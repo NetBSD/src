@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.6 2002/02/28 03:17:25 simonb Exp $	*/
+/*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -86,7 +86,7 @@ cdev_decl(biconsdev);
 cdev_decl(com);
 cdev_decl(lpt);
 cdev_decl(qms);
-cdev_decl(pms);
+cdev_decl(opms);
 cdev_decl(beep);
 cdev_decl(kbd);
 cdev_decl(iic);

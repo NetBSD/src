@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.9 2002/04/11 17:31:23 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.10 2002/04/19 01:04:42 wiz Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -66,7 +66,7 @@ major	{md = 18}
 major	{raid = 71}
 
 # IOMD device
-# parent to kbd, qms, pms, iic
+# parent to kbd, qms, opms, iic
 # also provides irq and timer services
 device	iomd {}
 attach	iomd at mainbus
@@ -111,10 +111,10 @@ file	arch/arm/iomd/qms_iomd.c		qms_iomd
 
 # PS/2 mouse device
 device	opms: tty
-file	arch/arm/iomd/pms.c			opms & opms_iomd needs-flag
+file	arch/arm/iomd/opms.c			opms & opms_iomd needs-flag
 
 attach	opms at iomd with opms_iomd
-file	arch/arm/iomd/pms_iomd.c		opms_iomd
+file	arch/arm/iomd/opms_iomd.c		opms_iomd
 
 # Standard keyboard driver (obsolete ... old vidc console)
 device	kbd

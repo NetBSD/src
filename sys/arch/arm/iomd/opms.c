@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.2 2002/02/18 18:58:47 bjh21 Exp $	*/
+/*	$NetBSD: opms.c,v 1.1 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	from:pms.c,v 1.24 1995/12/24 02:30:28 mycroft Exp
+ *	from: pms.c,v 1.24 1995/12/24 02:30:28 mycroft Exp
  */
 
 /*
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: pms.c,v 1.2 2002/02/18 18:58:47 bjh21 Exp $");
+__RCSID("$NetBSD: opms.c,v 1.1 2002/04/19 01:04:39 wiz Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: pms.c,v 1.2 2002/02/18 18:58:47 bjh21 Exp $");
 #include <machine/bus.h>
 #include <machine/conf.h>
 #include <machine/mouse.h>
-#include <arm/iomd/pmsvar.h>
+#include <arm/iomd/opmsvar.h>
 
 #define MOUSE_IOC_ACK
 
@@ -80,16 +80,16 @@ __RCSID("$NetBSD: pms.c,v 1.2 2002/02/18 18:58:47 bjh21 Exp $");
 
 /* function prototypes */
 
-void pmswatchdog	__P((void *));
+void opmswatchdog	__P((void *));
 #ifdef MOUSE_IOC_ACK
-static void pmsputbuffer __P((struct pms_softc *sc, struct mousebufrec *buf));
+static void opmsputbuffer __P((struct opms_softc *sc, struct mousebufrec *buf));
 #endif
-static __inline void pms_flush __P((struct pms_softc *sc));
-static int cmd_mouse __P((struct pms_softc *, u_char));
+static __inline void opms_flush __P((struct opms_softc *sc));
+static int cmd_mouse __P((struct opms_softc *, u_char));
 
 extern struct cfdriver opms_cd;
 
-/* pms device driver structure */
+/* opms device driver structure */
 
 #define PMS_DATA	0
 #define PMS_CR		1
@@ -115,8 +115,8 @@ extern struct cfdriver opms_cd;
  */
 
 static __inline void
-pms_flush(sc)
-	struct pms_softc *sc;
+opms_flush(sc)
+	struct opms_softc *sc;
 {
 	int n = 1000;
 
@@ -137,7 +137,7 @@ pms_flush(sc)
 
 static int
 cmd_mouse(sc, cmd)
-	struct pms_softc * sc;
+	struct opms_softc * sc;
 	u_char cmd;
 {
 	int c;
@@ -169,7 +169,7 @@ resend:
 		return(0);
 
 	if (--retry) {
-		pms_flush(sc);
+		opms_flush(sc);
 		goto resend;
 	}
 
@@ -187,8 +187,8 @@ resend:
  */
 
 int
-pmsinit(sc)
-	struct pms_softc *sc;
+opmsinit(sc)
+	struct opms_softc *sc;
 {
 	int i, j;
 	int mid;
@@ -216,12 +216,12 @@ pmsinit(sc)
 			    PMS_STATUS));
 			return(0);
 		}
-		pms_flush(sc);
+		opms_flush(sc);
 		delay(2);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PMS_CR, PMS_CR_ENABLE);
 	}
 
-	pms_flush(sc);
+	opms_flush(sc);
 
 	/*
 	 * Disable, reset and enable the mouse.
@@ -239,7 +239,7 @@ pmsinit(sc)
 				printf("Mouse Reset failed, status = <%x>.\n", mid);
 				return(0);
 			}
-			pms_flush(sc);
+			opms_flush(sc);
 			cmd_mouse(sc, PMS_RESET);
 			i = 0;
 		}
@@ -262,14 +262,14 @@ pmsinit(sc)
  * device open routine
  */
 int
-pmsopen(dev, flag, mode, p)
+opmsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	int unit = PMSUNIT(dev);
-	struct pms_softc *sc;
+	struct opms_softc *sc;
 
 	/* validate the unit and the softc */
 	if (unit >= opms_cd.cd_ndevs)
@@ -301,7 +301,7 @@ pmsopen(dev, flag, mode, p)
 	
 	/* install watchdog timeout */
 	callout_reset(&sc->sc_watchdog_ch, 30 * hz,
-	    pmswatchdog, sc);
+	    opmswatchdog, sc);
 
 	return(0);
 }
@@ -310,13 +310,13 @@ pmsopen(dev, flag, mode, p)
  * driver close function
  */
 int
-pmsclose(dev, flag, mode, p)
+opmsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* remove the timeout */
 	callout_stop(&sc->sc_watchdog_ch);
@@ -335,12 +335,12 @@ pmsclose(dev, flag, mode, p)
 }
 
 int
-pmsread(dev, uio, flag)
+opmsread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int error = 0;
 	size_t length;
@@ -355,7 +355,7 @@ pmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
-		if ((error = tsleep((caddr_t)sc, (PZERO | PCATCH), "pmsread", 0))) {
+		if ((error = tsleep((caddr_t)sc, (PZERO | PCATCH), "opmsread", 0))) {
 			sc->sc_state &= ~PMS_ASLP;
 			(void)splx(s);
 			return error;
@@ -382,14 +382,14 @@ pmsread(dev, uio, flag)
 }
 
 int
-pmsioctl(dev, cmd, addr, flag, p)
+opmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error = 0;
@@ -418,7 +418,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 		buffer.x = sc->origx;
 		buffer.y = sc->origy;
 #ifdef MOUSE_IOC_ACK
-		pmsputbuffer(sc, &buffer);
+		opmsputbuffer(sc, &buffer);
 #endif
 		break;
 	}
@@ -434,7 +434,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 		if (sc->sc_q.c_cc > 0)
 			printf("%s: setting mode with non empty buffer (%d)\n",
 			    sc->sc_dev.dv_xname, sc->sc_q.c_cc);
-		pmsputbuffer(sc, &buffer);
+		opmsputbuffer(sc, &buffer);
 #endif
 		break;
 	}
@@ -450,7 +450,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 		buffer.x = sc->origx;
 		buffer.y = sc->origy;
 #ifdef MOUSE_IOC_ACK
-		pmsputbuffer(sc, &buffer);
+		opmsputbuffer(sc, &buffer);
 #endif
 		break;
 	}
@@ -518,10 +518,10 @@ pmsioctl(dev, cmd, addr, flag, p)
 #define YNEG_MASK	0x20
 
 int
-pmsintr(arg)
+opmsintr(arg)
 	void *arg;
 {
-	struct pms_softc *sc = arg;
+	struct opms_softc *sc = arg;
 	static int state = 0;
 	static u_char buttons;
 	u_char changed;
@@ -533,7 +533,7 @@ pmsintr(arg)
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
-		pms_flush(sc);
+		opms_flush(sc);
 		return(-1);	/* Could have been ours but pass it on */
 	}
 
@@ -626,12 +626,12 @@ pmsintr(arg)
 
 
 int
-pmspoll(dev, events, p)
+opmspoll(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
 	int s = spltty();
 
@@ -648,10 +648,10 @@ pmspoll(dev, events, p)
 
 
 void
-pmswatchdog(arg)
+opmswatchdog(arg)
 	void *arg;
 {
-	struct pms_softc *sc = arg;
+	struct opms_softc *sc = arg;
 	int s;
 
 	if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS) & 0x03)
@@ -660,15 +660,15 @@ pmswatchdog(arg)
 		    sc->sc_dev.dv_xname, bus_space_read_1(sc->sc_iot,
 		    sc->sc_ioh, PMS_STATUS));
 		s = spltty();
-		pmsinit(sc);
+		opmsinit(sc);
 		(void)splx(s);
 	}
 }
 
 #ifdef MOUSE_IOC_ACK
 static void
-pmsputbuffer(sc, buffer)
-	struct pms_softc *sc;
+opmsputbuffer(sc, buffer)
+	struct opms_softc *sc;
 	struct mousebufrec *buffer;
 {
 	int s;
@@ -695,4 +695,4 @@ pmsputbuffer(sc, buffer)
 }
 #endif
 
-/* End of pms.c */
+/* End of opms.c */
