@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.7 2001/05/08 14:46:06 uch Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.8 2001/06/11 09:37:40 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: bivideo.c,v 1.7 2001/05/08 14:46:06 uch Exp $";
+    "$NetBSD: bivideo.c,v 1.8 2001/06/11 09:37:40 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ bivideo_init(struct hpcfb_fbconf *fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN /* XXXX */
 		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
 #endif
 		fb->hf_pack_width = 16;
