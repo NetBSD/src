@@ -1,9 +1,9 @@
 #
-# DUALITY -- Mycroft's box
+# DUALITY -- Mycroft's 486 box
 #
 
 machine		"i386"
-cpu		"i386"
+cpu		"i486"
 ident		DUALITY
 timezone	5 dst
 maxusers	16
