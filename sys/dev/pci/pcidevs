@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.41 1997/10/06 06:18:07 lonhyn Exp $
+$NetBSD: pcidevs,v 1.42 1997/10/08 17:00:43 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -780,7 +780,7 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 /* Matrox products */
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
-product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (\"Storm\")
+product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
