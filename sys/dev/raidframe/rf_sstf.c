@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.7 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.8 2001/11/13 07:11:17 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,10 @@
  * sstf.c --  prioritized shortest seek time first disk queueing code
  *
  ******************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.8 2001/11/13 07:11:17 lukem Exp $");
+
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_alloclist.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22 2001/05/02 10:32:11 scw Exp $	*/
+/*	$NetBSD: qd.c,v 1.23 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -60,6 +60,9 @@
 /*
  * qd.c - QDSS display driver for VAXSTATION-II GPX workstation
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.23 2001/11/13 07:11:24 lukem Exp $");
 
 #include "opt_ddb.h"
 

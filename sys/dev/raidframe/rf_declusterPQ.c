@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.6 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.7 2001/11/13 07:11:13 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,6 +33,9 @@
  * much code borrowed from rf_decluster.c
  *
  *--------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.7 2001/11/13 07:11:13 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

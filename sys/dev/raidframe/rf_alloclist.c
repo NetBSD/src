@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.7 2001/10/04 17:39:18 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.8 2001/11/13 07:11:12 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,6 +35,9 @@
  * FreeAList() causes each pointer to be freed.
  *
  ***************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.8 2001/11/13 07:11:12 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
