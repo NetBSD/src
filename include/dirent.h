@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dirent.h	5.18 (Berkeley) 2/23/91
- *	$Id: dirent.h,v 1.3 1993/08/01 18:44:56 mycroft Exp $
+ *	$Id: dirent.h,v 1.4 1993/12/10 19:16:09 jtc Exp $
  */
 
 #ifndef _DIRENT_H_
@@ -46,9 +46,9 @@
  */
 
 struct dirent {
-	u_long	d_fileno;		/* file number of entry */
-	u_short	d_reclen;		/* length of this record */
-	u_short	d_namlen;		/* length of string in d_name */
+	unsigned long	d_fileno;	/* file number of entry */
+	unsigned short	d_reclen;	/* length of this record */
+	unsigned short	d_namlen;	/* length of string in d_name */
 #ifdef _POSIX_SOURCE
 	char	d_name[255 + 1];	/* name must be no longer than this */
 #else
@@ -57,17 +57,8 @@ struct dirent {
 #endif
 };
 
-#ifdef _POSIX_SOURCE
-typedef void *	DIR;
-#else
-
-#define	d_ino		d_fileno	/* backward compatibility */
-
-/* definitions for library routines operating on directories. */
-#define	DIRBLKSIZ	1024
-
 /* structure describing an open directory. */
-typedef struct _dirdesc {
+typedef struct {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
 	long	dd_size;	/* amount of data returned by getdirentries */
@@ -77,16 +68,22 @@ typedef struct _dirdesc {
 	void	*dd_ddloc;	/* Linked list of ddloc structs for telldir/seekdir */
 } DIR;
 
+
+#ifndef _POSIX_SOURCE
+#define	d_ino		d_fileno	/* backward compatibility */
+
+/* definitions for library routines operating on directories. */
+#define	DIRBLKSIZ	1024
+
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
 #ifndef NULL
 #define	NULL	0
 #endif
-
 #endif /* _POSIX_SOURCE */
 
-#ifndef KERNEL
 
+#ifndef KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
