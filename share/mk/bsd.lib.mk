@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.46 1994/01/31 18:40:10 jtc Exp $
+#	$Id: bsd.lib.mk,v 1.47 1994/02/09 23:50:36 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -137,7 +137,6 @@ afterdepend:
 .if !target(install)
 .if !target(beforeinstall)
 beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${LIBDIR}
 .endif
 
 realinstall:
