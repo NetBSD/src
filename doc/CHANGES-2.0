@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.504 2004/11/12 04:59:40 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.505 2004/11/12 05:02:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7854,3 +7854,12 @@ bin/pax/tar.c					1.59
 	In GNU-tar mode, dontt split filenames to prefix+name because GNU 
 	tar does not honor it.
 	[christos, ticket #920]
+
+bin/pax/tar.c					1.58
+bin/pax/file_subs.c				1.52
+bin/pax/extern.h				1.45
+
+	Keep track of the length of the gnu long name/link hack, so that
+	we can append to it. Modify the code so that file_write is re-entrant,
+	even in the gnu long name/link hack.
+	[christos, ticket #921]
