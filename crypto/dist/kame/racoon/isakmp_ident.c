@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_ident.c,v 1.52 2001/01/24 02:36:53 thorpej Exp $	*/
+/*	$KAME: isakmp_ident.c,v 1.53 2001/01/26 04:02:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -803,9 +803,11 @@ ident_r1send(iph1, msg)
 	/* set responder's cookie */
 	isakmp_newcookie((caddr_t)&iph1->index.r_ck, iph1->remote, iph1->local);
 
+#ifdef HAVE_GSSAPI
 	if (iph1->approval->gssid != NULL)
 		gss_sa = ipsecdoi_setph1proposal(iph1->approval);
 	else
+#endif
 		gss_sa = iph1->sa_ret;
 
 	/* create buffer to send isakmp payload */
@@ -844,8 +846,10 @@ ident_r1send(iph1, msg)
 	error = 0;
 
 end:
+#ifdef HAVE_GSSAPI
 	if (gss_sa != iph1->sa_ret)
 		vfree(gss_sa);
+#endif
 	return error;
 }
 

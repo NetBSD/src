@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.c,v 1.18 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: remoteconf.c,v 1.20 2001/01/26 04:02:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -187,6 +187,10 @@ delisakmpsa(sa)
 		oakley_dhgrp_free(sa->dhgrp);
 	if (sa->next)
 		delisakmpsa(sa->next);
+#ifdef HAVE_GSSAPI
+	if (sa->gssid)
+		vfree(sa->gssid);
+#endif
 	free(sa);
 }
 
@@ -262,6 +266,9 @@ newisakmpsa()
 
 	new->next = NULL;
 	new->rmconf = NULL;
+#ifdef HAVE_GSSAPI
+	new->gssid = NULL;
+#endif
 
 	return new;
 }
