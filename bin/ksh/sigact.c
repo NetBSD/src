@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.c,v 1.3 2002/05/25 23:29:17 wiz Exp $	*/
+/*	$NetBSD: sigact.c,v 1.4 2003/06/23 11:39:03 agc Exp $	*/
 
 /* NAME:
  *      sigact.c - fake sigaction(2)
@@ -138,6 +138,12 @@
  *	- sigaction(),sigsuspend(),Signal(),signal(): use handler_t typedef
  *	  instead of explicit type.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: sigact.c,v 1.4 2003/06/23 11:39:03 agc Exp $");
+#endif
+
 
 /*
     #include <signal.h>
