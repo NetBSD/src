@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.49 2000/03/29 13:57:51 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.50 2000/06/05 07:59:54 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ static inline void ncr53c9x_setsync	__P((struct ncr53c9x_softc *,
  * Names for the NCR53c9x variants, correspnding to the variant tags
  * in ncr53c9xvar.h.
  */
-const char *ncr53c9x_variant_names[] = {
+static const char *ncr53c9x_variant_names[] = {
 	"ESP100",
 	"ESP100A",
 	"ESP200",
@@ -146,13 +146,29 @@ const char *ncr53c9x_variant_names[] = {
 	"AM53C974",
 };
 
+static struct scsipi_adapter ncr53c9x_adapter = {
+	0,			/* adapter refcnt */
+	ncr53c9x_scsi_cmd,	/* cmd */
+	minphys,		/* minphys */
+	NULL,			/* ioctl */
+	NULL,			/* getgeom */
+};
+
+static struct scsipi_device ncr53c9x_device = {
+	NULL,			/* use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* use default 'done' routine */
+};
+
 /*
  * Attach this instance, and then all the sub-devices
  */
 void
-ncr53c9x_attach(sc, dev)
+ncr53c9x_attach(sc, adapter, device)
 	struct ncr53c9x_softc *sc;
-	struct scsipi_device *dev;
+	struct scsipi_adapter *adapter;
+	struct scsipi_device *device;
 {
 
 	/*
@@ -212,8 +228,8 @@ ncr53c9x_attach(sc, dev)
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = dev;
+	sc->sc_link.adapter = (adapter) ? adapter : &ncr53c9x_adapter;
+	sc->sc_link.device = (device) ? device : &ncr53c9x_device;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
 	sc->sc_link.scsipi_scsi.max_lun = 7;
