@@ -697,7 +697,6 @@
 .ds doc-str-Lb-libossaudio OSS Audio Emulation Library (libossaudio, \-lossaudio)
 .ds doc-str-Lb-libpam      Pluggable Authentication Module Library (libpam, \-lpam)
 .ds doc-str-Lb-libpcap     Packet Capture Library (libpcap, \-lpcap)
-.ds doc-str-Lb-libpcap     Packet Capture Library (libpcap, \-lpcap)
 .ds doc-str-Lb-libpci      PCI Bus Access Library (libpci, \-lpci)
 .ds doc-str-Lb-libpmc      Performance Counters Library (libpmc, \-lpmc)
 .ds doc-str-Lb-libposix    \*[Px] \*[doc-str-Lb]Compatibility Library (libposix, \-lposix)
