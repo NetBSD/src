@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.5 2001/07/25 23:53:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.6 2001/08/08 16:36:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -215,6 +215,23 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 #endif
 
 	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
+
+	return 0;
+}
+
+
+int
+pthread_once(pthread_once_t *once_control, void (*routine)(void))
+{
+
+	if (once_control->pto_done == 0) {
+		pthread_mutex_lock(&once_control->pto_mutex);
+		if (once_control->pto_done == 0) {
+			routine();
+			once_control->pto_done = 1;
+		}
+		pthread_mutex_unlock(&once_control->pto_mutex);
+	}
 
 	return 0;
 }
