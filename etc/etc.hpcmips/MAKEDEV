@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.45 2002/11/28 16:56:26 hamajima Exp $
+#	$NetBSD: MAKEDEV,v 1.46 2002/12/31 06:54:38 shin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,7 @@
 #	systrace syscall tracer
 #	apm	power management device
 #	midi*	MIDI
+#	pci*	PCI bus access devices
 #
 
 dialin=0
@@ -151,6 +152,7 @@ all)
 	makedev systrace
 	makedev apm
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	makedev pci0
 #	makedev local
 	;;
 
@@ -683,6 +685,13 @@ music*)
 	mknod $music     c $major $(($unit + 0))
 	mknod $sequencer c $major $(($unit + 128))
 	chmod 666 $music $sequencer
+	;;
+
+pci*)
+	unit=${i#pci}
+	rm -f pci$unit
+	mknod pci$unit c 54 $unit
+	chmod 644 pci$unit
 	;;
 
 local)
