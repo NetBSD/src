@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.29 2000/02/04 09:31:07 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.30 2000/02/05 04:41:49 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,26 +37,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -354,7 +342,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->wdc_channel);	/* should return an error XXX */
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 	return;
 
