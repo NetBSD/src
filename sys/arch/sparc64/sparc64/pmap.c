@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1998/09/22 02:48:44 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1998/11/22 17:22:50 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -2543,7 +2543,13 @@ pv_syncflags(pv)
 	pv_entry_t npv;
 	int s = splimp();
 	int flags = pv->pv_va&PV_MASK;
-		
+	
+#ifdef DEBUG	
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pv_syncflags: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
 	if (pv->pv_pmap != NULL)
 		for (npv = pv; npv; npv = npv->pv_next) {
 			int64_t data;
@@ -2563,7 +2569,7 @@ pv_syncflags(pv)
 			data &= ~(TLB_MODIFY|TLB_ACCESS);
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, data, 0)) {
-				printf("pmap_clear_modify: gotten pseg empty!\n");
+				printf("pv_syncflags: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
 			}
@@ -2619,6 +2625,12 @@ pmap_clear_modify(pa)
 		changed |= 1;
 #endif
 	pv->pv_va &= ~(PV_MOD);
+#ifdef DEBUG	
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pmap_clear_modify: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
 	if (pv->pv_pmap != NULL)
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2707,6 +2719,12 @@ pmap_clear_reference(pa)
 		changed |= 1;
 #endif
 	pv->pv_va &= ~(PV_REF);
+#ifdef DEBUG	
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pmap_clear_reference: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
 	if (pv->pv_pmap != NULL)
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2785,6 +2803,12 @@ pmap_is_modified(pa)
 	pv = pa_to_pvh(pa);
 #ifdef HWREF
 	i = (pv->pv_va&PV_MOD);
+#ifdef DEBUG	
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pmap_is_modified: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
 	if (pv->pv_pmap != NULL)
 		for (npv = pv; i == 0 && npv && npv->pv_pmap; npv = npv->pv_next) {
 			int64_t data;
@@ -2836,6 +2860,12 @@ pmap_is_referenced(pa)
 	pv = pa_to_pvh(pa);
 #ifdef HWREF 
 	i = (pv->pv_va&PV_REF);
+#ifdef DEBUG	
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pmap_is_referenced: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
 	if (pv->pv_pmap != NULL)
 		for (npv = pv; npv; npv = npv->pv_next) {
 			int64_t data;
@@ -2965,6 +2995,12 @@ pmap_page_protect(pa, prot)
 
 		pv = pa_to_pvh(pa);
 		s = splimp();
+#ifdef DEBUG	
+		if (pv->pv_next && !pv->pv_pmap) {
+			printf("pmap_page_protect: npv but no pmap for pv %p\n", pv);
+			Debugger();
+		}
+#endif
 		if (pv->pv_pmap != NULL) {
 			for (; pv; pv = pv->pv_next) {
 #ifdef DEBUG
@@ -3059,6 +3095,12 @@ pmap_page_protect(pa, prot)
 		pv = firstpv;
 
 		/* Then remove the primary pv */
+#ifdef DEBUG	
+		if (pv->pv_next && !pv->pv_pmap) {
+			printf("pmap_page_protect: npv but no pmap for pv %p\n", pv);
+			Debugger();
+		}
+#endif
 		if (pv->pv_pmap != NULL) {
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
