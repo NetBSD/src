@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.124 1998/10/13 11:43:50 bouyer Exp $
+#	$NetBSD: files.i386,v 1.125 1998/11/12 21:32:16 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,6 +7,10 @@
 maxpartitions 8
 
 maxusers 2 16 64
+
+# APM options
+defopt	opt_apm.h APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
+	APM_NO_STANDBY APM_V10_ONLY APMDEBUG APMDEBUG_VALUE
 
 # Processor type options.
 defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
