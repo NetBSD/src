@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.24 1997/09/02 13:19:16 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.25 1997/09/02 13:24:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,12 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_dec_eb164.h"
+#include "opt_dec_kn20aa.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.24 1997/09/02 13:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.25 1997/09/02 13:24:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
