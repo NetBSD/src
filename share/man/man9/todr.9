@@ -1,6 +1,6 @@
-.\" $NetBSD: todr.9,v 1.6 2003/04/16 13:35:34 wiz Exp $
+.\" $NetBSD: todr.9,v 1.7 2003/07/18 21:51:30 thorpej Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,10 +34,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 22, 2000
+.Dd July 18, 2003
 .Dt TODR 9
 .Os
 .Sh NAME
+.Nm todr_attach
 .Nm todr_gettime
 .Nm todr_settime
 .Nm todr_getcal
@@ -47,6 +48,8 @@
 .Nd time-of-day clock support
 .Sh SYNOPSIS
 .In dev/clock_subr.h
+.Ft void
+.Fn todr_attach "todr_chip_handle_t"
 .Ft int
 .Fn todr_gettime "todr_chip_handle_t" "struct timeval *"
 .Ft int
@@ -65,14 +68,18 @@ The
 functions provide an interface to read, set and control
 .Ql time-of-day
 devices.
-The
+A driver for a
+.Ql time-of-day
+device registers its
 .Fa todr_chip_handle_t
-should be obtained from a driver for a particular hardware device that
-implements this interface.
-Examples of such drivers currently include
-.Xr mk48txx 4
-and
-.Xr intersil7170 4 .
+with machine-dependent code using the
+.Fn todr_attach
+function.
+Alternatively, a machine-dependent front-end to a
+.Ql time-of-day
+device driver may obtain the
+.Fa todr_chip_handle_t
+directly.
 .Pp
 The
 .Fn todr_gettime
@@ -138,6 +145,8 @@ and
 .Fn clock_ymdhms_to_secs
 functions never fail.
 .Sh SEE ALSO
+.Xr mk48txx 4 ,
+.Xr intersil7170 4 ,
 .Xr inittodr 9 ,
 .Xr resettodr 9 ,
 .Xr time 9
