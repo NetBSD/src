@@ -1,5 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.22 2002/01/22 16:55:19 mrg Exp $
-./usr/bin/psim		comp-debug-bin
+# $NetBSD: ad.powerpc,v 1.23 2002/01/22 17:02:08 mrg Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
