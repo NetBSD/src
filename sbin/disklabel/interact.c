@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.22 2003/12/29 19:12:29 jdc Exp $	*/
+/*	$NetBSD: interact.c,v 1.23 2003/12/29 21:21:25 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.22 2003/12/29 19:12:29 jdc Exp $");
+__RCSID("$NetBSD: interact.c,v 1.23 2003/12/29 21:21:25 jdc Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -475,7 +475,7 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 	for (;;) {
 		defnum(lp, def, p->p_offset);
 		i = getinput(":",
-		    "Start offset ('x' to start after partition 'x)",
+		    "Start offset ('x' to start after partition 'x')",
 		    def, line);
 		if (i == -1)
 			return;
