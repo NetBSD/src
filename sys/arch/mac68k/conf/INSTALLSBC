@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.16 2003/09/22 14:11:21 cl Exp $
+#	$NetBSD: INSTALLSBC,v 1.17 2003/10/08 11:10:55 bouyer Exp $
 #
 # INSTALLSBC
 
@@ -153,7 +153,8 @@ st*	at scsibus? target ? lun ?	# SCSI tape drives
 
 # IDE controller and devices
 wdc*	at obio? flags 0x1000
-wd*	at wdc? channel ? drive ?
+atabus* at wdc? channel ?
+wd*	at atabus? drive ?
 
 
 # Miscellaneous mass storage devices
