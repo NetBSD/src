@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.12 1998/02/12 01:57:34 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.13 1998/02/13 05:52:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.12 1998/02/12 01:57:34 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.13 1998/02/13 05:52:20 lukem Exp $");
 #endif
 #endif
 
@@ -46,17 +46,20 @@ __RCSID("$NetBSD: clnt_udp.c,v 1.12 1998/02/12 01:57:34 lukem Exp $");
  */
 
 #include "namespace.h"
-#include <sys/types.h>
-#include <sys/poll.h>
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netdb.h>
-#include <errno.h>
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
@@ -125,18 +128,18 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	u_long program;
 	u_long version;
 	struct timeval wait;
-	register int *sockp;
+	int *sockp;
 	u_int sendsz;
 	u_int recvsz;
 {
 	CLIENT *cl;
-	register struct cu_data *cu = NULL;
+	struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
+		warnx("clntudp_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
@@ -145,7 +148,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	recvsz = ((recvsz + 3) / 4) * 4;
 	cu = (struct cu_data *)mem_alloc(sizeof(*cu) + sendsz + recvsz);
 	if (cu == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
+		warnx("clntudp_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
@@ -215,7 +218,7 @@ clntudp_create(raddr, program, version, wait, sockp)
 	u_long program;
 	u_long version;
 	struct timeval wait;
-	register int *sockp;
+	int *sockp;
 {
 
 	return(clntudp_bufcreate(raddr, program, version, wait, sockp,
@@ -224,7 +227,7 @@ clntudp_create(raddr, program, version, wait, sockp)
 
 static enum clnt_stat 
 clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
-	register CLIENT	*cl;		/* client handle */
+	CLIENT	       *cl;		/* client handle */
 	u_long		proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
 	caddr_t		argsp;		/* pointer to args */
@@ -232,10 +235,10 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	caddr_t		resultsp;	/* pointer to results */
 	struct timeval	utimeout;	/* seconds to wait before giving up */
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs;
-	register int outlen;
-	register int inlen;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs;
+	int outlen;
+	int inlen;
 	int fromlen;
 	struct pollfd fd;
 	int milliseconds = (cu->cu_wait.tv_sec * 1000) +
@@ -393,7 +396,7 @@ clntudp_geterr(cl, errp)
 	CLIENT *cl;
 	struct rpc_err *errp;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	*errp = cu->cu_error;
 }
@@ -405,8 +408,8 @@ clntudp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs = &(cu->cu_outxdrs);
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs = &(cu->cu_outxdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
@@ -425,7 +428,7 @@ clntudp_control(cl, request, info)
 	u_int request;
 	char *info;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
@@ -453,7 +456,7 @@ static void
 clntudp_destroy(cl)
 	CLIENT *cl;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	if (cu->cu_closeit) {
 		(void)close(cu->cu_sock);
