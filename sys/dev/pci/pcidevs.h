@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.519 2003/03/25 18:30:14 tsubai Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.520 2003/03/29 20:56:54 jdc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.516 2003/03/25 18:28:15 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.517 2003/03/29 20:49:03 jdc Exp 
  */
 
 /*
@@ -525,6 +525,7 @@
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics (3Com) */
+#define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
@@ -2268,6 +2269,7 @@
 /* US Robotics products */
 #define	PCI_PRODUCT_USR_3C2884A	0x1007		/* 56K Voice Internal PCI Modem (WinModem) */
 #define	PCI_PRODUCT_USR_3CP5609	0x1008		/* 3CP5609 PCI 16550 Modem */
+#define	PCI_PRODUCT_USR2_2415	0x3685		/* Wireless PCI-PCMCIA adapter */
 
 /* V3 Semiconductor products */
 #define	PCI_PRODUCT_V3_V292PBC	0x0292		/* V292PBC AMD290x0 Host-PCI Bridge */
