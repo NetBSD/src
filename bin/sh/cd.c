@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.33 2003/10/30 09:40:26 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.34 2003/11/14 20:00:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.33 2003/10/30 09:40:26 dsl Exp $");
+__RCSID("$NetBSD: cd.c,v 1.34 2003/11/14 20:00:28 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: cd.c,v 1.33 2003/10/30 09:40:26 dsl Exp $");
 STATIC int docd(char *, int);
 STATIC char *getcomponent(void);
 STATIC void updatepwd(char *);
-STATIC char *find_pwd(int noerror);
+STATIC void find_curdir(int noerror);
 
 char *curdir = NULL;		/* current working directory */
 char *prevdir;			/* previous working directory */
@@ -86,8 +86,10 @@ cdcmd(int argc, char **argv)
 
 	nextopt(nullstr);
 
-	/* Try (quite hard) to have 'curdir' defined, nothing has set
-	   it on entry to the shell, but we want 'cd fred; cd -' to work. */
+	/*
+	 * Try (quite hard) to have 'curdir' defined, nothing has set
+	 * it on entry to the shell, but we want 'cd fred; cd -' to work.
+	 */
 	getpwd(1);
 	dest = *argptr;
 	if (dest == NULL) {
@@ -111,16 +113,12 @@ cdcmd(int argc, char **argv)
 		}
 	}
 
-	if (*dest == '\0')
-	        dest = ".";
 	if (dest[0] == '-' && dest[1] == '\0') {
 		dest = prevdir ? prevdir : curdir;
 		print = 1;
-		if (dest)
-		        print = 1;
-		else
-		        dest = ".";
 	}
+	if (*dest == '\0')
+	        dest = ".";
 	if (*dest == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
 	while ((p = padvance(&path, dest)) != NULL) {
@@ -298,27 +296,32 @@ updatepwd(char *dir)
 	INTON;
 }
 
-
+/*
+ * Posix says the default should be 'pwd -L' (as below), however
+ * the 'cd' command (above) does something much nearer to the
+ * posix 'cd -P' (not the posix default of 'cd -L').
+ * If 'cd' is changed to support -P/L then the default here
+ * needs to be revisited if the historic behaviour is to be kept.
+ */
 
 int
 pwdcmd(int argc, char **argv)
 {
 	int i;
 	char opt = 'L';
-	char *pwd;
 
 	while ((i = nextopt("LP")) != '\0')
 		opt = i;
 	if (*argptr)
 		error("unexpected argument");
 
-	if (opt == 'L') {
+	if (opt == 'L')
 		getpwd(0);
-		pwd = curdir;
-	} else
-		pwd = find_pwd(0);
+	else
+		find_curdir(0);
 
-	out1str(pwd);
+	setvar("PWD", curdir, VEXPORT);
+	out1str(curdir);
 	out1c('\n');
 	return 0;
 }
@@ -354,15 +357,13 @@ getpwd(int noerror)
 		}
 	}
 
-	pwd = find_pwd(noerror);
+	find_curdir(noerror);
 
-	if (pwd != NULL)
-		curdir = savestr(pwd);
 	return;
 }
 
-STATIC char *
-find_pwd(int noerror)
+STATIC void
+find_curdir(int noerror)
 {
 	int i;
 	char *pwd;
@@ -383,14 +384,16 @@ find_pwd(int noerror)
 
 	for (i = MAXPWD;; i *= 2) {
 		pwd = stalloc(i);
-		if (getcwd(pwd, i) != NULL)
-			return pwd;
+		if (getcwd(pwd, i) != NULL) {
+			curdir = savestr(pwd);
+			return;
+		}
 		stunalloc(pwd);
 		if (errno == ERANGE)
 			continue;
 		if (!noerror)
 			error("getcwd() failed: %s", strerror(errno));
-		return NULL;
+		return;
 	}
 #else
 	{
@@ -398,9 +401,8 @@ find_pwd(int noerror)
 		int status;
 		struct job *jp;
 		int pip[2];
-		char *buf;
 
-		buf = stalloc(MAXPWD);
+		pwd = stalloc(MAXPWD);
 		INTOFF;
 		if (pipe(pip) < 0)
 			error("Pipe call failed");
@@ -417,8 +419,8 @@ find_pwd(int noerror)
 		}
 		(void) close(pip[1]);
 		pip[1] = -1;
-		p = buf;
-		while ((i = read(pip[0], p, buf + MAXPWD - p)) > 0
+		p = pwd;
+		while ((i = read(pip[0], p, pwd + MAXPWD - p)) > 0
 		     || (i == -1 && errno == EINTR)) {
 			if (i > 0)
 				p += i;
@@ -428,16 +430,17 @@ find_pwd(int noerror)
 		status = waitforjob(jp);
 		if (status != 0)
 			error((char *)0);
-		if (i < 0 || p == buf || p[-1] != '\n') {
+		if (i < 0 || p == pwd || p[-1] != '\n') {
 			if (noerror) {
 				INTON;
-				return NULL;
+				return;
 			}
 			error("pwd command failed");
 		}
 		p[-1] = '\0';
 		INTON;
-		return buf;
+		curdir = savestr(pwd);
+		return;
 	}
 #endif
 }
