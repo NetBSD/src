@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2000/07/06 17:17:54 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2000/07/06 18:16:35 jhawk Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -25,8 +25,9 @@ realall:	netbsd boot
 	tar cvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
-	dd if=/dev/zero of=${IMAGE1} count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}
+	mv -f ${IMAGE1} ${IMAGE1}.tmp
+	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}.tmp
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
@@ -60,6 +61,7 @@ realall:	netbsd boot
                 echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
                         on disk $$disks."; \
 	)
+	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
@@ -91,7 +93,7 @@ release:
 	done
 	
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs
+	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

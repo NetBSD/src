@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2000/06/18 23:57:32 cyber Exp $
+#	$NetBSD: Makefile,v 1.30 2000/07/06 18:16:35 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -43,8 +43,10 @@ start.sh: start.tmpl
 realall: ${IMAGE}
 
 ${IMAGE}: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
+	rm -f ${IMAGE}.tmp
+	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp \
+	    512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
 	disklabel -r -R ${VND_CDEV} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
@@ -57,11 +59,12 @@ ${IMAGE}: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -82,7 +85,8 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 release:
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c tmplabel
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${IMAGE}.tmp ${CBIN} \
+	    ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c tmplabel
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
