@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.20 1995/06/25 13:39:37 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.21 1995/06/25 13:53:21 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -49,9 +49,9 @@ LIBKERN=${KERNLIB_PROF}
 ### Find out what to use for libcompat.
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
-LIBKERN=${COMPATLIB}
+LIBCOMPAT=${COMPATLIB}
 .else
-LIBKERN=${COMPATLIB_PROF}
+LIBCOMPAT=${COMPATLIB_PROF}
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
