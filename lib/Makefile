@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1997/06/23 05:24:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.40 1997/06/23 09:17:56 veego Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -14,7 +14,7 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libkvm \
 	(${MACHINE} == "pmax")   || \
 	(${MACHINE} == "x68k")
 SUBDIR+=        libkvm.old
-.else
+.endif
 
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
 # XXX process.
@@ -22,7 +22,5 @@ SUBDIR+=        libkvm.old
 	defined(EXPORTABLE_SYSTEM) || make(clean) || make(cleandir)
 SUBDIR+=	libtelnet
 .endif
-
-.endif	# make(clean) || make(cleandir)
 
 .include <bsd.subdir.mk>
