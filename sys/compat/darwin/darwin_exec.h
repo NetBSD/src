@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.10 2003/12/27 22:06:19 manu Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.11 2004/07/03 00:14:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ struct darwin_emuldata {
 int exec_darwin_copyargs(struct proc *, struct exec_package *, 
     struct ps_strings *, char **, void *);
 int exec_darwin_probe(char **);
+int darwin_exec_setup_stack(struct proc *, struct exec_package *);
+
 extern const struct emul emul_darwin;
 
 #endif /* !_DARWIN_EXEC_H_ */
