@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.87 1997/07/14 21:09:09 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.88 1997/08/23 14:22:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -349,24 +349,3 @@ chrtoblk(dev)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
-
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-cons_decl(pc);
-cons_decl(com);
-
-struct	consdev constab[] = {
-#if NPC + NVT > 0
-	cons_init(pc),
-#endif
-#if NCOM > 0
-	cons_init(com),
-#endif
-	{ 0 },
-};
