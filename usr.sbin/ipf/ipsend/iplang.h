@@ -1,7 +1,7 @@
-/*	$NetBSD: iplang.h,v 1.1.1.1 1997/09/21 16:49:16 veego Exp $	*/
+/*	$NetBSD: iplang.h,v 1.1.1.1.2.1 1997/10/30 07:17:12 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed.
+ * Copyright (C) 1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given

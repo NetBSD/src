@@ -1,14 +1,15 @@
-/*	$NetBSD: ipsopt.c,v 1.2 1997/09/21 18:02:14 veego Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.2.2.1 1997/10/30 07:17:29 mrg Exp $	*/
 
 /*
- * (C)opyright 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipsopt.c,v 2.0.2.10 1997/09/28 07:13:28 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +20,9 @@ static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include "ipsend.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.6 1997/09/25 01:45:14 thorpej Exp $	*/
+/*	$NetBSD: sock.c,v 1.6.2.1 1997/10/30 07:17:44 mrg Exp $	*/
 
 /*
  * sock.c (C) 1995-1997 Darren Reed
@@ -7,8 +7,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9 1997/09/28 07:13:37 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -20,10 +21,16 @@ static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <sys/time.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#ifndef	ultrix
 #include <fcntl.h>
+#endif
 #include <sys/dir.h>
 #define _KERNEL
 #define	KERNEL
+#ifdef	ultrix
+# undef	LOCORE
+# include <sys/smp_lock.h>
+#endif
 #include <sys/file.h>
 #undef  _KERNEL
 #undef  KERNEL
@@ -32,7 +39,9 @@ static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
-#include <kvm.h>
+#if !defined(ultrix) && !defined(hpux)
+# include <kvm.h>
+#endif
 #ifdef sun
 #include <sys/systm.h>
 #include <sys/session.h>
@@ -107,9 +116,14 @@ int	n;
 	return n;
 }
 
-struct	nlist	names[3] = {
+struct	nlist	names[4] = {
 	{ "_proc" },
 	{ "_nproc" },
+#ifdef	ultrix
+	{ "_u" },
+#else
+	{ NULL },
+#endif
 	{ NULL }
 	};
 
@@ -171,26 +185,35 @@ struct	tcpiphdr *ti;
 
 	if (!(p = getproc()))
 		return NULL;
-
+printf("fl %x ty %x cn %d mc %d\n",
+f->f_flag, f->f_type, f->f_count, f->f_msgcount);
 	up = (struct user *)malloc(sizeof(*up));
+#ifndef	ultrix
 	if (KMCPY(up, p->p_uarea, sizeof(*up)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x) failed\n", p, p->p_uarea);
 		return NULL;
 	    }
+#else
+	if (KMCPY(up, names[2].n_value, sizeof(*up)) == -1)
+	    {
+		fprintf(stderr, "read(%#x,%#x) failed\n", p, names[2].n_value);
+		return NULL;
+	    }
+#endif
 
 	o = (struct file **)calloc(1, sizeof(*o) * (up->u_lastfile + 1));
 	if (KMCPY(o, up->u_ofile, (up->u_lastfile + 1) * sizeof(*o)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x,%d) - u_ofile - failed\n",
-			up->u_ofile_arr, o, sizeof(*o));
+			up->u_ofile, o, sizeof(*o));
 		return NULL;
 	    }
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[fd], sizeof(*f)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x,%d) - o[fd] - failed\n",
-			up->u_ofile_arr[fd], f, sizeof(*f));
+			up->u_ofile[fd], f, sizeof(*f));
 		return NULL;
 	    }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: parse.c,v 1.10 1997/09/21 18:01:00 veego Exp $	*/
+/*	$NetBSD: parse.c,v 1.10.2.1 1997/10/30 07:16:09 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1996 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,12 +9,12 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -35,9 +35,9 @@
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: parse.c,v 2.0.2.14 1997/08/26 12:54:07 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
+static const char rcsid[] = "@(#)Id: parse.c,v 2.0.2.18 1997/10/19 15:39:29 darrenr Exp ";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -884,9 +884,13 @@ u_short *sp;
 }
 
 
+#ifdef __STDC__
+void optprint(u_short secmsk, u_short secbits, u_long optmsk, u_long optbits)
+#else
 void optprint(secmsk, secbits, optmsk, optbits)
 u_short secmsk, secbits;
 u_long optmsk, optbits;
+#endif
 {
 	struct ipopt_names *io, *so;
 	char *s;
@@ -955,8 +959,8 @@ u_long optmsk, optbits;
 
 char	*icmptypes[] = {
 	"echorep", (char *)NULL, (char *)NULL, "unreach", "squench",
-	"redir", (char *)NULL, (char *)NULL, "echo", (char *)NULL,
-	(char *)NULL, "timex", "paramprob", "timest", "timestrep",
+	"redir", (char *)NULL, (char *)NULL, "echo", "routerad",
+	"routersol", "timex", "paramprob", "timest", "timestrep",
 	"inforeq", "inforep", "maskreq", "maskrep", "END"
 };
 

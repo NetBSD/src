@@ -1,14 +1,14 @@
-/*	$NetBSD: ipf.h,v 1.1.1.6 1997/09/21 16:47:51 veego Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.6.2.1 1997/10/30 07:16:04 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.0.2.9 1997/08/26 12:52:46 darrenr Exp 
+ * Id: ipf.h,v 2.0.2.12 1997/09/28 07:11:50 darrenr Exp 
  */
 
 #ifndef	__IPF_H__
@@ -46,6 +46,10 @@
 # endif
 #endif
 
+#ifdef	ultrix
+extern	char	*strdup __P((char *));
+#endif
+
 extern	struct	frentry	*parse __P((char *));
 
 extern	void	printfr __P((struct frentry *));
@@ -64,7 +68,7 @@ struct	ipopt_names	{
 extern	u_32_t	buildopts __P((char *, char *, int));
 extern	u_32_t	hostnum __P((char *, int *));
 extern	u_32_t	optname __P((char ***, u_short *));
-extern	void	printpacket __P((struct ip *));
+extern	void	printpacket __P((ip_t *));
 #if SOLARIS
 extern	int	inet_aton __P((const char *, struct in_addr *));
 #endif

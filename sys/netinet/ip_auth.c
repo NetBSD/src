@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_auth.c,v 1.4 1997/09/21 18:03:09 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.4.2.1 1997/10/30 07:13:40 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed & Guido van Rooij.
+ * Copyright (C) 1997 by Darren Reed & Guido van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.14 1997/09/13 07:13:04 darrenr Exp ";
+#if !defined(lint)
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -60,7 +60,16 @@ static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.14 1997/09/13 07:13:04 darrenr Exp 
 #ifdef	NOT_KERNEL
 #undef	KERNEL
 #endif
+#ifdef __sgi
+# ifdef IFF_DRVRLOCK /* IRIX6 */
+#include <sys/hashing.h>
+# endif
+#endif
+#if defined(__sgi) && !defined(IFF_DRVRLOCK) /* IRIX < 6 */
+extern struct ifqueue   ipintrq;                /* ip packet input queue */
+#else
 #include <netinet/in_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
 #include <netinet/udp.h>
@@ -74,9 +83,11 @@ static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.14 1997/09/13 07:13:04 darrenr Exp 
 #endif
 
 
-#if SOLARIS
+#if (SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern kmutex_t ipf_auth;
+# if SOLARIS
 extern kcondvar_t ipfauthwait;
+# endif
 #endif
 
 int	fr_authsize = FR_NUMAUTH;
@@ -224,7 +235,7 @@ ip_t *ip;
 
 int fr_auth_ioctl(data, cmd, fr, frptr)
 caddr_t data;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 u_long cmd;
 #else
 int cmd;
@@ -323,10 +334,8 @@ fr_authioctlloop:
 		fr_auth[i].fra_pass = au->fra_pass;
 		fr_authpkts[i] = NULL;
 #ifdef	_KERNEL
-		SPLNET(s);
-# if SOLARIS
 		MUTEX_EXIT(&ipf_auth);
-# endif
+		SPL_NET(s);
 		if (m && au->fra_info.fin_out) {
 # if SOLARIS
 			error = fr_qout(fr_auth[i].fra_q, m);
@@ -385,7 +394,7 @@ fr_authioctlloop:
 			}
 		}
 # endif
-		SPLX(s);
+		SPL_X(s);
 #endif /* _KERNEL */
 		break;
 	default :
@@ -438,8 +447,8 @@ void fr_authexpire()
 	int s;
 #endif
 
+	SPL_NET(s);
 	MUTEX_ENTER(&ipf_auth);
-	SPLNET(s);
 	for (i = 0, fra = fr_auth; i < FR_NUMAUTH; i++, fra++) {
 		if ((!--fra->fra_age) && (m = fr_authpkts[i])) {
 			FREE_MB_T(m);
@@ -458,8 +467,7 @@ void fr_authexpire()
 		} else
 			faep = &fae->fae_next;
 	}
-
-	SPLX(s);
 	MUTEX_EXIT(&ipf_auth);
+	SPL_X(s);
 }
 #endif
