@@ -863,6 +863,7 @@ int main(argc, argv)
 	} else				/* file names in commandline */
 	for (; optind < argc; optind++) {
 	    char *name = argv[optind];	/* next file name            */
+	    ilevel = 0;
 	    infile[0] = fopen(name, "r");
 	    if (!infile[0]) cantread(name);
 #ifndef	NO__FILE
