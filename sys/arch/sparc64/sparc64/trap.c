@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 2000/07/20 23:29:50 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.52 2000/08/07 18:46:30 tv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -512,10 +512,13 @@ trap(type, tstate, pc, tf)
 
 #ifdef DEBUG
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_FOLLOW|TDB_TRAP)) {
+		char sbuf[sizeof(PSTATE_BITS) + 8];
+
 		printf("trap: type 0x%x: pc=%lx &tf=%lx\n",
-		       type, pc, tf); 
-		printf(" npc=%lx pstate=%b %s\n",
-		       (long)tf->tf_npc, pstate, PSTATE_BITS, 
+		       type, pc, tf);
+		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		printf(" npc=%lx pstate=%s %s\n",
+		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
 		       ((type == T_AST) ? "ast" : 
 			((type == T_RWRET) ? "rwret" : T)));
@@ -530,12 +533,15 @@ trap(type, tstate, pc, tf)
 	uvmexp.traps++;
 #ifdef DEBUG
 	if ((trapdebug&(TDB_FOLLOW|TDB_TRAP)) || ((trapdebug & TDB_TL) && tl())) {
+		char sbuf[sizeof(PSTATE_BITS) + 8];
+
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
 		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%lx",
-		       type, (int)tl(), pc, tf); 
-		printf(" npc=%lx pstate=%b %s\n",
-		       (long)tf->tf_npc, pstate, PSTATE_BITS, 
+		       type, (int)tl(), pc, tf);
+		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		printf(" npc=%lx pstate=%s %s\n",
+		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
 		       ((type == T_AST) ? "ast" : 
 			((type == T_RWRET) ? "rwret" : T)));
@@ -619,12 +625,19 @@ trap(type, tstate, pc, tf)
 			extern int trap_trace_dis;
 dopanic:
 			trap_trace_dis = 1;
-			printf("trap type 0x%x: pc=%lx",
-			       type, pc); 
-			printf(" npc=%lx pstate=%b\n",
-			       (long)tf->tf_npc, pstate, PSTATE_BITS);
-			DEBUGGER(type, tf);
-			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+
+			{
+				char sbuf[sizeof(PSTATE_BITS) + 8];
+
+				printf("trap type 0x%x: pc=%lx",
+				       type, pc); 
+				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
+						 sizeof(sbuf));
+				printf(" npc=%lx pstate=%s\n",
+				       (long)tf->tf_npc, sbuf);
+				DEBUGGER(type, tf);
+				panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+			}
 			/* NOTREACHED */
 		}
 #if defined(COMPAT_SVR4) || defined(SUN4M)
