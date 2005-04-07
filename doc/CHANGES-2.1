@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.54 2005/04/07 15:31:40 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.55 2005/04/07 16:14:12 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1203,3 +1203,18 @@ sys/netinet6/nd6.c				1.92
 	Make sure that prefixes get purged.  Fixes PR#21189,
 	PR#25968, and PR#37873.
 	[tron, ticket #1394]
+
+sys/dev/pci/pdcsata.c				1.2 via patch
+
+	Add RAID support.
+	[bouyer, ticket #1037]
+
+sys/dev/pci/auich.c				1.74
+sys/dev/pci/pcidevs				1.662
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/viaide.c				1.19 via patch
+
+	Add suport for nForce3 250 Audio, IDE and SATA.
+	[hira, ticket #1103]
+
