@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2005/04/07 12:01:08 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2005/04/07 12:01:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1784,7 +1784,7 @@ pmap_testout()
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	pmap_kenter_pa(va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL);
 	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif
