@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.40 2005/04/07 17:02:00 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.41 2005/04/07 17:03:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7117,3 +7117,8 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for Intel PRO/1000 GT.
 	[tron, ticket #16]
+
+share/man/man4/wm.4				1.12
+
+	Update list of supported Intel GbE chips.
+	[tron, ticket #17]
