@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.2 2005/04/07 16:57:14 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.3 2005/04/07 17:01:38 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.2 2005/04/07 16:51:56 jmc Exp
+ *	NetBSD: pcidevs,v 1.701.2.3 2005/04/07 17:01:05 jmc Exp
  */
 
 /*
@@ -5632,6 +5632,10 @@ const struct pci_product pci_products[] = {
 	    "i82546GB Gigabit Ethernet (SERDES)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI,
+	    "i82541PI Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -10124,4 +10128,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1952;
+const int pci_nproducts = 1953;
