@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.5 2005/04/06 17:22:39 he Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.6 2005/04/07 09:15:55 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -21,13 +21,6 @@ sys/netinet/tcp_input.c				patch
 	time, ignore it and fall back to old-style RTT calculation. This
 	prevents ending up with a negative RTT and panicking later.
 	[christos, ticket #1401]
-
-distrib/sets/lists/man/mi			1.738-1.739
-share/man/man4/Makefile				1.342 via patch
-share/man/man4/ahd.4				1.1-1.2
-
-	Add manual page for the ahd driver.
-	[he, ticket #1057, #1058, #1059]
 
 sys/arch/sgimips/hpc/if_sq.c			1.21
 
