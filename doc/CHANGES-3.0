@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.37 2005/04/06 22:40:43 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.38 2005/04/07 11:42:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7052,4 +7052,53 @@ xsrc/xfree/xc/programs/xwud/xwud.man		patch
 
 	Update XFree86 to version 4.5.0.
 	[jmc, ticket #114]
+
+dist/ntp/ntpd/ntpd.c				1.7
+
+	Double the stack space limit. We are running out with ntp.pool.org.
+	[jwise, ticket #113]
+
+distrib/notes/i386/hardware			1.119
+share/man/man4/aac.4				1.8
+sys/dev/pci/aac_pci.c				1.14
+sys/dev/pci/pcidevs				1.705
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Added support for Dell CERC SATA RAID 1.5/6ch.
+	[martti, ticket #115, #116]
+
+bin/sh/miscbltin.c				1.35
+
+	Fix the way the 'read' builtin processes IFS. In particular:
+	- IFS whitespace is now processes correctly,
+	- Trailing non-whitespace IFS characters are added to the last variable
+	  iff a subsequent variable would have been assigned a non-null string.
+	Now passes the 'read' tests in
+	http://www.research.att.com/~gsf/public/ifs.sh
+	[dsl, ticket #117]
+
+bin/sh/expand.c					1.69
+
+	Don't merge ifs regions with different quoting requirements
+	[dsl, ticket #118]
+
+bin/sh/expand.c					1.70
+
+	Check quoting before merging ifs regions.
+	sh -c 'set -- a; x="b c"; set -- "$@"$x'
+	now correctly gives $1=ab, $2=c
+	[dsl, ticket #119]
+
+bin/sh/arith_lex.l				1.13
+
+	A rather better fix for treating $((x)) as equivalent to $(($x))
+	provided that $x has a numeric value - which is what posix/sus needs.
+	[dsl, ticket #120]
+
+etc/etc.i386/MAKEDEV.conf			1.6
+
+	Add xencons to the default list of devices. Fix port-xen/29887 by
+	Juan RP.
+	[bouyer, ticket #121]
 
