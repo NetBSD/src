@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.8 2004/09/12 08:58:52 yamt Exp $	*/
+/*	$NetBSD: lint.h,v 1.9 2005/04/07 16:28:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -123,5 +123,7 @@ typedef	struct	ob {
 	size_t	o_len;		/* length of buffer */
 	char	*o_nxt;		/* next free byte in buffer */
 } ob_t;
+
+typedef struct type type_t;
 
 #include "externs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.20 2002/11/02 20:09:27 perry Exp $	*/
+/*	$NetBSD: externs1.h,v 1.21 2005/04/07 16:28:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -197,8 +197,6 @@ extern	int	typeok(op_t, int, tnode_t *, tnode_t *);
 extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
-extern	const	char *tyname(char *, size_t, type_t *);
-extern	const	char *basictyname(tspec_t);
 extern	tnode_t	*bldszof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);

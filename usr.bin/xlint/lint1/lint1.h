@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.16 2002/10/21 22:44:08 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.17 2005/04/07 16:28:40 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -133,7 +133,7 @@ typedef	struct {
  * Types are represented by concatenation of structures of type type_t
  * via t_subt.
  */
-typedef	struct type {
+struct type {
 	tspec_t	t_tspec;	/* type specifier */
 	u_int	t_aincompl : 1;	/* incomplete array type */
 	u_int	t_const : 1;	/* const modifier */
@@ -155,7 +155,7 @@ typedef	struct type {
 	} t_b;
 	struct	type *t_subt;	/* element type (arrays), return value
 				   (functions), or type pointer points to */
-} type_t;
+};
 
 #define	t_dim	t_u._t_dim
 #define	t_str	t_u._t_str

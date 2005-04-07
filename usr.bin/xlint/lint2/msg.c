@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.8 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: msg.c,v 1.9 2005/04/07 16:28:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.8 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: msg.c,v 1.9 2005/04/07 16:28:40 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ static	const	char *msgs[] = {
 	"%s multiply defined  \t%s  ::  %s",			      /* 3 */
 	"%s value used inconsistently  \t%s  ::  %s",		      /* 4 */
 	"%s value declared inconsistently  \t%s  ::  %s",	      /* 5 */
-	"%s, arg %d used inconsistently  \t%s  ::  %s",		      /* 6 */
+	"%s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s]",	      /* 6 */
 	"%s: variable # of args  \t%s  ::  %s",			      /* 7 */
 	"%s returns value which is always ignored",		      /* 8 */
 	"%s returns value which is sometimes ignored",		      /* 9 */

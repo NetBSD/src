@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.40 2005/01/02 17:59:47 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.41 2005/04/07 16:28:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.40 2005/01/02 17:59:47 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.41 2005/04/07 16:28:40 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2255,92 +2255,6 @@ conmemb(type_t *tp)
 		}
 	}
 	return (0);
-}
-
-const char *
-basictyname(tspec_t t)
-{
-	switch (t) {
-	case BOOL:	return "_Bool";
-	case CHAR:	return "char";
-	case UCHAR:	return "unsigned char";
-	case SCHAR:	return "signed char";
-	case SHORT:	return "short";
-	case USHORT:	return "unsigned short";
-	case INT:	return "int";
-	case UINT:	return "unsigned int";
-	case LONG:	return "long";
-	case ULONG:	return "unsigned long";
-	case QUAD:	return "long long";
-	case UQUAD:	return "unsigned long long";
-	case FLOAT:	return "float";
-	case DOUBLE:	return "double";
-	case LDOUBLE:	return "long double";
-	case PTR:	return "pointer";
-	case ENUM:	return "enum";
-	case STRUCT:	return "struct";
-	case UNION:	return "union";
-	case FUNC:	return "function";
-	case ARRAY:	return "array";
-	default:
-		LERROR("basictyname()");
-		return NULL;
-	}
-}
-
-const char *
-tyname(char *buf, size_t bufsiz, type_t *tp)
-{
-	tspec_t	t;
-	const	char *s;
-	char lbuf[64];
-
-	if ((t = tp->t_tspec) == INT && tp->t_isenum)
-		t = ENUM;
-
-	s = basictyname(t);
-
-
-	switch (t) {
-	case BOOL:
-	case CHAR:
-	case UCHAR:
-	case SCHAR:
-	case SHORT:
-	case USHORT:
-	case INT:
-	case UINT:
-	case LONG:
-	case ULONG:
-	case QUAD:
-	case UQUAD:
-	case FLOAT:
-	case DOUBLE:
-	case LDOUBLE:
-	case FUNC:
-		(void)snprintf(buf, bufsiz, "%s", s);
-		break;
-	case PTR:
-		(void)snprintf(buf, bufsiz, "%s to %s", s,
-		    tyname(lbuf, sizeof(lbuf), tp->t_subt));
-		break;
-	case ENUM:
-		(void)snprintf(buf, bufsiz, "%s %s", s,
-		    tp->t_enum->etag->s_name);
-		break;
-	case STRUCT:
-	case UNION:
-		(void)snprintf(buf, bufsiz, "%s %s", s,
-		    tp->t_str->stag->s_name);
-		break;
-	case ARRAY:
-		(void)snprintf(buf, bufsiz, "%s of %s[%d]", s,
-		    tyname(lbuf, sizeof(lbuf), tp->t_subt), tp->t_dim);
-		break;
-	default:
-		LERROR("tyname()");
-	}
-	return (buf);
 }
 
 /*
