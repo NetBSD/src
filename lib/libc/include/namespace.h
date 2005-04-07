@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.99 2005/04/02 04:53:53 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.100 2005/04/07 16:26:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -467,7 +467,7 @@
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
-#define statvfs			_statvfs
+#define statvfs(a, b)		_statvfs(a, b)
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
 #define strncasecmp		_strncasecmp
