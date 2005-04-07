@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.42 2005/04/07 17:04:21 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.43 2005/04/07 17:06:21 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7127,3 +7127,10 @@ share/man/man4/wm.4				1.13
 
 	Bump date for more supported cards.
 	[wiz, ticket #18]
+
+sys/dev/pci/pcidevs				1.704
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add ids for ATI Radeon 9700 Pro and 9800 Pro.
+	[tron, ticket #59]
