@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.58.2.1 2004/09/22 20:58:09 jmc Exp $	*/
+/*	$NetBSD: auich.c,v 1.58.2.1.2.1 2005/04/07 16:07:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.58.2.1 2004/09/22 20:58:09 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.58.2.1.2.1 2005/04/07 16:07:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,6 +352,8 @@ static const struct auich_devtype {
 	    "nForce2 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
 	    "nForce3 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC,
+	    "nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
 	    "AMD768 AC-97 Audio",		"AMD768" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
