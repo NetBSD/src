@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.55 2005/04/07 16:14:12 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.56 2005/04/07 20:33:21 jwise Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1218,3 +1218,7 @@ sys/dev/pci/viaide.c				1.19 via patch
 	Add suport for nForce3 250 Audio, IDE and SATA.
 	[hira, ticket #1103]
 
+sys/arch/i386/stand/boot/boot2.c		1.5
+
+	include sys/types.h to make this compile again.
+	[tron, ticket #1408]
