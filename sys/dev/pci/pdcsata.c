@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.3.4.2 2005/04/02 21:24:31 he Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.3.4.3 2005/04/07 16:01:57 tron Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -189,6 +189,9 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	}
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_RAID;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 	sc->sc_wdcdev.irqack = pdc203xx_irqack;
 	sc->sc_wdcdev.PIO_cap = 4;
