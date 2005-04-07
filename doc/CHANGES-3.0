@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.38 2005/04/07 11:42:28 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.39 2005/04/07 16:58:05 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7102,3 +7102,10 @@ etc/etc.i386/MAKEDEV.conf			1.6
 	Juan RP.
 	[bouyer, ticket #121]
 
+sys/dev/pci/pcidevs				1.702
+sys/dev/pci/aac_pci.c				1.13
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add missing PCI id for Adaptec ASR-2410SA.
+	[tron, ticket #15]
