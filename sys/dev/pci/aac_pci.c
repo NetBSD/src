@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.12.2.1 2005/04/07 11:30:06 tron Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.12.2.2 2005/04/07 16:51:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.12.2.1 2005/04/07 11:30:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.12.2.2 2005/04/07 16:51:59 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
 		PCI_VENDOR_ADP2,
-		0x0290,
+		PCI_PRODUCT_ADP2_ASR2410SA,
 		AAC_HWIF_I960RX,
 		0,
 		"Adaptec ASR-2410SA"
