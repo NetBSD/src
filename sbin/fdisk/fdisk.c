@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $ */
+/*	$NetBSD: fdisk.c,v 1.89 2005/04/07 20:23:13 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.89 2005/04/07 20:23:13 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2341,6 +2341,7 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 {
 	int acc = 0;
 	char *cp;
+	char ch;
 
 	for (;;) {
 		if (flags & DEC_SEC) {
@@ -2366,15 +2367,20 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 		if (isdigit((unsigned char)*cp) || *cp == '-') {
 			acc = strtol(lbuf, &cp, 10);
 			if (flags & DEC_SEC) {
-				if (*cp == 'm' || *cp == 'M') {
+				ch = *cp;
+				if (ch == 'g' || ch == 'G') {
+					acc *= 1024;
+					ch = 'm';
+				}
+				if (ch == 'm' || ch == 'M') {
 					acc *= SEC_IN_1M;
 					/* round to whole number of cylinders */
 					acc += dos_cylindersectors / 2;
 					acc /= dos_cylindersectors;
-					cp = "c";
+					ch = 'c';
 				}
-				if (*cp == 'c' || *cp == 'C') {
-					cp = "";
+				if (ch == 'c' || ch == 'C') {
+					cp++;
 					acc *= dos_cylindersectors;
 					/* adjustments for cylinder boundary */
 					if (acc == 0 && flags & DEC_RND_0)

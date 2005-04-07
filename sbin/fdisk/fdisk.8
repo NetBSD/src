@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.50 2004/07/13 19:24:03 uwe Exp $
+.\"	$NetBSD: fdisk.8,v 1.51 2005/04/07 20:23:13 dsl Exp $
 .\"
-.Dd July 13, 2004
+.Dd April 7, 2005
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -266,8 +266,9 @@ The
 .Em start
 and
 .Em size
-can be specified in blocks (nn), cylinders (nnc) or megabytes (nnm), values
-in megabytes will be rounded to the nearest cylinder boundary.
+can be specified in blocks (nn), cylinders (nnc), megabytes (nnm),
+or gigabytes (nng), values in megabytes and gigabytes
+will be rounded to the nearest cylinder boundary.
 The
 .Em size
 may be specified as
