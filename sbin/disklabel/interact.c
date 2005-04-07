@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.23 2003/12/29 21:21:25 jdc Exp $	*/
+/*	$NetBSD: interact.c,v 1.24 2005/04/07 21:27:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.23 2003/12/29 21:21:25 jdc Exp $");
+__RCSID("$NetBSD: interact.c,v 1.24 2005/04/07 21:27:44 christos Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -419,9 +419,11 @@ cmd_round(struct disklabel *lp, char *s, int fd)
 
 	switch (line[0]) {
 	case 'c':
+	case 'C':
 		rounding = 1;
 		return;
 	case 's':
+	case 'S':
 		rounding = 0;
 		return;
 	default:
@@ -710,11 +712,18 @@ getnum(struct disklabel *lp, char *buf, int max)
 	switch (*ep) {
 	case '\0':
 	case 's':
+	case 'S':
 		rv = (int) d;
 		break;
 
 	case 'c':
+	case 'C':
 		rv = (int) (d * lp->d_secpercyl);
+		break;
+
+	case 'k':
+	case 'K':
+		rv =  (int) (d * 1024 / lp->d_secsize);
 		break;
 
 	case 'm':
@@ -722,8 +731,20 @@ getnum(struct disklabel *lp, char *buf, int max)
 		rv =  (int) (d * 1024 * 1024 / lp->d_secsize);
 		break;
 
+	case 'g':
+	case 'G':
+		rv =  (int) (d * 1024 * 1024 * 1024 / lp->d_secsize);
+		break;
+
+	case 't':
+	case 'T':
+		rv =  (int) (d * 1024 * 1024 * 1024 * 1024 / lp->d_secsize);
+		break;
+
 	default:
 		printf("Unit error %c\n", *ep);
+		printf("Valid units: (S)ectors, (C)ylinders, (K)ilo, (M)ega, "
+		    "(G)iga, (T)era");
 		return -1;
 	}
 
