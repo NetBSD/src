@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.39 2005/04/07 16:58:05 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.40 2005/04/07 17:02:00 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7109,3 +7109,11 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add missing PCI id for Adaptec ASR-2410SA.
 	[tron, ticket #15]
+
+sys/dev/pci/pcidevs				1.703
+sys/dev/pci/if_wm.c				1.101
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for Intel PRO/1000 GT.
+	[tron, ticket #16]
