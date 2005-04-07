@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.91 2005/04/04 19:41:50 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.92 2005/04/07 23:21:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.91 2005/04/04 19:41:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.92 2005/04/07 23:21:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -803,7 +803,10 @@ auich_reset_codec(void *v)
 	sc = v;
 	control = bus_space_read_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset);
-	control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
+	if (sc->sc_modem_offset == 0)
+		control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
+	else
+		control &= ~ICH_ACLSO;
 	control |= (control & ICH_CRESET) ? ICH_WRESET : ICH_CRESET;
 	bus_space_write_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset, control);
@@ -924,11 +927,15 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 			if (sc->sc_modem_formats[index].frequency_type != 1
 			    && auich_set_rate(sc, mode, p->sample_rate))
 				return EINVAL;
+			auich_write_codec(sc, AC97_REG_LINE1_RATE,
+					  p->sample_rate);
+			auich_write_codec(sc, AC97_REG_LINE1_LEVEL, 0);
 		}
 		if (mode == AUMODE_PLAY) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh,
 			    ICH_GCTRL + sc->sc_modem_offset);
-			control &= ~ICH_PCM246_MASK;
+			if (sc->sc_modem_offset == 0)
+				control &= ~ICH_PCM246_MASK;
 			if (p->channels == 4) {
 				control |= ICH_PCM4;
 			} else if (p->channels == 6) {
@@ -1120,7 +1127,7 @@ auich_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!AC97_IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if) || sc->sc_modem_offset != 0)
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
