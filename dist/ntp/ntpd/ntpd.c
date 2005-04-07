@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.6 2004/06/29 04:16:37 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.6.2.1 2005/04/07 11:22:04 tron Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -680,7 +680,7 @@ service_main(
 	    struct rlimit rl;
 
 	    if (getrlimit(RLIMIT_STACK, &rl) != -1
-		&& (rl.rlim_cur = 5 * 4096 * sizeof(void *)) < rl.rlim_max)
+		&& (rl.rlim_cur = 10 * 4096 * sizeof(void *)) < rl.rlim_max)
 	    {
 		    if (setrlimit(RLIMIT_STACK, &rl) == -1)
 		    {
