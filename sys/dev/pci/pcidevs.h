@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702 2005/03/16 07:01:07 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.1 2005/04/07 11:31:09 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.701.2.1 2005/04/07 11:30:17 tron Exp
  */
 
 /*
@@ -1391,6 +1391,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB	0x0106		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_CERC_1_5	0x0291		/* CERC SATA RAID 1.5/6ch */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
