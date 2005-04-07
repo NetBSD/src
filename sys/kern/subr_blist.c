@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.5 2005/04/06 13:09:10 yamt Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.6 2005/04/07 12:12:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.5 2005/04/06 13:09:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.6 2005/04/07 12:12:51 yamt Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -95,11 +95,8 @@ __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
-#include <sys/kernel.h>
 #include <sys/blist.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #else
 
