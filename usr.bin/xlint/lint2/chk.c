@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.17 2004/06/20 22:20:17 jmc Exp $ */
+/* $NetBSD: chk.c,v 1.18 2005/04/07 16:28:40 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.17 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: chk.c,v 1.18 2005/04/07 16:28:40 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -447,6 +447,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	tspec_t	t1, t2;
 	arginf_t *ai, *ai1;
 	char	*pos1;
+	char	tyname1[64], tyname2[64];
 
 	/*
 	 * If a function definition is available (def != NULL), we compair the
@@ -582,8 +583,11 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	}
 
 	pos1 = xstrdup(mkpos(pos1p));
-	/* %s, arg %d used inconsistently\t%s  ::  %s */
-	msg(6, hte->h_name, n, pos1, mkpos(&call->f_pos));
+	/* %s, arg %d used inconsistently\t%s[%s]  ::  %s[%s] */
+	msg(6, hte->h_name, n, pos1, 
+	    tyname(tyname1, sizeof(tyname1), arg1),
+	    mkpos(&call->f_pos),
+	    tyname(tyname2, sizeof(tyname2), arg2));
 	free(pos1);
 }
 
