@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.6 2005/04/07 09:15:55 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.7 2005/04/07 15:34:23 he Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -34,3 +34,9 @@ sys/arch/sgimips/hpc/sqvar.h			1.6-1.7
 
 	Fix the HPC1 transmit logic, which was previously very broken.
 	[rumble, ticket #1054]
+
+sys/netinet6/nd6.c                              1.92
+
+	Make sure that prefixes get purged.  Fixes PR#21189,
+	PR#25968, and PR#37873.
+	[tron, ticket #1394]
