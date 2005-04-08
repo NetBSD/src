@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.142 2005/04/06 11:01:37 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.143 2005/04/08 12:55:13 he Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1684,3 +1684,8 @@ lib/libc/net/rcmd.c				1.55 via patch
 	and fixes [bin/14880] from Darren Reed <darrenr@>.
 	[ginsbach, ticket #5732]
 
+usr.bin/telnet/telnet.c				1.30 via patch
+
+	Plug buffer overflows, ref. CAN 2005-0468 and 2005-0469.
+	Patch from MIT/Kerberos (MITKRB5-SA-2005-001-telnet.txt).
+	[tron, ticket #5742]
