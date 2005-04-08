@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.28 2004/03/20 23:26:05 heas Exp $	*/
+/*	$NetBSD: telnet.c,v 1.28.4.1 2005/04/08 10:38:25 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.28 2004/03/20 23:26:05 heas Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.28.4.1 2005/04/08 10:38:25 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1440,6 +1440,8 @@ slc_start_reply(void)
 void
 slc_add_reply(unsigned int func, unsigned int flags, cc_t value)
 {
+	if ((slc_replyp - slc_reply) + 6 > sizeof(slc_reply))
+		return;
 	if ((*slc_replyp++ = func) == IAC)
 		*slc_replyp++ = IAC;
 	if ((*slc_replyp++ = flags) == IAC)
@@ -1453,11 +1455,12 @@ slc_end_reply(void)
 {
     int len;
 
+    len = slc_replyp - slc_reply;
+    if (len <= 4 || (len + 2 > sizeof(slc_reply)))
+	return;
     *slc_replyp++ = IAC;
     *slc_replyp++ = SE;
-    len = slc_replyp - slc_reply;
-    if (len <= 6)
-	return;
+    len += 2;
     if (NETROOM() > len) {
 	ring_supply_data(&netoring, slc_reply, slc_replyp - slc_reply);
 	printsub('>', &slc_reply[2], slc_replyp - slc_reply - 2);
@@ -1612,6 +1615,7 @@ void
 env_opt_add(unsigned char *ep)
 {
 	unsigned char *vp, c;
+	unsigned int len, olen, elen;
 
 	if (opt_reply == NULL)		/*XXX*/
 		return;			/*XXX*/
@@ -1629,13 +1633,13 @@ env_opt_add(unsigned char *ep)
 		return;
 	}
 	vp = env_getvalue(ep);
-	if (opt_replyp + (vp ? strlen((char *)vp) : 0) +
-				strlen((char *)ep) + 6 > opt_replyend)
+	elen = 2 * (vp ? strlen((char *)vp) : 0) +
+		2 * strlen((char *)ep) + 6;
+	if ((opt_replyend - opt_replyp) < elen)
 	{
-		int len;
 		unsigned char *p;
-		opt_replyend += OPT_REPLY_SIZE;
-		len = opt_replyend - opt_reply;
+		len = opt_replyend - opt_reply + elen;
+		olen = opt_replyp - opt_reply;
 		p = (unsigned char *)realloc(opt_reply, len);
 		if (p == NULL)
 			free(opt_reply);
@@ -1645,7 +1649,7 @@ env_opt_add(unsigned char *ep)
 			opt_reply = opt_replyp = opt_replyend = NULL;
 			return;
 		}
-		opt_replyp = opt_reply + len - (opt_replyend - opt_replyp);
+		opt_replyp = opt_reply + olen;
 		opt_replyend = opt_reply + len;
 	}
 	if (opt_welldefined(ep))
