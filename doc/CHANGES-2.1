@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.58 2005/04/08 10:39:12 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.59 2005/04/08 22:00:10 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1228,3 +1228,46 @@ usr.bin/telnet/telnet.c				1.30
 	Plug buffer overflows, ref. CAN 2005-0468 and 2005-0469.
 	Patch from MIT/Kerberos (MITKRB5-SA-2005-001-telnet.txt).
 	[tron, ticket #1410]
+
+usr.bin/gzip/gzip.c				1.69
+
+	Fixed for PR#28581. If stdin is the input stream, fstat it and check
+	if it's file. If so, use it's mtime for the mtime in the header.
+	Otherwise use time(2)'s result instead. Lines up with GNU gzip and
+	RFC 1952 now as well.
+	[jmc, ticket #1031]
+
+games/phantasia/fight.c				1.9-1.10
+games/phantasia/gamesupport.c			1.7-1.8
+games/phantasia/include.h			1.5
+games/phantasia/interplayer.c			1.7-1.8
+games/phantasia/io.c				1.7-1.8
+games/phantasia/main.c				1.13-1.15
+games/phantasia/misc.c				1.11-1.12
+games/phantasia/phantstruct.h			1.4
+games/phantasia/setup.c				1.13-1.14
+
+	Rework to use curses.h only on the target, not on the host.
+	Undef bool before including <curses.h>, since it tries to typedef
+	bool. Otherwise we get (at least on gcc 2.95.3) an empty declaration
+	warning from "typedef char char;" due to the #define of bool in
+	phantstruct.h.
+	Redo how void gets init'd.
+	setup now just creates an empty file. When main starts and loads it in,
+	it stats and if zero size init's a new location and saves it back out.
+	Now games.tgz can be shared among MACHINE_ARCH's
+	[jmc, ticket #1032]
+
+lib/libpthread/pthread_alarms.c			1.11
+
+	Avoid passing zero-valued timespecs to timer_settime() when we want
+	to set a timer, as that will clear the timer instead. Pass in a safely
+	in-the-past value instead. Addresses PR lib/28700.
+	[nathanw, ticket #1064]
+
+lib/libpthread/pthread_cond.c			1.17
+
+	Correctly return ETIMEDOUT when the absolute time is in the past, in
+	the nonthreaded case. Fixes, and fix from, PR lib/25961.
+	[nathanw, ticket #1065]
+
