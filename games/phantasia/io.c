@@ -1,10 +1,11 @@
-/*	$NetBSD: io.c,v 1.6.4.1 2005/04/08 21:43:47 tron Exp $	*/
+/*	$NetBSD: io.c,v 1.6.4.2 2005/04/08 21:46:52 tron Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
  */
 
 #include "include.h"
+#undef bool
 #include <curses.h>
 
 void
