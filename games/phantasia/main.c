@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.4.1 2005/04/08 21:43:41 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.12.4.2 2005/04/08 21:46:41 tron Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -56,6 +56,7 @@
  */
 
 #include "include.h"
+#undef bool
 #include <curses.h>
 
 int	main(int, char **);
