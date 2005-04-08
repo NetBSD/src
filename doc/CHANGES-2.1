@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.57 2005/04/07 20:34:38 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.58 2005/04/08 10:39:12 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1223,3 +1223,8 @@ sys/arch/i386/stand/boot/boot2.c		1.5
 	Include sys/types.h to make this compile again.
 	[tron, ticket #1408]
 
+usr.bin/telnet/telnet.c				1.30
+
+	Plug buffer overflows, ref. CAN 2005-0468 and 2005-0469.
+	Patch from MIT/Kerberos (MITKRB5-SA-2005-001-telnet.txt).
+	[tron, ticket #1410]
