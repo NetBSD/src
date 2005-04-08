@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.7.6.1 2005/04/04 18:03:10 tron Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.7.6.2 2005/04/08 13:40:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1989, 1993, 1994, 1995
@@ -44,6 +44,8 @@
 #define getpwnam		_getpwnam
 #define setpwent		_setpwent
 #define setpassent		_setpassent
+#define getpwuid_r		_getpwuid_r
+#define getpwnam_r		_getpwnam_r
 
 __weak_alias(endpwent,_endpwent)
 __weak_alias(getpwent,_getpwent)
@@ -51,6 +53,8 @@ __weak_alias(getpwuid,_getpwuid)
 __weak_alias(getpwnam,_getpwnam)
 __weak_alias(setpwent,_setpwent)
 __weak_alias(setpassent,_setpassent)
+__weak_alias(getpwuid_r,_getpwuid_r)
+__weak_alias(getpwnam_r,_getpwnam_r)
 #endif
 
 #include <sys/param.h>
