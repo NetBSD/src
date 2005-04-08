@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.27 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: neo.c,v 1.28 2005/04/08 14:30:57 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.27 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.28 2005/04/08 14:30:57 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ neo_intr(void *p)
 
 		sc->rwmark += sc->rblksize;
 		sc->rwmark %= sc->rbufsize;
-
+		nm_wr_4(sc, NM_RBUFFER_WMARK, sc->rbuf + sc->rwmark);
 		nm_ackint(sc, sc->recint);
 		if (sc->rintr)
 			(*sc->rintr)(sc->rarg);
