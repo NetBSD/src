@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.170 2005/04/06 04:30:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.171 2005/04/08 00:08:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.170 2005/04/06 04:30:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.171 2005/04/08 00:08:42 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -126,11 +126,6 @@ static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
-
-/* From uvm/uvm_pager.c */
-extern struct vm_map *pager_map;
-extern struct simplelock pager_map_wanted_lock;
-extern boolean_t pager_map_wanted;
 
 pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
@@ -2029,15 +2024,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	 * If we would, write what we have and try again.  If we don't
 	 * have anything to write, we'll have to sleep.
 	 */
-	while ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
+	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
 				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
 		int version;
 
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
-                simple_lock(&pager_map_wanted_lock);
-                pager_map_wanted = TRUE;
-                simple_unlock(&pager_map_wanted_lock);
+#if 0
+		      " with nfinfo=%d at offset 0x%x\n",
+		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
+		      (unsigned)fs->lfs_offset));
+#endif
 		lfs_updatemeta(sp);
 
 		version = sp->fip->fi_version;
@@ -2049,13 +2046,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 		sp->sum_bytes_left -= FINFOSIZE;
 
-                simple_lock(&pager_map_wanted_lock);
-		if (pager_map_wanted == TRUE) {
-                	UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
-                	UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock,
-					    FALSE, "pager_map", 0);
-		} else
-			simple_unlock(&pager_map_wanted_lock);
+		/*
+		 * Having given up all of the pager_map we were holding,
+		 * we can now wait for aiodoned to reclaim it for us
+		 * without fear of deadlock.
+		 */
+		kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
+				     UVMPAGER_MAPIN_WAITOK);
 	}
 
 	s = splbio();
