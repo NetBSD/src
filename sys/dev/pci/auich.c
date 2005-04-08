@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.92 2005/04/07 23:21:10 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.93 2005/04/08 12:50:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.92 2005/04/07 23:21:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.93 2005/04/08 12:50:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,6 +360,7 @@ static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
 #define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
 #define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
 
+#define	PCIID_ICH3MODEM		PCI_ID_CODE0(INTEL, 82801CA_MOD)
 #define PCIID_ICH4MODEM		PCI_ID_CODE0(INTEL, 82801DB_MOD)
 
 struct auich_devtype {
@@ -391,6 +392,7 @@ static const struct auich_devtype auich_audio_devices[] = {
 
 static const struct auich_devtype auich_modem_devices[] = {
 #ifdef AUICH_ATTACH_MODEM
+	{ PCIID_ICH3MODEM, "i82801CA (ICH2) AC-97 Modem", "ICH3MODEM" },
 	{ PCIID_ICH4MODEM, "i82801DB (ICH4) AC-97 Modem", "ICH4MODEM" },
 #endif
 	{ 0,		NULL,				NULL },
