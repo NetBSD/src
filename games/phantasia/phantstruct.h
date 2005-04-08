@@ -1,4 +1,6 @@
-/*	$NetBSD: phantstruct.h,v 1.3 1999/09/08 21:17:55 jsm Exp $	*/
+/*	$NetBSD: phantstruct.h,v 1.3.16.1 2005/04/08 21:43:24 tron Exp $	*/
+
+#define bool char
 
 /*
  * phantstruct.h - structure definitions for Phantasia
