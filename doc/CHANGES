@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.459 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.460 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -21,3 +21,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ipf(8): Updated to version 4.1.8. [martti 20050403]
 	identd(8): Add support for forwarding ident queries and receiving of
 		proxied ident queries. [peter 20050404]
+	ac97: Add support for AC'97 modems. [jmcneill 20050407]
+	auich(4): Add support for Intel ICH AC'97 modems as audio devices.
+		Currently disabled by default. [jmcneill 20050407]
