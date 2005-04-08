@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.45 2005/04/08 00:23:57 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.46 2005/04/08 13:41:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7144,4 +7144,18 @@ sys/uvm/uvm_map.c				1.188
 
 	Use voff_t instead of vaddr_t to hold file offset passed to pgo_put.
 	[dbj, ticket #123]
+
+lib/libc/gen/getmntinfo.c			1.14
+lib/libc/sys/statfs.c				1.3
+
+	PR/29919: Evaldo Gardenali: getmntinfo() calling deprecated function
+	getfsstat(). Fixed by defining an _getfsstat() internal function and
+	calling that instead.
+	[bouyer, ticket #125]
+
+distrib/utils/libhack/getpwent.c		1.9
+
+	Provide weak aliases for the newly added getpwuid_r() and getpwnam_r()
+	functions in order to fix link-time conflicts with the C library.
+	[bouyer, ticket #126]
 
