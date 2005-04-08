@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.11 2005/04/04 18:52:30 jmcneill Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.12 2005/04/08 15:27:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -29,6 +29,7 @@
 
 #define	AC97_REG_RESET			0x00
 #define		AC97_CAPS_MICIN			0x0001
+#define		AC97_CAPS_MODEMLINECODEC	0x0002 /* 1.x only! */
 #define		AC97_CAPS_TONECTRL		0x0004
 #define		AC97_CAPS_SIMSTEREO		0x0008
 #define		AC97_CAPS_HEADPHONES		0x0010
