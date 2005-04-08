@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.44 2005/04/07 17:07:08 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.45 2005/04/08 00:23:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7139,3 +7139,9 @@ sys/netinet6/nd6.c				1.92
 
 	Make sure that prefixes get purged. PR#21189, PR#25968, PR#27873
 	[tron, ticket #105]
+
+sys/uvm/uvm_map.c				1.188
+
+	Use voff_t instead of vaddr_t to hold file offset passed to pgo_put.
+	[dbj, ticket #123]
+
