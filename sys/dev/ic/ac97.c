@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.69 2005/04/07 23:24:05 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.70 2005/04/08 12:50:00 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.69 2005/04/07 23:24:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.70 2005/04/08 12:50:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,6 +726,8 @@ static const struct ac97_codecid {
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
 
 	/* Conexant AC'97 modems -- good luck finding datasheets! */
+	{ AC97_CODEC_ID('C', 'X', 'T', 33),
+	  0xffffffff,			"Conexant HSD11246", },
 	{ AC97_CODEC_ID('C', 'X', 'T', 34),
 	  0xffffffff,			"Conexant D480 MDC V.92 Modem", },
 	{ AC97_CODEC_ID('C', 'X', 'T', 0),
