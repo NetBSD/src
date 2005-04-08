@@ -1,10 +1,11 @@
-/*	$NetBSD: interplayer.c,v 1.6 1999/09/18 19:38:52 jsm Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.6.16.1 2005/04/08 21:43:47 tron Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
  */
 
 #include "include.h"
+#include <curses.h>
 
 void
 checkbattle()

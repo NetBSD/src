@@ -1,10 +1,11 @@
-/*	$NetBSD: io.c,v 1.6 2004/02/08 00:32:07 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.6.4.1 2005/04/08 21:43:47 tron Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
  */
 
 #include "include.h"
+#include <curses.h>
 
 void
 getstring(cp, mx)
