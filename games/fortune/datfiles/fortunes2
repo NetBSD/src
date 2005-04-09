@@ -818,7 +818,7 @@ take it I assign ten programmers to it?"
 completed," he said.
 		-- Geoffrey James, "The Tao of Programming"
 %
-	A manger went to his programmers and told them: "As regards to your
+	A manager went to his programmers and told them: "As regards to your
 work hours: you are going to have to come in at nine in the morning and leave
 at five in the afternoon."  At this, all of them became angry and several
 resigned on the spot.
@@ -1249,10 +1249,10 @@ screams: "Anybody got a match?"
 	knows he doesn't know what he's doing, so he does it carefully
 and with great restraint.
 	As he designs the first work, frill after frill and
-	embellishment after embellishment occur to him.  These get
-stored away to be used "next time."  Sooner or later the first system
-is finished, and the architect, with firm confidence and a demonstrated
-mastery of that class of systems, is ready to build a second system.
+embellishment after embellishment occur to him.  These get stored away
+to be used "next time."  Sooner or later the first system is finished,
+and the architect, with firm confidence and a demonstrated mastery of
+that class of systems, is ready to build a second system.
 	This second is the most dangerous system a man ever designs.
 When he does his third and later ones, his prior experiences will
 confirm each other as to the general characteristics of such systems,
@@ -35072,7 +35072,7 @@ Pandora's Rule:
 %
 panic: can't find /
 %
-panic: kernal segmentation violation. core dumped		(only kidding)
+panic: kernel segmentation violation. core dumped		(only kidding)
 %
 Paprika Measure:
 
