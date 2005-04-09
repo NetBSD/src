@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.99 2004/11/28 05:40:47 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.100 2005/04/09 20:14:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.99 2004/11/28 05:40:47 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.100 2005/04/09 20:14:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -500,7 +500,8 @@ main(int argc, char *argv[])
 		int	signum;
 
 		signum = my_signals[n];
-		(void) signal(signum, SIG_IGN);
+		if (signum != SIGCHLD)
+			(void) signal(signum, SIG_IGN);
 
 		if (signum != SIGPIPE) {
 			struct kevent	*ev;
