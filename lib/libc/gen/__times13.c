@@ -1,4 +1,4 @@
-/*	$NetBSD: __times13.c,v 1.2 2003/08/07 16:42:45 agc Exp $	*/
+/*	$NetBSD: __times13.c,v 1.3 2005/04/09 12:52:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: __times13.c,v 1.2 2003/08/07 16:42:45 agc Exp $");
+__RCSID("$NetBSD: __times13.c,v 1.3 2005/04/09 12:52:54 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ __warn_references(times,
  * Convert usec to clock ticks; could do (usec * CLK_TCK) / 1000000,
  * but this would overflow if we switch to nanosec.
  */
-#define	CONVTCK(r)	(r.tv_sec * clk_tck + r.tv_usec / (1000000 / clk_tck))
+#define	CONVTCK(r)	(r.tv_sec * clk_tck + r.tv_usec / (1000000 / (uint)clk_tck))
 
 clock_t
 times(tp)
@@ -71,7 +71,7 @@ times(tp)
 {
 	struct rusage ru;
 	struct timeval t;
-	static long clk_tck;
+	static clock_t clk_tck;
 	
 	_DIAGASSERT(tp != NULL);
 
@@ -80,7 +80,7 @@ times(tp)
 	 * moderately expensive function call.
 	 */
 	if (clk_tck == 0)
-		clk_tck = CLK_TCK;
+		clk_tck = (clock_t)CLK_TCK;
 
 	if (getrusage(RUSAGE_SELF, &ru) < 0)
 		return ((clock_t)-1);
