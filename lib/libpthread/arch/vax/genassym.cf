@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2004/12/01 14:27:01 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.6 2005/04/09 20:50:27 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ define UC_FLAGS		offsetof(ucontext_t, uc_flags)
 define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
 define _UC_CPU		_UC_CPU
 define _UC_USER		_UC_USER
+
+define STACKSPACE	STACKSPACE
 
 define _REG_R0		4*_REG_R0
 define _REG_R6		4*_REG_R6
