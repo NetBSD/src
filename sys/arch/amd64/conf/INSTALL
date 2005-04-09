@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2005/02/27 12:38:42 dsl Exp $
+# $NetBSD: INSTALL,v 1.27.2.1 2005/04/09 21:27:58 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27 $"
+#ident 		"INSTALL-$Revision: 1.27.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -134,8 +134,8 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 # compatibility to other console drivers
 #options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
