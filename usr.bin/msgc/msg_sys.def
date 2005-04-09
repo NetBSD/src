@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.31 2004/11/05 20:45:48 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.32 2005/04/09 13:12:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -439,7 +439,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 	}
 
 	/* copy the appropriate string to the output */
-	if (len != 0) {
+	if (len != 0 || flags & MSG_PROMPT_HIDE_DFLT) {
 		ibuf[len] = '\0';
 		strlcpy(val, ibuf, max_chars);
 	} else if (def != NULL && val != def) {
