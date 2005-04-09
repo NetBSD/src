@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.187 2005/04/01 11:59:34 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.188 2005/04/09 07:16:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.187 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.188 2005/04/09 07:16:38 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -185,7 +185,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 
 	sva = vm_map_min(kernel_map);
 	if (uvm_map(kernel_map, &sva, esz, NULL, UVM_UNKNOWN_OFFSET,
-	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
 		panic("alloc_cpuinfo_global_va: no virtual space");
 
