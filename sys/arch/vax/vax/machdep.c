@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.147 2005/04/01 11:59:36 yamt Exp $	 */
+/* $NetBSD: machdep.c,v 1.148 2005/04/09 20:44:24 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2005/04/09 20:44:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -681,48 +681,50 @@ krnunlock()
 }
 #endif
 
-/*
- * This is an argument list pushed onto the stack, and given to
- * a CALLG instruction in the trampoline.
- */
-struct saframe {
-	int	sa_type;
-	void	*sa_sas;
-	int	sa_events;
-	int	sa_interrupted;
-	void	*sa_ap;
-
-	int	sa_argc;
-};
-
 void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
-	struct saframe *sf, frame;
-	extern char sigcode[], upcallcode[];
+	uint32_t saframe[11], *fp = saframe;
 
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_ap = ap;
-	frame.sa_argc = 5;
+	sp = (void *)((uintptr_t)sp - sizeof(saframe));
 
-	sf = ((struct saframe *)sp) - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+	/*
+	 * We don't bother to save the callee's register mask
+	 * since the function is never expected to return.
+	 */
+
+	/*
+	 * Fake a CALLS stack frame.
+	 */
+	*fp++ = 0;			/* condition handler */
+	*fp++ = 0x20000000;		/* saved regmask & PSW */
+	*fp++ = 0;			/* saved AP */
+	*fp++ = 0;			/* saved FP, new call stack */
+	*fp++ = 0;			/* saved PC, new call stack */
+
+	/*
+	 * Now create the argument list.
+	 */
+	*fp++ = 5;			/* argc = 5 */
+	*fp++ = type;
+	*fp++ = (uintptr_t) sas;
+	*fp++ = nevents;
+	*fp++ = ninterrupted;
+	*fp++ = (uintptr_t) ap;
+
+	if (copyout(&saframe, sp, sizeof(saframe)) != 0) {
 		/* Copying onto the stack didn't work, die. */
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
-	tf->r0 = (long) upcall;
-	tf->sp = (long) sf;
-	tf->pc = (long) ((caddr_t)p->p_sigctx.ps_sigcode +
-			 ((caddr_t)upcallcode - (caddr_t)sigcode));
-	tf->psl = (long)PSL_U | PSL_PREVU;
+	tf->ap = (uintptr_t) sp + 20;
+	tf->sp = (long) sp;
+	tf->fp = (long) sp;
+	tf->pc = (long) upcall + 2;
+	tf->psl = (long) PSL_U | PSL_PREVU;
 }
 
 void
