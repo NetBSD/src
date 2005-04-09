@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.145 2005/03/30 11:09:16 yamt Exp $
+.\"	$NetBSD: sysctl.3,v 1.146 2005/04/09 02:03:36 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -892,6 +892,8 @@ The string and integer information available for the CTL_NET level
 is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
+The second and third levels are typically the protocol family and
+protocol number, though this is not always the case.
 .Bl -column "Second level nameXXXXXX" "routing messagesXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It PF\_ROUTE	routing messages	no
