@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.18 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: INSTALL_ACPI,v 1.18.4.1 2005/04/09 21:27:52 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.18.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -132,10 +132,10 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 # compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
