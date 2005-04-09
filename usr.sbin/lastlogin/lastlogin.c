@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.12 2005/01/14 07:41:34 martin Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.13 2005/04/09 02:13:20 atatat Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.12 2005/01/14 07:41:34 martin Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.13 2005/04/09 02:13:20 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -201,8 +201,15 @@ dolastlog(const char *logfile, int argc, char **argv)
 		for (i = 0; fread(&l, sizeof(l), 1, fp) == 1; i++) {
 			if (l.ll_time == 0)
 				continue;
-			if ((passwd = getpwuid(i)) != NULL)
-				process_entry(passwd, &l);
+			if ((passwd = getpwuid(i)) == NULL) {
+				static struct passwd p;
+				static char n[32];
+				snprintf(n, sizeof(n), "(%d)", i);
+				p.pw_uid = i;
+				p.pw_name = n;
+				passwd = &p;
+			}
+			process_entry(passwd, &l);
 		}
 		if (ferror(fp))
 			warnx("fread error");
@@ -335,7 +342,10 @@ process_entryx(struct passwd *p, struct lastlogx *l)
 {
 	struct output	o;
 
-	(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
+	if (numeric > 1)
+		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
+	else
+		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
 	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
 	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	(void)memcpy(&o.o_ss, &l->ll_ss, sizeof(o.o_ss));
