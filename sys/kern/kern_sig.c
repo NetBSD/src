@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.204 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.205 2005/04/09 16:07:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.204 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.205 2005/04/09 16:07:52 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -551,7 +551,13 @@ execsigs(struct proc *p)
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 	p->p_sigctx.ps_sigwaited = NULL;
-	p->p_flag &= ~P_NOCLDSTOP;
+
+	/*
+	 * Reset no zombies if child dies flag as Solaris does.
+	 */
+	p->p_flag &= ~(P_NOCLDWAIT | P_CLDSIGIGN);
+	if (SIGACTION_PS(ps, SIGCHLD).sa_handler == SIG_IGN)
+		SIGACTION_PS(ps, SIGCHLD).sa_handler = SIG_DFL;
 
 	/*
 	 * Reset stack state to the user stack.
