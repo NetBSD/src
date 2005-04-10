@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.164 2005/02/20 01:45:17 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.165 2005/04/10 08:21:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.164 2005/02/20 01:45:17 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.165 2005/04/10 08:21:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -3604,7 +3604,7 @@ auth_pam(struct passwd **ppw, const char *pwstr)
 		    PAM_SUCCESS) {
 			tmpl_user = (const char *) item;
 			if (strcmp((*ppw)->pw_name, tmpl_user) != 0)
-				*ppw = getpwnam(tmpl_user);
+				*ppw = sgetpwnam(tmpl_user);
 		} else
 			syslog(LOG_ERR, "Couldn't get PAM_USER: %s",
 			    pam_strerror(pamh, e));
