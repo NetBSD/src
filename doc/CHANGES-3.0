@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.48 2005/04/09 21:29:49 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.49 2005/04/10 22:23:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7177,4 +7177,9 @@ sys/arch/amd64/conf/INSTALL_ACPI		1.20
 	Comment out some wscons(4) options which are only required to run a
 	X11 server.
 	[dsl, ticket #129]
+
+distrib/sets/lists/man/mi			1.774
+
+	Add "skey" tag to pam_skey.[08].
+	[nakayama, ticket #130]
 
