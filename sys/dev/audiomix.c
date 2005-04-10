@@ -1,4 +1,4 @@
-/*	$NetBSD: audiomix.c,v 1.1.2.1 2005/04/10 10:12:25 kent Exp $	*/
+/*	$NetBSD: audiomix.c,v 1.1.2.2 2005/04/10 12:14:06 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audiomix.c,v 1.1.2.1 2005/04/10 10:12:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiomix.c,v 1.1.2.2 2005/04/10 12:14:06 kent Exp $");
 
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ audiomix_mix8(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 		b = *(int8_t*)r;
 		sum = a + b;
 		f1 = (~a & ~b & sum) | (a & b & ~sum);
-		f1 = (((f1 & 0x80) ^ 0x80) >> 7) - 1;
+		f1 = (~(f1 >> 7) & 1) - 1;
 		r2 = (0x80 - ((sum >> 7) & 1)) & f1;
 		*(int8_t*)w = (sum - (sum & f1)) | r2;
 #endif	/* SATURATION_LOGICALOP_8 */
@@ -280,7 +280,7 @@ audiomix_mix16le(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x8000) ^ 0x8000) >> 15) - 1;
+			f1 = (~(f1 >> 15) & 1) - 1;
 			r2 = (0x8000 - ((sum >> 15) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
@@ -341,7 +341,7 @@ audiomix_mix16be(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x8000) ^ 0x8000) >> 15) - 1;
+			f1 = (~(f1 >> 15) & 1) - 1;
 			r2 = (0x8000 - ((sum >> 15) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
@@ -394,7 +394,7 @@ audiomix_mix24le(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x800000) ^ 0x800000) >> 23) - 1;
+			f1 = (~(f1 >> 23) & 1) - 1;
 			r2 = (0x800000 - ((sum >> 23) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
@@ -444,7 +444,7 @@ audiomix_mix24be(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x800000) ^ 0x800000) >> 23) - 1;
+			f1 = (~(f1 >> 23) & 1) - 1;
 			r2 = (0x800000 - ((sum >> 23) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
@@ -502,7 +502,7 @@ audiomix_mix32le(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x80000000) ^ 0x80000000) >> 31) - 1;
+			f1 = (~(f1 >> 31) & 1) - 1;
 			r2 = (0x80000000 - ((sum >> 31) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
@@ -565,7 +565,7 @@ audiomix_mix32be(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 
 			sum = a + b;
 			f1 = (~a & ~b & sum) | (a & b & ~sum);
-			f1 = (((f1 & 0x80000000) ^ 0x80000000) >> 31) - 1;
+			f1 = (~(f1 >> 31) & 1) - 1;
 			r2 = (0x80000000 - ((sum >> 31) & 1)) & f1;
 			sum = (sum - (sum & f1)) | r2;
 		}
