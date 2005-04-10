@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.29 2005/04/09 13:07:23 tron Exp $
+# $NetBSD: INSTALL,v 1.30 2005/04/10 07:53:06 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.29 $"
+#ident 		"INSTALL-$Revision: 1.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -105,9 +105,9 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
-options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # These options enable verbose messages for several subsystems.
