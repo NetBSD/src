@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.12 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.12.2.1 2005/04/10 10:12:25 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ extern stream_filter_factory_t linear8_to_linear16;
 extern stream_filter_factory_t linear16_to_linear8;
 /* sampling rate conversion (aurateconv.c) */
 extern stream_filter_factory_t aurateconv;
+/* PCM mixing (audiomix.c) */
+extern stream_filter_factory_t audiomix;
 
 struct audio_format {
 	/**
