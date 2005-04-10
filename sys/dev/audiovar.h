@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.32.2.2 2005/02/13 04:36:16 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.32.2.3 2005/04/10 10:12:25 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
 #ifndef _SYS_DEV_AUDIOVAR_H_
 #define _SYS_DEV_AUDIOVAR_H_
 #include <dev/audio_if.h>
+#include <sys/device.h>
+#include <sys/queue.h>
+#include <sys/select.h>
 
 /*
  * Initial/default block duration is both configurable and patchable.
@@ -224,6 +227,8 @@ struct audio_softc {
 typedef struct chan_softc {
 	struct audio_softc	*master;
 	LIST_ENTRY(chan_softc)	list;
+	stream_fetcher_t	*last_fetcher;
+	audio_stream_t		last_stream;;
 } chan_softc_t;
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */
