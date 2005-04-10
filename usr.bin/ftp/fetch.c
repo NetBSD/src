@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.155 2005/01/12 22:37:41 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.156 2005/04/10 03:13:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.155 2005/01/12 22:37:41 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.156 2005/04/10 03:13:23 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -732,7 +732,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			/* success */
 			break;
 		}
-		freeaddrinfo(res0);
 
 		if (s < 0) {
 			warn("Can't connect to %s", host);
@@ -1275,6 +1274,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
+	if (res0)
+		freeaddrinfo(res0);
 	FREEPTR(savefile);
 	FREEPTR(user);
 	FREEPTR(pass);
