@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775 2005/04/11 22:42:47 jwise Exp $
+# $NetBSD: mi,v 1.776 2005/04/11 23:39:12 jwise Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2102,8 +2102,11 @@
 ./usr/share/man/cat8/smrsh.0			man-sendmail-catman	sendmail,.cat
 ./usr/share/man/cat8/smtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/smtpd.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/spamd-setup.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamd-setup.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat8/spamd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamd.0			man-netutil-catman	pf,.cat
+./usr/share/man/cat8/spamdb.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamdb.0			man-netutil-catman	pf,.cat
 ./usr/share/man/cat8/spamlogd.0			man-netutil-catman	pf,.cat
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-obsolete		obsolete
@@ -4309,8 +4312,11 @@
 ./usr/share/man/man8/smrsh.8			man-sendmail-man	sendmail,.man
 ./usr/share/man/man8/smtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/smtpd.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/spamd-setup.8		man-obsolete		obsolete
 ./usr/share/man/man8/pfspamd-setup.8		man-netutil-man		pf,.man
+./usr/share/man/man8/spamd.8			man-obsolete		obsolete
 ./usr/share/man/man8/pfspamd.8			man-netutil-man		pf,.man
+./usr/share/man/man8/spamdb.8			man-obsolete		obsolete
 ./usr/share/man/man8/pfspamdb.8			man-netutil-man		pf,.man
 ./usr/share/man/man8/spamlogd.8			man-netutil-man		pf,.man
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-obsolete		obsolete
