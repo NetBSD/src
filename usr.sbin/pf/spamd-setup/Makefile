@@ -1,14 +1,17 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2005/04/11 22:34:18 jwise Exp $
 #	$OpenBSD: Makefile,v 1.3 2004/01/21 08:07:41 deraadt Exp $
 
-PROG=	spamd-setup
+PROG=	pfspamd-setup
 SRCS=	spamd-setup.c
-MAN=	spamd-setup.8
+MAN=	pfspamd-setup.8
 
 LDADD=	-lz
 DPADD=	${LIBZ}
 
 BINDIR=	/usr/libexec
+
+pfspamd-setup.8: spamd-setup.8
+	cp $> $@
 
 .include <bsd.prog.mk>
 
