@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.188 2005/04/09 07:16:38 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.189 2005/04/11 05:56:11 perseant Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.188 2005/04/09 07:16:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.189 2005/04/11 05:56:11 perseant Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -165,9 +165,12 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	 * determine the alignment (XXX).
 	 */
 	align = PAGE_SIZE;
-	if (CACHEINFO.c_totalsize > align)
-		/* Assumes `c_totalsize' is power of two */
-		align = CACHEINFO.c_totalsize;
+	if (CACHEINFO.c_totalsize > align) {
+		/* Need a power of two */
+		while (align <= CACHEINFO.c_totalsize)
+			align <<= 1;
+		align >>= 1;
+	}
 
 	sz = sizeof(struct cpu_info);
 
