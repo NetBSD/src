@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.70 2005/04/08 12:50:00 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.71 2005/04/11 18:26:48 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.70 2005/04/08 12:50:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.71 2005/04/11 18:26:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ static const struct ac97_source_info modem_source_info[] = {
 		(sizeof(audio_source_info)/sizeof(audio_source_info[0]))
 #define MODEM_SOURCE_INFO_SIZE \
 		(sizeof(modem_source_info)/sizeof(modem_source_info[0]))
-#define SOURCE_INFO_SIZE(as) ((as)->type == AC97_TYPE_MODEM ? \
+#define SOURCE_INFO_SIZE(as) ((as)->type == AC97_CODEC_TYPE_MODEM ? \
 	        MODEM_SOURCE_INFO_SIZE : AUDIO_SOURCE_INFO_SIZE)
 
 /*
@@ -428,8 +428,6 @@ struct ac97_softc {
 	uint16_t shadow_reg[128];
 
 	int type;
-#define AC97_TYPE_AUDIO 1
-#define AC97_TYPE_MODEM 2
 
 	/* sysctl */
 	struct sysctllog *log;
@@ -911,7 +909,7 @@ ac97_restore_shadow(struct ac97_codec_if *self)
        }
 
        for (idx = 0; idx < SOURCE_INFO_SIZE(as); idx++) {
-		if (as->type == AC97_TYPE_MODEM)
+		if (as->type == AC97_CODEC_TYPE_MODEM)
 			si = &modem_source_info[idx];
 		else
 			si = &audio_source_info[idx];
@@ -984,7 +982,7 @@ ac97_setup_source_info(struct ac97_softc *as)
 
 	for (idx = 0, ouridx = 0; idx < SOURCE_INFO_SIZE(as); idx++) {
 		si = &as->source_info[ouridx];
-		if (as->type == AC97_TYPE_MODEM) {
+		if (as->type == AC97_CODEC_TYPE_MODEM) {
 			if (!ac97_check_capability(as,
 			    modem_source_info[idx].req_feature))
 				continue;
@@ -1008,7 +1006,7 @@ ac97_setup_source_info(struct ac97_softc *as)
 			/* Add an entry for mute, if necessary */
 			if (si->mute) {
 				si = &as->source_info[ouridx];
-				if (as->type == AC97_TYPE_MODEM)
+				if (as->type == AC97_CODEC_TYPE_MODEM)
 					memcpy(si, &modem_source_info[idx],
 					    sizeof(*si));
 				else
@@ -1084,8 +1082,15 @@ ac97_setup_source_info(struct ac97_softc *as)
 	}
 }
 
+/* backwords compatibility */
 int
 ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
+{
+	return ac97_attach_type(host_if, sc_dev, AC97_CODEC_TYPE_AUDIO);
+}
+
+int
+ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 {
 	struct ac97_softc *as;
 	int error, i, j;
@@ -1106,6 +1111,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;
+	as->type = type;
 
 	if ((error = host_if->attach(host_if->arg, &as->codec_if))) {
 		free(as, M_DEVBUF);
@@ -1118,6 +1124,8 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 	}
 
 	host_if->write(host_if->arg, AC97_REG_RESET, 0);
+	if (as->type == AC97_CODEC_TYPE_MODEM)
+		goto init_modem;
 	host_if->write(host_if->arg, AC97_REG_POWER, 0);
 
 	if (host_if->flags)
@@ -1176,10 +1184,9 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 	       ac97enhancement[AC97_CAPS_ENHANCEMENT(as->caps)]);
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
-	as->type = AC97_TYPE_AUDIO; /* default to audio */
+	as->type = AC97_CODEC_TYPE_AUDIO; /* default to audio */
 
-	if (!(as->host_flags & AC97_HOST_SKIP_AUDIO))
-		ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
 	if (as->ext_id != 0) {
 		/* Print capabilities */
 		bitmask_snprintf(as->ext_id, "\20\20SECONDARY10\17SECONDARY01"
@@ -1242,7 +1249,8 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 		}
 	}
 
-	if (as->ext_id == 0 && !(as->host_flags & AC97_HOST_SKIP_MODEM)) {
+init_modem:
+	if (as->ext_id == 0) {
 		ac97_read(as, AC97_REG_EXT_MODEM_ID, &as->ext_mid);
 		if (as->ext_mid == 0xffff)
 			as->ext_mid = 0;
@@ -1255,7 +1263,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 		uint16_t val, reg;
 		int err;
 
-		as->type = AC97_TYPE_MODEM;
+		as->type = AC97_CODEC_TYPE_MODEM;
 
 		/* Print capabilities */
 		bitmask_snprintf(as->ext_mid,
@@ -1297,6 +1305,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 		}
 		/* power-up everything that we have */
 		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0xff00 & ~(val << 8));
+#if 0
 		delay(100);
 		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0xff00 & ~(val << 8));
 		i = 500000;
@@ -1307,6 +1316,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 		if (i == 0)
 			printf("%s: error setting extended modem status\n",
 			    sc_dev->dv_xname);
+#endif
 
 		/* setup sysctls */
 		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
@@ -1354,7 +1364,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 	}
 
 sysctl_err:
-	as->source_info = (as->type == AC97_TYPE_MODEM ?
+	as->source_info = (as->type == AC97_CODEC_TYPE_MODEM ?
 			   as->modem_source_info : as->audio_source_info);
 	ac97_setup_source_info(as);
 
@@ -1784,9 +1794,9 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 	struct ac97_source_info *si;
 	int ouridx, idx;
 
-	if ((as->type == AC97_TYPE_AUDIO &&
+	if ((as->type == AC97_CODEC_TYPE_AUDIO &&
 	     as->num_source_info >= AUDIO_MAX_SOURCES) ||
-	    (as->type == AC97_TYPE_MODEM &&
+	    (as->type == AC97_CODEC_TYPE_MODEM &&
 	     as->num_source_info >= MODEM_MAX_SOURCES)) {
 		printf("%s: internal error: increase MAX_SOURCES in %s\n",
 		       __func__, __FILE__);
