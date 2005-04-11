@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.93 2005/04/08 12:50:00 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.94 2005/04/11 11:20:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.93 2005/04/08 12:50:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.94 2005/04/11 11:20:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,8 @@ struct auich_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
-	int codecnum;
+	int sc_codecnum;
+	int sc_codectype;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -292,7 +293,6 @@ static int	auich_attach_codec(void *, struct ac97_codec_if *);
 static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
-static enum ac97_host_flags auich_flags_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
 	NULL,			/* open */
@@ -392,7 +392,7 @@ static const struct auich_devtype auich_audio_devices[] = {
 
 static const struct auich_devtype auich_modem_devices[] = {
 #ifdef AUICH_ATTACH_MODEM
-	{ PCIID_ICH3MODEM, "i82801CA (ICH2) AC-97 Modem", "ICH3MODEM" },
+	{ PCIID_ICH3MODEM, "i82801CA (ICH3) AC-97 Modem", "ICH3MODEM" },
 	{ PCIID_ICH4MODEM, "i82801DB (ICH4) AC-97 Modem", "ICH4MODEM" },
 #endif
 	{ 0,		NULL,				NULL },
@@ -440,14 +440,16 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc = (struct auich_softc *)self;
 	pa = aux;
 
-	if ((d = auich_lookup(pa, auich_modem_devices)) != NULL)
+	if ((d = auich_lookup(pa, auich_modem_devices)) != NULL) {
 		sc->sc_modem_offset = 0x10;
-	else if ((d = auich_lookup(pa, auich_audio_devices)) != NULL)
+		sc->sc_codectype = AC97_CODEC_TYPE_MODEM;
+	} else if ((d = auich_lookup(pa, auich_audio_devices)) != NULL) {
 		sc->sc_modem_offset = 0;
-	else
+		sc->sc_codectype = AC97_CODEC_TYPE_AUDIO;
+	} else
 		panic("auich_attach: impossible");
 
-	if (sc->sc_modem_offset == 0)
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		aprint_naive(": Audio controller\n");
 	else
 		aprint_naive(": Modem controller\n");
@@ -559,20 +561,20 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->pcmo.dmalist, sc->pcmi.dmalist, sc->mici.dmalist));
 
-	sc->codecnum = sc->sc_modem_offset == 0 ? 0 : 1;
+	/* Modem codecs are always the secondary codec on ICH */
+	sc->sc_codecnum = sc->sc_codectype == AC97_CODEC_TYPE_MODEM ? 1 : 0;
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
 	sc->host_if.read = auich_read_codec;
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
-	sc->host_if.flags = auich_flags_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
 		return;
 
 	/* setup audio_format */
-	if (sc->sc_modem_offset == 0) {
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 		memcpy(sc->sc_audio_formats, auich_audio_formats, sizeof(auich_audio_formats));
 		if (!AC97_IS_4CH(sc->codec_if))
 			AUFMT_INVALIDATE(&sc->sc_audio_formats[AUICH_FORMATS_4CH]);
@@ -602,7 +604,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	config_interrupts(self, auich_finish_attach);
 
 	/* sysctl setup */
-	if (AC97_IS_FIXED_RATE(sc->codec_if) && sc->sc_modem_offset == 0)
+	if (AC97_IS_FIXED_RATE(sc->codec_if) &&
+	    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		return;
 
 	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
@@ -740,7 +743,8 @@ auich_read_codec(void *v, uint8_t reg, uint16_t *val)
 	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
-		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg + (sc->codecnum * 0x80));
+		*val = bus_space_read_2(sc->iot, sc->mix_ioh,
+		    reg + (sc->sc_codecnum * ICH_CODEC_OFFSET));
 		DPRINTF(ICH_DEBUG_CODECIO,
 		    ("auich_read_codec(%x, %x)\n", reg, *val));
 		status = bus_space_read_4(sc->iot, sc->aud_ioh,
@@ -776,7 +780,8 @@ auich_write_codec(void *v, uint8_t reg, uint16_t val)
 	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
-		bus_space_write_2(sc->iot, sc->mix_ioh, reg + (sc->codecnum * 0x80), val);
+		bus_space_write_2(sc->iot, sc->mix_ioh,
+		    reg + (sc->sc_codecnum * ICH_CODEC_OFFSET), val);
 		return 0;
 	} else {
 		aprint_normal("%s: write_codec timeout\n", sc->sc_dev.dv_xname);
@@ -805,7 +810,7 @@ auich_reset_codec(void *v)
 	sc = v;
 	control = bus_space_read_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset);
-	if (sc->sc_modem_offset == 0)
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
 	else
 		control &= ~ICH_ACLSO;
@@ -833,18 +838,6 @@ auich_reset_codec(void *v)
 		       sc->sc_dev.dv_xname);
 #endif
 	return 0;
-}
-
-static enum ac97_host_flags
-auich_flags_codec(void *v)
-{
-	struct auich_softc *sc;
-
-	sc = (struct auich_softc *)v;
-	if (sc->sc_modem_offset != 0)
-		return AC97_HOST_SKIP_AUDIO;
-	else
-		return AC97_HOST_SKIP_MODEM;
 }
 
 static int
@@ -903,7 +896,7 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 		if (p == NULL)
 			continue;
 
-		if (sc->sc_modem_offset == 0) {
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 			if (p->sample_rate <  8000 ||
 			    p->sample_rate > 48000)
 				return EINVAL;
@@ -921,7 +914,7 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
 		/* p represents HW encoding */
-		if (sc->sc_modem_offset == 0) {
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 			if (sc->sc_audio_formats[index].frequency_type != 1
 			    && auich_set_rate(sc, mode, p->sample_rate))
 				return EINVAL;
@@ -933,10 +926,10 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 					  p->sample_rate);
 			auich_write_codec(sc, AC97_REG_LINE1_LEVEL, 0);
 		}
-		if (mode == AUMODE_PLAY) {
+		if (mode == AUMODE_PLAY &&
+		    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh,
 			    ICH_GCTRL + sc->sc_modem_offset);
-			if (sc->sc_modem_offset == 0)
 				control &= ~ICH_PCM246_MASK;
 			if (p->channels == 4) {
 				control |= ICH_PCM4;
@@ -1129,7 +1122,8 @@ auich_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!AC97_IS_FIXED_RATE(sc->codec_if) || sc->sc_modem_offset != 0)
+	if (!AC97_IS_FIXED_RATE(sc->codec_if) ||
+	    sc->sc_codectype == AC97_CODEC_TYPE_MODEM)
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
@@ -1156,8 +1150,8 @@ auich_intr(void *v)
 	    ICH_GSTS + sc->sc_modem_offset);
 	DPRINTF(ICH_DEBUG_INTR, ("auich_intr: gsts=0x%x\n", gsts));
 
-	if ((sc->sc_modem_offset == 0 && gsts & ICH_POINT) ||
-	    (sc->sc_modem_offset != 0 && gsts & ICH_MOINT)) {
+	if ((sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_POINT) ||
+	    (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_MOINT)) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
@@ -1174,7 +1168,7 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO +
 		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
-		if (sc->sc_modem_offset == 0)
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 			bus_space_write_4(sc->iot, sc->aud_ioh,
 			    ICH_GSTS + sc->sc_modem_offset, ICH_POINT);
 		else
@@ -1183,8 +1177,8 @@ auich_intr(void *v)
 		ret++;
 	}
 
-	if ((sc->sc_modem_offset == 0 && gsts & ICH_PIINT) ||
-	    (sc->sc_modem_offset != 0 && gsts & ICH_MIINT)) {
+	if ((sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_PIINT) ||
+	    (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_MIINT)) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
@@ -1201,7 +1195,7 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI +
 		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
-		if (sc->sc_modem_offset == 0)
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 			bus_space_write_4(sc->iot, sc->aud_ioh,
 			    ICH_GSTS + sc->sc_modem_offset, ICH_PIINT);
 		else
@@ -1210,7 +1204,7 @@ auich_intr(void *v)
 		ret++;
 	}
 
-	if (sc->sc_modem_offset != 0 && gsts & ICH_MINT) {
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_MINT) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
