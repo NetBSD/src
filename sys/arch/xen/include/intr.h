@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2005/04/11 12:10:31 yamt Exp $	*/
 
 
 #ifndef _XEN_INTR_H_
@@ -14,5 +14,12 @@
 extern struct intrstub xenev_stubs[];
 
 #endif /* _LOCORE */
+
+/* XXX intrdefs.h */
+#define	SIR_XENEVT	26	/* not really a soft interrupt. */
+#define	IPL_SOFTXENEVT	IPL_BIO
+#if !defined(_LOCORE)
+#define	splsoftxenevt()	splbio()
+#endif
 
 #endif /* _XEN_INTR_H_ */
