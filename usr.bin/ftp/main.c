@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90 2004/07/21 00:09:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.91 2005/04/11 01:49:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -80,7 +80,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.90 2004/07/21 00:09:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.91 2005/04/11 01:49:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 	}
 	if (netrc[0] == '\0' && localhome != NULL) {
 		if (strlcpy(netrc, localhome, sizeof(netrc)) >= sizeof(netrc) ||
-	    	    strlcat(netrc, "/.netrc", sizeof(netrc)) >= sizeof(netrc)) {
+		    strlcat(netrc, "/.netrc", sizeof(netrc)) >= sizeof(netrc)) {
 			warnx("%s/.netrc: %s", localhome,
 			    strerror(ENAMETOOLONG));
 			netrc[0] = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.118 2005/04/11 01:43:31 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.119 2005/04/11 01:49:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.118 2005/04/11 01:43:31 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.119 2005/04/11 01:49:31 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -748,7 +748,7 @@ remotemodtime(const char *file, int noisy)
 		timebuf.tm_hour = hour;
 		timebuf.tm_mday = day;
 		timebuf.tm_mon = mo - 1;
-		timebuf.tm_year = yy - TM_YEAR_BASE; 
+		timebuf.tm_year = yy - TM_YEAR_BASE;
 		timebuf.tm_isdst = -1;
 		rtime = timegm(&timebuf);
 		if (rtime == -1) {
