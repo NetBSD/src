@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.5 2005/04/06 02:38:17 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.6 2005/04/11 23:19:24 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,15 +63,17 @@
 
 TAILQ_HEAD(bqueues, ubuf) bufqueues[BQUEUES];
 
-#define HASH_MAX 101
+struct bufhash_struct *bufhash;
 
-struct bufhash_struct bufhash[HASH_MAX];
+#define HASH_MAX 1024
+int hashmax  = HASH_MAX;
+int hashmask = (HASH_MAX - 1);
 
 int maxbufs = BUF_CACHE_SIZE;
 int nbufs = 0;
 int cachehits = 0;
 int cachemisses = 0;
-int hashmax = 0;
+int max_depth = 0;
 off_t locked_queue_bytes = 0;
 int locked_queue_count = 0;
 
@@ -79,30 +81,76 @@ int locked_queue_count = 0;
 static int
 vl_hash(struct uvnode * vp, daddr_t lbn)
 {
-	return (int)((unsigned long) vp + lbn) % HASH_MAX;
+	return (int)((unsigned long) vp + lbn) & hashmask;
 }
 
 /* Initialize buffer cache */
 void
-bufinit(void)
+bufinit(int max)
 {
 	int i;
+
+	if (max) {
+		for (hashmax = 1; hashmax < max; hashmax <<= 1)
+			;
+		hashmask = hashmax - 1;
+	}
 
 	for (i = 0; i < BQUEUES; i++) {
 		TAILQ_INIT(&bufqueues[i]);
 	}
-	for (i = 0; i < HASH_MAX; i++)
+	bufhash = (struct bufhash_struct *)malloc(hashmax * sizeof(*bufhash));
+	for (i = 0; i < hashmax; i++)
 		LIST_INIT(&bufhash[i]);
+}
+
+/* Widen the hash table. */
+void bufrehash(int max)
+{
+	int i, newhashmax, newhashmask;
+	struct ubuf *bp, *nbp;
+	struct bufhash_struct *np;
+
+	if (max < 0 || max < hashmax)
+		return;
+
+	/* Round up to a power of two */
+	for (newhashmax = 1; newhashmax < max; newhashmax <<= 1)
+		;
+	newhashmask = newhashmax - 1;
+
+	/* Allocate new empty hash table */
+	np = (struct bufhash_struct *)malloc(newhashmax * sizeof(*bufhash));
+	for (i = 0; i < newhashmax; i++)
+		LIST_INIT(&np[i]);
+
+	/* Now reassign all existing buffers to their new hash chains. */
+	for (i = 0; i < hashmax; i++) {
+		bp = LIST_FIRST(&bufhash[i]);
+		while(bp) {
+			nbp = LIST_NEXT(bp, b_hash);
+			LIST_REMOVE(bp, b_hash);
+			bp->b_hashval = vl_hash(bp->b_vp, bp->b_lblkno);
+			LIST_INSERT_HEAD(&np[bp->b_hashval], bp, b_hash);
+			bp = nbp;
+		}
+	}
+
+	/* Switch over and clean up */
+	free(bufhash);
+	bufhash = np;
+	hashmax = newhashmax;
+	hashmask = newhashmask;
 }
 
 /* Print statistics of buffer cache usage */
 void
 bufstats(void)
 {
-	printf("buffer cache: %d hits %d misses (%2.2f%%); hash depth %d\n",
+	printf("buffer cache: %d hits %d misses (%2.2f%%); hash width %d, depth %d\n",
 	    cachehits, cachemisses,
 	    (cachehits * 100.0) / (cachehits + cachemisses),
-	    hashmax);
+	    hashmax, max_depth);
 }
 
 /*
@@ -159,8 +207,9 @@ incore(struct uvnode * vp, int lbn)
 	/* XXX use a real hash instead. */
 	depth = 0;
 	LIST_FOREACH(bp, &bufhash[hash], b_hash) {
-		if (++depth > hashmax)
-			hashmax = depth;
+		if (++depth > max_depth)
+			max_depth = depth;
+		assert(depth <= nbufs);
 		if (bp->b_vp == vp && bp->b_lblkno == lbn) {
 			return bp;
 		}
@@ -223,6 +272,7 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 			if (bp->b_flags & B_DELWRI)
 				VOP_STRATEGY(bp);
 			buf_destroy(bp);
+			break;
 		}
 #ifdef DEBUG
 		else {
@@ -244,7 +294,8 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 	bp->b_vp = vp;
 	bp->b_blkno = bp->b_lblkno = lbn;
 	bp->b_bcount = size;
-	LIST_INSERT_HEAD(&bufhash[vl_hash(vp, lbn)], bp, b_hash);
+	bp->b_hashval = vl_hash(vp, lbn);
+	LIST_INSERT_HEAD(&bufhash[bp->b_hashval], bp, b_hash);
 	LIST_INSERT_HEAD(&vp->v_cleanblkhd, bp, b_vnbufs);
 	bp->b_flags = B_BUSY;
 
@@ -287,6 +338,12 @@ brelse(struct ubuf * bp)
 		TAILQ_INSERT_TAIL(&bufqueues[BQ_LRU], bp, b_freelist);
 	}
 	--bp->b_vp->v_usecount;
+
+	/* Move to the front of the hash chain */
+	if (LIST_FIRST(&bufhash[bp->b_hashval]) != bp) {
+		LIST_REMOVE(bp, b_hash);
+		LIST_INSERT_HEAD(&bufhash[bp->b_hashval], bp, b_hash);
+	}
 }
 
 /* Read the given block from disk, return it B_BUSY. */
