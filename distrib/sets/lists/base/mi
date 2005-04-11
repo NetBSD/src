@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.539 2005/04/04 19:11:18 peter Exp $
+# $NetBSD: mi,v 1.540 2005/04/11 22:35:45 jwise Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -891,8 +891,8 @@
 ./usr/libexec/sftp-server			base-secsh-bin		crypto
 ./usr/libexec/sm.bin				base-sendmail-usr
 ./usr/libexec/smrsh				base-sendmail-bin	sendmail
-./usr/libexec/spamd				base-netutil-bin	pf
-./usr/libexec/spamd-setup			base-netutil-bin	pf
+./usr/libexec/pfspamd				base-netutil-bin	pf
+./usr/libexec/pfspamd-setup			base-netutil-bin	pf
 ./usr/libexec/spamlogd				base-netutil-bin	pf
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
@@ -1122,7 +1122,7 @@
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
-./usr/sbin/spamdb				base-netutil-bin	pf
+./usr/sbin/pfspamdb				base-netutil-bin	pf
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
