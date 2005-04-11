@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.19 2005/03/25 20:14:43 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.20 2005/04/11 23:19:24 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include "fsutil.h"
 
 extern int fake_cleanseg;
+int extend_ifile(void);
 
 /*
  * Pass 0.  Check the LFS partial segments for valid checksums, correcting
@@ -265,6 +266,12 @@ pass0(void)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, writeit);
 	else
 		brelse(bp);
+
+	if (fs->lfs_freehd == 0) {
+		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");
+		if (preen || reply("FIX"))
+			extend_ifile();
+	}
 
 	/*
 	 * Check the distance between sequential free list entries.

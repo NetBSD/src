@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.4 2005/03/25 20:16:37 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.5 2005/04/11 23:19:24 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
+int extend_ifile(void);
 
 extern ufs_daddr_t badblk;
 extern SEGUSE *seg_table;
@@ -294,7 +295,7 @@ pass6check(struct inodesc * idesc)
 /*
  * Add a new block to the Ifile, to accommodate future file creations.
  */
-static int
+int
 extend_ifile(void)
 {
 	struct uvnode *vp;
@@ -318,7 +319,7 @@ extend_ifile(void)
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 	max = i + fs->lfs_ifpb;
-	maxino = max;
+	reset_maxino(max);
 	fs->lfs_bfree -= btofsb(fs, fs->lfs_bsize);
 
 	if (fs->lfs_version == 1) {
@@ -396,11 +397,8 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
 
-	while (thisino > (lblkno(fs, VTOI(fs->lfs_ivnode)->i_ffs1_size) -
-			  fs->lfs_segtabsz - fs->lfs_cleansz + 1) *
-	       fs->lfs_ifpb) {
+	while (thisino >= maxino)
 		extend_ifile();
-	}
 
 	if (fs->lfs_freehd == thisino) {
 		fs->lfs_freehd = nextfree;
@@ -723,4 +721,9 @@ pass6(void)
 		pwarn("** Phase 6b - Recheck Segment Block Accounting\n");
 		pass5();
 	}
+
+	/* Likewise for pass 0 */
+	if (!preen)
+		pwarn("** Phase 6c - Recheck Inode Free List\n");
+	pass0();
 }
