@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.3 2005/04/11 09:24:04 yamt Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.4 2005/04/11 12:10:31 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #ifndef _XEN_EVENTS_H_
 #define _XEN_EVENTS_H_
 
-#define	NR_IRQS		27 /* see intrdefs.h */
+#define	NR_IRQS		26 /* see intrdefs.h and intr.h */
 #define NR_PIRQS	32 /* XXX is this enouth ? */
 
 extern int evtchn_to_irq[];
