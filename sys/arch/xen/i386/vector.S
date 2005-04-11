@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.7 2005/03/17 15:30:45 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.8 2005/04/11 12:10:31 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -922,6 +922,25 @@ IDTVEC(softclock)
 #endif
 	decl	CPUVAR(IDEPTH)
 	jmp	*%esi
+
+#if defined(XEN) && defined(DOM0OPS)
+IDTVEC(softxenevt)
+	movl	$IPL_SOFTXENEVT, CPUVAR(ILEVEL)
+	STI(%eax)
+	incl	CPUVAR(IDEPTH)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(x86_softintlock)
+#endif
+	movl	CPUVAR(ISOURCES) + SIR_XENEVT * 4, %edi
+	addl	$1,IS_EVCNTLO(%edi)
+	adcl	$0,IS_EVCNTHI(%edi)
+	call	_C_LABEL(xenevt_notify)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(x86_softintunlock)
+#endif
+	decl	CPUVAR(IDEPTH)
+	jmp	*%esi
+#endif /* defined(XEN) && defined(DOM0OPS) */
 
 /*
  * Trap and fault vector routines
