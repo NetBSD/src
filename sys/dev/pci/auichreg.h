@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.8 2004/12/11 17:48:56 cube Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.9 2005/04/11 18:25:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -68,6 +68,8 @@
 #define		ICH_LVBIE	0x04	/* last valid buf int enable */
 #define		ICH_RR		0x02	/* 1 - reset regs */
 #define		ICH_RPBM	0x01	/* 1 - run, 0 - pause */
+
+#define	ICH_CODEC_OFFSET	0x80
 
 #define	ICH_PCMI	0x00
 #define	ICH_PCMO	0x10
