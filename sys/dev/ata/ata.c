@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $      */
+/*      $NetBSD: ata.c,v 1.67 2005/04/11 04:24:54 matt Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.67 2005/04/11 04:24:54 matt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -978,14 +978,14 @@ ata_print_modes(struct ata_channel *chp)
 	int drive;
 	struct ata_drive_datas *drvp;
 
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
 		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
-			chp->ch_channel, drive, drvp->PIO_mode);
+			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
 		if (drvp->drive_flags & DRIVE_UDMA) {
