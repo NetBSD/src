@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.4 2005/03/10 21:44:31 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.5 2005/04/11 10:48:14 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4 2005/03/10 21:44:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.5 2005/04/11 10:48:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -316,9 +316,11 @@ xencons_start(struct tty *tp)
 		msg.type = CMSG_CONSOLE;
 		msg.subtype = CMSG_CONSOLE_DATA;
 		msg.length = len;
-		ctrl_if_send_message_noblock(&msg, NULL, 0);
-		/* XXX check return value and queue wait for space
-		 * thread/softint */
+		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
+			HYPERVISOR_yield();
+			/* XXX check return value and queue wait for space
+			 * thread/softint */
+		}
 	}
 
 	s = spltty();
