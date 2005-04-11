@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.316 2005/04/05 16:47:51 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.317 2005/04/11 22:22:58 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -544,7 +544,7 @@ Version:	OpenBSD 3.6
 Current Vers:	OpenBSD 3.6-current
 Maintainer:	itojun@NetBSD.org
 Archive Site:	ftp://ftp.openbsd.org/
-Mailing List:
+Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
 Responsible:	itojun@NetBSD.org
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
