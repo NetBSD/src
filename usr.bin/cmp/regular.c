@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.17 2005/04/11 09:41:02 enami Exp $	*/
+/*	$NetBSD: regular.c,v 1.18 2005/04/11 10:39:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.17 2005/04/11 09:41:02 enami Exp $");
+__RCSID("$NetBSD: regular.c,v 1.18 2005/04/11 10:39:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 	}
 
 	if (len1 != len2)
-		eofmsg (len1 > len2 ? file2 : file1);
+		eofmsg(len1 > len2 ? file2 : file1);
 	if (dfound)
 		exit(DIFF_EXIT);
 	return;
