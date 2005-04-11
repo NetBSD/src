@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.h,v 1.1 2003/03/28 08:09:55 perseant Exp $ */
+/* $NetBSD: vnode.h,v 1.2 2005/04/11 23:19:24 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#define VNODE_CACHE_SIZE 1000
+
+#define VNODE_HASH_MAX   1024 /* Must be a PO2 */
+#define VNODE_CACHE_SIZE 1024 /* Need not be a PO2 */
 
 LIST_HEAD(ubuflists, ubuf);
 LIST_HEAD(uvnodelst, uvnode);

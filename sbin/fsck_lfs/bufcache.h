@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.3 2005/02/26 05:45:54 perseant Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.4 2005/04/11 23:19:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ struct ubuf {
 	daddr_t	b_lblkno;		/* Logical block number. */
 	daddr_t	b_blkno;		/* Underlying physical block number */
 	struct	uvnode *b_vp;		/* File vnode. */
+	int	b_hashval;		/* Hash value */
 };
 
 #define b_bufsize b_bcount
@@ -109,7 +110,8 @@ struct ubuf {
 
 LIST_HEAD(bufhash_struct, ubuf);
 
-void bufinit(void);
+void bufinit(int);
+void bufrehash(int);
 void bufstats(void);
 void buf_destroy(struct ubuf *);
 void bremfree(struct ubuf *);
