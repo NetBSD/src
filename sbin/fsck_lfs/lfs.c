@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.9 2005/03/25 20:16:37 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.10 2005/04/11 23:19:24 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -104,7 +104,7 @@ extern u_int32_t lfs_sb_cksum(struct dlfs *);
 extern void pwarn(const char *, ...);
 
 extern struct uvnodelst vnodelist;
-extern struct uvnodelst getvnodelist;
+extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
 extern int nvnodes;
 
 int fsdirty = 0;
@@ -341,7 +341,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	struct inode *ip;
 	struct ufs1_dinode *dip;
 	struct ubuf *bp;
-	int i;
+	int i, hash;
 
 	vp = (struct uvnode *) malloc(sizeof(*vp));
 	memset(vp, 0, sizeof(*vp));
@@ -406,7 +406,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	++nvnodes;
-	LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
+	hash = ((int)fs + ino) & (VNODE_HASH_MAX - 1);
+	LIST_INSERT_HEAD(&getvnodelist[hash], vp, v_getvnodes);
 	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
 
 	return vp;
@@ -548,6 +549,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 	if (idaddr == 0)
 		idaddr = fs->lfs_idaddr;
+	else
+		fs->lfs_idaddr = idaddr;
 	/* NB: If dummy_read!=0, idaddr==0 here so we get a fake inode. */
 	fs->lfs_ivnode = lfs_raw_vget(fs,
 		(dummy_read ? LFS_IFILE_INUM : fs->lfs_ifile), devvp->v_fd,

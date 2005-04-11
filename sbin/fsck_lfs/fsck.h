@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.13 2004/07/18 20:51:30 yamt Exp $	 */
+/* $NetBSD: fsck.h,v 1.14 2005/04/11 23:19:24 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -213,5 +213,6 @@ struct ufs1_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 daddr_t lfs_ino_daddr(ino_t);
 void clearinode(ino_t);
+void reset_maxino(ino_t);
 
 #include "fsck_vars.h"
