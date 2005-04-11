@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.16 2005/04/11 09:40:15 enami Exp $	*/
+/*	$NetBSD: regular.c,v 1.17 2005/04/11 09:41:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.16 2005/04/11 09:40:15 enami Exp $");
+__RCSID("$NetBSD: regular.c,v 1.17 2005/04/11 09:41:02 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 		eofmsg(file2);
 	len2 -= skip2;
 
+	byte = line = 1;
 	dfound = 0;
 	length = MIN(len1, len2);
 	for (blk_sz = 1024 * 1024; length != 0; length -= blk_sz) {
@@ -87,7 +88,7 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 		}
 
 		blk_cnt = blk_sz;
-		for (byte = line = 1; blk_cnt--; ++p1, ++p2, ++byte) {
+		for (; blk_cnt--; ++p1, ++p2, ++byte) {
 			if ((ch = *p1) != *p2) {
 				if (!lflag) {
 					diffmsg(file1, file2, byte, line);
