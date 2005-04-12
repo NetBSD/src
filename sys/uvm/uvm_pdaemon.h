@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.10 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.11 2005/04/12 13:11:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,6 +80,7 @@
  */
 
 void uvm_wait(const char *);
+boolean_t uvm_reclaimable(void);
 
 #endif /* _KERNEL */
 
