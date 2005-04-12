@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/04/11 22:34:18 jwise Exp $
+#	$NetBSD: Makefile,v 1.4 2005/04/12 14:21:20 jwise Exp $
 #	$OpenBSD: Makefile,v 1.7 2004/02/26 07:28:55 beck Exp $
 
 PROG=	pfspamd
@@ -6,6 +6,8 @@ SRCS=	spamd.c sdl.c grey.c
 MAN=	pfspamd.8
 
 BINDIR=	/usr/libexec
+
+CPPFLAGS+=	-DSPAMD_CHROOT=\"/var/chroot/spamd\"
 
 pfspamd.8:	spamd.8
 	cp $> $@
