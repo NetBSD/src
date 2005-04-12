@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.94 2005/04/11 11:20:45 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.95 2005/04/12 17:30:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.94 2005/04/11 11:20:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.95 2005/04/12 17:30:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,6 +288,7 @@ static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(struct device *);
 static void	auich_calibrate(struct auich_softc *);
+static void	auich_clear_cas(struct auich_softc *);
 
 static int	auich_attach_codec(void *, struct ac97_codec_if *);
 static int	auich_read_codec(void *, uint8_t, uint16_t *);
@@ -756,11 +757,17 @@ auich_read_codec(void *v, uint8_t reg, uint16_t *val)
 			*val = 0xffff;
 			DPRINTF(ICH_DEBUG_CODECIO,
 			    ("%s: read_codec error\n", sc->sc_dev.dv_xname));
+			if (reg == AC97_REG_GPIO_STATUS)
+				auich_clear_cas(sc);
 			return -1;
 		}
+		if (reg == AC97_REG_GPIO_STATUS)
+			auich_clear_cas(sc);
 		return 0;
 	} else {
 		aprint_normal("%s: read_codec timeout\n", sc->sc_dev.dv_xname);
+		if (reg == AC97_REG_GPIO_STATUS)
+			auich_clear_cas(sc);
 		return -1;
 	}
 }
@@ -810,10 +817,12 @@ auich_reset_codec(void *v)
 	sc = v;
 	control = bus_space_read_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset);
-	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 		control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
-	else
+	} else {
 		control &= ~ICH_ACLSO;
+		control |= ICH_GIE;
+	}
 	control |= (control & ICH_CRESET) ? ICH_WRESET : ICH_CRESET;
 	bus_space_write_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset, control);
@@ -1226,6 +1235,16 @@ auich_intr(void *v)
 		ret++;
 	}
 
+#ifdef AUICH_MODEM_DEBUG
+	if (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_GSCI) {
+		printf("%s: gsts=0x%x\n", sc->sc_dev.dv_xname, gsts);
+		/* int ack */
+		bus_space_write_4(sc->iot, sc->aud_ioh,
+		    ICH_GSTS + sc->sc_modem_offset, ICH_GSCI);
+		ret++;
+	}
+#endif
+
 	return ret;
 }
 
@@ -1612,4 +1631,14 @@ auich_calibrate(struct auich_softc *sc)
 	printf("\n");
 
 	sc->sc_ac97_clock = ac97rate;
+}
+
+static void
+auich_clear_cas(struct auich_softc *sc)
+{
+	/* Clear the codec access semaphore */
+	(void)bus_space_read_2(sc->iot, sc->mix_ioh,
+	    AC97_REG_RESET * (sc->sc_codecnum * ICH_CODEC_OFFSET));
+
+	return;
 }
