@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.72 2005/04/12 17:28:02 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.73 2005/04/12 21:11:43 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.72 2005/04/12 17:28:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.73 2005/04/12 21:11:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1270,15 +1270,17 @@ setup_modem:
 
 		/* power-up everything */
 		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0);
-		for (i = 500000; i >= 0; i--) {
+		for (i = 5000; i >= 0; i--) {
 			ac97_read(as, AC97_REG_EXT_MODEM_CTRL, &reg);
 			if ((reg & /*XXXval*/0xf) == /*XXXval*/0xf)
 			       break;
 			DELAY(1);
 		}
-		if (i <= 0)
-			printf("%s: error setting modem controls (val=0x%x, status=0x%x)\n",
-			    sc_dev->dv_xname, val, reg);
+		if (i <= 0) {
+			printf("%s: codec not responding, status=0x%x\n",
+			    sc_dev->dv_xname, reg);
+			return ENXIO;
+		}
 
 		/* setup sysctls */
 		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
