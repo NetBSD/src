@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.49 2004/10/23 13:28:26 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.50 2005/04/12 13:12:10 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.49 2004/10/23 13:28:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.50 2005/04/12 13:12:10 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,8 @@ Static usbd_status umodem_set_comm_feature(struct umodem_softc *sc,
 Static usbd_status umodem_set_line_coding(struct umodem_softc *sc,
 					  usb_cdc_line_state_t *state);
 
-Static void	umodem_get_caps(usbd_device_handle, int *, int *);
+Static void	umodem_get_caps(usbd_device_handle, int *, int *,
+				usb_interface_descriptor_t *);
 
 Static void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
 Static void	umodem_set(void *, int, int, int);
@@ -172,7 +173,7 @@ USB_MATCH(umodem)
 	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
 
-	umodem_get_caps(uaa->device, &cm, &acm);
+	umodem_get_caps(uaa->device, &cm, &acm, id);
 	if (!(cm & USB_CDC_CM_DOES_CM) ||
 	    !(cm & USB_CDC_CM_OVER_DATA) ||
 	    !(acm & USB_CDC_ACM_HAS_LINE))
@@ -205,11 +206,12 @@ USB_ATTACH(umodem)
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
-	umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap);
+	umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap, id);
 
 	/* Get the data interface no. */
-	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc(dev, UDESC_CS_INTERFACE,
-						       UDESCSUB_CDC_CM);
+	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
+							  UDESC_CS_INTERFACE,
+							  UDESCSUB_CDC_CM, id);
 	if (cmd == NULL) {
 		printf("%s: no CM descriptor\n", USBDEVNAME(sc->sc_dev));
 		goto bad;
@@ -446,23 +448,27 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-umodem_get_caps(usbd_device_handle dev, int *cm, int *acm)
+umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
+		usb_interface_descriptor_t *id)
 {
 	const usb_cdc_cm_descriptor_t *cmd;
 	const usb_cdc_acm_descriptor_t *cad;
 
 	*cm = *acm = 0;
 
-	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc(dev, UDESC_CS_INTERFACE,
-						       UDESCSUB_CDC_CM);
+	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
+							  UDESC_CS_INTERFACE,
+							  UDESCSUB_CDC_CM, id);
 	if (cmd == NULL) {
 		DPRINTF(("umodem_get_desc: no CM desc\n"));
 		return;
 	}
 	*cm = cmd->bmCapabilities;
 
-	cad = (usb_cdc_acm_descriptor_t *)usb_find_desc(dev, UDESC_CS_INTERFACE,
-							UDESCSUB_CDC_ACM);
+	cad = (usb_cdc_acm_descriptor_t *)usb_find_desc_if(dev,
+							   UDESC_CS_INTERFACE,
+							   UDESCSUB_CDC_ACM,
+							   id);
 	if (cad == NULL) {
 		DPRINTF(("umodem_get_desc: no ACM desc\n"));
 		return;
