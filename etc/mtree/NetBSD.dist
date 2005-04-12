@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.282 2005/04/12 14:24:32 jwise Exp $
+#	$NetBSD: NetBSD.dist,v 1.283 2005/04/12 15:35:54 kleink Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1040,6 +1040,7 @@
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/America
+./usr/share/zoneinfo/America/Argentina
 ./usr/share/zoneinfo/America/Indiana
 ./usr/share/zoneinfo/America/Kentucky
 ./usr/share/zoneinfo/America/North_Dakota
