@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.50 2005/04/02 06:28:10 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.51 2005/04/12 22:01:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.50 2005/04/02 06:28:10 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.51 2005/04/12 22:01:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1762,8 +1762,12 @@ _rl_complete_internal(int what_to_do)
 		    (end - len), end);
 	} else
 		matches = 0;
-	if (!rl_attempted_completion_function || !matches)
+	if (!rl_attempted_completion_function ||
+	     (!rl_attempted_completion_over && !matches))
 		matches = completion_matches(temp, (CPFunction *)complet_func);
+
+	if (rl_attempted_completion_over)
+		rl_attempted_completion_over = 0;
 
 	if (matches) {
 		int i, retval = CC_REFRESH;
@@ -2094,6 +2098,16 @@ rl_parse_and_bind(const char *line)
 	argc = el_parse(e, argc, argv);
 	tok_end(tok);
 	return (argc ? 1 : 0);
+}
+
+int
+rl_variable_bind(const char *var, const char *value)
+{
+	/*
+	 * The proper return value is undocument, but this is what the
+	 * readline source seems to do.
+	 */
+	return ((el_set(e, EL_BIND, "", var, value) == -1) ? 1 : 0);
 }
 
 void
