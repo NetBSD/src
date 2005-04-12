@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.1.1.2 2005/02/23 14:54:39 manu Exp $	*/
+/*	$NetBSD: parse.y,v 1.1.1.2.2.1 2005/04/12 09:29:41 tron Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -122,7 +122,7 @@ extern int f_rfcmode;
 
 %token EOT SLASH BLCL ELCL
 %token ADD GET DELETE DELETEALL FLUSH DUMP EXIT
-%token PR_ESP PR_AH PR_IPCOMP PR_ESPUDP
+%token PR_ESP PR_AH PR_IPCOMP PR_ESPUDP PR_TCP
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
 %token F_MODE MODE F_REQID
 %token F_EXT EXTENSION NOCYCLICSEQ
@@ -142,7 +142,7 @@ extern int f_rfcmode;
 %type <num> ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD ALG_ENC_NOKEY
 %type <num> ALG_AUTH ALG_AUTH_NOKEY
 %type <num> ALG_COMP
-%type <num> PR_ESP PR_AH PR_IPCOMP PR_ESPUDP
+%type <num> PR_ESP PR_AH PR_IPCOMP PR_ESPUDP PR_TCP
 %type <num> EXTENSION MODE
 %type <ulnum> DECSTRING
 %type <val> PL_REQUESTS portstr key_string
@@ -293,6 +293,12 @@ protocol_spec
 			p_ext &= ~SADB_X_EXT_OLD;
 			p_natt_oa = $2;
 			p_natt_type = UDP_ENCAP_ESPINUDP;
+		}
+	|	PR_TCP
+		{
+#ifdef SADB_X_SATYPE_TCPSIGNATURE
+			$$ = SADB_X_SATYPE_TCPSIGNATURE;
+#endif
 		}
 	;
 	
@@ -759,6 +765,11 @@ portstr
 upper_spec
 	:	DECSTRING { $$ = $1; }
 	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
+	|	PR_TCP { 
+#ifdef SADB_X_SATYPE_TCPSIGNATURE
+				$$ = IPPROTO_TCP; 
+#endif
+			}
 	|	STRING
 		{
 			struct protoent *ent;
