@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.49 2005/04/10 22:23:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.50 2005/04/12 09:33:37 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7182,4 +7182,20 @@ distrib/sets/lists/man/mi			1.774
 
 	Add "skey" tag to pam_skey.[08].
 	[nakayama, ticket #130]
+
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c	1.2
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c 1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp_agg.c	1.2
+crypto/dist/ipsec-tools/src/setkey/parse.y	1.2
+crypto/dist/ipsec-tools/src/setkey/setkey.8	1.2
+crypto/dist/ipsec-tools/src/setkey/token.l	1.2
+lib/libipsec/package_version.h			1.6
+
+	Resurrect TCP-MD5 support. This fixes bin/29915.
+	[manu, ticket #132]
+
+share/mk/bsd.x11.mk				1.46
+
+	Update __vendorversion__ to 4.5.0.
+	[hira, ticket #133]
 
