@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.543 2005/04/12 15:35:54 kleink Exp $
+# $NetBSD: mi,v 1.544 2005/04/12 15:55:38 jwise Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3480,7 +3480,8 @@
 ./var/chroot/ntpd/var				base-ntp-root
 ./var/chroot/ntpd/var/db			base-ntp-root
 ./var/chroot/ntpd/var/run			base-ntp-root
-./var/chroot/spamd				base-sys-root
+./var/chroot/pfspamd				base-sys-root
+./var/chroot/spamd				base-obsolete
 ./var/chroot/sshd				base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
