@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.22 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: atareg.h,v 1.23 2005/04/12 11:45:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -130,6 +130,8 @@
 #define	WDCC_STANDBY		0xe2	/* set standby timer & enter standby */
 #define	WDCC_STANDBY_IMMED	0xe0	/* enter standby mode */
 #define	WDCC_CHECK_PWR		0xe5	/* check power mode */
+
+#define WCDD_SECURITY_FREEZE	0xf5	/* freeze locking state */
 
 /* Big Drive support */
 #define	WDCC_READ_EXT		0x24	/* read 48-bit addressing */
