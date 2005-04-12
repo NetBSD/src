@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.1.1.2 2005/02/23 14:54:40 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.1.1.2.2.1 2005/04/12 09:29:41 tron Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -177,6 +177,11 @@ ah-old		{ yylval.num = 1; return(PR_AH); }
 esp-old		{ yylval.num = 1; return(PR_ESP); }
 esp-udp		{ yylval.num = 0; return(PR_ESPUDP); }
 ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
+tcp		{ 
+#ifdef SADB_X_SATYPE_TCPSIGNATURE
+			yylval.num = 0; return(PR_TCP); 
+#endif
+		}
 
 	/* authentication alogorithm */
 {hyphen}A	{ BEGIN S_AUTHALG; return(F_AUTH); }
