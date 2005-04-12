@@ -1,4 +1,4 @@
-/*	$NetBSD: spamd-setup.c,v 1.3 2004/11/14 11:26:48 yamt Exp $ */
+/*	$NetBSD: spamd-setup.c,v 1.4 2005/04/12 14:35:36 jwise Exp $ */
 /*	$OpenBSD: spamd-setup.c,v 1.19 2004/06/29 11:19:07 mickey Exp $ */
 
 /*
@@ -41,7 +41,9 @@
 
 #define PATH_FTP		"/usr/bin/ftp"
 #define PATH_PFCTL		"/sbin/pfctl"
+#ifndef PATH_SPAMD_CONF
 #define PATH_SPAMD_CONF		"/etc/spamd.conf"
+#endif
 #define SPAMD_ARG_MAX		256 /* max # of args to an exec */
 
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
