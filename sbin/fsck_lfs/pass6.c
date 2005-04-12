@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.5 2005/04/11 23:19:24 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.6 2005/04/12 23:14:18 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -219,9 +219,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
 		idesc.id_type = ADDR;
 		idesc.id_lblkno = 0;
 		clri(&idesc, "unknown", 2); /* XXX magic number 2 */
-
-		/* Get rid of this vnode for good */
-		vnode_destroy(vp);
+		/* vp has been destroyed */
 	}
 }
 
@@ -391,14 +389,14 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	SEGUSE *sup;
 	struct ubuf *bp;
 
+	while (thisino >= maxino)
+		extend_ifile();
+
 	LFS_IENTRY(ifp, fs, thisino, bp);
 	nextfree = ifp->if_nextfree;
 	ifp->if_nextfree = 0;
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
-
-	while (thisino >= maxino)
-		extend_ifile();
 
 	if (fs->lfs_freehd == thisino) {
 		fs->lfs_freehd = nextfree;
@@ -407,6 +405,7 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 			extend_ifile();
 		}
 	} else {
+		/* Search the free list for this inode */
 		ino = fs->lfs_freehd;
 		while (ino) {
 			LFS_IENTRY(ifp, fs, ino, bp);
