@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.10 2005/04/11 23:19:24 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.11 2005/04/12 12:42:02 martin Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -406,7 +406,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	++nvnodes;
-	hash = ((int)fs + ino) & (VNODE_HASH_MAX - 1);
+	hash = ((int)(intptr_t)fs + ino) & (VNODE_HASH_MAX - 1);
 	LIST_INSERT_HEAD(&getvnodelist[hash], vp, v_getvnodes);
 	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
 
