@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.776 2005/04/11 23:39:12 jwise Exp $
+# $NetBSD: mi,v 1.777 2005/04/12 14:42:37 jwise Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1527,7 +1527,8 @@
 ./usr/share/man/cat5/services.0			man-net-catman		.cat
 ./usr/share/man/cat5/shells.0			man-sys-catman		.cat
 ./usr/share/man/cat5/siginfo.0			man-obsolete		obsolete
-./usr/share/man/cat5/spamd.conf.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat5/pfspamd.conf.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat5/spamd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
@@ -3737,7 +3738,8 @@
 ./usr/share/man/man5/services.5			man-net-man		.man
 ./usr/share/man/man5/shells.5			man-sys-man		.man
 ./usr/share/man/man5/siginfo.5			man-obsolete		obsolete
-./usr/share/man/man5/spamd.conf.5		man-netutil-man		pf,.man
+./usr/share/man/man5/pfspamd.conf.5		man-netutil-man		pf,.man
+./usr/share/man/man5/spamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
