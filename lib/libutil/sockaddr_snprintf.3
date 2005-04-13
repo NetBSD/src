@@ -1,4 +1,4 @@
-.\"     $NetBSD: sockaddr_snprintf.3,v 1.4 2005/04/09 02:05:47 atatat Exp $
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.5 2005/04/13 23:08:03 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2004
+.Dd April 9, 2005
 .Dt SOCKADDR_SNPRINTF 3
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ addresses, the scope portion of the address is printed numerically.
 .It ?
 If present between
 .Dq %
-and the format character and the selected format does not apply to
+and the format character, and the selected format does not apply to
 the given address family, the
 .Dq N/A
 string is elided and no output results.
@@ -239,5 +239,5 @@ printing
 is not very convenient.
 The
 .Dq \&?
-character can suppress this but other formatting (e.g., spacing or
+character can suppress this, but other formatting (e.g., spacing or
 punctuation) will remain.
