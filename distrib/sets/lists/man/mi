@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.1 2005/04/10 22:22:46 tron Exp $
+# $NetBSD: mi,v 1.768.2.2 2005/04/13 15:50:20 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1980,6 +1980,7 @@
 ./usr/share/man/cat8/pdisk.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/peace.0			man-sys-catman		.cat
 ./usr/share/man/cat8/pfctl.0			man-sys-catman		pf,.cat
+./usr/share/man/cat8/pflogd.0			man-sys-catman		pf,.cat
 ./usr/share/man/cat8/pickup.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/pim6dd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pim6sd.0			man-obsolete		obsolete
@@ -4182,6 +4183,7 @@
 ./usr/share/man/man8/pdisk.8			man-sysutil-man		.man
 ./usr/share/man/man8/peace.8			man-sys-man		.man
 ./usr/share/man/man8/pfctl.8			man-sys-man		pf,.man
+./usr/share/man/man8/pflogd.8			man-sys-man		pf,.man
 ./usr/share/man/man8/pickup.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/pim6dd.8			man-obsolete		obsolete
 ./usr/share/man/man8/pim6sd.8			man-obsolete		obsolete
