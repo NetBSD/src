@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.17 2004/09/02 11:35:56 jmmv Exp $
+.\"	$NetBSD: login.conf.5,v 1.18 2005/04/13 20:39:05 drochner Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ The class is used to look up a corresponding entry in the
 file.
 A special class called
 .Dq default
-will be used (if it exists) if there is no other match.
+will be used (if it exists) if the field in the password file is empty.
 .Sh CAPABILITIES
 Refer to
 .Xr getcap 3
