@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2005/04/13 16:05:49 tron Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2005/04/13 16:21:19 tron Exp $
 #	$OpenBSD: Makefile,v 1.3 2004/01/21 08:07:41 deraadt Exp $
 
 PROG=	pfspamd-setup
@@ -7,6 +7,8 @@ MAN=	pfspamd-setup.8
 
 LDADD=	-lz
 DPADD=	${LIBZ}
+
+CPPFLAGS+=	-DPATH_SPAMD_CONF=\"/etc/spamd.conf\"
 
 BINDIR=	/usr/libexec
 
