@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/14 11:26:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2005/04/13 16:26:37 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,9 @@
 
 MAN+=	pf.conf.5
 MAN+=	pf.os.5
-MAN+=	spamd.conf.5
+MAN+=	pfspamd.conf.5
+
+pfspamd.conf.5:	spamd.conf.5
+	cp $> $@
 
 .include <bsd.man.mk>
