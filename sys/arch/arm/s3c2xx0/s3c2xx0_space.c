@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.5 2005/04/01 11:59:25 yamt Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.6 2005/04/13 03:39:18 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.5 2005/04/01 11:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.6 2005/04/13 03:39:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,9 @@ s3c2xx0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	endva = round_page(bsh + size);
 	va = trunc_page(bsh);
 
-	uvm_km_free(kernel_map, va, endva - va);
+	pmap_kremove(va, endva - va);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 
