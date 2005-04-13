@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.50 2005/04/12 09:33:37 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.51 2005/04/13 16:42:09 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7198,4 +7198,55 @@ share/mk/bsd.x11.mk				1.46
 
 	Update __vendorversion__ to 4.5.0.
 	[hira, ticket #133]
+
+distrib/sets/lists/base/mi			1.539
+distrib/sets/lists/man/mi			1.773
+etc/group					1.17
+etc/master.passwd				1.31
+etc/postinstall					1.96-1.97
+usr.sbin/pf/Makefile				1.5
+
+	Enable pflogd(8), the logging daemon for pf(4).
+	[peter, ticket #134]
+
+etc/security					1.95
+
+	Allow an underscore as first character and embedded underscores & dots
+	for login and group names. Fixes PR misc/29913 from Arto Selonen.
+	[peter, ticket #135]
+
+usr.sbin/user/user.c				1.78-1.79
+
+	Allow '_', '.' and '-' in group names, like in login names.
+	Fixes problem with groupadd(8) for _pflogd; pointed out by Jukka Salmi.
+	Do some Common Subexpression Elimination when testing for valid
+	characters in login and group names.
+	[peter, ticket #136]
+
+sys/kern/kern_lkm.c				1.86
+
+	Make "modstat -n NAME" work again.
+	[hanken, ticket #137]
+
+dist/pf/libexec/spamd-setup/spamd-setup.c	1.4
+dist/pf/libexec/spamd/spamd.c			1.7
+distrib/sets/lists/base/mi			1.540-1.542,1.544-1.545
+distrib/sets/lists/man/mi			1.775-1.778
+etc/mtree/NetBSD.dist				1.282
+etc/mtree/special				1.83
+usr.sbin/pf/man/man5/Makefile			1.2
+usr.sbin/pf/spamd-setup/Makefile		1.2-1.4
+usr.sbin/pf/spamd/Makefile			1.3-1.5
+usr.sbin/pf/spamdb/Makefile			1.2
+usr.sbin/pf/spamlogd/Makefile			1.3
+
+	Rename spamd(8) to pfspamd(8).
+	[jwise, ticket #138, #140, #141]
+
+distrib/sets/lists/base/mi			1.543
+etc/mtree/NetBSD.dist				1.283
+
+	Adjust for the Argentina directory that came with tzdata2004b;
+	noted by Geoff C. Wing in PR bin/29954.
+	[kleink, ticket #139]
 
