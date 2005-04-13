@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.77.2.1 2005/04/13 15:58:51 tron Exp $ */
+/* $NetBSD: user.c,v 1.77.2.2 2005/04/13 15:59:37 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.77.2.1 2005/04/13 15:58:51 tron Exp $");
+__RCSID("$NetBSD: user.c,v 1.77.2.2 2005/04/13 15:59:37 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -633,6 +633,9 @@ append_group(char *user, int ngroups, const char **groups)
 	return 1;
 }
 
+/* the valid characters for login and group names */
+#define VALID_CHAR(c)	(isalnum(c) || (c) == '.' || (c) == '_' || (c) == '-')
+
 /* return 1 if `login' is a valid login name */
 static int
 valid_login(char *login_name, int allow_samba)
@@ -643,7 +646,7 @@ valid_login(char *login_name, int allow_samba)
 		return 0;
 	}
 	for (cp = login_name ; *cp ; cp++) {
-		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
+		if (!VALID_CHAR(*cp)) {
 #ifdef EXTENSIONS
 			/* check for a trailing '$' in a Samba user name */
 			if (allow_samba && *cp == '$' && *(cp + 1) == 0x0) {
@@ -663,7 +666,7 @@ valid_group(char *group)
 	unsigned char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
-		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
+		if (!VALID_CHAR(*cp)) {
 			return 0;
 		}
 	}
