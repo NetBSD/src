@@ -158,10 +158,14 @@ options BTUARTCONSOLE
 options KGDB_DEVNAME="\"btuart\""   # ffuart or btuart
 options KGDB_DEVRATE=115200
 
-#aupxa0	at pxaip?		# AC97 interface
+# DMAC support
+pxadmac0 	at pxaip? addr 0x40000000 intr 25
+options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
+#options 	PXA2X0_DMAC_FIXED_PRIORITY	 # Don't want multiple priority
 
-# Audio support
-#audio*	at audiobus?
+# AC97 Audio support
+pxaacu0 	at pxaip? addr 0x40500000 intr 14
+audio*		at audiobus?
 
 # On-board device support
 obio0		at pxaip? intr 8
