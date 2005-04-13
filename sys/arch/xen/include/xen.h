@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.10.2.1 2005/03/30 10:04:25 tron Exp $	*/
+/*	$NetBSD: xen.h,v 1.10.2.2 2005/04/13 21:39:05 tron Exp $	*/
 
 /*
  *
@@ -57,6 +57,7 @@ void	xennetback_init(void);
 void	xen_shm_init(void);
 
 void	xenevt_event(int);
+void	xenevt_notify(void);
 
 void	idle_block(void);
 
