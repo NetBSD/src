@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.94 2005/03/12 00:52:51 tron Exp $
+# $NetBSD: postinstall,v 1.94.2.1 2005/04/13 15:51:38 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -546,7 +546,7 @@ do_uid()
 	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd sshd smmsp
+	    named ntpd sshd smmsp _pflogd
 }
 
 
