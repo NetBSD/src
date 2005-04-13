@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
+#	$NetBSD: files.pxa2x0,v 1.7 2005/04/13 07:42:28 scw Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -48,3 +48,14 @@ file arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc
 
+# DMA controller
+device	pxadmac: dmover_service
+attach	pxadmac at pxaip
+file	arch/arm/xscale/pxa2x0_dmac.c		pxadmac needs-flag
+defparam	opt_pxa2x0_dmac.h	PXA2X0_DMAC_FIXED_PRIORITY
+defparam	opt_pxa2x0_dmac.h	PXA2X0_DMAC_DMOVER_CONCURRENCY
+
+# AC97 Controller
+device	pxaacu: audiobus, auconv, mulaw, ac97, aurateconv
+attach	pxaacu at pxaip
+file	arch/arm/xscale/pxa2x0_ac97.c		pxaacu
