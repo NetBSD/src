@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.4 2005/04/06 21:26:45 tron Exp $
+# $NetBSD: mi,v 1.532.2.5 2005/04/13 15:50:34 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -171,6 +171,7 @@
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
 ./sbin/pfctl					base-netutil-root	pf
+./sbin/pflogd					base-netutil-root	pf
 ./sbin/ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	inet6
 ./sbin/poweroff					base-sysutil-root
