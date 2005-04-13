@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2005/04/13 16:05:49 tron Exp $
 #	$OpenBSD: Makefile,v 1.2 2004/02/27 19:41:39 david Exp $
 
-PROG=	spamdb
+PROG=	pfspamdb
 SRCS=	spamdb.c
-MAN=	spamdb.8
+MAN=	pfspamdb.8
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pf/libexec/spamd
+
+pfspamdb.8: spamdb.8
+	cp $> $@
 
 .include <bsd.prog.mk>
 
