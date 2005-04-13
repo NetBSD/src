@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.5 2005/02/27 00:27:33 perry Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.6 2005/04/13 00:19:44 mrg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.5 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.6 2005/04/13 00:19:44 mrg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -1509,7 +1509,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could allocate firmware DMA memory\n",
+		aprint_error("%s: could not allocate firmware DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
