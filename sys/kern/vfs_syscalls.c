@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.217 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.217.2.1 2005/04/13 21:31:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.1 2005/04/13 21:31:09 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -139,6 +139,15 @@ sys_mount(l, v, retval)
 	struct vattr va;
 	struct nameidata nd;
 	struct vfsops *vfs;
+
+	/*
+	 * if MNT_GETARGS is specified, it should be only flag.
+	 */
+
+	if ((SCARG(uap, flags) & MNT_GETARGS) != 0 &&
+	    (SCARG(uap, flags) & ~MNT_GETARGS) != 0) {
+		return EINVAL;
+	}
 
 	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
 	    (error = suser(p->p_ucred, &p->p_acflag)))
@@ -312,22 +321,24 @@ sys_mount(l, v, retval)
 	 */
 	mp->mnt_flag |= SCARG(uap, flags) & MNT_FORCE;
  update:
-	/*
-	 * Set the mount level flags.
-	 */
-	if (SCARG(uap, flags) & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
-	mp->mnt_flag &=
-	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
-	mp->mnt_flag |= SCARG(uap, flags) &
-	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_IGNORE);
+	if ((SCARG(uap, flags) & MNT_GETARGS) == 0) {
+		/*
+		 * Set the mount level flags.
+		 */
+		if (SCARG(uap, flags) & MNT_RDONLY)
+			mp->mnt_flag |= MNT_RDONLY;
+		else if (mp->mnt_flag & MNT_RDONLY)
+			mp->mnt_iflag |= IMNT_WANTRDWR;
+		mp->mnt_flag &=
+		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
+		mp->mnt_flag |= SCARG(uap, flags) &
+		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
+		    MNT_IGNORE);
+	}
 	/*
 	 * Mount the filesystem.
 	 */
@@ -335,7 +346,7 @@ sys_mount(l, v, retval)
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
 		if (mp->mnt_iflag & IMNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
-		if (error || (mp->mnt_flag & MNT_GETARGS))
+		if (error)
 			mp->mnt_flag = flag;
 		mp->mnt_flag &=~
 		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
