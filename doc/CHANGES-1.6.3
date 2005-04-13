@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.143 2005/04/08 12:55:13 he Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.144 2005/04/13 21:57:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1689,3 +1689,11 @@ usr.bin/telnet/telnet.c				1.30 via patch
 	Plug buffer overflows, ref. CAN 2005-0468 and 2005-0469.
 	Patch from MIT/Kerberos (MITKRB5-SA-2005-001-telnet.txt).
 	[tron, ticket #5742]
+
+sys/dev/pci/neo.c				1.28
+
+	* neo_intr()
+	  update the watermark for the recording buffer
+	  The fix was provided in PR#26706 by Chapman Flack.
+	[kent, ticket #5743]
+
