@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.51 2005/04/13 16:42:09 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.52 2005/04/13 21:41:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7249,4 +7249,40 @@ etc/mtree/NetBSD.dist				1.283
 	Adjust for the Argentina directory that came with tzdata2004b;
 	noted by Geoff C. Wing in PR bin/29954.
 	[kleink, ticket #139]
+
+sys/kern/vfs_syscalls.c				1.218
+
+	sys_mount:
+	- reject attempts of MNT_GETARGS + other MNT_xxx.
+	- don't modify mnt_flags needlessly for MNT_GETARGS.
+	  a stopgap fix for PR/29898.
+	[yamt, ticket #142]
+
+sys/arch/xen/include/evtchn.h			1.3
+
+	Don't stamp soft interrupts.
+	[yamt, ticket #143]
+
+sys/arch/xen/xen/xencons.c			1.5
+
+	xencons_start: retry when queue is full.
+	[yamt, ticket #144]
+
+sys/netinet/ip_output.c				1.150
+sys/netinet/ip_var.h				1.70
+
+	When doing TSO, avoid to use duplicated ip_id heavily.
+	[yamt, ticket #145]
+
+sys/arch/xen/i386/vector.S			1.8
+sys/arch/xen/include/evtchn.h			1.4
+sys/arch/xen/include/intr.h			1.2
+sys/arch/xen/include/xen.h			1.12
+sys/arch/xen/x86/intr.c				1.5
+sys/arch/xen/xen/xenevt.c			1.3
+
+	Fix a bug which corrupts runqueue.
+	When dealing with events, which are handed to xenevt pseudo device,
+	don't call wakeup(9)/selnotify(9) at too high IPL. PR/29792.
+	[yamt, ticket #146]
 
