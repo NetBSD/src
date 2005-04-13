@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.4.2.1 2005/04/13 21:38:58 tron Exp $	*/
 /*	NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp	*/
 
 /*
@@ -104,9 +104,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4.2.1 2005/04/13 21:38:58 tron Exp $");
 
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
 
 #include <sys/cdefs.h>
 #include <sys/param.h> 
@@ -200,6 +201,11 @@ struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softserial_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
+#if defined(DOM0OPS)
+struct intrhand fake_softxenevt_intrhand;
+
+extern void Xsoftxenevt(void);
+#endif
 
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
@@ -248,6 +254,21 @@ cpu_intr_init(struct cpu_info *ci)
 	ci->ci_isources[SIR_SERIAL] = isp;
 	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "softserial");
+
+#if defined(DOM0OPS)
+	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xsoftxenevt;
+	isp->is_resume = Xsoftxenevt;
+	fake_softxenevt_intrhand.ih_level = IPL_SOFTXENEVT;
+	isp->is_handlers = &fake_softxenevt_intrhand;
+	isp->is_pic = &softintr_pic;
+	ci->ci_isources[SIR_XENEVT] = isp;
+	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	    ci->ci_dev->dv_xname, "xenevt");
+#endif /* defined(DOM0OPS) */
 
 	intr_calculatemasks(ci);
 
