@@ -1,4 +1,4 @@
-/*	$NetBSD: spamd.c,v 1.6 2004/11/16 05:14:12 yamt Exp $	*/
+/*	$NetBSD: spamd.c,v 1.6.2.1 2005/04/13 16:16:14 tron Exp $	*/
 /*	$OpenBSD: spamd.c,v 1.71 2004/08/17 09:38:07 henning Exp $	*/
 
 /*
@@ -1096,8 +1096,8 @@ main(int argc, char *argv[])
 	}
 
 jail:
-	if (chroot("/var/chroot/spamd") == -1 || chdir("/") == -1) {
-		syslog(LOG_ERR, "cannot chdir to /var/chroot/spamd.");
+	if (chroot(SPAMD_CHROOT) == -1 || chdir("/") == -1) {
+		syslog(LOG_ERR, "cannot chdir to " SPAMD_CHROOT ".");
 		exit(1);
 	}
 
