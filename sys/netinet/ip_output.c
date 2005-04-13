@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.149 2005/03/11 17:07:51 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.149.2.1 2005/04/13 21:34:51 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.149 2005/03/11 17:07:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.149.2.1 2005/04/13 21:34:51 tron Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -235,7 +235,26 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		ip->ip_id = ip_newid();
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			ip->ip_id = ip_newid();
+		} else {
+
+			/*
+			 * TSO capable interfaces (typically?) increment
+			 * ip_id for each segment.
+			 * "allocate" enough ids here to increase the chance
+			 * for them to be unique.
+			 *
+			 * note that the following calculation is not
+			 * needed to be precise.  wasting some ip_id is fine.
+			 */
+
+			unsigned int segsz = m->m_pkthdr.segsz;
+			unsigned int datasz = ntohs(ip->ip_len) - hlen;
+			unsigned int num = howmany(datasz, segsz);
+
+			ip->ip_id = ip_newid_range(num);
+		}
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
 	} else {
