@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.8 2005/04/08 10:45:10 he Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.9 2005/04/13 21:53:05 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -46,3 +46,9 @@ usr.bin/telnet/telnet.c                         1.30
 	Plug buffer overflows, ref. CAN 2005-0468 and 2005-0469.
 	Patch from MIT/Kerberos (MITKRB5-SA-2005-001-telnet.txt).
 	[tron, ticket #1410]
+
+sys/arch/powerpc/powerpc/trap.c			1.106
+
+	Drop the big lock in upcallret() like all the other platforms do.
+	[chs, ticket #1066]
+
