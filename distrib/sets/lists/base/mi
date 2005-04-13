@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.7 2005/04/13 16:13:07 tron Exp $
+# $NetBSD: mi,v 1.532.2.8 2005/04/13 16:31:49 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -895,7 +895,8 @@
 ./usr/libexec/spamd				base-obsolete		obsolete
 ./usr/libexec/pfspamd-setup			base-netutil-bin	pf
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
-./usr/libexec/spamlogd				base-netutil-bin	pf
+./usr/libexec/pfspamlogd			base-netutil-bin	pf
+./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftpd				base-netutil-bin
