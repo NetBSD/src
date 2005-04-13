@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2005/03/15 16:05:04 peter Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2005/04/13 15:49:52 tron Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=		authpf
 SUBDIR+=	ftp-proxy
 SUBDIR+=	pfctl
-# notyet SUBDIR+=	pflogd
+SUBDIR+=	pflogd
 SUBDIR+=	spamd
 SUBDIR+=	spamd-setup
 SUBDIR+=	spamdb
