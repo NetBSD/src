@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.80 2005/04/14 00:44:16 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.81 2005/04/14 00:58:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -522,10 +522,10 @@ typedef struct _cleanerinfo {
 	if (((bp)->b_flags & B_GATHERED) == 0) {		 	\
 		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
 	}								\
-        simple_unlock(&(fs)->lfs_interlock);				\
+	simple_unlock(&(fs)->lfs_interlock);				\
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
     } else {							 	\
-        simple_unlock(&(fs)->lfs_interlock);				\
+	simple_unlock(&(fs)->lfs_interlock);				\
 	brelse(bp);						 	\
     }									\
 } while (0)
@@ -947,8 +947,8 @@ struct lfs_cluster {
 struct lbnentry {
 	LIST_ENTRY(lbnentry) entry;
 	daddr_t lbn;
-        struct lfs *fs;
-        struct vnode *vp;
+	struct lfs *fs;
+	struct vnode *vp;
 };
 
 /*
