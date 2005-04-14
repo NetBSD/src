@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.53 2005/04/14 00:44:17 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.53 2005/04/14 00:44:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -494,7 +494,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 static __inline unsigned int
 lfs_blist_hash(struct lfs *fs, struct inode *ip, daddr_t lbn)
 {
-        return ((intptr_t)fs ^ ip->i_number ^ lbn) & (lfs_blist_hw - 1);
+	return ((intptr_t)fs ^ ip->i_number ^ lbn) & (lfs_blist_hw - 1);
 }
 
 #define HASH_HEADER(ip, hash) &(lfs_blist[hash])
