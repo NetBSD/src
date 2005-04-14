@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.10 2005/04/14 10:20:01 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.11 2005/04/14 10:30:28 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -129,7 +129,8 @@ is one of following:
 .Ss Privilege separation
 .Bl -tag -width Ds -compact
 .It Ic privsep { Ar statements Ic }
-specifies privilege separation parameters. When enabled, these enable
+specifies privilege separation parameters.
+When enabled, these enable
 .Xr racoon 8
 to operate with an unprivileged instance doing most of the work, while
 a privileged instance take care of performing the following operations
@@ -140,7 +141,8 @@ validating passwords against system database or against PAM.
 .It Ic user Ar user ;
 The user the unprivileged instance of
 .Xr racoon 8 ,
-should switch to. This can be a quoted user name or a numeric UID.
+should switch to.
+This can be a quoted user name or a numeric UID.
 .It Ic group Ar group ;
 The group the unprivileged instance of
 .Xr racoon 8 ,
@@ -150,7 +152,8 @@ A directory where the unprivileged instance of
 .Xr racoon 8
 should
 .Xr chroot 2
-to. This directory should hold a tree where the following files must be
+to.
+This directory should hold a tree where the following files must be
 reachable:
 .Bl -tag -width Ds -compact
 .It Pa /dev/random
@@ -167,8 +170,8 @@ tree.
 .El
 .El
 .Ss Path Specification
-This section specify various paths used by racoon. When running in privilege
-separation mode,
+This section specify various paths used by racoon.
+When running in privilege separation mode,
 .Ic certificate
 and
 .Ic script
@@ -200,8 +203,8 @@ simply add a SA to the file at the moment.
 You should maintain the file manually.
 .It Ic path script Ar path
 .Xr racoon 8
-will search this directory for scripts hooks. If you run with privilege
-separation,
+will search this directory for scripts hooks.
+If you run with privilege separation,
 .Xr racoon 8
 will refuse to execute a script stored outside of this directory.
 .El
@@ -241,7 +244,8 @@ the maximum time it should take to complete phase 2.
 The default time is 10 seconds.
 .It Ic natt_keepalive Ar number Ar timeunit ;
 interval between sending NAT-Traversal keepalive packets.
-The default time is 20 seconds. Set to 0s to disable.
+The default time is 20 seconds.
+Set to 0s to disable.
 .El
 .El
 .\"
@@ -269,8 +273,10 @@ You can provide more than one address definition.
 Same as
 .Ic isakmp
 but also sets the socket options to accept UDP-encapsulated ESP traffic for
-NAT-Traversal. If you plan to use NAT-T, you should provide at least one address
-with port 4500, which is specified by IANA. There is no default.
+NAT-Traversal.
+If you plan to use NAT-T, you should provide at least one address
+with port 4500, which is specified by IANA.
+There is no default.
 .It Ic strict_address ;
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any addresses.
@@ -285,7 +291,8 @@ if racoon was built with support for admin port.
 .Ar owner
 and
 .Ar group
-are the socket path, owner and group, they must be quoted. Defaults are
+are the socket path, owner and group, they must be quoted.
+Defaults are
 .Pa /var/racoon/racoon.sock ,
 UID 0, and GID 0.
 .Ar mode
@@ -409,9 +416,9 @@ will get DN from Subject field in the certificate.
 specifies the login to use in client-side Hybrid authentication.
 It is available only if
 .Xr racoon 8
-has been built with this option. The
-associated password is looked up in the pre-shared key files, using the
-login
+has been built with this option.
+The associated password is looked up in the pre-shared key files,
+using the login
 .Ic string
 as the key id.
 .\"
@@ -462,15 +469,17 @@ is one of followings:
 .Bl -tag -width Ds -compact
 .It Ic x509 Ar cacertfile ;
 .Ar cacertfile
-means a file name of the root certificate authority. Default is
+means a file name of the root certificate authority.
+Default is
 .Pa /etc/openssl/cert.pem
 .El
 .\"
 .It Ic mode_cfg (on \(ba off) ;
-Gather network information through ISAKMP mode configuration. This only
-. works if
-Ic hybrid_rsa_client
-is the approved proposal. Default is off.
+Gather network information through ISAKMP mode configuration.
+This only works if
+.Ic hybrid_rsa_client
+is the approved proposal.
+Default is off.
 .\"
 .It Ic peers_certfile ( dnssec \*(Ba Ar certfile ) ;
 If
@@ -488,8 +497,8 @@ and will use this certificate as the peer's certificate.
 .\"
 .It Ic script Ar script Ic phase1_up
 .It Ic script Ar script Ic phase1_down
-Shell scripts that get executed when an phase 1 SA goes up or down. Both
-script get either
+Shell scripts that get executed when an phase 1 SA goes up or down.
+Both script get either
 .Ic phase1_up
 or
 .Ic phase1_down
@@ -540,19 +549,21 @@ They can be individually specified in each proposal.
 Enable receiver-side IKE fragmentation, if
 .Xr racoon 8
 has been build with
-this feature. This extension is there to workaround
+this feature.
+This extension is there to workaround
 broken firewalls that do not work with fragmented UDP packets.
 IKE fragmentation is always enabled on the sender-side, and
 it is used if the peer advertise itself as IKE fragmentation capable.
 .\"
 .It Ic esp_frag Ar fraglen ;
-This option is only relevant if you use NAT traversal in tunnel mode. Its
-purpose is to workaround broken DSL routers that reject UDP fragments,
-by fragmenting the IP packets before ESP encapsulation. The result is
-ESP over UDP of fragmented packets instead of fragmented ESP over
-UDP packets.
+This option is only relevant if you use NAT traversal in tunnel mode.
+Its purpose is to workaround broken DSL routers that reject UDP
+fragments, by fragmenting the IP packets before ESP encapsulation.
+The result is ESP over UDP of fragmented packets instead of fragmented
+ESP over UDP packets.
 .Ar fraglen
-is the maximum size of the fragments. 552 should work anywhere,
+is the maximum size of the fragments.
+552 should work anywhere,
 but the higher
 .Ar fraglen
 is, the better the performances are.
@@ -646,22 +657,25 @@ The default value is
 This directive enables use of the NAT-Traversal IPsec extension
 (NAT-T).
 NAT-T allows one or both peers to reside behind a NAT gateway (i.e.
-doing address- or port-translation). Presence of NAT gateways along the path
+doing address- or port-translation).
+Presence of NAT gateways along the path
 is discovered during phase 1 handshake and if found, NAT-T is negotiated.
 When NAT-T is in charge all ESP and AH packets of a given connection
-are encapsulated into UDP datagrams (port 4500, by default). Possible values
-are:
+are encapsulated into UDP datagrams (port 4500, by default).
+Possible values are:
 .Bl -tag -width Ds -compact
 .It Ic on
 NAT-T is used when NAT gateway is detected between the peers.
 .It Ic off
-NAT-T is not proposed/accepted. This is the default.
+NAT-T is not proposed/accepted.
+This is the default.
 .It Ic force
 NAT-T is used regardless if there is a NAT between the peers or not.
 .El
-Please note that NAT-T support is a compile time option. Although it
-is enabled in the source distribution by default, it may not be
-available in your particular build. In that case you will get a
+Please note that NAT-T support is a compile time option.
+Although it is enabled in the source distribution by default, it
+may not be available in your particular build.
+In that case you will get a
 warning when using any of NAT-T related config options.
 .\"
 .It Ic dpd_delay Ar delay ;
@@ -747,7 +761,8 @@ directive.
 define the GSS-API endpoint name, to be included as an attribute in the SA,
 if the
 .Ic gssapi_krb
-authentication method is used. If this is not defined, the default value of
+authentication method is used.
+If this is not defined, the default value of
 .Ql host/hostname
 is used, where hostname is the value returned by the
 .Xr hostname 1
@@ -913,24 +928,29 @@ The default is off.
 .Bl -tag -width Ds -compact
 .It Ic mode_cfg { Ar statements Ic }
 Defines the information to return for remote hosts' ISAKMP mode config
-requests. Also defines the authentication source for remote peers
+requests.
+Also defines the authentication source for remote peers
 authenticating through Xauth/hybrid auth.
 .Pp
 This section is currently only useful if you selected the
 .Ic hybrid_rsa_server
-authentication method.  The following are valid statements:
+authentication method.
+The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic auth_source (system \(ba radius \(ba pam) ;
 Specify the source for authentication of users through Xauth/hybrid auth.
 .Ar system
-means to use the Unix user database. This is the default.
+means to use the Unix user database.
+This is the default.
 .Ar radius
-means to use a RADIUS server. It works only if
+means to use a RADIUS server.
+It works only if
 .Xr racoon 8
 was build with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 .Ar pam
-means to use PAM. It works only if
+means to use PAM.
+It works only if
 .Xr racoon 8
 was build with libpam support.
 .It Ic conf_source (local \(ba radius) ;
@@ -941,27 +961,33 @@ means to use the local IP pool defined by the
 .Ic network4
 and
 .Ic pool_size
-keywords. This is the default.
+keywords.
+This is the default.
 .Ar radius
-means to use a RADIUS server. It works only if
+means to use a RADIUS server.
+It works only if
 .Xr racoon 8
 was build with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 RADIUS configuration requires RADIUS authentication.
 .It Ic accounting (none \(ba radius \(ba pam) ;
-Enable or disable accounting. Default is
+Enable or disable accounting.
+Default is
 .Ar none ,
 which disable accounting.
 .Ar radius
-enable RADIUS accounting. It works only if
+enable RADIUS accounting.
+It works only if
 .Xr racoon 8
 was build with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 RADIUS accounting require RADIUS authentication.
 .Ar pam
-enable PAM accounting. It works only if
+enable PAM accounting.
+It works only if
 .Xr racoon 8
-was build with libpam support. PAM accounting require
+was build with libpam support.
+PAM accounting require
 PAM authentication.
 .It Ic pool_size Ar size
 Specify the size of the IP address pool, either local or allocated
@@ -970,7 +996,8 @@ through RADIUS.
 selects the local pool or the RADIUS configuration, but in both
 configuration, you cannot have more than
 .Ar size
-users connected at the same time. The default is 255.
+users connected at the same time.
+The default is 255.
 .It Ic network4 Ar address ;
 .It Ic netmask4 Ar address ;
 The local IP pool base address and network mask from which dynamically
@@ -994,8 +1021,10 @@ Default is
 .It Ic auth_throttle Ar delay ;
 On each failed Xauth authentication attempt, refuse new attempts for
 .Ar delay
-more seconds. This is to avoid dictionary attacks on Xauth passwords.
-Default is one second. Set to zero to disable authentication delay.
+more seconds.
+This is to avoid dictionary attacks on Xauth passwords.
+Default is one second.
+Set to zero to disable authentication delay.
 .El
 .El
 .Ss Special directives
