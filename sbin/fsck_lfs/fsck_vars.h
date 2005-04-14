@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.8 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.9 2005/04/14 21:15:59 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -48,6 +48,7 @@ extern int bflag;		/* location of alternate super block */
 extern int debug;		/* output debugging info */
 extern int exitonfail;
 extern int preen;		/* just fix normal inconsistencies */
+extern int quiet;		/* don't report clean filesystems */
 extern char havesb;		/* superblock has been read */
 extern char skipclean;		/* skip clean file systems if preening */
 extern int fsmodified;		/* 1 => write done to file system */
