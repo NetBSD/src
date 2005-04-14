@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_set_policy.3,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $
+.\"	$NetBSD: ipsec_set_policy.3,v 1.2 2005/04/14 09:47:12 wiz Exp $
 .\"
 .\"	$KAME: ipsec_set_policy.3,v 1.16 2003/01/06 21:59:03 sumikawa Exp $
 .\"
@@ -100,22 +100,22 @@ is formatted as either of the following:
 must be
 .Li in
 ,
-.Li out 
+.Li out
 or
 .Li fwd .
 .Ar direction
-specifies which direction the policy needs to be applied. Nonstandard 
-direction 
+specifies which direction the policy needs to be applied. Nonstandard
+direction
 .Ar fwd
-is substituted with 
+is substituted with
 .Ar in
 on platforms which do not support forward policies.
 .Pp
 .Ar priority specification
 is used to control the placement of the policy within the SPD. Policy position
-is determined by 
-a signed integer where higher priorities indicate the policy is placed 
-closer to the beginning of the list and lower priorities indicate the 
+is determined by
+a signed integer where higher priorities indicate the policy is placed
+closer to the beginning of the list and lower priorities indicate the
 policy is placed closer to the end of the list. Policies with equal
 priorities are added at the end of the group of such policies.
 .Pp
@@ -139,7 +139,7 @@ or
 .Li high (1073741824)
 .Pp
 .Ar offset
-is an unsigned integer. It can be up to 1073741824 for 
+is an unsigned integer. It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
@@ -224,7 +224,7 @@ Both
 .Ar src
 and
 .Ar dst
-can be omited. 
+can be omited.
 .Pp
 .Ar level
 must be set to one of the following:

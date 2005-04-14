@@ -1,4 +1,4 @@
-.\"	$NetBSD: plainrsa-gen.8,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $
+.\"	$NetBSD: plainrsa-gen.8,v 1.2 2005/04/14 09:47:12 wiz Exp $
 .\"
 .\" Id: plainrsa-gen.8,v 1.2 2004/07/12 20:43:50 ludvigm Exp
 .\"
@@ -49,9 +49,9 @@
 .\"
 .Sh DESCRIPTION
 .Nm
-can be used to generate 
+can be used to generate
 .Pa Plain RSA keys
-for authentication purposes. Using 
+for authentication purposes. Using
 .Pa Plain RSA keys
 is optional. Other possibilities are
 .Pa Preshared keys
@@ -60,7 +60,7 @@ or
 .\"
 .Bl -tag -width Ds
 .It Fl b Ar bits
-bit length of the key. Default is 
+bit length of the key. Default is
 .Pa 1024 ,
 recommended length is
 .Pa 2048
@@ -72,9 +72,9 @@ value of RSA public exponent. Default is
 .Pa 0x3 .
 Don't change unless you really know what you are doing!
 .It Fl f Ar outfile
-write the resulting key to 
+write the resulting key to
 .Pa outfile
-instead of 
+instead of
 .Pa stdout .
 If the file already exists it won't be overwritten. You wouldn't like to loose your private key by accident, would you?
 .El
@@ -82,7 +82,7 @@ If the file already exists it won't be overwritten. You wouldn't like to loose y
 .Sh OUTPUT FILE FORMAT
 This is the secter
 .Pa private key
-that should 
+that should
 .Ic never
 leave your computer:
 .Bd -literal
@@ -104,7 +104,7 @@ The line
 .Pa pubkey=0sAQOrW...
 of the
 .Pa private key
-contains a 
+contains a
 .Pa public key
 that should be stored in the other peer's configuration in this format:
 .Bd -literal
@@ -112,9 +112,9 @@ that should be stored in the other peer's configuration in this format:
 .Ed
 .\"
 .Pp
-You can also specify 
+You can also specify
 .Pa from
-and 
+and
 .Pa to
 addresses for which the key is valid:
 .Bd -literal
@@ -130,7 +130,7 @@ addresses for which the key is valid:
 .Sh HISTORY
 The
 .Nm
-written by 
+written by
 .Pa Michal Ludvig <michal@logix.cz>
-first appeared in 
+first appeared in
 .Ic ipsec-tools 0.4 .
