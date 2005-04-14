@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.22 2005/04/14 21:15:59 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.23 2005/04/14 21:30:11 wiz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -304,7 +304,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "usage: %s [-dnpy] [-b block] [-m mode] filesystem ...\n",
+	    "usage: %s [-dfpq] [-b block] [-m mode] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(1);
 }
