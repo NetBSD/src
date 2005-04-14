@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.545 2005/04/12 16:59:16 kleink Exp $
+# $NetBSD: mi,v 1.546 2005/04/14 21:45:10 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1302,7 +1302,7 @@
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/openssl			base-crypto-examples
-./usr/share/examples/pf				base-netutil-examples	pf
+./usr/share/examples/pf				base-netutil-examples
 ./usr/share/examples/postfix			base-postfix-examples
 ./usr/share/examples/racoon			base-netutil-examples
 ./usr/share/examples/racoon/roadwarrior		base-netutil-examples
