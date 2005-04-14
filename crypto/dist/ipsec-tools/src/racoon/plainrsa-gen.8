@@ -1,4 +1,4 @@
-.\"	$NetBSD: plainrsa-gen.8,v 1.4 2005/04/14 10:13:10 wiz Exp $
+.\"	$NetBSD: plainrsa-gen.8,v 1.5 2005/04/14 10:15:58 wiz Exp $
 .\"
 .\" Id: plainrsa-gen.8,v 1.2 2004/07/12 20:43:50 ludvigm Exp
 .\"
@@ -30,8 +30,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Jun 14, 2004
-.Dt plainrsa-gen 8
+.Dd June 14, 2004
+.Dt PLAINRSA-GEN 8
 .Os
 \"
 .Sh NAME
@@ -76,11 +76,11 @@ write the resulting key to
 .Pa outfile
 instead of
 .Pa stdout .
-If the file already exists it won't be overwritten. You wouldn't like to loose your private key by accident, would you?
+If the file already exists it won't be overwritten. You wouldn't like to lose your private key by accident, would you?
 .El
 .\"
 .Sh OUTPUT FILE FORMAT
-This is the secter
+This is the secret
 .Pa private key
 that should
 .Ic never
@@ -124,13 +124,13 @@ addresses for which the key is valid:
 .Ed
 .\"
 .Sh SEE ALSO
-.Xr racoon.conf 5
+.Xr racoon.conf 5 ,
 .Xr racoon 8
 .\"
 .Sh HISTORY
 The
 .Nm
 written by
-.Pa Michal Ludvig <michal@logix.cz>
+.An Michal Ludvig Aq michal@logix.cz
 first appeared in
 .Ic ipsec-tools 0.4 .
