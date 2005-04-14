@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.142 2005/04/14 00:44:17 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.143 2005/04/14 00:58:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.142 2005/04/14 00:44:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.143 2005/04/14 00:58:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,8 +1459,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			if (pages_per_block > 1) {
 				while (curpg &&
 				       ((curpg->offset & fs->lfs_bmask) ||
-				        curpg->offset >= vp->v_size ||
-				        curpg->offset >= endoffset))
+					curpg->offset >= vp->v_size ||
+					curpg->offset >= endoffset))
 					curpg = TAILQ_NEXT(curpg, listq);
 			}
 			if (curpg == NULL)
