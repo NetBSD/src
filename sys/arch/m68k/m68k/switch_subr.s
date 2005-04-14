@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.11 2004/03/24 15:38:41 wiz Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.12 2005/04/14 12:35:42 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -531,7 +531,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 
 	/* Loading '0.0' will change FPU to "idle". */
-	fmove.x #0,%fp0
+	fmove.d #0,%fp0
 	fnop
 
 	/* Save the resulting idle frame into the buffer */
