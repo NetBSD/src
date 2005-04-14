@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_set_policy.3,v 1.7 2005/04/14 10:24:18 wiz Exp $
+.\"	$NetBSD: ipsec_set_policy.3,v 1.8 2005/04/14 10:30:28 wiz Exp $
 .\"
 .\"	$KAME: ipsec_set_policy.3,v 1.16 2003/01/06 21:59:03 sumikawa Exp $
 .\"
@@ -104,30 +104,32 @@ must be
 or
 .Li fwd .
 .Ar direction
-specifies which direction the policy needs to be applied. Nonstandard
-direction
+specifies which direction the policy needs to be applied.
+Nonstandard direction
 .Ar fwd
 is substituted with
 .Ar in
 on platforms which do not support forward policies.
 .Pp
 .Ar priority specification
-is used to control the placement of the policy within the SPD. Policy position
-is determined by
+is used to control the placement of the policy within the SPD.
+Policy position is determined by
 a signed integer where higher priorities indicate the policy is placed
 closer to the beginning of the list and lower priorities indicate the
-policy is placed closer to the end of the list. Policies with equal
+policy is placed closer to the end of the list.
+Policies with equal
 priorities are added at the end of the group of such policies.
 .Pp
 Priority can only
 be specified when libipsec has been compiled against kernel headers that
-support policy priorities (>= 2.6.6). It takes one of the following formats:
+support policy priorities (>= 2.6.6).
+It takes one of the following formats:
 .Bl -tag  -width "discard"
 .It Xo
 .Ar {priority,prio} offset
 .Xc
 .Ar offset
-is an integer in ranges -2147483647 .. 214783648.
+is an integer in ranges -2147483647..214783648.
 .It Xo
 .Ar {priority,prio} base {+,-} offset
 .Xc
@@ -139,12 +141,14 @@ or
 .Li high (1073741824)
 .Pp
 .Ar offset
-is an unsigned integer. It can be up to 1073741824 for
+is an unsigned integer.
+It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
 The interpretation of policy priority in these functions and the kernel DOES
-differ. The relationship between the two can be described as
+differ.
+The relationship between the two can be described as
 p(kernel) = 0x80000000 - p(func)
 .Pp
 With
