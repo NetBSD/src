@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.2 2005/04/14 09:47:12 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.3 2005/04/14 10:04:17 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -131,22 +131,22 @@ is one of following:
 .It Ic privsep { Ar statements Ic }
 specifies privilege separation parameters. When enabled, these enable
 .Xr racoon 8
-to operate with an unprivilegied instance doing most of the work, while
-a privilegied instance take care of performing the following operations
+to operate with an unprivileged instance doing most of the work, while
+a privileged instance take care of performing the following operations
 as root: reading PSK and private keys, launching hook scripts, and
 validating passwords against system database or against PAM.
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic user Ar user ;
-The user the unprivilegied instance of
+The user the unprivileged instance of
 .Xr racoon 8 ,
 should switch to. This can be a quoted user name or a numeric UID.
 .It Ic group Ar group ;
-The group the unprivilegied instance of
+The group the unprivileged instance of
 .Xr racoon 8 ,
 should switch to. This can be a quoted group name or a numeric GID.
 .It Ic chroot Ar path ;
-A directory where the unprivilegied instance of
+A directory where the unprivileged instance of
 .Xr racoon 8
 should
 .Xr chroot 2
@@ -161,7 +161,7 @@ reachable:
 .Pp
 The PSK file, the private keys, and the hook scripts are accessed through
 .Xr racoon 8
-privilegied instance and do not need to be reachable in the chrooted tree.
+privileged instance and do not need to be reachable in the chroot'ed tree.
 .El
 .El
 .Ss Path Specification
@@ -268,7 +268,7 @@ Same as
 .Ic isakmp
 but also sets the socket options to accept UDP-encapsulated ESP traffic for
 NAT-Traversal. If you plan to use NAT-T, you should provide at least one address
-with port 4500, which is specified byt IANA. There is no default.
+with port 4500, which is specified by IANA. There is no default.
 .It Ic strict_address ;
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any addresses.
@@ -428,7 +428,7 @@ except that the individual component values of an
 .Ic asn1dn
 identifier may specified as
 .Ic *
-to match any value (eg "C=XX, O=MyOrg, OU=*, CN=Mine").
+to match any value (e.g. "C=XX, O=MyOrg, OU=*, CN=Mine").
 Alternative acceptable peer identifiers may be specified by repeating the
 .Ic peers_identifier
 statement.
@@ -468,7 +468,7 @@ means a file name of the root certificate authority. Default is
 Gather network information through ISAKMP mode configuration. This only
 . works if
 Ic hybrid_rsa_client
-is the aproved proposal. Default is off.
+is the approved proposal. Default is off.
 .\"
 .It Ic peers_certfile ( dnssec \*(Ba Ar certfile ) ;
 If
@@ -535,7 +535,7 @@ the peer if you do not specify it(them).
 They can be individually specified in each proposal.
 .\"
 .It Ic ike_frag (on \(ba off) ;
-Enable reciever-side IKE fragmentation, if
+Enable receiver-side IKE fragmentation, if
 .Xr racoon 8
 has been build with
 this feature. This extension is there to workaround
@@ -544,7 +544,7 @@ IKE fragmentation is always enabled on the sender-side, and
 it is used if the peer advertise itself as IKE fragmentation capable.
 .\"
 .It Ic esp_frag Ar fraglen ;
-This option is only revelant if you use NAT traversal in tunnel mode. Its
+This option is only relevant if you use NAT traversal in tunnel mode. Its
 purpose is to workaround broken DSL routers that reject UDP fragments,
 by fragmenting the IP packets before ESP encapsulation. The result is
 ESP over UDP of fragmented packets instead of fragmented ESP over
@@ -664,7 +664,7 @@ warning when using any of NAT-T related config options.
 .\"
 .It Ic dpd_delay Ar delay ;
 This option activates the DPD and sets the time (in seconds) allowed
-between 2 proofs of liveness requests.
+between 2 proofs of aliveness requests.
 The default value is
 .Ic 0,
 which disables DPD monitoring, but still negotiates DPD support.
@@ -673,14 +673,14 @@ which disables DPD monitoring, but still negotiates DPD support.
 If
 .Ic dpd_delay
 is set, this sets the delay (in seconds) to wait for a proof of
-liveness before considering it as failed and send another request.
+aliveness before considering it as failed and send another request.
 The default value is
 .Ic 5.
 .\"
 .It Ic dpd_maxfail Ar number ;
 If
 .Ic dpd_delay
-is set, this sets the maximum number of proof of liveness to request
+is set, this sets the maximum number of proof of aliveness to request
 (without reply) before considering the peer is dead.
 The default value is
 .Ic 5.
@@ -910,7 +910,7 @@ The default is off.
 .Ss ISAKMP mode configuration settings
 .Bl -tag -width Ds -compact
 .It Ic mode_cfg { Ar statements Ic }
-Defines the information to return for remote hosts's ISAKMP mode config
+Defines the information to return for remote hosts' ISAKMP mode config
 requests. Also defines the authentication source for remote peers
 authenticating through Xauth/hybrid auth.
 .Pp
@@ -1088,5 +1088,5 @@ and may cause unwanted timeouts, specifically when large D-H group is used.
 .\"
 .Sh SECURITY CONSIDERATIONS
 The use of IKE phase 1 aggressive mode is not recommended,
-as describved in
+as described in
 .Li http://www.kb.cert.org/vuls/id/886601 .
