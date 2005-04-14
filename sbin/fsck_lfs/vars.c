@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.8 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: vars.c,v 1.9 2005/04/14 21:15:59 perseant Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -62,6 +62,7 @@ int bflag;			/* location of alternate super block */
 int debug;			/* output debugging info */
 int exitonfail;
 int preen;			/* just fix normal inconsistencies */
+int quiet;			/* don't report clean filesystems */
 char havesb;			/* superblock has been read */
 char skipclean;			/* skip clean file systems if preening */
 int fsmodified;			/* 1 => write done to file system */
