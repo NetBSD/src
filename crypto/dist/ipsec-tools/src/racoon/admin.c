@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.1.1.2 2005/02/23 14:54:10 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.2 2005/04/14 10:31:35 wiz Exp $	*/
 
 /* Id: admin.c,v 1.17 2005/01/02 08:39:09 manubsd Exp */
 
@@ -321,7 +321,7 @@ admin_process(so2, combuf)
 		}
 
 		plog(LLV_INFO, LOCATION, NULL, 
-		    "Flushing all SA for peer %s\n", rem);
+		    "Flushing all SAs for peer %s\n", rem);
 
 		while ((iph1 = getph1bydstaddr(dst)) != NULL) {
 			if ((loc = strdup(saddrwop2str(iph1->local))) == NULL) {
