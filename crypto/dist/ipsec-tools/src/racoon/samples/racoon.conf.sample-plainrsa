@@ -6,7 +6,7 @@
 # by FreeSWAN/OpenSwan/StrongSwan/*Swan users. This functionality is 
 # here mainly for those who are moving from the *Swan world to Racoon.
 
-# Racoon will look for a keyfile in this diretory.
+# Racoon will look for a keyfile in this directory.
 path certificate "samples" ;
 
 remote anonymous

@@ -27,7 +27,7 @@ listen
 timer
 {
 	# To keep the NAT-mappings on your NAT gateway, there must be
-	# a traffic between the peers. Noramlly the UDP-Encap traffic
+	# a traffic between the peers. Normally the UDP-Encap traffic
 	# (i.e. the real data transported over the tunnel) would be
 	# enough, but to be safe racoon will send the a short
 	# "Keep-alive packet" every few seconds to every peer with
