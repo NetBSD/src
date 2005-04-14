@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.171 2005/04/08 00:08:42 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.172 2005/04/14 00:02:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.171 2005/04/08 00:08:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.172 2005/04/14 00:02:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2297,6 +2297,9 @@ inconsistent:
 	VREF(ip->i_devvp);
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
+
+	/* Initialize hiblk from file size */
+	ip->i_lfs_hiblk = lblkno(ip->i_lfs, ip->i_size + ip->i_lfs->lfs_bsize - 1) - 1;
 
 	*vpp = vp;
 }
