@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.91 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.92 2005/04/14 00:02:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.91 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.92 2005/04/14 00:02:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -321,6 +321,7 @@ lfs_truncate(void *v)
 			uvm_vnp_setsize(ovp, length);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			KASSERT(ovp->v_size == oip->i_size);
+			oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		} else {
 			error = lfs_reserve(fs, ovp, NULL,
@@ -337,6 +338,7 @@ lfs_truncate(void *v)
 			uvm_vnp_setsize(ovp, length);
 			(void) VOP_BWRITE(bp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
@@ -592,6 +594,7 @@ done:
 	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
   errout:
+	oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
 	lfs_segunlock(fs);
 	return (allerror ? allerror : error);
 }

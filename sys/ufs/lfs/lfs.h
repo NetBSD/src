@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.78 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.79 2005/04/14 00:02:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -963,6 +963,7 @@ struct lfs_inode_ext {
 	LIST_HEAD(, lbnentry) lfs_blist[LFS_BLIST_HASH_WIDTH];
 #define LFSI_NO_GOP_WRITE 0x01
 	u_int32_t lfs_iflags;           /* Inode flags */
+	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
@@ -970,6 +971,7 @@ struct lfs_inode_ext {
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
 #define i_lfs_blist		inode_ext.lfs->lfs_blist
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags
+#define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
