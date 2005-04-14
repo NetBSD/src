@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.159 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.160 2005/04/14 00:02:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.159 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.160 2005/04/14 00:02:46 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -897,16 +897,31 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
-	 * addresses to disk; possibly revert the inode size.
-	 * XXX By not writing these blocks, we are making the lfs_avail
+	 * addresses to disk; possibly change the on-disk record of
+	 * the inode size, either by reverting to the previous size
+	 * (in the case of cleaning) or by verifying the inode's block
+	 * holdings (in the case of files being allocated as they are being
+	 * written).
+	 * XXX By not writing UNWRITTEN blocks, we are making the lfs_avail
 	 * XXX count on disk wrong by the same amount.	We should be
 	 * XXX able to "borrow" from lfs_avail and return it after the
 	 * XXX Ifile is written.  See also in lfs_writeseg.
 	 */
+
+	/* Check file size based on highest allocated block */
+	if (((ip->i_ffs1_mode & IFMT) == IFREG ||
+	     (ip->i_ffs1_mode & IFMT) == IFREG) &&
+	    ip->i_size > ((ip->i_lfs_hiblk + 1) << fs->lfs_bshift)) {
+		cdp->di_size = (ip->i_lfs_hiblk + 1) << fs->lfs_bshift;
+		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
+		      PRId64 "\n", (int)ip->i_number, ip->i_size, cdp->di_size));
+	}
 	if (ip->i_lfs_effnblks != ip->i_ffs1_blocks) {
-		cdp->di_size = ip->i_lfs_osize;
-		DLOG((DLOG_VNODE, "lfs_writeinode: cleansing ino %d (%d != %d)\n",
-		      ip->i_number, ip->i_lfs_effnblks, ip->i_ffs1_blocks));
+		if (ip->i_flags & IN_CLEANING)
+			cdp->di_size = ip->i_lfs_osize;
+		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %d != nblk %d)"
+		      " at %x\n", ip->i_number, ip->i_lfs_effnblks,
+		      ip->i_ffs1_blocks, fs->lfs_offset));
 		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + NIADDR;
 		     daddrp++) {
 			if (*daddrp == UNWRITTEN) {
@@ -915,9 +930,31 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			}
 		}
 	} else {
-		/* If all blocks are goig to disk, update the "size on disk" */
+		/* If all blocks are going to disk, update "size on disk" */
 		ip->i_lfs_osize = ip->i_size;
 	}
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Check dinode held blocks against dinode size.
+	 * This should be identical to the check in lfs_vget().
+	 */
+	for (i = (cdp->di_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
+	     i < NDADDR; i++) {
+		KASSERT(i >= 0);
+		if ((cdp->di_mode & IFMT) == IFLNK)
+			continue;
+		if (((cdp->di_mode & IFMT) == IFBLK ||
+		     (cdp->di_mode & IFMT) == IFCHR) && i == 0)
+			continue;
+		if (cdp->di_db[i] != 0) {
+# ifdef DEBUG
+			lfs_dump_dinode(cdp);
+# endif
+			panic("writing inconsistent inode");
+		}
+	}
+#endif /* DIAGNOSTIC */
 
 	if (ip->i_flag & IN_CLEANING)
 		LFS_CLR_UINO(ip, IN_CLEANING);
@@ -1255,6 +1292,10 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	}
 
 	KASSERT(ooff == 0 || ooff == UNWRITTEN || ooff == daddr);
+
+	/* Update hiblk when extending the file */
+	if (lbn > ip->i_lfs_hiblk)
+		ip->i_lfs_hiblk = lbn;
 
 	/*
 	 * Though we'd rather it couldn't, this *can* happen right now

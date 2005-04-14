@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.78 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.79 2005/04/14 00:02:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.78 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.79 2005/04/14 00:02:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.78 2005/04/01 21:59:46 perseant Exp 
 #include <sys/mount.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -382,6 +383,9 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	LFS_SET_UINO(ip, IN_CHANGE);
 	/* on-disk structure has been zeroed out by lfs_vcreate */
 	ip->i_din.ffs1_din->di_inumber = new_ino;
+
+	/* Note no blocks yet */
+	ip->i_lfs_hiblk = -1;
 
 	/* Set a new generation number for this inode. */
 	if (new_gen) {
