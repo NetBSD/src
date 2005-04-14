@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.4 2005/04/14 10:05:45 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.5 2005/04/14 10:06:32 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -161,7 +161,9 @@ reachable:
 .Pp
 The PSK file, the private keys, and the hook scripts are accessed through
 .Xr racoon 8
-privileged instance and do not need to be reachable in the chroot'ed tree.
+privileged instance and do not need to be reachable in the
+.Xr chroot 2 Ap ed
+tree.
 .El
 .El
 .Ss Path Specification
