@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.17 2005/04/01 11:59:36 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.18 2005/04/14 12:37:43 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.17 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.18 2005/04/14 12:37:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -560,7 +560,10 @@ xennet_tx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	DPRINTFN(XEDB_MBUF, ("xennet_tx_mbuf_free %p pa %p\n", txbuf,
 	    (void *)txbuf->xt_pa));
 	SLIST_INSERT_HEAD(&txbuf->xt_sc->sc_tx_bufs, txbuf, xt_next);
-	pool_cache_put(&mbpool_cache, m);
+
+	if (m != NULL) {
+		pool_cache_put(&mbpool_cache, m);
+	}
 }
 
 static void
@@ -644,7 +647,9 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	xennet_rx_push_buffer(sc, id);
 
-	pool_cache_put(&mbpool_cache, m);
+	if (m != NULL) {
+		pool_cache_put(&mbpool_cache, m);
+	}
 }
 
 static int
