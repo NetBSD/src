@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.7 2005/04/13 16:28:06 nathanw Exp $
+.\"	$NetBSD: crypto.4,v 1.8 2005/04/14 18:52:23 nathanw Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -118,7 +118,7 @@ Clone the fd argument to
 yielding a new file descriptor which can be used to create
 crypto sessions and request crypto operations.
 .\"
-.It Dv CRIOCGSESSION Fa struct session_op *sessp
+.It Dv CIOCGSESSION Fa struct session_op *sessp
 Persistently bind a file descriptor returned by a previous
 .Dv CRIOCGET
 to a session: that is, to the chosen privacy algorithm, integrity
