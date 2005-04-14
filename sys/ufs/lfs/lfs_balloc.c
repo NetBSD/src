@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.52 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.53 2005/04/14 00:44:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.52 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.53 2005/04/14 00:44:17 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -98,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.52 2005/04/01 21:59:46 perseant Exp
 int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
 
 u_int64_t locked_fakequeue_count;
+extern int lfs_blist_hw;
+extern int lfs_blist_total;    /* # entries in hash table */
+extern int lfs_blist_maxdepth; /* Hash max depth */
+extern LIST_HEAD(, lbnentry) *lfs_blist;
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -211,7 +215,7 @@ lfs_balloc(void *v)
 			}
 			ip->i_lfs_effnblks += bb;
 			simple_lock(&fs->lfs_interlock);
-			ip->i_lfs->lfs_bfree -= bb;
+			fs->lfs_bfree -= bb;
 			simple_unlock(&fs->lfs_interlock);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
@@ -256,7 +260,7 @@ lfs_balloc(void *v)
 	}
 	if (ISSPACE(fs, bcount, ap->a_cred)) {
 		simple_lock(&fs->lfs_interlock);
-		ip->i_lfs->lfs_bfree -= bcount;
+		fs->lfs_bfree -= bcount;
 		simple_unlock(&fs->lfs_interlock);
 		ip->i_lfs_effnblks += bcount;
 	} else {
@@ -487,6 +491,14 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	return (error);
 }
 
+static __inline unsigned int
+lfs_blist_hash(struct lfs *fs, struct inode *ip, daddr_t lbn)
+{
+        return ((intptr_t)fs ^ ip->i_number ^ lbn) & (lfs_blist_hw - 1);
+}
+
+#define HASH_HEADER(ip, hash) &(lfs_blist[hash])
+
 /*
  * Record this lbn as being "write pending".  We used to have this information
  * on the buffer headers, but since pages don't have buffer headers we
@@ -498,13 +510,14 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	struct lfs *fs;
 	struct inode *ip;
 	struct lbnentry *lbp;
-	int hash;
-
-	/* Don't count metadata */
-	if (lbn < 0 || vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
-		return;
+	unsigned int hash, depth;
 
 	ip = VTOI(vp);
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
+		return;
+
 	fs = ip->i_lfs;
 
 	ASSERT_NO_SEGLOCK(fs);
@@ -512,15 +525,22 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	/* If no space, wait for the cleaner */
 	lfs_availwait(fs, btofsb(fs, 1 << fs->lfs_bshift));
 
-	hash = lbn % LFS_BLIST_HASH_WIDTH;
-	LIST_FOREACH(lbp, &(ip->i_lfs_blist[hash]), entry) {
-		if (lbp->lbn == lbn)
+	hash = lfs_blist_hash(fs, ip, lbn);
+	depth = 0;
+	LIST_FOREACH(lbp, HASH_HEADER(ip, hash), entry) {
+		if (lbp->lbn == lbn && lbp->vp == vp && lbp->fs == fs)
 			return;
+		++depth;
 	}
 
 	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
 	lbp->lbn = lbn;
-	LIST_INSERT_HEAD(&(ip->i_lfs_blist[hash]), lbp, entry);
+	lbp->vp = vp;
+	lbp->fs = fs;
+	if (depth > lfs_blist_maxdepth)
+		lfs_blist_maxdepth = depth;
+	++lfs_blist_total;
+	LIST_INSERT_HEAD(HASH_HEADER(ip, hash), lbp, entry);
 
 	simple_lock(&fs->lfs_interlock);
 	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
@@ -529,11 +549,12 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 }
 
 static void
-lfs_do_deregister(struct lfs *fs, struct lbnentry *lbp)
+lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 {
 	ASSERT_MAYBE_SEGLOCK(fs);
 
 	LIST_REMOVE(lbp, entry);
+	--lfs_blist_total;
 	pool_put(&lfs_lbnentry_pool, lbp);
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
@@ -551,36 +572,22 @@ lfs_deregister_block(struct vnode *vp, daddr_t lbn)
 	struct lfs *fs;
 	struct inode *ip;
 	struct lbnentry *lbp;
-	int hash;
-
-	/* Don't count metadata */
-	if (lbn < 0 || vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
-		return;
+	unsigned int hash;
 
 	ip = VTOI(vp);
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
+		return;
+
 	fs = ip->i_lfs;
-	hash = lbn % LFS_BLIST_HASH_WIDTH;
-	LIST_FOREACH(lbp, &(ip->i_lfs_blist[hash]), entry) {
-		if (lbp->lbn == lbn)
+	hash = lfs_blist_hash(fs, ip, lbn);
+	LIST_FOREACH(lbp, HASH_HEADER(vp, hash), entry) {
+		if (lbp->lbn == lbn && lbp->vp == vp && lbp->fs == fs)
 			break;
 	}
 	if (lbp == NULL)
 		return;
 
-	lfs_do_deregister(fs, lbp);
-}
-
-void
-lfs_deregister_all(struct vnode *vp)
-{
-	struct lbnentry *lbp;
-	struct lfs *fs;
-	struct inode *ip;
-	int i;
-
-	ip = VTOI(vp);
-	fs = ip->i_lfs;
-	for (i = 0; i < LFS_BLIST_HASH_WIDTH; i++)
-		while((lbp = LIST_FIRST(&(ip->i_lfs_blist[i]))) != NULL)
-			lfs_do_deregister(fs, lbp);
+	lfs_do_deregister(fs, ip, lbp);
 }

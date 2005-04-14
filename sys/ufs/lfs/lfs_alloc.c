@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.79 2005/04/14 00:02:46 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.80 2005/04/14 00:44:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.79 2005/04/14 00:02:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.80 2005/04/14 00:44:16 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -417,7 +417,9 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	struct inode *ip;
 	struct ufs1_dinode *dp;
 	struct ufsmount *ump;
+#ifdef QUOTA
 	int i;
+#endif
 
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
@@ -431,8 +433,6 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	memset(dp, 0, sizeof(*dp));
 	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
 	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
-	for (i = 0; i < LFS_BLIST_HASH_WIDTH; i++)
-		LIST_INIT(&(ip->i_lfs_blist[i]));
 	vp->v_data = ip;
 	ip->i_din.ffs1_din = dp;
 	ip->i_ump = ump;
