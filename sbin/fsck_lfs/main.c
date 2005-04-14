@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.21 2005/04/06 04:32:59 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.22 2005/04/14 21:15:59 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -107,7 +107,8 @@ main(int argc, char **argv)
 		case 'P':		/* Progress meter not implemented. */
 			break;
 
-		case 'q':		/* Quiet not implemented */
+		case 'q':
+			quiet++;
 			break;
 
 		case 'y':

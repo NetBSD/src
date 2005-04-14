@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.20 2005/04/11 23:19:24 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.21 2005/04/14 21:15:59 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -187,15 +187,14 @@ setup(const char *dev)
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if (preen == 0)
-		printf("** %s", dev);
 	if (nflag) {
 		if (preen)
 			pfatal("NO WRITE ACCESS");
-		printf(" (NO WRITE)");
-	}
-	if (preen == 0)
-		printf("\n");
+		printf("** %s (NO WRITE)\n", dev);
+		quiet = 0;
+	} else if (!preen && !quiet)
+		printf("** %s\n", dev);
+
 	fsmodified = 0;
 	lfdir = 0;
 
@@ -216,8 +215,9 @@ setup(const char *dev)
 
 	if (fs->lfs_pflags & LFS_PF_CLEAN) {
 		if (doskipclean) {
-			pwarn("%sile system is clean; not checking\n",
-				preen ? "f" : "** F");
+			if (!quiet)
+				pwarn("%sile system is clean; not checking\n",
+				      preen ? "f" : "** F");
 			return (-1);
 		}
 		if (!preen)
