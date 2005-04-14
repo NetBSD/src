@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.52 2005/04/13 21:41:12 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.53 2005/04/14 13:33:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7285,4 +7285,16 @@ sys/arch/xen/xen/xenevt.c			1.3
 	When dealing with events, which are handed to xenevt pseudo device,
 	don't call wakeup(9)/selnotify(9) at too high IPL. PR/29792.
 	[yamt, ticket #146]
+
+sys/dev/mvme/clock_pcctwo.c			1.7
+
+	s/struct device/struct clock_pcctwo_softc/ in CFATTACH_DECL().
+	[scw, ticket #151]
+
+sys/arch/m68k/m68k/switch_subr.s		1.12
+
+	In m68k_make_fpu_idle_frame(), replace fmove.x with fmove.d as the
+	former is not supported natively by the 060's FPU.
+	Fixes a problem on MVME177 reported by Matt Thomas on port-mvme68k@
+	[scw, ticket #152]
 
