@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.9 2005/04/14 10:13:10 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.10 2005/04/14 10:20:01 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -155,8 +155,8 @@ reachable:
 .Bl -tag -width Ds -compact
 .It Pa /dev/random
 .It Pa /dev/urandom
-.It The certificates.
-.It The file containing the Xauth banner.
+.It The certificates
+.It The file containing the Xauth banner
 .El
 .Pp
 The PSK file, the private keys, and the hook scripts are accessed through
@@ -290,7 +290,7 @@ are the socket path, owner and group, they must be quoted. Defaults are
 UID 0, and GID 0.
 .Ar mode
 is the access mode in octal, default is 0600.
-.It Ic adminsock disabled;
+.It Ic adminsock disabled ;
 This directive tells racoon to not listen on the admin socket.
 .El
 .El
@@ -668,7 +668,7 @@ warning when using any of NAT-T related config options.
 This option activates the DPD and sets the time (in seconds) allowed
 between 2 proofs of aliveness requests.
 The default value is
-.Ic 0,
+.Ic 0 ,
 which disables DPD monitoring, but still negotiates DPD support.
 .\"
 .It Ic dpd_retry Ar delay ;
@@ -677,7 +677,7 @@ If
 is set, this sets the delay (in seconds) to wait for a proof of
 aliveness before considering it as failed and send another request.
 The default value is
-.Ic 5.
+.Ic 5 .
 .\"
 .It Ic dpd_maxfail Ar number ;
 If
@@ -685,7 +685,7 @@ If
 is set, this sets the maximum number of proof of aliveness to request
 (without reply) before considering the peer is dead.
 The default value is
-.Ic 5.
+.Ic 5 .
 .\"
 .It Ic nonce_size Ar number ;
 define the byte size of nonce value.
@@ -721,9 +721,9 @@ defines the authentication method used for the phase 1 negotiation.
 This directive must be defined.
 .Ar type
 is one of:
-.Ic pre_shared_key, rsasig, gssapi_krb, hybrid_rsa_server,
+.Ic pre_shared_key , rsasig , gssapi_krb , hybrid_rsa_server ,
 or
-.Ic hybrid_rsa_client.
+.Ic hybrid_rsa_client .
 .\"
 .It Ic dh_group Ar group ;
 define the group used for the Diffie-Hellman exponentiations.
@@ -764,7 +764,7 @@ will obey the policy configured into the kernel by
 and will construct phase 2 proposals by combining
 .Ic sainfo
 specifications in
-.Nm Ns ,
+.Nm ,
 and policies in the kernel.
 .\"
 .Ss Sainfo Specifications
@@ -946,7 +946,8 @@ keywords. This is the default.
 means to use a RADIUS server. It works only if
 .Xr racoon 8
 was build with libradius support, and the configuration is done in
-.Xr radius.conf 5 . RADIUS configuration requires RADIUS authentication.
+.Xr radius.conf 5 .
+RADIUS configuration requires RADIUS authentication.
 .It Ic accounting (none \(ba radius \(ba pam) ;
 Enable or disable accounting. Default is
 .Ar none ,
@@ -955,7 +956,8 @@ which disable accounting.
 enable RADIUS accounting. It works only if
 .Xr racoon 8
 was build with libradius support, and the configuration is done in
-.Xr radius.conf 5 . RADIUS accounting require RADIUS authentication.
+.Xr radius.conf 5 .
+RADIUS accounting require RADIUS authentication.
 .Ar pam
 enable PAM accounting. It works only if
 .Xr racoon 8
