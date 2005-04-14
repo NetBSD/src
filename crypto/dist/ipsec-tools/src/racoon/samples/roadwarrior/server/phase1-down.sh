@@ -2,7 +2,7 @@
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
-# Correctly flush automatically generated SAD and SPD
+# Correctly flush automatically generated SAD and SPD entries
 # This should go away the day racoon will properly do the job.
 
 echo "
