@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.6 2005/04/14 10:26:40 wiz Exp $
+.\"	$NetBSD: racoonctl.8,v 1.7 2005/04/14 10:30:28 wiz Exp $
 .\"
 .\" Id: racoonctl.8,v 1.2.4.1 2005/02/24 18:04:42 manubsd Exp
 .\"
@@ -76,7 +76,8 @@ Communication between
 .Nm
 and
 .Xr racoon 8
-is done through a UNIX socket. By changing the default mode and ownership
+is done through a UNIX socket.
+By changing the default mode and ownership
 of the socket, you can allow non root users to alter
 .Xr racoon 8
 behavior, so do that with caution.
@@ -86,7 +87,8 @@ The following commands are available:
 .It reload-config
 This should cause
 .Xr racoon 8
-to reload its configuration file. This seems completely broken at the time
+to reload its configuration file.
+This seems completely broken at the time
 this man page is written.
 .It show-schedule
 Unknown command.
@@ -103,8 +105,8 @@ either ISAKMP SA, IPsec ESP SA, or IPsec AH SA, or all IPsec SA.
 .Oo Fl u Ar username
 .Oc Ar saopts
 .Xc
-Establish a SA, either a ISAKMP SA, IPsec ESP SA, or IPsec AH SA. The
-optional
+Establish a SA, either a ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
+The optional
 .Fl u Ar username
 can be used when establishing an ISAKMP SA while hybrid auth is in use.
 .Nm
@@ -123,14 +125,14 @@ can have the following formats:
 .Oo Fl u Ar username
 .Oc Ar vpn_gateway
 .Xc
-This is a particular case of the previous command. It will establish an ISAKMP
-SA with
+This is a particular case of the previous command.
+It will establish an ISAKMP SA with
 .Ar vpn_gateway .
 .It delete-sa Ar saopts
 Delete a SA, either a ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 .It vpn-disconnect Ar vpn_gateway
-This is a particular case of the previous command. It will kill all SA
-associated with
+This is a particular case of the previous command.
+It will kill all SAs associated with
 .Ar vpn_gateway .
 .It show-event Op Fl l
 Dump all events reported by
@@ -173,7 +175,8 @@ control socket.
 .Sh HISTORY
 Once was
 .Ic kmpstat
-in the KAME project. It turned into
+in the KAME project.
+It turned into
 .Nm
 but remained undocumented for a while.
 .An Emmanuel Dreyfus Aq manu@NetBSD.org
