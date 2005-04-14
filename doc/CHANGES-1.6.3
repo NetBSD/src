@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.144 2005/04/13 21:57:06 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.145 2005/04/14 22:12:41 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1696,4 +1696,9 @@ sys/dev/pci/neo.c				1.28
 	  update the watermark for the recording buffer
 	  The fix was provided in PR#26706 by Chapman Flack.
 	[kent, ticket #5743]
+
+src/sys/dev/audio.c				patch
+
+	Correct audio recording buffer handling. Fixes PR kern/26706.
+	[kent, ticket #5744]
 
