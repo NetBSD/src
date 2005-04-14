@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.4 2005/04/13 23:12:01 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.5 2005/04/14 10:04:17 wiz Exp $
 .\"
 .\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
 .\"
@@ -126,7 +126,7 @@ No action.
 The program will check validity of input, but no changes to the SPD will
 be made.
 .It Fl r
-Use semantics described in IPSec RFCs.
+Use semantics described in IPsec RFCs.
 This mode is default.
 For details see section
 .Sx RFC vs Linux kernel semantics .
@@ -225,7 +225,7 @@ Add an SPD entry.
 .Xc
 Add an SPD entry based on PF tag.
 .Ar tag
-must be a string surrounded by doublequote.
+must be a string surrounded by double quotes.
 .\"
 .It Xo
 .Li spddelete
@@ -432,7 +432,7 @@ must be decimal number.
 The square bracket around
 .Ar port
 is really necessary.
-They are not manpage metacharacters.
+They are not man page meta-characters.
 For FQDN resolution, the rules applicable to
 .Ar src
 and
