@@ -1,4 +1,4 @@
-.\"	$NetBSD: plainrsa-gen.8,v 1.6 2005/04/14 10:30:28 wiz Exp $
+.\"	$NetBSD: plainrsa-gen.8,v 1.7 2005/04/15 10:58:11 wiz Exp $
 .\"
 .\" Id: plainrsa-gen.8,v 1.2 2004/07/12 20:43:50 ludvigm Exp
 .\"
@@ -33,10 +33,10 @@
 .Dd June 14, 2004
 .Dt PLAINRSA-GEN 8
 .Os
-\"
+.\"
 .Sh NAME
 .Nm plainrsa-gen
-.Nd Generator of Plain RSA keys
+.Nd generator for Plain RSA keys
 .\"
 .Sh SYNOPSIS
 .Nm plainrsa-gen
@@ -50,44 +50,44 @@
 .Sh DESCRIPTION
 .Nm
 can be used to generate
-.Pa Plain RSA keys
+.Li Plain RSA keys
 for authentication purposes.
 Using
-.Pa Plain RSA keys
+.Li Plain RSA keys
 is optional.
 Other possibilities are
-.Pa Pre-shared keys
+.Li Pre-shared keys
 or
-.Pa X.509 certificates .
+.Li X.509 certificates .
 .\"
 .Bl -tag -width Ds
 .It Fl b Ar bits
 bit length of the key.
 Default is
-.Pa 1024 ,
+.Li 1024 ,
 recommended length is
-.Pa 2048
+.Li 2048
 or even
-.Pa 4096
+.Li 4096
 bits.
-Note that generating longer keys takes longer time.
+Note that generating longer keys takes more time.
 .It Fl e Ar pubexp
-value of RSA public exponent.
+value of the RSA public exponent.
 Default is
-.Pa 0x3 .
-Don't change unless you really know what you are doing!
+.Li 0x3 .
+Don't change this unless you really know what you are doing!
 .It Fl f Ar outfile
 write the resulting key to
-.Pa outfile
+.Ar outfile
 instead of
-.Pa stdout .
+.Li stdout .
 If the file already exists it won't be overwritten.
 You wouldn't like to lose your private key by accident, would you?
 .El
 .\"
 .Sh OUTPUT FILE FORMAT
 This is the secret
-.Pa private key
+.Li private key
 that should
 .Ic never
 leave your computer:
@@ -107,11 +107,11 @@ leave your computer:
 .Ed
 .Pp
 The line
-.Pa pubkey=0sAQOrW...
+.Li pubkey=0sAQOrW...
 of the
-.Pa private key
+.Li private key
 contains a
-.Pa public key
+.Li public key
 that should be stored in the other peer's configuration in this format:
 .Bd -literal
 : PUB 0sAQOrWlcwbAIdNSMhDt...
@@ -119,14 +119,12 @@ that should be stored in the other peer's configuration in this format:
 .\"
 .Pp
 You can also specify
-.Pa from
+.Li from
 and
-.Pa to
+.Li to
 addresses for which the key is valid:
 .Bd -literal
 0.0.0.0/0 10.20.30.0/24 : PUB 0sAQOrWlcwbAIdNSMhDt...
-.Ed
-.\"
 .Ed
 .\"
 .Sh SEE ALSO
@@ -134,9 +132,8 @@ addresses for which the key is valid:
 .Xr racoon 8
 .\"
 .Sh HISTORY
-The
 .Nm
-written by
+was written by
 .An Michal Ludvig Aq michal@logix.cz
-first appeared in
+and first appeared in
 .Ic ipsec-tools 0.4 .
