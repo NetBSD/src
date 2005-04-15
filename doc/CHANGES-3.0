@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.54 2005/04/15 09:49:14 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.55 2005/04/15 22:13:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7303,4 +7303,18 @@ distrib/sets/lists/base/mi			1.546
 	The pf directory is always created in /usr/share/examples, so remove
 	the pf keyword from the list. Fixes part of PR 29968 from Jukka Salmi.
 	[peter, ticket #153]
+
+sbin/atactl/atactl.8				1.20-1.21
+sbin/atactl/atactl.c				1.38
+sys/dev/ata/atareg.h				1.23
+
+	Implement a "security" command with subcommands to query the status of
+	the "security" extension and to "freeze" it. With the security
+	extension frozen, disk passwords cannot be set anymore, until the next
+	hard reset. Normally, this is the business of the BIOS, but
+	older/buggy/embedded BIOSes don't care. This leaves the (theoretical)
+	possibility that a malicious program in posession of superuser rights
+	sets a disk password, rendering the disk useless (or at least
+	uneconomical to recover from).
+	[drochner, ticket #156]
 
