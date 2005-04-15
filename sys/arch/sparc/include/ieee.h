@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.8 2003/10/28 15:55:09 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.9 2005/04/15 22:39:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,8 @@ struct ieee_ext {
 #define	EXT_EXP_INFNAN	32767
 
 #if 0
+#define	SNG_QUIETNAN	(1 << 22)
+#define	DBL_QUIETNAN	(1 << 19)
 #define	EXT_QUIETNAN	(1 << 15)
 #endif
 

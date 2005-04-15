@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2004/03/04 23:42:38 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2005/04/15 22:39:11 kleink Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
 	alloca.S \
@@ -13,8 +13,9 @@ SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c \
 	isnanf_ieee754.c isnand_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
 	ldexp_ieee754.c \
-	modf_ieee754.c \
-	nanf_ieee754.c
+	modf_ieee754.c
+
+SRCS+=	nanf.c
 
 SRCS+=	fpgetmask.S fpgetround.S fpgetsticky.S \
 	fpsetmask.S fpsetround.S fpsetsticky.S
