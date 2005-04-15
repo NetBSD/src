@@ -1,6 +1,6 @@
 # $KAME: racoon.conf.sample,v 1.28 2002/10/18 14:33:28 itojun Exp $
 
-# "path" affects "include" directive.  "path" must be specified before any
+# "path" affects "include" directives.  "path" must be specified before any
 # "include" directive with relative file path.
 # you can overwrite "path" directive afterwards, however, doing so may add
 # more confusion.

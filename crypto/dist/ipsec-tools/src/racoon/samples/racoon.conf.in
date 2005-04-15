@@ -1,11 +1,13 @@
 # $KAME: racoon.conf.in,v 1.18 2001/08/16 06:33:40 itojun Exp $
 
-# "path" must be placed before it should be used.
-# You can overwrite which you defined, but it should not use due to confusing.
+# "path" affects "include" directives.  "path" must be specified before any
+# "include" directive with relative file path.
+# you can overwrite "path" directive afterwards, however, doing so may add
+# more confusion.
 path include "@sysconfdir_x@/racoon";
 #include "remote.conf";
 
-# search this file for pre_shared_key with various ID key.
+# the file should contain key ID/key pairs, for pre-shared key authentication.
 path pre_shared_key "@sysconfdir_x@/racoon/psk.txt";
 
 # racoon will look for certificate file in the directory,
@@ -16,7 +18,7 @@ path certificate "@sysconfdir_x@/cert";
 # or "debug2".
 #log debug;
 
-# "padding" defines some parameter of padding.  You should not touch these.
+# "padding" defines some padding parameters.  You should not touch these.
 padding
 {
 	maximum_length 20;	# maximum padding length.
@@ -25,25 +27,25 @@ padding
 	exclusive_tail off;	# extract last one octet.
 }
 
-# if no listen directive is specified, racoon will listen to all
+# if no listen directive is specified, racoon will listen on all
 # available interface addresses.
 listen
 {
 	#isakmp ::1 [7000];
 	#isakmp 202.249.11.124 [500];
-	#admin [7002];		# administrative's port by kmpstat.
-	#strict_address; 	# required all addresses must be bound.
+	#admin [7002];		# administrative port for racoonctl.
+	#strict_address; 	# requires that all addresses must be bound.
 }
 
-# Specification of default various timer.
+# Specify various default timers.
 timer
 {
 	# These value can be changed per remote node.
 	counter 5;		# maximum trying count to send.
 	interval 20 sec;	# maximum interval to resend.
-	persend 1;		# the number of packets per a send.
+	persend 1;		# the number of packets per send.
 
-	# timer for waiting to complete each phase.
+	# maximum time to wait for completing each phase.
 	phase1 30 sec;
 	phase2 15 sec;
 }
@@ -59,7 +61,7 @@ remote anonymous
 
 	nonce_size 16;
 	initial_contact on;
-	proposal_check obey;	# obey, strict or claim
+	proposal_check obey;	# obey, strict, or claim
 
 	proposal {
 		encryption_algorithm 3des;
