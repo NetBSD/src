@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.37 2005/01/20 15:36:02 xtraeme Exp $	*/
+/*	$NetBSD: atactl.c,v 1.37.2.1 2005/04/15 22:07:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.37 2005/01/20 15:36:02 xtraeme Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.37.2.1 2005/04/15 22:07:53 tron Exp $");
 #endif
 
 
@@ -118,6 +118,8 @@ void	print_selftest_entry(int, struct ata_smart_selftest *);
 void	print_error(void *);
 void	print_selftest(void *);
 
+struct ataparams *getataparams(void);
+
 int	is_smart(void);
 
 int	fd;				/* file descriptor for device */
@@ -131,6 +133,7 @@ void	device_setidle(int, char *[]);
 void	device_idle(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
+void	device_security(int, char *[]);
 
 void	device_smart_temp(struct ata_smart_attr *, uint64_t);
 
@@ -144,6 +147,7 @@ struct command device_commands[] = {
 	{ "checkpower",	"",			device_checkpower },
 	{ "smart",	"enable|disable|status|offline #|error-log|selftest-log",
 						device_smart },
+	{ "security",	"freeze|status",	device_security },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -281,6 +285,17 @@ static const struct {
 	{ 240,		"Head flying hours" },
 	{ 250,		"Read error retry rate" },
 	{   0,		"Unknown" },
+};
+
+struct bitinfo ata_sec_st[] = {
+	{ WDC_SEC_SUPP,		"supported" },
+	{ WDC_SEC_EN,		"enabled" },
+	{ WDC_SEC_LOCKED,	"locked" },
+	{ WDC_SEC_FROZEN,	"frozen" },
+	{ WDC_SEC_EXP,		"expired" },
+	{ WDC_SEC_ESE_SUPP,	"enhanced erase support" },
+	{ WDC_SEC_LEV_MAX,	"maximum level" },
+	{ 0,			NULL },
 };
 
 int
@@ -715,6 +730,29 @@ print_selftest(void *buf)
 		print_selftest_entry(i, &stlog->log_entries[i]);
 }
 
+struct ataparams *
+getataparams()
+{
+	struct atareq req;
+	static union {
+		unsigned char inbuf[DEV_BSIZE];
+		struct ataparams inqbuf;
+	} inbuf;
+
+	memset(&inbuf, 0, sizeof(inbuf));
+	memset(&req, 0, sizeof(req));
+
+	req.flags = ATACMD_READ;
+	req.command = WDCC_IDENTIFY;
+	req.databuf = (caddr_t)&inbuf;
+	req.datalen = sizeof(inbuf);
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	return (&inbuf.inqbuf);
+}
+
 /*
  * is_smart:
  *
@@ -725,23 +763,10 @@ int
 is_smart(void)
 {
 	int retval = 0;
-	struct atareq req;
-	unsigned char inbuf[DEV_BSIZE];
 	struct ataparams *inqbuf;
 	char *status;
 
-	memset(&inbuf, 0, sizeof(inbuf));
-	memset(&req, 0, sizeof(req));
-
-	inqbuf = (struct ataparams *) inbuf;
-
-	req.flags = ATACMD_READ;
-	req.command = WDCC_IDENTIFY;
-	req.databuf = (caddr_t) inbuf;
-	req.datalen = sizeof(inbuf);
-	req.timeout = 1000;
-
-	ata_command(&req);
+	inqbuf = getataparams();
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
 		if (!(inqbuf->atap_cmd_set1 & WDC_CMD1_SMART)) {
@@ -779,8 +804,6 @@ void
 device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
-	struct atareq req;
-	unsigned char inbuf[DEV_BSIZE];
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
 	u_int16_t *p;
@@ -790,18 +813,7 @@ device_identify(int argc, char *argv[])
 	if (argc != 0)
 		usage();
 
-	memset(&inbuf, 0, sizeof(inbuf));
-	memset(&req, 0, sizeof(req));
-
-	inqbuf = (struct ataparams *) inbuf;
-
-	req.flags = ATACMD_READ;
-	req.command = WDCC_IDENTIFY;
-	req.databuf = (caddr_t) inbuf;
-	req.datalen = sizeof(inbuf);
-	req.timeout = 1000;
-
-	ata_command(&req);
+	inqbuf = getataparams();
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/*
@@ -1180,6 +1192,30 @@ device_smart(int argc, char *argv[])
 	} else {
 		usage();
 	}
+	return;
+}
+
+void
+device_security(int argc, char *argv[])
+{
+	struct atareq req;
+	struct ataparams *inqbuf;
+
+	/* need subcommand */
+	if (argc < 1)
+		usage();
+
+	if (strcmp(argv[0], "freeze") == 0) {
+		memset(&req, 0, sizeof(req));
+		req.command = WCDD_SECURITY_FREEZE;
+		req.timeout = 1000;
+		ata_command(&req);
+	} else if (strcmp(argv[0], "status") == 0) {
+		inqbuf = getataparams();
+		print_bitinfo("\t", "\n", inqbuf->atap_sec_st, ata_sec_st);
+	} else
+		usage();
+
 	return;
 }
 
