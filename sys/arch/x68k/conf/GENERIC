@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC,v 1.110 2005/04/15 17:27:21 itohy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	8
 
@@ -396,6 +396,10 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?

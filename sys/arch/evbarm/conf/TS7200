@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.13 2005/02/18 21:05:51 dsl Exp $
+#	$NetBSD: TS7200,v 1.14 2005/04/15 17:27:21 itohy Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -350,6 +350,10 @@ atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
 # USB Handspring Visor
 # uvisor*	at uhub? port ?
 # ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 # uscanner* at uhub? port ?
