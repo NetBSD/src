@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_strerror.3,v 1.5 2005/04/14 10:25:58 wiz Exp $
+.\"	$NetBSD: ipsec_strerror.3,v 1.6 2005/04/15 10:58:11 wiz Exp $
 .\"
 .\"	$KAME: ipsec_strerror.3,v 1.9 2001/08/17 07:21:36 itojun Exp $
 .\"
@@ -35,14 +35,14 @@
 .\"
 .Sh NAME
 .Nm ipsec_strerror
-.Nd error message for IPsec policy manipulation library
+.Nd error messages for the IPsec policy manipulation library
 .\"
 .Sh LIBRARY
 .Lb libipsec
 .Sh SYNOPSIS
 .In netinet6/ipsec.h
 .Ft "const char *"
-.Fn ipsec_strerror
+.Fn ipsec_strerror void
 .\"
 .Sh DESCRIPTION
 .Pa netinet6/ipsec.h
@@ -50,12 +50,12 @@ declares
 .Pp
 .Dl extern int ipsec_errcode ;
 .Pp
-which is used to pass an error code from IPsec policy manipulation library
-to an user program.
+which is used to pass an error code from the IPsec policy manipulation
+library to a program.
 .Fn ipsec_strerror
 can be used to obtain the error message string for the error code.
 .Pp
-The array pointed to is not to be modified by the program.
+The array pointed to is not to be modified by the calling program.
 Since
 .Fn ipsec_strerror
 uses
@@ -64,21 +64,21 @@ as underlying function, calling
 .Xr strerror 3
 after
 .Fn ipsec_strerror
-would make the return value from
+will make the return value from
 .Fn ipsec_strerror
-invalid, or overwritten.
+invalid or overwritten.
 .\"
 .Sh RETURN VALUES
 .Fn ipsec_strerror
-always return a pointer to C string.
-The C string must not be overwritten by user programs.
+always returns a pointer to a C string.
+The C string must not be overwritten by the calling program.
 .\"
 .Sh SEE ALSO
 .Xr ipsec_set_policy 3
 .\"
 .Sh HISTORY
 .Fn ipsec_strerror
-first appeared in WIDE/KAME IPv6 protocol stack kit.
+first appeared in the WIDE/KAME IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 .Fn ipsec_strerror
