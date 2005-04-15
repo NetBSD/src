@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.665 2005/04/10 23:02:01 perry Exp $
+# $NetBSD: GENERIC,v 1.666 2005/04/15 17:27:21 itohy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.665 $"
+#ident 		"GENERIC-$Revision: 1.666 $"
 
 maxusers	32		# estimated number of users
 
@@ -1001,6 +1001,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
