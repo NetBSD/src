@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.53 2005/04/14 13:33:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.54 2005/04/15 09:49:14 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7297,4 +7297,10 @@ sys/arch/m68k/m68k/switch_subr.s		1.12
 	former is not supported natively by the 060's FPU.
 	Fixes a problem on MVME177 reported by Matt Thomas on port-mvme68k@
 	[scw, ticket #152]
+
+distrib/sets/lists/base/mi			1.546
+
+	The pf directory is always created in /usr/share/examples, so remove
+	the pf keyword from the list. Fixes part of PR 29968 from Jukka Salmi.
+	[peter, ticket #153]
 
