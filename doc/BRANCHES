@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.46 2005/04/01 12:13:57 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.47 2005/04/15 13:39:00 kent Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -342,6 +342,7 @@ Scope:		kernel (audio device drivers)
 Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
 		Please consult with the maintainer before committing
 		to this branch.
+		This branch is not expected to be compilable yet.
 
 Branch:		kqueue
 Description:	kqueue kernel event notification mechanism (from FreeBSD)
