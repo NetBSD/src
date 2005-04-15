@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.15 2003/08/07 16:43:44 agc Exp $
+.\"	$NetBSD: strtod.3,v 1.16 2005/04/15 22:46:21 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtod.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 28, 2002
+.Dd April 15, 2005
 .Dt STRTOD 3
 .Os
 .Sh NAME
@@ -101,9 +101,7 @@ A character sequence
 .Li NAN
 or
 .Li NAN(n-char-sequence-opt)
-is converted to a quiet \*(Na, if supported, else to a
-.Dq reserved operand
-for that machine (i.e.,
+is converted to a quiet \*(Na, if supported, else remain unrecognized (i.e.,
 .Tn VAX ) .
 .Pp
 If
