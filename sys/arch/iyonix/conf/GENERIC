@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: GENERIC,v 1.9 2005/04/15 17:27:21 itohy Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -398,6 +398,10 @@ usb*	at uhci?
 # USB Handspring Visor
 # uvisor*	at uhub? port ?
 # ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 # uscanner* at uhub? port ?

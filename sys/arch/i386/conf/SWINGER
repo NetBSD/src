@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.63 2005/03/25 23:28:44 cube Exp $
+#	$NetBSD: SWINGER,v 1.64 2005/04/15 17:27:21 itohy Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.63 $"
+#ident 		"SWINGER-$Revision: 1.64 $"
 
 maxusers	64		# estimated number of users
 
@@ -648,6 +648,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

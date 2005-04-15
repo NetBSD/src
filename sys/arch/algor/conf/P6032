@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.29 2005/03/25 23:28:43 cube Exp $
+#	$NetBSD: P6032,v 1.30 2005/04/15 17:27:20 itohy Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.29 $"
+#ident 		"P6032-$Revision: 1.30 $"
 
 maxusers 32
 
@@ -352,6 +352,10 @@ fd*	at	fdc? drive ?
 # FTDI FT8U100AX serial adapter
 #uftdi*	at uhub? port ?
 #ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?
