@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.45 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: strtod.c,v 1.46 2005/04/15 22:46:21 kleink Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.45 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.46 2005/04/15 22:46:21 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -124,6 +124,13 @@ __RCSID("$NetBSD: strtod.c,v 1.45 2005/02/09 21:35:47 kleink Exp $");
 #ifdef __vax__
 #define VAX
 #endif
+
+#if defined(__hppa__) || defined(__mips__) || defined(__sh__)
+#define	NAN_WORD0	0x7ff40000
+#else
+#define	NAN_WORD0	0x7ff80000
+#endif
+#define	NAN_WORD1	0
 
 #define Long	int32_t
 #define ULong	u_int32_t
@@ -1255,19 +1262,12 @@ strtod
 		goto ret;
 	}
 
+#ifdef IEEE_Arith
 	/* "NAN" or "NAN(n-char-sequence-opt)" */
 	if (tolower((unsigned char)*s) == 'n' && strncasecmp(s, "nan", 3) == 0) {
-#ifdef IEEE_Arith
 		/* Build a quiet NaN. */
-		word0(rv) = Exp_mask | ((1 << Exp_shift) - 1);
-		word1(rv) = 0;
-#else
-#ifdef VAX
-		/* Lacking a quiet NaN, build a reserved operand. */
-		word0(rv) = Sign_bit;
-		word1(rv) = 0;
-#endif
-#endif
+		word0(rv) = NAN_WORD0;
+		word1(rv) = NAN_WORD1;
 		s+= 3;
 
 		/* Don't interpret (n-char-sequence-opt), for now. */
@@ -1283,6 +1283,7 @@ strtod
 
 		goto ret;
 	}
+#endif
 
 	if (*s == '0') {
 		nz0 = 1;
