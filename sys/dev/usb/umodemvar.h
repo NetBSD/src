@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.1 2005/04/15 14:14:09 itohy Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.2 2005/04/15 14:43:05 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct umodem_softc {
 int umodem_common_attach(device_ptr_t, struct umodem_softc *,
 			 struct usb_attach_arg *, struct ucom_attach_args *);
 
-void	umodem_get_caps(usbd_device_handle, int *, int *,
+int	umodem_get_caps(usbd_device_handle, int *, int *,
 			usb_interface_descriptor_t *);
 
 void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
