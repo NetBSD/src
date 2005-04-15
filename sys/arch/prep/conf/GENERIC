@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2005/03/25 23:28:44 cube Exp $
+# $NetBSD: GENERIC,v 1.92 2005/04/15 17:27:21 itohy Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.91 $"
+#ident		"GENERIC-$Revision: 1.92 $"
 
 maxusers	32
 
@@ -458,6 +458,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Handspring Visor
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?

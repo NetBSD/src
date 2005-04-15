@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.18 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: PB1000,v 1.19 2005/04/15 17:27:21 itohy Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.18 $"
+#ident 		"PB1000-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -187,6 +187,10 @@ sd*	at scsibus? target ? lun ?
 # USB-IrDA bridge spec
 #uirda* at uhub? port ? configuration ? interface ?
 #irframe* at uirda?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 ugen*		at uhub? port ?

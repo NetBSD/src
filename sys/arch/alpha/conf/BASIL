@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.33 2005/03/25 23:28:43 cube Exp $
+# $NetBSD: BASIL,v 1.34 2005/04/15 17:27:20 itohy Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.33 $"
+#ident 		"BASIL-$Revision: 1.34 $"
 
 maxusers 64
 
@@ -435,6 +435,10 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

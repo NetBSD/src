@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.23 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.24 2005/04/15 17:27:21 itohy Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.23 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -356,6 +356,10 @@ urio*   at uhub? port ?
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*   at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
