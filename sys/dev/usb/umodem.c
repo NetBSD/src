@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.51 2005/04/15 14:14:09 itohy Exp $	*/
+/*	$NetBSD: umodem.c,v 1.52 2005/04/15 14:43:05 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.51 2005/04/15 14:14:09 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.52 2005/04/15 14:43:05 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,10 +115,7 @@ USB_MATCH(umodem)
 	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
 
-	umodem_get_caps(uaa->device, &cm, &acm, id);
-	if (!(cm & USB_CDC_CM_DOES_CM) ||
-	    !(cm & USB_CDC_CM_OVER_DATA) ||
-	    !(acm & USB_CDC_ACM_HAS_LINE))
+	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
