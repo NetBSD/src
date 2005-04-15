@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.58 2005/01/24 01:36:07 joff Exp $
+#	$NetBSD: files.usb,v 1.59 2005/04/15 14:14:09 itohy Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -195,7 +195,9 @@ file	dev/usb/if_udav.c		udav
 
 # Serial drivers
 # Modems
-device	umodem: ucombus
+define	umodem_common
+file	dev/usb/umodem_common.c		umodem_common
+device	umodem: ucombus, umodem_common
 attach	umodem at uhub
 file	dev/usb/umodem.c		umodem
 
