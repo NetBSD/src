@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.8 2005/04/16 22:49:38 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.9 2005/04/16 23:33:18 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -283,7 +283,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		hypervisor_disable_event(xbdi->evtchn);
+		hypervisor_mask_event(xbdi->evtchn);
 		event_remove_handler(xbdi->evtchn, xbdback_evthandler, xbdi);
 		ring_addr = (vaddr_t)xbdi->blk_ring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);

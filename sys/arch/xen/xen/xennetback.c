@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.7 2005/04/16 22:49:38 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.8 2005/04/16 23:33:18 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -374,7 +374,7 @@ fail_1:
 		}
 		xneti->status = DISCONNECTED;
 		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-		hypervisor_disable_event(xneti->xni_evtchn);
+		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
