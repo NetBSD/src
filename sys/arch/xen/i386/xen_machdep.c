@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.6 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.7 2005/04/16 08:49:29 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.7 2005/04/16 08:49:29 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -592,7 +592,7 @@ xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
 }
 
 int
-xpq_update_foreing(pt_entry_t *ptr, pt_entry_t val, int dom)
+xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
 {
 	xpq_queue_t xpq_up[3];
 
