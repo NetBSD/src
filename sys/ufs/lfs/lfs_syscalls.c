@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.104 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.105 2005/04/16 17:28:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.104 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.105 2005/04/16 17:28:37 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.104 2005/04/01 21:59:46 perseant 
 #include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 
 #include <sys/sa.h>
@@ -124,6 +123,8 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 	BLOCK_INFO *blkiov;
 	int blkcnt, error;
 	fsid_t fsid;
+	struct lfs *fs;
+	struct mount *mntp;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -131,11 +132,15 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
+	if ((mntp = vfs_getvfs(fsidp)) == NULL) 
+		return (ENOENT);
+	fs = VFSTOUFS(mntp)->um_lfs;
+
 	blkcnt = SCARG(uap, blkcnt);
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
-	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
+	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
@@ -144,7 +149,7 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
-	free(blkiov, M_SEGMENT);
+	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	return error;
 }
 #else
@@ -160,6 +165,8 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 	BLOCK_INFO_15 *blkiov15;
 	int i, blkcnt, error;
 	fsid_t fsid;
+	struct lfs *fs;
+	struct mount *mntp;
 
 	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
@@ -167,12 +174,16 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
+	if ((mntp = vfs_getvfs(&fsid)) == NULL) 
+		return (ENOENT);
+	fs = VFSTOUFS(mntp)->um_lfs;
+
 	blkcnt = SCARG(uap, blkcnt);
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
-	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
-	blkiov15 = malloc(blkcnt * sizeof(BLOCK_INFO_15), M_SEGMENT, M_WAITOK);
+	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
+	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
 			    blkcnt * sizeof(BLOCK_INFO_15))) != 0)
 		goto out;
@@ -201,8 +212,8 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 			blkcnt * sizeof(BLOCK_INFO_15));
 	}
     out:
-	free(blkiov, M_SEGMENT);
-	free(blkiov15, M_SEGMENT);
+	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
 	return error;
 }
 #endif
@@ -559,6 +570,8 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 	BLOCK_INFO *blkiov;
 	int blkcnt, error;
 	fsid_t fsid;
+	struct lfs *fs;
+	struct mount *mntp;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -566,10 +579,14 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
+	if ((mntp = vfs_getvfs(&fsid)) == NULL) 
+		return (ENOENT);
+	fs = VFSTOUFS(mntp)->um_lfs;
+
 	blkcnt = SCARG(uap, blkcnt);
 	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
-	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
+	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
@@ -578,7 +595,7 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
-	free(blkiov, M_SEGMENT);
+	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	return error;
 }
 #else
@@ -595,6 +612,8 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 	BLOCK_INFO_15 *blkiov15;
 	int i, blkcnt, error;
 	fsid_t fsid;
+	struct lfs *fs;
+	struct mount *mntp;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -602,11 +621,15 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
+	if ((mntp = vfs_getvfs(&fsid)) == NULL) 
+		return (ENOENT);
+	fs = VFSTOUFS(mntp)->um_lfs;
+
 	blkcnt = SCARG(uap, blkcnt);
 	if ((size_t) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
-	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
-	blkiov15 = malloc(blkcnt * sizeof(BLOCK_INFO_15), M_SEGMENT, M_WAITOK);
+	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
+	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
 			    blkcnt * sizeof(BLOCK_INFO_15))) != 0)
 		goto out;
@@ -635,8 +658,8 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 			blkcnt * sizeof(BLOCK_INFO_15));
 	}
     out:
-	free(blkiov, M_SEGMENT);
-	free(blkiov15, M_SEGMENT);
+	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
 	return error;
 }
 #endif
