@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.55 2005/04/15 22:13:48 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.56 2005/04/16 10:33:50 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7317,4 +7317,18 @@ sys/dev/ata/atareg.h				1.23
 	sets a disk password, rendering the disk useless (or at least
 	uneconomical to recover from).
 	[drochner, ticket #156]
+
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/hpc/hpcKbd.c	1.4
+
+	- handle wscons encoding correctly.
+	- handle "swapctrlcaps" encoding.
+	- fix typos in geometry and keymap names.
+	[nakayama, ticket #157]
+
+include/ctype.h					1.28
+
+	Replaced the macro name "notyet" with a 0. There's always the
+	possibility that a strictly conforming C program uses that name
+	itself, so it had to be removed.
+	[rillig, ticket #158]
 
