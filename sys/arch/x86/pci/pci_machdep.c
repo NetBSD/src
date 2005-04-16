@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2005/04/16 07:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/10/30 21:19:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2005/04/16 07:53:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/10/30 21:19:54 fvdl Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <machine/pio.h>
 #include <machine/intr.h>
