@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.81 2005/04/14 00:58:26 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.82 2005/04/16 17:28:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -138,7 +138,8 @@ typedef struct lfs_res_blk {
 #define LFS_NB_IBLOCK	2
 #define LFS_NB_CLUSTER	3
 #define LFS_NB_CLEAN	4
-#define LFS_NB_COUNT	5 /* always last */
+#define LFS_NB_BLKIOV	5
+#define LFS_NB_COUNT	6 /* always last */
 
 /* Number of reserved memory blocks of each type */
 #define LFS_N_SUMMARIES 2
@@ -146,10 +147,11 @@ typedef struct lfs_res_blk {
 #define LFS_N_IBLOCKS	16  /* In theory ssize/bsize; in practice around 2 */
 #define LFS_N_CLUSTERS	16  /* In theory ssize/MAXPHYS */
 #define LFS_N_CLEAN	0
+#define LFS_N_BLKIOV	1
 
 /* Total count of "large" (non-pool) types */
 #define LFS_N_TOTAL (LFS_N_SUMMARIES + LFS_N_SBLOCKS + LFS_N_IBLOCKS +	\
-		     LFS_N_CLUSTERS + LFS_N_CLEAN)
+		     LFS_N_CLUSTERS + LFS_N_CLEAN + LFS_N_BLKIOV)
 
 /* Counts for pool types */
 #define LFS_N_CL	LFS_N_CLUSTERS

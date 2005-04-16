@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.143 2005/04/14 00:58:26 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.144 2005/04/16 17:28:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.143 2005/04/14 00:58:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.144 2005/04/16 17:28:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.143 2005/04/14 00:58:26 perseant Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 
@@ -1313,10 +1312,10 @@ lfs_fcntl(void *v)
 		blkcnt = blkvp.blkcnt;
 		if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 			return (EINVAL);
-		blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
+		blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 		if ((error = copyin(blkvp.blkiov, blkiov,
 		     blkcnt * sizeof(BLOCK_INFO))) != 0) {
-			free(blkiov, M_SEGMENT);
+			lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 			return error;
 		}
 
@@ -1336,7 +1335,7 @@ lfs_fcntl(void *v)
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
 		simple_unlock(&fs->lfs_interlock);
-		free(blkiov, M_SEGMENT);
+		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
 	    case LFCNRECLAIM:

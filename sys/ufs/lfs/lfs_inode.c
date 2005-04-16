@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.92 2005/04/14 00:02:46 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.93 2005/04/16 17:28:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.92 2005/04/14 00:02:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.93 2005/04/16 17:28:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.92 2005/04/14 00:02:46 perseant Exp 
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 
@@ -713,7 +712,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		MALLOC(copy, int32_t *, fs->lfs_bsize, M_TEMP, M_WAITOK);
+		copy = (int32_t *)lfs_malloc(fs, fs->lfs_bsize, LFS_NB_IBLOCK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->lfs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 		/* XXX ondisk32 */
@@ -766,7 +765,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	}
 
 	if (copy != NULL) {
-		FREE(copy, M_TEMP);
+		lfs_free(fs, copy, LFS_NB_IBLOCK);
 	} else {
 		if (bp->b_flags & B_DELWRI) {
 			LFS_UNLOCK_BUF(bp);
