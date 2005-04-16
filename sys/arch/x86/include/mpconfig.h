@@ -1,12 +1,12 @@
-/*	$NetBSD: mpconfig.h,v 1.6 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.7 2005/04/16 07:45:59 yamt Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
  * MP config as well.
  */
 
-#ifndef _X86_MPCONFIG_H
-#define _X86_MPCONFIG_H
+#ifndef _X86_MPCONFIG_H_
+#define _X86_MPCONFIG_H_
 
 /*
  * XXX
@@ -76,4 +76,4 @@ extern int mp_nbus;
 #endif
 #endif
 
-#endif /* _X86_MPCONFIG_H */
+#endif /* _X86_MPCONFIG_H_ */
