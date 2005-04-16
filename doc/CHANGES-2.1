@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.63 2005/04/16 11:03:56 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.64 2005/04/16 11:57:27 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1360,4 +1360,9 @@ sys/dev/ic/wdc.c				1.217 via patch
 	Avoid panics in DIAGNOSTIC kernels on systems using IDE controllers
 	with a shared queue. This fixes kern/27421.
 	[bouyer, ticket #1105]
+
+sys/arch/powerpc/powerpc/pio_subr.S		1.9
+
+	Fix problem with unclosed comments.
+	[matt, ticket #1106]
 
