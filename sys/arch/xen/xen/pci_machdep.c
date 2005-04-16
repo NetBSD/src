@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.3 2005/04/16 07:53:35 yamt Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.4 2005/04/16 22:49:38 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -183,22 +183,23 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 
 	ihp->pirq = line;
-	ihp->irq = bind_pirq_to_irq(ihp->pirq);
-	if (ihp->irq == -1)
+	ihp->evtch = bind_pirq_to_evtch(ihp->pirq);
+	if (ihp->evtch == -1)
 		goto bad;
 
 	return 0;
 
 bad:
 	ihp->pirq = -1;
-	ihp->irq = -1;
+	ihp->evtch = -1;
 	return 1;
 }
 const char
 *pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char buf[64];
-	snprintf(buf, 64, "physical irq %d, irq %d", ih.pirq, ih.irq);
+	snprintf(buf, 64, "irq %d, event channel %d",
+	    ih.pirq, ih.evtch);
 	return buf;
 	
 }
@@ -213,7 +214,7 @@ void *
 pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
     int level, int (*func)(void *), void *arg)
 {
-	return (void *)pirq_establish(intrh.pirq, intrh.irq, func, arg, level);
+	return (void *)pirq_establish(intrh.pirq, intrh.evtch, func, arg, level);
 }
 
 void

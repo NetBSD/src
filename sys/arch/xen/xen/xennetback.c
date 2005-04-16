@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.6 2005/04/01 11:59:36 yamt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.7 2005/04/16 22:49:38 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -95,7 +95,6 @@ struct xnetback_instance {
 
 	/* remote domain communication stuff */
 	unsigned int xni_evtchn;
-	unsigned int xni_irq;
 	paddr_t xni_ma_rxring; /* machine address of rx shared ring */
 	paddr_t xni_ma_txring; /* machine address of tx shared ring */
 
@@ -349,12 +348,11 @@ fail_1:
 		xneti->xni_rxring = (void *)ring_rxaddr;
 		xneti->xni_txring = (void *)ring_txaddr;
 		xneti->xni_evtchn = req->evtchn;
-		xneti->xni_irq = bind_evtchn_to_irq(req->evtchn);
-		event_set_handler(xneti->xni_irq, xennetback_evthandler,
+		event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
 		    xneti, IPL_NET);
-		printf("%s interrupting at irq %d\n",
-		    xneti->xni_if.if_xname, xneti->xni_irq);
-		hypervisor_enable_irq(xneti->xni_irq);
+		printf("%s using event channel %d\n",
+		    xneti->xni_if.if_xname, xneti->xni_evtchn);
+		hypervisor_enable_event(xneti->xni_evtchn);
 		xneti->status = CONNECTED;
 		if (xneti->xni_if.if_flags & IFF_UP)
 			xneti->xni_if.if_flags |= IFF_RUNNING;
@@ -376,10 +374,9 @@ fail_1:
 		}
 		xneti->status = DISCONNECTED;
 		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-		hypervisor_disable_irq(xneti->xni_irq);
-		event_remove_handler(xneti->xni_irq,
+		hypervisor_disable_event(xneti->xni_evtchn);
+		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
-		unbind_evtchn_to_irq(xneti->xni_evtchn);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
@@ -750,6 +747,8 @@ xennetback_ifstop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	if (xneti->status == CONNECTED) {
+		printf("%s: req_prod 0x%x resp_prod 0x%x req_cons 0x%x event 0x%x\n",
+		    ifp->if_xname, xneti->xni_txring->req_prod, xneti->xni_txring->resp_prod, xneti->xni_txring->req_cons, xneti->xni_txring->event);
 		xennetback_evthandler(ifp->if_softc); /* flush pending RX requests */
 	}
 	splx(s);
