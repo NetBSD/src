@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.65 2005/04/16 12:20:42 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.66 2005/04/16 14:51:18 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1400,4 +1400,12 @@ sys/dev/pci/if_tlvar.h				1.11
 
 	Attach tl(4) as an event source to rnd(4).
 	[dan, ticket #1117]
+
+sys/dev/pci/trm.c				1.19
+
+	Move epprom settings checks to the right place, so that sync/wide
+	nego is started based on the eeprom values and adapter capabilities.
+	Avoid the driver to negotiate wide transfers with a wide drive
+	connected to a non-wide capable controller.
+	[bouyer, ticket #1429]
 
