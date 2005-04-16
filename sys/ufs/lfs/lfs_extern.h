@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.65 2005/04/14 00:44:17 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.66 2005/04/16 17:35:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 /* lfs_balloc.c */
 void lfs_register_block(struct vnode *, daddr_t);
 void lfs_deregister_block(struct vnode *, daddr_t);
+void lfs_deregister_all(struct vnode *);
 
 /* lfs_bio.c */
 int lfs_availwait(struct lfs *, int);

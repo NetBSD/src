@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.93 2005/04/16 17:28:37 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.94 2005/04/16 17:35:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.93 2005/04/16 17:28:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.94 2005/04/16 17:35:58 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -486,6 +486,7 @@ lfs_truncate(void *v)
 				blocksreleased += nblocks;
 				oip->i_ffs1_ib[level] = 0;
 				lfs_blkfree(fs, bn, fs->lfs_bsize, &lastseg, &bc);
+        			lfs_deregister_block(ovp, bn);
 			}
 		}
 		if (lastiblock[level] >= 0)
@@ -512,6 +513,7 @@ lfs_truncate(void *v)
 		blocksreleased += btofsb(fs, bsize);
 		oip->i_ffs1_db[i] = 0;
 		lfs_blkfree(fs, bn, obsize, &lastseg, &bc);
+        	lfs_deregister_block(ovp, bn);
 	}
 	if (lastblock < 0)
 		goto done;
@@ -598,7 +600,7 @@ done:
 	return (allerror ? allerror : error);
 }
 
-/* Update segment usage information when removing a block. */
+/* Update segment and avail usage information when removing a block. */
 static int
 lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 	    size_t *num)
@@ -616,6 +618,7 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 		} else
 			*num += bsize;
 	}
+
 	return error;
 }
 

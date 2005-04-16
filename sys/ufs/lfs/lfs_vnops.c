@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.144 2005/04/16 17:28:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.145 2005/04/16 17:35:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.144 2005/04/16 17:28:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.145 2005/04/16 17:35:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1041,6 +1041,7 @@ lfs_reclaim(void *v)
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
 	pool_put(&lfs_dinode_pool, ip->i_din.ffs1_din);
+	lfs_deregister_all(vp);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
 	pool_put(&lfs_inode_pool, vp->v_data);

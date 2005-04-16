@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.173 2005/04/14 00:44:17 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.174 2005/04/16 17:35:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.173 2005/04/14 00:44:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.174 2005/04/16 17:35:58 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -130,12 +130,6 @@ extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
 int lfs_do_rfw = 0;
-
-#define LFS_BLIST_HASH_WIDTH 0x1000
-int lfs_blist_hw = LFS_BLIST_HASH_WIDTH; 	/* Hash width */
-int lfs_blist_total;    /* # entries in hash table */
-int lfs_blist_maxdepth; /* Hash max depth */
-LIST_HEAD(, lbnentry) *lfs_blist;
 
 const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 	&lfs_vnodeop_opv_desc,
@@ -282,8 +276,6 @@ lfs_writerd(void *arg)
 void
 lfs_init()
 {
-	int i;
-
 #ifdef _LKM
 	malloc_type_attach(M_SEGMENT);
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
@@ -301,12 +293,6 @@ lfs_init()
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
 	simple_lock_init(&lfs_subsys_lock);
-
-	lfs_blist_total = 0;
-	lfs_blist_maxdepth = 0;
-	lfs_blist = malloc(lfs_blist_hw * sizeof(*lfs_blist), M_SEGMENT, M_WAITOK);
-	for (i = 0; i < lfs_blist_hw; i++)
-		LIST_INIT(&(lfs_blist[i]));
 }
 
 void
@@ -323,6 +309,8 @@ lfs_done()
 	pool_destroy(&lfs_inode_pool);
 	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
+	pool_destroy(&lfs_lbnentry_pool);
+	free(lfs_blist);
 	malloc_type_detach(M_SEGMENT);
 #endif
 }
