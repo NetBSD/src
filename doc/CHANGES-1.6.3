@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.145 2005/04/14 22:12:41 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.146 2005/04/16 14:51:46 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1701,4 +1701,12 @@ src/sys/dev/audio.c				patch
 
 	Correct audio recording buffer handling. Fixes PR kern/26706.
 	[kent, ticket #5744]
+
+sys/dev/pci/trm.c				1.19
+
+	Move epprom settings checks to the right place, so that sync/wide nego
+	is started based on the eeprom values and adapter capabilities.
+	Avoid the driver to negotiate wide transfers with a wide drive
+	connected to a non-wide capable controller.
+	[bouyer, ticket #5751]
 
