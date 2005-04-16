@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.5 2005/04/16 22:49:37 bouyer Exp $	*/
 
 /*
  *
@@ -77,7 +77,6 @@ struct xennet_softc {
 	unsigned int		sc_backend_state;
 
 	unsigned int		sc_evtchn;
-	unsigned int		sc_irq;
 
 	netif_tx_interface_t	*sc_tx;
 	netif_rx_interface_t	*sc_rx;

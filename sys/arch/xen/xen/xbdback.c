@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.7 2005/04/01 11:59:36 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.8 2005/04/16 22:49:38 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -80,7 +80,6 @@ struct xbdback_instance {
 	xbdback_state_t status;
 	/* parameters for the communication */
 	unsigned int evtchn;
-	unsigned int irq;
 	paddr_t ma_ring;
 	/* private parameters for communication */
 	blkif_ring_t *blk_ring;
@@ -263,11 +262,11 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xbdi->blk_ring = (void *)ring_addr;
 		xbdi->evtchn = req->evtchn;
-		xbdi->irq = bind_evtchn_to_irq(xbdi->evtchn);
-		event_set_handler(xbdi->irq, xbdback_evthandler, xbdi, IPL_BIO);
-		printf("xbd backend %d for domain %d interrupting at irq %d\n",
-		    xbdi->handle, xbdi->domid, xbdi->irq);
-		hypervisor_enable_irq(xbdi->irq);
+		event_set_handler(xbdi->evtchn,
+		    xbdback_evthandler, xbdi, IPL_BIO);
+		printf("xbd backend %d for domain %d using event channel %d\n",
+		    xbdi->handle, xbdi->domid, xbdi->evtchn);
+		hypervisor_enable_event(xbdi->evtchn);
 		req->status = BLKIF_BE_STATUS_OKAY;
 		break;
 	}
@@ -284,9 +283,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		hypervisor_disable_irq(xbdi->irq);
-		event_remove_handler(xbdi->irq, xbdback_evthandler, xbdi);
-		unbind_evtchn_to_irq(xbdi->evtchn);
+		hypervisor_disable_event(xbdi->evtchn);
+		event_remove_handler(xbdi->evtchn, xbdback_evthandler, xbdi);
 		ring_addr = (vaddr_t)xbdi->blk_ring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,

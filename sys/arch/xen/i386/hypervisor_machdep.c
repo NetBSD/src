@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.6 2005/03/26 20:00:49 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.7 2005/04/16 22:49:37 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2005/03/26 20:00:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.7 2005/04/16 22:49:37 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -93,7 +93,6 @@ stipending()
 	uint32_t l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
-	int irq;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int ret;
@@ -128,11 +127,13 @@ stipending()
 				l2 &= ~(1 << l2i);
 
 				port = (l1i << 5) + l2i;
-				if ((irq = evtchn_to_irq[port]) != -1) {
-					hypervisor_acknowledge_irq(irq);
-					ci->ci_ipending |= (1 << irq);
+				if (evtsource[port]) {
+					hypervisor_mask_event(port);
+					hypervisor_clear_event(port);
+					hypervisor_set_ipending(port, l1i, l2i);
+					evtsource[port]->ev_evcnt.ev_count++;
 					if (ret == 0 && ci->ci_ilevel <
-					    ci->ci_isources[irq]->is_maxlevel)
+					    evtsource[port]->ev_maxlevel)
 						ret = 1;
 				}
 #ifdef DOM0OPS
@@ -161,7 +162,6 @@ do_hypervisor_callback(struct intrframe *regs)
 	uint32_t l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
-	int irq;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int level;
@@ -188,11 +188,11 @@ do_hypervisor_callback(struct intrframe *regs)
 				port = (l1i << 5) + l2i;
 #ifdef PORT_DEBUG
 				if (port == PORT_DEBUG)
-					printf("do_hypervisor_callback event %d irq %d\n", port, evtchn_to_irq[port]);
+					printf("do_hypervisor_callback event %d%d\n", port);
 #endif
-				if ((irq = evtchn_to_irq[port]) != -1)
-					do_event(irq, regs);
-#if DOM0OPS
+				if (evtsource[port])
+					do_event(port, regs);
+#ifdef DOM0OPS
 				else
 					xenevt_event(port);
 #endif
@@ -253,4 +253,48 @@ hypervisor_clear_event(unsigned int ev)
 #endif
 
 	x86_atomic_clear_bit(&s->evtchn_pending[0], ev);
+}
+
+void
+hypervisor_enable_ipl(unsigned int ipl)
+{
+	u_int32_t l1, l2;
+	int l1i, l2i;
+	struct cpu_info *ci = curcpu();
+
+	/* enable all events for ipl */
+
+	l1 = ci->ci_isources[ipl]->ipl_evt_mask1;
+	ci->ci_isources[ipl]->ipl_evt_mask1 = 0;
+	while ((l1i = ffs(l1)) != 0) {
+		l1i--;
+		l1 &= ~(1 << l1i);
+		l2 = ci->ci_isources[ipl]->ipl_evt_mask2[l1i];
+		ci->ci_isources[ipl]->ipl_evt_mask2[l1i] = 0;
+		while ((l2i = ffs(l2)) != 0) {
+			l2i--;
+			l2 &= ~(1 << l2i);
+
+			hypervisor_enable_event((l1i << 5) + l2i);
+		}
+	}
+}
+
+void
+hypervisor_set_ipending(int port, int l1, int l2)
+{
+	int ipl, imask;
+	struct cpu_info *ci = curcpu();
+
+	/* set pending bit for the appropriate IPLs */	
+	ci->ci_ipending |= evtsource[port]->ev_imask;
+
+	/* and set event pending bit for each IPL */
+	imask = evtsource[port]->ev_imask;
+	while ((ipl = ffs(imask)) != 0) {
+		ipl--;
+		imask &= ~(1 << ipl);
+		ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
+		ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
+	}
 }
