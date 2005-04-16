@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/03/06 03:31:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2005/04/16 12:10:26 tron Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -42,3 +42,7 @@ CPPFLAGS+=	-DPSZ=8
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
 .include "../../Makefile.drivermod"
+
+SUBDIR=	riva128
+
+.include <bsd.subdir.mk>
