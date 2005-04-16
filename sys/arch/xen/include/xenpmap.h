@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.5 2005/04/16 08:49:29 yamt Exp $	*/
 
 /*
  *
@@ -47,7 +47,7 @@ void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
-int  xpq_update_foreing(pt_entry_t *, pt_entry_t, int);
+int  xpq_update_foreign(pt_entry_t *, pt_entry_t, int);
 
 extern paddr_t *xpmap_phys_to_machine_mapping;
 
