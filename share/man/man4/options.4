@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.232.2.6 2004/06/06 06:40:28 jdc Exp $
+.\"	$NetBSD: options.4,v 1.232.2.6.2.1 2005/04/16 12:14:41 tron Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -494,8 +494,11 @@ binaries otherwise.
 Beware - if this option is on, the kernel would run
 .Em any
 unknown ELF binaries as if they were
-.Nx
-binaries.
+.It Cd options P1003_1B_SEMAPHORE
+Includes kernel support for the standard C library
+.Pq Pa libc
+functions that implement semaphores as specified in
+.St -p1003.1-96 .
 .El
 .Ss Debugging Options
 .Bl -ohang
