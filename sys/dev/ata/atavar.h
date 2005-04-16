@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.40.2.2.2.1 2005/03/16 18:36:59 jmc Exp $	*/
+/*	$NetBSD: atavar.h,v 1.40.2.2.2.2 2005/04/16 10:59:39 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -66,6 +66,9 @@ struct ata_xfer {
 #define	C_TIMEOU	0x0002		/* xfer processing timed out */
 #define	C_POLL		0x0004		/* command is polled */
 #define	C_DMA		0x0008		/* command uses DMA */
+#define	C_WAIT		0x0010		/* can use tsleep */
+#define	C_WAITACT	0x0020		/* wakeup when active */
+#define	C_FREE		0x0040		/* call wdc_free_xfer() asap */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1 /* device is gone */
