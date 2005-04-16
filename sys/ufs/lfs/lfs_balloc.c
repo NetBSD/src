@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.55 2005/04/16 17:35:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.55 2005/04/16 17:35:58 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
+#include <sys/tree.h>
 #include <sys/trace.h>
-#include <sys/malloc.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -98,10 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.54 2005/04/14 00:58:26 perseant Exp
 int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
 
 u_int64_t locked_fakequeue_count;
-extern int lfs_blist_hw;
-extern int lfs_blist_total;    /* # entries in hash table */
-extern int lfs_blist_maxdepth; /* Hash max depth */
-extern LIST_HEAD(, lbnentry) *lfs_blist;
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -491,13 +487,15 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	return (error);
 }
 
-static __inline unsigned int
-lfs_blist_hash(struct lfs *fs, struct inode *ip, daddr_t lbn)
+static __inline int
+lge(struct lbnentry *a, struct lbnentry *b)
 {
-	return ((intptr_t)fs ^ ip->i_number ^ lbn) & (lfs_blist_hw - 1);
+	return a->lbn - b->lbn;
 }
 
-#define HASH_HEADER(ip, hash) &(lfs_blist[hash])
+SPLAY_PROTOTYPE(lfs_splay, lbnentry, entry, lge);
+
+SPLAY_GENERATE(lfs_splay, lbnentry, entry, lge);
 
 /*
  * Record this lbn as being "write pending".  We used to have this information
@@ -510,7 +508,6 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	struct lfs *fs;
 	struct inode *ip;
 	struct lbnentry *lbp;
-	unsigned int hash, depth;
 
 	ip = VTOI(vp);
 
@@ -525,22 +522,13 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	/* If no space, wait for the cleaner */
 	lfs_availwait(fs, btofsb(fs, 1 << fs->lfs_bshift));
 
-	hash = lfs_blist_hash(fs, ip, lbn);
-	depth = 0;
-	LIST_FOREACH(lbp, HASH_HEADER(ip, hash), entry) {
-		if (lbp->lbn == lbn && lbp->vp == vp && lbp->fs == fs)
-			return;
-		++depth;
-	}
-
 	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
 	lbp->lbn = lbn;
-	lbp->vp = vp;
-	lbp->fs = fs;
-	if (depth > lfs_blist_maxdepth)
-		lfs_blist_maxdepth = depth;
-	++lfs_blist_total;
-	LIST_INSERT_HEAD(HASH_HEADER(ip, hash), lbp, entry);
+	if (SPLAY_INSERT(lfs_splay, &ip->i_lfs_lbtree, lbp) != NULL) {
+		/* Already there */
+		pool_put(&lfs_lbnentry_pool, lbp);
+		return;
+	}
 
 	simple_lock(&fs->lfs_interlock);
 	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
@@ -553,8 +541,7 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 {
 	ASSERT_MAYBE_SEGLOCK(fs);
 
-	LIST_REMOVE(lbp, entry);
-	--lfs_blist_total;
+	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
 	pool_put(&lfs_lbnentry_pool, lbp);
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
@@ -572,7 +559,7 @@ lfs_deregister_block(struct vnode *vp, daddr_t lbn)
 	struct lfs *fs;
 	struct inode *ip;
 	struct lbnentry *lbp;
-	unsigned int hash;
+	struct lbnentry tmp;
 
 	ip = VTOI(vp);
 
@@ -581,13 +568,28 @@ lfs_deregister_block(struct vnode *vp, daddr_t lbn)
 		return;
 
 	fs = ip->i_lfs;
-	hash = lfs_blist_hash(fs, ip, lbn);
-	LIST_FOREACH(lbp, HASH_HEADER(vp, hash), entry) {
-		if (lbp->lbn == lbn && lbp->vp == vp && lbp->fs == fs)
-			break;
-	}
+	tmp.lbn = lbn;
+	lbp = SPLAY_FIND(lfs_splay, &ip->i_lfs_lbtree, &tmp);
 	if (lbp == NULL)
 		return;
 
 	lfs_do_deregister(fs, ip, lbp);
+}
+
+void
+lfs_deregister_all(struct vnode *vp)
+{
+	struct lbnentry *lbp, *nlbp;
+	struct lfs_splay *hd;
+	struct lfs *fs;
+	struct inode *ip;
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+	hd = &ip->i_lfs_lbtree;
+
+	for (lbp = SPLAY_MIN(lfs_splay, hd); lbp != NULL; lbp = nlbp) {
+		nlbp = SPLAY_NEXT(lfs_splay, hd, lbp);
+		lfs_do_deregister(fs, ip, lbp);
+	}
 }
