@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.83 2005/04/16 17:35:58 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.84 2005/04/16 19:52:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -941,7 +941,6 @@ struct lfs_cluster {
 	struct lfs *fs;	       /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
 };
-#endif /* _KERNEL */
 
 /*
  * List containing block numbers allocated through lfs_balloc.
@@ -950,6 +949,7 @@ struct lbnentry {
 	SPLAY_ENTRY(lbnentry) entry;
 	daddr_t lbn;
 };
+#endif /* _KERNEL */
 
 /*
  * LFS inode extensions.
@@ -963,7 +963,9 @@ struct lfs_inode_ext {
 #define LFSI_NO_GOP_WRITE 0x01
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
+#ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
+#endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
