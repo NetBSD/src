@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.10 2002/04/05 18:27:55 bouyer Exp $	*/
+/*	$NetBSD: trm.c,v 1.10.4.1 2005/04/16 14:46:18 tron Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.10 2002/04/05 18:27:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.10.4.1 2005/04/16 14:46:18 tron Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -593,11 +593,6 @@ trm_init(sc)
 		ti->config0 = tconf->config0;
 		ti->period = trm_clock_period[tconf->period & 0x07];
 		ti->flag = 0;
-		if ((ti->config0 & NTC_DO_WIDE_NEGO) != 0 &&
-		    (sc->sc_config & HCC_WIDE_CARD) != 0)
-			ti->flag |= WIDE_NEGO_ENABLE;
-		if ((ti->config0 & NTC_DO_SYNC_NEGO) != 0)
-			ti->flag |= SYNC_NEGO_ENABLE;
 		if ((ti->config0 & NTC_DO_DISCONNECT) != 0) {
 #ifdef notyet
 			if ((ti->config0 & NTC_DO_TAG_QUEUING) != 0)
@@ -808,12 +803,15 @@ trm_scsipi_request(chan, req, arg)
 #endif
 				ti->flag &= ~USE_TAG_QUEUING;
 
-			if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0) {
+			if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0 && 
+			    (sc->sc_config & HCC_WIDE_CARD) != 0 && 
+			    (ti->config0 & NTC_DO_WIDE_NEGO) != 0) {
 				ti->flag |= WIDE_NEGO_ENABLE;
 				ti->flag &= ~WIDE_NEGO_DONE;
 			}
 
-			if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0) {
+			if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
+			    (ti->config0 & NTC_DO_SYNC_NEGO) != 0) {
 				ti->flag |= SYNC_NEGO_ENABLE;
 				ti->flag &= ~SYNC_NEGO_DONE;
 				ti->period = trm_clock_period[0];
