@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.1 2005/03/16 18:37:03 jmc Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.2 2005/04/16 10:59:50 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.1 2005/03/16 18:37:03 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.2 2005/04/16 10:59:50 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -873,6 +873,17 @@ wdcstart(struct wdc_channel *chp)
 	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
 		return; /* queue froozen */
 	}
+	/*
+	 * if someone is waiting for the command to be active, wake it up
+	 * and let it process the command
+	 */
+	if (xfer->c_flags & C_WAITACT) {
+		WDCDEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
+		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
+		    DEBUG_XFERS);
+		wakeup(xfer);
+		return;
+	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
 		panic("wdcstart: channel waiting for irq");
@@ -1622,6 +1633,8 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 		wdc_c->flags |= AT_POLL;
 	if (wdc_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
+	if (wdc_c->flags & AT_WAIT)
+		xfer->c_flags |= C_WAIT;
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = wdc_c->data;
 	xfer->c_bcount = wdc_c->bcount;
@@ -2003,6 +2016,20 @@ wdc_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
+	/*
+	 * if polling and can sleep, wait for the xfer to be at head of queue
+	 */
+	if ((xfer->c_flags & (C_POLL | C_WAIT)) ==  (C_POLL | C_WAIT)) {
+		while (TAILQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
+			xfer->c_flags |= C_WAITACT;
+			tsleep(xfer, PRIBIO, "ataact", 0);
+			xfer->c_flags &= ~C_WAITACT;
+			if (xfer->c_flags & C_FREE) {
+				wdc_free_xfer(chp, xfer);
+				return;
+			}
+		}
+	}
 	wdcstart(chp);
 }
 
@@ -2027,6 +2054,13 @@ wdc_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int s;
+
+	if (xfer->c_flags & C_WAITACT) {
+		/* Someone is waiting for this xfer, so we can't free now */
+		xfer->c_flags |= C_FREE;
+		wakeup(xfer);
+		return;
+	}
 
 	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
 		(*wdc->free_hw)(chp);
