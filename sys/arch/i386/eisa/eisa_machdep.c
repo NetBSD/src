@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.23 2005/02/03 20:33:05 perry Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.24 2005/04/16 07:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.23 2005/02/03 20:33:05 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.24 2005/04/16 07:53:35 yamt Exp $");
 
 #include "ioapic.h"
 
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.23 2005/02/03 20:33:05 perry Exp 
 #include <sys/device.h>
 #include <sys/extent.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
