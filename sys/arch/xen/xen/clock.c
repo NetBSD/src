@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/03/10 21:44:31 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2005/04/16 22:49:38 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/03/10 21:44:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/04/16 22:49:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,16 +227,16 @@ xen_microtime(struct timeval *tv)
 void
 xen_initclocks()
 {
-	int irq = bind_virq_to_irq(VIRQ_TIMER);
+	int evtch = bind_virq_to_evtch(VIRQ_TIMER);
 
-	aprint_verbose("Xen clock: using irq %d\n", irq);
+	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
 	get_time_values_from_xen();
 	processed_system_time = shadow_system_time;
 
-	event_set_handler(irq, (int (*)(void *))xen_timer_handler,
+	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
 	    NULL, IPL_CLOCK);
-	hypervisor_enable_irq(irq);
+	hypervisor_enable_event(evtch);
 }
 
 static int
