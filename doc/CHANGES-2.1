@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.64 2005/04/16 11:57:27 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.65 2005/04/16 12:20:42 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1365,4 +1365,39 @@ sys/arch/powerpc/powerpc/pio_subr.S		1.9
 
 	Fix problem with unclosed comments.
 	[matt, ticket #1106]
+
+distrib/sets/lists/xserver/md.amd64		1.13
+distrib/sets/lists/xserver/md.cats		1.9
+distrib/sets/lists/xserver/md.i386		1.29
+distrib/sets/lists/xserver/md.macppc		1.21
+x11/Xserver/hw/xfree86/drivers/nv/Makefile	1.7
+x11/Xserver/hw/xfree86/drivers/nv/riva128/Makefile 1.1
+
+	Provide Riva 128 support in NetBSD's X11 distribution.
+	[rtr, ticket #1112]
+
+lib/librt/sem_open.3				1.2
+
+	Bring in sem_open (& sem_close & sem_unlink) man page from FreeBSD.
+	These functions are actually implemented, but the old man page said
+	that they simply returned with errors--it was apparently out of date
+	at the time of import.
+	[briggs, ticket #1114]
+
+share/man/man4/options.4			1.261
+
+	Document option P1003_1B_SEMAPHORE.
+	[briggs, ticket #1115]
+
+sys/dev/ic/rtl81x9.c				1.48
+sys/dev/ic/rtl81x9var.h				1.16
+
+	Attach rtk(4) as an event source to rnd(4).
+	[dan, ticket #1116]
+
+sys/dev/pci/if_tl.c				1.67
+sys/dev/pci/if_tlvar.h				1.11
+
+	Attach tl(4) as an event source to rnd(4).
+	[dan, ticket #1117]
 
