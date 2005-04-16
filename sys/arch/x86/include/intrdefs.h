@@ -1,7 +1,7 @@
-/*	$NetBSD: intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.4 2005/04/16 07:45:59 yamt Exp $	*/
 
-#ifndef _i386_INTRDEFS_H
-#define _i386_INTRDEFS_H
+#ifndef _X86_INTRDEFS_H_
+#define _X86_INTRDEFS_H_
 
 /*
  * Interrupt priority levels.
@@ -87,4 +87,4 @@
 
 #define IREENT_MAGIC	0x18041969
 
-#endif /* _X86_INTRDEFS_H */
+#endif /* _X86_INTRDEFS_H_ */
