@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.56 2005/04/16 10:33:50 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.57 2005/04/16 14:36:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7331,4 +7331,12 @@ include/ctype.h					1.28
 	possibility that a strictly conforming C program uses that name
 	itself, so it had to be removed.
 	[rillig, ticket #158]
+
+sys/dev/pci/trm.c				1.19
+
+	Move epprom settings checks to the right place, so that sync/wide nego
+	is started based on the eeprom values and adapter capabilities.
+	Avoid the driver to negotiate wide transfers with a wide drive
+	connected to a non-wide capable controller.
+	[bouyer, ticket #159]
 
