@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.24 2005/02/03 21:17:01 perry Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.25 2005/04/16 07:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.24 2005/02/03 21:17:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.25 2005/04/16 07:53:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.24 2005/02/03 21:17:01 perry Exp $
 #include <machine/bioscall.h>
 #include <machine/psl.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>

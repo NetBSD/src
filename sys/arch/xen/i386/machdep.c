@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2005/04/01 11:59:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2005/04/16 07:53:35 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2005/04/16 07:53:35 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -378,8 +378,10 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
+#if defined(XEN) && defined(DOM0OPS)
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+#endif /* defined(XEN) && defined(DOM0OPS) */
 }
 
 /*
@@ -1303,7 +1305,7 @@ void cpu_init_idt()
         lidt(&region);
 }
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+#if !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
 add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 {
@@ -1383,7 +1385,7 @@ add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 	physmem += atop(mem_clusters[mem_cluster_cnt].size);
 	mem_cluster_cnt++;
 }
-#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
+#endif /* !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
 initgdt()
@@ -1484,7 +1486,9 @@ init386(paddr_t first_avail)
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
+#if defined(XEN) && defined(DOM0OPS)
 	x86_bus_space_init();
+#endif /* defined(XEN) && defined(DOM0OPS) */
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
