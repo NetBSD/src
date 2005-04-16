@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.51 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.52 2005/04/16 17:28:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.51 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.52 2005/04/16 17:28:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,10 @@ lfs_blkatoff(void *v)
 char *lfs_res_names[LFS_NB_COUNT] = {
 	"summary",
 	"superblock",
-	"ifile block",
+	"file block",
 	"cluster",
 	"clean",
+	"blkiov",
 };
 #endif
 
@@ -136,6 +137,7 @@ int lfs_res_qty[LFS_NB_COUNT] = {
 	LFS_N_IBLOCKS,
 	LFS_N_CLUSTERS,
 	LFS_N_CLEAN,
+	LFS_N_BLKIOV,
 };
 
 void
@@ -168,6 +170,8 @@ lfs_setup_resblks(struct lfs *fs)
 		fs->lfs_resblk[i].size = MAXPHYS;
 	for (j = 0; j < LFS_N_CLEAN; j++, i++)
 		fs->lfs_resblk[i].size = MAXPHYS;
+	for (j = 0; j < LFS_N_BLKIOV; j++, i++)
+		fs->lfs_resblk[i].size = LFS_MARKV_MAXBLKCNT * sizeof(BLOCK_INFO);
 
 	for (i = 0; i < LFS_N_TOTAL; i++) {
 		fs->lfs_resblk[i].p = malloc(fs->lfs_resblk[i].size,
