@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.62 2005/04/15 22:17:52 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.63 2005/04/16 11:03:56 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1301,4 +1301,63 @@ sys/arch/x86/x86/mpbios.c			1.23
 	Use fixed mode, not lopri, for delivering IO interrupts. Suggested by
 	Peter O'Kane. Fixes interrupt problems on some Xeon systems.
 	[fvdl, ticket #1073]
+
+include/ctype.h					1.28 via patch
+
+	Replaced the macro name "notyet" with a 0. There's always the
+	possibility that a strictly conforming C program uses that name
+	itself, so it had to be removed.
+	[rillig, ticket #1427]
+
+sys/dev/sun/kbd.c				1.41
+
+	Go back to filtering out KBD_IDLE events by default. The Xsun shipped
+	with NetBSD 2.0 gets confused by them (generating events for keycode
+	134 when all keys are released), and even when that's fixed we should
+	keep one release worth of backward compatibility.
+	[bjh21, ticket #1075]
+
+lib/libc/time/localtime.c			1.36
+
+	PR/28324: Takayoshi Kochi: localtime_r(3) returns GMT
+	Add missing tzset_unlocked(); as suggested.
+	[kochi, ticket #1087]
+
+libexec/ld.elf_so/arch/sparc/mdreloc.c		1.34
+
+	Add support for unaligned relocs on sparc, from PR 26858.
+	Should also fix PR 25901 and PR 18296.
+	[skrll, ticket #1090]
+
+sys/arch/arm/xscale/i80321_pci.c		1.5
+
+	Start I/O range at base+0x1000 to avoid 0.
+	[briggs, ticket #1092]
+
+sys/dev/raidframe/rf_states.c			1.37
+
+	After walking through desc->dagList nuking entries, make sure
+	desc->dagList is set to NULL before continuing.  If we don't,
+	there's a danger that we'll try to re-free these items later.
+	(This should fix a panic reported to me via private communciation.)
+	[oster, ticket #1095]
+
+sys/arch/hpcmips/vr/vr.c			1.45
+
+	Make high speed CF cards work under NetBSD-hpcmips. This fixes
+	PR hpcmips/26158 and PR install/28656.
+	[hamajima, ticket #1097]
+
+sys/dev/raidframe/rf_reconstruct.c		1.79
+
+	ForceReconReadDoneProc() needs a return after doing the first
+	rf_CauseReconEvent().
+	[oster, ticket #1104]
+
+sys/dev/ata/atavar.h				1.65 via patch
+sys/dev/ic/wdc.c				1.217 via patch
+
+	Avoid panics in DIAGNOSTIC kernels on systems using IDE controllers
+	with a shared queue. This fixes kern/27421.
+	[bouyer, ticket #1105]
 
