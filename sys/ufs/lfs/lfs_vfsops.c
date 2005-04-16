@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.174 2005/04/16 17:35:58 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.175 2005/04/16 18:10:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.174 2005/04/16 17:35:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.175 2005/04/16 18:10:12 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -310,7 +310,6 @@ lfs_done()
 	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
 	pool_destroy(&lfs_lbnentry_pool);
-	free(lfs_blist);
 	malloc_type_detach(M_SEGMENT);
 #endif
 }
