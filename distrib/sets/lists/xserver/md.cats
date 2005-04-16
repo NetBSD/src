@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.4.4.1 2005/01/13 16:36:35 he Exp $
+# $NetBSD: md.cats,v 1.4.4.2 2005/04/16 12:10:33 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -116,6 +116,7 @@
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/rendition_drv.o
+./usr/X11R6/lib/modules/drivers/riva128.o
 ./usr/X11R6/lib/modules/drivers/s3_drv.o
 ./usr/X11R6/lib/modules/drivers/s3virge_drv.o
 ./usr/X11R6/lib/modules/drivers/savage_drv.o
