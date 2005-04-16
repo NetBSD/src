@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.20 2005/04/01 11:59:36 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -98,8 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2005/04/01 11:59:36 yamt Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -136,8 +136,8 @@ static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	    void *buf, bus_size_t buflen, struct proc *p, int flags);
-static __inline int _bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
-    paddr_t, int);
+static __inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
+    bus_addr_t, int);
 
 
 /*
@@ -314,8 +314,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 }
 
 static __inline int
-_bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    paddr_t paddr, int size)
+_bus_dmamap_load_busaddr(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_addr_t addr, int size)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	int nseg = map->dm_nsegs;
@@ -334,35 +334,35 @@ again:
 	if (map->_dm_boundary > 0) {
 		bus_addr_t baddr; /* next boundary address */
 
-		baddr = (paddr + map->_dm_boundary) & bmask;
-		if (sgsize > (baddr - paddr))
-			sgsize = (baddr - paddr);
+		baddr = (addr + map->_dm_boundary) & bmask;
+		if (sgsize > (baddr - addr))
+			sgsize = (baddr - addr);
 	}
 
 	/*
 	 * Insert chunk into a segment, coalescing with
 	 * previous segment if possible.
 	 */
-	if (nseg > 0 && paddr == lastaddr &&
+	if (nseg > 0 && addr == lastaddr &&
 	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
 	    (map->_dm_boundary == 0 ||
-	     (segs[nseg-1].ds_addr & bmask) == (paddr & bmask))) {
+	     (segs[nseg-1].ds_addr & bmask) == (addr & bmask))) {
 		/* coalesce */
 		segs[nseg-1].ds_len += sgsize;
 	} else if (nseg >= map->_dm_segcnt) {
 		return EFBIG;
 	} else {
 		/* new segment */
-		segs[nseg].ds_addr = paddr;
+		segs[nseg].ds_addr = addr;
 		segs[nseg].ds_len = sgsize;
 		nseg++;
 	}
 
-	lastaddr = paddr + sgsize;
+	lastaddr = addr + sgsize;
 	if (map->_dm_bounce_thresh != 0 && lastaddr > map->_dm_bounce_thresh)
 		return EINVAL;
 
-	paddr += sgsize;
+	addr += sgsize;
 	size -= sgsize;
 	if (size > 0)
 		goto again;
@@ -414,7 +414,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_busaddr(t, map,
+			    _BUS_PHYS_TO_BUS(paddr), size);
 			break;
 
 		case M_EXT|M_EXT_PAGES:
@@ -435,15 +436,16 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			/* load each pages */
 			while (remainbytes > 0) {
 				const struct vm_page *pg;
+				bus_addr_t busaddr;
 
 				size = MIN(remainbytes, PAGE_SIZE - offset);
 
 				pg = *pgs++;
 				KASSERT(pg);
-				paddr = VM_PAGE_TO_PHYS(pg) + offset;
+				busaddr = _BUS_VM_PAGE_TO_BUS(pg) + offset;
 
-				error = _bus_dmamap_load_paddr(t, map,
-				    paddr, size);
+				error = _bus_dmamap_load_busaddr(t, map,
+				    busaddr, size);
 				if (error)
 					break;
 				offset = 0;
@@ -455,7 +457,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_busaddr(t, map,
+			    _BUS_PHYS_TO_BUS(paddr), size);
 			break;
 
 		default:
@@ -1100,9 +1103,9 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		int error;
 
 		/*
-		 * Get the physical address for this segment.
+		 * Get the bus address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+		curaddr = _BUS_VIRT_TO_BUS(pmap, vaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify
@@ -1119,7 +1122,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
+		error = _bus_dmamap_load_busaddr(t, map, curaddr, sgsize);
 		if (error)
 			return error;
 

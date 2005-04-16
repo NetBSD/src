@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.3 2005/04/16 07:53:35 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -30,12 +30,12 @@
  *
  */
 
-#include <sys/null.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <dev/pci/pcivar.h>
 
