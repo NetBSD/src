@@ -59,6 +59,12 @@
 /* Define to 1 if you have the `err' function. */
 #define HAVE_ERR 1
 
+/* Define to 1 if you have the `fcntl' function. */
+#define HAVE_FCNTL 1
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#define HAVE_FCNTL_H 1
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #define HAVE_GETTIMEOFDAY 1
 
@@ -79,6 +85,9 @@
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
+
+/* Define if F_SETFD is defined in <fcntl.h> */
+#define HAVE_SETFD 1
 
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
@@ -127,6 +136,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
+
+/* Version number of package */
+#define VERSION "1.0c"
 
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef pid_t */

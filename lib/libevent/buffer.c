@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.2 2004/12/06 13:16:36 wiz Exp $	*/
+/*	$NetBSD: buffer.c,v 1.3 2005/04/17 07:20:00 provos Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -134,7 +134,7 @@ end:
 int
 evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 {
-	int nread = datlen;
+	size_t nread = datlen;
 	if (nread >= buf->off)
 		nread = buf->off;
 
