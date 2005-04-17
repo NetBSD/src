@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.1 2005/04/17 15:15:49 lukem Exp $
+# $NetBSD: postinstall,v 1.2 2005/04/17 15:38:34 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -488,18 +488,6 @@ modify_file()
 #	items
 #	-----
 #
-
-#
-#	postinstall
-#
-additem postinstall "/etc/postinstall being up to date"
-do_postinstall()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_postinstall  fix|check"
-
-	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
-		postinstall
-}
 
 #
 #	defaults
@@ -1145,13 +1133,16 @@ main()
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
+	orig_SRC_DIR="${SRC_DIR}"
+
 	#
 	# If '-s etc.tgz', extract etc.tgz to a scratch directory
 	# and invoke the copy of etc/postinstall contained within.
 	#
 	if [ -f "${SRC_DIR}" ]; then
 		ETCTGZDIR="${SCRATCHDIR}/etc.tgz"
-		msg "SRC_DIR ${SRC_DIR} is a file; temporarily extracting to ${ETCTGZDIR}"
+		echo "Note: -s ${SRC_DIR} is a file,"
+		echo "      temporarily extracting to ${ETCTGZDIR}"
 		if ! mkdir "${ETCTGZDIR}"; then
 			err 1 "Can't create ${ETCTGZDIR}"
 		fi
@@ -1159,19 +1150,7 @@ main()
 			cd "${ETCTGZDIR}" &&
 			tar -zxf -
 		) || err 1 "Can't extract ${SRC_DIR}"
-		if [ ! -f "${ETCTGZDIR}/etc/postinstall" ]; then
-			err 1 "Can't find etc/postinstall in ${SRC_DIR}"
-		fi
-		msg "Invoking ${ETCTGZDIR}/etc/postinstall -s ${ETCTGZDIR} -d ${DEST_DIR} -m ${MACHINE} -a ${MACHINE_ARCH} $@"
-		"${ETCTGZDIR}/etc/postinstall" -s "${ETCTGZDIR}" \
-		    -d "${DEST_DIR}" -m "${MACHINE}" -a "${MACHINE_ARCH}" "$@"
-		failed=$?
-#XXX: need to improve the following ...
-		cat <<_Fix_my_paths_
-Temporary paths will be wrong; try the following instead:
-    ${0} -s ${SRC_DIR}
-_Fix_my_paths_
-		exit $?
+		SRC_DIR="${ETCTGZDIR}"
 	fi
 
 	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
@@ -1224,6 +1203,9 @@ _Fix_my_paths_
 	list)
 		echo "Source directory: ${SRC_DIR:-/}"
 		echo "Target directory: ${DEST_DIR:-/}"
+		if [ "${SRC_DIR}" != "${orig_SRC_DIR}" ]; then
+			echo " (extracted from: ${orig_SRC_DIR})"
+		fi
 		list
 		;;
 
@@ -1241,6 +1223,9 @@ _Fix_my_paths_
 		# perform each check/fix
 		#
 		echo "Source directory: ${SRC_DIR:-/}"
+		if [ "${SRC_DIR}" != "${orig_SRC_DIR}" ]; then
+			echo " (extracted from: ${orig_SRC_DIR})"
+		fi
 		echo "Target directory: ${DEST_DIR:-/}"
 		items_passed=
 		items_failed=
@@ -1266,7 +1251,7 @@ _Fix_my_paths_
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${0} -s ${SRC_DIR} -d ${DEST_DIR:-/}$m fix${items_failed}
+    ${0} -s ${orig_SRC_DIR} -d ${DEST_DIR:-/}$m fix${items_failed}
 _Fix_me_
 		fi
 
