@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2005/02/25 13:46:49 simonb Exp $
+# $NetBSD: GENERIC,v 1.77.2.1 2005/04/17 11:44:58 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -433,6 +433,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
