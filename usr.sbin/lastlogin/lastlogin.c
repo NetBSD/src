@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.8.4.1 2005/04/17 13:29:32 tron Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.8.4.1 2005/04/17 13:29:32 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ main(argc, argv)
 
 	setpassent(0);	/* Close passwd file pointers */
 
-	if (DOSORT(sortlog))
+	if (outstack && DOSORT(sortlog))
 		sortoutput(outstack);
 
 	fclose(fp);
