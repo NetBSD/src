@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.3.2.2 2005/04/17 10:28:16 tron Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.3.2.3 2005/04/17 10:29:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.3.2.2 2005/04/17 10:28:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.3.2.3 2005/04/17 10:29:49 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,6 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	const usb_cdc_cm_descriptor_t *cmd;
 	char devinfo[1024];
 	usbd_status err;
 	int data_ifcno;
@@ -129,17 +128,15 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
-	umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap, id);
-
 	/* Get the data interface no. */
-	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
-							  UDESC_CS_INTERFACE,
-							  UDESCSUB_CDC_CM, id);
-	if (cmd == NULL) {
-		printf("%s: no CM descriptor\n", USBDEVNAME(sc->sc_dev));
+	sc->sc_data_iface_no = data_ifcno =
+	    umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap, id);
+
+	if (data_ifcno == -1) {
+		printf("%s: no pointer to data interface\n",
+		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
-	sc->sc_data_iface_no = data_ifcno = cmd->bDataInterface;
 
 	printf("%s: data interface %d, has %sCM over data, has %sbreak\n",
 	       USBDEVNAME(sc->sc_dev), data_ifcno,
@@ -367,12 +364,13 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 }
 
-void
+int
 umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 		usb_interface_descriptor_t *id)
 {
 	const usb_cdc_cm_descriptor_t *cmd;
 	const usb_cdc_acm_descriptor_t *cad;
+	const usb_cdc_union_descriptor_t *cud;
 
 	*cm = *acm = 0;
 
@@ -381,9 +379,9 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 							  UDESCSUB_CDC_CM, id);
 	if (cmd == NULL) {
 		DPRINTF(("umodem_get_desc: no CM desc\n"));
-		return;
+	} else {
+		*cm = cmd->bmCapabilities;
 	}
-	*cm = cmd->bmCapabilities;
 
 	cad = (usb_cdc_acm_descriptor_t *)usb_find_desc_if(dev,
 							   UDESC_CS_INTERFACE,
@@ -391,9 +389,19 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 							   id);
 	if (cad == NULL) {
 		DPRINTF(("umodem_get_desc: no ACM desc\n"));
-		return;
+	} else {
+		*acm = cad->bmCapabilities;
 	}
-	*acm = cad->bmCapabilities;
+
+	cud = (usb_cdc_union_descriptor_t *)usb_find_desc_if(dev,
+							     UDESC_CS_INTERFACE,
+							     UDESCSUB_CDC_UNION,
+							     id);
+	if (cud == NULL) {
+		DPRINTF(("umodem_get_desc: no UNION desc\n"));
+	}
+	
+	return cmd ? cmd->bDataInterface : cud ? cud->bSlaveInterface[0] : -1;
 }
 
 void
