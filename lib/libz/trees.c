@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $ */
+/* $NetBSD: trees.c,v 1.13 2005/04/17 17:22:36 christos Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -31,10 +31,10 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $ */
+/* @(#) $Id: trees.c,v 1.13 2005/04/17 17:22:36 christos Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $");
+__RCSID("$NetBSD: trees.c,v 1.13 2005/04/17 17:22:36 christos Exp $");
 
 /* #define GEN_TREES_H */
 
@@ -610,7 +610,7 @@ local void gen_codes (tree, max_code, bl_count)
         tree[n].Code = bi_reverse(next_code[len]++, len);
 
         Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
-             n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
+             n, (isgraph((unsigned char)n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
     }
 }
 
@@ -1102,7 +1102,7 @@ local void compress_block(s, ltree, dtree)
         lc = s->l_buf[lx++];
         if (dist == 0) {
             send_code(s, lc, ltree); /* send a literal byte */
-            Tracecv(isgraph(lc), (stderr," '%c' ", lc));
+            Tracecv(isgraph((unsigned char)lc), (stderr," '%c' ", lc));
         } else {
             /* Here, lc is the match length - MIN_MATCH */
             code = _length_code[lc];
