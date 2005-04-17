@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.137 2005/04/11 15:36:46 cube Exp $
+$NetBSD: UPDATING,v 1.138 2005/04/17 23:12:40 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20050417:
+	postinstall(8) was moved from /etc to /usr/sbin and made part
+	of the "base" set, to make it easier to invoke after an
+	upgrade.
+
 20050325:
 	pcppi(4) was separated in two devices, adding attimer(4).  Be sure
 	to add a config line for an attimer(4) device in your kernel
