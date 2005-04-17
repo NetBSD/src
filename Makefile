@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.238 2005/01/01 10:32:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.239 2005/04/17 15:18:34 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -144,19 +144,21 @@ afterinstall: .PHONY
 	${MAKEDIRTARGET} . postinstall-check
 .endif
 
+_POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
+
 postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
-	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ check
+	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN .PHONY
 	@echo "   === Post installation fixes ==="
-	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix
+	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix
 	@echo "   ==============================="
 
 postinstall-fix-obsolete: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
-	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
+	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
 
 
