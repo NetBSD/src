@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.21 2005/04/17 14:50:11 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.22 2005/04/17 21:11:30 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.21 2005/04/17 14:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.22 2005/04/17 21:11:30 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -176,18 +176,8 @@ static int xennet_media[] = {
 static int nxennet_media = (sizeof(xennet_media)/sizeof(xennet_media[0]));
 #endif
 
+int in_autoconf = 0;
 
-static int
-xennet_wait_for_interfaces(void)
-{
-	int i = 1000;
-	while (netctrl.xc_interfaces != netctrl.xc_connected) {
-		delay(1000);
-		if (i-- < 0)
-			return 1;
-	}
-	return 0;
-}
 
 int
 xennet_scan(struct device *self, struct xennet_attach_args *xneta,
@@ -216,18 +206,10 @@ xennet_scan(struct device *self, struct xennet_attach_args *xneta,
 	st.max_handle  = 0;
 	memcpy(cmsg.msg, &st, sizeof(st));
 	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
+	in_autoconf = 1;
+	config_pending_incr();
 
 	return 0;
-}
-
-void
-xennet_scan_finish(struct device *parent)
-{
-	int err;
-
-	err = xennet_wait_for_interfaces();
-	if (err)
-		ctrl_if_unregister_receiver(CMSG_NETIF_FE, xennet_ctrlif_rx);
 }
 
 int
@@ -380,6 +362,10 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		config_found(netctrl.xc_parent, &xneta, netctrl.xc_cfprint);
 		sc = find_device(status->handle);
 		if (sc == NULL) {
+			if (in_autoconf) {
+				in_autoconf = 0;
+				config_pending_decr();
+			}
 			printf("Status change: invalid netif handle %u\n",
 			    status->handle);
 			return;
@@ -543,6 +529,10 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
 		    RND_TYPE_NET, 0);
 #endif
+		if (in_autoconf) {
+			in_autoconf = 0;
+			config_pending_decr();
+		}
 		break;
 
 	default:

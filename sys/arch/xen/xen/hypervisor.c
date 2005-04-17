@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.12 2005/03/11 20:39:39 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.13 2005/04/17 21:11:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12 2005/03/11 20:39:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.13 2005/04/17 21:11:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,15 +161,6 @@ hypervisor_match(parent, match, aux)
 	return 0;
 }
 
-#if NXENNET > 0
-static void
-scan_finish(struct device *parent)
-{
-
-	xennet_scan_finish(parent);
-}
-#endif /* NXENNET > 0 */
-
 /*
  * Attach the hypervisor.
  */
@@ -258,9 +249,6 @@ hypervisor_attach(parent, self, aux)
 		xbdback_init();
 		xennetback_init();
 	}
-#endif
-#if NXENNET > 0
-	config_interrupts(self, scan_finish);
 #endif
 }
 
