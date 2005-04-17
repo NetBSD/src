@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.279 2005/04/02 08:21:36 mlelstv Exp $
+.\"	$NetBSD: main,v 1.280 2005/04/17 23:12:40 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -683,7 +683,7 @@ System upgrades are made easier through the
 script which helps updating the
 .Pa /etc
 config files interactively, and the
-.Pa /etc/postinstall
+.Pa /usr/sbin/postinstall
 script which is provided to check for or fix configuration changes
 that have occurred in
 .Nx .
@@ -1118,11 +1118,8 @@ The following issues can generally be resolved by extracting the
 set into a temporary directory and running
 .Em postinstall :
 .(disp
-mkdir /tmp/upgrade
-cd /tmp/upgrade
-pax -zrpe -f /path/to/etc.tgz
-\&./etc/postinstall -s `pwd` check
-\&./etc/postinstall -s `pwd` fix
+postinstall -s /path/to/etc.tgz check
+postinstall -s /path/to/etc.tgz fix
 .disp)
 .Pp
 Issues fixed by
