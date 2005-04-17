@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.18 2005/04/17 14:50:11 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.19 2005/04/17 21:11:30 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.18 2005/04/17 14:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.19 2005/04/17 21:11:30 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -381,17 +381,9 @@ struct xbd_ctrl {
 
 	cfprint_t xc_cfprint;
 	struct device *xc_parent;
-#define BLK_CTRL_NMSGS 8
-	ctrl_msg_t *msgs[BLK_CTRL_NMSGS]; /* ring of pending messages */
-	volatile int msg_producer, msg_consumer;
-	struct proc *sc_thread;
-
 };
 
 static struct xbd_ctrl blkctrl;
-
-static void xbdc_create_thread(void *);
-static void xbdc_thread(void *);
 
 #define XBDUNIT(x)		DISKUNIT(x)
 #define GETXBD_SOFTC(_xs, x)	if (!((_xs) = getxbd_softc(x))) return ENXIO
@@ -719,29 +711,6 @@ blkif_status(blkif_fe_interface_status_t *status)
 	}
 }
 
-static void
-xbdc_thread(void *arg)
-{
-	struct xbd_ctrl *xbdc_sc = arg;
-	int s;
-
-	for (;;) {
-		s = splbio();
-		/* get messages from ring */
-		while(xbdc_sc->msg_consumer != xbdc_sc->msg_producer) {
-			blkif_status((blkif_fe_interface_status_t *)
-			    &(xbdc_sc->msgs[xbdc_sc->msg_consumer]->msg[0]));
-			ctrl_if_send_response(
-			    xbdc_sc->msgs[xbdc_sc->msg_consumer]);
-			xbdc_sc->msg_consumer++;
-			if (xbdc_sc->msg_consumer == BLK_CTRL_NMSGS)
-				xbdc_sc->msg_consumer = 0;
-		}
-		(void) tsleep(&xbdc_sc->msgs, PRIBIO, "xbdc", 0);
-		splx(s);
-	}
-}
-
 
 static void
 xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
@@ -750,19 +719,14 @@ xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	case CMSG_BLKIF_FE_INTERFACE_STATUS:
 		if (msg->length != sizeof(blkif_fe_interface_status_t))
 			goto parse_error;
-		/* store messages in ring, and wakeup thread */
-		blkctrl.msgs[blkctrl.msg_producer] = msg;
-		blkctrl.msg_producer++;
-		if (blkctrl.msg_producer == BLK_CTRL_NMSGS)
-			blkctrl.msg_producer = 0;
-		if (blkctrl.msg_producer == blkctrl.msg_consumer)
-			panic("xbdc: ring too small");
-		wakeup(&blkctrl.msgs);
+		blkif_status((blkif_fe_interface_status_t *)
+		    &msg->msg[0]);
 		break;        
 	default:
 		goto parse_error;
 	}
 
+	ctrl_if_send_response(msg);
 	return;
 
  parse_error:
@@ -952,24 +916,11 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 	in_autoconf = 1;
 	config_pending_incr();
-	blkctrl.msg_producer = blkctrl.msg_consumer = 0;
-	kthread_create(xbdc_create_thread, &blkctrl);
 
 	send_driver_status(1);
 
 	return 0;
 }
-
-static void
-xbdc_create_thread(void *arg)
-{
-	struct xbd_ctrl *xbdc_sc = arg;
-	int error;
-	if ((error = kthread_create1(xbdc_thread, xbdc_sc, &xbdc_sc->sc_thread,
-	    "%s", "xbdc")) != 0)
-		aprint_error("xbdc: unable to create kernel thread: error %d\n",
-		    error);
-}	
 
 #if NXBD > 0
 int

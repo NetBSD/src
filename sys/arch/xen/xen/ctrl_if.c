@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.6 2005/04/17 14:50:11 bouyer Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.7 2005/04/17 21:11:30 bouyer Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,11 +9,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.6 2005/04/17 14:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.7 2005/04/17 21:11:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 #include <sys/malloc.h>
 
 #include <machine/xen.h>
@@ -47,10 +48,6 @@ static CONTROL_RING_IDX ctrl_if_rx_req_cons;
 static ctrl_msg_handler_t ctrl_if_rxmsg_handler[256];
     /* Primary message type -> callback in process context? */
 static unsigned long ctrl_if_rxmsg_blocking_context[256/sizeof(unsigned long)];
-#if 0
-    /* Is it late enough during bootstrap to use schedule_task()? */
-static int safe_to_schedule_task;
-#endif
     /* Queue up messages to be handled in process context. */
 static ctrl_msg_t ctrl_if_rxmsg_deferred[CONTROL_RING_SIZE];
 static CONTROL_RING_IDX ctrl_if_rxmsg_deferred_prod;
@@ -64,11 +61,7 @@ static struct {
 
 /* For received messages that must be deferred to process context. */
 static void __ctrl_if_rxmsg_deferred(void *unused);
-
-#ifdef notyet
-/* Deferred callbacks for people waiting for space in the transmit ring. */
-static int DECLARE_TASK_QUEUE(ctrl_if_tx_tq);
-#endif
+static void ctrl_if_kthread_create(void *);
 
 static void *ctrl_if_softintr = NULL;
 
@@ -131,26 +124,36 @@ static void __ctrl_if_tx_tasklet(unsigned long data)
     if ( was_full && !TX_FULL(ctrl_if) )
     {
         wakeup(&ctrl_if_tx_wait);
-#ifdef notyet
-        run_task_queue(&ctrl_if_tx_tq);
-#endif
     }
 }
 
-static void __ctrl_if_rxmsg_deferred(void *unused)
+static void
+__ctrl_if_rxmsg_deferred(void *unused)
 {
 	ctrl_msg_t *msg;
 	CONTROL_RING_IDX dp;
+	int s;
 
-	dp = ctrl_if_rxmsg_deferred_prod;
-	__insn_barrier(); /* Ensure we see all deferred requests up to 'dp'. */
 
-	while ( ctrl_if_rxmsg_deferred_cons != dp )
-	{
-		msg = &ctrl_if_rxmsg_deferred[
-		    MASK_CONTROL_IDX(ctrl_if_rxmsg_deferred_cons)];
-		(*ctrl_if_rxmsg_handler[msg->type])(msg, 0);
-		ctrl_if_rxmsg_deferred_cons++;
+	while (1) {
+		s = splsoftnet();
+		dp = ctrl_if_rxmsg_deferred_prod;
+		__insn_barrier(); /* Ensure we see all requests up to 'dp'. */
+		if (ctrl_if_rxmsg_deferred_cons == dp) {
+			tsleep(&ctrl_if_rxmsg_deferred_cons, PRIBIO,
+			    "rxdef", 0);
+			splx(s);
+			continue;
+		}
+		splx(s);
+
+		while ( ctrl_if_rxmsg_deferred_cons != dp )
+		{
+			msg = &ctrl_if_rxmsg_deferred[
+			    MASK_CONTROL_IDX(ctrl_if_rxmsg_deferred_cons)];
+			(*ctrl_if_rxmsg_handler[msg->type])(msg, 0);
+			ctrl_if_rxmsg_deferred_cons++;
+		}
 	}
 }
 
@@ -455,7 +458,7 @@ ctrl_if_softintr_handler(void *arg)
 {
 
 	if ( ctrl_if_rxmsg_deferred_cons != ctrl_if_rxmsg_deferred_prod )
-		__ctrl_if_rxmsg_deferred(NULL);
+		wakeup(&ctrl_if_rxmsg_deferred_cons);
 }
 
 #ifdef notyet
@@ -523,19 +526,22 @@ void ctrl_if_init(void)
 	ctrl_if_softintr = softintr_establish(IPL_SOFTNET,
 	    ctrl_if_softintr_handler, NULL);
 
+	kthread_create(ctrl_if_kthread_create, NULL);
+
 	ctrl_if_resume();
 }
 
-
-#if 0
-/* This is called after it is safe to call schedule_task(). */
-static int __init ctrl_if_late_setup(void)
+static void
+ctrl_if_kthread_create(void *arg)
 {
-    safe_to_schedule_task = 1;
-    return 0;
+	int error;
+	static struct proc *ctrl_if_proc;
+	if ((error = kthread_create1(__ctrl_if_rxmsg_deferred, NULL,
+	    &ctrl_if_proc, "ctrlif")) != 0) {
+		aprint_error("ctrlif: unable to create kernel thread: "
+		    "error %d\n", error);
+	}
 }
-__initcall(ctrl_if_late_setup);
-#endif
 
 
 /*
