@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.12 2003/08/07 11:17:53 agc Exp $	*/
+/*	$NetBSD: output.c,v 1.13 2005/04/17 17:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.12 2003/08/07 11:17:53 agc Exp $");
+__RCSID("$NetBSD: output.c,v 1.13 2005/04/17 17:16:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -824,7 +824,7 @@ is_C_identifier(name)
 char *name;
 {
     char *s;
-    int c;
+    unsigned char c;
 
     s = name;
     c = *s;
