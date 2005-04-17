@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.6 2005/04/16 22:49:38 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.6 2005/04/16 22:49:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -159,7 +159,7 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 			aprint_verbose("%s: using event channel %d\n",
 			    sc->sc_dev.dv_xname, evtch);
 			if (event_set_handler(evtch, xencons_intr, sc,
-			    IPL_TTY) != 0)
+			    IPL_TTY, "xencons") != 0)
 				printf("console: "
 				    "can't register xencons_intr\n");
 			hypervisor_enable_event(evtch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.5 2005/04/16 22:49:37 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.6 2005/04/17 14:50:11 bouyer Exp $	*/
 
 /*
  *
@@ -41,7 +41,7 @@ extern struct evtsource *evtsource[];
 void events_default_setup(void);
 void init_events(void);
 unsigned int do_event(int, struct intrframe *);
-int event_set_handler(int, int (*func)(void *), void *, int);
+int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 int bind_virq_to_evtch(int);

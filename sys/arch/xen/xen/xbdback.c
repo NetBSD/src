@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.9 2005/04/16 23:33:18 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.10 2005/04/17 14:50:11 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -228,6 +228,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	{
 		blkif_be_connect_t *req = (blkif_be_connect_t *)&msg->msg[0];
 		vaddr_t ring_addr;
+		char evname[16];
 
 		if (msg->length != sizeof(blkif_be_connect_t))
 			goto error;
@@ -262,8 +263,9 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xbdi->blk_ring = (void *)ring_addr;
 		xbdi->evtchn = req->evtchn;
+		snprintf(evname, sizeof(evname), "xbdback%d", xbdi->domid);
 		event_set_handler(xbdi->evtchn,
-		    xbdback_evthandler, xbdi, IPL_BIO);
+		    xbdback_evthandler, xbdi, IPL_BIO, evname);
 		printf("xbd backend %d for domain %d using event channel %d\n",
 		    xbdi->handle, xbdi->domid, xbdi->evtchn);
 		hypervisor_enable_event(xbdi->evtchn);
