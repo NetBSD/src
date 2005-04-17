@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.3.2.3 2005/04/17 10:29:49 tron Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.3.2.4 2005/04/17 10:30:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.3.2.3 2005/04/17 10:29:49 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.3.2.4 2005/04/17 10:30:40 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,12 +174,12 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-                        uca->bulkin = ed->bEndpointAddress;
-                } else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
+			uca->bulkin = ed->bEndpointAddress;
+		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			   (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-                        uca->bulkout = ed->bEndpointAddress;
-                }
-        }
+			uca->bulkout = ed->bEndpointAddress;
+		}
+	}
 
 	if (uca->bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
@@ -378,7 +378,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 							  UDESC_CS_INTERFACE,
 							  UDESCSUB_CDC_CM, id);
 	if (cmd == NULL) {
-		DPRINTF(("umodem_get_desc: no CM desc\n"));
+		DPRINTF(("umodem_get_caps: no CM desc\n"));
 	} else {
 		*cm = cmd->bmCapabilities;
 	}
@@ -388,7 +388,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 							   UDESCSUB_CDC_ACM,
 							   id);
 	if (cad == NULL) {
-		DPRINTF(("umodem_get_desc: no ACM desc\n"));
+		DPRINTF(("umodem_get_caps: no ACM desc\n"));
 	} else {
 		*acm = cad->bmCapabilities;
 	}
@@ -398,9 +398,9 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 							     UDESCSUB_CDC_UNION,
 							     id);
 	if (cud == NULL) {
-		DPRINTF(("umodem_get_desc: no UNION desc\n"));
+		DPRINTF(("umodem_get_caps: no UNION desc\n"));
 	}
-	
+
 	return cmd ? cmd->bDataInterface : cud ? cud->bSlaveInterface[0] : -1;
 }
 
@@ -471,7 +471,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	if (sc->sc_dying)
 		return (EIO);
 
-	DPRINTF(("umodemioctl: cmd=0x%08lx\n", cmd));
+	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
 
 	switch (cmd) {
 	case USB_GET_CM_OVER_DATA:
@@ -485,7 +485,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 		break;
 
 	default:
-		DPRINTF(("umodemioctl: unknown\n"));
+		DPRINTF(("umodem_ioctl: unknown\n"));
 		error = EPASSTHROUGH;
 		break;
 	}
@@ -496,7 +496,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 void
 umodem_dtr(struct umodem_softc *sc, int onoff)
 {
-	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
+	DPRINTF(("umodem_dtr: onoff=%d\n", onoff));
 
 	if (sc->sc_dtr == onoff)
 		return;
@@ -508,7 +508,7 @@ umodem_dtr(struct umodem_softc *sc, int onoff)
 void
 umodem_rts(struct umodem_softc *sc, int onoff)
 {
-	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
+	DPRINTF(("umodem_rts: onoff=%d\n", onoff));
 
 	if (sc->sc_rts == onoff)
 		return;
