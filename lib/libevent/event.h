@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
+/*	$NetBSD: event.h,v 1.4 2005/04/17 07:20:00 provos Exp $	*/
 /*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
 
 /*
@@ -73,18 +73,22 @@ struct {								\
 }
 #endif /* !RB_ENTRY */
 
+struct event_base;
 struct event {
 	TAILQ_ENTRY (event) ev_next;
 	TAILQ_ENTRY (event) ev_active_next;
 	TAILQ_ENTRY (event) ev_signal_next;
 	RB_ENTRY (event) ev_timeout_node;
 
+	struct event_base *ev_base;
 	int ev_fd;
 	short ev_events;
 	short ev_ncalls;
 	short *ev_pncalls;	/* Allows deletes in callback */
 
 	struct timeval ev_timeout;
+
+	int ev_pri;		/* smaller numbers are higher priority */
 
 	void (*ev_callback)(int, short, void *arg);
 	void *ev_arg;
@@ -93,8 +97,8 @@ struct event {
 	int ev_flags;
 };
 
-#define EVENT_SIGNAL(ev)	ev->ev_fd
-#define EVENT_FD(ev)		ev->ev_fd
+#define EVENT_SIGNAL(ev)	(int)ev->ev_fd
+#define EVENT_FD(ev)		(int)ev->ev_fd
 
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
@@ -112,23 +116,32 @@ struct eventop {
 	void *(*init)(void);
 	int (*add)(void *, struct event *);
 	int (*del)(void *, struct event *);
-	int (*recalc)(void *, int);
-	int (*dispatch)(void *, struct timeval *);
+	int (*recalc)(struct event_base *, void *, int);
+	int (*dispatch)(struct event_base *, void *, struct timeval *);
 };
 
 #define TIMEOUT_DEFAULT	{5, 0}
 
-void event_init(void);
+void *event_init(void);
 int event_dispatch(void);
+int event_base_dispatch(struct event_base *);
+
+#define _EVENT_LOG_DEBUG 0
+#define _EVENT_LOG_MSG   1
+#define _EVENT_LOG_WARN  2
+#define _EVENT_LOG_ERR   3
+typedef void (*event_log_cb)(int severity, const char *msg);
+void event_set_log_callback(event_log_cb cb);
+
+/* Associate a different event base with an event */
+int event_base_set(struct event_base *, struct event *);
 
 #define EVLOOP_ONCE	0x01
 #define EVLOOP_NONBLOCK	0x02
 int event_loop(int);
+int event_base_loop(struct event_base *, int);
 int event_loopexit(struct timeval *);	/* Causes the loop to exit */
-
-int timeout_next(struct timeval *);
-void timeout_correct(struct timeval *);
-void timeout_process(void);
+int event_base_loopexit(struct event_base *, struct timeval *);
 
 #define evtimer_add(ev, tv)		event_add(ev, tv)
 #define evtimer_set(ev, cb, arg)	event_set(ev, -1, 0, cb, arg)
@@ -159,6 +172,16 @@ void event_active(struct event *, int, short);
 int event_pending(struct event *, short, struct timeval *);
 
 #define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
+
+/* Some simple debugging functions */
+const char *event_get_version(void);
+const char *event_get_method(void);
+
+/* These functions deal with event priorities */
+
+int	event_priority_init(int);
+int	event_base_priority_init(struct event_base *, int);
+int	event_priority_set(struct event *, int);
 
 /* These functions deal with buffering input and output */
 
@@ -213,6 +236,7 @@ struct bufferevent {
 
 struct bufferevent *bufferevent_new(int fd,
     evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+int bufferevent_priority_set(struct bufferevent *bufev, int pri);
 void bufferevent_free(struct bufferevent *bufev);
 int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
 int bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf);
