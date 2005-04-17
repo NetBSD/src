@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.17.2.1 2005/04/07 16:04:48 tron Exp $
+$NetBSD: pcidevs,v 1.615.2.17.2.2 2005/04/17 13:33:11 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1429,6 +1429,7 @@ product GALILEO	GT64115		0x4111	GT-64115 System Controller
 product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	SKNET		0x4320	SK-NET Gigabit Ethernet
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
+product GALILEO	BELKIN		0x5005	Belkin Gigabit Ethernet
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
 
