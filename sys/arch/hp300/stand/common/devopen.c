@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.8 2005/04/17 17:19:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ atoi(char *cp)
 {
 	int val = 0;
 
-	while (isdigit(*cp))
+	while (isdigit((unsigned char)*cp))
 		val = val * 10 + (*cp++ - '0');
 	return val;
 }
