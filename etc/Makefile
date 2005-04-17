@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.311 2005/03/28 03:13:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.312 2005/04/17 15:15:48 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -227,9 +227,6 @@ FILESMODE_${file:T}=	664
 CONFIGFILES+=		${file}
 FILESMODE_${file:T}=	600
 .endfor
-
-CONFIGFILES+=		postinstall
-FILESMODE_postinstall=	${BINMODE}
 
 CONFIGFILES+=		aliases
 FILESDIR_aliases=	/etc/mail

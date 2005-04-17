@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.546 2005/04/14 21:45:10 peter Exp $
+# $NetBSD: mi,v 1.547 2005/04/17 15:15:48 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1070,6 +1070,7 @@
 ./usr/sbin/postconf				base-postfix-bin	postfix
 ./usr/sbin/postdrop				base-postfix-bin	postfix
 ./usr/sbin/postfix				base-postfix-bin	postfix
+./usr/sbin/postinstall				base-sysutil-bin
 ./usr/sbin/postkick				base-postfix-bin	postfix
 ./usr/sbin/postlock				base-postfix-bin	postfix
 ./usr/sbin/postlog				base-postfix-bin	postfix
