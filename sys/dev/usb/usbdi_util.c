@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.42 2004/12/03 08:53:40 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.42.10.1 2005/04/17 10:24:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.42 2004/12/03 08:53:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.42.10.1 2005/04/17 10:24:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,6 +537,32 @@ usb_find_desc(usbd_device_handle dev, int type, int subtype)
 		if (!desc || (desc->bDescriptorType == type &&
 			      (subtype == USBD_SUBTYPE_ANY ||
 			       subtype == desc->bDescriptorSubtype)))
+			break;
+	}
+	return desc;
+}
+
+/* same as usb_find_desc(), but searches only in the specified interface. */
+const usb_descriptor_t *
+usb_find_desc_if(usbd_device_handle dev, int type, int subtype,
+		 usb_interface_descriptor_t *id)
+{
+	usbd_desc_iter_t iter;
+	const usb_descriptor_t *desc;
+
+	usb_desc_iter_init(dev, &iter);
+
+	iter.cur = (void *)id;		/* start from the interface desc */
+	usb_desc_iter_next(&iter);	/* and skip it */
+
+	while ((desc = usb_desc_iter_next(&iter)) != NULL) {
+		if (desc->bDescriptorType == UDESC_INTERFACE) {
+			/* we ran into the next interface --- not found */
+			return NULL;
+		}
+		if (desc->bDescriptorType == type &&
+		    (subtype == USBD_SUBTYPE_ANY ||
+		     subtype == desc->bDescriptorSubtype))
 			break;
 	}
 	return desc;
