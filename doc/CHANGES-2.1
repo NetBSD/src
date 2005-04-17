@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.66 2005/04/16 14:51:18 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.67 2005/04/17 13:37:02 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1408,4 +1408,18 @@ sys/dev/pci/trm.c				1.19
 	Avoid the driver to negotiate wide transfers with a wide drive
 	connected to a non-wide capable controller.
 	[bouyer, ticket #1429]
+
+usr.sbin/lastlogin/lastlogin.c			1.12 via patch
+
+	Avoid a NULL pointer dereference. From Karim Ayad in PR bin/28958.
+	[martin, ticket #1091]
+
+share/man/man4/sk.4				1.6
+sys/dev/pci/if_sk.c				1.13
+sys/dev/pci/pcidevs				1.687
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for Belkin Gigabit Desktop Network PCI card.
+	[fredb, ticket #1120]
 
