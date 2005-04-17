@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.6 2005/04/16 23:33:18 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.6 2005/04/16 23:33:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,13 +125,15 @@ init_events()
 	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
 	aprint_verbose("debug vitual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG);
+	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
+	    "debugev");
 	hypervisor_enable_event(evtch);
 
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect vitual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE);
+	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
+	    "misdirev");
 	hypervisor_enable_event(evtch);
 
 	/* This needs to be done early, but after the IRQ subsystem is
@@ -352,13 +354,15 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level)
 {
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
+	char evname[8];
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	if (event_set_handler(evtch, pirq_interrupt, ih, level) != 0) {
+	snprintf(evname, sizeof(evname), "irq%d", pirq);
+	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
 		free(ih, M_DEVBUF);
 		return NULL;
 	}
@@ -400,7 +404,8 @@ pirq_interrupt(void *arg)
 #endif /* DOM0OPS */
 
 int
-event_set_handler(int evtch, int (*func)(void *), void *arg, int level)
+event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
+    const char *evname)
 {
 	struct iplsource *ipls;
 	struct evtsource *evts;
@@ -458,8 +463,12 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level)
 			panic("can't allocate fixed interrupt source");
 		evts->ev_handlers = ih;
 		evtsource[evtch] = evts;
-		snprintf(evts->ev_evname, sizeof(evts->ev_evname), "evt%d",
-		    evtch);
+		if (evname)
+			strncpy(evts->ev_evname, evname,
+			    sizeof(evts->ev_evname));
+		else
+			snprintf(evts->ev_evname, sizeof(evts->ev_evname),
+			    "evt%d", evtch);
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
 		    ci->ci_dev->dv_xname, evts->ev_evname);
 	} else {

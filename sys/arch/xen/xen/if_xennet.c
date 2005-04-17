@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.20 2005/04/16 22:49:38 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.21 2005/04/17 14:50:11 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.20 2005/04/16 22:49:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.21 2005/04/17 14:50:11 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -532,7 +532,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		aprint_verbose("%s: using event channel %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_evtchn);
 		event_set_handler(sc->sc_evtchn,
-		    &xen_network_handler, sc, IPL_NET);
+		    &xen_network_handler, sc, IPL_NET, sc->sc_dev.dv_xname);
 		hypervisor_enable_event(sc->sc_evtchn);
 		xennet_driver_count_connected();
 
