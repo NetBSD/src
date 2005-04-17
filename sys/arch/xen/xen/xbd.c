@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.19 2005/04/17 21:11:30 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.20 2005/04/17 22:59:37 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.19 2005/04/17 21:11:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.20 2005/04/17 22:59:37 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -57,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.19 2005/04/17 21:11:30 bouyer Exp $");
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 
 #include <uvm/uvm.h>
 
@@ -187,11 +185,6 @@ static dev_t xbd_cd_cdev_major;
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
-#if 0
-static void	xbd_update_create_kthread(void *);
-static void	xbd_update_kthread(void *);
-static int	xbd_update_handler(void *);
-#endif
 
 static int	xbdinit(struct xbd_softc *, vdisk_t *, struct dk_intf *);
 
@@ -243,16 +236,11 @@ static struct xbd_attach_args cd_ata = {
 };
 #endif
 
-static struct sysctlnode *diskcookies;
-
-
 #if defined(XBDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
 
 #ifdef DEBUG
-int xbddebug = 0;
-
 #define XBDB_FOLLOW	0x1
 #define XBDB_IO		0x2
 #define XBDB_SETUP	0x4
@@ -261,6 +249,9 @@ int xbddebug = 0;
 #define IFDEBUG(x,y)		if (xbddebug & (x)) y
 #define DPRINTF(x,y)		IFDEBUG(x, printf y)
 #define DPRINTF_FOLLOW(y)	DPRINTF(XBDB_FOLLOW, y)
+
+int xbddebug = 0;
+
 #define	DEBUG_MARK_UNUSED(_xr)	(_xr)->xr_sc = (void *)0xdeadbeef
 
 struct xbdreq *xbd_allxr;
@@ -611,15 +602,6 @@ connect_interface(blkif_fe_interface_status_t *status)
 	return;
 }
 
-static void
-unexpected(blkif_fe_interface_status_t *status)
-{
-
-	printf("Unexpected blkif status %d in state %d\n", 
-	    status->status, state);
-}
-
-#if 0
 static struct device *
 find_device(vdisk_t *xd)
 {
@@ -636,7 +618,99 @@ find_device(vdisk_t *xd)
 	}
 	return dv;
 }
-#endif
+
+static void
+vbd_update(void)
+{
+	struct xbd_attach_args *xbda;
+	struct device *dev;
+	vdisk_t *xd;
+	vdisk_t *vbd_info_update, *vbd_info_old;
+	int i, j, new_nr_vbds;
+	extern int hypervisor_print(void *, const char *);
+
+	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
+	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK | M_ZERO);
+
+	new_nr_vbds  = get_vbd_info(vbd_info_update);
+
+	if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
+	    sizeof(vdisk_t)) == 0) {
+		FREE(vbd_info_update, M_DEVBUF);
+		return;
+	}
+
+	for (i = 0, j = 0; i < nr_vbds && j < new_nr_vbds;)  {
+		if (vbd_info[i].device > vbd_info_update[j].device) {
+			DPRINTF(XBDB_HOTPLUG,
+			    ("delete device %x size %lx\n",
+				vbd_info[i].device,
+				(u_long)vbd_info[i].capacity));
+			xd = &vbd_info[i];
+			dev = find_device(xd);
+			if (dev)
+				config_detach(dev, DETACH_FORCE);
+			i++;
+		} else if (vbd_info_update[j].device > vbd_info[i].device) {
+			DPRINTF(XBDB_HOTPLUG,
+			    ("add device %x size %lx\n",
+				vbd_info_update[j].device,
+				(u_long)vbd_info_update[j].capacity));
+			xd = &vbd_info_update[j];
+			xbda = get_xbda(xd);
+			if (xbda) {
+				xbda->xa_xd = xd;
+				config_found(blkctrl.xc_parent, xbda,
+				    blkctrl.xc_cfprint);
+			}
+			j++;
+		} else {
+			i++; j++;
+			DPRINTF(XBDB_HOTPLUG,
+			    ("update device %x size %lx size %lx\n",
+				vbd_info_update[i].device,
+				(u_long)vbd_info[j].capacity,
+				(u_long)vbd_info_update[i].capacity));
+		}
+	}
+	for (; i < nr_vbds; i++) {
+		DPRINTF(XBDB_HOTPLUG,
+		    ("delete device %x size %lx\n",
+			vbd_info[i].device,
+			(u_long)vbd_info[i].capacity));
+		xd = &vbd_info[i];
+		dev = find_device(xd);
+		if (dev)
+			config_detach(dev, DETACH_FORCE);
+	}
+	for (; j < new_nr_vbds; j++) {
+		DPRINTF(XBDB_HOTPLUG,
+		    ("add device %x size %lx\n",
+			vbd_info_update[j].device,
+			(u_long)vbd_info_update[j].capacity));
+		xd = &vbd_info_update[j];
+		xbda = get_xbda(xd);
+		if (xbda) {
+			xbda->xa_xd = xd;
+			config_found(blkctrl.xc_parent, xbda,
+			    blkctrl.xc_cfprint);
+		}
+	}
+
+	nr_vbds = new_nr_vbds;
+
+	vbd_info_old = vbd_info;
+	vbd_info = vbd_info_update;
+	FREE(vbd_info_old, M_DEVBUF);
+}
+
+static void
+unexpected(blkif_fe_interface_status_t *status)
+{
+
+	printf("Unexpected blkif status %d in state %d\n", 
+	    status->status, state);
+}
 
 static void
 blkif_status(blkif_fe_interface_status_t *status)
@@ -698,9 +772,7 @@ blkif_status(blkif_fe_interface_status_t *status)
 			unexpected(status);
 			break;
 		case STATE_CONNECTED:
-#if 0
 			vbd_update();
-#endif
 			break;
 		}
 		break;
@@ -840,35 +912,6 @@ send_interface_connect(void)
 	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
 }
 
-static void
-setup_sysctl(void)
-{
-	struct sysctlnode *pnode;
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       0,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
-
-	sysctl_createv(NULL, 0, NULL, &pnode,
-		       0,
-		       CTLTYPE_NODE, "domain0", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	if (pnode == NULL)
-		return;
-
-	sysctl_createv(NULL, 0, &pnode, &pnode,
-		       0,
-		       CTLTYPE_NODE, "diskcookie", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	if (pnode)
-		diskcookies = pnode;
-}
 
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
@@ -879,9 +922,6 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 	blkctrl.xc_parent = self;
 	blkctrl.xc_cfprint = print;
-
-	if (xen_start_info.flags & SIF_PRIVILEGED)
-		setup_sysctl();
 
 #if NXBD > 0
 	xbd_major = devsw_name2blk("xbd", NULL, 0);
@@ -981,14 +1021,6 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
-	if (diskcookies) {
-		/* XXX beware that xs->sc_xd_device is a long */
-		sysctl_createv(NULL, 0, &diskcookies, NULL,
-		    0,
-		    CTLTYPE_INT, xs->sc_dev.dv_xname, NULL,
-		    NULL, 0, &xs->sc_xd_device, 0,
-		    CTL_CREATE, CTL_EOL);
-	}
 
 #if NRND > 0
 	rnd_attach_source(&xs->sc_rnd_source, xs->sc_dev.dv_xname,
@@ -1000,6 +1032,7 @@ static int
 xbd_detach(struct device *dv, int flags)
 {
 	struct	xbd_softc *xs = (struct	xbd_softc *)dv;
+	int bmaj, cmaj, mn, i;
 
 	/* 
 	 * Mark disk about to be removed (between now and when the xs
@@ -1011,15 +1044,32 @@ xbd_detach(struct device *dv, int flags)
 	if (xs->sc_dksc.sc_dkdev.dk_busy > 0)
 		tsleep(&xs, PWAIT, "xbdetach", hz);
 
+	/* locate the major number */
+	bmaj = bdevsw_lookup_major(&xbd_bdevsw);
+	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
+
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = DISKMINOR(dv->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
+#if 0
+	s = splbio();
+	/* Kill off any queued buffers. */
+	bufq_drain(&sd->buf_queue);
+	bufq_free(&sd->buf_queue);
+
+	splx(s);
+#endif
+
 	/* Detach the disk. */
 	disk_detach(&xs->sc_dksc.sc_dkdev);
 
-	/* XXX decrement bufq_users and free? */
-
-	/* XXX no need to remove sysctl nodes since they only exist
-	 * in domain0 and domain0's devices are never removed.
-	 */
-
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&xs->sc_rnd_source);
+#endif
 	return 0;
 }
 
@@ -1438,105 +1488,6 @@ xbd_response_handler(void *arg)
 		signal_requests_to_xen();
 	return 0;
 }
-
-#if 0
-static void
-xbd_update_create_kthread(void *arg)
-{
-
-	kthread_create1(xbd_update_kthread, arg, NULL, "xbdupdate");
-}
-
-static void
-xbd_update_kthread(void *arg)
-{
-	struct device *parent = arg;
-	struct xbd_attach_args *xbda;
-	struct device *dev;
-	vdisk_t *xd;
-	vdisk_t *vbd_info_update, *vbd_info_old;
-	int i, j, new_nr_vbds;
-	extern int hypervisor_print(void *, const char *);
-
-	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
-	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
-
-	for (;;) {
-		memset(vbd_info_update, 0, MAX_VBDS * sizeof(vdisk_t));
-		new_nr_vbds  = get_vbd_info(vbd_info_update);
-
-		if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
-		    sizeof(vdisk_t)) == 0) {
-			FREE(vbd_info_update, M_DEVBUF);
-			tsleep(parent, PWAIT, "xbdupd", 0);
-			MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
-			    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
-			continue;
-		}
-
-		j = 0;
-		for (i = 0; i < new_nr_vbds; i++) {
-			while (j < nr_vbds &&
-			    vbd_info[j].device < vbd_info_update[i].device) {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("delete device %x size %lx\n",
-					vbd_info[j].device,
-					vbd_info[j].capacity));
-				xd = &vbd_info[j];
-				dev = find_device(xd);
-				if (dev)
-					config_detach(dev, DETACH_FORCE);
-				j++;
-			}
-			if (j < nr_vbds &&
-			    vbd_info[j].device == vbd_info_update[i].device) {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("update device %x size %lx size %lx\n",
-					vbd_info_update[i].device,
-					vbd_info[j].capacity,
-					vbd_info_update[i].capacity));
-				j++;
-			} else {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("add device %x size %lx\n",
-					vbd_info_update[i].device,
-					vbd_info_update[i].capacity));
-				xd = &vbd_info_update[i];
-				xbda = get_xbda(xd);
-				if (xbda) {
-					xbda->xa_xd = xd;
-					config_found(parent, xbda, hypervisor_print);
-				}
-			}
-		}
-
-		while (j < nr_vbds) {
-			DPRINTF(XBDB_HOTPLUG, ("delete device %x\n",
-			    vbd_info[j].device));
-			xd = &vbd_info[j];
-			dev = find_device(xd);
-			if (dev)
-				config_detach(dev, DETACH_FORCE);
-			j++;
-		}
-
-		nr_vbds = new_nr_vbds;
-
-		vbd_info_old = vbd_info;
-		vbd_info = vbd_info_update;
-		vbd_info_update = vbd_info_old;
-	}
-}
-
-static int
-xbd_update_handler(void *arg)
-{
-
-	wakeup(arg);
-
-	return 0;
-}
-#endif
 
 /* XXX: we should probably put these into dksubr.c, mostly */
 int
