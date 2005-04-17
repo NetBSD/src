@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.157 2005/03/11 19:25:22 mycroft Exp $	*/
+/*	$NetBSD: ohci.c,v 1.158 2005/04/17 14:46:49 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.157 2005/03/11 19:25:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.158 2005/04/17 14:46:49 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1411,10 +1411,12 @@ ohci_softintr(void *v)
 					for (j = 0; j < iframes; i++, j++) {
 						len = le16toh(sitd->
 						    itd.itd_offset[j]);
-						len =
-						    (OHCI_ITD_PSW_GET_CC(len) ==
-						    OHCI_CC_NOT_ACCESSED) ? 0 :
-						    OHCI_ITD_PSW_LENGTH(len);
+						if ((OHCI_ITD_PSW_GET_CC(len) &
+						    OHCI_CC_NOT_ACCESSED_MASK)
+						    == OHCI_CC_NOT_ACCESSED)
+							len = 0;
+						else
+							len = OHCI_ITD_PSW_LENGTH(len);
 						xfer->frlengths[i] = len;
 						actlen += len;
 					}
