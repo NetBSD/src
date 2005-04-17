@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.58 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: IOPENER,v 1.58.2.1 2005/04/17 11:41:20 tron Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.58 $"
+#ident 		"IOPENER-$Revision: 1.58.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -369,6 +369,10 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
