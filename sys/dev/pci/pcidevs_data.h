@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.1 2005/04/07 16:05:38 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.2 2005/04/17 13:34:23 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.1 2005/04/07 16:04:48 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.2 2005/04/17 13:33:11 tron Exp 
  */
 
 /*
@@ -3818,6 +3818,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Galileo Technology",
 	    "GT-64120 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    0,
+	    "Galileo Technology",
+	    "Belkin Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
