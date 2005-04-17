@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.261 $"
+#ident 		"GENERIC-$Revision: 1.261.4.1 $"
 
 maxusers 32
 
@@ -558,6 +558,10 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 # FTDI FT8U100AX serial adapter
 uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
