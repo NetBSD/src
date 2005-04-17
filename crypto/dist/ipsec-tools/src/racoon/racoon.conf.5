@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.12 2005/04/15 10:58:11 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.13 2005/04/17 01:03:46 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -88,7 +88,7 @@ number,
 the expression becomes
 .Bq Bq Ar port .
 The vertical bar
-.Pq Ql \*(Ba
+.Pq Ql \&|
 is used to indicate
 a choice between optional parameters.
 Parentheses
@@ -338,7 +338,7 @@ This is the encoding used by older versions of
 .Ss Remote Nodes Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic remote ( Ar address \*(Ba Ic anonymous )
+.Ic remote ( Ar address | Ic anonymous )
 .Bq Bq Ar port
 .Bq Ic inherit Ar parent
 .Ic { Ar statements Ic }
@@ -368,7 +368,7 @@ The following are valid statements.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
-.It Ic exchange_mode ( main \*(Ba aggressive \*(Ba base ) ;
+.It Ic exchange_mode ( main | aggressive | base ) ;
 defines the exchange mode for phase 1 when racoon is the initiator.
 It also means the acceptable exchange mode when racoon is responder.
 More than one mode can be specified by separating them with a comma.
@@ -485,7 +485,7 @@ This only works if
 is the approved proposal.
 Default is off.
 .\"
-.It Ic peers_certfile ( dnssec \*(Ba Ar certfile ) ;
+.It Ic peers_certfile ( dnssec | Ar certfile ) ;
 If
 .Ic dnssec
 is defined,
@@ -563,7 +563,8 @@ This option is only relevant if you use NAT traversal in tunnel mode.
 Its purpose is to work around broken DSL routers that reject UDP
 fragments, by fragmenting the IP packets before ESP encapsulation.
 The result is ESP over UDP of fragmented packets instead of fragmented
-ESP over UDP packets.
+ESP over UDP packets (i.e., IP:UDP:ESP:frag(IP) instead of
+frag(IP:UDP:ESP:IP)).
 .Ar fraglen
 is the maximum size of the fragments.
 552 should work anywhere,
@@ -789,7 +790,7 @@ and policies in the kernel.
 .Ss Sainfo Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic sainfo ( Ar source_id destination_id \*(Ba Ic anonymous ) [ from Ar idtype [ Ar string ] ]
+.Ic sainfo ( Ar source_id destination_id | Ic anonymous ) [ from Ar idtype [ Ar string ] ]
 .Ic { Ar statements Ic }
 .Xc
 defines the parameters of the IKE phase 2 (IPsec-SA establishment).
@@ -827,8 +828,7 @@ is one of following:
 Or you can define 1, 2, 5, 14, 15, 16, 17, or 18 as the DH group number.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
-define the lifetime of amount of time
-which are to be used IPsec-SA.
+define how long an IPsec-SA will be used, in timeunits.
 Any proposal will be accepted, and no attribute(s) will be proposed to
 the peer if you do not specify it(them).
 See the
