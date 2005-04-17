@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.8 2005/04/16 23:33:18 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.9 2005/04/17 14:50:11 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -349,7 +349,7 @@ fail_1:
 		xneti->xni_txring = (void *)ring_txaddr;
 		xneti->xni_evtchn = req->evtchn;
 		event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
-		    xneti, IPL_NET);
+		    xneti, IPL_NET, xneti->xni_if.if_xname);
 		printf("%s using event channel %d\n",
 		    xneti->xni_if.if_xname, xneti->xni_evtchn);
 		hypervisor_enable_event(xneti->xni_evtchn);
