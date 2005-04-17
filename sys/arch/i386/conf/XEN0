@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1.2.1 2005/03/20 14:37:09 tron Exp $
+# $NetBSD: XEN0,v 1.1.2.2 2005/04/17 11:40:53 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -461,6 +461,10 @@ urio*   at uhub? port ?
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*   at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
