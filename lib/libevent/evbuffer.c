@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer.c,v 1.2 2004/12/06 13:16:36 wiz Exp $	*/
+/*	$NetBSD: evbuffer.c,v 1.3 2005/04/17 07:20:00 provos Exp $	*/
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -37,8 +37,10 @@
 
 #include "event.h"
 
-void bufferevent_read_pressure_cb(struct evbuffer *, size_t, size_t, void *);
+/* prototypes */
+
 void bufferevent_setwatermark(struct bufferevent *, short, size_t, size_t);
+void bufferevent_read_pressure_cb(struct evbuffer *, size_t, size_t, void *);
 
 static int
 bufferevent_add(struct event *ev, int timeout)
@@ -144,7 +146,9 @@ bufferevent_writecb(int fd, short event, void *arg)
 	if (EVBUFFER_LENGTH(bufev->output)) {
 	    res = evbuffer_write(bufev->output, fd);
 	    if (res == -1) {
-		    if (errno == EAGAIN || errno == EINTR)
+		    if (errno == EAGAIN ||
+			errno == EINTR ||
+			errno == EINPROGRESS)
 			    goto reschedule;
 		    /* error case */
 		    what |= EVBUFFER_ERROR;
@@ -217,6 +221,17 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 	bufev->enabled = EV_READ | EV_WRITE;
 
 	return (bufev);
+}
+
+int
+bufferevent_priority_set(struct bufferevent *bufev, int priority)
+{
+	if (event_priority_set(&bufev->ev_read, priority) == -1)
+		return (-1);
+	if (event_priority_set(&bufev->ev_write, priority) == -1)
+		return (-1);
+
+	return (0);
 }
 
 void
