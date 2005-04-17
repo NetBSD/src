@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.3 2005/03/30 10:07:40 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.4 2005/04/17 11:54:00 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.3 2005/03/30 10:07:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.4 2005/04/17 11:54:00 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -1005,10 +1005,15 @@ xennet_start(struct ifnet *ifp)
 			pa = m->m_ext.ext_paddr +
 				(m->m_data - m->m_ext.ext_buf);
 			break;
-		default:
 		case 0:
 			pa = m->m_paddr + M_BUFOFFSET(m) +
 				(m->m_data - M_BUFADDR(m));
+			break;
+		default:
+			if (!pmap_extract(pmap_kernel(), (vaddr_t)m->m_data,
+			    &pa)) {
+				panic("xennet_start: no pa");
+			}
 			break;
 		}
 
