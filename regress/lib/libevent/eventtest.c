@@ -1,4 +1,4 @@
-/*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
+/*	$NetBSD: eventtest.c,v 1.4 2005/04/17 07:20:00 provos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
@@ -54,6 +54,7 @@ static int roff;
 static int usepersist;
 static struct timeval tset;
 static struct timeval tcalled;
+static struct event_base *event_base;
 
 #define TEST1	"this is a test"
 #define SECONDS	1
@@ -512,13 +513,122 @@ test9(void)
 	cleanup_test();
 }
 
+struct test_pri_event {
+	struct event ev;
+	int count;
+};
+
+void
+test_priorities_cb(int fd, short what, void *arg)
+{
+	struct test_pri_event *pri = arg;
+	struct timeval tv;
+
+	if (pri->count == 3) {
+		event_loopexit(NULL);
+		return;
+	}
+
+	pri->count++;
+
+	timerclear(&tv);
+	event_add(&pri->ev, &tv);
+}
+
+void
+test_priorities(int npriorities)
+{
+	char buf[32];
+	struct test_pri_event one, two;
+	struct timeval tv;
+
+	snprintf(buf, sizeof(buf), "Priorities %d: ", npriorities);
+	setup_test(buf);
+
+	event_base_priority_init(event_base, npriorities);
+
+	memset(&one, 0, sizeof(one));
+	memset(&two, 0, sizeof(two));
+
+	timeout_set(&one.ev, test_priorities_cb, &one);
+	if (event_priority_set(&one.ev, 0) == -1) {
+		fprintf(stderr, "%s: failed to set priority", __func__);
+		exit(1);
+	}
+
+	timeout_set(&two.ev, test_priorities_cb, &two);
+	if (event_priority_set(&two.ev, npriorities - 1) == -1) {
+		fprintf(stderr, "%s: failed to set priority", __func__);
+		exit(1);
+	}
+
+	timerclear(&tv);
+
+	if (event_add(&one.ev, &tv) == -1)
+		exit(1);
+	if (event_add(&two.ev, &tv) == -1)
+		exit(1);
+
+	event_dispatch();
+
+	event_del(&one.ev);
+	event_del(&two.ev);
+
+	if (npriorities == 1) {
+		if (one.count == 3 && two.count == 3)
+			test_ok = 1;
+	} else if (npriorities == 2) {
+		/* Two is called once because event_loopexit is priority 1 */
+		if (one.count == 3 && two.count == 1)
+			test_ok = 1;
+	} else {
+		if (one.count == 3 && two.count == 0)
+			test_ok = 1;
+	}
+
+	cleanup_test();
+}
+
+static void
+test_multiple_cb(int fd, short event, void *arg)
+{
+	if (event & EV_READ)
+		test_ok |= 1;
+	else if (event & EV_WRITE)
+		test_ok |= 2;
+}
+
+void
+test_multiple_events_for_same_fd(void)
+{
+   struct event e1, e2;
+
+   setup_test("Multiple events for same fd: ");
+
+   event_set(&e1, pair[0], EV_READ, test_multiple_cb, NULL);
+   event_add(&e1, NULL);
+   event_set(&e2, pair[0], EV_WRITE, test_multiple_cb, NULL);
+   event_add(&e2, NULL);
+   event_loop(EVLOOP_ONCE);
+   event_del(&e2);
+   write(pair[1], TEST1, strlen(TEST1)+1);
+   event_loop(EVLOOP_ONCE);
+   event_del(&e1);
+   
+   if (test_ok != 3)
+	   test_ok = 0;
+
+   cleanup_test();
+}
+
+
 int
 main (int argc, char **argv)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/* Initalize the event library */
-	event_init();
+	event_base = event_init();
 
 	test1();
 
@@ -537,6 +647,12 @@ main (int argc, char **argv)
 	test8();
 
 	test9();
+
+	test_priorities(1);
+	test_priorities(2);
+	test_priorities(3);
+
+	test_multiple_events_for_same_fd();
 
 	return (0);
 }
