@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.33 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: NATSUMI,v 1.33.2.1 2005/04/17 11:42:44 tron Exp $
 #
 #	for development
 #
@@ -350,6 +350,10 @@ ucom*	at uplcom? portno ?
 # USB Handspring Visor
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?
