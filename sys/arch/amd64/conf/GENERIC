@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2005/02/25 13:46:48 simonb Exp $
+# $NetBSD: GENERIC,v 1.42.2.1 2005/04/17 11:40:35 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.42.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -673,6 +673,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
