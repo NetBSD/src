@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27.2.1 2005/04/09 21:27:58 tron Exp $
+# $NetBSD: INSTALL,v 1.27.2.2 2005/04/17 11:42:28 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27.2.1 $"
+#ident 		"INSTALL-$Revision: 1.27.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -564,6 +564,10 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?
