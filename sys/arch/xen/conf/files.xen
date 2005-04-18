@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.20 2005/04/17 14:44:14 bouyer Exp $
+#	$NetBSD: files.xen,v 1.21 2005/04/18 21:33:21 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -109,7 +109,7 @@ attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }: isabus, pcibus
+device	hypervisor { }: isabus, pcibus, sysmon_power
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
