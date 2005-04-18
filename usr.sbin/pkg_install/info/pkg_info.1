@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.47 2005/02/26 14:09:58 grant Exp $
+.\" $NetBSD: pkg_info.1,v 1.48 2005/04/18 12:28:46 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -127,6 +127,8 @@ Show the de-install script (if any) for each package.
 Show the files within each package.
 This is different from just viewing the packing list, since full pathnames
 for everything are generated.
+Files that were created dynamically during installation of the package
+are not listed.
 .It Fl l Ar str
 Prefix each information category header (see
 .Fl q )
