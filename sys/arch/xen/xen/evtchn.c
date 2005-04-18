@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.8 2005/04/18 20:22:22 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.7 2005/04/17 14:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.8 2005/04/18 20:22:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -189,7 +189,7 @@ do_event(int evtch, struct intrframe *regs)
 	ilevel = ci->ci_ilevel;
 	if (evtsource[evtch]->ev_maxlevel <= ilevel) {
 #ifdef IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
+		if (evtch == IRQ_DEBUG)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
@@ -312,7 +312,7 @@ bind_pirq_to_evtch(int pirq)
 		evtchn = op.u.bind_pirq.port;
 
 #ifdef IRQ_DEBUG
-		printf("pirq %d irq %d evtchn %d\n", pirq, irq, evtchn);
+		printf("pirq %d evtchn %d\n", pirq, evtchn);
 #endif
 		pirq_to_evtch[pirq] = evtchn;
 	}
@@ -395,8 +395,8 @@ pirq_interrupt(void *arg)
 
 	ret = ih->func(ih->arg);
 #ifdef IRQ_DEBUG
-	if (ih->irq == IRQ_DEBUG)
-	    printf("pirq_interrupt irq %d/%d ret %d\n", ih->irq, ih->pirq, ret);
+	if (ih->evtch == IRQ_DEBUG)
+	    printf("pirq_interrupt irq %d ret %d\n", ih->pirq, ret);
 #endif
 	return ret;
 }
@@ -531,7 +531,7 @@ void
 hypervisor_enable_event(unsigned int evtch)
 {
 #ifdef IRQ_DEBUG
-	if (irq == IRQ_DEBUG)
+	if (evtch == IRQ_DEBUG)
 		printf("hypervisor_enable_evtch: evtch %d\n", evtch);
 #endif
 
@@ -539,7 +539,7 @@ hypervisor_enable_event(unsigned int evtch)
 #ifdef DOM0OPS
 	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
 #ifdef  IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
+		if (evtch == IRQ_DEBUG)
 		    printf("pirq_notify(%d)\n", evtch);
 #endif
 		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
