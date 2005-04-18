@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.5 2004/10/04 19:59:51 he Exp $	*/
+/*	$NetBSD: disk.c,v 1.6 2005/04/18 15:38:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 extern const struct arcbios_fv *ARCBIOS;
 
 struct	disk_softc {
-	int	sc_fd;			/* PROM file id */
+	u_long	sc_fd;			/* PROM file id */
 	int	sc_part;		/* disk partition number */
 	struct	disklabel sc_label;	/* disk label for this disk */
 };
@@ -69,7 +69,7 @@ diskstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	struct partition *pp = &sc->sc_label.d_partitions[part];
 	int s;
 	int64_t offset;
-	paddr_t count;
+	u_long count;
 
 	offset = bn;
 
@@ -111,8 +111,7 @@ diskopen(struct open_file *f, ...)
 #ifdef arc
 	char *msg, buf[DEV_BSIZE];
 #endif
-	int i;
-	paddr_t i_arg;
+	u_long fd;
 	char *device;
 	va_list ap;
 
@@ -135,17 +134,16 @@ diskopen(struct open_file *f, ...)
 	if (part >= 16)
 		return (ENXIO);
 
-	if (ARCBIOS->Open(device, 0, &i_arg)) {
+	if (ARCBIOS->Open(device, 0, &fd)) {
 		printf("open failed\n");
 		return (ENXIO);
 	}
-	i = (int)i_arg;
 
 	sc = alloc(sizeof(struct disk_softc));
 	memset(sc, 0, sizeof(struct disk_softc));
 	f->f_devdata = (void *)sc;
 
-	sc->sc_fd = i;
+	sc->sc_fd = fd;
 	sc->sc_part = part;
 
 	/* try to read disk label and partition table information */
