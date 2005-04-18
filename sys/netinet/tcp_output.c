@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.130 2005/04/18 21:50:25 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.131 2005/04/18 21:55:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.130 2005/04/18 21:50:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.131 2005/04/18 21:55:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -196,6 +196,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.130 2005/04/18 21:50:25 yamt Exp $"
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+#include <netinet/in_offload.h>
 
 #ifdef IPSEC
 #include <netkey/key.h>
@@ -1563,4 +1564,130 @@ tcp_setpersist(struct tcpcb *tp)
 	TCP_TIMER_ARM(tp, TCPT_PERSIST, nticks);
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
+}
+
+/*
+ * tcp4_segment: handle M_CSUM_TSOv4 by software.
+ *
+ * => always consume m.
+ * => call output_func with output_arg for each segments.
+ */
+
+int
+tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
+    void *output_arg)
+{
+	int mss;
+	int iphlen;
+	int thlen;
+	int hlen;
+	int len;
+	struct ip *iph;
+	struct tcphdr *th;
+	uint16_t ipid;
+	uint32_t tcpseq;
+	struct mbuf *hdr = NULL;
+	struct mbuf *t;
+	int error = 0;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0);
+
+	m->m_pkthdr.csum_flags = 0;
+
+	len = m->m_pkthdr.len;
+	KASSERT(len >= sizeof(*iph) + sizeof(*th));
+
+	if (m->m_len < sizeof(*iph)) {
+		m = m_pullup(m, sizeof(*iph));
+		if (m == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+	}
+	iph = mtod(m, struct ip *);
+	iphlen = iph->ip_hl * 4;
+	KASSERT(iph->ip_v == IPVERSION);
+	KASSERT(iphlen >= sizeof(*iph));
+	KASSERT(iph->ip_p == IPPROTO_TCP);
+	ipid = ntohs(iph->ip_id);
+
+	hlen = iphlen + sizeof(*th);
+	if (m->m_len < hlen) {
+		m = m_pullup(m, hlen);
+		if (m == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+	}
+	th = (void *)(mtod(m, char *) + iphlen);
+	tcpseq = ntohl(th->th_seq);
+	thlen = th->th_off * 4;
+	hlen = iphlen + thlen;
+
+	mss = m->m_pkthdr.segsz;
+	KASSERT(mss != 0);
+	KASSERT(len > hlen);
+
+	t = m_split(m, hlen, M_NOWAIT);
+	if (t == NULL) {
+		error = ENOMEM;
+		goto quit;
+	}
+	hdr = m;
+	m = t;
+	len -= hlen;
+	KASSERT(len % mss == 0);
+	while (len > 0) {
+		struct mbuf *n;
+
+		n = m_dup(hdr, 0, hlen, M_NOWAIT);
+		if (n == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+		KASSERT(n->m_len == hlen); /* XXX */
+
+		t = m_split(m, mss, M_NOWAIT);
+		if (t == NULL) {
+			m_freem(n);
+			error = ENOMEM;
+			goto quit;
+		}
+		m_cat(n, m);
+		m = t;
+
+		KASSERT(n->m_len >= hlen); /* XXX */
+
+		n->m_pkthdr.len = hlen + mss;
+		iph = mtod(n, struct ip *);
+		KASSERT(iph->ip_v == IPVERSION);
+		iph->ip_len = htons(n->m_pkthdr.len);
+		iph->ip_id = htons(ipid);
+		th = (void *)(mtod(n, char *) + iphlen);
+		th->th_seq = htonl(tcpseq);
+		iph->ip_sum = 0;
+		iph->ip_sum = in_cksum(n, iphlen);
+		th->th_sum = 0;
+		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
+
+		error = (*output_func)(output_arg, n);
+		if (error) {
+			goto quit;
+		}
+
+		tcpseq += mss;
+		ipid++;
+		len -= mss;
+	}
+
+quit:
+	if (hdr != NULL) {
+		m_freem(hdr);
+	}
+	if (m != NULL) {
+		m_freem(m);
+	}
+
+	return error;
 }
