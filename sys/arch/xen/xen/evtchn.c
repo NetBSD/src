@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.9 2005/04/18 20:23:56 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.10 2005/04/18 21:31:03 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.9 2005/04/18 20:23:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.10 2005/04/18 21:31:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,9 +83,6 @@ physdev_op_t physdev_op_notify = {
 };
 #endif
 
-#if 0
-static int xen_die_handler(void *);
-#endif
 int debug_port;
 static int xen_debug_handler(void *);
 static int xen_misdirect_handler(void *);
@@ -547,17 +544,6 @@ hypervisor_enable_event(unsigned int evtch)
 	}
 #endif /* DOM0OPS */
 }
-
-#if 0
-static int
-xen_die_handler(void *arg)
-{
-	printf("hypervisor: DIE event received...\n");
-	cpu_reboot(0, NULL);
-	/* NOTREACHED */
-	return 0;
-}
-#endif
 
 static int
 xen_debug_handler(void *arg)
