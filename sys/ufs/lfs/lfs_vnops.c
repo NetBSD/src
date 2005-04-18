@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.145 2005/04/16 17:35:58 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.146 2005/04/18 17:36:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.145 2005/04/16 17:35:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.146 2005/04/18 17:36:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,7 +549,7 @@ lfs_unmark_vnode(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
-	if (ip->i_flag & IN_ADIROP) {
+	if (ip && (ip->i_flag & IN_ADIROP)) {
 		KASSERT(vp->v_flag & VDIROP);
 		simple_lock(&ip->i_lfs->lfs_interlock);
 		--ip->i_lfs->lfs_nadirop;
