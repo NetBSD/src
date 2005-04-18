@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname.c,v 1.13 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: servent.h,v 1.1 2005/04/18 19:39:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,34 +35,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getservbyname.c,v 1.13 2005/04/18 19:39:45 kleink Exp $");
-#endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-#include "reentrant.h"
+#include <stdio.h>
 
-#include <netdb.h>
+struct servent_data {
+        FILE *fp;
+	struct servent serv;
+	char **aliases;
+	size_t maxaliases;
+	int stayopen;
+	char *line;
+	void *dummy;
+};
 
-#include "servent.h"
-
-#ifdef __weak_alias
-__weak_alias(getservbyname,_getservbyname)
-#endif
-
-#ifdef _REENTRANT
-extern mutex_t _servent_mutex;
-#endif
-extern struct servent_data _servent_data;
-
-struct servent *
-getservbyname(const char *name, const char *proto)
-{
-	struct servent *s;
-
-	mutex_lock(&_servent_mutex);
-	s = getservbyname_r(name, proto, &_servent_data.serv, &_servent_data);
-	mutex_unlock(&_servent_mutex);
-	return (s);
-}
+struct servent	*getservent_r(struct servent *, struct servent_data *);
+struct servent	*getservbyname_r(const char *, const char *,
+    struct servent *, struct servent_data *);
+struct servent	*getservbyport_r(int, const char *,
+    struct servent *, struct servent_data *);
+void setservent_r(int, struct servent_data *);
+void endservent_r(struct servent_data *);

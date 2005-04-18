@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.5 2005/04/18 19:39:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.5 2005/04/18 19:39:45 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: getservent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "servent.h"
 
 #ifdef __weak_alias
 __weak_alias(endservent_r,_endservent_r)
