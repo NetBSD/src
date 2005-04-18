@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.150 2005/04/07 12:22:47 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.151 2005/04/18 21:50:25 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.150 2005/04/07 12:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.151 2005/04/18 21:50:25 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -157,6 +157,16 @@ static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
 #endif
+
+int	udp_do_loopback_cksum = 0;
+int	tcp_do_loopback_cksum = 0;
+int	ip_do_loopback_cksum = 0;
+
+#define	IN_NEED_CHECKSUM(ifp, csum_flags) \
+	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
+	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -788,9 +798,9 @@ spd_done:
 #endif
 
 	/* Maybe skip checksums on loopback interfaces. */
-	if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
-			   ip_do_loopback_cksum))
+	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	}
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
 	 * If small enough for mtu of path, or if using TCP segmentation
@@ -817,11 +827,15 @@ spd_done:
 			 * XXX fields to be 0?
 			 */
 			if (sw_csum & M_CSUM_IPv4) {
+				KASSERT(IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4));
 				ip->ip_sum = in_cksum(m, hlen);
 				m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 			}
 			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-				in_delayed_cksum(m);
+				if (IN_NEED_CHECKSUM(ifp,
+				    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
+					in_delayed_cksum(m);
+				}
 				m->m_pkthdr.csum_flags &=
 				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 			}
@@ -842,7 +856,10 @@ spd_done:
 	 * XXX Some hardware can do this.
 	 */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		if (IN_NEED_CHECKSUM(ifp,
+		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
+			in_delayed_cksum(m);
+		}
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
