@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.13 2005/04/17 21:11:30 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.14 2005/04/18 21:33:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,12 +63,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.13 2005/04/17 21:11:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.14 2005/04/18 21:33:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <dev/sysmon/sysmonvar.h>
 
 #include "xencons.h"
 #include "xennet.h"
@@ -82,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.13 2005/04/17 21:11:30 bouyer Exp $
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#include <machine/ctrl_if.h>
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -144,6 +146,17 @@ int     isa_has_been_seen;
 struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
+
+/* shutdown/reboot message stuff */
+static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
+static struct sysmon_pswitch hysw_shutdown = {
+	.smpsw_type = PSWITCH_TYPE_POWER,
+	.smpsw_name = "hypervisor",
+};
+static struct sysmon_pswitch hysw_reboot = {
+	.smpsw_type = PSWITCH_TYPE_RESET,
+	.smpsw_name = "hypervisor",
+};
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -250,6 +263,13 @@ hypervisor_attach(parent, self, aux)
 		xennetback_init();
 	}
 #endif
+	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
+	    sysmon_pswitch_register(&hysw_shutdown) != 0)
+		printf("%s: unable to register with sysmon\n",
+		    self->dv_xname);
+	else 
+		ctrl_if_register_receiver(CMSG_SHUTDOWN,
+		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 }
 
 static int
@@ -291,3 +311,20 @@ xenkernfs_init()
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
 #endif
+
+/* handler for the shutdown messages */
+static void
+hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
+{
+	switch(msg->subtype) {
+	case CMSG_SHUTDOWN_POWEROFF:	
+		sysmon_pswitch_event(&hysw_shutdown, PSWITCH_EVENT_PRESSED);
+		break;
+	case CMSG_SHUTDOWN_REBOOT:	
+		sysmon_pswitch_event(&hysw_reboot, PSWITCH_EVENT_PRESSED);
+		break;
+	default:
+		printf("shutdown_handler: unknwon message %d\n",
+		    msg->type);
+	}
+}
