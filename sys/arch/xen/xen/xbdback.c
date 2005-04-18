@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.10 2005/04/17 14:50:11 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.11 2005/04/18 11:41:11 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -415,6 +415,11 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			printf("xbdback VBD grow domain %d: can't ioctl "
 			    "device 0x%x (error %d)\n", xbdi->domid,
 			    req->extent.device, error);
+			vbd->start = vbd->size = vbd->dev = 0;
+			vn_close(vbd->vp, FREAD, NOCRED, NULL);
+			vbd->vp = NULL;
+			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
+			goto end;
 		}
 		vbd->size = req->extent.sector_length * (512 / DEV_BSIZE);
 		if (vbd->size == 0 || vbd->size > dpart.part->p_size);
