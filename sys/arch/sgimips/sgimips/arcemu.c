@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.9 2005/04/07 23:36:48 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.10 2005/04/18 15:46:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.9 2005/04/07 23:36:48 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.10 2005/04/18 15:46:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ arcemu_ip12_eeprom_read()
 	struct seeprom_descriptor sd;
 	bus_space_handle_t bsh;
 	bus_space_tag_t tag;
-	paddr_t reg;
+	u_int32_t reg;
 
 	tag = SGIMIPS_BUS_SPACE_NORMAL;
 	bus_space_map(tag, 0x1fa00000 + 0x1801bf, 1, 0, &bsh);
