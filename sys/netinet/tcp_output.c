@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.129 2005/03/29 20:09:24 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.130 2005/04/18 21:50:25 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.129 2005/03/29 20:09:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.130 2005/04/18 21:50:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1306,7 +1306,7 @@ send:
 
 	/*
 	 * Set ourselves up to be checksummed just before the packet
-	 * hits the wire.  Maybe skip checksums on loopback interfaces.
+	 * hits the wire.
 	 */
 	switch (af) {
 #ifdef INET
@@ -1316,13 +1316,7 @@ send:
 			m->m_pkthdr.segsz = txsegsize;
 			m->m_pkthdr.csum_flags = M_CSUM_TSOv4;
 		} else {
-			if (__predict_true(ro->ro_rt == NULL ||
-					   !(ro->ro_rt->rt_ifp->if_flags &
-					     IFF_LOOPBACK) ||
-					   tcp_do_loopback_cksum))
-				m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
-			else
-				m->m_pkthdr.csum_flags = 0;
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
 			if (len + optlen) {
 				/* Fixup the pseudo-header checksum. */
 				/* XXXJRT Not IP Jumbogram safe. */
@@ -1344,13 +1338,7 @@ send:
 		m->m_pkthdr.len = sizeof(struct ip6_hdr)
 			+ sizeof(struct tcphdr) + optlen + len;
 #ifdef notyet
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   tcp_do_loopback_cksum))
-			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
-		else
-			m->m_pkthdr.csum_flags = 0;
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 #endif
 		if (len + optlen) {
@@ -1359,14 +1347,8 @@ send:
 			th->th_sum = in_cksum_addword(th->th_sum,
 			    htons((u_int16_t) (len + optlen)));
 		}
-#ifndef notyet
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   tcp_do_loopback_cksum))
-			th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
-			    sizeof(struct tcphdr) + optlen + len);
-#endif
+		th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
+		    sizeof(struct tcphdr) + optlen + len);
 		break;
 #endif
 	}
