@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotobynumber.c,v 1.2 2005/01/07 22:22:49 mycroft Exp $	*/
+/*	$NetBSD: getprotobynumber.c,v 1.3 2005/04/18 19:39:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,13 +38,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getprotobynumber.c,v 1.2 2005/01/07 22:22:49 mycroft Exp $");
+__RCSID("$NetBSD: getprotobynumber.c,v 1.3 2005/04/18 19:39:45 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
 
 #include <netdb.h>
+
+#include "protoent.h"
 
 #ifdef __weak_alias
 __weak_alias(getprotobynumber,_getprotobynumber)
