@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.7 2005/04/16 22:49:37 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.8 2005/04/18 20:23:56 yamt Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.7 2005/04/16 22:49:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8 2005/04/18 20:23:56 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -272,10 +272,16 @@ hypervisor_enable_ipl(unsigned int ipl)
 		l2 = ci->ci_isources[ipl]->ipl_evt_mask2[l1i];
 		ci->ci_isources[ipl]->ipl_evt_mask2[l1i] = 0;
 		while ((l2i = ffs(l2)) != 0) {
+			int evtch;
+
 			l2i--;
 			l2 &= ~(1 << l2i);
 
-			hypervisor_enable_event((l1i << 5) + l2i);
+			evtch = (l1i << 5) + l2i;
+			KASSERT(evtch_maskcount[evtch] > 0);
+			if ((--evtch_maskcount[evtch]) == 0) {
+				hypervisor_enable_event(evtch);
+			}
 		}
 	}
 }
@@ -285,6 +291,9 @@ hypervisor_set_ipending(int port, int l1, int l2)
 {
 	int ipl, imask;
 	struct cpu_info *ci = curcpu();
+
+	KASSERT(port == (l1 << 5) + l2);
+	KASSERT(evtch_maskcount[port] == 0);
 
 	/* set pending bit for the appropriate IPLs */	
 	ci->ci_ipending |= evtsource[port]->ev_imask;
@@ -296,5 +305,8 @@ hypervisor_set_ipending(int port, int l1, int l2)
 		imask &= ~(1 << ipl);
 		ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
 		ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
+
+		evtch_maskcount[port]++;
+		KASSERT(evtch_maskcount[port] <= 32);
 	}
 }
