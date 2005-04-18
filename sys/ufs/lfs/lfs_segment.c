@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.160 2005/04/14 00:02:46 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.161 2005/04/18 23:03:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.160 2005/04/14 00:02:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.161 2005/04/18 23:03:08 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -910,7 +910,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	/* Check file size based on highest allocated block */
 	if (((ip->i_ffs1_mode & IFMT) == IFREG ||
-	     (ip->i_ffs1_mode & IFMT) == IFREG) &&
+	     (ip->i_ffs1_mode & IFMT) == IFDIR) &&
 	    ip->i_size > ((ip->i_lfs_hiblk + 1) << fs->lfs_bshift)) {
 		cdp->di_size = (ip->i_lfs_hiblk + 1) << fs->lfs_bshift;
 		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
