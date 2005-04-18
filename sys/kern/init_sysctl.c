@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.36 2005/03/11 06:16:15 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.37 2005/04/18 10:46:39 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36 2005/03/11 06:16:15 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.37 2005/04/18 10:46:39 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -372,7 +372,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "saved_ids",
-		       SYSCTL_DESCR("Whether saved set-group/user ID is "
+		       SYSCTL_DESCR("Whether POSIX saved set-group/user ID is "
 				    "available"), NULL,
 #ifdef _POSIX_SAVED_IDS
 		       1,
