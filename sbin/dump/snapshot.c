@@ -1,7 +1,7 @@
-/*	$NetBSD: snapshot.c,v 1.1 2005/04/19 07:26:38 hannken Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.2 2005/04/19 08:10:43 hannken Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
