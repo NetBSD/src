@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.10 2005/03/31 15:11:54 thorpej Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.11 2005/04/19 03:15:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.10 2005/03/31 15:11:54 thorpej Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.11 2005/04/19 03:15:36 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -153,7 +153,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_USER_UNKNOWN);
 	if (pwd->pw_dir == NULL)
 		return (PAM_AUTH_ERR);
@@ -414,7 +415,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_USER_UNKNOWN);
 
 	/* start the agent */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_radius.c,v 1.3 2005/03/31 15:11:54 thorpej Exp $	*/
+/*	$NetBSD: pam_radius.c,v 1.4 2005/04/19 03:15:35 christos Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_radius/pam_radius.c,v 1.22 2004/06/25 12:32:45 kan Exp $");
 #else
-__RCSID("$NetBSD: pam_radius.c,v 1.3 2005/03/31 15:11:54 thorpej Exp $");
+__RCSID("$NetBSD: pam_radius.c,v 1.4 2005/04/19 03:15:35 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -323,7 +323,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 				if (retval != PAM_SUCCESS)
 					return (retval);
 				if (getpwnam_r(tmpuser, &pwres, pwbuf,
-					       sizeof(pwbuf), &pwd) != 0) {
+					       sizeof(pwbuf), &pwd) != 0 ||
+				    pwd == NULL) {
 					pam_set_item(pamh, PAM_USER,
 					    template_user);
 					PAM_LOG("Using template user");
