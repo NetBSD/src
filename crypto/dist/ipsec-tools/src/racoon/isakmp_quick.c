@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.1.1.3 2005/03/14 08:14:31 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.13.2.1 2005/03/02 20:00:03 vanhu Exp */
 
@@ -1700,6 +1700,7 @@ quick_r3prep(iph2, msg0)
 		delsp_bothdir((struct policyindex *)iph2->spidx_gen);
 		racoon_free(iph2->spidx_gen);
 		iph2->spidx_gen = NULL;
+		iph2->generated_spidx=1;
 	}
 
 	error = 0;
