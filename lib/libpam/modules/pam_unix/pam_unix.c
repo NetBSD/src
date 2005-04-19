@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.7 2005/03/31 15:11:54 thorpej Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.8 2005/04/19 03:15:37 christos Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.7 2005/03/31 15:11:54 thorpej Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.8 2005/04/19 03:15:37 christos Exp $");
 #endif
 
 
@@ -158,7 +158,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 		return (retval);
 
 	if (user == NULL ||
-	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_SERVICE_ERR);
 
 	PAM_LOG("Got user: %s", user);
