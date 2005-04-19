@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.25 2004/09/26 21:13:27 jmmv Exp $
+#	$NetBSD: Makefile.inc,v 1.25.2.1 2005/04/19 12:32:38 tron Exp $
 
 SRCS+=	alloca.S fabs.S
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c
-SRCS+=	nanf_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
 SRCS+=	frexp_ieee754.c
 SRCS+=	isinff_ieee754.c isinfd_ieee754.c
 SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
+
+SRCS+=	nanf.c
 
 # 68000-based machines use a double-extended `long double' type
 # for which the generic ieee754 versions can be used
