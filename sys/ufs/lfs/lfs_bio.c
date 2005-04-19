@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.83 2005/04/06 04:30:46 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.84 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.83 2005/04/06 04:30:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.84 2005/04/19 20:59:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,13 +522,9 @@ lfs_flush_fs(struct lfs *fs, int flags)
 		return;
 
 	simple_lock(&lfs_subsys_lock);
-	lfs_subsys_pages -= fs->lfs_pages; /* XXXUBC */
-	if (lfs_subsys_pages < 0)	   /* XXXUBC */
-		lfs_subsys_pages = 0;	   /* XXXUBC */
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 	simple_unlock(&lfs_subsys_lock);
-	fs->lfs_pages = 0; /* XXXUBC need a better way to count this */
 
 	simple_unlock(&fs->lfs_interlock);
 	lfs_writer_enter(fs, "fldirop");
@@ -561,7 +557,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	if (lfs_dostats)
 		++lfs_stats.write_exceeded;
 	/* XXX should we include SEGM_CKP here? */
-	if (lfs_writing && !(flags & (SEGM_SYNC | SEGM_WRITERD))) {
+	if (lfs_writing && !(flags & SEGM_SYNC)) {
 		DLOG((DLOG_FLUSH, "lfs_flush: not flushing because another flush is active\n"));
 		return;
 	}

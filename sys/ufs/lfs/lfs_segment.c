@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.161 2005/04/18 23:03:08 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.162 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.161 2005/04/18 23:03:08 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.162 2005/04/19 20:59:05 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1109,12 +1109,12 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 	/* Insert into the buffer list, update the FINFO block. */
 	bp->b_flags |= B_GATHERED;
 
-	/* This block's accounting moves from lfs_favail to lfs_avail */
-	lfs_deregister_block(sp->vp, bp->b_lblkno);
-
 	*sp->cbpp++ = bp;
-	for (j = 0; j < blksinblk; j++)
+	for (j = 0; j < blksinblk; j++) {
 		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno + j;
+		/* This block's accounting moves from lfs_favail to lfs_avail */
+		lfs_deregister_block(sp->vp, bp->b_lblkno + j);
+	}
 
 	sp->sum_bytes_left -= sizeof(int32_t) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;

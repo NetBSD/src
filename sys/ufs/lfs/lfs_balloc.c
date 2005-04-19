@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.55 2005/04/16 17:35:58 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.56 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.55 2005/04/16 17:35:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.56 2005/04/19 20:59:05 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -530,9 +530,14 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 		return;
 	}
 
+	++ip->i_lfs_nbtree;
 	simple_lock(&fs->lfs_interlock);
 	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_pages += fs->lfs_bsize >> PAGE_SHIFT;
+	simple_lock(&lfs_subsys_lock);
 	++locked_fakequeue_count;
+	lfs_subsys_pages += fs->lfs_bsize >> PAGE_SHIFT;
+	simple_unlock(&lfs_subsys_lock);
 	simple_unlock(&fs->lfs_interlock);
 }
 
@@ -541,14 +546,17 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 {
 	ASSERT_MAYBE_SEGLOCK(fs);
 
+	--ip->i_lfs_nbtree;
 	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
 	pool_put(&lfs_lbnentry_pool, lbp);
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
 		fs->lfs_favail -= btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_pages -= fs->lfs_bsize >> PAGE_SHIFT;
 	simple_lock(&lfs_subsys_lock);
 	if (locked_fakequeue_count > 0)
 		--locked_fakequeue_count;
+	lfs_subsys_pages -= fs->lfs_bsize >> PAGE_SHIFT;
 	simple_unlock(&lfs_subsys_lock);
 	simple_unlock(&fs->lfs_interlock);
 }

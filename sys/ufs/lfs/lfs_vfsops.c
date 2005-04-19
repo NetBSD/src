@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.175 2005/04/16 18:10:12 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.176 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.175 2005/04/16 18:10:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.176 2005/04/19 20:59:05 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -196,7 +196,7 @@ lfs_writerd(void *arg)
 
 	simple_lock(&lfs_subsys_lock);
 	for (;;) {
-		ltsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", 0,
+		ltsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", hz/10,
 		    &lfs_subsys_lock);
 
 		/*
@@ -234,7 +234,7 @@ lfs_writerd(void *arg)
 		 */
 		simple_lock(&lfs_subsys_lock);
 		loopcount = 0;
-		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
+		if (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
 
@@ -252,19 +252,6 @@ lfs_writerd(void *arg)
 
 			lfs_flush(NULL, SEGM_WRITERD, 0);
 			lfs_do_flush = 0;
-			if (++loopcount > 10) {
-				printf("lfs_writer_daemon: livelock: "
-					"lqc = %lld (of %lld), "
-					"lqb = %lld (of %lld), "
-					"lsp = %lld (of %lld)\n",
-					(long long)locked_queue_count,
-					(long long)LFS_MAX_BUFS,
-					(long long)locked_queue_bytes,
-					(long long)LFS_MAX_BYTES,
-					(long long)lfs_subsys_pages,
-					(long long)LFS_MAX_PAGES);
-				break;
-			}
 		}
 	}
 	/* NOTREACHED */
@@ -1423,6 +1410,11 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vput(ump->um_devvp);
+
+	/* Complain about page leakage */
+	if (fs->lfs_pages > 0)
+		printf("lfs_unmount: still claim %d pages (%d in subsystem)\n",
+			fs->lfs_pages, lfs_subsys_pages);
 
 	/* Free per-mount data structures */
 	free(fs->lfs_suflags[0], M_SEGMENT);
