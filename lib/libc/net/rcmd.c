@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.59 2005/03/30 16:12:58 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.60 2005/04/19 03:20:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.59 2005/03/30 16:12:58 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.60 2005/04/19 03:20:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -403,7 +403,8 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		rshcmd = _PATH_BIN_RCMD;
 
 	/* locuser must exist on this host. */
-	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pw) != 0) {
+	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pw) != 0 ||
+	    pw == NULL) {
 		warnx("rshrcmd: unknown user: %s", locuser);
 		return(-1);
 	}
@@ -683,7 +684,8 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	isvaliduser = -1;
 	if (__check_rhosts_file || superuser) {
 
-		if (getpwnam_r(luser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+		if (getpwnam_r(luser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0
+		    || pwd == NULL)
 			return (-1);
 		(void)strlcpy(pbuf, pwd->pw_dir, sizeof(pbuf));
 		(void)strlcat(pbuf, "/.rhosts", sizeof(pbuf));
