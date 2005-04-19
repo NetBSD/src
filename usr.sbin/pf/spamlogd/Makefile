@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/04/12 14:44:10 jwise Exp $
+#	$NetBSD: Makefile,v 1.4 2005/04/19 08:42:54 tron Exp $
 #	$OpenBSD: Makefile,v 1.2 2004/02/27 19:41:39 david Exp $
 
 PROG=	pfspamlogd
@@ -11,6 +11,8 @@ BINDIR=	/usr/libexec
 
 pfspamlogd.8:	spamlogd.8
 	cp $> $@
+
+CLEANFILES+=	pfspamlogd.8
 
 .include <bsd.prog.mk>
 
