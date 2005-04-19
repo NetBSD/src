@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2005/04/19 07:26:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2004/04/21 01:05:32 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2005/04/19 07:26:38 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: main.c,v 1.57 2004/04/21 01:05:32 christos Exp $");
 
 #include "dump.h"
 #include "pathnames.h"
+#include "snapshot.h"
 
 int	timestamp;		/* print message timestamps */
 int	notify;			/* notify operator flag */
@@ -100,6 +101,7 @@ main(int argc, char *argv[])
 	char *map;
 	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, Fflag = 0, honorlevel = 1;
+	int snap_internal = 0;
 	ino_t maxino;
 	time_t tnow, date;
 	int dirc;
@@ -107,6 +109,7 @@ main(int argc, char *argv[])
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
 	char *new_time_format;
+	char *snap_backup = NULL;
 
 	spcl.c_date = 0;
 	(void)time(&tnow);
@@ -131,7 +134,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789aB:b:cd:eFf:h:k:l:L:nr:s:StT:uWw")) != -1)
+	    "0123456789aB:b:cd:eFf:h:k:l:L:nr:s:StT:uWwx:X")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -242,6 +245,14 @@ main(int argc, char *argv[])
 		case 'w':
 			lastdump(ch);
 			exit(X_FINOK);	/* do nothing else */
+
+		case 'x':
+			snap_backup = optarg;
+			break;
+
+		case 'X':
+			snap_internal = 1;
+			break;
 
 		default:
 			usage();
@@ -382,11 +393,12 @@ main(int argc, char *argv[])
 	 *	the file system name.
 	 */
 	mountpoint = NULL;
+	mntinfo = mntinfosearch(disk);
 	if ((dt = fstabsearch(disk)) != NULL) {
 		disk = rawname(dt->fs_spec);
 		mountpoint = dt->fs_file;
 		msg("Found %s on %s in %s\n", disk, mountpoint, _PATH_FSTAB);
-	} else if ((mntinfo = mntinfosearch(disk)) != NULL) {
+	} else if (mntinfo != NULL) {
 		disk = rawname(mntinfo->f_mntfromname);
 		mountpoint = mntinfo->f_mntonname;
 		msg("Found %s on %s in mount table\n", disk, mountpoint);
@@ -410,9 +422,24 @@ main(int argc, char *argv[])
 	(void)gethostname(spcl.c_host, sizeof(spcl.c_host));
 	spcl.c_host[sizeof(spcl.c_host) - 1] = '\0';
 
-	if ((diskfd = open(disk, O_RDONLY)) < 0) {
-		msg("Cannot open %s\n", disk);
-		exit(X_STARTUP);
+	if ((snap_backup != NULL || snap_internal) && mntinfo == NULL) {
+		msg("WARNING: Cannot use -x or -X on unmounted file system.\n");
+		snap_backup = NULL;
+		snap_internal = 0;
+	}
+	if (snap_backup != NULL || snap_internal) {
+		diskfd = snap_open(mntinfo->f_mntonname, snap_backup, &tnow);
+		if (diskfd < 0) {
+			msg("Cannot open snapshot of %s\n",
+				mntinfo->f_mntonname);
+			exit(X_STARTUP);
+		}
+		spcl.c_date = tnow;
+	} else {
+		if ((diskfd = open(disk, O_RDONLY)) < 0) {
+			msg("Cannot open %s\n", disk);
+			exit(X_STARTUP);
+		}
 	}
 	sync();
 
@@ -432,6 +459,8 @@ main(int argc, char *argv[])
  	msg("Date of last level %c dump: %s", lastlevel,
 		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&date));
 	msg("Dumping ");
+	if (snap_backup != NULL)
+		msgtail("a snapshot of ");
 	if (dirc != 0)
 		msgtail("a subset of ");
 	msgtail("%s (%s) ", disk, spcl.c_filesys);
@@ -603,9 +632,10 @@ usage(void)
 	const char *prog = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-0123456789aceFnStu] [-B records] [-b blocksize]\n"
+"usage: %s [-0123456789aceFnStuX] [-B records] [-b blocksize]\n"
 "            [-d density] [-f file] [-h level] [-k read-blocksize]\n"
-"            [-L label] [-l timeout] [-r read-cache] [-s feet] [-T date] files-to-dump\n"
+"            [-L label] [-l timeout] [-r read-cache] [-s feet]\n"
+"            [-T date] [-x snap-backup] files-to-dump\n"
 "       %s [-W | -w]\n", prog, prog);
 	exit(X_STARTUP);
 }
@@ -706,6 +736,7 @@ obsolete(int *argcp, char **argvp[])
 		case 'h':
 		case 's':
 		case 'T':
+		case 'x':
 			if (*argv == NULL) {
 				warnx("option requires an argument -- %c", *ap);
 				usage();
