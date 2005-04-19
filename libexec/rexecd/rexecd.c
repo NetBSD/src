@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.22 2005/03/30 01:07:47 christos Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.23 2005/04/19 03:22:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.22 2005/03/30 01:07:47 christos Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.23 2005/04/19 03:22:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,8 @@ doit(struct sockaddr *fromp)
 	getstr(pass, sizeof(pass), "password");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
 	(void)alarm(0);
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL) {
 		if (dolog)
 			syslog(LOG_ERR, "no such user %s", user);
 		rexecd_errx(EXIT_FAILURE, "Login incorrect.");
