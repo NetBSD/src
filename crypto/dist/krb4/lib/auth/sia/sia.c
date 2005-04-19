@@ -34,7 +34,7 @@
 #include "sia_locl.h"
 
 __RCSID("$KTH-KRB: sia.c,v 1.36 2001/09/13 01:19:14 assar Exp $"
-      "$NetBSD: sia.c,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $");
+      "$NetBSD: sia.c,v 1.2 2005/04/19 12:55:31 christos Exp $");
 
 int 
 siad_init(void)
@@ -126,7 +126,8 @@ doauth(SIAENTITY *entity, int pkgind, char *name)
     int secure;
 #endif
 	
-    if(getpwnam_r(name, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0){
+    (void)getpwnam_r(name, &pw, pwbuf, sizeof(pwbuf), &pwd);
+    if (pwd == NULL) {
 	SIA_DEBUG(("DEBUG", "failed to getpwnam(%s)", name));
 	return SIADFAIL;
     }
