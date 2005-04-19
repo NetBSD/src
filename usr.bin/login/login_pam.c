@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.6 2005/04/03 06:56:39 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.7 2005/04/19 03:40:58 lukem Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.6 2005/04/03 06:56:39 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.7 2005/04/19 03:40:58 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -326,6 +326,7 @@ main(int argc, char *argv[])
 		 * Don't check for errors, because we don't want to give
 		 * out any information.
 		 */
+		pwd = NULL;
 		(void)getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf), &pwd);
 
 		/*
@@ -369,6 +370,7 @@ main(int argc, char *argv[])
 			 * Don't check for errors, because we don't want to give
 			 * out any information.
 			 */
+			pwd = NULL;
 			(void)getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
 			    &pwd);
 			lc = login_getpwclass(pwd);
