@@ -1,4 +1,4 @@
-/* $NetBSD: mkdict.c,v 1.9 2003/08/07 09:37:06 agc Exp $ */
+/* $NetBSD: mkdict.c,v 1.10 2005/04/19 20:19:09 rillig Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
 static const char rcsid[] = 
-    "$NetBSD: mkdict.c,v 1.9 2003/08/07 09:37:06 agc Exp $";
+    "$NetBSD: mkdict.c,v 1.10 2005/04/19 20:19:09 rillig Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ main(argc, argv)
 		}
 		len = 0;
 		for (p = buf[current]; *p != '\n'; p++) {
-			if (!islower(*p))
+			if (!islower((unsigned char)*p))
 				break;
 			if (*p == 'q') {
 				q = p + 1;
