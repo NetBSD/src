@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.14 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: master.c,v 1.15 2005/04/19 03:40:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.14 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: master.c,v 1.15 2005/04/19 03:40:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ extern	void	logwtmp(char *, char *, char *);
  * master's name, remote requests to set the network time, ...), and
  * takes the appropriate action.
  */
-int
+void
 master(void)
 {
 	struct hosttbl *htp;
