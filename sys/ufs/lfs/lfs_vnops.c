@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.146 2005/04/18 17:36:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.147 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.146 2005/04/18 17:36:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.147 2005/04/19 20:59:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1528,10 +1528,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			if (dirty) {
 				pg->flags &= ~PG_CLEAN;
 				if (flags & PGO_FREE) {
-					/* XXXUBC need better way to update */
-					simple_lock(&lfs_subsys_lock);
-					lfs_subsys_pages += MIN(1, pages_per_block);
-					simple_unlock(&lfs_subsys_lock);
 					/*
 					 * Wire the page so that
 					 * pdaemon doesn't see it again.
