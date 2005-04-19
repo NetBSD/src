@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.1.1.3 2005/03/14 08:14:30 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.14.4.2 2005/03/02 20:00:03 vanhu Exp */
 
@@ -1028,7 +1028,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			if (iph2) {
 				/* Delete the SPD entry if we generated it
 				 */
-				if (iph2->ph1 && iph2->ph1->rmconf && iph2->ph1->rmconf->gen_policy) {
+				if (iph2->generated_spidx) {
 					struct policyindex spidx;
 					struct sockaddr_storage addr;
 					u_int8_t pref;
