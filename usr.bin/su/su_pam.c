@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.8 2005/04/02 16:12:52 he Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.9 2005/04/19 03:17:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.8 2005/04/02 16:12:52 he Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.9 2005/04/19 03:17:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 	username = getlogin();
 	if (username == NULL || 
 	    getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
-	    pwd->pw_uid != ruid) {
+	    pwd == NULL || pwd->pw_uid != ruid) {
 		if (getpwuid_r(ruid, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 			pwd = NULL;
 	}
@@ -178,7 +178,8 @@ main(int argc, char **argv)
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv - 1;
 
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		errx(EXIT_FAILURE, "unknown login %s", user);
 
 	/*
@@ -246,7 +247,8 @@ main(int argc, char **argv)
 		    "pam_get_item(PAM_USER): %s", pam_strerror(pamh, pam_err));
 	} else {
 		user = (char *)newuser;
-		if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+		if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+		    pwd == NULL) {
 			pam_end(pamh, pam_err);
 			syslog(LOG_ERR, "unknown login: %s", username);
 			errx(EXIT_FAILURE, "unknown login: %s", username);
