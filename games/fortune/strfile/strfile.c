@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.22 2003/08/07 09:37:14 agc Exp $	*/
+/*	$NetBSD: strfile.c,v 1.23 2005/04/19 20:16:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.22 2003/08/07 09:37:14 agc Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.23 2005/04/19 20:16:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -224,12 +224,12 @@ main(ac, av)
 			first = Oflag;
 		}
 		else if (first) {
-			for (nsp = sp; !isalnum(*nsp); nsp++)
+			for (nsp = sp; !isalnum((unsigned char)*nsp); nsp++)
 				continue;
 			ALLOC(Firstch, Num_pts);
 			fp = &Firstch[Num_pts - 1];
-			if (Iflag && isupper(*nsp))
-				fp->first = tolower(*nsp);
+			if (Iflag && isupper((unsigned char)*nsp))
+				fp->first = tolower((unsigned char)*nsp);
 			else
 				fp->first = *nsp;
 			fp->pos = Seekpts[Num_pts - 1];
