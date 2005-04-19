@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.13 2005/04/09 22:43:51 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.14 2005/04/19 03:19:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -430,7 +430,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 			inbuf.length = cnt;
 
 			if (getpwnam_r(UserNameRequested, &pws, pwbuf,
-			    sizeof(pwbuf), &pwd) != 0)
+			    sizeof(pwbuf), &pwd) != 0 || pwd == NULL)
 				break;
 
 			snprintf(ccname, sizeof(ccname),

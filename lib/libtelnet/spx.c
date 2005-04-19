@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.6 2005/04/09 22:43:51 christos Exp $ */
+/*	$NetBSD: spx.c,v 1.7 2005/04/19 03:19:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.6 2005/04/09 22:43:51 christos Exp $");
+__RCSID("$NetBSD: spx.c,v 1.7 2005/04/19 03:19:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ spx_status(ap, name, l, level)
 	 */
 
 	if (getpwnam_r(UserNameRequested, &pws, pwbuf, sizeof(pwbuf), &pwd)
-	    != 0) {
+	    != 0 || pwd == NULL) {
 	    return(AUTH_USER);   /*  not authenticated  */
 	}
 
