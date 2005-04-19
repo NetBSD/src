@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.24 2003/08/07 16:42:59 agc Exp $	*/
+/*	$NetBSD: unvis.c,v 1.25 2005/04/19 16:33:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.24 2003/08/07 16:42:59 agc Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.25 2005/04/19 16:33:53 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ unvis(cp, c, astate, flag)
 	int c;
 	int *astate, flag;
 {
-	return __unvis13(cp, (int)c, astate, flag);
+	return __unvis13(cp, c, astate, flag);
 }
 
 /*
@@ -93,6 +93,7 @@ __unvis13(cp, c, astate, flag)
 	int c;
 	int *astate, flag;
 {
+	unsigned char uc = (unsigned char)c;
 
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(astate != NULL);
@@ -216,7 +217,7 @@ __unvis13(cp, c, astate, flag)
 		return (UNVIS_VALID);
 
 	case S_OCTAL2:	/* second possible octal digit */
-		if (isoctal(c)) {
+		if (isoctal(uc)) {
 			/* 
 			 * yes - and maybe a third 
 			 */
@@ -232,7 +233,7 @@ __unvis13(cp, c, astate, flag)
 
 	case S_OCTAL3:	/* third possible octal digit */
 		*astate = S_GROUND;
-		if (isoctal(c)) {
+		if (isoctal(uc)) {
 			*cp = (*cp << 3) + (c - '0');
 			return (UNVIS_VALID);
 		}
@@ -241,8 +242,8 @@ __unvis13(cp, c, astate, flag)
 		 */
 		return (UNVIS_VALIDPUSH);
 	case S_HEX1:
-		if (isxdigit(c)) {
-			*cp = xtod(c);
+		if (isxdigit(uc)) {
+			*cp = xtod(uc);
 			*astate = S_HEX2;
 			return (0);
 		}
@@ -253,8 +254,8 @@ __unvis13(cp, c, astate, flag)
 		return (UNVIS_VALIDPUSH);
 	case S_HEX2:
                 *astate = S_GROUND;
-                if (isxdigit(c)) {
-                        *cp = xtod(c) | (*cp << 4);
+                if (isxdigit(uc)) {
+                        *cp = xtod(uc) | (*cp << 4);
 			return (UNVIS_VALID);
 		}
                 return (UNVIS_VALIDPUSH);
