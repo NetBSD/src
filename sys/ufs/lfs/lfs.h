@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.84 2005/04/16 19:52:09 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.85 2005/04/19 20:59:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -366,7 +366,8 @@ struct lfid {
 
 /* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !((vp)->v_flag & VONWORKLST))
+			  !((vp)->v_flag & VONWORKLST) &&		\
+			  VTOI(vp)->i_lfs_nbtree == 0)
 
 /* XXX Shouldn't we use v_numoutput instead? */
 #define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
@@ -943,7 +944,7 @@ struct lfs_cluster {
 };
 
 /*
- * List containing block numbers allocated through lfs_balloc.
+ * Splay tree containing block numbers allocated through lfs_balloc.
  */
 struct lbnentry {
 	SPLAY_ENTRY(lbnentry) entry;
@@ -965,6 +966,7 @@ struct lfs_inode_ext {
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
+	int	  lfs_nbtree;		/* Size of tree */
 #endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
@@ -974,6 +976,7 @@ struct lfs_inode_ext {
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
+#define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
