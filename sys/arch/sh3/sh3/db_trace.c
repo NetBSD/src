@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2004/02/23 01:06:53 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 2005/04/19 22:26:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2004/02/23 01:06:53 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2005/04/19 22:26:21 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ void
 db_nextframe(
 	db_addr_t pc,		/* in: entry address of current function */
 	db_addr_t *fp,		/* in: current fp, out: parent fp */
-	db_addr_t *pr)		/* out: parent fp */
+	db_addr_t *pr)		/* out: parent pr */
 {
 	int *frame = (void *)*fp;
 	int i, inst;
