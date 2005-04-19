@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2005/04/19 20:14:29 rillig Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.10 2005/02/11 06:21:21 simonb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2005/04/19 20:14:29 rillig Exp $");
 #endif
 
 
@@ -642,8 +642,8 @@ do_gmatch(s, se, p, pe, isfile)
 		sc = s < se ? *s : '\0';
 		s++;
 		if (isfile) {
-			sc = FILECHCONV(sc);
-			pc = FILECHCONV(pc);
+			sc = FILECHCONV((unsigned char)sc);
+			pc = FILECHCONV((unsigned char)pc);
 		}
 		if (!ISMAGIC(pc)) {
 			if (sc != pc)

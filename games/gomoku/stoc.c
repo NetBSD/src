@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.8 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: stoc.c,v 1.9 2005/04/19 20:17:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.8 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.9 2005/04/19 20:17:12 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ ctos(mp)
 	i = atoi(&mp[1]);
 	if (i < 1 || i > 19)
 		return(ILLEGAL);
-	return(PT(lton(mp[0]), i));
+	return(PT(lton((unsigned char)mp[0]), i));
 }
 
 /*

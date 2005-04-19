@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.10 2005/04/19 20:14:29 rillig Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: exec.c,v 1.10 2005/04/19 20:14:29 rillig Exp $");
 #endif
 
 
@@ -782,7 +782,7 @@ scriptexec(tp, ap)
 		}
 		if ((buf[0] == '#' && buf[1] == '!' && (cp = &buf[2]))
 # ifdef OS2
-		    || (strncmp(buf, "extproc", 7) == 0 && isspace(buf[7])
+		    || (strncmp(buf, "extproc", 7) == 0 && isspace((unsigned char)buf[7])
 			&& (cp = &buf[7]))
 # endif /* OS2 */
 		    )

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.10 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.11 2005/04/19 20:14:29 rillig Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.10 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: lex.c,v 1.11 2005/04/19 20:14:29 rillig Exp $");
 #endif
 
 
@@ -221,7 +221,7 @@ yylex(cf)
 			  case '\\':
 				c = getsc();
 #ifdef OS2
-				if (isalnum(c)) {
+				if (isalnum((unsigned char)c)) {
 					*wp++ = CHAR, *wp++ = '\\';
 					*wp++ = CHAR, *wp++ = c;
 				} else
