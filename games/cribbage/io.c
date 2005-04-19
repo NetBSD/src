@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.18 2004/11/05 21:30:31 dsl Exp $	*/
+/*	$NetBSD: io.c,v 1.19 2005/04/19 20:12:07 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.18 2004/11/05 21:30:31 dsl Exp $");
+__RCSID("$NetBSD: io.c,v 1.19 2005/04/19 20:12:07 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -490,7 +490,7 @@ void
 wait_for(ch)
 	int ch;
 {
-	char c;
+	int c;
 
 	if (ch == '\n')
 		while ((c = readchar()) != '\n')
@@ -508,11 +508,11 @@ int
 readchar()
 {
 	int cnt;
-	char c;
+	unsigned char c;
 
 over:
 	cnt = 0;
-	while (read(STDIN_FILENO, &c, sizeof(char)) <= 0)
+	while (read(STDIN_FILENO, &c, sizeof(unsigned char)) <= 0)
 		if (cnt++ > 100) {	/* if we are getting infinite EOFs */
 			bye();		/* quit the game */
 			exit(1);
@@ -545,9 +545,6 @@ getline()
 	refresh();
 	/* loop reading in the string, and put it in a temporary buffer */
 	for (sp = linebuf; (c = readchar()) != '\n'; clrtoeol(), refresh()) {
-		if (c == -1)
-			continue;
-		else
 			if (c == erasechar()) {	/* process erase character */
 				if (sp > linebuf) {
 					int i;
