@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.10 2005/04/18 21:31:03 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.11 2005/04/19 22:14:30 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.10 2005/04/18 21:31:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.11 2005/04/19 22:14:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,9 +162,6 @@ do_event(int evtch, struct intrframe *regs)
 		printf("do_event: evtch %d\n", evtch);
 #endif
 	ci = &cpu_info_primary;
-
-	hypervisor_mask_event(evtch);
-	hypervisor_clear_event(evtch);
 
 	/*
 	 * Shortcut for the debug handler, we want it to always run,
