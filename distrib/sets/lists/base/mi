@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.12 2005/04/15 09:48:26 tron Exp $
+# $NetBSD: mi,v 1.532.2.13 2005/04/20 11:15:29 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1070,6 +1070,7 @@
 ./usr/sbin/postconf				base-postfix-bin	postfix
 ./usr/sbin/postdrop				base-postfix-bin	postfix
 ./usr/sbin/postfix				base-postfix-bin	postfix
+./usr/sbin/postinstall				base-sysutil-bin
 ./usr/sbin/postkick				base-postfix-bin	postfix
 ./usr/sbin/postlock				base-postfix-bin	postfix
 ./usr/sbin/postlog				base-postfix-bin	postfix
