@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.134 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: vnode.h,v 1.135 2005/04/20 13:44:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -185,13 +185,12 @@ extern struct simplelock global_v_numoutput_slock;
  * Valid states for the fingerprint flag - if signed exec is being used
  */
 #ifdef VERIFIED_EXEC
-#define FINGERPRINT_INVALID  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
 #define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
 #define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
                                    indirect execs allowed */
 #define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
 #define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
-#define FINGERPRINT_NODEV    5  /* fingerprint evaluated but no dev list */
 #endif
 
 /*

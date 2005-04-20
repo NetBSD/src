@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.86 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.87 2005/04/20 13:44:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.87 2005/04/20 13:44:46 blymn Exp $");
 
 #include "fs_union.h"
 
@@ -70,9 +70,6 @@ int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
 
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
-
-extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
-extern struct veriexec_devhead veriexec_file_dev_head;
 #endif
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
@@ -105,10 +102,14 @@ vn_open(ndp, fmode, cmode)
 	struct ucred *cred = p->p_ucred;
 	struct vattr va;
 	int error;
-#ifdef VERIFIED_EXEC
-	char got_dev;
-	struct veriexec_inode_list *veriexec_node;
-	char fingerprint[MAXFINGERPRINTLEN];
+#ifdef NEVER /* for the moment I am not convinced this is needed since NDINIT should do this lookup...XXXX blymn */
+	char pathbuf[MAXPATHLEN];
+	unsigned pathlen;
+
+        if (ndp->ni_segflg == UIO_SYSSPACE)
+                error = copystr(pathbuf, ndp->ni_dirp, MAXPATHLEN, &pathlen);
+        else
+                error = copyinstr(pathbuf, ndp->ni_dirp,MAXPATHLEN, &pathlen);
 #endif
 
 restart:
@@ -175,75 +176,24 @@ restart:
 	}
 
 #ifdef VERIFIED_EXEC
-	veriexec_node = NULL;
-
 	if ((error = VOP_GETATTR(vp, &va, cred, p)) != 0)
 		goto bad;
 #endif
 
 	if ((fmode & O_CREAT) == 0) {
 #ifdef VERIFIED_EXEC
-		  /*
-		   * Look for the file on the fingerprint lists iff
-		   * it has not been seen before.
-		   */
-		if ((vp->fp_status == FINGERPRINT_INVALID) ||
-		    (vp->fp_status == FINGERPRINT_NODEV)) {
-			  /* check the file list for the finger print */
-			veriexec_node = get_veriexec_inode(&veriexec_file_dev_head,
-						     va.va_fsid,
-						     va.va_fileid,
-						     &got_dev);
-			if (veriexec_node == NULL) {
-				/* failing that, check the exec list */
-				veriexec_node = get_veriexec_inode(
-					&veriexec_dev_head, va.va_fsid,
-					va.va_fileid, &got_dev);
-			}
-
-			if ((veriexec_node == NULL) && (got_dev == 1))
-				vp->fp_status = FINGERPRINT_NOENTRY;
-
-			if (veriexec_node != NULL) {
-				if ((error = evaluate_fingerprint(vp,
-						veriexec_node, p, va.va_size,
-						fingerprint)) != 0)
-					goto bad;
-
-				if (fingerprintcmp(veriexec_node,
-						   fingerprint) == 0) {
-					  /* fingerprint ok */
-					vp->fp_status =	FINGERPRINT_VALID;
-#ifdef VERIFIED_EXEC_DEBUG
-					printf(
-			"file fingerprint matches for dev %lu, file %lu\n",
-						va.va_fsid, va.va_fileid);
+		  /* XXX may need pathbuf instead */
+		if ((vp->v_type == VREG) &&
+		    ((error = veriexec_verify(p, vp, &va, ndp->ni_dirp,
+					      VERIEXEC_FILE)) != 0))
+			goto bad;
 #endif
-				} else {
-					vp->fp_status =	FINGERPRINT_NOMATCH;
-				}
-			}
-		}
-#endif
-
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
 
-#ifdef VERIFIED_EXEC
-				/* file is on finger print list */
-			if (vp->fp_status == FINGERPRINT_NOMATCH) {
-				  /* fingerprint bad */
-				printf(
-		"file fingerprint does not match on dev %lu, file %lu\n",
-					va.va_fsid, va.va_fileid);
-				if (securelevel > 2) {
-					error = EPERM;
-					goto bad;
-				}
-			}
-#endif
 		}
+
 		if (fmode & (FWRITE | O_TRUNC)) {
 			if (vp->v_type == VDIR) {
 				error = EISDIR;
@@ -260,20 +210,22 @@ restart:
 			   * keep checking for the file having
 			   * a fingerprint.
 			   */
-			if (vp->fp_status == FINGERPRINT_VALID) {
+			if ((vp->fp_status == FINGERPRINT_VALID) ||
+			    (vp->fp_status == FINGERPRINT_INDIRECT)) {
 				printf(
 		      "writing to fingerprinted file for dev %lu, file %lu\n",
 		      va.va_fsid, va.va_fileid);
-				if (securelevel > 2) {
+				if (securelevel >= 2) {
 					error = EPERM;
 					goto bad;
 				} else {
-					vp->fp_status =	FINGERPRINT_INVALID;
+					vp->fp_status =	FINGERPRINT_NOMATCH;
 				}
 			}
 #endif
 		}
 	}
+
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
