@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.318 2005/04/19 12:42:35 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.319 2005/04/20 02:03:22 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -137,7 +137,7 @@ ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available, apparently
 there's also a version in the works that has all changes from *BSD and Linux.
 
 Package:	cvs
-Version:	1.11.17
+Version:	1.11.20
 Current Vers:	1.11.20/1.12.11
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
@@ -148,6 +148,8 @@ Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
 for the import.
 Do not forget to update gnu/usr.bin/cvs/include/config.h to match
 gnu/dist/cvs/config.h.in.
+If you want to upgrade to 1.12.XX, please talk to christos first.
+I have merged all the changes already.
 
 Package:	db
 Version:	1.85
