@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.129 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: key.c,v 1.130 2005/04/20 15:44:12 manu Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.130 2005/04/20 15:44:12 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -382,6 +382,10 @@ static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int16_t));
 #ifdef SADB_X_EXT_TAG
 static struct mbuf *key_setsadbxtag __P((u_int16_t));
+#endif
+#ifdef IPSEC_NAT_T
+static struct mbuf *key_setsadbxport __P((u_int16_t, u_int16_t));
+static struct mbuf *key_setsadbxtype __P((u_int16_t));
 #endif
 static struct mbuf *key_setsadblifetime __P((u_int16_t, u_int32_t,
 	u_int64_t, u_int64_t, u_int64_t));
@@ -3528,6 +3532,11 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		SADB_EXT_ADDRESS_DST, SADB_EXT_ADDRESS_PROXY, SADB_EXT_KEY_AUTH,
 		SADB_EXT_KEY_ENCRYPT, SADB_EXT_IDENTITY_SRC,
 		SADB_EXT_IDENTITY_DST, SADB_EXT_SENSITIVITY,
+#ifdef IPSEC_NAT_T
+		SADB_X_EXT_NAT_T_TYPE, SADB_X_EXT_NAT_T_SPORT, 
+		SADB_X_EXT_NAT_T_DPORT, SADB_X_EXT_NAT_T_OA,
+		SADB_X_EXT_NAT_T_FRAG,
+#endif
 	};
 
 	m = key_setsadbmsg(type, 0, satype, seq, pid, sav->refcnt);
@@ -3604,6 +3613,28 @@ key_setdumpsa(sav, type, satype, seq, pid)
 			p = sav->lft_s;
 			break;
 
+#ifdef IPSEC_NAT_T
+		case SADB_X_EXT_NAT_T_TYPE:
+			if ((m = key_setsadbxtype(sav->natt_type)) == NULL)
+				goto fail;
+			break;
+		
+		case SADB_X_EXT_NAT_T_DPORT:
+			if ((m = key_setsadbxport(sav->remote_ike_port, 
+			    SADB_X_EXT_NAT_T_DPORT)) == NULL)
+				goto fail;
+			break;
+
+		case SADB_X_EXT_NAT_T_SPORT:
+			if ((m = key_setsadbxport(sav->local_ike_port, 
+			    SADB_X_EXT_NAT_T_SPORT)) == NULL)
+				goto fail;
+			break;
+
+		case SADB_X_EXT_NAT_T_OA:
+		case SADB_X_EXT_NAT_T_FRAG:
+			continue;
+#endif
 		case SADB_EXT_ADDRESS_PROXY:
 		case SADB_EXT_IDENTITY_SRC:
 		case SADB_EXT_IDENTITY_DST:
@@ -3889,6 +3920,69 @@ key_setsadbxtag(tag)
 	p->sadb_x_tag_len = PFKEY_UNIT64(len);
 	p->sadb_x_tag_exttype = SADB_X_EXT_TAG;
 	m_nametag_tag2tagname(tag, p->sadb_x_tag_name);
+
+	return m;
+}
+#endif
+
+#ifdef IPSEC_NAT_T
+/*
+ * set a port in sadb_x_nat_t_port
+ */
+static struct mbuf *
+key_setsadbxport(port, type)
+	u_int16_t port;
+	u_int16_t type;
+{
+	struct mbuf *m;
+	size_t len;
+	struct sadb_x_nat_t_port *p;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_port));
+
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_nat_t_port *);
+
+	bzero(p, len);
+	p->sadb_x_nat_t_port_len = PFKEY_UNIT64(len);
+	p->sadb_x_nat_t_port_exttype = type;
+	p->sadb_x_nat_t_port_port = htons(port);
+
+	return m;
+}
+
+/*
+ * set a type in sadb_x_nat_t_type
+ */
+static struct mbuf *
+key_setsadbxtype(type)
+	u_int16_t type;
+{
+	struct mbuf *m;
+	size_t len;
+	struct sadb_x_nat_t_type *p;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_type));
+
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_nat_t_type *);
+
+	bzero(p, len);
+	p->sadb_x_nat_t_type_len = PFKEY_UNIT64(len);
+	p->sadb_x_nat_t_type_exttype = SADB_X_EXT_NAT_T_TYPE;
+	p->sadb_x_nat_t_type_type = type;
 
 	return m;
 }
