@@ -136,4 +136,10 @@ int ctrl_if_transmitter_empty(void);  /* !! DANGEROUS FUNCTION !! */
  */
 void ctrl_if_discard_responses(void); /* !! DANGEROUS FUNCTION !! */
 
+/*
+ * message polling for use by xencons. Warning: this will reenable
+ * interrupts at splhigh.
+ */
+void ctrl_if_console_poll(void);
+
 #endif /* __ASM_XEN__CONTROL_IF_H__ */

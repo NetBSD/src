@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.1 2005/04/16 22:49:37 bouyer Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.2 2005/04/20 22:01:24 bouyer Exp $	*/
 /*	NetBSD intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp 	*/
 
 #ifndef _XEN_INTRDEFS_H
@@ -25,35 +25,35 @@
 #define	IPL_NONE	0x0	/* nothing */
 #define	IPL_SOFTCLOCK	0x1	/* timeouts */
 #define	IPL_SOFTNET	0x2	/* protocol stacks */
-#define IPL_SOFTXENEVT	0x3	/* /dev/xenevt */
+#define	IPL_SOFTXENEVT	0x3	/* /dev/xenevt */
 #define	IPL_BIO		0x4	/* block I/O */
 #define	IPL_NET		0x5	/* network */
 #define	IPL_SOFTSERIAL	0x6	/* serial */
-#define	IPL_TTY		0x7	/* terminal */
-#define	IPL_VM		0x8	/* memory allocation */
-#define	IPL_AUDIO	0x9	/* audio */
-#define	IPL_CLOCK	0xa	/* clock */
-#define IPL_SCHED	IPL_CLOCK
-#define	IPL_HIGH	0xb	/* everything */
-#define	IPL_SERIAL	0xb	/* serial */
-#define IPL_IPI         0xc     /* inter-processor interrupts */
-#define IPL_DEBUG	0xd	/* debug events */
-#define IPL_DIE		0xe	/* die events */
-#define IPL_CTRL	0xf	/* control events */
+#define	IPL_CTRL	0x7	/* control events */
+#define	IPL_TTY		0x8	/* terminal */
+#define	IPL_VM		0x9	/* memory allocation */
+#define	IPL_AUDIO	0xa	/* audio */
+#define	IPL_CLOCK	0xb	/* clock */
+#define	IPL_SCHED	IPL_CLOCK
+#define	IPL_HIGH	0xc	/* everything */
+#define	IPL_SERIAL	0xc	/* serial */
+#define	IPL_IPI		0xd	/* inter-processor interrupts */
+#define	IPL_DEBUG	0xe	/* debug events */
+#define	IPL_DIE		0xf	/* die events */
 #define	NIPL		16
 
 /* Soft interrupt masks. */
-#define SIR_CLOCK	IPL_SOFTCLOCK
-#define SIR_NET		IPL_SOFTNET
-#define SIR_SERIAL	IPL_SOFTSERIAL
-#define SIR_XENEVT	IPL_SOFTXENEVT
+#define	SIR_CLOCK	IPL_SOFTCLOCK
+#define	SIR_NET		IPL_SOFTNET
+#define	SIR_SERIAL	IPL_SOFTSERIAL
+#define	SIR_XENEVT	IPL_SOFTXENEVT
 
 #define	IREENT_MAGIC	0x18041969
 
 /* Interrupt sharing types (for ISA) */
-#define IST_NONE        0       /* none */
-#define IST_PULSE       1       /* pulsed */
-#define IST_EDGE        2       /* edge-triggered */
-#define IST_LEVEL       3       /* level-triggered */ 
+#define	IST_NONE	0	/* none */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */ 
 
 #endif /* _XEN_INTRDEFS_H */
