@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -1477,6 +1482,8 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
     Node *p;
     List *ulist;
 
+    assert (repository);
+
     p = findnode (mulist, update_dir);
     if (p == NULL)
 	return err;
@@ -1755,7 +1762,7 @@ remove_file (finfo, tag, message)
     if (corev != NULL)
 	free (corev);
 
-    retcode = RCS_checkin (finfo->rcs, finfo->file, message, rev,
+    retcode = RCS_checkin (finfo->rcs, finfo->file, message, rev, 0,
 			   RCS_FLAGS_DEAD | RCS_FLAGS_QUIET);
     if (retcode	!= 0)
     {
@@ -2122,13 +2129,14 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    /* commit a dead revision. */
 	    (void) sprintf (tmp, "file %s was initially added on branch %s.",
 			    file, tag);
-	    retcode = RCS_checkin (rcs, NULL, tmp, NULL,
+	    retcode = RCS_checkin (rcs, NULL, tmp, NULL, 0,
 				   RCS_FLAGS_DEAD | RCS_FLAGS_QUIET);
 	    free (tmp);
 	    if (retcode != 0)
 	    {
 		error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
 		       "could not create initial dead revision %s", rcs->path);
+		free (fname);
 		goto out;
 	    }
 
@@ -2162,11 +2170,24 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    char *head;
 	    char *magicrev;
 	    int retcode;
+	    time_t headtime = -1;
+	    char *revnum, *tmp;
+	    FILE *fp;
+	    time_t t = -1;
+	    struct tm *ct;
 
 	    fixbranch (rcs, sbranch);
 
 	    head = RCS_getversion (rcs, NULL, NULL, 0, (int *) NULL);
+	    if (!head)
+		error (1, 0, "No head revision in archive file `%s'.",
+		       rcs->path);
 	    magicrev = RCS_magicrev (rcs, head);
+
+	    /* If this is not a new branch, then we will want a dead
+	       version created before this one. */
+	    if (!newfile)
+		headtime = RCS_getrevtime (rcs, head, 0, 0);
 
 	    retcode = RCS_settag (rcs, tag, magicrev);
 	    RCS_rewrite (rcs, NULL, NULL);
@@ -2179,6 +2200,69 @@ checkaddfile (file, repository, tag, options, rcsnode)
 		error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
 		       "could not stub branch %s for %s", tag, rcs->path);
 		goto out;
+	    }
+	    /* We need to add a dead version here to avoid -rtag -Dtime
+	       checkout problems between when the head version was
+	       created and now. */
+	    if (!newfile && headtime != -1)
+	    {
+		/* move the new file out of the way. */
+		fname = xmalloc (strlen (file) + sizeof (CVSADM)
+			     + sizeof (CVSPREFIX) + 10);
+		(void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
+		rename_file (file, fname);
+
+		/* Create empty FILE.  Can't use copy_file with a DEVNULL
+		   argument -- copy_file now ignores device files. */
+		fp = fopen (file, "w");
+		if (fp == NULL)
+		    error (1, errno, "cannot open %s for writing", file);
+		if (fclose (fp) < 0)
+		    error (0, errno, "cannot close %s", file);
+
+		/* As we will be hacking the delta date, put the time
+		   this was added into the log message. */
+		t = time(NULL);
+		ct = gmtime(&t);
+		tmp = xmalloc (strlen (file) + strlen (tag) + 80);
+
+		(void) sprintf (tmp,
+			       "file %s was added on branch %s on %d-%02d-%02d %02d:%02d:%02d +0000",
+				 file, tag,
+				 ct->tm_year + (ct->tm_year < 100 ? 0 : 1900),
+				 ct->tm_mon + 1, ct->tm_mday,
+				 ct->tm_hour, ct->tm_min, ct->tm_sec);
+			 
+		/* commit a dead revision. */
+		revnum = RCS_whatbranch (rcs, tag);
+		retcode = RCS_checkin (rcs, NULL, tmp, revnum, headtime,
+				       RCS_FLAGS_DEAD |
+				       RCS_FLAGS_QUIET |
+				       RCS_FLAGS_USETIME);
+		free (revnum);
+		free (tmp);
+
+		if (retcode != 0)
+		{
+		    error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
+			   "could not created dead stub %s for %s", tag,
+			   rcs->path);
+		    goto out;
+		}
+
+		/* put the new file back where it was */
+		rename_file (fname, file);
+		free (fname);
+
+		/* double-check that the file was written correctly */
+		freercsnode (&rcs);
+		rcs = RCS_parse (file, repository);
+		if (rcs == NULL)
+		{
+		    error (0, 0, "could not read %s", rcs->path);
+		    goto out;
+		}
+		*rcsnode = rcs;
 	    }
 	}
 	else

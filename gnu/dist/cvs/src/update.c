@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -34,6 +39,7 @@
  */
 
 #include "cvs.h"
+#include <assert.h>
 #include "savecwd.h"
 #ifdef SERVER_SUPPORT
 # include "md5.h"
@@ -195,6 +201,7 @@ update (argc, argv)
 		tag = optarg;
 		break;
 	    case 'D':
+		if (date) free (date);
 		date = Make_Date (optarg);
 		break;
 	    case 'P':
@@ -1339,7 +1346,9 @@ VERS: ", 0);
 		   for us to stat.  */
 		if (stat (vers_ts->srcfile->path, &sb) < 0)
 		{
+#if defined (SERVER_SUPPORT) || defined (CLIENT_SUPPORT)
 		    buf_free (revbuf);
+#endif /* defined (SERVER_SUPPORT) || defined (CLIENT_SUPPORT) */
 		    error (1, errno, "cannot stat %s",
 			   vers_ts->srcfile->path);
 		}
@@ -1513,8 +1522,10 @@ VERS: ", 0);
 	free (backup);
     }
 
+#if defined (SERVER_SUPPORT) || defined (CLIENT_SUPPORT)
     if (revbuf != NULL)
 	buf_free (revbuf);
+#endif /* defined (SERVER_SUPPORT) || defined (CLIENT_SUPPORT) */
     return retval;
 }
 
@@ -1936,6 +1947,8 @@ merge_file (finfo, vers)
     int status;
     int retcode = 0;
     int retval;
+
+    assert (vers->vn_user);
 
     /*
      * The users currently modified file is moved to a backup file name

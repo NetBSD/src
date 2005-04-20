@@ -20,6 +20,8 @@
 #include <assert.h>
 #include "cvs.h"
 
+#include "xsize.h"
+
 static int deep_remove_dir PROTO((const char *path));
 
 /*
@@ -898,31 +900,48 @@ FILE *cvs_temp_file (filename)
  *  This function exits with a fatal error if it fails to read the link for
  *  any reason.
  */
+#define MAXSIZE (SIZE_MAX < SSIZE_MAX ? SIZE_MAX : SSIZE_MAX)
+
 char *
 xreadlink (link)
     const char *link;
 {
     char *file = NULL;
-    int buflen = 128;
-    int link_name_len;
+    size_t buflen = 128;
 
-    /* Get the name of the file to which `from' is linked.
-       FIXME: what portability issues arise here?  Are readlink &
-       ENAMETOOLONG defined on all systems? -twp */
-    do
+    /* Get the name of the file to which `from' is linked. */
+    while (1)
     {
+	ssize_t r;
+	size_t link_name_len;
+
 	file = xrealloc (file, buflen);
-	link_name_len = readlink (link, file, buflen - 1);
-	buflen *= 2;
+	r = readlink (link, file, buflen);
+	link_name_len = r;
+
+	if (r < 0
+#ifdef ERANGE
+	    /* AIX 4 and HP-UX report ERANGE if the buffer is too small. */
+	    && errno != ERANGE
+#endif
+	    )
+	    error (1, errno, "cannot readlink %s", link);
+
+	/* If there is space for the NUL byte, set it and return. */
+	if (r >= 0 && link_name_len < buflen)
+	{
+	    file[link_name_len] = '\0';
+	    return file;
+	}
+
+	if (buflen <= MAXSIZE / 2)
+	    buflen *= 2;
+	else if (buflen < MAXSIZE)
+	    buflen = MAXSIZE;
+	else
+	    /* Our buffer cannot grow any bigger.  */
+	    error (1, ENAMETOOLONG, "cannot readlink %s", link);
     }
-    while (link_name_len < 0 && errno == ENAMETOOLONG);
-
-    if (link_name_len < 0)
-	error (1, errno, "cannot readlink %s", link);
-
-    file[link_name_len] = '\0';
-
-    return file;
 }
 #endif /* HAVE_READLINK */
 

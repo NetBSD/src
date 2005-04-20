@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -757,6 +762,8 @@ logfile_write (repository, filter, message, logfp, changes)
     int pipestatus;
     char *fmt_percent;		/* the location of the percent sign
 				   that starts the format string. */
+
+    assert (repository);
 
     /* The user may specify a format string as part of the filter.
        Originally, `%s' was the only valid string.  The string that
