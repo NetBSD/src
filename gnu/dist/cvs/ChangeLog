@@ -1,3 +1,123 @@
+2005-04-15  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Klocwork fixes.
+
+2005-04-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note contrib Perl taint vulnerability fix.
+
+2005-03-23  Derek Price  <derek@ximbiot.com>
+
+	* ylwrap: New file.
+
+2005-03-15  Derek Price  <derek@ximbiot.com>
+
+	* HACKING, NEWS: Note new Automake version.
+
+2005-03-04  Jim Hyslop  <jhyslop@ieee.org>
+
+	* NEWS: Note fix for compile errors on IRIX 5.3.
+
+2005-02-22  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note recent watch on/off fileattr fix.
+
+2005-01-31  Derek Price  <derek@ximbiot.com>
+
+	* AUTHORS: Add Conrad Pino.
+	* README: Update copyright notice.
+
+2005-01-29  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note some recent changes.
+
+2004-11-17  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note "red file" fix source inclusion.
+
+2004-11-05  Conrad T. Pino  <Conrad@Pino.com>
+
+	* cvsnt.dep: Regenerated after complete rebuild.
+	* cvsnt.mak: Regenerated after complete rebuild.
+
+2004-11-03  Derek Price  <derek@ximbiot.com>
+
+	* HACKING, NEWS: Note new Autoconf & Automake versions.
+
+2004-10-29  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note xreadlink fix.
+
+2004-10-26  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note GSSAPI error message fix.
+
+2004-10-19  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note resurrection fix.
+
+2004-10-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note new import branch verification.
+
+2004-09-25  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Use doc/mkman.pl as source for doc/mkman.
+
+2004-09-08  Conrad T. Pino <Conrad@Pino.com>
+
+	* cvsnt.dsp: Add "windows-NT/JmgStat.c" to project.  Add
+	"windows-NT/JmgStat.h" to project.  Add "lib/xsize.h" to project.
+	* cvsnt.dep: Regenerated for "cvsnt.dsp" change.
+	* cvsnt.mak: Regenerated for "cvsnt.dsp" change.
+
+2004-09-07  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Windows DST fix.
+
+2004-09-03  Derek Price  <derek@ximbiot.com>
+
+	* HACKING: Codify backwards compatibility conventions.  Remove outdated
+	reference to very old MSVC++ releases.
+
+2004-08-30  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note compliance of log_accum.pl with Perl 5.8.5.
+
+2004-08-24  Derek Price  <derek@ximbiot.com>
+
+	* TODO (24, 49, 92, 113): Remove completed/obsolescent items.
+
+2004-08-24  Derek Price  <derek@ximbiot.com>
+
+	* BUGS: Remove release subdir note.  This was fixed with the commit on
+	2004-02-25, based on Matthew Ogilvie's patch.
+
+2004-08-24  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note r* . fix.
+	* BUGS: Remove r* . note.
+
+2004-08-24  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note invalid tag fix.
+
+2004-08-24  Mark D. Baushke  <mdb@cvshome.org>
+
+	* NEWS: Note that modules -a bugfix has a change in behavior.
+
+2004-06-22  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Conrad's Windows fix.
+
+2004-06-21  Derek Price  <derek@ximbiot.com>
+
+	* .cvsignore: Ignore GPG signature files for distributions.
+
+2004-06-10  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note manual update.
+
 2004-06-09  Derek Price  <derek@ximbiot.com>
 
 	* NEWS: Note Stefan & Sebastian's security fixes.
