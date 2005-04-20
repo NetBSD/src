@@ -1,6 +1,24 @@
-#! @PERL@
+#! @PERL@ -T
 # -*-Perl-*-
+
+###############################################################################
+###############################################################################
+###############################################################################
 #
+# THIS SCRIPT IS PROBABLY BROKEN.  REMOVING THE -T SWITCH ON THE #! LINE ABOVE
+# WOULD FIX IT, BUT THIS IS INSECURE.  WE RECOMMEND FIXING THE ERRORS WHICH THE
+# -T SWITCH WILL CAUSE PERL TO REPORT BEFORE RUNNING THIS SCRIPT FROM A CVS
+# SERVER TRIGGER.  PLEASE SEND PATCHES CONTAINING THE CHANGES YOU FIND
+# NECESSARY TO RUN THIS SCRIPT WITH THE TAINT-CHECKING ENABLED BACK TO THE
+# <bug-cvs@gnu.org> MAILING LIST.
+#
+# For more on general Perl security and taint-checking, please try running the
+# `perldoc perlsec' command.
+#
+###############################################################################
+###############################################################################
+###############################################################################
+
 # From: clyne@niwot.scd.ucar.EDU (John Clyne)
 # Date: Fri, 28 Feb 92 09:54:21 MST
 # 
