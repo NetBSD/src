@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2003/10/12 14:42:03 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2005/04/20 18:26:11 jmc Exp $
 
 KMINCLUDES= arch/sparc/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
@@ -15,23 +15,23 @@ CLEANFILES+=rem.S sdiv.S udiv.S urem.S
 sdiv.S: ${.CURDIR}/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.div')define(OP,\`div')define(S,\`true')"; \
-	 cat ${.ALLSRC}) | m4 > ${.TARGET}
+	 cat ${.ALLSRC}) | ${TOOL_M4} > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
 udiv.S: ${.CURDIR}/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.udiv')define(OP,\`div')define(S,\`false')"; \
-	 cat ${.ALLSRC}) | m4 > ${.TARGET}
+	 cat ${.ALLSRC}) | ${TOOL_M4} > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
 rem.S: ${.CURDIR}/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.rem')define(OP,\`rem')define(S,\`true')"; \
-	 cat ${.ALLSRC}) | m4 > ${.TARGET}
+	 cat ${.ALLSRC}) | ${TOOL_M4} > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
 urem.S: ${.CURDIR}/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
-	 cat ${.ALLSRC}) | m4 > ${.TARGET}
+	 cat ${.ALLSRC}) | ${TOOL_M4} > ${.TARGET}
 	@chmod 444 ${.TARGET}
