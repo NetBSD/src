@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.24 2005/03/13 09:37:06 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.25 2005/04/20 22:10:51 hubertf Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -413,6 +413,14 @@ Indicates whether object directories will be created automatically
 .Dq make obj
 pass) at the start of a build.
 .DFLTn
+.
+.It Sy MKPAM
+.YorN
+Indicates wether the
+.Xr pam 8
+framework (libraries and support files) is built.
+The old code is not supported and may be removed in the future.
+.DFLTy
 .
 .It Sy MKPF
 .YorN
