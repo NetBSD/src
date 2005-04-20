@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306.2.5 2005/04/06 22:24:00 tron Exp $
+#	$NetBSD: Makefile,v 1.306.2.6 2005/04/20 11:14:59 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -227,9 +227,6 @@ FILESMODE_${file:T}=	664
 CONFIGFILES+=		${file}
 FILESMODE_${file:T}=	600
 .endfor
-
-CONFIGFILES+=		postinstall
-FILESMODE_postinstall=	${BINMODE}
 
 CONFIGFILES+=		aliases
 FILESDIR_aliases=	/etc/mail
