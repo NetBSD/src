@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.37 2004/01/17 21:00:16 dbj Exp $	*/
+/*	$NetBSD: dd.c,v 1.38 2005/04/20 17:38:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.37 2004/01/17 21:00:16 dbj Exp $");
+__RCSID("$NetBSD: dd.c,v 1.38 2005/04/20 17:38:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,18 +218,18 @@ setup(void)
 
 		if (ddflags & C_ASCII || ddflags & C_EBCDIC) {
 			if (ddflags & C_LCASE) {
-				for (cnt = 0; cnt < 0377; ++cnt)
+				for (cnt = 0; cnt < 256; ++cnt)
 					casetab[cnt] = tolower(ctab[cnt]);
 			} else {
-				for (cnt = 0; cnt < 0377; ++cnt)
+				for (cnt = 0; cnt < 256; ++cnt)
 					casetab[cnt] = toupper(ctab[cnt]);
 			}
 		} else {
 			if (ddflags & C_LCASE) {
-				for (cnt = 0; cnt < 0377; ++cnt)
+				for (cnt = 0; cnt < 256; ++cnt)
 					casetab[cnt] = tolower(cnt);
 			} else {
-				for (cnt = 0; cnt < 0377; ++cnt)
+				for (cnt = 0; cnt < 256; ++cnt)
 					casetab[cnt] = toupper(cnt);
 			}
 		}
