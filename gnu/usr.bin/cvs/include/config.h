@@ -402,7 +402,7 @@
 #define PACKAGE_TARNAME "cvs"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.11.17"
+#define PACKAGE_VERSION "1.11.20"
 
 /* Path to the pr utility */
 #define PR_PROGRAM "/usr/bin/pr"
