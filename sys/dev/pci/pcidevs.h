@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.706 2005/04/06 15:49:06 martti Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.707 2005/04/20 21:34:36 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.705 2005/04/06 15:48:16 martti Exp
+ *	NetBSD: pcidevs,v 1.706 2005/04/20 21:33:39 bouyer Exp
  */
 
 /*
@@ -1293,6 +1293,7 @@
 #define	PCI_PRODUCT_COMPAQ_USB_MEDIAGX	0xa0f8		/* USB Controller */
 #define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_N10T2	0xb012		/* Netelligent 10 T/2 UTP/Coax */
 #define	PCI_PRODUCT_COMPAQ_INT100TX	0xb030		/* Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
