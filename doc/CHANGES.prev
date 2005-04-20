@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.28 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.29 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7955,3 +7955,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	sendmail(8): update to 8.13.3.  [atatat 20050315]
 	pkill(1): Add -i option to ignore case for both pgrep(1) and pkill(1).
 		[sketch 20050316]
+	postinstall(8): Moved from /etc to /usr/sbin.  [lukem 20050417]
