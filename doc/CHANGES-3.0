@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.60 2005/04/19 13:39:10 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.61 2005/04/20 11:45:05 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7460,4 +7460,25 @@ sys/sys/ieee754.h				1.5
 	required by the standard, and in its consequences it is not an
 	appropriate substitute for a qNaN.
 	[kleink, ticket #163]
+
+Makefile					1.239
+UPDATING					1.138 via patch
+distrib/notes/common/main			1.280
+distrib/sets/lists/base/mi			1.547
+distrib/sets/lists/etc/mi			1.154
+distrib/utils/sysinst/util.c			1.136
+doc/CHANGES					1.461 via patch
+etc/Makefile					1.312
+etc/mtree/special				1.84
+etc/postinstall					delete
+etc/rc.d/Makefile				1.50
+usr.sbin/etcupdate/etcupdate			1.22
+usr.sbin/Makefile				1.200
+usr.sbin/postinstall/Makefile			1.1
+usr.sbin/postinstall/postinstall		1.1-1.2
+usr.sbin/postinstall/postinstall.8		1.1-1.2
+
+	Move /etc/postinstall (and the etc.tgz set) to /usr/sbin/postinstall
+	(and the base.tgz set).
+	[lukem, ticket #164, #165, #166, #167, #168, #176]
 
