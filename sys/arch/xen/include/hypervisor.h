@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.12 2005/04/16 23:33:17 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.13 2005/04/20 14:48:29 bouyer Exp $	*/
 
 /*
  * 
@@ -94,7 +94,7 @@ void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_force_callback(void);
 void hypervisor_enable_ipl(unsigned int);
-void hypervisor_set_ipending(int, int, int);
+void hypervisor_set_ipending(u_int32_t, int, int);
 
 /*
  * Assembler stubs for hyper-calls.
