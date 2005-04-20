@@ -1,159 +1,240 @@
 %{
-/*
- * Parser for verified exec fingerprint file.
+/*	$NetBSD: veriexecctl_parse.y,v 1.5 2005/04/20 13:44:45 blymn Exp $	*/
+
+/*-
+ * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
  *
- * $NetBSD: veriexecctl_parse.y,v 1.4 2005/01/19 20:42:04 xtraeme Exp $
+ * All rights reserved.
+ *
+ * This code has been donated to The NetBSD Foundation by the Author.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  *
  */
 
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/statvfs.h>
+#include <sys/mount.h>
+
+#include <sys/verified_exec.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/verified_exec.h>
+#include <err.h>
 
-/* yacc internal function */
-static int     yygrowstack(void);
-int yylex(void);
-void yyerror(const char *);
+#include "veriexecctl.h"
 
-/* function prototypes */
-static int
-convert(char *fp, unsigned int count, unsigned char *out);
-
-/* ioctl parameter struct */
-static struct verified_exec_params params;
-extern int fd;
-extern int lineno;
+struct veriexec_params params;
 
 %}
 
 %union {
-  char *string;
-  int  intval;
+	char *string;
+	int intval;
 }
 
-%token EOL
 %token <string> PATH
 %token <string> STRING
+%token EOL
 
 %%
 
-statement: /* empty */
-  | statement path type fingerprint flags eol
-  | statement error eol {
-				yyclearin; /* discard lookahead */
-				yyerrok;   /* no more error */
-				fprintf(stderr,
-					"skipping to next fingerprint\n");
+statement	:	/* empty */
+		|	statement path type fingerprint flags eol {
+				struct stat sb;
+
+				if (phase == 2) {
+					phase2_load();
+					goto phase_2_end;
+				}
+
+				if (stat(params.file, &sb) == 0) {
+					struct vexec_up *p;
+
+					/* Only regular files */
+					if (!S_ISREG(sb.st_mode)) {
+						(void) fprintf(stderr,
+							       "Line %u: "
+						    "%s is not a regular file.\n",
+							       line,
+							       params.file);
+					}
+
+					if ((p = dev_lookup(sb.st_dev)) != NULL) {
+						(p->vu_param.hash_size)++;
+					} else {
+						if (verbose) {
+							struct statvfs sf;
+
+							statvfs(params.file,
+							       &sf);
+
+							(void) printf(
+							    " => Adding device"
+							    " ID %d. (%s)\n",
+							    sb.st_dev,
+							    sf.f_mntonname);
+						}
+
+						dev_add(sb.st_dev);
+					}
+				} else {
+					(void) fprintf(stderr,
+						       "Line %u: Can't stat"
+						       " %s.\n",
+					    line, params.file);
+				}
+
+phase_2_end:
+				bzero(&params, sizeof(params));
 			}
-  ;
+		|	statement eol
+		|	statement error eol {
+				yyerrok;
+			}
+		;
 
-path: PATH 
-{
-	if (strlen($1) >= MAXPATHLEN) {
-		yyerror("Path >= MAXPATHLEN");
-		YYERROR;
-	}
-	strncpy(params.file, $1, MAXPATHLEN);
-	params.type = VERIEXEC_DIRECT;
-};
+path		:	PATH {
+				strlcpy(params.file, $1, MAXPATHLEN);
+			}
+		;
 
-type: STRING
-{
-	if (strcasecmp($1, "md5") == 0) {
-		params.fp_type = FINGERPRINT_TYPE_MD5;
-	} else if (strcasecmp($1, "sha1") == 0) {
-		params.fp_type = FINGERPRINT_TYPE_SHA1;
-	} else {
-		fprintf(stderr, "%s %s at %d, %s\n",
-			"veriexecctl: bad fingerprint type", $1, lineno,
-			"assuming MD5");
-		params.fp_type = FINGERPRINT_TYPE_MD5;
-	}
-};
+type		:	STRING {
+				if (phase != 1) {
+					if (strlen($1) >=
+					    sizeof(params.fp_type)) {
+						yyerror("Fingerprint type too "								"long");
+						YYERROR;
+					}
+				
+					strlcpy(params.fp_type, $1,
+						sizeof(params.fp_type));
+				}
+			}
+		;
 
 
-fingerprint: STRING
-{
-	unsigned int count;
+fingerprint	:	STRING {
+				if (phase != 1) {
+					params.fingerprint = (char *)
+						malloc(strlen($1) / 2);
+					if (params.fingerprint == NULL) {
+						fprintf(stderr, "Fingerprint"
+							"mem alloc failed, "
+							"cannot continue.\n");
+						exit(1);
+					}
+					
+					if ((params.size =
+					       convert($1, params.fingerprint))
+					     == -1) {
+						free(params.fingerprint);
+						yyerror("Bad fingerprint");
+						YYERROR;
+					}
+				}
+				
+			}
+		;
 
-	if (params.fp_type == FINGERPRINT_TYPE_SHA1)
-		count = SHA1_FINGERPRINTLEN;
-	else
-		count = MD5_FINGERPRINTLEN;
-	
-	if (convert($1, count, params.fingerprint) < 0) {
-		fprintf(stderr,
-			"veriexecctl: bad fingerprint at line %d\n",
-			lineno);
-	}
-};
+flags		:	/* empty */ {
+				if (phase == 2)
+					params.type = VERIEXEC_DIRECT;
+			}
+		|	flags flag_spec
+		;
 
-flags: /* empty */
-	| flag_spec flags;
+flag_spec	:	STRING {
+				if (phase != 1) {
+					if (strcasecmp($1, "direct") == 0) {
+						params.type = VERIEXEC_DIRECT;
+					} else if (strcasecmp($1, "indirect")
+						   == 0) {
+						params.type = VERIEXEC_INDIRECT;
+/*					} else if (strcasecmp($1, "shell") == 0) {
+						params.vxp_type = VEXEC_SHELL;*/
+					} else if (strcasecmp($1, "file")
+						   == 0) {
+						params.type = VERIEXEC_FILE;
+					} else {
+						yyerror("Bad option");
+						YYERROR;
+					}
+				}
 
-flag_spec: STRING
-{
-	params.type = VERIEXEC_DIRECT;
-	if (strcasecmp($1, "indirect") == 0) {
-		params.type = VERIEXEC_INDIRECT;
-	} else if (strcasecmp($1, "file") == 0) {
-		params.type = VERIEXEC_FILE;
-	}
-};
+			}
+		;
 
-eol: EOL
-{
-	if (!YYRECOVERING) /* Don't do the ioctl if we saw an error */
-		do_ioctl();
-};
+eol		:	EOL
+		;
 
 %%
 		
 /*
- * Convert: takes the hexadecimal string pointed to by fp and converts
- * it to a "count" byte binary number which is stored in the array pointed to
- * by out.  Returns -1 if the conversion fails.
+ * Takes the hexadecimal string pointed to by "fp" and converts it to a 
+ * "count" byte binary number which is stored in the array pointed to
+ * by "out".  Returns the number of bytes converted or -1 if the conversion
+ * fails.
  */
-static int
-convert(char *fp, unsigned int count, unsigned char *out)
-{
-        int i, value, error = 0;
-        
-        for (i = 0; i < count; i++) {
-                if ((fp[2*i] >= '0') && (fp[2*i] <= '9')) {
-                        value = 16 * (fp[2*i] - '0');
-                } else if ((fp[2*i] >= 'a') && (fp[2*i] <= 'f')) {
-                        value = 16 * (10 + fp[2*i] - 'a');
-                } else {
-                        error = -1;
-                        break;
-                }
-                
-                if ((fp[2*i + 1] >= '0') && (fp[2*i + 1] <= '9')) {
-                        value += fp[2*i + 1] - '0';
-                } else if ((fp[2*i + 1] >= 'a') && (fp[2*i + 1] <= 'f')) {
-                        value += fp[2*i + 1] - 'a' + 10;
-                } else {
-                        error = -1;
-                        break;
-                }
+int convert(char *fp, u_char *out) {
+        int i, value, error, count;
 
-                out[i] = value;
-        }
-        
-        return error;
-}
+	count = strlen(fp);
 
-/*
- * Perform the load of the fingerprint.  Assumes that the fingerprint
- * pseudo-device is opened and the file handle is in fd.
- */
-static void
-do_ioctl(void)
-{
-	if (ioctl(fd, VERIEXECLOAD, &params) < 0)
-		fprintf(stderr,	"Ioctl failed with error `%s' on file %s\n",
-			strerror(errno), params.file);
+	  /*
+	   * if there are not an even number of hex digits then there is
+	   * not an integral number of bytes in the fingerprint.
+	   */
+	if ((count % 2) != 0)
+		return -1;
+	
+	count /= 2;
+	error = count;
+
+	for (i = 0; i < count; i++) {
+		if ((fp[2*i] >= '0') && (fp[2*i] <= '9')) {
+			value = 16 * (fp[2*i] - '0');
+		} else if ((tolower(fp[2*i]) >= 'a')
+			   && (tolower(fp[2*i]) <= 'f')) {
+			value = 16 * (10 + tolower(fp[2*i]) - 'a');
+		} else {
+			error = -1;
+			break;
+		}
+
+		if ((fp[2*i + 1] >= '0') && (fp[2*i + 1] <= '9')) {
+			value += fp[2*i + 1] - '0';
+		} else if ((tolower(fp[2*i + 1]) >= 'a')
+			   && (tolower(fp[2*i + 1]) <= 'f')) {
+			value += tolower(fp[2*i + 1]) - 'a' + 10;
+		} else {
+			error = -1;
+			break;
+		}
+
+		out[i] = value;
+	}
+
+	return (error);
 }

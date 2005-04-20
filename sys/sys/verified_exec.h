@@ -1,33 +1,36 @@
-/*	$NetBSD: verified_exec.h,v 1.6 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.7 2005/04/20 13:44:46 blymn Exp $	*/
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn
- *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
- * All rights reserved.
+ * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
- * This code has been donated to The NetBSD Foundation by the Author.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Brett Lymn and Elad Efrat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.7 2005/04/20 13:44:46 blymn Exp $");
 
 /*
  *
@@ -35,19 +38,34 @@
  *
  */
 #include <sys/param.h>
+#include <sys/hash.h>
 
 #ifndef V_EXEC_H
 #define V_EXEC_H 1
 
-#define MAXFINGERPRINTLEN 20  /* enough room for largest signature... */
+/* Max length of the fingerprint type string, including terminating \0 char */
+#define VERIEXEC_TYPE_MAXLEN 9
 
-struct verified_exec_params  {
+struct veriexec_params  {
 	unsigned char type;
-	unsigned char fp_type;  /* type of fingerprint this is */
+	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];  /* type of fingerprint
+							 this is */
 	char file[MAXPATHLEN];
-	unsigned char fingerprint[MAXFINGERPRINTLEN];
+	unsigned int size;  /* number of bytes in the fingerprint */
+	unsigned char *fingerprint;
 };
 
+struct veriexec_sizing_params {
+	dev_t dev;
+	size_t hash_size;
+};
+
+struct veriexec_fp_report {
+	unsigned size;
+	unsigned char *fingerprints;
+};
+
+	
 /*
  * Types of veriexec inodes we can have
  */
@@ -55,48 +73,102 @@ struct verified_exec_params  {
 #define VERIEXEC_INDIRECT 1  /* Only allow indirect execution */
 #define VERIEXEC_FILE     2  /* Fingerprint of a plain file */
 
-/*
- * Types of fingerprints we support.
- */
-#define FINGERPRINT_TYPE_MD5 1 /* MD5 hash */
-#define MD5_FINGERPRINTLEN 16  /* and it's length in chars */
-#define FINGERPRINT_TYPE_SHA1 2 /* SHA1 hash */
-#define SHA1_FINGERPRINTLEN 20  /* and it's length in chars */
-
-#define VERIEXECLOAD _IOW('S', 0x1, struct verified_exec_params)
+#define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
+#define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
+#define VERIEXEC_FINGERPRINTS _IOWR('S', 0x3, struct veriexec_fp_report)
 
 #ifdef _KERNEL
-void	verifiedexecattach(struct device *, struct device *, void *);
-int     verifiedexecopen(dev_t, int, int, struct proc *);
-int     verifiedexecclose(dev_t, int, int, struct proc *);
-int     verifiedexecioctl(dev_t, u_long, caddr_t, int, struct proc *);
+void	veriexecattach(struct device *, struct device *, void *);
+int     veriexecopen(dev_t, int, int, struct proc *);
+int     veriexecclose(dev_t, int, int, struct proc *);
+int     veriexecioctl(dev_t, u_long, caddr_t, int, struct proc *);
+
+/* defined in kern_verifiedexec.c */
+extern char *veriexec_fp_names;
+
+/*
+ * Operations vector for verified exec, this defines the characteristics
+ * for the fingerprint type.
+ */
+
+/* Function types: init, update, final. */
+typedef void (*VERIEXEC_INIT_FN)(void *);
+typedef void (*VERIEXEC_UPDATE_FN)(void *, u_char *, u_int);
+typedef void (*VERIEXEC_FINAL_FN)(u_char *, void *);
+
+struct veriexec_fp_ops {
+	char type[VERIEXEC_TYPE_MAXLEN];
+	size_t hash_len;
+	size_t context_size;
+	VERIEXEC_INIT_FN init;
+	VERIEXEC_UPDATE_FN update;
+	VERIEXEC_FINAL_FN final;
+	LIST_ENTRY(veriexec_fp_ops) entries;
+};
+
 /*
  * list structure definitions - needed in kern_exec.c
  */
 
-struct veriexec_devhead veriexec_dev_head;
-struct veriexec_devhead veriexec_file_dev_head;
-
-struct veriexec_dev_list {
-	unsigned long id;
-	LIST_HEAD(inodehead, veriexec_inode_list) inode_head;
-	LIST_ENTRY(veriexec_dev_list) entries;
+/* An entry in the per-device hash table. */
+struct veriexec_hash_entry {
+        ino_t         inode;                        /* Inode number. */
+        unsigned char type;                         /* Entry type. */
+        unsigned char *fp;                          /* Fingerprint. */
+	struct veriexec_fp_ops *ops;                /* Fingerprint ops vector*/
+        LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
 
-struct veriexec_inode_list
-{
-	unsigned char type;
-	unsigned char fp_type;
-	unsigned long inode;
-	unsigned char fingerprint[MAXFINGERPRINTLEN];
-	LIST_ENTRY(veriexec_inode_list) entries;
+LIST_HEAD(veriexec_hashhead, veriexec_hash_entry) *hash_tbl;
+
+/* Veriexec hash table information. */
+struct veriexec_hashtbl {
+        struct veriexec_hashhead *hash_tbl;
+        size_t hash_size;       /* Number of slots in the table. */
+        dev_t hash_dev;         /* Device ID the hash table refers to. */
+        LIST_ENTRY(veriexec_hashtbl) hash_list;
 };
 
-struct veriexec_inode_list *get_veriexec_inode(struct veriexec_devhead *,
-	    long, long, char *);
-int evaluate_fingerprint(struct vnode *, struct veriexec_inode_list *,
-	    struct proc *, u_quad_t, char *);
-int fingerprintcmp(struct veriexec_inode_list *, unsigned char *);
+/* Global list of hash tables. */
+LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
+
+/* Mask to ensure bounded access to elements in the hash table. */
+#define VERIEXEC_HASH_MASK(tbl)    ((tbl)->hash_size - 1)
+
+/*
+ * Hashing function: Takes an inode number modulus the mask to give back
+ * an index into the hash table.
+ */
+#define VERIEXEC_HASH(tbl, inode)  \
+        (hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
+	 & VERIEXEC_HASH_MASK(tbl))
+
+/* Callback for hash traversal. */
+typedef void (*VERIEXEC_CALLBACK)(struct veriexec_hash_entry *, dev_t);
+
+void veriexec_init_fp_ops(void);
+struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
+int veriexec_fp_calc(struct proc *, struct vnode *,
+		     struct veriexec_hash_entry *, uint64_t, u_char *);
+int veriexec_fp_cmp(struct veriexec_hash_entry *, u_char *);
+
+struct veriexec_hashtbl *veriexec_tblfind(dev_t);
+struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
+int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
+void veriexec_hashprint(struct veriexec_hash_entry *, dev_t);
+int veriexec_tblwalk(VERIEXEC_CALLBACK *);
+
+int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
+		    const u_char *, int);
+int veriexec_removechk(struct proc *, struct vnode *, const char *);
+void veriexec_init_fp_ops(void);
 
 #endif
+
+#ifdef VERIFIED_EXEC_DEBUG
+#define veriexec_dprintf(x) printf x
+#else
+#define veriexec_dprintf(x)
+#endif /* VERIFIED_EXEC_DEBUG */
+
 #endif
