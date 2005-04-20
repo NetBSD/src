@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.80 2005/04/12 13:11:45 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.81 2005/04/20 14:10:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.80 2005/04/12 13:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.81 2005/04/20 14:10:03 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -487,8 +487,8 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap_kernel(), va, &pa)) {
-			panic("uvm_km_check_empty: va %p has pa %p",
-			    (void *)va, (void *)pa);
+			panic("uvm_km_check_empty: va %p has pa 0x%llx",
+			    (void *)va, (long long)pa);
 		}
 		if (!intrsafe) {
 			const struct vm_page *pg;
