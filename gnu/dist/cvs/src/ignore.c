@@ -241,10 +241,25 @@ ign_add (ign, hold)
 			free (ign_list[i]);
 		    ign_hold = -1;
 		}
-		s_ign_list = (char **) xmalloc (ign_count * sizeof (char *));
-		for (i = 0; i < ign_count; i++)
-		    s_ign_list[i] = ign_list[i];
-		s_ign_count = ign_count;
+		if (s_ign_list)
+		{
+		    /* Don't save the ignore list twice - if there are two
+		     * bangs in a local .cvsignore file then we don't want to
+		     * save the new list the first bang created.
+		     *
+		     * We still need to free the "new" ignore list.
+		     */
+		    for (i = 0; i < ign_count; i++)
+			free (ign_list[i]);
+		}
+		else
+		{
+		    /* Save the ignore list for later.  */
+		    s_ign_list = xmalloc (ign_count * sizeof (char *));
+		    for (i = 0; i < ign_count; i++)
+			s_ign_list[i] = ign_list[i];
+		    s_ign_count = ign_count;
+		}
 		ign_count = 1;
 		/* Always ignore the "CVS" directory.  */
 		ign_list[0] = xstrdup ("CVS");
@@ -335,7 +350,7 @@ ignore_directory (name)
     i = dir_ign_current;
     while (i--)
     {
-	if (strncmp (name, dir_ign_list[i], strlen (dir_ign_list[i])) == 0)
+	if (strncmp (name, dir_ign_list[i], strlen (dir_ign_list[i])+1) == 0)
 	    return 1;
     }
 

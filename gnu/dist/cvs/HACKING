@@ -21,6 +21,21 @@ to use:
 
 	$ CFLAGS="-g -Wall" ./config.status --recheck
 
+* Backwards Compatibility
+
+Only bug fixes are accepted into the stable branch.  New features should be
+applied to the trunk.
+
+If it is not inextricable from a bug fix, CVS's output (to stdout/stderr)
+should not be changed on the stable branch in order to best support scripts and
+other tools which parse CVS's output.  It is ok to change output between
+feature releases (on the trunk), though such changes should be noted in the
+NEWS file.
+
+Changes in the way CVS responds to command line options, config options, etc.
+should be accompanied by deprecation warnings for an entire stable series of
+releases before being changed permanently, if at all possible.
+
 * Indentation style
 
 CVS mostly uses a consistent indentation style which looks like this:
@@ -100,10 +115,6 @@ Generally speaking the GNU coding standards are mostly used by CVS
 and perhaps an exception or two we haven't mentioned).  This is the
 file standards.text at the GNU FTP sites.
 
-Filenames for .c and .h files may contain _ but should not contain -
-(the latter causes Visual C++ 2.1 to create makefiles which Visual C++
-4.0 cannot use).
-
 * Regenerating Build Files
 
 On UNIX, if you wish to change the Build files, you will need Autoconf and
@@ -115,8 +126,8 @@ have the same versions the developers do, so the rules to run them
 automatically aren't included in the generated Makefiles unless you run
 configure with the --enable-maintainer-mode option.
 
-The CVS Makefiles and configure script were built using Automake 1.7.9 and
-Autoconf 2.58, respectively.
+The CVS Makefiles and configure script were built using Automake 1.9.5 and
+Autoconf 2.59, respectively.
 
 There is a known bug in Autoconf 2.57 that will prevent the configure
 scripts it generates from working on some platforms.  Other combinations of

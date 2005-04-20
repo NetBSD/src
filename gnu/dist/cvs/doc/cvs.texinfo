@@ -4,13 +4,14 @@
 @macro copyleftnotice
 @noindent
 Copyright @copyright{} 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-                       2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+                       2001, 2002, 2003, 2004, 2005
+                       Free Software Foundation, Inc.
 
 @multitable @columnfractions .12 .88
 @item Portions
-@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004
+@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005
                                   Derek R. Price,
-@item @tab Copyright @copyright{} 2002, 2003, 2004
+@item @tab Copyright @copyright{} 2002, 2003, 2004, 2005
                                   Ximbiot @url{http://ximbiot.com},
 @item @tab Copyright @copyright{} 1992, 1993, 1999 Signum Support AB,
 @item @tab and Copyright @copyright{} others.
@@ -7198,6 +7199,9 @@ $ cd wdiff-0.05
 $ cvs import -m "Import of FSF v. 0.05" fsf/wdiff FSF_DIST WDIFF_0_05
 @end example
 
+@strong{WARNING: If you use a release tag that already exists in one of the
+repository archives, files removed by an import may not be detected.}
+
 For files that have not been modified locally, the newly created
 revision becomes the head revision.  If you have made local
 changes, @code{import} will warn you that you must merge the changes
@@ -8233,8 +8237,8 @@ does not contain the specified tag.
 @strong{Note: this is not the same as the overall @samp{cvs -r} option,
 which you can specify to the left of a @sc{cvs} command!}
 
-@samp{-r} is available with the @code{checkout}, @code{commit},
-@code{diff}, @code{history}, @code{export}, @code{rdiff},
+@samp{-r} is available with the @code{annotate}, @code{checkout},
+@code{commit}, @code{diff}, @code{history}, @code{export}, @code{rdiff}, 
 @code{rtag}, and @code{update} commands.
 
 @item -W
@@ -10091,8 +10095,10 @@ At least three arguments are required.
 @var{repository} is needed to identify the collection
 of source.  @var{vendortag} is a tag for the entire
 branch (e.g., for 1.1.1).  You must also specify at
-least one @var{releasetag} to identify the files at
-the leaves created each time you execute @code{import}.
+least one @var{releasetag} to uniquely identify the files at
+the leaves created each time you execute @code{import}.  The
+@var{releasetag} should be new, not previously existing in the
+repository file, and uniquely identify the imported release,
 
 @c I'm not completely sure this belongs here.  But
 @c we need to say it _somewhere_ reasonably obvious; it
@@ -10260,7 +10266,12 @@ with the normal use inside @sc{cvs} (@pxref{Common options}).}
 @appendixsubsec log options
 
 By default, @code{log} prints all information that is
-available.  All other options restrict the output.
+available.  All other options restrict the output.  Note that the revision
+selection options (@code{-d}, @code{-r}, @code{-s}, and @code{-w}) have no
+effect, other than possibly causing a search for files in Attic directories,
+when used in conjunction with the options that restrict the output to only
+@code{log} header fields (@code{-b}, @code{-h}, @code{-R}, and @code{-t})
+unless the @code{-S} option is also specified.
 
 @table @code
 @item -b
@@ -11853,6 +11864,8 @@ file, which defines the modules inside the repository.
 @menu
 * modules::                     Defining modules
 * Wrappers::                    Specify binary-ness based on file name
+* Trigger Scripts::		Some notes on the commit support files and
+				taginfo, referenced below.
 * commit files::                The commit support files (commitinfo,
                                 verifymsg, editinfo, loginfo)
 * taginfo::                     Verifying/Logging tags
@@ -12349,59 +12362,26 @@ cvs import -I ! -W "*.exe -k 'b'" first-dir vendortag reltag
 @c One catch--"cvs diff" will not invoke the wrappers
 @c (probably a CVS bug, although I haven't thought it out).
 
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node commit files
-@appendixsec The commit support files
-@cindex Committing, administrative support files
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node Trigger Scripts
+@appendixsec The Trigger Scripts
+@cindex Info files
+@cindex Trigger scripts
 
-The @samp{-i} flag in the @file{modules} file can be
-used to run a certain program whenever files are
-committed (@pxref{modules}).  The files described in
-this section provide other, more flexible, ways to run
-programs whenever something is committed.
+Several of the administrative files support triggers, or the launching external
+scripts or programs at specific times before or after particular events.  The
+individual files are discussed in the later sections, @ref{commit files} and
+@ref{taginfo}, but some of the common elements are discussed here.
 
-There are three kinds of programs that can be run on
-commit.  They are specified in files in the repository,
-as described below.  The following table summarizes the
-file names and the purpose of the corresponding
-programs.
-
-@table @file
-@item commitinfo
-The program is responsible for checking that the commit
-is allowed.  If it exits with a non-zero exit status
-the commit will be aborted.
-
-@item verifymsg
-The specified program is used to evaluate the log message,
-and possibly verify that it contains all required
-fields.  This is most useful in combination with the
-@file{rcsinfo} file, which can hold a log message
-template (@pxref{rcsinfo}).
-
-@item editinfo
-The specified program is used to edit the log message,
-and possibly verify that it contains all required
-fields.  This is most useful in combination with the
-@file{rcsinfo} file, which can hold a log message
-template (@pxref{rcsinfo}).  (obsolete)
-
-@item loginfo
-The specified program is called when the commit is
-complete.  It receives the log message and some
-additional information and can store the log message in
-a file, or mail it to appropriate persons, or maybe
-post it to a local newsgroup, or@dots{}  Your
-imagination is the limit!
-@end table
+All the trigger scripts are launched in a copy of the user sandbox being
+committed, on the server, in client-server mode.  In local mode, the scripts
+are actually launched directly from the user sandbox directory being committed.
+For most intents and purposes, the same scripts can be run in both locations
+without alteration.
 
 @menu
-* syntax::                      The common syntax
-* commitinfo::                  Pre-commit checking
-* verifymsg::                   How are log messages evaluated?
-* editinfo::                    Specifying how log messages are created
-                                (obsolete)
-* loginfo::                     Where should log messages be sent?
+* syntax::			The common syntax
+* Trigger Script Security::	Trigger script security
 @end menu
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -12465,6 +12445,78 @@ is used as a file name or command-line as appropriate.
 @c includes the filename--"directory name" above should be
 @c unambiguous but there is nothing like an example to
 @c confirm people's understanding of this sort of thing).
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node Trigger Script Security
+@appendixsubsec Security and the Trigger Scripts
+@cindex Info files, security
+@cindex Trigger scripts, security
+
+Security is a huge subject, and implementing a secure system is a non-trivial
+task.  This section will barely touch on all the issues involved, but it is
+well to note that, as with any script you will be allowing an untrusted
+user to run on your server, there are measures you can take to help prevent
+your trigger scripts from being abused.
+
+For instance, since the CVS trigger scripts all run in a copy of the user's
+sandbox on the server, a naively coded Perl trigger script which attempts to
+use a Perl module that is not installed on the system can be hijacked by any
+user with commit access who is checking in a file with the correct name.  Other
+scripting languages may be vulnerable to similar hacks.
+
+One way to make a script more secure, at least with Perl, is to use scripts
+which invoke the @code{-T}, or "taint-check" switch on their @code{#!} line.
+In the most basic terms, this causes Perl to avoid running code that may have
+come from an external source.  Please run the @code{perldoc perlsec} command
+for more on Perl security.  Again, other languages may implement other security
+verification hooks which look more or less like Perl's "taint-check" mechanism.
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node commit files
+@appendixsec The commit support files
+@cindex Committing, administrative support files
+
+There are three kinds of trigger scripts (@pxref{Trigger Scripts}) that can be
+run at various times during a commit.  They are specified in files in the
+repository, as described below.  The following table summarizes the
+file names and the purpose of the corresponding programs.
+
+@table @file
+@item commitinfo
+The program is responsible for checking that the commit
+is allowed.  If it exits with a non-zero exit status
+the commit will be aborted.
+
+@item verifymsg
+The specified program is used to evaluate the log message,
+and possibly verify that it contains all required
+fields.  This is most useful in combination with the
+@file{rcsinfo} file, which can hold a log message
+template (@pxref{rcsinfo}).
+
+@item editinfo
+The specified program is used to edit the log message,
+and possibly verify that it contains all required
+fields.  This is most useful in combination with the
+@file{rcsinfo} file, which can hold a log message
+template (@pxref{rcsinfo}).  (obsolete)
+
+@item loginfo
+The specified program is called when the commit is
+complete.  It receives the log message and some
+additional information and can store the log message in
+a file, or mail it to appropriate persons, or maybe
+post it to a local newsgroup, or@dots{}  Your
+imagination is the limit!
+@end table
+
+@menu
+* commitinfo::                  Pre-commit checking
+* verifymsg::                   How are log messages evaluated?
+* editinfo::                    Specifying how log messages are created
+                                (obsolete)
+* loginfo::                     Where should log messages be sent?
+@end menu
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node commitinfo
@@ -13046,9 +13098,9 @@ directory.
 The @file{taginfo} file defines programs to execute
 when someone executes a @code{tag} or @code{rtag}
 command.  The @file{taginfo} file has the standard form
-for administrative files (@pxref{syntax}),
+for trigger scripts (@pxref{Trigger Scripts}),
 where each line is a regular expression
-followed by a command to execute.  The arguments passed
+followed by a command to execute (@pxref{syntax}).  The arguments passed
 to the command are, in order, the @var{tagname},
 @var{operation} (@code{add} for @code{tag},
 @code{mov} for @code{tag -F}, and @code{del} for

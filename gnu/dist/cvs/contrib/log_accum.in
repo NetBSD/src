@@ -1,6 +1,24 @@
-#! @PERL@
+#! @PERL@ -T
 # -*-Perl-*-
+
+###############################################################################
+###############################################################################
+###############################################################################
 #
+# THIS SCRIPT IS PROBABLY BROKEN.  REMOVING THE -T SWITCH ON THE #! LINE ABOVE
+# WOULD FIX IT, BUT THIS IS INSECURE.  WE RECOMMEND FIXING THE ERRORS WHICH THE
+# -T SWITCH WILL CAUSE PERL TO REPORT BEFORE RUNNING THIS SCRIPT FROM A CVS
+# SERVER TRIGGER.  PLEASE SEND PATCHES CONTAINING THE CHANGES YOU FIND
+# NECESSARY TO RUN THIS SCRIPT WITH THE TAINT-CHECKING ENABLED BACK TO THE
+# <bug-cvs@gnu.org> MAILING LIST.
+#
+# For more on general Perl security and taint-checking, please try running the
+# `perldoc perlsec' command.
+#
+###############################################################################
+###############################################################################
+###############################################################################
+
 # Perl filter to handle the log messages from the checkin of files in
 # a directory.  This script will group the lists of files by log
 # message, and mail a single consolidated log message at the end of
@@ -273,7 +291,7 @@ sub change_summary {
         }
 
         $diff = "\n\n";
-        $vhost = @path[0];
+        $vhost = $path[0];
         if ($CVSWEB_PORT eq "80") {
           $cvsweb_base = "$CVSWEB_SCHEME://$vhost.$CVSWEB_DOMAIN/$CVSWEB_URI";
         }
@@ -457,7 +475,7 @@ sub mail_notification
 
     my $subj = &derive_subject_from_changes_file ();
 
-    if ($EMULATE_LOCAL_MAIL_USER NE "") {
+    if ($EMULATE_LOCAL_MAIL_USER ne "") {
         $MAIL_FROM = "$cvs_user\@$EMULATE_LOCAL_MAIL_USER";
     }
 
@@ -536,7 +554,6 @@ $state = $STATE_NONE;
 $cvs_user = $ENV{'USER'} || getlogin || (getpwuid($<))[0] || sprintf("uid#%d",$<);
 @files = process_argv(@ARGV);
 @path = split('/', $files[0]);
-$repository = $path[0];
 if ($#path == 0) {
     $dir = ".";
 } else {

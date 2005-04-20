@@ -32,6 +32,7 @@ onoff_fileproc (callerdat, finfo)
     void *callerdat;
     struct file_info *finfo;
 {
+    fileattr_get0 (finfo->file, "_watched");
     fileattr_set (finfo->file, "_watched", turning_on ? "" : NULL);
     return 0;
 }
@@ -50,7 +51,10 @@ onoff_filesdoneproc (callerdat, err, repository, update_dir, entries)
     List *entries;
 {
     if (setting_default)
+    {
+	fileattr_get0 (NULL, "_watched");
 	fileattr_set (NULL, "_watched", turning_on ? "" : NULL);
+    }
     return err;
 }
 

@@ -1,6 +1,10 @@
 /*
- * Copyright (c) 1992, Mark D. Baushke
- * Copyright (c) 2002, Derek R. Price
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Poritons Copyright (c) 1992, Mark D. Baushke
  *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -11,6 +15,7 @@
  */
 
 #include "cvs.h"
+#include <assert.h>
 #include "getline.h"
 
 /* Printable names for things in the current_parsed_root->method enum variable.
@@ -23,13 +28,14 @@ const char method_names[][16] = {
 
 #ifndef DEBUG
 
-char *
+cvsroot_t *
 Name_Root (dir, update_dir)
-    char *dir;
-    char *update_dir;
+    const char *dir;
+    const char *update_dir;
 {
     FILE *fpin;
-    char *ret, *xupdate_dir;
+    cvsroot_t *ret;
+    const char *xupdate_dir;
     char *root = NULL;
     size_t root_allocated = 0;
     char *tmp;
@@ -85,7 +91,7 @@ Name_Root (dir, update_dir)
 	goto out;
     }
     fclose (fpin);
-    cp = root + (len - 1);
+    cp = root + len - 1;
     if (*cp == '\n')
 	*cp = '\0';			/* strip the newline */
 
@@ -94,43 +100,38 @@ Name_Root (dir, update_dir)
      * absolute pathname or specify a remote server.
      */
 
-    if (
-#ifdef CLIENT_SUPPORT
-	(strchr (root, ':') == NULL) &&
-#endif
-    	! isabsolute (root))
+    ret = parse_cvsroot (root);
+    if (ret == NULL)
     {
 	error (0, 0, "in directory %s:", xupdate_dir);
 	error (0, 0,
-	       "ignoring %s because it does not contain an absolute pathname.",
+	       "ignoring %s because it does not contain a valid root.",
 	       CVSADM_ROOT);
-	ret = NULL;
 	goto out;
     }
 
+    if (
 #ifdef CLIENT_SUPPORT
-    if ((strchr (root, ':') == NULL) && !isdir (root))
-#else /* ! CLIENT_SUPPORT */
-    if (!isdir (root))
-#endif /* CLIENT_SUPPORT */
+        !ret->isremote &&
+#endif
+        !isdir (ret->directory))
     {
 	error (0, 0, "in directory %s:", xupdate_dir);
 	error (0, 0,
 	       "ignoring %s because it specifies a non-existent repository %s",
 	       CVSADM_ROOT, root);
+	free_cvsroot_t (ret);
 	ret = NULL;
 	goto out;
     }
 
-    /* allocate space to return and fill it in */
-    strip_trailing_slashes (root);
-    ret = xstrdup (root);
+
  out:
     free (cvsadm);
     free (tmp);
     if (root != NULL)
 	free (root);
-    return (ret);
+    return ret;
 }
 
 
@@ -370,6 +371,8 @@ parse_cvsroot (root_in)
 #ifdef CLIENT_SUPPORT
     int check_hostname, no_port, no_password;
 #endif /* CLIENT_SUPPORT */
+
+    assert (root_in);
 
     /* allocate some space */
     newroot = new_cvsroot_t();
@@ -737,6 +740,8 @@ normalize_cvsroot (root)
     char *cvsroot_canonical;
     char *p, *hostname, *username;
     char port_s[64];
+
+    assert (root && root->hostname && root->directory);
 
     /* get the appropriate port string */
     sprintf (port_s, "%d", get_cvs_port_number (root));
