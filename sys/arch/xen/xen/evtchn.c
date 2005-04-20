@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.11 2005/04/19 22:14:30 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.12 2005/04/20 07:59:21 xtraeme Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.11 2005/04/19 22:14:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.12 2005/04/20 07:59:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,14 +121,14 @@ init_events()
 	int evtch;
 
 	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
-	aprint_verbose("debug vitual interrupt using event channel %d\n",
+	aprint_verbose("debug virtual interrupt using event channel %d\n",
 	    evtch);
 	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
 	    "debugev");
 	hypervisor_enable_event(evtch);
 
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
-	aprint_verbose("misdirect vitual interrupt using event channel %d\n",
+	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
 	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
 	    "misdirev");
