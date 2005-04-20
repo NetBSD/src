@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.463 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.464 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,7 +24,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ac97: Add support for AC'97 modems. [jmcneill 20050407]
 	auich(4): Add support for Intel ICH AC'97 modems as audio devices.
 		Currently disabled by default. [jmcneill 20050407]
-	postinstall(8): Moved from /etc to /usr/sbin.  [lukem 20050417]
 	arc: Add a standalone boot program to load ELF kernels.
 		[tsutsui 20050418]
 	cvs(1): Upgrade to 1.11.20. [christos 20050419]
