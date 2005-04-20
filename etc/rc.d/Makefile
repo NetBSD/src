@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.49 2004/06/30 09:22:41 tron Exp $
+# $NetBSD: Makefile,v 1.49.2.1 2005/04/20 11:39:59 tron Exp $
 
 .include <bsd.own.mk>
 
 # if you're adding new scripts, don't forget to update followings.
-#	src/etc/postinstall
-#	src/etc/mtree/special
 #	src/distrib/sets/lists/etc/mi
+#	src/etc/mtree/special
+#	src/usr.sbin/postinstall/postinstall
 
 CONFIGFILES=\
 	DAEMON LOGIN NETWORKING SERVERS \
