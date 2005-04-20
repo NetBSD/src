@@ -1,52 +1,112 @@
 %{
-/*
- * Configuration file lexer for Verified exec
+/*	$NetBSD: veriexecctl_conf.l,v 1.3 2005/04/20 13:44:45 blymn Exp $	*/
+
+/*-
+ * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ *
+ * All rights reserved.
+ *
+ * This code has been donated to The NetBSD Foundation by the Author.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
  */
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/verified_exec.h>
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <err.h>
+
 #include "veriexecctl_parse.h"
+#include "veriexecctl.h"
 
-int lineno = 1;
-
-void yyerror(const char *message);
-void warning(const char *message);
-int yylex(void);
-
+u_int64_t entries;
+char *filename;
 %}
 
-%%
-
-path     { return PATH; }
-string   { return STRING; }
-eol      { return EOL; }
-
-\/[^ 	]+  {
-	yylval.string = strdup(yytext);
-	return PATH;
-}
-
-[0-9a-zA-Z]+  {
-	yylval.string = strdup(yytext);
-	return STRING;
-}
-
-\n      {
-	lineno++;  /* for error reporting */
-	return EOL;
-}
-
-[ \t\r] ;  /* eat white ones */
-
-#.* ;      /* comment */
-
-.    yyerror("invalid character");
+STRING		[0-9a-zA-Z]+
 
 %%
 
-void yyerror(const char *string)
-{
-  fprintf(stderr, "%d: %s at %s\n", lineno, string, yytext);
+	/* path */
+\/[^ \t]+	{
+			yylval.string = strdup(yytext);
+			return (PATH);
+		}
+
+	/* string (fingerprint, type, options) */
+{STRING} 	{
+			yylval.string = strdup(yytext);
+			if (!(yylval.string)) {
+				(void) fprintf(stderr, "WARNING: Out"
+				    " of memory during run-time! "
+				    "Attempting recover...\n");
+
+				/*
+				 * Sleep a little bit and let the
+				 * machine calm down. ;)
+				 */
+				usleep(60000);
+
+				yylval.string = strdup(yytext);
+				if (!(yylval.string)) {
+					(void) fprintf(stderr, "ERROR:"
+					    " No memory. Aborting.\n");
+					exit(1);
+				}
+
+				(void) fprintf(stderr, "Recovered.\n");
+			}
+
+			return (STRING);
+		}
+
+
+	/* comments, white-outs */
+[ \t\r]		|
+#.*		;
+#.*\n		|
+^\n		{ line++; }
+
+	/* eol on a line with data. need a call to ioctl, return eol */
+\n		{
+			line++;
+			return (EOL);
+		}
+
+.		{ yyerror("Invalid character"); }
+
+%%
+
+int yywrap(void) {
+	return (1);
+}
+
+void yyerror(const char *string) {
+	fprintf(stderr, "%s at \"%s\", line %d\n", string, yytext, line);
 }

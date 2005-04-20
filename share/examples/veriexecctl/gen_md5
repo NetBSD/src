@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: gen_md5,v 1.1 2002/11/23 10:25:04 blymn Exp $
+#	$NetBSD: gen_md5,v 1.2 2005/04/20 13:44:45 blymn Exp $
 #
 # This is a helper script that scans all the file systems for
 # executables and generates an entry in the signatures file for
@@ -13,7 +13,7 @@ echo "Fingerprinting the system, this may take a while...."
 find / \( \( -fstype ffs -a ! -iregex '^/proc.*' -a -type f -a \( -perm -0100 -o -perm -0010 -o -perm -0001 \) \) -o -name 'lib*so*' \) -print | while read line
 do
 	echo "Fingerprinting $line"
-	hash=`md5 $line | cut -d'=' -f2 | tr -d ' '`
+	hash=`md5 < $line`
 	flag=""
 	if [ ! -x $line ]
 	then
