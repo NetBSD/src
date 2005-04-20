@@ -1,5 +1,10 @@
 /*
- * Copyright (c) 1993 david d zuhn
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1993 david d zuhn
  * 
  * Written by david d `zoo' zuhn while at Cygnus Support
  * 

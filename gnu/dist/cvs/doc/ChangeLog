@@ -1,3 +1,49 @@
+2005-04-14  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (Administrative files): Add "Trigger Scripts" node to
+	the menu.
+	(Trigger Scripts, Trigger Script Security): New nodes.
+	(syntax): Move under Trigger scripts node.
+	(commit files, taginfo): Rewrite to reference Trigger Script node.  
+
+2005-04-06  Derek Price  <derek@ximbiot.com>
+
+	* Makefile.am (MAINTAINERCLEANFILES): Add cvs.1.
+	(cvs.1): Create intermediate file so that the original isn't emptied on
+	error.
+
+2005-01-31  Derek Price  <derek@ximbiot.com>
+
+	* Makefile.am, cvs.man.header, cvs.texinfo: Update copyright notices.
+
+2005-01-29  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (log options): Note quirky interaction of log options.
+	(Suggestion from Dan Peterson <dbpete@aol.com>.)
+
+2004-10-29  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo (Common options): The -r TAG option works with
+	the cvs annotate command.
+	(Original patch from Ville Skytta <scop@cvshome.org>.)
+
+2004-09-25  Derek Price  <derek@ximbiot.com>
+
+	* mkman.in: Move to...
+	* mkman.pl: ...here.
+	* Makefile.am (cvs.1): mkman is in build dir, not src dir.
+
+2004-07-17  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (Update imports, import): Add notes on requirement that
+	release tags be unique.
+	(Original patch from Ilya N. Golubev <gin@mo.msk.ru>.)
+
+2004-06-10  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (commit files): Remove reference to the obsolete -i
+	module option.
+
 2004-05-28  Derek Price  <derek@ximbiot.com>
 
 	* cvs.texinfo (Global options): Remove reference to global -l option.

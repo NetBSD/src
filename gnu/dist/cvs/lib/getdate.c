@@ -11,7 +11,7 @@ static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93 (BSDI)";
 #define yyerrok (yyerrflag=0)
 #define YYRECOVERING (yyerrflag!=0)
 #define YYPREFIX "yy"
-#line 2 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 2 "getdate.y"
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -153,7 +153,7 @@ static MERIDIAN	yyMeridian;
 static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
 
-#line 145 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 145 "getdate.y"
 typedef union {
     time_t		Number;
     enum _MERIDIAN	Meridian;
@@ -382,7 +382,7 @@ struct yystack {
 int yychar; /* some people use this, so we copy it in & out */
 int yyerrflag; /* must be global for yyerrok & YYRECOVERING */
 YYSTYPE yylval;
-#line 381 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 381 "getdate.y"
 
 /* Month and day table. */
 static TABLE const MonthDayTable[] = {
@@ -1228,37 +1228,37 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 163 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 163 "getdate.y"
 {
 	    yyHaveTime++;
 	}
 break;
 case 4:
-#line 166 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 166 "getdate.y"
 {
 	    yyHaveZone++;
 	}
 break;
 case 5:
-#line 169 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 169 "getdate.y"
 {
 	    yyHaveDate++;
 	}
 break;
 case 6:
-#line 172 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 172 "getdate.y"
 {
 	    yyHaveDay++;
 	}
 break;
 case 7:
-#line 175 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 175 "getdate.y"
 {
 	    yyHaveRel++;
 	}
 break;
 case 8:
-#line 178 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 178 "getdate.y"
 {
 	    yyHaveTime++;
 	    yyHaveDate++;
@@ -1266,7 +1266,7 @@ case 8:
 	}
 break;
 case 10:
-#line 186 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 186 "getdate.y"
 {
 	    yyYear = yyvsp[-10].Number;
 	    yyMonth = yyvsp[-8].Number;
@@ -1279,7 +1279,7 @@ case 10:
 	}
 break;
 case 11:
-#line 198 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 198 "getdate.y"
 {
 	    yyHour = yyvsp[-1].Number;
 	    yyMinutes = 0;
@@ -1288,7 +1288,7 @@ case 11:
 	}
 break;
 case 12:
-#line 204 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 204 "getdate.y"
 {
 	    yyHour = yyvsp[-3].Number;
 	    yyMinutes = yyvsp[-1].Number;
@@ -1297,7 +1297,7 @@ case 12:
 	}
 break;
 case 13:
-#line 210 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 210 "getdate.y"
 {
 	    yyHour = yyvsp[-3].Number;
 	    yyMinutes = yyvsp[-1].Number;
@@ -1307,7 +1307,7 @@ case 13:
 	}
 break;
 case 14:
-#line 217 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 217 "getdate.y"
 {
 	    yyHour = yyvsp[-5].Number;
 	    yyMinutes = yyvsp[-3].Number;
@@ -1316,7 +1316,7 @@ case 14:
 	}
 break;
 case 15:
-#line 223 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 223 "getdate.y"
 {
 	    yyHour = yyvsp[-5].Number;
 	    yyMinutes = yyvsp[-3].Number;
@@ -1327,56 +1327,56 @@ case 15:
 	}
 break;
 case 16:
-#line 233 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 233 "getdate.y"
 {
 	    yyTimezone = yyvsp[0].Number;
 	    yyDSTmode = DSToff;
 	}
 break;
 case 17:
-#line 237 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 237 "getdate.y"
 {
 	    yyTimezone = yyvsp[0].Number;
 	    yyDSTmode = DSTon;
 	}
 break;
 case 18:
-#line 242 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 242 "getdate.y"
 {
 	    yyTimezone = yyvsp[-1].Number;
 	    yyDSTmode = DSTon;
 	}
 break;
 case 19:
-#line 248 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 248 "getdate.y"
 {
 	    yyDayOrdinal = 1;
 	    yyDayNumber = yyvsp[0].Number;
 	}
 break;
 case 20:
-#line 252 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 252 "getdate.y"
 {
 	    yyDayOrdinal = 1;
 	    yyDayNumber = yyvsp[-1].Number;
 	}
 break;
 case 21:
-#line 256 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 256 "getdate.y"
 {
 	    yyDayOrdinal = yyvsp[-1].Number;
 	    yyDayNumber = yyvsp[0].Number;
 	}
 break;
 case 22:
-#line 262 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 262 "getdate.y"
 {
 	    yyMonth = yyvsp[-2].Number;
 	    yyDay = yyvsp[0].Number;
 	}
 break;
 case 23:
-#line 266 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 266 "getdate.y"
 {
 	    if (yyvsp[-4].Number >= 100) {
 		yyYear = yyvsp[-4].Number;
@@ -1390,7 +1390,7 @@ case 23:
 	}
 break;
 case 24:
-#line 277 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 277 "getdate.y"
 {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */
 	    yyYear = yyvsp[-2].Number;
@@ -1399,7 +1399,7 @@ case 24:
 	}
 break;
 case 25:
-#line 283 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 283 "getdate.y"
 {
 	    /* e.g. 17-JUN-1992.  */
 	    yyDay = yyvsp[-2].Number;
@@ -1408,14 +1408,14 @@ case 25:
 	}
 break;
 case 26:
-#line 289 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 289 "getdate.y"
 {
 	    yyMonth = yyvsp[-1].Number;
 	    yyDay = yyvsp[0].Number;
 	}
 break;
 case 27:
-#line 293 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 293 "getdate.y"
 {
 	    yyMonth = yyvsp[-3].Number;
 	    yyDay = yyvsp[-2].Number;
@@ -1423,14 +1423,14 @@ case 27:
 	}
 break;
 case 28:
-#line 298 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 298 "getdate.y"
 {
 	    yyMonth = yyvsp[0].Number;
 	    yyDay = yyvsp[-1].Number;
 	}
 break;
 case 29:
-#line 302 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 302 "getdate.y"
 {
 	    yyMonth = yyvsp[-1].Number;
 	    yyDay = yyvsp[-2].Number;
@@ -1438,68 +1438,68 @@ case 29:
 	}
 break;
 case 30:
-#line 309 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 309 "getdate.y"
 {
 	    yyRelSeconds = -yyRelSeconds;
 	    yyRelMonth = -yyRelMonth;
 	}
 break;
 case 32:
-#line 316 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 316 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number * yyvsp[0].Number * 60L;
 	}
 break;
 case 33:
-#line 319 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 319 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number * yyvsp[0].Number * 60L;
 	}
 break;
 case 34:
-#line 322 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 322 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[0].Number * 60L;
 	}
 break;
 case 35:
-#line 325 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 325 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number;
 	}
 break;
 case 36:
-#line 328 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 328 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number;
 	}
 break;
 case 37:
-#line 331 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 331 "getdate.y"
 {
 	    yyRelSeconds++;
 	}
 break;
 case 38:
-#line 334 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 334 "getdate.y"
 {
 	    yyRelMonth += yyvsp[-1].Number * yyvsp[0].Number;
 	}
 break;
 case 39:
-#line 337 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 337 "getdate.y"
 {
 	    yyRelMonth += yyvsp[-1].Number * yyvsp[0].Number;
 	}
 break;
 case 40:
-#line 340 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 340 "getdate.y"
 {
 	    yyRelMonth += yyvsp[0].Number;
 	}
 break;
 case 41:
-#line 345 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 345 "getdate.y"
 {
 	    if (yyHaveTime && yyHaveDate && !yyHaveRel)
 		yyYear = yyvsp[0].Number;
@@ -1527,13 +1527,13 @@ case 41:
 	}
 break;
 case 42:
-#line 372 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 372 "getdate.y"
 {
 	    yyval.Meridian = MER24;
 	}
 break;
 case 43:
-#line 375 "/u/scjones/cvs-nightly/lib/getdate.y"
+#line 375 "getdate.y"
 {
 	    yyval.Meridian = yyvsp[0].Meridian;
 	}

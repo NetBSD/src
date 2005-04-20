@@ -236,7 +236,7 @@ static short tz_local;
 static time_t tz_seconds_east_of_GMT;
 static char *tz_name = "+0000";
 
-char *logHistory = ALL_HISTORY_REC_TYPES;
+char *logHistory;
 
 /* -r, -t, or -b options, malloc'd.  These are "" if the option in
    question is not specified or is overridden by another option.  The
@@ -442,7 +442,7 @@ history (argc, argv)
 		backto = xstrdup (optarg);
 		break;
 	    case 'f':			/* For specified file */
-		save_file ("", optarg, (char *) NULL);
+		save_file (NULL, optarg, NULL);
 		break;
 	    case 'm':			/* Full module report */
 		if (!module_report++) report_count++;
@@ -451,7 +451,7 @@ history (argc, argv)
 		save_module (optarg);
 		break;
 	    case 'p':			/* For specified directory */
-		save_file (optarg, "", (char *) NULL);
+		save_file (optarg, NULL, NULL);
 		break;
 	    case 'r':			/* Since specified Tag/Rev */
 		if (since_date || *since_tag || *backto)
@@ -534,7 +534,7 @@ history (argc, argv)
     argc -= optind;
     argv += optind;
     for (i = 0; i < argc; i++)
-	save_file ("", argv[i], (char *) NULL);
+	save_file (NULL, argv[i], NULL);
 
 
     /* ================ Now analyze the arguments a bit */
@@ -952,7 +952,9 @@ save_file (dir, name, module)
 	file_list = xrealloc (file_list, xtimes (file_max, sizeof (*fl)));
     }
     fl = &file_list[file_count++];
-    fl->l_file = cp = xmalloc (strlen (dir) + strlen (name) + 2);
+    fl->l_file = cp = xmalloc (dir ? strlen (dir) : 0
+			       + name ? strlen (name) : 0
+			       + 2);
     fl->l_module = module;
 
     if (dir && *dir)
@@ -1393,6 +1395,8 @@ select_hrec (hr)
 		    if (within (cp, cp2))
 		    {
 			hr->mod = fl->l_module;
+			if (cmpfile != NULL)
+			    free (cmpfile);
 			break;
 		    }
 		    if (cmpfile != NULL)
