@@ -396,7 +396,7 @@
 #define PACKAGE_NAME "Concurrent Versions System (CVS)"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.17"
+#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.20"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "cvs"
