@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.135 2005/02/11 17:50:13 jmc Exp $
+$NetBSD: UPDATING,v 1.135.2.1 2005/04/20 11:40:16 tron Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20050417:
+	postinstall(8) was moved from /etc to /usr/sbin and made part
+	of the "base" set, to make it easier to invoke after an
+	upgrade.
+
 20050211:
 	Fixes to tools/Makefile.gnuhost may cause UPDATE=1 builds in
 	some of the cross tools to fail if they use configure. Some configure's
