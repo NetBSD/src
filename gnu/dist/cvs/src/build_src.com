@@ -44,6 +44,7 @@ $ CC root.c
 $ CC run.c
 $ CC scramble.c
 $ CC server.c
+$ CC stack.c
 $ CC status.c
 $ CC subr.c
 $ CC tag.c
@@ -62,7 +63,7 @@ lock.obj,log.obj,login.obj,logmsg.obj,mkmodules.obj,modules.obj,myndbm.obj,-
 no_diff.obj,-
 parseinfo.obj,patch.obj,rcs.obj,rcscmds.obj,recurse.obj,release.obj,-
 remove.obj,repos.obj,root.obj,run.obj,scramble.obj,server.obj,-
-status.obj,-
+stack.obj,status.obj,-
 subr.obj,tag.obj,update.obj,version.obj,vers_ts.obj,watch.obj,wrapper.obj,-
 zlib.obj
 $ link/nodeb/exe=cvs.exe main.obj,cvslib.olb/lib,[-.vms]openvmslib.olb/lib,-
