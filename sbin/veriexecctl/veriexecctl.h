@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.2 2005/04/21 11:21:58 he Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.3 2005/04/21 12:45:12 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef _VEXECCTL_H_
-#define _VEXECCTL_H_
+#ifndef _VERIEXECCTL_H_
+#define _VERIEXECCTL_H_
 
 CIRCLEQ_HEAD(vexec_ups, vexec_up) params_list;
 struct vexec_up {
@@ -40,7 +40,7 @@ struct vexec_up {
 };
 
 extern int gfd, no_mem, phase, verbose;
-extern unsigned line;
+extern size_t line;
 extern char *infile;
 extern FILE *yyin;
 
@@ -48,11 +48,8 @@ int yywrap(void);
 int yylex(void);
 int yyparse(void);
 void yyerror(const char *);
-FILE *openlock(const char *);
 struct vexec_up *dev_lookup(dev_t);
 struct vexec_up *dev_add(dev_t);
-int phase1_preload(void);
 void phase2_load(void);
-int convert(u_char *, u_char *);
 
-#endif /* _VEXECCTL_H_ */
+#endif /* _VERIEXECCTL_H_ */
