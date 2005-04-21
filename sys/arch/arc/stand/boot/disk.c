@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.1 2005/04/18 16:27:54 tsutsui Exp $	*/
+/*	$NetBSD: disk.c,v 1.2 2005/04/21 13:34:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +181,6 @@ diskopen(struct open_file *f, ...)
 		    lp->d_partitions[i].p_offset >= mbrp_off)
 			lp->d_partitions[i].p_offset -= mbrp_off;
 	}
-#endif
 
 	if (part >= lp->d_npartitions ||
 	    lp->d_partitions[part].p_fstype == FS_UNUSED ||
@@ -189,6 +188,7 @@ diskopen(struct open_file *f, ...)
 		free(sc, sizeof(struct disk_softc));
 		return ENXIO;
 	}
+#endif
 	return 0;
 }
 
