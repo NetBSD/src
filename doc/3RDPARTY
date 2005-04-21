@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.319 2005/04/20 02:03:22 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.320 2005/04/21 13:59:41 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -288,7 +288,7 @@ for import.
 
 Package:	heimdal
 Version:	0.6.2
-Current Vers:	0.6.2
+Current Vers:	0.6.4
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Mailing List:	heimdal-discuss@pdc.kth.se
