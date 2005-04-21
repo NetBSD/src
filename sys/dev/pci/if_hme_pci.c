@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.16 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.17 2005/04/21 11:35:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.16 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.17 2005/04/21 11:35:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ hmeattach_pci(parent, self, aux)
 	bus_space_tag_t		romt;
 	bus_space_handle_t	romh;
 	bus_size_t		romsize;
-	u_int8_t		buf[32];
+	u_int8_t		buf[64];
 	int			dataoff, vpdoff;
 	struct pci_vpd		*vpd;
 	static const u_int8_t promhdr[] = { 0x55, 0xaa };
@@ -129,10 +129,16 @@ hmeattach_pci(parent, self, aux)
 	};
 #define PROMDATA_PTR_VPD	0x08
 #define PROMDATA_DATA2		0x0a
-	static const u_int8_t promdat2[] = {
+	static const u_int8_t promdat2hme[] = {
 		0x18, 0x00,			/* structure length */
 		0x00,				/* structure revision */
 		0x00,				/* interface revision */
+		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
+		PCI_CLASS_NETWORK		/* class code */
+	};
+	static const u_int8_t promdat2qfe[] = {
+		0x00,				/* structure revision */
+		0x80,				/* interface revision */
 		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
 		PCI_CLASS_NETWORK		/* class code */
 	};
@@ -247,8 +253,10 @@ hmeattach_pci(parent, self, aux)
 			bus_space_read_region_1(romt, romh, dataoff,
 			    buf, sizeof buf);
 			if (memcmp(buf, promdat, sizeof promdat) == 0 &&
-			    memcmp(buf + PROMDATA_DATA2, promdat2,
-				sizeof promdat2) == 0 &&
+			    (memcmp(buf + PROMDATA_DATA2, promdat2hme,
+				sizeof promdat2hme) == 0 ||
+			     memcmp(buf + PROMDATA_DATA2, promdat2qfe,
+				sizeof promdat2qfe) == 0) &&
 			    (vpdoff = (buf[PROMDATA_PTR_VPD] |
 				(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
 
@@ -259,6 +267,20 @@ hmeattach_pci(parent, self, aux)
 				 * properly terminated (only one resource
 				 * and no end tag).
 				 */
+				if (bus_space_read_1(romt, romh,
+				    vpdoff + (3 + sizeof(struct pci_vpd)) +
+				    ETHER_ADDR_LEN) != 0x79 &&
+				    bus_space_read_1(romt, romh,
+				    vpdoff + 4 * (3 + sizeof(struct pci_vpd) +
+				    ETHER_ADDR_LEN)) == 0x79) {
+					/*
+					 * Use the Nth NA for the Nth HME on
+					 * this SUNW,qfe.
+					 */
+					vpdoff += pa->pa_device *
+					    (3 + sizeof(struct pci_vpd) +
+					    ETHER_ADDR_LEN);
+				}
 				/* read PCI VPD */
 				bus_space_read_region_1(romt, romh,
 				    vpdoff, buf, sizeof buf);
