@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XENU,v 1.1 2005/03/11 20:48:24 bouyer Exp $
+# $NetBSD: INSTALL_XENU,v 1.1.2.1 2005/04/21 19:08:45 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -20,7 +20,7 @@ maxusers	32		# estimated number of users
 options 	I686_CPU
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
+#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
