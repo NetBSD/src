@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2005/04/18 16:27:54 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2005/04/21 13:52:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	}
 #endif
 #ifdef sgimips
-	/* 
+	/*
 	 * If device starts with a PCI bus specifier, skip past it so the
 	 * device-matching code below gets the actual device type. Leave
 	 * fname as is, since it'll be passed back to ARCS to open the
@@ -94,7 +94,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		if (*ncp)
 			cp = ncp;
 	}
- 
+
 	/*
 	 * Look for a string like 'scsi(0)disk(0)rdisk(0)partition(0)netbsd'
 	 * or 'dksc(0,0,0)/netbsd' (the file can either be a relative path
