@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.4 2004/05/25 14:55:47 hannken Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.4.2.1 2005/04/21 19:01:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ unconfig(int argc, char **argv)
 void
 list(int argc, char **argv)
 {
-	int n, fd;
+	int n, fd, flags;
 	char *dev, path[64], full[64];
 	char clbuf[5], bsbuf[5], tmbuf[64];
 	time_t t;
@@ -233,6 +233,9 @@ list(int argc, char **argv)
 			err(1, "open: %s", dev);
 		}
 
+		if (ioctl(fd, FSSIOFGET, &flags) < 0)
+			flags = 0;
+
 		if (ioctl(fd, FSSIOCGET, &fsg) < 0) {
 			if (errno == ENXIO)
 				printf("%s: not in use\n", dev);
@@ -250,13 +253,14 @@ list(int argc, char **argv)
 			t = fsg.fsg_time.tv_sec;
 			strftime(tmbuf, sizeof(tmbuf), "%F %T", localtime(&t));
 
-			if (fsg.fsg_csize == 0)
-				printf("%s: %s, persistent, taken %s\n", dev,
-				    fsg.fsg_mount, tmbuf);
+			printf("%s: %s, taken %s", dev, fsg.fsg_mount, tmbuf);
+			if ((flags & FSS_UNCONFIG_ON_CLOSE) != 0)
+				printf(", unconfig on close");
+			if (fsg.fsg_csize == 0) 
+				printf(", file system internal\n");
 			else
-				printf("%s: %s, taken %s, %" PRId64 " clusters"
-				    " of %s, %s backup\n", dev, fsg.fsg_mount,
-				    tmbuf, fsg.fsg_mount_size, clbuf, bsbuf);
+				printf(", %"PRId64" cluster of %s, %s backup\n",
+				    fsg.fsg_mount_size, clbuf, bsbuf);
 		} else
 			printf("%s: %s\n", dev, fsg.fsg_mount);
 
