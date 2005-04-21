@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotobynumber_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $	*/
+/*	$NetBSD: getprotobynumber_r.c,v 1.2.6.1 2005/04/21 16:59:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)getproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotobynumber_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $");
+__RCSID("$NetBSD: getprotobynumber_r.c,v 1.2.6.1 2005/04/21 16:59:02 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <netdb.h>
 #include <stddef.h>
+
+#include "protoent.h"
 
 #ifdef __weak_alias
 __weak_alias(getprotobynumber_r,_getprotobynumber_r)

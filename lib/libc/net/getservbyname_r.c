@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.2.6.1 2005/04/21 16:59:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.2.6.1 2005/04/21 16:59:02 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: getservbyname_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $");
 #include <assert.h>
 #include <netdb.h>
 #include <string.h>
+
+#include "servent.h"
 
 #ifdef __weak_alias
 __weak_alias(getservbyname_r,_getservbyname_r)
