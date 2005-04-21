@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.15 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipmon.8,v 1.15.6.1 2005/04/21 18:54:42 tron Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -73,6 +73,9 @@ unreachable message.
 In order for \fBipmon\fP to properly work, the kernel option
 \fBIPFILTER_LOG\fP must be turned on in your kernel.  Please see
 \fBoptions(4)\fP for more details.
+.LP
+\fBipmon\fP reopens its log file(s) and rereads its configuration file
+when it receives a SIGHUP signal.
 .SH OPTIONS
 .TP
 .B \-a
