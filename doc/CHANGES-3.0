@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.61 2005/04/20 11:45:05 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.62 2005/04/21 17:12:03 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7481,4 +7481,75 @@ usr.sbin/postinstall/postinstall.8		1.1-1.2
 	Move /etc/postinstall (and the etc.tgz set) to /usr/sbin/postinstall
 	(and the base.tgz set).
 	[lukem, ticket #164, #165, #166, #167, #168, #176]
+
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	1.2
+
+	Fix SA lifebyte check.
+	[manu, ticket #169]
+
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c 1.2
+crypto/dist/ipsec-tools/src/racoon/handler.h	1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c 1.2
+crypto/dist/ipsec-tools/src/racoon/pfkey.c	1.2
+
+	Fix simple DES support (security problems for racoon to racoon setups).
+	Fix broken generated policies flush.
+	[manu, ticket #179]
+
+sys/arch/xen/xen/xbdback.c			1.6
+
+	Use DEV_STRATEGY() instead of VOP_STRATEGY(). It's not safe to use
+	VOP_STRATEGY() from interrupt context.
+	[bouyer, ticket #170]
+
+sys/dev/ic/esiop.c				1.33
+
+	Don't assume all LUNs are probed before scsipi sets the mode, and
+	always check if lun_tagtbl needs to be allocated. Fixes PR kern/29603.
+	[bouyer, ticket #171]
+
+include/inttypes.h				1.4
+include/netdb.h					1.51
+lib/libc/net/getprotobyname.c			1.3
+lib/libc/net/getprotobyname_r.c			1.3
+lib/libc/net/getprotobynumber.c			1.3
+lib/libc/net/getprotobynumber_r.c		1.3
+lib/libc/net/getprotoent.c			1.11
+lib/libc/net/getprotoent_r.c			1.5
+lib/libc/net/getservbyname.c			1.13
+lib/libc/net/getservbyname_r.c			1.3
+lib/libc/net/getservbyport.c			1.11
+lib/libc/net/getservbyport_r.c			1.3
+lib/libc/net/getservent.c			1.11
+lib/libc/net/getservent_r.c			1.5
+lib/libc/net/protoent.h				1.1
+lib/libc/net/servent.h				1.1
+
+	Instead of pulling in all of <wchar.h>, just define wchar_t here.
+	Addresses PR lib/29987.
+	Move the (at this time private) get{proto,serv}ent_r() prototypes and
+	data structures into the libc sources until the interface gets redone.
+	[kleink, ticket #172]
+
+sys/arch/xen/i386/pmap.c			1.10
+sys/arch/xen/i386/xen_machdep.c			1.7
+sys/arch/xen/i386/xen_shm_machdep.c		1.7
+sys/arch/xen/include/xen_shm.h			1.3
+sys/arch/xen/include/xenpmap.h			1.5
+
+	Fix misspelling in function name.
+	[yamt, ticket #173]
+
+sys/arch/x86/include/cacheinfo.h		1.4
+sys/arch/x86/include/intrdefs.h			1.4
+sys/arch/x86/include/isa_machdep.h		1.4
+sys/arch/x86/include/lock.h			1.9
+sys/arch/x86/include/mpacpi.h			1.3
+sys/arch/x86/include/mpconfig.h			1.7
+sys/arch/x86/include/pci_machdep.h		1.5
+
+	Make multi inclusion protection macros consistent.
+	[yamt, ticket #174]
 
