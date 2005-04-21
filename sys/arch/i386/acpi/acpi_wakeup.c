@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.14 2005/01/26 21:46:38 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.15 2005/04/21 14:03:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.14 2005/01/26 21:46:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.15 2005/04/21 14:03:24 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -176,9 +176,21 @@ enter_s4_with_bios(void)
 }
 
 static u_int16_t	r_ldt;
-static u_int16_t	r_cs, r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
-static u_int32_t	r_eax, r_ebx, r_ecx, r_edx, r_ebp, r_esi, r_edi,
-			r_efl, r_cr0, r_cr2, r_cr3, r_cr4, r_esp;
+static u_int16_t	r_cs __used;
+static u_int16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
+static u_int32_t	r_eax __used;
+static u_int32_t	r_ebx __used;
+static u_int32_t	r_ecx __used;
+static u_int32_t	r_edx __used;
+static u_int32_t	r_ebp __used;
+static u_int32_t	r_esi __used;
+static u_int32_t	r_edi __used;
+static u_int32_t	r_efl __used;
+static u_int32_t	r_cr0 __used;
+static u_int32_t	r_cr2 __used;
+static u_int32_t	r_cr3 __used;
+static u_int32_t	r_cr4 __used;
+static u_int32_t	r_esp __used;
 static u_int32_t	ret_addr;
 static struct region_descriptor	r_idt, r_gdt;
 
