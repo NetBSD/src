@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.3 2005/03/14 08:14:29 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.3.2.1 2005/04/21 16:51:40 tron Exp $	*/
 
 /* Id: isakmp.c,v 1.34.2.2 2005/03/13 17:31:55 vanhu Exp */
 
@@ -1823,18 +1823,19 @@ isakmp_ph1expire(iph1)
 {
 	char *src, *dst;
 
-	src = strdup(saddr2str(iph1->local));
-	dst = strdup(saddr2str(iph1->remote));
-	plog(LLV_INFO, LOCATION, NULL,
-		"ISAKMP-SA expired %s-%s spi:%s\n",
-		src, dst,
-		isakmp_pindex(&iph1->index, 0));
-	racoon_free(src);
-	racoon_free(dst);
-
 	SCHED_KILL(iph1->sce);
 
-	iph1->status = PHASE1ST_EXPIRED;
+	if(iph1->status != PHASE1ST_EXPIRED){
+		src = strdup(saddr2str(iph1->local));
+		dst = strdup(saddr2str(iph1->remote));
+		plog(LLV_INFO, LOCATION, NULL,
+			 "ISAKMP-SA expired %s-%s spi:%s\n",
+			 src, dst,
+			 isakmp_pindex(&iph1->index, 0));
+		racoon_free(src);
+		racoon_free(dst);
+		iph1->status = PHASE1ST_EXPIRED;
+	}
 
 	/*
 	 * the phase1 deletion is postponed until there is no phase2.

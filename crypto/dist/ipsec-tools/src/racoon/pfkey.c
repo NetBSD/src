@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.1 2005/04/21 16:51:40 tron Exp $	*/
 
 /* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
 
@@ -1257,9 +1257,7 @@ pk_recvupdate(mhp)
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
 	 */
-	/* XXX ???
-	  */
-/*	unbindph12(iph2);*/
+	unbindph12(iph2);
 
 	iph2->sce = sched_new(iph2->approval->lifetime,
 	    isakmp_ph2expire_stub, iph2);
