@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.1.1.2 2005/02/23 14:54:15 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.1.1.2.2.1 2005/04/21 16:51:40 tron Exp $	*/
 
 /* Id: handler.h,v 1.11 2004/11/16 15:44:46 ludvigm Exp */
 
@@ -305,6 +305,8 @@ struct ph2handle {
 					/* NOTE: Should be release after use. */
 
 	struct isakmp_ivm *ivm;		/* IVs */
+
+	int generated_spidx;	/* mark handlers whith generated policy */
 
 #ifdef ENABLE_STATS
 	struct timeval start;

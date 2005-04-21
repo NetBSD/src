@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.1.1.2 2005/02/23 14:54:12 manu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.1.1.2.2.1 2005/04/21 16:51:40 tron Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.40.4.1 2005/02/22 23:56:08 manubsd Exp */
 
@@ -1187,10 +1187,13 @@ evp_keylen(int len, const EVP_CIPHER *e)
 {
 	if (!e)
 		return -1;
-	if (len != 0 && len != EVP_CIPHER_key_length(e))
+	/* EVP functions return lengths in bytes, ipsec-tools
+	 * uses lengths in bits, therefore conversion is required. --AK
+	 */
+	if (len != 0 && len != (EVP_CIPHER_key_length(e) << 3))
 		return -1;
 	
-	return EVP_CIPHER_key_length(e);
+	return EVP_CIPHER_key_length(e) << 3;
 }
 
 /*
