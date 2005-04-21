@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.4 2005/04/21 12:45:12 christos Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.5 2005/04/21 13:37:44 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -93,6 +93,6 @@ yywrap(void)
 void
 yyerror(const char *string)
 {
-	(void)fprintf(stderr, "%s: %s at \"%s\", line %d\n", getprogname(),
+	(void)fprintf(stderr, "%s: %s at \"%s\", line %zu\n", getprogname(),
 	    string, yytext, line);
 }
