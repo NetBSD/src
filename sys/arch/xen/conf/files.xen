@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.18 2005/03/11 20:44:37 bouyer Exp $
+#	$NetBSD: files.xen,v 1.18.2.1 2005/04/21 18:41:11 tron Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -82,8 +82,8 @@ include	"dev/ata/files.ata"
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
-file	arch/xen/x86/bus_dma.c
-file	arch/xen/x86/bus_space.c
+file	arch/x86/x86/bus_dma.c		dom0ops
+file	arch/xen/x86/bus_space.c	dom0ops
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c
