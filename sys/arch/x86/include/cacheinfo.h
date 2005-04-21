@@ -1,7 +1,7 @@
-/*	$NetBSD: cacheinfo.h,v 1.3 2004/08/17 15:27:46 briggs Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.3.10.1 2005/04/21 17:06:16 tron Exp $	*/
 
-#ifndef _X86_CACHEINFO_H
-#define _X86_CACHEINFO_H
+#ifndef _X86_CACHEINFO_H_
+#define _X86_CACHEINFO_H_
 
 struct x86_cache_info {
 	uint8_t		cai_index;
@@ -156,4 +156,4 @@ void x86_print_cacheinfo(struct cpu_info *);
 #define	VIA_L2N_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define	VIA_L2N_ECX_C_LS(x)		 ( (x)        & 0xff)
 
-#endif /* _X86_CACHEINFO_H */
+#endif /* _X86_CACHEINFO_H_ */
