@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.4 2005/04/07 17:05:37 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.5 2005/04/21 18:51:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.4 2005/04/07 17:05:07 jmc Exp
+ *	NetBSD: pcidevs,v 1.701.2.5 2005/04/21 18:50:40 tron Exp
  */
 
 /*
@@ -4494,6 +4494,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
 	    "Netelligent 10/100 TX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T2,
+	    "Netelligent 10 T/2 UTP/Coax",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INT100TX,
@@ -10140,4 +10144,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1956;
+const int pci_nproducts = 1957;
