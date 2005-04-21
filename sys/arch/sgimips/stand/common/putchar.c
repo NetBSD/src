@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.4 2005/04/18 15:38:00 tsutsui Exp $	 */
+/*	$NetBSD: putchar.c,v 1.5 2005/04/21 13:59:15 tsutsui Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,12 +42,16 @@
 extern const struct arcbios_fv *ARCBIOS;
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
-	static char ch[2] = "?\r";
+	char ch;
 	u_long count;
 
-	ch[0] = c;
-	(*ARCBIOS->Write)(1, &ch, c == '\n' ? 2 : 1, &count);
+	if (c == '\n') {
+		ch = '\r';
+		(*ARCBIOS->Write)(1, &ch, 1, &count);
+	}
+
+	ch = c;
+	(*ARCBIOS->Write)(1, &ch, 1, &count);
 }
