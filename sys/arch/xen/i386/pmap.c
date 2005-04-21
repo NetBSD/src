@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8.2.1 2005/04/21 17:09:06 tron Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.2.1 2005/04/21 17:09:06 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -4205,7 +4205,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 		//printf("pmap_remap_pages opte == pa");
 		/* zap! */
 		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-		error = xpq_update_foreing(maptp, npte, dom);
+		error = xpq_update_foreign(maptp, npte, dom);
 
 		/*
 		 * The protection bits should not have changed
@@ -4264,7 +4264,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 			opte = pte_get_ma(&ptes[x86_btop(va)]);
 			maptp = (pt_entry_t *)vtomach(
 				(vaddr_t)&ptes[x86_btop(va)]);
-			error = xpq_update_foreing(maptp, npte, dom);
+			error = xpq_update_foreign(maptp, npte, dom);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -4284,7 +4284,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 
 	//printf("pmap initial setup");
 	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-	error = xpq_update_foreing(maptp, npte, dom);
+	error = xpq_update_foreign(maptp, npte, dom);
 
 shootdown_test:
 	/* Update page attributes if needed */
