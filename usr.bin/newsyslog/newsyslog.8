@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.32 2005/04/20 19:26:50 reed Exp $
+.\"	$NetBSD: newsyslog.8,v 1.33 2005/04/21 17:33:31 reed Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -338,9 +338,13 @@ to save space.
 .It Ar path_to_pid_file
 This optional field specifies
 the file name to read to find the daemon process id.
-If this field is present, a signal of type
+If this field is missing, it defaults to the
+.Pa /var/run/syslogd.pid
+file.
+A signal of type
 .Ar sigtype
 is sent to the process id contained in this
+.Ar path_to_pid_file
 file.
 This field must start with
 .Sq /
