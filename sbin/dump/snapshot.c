@@ -1,7 +1,7 @@
-/*	$NetBSD: snapshot.c,v 1.2.2.2 2005/04/21 19:04:41 tron Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.2.2.3 2005/04/21 19:05:37 tron Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
