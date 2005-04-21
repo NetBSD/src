@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.13 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: fss.c,v 1.13.2.1 2005/04/21 19:00:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13.2.1 2005/04/21 19:00:24 tron Exp $");
 
 #include "fss.h"
 
@@ -770,7 +770,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
 	sc->sc_bs_vp = NULL;
-	sc->sc_flags &= ~FSS_PERSISTENT;
+	sc->sc_flags &= ~(FSS_PERSISTENT|FSS_BS_ALLOC);
 
 	FSS_STAT_CLEAR(sc);
 
