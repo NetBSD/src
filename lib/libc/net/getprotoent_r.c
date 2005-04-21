@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.4.6.1 2005/04/21 16:59:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
+__RCSID("$NetBSD: getprotoent_r.c,v 1.4.6.1 2005/04/21 16:59:15 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: getprotoent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "protoent.h"
 
 #ifdef __weak_alias
 __weak_alias(endprotoent_r,_endprotoent_r)
