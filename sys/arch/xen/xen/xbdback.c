@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.4.2.1 2005/03/30 10:07:29 tron Exp $      */
+/*      $NetBSD: xbdback.c,v 1.4.2.2 2005/04/21 16:53:08 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -599,6 +599,7 @@ xbdback_io(struct xbdback_instance *xbdi, blkif_request_t *req)
 	xbd_req->rq_buf.b_iodone = xbdback_iodone;
 	xbd_req->rq_buf.b_proc = NULL;
 	xbd_req->rq_buf.b_vp = vbd->vp;
+	xbd_req->rq_buf.b_dev = vbd->dev;
 	xbd_req->rq_buf.b_blkno = req->sector_number;
 	xbd_req->rq_buf.b_bcount = (daddr_t)req_size;
 	xbd_req->rq_buf.b_data = (void *)start_offset;
@@ -669,7 +670,7 @@ xbdback_do_io(struct xbdback_request *xbd_req)
 		xbd_req->rq_buf.b_vp->v_numoutput++;
 	XENPRINTF(("xbdback_io domain %d: start request\n",
 	    xbd_req->rq_xbdi->domid));
-	VOP_STRATEGY(xbd_req->rq_buf.b_vp, &xbd_req->rq_buf);
+	DEV_STRATEGY(&xbd_req->rq_buf);
 }
 
 static void
