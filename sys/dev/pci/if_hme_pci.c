@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.17 2005/04/21 11:35:01 christos Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.18 2005/04/21 18:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.17 2005/04/21 11:35:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.18 2005/04/21 18:31:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,34 @@ hmematch_pci(parent, cf, aux)
 	return (0);
 }
 
+#if HME_USE_LOCAL_MAC_ADDRESS
+static inline int
+hmepromvalid(u_int8_t* buf)
+{
+	return buf[0] == 0x18 && buf[1] == 0x00 &&	/* structure length */
+	    buf[2] == 0x00 &&				/* revision */
+	    (buf[3] == 0x00 ||				/* hme */
+	     buf[3] == 0x80) &&				/* qfe */
+	    buf[4] == PCI_SUBCLASS_NETWORK_ETHERNET &&	/* subclass code */
+	    buf[5] == PCI_CLASS_NETWORK;		/* class code */
+}
+
+static inline int
+hmevpdoff(bus_space_handle_t romh, bus_space_tag_t romt, int vpdoff, int dev)
+{
+#define VPDLEN (3 + sizeof(struct pci_vpd) + ETHER_ADDR_LEN)
+	if (bus_space_read_1(romt, romh, vpdoff + VPDLEN) != 0x79 &&
+	    bus_space_read_1(romt, romh, vpdoff + 4 * VPDLEN) == 0x79) {
+		/*
+		 * Use the Nth NA for the Nth HME on
+		 * this SUNW,qfe.
+		 */
+		vpdoff += dev * VPDLEN;
+	}
+	return vpdoff;
+}
+#endif
+
 void
 hmeattach_pci(parent, self, aux)
 	struct device *parent, *self;
@@ -129,19 +157,6 @@ hmeattach_pci(parent, self, aux)
 	};
 #define PROMDATA_PTR_VPD	0x08
 #define PROMDATA_DATA2		0x0a
-	static const u_int8_t promdat2hme[] = {
-		0x18, 0x00,			/* structure length */
-		0x00,				/* structure revision */
-		0x00,				/* interface revision */
-		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
-		PCI_CLASS_NETWORK		/* class code */
-	};
-	static const u_int8_t promdat2qfe[] = {
-		0x00,				/* structure revision */
-		0x80,				/* interface revision */
-		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
-		PCI_CLASS_NETWORK		/* class code */
-	};
 #endif	/* HME_USE_LOCAL_MAC_ADDRESS */
 
 	printf(": Sun Happy Meal Ethernet, rev. %d\n",
@@ -253,10 +268,7 @@ hmeattach_pci(parent, self, aux)
 			bus_space_read_region_1(romt, romh, dataoff,
 			    buf, sizeof buf);
 			if (memcmp(buf, promdat, sizeof promdat) == 0 &&
-			    (memcmp(buf + PROMDATA_DATA2, promdat2hme,
-				sizeof promdat2hme) == 0 ||
-			     memcmp(buf + PROMDATA_DATA2, promdat2qfe,
-				sizeof promdat2qfe) == 0) &&
+			    hmepromvalid(buf + PROMDATA_DATA2) &&
 			    (vpdoff = (buf[PROMDATA_PTR_VPD] |
 				(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
 
@@ -267,20 +279,8 @@ hmeattach_pci(parent, self, aux)
 				 * properly terminated (only one resource
 				 * and no end tag).
 				 */
-				if (bus_space_read_1(romt, romh,
-				    vpdoff + (3 + sizeof(struct pci_vpd)) +
-				    ETHER_ADDR_LEN) != 0x79 &&
-				    bus_space_read_1(romt, romh,
-				    vpdoff + 4 * (3 + sizeof(struct pci_vpd) +
-				    ETHER_ADDR_LEN)) == 0x79) {
-					/*
-					 * Use the Nth NA for the Nth HME on
-					 * this SUNW,qfe.
-					 */
-					vpdoff += pa->pa_device *
-					    (3 + sizeof(struct pci_vpd) +
-					    ETHER_ADDR_LEN);
-				}
+				vpdoff = hmevpdoff(romt, romh, vpdoff,
+				    pa->pa_device);
 				/* read PCI VPD */
 				bus_space_read_region_1(romt, romh,
 				    vpdoff, buf, sizeof buf);
