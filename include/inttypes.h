@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.3 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.3.2.1 2005/04/21 16:56:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,12 @@
 
 #include <sys/cdefs.h>
 #include <sys/inttypes.h>
-#include <wchar.h>
+#include <machine/ansi.h>
+
+#ifdef	_BSD_WCHAR_T_
+typedef	_BSD_WCHAR_T_	wchar_t;
+#undef	_BSD_WCHAR_T_
+#endif
 
 __BEGIN_DECLS
 intmax_t	strtoimax(const char * __restrict,
