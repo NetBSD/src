@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.5 2005/03/15 23:37:58 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.1 2005/04/21 17:09:19 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -48,10 +48,10 @@
 
 /*
  * Helper routines for the backend drivers. This implement the necessary
- * functions to map a bunch of pages from foreing domains in our kernel VM
+ * functions to map a bunch of pages from foreign domains in our kernel VM
  * space, do I/O to it, and unmap it.
  *
- * At boot time, we grap some kernel VM space that we'll use to map the foreing
+ * At boot time, we grap some kernel VM space that we'll use to map the foreign
  * pages. We also maintain a virtual to machine mapping table to give back
  * the appropriate address to bus_dma if requested.
  * If no more VM space is available, we return an error. The caller can then
