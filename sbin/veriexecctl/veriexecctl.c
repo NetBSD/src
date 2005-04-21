@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.6 2005/04/20 13:44:45 blymn Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.7 2005/04/21 11:21:58 he Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -53,25 +53,25 @@
 
 extern struct veriexec_params params; /* in veriexecctl_parse.y */
 extern char *filename; /* in veriexecctl_conf.l */
-int fd, verbose = 0, no_mem = 0, phase;
+int gfd, verbose = 0, no_mem = 0, phase;
 unsigned line;
 
 /*
  * Prototypes
  */
-int
-fingerprint_load(char *infile);
+int fingerprint_load(char*);
+
 
 FILE *
 openlock(const char *path)
 {
-	int fd;
+	int lfd;
 
-	fd = open(path, O_RDONLY|O_EXLOCK, 0);
-	if (fd < 0)
+	lfd = open(path, O_RDONLY|O_EXLOCK, 0);
+	if (lfd < 0)
 		return (NULL);
 
-	return (fdopen(fd, "r"));
+	return (fdopen(lfd, "r"));
 }
 
 struct vexec_up *
@@ -116,7 +116,7 @@ phase1_preload(void)
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
-		if (ioctl(fd, VERIEXEC_TABLESIZE, &(vup->vu_param)) < 0) {
+		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) < 0) {
 			(void) fprintf(stderr, "Error in phase 1: Can't "
 			    "set hash table size for device %d: %s.\n",
 			    vup->vu_param.dev, strerror(errno));
@@ -126,7 +126,7 @@ phase1_preload(void)
 
 		if (verbose) {
 			printf(" => Hash table sizing successful for device "
-			    "%d. (%u entries)\n", vup->vu_param.dev,
+			    "%d. (%zu entries)\n", vup->vu_param.dev,
 			    vup->vu_param.hash_size);
 		}
 
@@ -139,12 +139,12 @@ phase1_preload(void)
 
 /*
  * Load the fingerprint. Assumes that the fingerprint pseudo-device is
- * opened and the file handle is in fd.
+ * opened and the file handle is in gfd.
  */
 void
 phase2_load(void)
 {
-	if (ioctl(fd, VERIEXEC_LOAD, &params) < 0) {
+	if (ioctl(gfd, VERIEXEC_LOAD, &params) < 0) {
 		(void) fprintf(stderr, "%s: %s\n", params.file,
 			       strerror(errno));
 	}
@@ -155,12 +155,12 @@ phase2_load(void)
  * Fingerprint load handling.
  */
 int
-fingerprint_load(char *infile)
+fingerprint_load(char *ifile)
 {
 	CIRCLEQ_INIT(&params_list);
 
-	if ((yyin = openlock(infile)) == NULL) {
-		err(1, "Failed to open %s", infile);
+	if ((yyin = openlock(ifile)) == NULL) {
+		err(1, "Failed to open %s", ifile);
 	}
 
 	/*
@@ -172,7 +172,7 @@ fingerprint_load(char *infile)
 
 	if (verbose) {
 		(void) fprintf(stderr, "Phase 1: Building hash table information:\n");
-		(void) fprintf(stderr, "=> Parsing \"%s\"\n", infile);
+		(void) fprintf(stderr, "=> Parsing \"%s\"\n", ifile);
 	}
 
 	yyparse();
@@ -191,7 +191,7 @@ fingerprint_load(char *infile)
 	if (verbose) {
 		(void) fprintf(stderr, "Phase 2: Loading per-file "
 			       "fingerprints.\n");
-		(void) fprintf(stderr, "=> Parsing \"%s\"\n", infile);
+		(void) fprintf(stderr, "=> Parsing \"%s\"\n", ifile);
 	}
 
 	yyparse();
@@ -227,8 +227,8 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	fd = open(VERIEXEC_DEVICE, O_RDWR, 0);
-	if (fd == -1) {
+	gfd = open(VERIEXEC_DEVICE, O_RDWR, 0);
+	if (gfd == -1) {
 		err(1, "Failed to open pseudo-device");
 	}
 
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 		
-		if (ioctl(fd, VERIEXEC_FINGERPRINTS, &report) == 0) {
+		if (ioctl(gfd, VERIEXEC_FINGERPRINTS, &report) == 0) {
 			if (size != report.size) {
 				if (verbose)
 					fprintf(stderr, "fingerprints: "
@@ -262,7 +262,7 @@ main(int argc, char **argv)
 						"realloc failed\n");
 					exit(1);
 				}
-				if (ioctl(fd, VERIEXEC_FINGERPRINTS,
+				if (ioctl(gfd, VERIEXEC_FINGERPRINTS,
 					  &report) < 0) {
 					fprintf(stderr,
 						"fingerprints ioctl: %s\n",
@@ -282,6 +282,6 @@ main(int argc, char **argv)
 		usage(1);
 	}
 
-	(void) close(fd);
+	(void) close(gfd);
 	return (0);
 }
