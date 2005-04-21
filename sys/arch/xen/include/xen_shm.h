@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.2.2.1 2005/04/21 17:08:56 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -32,7 +32,7 @@
 
 /*
  * Helper routines for the backend drivers. This implement the necessary
- * functions to map a bunch of pages from foreing domains in our kernel VM
+ * functions to map a bunch of pages from foreign domains in our kernel VM
  * space, do I/O to it, and unmap it.
  */
 
