@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.13.2.1 2005/04/21 19:00:24 tron Exp $	*/
+/*	$NetBSD: fss.c,v 1.13.2.2 2005/04/21 19:01:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13.2.1 2005/04/21 19:00:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13.2.2 2005/04/21 19:01:40 tron Exp $");
 
 #include "fss.h"
 
@@ -172,10 +172,19 @@ fssattach(int num)
 int
 fss_open(dev_t dev, int flags, int mode, struct proc *p)
 {
+	int s, mflag;
 	struct fss_softc *sc;
+
+	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
 	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
 		return ENODEV;
+
+	FSS_LOCK(sc, s);
+
+	sc->sc_flags |= mflag;
+
+	FSS_UNLOCK(sc, s);
 
 	return 0;
 }
@@ -183,10 +192,31 @@ fss_open(dev_t dev, int flags, int mode, struct proc *p)
 int
 fss_close(dev_t dev, int flags, int mode, struct proc *p)
 {
+	int s, mflag, error;
 	struct fss_softc *sc;
+
+	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
 	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
 		return ENODEV;
+
+	FSS_LOCK(sc, s); 
+
+	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag) {
+		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
+		    (sc->sc_flags & FSS_ACTIVE) != 0) {
+			FSS_UNLOCK(sc, s);
+			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, p);
+			if (error)
+				return error;
+			FSS_LOCK(sc, s);
+		}
+		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
+	}
+
+	sc->sc_flags &= ~mflag;
+
+	FSS_UNLOCK(sc, s);
 
 	return 0;
 }
@@ -254,8 +284,6 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	sc->sc_flags |= FSS_EXCL;
 	FSS_UNLOCK(sc, s);
 
-	error = EINVAL;
-
 	switch (cmd) {
 	case FSSIOCSET:
 		if ((flag & FWRITE) == 0)
@@ -297,6 +325,20 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = ENXIO;
 			break;
 		}
+		break;
+
+	case FSSIOFSET:
+		sc->sc_uflags = *(int *)data;
+		error = 0;
+		break;
+
+	case FSSIOFGET:
+		*(int *)data = sc->sc_uflags;
+		error = 0;
+		break;
+
+	default:
+		error = EINVAL;
 		break;
 	}
 
