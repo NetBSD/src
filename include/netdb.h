@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.48.2.1 2005/03/21 23:07:15 tron Exp $	*/
+/*	$NetBSD: netdb.h,v 1.48.2.2 2005/04/21 16:59:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -352,46 +352,6 @@ void		freeaddrinfo(struct addrinfo *);
 const char	*gai_strerror(int);
 #endif
 void		setservent(int);
-
-#if defined(_NETBSD_SOURCE) && defined(_LIBC)
-
-struct protoent_data {
-        FILE *fp;
-	struct protoent proto;
-	char **aliases;
-	size_t maxaliases;
-	int stayopen;
-	char *line;
-	void *dummy;
-};
-
-struct protoent	*getprotoent_r(struct protoent *, struct protoent_data *);
-struct protoent	*getprotobyname_r(const char *,
-    struct protoent *, struct protoent_data *);
-struct protoent	*getprotobynumber_r(int,
-    struct protoent *, struct protoent_data *);
-void setprotoent_r(int, struct protoent_data *);
-void endprotoent_r(struct protoent_data *);
-
-struct servent_data {
-        FILE *fp;
-	struct servent serv;
-	char **aliases;
-	size_t maxaliases;
-	int stayopen;
-	char *line;
-	void *dummy;
-};
-
-struct servent	*getservent_r(struct servent *, struct servent_data *);
-struct servent	*getservbyname_r(const char *, const char *,
-    struct servent *, struct servent_data *);
-struct servent	*getservbyport_r(int, const char *,
-    struct servent *, struct servent_data *);
-void setservent_r(int, struct servent_data *);
-void endservent_r(struct servent_data *);
-
-#endif /* _NETBSD_SOURCE && _LIBC */
 __END_DECLS
 
 #endif /* !_NETDB_H_ */
