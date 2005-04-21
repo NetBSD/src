@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.8 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.8.2.1 2005/04/21 19:01:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _SYS_DEV_FSSVAR_H
 #define _SYS_DEV_FSSVAR_H
 
+#define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
+
 struct fss_set {
 	char		*fss_mount;	/* Mount point of file system */
 	char		*fss_bstore;	/* Path of backing store */
@@ -56,6 +58,8 @@ struct fss_get {
 #define FSSIOCSET	_IOW('F', 0, struct fss_set)	/* Configure */
 #define FSSIOCGET	_IOR('F', 1, struct fss_get)	/* Status */
 #define FSSIOCCLR	_IO('F', 2)			/* Unconfigure */
+#define FSSIOFSET	_IOW('F', 3, int)		/* Set flags */
+#define FSSIOFGET	_IOR('F', 4, int)		/* Get flags */
 
 #ifdef _KERNEL
 
@@ -147,6 +151,9 @@ struct fss_softc {
 #define FSS_EXCL	0x08		/* Exclusive access granted */
 #define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
+#define FSS_CDEV_OPEN	0x40		/* character device open */
+#define FSS_BDEV_OPEN	0x80		/* block device open */
+	int		sc_uflags;	/* User visible flags */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
