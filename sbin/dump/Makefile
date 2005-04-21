@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/04/02 10:39:24 fvdl Exp $
+#	$NetBSD: Makefile,v 1.31.6.1 2005/04/21 19:04:20 tron Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -26,8 +26,8 @@ PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
 CPPFLAGS+=-DRDUMP -I${.CURDIR}
 # CPPFLAGS+= -DDEBUG -DTDEBUG -DFDEBUG -DWRITEDEBUG -DSTATS -DDIAGNOSTICS
-SRCS=	itime.c main.c optr.c dumprmt.c rcache.c tape.c traverse.c unctime.c \
-	ffs_inode.c ffs_bswap.c
+SRCS=	itime.c main.c optr.c dumprmt.c rcache.c snapshot.c tape.c \
+	traverse.c unctime.c ffs_inode.c ffs_bswap.c
 MAN=	dump.8
 MLINKS+=dump.8 rdump.8
 
