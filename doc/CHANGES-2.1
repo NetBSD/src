@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.67 2005/04/17 13:37:02 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.68 2005/04/22 07:01:25 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1422,4 +1422,9 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for Belkin Gigabit Desktop Network PCI card.
 	[fredb, ticket #1120]
+
+sys/netinet/tcp_input.c				patch
+
+	Fix TCP performance problems introduced in ticket 1401.
+	[chs, ticket #1445]
 
