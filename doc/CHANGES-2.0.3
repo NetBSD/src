@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.9 2005/04/13 21:53:05 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.10 2005/04/22 07:00:49 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -51,4 +51,10 @@ sys/arch/powerpc/powerpc/trap.c			1.106
 
 	Drop the big lock in upcallret() like all the other platforms do.
 	[chs, ticket #1066]
+
+sys/netinet/tcp_input.c				patch
+
+	Fix TCP performance problems introduced in ticket 1401.
+	[chs, ticket #1445]
+
 
