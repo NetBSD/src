@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.5 2005/04/22 14:47:39 yamt Exp $	*/
 
 /*
  *
@@ -103,6 +103,8 @@ tlbflush(void)
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
 }
+
+#define	tlbflushg()	tlbflush()	/* we don't use PGE */
 
 static __inline u_int
 rdr6(void)
