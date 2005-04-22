@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.7 2003/08/07 16:42:16 agc Exp $	*/
+/*	$NetBSD: index.S,v 1.8 2005/04/22 06:59:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)index.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: index.S,v 1.7 2003/08/07 16:42:16 agc Exp $")
+	ASMSTR("$NetBSD: index.S,v 1.8 2005/04/22 06:59:00 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -44,10 +44,11 @@
 #endif
 
 LEAF(index)
+1:
 	lbu	a2, 0(a0)		# get a byte
 	addu	a0, a0, 1
 	beq	a2, a1, fnd
-	bne	a2, zero, _C_LABEL(index)
+	bne	a2, zero, 1b
 notfnd:
 	move	v0, zero
 	j	ra
