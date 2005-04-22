@@ -1,4 +1,4 @@
-/*	$NetBSD: sony8x16.h,v 1.6 2003/08/07 16:31:33 agc Exp $	*/
+/*	$NetBSD: sony8x16.h,v 1.7 2005/04/22 14:46:01 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 
 /* This font data is generated from sys/arch/newsmips/dev/fnt.c */
 
-extern u_char sony8x16_data[];
+static u_char sony8x16_data[];
 
 struct wsdisplay_font sony8x16 = {
 	"sony8x16",			/* typeface name */
