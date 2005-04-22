@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.15 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.16 2005/04/22 06:58:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sbrk.S,v 1.15 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("$NetBSD: sbrk.S,v 1.16 2005/04/22 06:58:01 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(__curbrk)
@@ -68,4 +68,4 @@ LEAF(_sbrk)
 1:
 	la	t9, _C_LABEL(__cerror)
 	jr	t9
-END(sbrk)
+END(_sbrk)
