@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2004/11/24 22:01:42 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2005/04/22 09:49:45 martin Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -32,7 +32,7 @@ iso-image-md-post:
 		${SGI.image}
 # Don't hardcode this. Pick it up from bootblock.h
 	SEEK=`egrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
-		${.CURDIR}/../../sys/sys/bootblock.h | sed -e 's/[^0-9]*//'`; \
+		${DESTDIR}/usr/include/sys/bootblock.h | sed -e 's/[^0-9]*//'`; \
 		dd if=${CDROM.image} of=${SGI.image} bs=512 seek=$${SEEK}
 	mv ${SGI.image} ${CDROM.image}
 	rm -f ${RELEASEDIR}/ip2x ${RELEASEDIR}/ip3x
