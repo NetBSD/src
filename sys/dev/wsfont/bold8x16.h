@@ -1,4 +1,4 @@
-/*	 $NetBSD: bold8x16.h,v 1.9 2005/02/27 00:27:52 perry Exp $ */
+/*	 $NetBSD: bold8x16.h,v 1.10 2005/04/22 14:46:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * This font lives in the public domain. It it a PC font, IBM encoding,
  * which was designed for use with syscons.
  */
-extern u_char bold8x16_data[];
+static u_char bold8x16_data[];
 
 struct wsdisplay_font bold8x16 = {
 	"Boldface",			/* typeface name */
