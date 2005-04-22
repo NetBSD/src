@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.190.2.6.2.1 2005/04/06 13:50:45 tron Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.190.2.6.2.2 2005/04/22 06:58:50 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.6.2.1 2005/04/06 13:50:45 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.6.2.2 2005/04/22 06:58:50 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1502,8 +1502,7 @@ after_listen:
 				 */
 				++tcpstat.tcps_predack;
 				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp,
-					  TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+					tcp_xmit_timer(tp, opti.ts_ecr);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -2132,7 +2131,7 @@ after_listen:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+			tcp_xmit_timer(tp, opti.ts_ecr);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
