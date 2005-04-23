@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.162 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.163 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.162 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.163 2005/04/23 19:47:51 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1471,6 +1471,45 @@ lfs_updatemeta(struct segment *sp)
 }
 
 /*
+ * Move lfs_offset to a segment earlier than sn.
+ */
+int
+lfs_rewind(struct lfs *fs, int newsn)
+{
+	int sn, osn, isdirty;
+	struct buf *bp;
+	SEGUSE *sup;
+
+	ASSERT_SEGLOCK(fs);
+
+	osn = dtosn(fs, fs->lfs_offset);
+	if (osn < newsn)
+		return 0;
+
+	/* lfs_avail eats the remaining space in this segment */
+	fs->lfs_avail -= fs->lfs_fsbpseg - (fs->lfs_offset - fs->lfs_curseg);
+
+	/* Find a low-numbered segment */
+	for (sn = 0; sn < fs->lfs_nseg; ++sn) {
+		LFS_SEGENTRY(sup, fs, sn, bp);
+		isdirty = sup->su_flags & SEGUSE_DIRTY;
+		brelse(bp);
+
+		if (!isdirty)
+			break;
+	}
+	if (sn == fs->lfs_nseg)
+		panic("lfs_rewind: no clean segments");
+	if (sn >= newsn)
+		return ENOENT;
+	fs->lfs_nextseg = sn;
+	lfs_newseg(fs);
+	fs->lfs_offset = fs->lfs_curseg;
+
+	return 0;
+}
+
+/*
  * Start a new partial segment.
  *
  * Return 1 when we entered to a new segment.
@@ -1582,6 +1621,26 @@ lfs_initseg(struct lfs *fs)
 }
 
 /*
+ * Remove SEGUSE_INVAL from all segments.
+ */
+void
+lfs_unset_inval_all(struct lfs *fs)
+{
+	SEGUSE *sup;
+	struct buf *bp;
+	int i;
+
+	for (i = 0; i < fs->lfs_nseg; i++) {
+		LFS_SEGENTRY(sup, fs, i, bp);
+		if (sup->su_flags & SEGUSE_INVAL) {
+			sup->su_flags &= ~SEGUSE_INVAL;
+			VOP_BWRITE(bp);
+		} else
+			brelse(bp);
+	}
+}
+
+/*
  * Return the next segment to write.
  */
 void
@@ -1590,7 +1649,7 @@ lfs_newseg(struct lfs *fs)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
-	int curseg, isdirty, sn;
+	int curseg, isdirty, sn, skip_inval;
 
 	ASSERT_SEGLOCK(fs);
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
@@ -1610,12 +1669,17 @@ lfs_newseg(struct lfs *fs)
 
 	fs->lfs_lastseg = fs->lfs_curseg;
 	fs->lfs_curseg = fs->lfs_nextseg;
+	skip_inval = 1;
 	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
-		if (sn == curseg)
-			panic("lfs_nextseg: no clean segments");
+		if (sn == curseg) {
+			if (skip_inval)
+				skip_inval = 0;
+			else
+				panic("lfs_nextseg: no clean segments");
+		}
 		LFS_SEGENTRY(sup, fs, sn, bp);
-		isdirty = sup->su_flags & SEGUSE_DIRTY;
+		isdirty = sup->su_flags & (SEGUSE_DIRTY | (skip_inval ? SEGUSE_INVAL : 0));
 		/* Check SEGUSE_EMPTY as we go along */
 		if (isdirty && sup->su_nbytes == 0 &&
 		    !(sup->su_flags & SEGUSE_EMPTY))
@@ -1626,6 +1690,8 @@ lfs_newseg(struct lfs *fs)
 		if (!isdirty)
 			break;
 	}
+	if (skip_inval == 0)
+		lfs_unset_inval_all(fs);
 
 	++fs->lfs_nactive;
 	fs->lfs_nextseg = sntod(fs, sn);

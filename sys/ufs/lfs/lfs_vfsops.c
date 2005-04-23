@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.176 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.177 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.176 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.177 2005/04/23 19:47:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1084,6 +1084,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->lfs_pages = 0;
 	simple_lock_init(&fs->lfs_interlock);
 	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
+	lockinit(&fs->lfs_iflock, PINOD, "lfs_iflock", 0, 0);
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1161,8 +1162,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 				sup->su_flags &= ~SEGUSE_EMPTY;
 				++changed;
 			}
-			if (sup->su_flags & SEGUSE_ACTIVE) {
-				sup->su_flags &= ~SEGUSE_ACTIVE;
+			if (sup->su_flags & (SEGUSE_ACTIVE|SEGUSE_INVAL)) {
+				sup->su_flags &= ~(SEGUSE_ACTIVE|SEGUSE_INVAL);
 				++changed;
 			}
 		}
@@ -2366,4 +2367,203 @@ warn_ifile_size(struct lfs *fs)
 						       fs->lfs_bshift)) >>
 				PAGE_SHIFT);
 	}
+}
+
+/*
+ * Resize the filesystem to contain the specified number of segments.
+ */
+int
+lfs_resize_fs(struct lfs *fs, int newnsegs)
+{
+	SEGUSE *sup;
+	struct buf *bp, *obp;
+	daddr_t olast, nlast, ilast, noff, start, end;
+	struct vnode *ivp;
+	struct inode *ip;
+	int error, badnews, inc, oldnsegs;
+	int sbbytes, csbbytes, gain, cgain;
+	int i;
+
+	/* Only support v2 and up */
+	if (fs->lfs_version < 2)
+		return EOPNOTSUPP;
+
+	/* If we're doing nothing, do it fast */
+	oldnsegs = fs->lfs_nseg;
+	if (newnsegs == oldnsegs)
+		return 0;
+
+	/* We always have to have two superblocks */
+	if (newnsegs <= dtosn(fs, fs->lfs_sboffs[1]))
+		return EFBIG;
+
+	ivp = fs->lfs_ivnode;
+	ip = VTOI(ivp);
+	error = 0;
+
+	/* Take the segment lock so no one else calls lfs_newseg() */
+	lfs_seglock(fs, SEGM_PROT);
+
+	/*
+	 * Make sure the segments we're going to be losing, if any,
+	 * are in fact empty.  We hold the seglock, so their status
+	 * cannot change underneath us.  Count the superblocks we lose,
+	 * while we're at it.
+	 */
+	sbbytes = csbbytes = 0;
+	cgain = 0;
+	for (i = newnsegs; i < oldnsegs; i++) {
+		LFS_SEGENTRY(sup, fs, i, bp);
+		badnews = sup->su_nbytes || !(sup->su_flags & SEGUSE_INVAL);
+		if (sup->su_flags & SEGUSE_SUPERBLOCK)
+			sbbytes += LFS_SBPAD;
+		if (!(sup->su_flags & SEGUSE_DIRTY)) {
+			++cgain;
+			if (sup->su_flags & SEGUSE_SUPERBLOCK)
+				csbbytes += LFS_SBPAD;
+		}
+		brelse(bp);
+		if (badnews) {
+			error = EBUSY;
+			goto out;
+		}
+	}
+
+	/* Note old and new segment table endpoints, and old ifile size */
+	olast = fs->lfs_cleansz + fs->lfs_segtabsz;
+	nlast = howmany(newnsegs, fs->lfs_sepb) + fs->lfs_cleansz;
+	ilast = ivp->v_size >> fs->lfs_bshift;
+	noff = nlast - olast;
+
+	/*
+	 * Make sure no one can use the Ifile while we change it around.
+	 * Even after taking the iflock we need to make sure no one still
+	 * is holding Ifile buffers, so we get each one, to drain them.
+	 * (XXX this could be done better.)
+	 */
+	simple_lock(&fs->lfs_interlock);
+	lockmgr(&fs->lfs_iflock, LK_EXCLUSIVE, &fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
+	vn_lock(ivp, LK_EXCLUSIVE | LK_RETRY);
+	for (i = 0; i < ilast; i++) {
+		bread(ivp, i, fs->lfs_bsize, NOCRED, &bp);
+		brelse(bp);
+	}
+
+	/* Allocate new Ifile blocks */
+	for (i = ilast; i < ilast + noff; i++) {
+		if (VOP_BALLOC(ivp, i * fs->lfs_bsize, fs->lfs_bsize, NOCRED, 0,
+			       &bp) != 0)
+			panic("balloc extending ifile");
+		memset(bp->b_data, 0, fs->lfs_bsize);
+		VOP_BWRITE(bp);
+	}
+
+	/* Register new ifile size */
+	ip->i_size += noff * fs->lfs_bsize; 
+	ip->i_ffs1_size = ip->i_size;
+	uvm_vnp_setsize(ivp, ip->i_size);
+
+	/* Copy the inode table to its new position */
+	if (noff != 0) {
+		if (noff < 0) {
+			start = nlast;
+			end = ilast + noff;
+			inc = 1;
+		} else {
+			start = ilast + noff - 1;
+			end = nlast - 1;
+			inc = -1;
+		}
+		for (i = start; i != end; i += inc) {
+			if (bread(ivp, i, fs->lfs_bsize, NOCRED, &bp) != 0)
+				panic("resize: bread dst blk failed");
+			if (bread(ivp, i - noff, fs->lfs_bsize, NOCRED, &obp))
+				panic("resize: bread src blk failed");
+			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
+			VOP_BWRITE(bp);
+			brelse(obp);
+		}
+	}
+
+	/* If we are expanding, write the new empty SEGUSE entries */
+	if (newnsegs > oldnsegs) {
+		for (i = oldnsegs; i < newnsegs; i++) {
+			if ((error = bread(ivp, i / fs->lfs_sepb +
+					   fs->lfs_cleansz,
+					   fs->lfs_bsize, NOCRED, &bp)) != 0)
+				panic("lfs: ifile read: %d", error);
+			while ((i + 1) % fs->lfs_sepb && i < newnsegs) {
+				sup = &((SEGUSE *)bp->b_data)[i % fs->lfs_sepb];
+				memset(sup, 0, sizeof(*sup));
+				i++;
+			}
+			VOP_BWRITE(bp);
+		}
+	}
+
+	/* Zero out unused superblock offsets */
+	for (i = 2; i < LFS_MAXNUMSB; i++)
+		if (dtosn(fs, fs->lfs_sboffs[i]) >= newnsegs)
+			fs->lfs_sboffs[i] = 0x0;
+
+	/*
+	 * Correct superblock entries that depend on fs size.
+	 * The computations of these are as follows:
+	 *
+	 * size  = segtod(fs, nseg)
+	 * dsize = segtod(fs, nseg - minfreeseg) - btofsb(#super * LFS_SBPAD)
+	 * bfree = dsize - btofsb(fs, bsize * nseg / 2) - blocks_actually_used
+	 * avail = segtod(fs, nclean) - btofsb(#clean_super * LFS_SBPAD)
+	 *         + (segtod(fs, 1) - (offset - curseg))
+	 *	   - segtod(fs, minfreeseg - (minfreeseg / 2))
+	 *
+	 * XXX - we should probably adjust minfreeseg as well.
+	 */
+	gain = (newnsegs - oldnsegs);
+	fs->lfs_nseg = newnsegs;
+	fs->lfs_segtabsz = nlast - fs->lfs_cleansz;
+	fs->lfs_size += gain * btofsb(fs, fs->lfs_ssize);
+	fs->lfs_dsize += gain * btofsb(fs, fs->lfs_ssize) - btofsb(fs, sbbytes);
+	fs->lfs_bfree += gain * btofsb(fs, fs->lfs_ssize) - btofsb(fs, sbbytes)
+		       - gain * btofsb(fs, fs->lfs_bsize / 2);
+	if (gain > 0) {
+		fs->lfs_nclean += gain;
+		fs->lfs_avail += gain * btofsb(fs, fs->lfs_ssize);
+	} else {
+		fs->lfs_nclean -= cgain;
+		fs->lfs_avail -= cgain * btofsb(fs, fs->lfs_ssize) -
+				 btofsb(fs, csbbytes);
+	}
+
+	/* Resize segment flag cache */
+	fs->lfs_suflags[0] = (u_int32_t *)realloc(fs->lfs_suflags[0],
+						  fs->lfs_nseg * sizeof(u_int32_t),
+						  M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[0],
+						  fs->lfs_nseg * sizeof(u_int32_t),
+						  M_SEGMENT, M_WAITOK);
+	for (i = oldnsegs; i < newnsegs; i++)
+		fs->lfs_suflags[0][i] = fs->lfs_suflags[1][i] = 0x0;
+
+	/* Truncate Ifile if necessary */
+	if (noff < 0)
+		VOP_TRUNCATE(ivp, ivp->v_size + (noff << fs->lfs_bshift), 0,
+			     NOCRED, curproc);
+
+	/* Update cleaner info so the cleaner can die */
+	bread(ivp, 0, fs->lfs_bsize, NOCRED, &bp);
+	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
+	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
+	VOP_BWRITE(bp);
+
+	/* Let Ifile accesses proceed */
+	VOP_UNLOCK(ivp, 0);
+	simple_lock(&fs->lfs_interlock);
+	lockmgr(&fs->lfs_iflock, LK_RELEASE, &fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
+
+    out:
+	lfs_segunlock(fs);
+	return error;
 }

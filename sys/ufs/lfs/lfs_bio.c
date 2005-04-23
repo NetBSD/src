@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.84 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.85 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.84 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.85 2005/04/23 19:47:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ lfs_bwrite(void *v)
 		panic("bawrite LFS buffer");
 	}
 #endif /* DIAGNOSTIC */
-	return lfs_bwrite_ext(bp,0);
+	return lfs_bwrite_ext(bp, 0);
 }
 
 /*
@@ -446,24 +446,28 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	struct inode *ip;
 	int fsb, s;
 
-	ASSERT_MAYBE_SEGLOCK(VFSTOUFS(bp->b_vp->v_mount)->um_lfs);
+	fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
+
+	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_flags & B_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
 	KASSERT((bp->b_flags & (B_DELWRI|B_LOCKED)) != B_DELWRI);
 	KASSERT((bp->b_flags & (B_DELWRI|B_LOCKED)) != B_LOCKED);
 
 	/*
-	 * Don't write *any* blocks if we're mounted read-only.
+	 * Don't write *any* blocks if we're mounted read-only, or
+	 * if we are "already unmounted".
+	 *
 	 * In particular the cleaner can't write blocks either.
 	 */
-	if (VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
+	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
 		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
 		LFS_UNLOCK_BUF(bp);
 		if (LFS_IS_MALLOC_BUF(bp))
 			bp->b_flags &= ~B_BUSY;
 		else
 			brelse(bp);
-		return EROFS;
+		return (fs->lfs_ronly ? EROFS : 0);
 	}
 
 	/*
@@ -481,7 +485,6 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * blocks.
 	 */
 	if (!(bp->b_flags & B_LOCKED)) {
-		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 
 		ip = VTOI(bp->b_vp);
