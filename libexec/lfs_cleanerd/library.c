@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.41 2005/02/26 05:43:04 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.42 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.41 2005/02/26 05:43:04 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.42 2005/04/23 19:47:51 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,6 +270,7 @@ get_ifile(FS_INFO *fsp, int use_mmap)
 	char *ifile_name;
 	int count;
 	int rfd; /* Root file descriptor */
+	static int oldnseg;
 
 	ifp = NULL;
 	if(ifile_fd == -1) {
@@ -331,6 +332,11 @@ redo_read:
 	fsp->fi_cip = (CLEANERINFO *)ifp;
 	fsp->fi_segusep = (SEGUSE *)(ifp + CLEANSIZE(fsp));
 	fsp->fi_ifilep  = (IFILE *)((caddr_t)fsp->fi_segusep + SEGTABSIZE(fsp));
+
+	/* If the number of segments changed under us, bomb out */
+	if (oldnseg && oldnseg != fsp->fi_cip->clean + fsp->fi_cip->dirty)
+		log_exit(0, LOG_NOTICE, "number of segments changed");
+	oldnseg = fsp->fi_cip->clean + fsp->fi_cip->dirty;
 
 	/*
 	 * The number of ifile entries is equal to the number of

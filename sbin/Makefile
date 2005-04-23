@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2005/01/10 02:53:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.92 2005/04/23 19:47:51 perseant Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -16,7 +16,7 @@ SUBDIR=	atactl badsect bim brconfig ccdconfig disklabel dkctl dmesg \
 # support for various file systems
 SUBDIR+= fsck_ext2fs
 SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs
-SUBDIR+= newfs_lfs fsck_lfs dump_lfs
+SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
 SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= mount_ados
 SUBDIR+= mount_cd9660

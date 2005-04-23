@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.85 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.86 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -389,6 +389,7 @@ struct segusage {
 #define	SEGUSE_SUPERBLOCK	0x04	/*  segment contains a superblock */
 #define SEGUSE_ERROR		0x08	/*  cleaner: do not clean segment */
 #define SEGUSE_EMPTY		0x10	/*  segment is empty */
+#define SEGUSE_INVAL		0x20	/*  segment is invalid */
 	u_int32_t su_flags;		/* 12: segment flags */
 	u_int64_t su_lastmod;		/* 16: last modified timestamp */
 };
@@ -406,9 +407,28 @@ struct segusage_v1 {
 #define	SEGTABSIZE_SU(fs)						\
 	(((fs)->lfs_nseg + SEGUPB(fs) - 1) / (fs)->lfs_sepb)
 
+#ifdef _KERNEL
+# define SHARE_IFLOCK(F) 						\
+  do {									\
+	simple_lock(&(F)->lfs_interlock);				\
+	lockmgr(&(F)->lfs_iflock, LK_SHARED, &(F)->lfs_interlock);	\
+	simple_unlock(&(F)->lfs_interlock);				\
+  } while(0)
+# define UNSHARE_IFLOCK(F)						\
+  do {									\
+	simple_lock(&(F)->lfs_interlock);				\
+	lockmgr(&(F)->lfs_iflock, LK_RELEASE, &(F)->lfs_interlock);	\
+	simple_unlock(&(F)->lfs_interlock);				\
+  } while(0)
+#else /* ! _KERNEL */
+# define SHARE_IFLOCK(F)
+# define UNSHARE_IFLOCK(F)
+#endif /* ! _KERNEL */
+
 /* Read in the block with a specific segment usage entry from the ifile. */
 #define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
 	int _e;								\
+	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) / (F)->lfs_sepb) + (F)->lfs_cleansz,			\
@@ -419,6 +439,7 @@ struct segusage_v1 {
 			((IN) & ((F)->lfs_sepb - 1)));			\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
@@ -474,6 +495,7 @@ struct ifile_v1 {
 /* Read in the block with a specific inode from the ifile. */
 #define	LFS_IENTRY(IP, F, IN, BP) do {					\
 	int _e;								\
+	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
@@ -484,6 +506,7 @@ struct ifile_v1 {
 				 (IN) % (F)->lfs_ifpb);			\
 	else								\
 		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
@@ -504,11 +527,13 @@ typedef struct _cleanerinfo {
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
+	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if (bread((F)->lfs_ivnode,					\
 	    (daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))			\
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
@@ -791,6 +816,7 @@ struct lfs {
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
 	struct lock lfs_fraglock;
+	struct lock lfs_iflock;		/* Ifile lock */
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
@@ -1049,7 +1075,10 @@ struct lfs_fcntl_markv {
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
 #define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, struct fhandle)
-/* Compat for NetBSD 2.x error */
+#define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
+#define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
+#define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
+/* Compat for NetBSD 2.x bug */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
 

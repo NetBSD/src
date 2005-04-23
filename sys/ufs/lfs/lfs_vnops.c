@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.147 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.148 2005/04/23 19:47:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.147 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.148 2005/04/23 19:47:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1260,6 +1260,7 @@ lfs_fcntl(void *v)
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;
+	SEGUSE *sup;
 	int blkcnt, error, oclean;
 	struct lfs_fcntl_markv blkvp;
 	fsid_t *fsidp;
@@ -1375,6 +1376,26 @@ lfs_fcntl(void *v)
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid));
+
+	    case LFCNREWIND:
+		/* Move lfs_offset to the lowest-numbered segment */
+		return lfs_rewind(fs, *(int *)ap->a_data);
+
+	    case LFCNINVAL:
+		/* Mark a segment SEGUSE_INVAL */
+		LFS_SEGENTRY(sup, fs, *(int *)ap->a_data, bp);
+		if (sup->su_nbytes > 0) {
+			brelse(bp);
+			lfs_unset_inval_all(fs);
+			return EBUSY;
+		}
+		sup->su_flags |= SEGUSE_INVAL;
+		VOP_BWRITE(bp);
+		return 0;
+
+	    case LFCNRESIZE:
+		/* Resize the filesystem */
+		return lfs_resize_fs(fs, *(int *)ap->a_data);
 
 	    default:
 		return ufs_fcntl(v);
