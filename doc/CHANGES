@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.465 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.466 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -28,3 +28,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[tsutsui 20050418]
 	cvs(1): Upgrade to 1.11.20. [christos 20050419]
 	openssh: Upgrade to 4.0. [christos 20050423]
+	am-utils: Upgrade to 6.1-rc2 [christos 20050423]
