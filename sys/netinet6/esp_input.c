@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.35 2004/02/11 10:47:28 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.36 2005/04/23 14:05:28 manu Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.35 2004/02/11 10:47:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.36 2005/04/23 14:05:28 manu Exp $");
 
 #include "opt_inet.h"
 
@@ -112,6 +112,11 @@ esp4_input(m, va_alist)
 	int s;
 	va_list ap;
 	int off;
+	u_int16_t sport = 0;
+	u_int16_t dport = 0;
+#ifdef IPSEC_NAT_T
+	struct m_tag *tag = NULL;
+#endif
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
@@ -136,6 +141,14 @@ esp4_input(m, va_alist)
 		}
 	}
 
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT_T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL)) != NULL) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
+
 	ip = mtod(m, struct ip *);
 	esp = (struct esp *)(((u_int8_t *)ip) + off);
 	hlen = ip->ip_hl << 2;
@@ -145,7 +158,7 @@ esp4_input(m, va_alist)
 
 	if ((sav = key_allocsa(AF_INET,
 	                      (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst,
-	                      IPPROTO_ESP, spi)) == 0) {
+	                      IPPROTO_ESP, spi, sport, dport)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv4 ESP input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -481,7 +494,8 @@ esp4_ctlinput(cmd, sa, v)
 		if ((sav = key_allocsa(AF_INET,
 				       (caddr_t) &ip->ip_src,
 				       (caddr_t) &ip->ip_dst,
-				       IPPROTO_ESP, esp->esp_spi)) == NULL)
+				       IPPROTO_ESP, esp->esp_spi,
+				       0, 0)) == NULL)
 			return NULL;
 		if (sav->state != SADB_SASTATE_MATURE &&
 		    sav->state != SADB_SASTATE_DYING) {
@@ -558,7 +572,7 @@ esp6_input(mp, offp, proto)
 
 	if ((sav = key_allocsa(AF_INET6,
 	                      (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst,
-	                      IPPROTO_ESP, spi)) == 0) {
+	                      IPPROTO_ESP, spi, 0, 0)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv6 ESP input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -954,7 +968,7 @@ esp6_ctlinput(cmd, sa, d)
 			sav = key_allocsa(AF_INET6,
 					  (caddr_t)&sa6_src->sin6_addr,
 					  (caddr_t)&sa6_dst->sin6_addr,
-					  IPPROTO_ESP, espp->esp_spi);
+					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)
