@@ -1,5 +1,5 @@
-/*	$NetBSD: buffer.h,v 1.1.1.6 2002/03/08 01:20:34 itojun Exp $	*/
-/*	$OpenBSD: buffer.h,v 1.11 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.7 2005/04/23 16:28:01 christos Exp $	*/
+/*	$OpenBSD: buffer.h,v 1.12 2004/10/29 23:56:17 djm Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,5 +40,9 @@ void	 buffer_consume(Buffer *, u_int);
 void	 buffer_consume_end(Buffer *, u_int);
 
 void     buffer_dump(Buffer *);
+
+int	 buffer_get_ret(Buffer *, void *, u_int);
+int	 buffer_consume_ret(Buffer *, u_int);
+int	 buffer_consume_end_ret(Buffer *, u_int);
 
 #endif				/* BUFFER_H */
