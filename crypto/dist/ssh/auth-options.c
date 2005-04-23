@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.5 2005/04/23 16:53:28 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,8 +11,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.28 2003/06/02 09:17:34 markus Exp $");
-__RCSID("$NetBSD: auth-options.c,v 1.4 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.29 2005/03/01 10:09:52 djm Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.5 2005/04/23 16:53:28 christos Exp $");
 
 #include "xmalloc.h"
 #include "match.h"
@@ -219,7 +219,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		}
 		cp = "permitopen=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
-			char host[256], sport[6];
+			char *host, *p;
 			u_short port;
 			char *patterns = xmalloc(strlen(opts) + 1);
 
@@ -238,25 +238,29 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			if (!*opts) {
 				debug("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				auth_debug_add("%.100s, line %lu: missing end quote",
-				    file, linenum);
+				auth_debug_add("%.100s, line %lu: missing "
+				    "end quote", file, linenum);
 				xfree(patterns);
 				goto bad_option;
 			}
 			patterns[i] = 0;
 			opts++;
-			if (sscanf(patterns, "%255[^:]:%5[0-9]", host, sport) != 2 &&
-			    sscanf(patterns, "%255[^/]/%5[0-9]", host, sport) != 2) {
-				debug("%.100s, line %lu: Bad permitopen specification "
-				    "<%.100s>", file, linenum, patterns);
+			p = patterns;
+			host = hpdelim(&p);
+			if (host == NULL || strlen(host) >= NI_MAXHOST) {
+				debug("%.100s, line %lu: Bad permitopen "
+				    "specification <%.100s>", file, linenum, 
+				    patterns);
 				auth_debug_add("%.100s, line %lu: "
-				    "Bad permitopen specification", file, linenum);
+				    "Bad permitopen specification", file,
+				    linenum);
 				xfree(patterns);
 				goto bad_option;
 			}
-			if ((port = a2port(sport)) == 0) {
-				debug("%.100s, line %lu: Bad permitopen port <%.100s>",
-				    file, linenum, sport);
+ 			host = cleanhostname(host);
+ 			if (p == NULL || (port = a2port(p)) == 0) {
+				debug("%.100s, line %lu: Bad permitopen port "
+				    "<%.100s>", file, linenum, p ? p : "");
 				auth_debug_add("%.100s, line %lu: "
 				    "Bad permitopen port", file, linenum);
 				xfree(patterns);

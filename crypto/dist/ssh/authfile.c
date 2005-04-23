@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.19 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: authfile.c,v 1.20 2005/04/23 16:53:28 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,8 +37,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.57 2004/06/21 17:36:31 avsm Exp $");
-__RCSID("$NetBSD: authfile.c,v 1.19 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.60 2004/12/11 01:48:56 dtucker Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.20 2005/04/23 16:53:28 christos Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: authfile.c,v 1.19 2005/02/13 05:57:26 christos Exp $");
 #include "log.h"
 #include "authfile.h"
 #include "rsa.h"
+#include "misc.h"
 
 /* Version identification string for SSH v1 identity files. */
 static const char authfile_id_string[] =
@@ -245,8 +246,10 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 		    filename, strerror(errno));
 		return NULL;
 	}
-	if (st.st_size > 1*1024*1024)
-		close(fd);
+	if (st.st_size > 1*1024*1024) {
+		error("key file %.200s too large", filename);
+		return NULL;
+	}
 	len = (size_t)st.st_size;		/* truncated */
 
 	buffer_init(&buffer);
@@ -337,6 +340,7 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 		return NULL;
 	}
 	if (st.st_size > 1*1024*1024) {
+		error("key file %.200s too large", filename);
 		close(fd);
 		return (NULL);
 	}
@@ -597,13 +601,14 @@ static int
 key_try_load_public(Key *k, const char *filename, char **commentp)
 {
 	FILE *f;
-	char line[4096];
+	char line[SSH_MAX_PUBKEY_BYTES];
 	char *cp;
+	u_long linenum = 0;
 
 	f = fopen(filename, "r");
 	if (f != NULL) {
-		while (fgets(line, sizeof(line), f)) {
-			line[sizeof(line)-1] = '\0';
+		while (read_keyfile_line(f, filename, line, sizeof(line),
+			    &linenum) != -1) {
 			cp = line;
 			switch (*cp) {
 			case '#':

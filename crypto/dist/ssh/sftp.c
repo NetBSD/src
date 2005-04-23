@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.16 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.17 2005/04/23 16:53:29 christos Exp $	*/
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,10 +17,11 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.56 2004/07/11 17:48:47 deraadt Exp $");
-__RCSID("$NetBSD: sftp.c,v 1.16 2005/02/13 05:57:27 christos Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.62 2005/02/20 22:59:06 djm Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.17 2005/04/23 16:53:29 christos Exp $");
 
 #include <glob.h>
+#include <histedit.h>
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -146,8 +147,10 @@ int interactive_loop(int fd_in, int fd_out, char *file1, char *file2);
 static void
 killchild(int signo)
 {
-	if (sshpid > 1)
+	if (sshpid > 1) {
 		kill(sshpid, SIGTERM);
+		waitpid(sshpid, NULL, 0);
+	}
 
 	_exit(1);
 }
@@ -156,9 +159,11 @@ static void
 cmd_interrupt(int signo)
 {
 	const char msg[] = "\rInterrupt  \n";
+	int olderrno = errno;
 
 	write(STDERR_FILENO, msg, sizeof(msg) - 1);
 	interrupted = 1;
+	errno = olderrno;
 }
 
 static void
@@ -258,7 +263,7 @@ path_strip(char *path, char *strip)
 		return (xstrdup(path));
 
 	len = strlen(strip);
-	if (strip != NULL && strncmp(path, strip, len) == 0) {
+	if (strncmp(path, strip, len) == 0) {
 		if (strip[len - 1] != '/' && path[len] == '/')
 			len++;
 		return (xstrdup(path + len));
@@ -742,12 +747,14 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 {
 	glob_t g;
 	int i, c = 1, colspace = 0, columns = 1;
-	Attrib *a;
+	Attrib *a = NULL;
 
 	memset(&g, 0, sizeof(g));
 
 	if (remote_glob(conn, path, GLOB_MARK|GLOB_NOCHECK|GLOB_BRACE,
-	    NULL, &g)) {
+	    NULL, &g) || (g.gl_pathc && !g.gl_matchc)) {
+		if (g.gl_pathc)
+			globfree(&g);
 		error("Can't ls: \"%s\" not found", path);
 		return (-1);
 	}
@@ -756,19 +763,21 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 		goto out;
 
 	/*
-	 * If the glob returns a single match, which is the same as the
-	 * input glob, and it is a directory, then just list its contents
+	 * If the glob returns a single match and it is a directory,
+	 * then just list its contents.
 	 */
-	if (g.gl_pathc == 1 &&
-	    strncmp(path, g.gl_pathv[0], strlen(g.gl_pathv[0]) - 1) == 0) {
-		if ((a = do_lstat(conn, path, 1)) == NULL) {
+	if (g.gl_matchc == 1) {
+		if ((a = do_lstat(conn, g.gl_pathv[0], 1)) == NULL) {
 			globfree(&g);
 			return (-1);
 		}
 		if ((a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) &&
 		    S_ISDIR(a->perm)) {
+			int err;
+
+			err = do_ls_dir(conn, g.gl_pathv[0], strip_path, lflag);
 			globfree(&g);
-			return (do_ls_dir(conn, path, strip_path, lflag));
+			return (err);
 		}
 	}
 
@@ -788,7 +797,7 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 		colspace = width / columns;
 	}
 
-	for (i = 0; g.gl_pathv[i] && !interrupted; i++) {
+	for (i = 0; g.gl_pathv[i] && !interrupted; i++, a = NULL) {
 		char *fname;
 
 		fname = path_strip(g.gl_pathv[i], strip_path);
@@ -805,7 +814,8 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 			 * that the server returns as well as the filenames.
 			 */
 			memset(&sb, 0, sizeof(sb));
-			a = do_lstat(conn, g.gl_pathv[i], 1);
+			if (a == NULL)
+				a = do_lstat(conn, g.gl_pathv[i], 1);
 			if (a != NULL)
 				attrib_to_stat(a, &sb);
 			lname = ls_file(fname, &sb, 1);
@@ -1210,6 +1220,12 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 	return (0);
 }
 
+static char *
+prompt(EditLine *el)
+{
+	return ("sftp> ");
+}
+
 int
 interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 {
@@ -1218,6 +1234,25 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	char cmd[2048];
 	struct sftp_conn *conn;
 	int err;
+	EditLine *el = NULL;
+	History *hl = NULL;
+	HistEvent hev;
+	extern char *__progname;
+
+	if (!batchmode && isatty(STDIN_FILENO)) {
+		if ((el = el_init(__progname, stdin, stdout, stderr)) == NULL)
+			fatal("Couldn't initialise editline");
+		if ((hl = history_init()) == NULL)
+			fatal("Couldn't initialise editline history");
+		history(hl, &hev, H_SETSIZE, 100);
+		el_set(el, EL_HIST, history, hl);
+
+		el_set(el, EL_PROMPT, prompt);
+		el_set(el, EL_EDITOR, "emacs");
+		el_set(el, EL_TERMINAL, NULL);
+		el_set(el, EL_SIGNAL, 1);
+		el_source(el, NULL);
+	}
 
 	conn = do_init(fd_in, fd_out, copy_buffer_len, num_requests);
 	if (conn == NULL)
@@ -1234,8 +1269,11 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 		if (remote_is_dir(conn, dir) && file2 == NULL) {
 			printf("Changing to: %s\n", dir);
 			snprintf(cmd, sizeof cmd, "cd \"%s\"", dir);
-			if (parse_dispatch_command(conn, cmd, &pwd, 1) != 0)
+			if (parse_dispatch_command(conn, cmd, &pwd, 1) != 0) {
+				xfree(dir);
+				xfree(pwd);
 				return (-1);
+			}
 		} else {
 			if (file2 == NULL)
 				snprintf(cmd, sizeof cmd, "get %s", dir);
@@ -1257,19 +1295,28 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	err = 0;
 	for (;;) {
 		char *cp;
+		const char *line;
+		int count = 0;
 
 		signal(SIGINT, SIG_IGN);
 
-		printf("sftp> ");
-
-		/* XXX: use libedit */
-		if (fgets(cmd, sizeof(cmd), infile) == NULL) {
-			printf("\n");
-			break;
+		if (el == NULL) {
+			printf("sftp> ");
+			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
+				printf("\n");
+				break;
+			}
+			if (batchmode) /* Echo command */
+				printf("%s", cmd);
+		} else {
+			if ((line = el_gets(el, &count)) == NULL || count <= 0)
+				break;
+			history(hl, &hev, H_ENTER, line);
+			if (strlcpy(cmd, line, sizeof(cmd)) >= sizeof(cmd)) {
+				fprintf(stderr, "Error: input line too long\n");
+				continue;
+			}
 		}
-
-		if (batchmode) /* Echo command */
-			printf("%s", cmd);
 
 		cp = strrchr(cmd, '\n');
 		if (cp)
@@ -1418,6 +1465,7 @@ main(int argc, char **argv)
 				fatal("%s (%s).", strerror(errno), optarg);
 			showprogress = 0;
 			batchmode = 1;
+			addargs(&args, "-obatchmode yes");
 			break;
 		case 'P':
 			sftp_direct = optarg;

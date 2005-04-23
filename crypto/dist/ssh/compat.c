@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.6 2005/02/22 02:29:32 elric Exp $	*/
+/*	$NetBSD: compat.c,v 1.7 2005/04/23 16:53:28 christos Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.66 2003/04/01 10:31:26 markus Exp $");
-__RCSID("$NetBSD: compat.c,v 1.6 2005/02/22 02:29:32 elric Exp $");
+RCSID("$OpenBSD: compat.c,v 1.71 2005/03/01 10:09:52 djm Exp $");
+__RCSID("$NetBSD: compat.c,v 1.7 2005/04/23 16:53:28 christos Exp $");
 
 #include "buffer.h"
 #include "packet.h"
@@ -64,24 +64,28 @@ compat_datafellows(const char *version)
 		  "OpenSSH_2.1*,"
 		  "OpenSSH_2.2*",	SSH_OLD_SESSIONID|SSH_BUG_BANNER|
 					SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF},
+					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.3.0*",	SSH_BUG_BANNER|SSH_BUG_BIGENDIANAES|
 					SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF},
+					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.3.*",	SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
-					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
+					SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.5.0p1*,"
 		  "OpenSSH_2.5.1p1*",
 					SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
-					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
+					SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.5.0*,"
 		  "OpenSSH_2.5.1*,"
 		  "OpenSSH_2.5.2*",	SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF},
-		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
+		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
+					SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.*,"
 		  "OpenSSH_3.0*,"
-		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF},
+		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
+		{ "OpenSSH_3.*",	SSH_OLD_FORWARD_ADDR },
 		{ "Sun_SSH_1.0*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
 		{ "OpenSSH*",		0 },
 		{ "*MindTerm*",		0 },

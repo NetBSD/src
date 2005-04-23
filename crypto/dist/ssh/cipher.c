@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.16 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: cipher.c,v 1.17 2005/04/23 16:53:28 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,8 +36,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.71 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: cipher.c,v 1.16 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.73 2005/01/23 10:18:12 djm Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.17 2005/04/23 16:53:28 christos Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -45,10 +45,6 @@ __RCSID("$NetBSD: cipher.c,v 1.16 2005/02/13 05:57:26 christos Exp $");
 
 #include <openssl/md5.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-extern const EVP_CIPHER *evp_rijndael(void);
-extern void ssh_rijndael_iv(EVP_CIPHER_CTX *, int, u_char *, u_int);
-#endif
 extern const EVP_CIPHER *evp_ssh1_bf(void);
 extern const EVP_CIPHER *evp_ssh1_3des(void);
 extern void ssh1_3des_iv(EVP_CIPHER_CTX *, int, u_char *, int);
@@ -71,19 +67,11 @@ struct Cipher {
 	{ "blowfish-cbc",	SSH_CIPHER_SSH2, 8, 16, EVP_bf_cbc },
 	{ "cast128-cbc",	SSH_CIPHER_SSH2, 8, 16, EVP_cast5_cbc },
 	{ "arcfour",		SSH_CIPHER_SSH2, 8, 16, EVP_rc4 },
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-	{ "aes128-cbc",		SSH_CIPHER_SSH2, 16, 16, evp_rijndael },
-	{ "aes192-cbc",		SSH_CIPHER_SSH2, 16, 24, evp_rijndael },
-	{ "aes256-cbc",		SSH_CIPHER_SSH2, 16, 32, evp_rijndael },
-	{ "rijndael-cbc@lysator.liu.se",
-				SSH_CIPHER_SSH2, 16, 32, evp_rijndael },
-#else
 	{ "aes128-cbc",		SSH_CIPHER_SSH2, 16, 16, EVP_aes_128_cbc },
 	{ "aes192-cbc",		SSH_CIPHER_SSH2, 16, 24, EVP_aes_192_cbc },
 	{ "aes256-cbc",		SSH_CIPHER_SSH2, 16, 32, EVP_aes_256_cbc },
 	{ "rijndael-cbc@lysator.liu.se",
 				SSH_CIPHER_SSH2, 16, 32, EVP_aes_256_cbc },
-#endif
 	{ "aes128-ctr",		SSH_CIPHER_SSH2, 16, 16, evp_aes_128_ctr },
 	{ "aes192-ctr",		SSH_CIPHER_SSH2, 16, 24, evp_aes_128_ctr },
 	{ "aes256-ctr",		SSH_CIPHER_SSH2, 16, 32, evp_aes_128_ctr },
@@ -133,7 +121,7 @@ cipher_by_name(const char *name)
 {
 	Cipher *c;
 	for (c = ciphers; c->name != NULL; c++)
-		if (strcasecmp(c->name, name) == 0)
+		if (strcmp(c->name, name) == 0)
 			return c;
 	return NULL;
 }
@@ -186,8 +174,10 @@ cipher_number(const char *name)
 	Cipher *c;
 	if (name == NULL)
 		return -1;
-	c = cipher_by_name(name);
-	return (c==NULL) ? -1 : c->number;
+	for (c = ciphers; c->name != NULL; c++)
+		if (strcasecmp(c->name, name) == 0)
+			return c->number;
+	return -1;
 }
 
 char *
@@ -317,11 +307,6 @@ cipher_get_keyiv(CipherContext *cc, u_char *iv, u_int len)
 		if (evplen != len)
 			fatal("%s: wrong iv length %d != %d", __func__,
 			    evplen, len);
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-		if (c->evptype == evp_rijndael)
-			ssh_rijndael_iv(&cc->evp, 0, iv, len);
-		else
-#endif
 		if (c->evptype == evp_aes_128_ctr)
 			ssh_aes_ctr_iv(&cc->evp, 0, iv, len);
 		else
@@ -348,11 +333,6 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 		evplen = EVP_CIPHER_CTX_iv_length(&cc->evp);
 		if (evplen == 0)
 			return;
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-		if (c->evptype == evp_rijndael)
-			ssh_rijndael_iv(&cc->evp, 1, iv, evplen);
-		else
-#endif
 		if (c->evptype == evp_aes_128_ctr)
 			ssh_aes_ctr_iv(&cc->evp, 1, iv, evplen);
 		else
@@ -366,13 +346,8 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 	}
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-#define EVP_X_STATE(evp)	&(evp).c
-#define EVP_X_STATE_LEN(evp)	sizeof((evp).c)
-#else
 #define EVP_X_STATE(evp)	(evp).cipher_data
 #define EVP_X_STATE_LEN(evp)	(evp).cipher->ctx_size
-#endif
 
 int
 cipher_get_keycontext(const CipherContext *cc, u_char *dat)

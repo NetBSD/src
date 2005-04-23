@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2005/04/23 16:53:28 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.25 2004/08/11 21:43:05 avsm Exp $");
-__RCSID("$NetBSD: misc.c,v 1.15 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: misc.c,v 1.28 2005/03/01 10:09:52 djm Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2005/04/23 16:53:28 christos Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -271,6 +271,48 @@ convtime(const char *s)
 	return total;
 }
 
+/*
+ * Search for next delimiter between hostnames/addresses and ports.
+ * Argument may be modified (for termination).
+ * Returns *cp if parsing succeeds.
+ * *cp is set to the start of the next delimiter, if one was found.
+ * If this is the last field, *cp is set to NULL.
+ */
+char *
+hpdelim(char **cp)
+{
+	char *s, *old;
+
+	if (cp == NULL || *cp == NULL)
+		return NULL;
+
+	old = s = *cp;
+	if (*s == '[') {
+		if ((s = strchr(s, ']')) == NULL)
+			return NULL;
+		else
+			s++;
+	} else if ((s = strpbrk(s, ":/")) == NULL)
+		s = *cp + strlen(*cp); /* skip to end (see first case below) */
+
+	switch (*s) {
+	case '\0':
+		*cp = NULL;	/* no more fields*/
+		break;
+	
+	case ':':
+	case '/':
+		*s = '\0';	/* terminate */
+		*cp = s + 1;
+		break;
+	
+	default:
+		return NULL;
+	}
+
+	return old;
+}
+
 char *
 cleanhostname(char *host)
 {
@@ -327,4 +369,27 @@ addargs(arglist *args, char *fmt, ...)
 	args->nalloc = nalloc;
 	args->list[args->num++] = xstrdup(buf);
 	args->list[args->num] = NULL;
+}
+
+/*
+ * Read an entire line from a public key file into a static buffer, discarding
+ * lines that exceed the buffer size.  Returns 0 on success, -1 on failure.
+ */
+int
+read_keyfile_line(FILE *f, const char *filename, char *buf, size_t bufsz,
+   u_long *lineno)
+{
+	while (fgets(buf, bufsz, f) != NULL) {
+		(*lineno)++;
+		if (buf[strlen(buf) - 1] == '\n' || feof(f)) {
+			return 0;
+		} else {
+			debug("%s: %s line %lu exceeds size limit", __func__,
+			    filename, *lineno);
+			/* discard remainder of line */
+			while(fgetc(f) != '\n' && !feof(f))
+				;	/* nothing */
+		}
+	}
+	return -1;
 }
