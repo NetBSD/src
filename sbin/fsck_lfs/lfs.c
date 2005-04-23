@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.11 2005/04/12 12:42:02 martin Exp $ */
+/* $NetBSD: lfs.c,v 1.12 2005/04/23 20:21:03 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -563,8 +563,13 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 /*
  * Check partial segment validity between fs->lfs_offset and the given goal.
- * If goal == 0, just keep on going until the segments stop making sense.
- * Return the address of the first partial segment that failed.
+ *
+ * If goal == 0, just keep on going until the segments stop making sense,
+ * and return the address of the last valid partial segment.
+ *
+ * If goal != 0, return the address of the first partial segment that failed,
+ * or "goal" if we reached it without failure (the partial segment *at* goal
+ * need not be valid).
  */
 ufs_daddr_t
 try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
@@ -576,6 +581,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 	ufs_daddr_t nodirop_daddr;
 	u_int64_t serial;
 
+	odaddr = -1;
 	daddr = osb->lfs_offset;
 	nodirop_daddr = daddr;
 	serial = osb->lfs_serial;
