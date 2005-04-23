@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2005/04/18 16:27:54 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2005/04/23 17:35:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 char *kernelnames[] = {
 	"placekeeper",
-	"netbsd.sgimips",
+	"netbsd.arc",
 	"netbsd",
 	"netbsd.gz",
 	"netbsd.bak",
