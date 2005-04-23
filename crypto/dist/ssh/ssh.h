@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.13 2005/02/13 05:57:27 christos Exp $	*/
-/*	$OpenBSD: ssh.h,v 1.75 2003/12/02 17:01:15 markus Exp $	*/
+/*	$NetBSD: ssh.h,v 1.14 2005/04/23 16:53:29 christos Exp $	*/
+/*	$OpenBSD: ssh.h,v 1.76 2004/12/06 11:41:03 dtucker Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -30,6 +30,13 @@
  * in configuration files or on the command line.
  */
 #define SSH_MAX_IDENTITY_FILES		100
+
+/*
+ * Maximum length of lines in authorized_keys file.
+ * Current value permits 16kbit RSA and RSA1 keys and 8kbit DSA keys, with
+ * some room for options and comments.
+ */
+#define SSH_MAX_PUBKEY_BYTES		8192
 
 /*
  * Major protocol version.  Different version indicates major incompatibility
