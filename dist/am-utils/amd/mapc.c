@@ -1,4 +1,4 @@
-/*	$NetBSD: mapc.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.5 2005/04/23 18:51:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -371,7 +371,7 @@ mapc_showtypes(char *buf, size_t buflen)
     }
     if (l > 54) {
       l = 0;
-      strcat(buf, "\n\t\t ", buflen);
+      strlcat(buf, "\n\t\t ", buflen);
     }
   }
 }

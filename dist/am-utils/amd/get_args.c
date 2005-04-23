@@ -1,4 +1,4 @@
-/*	$NetBSD: get_args.c,v 1.4 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.5 2005/04/23 18:51:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -381,8 +381,8 @@ get_args(int argc, char *argv[])
       hostdomain = gopt.sub_domain;
     if (*hostdomain == '.')
       hostdomain++;
-    strlcat(hostd, ".", sizeof(hostd));
-    strlcat(hostd, hostdomain, sizeof(hostd));
+    strlcat(hostd, ".", 2 * MAXHOSTNAMELEN + 1);
+    strlcat(hostd, hostdomain, 2 * MAXHOSTNAMELEN + 1);
 
 #ifdef MOUNT_TABLE_ON_FILE
     if (amuDebug(D_MTAB))

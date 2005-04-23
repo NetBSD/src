@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_start.c,v 1.6 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.7 2005/04/23 18:51:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -375,7 +375,7 @@ mount_automounter(int ppid)
     if (ret != 0)
       return ret;
   }
-  snprintf(pid_fsname, sizeof(pid_fsname), "%s:(pid%ld,port%u)",
+  snprintf(pid_fsname, 16 + MAXHOSTNAMELEN, "%s:(pid%ld,port%u)",
       am_get_hostname(), (long) am_mypid, nfs_port);
 
   /* security: if user sets -D amq, don't even create listening socket */
