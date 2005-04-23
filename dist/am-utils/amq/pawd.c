@@ -1,4 +1,4 @@
-/*	$NetBSD: pawd.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.5 2005/04/23 22:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -70,7 +70,7 @@ find_mt(amq_mount_tree *mt, char *dir)
   while (mt) {
     if (!STREQ(mt->mt_type, "toplvl")) {
       int len = strlen(mt->mt_mountpoint);
-      if (NSTREQ(mt->mt_mountpoint, dir, len) &&
+      if (len && NSTREQ(mt->mt_mountpoint, dir, len) &&
 	  ((dir[len] == '\0') || (dir[len] == '/'))) {
 	char tmp_buf[MAXPATHLEN];
 	strlcpy(tmp_buf, mt->mt_directory, sizeof(tmp_buf));
