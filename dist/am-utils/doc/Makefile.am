@@ -36,7 +36,7 @@ ps: am-utils.dvi am-utils.ps
 am-utils-clean: clean maintainer-clean-aminfo maintainer-clean-vti
 
 # personal rule for Erez Zadok to generate and install html docs
-alldocs: ps install-NEWS install-INSTALL install-ChangeLog install-AUTHORS install-tasks install-autofs install-y2k install-BUGS install-html install-ps install-MIRRORS
+alldocs: ps install-NEWS install-INSTALL install-ChangeLog install-AUTHORS install-tasks install-autofs install-y2k install-ldap install-osx install-BUGS install-FAQ install-html install-ps install-MIRRORS
 
 AMU_HTML_TOP=$(HOME)/proj/www/docs/am-utils
 install-html: $(AMU_HTML_TOP)/am-utils-all.html
@@ -78,8 +78,20 @@ install-y2k: $(AMU_HTML_TOP)/y2k.txt
 $(AMU_HTML_TOP)/y2k.txt: $(top_srcdir)/README.y2k
 	install -c -m 644 $< $@
 
+install-ldap: $(AMU_HTML_TOP)/ldap.txt
+$(AMU_HTML_TOP)/ldap.txt: $(top_srcdir)/README.ldap
+	install -c -m 644 $< $@
+
+install-osx: $(AMU_HTML_TOP)/osx.txt
+$(AMU_HTML_TOP)/osx.txt: $(top_srcdir)/README.osx
+	install -c -m 644 $< $@
+
 install-BUGS: $(AMU_HTML_TOP)/BUGS.txt
 $(AMU_HTML_TOP)/BUGS.txt: $(top_srcdir)/BUGS
+	install -c -m 644 $< $@
+
+install-FAQ: $(AMU_HTML_TOP)/FAQ.txt
+$(AMU_HTML_TOP)/FAQ.txt: $(top_srcdir)/FAQ
 	install -c -m 644 $< $@
 
 install-MIRRORS: $(AMU_HTML_TOP)/MIRRORS.txt $(AMU_HTML_TOP)/MIRRORS.html

@@ -22,7 +22,7 @@ INCLUDES = -I$(top_srcdir)/include
 
 # allow users to add their own flags via "configure --enable-am-flags=ARG"
 AMU_CFLAGS = @AMU_CFLAGS@
-CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
+AM_CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
 
 # additional files to distribute and clean
 EXTRA_DIST = $(man_MANS)

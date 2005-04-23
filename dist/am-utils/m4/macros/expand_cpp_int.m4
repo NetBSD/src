@@ -3,7 +3,7 @@ dnl Expand the value of a CPP macro into a printable integer number.
 dnl Takes: header, macro, [action-if-found, [action-if-not-found]]
 dnl It runs the header through CPP looking for a match between the macro
 dnl and a string pattern, and if sucessful, it prints the string value out.
-AC_DEFUN(AMU_EXPAND_CPP_INT,
+AC_DEFUN([AMU_EXPAND_CPP_INT],
 [
 # we are looking for a regexp of an integer (must not start with 0 --- those
 # are octals).

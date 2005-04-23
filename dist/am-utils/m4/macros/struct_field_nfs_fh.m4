@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the name of the nfs filehandle field in nfs_args_t.
-AC_DEFUN(AMU_STRUCT_FIELD_NFS_FH,
+AC_DEFUN([AMU_STRUCT_FIELD_NFS_FH],
 [
 dnl make sure this is called before macros which depend on it
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Specify additional compile options based on the OS and the compiler
-AC_DEFUN(AMU_OS_CFLAGS,
+AC_DEFUN([AMU_OS_CFLAGS],
 [
 AC_CACHE_CHECK(additional compiler flags,
 ac_cv_os_cflags,
@@ -42,9 +42,13 @@ case "${host_os}" in
 		# turn on additional headers
 		ac_cv_os_cflags="-D_XOPEN_EXTENDED_SOURCE"
 		;;
+	aix5.3* )
+		# avoid circular dependencies in yp headers, and more
+		ac_cv_os_cflags="-DHAVE_BAD_HEADERS -D_XOPEN_EXTENDED_SOURCE -D_USE_IRS -D_MSGQSUPPORT"
+		;;
 	aix* )
 		# avoid circular dependencies in yp headers
-		ac_cv_os_cflags="-DHAVE_BAD_HEADERS -D_XOPEN_EXTENDED_SOURCE"
+		ac_cv_os_cflags="-DHAVE_BAD_HEADERS -D_XOPEN_EXTENDED_SOURCE -D_USE_IRS"
 		;;
 	OFF-sunos4* )
 		# make sure passing whole structures is handled in gcc
@@ -80,6 +84,6 @@ case "${host_os}" in
 		;;
 esac
 ])
-CFLAGS="$CFLAGS $ac_cv_os_cflags"
+AMU_CFLAGS="$AMU_CFLAGS $ac_cv_os_cflags"
 ])
 dnl ======================================================================

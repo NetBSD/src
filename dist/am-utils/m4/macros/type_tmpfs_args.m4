@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for TMPFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_TMPFS_ARGS,
+AC_DEFUN([AMU_TYPE_TMPFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of tmpfs mount(2) arguments,
 ac_cv_type_tmpfs_args,

@@ -1,6 +1,6 @@
 fdnl ######################################################################
 dnl find if mntent_t field mnt_time exists and is of type "char *"
-AC_DEFUN(AMU_FIELD_MNTENT_T_MNT_TIME_STRING,
+AC_DEFUN([AMU_FIELD_MNTENT_T_MNT_TIME_STRING],
 [
 AC_CACHE_CHECK(if mntent_t field mnt_time exist as type string,
 ac_cv_field_mntent_t_mnt_time_string,

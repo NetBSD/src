@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for UFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_UFS_ARGS,
+AC_DEFUN([AMU_TYPE_UFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of ufs mount(2) arguments,
 ac_cv_type_ufs_args,

@@ -2,7 +2,7 @@ dnl ######################################################################
 dnl Find the structure of an nfs filehandle.
 dnl if found, defined am_nfs_fh to it, else leave it undefined.
 dnl THE ORDER OF LOOKUPS IN THIS FILE IS VERY IMPORTANT!!!
-AC_DEFUN(AMU_STRUCT_NFS_FH,
+AC_DEFUN([AMU_STRUCT_NFS_FH],
 [
 AC_CACHE_CHECK(for type/structure of NFS V2 filehandle,
 ac_cv_struct_nfs_fh,

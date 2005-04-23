@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Specify additional cpp options based on the OS and the compiler
-AC_DEFUN(AMU_OS_CPPFLAGS,
+AC_DEFUN([AMU_OS_CPPFLAGS],
 [
 AC_CACHE_CHECK(additional preprocessor flags,
 ac_cv_os_cppflags,

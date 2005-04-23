@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl check if libwrap (if exists), requires the caller to define the variables
 dnl deny_severity and allow_severity.
-AC_DEFUN(AMU_CHECK_LIBWRAP_SEVERITY,
+AC_DEFUN([AMU_CHECK_LIBWRAP_SEVERITY],
 [
 AC_CACHE_CHECK([if libwrap wants caller to define allow_severity and deny_severity], ac_cv_need_libwrap_severity_vars, [
 # save, then reset $LIBS back to original value

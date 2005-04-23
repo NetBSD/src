@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check style of mounting filesystems
-AC_DEFUN(AMU_CHECK_MOUNT_STYLE,
+AC_DEFUN([AMU_CHECK_MOUNT_STYLE],
 [
 AC_CACHE_CHECK(style of mounting filesystems,
 ac_cv_style_mount,

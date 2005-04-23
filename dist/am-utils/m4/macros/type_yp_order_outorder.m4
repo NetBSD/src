@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct type for the 3rd argument to yp_order()
-AC_DEFUN(AMU_TYPE_YP_ORDER_OUTORDER,
+AC_DEFUN([AMU_TYPE_YP_ORDER_OUTORDER],
 [
 AC_CACHE_CHECK(pointer type of 3rd argument to yp_order(),
 ac_cv_yp_order_outorder,

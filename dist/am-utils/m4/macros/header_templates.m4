@@ -13,9 +13,6 @@ AH_TEMPLATE([HAVE_AMU_FS_TOPLVL],
 AH_TEMPLATE([HAVE_AMU_FS_ERROR],
 [Define if have error filesystem])
 
-AH_TEMPLATE([HAVE_AMU_FS_INHERIT],
-[Define if have inheritance filesystem])
-
 AH_TEMPLATE([HAVE_AMU_FS_PROGRAM],
 [Define if have program filesystem])
 
@@ -63,6 +60,9 @@ AH_TEMPLATE([HAVE_MAP_PASSWD],
 
 AH_TEMPLATE([HAVE_MAP_UNION],
 [Define if have UNION maps])
+
+AH_TEMPLATE([HAVE_MAP_EXEC],
+[Define if have executable maps])
 
 AH_TEMPLATE([HAVE_FS_UFS],
 [Define if have UFS filesystem])
@@ -709,6 +709,9 @@ AH_TEMPLATE([HOST_CPU],
 AH_TEMPLATE([HOST_ARCH],
 [Define name of host machine's architecture (eg. sun4)])
 
+AH_TEMPLATE([DISTRO_NAME],
+[Define name of host OS's distribution name (eg. debian, redhat, suse, etc.)])
+
 AH_TEMPLATE([HOST_VENDOR],
 [Define name of host machine's vendor (eg. sun)])
 
@@ -909,6 +912,9 @@ AH_TEMPLATE([HAVE_EXTERN_STRCASECMP],
 
 AH_TEMPLATE([HAVE_EXTERN_STRDUP],
 [does extern definition for strdup() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_STRLCPY],
+[does extern definition for strlcpy() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRSTR],
 [does extern definition for strstr() exist?])

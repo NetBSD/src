@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for AUTOFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_AUTOFS_ARGS,
+AC_DEFUN([AMU_TYPE_AUTOFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of autofs mount(2) arguments,
 ac_cv_type_autofs_args,

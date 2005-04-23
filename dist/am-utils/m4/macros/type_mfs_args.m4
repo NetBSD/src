@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for MFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_MFS_ARGS,
+AC_DEFUN([AMU_TYPE_MFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of mfs mount(2) arguments,
 ac_cv_type_mfs_args,

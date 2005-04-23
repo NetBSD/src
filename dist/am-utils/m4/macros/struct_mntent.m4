@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find if struct mntent exists anywhere in mount.h or mntent.h headers
-AC_DEFUN(AMU_STRUCT_MNTENT,
+AC_DEFUN([AMU_STRUCT_MNTENT],
 [
 AC_CACHE_CHECK(for struct mntent,
 ac_cv_have_struct_mntent,

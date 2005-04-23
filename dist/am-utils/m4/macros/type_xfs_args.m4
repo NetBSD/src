@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for XFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_XFS_ARGS,
+AC_DEFUN([AMU_TYPE_XFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of xfs mount(2) arguments,
 ac_cv_type_xfs_args,

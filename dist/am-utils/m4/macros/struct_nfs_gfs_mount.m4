@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find if struct nfs_gfs_mount exists anywhere in typical headers
-AC_DEFUN(AMU_STRUCT_NFS_GFS_MOUNT,
+AC_DEFUN([AMU_STRUCT_NFS_GFS_MOUNT],
 [
 dnl make sure this is called before [AC_TYPE_NFS_FH]
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])

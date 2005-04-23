@@ -86,6 +86,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/extern_optarg.m4			\
 	m4/macros/extern_sys_errlist.m4			\
 	m4/macros/field_mntent_t_mnt_time_string.m4	\
+	m4/macros/func_bad_hasmntopt.m4			\
 	m4/macros/func_bad_memcmp.m4			\
 	m4/macros/func_bad_yp_all.m4			\
 	m4/macros/header_templates.m4			\
@@ -258,6 +259,7 @@ EXTRA_DIST_CONF =			\
 	\
 	conf/umount/umount_bsd44.c	\
 	conf/umount/umount_default.c	\
+	conf/umount/umount_linux.c	\
 	conf/umount/umount_osf.c
 
 EXTRA_DIST_INCLUDE =		\
@@ -275,16 +277,19 @@ EXTRA_DIST =			\
 	$(EXTRA_DIST_INCLUDE)	\
 	\
 	BUGS			\
+	FAQ			\
 	LSM.am-utils		\
 	MIRRORS.txt		\
 	MIRRORS.html		\
 	README.autofs		\
 	README.ldap		\
+	README.osx		\
 	README.y2k		\
 	bootstrap		\
 	buildall		\
 	config.guess.long	\
 	depcomp			\
+	ldap.schema		\
 	ldap-id.ms		\
 	ldap-id.txt		\
 	stamp-h.in		\

@@ -1,6 +1,6 @@
 dnl Check for a yp_all() function that does not leak a file descriptor
 dnl to the ypserv process.
-AC_DEFUN(AMU_FUNC_BAD_YP_ALL,
+AC_DEFUN([AMU_FUNC_BAD_YP_ALL],
 [
 AC_CACHE_CHECK(for a file-descriptor leakage clean yp_all,
 ac_cv_func_yp_all_clean,

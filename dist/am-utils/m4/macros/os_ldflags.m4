@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Specify additional linker options based on the OS and the compiler
-AC_DEFUN(AMU_OS_LDFLAGS,
+AC_DEFUN([AMU_OS_LDFLAGS],
 [
 AC_CACHE_CHECK(additional linker flags,
 ac_cv_os_ldflags,

@@ -6,6 +6,8 @@
 [ global ]
 # (amd -n)
 normalize_hostnames =		no | yes
+# do we want to strip domain names from hostnames or not?
+domain_strip =			yes | no
 # (amd -p)
 print_pid =			no | yes
 pid_file =			/dev/stdout | /var/run/amd.pid
@@ -35,9 +37,17 @@ vendor =			redhat
 print_version =			no | yes
 # (amd -l)
 log_file =			/dev/stderr | /var/log/amd | syslog[:facility]
-# NFS (RPC/UDP) retry interval, in tenths of secs (amd -t interval.counter)
+# NFS (RPC) retry interval/counter, in tenths of secs (amd -t interval.counter)
 nfs_retry_interval =		8
 nfs_retransmit_counter =	11 (eleven retransmission attempts)
+# The next four are the same as the above two, but allow you to set global
+# values for all UDP vs. TCP mounts separately.
+nfs_retry_interval_udp =	16
+nfs_retransmit_counter_udp =	22
+nfs_retry_interval_tcp =	4
+nfs_retransmit_counter_tcp =	5
+# NFS attribute cache value for Amd's automount points (seconds)
+auto_attrcache =		0
 # (amd -w)
 dismount_interval =		120
 # (amd -y)
@@ -47,6 +57,8 @@ log_options =			fatal,error,user,warn,info,map,stats,all
 # (amd -D)
 debug_options =			all,amq,daemon,fork,full,hrtime,info,mem,mtab,\
 				str,readdir,test,trace,xdrtrace
+# path for mtab file during mtab debug mode
+debug_mtab_file =               /tmp/mnttab
 # (amd -S)
 plock =				yes | no
 # selectors are not recognized by default in the /defaults entry
@@ -76,6 +88,9 @@ autofs_use_lofs =		yes | no
 search_path =			/etc/local:/etc/amdmaps:/misc/yp
 # alternate RPC program number to register with the port mapper
 portmap_program =		300019-300029
+# Ask for a different Amq RPC port (both UDP and TCP).
+# If set to 0 (default), Amd will pick a port automatically.
+preferred_amq_port =		1234
 # use fully qualified host names
 fully_qualified_hosts =		no | yes
 # force NFS version or NFS protocol
@@ -87,6 +102,10 @@ use_tcpwrappers =		yes | no
 nfs_allow_insecure_port =	yes | no
 # address used for local NFS mount and RPC server (default to localhost)
 localhost_address =		foo.example.com | 192.168.1.2
+# number of seconds to timeout before map returns output
+exec_map_timeout =		10
+# normalize multiple/trailing slashes or not?
+normalize_slashes =		yes | no
 
 ##############################################################################
 # DEFINE AN AMD MOUNT POINT
@@ -113,5 +132,12 @@ mount_type =			nfs
 # any string that will be used as prefix to the map /defaults entry
 # this overrides what's defined in [global]
 map_defaults =			type:=nfs
+
+##############################################################################
+# DEFINE ANOTHER AMD MOUNT POINT
+[ /test ]
+map_name =			/etc/lookup-entry.sh
+# an executable map type
+mount_type =			exec
 
 ##############################################################################
