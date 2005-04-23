@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl check the correct type for the mount type in the mount() system call
 dnl If you change this one, you must also fix the check_mtype_printf_type.m4.
-AC_DEFUN(AMU_CHECK_MTYPE_TYPE,
+AC_DEFUN([AMU_CHECK_MTYPE_TYPE],
 [
 AC_CACHE_CHECK(type of mount type field in mount() call,
 ac_cv_mtype_type,

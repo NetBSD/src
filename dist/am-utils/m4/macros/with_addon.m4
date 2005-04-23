@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Do we want to compile with "ADDON" support? (hesiod, ldap, etc.)
-AC_DEFUN(AMU_WITH_ADDON,
+AC_DEFUN([AMU_WITH_ADDON],
 [AC_MSG_CHECKING([if $1 is wanted])
 ac_upcase=`echo $1|tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 AC_ARG_WITH($1,

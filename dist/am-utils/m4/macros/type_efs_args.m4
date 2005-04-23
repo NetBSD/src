@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for EFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_EFS_ARGS,
+AC_DEFUN([AMU_TYPE_EFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of efs mount(2) arguments,
 ac_cv_type_efs_args,
