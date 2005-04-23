@@ -8,19 +8,53 @@ SYSTEM				CONFIG	COMPILE	RUN	SHLIB	AUTOFS
 =========================	=======	=======	=======	=======	======
 alpha-dec-osf4.0f		ro	ro	ro	-	-
 alpha-dec-osf5.1		ro	ro	ro	-	-
+i386-apple-darwin6.0		ezk	ezk	ezk	ezk	-
 i386-pc-bsdi2.1			ion	ion	ion	ion[X]	ion[X]
+i386-pc-linux-fc1		ezk	ezk	ezk	ezk	-
+i386-pc-linux-fc2		ezk	ezk	ezk	ezk	-
+i386-pc-linux-fc3		ezk	ezk	ezk	ezk	-
 i386-pc-linux-rh6.2		ion	ion	ion	ion	ion
 i386-pc-linux-rh7.1		ion	ion	ion	ion	ion
 i386-pc-linux-rh7.2		ion	ion	ion	ion	ion
 i386-pc-linux-rh7.3		ion	ion	ion	ion	ion
+i386-pc-linux-rh8.0		ezk	ezk	ezk	ezk	-
 i386-pc-linux-rh9		ion	ion	ion	ion	ion
-i386-pc-solaris2.9		ro	ro	ro	-	-
+i386-pc-linux-rhel3		ezk	ezk	ezk	ezk	-
+i386-pc-linux-rhel4		ezk	ezk	ezk	ezk	-
+i386-pc-linux-suse8.2		ezk	ezk	ezk	ezk	-
+i386-pc-linux-suse9.1		ezk	ezk	ezk	ezk	-
 i386-pc-solaris2.10		ro	ro	ro	-	-
+i386-pc-solaris2.9		ro	ro	ro	-	-
+i386-unknown-freebsd4.8		ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd4.9		ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd4.10	ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd4.11	ezk	ezk	ezk	ezk	-
 i386-unknown-freebsd5.0		ezk	ezk	-	ezk	-
+i386-unknown-freebsd5.1		ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd5.2		ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd5.2.1	ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd5.3		ezk	ezk	ezk	ezk	-
+i386-unknown-freebsd6 (SNAP1)	ezk	ezk	ezk	ezk	-
+i386-unknown-netbsd1.6A		ezk	ezk	ezk	ezk	-
+i386-unknown-netbsdelf1.6.1	ezk	ezk	ezk	ezk	-
+i386-unknown-netbsdelf1.6.2	ezk	ezk	ezk	ezk	-
+i386-unknown-netbsdelf2.0	ezk	ezk	ezk	ezk	-
+i386-unknown-openbsd3.3		ezk	ezk	ezk	ezk	-
+i386-unknown-openbsd3.6		ezk	ezk	ezk	ezk	-
+i686-apple-darwin6.6		ezk	ezk	ezk	ezk	-
+ia64-hp-hpux11.20		ezk	ezk	ezk	ezk	-
 ia64-unknown-linux-rh2.1AS	ezk	ezk	-	ezk	-
+ia64-unknown-linux-rh2.1AW	ezk	ezk	ezk	ezk	-
+ia64-unknown-linux-rhel4	ezk	ezk	ezk	ezk	-
 mips-sgi-irix6.2		ro	ro	ro	-	-[3]
 mips-sgi-irix6.5		ro	ro	ro	-	-[3]
+mipsel-unknown-linux-rhPS2	ezk	ezk	ezk	ezk	-
+powerpc-apple-darwin7.6.0	ezk	ezk	ezk	ezk	-
+powerpc-apple-darwin7.7.0	ezk	ezk	ezk	ezk	-
+powerpc-apple-darwin7.8.0	ezk	ezk	ezk	ezk	-
 powerpc-ibm-aix5.1.0.0		ion	ion	ion	ion[X]	ion[1,2]
+powerpc-ibm-aix5.2.0.0		ezk	ezk	ezk	ezk	-
+powerpc-ibm-aix5.3.0.0		ezk	ezk	ezk	ezk	-
 sparc-sun-solaris2.5.1		ion	ion	ion	ion	ion[1]
 sparc-sun-solaris2.6		ion	ion	ion	ion	ion
 sparc-sun-solaris2.7		ion	ion	ion	ion	ion
@@ -29,9 +63,12 @@ sparc-sun-solaris2.9		ro	ro	ro	-	-
 sparc-sun-solaris2.10		ro	ro	ro	-	-
 sparc-unknown-linux-rh62	ion	ion	ion	ion	ion
 sparc64-unknown-linux-aurora10	ion	ion	ion	ion	ion
+sparc64-unknown-linux-deb3.0	ezk	ezk	ezk	ezk	-
 sparc64-unknown-linux-rh62	ion	ion	ion	ion	ion
 sparc64-unknown-linux-suse7.3	ezk	ezk	-	ezk	-
+x86_64-unknown-linux-rh2.9.5AS	ezk	ezk	ezk	ezk	-
 x86_64-unknown-linux-rh3.0.0AS	ion	ion	ion	ion	ion
+
 
 EMAIL ID LEGEND:
 

@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl Run a program and print its output as a string
 dnl Takes: (header, code-to-run, [action-if-found, [action-if-not-found]])
-AC_DEFUN(AMU_EXPAND_RUN_STRING,
+AC_DEFUN([AMU_EXPAND_RUN_STRING],
 [
 value="notfound"
 AC_TRY_RUN(
