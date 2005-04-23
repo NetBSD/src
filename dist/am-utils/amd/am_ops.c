@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.1.1.8 2005/04/23 18:09:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_ops.c,v 1.20 2004/01/06 03:56:19 ezk Exp
+ * Id: am_ops.c,v 1.23 2005/04/07 05:50:38 ezk Exp
  *
  */
 
@@ -88,9 +88,6 @@ static am_ops *vops[] =
 #ifdef HAVE_AMU_FS_UNION
   &amfs_union_ops,		/* union F/S */
 #endif /* HAVE_AMU_FS_UNION */
-#ifdef HAVE_AMU_FS_INHERIT
-  &amfs_inherit_ops,		/* inheritance F/S */
-#endif /* HAVE_AMU_FS_INHERIT */
 
   /*
    * A few more native filesystems.
@@ -332,8 +329,7 @@ merge_opts(const char *opts1, const char *opts2)
        tmpstr;
        tmpstr = strtok(NULL, ",")) {
     /* copy option to temp buffer */
-    strncpy(oneopt, tmpstr, 80);
-    oneopt[79] = '\0';
+    xstrlcpy(oneopt, tmpstr, 80);
     /* if option has a value such as rsize=1024, chop the value part */
     if ((eq = haseq(oneopt)))
       *eq = '\0';

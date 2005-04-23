@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_util.c,v 1.1.1.7 2004/11/27 01:01:04 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.1.1.8 2005/04/23 18:13:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_util.c,v 1.11 2004/01/06 03:56:20 ezk Exp
+ * Id: fsi_util.c,v 1.13 2005/02/27 04:23:09 ezk Exp
  *
  */
 
@@ -453,7 +453,7 @@ set_ether_if(ether_if *ep, int k, char *v)
 
   case EF_INADDR:{
       ep->e_inaddr.s_addr = inet_addr(v);
-      if (ep->e_inaddr.s_addr == (u_long) - 1)
+      if ((int) ep->e_inaddr.s_addr == -1)
 	yyerror("malformed IP dotted quad: %s", v);
       XFREE(v);
     }

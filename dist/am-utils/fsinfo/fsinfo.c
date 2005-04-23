@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.c,v 1.1.1.7 2004/11/27 01:01:04 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.1.1.8 2005/04/23 18:13:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.c,v 1.13 2004/01/06 03:56:20 ezk Exp
+ * Id: fsinfo.c,v 1.15 2005/04/07 05:50:38 ezk Exp
  *
  */
 
@@ -126,7 +126,7 @@ fsi_get_args(int c, char *v[])
       break;
 
     case 'h':
-      strncpy(hostname, optarg, sizeof(hostname) - 1);
+      xstrlcpy(hostname, optarg, sizeof(hostname));
       break;
 
     case 'e':

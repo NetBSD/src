@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the autofs flavor
-AC_DEFUN(AMU_CHECK_AUTOFS_STYLE,
+AC_DEFUN([AMU_CHECK_AUTOFS_STYLE],
 [
 AC_CACHE_CHECK(autofs style,
 ac_cv_autofs_style,

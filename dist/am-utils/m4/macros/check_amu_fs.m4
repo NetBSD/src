@@ -4,7 +4,7 @@ dnl Usage: AC_CHECK_AMU_FS(<fs>, <msg>, [<depfs>])
 dnl Print the message in <msg>, and declare HAVE_AMU_FS_<fs> true.
 dnl If <depfs> is defined, then define this filesystem as tru only of the
 dnl filesystem for <depfs> is true.
-AC_DEFUN(AMU_CHECK_AMU_FS,
+AC_DEFUN([AMU_CHECK_AMU_FS],
 [
 # store variable name of fs
 ac_upcase_am_fs_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`

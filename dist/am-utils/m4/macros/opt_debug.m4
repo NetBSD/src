@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl Debugging: "yes" means general, "mem" means general and memory debugging,
 dnl and "no" means none.
-AC_DEFUN(AMU_OPT_DEBUG,
+AC_DEFUN([AMU_OPT_DEBUG],
 [AC_MSG_CHECKING(for debugging options)
 AC_ARG_ENABLE(debug,
 AC_HELP_STRING([--enable-debug=ARG],[enable debugging (yes/mem/no)]),
