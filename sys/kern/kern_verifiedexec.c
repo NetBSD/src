@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.10 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.11 2005/04/23 09:10:47 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.10 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.11 2005/04/23 09:10:47 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -479,7 +479,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	case FINGERPRINT_VALID:
 	case FINGERPRINT_INDIRECT:
 	case FINGERPRINT_NOMATCH:
-		if (securelevel >= 2) {
+		if ((securelevel >= 2) || security_veriexec_strict) {
 			printf("Veriexec: Denying unlink request for %s "
 			       "from uid=%u: File in fingerprint tables. "
 			       "(pid=%u, dev=%ld, inode=%lu)\n", pathbuf,
@@ -488,16 +488,6 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 
 			error = EPERM;
 		} else {
-#ifdef DIAGNOSTIC
-			/* XXX: Print more details? */
-			vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
-			if (vhe == NULL) {
-				panic("Veriexec: Inconsistency! "
-				      "File has post-evaluation status, "
-				      "but not in lists. Report a bug.");
-			}
-#endif /* DIAGNOSTIC */
-
 			if (security_veriexec_verbose) {
 				printf("Veriexec: veriexec_removechk: Removing"
 				       " entry from Veriexec table. (file=%s, "
