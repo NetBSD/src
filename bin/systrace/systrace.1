@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.29 2003/11/28 23:32:02 wiz Exp $
+.\"	$NetBSD: systrace.1,v 1.30 2005/04/23 10:56:54 wiz Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd November 28, 2003
+.Dd April 23, 2005
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nm systrace
 .Bk -words
 .Op Fl AaCitUu
-.Op Fl c Ar uid:gid
+.Op Fl c Ar user:group
 .Op Fl d Ar policydir
 .Op Fl f Ar file
 .Op Fl g Ar gui
@@ -92,13 +92,13 @@ An operation not covered by policy is denied and logged via
 Run systrace in cradle mode; if a cradle server is not running, one is
 launched.
 This decouples UIs from systrace, allowing for re-attaching UIs.
-.It Fl c Ar uid:gid
+.It Fl c Ar user:group
 Specifies the
-.Va uid
+.Va user
 and
-.Va gid
+.Va group
 that the monitored application should be executed with,
-which must be specified as nonnegative integers (not as names).
+which may be either non-negative integers or names.
 This is useful in conjunction with privilege elevation and requires
 root privilege.
 .It Fl d Ar policydir
