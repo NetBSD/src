@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.20 2005/02/13 00:53:12 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.21 2005/04/23 16:28:19 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.180 2004/07/28 09:40:29 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.181 2004/12/23 17:35:48 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -243,6 +243,10 @@ do_authenticated1(Authctxt *authctxt)
 	u_int proto_len, data_len, dlen, compression_level = 0;
 
 	s = session_new();
+	if (s == NULL) {
+		error("no more sessions");
+		return;
+	}
 	s->authctxt = authctxt;
 	s->pw = authctxt->pw;
 

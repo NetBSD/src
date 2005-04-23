@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.1.1.21 2005/02/13 00:53:25 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.1.1.22 2005/04/23 16:28:32 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.301 2004/08/11 11:50:09 dtucker Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.308 2005/02/08 22:24:57 dtucker Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -107,12 +107,6 @@ ServerOptions options;
 
 /* Name of the server configuration file. */
 char *config_file_name = _PATH_SERVER_CONFIG_FILE;
-
-/*
- * Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
- * Default value is AF_UNSPEC means both IPv4 and IPv6.
- */
-int IPv4or6 = AF_UNSPEC;
 
 /*
  * Debug mode flag.  This can be set on the command line.  If debug
@@ -651,6 +645,7 @@ privsep_postauth(Authctxt *authctxt)
 	else if (pmonitor->m_pid != 0) {
 		debug2("User child is on pid %ld", (long)pmonitor->m_pid);
 		close(pmonitor->m_recvfd);
+		buffer_clear(&loginmsg);
 		monitor_child_postauth(pmonitor);
 
 		/* NEVERREACHED */
@@ -741,7 +736,7 @@ get_hostkey_index(Key *key)
 static int
 drop_connection(int startups)
 {
-	double p, r;
+	int p, r;
 
 	if (startups < options.max_startups_begin)
 		return 0;
@@ -752,12 +747,11 @@ drop_connection(int startups)
 
 	p  = 100 - options.max_startups_rate;
 	p *= startups - options.max_startups_begin;
-	p /= (double) (options.max_startups - options.max_startups_begin);
+	p /= options.max_startups - options.max_startups_begin;
 	p += options.max_startups_rate;
-	p /= 100.0;
-	r = arc4random() / (double) UINT_MAX;
+	r = arc4random() % 100;
 
-	debug("drop_connection: p %g, r %g", p, r);
+	debug("drop_connection: p %d, r %d", p, r);
 	return (r < p) ? 1 : 0;
 }
 
@@ -875,7 +869,7 @@ main(int ac, char **av)
 	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
 	char *line;
 	int listen_sock, maxfd;
-	int startup_p[2], config_s[2];
+	int startup_p[2] = { -1 , -1 }, config_s[2] = { -1 , -1 };
 	int startups = 0;
 	Key *key;
 	Authctxt *authctxt;
@@ -893,10 +887,10 @@ main(int ac, char **av)
 	while ((opt = getopt(ac, av, "f:p:b:k:h:g:u:o:dDeiqrtQR46")) != -1) {
 		switch (opt) {
 		case '4':
-			IPv4or6 = AF_INET;
+			options.address_family = AF_INET;
 			break;
 		case '6':
-			IPv4or6 = AF_INET6;
+			options.address_family = AF_INET6;
 			break;
 		case 'f':
 			config_file_name = optarg;
@@ -997,7 +991,6 @@ main(int ac, char **av)
 		closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
 
 	SSLeay_add_all_algorithms();
-	channel_set_af(IPv4or6);
 
 	/*
 	 * Force logging to stderr until we have loaded the private host
@@ -1030,6 +1023,9 @@ main(int ac, char **av)
 
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
+
+	/* set default channel AF */
+	channel_set_af(options.address_family);
 
 	/* Check that there are no remaining arguments. */
 	if (optind < ac) {
@@ -1136,7 +1132,7 @@ main(int ac, char **av)
 	}
 
 	/* Initialize the log (it is reinitialized below in case we forked). */
-	if (debug_flag && !inetd_flag)
+	if (debug_flag && (!inetd_flag || rexeced_flag))
 		log_stderr = 1;
 	log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
@@ -1212,10 +1208,12 @@ main(int ac, char **av)
 			if (num_listen_socks >= MAX_LISTEN_SOCKS)
 				fatal("Too many listen sockets. "
 				    "Enlarge MAX_LISTEN_SOCKS");
-			if (getnameinfo(ai->ai_addr, ai->ai_addrlen,
+			if ((ret = getnameinfo(ai->ai_addr, ai->ai_addrlen,
 			    ntop, sizeof(ntop), strport, sizeof(strport),
-			    NI_NUMERICHOST|NI_NUMERICSERV) != 0) {
-				error("getnameinfo failed");
+			    NI_NUMERICHOST|NI_NUMERICSERV)) != 0) {
+				error("getnameinfo failed: %.100s",
+				    (ret != EAI_SYSTEM) ? gai_strerror(ret) :
+				    strerror(errno));
 				continue;
 			}
 			/* Create socket for listening. */
@@ -1445,7 +1443,8 @@ main(int ac, char **av)
 						sock_in = newsock;
 						sock_out = newsock;
 						log_init(__progname, options.log_level, options.log_facility, log_stderr);
-						close(config_s[0]);
+						if (rexec_flag)
+							close(config_s[0]);
 						break;
 					}
 				}
@@ -1605,12 +1604,12 @@ main(int ac, char **av)
 	/* XXX global for cleanup, access from other modules */
 	the_authctxt = authctxt;
 
+	/* prepare buffer to collect messages to display to user after login */
+	buffer_init(&loginmsg);
+
 	if (use_privsep)
 		if (privsep_preauth(authctxt) == 1)
 			goto authenticated;
-
-	/* prepare buffer to collect messages to display to user after login */
-	buffer_init(&loginmsg);
 
 	/* perform the key exchange */
 	/* authenticate user and start session */
