@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.23 2005/04/14 21:30:11 wiz Exp $	 */
+/* $NetBSD: main.c,v 1.24 2005/04/23 20:21:03 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -219,28 +219,30 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		 */
 		printf("** Phase 4 - Check Reference Counts\n");
 		pass4();
+	}
 
-		/*
-		 * 5: check segment byte totals and dirty flags
-		 */
+	/*
+	 * 5: check segment byte totals and dirty flags, and cleanerinfo
+	 */
+	if (!preen)
 		printf("** Phase 5 - Check Segment Block Accounting\n");
-		pass5();
+	pass5();
 
-		if (debug) {
-			if (duplist != NULL) {
-				printf("The following duplicate blocks remain:");
-				for (dp = duplist; dp; dp = dp->next)
-					printf(" %lld,", (long long) dp->dup);
-				printf("\n");
-			}
-			if (zlnhead != NULL) {
-				printf("The following zero link count inodes remain:");
-				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
-					printf(" %u,", zlnp->zlncnt);
-				printf("\n");
-			}
+	if (debug && !preen) {
+		if (duplist != NULL) {
+			printf("The following duplicate blocks remain:");
+			for (dp = duplist; dp; dp = dp->next)
+				printf(" %lld,", (long long) dp->dup);
+			printf("\n");
+		}
+		if (zlnhead != NULL) {
+			printf("The following zero link count inodes remain:");
+			for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
+				printf(" %u,", zlnp->zlncnt);
+			printf("\n");
 		}
 	}
+
 	if (!rerun) {
 		if (!preen)
 			printf("** Phase 6 - Roll Forward\n");

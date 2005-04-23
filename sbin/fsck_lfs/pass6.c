@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.6 2005/04/12 23:14:18 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.7 2005/04/23 20:21:03 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -468,12 +468,12 @@ pass6(void)
 		return;
 	}
 
+	if (debug)
+		pwarn("could roll forward from %" PRIx32 " to %" PRIx32 "\n",
+			fs->lfs_offset, lastgood);
+
 	if (!preen && reply("roll forward") == 0)
 		return;
-
-	if (debug)
-		pwarn("rolling forward between %" PRIx32 " and %" PRIx32 "\n",
-			fs->lfs_offset, lastgood);
 	/*
 	 * Pass 1: find inode blocks.  We ignore the Ifile inode but accept
 	 * changes to any other inode.
