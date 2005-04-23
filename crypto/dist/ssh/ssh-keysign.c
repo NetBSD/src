@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.8 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.9 2005/04/23 16:53:29 christos Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,8 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.16 2004/04/18 23:10:26 djm Exp $");
-__RCSID("$NetBSD: ssh-keysign.c,v 1.8 2005/02/13 05:57:27 christos Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.18 2004/08/23 14:29:23 dtucker Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.9 2005/04/23 16:53:29 christos Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.8 2005/02/13 05:57:27 christos Exp $");
 #include "canohost.h"
 #include "pathnames.h"
 #include "readconf.h"
+#include "uidswap.h"
 
 /* XXX readconf.c needs these */
 uid_t original_real_uid;
@@ -150,15 +151,18 @@ main(int argc, char **argv)
 	key_fd[0] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 	key_fd[1] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
 
-	seteuid(getuid());
-	setuid(getuid());
+	original_real_uid = getuid();	/* XXX readconf.c needs this */
+	if ((pw = getpwuid(original_real_uid)) == NULL)
+		fatal("getpwuid failed");
+	pw = pwcopy(pw);
+
+	permanently_set_uid(pw);
 
 #ifdef DEBUG_SSH_KEYSIGN
 	log_init("ssh-keysign", SYSLOG_LEVEL_DEBUG3, SYSLOG_FACILITY_AUTH, 0);
 #endif
 
 	/* verify that ssh-keysign is enabled by the admin */
-	original_real_uid = getuid();	/* XXX readconf.c needs this */
 	initialize_options(&options);
 	(void)read_config_file(_PATH_HOST_CONFIG_FILE, "", &options, 0);
 	fill_default_options(&options);
@@ -168,10 +172,6 @@ main(int argc, char **argv)
 
 	if (key_fd[0] == -1 && key_fd[1] == -1)
 		fatal("could not open any host key");
-
-	if ((pw = getpwuid(getuid())) == NULL)
-		fatal("getpwuid failed");
-	pw = pwcopy(pw);
 
 	SSLeay_add_all_algorithms();
 	for (i = 0; i < 256; i++)

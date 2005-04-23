@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.19 2005/02/22 02:29:32 elric Exp $	*/
-/*	$OpenBSD: servconf.h,v 1.70 2004/06/24 19:30:54 djm Exp $	*/
+/*	$NetBSD: servconf.h,v 1.20 2005/04/23 16:53:28 christos Exp $	*/
+/*	$OpenBSD: servconf.h,v 1.71 2004/12/23 23:11:00 djm Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,6 +44,7 @@ typedef struct {
 	u_short ports[MAX_PORTS];	/* Port number to listen on. */
 	char   *listen_addr;		/* Address on which the server listens. */
 	struct addrinfo *listen_addrs;	/* Addresses on which the server listens. */
+	int     address_family;		/* Address family used by the server. */
 	char   *host_key_files[MAX_HOSTKEYS];	/* Files containing host keys. */
 	int     num_host_key_files;     /* Number of files for host keys. */
 	char   *pid_file;	/* Where to put our pid */
