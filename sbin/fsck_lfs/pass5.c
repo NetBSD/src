@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.15 2005/04/11 23:19:24 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.16 2005/04/23 20:21:03 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,9 @@ pass5(void)
 
 	/*
 	 * Check segment holdings against actual holdings.  Check for
-	 * "clean" segments that contain live data.
+	 * "clean" segments that contain live data.  If we are only
+	 * rolling forward, we can't check the segment holdings, but
+	 * we can still check the cleanerinfo data.
 	 */
 	nclean = 0;
 	avail = 0;
@@ -87,16 +89,16 @@ pass5(void)
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		diddirty = 0;
 		LFS_SEGENTRY(su, fs, i, bp);
-		if (!(su->su_flags & SEGUSE_DIRTY) &&
+		if (!preen && !(su->su_flags & SEGUSE_DIRTY) &&
 		    seg_table[i].su_nbytes > 0) {
 			pwarn("%d bytes contained in 'clean' segment %d\n",
 			    seg_table[i].su_nbytes, i);
-			if (preen || reply("dirty segment")) {
+			if (reply("dirty segment")) {
 				su->su_flags |= SEGUSE_DIRTY;
 				++diddirty;
 			}
 		}
-		if ((su->su_flags & SEGUSE_DIRTY) &&
+		if (!preen && (su->su_flags & SEGUSE_DIRTY) &&
 		    su->su_nbytes != seg_table[i].su_nbytes) {
 			pwarn("segment %d claims %d bytes but has %d",
 			    i, su->su_nbytes, seg_table[i].su_nbytes);
@@ -107,7 +109,7 @@ pass5(void)
 			else
 				pwarn(" (low by %d)\n", -su->su_nbytes +
 				    seg_table[i].su_nbytes);
-			if (preen || reply("fix")) {
+			if (reply("fix")) {
 				su->su_nbytes = seg_table[i].su_nbytes;
 				++diddirty;
 			}
@@ -148,7 +150,8 @@ pass5(void)
 	avail -= btofsb(fs, locked_queue_bytes);
 
 	if (idaddr)
-		pwarn("NOTE: when using -i, expect discrepancies in dmeta, avail, nclean, bfree\n");
+		pwarn("NOTE: when using -i, expect discrepancies in dmeta,"
+		      " avail, nclean, bfree\n");
 	if (dmeta != fs->lfs_dmeta) {
 		pwarn("dmeta given as %d, should be %ld\n", fs->lfs_dmeta,
 		    dmeta);
