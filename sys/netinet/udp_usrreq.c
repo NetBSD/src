@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.135 2005/04/18 21:50:25 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.136 2005/04/23 14:05:28 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.135 2005/04/18 21:50:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.136 2005/04/23 14:05:28 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1357,6 +1357,9 @@ udp4_espinudp(m, off, src, so)
 	size_t iphdrlen;
 	struct ip *ip;
 	struct mbuf *n;
+	struct m_tag *tag;
+	struct udphdr *udphdr;
+	u_int16_t sport, dport;
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
@@ -1407,6 +1410,14 @@ udp4_espinudp(m, off, src, so)
 	}
 
 	/*
+	 * Get the UDP ports. They are handled in network 
+	 * order everywhere in IPSEC_NAT_T code.
+	 */
+	udphdr = (struct udphdr *)(data - skip);
+	sport = udphdr->uh_sport;
+	dport = udphdr->uh_dport;
+
+	/*
 	 * Remove the UDP header (and possibly the non ESP marker)
 	 * IP header lendth is iphdrlen
 	 * Before:
@@ -1438,6 +1449,18 @@ udp4_espinudp(m, off, src, so)
 		printf("udp4_espinudp: m_dup failed\n");
 		return 0;
 	}
+
+	/*
+	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
+	 * the source UDP port. This is required if we want
+	 * to select the right SPD for multiple hosts behind 
+	 * same NAT 
+	 */
+	tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+	    sizeof(sport) + sizeof(dport), M_WAITOK);
+	((u_int16_t *)(tag + 1))[0] = sport;
+	((u_int16_t *)(tag + 1))[1] = dport;
+	m_tag_prepend(n, tag);
 
 	esp4_input(n, iphdrlen);
 
