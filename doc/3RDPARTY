@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.321 2005/04/22 00:37:10 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.322 2005/04/23 16:57:07 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -477,7 +477,7 @@ The next time OpenPAM is imported (OpenPAM Feterita or later), eliminate
 the local copy of openpam_free_envlist() in the pam_exec module.
 
 Package:	OpenSSH
-Version:	3.9
+Version:	4.0
 Current Vers:	4.0 / portable 4.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
