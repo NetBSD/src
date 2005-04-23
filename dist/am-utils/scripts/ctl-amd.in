@@ -60,6 +60,10 @@ fi
 return 1
 }
 
+# before running any real programs, chdir to / to avoid possible hangs on
+# (NFS) mounts which may be restarting.
+cd /
+
 # search for amd.conf file
 CF_FILE="@sysconfdir@/amd.conf"
 # any local copy of the conf file overrides the "global" one
@@ -99,7 +103,7 @@ case "$1" in
 	echo "killing amd..."
 	killproc " amd"
 	wait4amd2die
-	test -f /var/lock/subsys/amd && rm -f /var/lock/subsys/amd
+	rm -f /var/lock/subsys/amd
 	;;
 
 'restart')

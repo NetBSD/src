@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct way to dereference the hostname part of the nfs fhandle
-AC_DEFUN(AMU_CHECK_NFS_HN_DREF,
+AC_DEFUN([AMU_CHECK_NFS_HN_DREF],
 [
 AC_CACHE_CHECK(nfs hostname dereferencing style,
 ac_cv_nfs_hn_dref_style,

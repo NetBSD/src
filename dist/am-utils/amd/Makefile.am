@@ -33,7 +33,6 @@ amd_SOURCES =			\
 	amfs_error.c		\
 	amfs_generic.c		\
 	amfs_host.c		\
-	amfs_inherit.c		\
 	amfs_link.c		\
 	amfs_linkx.c		\
 	amfs_nfsl.c		\
@@ -64,6 +63,7 @@ amd_SOURCES =			\
 # the complete list of all optional sources
 EXTRA_amd_SOURCES =	\
 	info_file.c	\
+	info_exec.c	\
 	info_hesiod.c	\
 	info_ldap.c	\
 	info_ndbm.c	\
@@ -112,7 +112,7 @@ INCLUDES = -I$(top_srcdir)/include
 
 # allow users to add their own flags via "configure --enable-am-flags=ARG"
 AMU_CFLAGS = @AMU_CFLAGS@
-CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
+AM_CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
 AM_YFLAGS = -d
 
 # dependencies

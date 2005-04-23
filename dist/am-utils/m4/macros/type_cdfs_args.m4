@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for CDFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_CDFS_ARGS,
+AC_DEFUN([AMU_TYPE_CDFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of cdfs mount(2) arguments,
 ac_cv_type_cdfs_args,

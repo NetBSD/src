@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl find if "extern char *optarg" exists in headers
-AC_DEFUN(AMU_EXTERN_OPTARG,
+AC_DEFUN([AMU_EXTERN_OPTARG],
 [
 AC_CACHE_CHECK(if external definition for optarg[] exists,
 ac_cv_extern_optarg,

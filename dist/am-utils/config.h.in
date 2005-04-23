@@ -36,6 +36,10 @@
 /* Turn off memory debugging by default */
 #undef DEBUG_MEM
 
+/* Define name of host OS's distribution name (eg. debian, redhat, suse, etc.)
+   */
+#undef DISTRO_NAME
+
 /* Define to the type of elements in the array set by `getgroups'. Usually
    this is either `int' or `gid_t'. */
 #undef GETGROUPS_T
@@ -61,9 +65,6 @@
 
 /* Define if have NFS host-tree filesystem */
 #undef HAVE_AMU_FS_HOST
-
-/* Define if have inheritance filesystem */
-#undef HAVE_AMU_FS_INHERIT
 
 /* Define if have symbolic-link filesystem */
 #undef HAVE_AMU_FS_LINK
@@ -95,7 +96,7 @@
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
-/* Define if `addr' is member of `autofs_args_t'. */
+/* Define to 1 if `addr' is member of `autofs_args_t'. */
 #undef HAVE_AUTOFS_ARGS_T_ADDR
 
 /* define if have a bad version of hasmntopt() */
@@ -119,22 +120,22 @@
 /* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO
 
-/* Define if `flags' is member of `cdfs_args_t'. */
+/* Define to 1 if `flags' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_FLAGS
 
-/* Define if `fspec' is member of `cdfs_args_t'. */
+/* Define to 1 if `fspec' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_FSPEC
 
-/* Define if `iso_flags' is member of `cdfs_args_t'. */
+/* Define to 1 if `iso_flags' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_ISO_FLAGS
 
-/* Define if `iso_pgthresh' is member of `cdfs_args_t'. */
+/* Define to 1 if `iso_pgthresh' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_ISO_PGTHRESH
 
-/* Define if `norrip' is member of `cdfs_args_t'. */
+/* Define to 1 if `norrip' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_NORRIP
 
-/* Define if `ssector' is member of `cdfs_args_t'. */
+/* Define to 1 if `ssector' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_SSECTOR
 
 /* Define to 1 if you have the <cdfs/cdfsmount.h> header file. */
@@ -186,10 +187,10 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define if `flags' is member of `efs_args_t'. */
+/* Define to 1 if `flags' is member of `efs_args_t'. */
 #undef HAVE_EFS_ARGS_T_FLAGS
 
-/* Define if `fspec' is member of `efs_args_t'. */
+/* Define to 1 if `fspec' is member of `efs_args_t'. */
 #undef HAVE_EFS_ARGS_T_FSPEC
 
 /* Define to 1 if you have the <errno.h> header file. */
@@ -255,6 +256,9 @@
 /* does extern definition for strdup() exist? */
 #undef HAVE_EXTERN_STRDUP
 
+/* does extern definition for strlcpy() exist? */
+#undef HAVE_EXTERN_STRLCPY
+
 /* does extern definition for strstr() exist? */
 #undef HAVE_EXTERN_STRSTR
 
@@ -279,7 +283,7 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define if `fds_bits' is member of `fd_set'. */
+/* Define to 1 if `fds_bits' is member of `fd_set'. */
 #undef HAVE_FD_SET_FDS_BITS
 
 /* Define to 1 if you have the `fgets' function. */
@@ -420,6 +424,9 @@
 /* Define to 1 if you have the <hsfs/hsfs.h> header file. */
 #undef HAVE_HSFS_HSFS_H
 
+/* Define to 1 if you have the `hstrerror' function. */
+#undef HAVE_HSTRERROR
+
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
@@ -459,6 +466,9 @@
 /* Define to 1 if you have the `posix4' library (-lposix4). */
 #undef HAVE_LIBPOSIX4
 
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
 /* Define to 1 if you have the `rpc' library (-lrpc). */
 #undef HAVE_LIBRPC
 
@@ -470,6 +480,9 @@
 
 /* does libwrap exist? */
 #undef HAVE_LIBWRAP
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
 
 /* Define to 1 if you have the <linux/auto_fs4.h> header file. */
 #undef HAVE_LINUX_AUTO_FS4_H
@@ -504,11 +517,17 @@
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #undef HAVE_MACHINE_ENDIAN_H
 
+/* Define to 1 if you have the `madvise' function. */
+#undef HAVE_MADVISE
+
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
 /* Define if have DBM maps */
 #undef HAVE_MAP_DBM
+
+/* Define if have executable maps */
+#undef HAVE_MAP_EXEC
 
 /* Define if have file maps (everyone should have it!) */
 #undef HAVE_MAP_FILE
@@ -564,13 +583,13 @@
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
-/* Define if `mnt_cnode' is member of `mntent_t'. */
+/* Define to 1 if `mnt_cnode' is member of `mntent_t'. */
 #undef HAVE_MNTENT_T_MNT_CNODE
 
-/* Define if `mnt_ro' is member of `mntent_t'. */
+/* Define to 1 if `mnt_ro' is member of `mntent_t'. */
 #undef HAVE_MNTENT_T_MNT_RO
 
-/* Define if `mnt_time' is member of `mntent_t'. */
+/* Define to 1 if `mnt_time' is member of `mntent_t'. */
 #undef HAVE_MNTENT_T_MNT_TIME
 
 /* does mntent_t have mnt_time field and is of type "char *" ? */
@@ -582,7 +601,7 @@
 /* Define to 1 if you have the `mount' function. */
 #undef HAVE_MOUNT
 
-/* Define if `optptr' is member of `mounta'. */
+/* Define to 1 if `optptr' is member of `mounta'. */
 #undef HAVE_MOUNTA_OPTPTR
 
 /* Define to 1 if you have the `mountsyscall' function. */
@@ -630,37 +649,37 @@
 /* Define to 1 if you have the <nfsclient/nfsargs.h> header file. */
 #undef HAVE_NFSCLIENT_NFSARGS_H
 
-/* Define if `acdirmin' is member of `nfs_args_t'. */
+/* Define to 1 if `acdirmin' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_ACDIRMIN
 
-/* Define if `acregmin' is member of `nfs_args_t'. */
+/* Define to 1 if `acregmin' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_ACREGMIN
 
-/* Define if `bsize' is member of `nfs_args_t'. */
+/* Define to 1 if `bsize' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_BSIZE
 
-/* Define if `fhsize' is member of `nfs_args_t'. */
+/* Define to 1 if `fhsize' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_FHSIZE
 
-/* Define if `fh_len' is member of `nfs_args_t'. */
+/* Define to 1 if `fh_len' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_FH_LEN
 
-/* Define if `gfs_flags' is member of `nfs_args_t'. */
+/* Define to 1 if `gfs_flags' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_GFS_FLAGS
 
-/* Define if `namlen' is member of `nfs_args_t'. */
+/* Define to 1 if `namlen' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_NAMLEN
 
-/* Define if `optstr' is member of `nfs_args_t'. */
+/* Define to 1 if `optstr' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_OPTSTR
 
-/* Define if `proto' is member of `nfs_args_t'. */
+/* Define to 1 if `proto' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_PROTO
 
-/* Define if `sotype' is member of `nfs_args_t'. */
+/* Define to 1 if `sotype' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_SOTYPE
 
-/* Define if `version' is member of `nfs_args_t'. */
+/* Define to 1 if `version' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_VERSION
 
 /* Define to 1 if you have the <nfs/export.h> header file. */
@@ -708,25 +727,25 @@
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
-/* Define if `dirmask' is member of `pcfs_args_t'. */
+/* Define to 1 if `dirmask' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_DIRMASK
 
-/* Define if `dsttime' is member of `pcfs_args_t'. */
+/* Define to 1 if `dsttime' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_DSTTIME
 
-/* Define if `fspec' is member of `pcfs_args_t'. */
+/* Define to 1 if `fspec' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_FSPEC
 
-/* Define if `gid' is member of `pcfs_args_t'. */
+/* Define to 1 if `gid' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_GID
 
-/* Define if `mask' is member of `pcfs_args_t'. */
+/* Define to 1 if `mask' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_MASK
 
-/* Define if `secondswest' is member of `pcfs_args_t'. */
+/* Define to 1 if `secondswest' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_SECONDSWEST
 
-/* Define if `uid' is member of `pcfs_args_t'. */
+/* Define to 1 if `uid' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_UID
 
 /* Define to 1 if you have the `plock' function. */
@@ -820,6 +839,9 @@
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
+/* Define to 1 if you have the `sigsuspend' function. */
+#undef HAVE_SIGSUSPEND
+
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
@@ -862,19 +884,22 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
 /* Define to 1 if you have the `strspn' function. */
 #undef HAVE_STRSPN
 
 /* Define to 1 if you have the `strstr' function. */
 #undef HAVE_STRSTR
 
-/* Define if `fhs_fh' is member of `struct fhstatus'. */
+/* Define to 1 if `fhs_fh' is member of `struct fhstatus'. */
 #undef HAVE_STRUCT_FHSTATUS_FHS_FH
 
-/* Define if `ifa_next' is member of `struct ifaddrs'. */
+/* Define to 1 if `ifa_next' is member of `struct ifaddrs'. */
 #undef HAVE_STRUCT_IFADDRS_IFA_NEXT
 
-/* Define if `ifr_addr' is member of `struct ifreq'. */
+/* Define to 1 if `ifr_addr' is member of `struct ifreq'. */
 #undef HAVE_STRUCT_IFREQ_IFR_ADDR
 
 /* Define if have struct mntent in one of the standard headers */
@@ -889,13 +914,13 @@
 /* Define if have struct nfs_gfs_mount in one of the standard nfs headers */
 #undef HAVE_STRUCT_NFS_GFS_MOUNT
 
-/* Define if `sa_len' is member of `struct sockaddr'. */
+/* Define to 1 if `sa_len' is member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
-/* Define if `f_fstypename' is member of `struct statfs'. */
+/* Define to 1 if `f_fstypename' is member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_FSTYPENAME
 
-/* Define if `devid' is member of `struct umntrequest'. */
+/* Define to 1 if `devid' is member of `struct umntrequest'. */
 #undef HAVE_STRUCT_UMNTREQUEST_DEVID
 
 /* Define to 1 if you have the `svc_getreq' function. */
@@ -1093,16 +1118,16 @@
 /* Define to 1 if you have the `ualarm' function. */
 #undef HAVE_UALARM
 
-/* Define if `flags' is member of `ufs_args_t'. */
+/* Define to 1 if `flags' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_FLAGS
 
-/* Define if `fspec' is member of `ufs_args_t'. */
+/* Define to 1 if `fspec' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_FSPEC
 
-/* Define if `ufs_flags' is member of `ufs_args_t'. */
+/* Define to 1 if `ufs_flags' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_UFS_FLAGS
 
-/* Define if `ufs_pgthresh' is member of `ufs_args_t'. */
+/* Define to 1 if `ufs_pgthresh' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_UFS_PGTHRESH
 
 /* Define to 1 if you have the <ufs/ufs/extattr.h> header file. */
@@ -1116,6 +1141,9 @@
 
 /* Define to 1 if you have the `umount' function. */
 #undef HAVE_UMOUNT
+
+/* Define to 1 if you have the `umount2' function. */
+#undef HAVE_UMOUNT2
 
 /* Define to 1 if you have the `uname' function. */
 #undef HAVE_UNAME
@@ -1279,10 +1307,10 @@
 /* Define to 1 if you have the `xdr_writeargs' function. */
 #undef HAVE_XDR_WRITEARGS
 
-/* Define if `flags' is member of `xfs_args_t'. */
+/* Define to 1 if `flags' is member of `xfs_args_t'. */
 #undef HAVE_XFS_ARGS_T_FLAGS
 
-/* Define if `fspec' is member of `xfs_args_t'. */
+/* Define to 1 if `fspec' is member of `xfs_args_t'. */
 #undef HAVE_XFS_ARGS_T_FSPEC
 
 /* Define to 1 if you have the `yp_all' function. */
@@ -1293,6 +1321,9 @@
 
 /* Define to 1 if you have the `_seterr_reply' function. */
 #undef HAVE__SETERR_REPLY
+
+/* Define to 1 if you have the `__rpc_get_local_uid' function. */
+#undef HAVE___RPC_GET_LOCAL_UID
 
 /* Define to 1 if you have the `__seterr_reply' function. */
 #undef HAVE___SETERR_REPLY
@@ -1941,9 +1972,9 @@
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-        STACK_DIRECTION > 0 => grows toward higher addresses
-        STACK_DIRECTION < 0 => grows toward lower addresses
-        STACK_DIRECTION = 0 => direction of growth unknown */
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
@@ -2018,9 +2049,11 @@
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 #undef inline
+#endif
 
 /* Define a type for the lofs_args structure */
 #undef lofs_args_t
