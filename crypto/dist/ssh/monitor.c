@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1.1.7 2005/02/13 00:53:03 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.1.1.8 2005/04/23 16:28:11 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.61 2004/07/17 05:31:41 dtucker Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.62 2005/01/30 11:18:08 dtucker Exp $");
 
 #include <openssl/dh.h>
 
@@ -1119,7 +1119,7 @@ mm_answer_sesskey(int sock, Buffer *m)
 	int rsafail;
 
 	/* Turn off permissions */
-	monitor_permit(mon_dispatch, MONITOR_REQ_SESSKEY, 1);
+	monitor_permit(mon_dispatch, MONITOR_REQ_SESSKEY, 0);
 
 	if ((p = BN_new()) == NULL)
 		fatal("%s: BN_new", __func__);

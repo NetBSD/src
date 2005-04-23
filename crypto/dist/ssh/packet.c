@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.17 2005/02/13 00:53:06 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.18 2005/04/23 16:28:13 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.115 2004/06/21 17:36:31 avsm Exp $");
+RCSID("$OpenBSD: packet.c,v 1.116 2004/10/20 11:48:53 markus Exp $");
 
 #include <sys/queue.h>
 
@@ -977,6 +977,8 @@ packet_read_poll1(void)
 		    buffer_len(&compression_buffer));
 	}
 	type = buffer_get_char(&incoming_packet);
+	if (type < SSH_MSG_MIN || type > SSH_MSG_MAX)
+		packet_disconnect("Invalid ssh1 packet type: %d", type);
 	return type;
 }
 
@@ -1089,6 +1091,8 @@ packet_read_poll2(u_int32_t *seqnr_p)
 	 * return length of payload (without type field)
 	 */
 	type = buffer_get_char(&incoming_packet);
+	if (type < SSH2_MSG_MIN || type >= SSH2_MSG_LOCAL_MIN)
+		packet_disconnect("Invalid ssh2 packet type: %d", type);
 	if (type == SSH2_MSG_NEWKEYS)
 		set_newkeys(MODE_IN);
 #ifdef PACKET_DEBUG

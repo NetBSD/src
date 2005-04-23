@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.12 2005/02/13 00:52:44 christos Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.1.1.13 2005/04/23 16:27:58 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.60 2004/06/21 17:36:31 avsm Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.62 2004/12/11 01:48:56 dtucker Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -34,6 +34,7 @@ RCSID("$OpenBSD: auth-rsa.c,v 1.60 2004/06/21 17:36:31 avsm Exp $");
 #include "hostfile.h"
 #include "monitor_wrap.h"
 #include "ssh.h"
+#include "misc.h"
 
 /* import */
 extern ServerOptions options;
@@ -50,7 +51,7 @@ extern u_char session_id[16];
  *   options bits e n comment
  * where bits, e and n are decimal numbers,
  * and comment is any string of characters up to newline.  The maximum
- * length of a line is 8000 characters.  See the documentation for a
+ * length of a line is SSH_MAX_PUBKEY_BYTES characters.  See sshd(8) for a
  * description of the options.
  */
 
@@ -153,7 +154,7 @@ auth_rsa_challenge_dialog(Key *key)
 int
 auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 {
-	char line[8192], *file;
+	char line[SSH_MAX_PUBKEY_BYTES], *file;
 	int allowed = 0;
 	u_int bits;
 	FILE *f;
@@ -202,11 +203,9 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	 * found, perform a challenge-response dialog to verify that the
 	 * user really has the corresponding private key.
 	 */
-	while (fgets(line, sizeof(line), f)) {
+	while (read_keyfile_line(f, file, line, sizeof(line), &linenum) != -1) {
 		char *cp;
 		char *key_options;
-
-		linenum++;
 
 		/* Skip leading whitespace, empty and comment lines. */
 		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
