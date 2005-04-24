@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.17 2004/10/22 05:39:57 skrll Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.18 2005/04/24 21:11:58 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.17 2004/10/22 05:39:57 skrll Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.18 2005/04/24 21:11:58 christos Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -174,6 +174,12 @@ va_arg(ap, unsigned int))
 					len = ep - bp;
 				memcpy(bp, str, len);
 				bp += len;
+				fmt += 2;
+				break;
+			}
+			case 'c':{
+				int c = va_arg(ap, int);
+				*bp++ = (char)c;
 				fmt += 2;
 				break;
 			}
