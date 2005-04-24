@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.8 2005/04/23 18:13:29 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2005/04/24 13:34:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -96,7 +96,7 @@ void
 xstrlcpy(char *dst, const char *src, size_t len)
 {
   if (len < 0) {
-    plog(XLOG_ERROR, "xstrlcpy: illegal len %d", len);
+    plog(XLOG_ERROR, "xstrlcpy: illegal len %lu", (unsigned long)len);
     return;
   }
   if (len == 0)
