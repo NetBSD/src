@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.777 2005/04/15 17:18:19 itohy Exp $
+#	$NetBSD: mi,v 1.778 2005/04/24 21:43:03 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5130,6 +5130,14 @@
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_crypto.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_input.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_ioctl.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_node.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_output.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_proto.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_radiotap.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_choose.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_input.0		comp-sys-catman	.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_lower_rate.0	comp-sys-catman	.cat
@@ -8970,6 +8978,14 @@
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
 ./usr/share/man/man9/i386/bioscall.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_crypto.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_input.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_ioctl.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_node.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_output.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_proto.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_radiotap.9	comp-sys-man		.man
 ./usr/share/man/man9/ieee80211_rssadapt_choose.9	comp-sys-man	.man
 ./usr/share/man/man9/ieee80211_rssadapt_input.9		comp-sys-man	.man
 ./usr/share/man/man9/ieee80211_rssadapt_lower_rate.9	comp-sys-man	.man
