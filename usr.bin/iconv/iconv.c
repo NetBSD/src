@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.7 2005/04/24 17:08:42 thorpej Exp $	*/
+/*	$NetBSD: iconv.c,v 1.8 2005/04/24 17:46:06 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.7 2005/04/24 17:08:42 thorpej Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.8 2005/04/24 17:46:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -39,15 +39,27 @@ __RCSID("$NetBSD: iconv.c,v 1.7 2005/04/24 17:08:42 thorpej Exp $");
 #include <unistd.h>
 #include <err.h>
 
+static void usage(void) __attribute__((__unused__));
+static char *estrdup(const char *);
+static int scmp(const void *, const void *);
+static void show_codesets(void);
+static void do_conv(const char *, FILE *, const char *, const char *, int, int);
+
 static void
 usage(void)
 {
-	fprintf(stderr,
-		"usage:\n"
-		"\t%s [-cs] -f <from> -t <to> [file ...]\n"
-		"\t%s -l\n",
-		getprogname(), getprogname());
+	(void)fprintf(stderr, "Usage: %s [-cs] -f <from> -t <to> [file ...]\n"
+	    "\t%s -l\n", getprogname(), getprogname());
 	exit(1);
+}
+
+static char *
+estrdup(const char *str)
+{
+	char *ptr = strdup(str);
+	if (ptr == NULL)
+		err(EXIT_FAILURE, "Cannot copy string");
+	return ptr;
 }
 
 /*
@@ -73,18 +85,17 @@ show_codesets(void)
 
 	qsort(list, sz, sizeof(char *), scmp);
 
-	for (i=0; i<sz; i++) {
-		printf("%s\n", list[i]);
-	}
+	for (i = 0; i < sz; i++)
+		(void)printf("%s\n", list[i]);
 
 	__iconv_free_list(list, sz);
 }
 
 #define INBUFSIZE 1024
-#define OUTBUFSIZE (INBUFSIZE*2)
+#define OUTBUFSIZE (INBUFSIZE * 2)
 static void
 do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
-	int hide_invalid)
+    int hide_invalid)
 {
 	char inbuf[INBUFSIZE], outbuf[OUTBUFSIZE], *out;
 	const char *in;
@@ -101,15 +112,15 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	invalids = 0;
 	while ((inbytes = fread(inbuf, 1, INBUFSIZE, fp)) > 0) {
 		in = inbuf;
-		while (inbytes>0) {
+		while (inbytes > 0) {
 			size_t inval;
 
 			out = outbuf;
 			outbytes = OUTBUFSIZE;
 			ret = __iconv(cd, &in, &inbytes, &out, &outbytes,
-				      flags, &inval);
+			    flags, &inval);
 			invalids += inval;
-			if (ret==(size_t)-1 && errno != E2BIG) {
+			if (ret == (size_t)-1 && errno != E2BIG) {
 				/*
 				 * XXX: iconv(3) is bad interface.
 				 *   invalid character count is lost here.
@@ -119,22 +130,22 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 					err(EXIT_FAILURE, "iconv()");
 
 				/* incomplete input character */
-				memmove(inbuf, in, inbytes);
-				ret = fread(inbuf+inbytes, 1,
-					    INBUFSIZE-inbytes, fp);
+				(void)memmove(inbuf, in, inbytes);
+				ret = fread(inbuf + inbytes, 1,
+				    INBUFSIZE - inbytes, fp);
 				if (ret == 0) {
-					if (feof(fp))
-						errx(EXIT_FAILURE,
-						     "iconv(): %s",
-						     strerror(EINVAL));
-					else
+					if (feof(fp)) {
+						errno = EINVAL;
+						err(EXIT_FAILURE, "iconv()");
+					} else
 						err(EXIT_FAILURE, "fread()");
 				}
 				in = inbuf;
 				inbytes += ret;
 			}
 			if (outbytes < OUTBUFSIZE)
-				fwrite(outbuf, 1, OUTBUFSIZE-outbytes, stdout);
+				(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes,
+				    stdout);
 		}
 	}
 	/* reset the shift state of the output buffer */
@@ -144,11 +155,11 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	if (ret == -1)
 		err(EXIT_FAILURE, "iconv()");
 	if (outbytes < OUTBUFSIZE)
-		fwrite(outbuf, 1, OUTBUFSIZE-outbytes, stdout);
+		(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes, stdout);
 
 	if (invalids > 0 && !silent)
 		warnx("warning: invalid characters: %lu",
-		      (unsigned long)invalids);
+		    (unsigned long)invalids);
 
 	iconv_close(cd);
 }
@@ -157,13 +168,13 @@ int
 main(int argc, char **argv)
 {
 	int ch, i;
-	extern char *optarg;
-	extern int optind;
 	int opt_l = 0, opt_s = 0, opt_c = 0;
 	char *opt_f = NULL, *opt_t = NULL;
 	FILE *fp;
 
-	while ((ch=getopt(argc, argv, "cslf:t:")) != EOF) {
+	setprogname(argv[0]);
+
+	while ((ch = getopt(argc, argv, "cslf:t:")) != EOF) {
 		switch (ch) {
 		case 'c':
 			opt_c = 1;
@@ -177,22 +188,21 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			/* from */
-			opt_f = strdup(optarg);
+			opt_f = estrdup(optarg);
 			break;
 		case 't':
 			/* to */
-			opt_t = strdup(optarg);
+			opt_t = estrdup(optarg);
 			break;
 		default:
 			usage();
 		}
 	}
-	argc-=optind;
-	argv+=optind;
+	argc -= optind;
+	argv += optind;
 	if (opt_l) {
-		if (argc>0 || opt_s || opt_f != NULL || opt_t != NULL) {
-			warnx("%s: -l should be specified solely.",
-			      getprogname());
+		if (argc > 0 || opt_s || opt_f != NULL || opt_t != NULL) {
+			warnx("-l is not allowed with other flags.");
 			usage();
 		}
 		show_codesets();
@@ -203,17 +213,16 @@ main(int argc, char **argv)
 		if (argc == 0)
 			do_conv("<stdin>", stdin, opt_f, opt_t, opt_s, opt_c);
 		else {
-			for (i=0; i<argc; i++) {
+			for (i = 0; i < argc; i++) {
 				fp = fopen(argv[i], "r");
 				if (fp == NULL)
-					errx(EXIT_FAILURE, "%s: %s",
-					     argv[i], strerror(errno));
+					err(EXIT_FAILURE, "Cannot open `%s'",
+					    argv[i]);
 				do_conv(argv[i], fp, opt_f, opt_t, opt_s,
-					opt_c);
-				fclose(fp);
+				    opt_c);
+				(void)fclose(fp);
 			}
 		}
 	}
-
 	return EXIT_SUCCESS;
 }
