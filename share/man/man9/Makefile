@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.170 2005/04/01 12:07:42 yamt Exp $
+#       $NetBSD: Makefile,v 1.171 2005/04/24 21:43:03 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -16,6 +16,9 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 filedesc.9 fork1.9 fsetown.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
+	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
+	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
+	ieee80211_radiotap.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
 	isapnp.9 itimerfix.9 kcopy.9 kcont.9 \
 	kfilter_register.9 knote.9 \
