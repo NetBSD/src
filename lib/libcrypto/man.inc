@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.14 2005/04/24 00:12:07 wiz Exp $
+#	$NetBSD: man.inc,v 1.15 2005/04/24 00:13:50 wiz Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -11,7 +11,7 @@ MAN+=	openssl_pkcs12.1 openssl_crl2pkcs7.1 openssl_pkcs7.1 \
 	openssl_dsaparam.1 openssl_dhparam.1 openssl_version.1 \
 	openssl_ocsp.1 openssl_req.1 openssl_nseq.1 openssl_s_server.1 \
 	openssl_ciphers.1 openssl_s_client.1 openssl_dgst.1 \
-	openssl_verify.1 openssl_s_time.1
+	openssl_verify.1 openssl_s_time.1 openssl_errstr.1
 
 MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	openssl_rc4.3 openssl_md5.3 SMIME_read_PKCS7.3 SMIME_write_PKCS7.3 \
@@ -57,8 +57,7 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	openssl_evp.3 SSL_clear.3 SSL_CTX_sess_number.3 BIO_f_buffer.3 \
 	openssl_buffer.3 BIO_f_cipher.3 SSL_get_current_cipher.3 \
 	ERR_clear_error.3 SSL_get_error.3 ERR_get_error.3 \
-	ERR_put_error.3 openssl_err.3 openssl_errstr.3 \
-	openssl_threads.3 openssl_des.3 \
+	ERR_put_error.3 openssl_err.3 openssl_threads.3 openssl_des.3 \
 	RAND_bytes.3 BN_num_bytes.3 ERR_load_strings.3 \
 	ERR_load_crypto_strings.3 d2i_DHparams.3 \
 	OpenSSL_add_all_algorithms.3 SSL_CTX_sessions.3 \
