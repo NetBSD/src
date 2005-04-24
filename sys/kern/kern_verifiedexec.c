@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.11 2005/04/23 09:10:47 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.12 2005/04/24 12:58:26 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.11 2005/04/23 09:10:47 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.12 2005/04/24 12:58:26 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -475,6 +475,8 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	if (error)
 		return (error);
 
+	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
+	
 	switch (vp->fp_status) {
 	case FINGERPRINT_VALID:
 	case FINGERPRINT_INDIRECT:
@@ -495,6 +497,11 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 				       va.va_fsid, va.va_fileid);
 			}
 
+			if (vhe == NULL) {
+				panic("Veriexec: tables inconsistent, vnode "
+				      "has status but no fp entry found");
+			}
+			
 			goto veriexec_rm;
 		}
 
@@ -509,7 +516,6 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		 * Could be we don't have an entry for this, but we can't
 		 * risk an unevaluated file or vnode cache flush.
 		 */
-		vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
 		if (vhe == NULL) {
 			break;
 		}
