@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.47 2004/10/22 21:00:18 jmc Exp $	*/
+/*	$NetBSD: extern.h,v 1.48 2005/04/24 01:45:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,13 +75,16 @@ int ar_fow(off_t, off_t *);
 int ar_rev(off_t );
 int ar_next(void);
 void ar_summary(int);
-int ar_dochdir(char *);
+int ar_dochdir(const char *);
 
 /*
  * ar_subs.c
  */
 extern u_long flcnt;
 extern ARCHD archd;
+int updatepath(void);
+int dochdir(const char *);
+int fdochdir(int);
 void list(void);
 void extract(void);
 void append(void);
