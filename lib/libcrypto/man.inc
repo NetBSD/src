@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.13 2004/03/22 00:48:04 groo Exp $
+#	$NetBSD: man.inc,v 1.14 2005/04/24 00:12:07 wiz Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -57,7 +57,8 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	openssl_evp.3 SSL_clear.3 SSL_CTX_sess_number.3 BIO_f_buffer.3 \
 	openssl_buffer.3 BIO_f_cipher.3 SSL_get_current_cipher.3 \
 	ERR_clear_error.3 SSL_get_error.3 ERR_get_error.3 \
-	ERR_put_error.3 openssl_err.3 openssl_threads.3 openssl_des.3 \
+	ERR_put_error.3 openssl_err.3 openssl_errstr.3 \
+	openssl_threads.3 openssl_des.3 \
 	RAND_bytes.3 BN_num_bytes.3 ERR_load_strings.3 \
 	ERR_load_crypto_strings.3 d2i_DHparams.3 \
 	OpenSSL_add_all_algorithms.3 SSL_CTX_sessions.3 \
