@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.7 2005/02/27 00:27:42 perry Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.8 2005/04/24 08:18:47 abs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.7 2005/02/27 00:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.8 2005/04/24 08:18:47 abs Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -399,7 +399,7 @@ static const keysym_t pckbd_keydesc_pt[] = {
     KC(10),  KS_9,		KS_parenright,	KS_bracketright,
     KC(11),  KS_0,		KS_equal,	KS_braceright,
     KC(12),  KS_apostrophe,	KS_question,
-    KC(13),  KS_less,		KS_greater,
+    KC(13),  KS_guillemotleft,	KS_guillemotright,
     KC(26),  KS_plus,		KS_asterisk,
     KC(27),  KS_dead_acute,	KS_dead_grave,
     KC(39),  KS_ccedilla,	KS_Ccedilla,
