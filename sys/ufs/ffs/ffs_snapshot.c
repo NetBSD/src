@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.12 2005/04/21 14:02:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.13 2005/04/24 15:49:37 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -291,6 +291,16 @@ ffs_snapshot(mp, vp, ctime)
 	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	microtime(&starttime);
+	/*
+	 * If the last cylinder group has changed the last block
+	 * saved before may have changed too so update it now.
+	 */
+	if (!ACTIVECG_ISSET(fs, fs->fs_ncg-1)) {
+		if ((error = readfsblk(vp, cgbuf, numblks - 1)) != 0)
+			goto out1;
+		if ((error = writevnblk(vp, cgbuf, numblks - 1)) != 0)
+			goto out1;
+	}
 	/*
 	 * First, copy all the cylinder group maps that have changed.
 	 */
