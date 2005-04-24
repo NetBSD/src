@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.782 2005/04/24 00:15:02 wiz Exp $
+# $NetBSD: mi,v 1.783 2005/04/24 21:43:03 dyoung Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -895,6 +895,7 @@
 ./usr/share/man/cat4/icpsp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/icsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/idp.0			man-sys-catman		.cat
+./usr/share/man/cat4/ieee80211.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ifpci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igsfb.0			man-sys-catman		.cat
@@ -3106,6 +3107,7 @@
 ./usr/share/man/man4/icpsp.4			man-sys-man		.man
 ./usr/share/man/man4/icsphy.4			man-sys-man		.man
 ./usr/share/man/man4/idp.4			man-sys-man		.man
+./usr/share/man/man4/ieee80211.4		man-sys-man		.man
 ./usr/share/man/man4/ifmedia.4			man-sys-man		.man
 ./usr/share/man/man4/ifpci.4			man-sys-man		.man
 ./usr/share/man/man4/igsfb.4			man-sys-man		.man
