@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.44 2004/08/02 10:20:48 yamt Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.45 2005/04/24 01:45:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.44 2004/08/02 10:20:48 yamt Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.45 2005/04/24 01:45:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,10 +192,8 @@ ar_open(const char *name)
 		return(-1);
 
 	if (chdname != NULL)
-		if (chdir(chdname) != 0) {
-			syswarn(1, errno, "Failed chdir to %s", chdname);
+		if (dochdir(chdname) == -1)
 			return(-1);
-		}
 	/*
 	 * set up is based on device type
 	 */
@@ -1706,16 +1704,12 @@ ar_summary(int n)
  */
 
 int
-ar_dochdir(char *name)
+ar_dochdir(const char *name)
 {
-	/* First fchdir() back... */
-	if (fchdir(cwdfd) < 0) {
-		syswarn(1, errno, "Can't fchdir to starting directory");
-		return(-1);
-	}
-	if (chdir(name) < 0) {
-		syswarn(1, errno, "Can't chdir to %s", name);
-		return(-1);
-	}
-	return (0);
+	/* First fdochdir() back... */
+	if (fdochdir(cwdfd) == -1)
+		return -1;
+	if (dochdir(name) == -1)
+		return -1;
+	return 0;
 }

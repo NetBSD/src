@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.36 2005/04/24 01:24:57 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.37 2005/04/24 01:45:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.36 2005/04/24 01:24:57 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.37 2005/04/24 01:45:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: ar_subs.c,v 1.36 2005/04/24 01:24:57 christos Exp $");
 #include "pax.h"
 #include "extern.h"
 
+static int path_check(ARCHD *);
 static void wr_archive(ARCHD *, int is_app);
 static int get_arc(void);
 static int next_head(ARCHD *);
@@ -75,6 +76,55 @@ extern sigset_t s_mask;
 static char hdbuf[BLKMULT];		/* space for archive header on read */
 u_long flcnt;				/* number of files processed */
 ARCHD archd;
+
+static char	cwdpath[MAXPATHLEN];	/* current working directory path */
+static size_t	cwdpathlen;		/* current working directory path len */
+
+int
+updatepath(void)
+{
+	if (getcwd(cwdpath, sizeof(cwdpath)) == NULL) {
+		syswarn(1, errno, "Cannot get working directory");
+		return -1;
+	}
+	cwdpathlen = strlen(cwdpath);
+	return 0;
+}
+
+int
+fdochdir(int fdwd)
+{
+	if (fchdir(fdwd) == -1) {
+		syswarn(1, errno, "Cannot chdir to `.'");
+		return -1;
+	}
+	return updatepath();
+}
+
+int
+dochdir(const char *name)
+{
+	if (chdir(name) == -1)
+		syswarn(1, errno, "Cannot chdir to `%s'", name);
+	return updatepath();
+}
+
+static int
+path_check(ARCHD *arcn)
+{
+	char buf[MAXPATHLEN];
+
+	if (realpath(arcn->name, buf) == NULL) {
+		syswarn(1, 0, "Cannot resolve `%s'", arcn->name);
+		return -1;
+	}
+	if (strncmp(buf, cwdpath, cwdpathlen) != 0) {
+		syswarn(1, 0, "Attempt to write file `%s' outside current "
+		    "working directory `%s' ignored", buf, cwdpath);
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * list()
@@ -327,9 +377,14 @@ extract(void)
 		 */
 		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL) &&
 		    !to_stdout)
-			if (chdir(arcn->pat->chdname) != 0)
-				syswarn(1, errno, "Cannot chdir to %s",
-				    arcn->pat->chdname);
+			dochdir(arcn->pat->chdname);
+
+		if (secure && path_check(arcn) != 0) {
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
+		}
+
+			
 		/*
 		 * all ok, extract this member based on type
 		 */
@@ -390,9 +445,7 @@ extract(void)
 		 * if required, chdir around.
 		 */
 		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
-			if (fchdir(cwdfd) != 0)
-				syswarn(1, errno,
-				    "Can't fchdir to starting directory");
+			fdochdir(cwdfd);
 	}
 
 	/*
