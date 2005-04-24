@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.83 2005/02/10 17:48:33 jmc Exp $	*/
+/*	$NetBSD: options.c,v 1.84 2005/04/24 03:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.83 2005/02/10 17:48:33 jmc Exp $");
+__RCSID("$NetBSD: options.c,v 1.84 2005/04/24 03:39:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,6 +220,7 @@ struct option pax_longopts[] = {
 						OPT_INSECURE },
 	{ "force-local",	no_argument,		0,
 						OPT_FORCE_LOCAL },
+	{ 0,			0,			0 },
 };
 
 /*
