@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.10 2005/04/22 14:37:10 wiz Exp $
+.\" $NetBSD: veriexecctl.8,v 1.11 2005/04/24 13:23:55 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.10 2005/04/22 14:37:10 wiz Exp $
+.\"	$Id: veriexecctl.8,v 1.11 2005/04/24 13:23:55 blymn Exp $
 .\"
 .Dd April 22, 2005
 .Dt VERIEXECCTL 8
@@ -144,3 +144,5 @@ first appeared in
 requires the kernel to have been configured with the
 .Dv VERIFIED_EXEC
 option and the verifiedexec pseudo-device.
+.Sh BUGS
+There must be no whitespace in the path field of a fingerprint entry.
