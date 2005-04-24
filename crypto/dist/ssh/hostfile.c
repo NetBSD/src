@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.13 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.14 2005/04/24 13:31:01 kleink Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: hostfile.c,v 1.33 2005/03/01 10:40:26 djm Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.13 2005/04/23 16:53:28 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.14 2005/04/24 13:31:01 kleink Exp $");
 
 #include <resolv.h>
 #include <openssl/hmac.h>
@@ -90,8 +90,8 @@ extract_salt(const char *s, u_int l, char *salt, size_t salt_len)
 		return (-1);
 	}
 	if (ret != SHA_DIGEST_LENGTH) {
-		debug2("extract_salt: expected salt len %u, got %u",
-		    salt_len, ret);
+		debug2("extract_salt: expected salt len %lu, got %u",
+		    (unsigned long)salt_len, ret);
 		return (-1);
 	}
 	
