@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.781 2005/04/23 19:47:51 perseant Exp $
+# $NetBSD: mi,v 1.782 2005/04/24 00:15:02 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -272,6 +272,7 @@
 ./usr/share/man/cat1/openssl_dsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_dsaparam.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_enc.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_errstr.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_gendsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman	crypto,.cat
@@ -2482,6 +2483,7 @@
 ./usr/share/man/man1/openssl_dsa.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_dsaparam.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_enc.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_errstr.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_gendsa.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_genrsa.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_nseq.1		man-crypto-man		crypto,.man
