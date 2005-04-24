@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.36 2004/10/10 21:53:23 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.37 2005/04/24 01:45:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.36 2004/10/10 21:53:23 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.37 2005/04/24 01:45:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,6 +266,8 @@ main(int argc, char **argv)
 		syswarn(0, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
+	if (updatepath() == -1)
+		return(exit_val);
 
 	/*
 	 * Where should we put temporary files?
