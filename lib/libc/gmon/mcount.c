@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.15 2005/04/24 18:15:52 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.16 2005/04/24 18:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.15 2005/04/24 18:15:52 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.16 2005/04/24 18:18:52 christos Exp $");
 #endif
 #endif
 
@@ -87,7 +87,7 @@ extern struct gmonparam _gmondummy;
 struct gmonparam *_m_gmon_alloc(void);
 #endif
 
-_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__,__used__));	/* see below. */
+_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__used__));	/* see below. */
 
 /*
  * mcount is called on entry to each function compiled with the profiling
