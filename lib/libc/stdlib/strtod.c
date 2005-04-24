@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.47 2005/04/24 19:33:52 christos Exp $	*/
+/*	$NetBSD: strtod.c,v 1.48 2005/04/24 23:29:06 christos Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.47 2005/04/24 19:33:52 christos Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.48 2005/04/24 23:29:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1742,8 +1742,9 @@ strtod
 			 * example: 1.2e-307 .
 			 */
 			if (y <= (P-1)*Exp_msk1 && aadj >= 1.) {
-				int tmpadj = (int)(aadj + 0.5);
-				aadj1 = (double)(dsign ? tmpadj : -tmpadj);
+				aadj1 = (double)(int)(aadj + 0.5);
+				if (!dsign)
+					aadj1 = -aadj1;
 				}
 			adj = aadj1 * ulp(value(rv));
 			value(rv) += adj;
