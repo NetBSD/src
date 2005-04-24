@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.37 2005/04/24 01:45:04 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.38 2005/04/24 03:36:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.37 2005/04/24 01:45:04 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.38 2005/04/24 03:36:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: ar_subs.c,v 1.37 2005/04/24 01:45:04 christos Exp $");
 #include "pax.h"
 #include "extern.h"
 
-static int path_check(ARCHD *);
+static int path_check(ARCHD *, int);
 static void wr_archive(ARCHD *, int is_app);
 static int get_arc(void);
 static int next_head(ARCHD *);
@@ -110,12 +110,22 @@ dochdir(const char *name)
 }
 
 static int
-path_check(ARCHD *arcn)
+path_check(ARCHD *arcn, int level)
 {
 	char buf[MAXPATHLEN];
 
 	if (realpath(arcn->name, buf) == NULL) {
-		syswarn(1, 0, "Cannot resolve `%s'", arcn->name);
+		int error;
+		char *p = strrchr(arcn->name, '/');
+		if (p == NULL)
+			return 0;	/* abort? how can this happen? */
+		*p = '\0';
+		error = path_check(arcn, level + 1);
+		*p = '/';
+		if (error == 0)
+			return 0;
+		if (level == 0)
+			syswarn(1, 0, "Cannot resolve `%s'", arcn->name);
 		return -1;
 	}
 	if (strncmp(buf, cwdpath, cwdpathlen) != 0) {
@@ -379,7 +389,7 @@ extract(void)
 		    !to_stdout)
 			dochdir(arcn->pat->chdname);
 
-		if (secure && path_check(arcn) != 0) {
+		if (secure && path_check(arcn, 0) != 0) {
 			(void)rd_skip(arcn->skip + arcn->pad);
 			continue;
 		}
