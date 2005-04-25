@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/12/29 15:04:06 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2005/04/25 15:43:34 matt Exp $
 # Copyright 2002 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -28,6 +28,8 @@
 LIB=	pam_ksu
 SRCS=	pam_ksu.c
 MAN=	pam_ksu.8
+
+CPPFLAGS+=	-I${DESTDIR}/usr/include/krb5
 
 LIBDPLIBS=	krb5	${LIB_ROOT_DIR}/libkrb5 \
 		asn1	${LIB_ROOT_DIR}/libasn1 \
