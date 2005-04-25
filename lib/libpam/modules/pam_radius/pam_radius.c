@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_radius.c,v 1.4 2005/04/19 03:15:35 christos Exp $	*/
+/*	$NetBSD: pam_radius.c,v 1.5 2005/04/25 15:42:46 matt Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_radius/pam_radius.c,v 1.22 2004/06/25 12:32:45 kan Exp $");
 #else
-__RCSID("$NetBSD: pam_radius.c,v 1.4 2005/04/19 03:15:35 christos Exp $");
+__RCSID("$NetBSD: pam_radius.c,v 1.5 2005/04/25 15:42:46 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -117,7 +117,7 @@ build_access_request(struct rad_handle *radh, const char *user,
 		hints.ai_family = PF_INET;
 		if (getaddrinfo(nas_ipaddr, NULL, &hints, &res) == 0 &&
 		    res != NULL) {
-			(struct sockaddr *)haddr = res->ai_addr;
+			haddr = (struct sockaddr_in *)res->ai_addr;
 			error = rad_put_addr(radh, RAD_NAS_IP_ADDRESS,
 			    haddr->sin_addr);
 			freeaddrinfo(res);
