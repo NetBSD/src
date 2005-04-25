@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.192 2005/02/13 23:53:20 fredb Exp $	*/
+/*	$NetBSD: audio.c,v 1.193 2005/04/25 13:19:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.192 2005/02/13 23:53:20 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.193 2005/04/25 13:19:46 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1306,11 +1306,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
-	sc->sc_full_duplex = 0;
-/* doesn't always work right on SB.
+	sc->sc_full_duplex = 
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX);
-*/
 
 	mode = 0;
 	if (flags & FREAD) {
