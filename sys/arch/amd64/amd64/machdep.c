@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2005/04/01 11:59:22 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2005/04/25 15:02:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2005/04/01 11:59:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2005/04/25 15:02:02 lukem Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -257,7 +257,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);

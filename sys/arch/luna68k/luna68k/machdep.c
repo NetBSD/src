@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.39 2005/02/11 15:03:55 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.40 2005/04/25 15:02:05 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2005/02/11 15:03:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2005/04/25 15:02:05 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,7 +259,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
