@@ -1,3 +1,4 @@
+.\" $NetBSD: ieee80211_radiotap.9,v 1.2 2005/04/25 14:36:36 wiz Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -26,7 +27,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.1 2005/04/24 21:11:07 dyoung Exp $
 .\"
 .Dd March 2, 2004
 .Dt IEEE80211_RADIOTAP 9
@@ -205,11 +205,11 @@ struct an_rx_radiotap_header {
 Bitmap indicating which fields are present in the above structure:
 .Bd -literal -offset indent
 #define AN_RX_RADIOTAP_PRESENT \\
-	((1 << IEEE80211_RADIOTAP_FLAGS) | \\
-	 (1 << IEEE80211_RADIOTAP_RATE) | \\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) | \\
-	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \\
-	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+	((1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_FLAGS) | \\
+	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_RATE) | \\
+	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_CHANNEL) | \\
+	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \\
+	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_DBM_ANTNOISE))
 .Ed
 .Sh SEE ALSO
 .Xr bpf 4 ,
