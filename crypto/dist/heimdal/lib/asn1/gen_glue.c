@@ -35,7 +35,7 @@
 
 #ifdef __RCSID
 __RCSID("$Heimdal: gen_glue.c,v 1.7 1999/12/02 17:05:02 joda Exp $"
-        "$NetBSD: gen_glue.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+        "$NetBSD: gen_glue.c,v 1.3 2005/04/25 17:20:51 matt Exp $");
 #endif
 
 static void
@@ -106,11 +106,11 @@ generate_units (const Symbol *s)
     int tag = -1;
 
     fprintf (headerfile,
-	     "extern struct units %s_units[];",
+	     "extern struct units * const %s_units;",
 	     s->gen_name);
 
     fprintf (codefile,
-	     "struct units %s_units[] = {\n",
+	     "struct units %s_units_static[] = {\n",
 	     s->gen_name);
 
     if(t->members)
@@ -125,6 +125,10 @@ generate_units (const Symbol *s)
     fprintf (codefile,
 	     "\t{NULL,\t0}\n"
 	     "};\n\n");
+
+    fprintf (codefile,
+	     "struct units * const %s_units = %s_units_static;\n\n",
+	     s->gen_name, s->gen_name);
 }
 
 void
