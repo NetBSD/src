@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2005/04/01 11:59:27 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/04/01 11:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:05 lukem Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -849,7 +849,7 @@ cpu_startup(void)
 	 * fogging the air w/ humid cries --
 	 *	WELCOME TO SUMMER!
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 
 	/* identify system type */
 	printf("%s\n", cpu_model);
