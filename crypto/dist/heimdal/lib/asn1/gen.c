@@ -35,7 +35,7 @@
 
 #ifdef __RCSID
 __RCSID("$Heimdal: gen.c,v 1.50 2003/04/17 07:09:18 lha Exp $"
-        "$NetBSD: gen.c,v 1.7 2005/04/25 01:25:25 matt Exp $");
+        "$NetBSD: gen.c,v 1.8 2005/04/25 17:20:51 matt Exp $");
 #endif
 
 FILE *headerfile, *codefile, *logfile;
@@ -92,8 +92,7 @@ init_generate (const char *filename, const char *base)
 	     "#define __%s_h__\n\n", headerbase, headerbase);
     fprintf (headerfile, 
 	     "#include <stddef.h>\n"
-	     "#include <time.h>\n"
-	     "#include <parse_units.h>\n\n");
+	     "#include <time.h>\n\n");
 #ifndef HAVE_TIMEGM
     fprintf (headerfile, "time_t timegm (struct tm*);\n\n");
 #endif
