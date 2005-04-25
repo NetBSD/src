@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2004/07/06 13:09:18 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2005/04/25 15:02:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2004/07/06 13:09:18 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2005/04/25 15:02:06 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -187,7 +187,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

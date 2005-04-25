@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2005/04/25 15:02:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2005/04/25 15:02:07 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -315,7 +315,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	fputype = FPU_NONE;
 #ifdef  FPU_EMULATE

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2005/02/11 15:03:56 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2005/04/25 15:02:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2005/02/11 15:03:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2005/04/25 15:02:06 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -341,7 +341,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

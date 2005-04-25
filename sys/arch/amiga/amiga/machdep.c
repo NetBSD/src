@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 2004/03/24 15:34:47 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 2005/04/25 15:02:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2004/03/24 15:34:47 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2005/04/25 15:02:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

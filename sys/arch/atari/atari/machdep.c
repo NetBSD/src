@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2005/02/11 15:03:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2005/04/25 15:02:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2005/02/11 15:03:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/04/25 15:02:03 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -248,7 +248,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), mem_size);

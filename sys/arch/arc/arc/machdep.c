@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2005/01/22 07:44:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2005/04/25 15:02:03 lukem Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2005/01/22 07:44:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2005/04/25 15:02:03 lukem Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -528,7 +528,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
