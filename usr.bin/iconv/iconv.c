@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.8 2005/04/24 17:46:06 christos Exp $	*/
+/*	$NetBSD: iconv.c,v 1.9 2005/04/25 13:57:34 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.8 2005/04/24 17:46:06 christos Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.9 2005/04/25 13:57:34 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -134,10 +134,12 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 				ret = fread(inbuf + inbytes, 1,
 				    INBUFSIZE - inbytes, fp);
 				if (ret == 0) {
-					if (feof(fp)) {
-						errno = EINVAL;
-						err(EXIT_FAILURE, "iconv()");
-					} else
+					if (feof(fp))
+						errx(EXIT_FAILURE,
+						     "unexpected end of file; "
+						     "the last character is "
+						     "incomplete.");
+					else
 						err(EXIT_FAILURE, "fread()");
 				}
 				in = inbuf;
