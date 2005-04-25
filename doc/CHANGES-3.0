@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.66 2005/04/25 13:51:48 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.67 2005/04/25 14:54:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7680,4 +7680,12 @@ sys/arch/xen/xen/hypervisor.c			1.14
 	A NetBSD guest will now reboot or shutdown on 'xm shutdown' commands
 	in domain0.
 	[bouyer, ticket #190]
+
+sys/dev/audio.c					1.193
+
+	Enable full-duplex mode by default on drivers that support it if the
+	underlying audio device was opened read/write. This is consistent with
+	Linux OSS behaviour and fixes a bug with certain applications
+	(including Skype) that assume this behaviour. Fixes PR kern/30044.
+	[jmcneill, ticket #200]
 
