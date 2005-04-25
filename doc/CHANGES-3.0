@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.65 2005/04/25 13:38:20 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.66 2005/04/25 13:51:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7639,4 +7639,45 @@ sys/ufs/ffs/ffs_snapshot.c			1.12-1.13
 	Fix an inconsistency where the last block of the snapshot contains
 	old data.
 	[hannken, ticket #197]
+
+sys/arch/i386/conf/INSTALL_XENU			1.2
+sys/arch/xen/conf/files.xen			1.20
+sys/arch/xen/xen/vga_xen.c			delete
+sys/arch/xen/xen/xenkbc.c			delete
+
+	Remove "xenkbc at hypervisor" and "vga at hypervisor". They have been
+	obsoleted by PCI and ISA support..
+	[bouyer, ticket #186]
+
+sys/arch/xen/include/if_xennetvar.h		1.6
+sys/arch/xen/xen/ctrl_if.c			1.7
+sys/arch/xen/xen/hypervisor.c			1.13
+sys/arch/xen/xen/if_xennet.c			1.22
+sys/arch/xen/xen/xbd.c				1.19
+
+	Add a kernel thread to the control interface, to handle deferred
+	callacks (which may sleep). Fix port-xen/29851 by YAMAMOTO Takashi.
+	Use config_pending_incr()/config_pending_decr() in if_xennet instead of
+	busy-looping (which doesn't work any more). Remove the kernel thread
+	from xbd, which isn't needed any more.
+	[bouyer, ticket #187]
+
+sys/arch/xen/xen/xbd.c				1.20
+
+	Remove unused code. Add support for dynamic attach/detach.
+	Fixes port-xen/29856.
+	[bouyer, ticket #188]
+
+sys/arch/xen/xen/xbdback.c			1.11
+
+	If VOP_IOCTL fails on the device we're trying to export, return an
+	error instead of dereferencing a NULL pointer later.
+	[bouyer, ticket #189]
+
+sys/arch/xen/conf/files.xen			1.21
+sys/arch/xen/xen/hypervisor.c			1.14
+
+	A NetBSD guest will now reboot or shutdown on 'xm shutdown' commands
+	in domain0.
+	[bouyer, ticket #190]
 
