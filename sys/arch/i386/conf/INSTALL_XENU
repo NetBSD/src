@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XENU,v 1.1.2.1 2005/04/21 19:08:45 tron Exp $
+# $NetBSD: INSTALL_XENU,v 1.1.2.2 2005/04/25 13:41:24 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -140,16 +140,6 @@ xbd*		at hypervisor?		# Xen virtual block device
 #wd*		at hypervisor?		# Xen vbd (wd identity)
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
-
-#xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
-#pckbd*		at xenkbc?		# Keyboard
-#vga*		at hypervisor?		# Xen VGA display
-#pms*		at xenkbc?		# PS/2 Mouse for wsmouse
-
-#wskbd*		at pckbd? console ?
-#wsdisplay*	at vga? console ?
-#wsmouse*	at pms? mux 0
-
 
 include	"arch/i386/conf/GENERIC.local"
 
