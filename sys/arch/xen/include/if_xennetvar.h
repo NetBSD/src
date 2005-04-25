@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.4.2.1 2005/04/25 13:44:02 tron Exp $	*/
 
 /*
  *
@@ -108,7 +108,6 @@ struct xennet_attach_args {
 struct nfs_diskless;
 
 int xennet_scan(struct device *, struct xennet_attach_args *, cfprint_t);
-void xennet_scan_finish(struct device *);
 void xennet_start(struct ifnet *);
 int xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void xennet_watchdog(struct ifnet *ifp);
