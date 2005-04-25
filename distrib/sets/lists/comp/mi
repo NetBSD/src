@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.778 2005/04/24 21:43:03 dyoung Exp $
+#	$NetBSD: mi,v 1.779 2005/04/25 11:38:01 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1450,7 +1450,7 @@
 ./usr/include/tcpd.h				comp-c-include
 ./usr/include/termcap.h				comp-c-include
 ./usr/include/termios.h				comp-c-include
-./usr/include/threadlib.h			comp-c-include		obsolete
+./usr/include/threadlib.h			comp-obsolete		obsolete
 ./usr/include/time.h				comp-c-include
 ./usr/include/ttyent.h				comp-c-include
 ./usr/include/tzfile.h				comp-c-include
@@ -1468,7 +1468,7 @@
 ./usr/include/ufs/mfs/mfsnode.h			comp-c-include
 ./usr/include/ufs/ufs/dinode.h			comp-c-include
 ./usr/include/ufs/ufs/dir.h			comp-c-include
-./usr/include/ufs/ufs/dirhash.h			comp-c-include		obsolete
+./usr/include/ufs/ufs/dirhash.h			comp-obsolete		obsolete
 ./usr/include/ufs/ufs/inode.h			comp-c-include
 ./usr/include/ufs/ufs/quota.h			comp-c-include
 ./usr/include/ufs/ufs/ufs_bswap.h		comp-c-include
