@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2004/01/05 19:55:27 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2005/04/25 15:02:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2004/01/05 19:55:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2005/04/25 15:02:04 lukem Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -327,7 +327,7 @@ cpu_startup(void)
 	 */
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	printf("NCD Explora451\n");
 
 	memsize = ctob(physmem);

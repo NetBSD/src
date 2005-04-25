@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.254 2005/04/01 11:59:34 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.255 2005/04/25 15:02:07 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2005/04/25 15:02:07 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -258,7 +258,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

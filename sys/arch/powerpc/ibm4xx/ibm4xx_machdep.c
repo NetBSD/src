@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.2 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.3 2005/04/25 15:02:06 lukem Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.2 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.3 2005/04/25 15:02:06 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -295,7 +295,7 @@ ibm4xx_cpu_startup(const char *model)
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
 

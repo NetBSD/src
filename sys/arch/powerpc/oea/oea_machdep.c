@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.20 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.21 2005/04/25 15:02:06 lukem Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.20 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.21 2005/04/25 15:02:06 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -682,7 +682,7 @@ oea_startup(const char *model)
 	}
 	initmsgbuf(v, sz);
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
 	cpu_identify(NULL, 0);

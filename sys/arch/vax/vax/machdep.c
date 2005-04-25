@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.148 2005/04/09 20:44:24 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.149 2005/04/25 15:02:07 lukem Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2005/04/09 20:44:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2005/04/25 15:02:07 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -192,7 +192,8 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 * Also call CPU init on systems that need that.
 	 */
-	printf("%s\n%s\n", version, cpu_model);
+	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_model);
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2005/04/01 11:59:26 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:04 lukem Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/04/01 11:59:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:04 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -376,7 +376,7 @@ cpu_startup(void)
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	printf("Walnut PowerPC 405GP Evaluation Board\n");
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));

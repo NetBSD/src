@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.245 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: init_main.c,v 1.246 2005/04/25 15:02:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.245 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.246 2005/04/25 15:02:07 lukem Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -245,7 +245,6 @@ main(void)
 	 * in case of early panic or other messages.
 	 */
 	consinit();
-	printf("%s", copyright);
 
 	KERNEL_LOCK_INIT();
 

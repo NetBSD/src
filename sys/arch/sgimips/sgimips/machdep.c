@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2005/03/26 10:04:29 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2005/04/25 15:02:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2005/03/26 10:04:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2005/04/25 15:02:07 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -635,7 +635,7 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
-	printf(version);
+	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.303 2005/03/05 17:34:06 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.304 2005/04/25 15:02:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2005/03/05 17:34:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2005/04/25 15:02:06 lukem Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -434,7 +434,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 
 	vers = mac68k_machine.booter_version;
