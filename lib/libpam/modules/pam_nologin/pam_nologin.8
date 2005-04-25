@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_nologin.8,v 1.4 2005/02/26 15:07:38 thorpej Exp $
+.\" $NetBSD: pam_nologin.8,v 1.5 2005/04/25 10:24:06 yamt Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\"
@@ -53,10 +53,10 @@ The NoLogin authentication component
 always returns success for the superuser,
 and returns success for all other users
 if the file
-.Pa /var/run/nologin
+.Pa /etc/nologin
 does not exist.
 If
-.Pa /var/run/nologin
+.Pa /etc/nologin
 does exist,
 then its contents are echoed
 to non-superusers
@@ -67,7 +67,7 @@ is specified in
 then the file thus specified
 is used instead.
 This usually defaults to
-.Pa /var/run/nologin .
+.Pa /etc/nologin .
 .Pp
 The following options may be passed to the authentication module:
 .Bl -tag -width ".Cm no_warn"
