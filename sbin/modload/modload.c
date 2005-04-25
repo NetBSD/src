@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.49 2004/10/27 19:36:31 peter Exp $	*/
+/*	$NetBSD: modload.c,v 1.50 2005/04/25 01:33:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.49 2004/10/27 19:36:31 peter Exp $");
+__RCSID("$NetBSD: modload.c,v 1.50 2005/04/25 01:33:03 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -512,12 +512,12 @@ main(int argc, char **argv)
 			int cmajor = LKM_CHAR_MAJOR(sbuf.offset);
 			(void)snprintf(arg3, sizeof(arg3), "%d", cmajor);
 			(void)snprintf(arg4, sizeof(arg4), "%d", bmajor);
-			execl(post, post, id, type, arg3, arg4, 0);
+			execl(post, post, id, type, arg3, arg4, NULL);
 		} else {
 			char arg3[16];
 			(void)snprintf(arg3, sizeof(arg3), "%ld",
 			    (long)sbuf.offset);
-			execl(post, post, id, type, arg3, 0);
+			execl(post, post, id, type, arg3, NULL);
 		}
 		err(16, "can't exec `%s'", post);
 	}

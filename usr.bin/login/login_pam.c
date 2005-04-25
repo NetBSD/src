@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.7 2005/04/19 03:40:58 lukem Exp $       */
+/*     $NetBSD: login_pam.c,v 1.8 2005/04/25 01:34:38 matt Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.7 2005/04/19 03:40:58 lukem Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.8 2005/04/25 01:34:38 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -679,7 +679,7 @@ skip_auth:
 	(void)strlcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
 	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 1);
 
-	execlp(pwd->pw_shell, tbuf, 0);
+	execlp(pwd->pw_shell, tbuf, NULL);
 	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
 
