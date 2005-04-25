@@ -1,3 +1,5 @@
+.\" $NetBSD: ieee80211.4,v 1.2 2005/04/25 12:28:10 wiz Exp $
+.\"
 .\" Copyright (c) 2001
 .\"	The Aerospace Corporation.  All rights reserved.
 .\"
@@ -83,7 +85,7 @@ and setting
 to the length.
 If
 .Va i_val
-is \(>= 0 then the request refers to the configured value for that slot.
+is \(\*[Gt]= 0 then the request refers to the configured value for that slot.
 Generally, 0 is the only valid value, but some interfaces support more
 SSIDs.
 If
@@ -236,10 +238,7 @@ Set the powersave sleep time in msec to the value in
 .Xr an 4 ,
 .Xr ray 4 ,
 .Xr wi 4 ,
-.Xr ancontrol 8 ,
-.Xr ifconfig 8 ,
-.Xr raycontrol 8 ,
-.Xr wicontrol 8
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
