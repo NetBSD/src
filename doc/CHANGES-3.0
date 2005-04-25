@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.64 2005/04/25 10:16:24 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.65 2005/04/25 13:38:20 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7628,4 +7628,15 @@ sys/dev/pci/if_hme_pci.c			1.17-1.18
 
 	PR/30018: Peter Eisch: Sun QFE support in non-sparc hardware
 	[christos, ticket #191]
+
+sys/netkey/key.c				1.130
+
+	Send NAT-T ports in SAD dump so that setkey -D can display them.
+	[manu, ticket #195]
+
+sys/ufs/ffs/ffs_snapshot.c			1.12-1.13
+
+	Fix an inconsistency where the last block of the snapshot contains
+	old data.
+	[hannken, ticket #197]
 
