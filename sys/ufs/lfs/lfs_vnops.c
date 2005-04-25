@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.148 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.149 2005/04/25 06:28:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.148 2005/04/23 19:47:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.149 2005/04/25 06:28:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,7 +922,7 @@ lfs_getattr(void *v)
 int
 lfs_setattr(void *v)
 {
-	struct vop_getattr_args /* {
+	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
