@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.20 2004/08/13 12:10:39 mycroft Exp $	*/
+/*	$NetBSD: vi.c,v 1.21 2005/04/25 01:06:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.20 2004/08/13 12:10:39 mycroft Exp $");
+__RCSID("$NetBSD: vi.c,v 1.21 2005/04/25 01:06:03 matt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1021,7 +1021,7 @@ vi_histedit(EditLine *el, int c)
 		return CC_ERROR;
 	case 0:
 		close(fd);
-		execlp("vi", "vi", tempfile, 0);
+		execlp("vi", "vi", tempfile, NULL);
 		exit(0);
 		/*NOTREACHED*/
 	default:
