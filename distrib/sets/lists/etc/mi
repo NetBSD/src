@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.154 2005/04/17 15:15:49 lukem Exp $
+# $NetBSD: mi,v 1.155 2005/04/25 11:38:01 wiz Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -113,7 +113,7 @@
 ./etc/postfix/post-install			etc-postfix-etc		postfix
 ./etc/postfix/postfix-files			etc-postfix-etc		postfix
 ./etc/postfix/postfix-script			etc-postfix-etc		postfix
-./etc/postinstall				etc-sys-etc		obsolete
+./etc/postinstall				etc-obsolete		obsolete
 ./etc/powerd/scripts/power_button		etc-sysutil-etc
 ./etc/powerd/scripts/reset_button		etc-sysutil-etc
 ./etc/primes					etc-obsolete		obsolete
