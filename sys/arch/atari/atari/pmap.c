@@ -1,3 +1,4 @@
+/*	$NetBSD: pmap.c,v 1.89 2005/04/25 06:27:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2005/04/01 11:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2005/04/25 06:27:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
