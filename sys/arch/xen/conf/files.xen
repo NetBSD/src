@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.18.2.1 2005/04/21 18:41:11 tron Exp $
+#	$NetBSD: files.xen,v 1.18.2.2 2005/04/25 13:41:30 tron Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -242,15 +242,6 @@ file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
 #attach	wd at hypervisor with wd_xen
 #attach	sd at hypervisor with sd_xen
 #attach	cd at hypervisor with cd_xen
-
-# Keyboard
-device	xenkbc: pckbport
-attach	xenkbc at hypervisor
-file	arch/xen/xen/xenkbc.c		xenkbc		needs-flag
-
-# Generic VGA
-attach	vga at hypervisor with vga_xen
-file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
 
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS
