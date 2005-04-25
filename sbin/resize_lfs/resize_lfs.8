@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_lfs.8,v 1.1 2005/04/23 19:47:51 perseant Exp $
+.\"     $NetBSD: resize_lfs.8,v 1.2 2005/04/25 11:47:37 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nd resize a mounted log-structured filesystem
 .Sh SYNOPSIS
 .Nm
-.Op Fl n Ar new-size
 .Op Fl v
+.Op Fl n Ar new-size
 .Ar mounted-file-system
 .Sh DESCRIPTION
 .Nm
@@ -63,14 +63,17 @@ of the specified size; when shrinking,
 .Nm
 must first
 .Dq clean
-the segments that will be invalid when the filesystem is shrunk.  If
-this cleaning process results in these segments becoming redirtied,
+the segments that will be invalid when the filesystem is shrunk.
+If this cleaning process results in these segments becoming redirtied,
 this indicates that the given new size is not large enough to contain the
 existing filesystem data, and
 .Nm
 will return an error.
 .Sh EXAMPLES
-.Ic resize_lfs Fl n Cm 32576 Cm /home
+To resize the file system mounted at
+.Pa /home
+to 32576 sectors:
+.Dl resize_lfs -n 32576 /home
 .Sh SEE ALSO
 .Xr fsck_lfs 8 ,
 .Xr lfs_cleanerd 8 ,
@@ -80,7 +83,7 @@ The
 .Nm
 command first appeared in
 .Nx 3.0 .
-.Sh AUTHOR
+.Sh AUTHORS
 .An Konrad Schroder
 .Aq perseant@NetBSD.org
 .Sh BUGS
