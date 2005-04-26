@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 2005/04/25 11:38:02 wiz Exp $
+# $NetBSD: mi,v 1.24 2005/04/26 10:51:26 agc Exp $
 ./etc/mtree/set.text				text-sys-root
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
@@ -30,7 +30,6 @@
 ./usr/bin/soelim				text-groff-bin
 ./usr/bin/tbl					text-groff-bin
 ./usr/bin/texi2dvi				text-texinfo-bin
-./usr/bin/texi2pdf				text-texinfo-bin
 ./usr/bin/texindex				text-texinfo-bin
 ./usr/bin/tfmtodit				text-groff-bin
 ./usr/bin/troff					text-groff-bin
