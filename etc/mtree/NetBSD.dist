@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.283 2005/04/12 15:35:54 kleink Exp $
+#	$NetBSD: NetBSD.dist,v 1.284 2005/04/26 19:39:11 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -482,8 +482,11 @@
 ./usr/share/keymaps/x68k
 ./usr/share/ldscripts
 ./usr/share/locale
+./usr/share/locale/be
+./usr/share/locale/be/LC_MESSAGES
 ./usr/share/locale/bg_BG.CP1251
 ./usr/share/locale/ca
+./usr/share/locale/ca/LC_MESSAGES
 ./usr/share/locale/ca_ES.ISO8859-1
 ./usr/share/locale/ca_ES.ISO8859-15
 ./usr/share/locale/cs
@@ -506,6 +509,10 @@
 ./usr/share/locale/el
 ./usr/share/locale/el/LC_MESSAGES
 ./usr/share/locale/el_GR.ISO8859-7
+./usr/share/locale/en@boldquot
+./usr/share/locale/en@boldquot/LC_MESSAGES
+./usr/share/locale/en@quot
+./usr/share/locale/en@quot/LC_MESSAGES
 ./usr/share/locale/en_AU.ISO8859-1
 ./usr/share/locale/en_AU.ISO8859-15
 ./usr/share/locale/en_CA.ISO8859-1
@@ -523,6 +530,8 @@
 ./usr/share/locale/es_ES.ISO8859-15
 ./usr/share/locale/et
 ./usr/share/locale/et/LC_MESSAGES
+./usr/share/locale/fi
+./usr/share/locale/fi/LC_MESSAGES
 ./usr/share/locale/fi_FI.ISO8859-1
 ./usr/share/locale/fi_FI.ISO8859-15
 ./usr/share/locale/fr
@@ -574,6 +583,8 @@
 ./usr/share/locale/nl_BE.ISO8859-15
 ./usr/share/locale/nl_NL.ISO8859-1
 ./usr/share/locale/nl_NL.ISO8859-15
+./usr/share/locale/nn
+./usr/share/locale/nn/LC_MESSAGES
 ./usr/share/locale/no
 ./usr/share/locale/no/LC_MESSAGES
 ./usr/share/locale/no@nynorsk
@@ -597,16 +608,21 @@
 ./usr/share/locale/ru_RU.ISO8859-5
 ./usr/share/locale/ru_RU.KOI8-R
 ./usr/share/locale/sk
+./usr/share/locale/sk/LC_MESSAGES
 ./usr/share/locale/sk_SK.ISO8859-2
 ./usr/share/locale/sl
 ./usr/share/locale/sl/LC_MESSAGES
 ./usr/share/locale/sl_SI.ISO8859-2
+./usr/share/locale/sr
+./usr/share/locale/sr/LC_MESSAGES
 ./usr/share/locale/sv
 ./usr/share/locale/sv/LC_MESSAGES
 ./usr/share/locale/sv_SE.ISO8859-1
 ./usr/share/locale/sv_SE.ISO8859-15
 ./usr/share/locale/tr
 ./usr/share/locale/tr/LC_MESSAGES
+./usr/share/locale/uk
+./usr/share/locale/uk/LC_MESSAGES
 ./usr/share/locale/uk_UA.KOI8-U
 ./usr/share/locale/zh_CN
 ./usr/share/locale/zh_CN.GB18030
