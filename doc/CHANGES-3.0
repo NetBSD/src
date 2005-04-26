@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.67 2005/04/25 14:54:21 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.68 2005/04/26 13:19:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7688,4 +7688,9 @@ sys/dev/audio.c					1.193
 	Linux OSS behaviour and fixes a bug with certain applications
 	(including Skype) that assume this behaviour. Fixes PR kern/30044.
 	[jmcneill, ticket #200]
+
+sys/dev/pci/if_hme_pci.c			1.19
+
+	Correct order of args in hmevpdoff() to fix build problem.
+	[atatat, ticket #208]
 
