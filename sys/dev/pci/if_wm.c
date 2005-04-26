@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.101 2005/03/19 11:58:03 tron Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.102 2005/04/26 07:55:17 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.101 2005/03/19 11:58:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.102 2005/04/26 07:55:17 scw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2839,6 +2839,15 @@ wm_stop(struct ifnet *ifp, int disable)
 	/* Stop the transmit and receive processes. */
 	CSR_WRITE(sc, WMREG_TCTL, 0);
 	CSR_WRITE(sc, WMREG_RCTL, 0);
+
+	/*
+	 * Clear the interrupt mask to ensure the device cannot assert its
+	 * interrupt line.
+	 * Clear sc->sc_icr to ensure wm_intr() makes no attempt to service
+	 * any currently pending or shared interrupt.
+	 */
+	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
+	sc->sc_icr = 0;
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
