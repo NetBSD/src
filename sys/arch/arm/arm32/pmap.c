@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2005/04/01 11:59:23 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.152 2005/04/26 16:03:08 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2005/04/01 11:59:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2005/04/26 16:03:08 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1872,10 +1872,17 @@ pmap_page_remove(struct vm_page *pg)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	if (flush) {
+		/*
+		 * Note: We can't use pmap_tlb_flush{I,}D() here since that
+		 * would need a subsequent call to pmap_update() to ensure
+		 * curpm->pm_cstate.cs_all is reset. Our callers are not
+		 * required to do that (see pmap(9)), so we can't modify
+		 * the current pmap's state.
+		 */
 		if (PV_BEEN_EXECD(flags))
-			pmap_tlb_flushID(curpm);
+			cpu_tlb_flushID();
 		else
-			pmap_tlb_flushD(curpm);
+			cpu_tlb_flushD();
 	}
 	cpu_cpwait();
 }
