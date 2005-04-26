@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2 2005/04/17 15:38:34 lukem Exp $
+# $NetBSD: postinstall,v 1.3 2005/04/26 01:07:35 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -684,9 +684,17 @@ do_ssh()
 	done
 	if [ -n "${sshdconf}" ]; then
 		modify_file ${op} "${sshdconf}" "${SCRATCHDIR}/sshdconf" '
-			$1 ~ /^[Hh][Oo][Ss][Tt][Kk][Ee][Yy]$/ &&
-			$2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ {
-				sub(/\/etc\/+/, "/etc/ssh/");
+			/^[^#$]/ {
+				kw = tolower($1)
+				if (kw == "hostkey" &&
+				    $2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ ) {
+					sub(/\/etc\/+/, "/etc/ssh/")
+				}
+				if (kw == "rhostsauthentication" ||
+				    kw == "verifyreversemapping" ||
+				    kw == "reversemappingcheck") {
+					sub(/^/, "# DEPRECATED:\t")
+				}
 			}
 			{ print }
 		'
