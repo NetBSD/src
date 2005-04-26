@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.47 2004/10/12 14:51:03 lukem Exp $
+# $NetBSD: network,v 1.48 2005/04/26 10:28:29 cjs Exp $
 #
 
 # PROVIDE: network
@@ -252,6 +252,8 @@ network_start()
 		route add -inet6 default $defaultroute6
 	fi
 
+	echo -n "Adding interface aliases:"
+
 	# Check if each configured interface xxN has an $ifaliases_xxN variable
 	# associated, then configure additional IP addresses for that interface.
 	# The variable contains a list of "address netmask" pairs, with
@@ -261,11 +263,7 @@ network_start()
 	# considered not recommended.  Use /etc/ifconfig.xxN if possible.
 	# 
 	#
-	if [ -n "$configured_interfaces" ]; then
-		echo "Adding interface aliases:"
-		done_aliases_message=yes
-	fi
-	for int in $configured_interfaces; do
+	for int in lo0 $configured_interfaces; do
 		eval args=\$ifaliases_$int
 		if [ -n "$args" ]; then
 			set -- $args
@@ -278,6 +276,7 @@ network_start()
 					ifconfig $int inet alias $addr \
 					    netmask $net
 				fi
+				echo -n " $int:$addr"
 			done
 		fi
 	done
@@ -292,9 +291,6 @@ network_start()
 	#
 	#
 	if [ -f /etc/ifaliases ]; then
-		if [ "$done_aliases_message" != yes ]; then
-			echo "Adding interface aliases:"
-		fi
 		while read addr int net; do
 			if [ -z "$net" ]; then
 				# for compatibility only, obsolete
@@ -304,6 +300,8 @@ network_start()
 			fi
 		done < /etc/ifaliases
 	fi
+
+	echo
 
 	# IPv6 interface autoconfiguration.
 	#
