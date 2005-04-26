@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.226 2005/04/03 05:02:46 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.227 2005/04/26 05:37:45 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.226 2005/04/03 05:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.227 2005/04/26 05:37:45 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2708,11 +2708,11 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	if (ip)
 		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
 		    (caddr_t)&ip->ip_dst, IPPROTO_TCP,
-		    htonl(TCP_SIG_SPI));
+		    htonl(TCP_SIG_SPI), 0, 0);
 	else
 		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
 		    (caddr_t)&ip6->ip6_dst, IPPROTO_TCP,
-		    htonl(TCP_SIG_SPI));
+		    htonl(TCP_SIG_SPI), 0, 0);
 #endif
 
 	return (sav);	/* freesav must be performed by caller */
