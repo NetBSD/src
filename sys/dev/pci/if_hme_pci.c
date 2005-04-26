@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.18 2005/04/21 18:31:51 christos Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.19 2005/04/26 13:02:06 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.18 2005/04/21 18:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.19 2005/04/26 13:02:06 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ hmepromvalid(u_int8_t* buf)
 }
 
 static inline int
-hmevpdoff(bus_space_handle_t romh, bus_space_tag_t romt, int vpdoff, int dev)
+hmevpdoff(bus_space_tag_t romt, bus_space_handle_t romh, int vpdoff, int dev)
 {
 #define VPDLEN (3 + sizeof(struct pci_vpd) + ETHER_ADDR_LEN)
 	if (bus_space_read_1(romt, romh, vpdoff + VPDLEN) != 0x79 &&
