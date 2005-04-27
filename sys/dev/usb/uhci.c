@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.185 2005/03/02 11:37:27 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.186 2005/04/27 07:47:25 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.185 2005/03/02 11:37:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.186 2005/04/27 07:47:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1343,7 +1343,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 #endif
 	/*
 	 * If the last TD is still active we need to check whether there
-	 * is a an error somewhere in the middle, or whether there was a
+	 * is an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
 	if (le32toh(lstd->td.td_status) & UHCI_TD_ACTIVE) {
@@ -3493,7 +3493,8 @@ uhci_root_intr_transfer(usbd_xfer_handle xfer)
 	if (err)
 		return (err);
 
-	/* Pipe isn't running (otherwise err would be USBD_INPROG),
+	/*
+	 * Pipe isn't running (otherwise err would be USBD_INPROG),
 	 * start first
 	 */
 	return (uhci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
