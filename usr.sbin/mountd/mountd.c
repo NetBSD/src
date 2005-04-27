@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.93 2005/03/15 04:54:59 briggs Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.94 2005/04/27 20:32:41 perseant Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.93 2005/03/15 04:54:59 briggs Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.94 2005/04/27 20:32:41 perseant Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1018,6 +1018,7 @@ get_exportlist(n)
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_LFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
