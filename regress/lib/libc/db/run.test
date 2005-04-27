@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: run.test,v 1.8 1996/05/03 21:57:51 cgd Exp $
+#	$NetBSD: run.test,v 1.9 2005/04/27 23:37:34 christos Exp $
 #	@(#)run.test	8.10 (Berkeley) 7/26/94
 #
 
@@ -23,7 +23,7 @@ main()
 	fi
 	
 	if [ $# -eq 0 ]; then
-		for t in 1 2 3 4 5 6 7 8 9 10 11 12 13 20; do
+		for t in 1 2 3 4 5 6 7 8 9 10 11 12 13 20 21; do
 			test$t
 		done
 	else
@@ -703,4 +703,13 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 	done
 }
 
+test21() {
+	cat << _EOF | $PROG -i bsize=65536 hash /dev/stdin
+p
+k1234
+d1234
+r
+k1234
+_EOF
+}
 main $*
