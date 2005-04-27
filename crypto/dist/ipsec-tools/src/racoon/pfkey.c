@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.3 2005/04/27 05:19:50 manu Exp $	*/
 
 /* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
 
@@ -2840,13 +2840,13 @@ sadbsecas2str(src, dst, proto, spi, mode)
 	p += i;
 	blen -= i;
 
-	i = snprintf(p, blen, "%s->", saddrwop2str(src));
+	i = snprintf(p, blen, "%s->", saddr2str(src));
 	if (i < 0 || i >= blen)
 		return NULL;
 	p += i;
 	blen -= i;
 
-	i = snprintf(p, blen, "%s ", saddrwop2str(dst));
+	i = snprintf(p, blen, "%s ", saddr2str(dst));
 	if (i < 0 || i >= blen)
 		return NULL;
 	p += i;

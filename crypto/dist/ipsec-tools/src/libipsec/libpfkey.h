@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.3 2005/02/24 20:59:24 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.4 2005/04/27 05:19:49 manu Exp $	*/
 
 /* Id: libpfkey.h,v 1.8.2.1 2005/02/24 13:33:54 manubsd Exp */
 
@@ -47,6 +47,7 @@
 struct sadb_msg;
 extern void pfkey_sadump __P((struct sadb_msg *));
 extern void pfkey_spdump __P((struct sadb_msg *));
+extern void pfkey_spdump_withports __P((struct sadb_msg *));
 
 struct sockaddr;
 struct sadb_alg;
@@ -57,6 +58,7 @@ int ipsec_check_keylen __P((u_int, u_int, u_int));
 int ipsec_check_keylen2 __P((u_int, u_int, u_int));
 int ipsec_get_keylen __P((u_int, u_int, struct sadb_alg *));
 char *ipsec_dump_policy __P((caddr_t policy, char *delimiter));
+char *ipsec_dump_policy_withports __P((caddr_t policy, char *delimiter));
 void ipsec_hexdump __P((caddr_t buf, int len));
 int  ipsec_get_policylen __P((caddr_t policy));
 caddr_t ipsec_set_policy __P((char *msg, int msglen));

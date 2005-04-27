@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.3 2005/04/27 05:19:50 manu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.13.2.1 2005/03/02 20:00:03 vanhu Exp */
 
@@ -450,6 +450,13 @@ quick_i2recv(iph2, msg0)
 		case ISAKMP_NPTYPE_N:
 			isakmp_check_notify(pa->ptr, iph2->ph1);
 			break;
+
+#ifdef ENABLE_NATT
+		case ISAKMP_NPTYPE_NATOA_DRAFT:
+		case ISAKMP_NPTYPE_NATOA_RFC:
+			/* Ignore original source/destination messages */
+			break;
+#endif
 
 		default:
 			/* don't send information, see ident_r1recv() */
