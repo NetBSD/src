@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.92 2005/04/12 13:11:45 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.93 2005/04/27 15:19:17 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.92 2005/04/12 13:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.93 2005/04/27 15:19:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -377,6 +377,9 @@ uvmfault_anonget(ufi, amap, anon)
 				uvmexp.fltnoram++;
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
 				    0,0,0);
+				if (!uvm_reclaimable()) {
+					return ENOMEM;
+				}
 				uvm_wait("flt_noram1");
 			} else {
 				/* we set the PG_BUSY bit */
