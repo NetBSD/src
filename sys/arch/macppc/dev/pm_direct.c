@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.25 2005/02/01 03:24:29 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.26 2005/04/27 16:41:54 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.25 2005/02/01 03:24:29 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.26 2005/04/27 16:41:54 briggs Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -251,16 +251,22 @@ pm_setup_adb()
 {
 }
 
+/*
+ * Search for targ in list.  list is an area of listlen bytes
+ * containing null-terminated strings.
+ */
 static int
 strinlist(char *targ, char *list, int listlen)
 {
 	char	*str;
 	int	sl;
+	int	targlen;
 
 	str = list;
+	targlen = strlen(targ);
 	while (listlen > 0) {
 		sl = strlen(str);
-		if (strncmp(targ, str, sl) == 0)
+		if (sl == targlen && (strncmp(targ, str, sl) == 0))
 			return 1;
 		str += sl+1;
 		listlen -= sl+1;
