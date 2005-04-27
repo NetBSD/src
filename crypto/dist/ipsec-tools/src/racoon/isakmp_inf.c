@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.3 2005/04/27 05:19:50 manu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.14.4.2 2005/03/02 20:00:03 vanhu Exp */
 
@@ -619,8 +619,10 @@ isakmp_info_send_common(iph1, payload, np, flags)
 	iph2->src = dupsaddr(iph1->local);
 	switch (iph1->remote->sa_family) {
 	case AF_INET:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
 		((struct sockaddr_in *)iph2->src)->sin_port = 0;
+#endif
 		break;
 #ifdef INET6
 	case AF_INET6:

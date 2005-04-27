@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.9 2005/04/17 01:03:46 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.10 2005/04/27 05:19:50 manu Exp $
 .\"
 .\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
 .\"
@@ -51,7 +51,7 @@
 .Op Fl aklPrv
 .Fl D
 .Nm setkey
-.Op Fl Pv
+.Op Fl Pvp
 .Fl F
 .Nm setkey
 .Op Fl H
@@ -94,9 +94,14 @@ A dead SAD entry is one that has expired but remains in the
 system because it is referenced by some SPD entries.
 .It Fl D
 Dump the SAD entries.
+If 
+.Fl P ,
+is also specified, SPD entries are dumped.
 If
-.Fl P
-is also specified, the SPD entries are dumped.
+.Fl p
+is specified with
+.Fl P ,
+the ports that can be used for ESP over UDP are displayed in policies.
 .It Fl F
 Flush the SAD entries.
 If
