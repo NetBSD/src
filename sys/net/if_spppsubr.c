@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.83 2005/03/31 15:48:13 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.84 2005/04/27 07:48:02 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.83 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.84 2005/04/27 07:48:02 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4647,7 +4647,7 @@ sppp_keepalive(void *dummy)
 		    /* idle timeout is enabled for this interface */
 		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
 		    	if (ifp->if_flags & IFF_DEBUG)
-			    printf("%s: no activitiy for %lu seconds\n",
+			    printf("%s: no activity for %lu seconds\n",
 				sp->pp_if.if_xname,
 				(unsigned long)(now-sp->pp_last_activity));
 			lcp.Close(sp);
