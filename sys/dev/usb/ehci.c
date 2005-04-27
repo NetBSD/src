@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.91 2005/02/27 00:27:51 perry Exp $ */
+/*	$NetBSD: ehci.c,v 1.92 2005/04/27 02:12:20 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.92 2005/04/27 02:12:20 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -439,7 +439,6 @@ ehci_init(ehci_softc_t *sc)
 			    EHCI_LINK_QH);
 		}
 		sqh->qh.qh_endp = htole32(EHCI_QH_SET_EPS(EHCI_QH_SPEED_HIGH));
-		sqh->qh.qh_link = EHCI_NULL;
 		sqh->qh.qh_curqtd = EHCI_NULL;
 		sqh->next = NULL;
 		sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
