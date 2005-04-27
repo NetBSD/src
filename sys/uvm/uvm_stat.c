@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.25 2004/11/23 04:51:56 yamt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.26 2005/04/27 11:02:43 yamt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.25 2004/11/23 04:51:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.26 2005/04/27 11:02:43 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -249,5 +249,7 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.nfreeanon);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
+	(*pr)("    swpgavail=%d\n",
+	    uvmexp.swpgavail);
 }
 #endif
