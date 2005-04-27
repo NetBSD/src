@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.149 2005/04/25 06:28:51 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.150 2005/04/27 20:35:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.149 2005/04/25 06:28:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.150 2005/04/27 20:35:10 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1812,7 +1812,7 @@ lfs_putpages(void *v)
 
 		simple_lock(&vp->v_interlock);
 		if (locked)
-			VOP_LOCK(vp, LK_EXCLUSIVE);
+			VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */
