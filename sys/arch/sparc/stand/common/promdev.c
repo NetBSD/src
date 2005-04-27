@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.15 2003/07/30 15:58:40 mrg Exp $ */
+/*	$NetBSD: promdev.c,v 1.16 2005/04/27 07:59:47 martin Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -91,7 +91,7 @@ struct devsw obp_v2_devsw =
 	{ "obp v2", obp_v2_strategy, null_devopen, obp_close, null_devioctl };
 
 
-char	*prom_bootdevice;
+char	prom_bootdevice[MAX_PROM_PATH];
 static int	saveecho;
 
 
@@ -139,7 +139,7 @@ devopen(f, fname, file)
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
 	case PROM_OPENFIRM:
-		if (prom_bootdevice == NULL) {
+		if (*prom_bootdevice == '\0') {
 			error = ENXIO;
 			break;
 		}
