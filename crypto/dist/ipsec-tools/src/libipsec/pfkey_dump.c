@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.2 2005/04/10 21:20:55 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.3 2005/04/27 05:19:49 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -110,6 +110,7 @@ static char *str_prefport __P((u_int, u_int, u_int, u_int));
 static void str_upperspec __P((u_int, u_int, u_int));
 static char *str_time __P((time_t));
 static void str_lifetime_byte __P((struct sadb_lifetime *, char *));
+static void pfkey_spdump1(struct sadb_msg *, int);
 
 struct val2str {
 	int val;
@@ -412,6 +413,21 @@ void
 pfkey_spdump(m)
 	struct sadb_msg *m;
 {
+	return pfkey_spdump1(m, 0);
+}
+
+void
+pfkey_spdump_withports(m)
+	struct sadb_msg *m;
+{
+	return pfkey_spdump1(m, 1);
+}
+
+static void
+pfkey_spdump1(m, withports)
+	struct sadb_msg *m;
+	int withports;
+{
 	char pbuf[NI_MAXSERV];
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
@@ -515,7 +531,11 @@ pfkey_spdump(m)
 		printf("no X_POLICY extension.\n");
 		return;
 	}
-	d_xpl = ipsec_dump_policy((char *)m_xpl, "\n\t");
+	if (withports)
+		d_xpl = ipsec_dump_policy_withports((char *)m_xpl, "\n\t");
+	else
+		d_xpl = ipsec_dump_policy((char *)m_xpl, "\n\t");
+		
 	if (!d_xpl)
 		printf("\n\tPolicy:[%s]\n", ipsec_strerror());
 	else {

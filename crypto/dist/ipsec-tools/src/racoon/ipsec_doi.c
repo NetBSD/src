@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.2 2005/04/18 11:15:01 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.3 2005/04/27 05:19:50 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.26.2.1 2005/02/17 13:19:18 vanhu Exp */
 
@@ -2611,17 +2611,19 @@ setph1attr(sa, buf)
 	int attrlen = 0;
 
 	if (sa->lifetime) {
+		u_int32_t lifetime = htonl((u_int32_t)sa->lifetime);
+
 		attrlen += sizeof(struct isakmp_data)
 			+ sizeof(struct isakmp_data);
 		if (sa->lifetime > 0xffff)
-			attrlen += sizeof(sa->lifetime);
+			attrlen += sizeof(lifetime);
 		if (buf) {
 			p = isakmp_set_attr_l(p, OAKLEY_ATTR_SA_LD_TYPE,
 						OAKLEY_ATTR_SA_LD_TYPE_SEC);
 			if (sa->lifetime > 0xffff) {
-				u_int32_t v = htonl((u_int32_t)sa->lifetime);
 				p = isakmp_set_attr_v(p, OAKLEY_ATTR_SA_LD,
-						(caddr_t)&v, sizeof(v));
+						(caddr_t)&lifetime, 
+						sizeof(lifetime));
 			} else {
 				p = isakmp_set_attr_l(p, OAKLEY_ATTR_SA_LD,
 							sa->lifetime);
@@ -2630,17 +2632,19 @@ setph1attr(sa, buf)
 	}
 
 	if (sa->lifebyte) {
+		u_int32_t lifebyte = htonl((u_int32_t)sa->lifebyte);
+		
 		attrlen += sizeof(struct isakmp_data)
 			+ sizeof(struct isakmp_data);
 		if (sa->lifebyte > 0xffff)
-			attrlen += sizeof(sa->lifebyte);
+			attrlen += sizeof(lifebyte);
 		if (buf) {
 			p = isakmp_set_attr_l(p, OAKLEY_ATTR_SA_LD_TYPE,
 						OAKLEY_ATTR_SA_LD_TYPE_KB);
 			if (sa->lifebyte > 0xffff) {
-				u_int32_t v = htonl((u_int32_t)sa->lifebyte);
 				p = isakmp_set_attr_v(p, OAKLEY_ATTR_SA_LD,
-							(caddr_t)&v, sizeof(v));
+							(caddr_t)&lifebyte,
+							sizeof(lifebyte));
 			} else {
 				p = isakmp_set_attr_l(p, OAKLEY_ATTR_SA_LD,
 							sa->lifebyte);
