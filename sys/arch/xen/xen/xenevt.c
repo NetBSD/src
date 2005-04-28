@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.2.2.1 2005/04/13 21:38:45 tron Exp $      */
+/*      $NetBSD: xenevt.c,v 1.2.2.2 2005/04/28 10:19:03 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -45,6 +45,8 @@
 #include <machine/hypervisor.h>
 #include <machine/xenio.h>
 #include <machine/xen.h>
+
+extern struct evcnt softxenevt_evtcnt;
 
 /*
  * Interface between the event channel and userland.
@@ -123,8 +125,9 @@ xenevt_event(int port)
 	struct xenevt_d *d;
 	struct cpu_info *ci;
 
-	hypervisor_mask_event(port);
+        hypervisor_mask_event(port);
 	hypervisor_clear_event(port);
+
 	d = devevent[port];
 	if (d != NULL) {
 		xenevt_record(d, port);
@@ -137,7 +140,7 @@ xenevt_event(int port)
 
 		if (ci->ci_ilevel < IPL_SOFTXENEVT) {
 			/* fast and common path */
-			ci->ci_isources[SIR_XENEVT]->is_evcnt.ev_count++;
+			softxenevt_evtcnt.ev_count++;
 			xenevt_donotify(d);
 		} else {
 			simple_lock(&devevent_pending_lock);
