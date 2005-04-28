@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.10.2.1 2005/04/28 10:19:09 tron Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.10.2.2 2005/04/28 10:25:23 tron Exp $	*/
 
 /*
  * 
@@ -87,16 +87,14 @@ struct intrframe;
 void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_notify_via_evtchn(unsigned int);
 void hypervisor_enable_event(unsigned int);
-void hypervisor_disable_event(unsigned int);
-void hypervisor_acknowledge_event(unsigned int);
-void hypervisor_enable_ipl(unsigned int);
-void hypervisor_set_ipending(int, int, int);
 
 /* hypervisor_machdep.c */
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_force_callback(void);
+void hypervisor_enable_ipl(unsigned int);
+void hypervisor_set_ipending(int, int, int);
 
 /*
  * Assembler stubs for hyper-calls.
