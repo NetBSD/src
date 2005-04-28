@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2.2.3 2005/04/25 13:44:08 tron Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.2.2.4 2005/04/28 10:19:17 tron Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.3 2005/04/25 13:44:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.4 2005/04/28 10:19:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ void printk(char *, ...);
 int initdom_ctrlif_domcontroller_port = -1;
 
 /* static */ int ctrl_if_evtchn = -1;
-static int ctrl_if_irq;
 static struct simplelock ctrl_if_lock;
 
 static CONTROL_RING_IDX ctrl_if_tx_resp_cons;
@@ -498,11 +497,11 @@ void ctrl_if_resume(void)
     ctrl_if_rx_req_cons  = ctrl_if->rx_resp_prod;
 
     ctrl_if_evtchn = xen_start_info.domain_controller_evtchn;
-    ctrl_if_irq    = bind_evtchn_to_irq(ctrl_if_evtchn);
-    aprint_verbose("Domain controller: using irq %d\n", ctrl_if_irq);
+    aprint_verbose("Domain controller: using event channel %d\n",
+	ctrl_if_evtchn);
 
-    event_set_handler(ctrl_if_irq, &ctrl_if_interrupt, NULL, IPL_HIGH + 2);
-    hypervisor_enable_irq(ctrl_if_irq);
+    event_set_handler(ctrl_if_evtchn, &ctrl_if_interrupt, NULL, IPL_CTRL);
+    hypervisor_enable_event(ctrl_if_evtchn);
 }
 
 void ctrl_if_early_init(void)
