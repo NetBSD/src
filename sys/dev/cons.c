@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.54 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: cons.c,v 1.55 2005/04/28 07:54:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.54 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.55 2005/04/28 07:54:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -415,7 +415,7 @@ cn_redirect(dev_t *devp, int is_read, int *error)
 	 */
 	*error = ENXIO;
 	if (constty != NULL && minor(dev) == 0 &&
-	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE ))) {
+	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {
 		if (is_read) {
 			*error = 0;
 			return NULL;
