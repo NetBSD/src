@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.69 2005/04/28 11:07:53 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.70 2005/04/28 11:34:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7719,6 +7719,20 @@ sys/arch/xen/xen/xenevt.c			1.4-1.5
 sys/arch/xen/xen/xennetback.c			1.7-1.9
 
 	Bug fixes for interface to the domain controller.
+	[bouyer, ticket #192]
+
+sys/arch/xen/include/ctrl_if.h			1.3
+sys/arch/xen/include/intrdefs.h			1.2
+sys/arch/xen/xen/ctrl_if.c			1.8
+sys/arch/xen/xen/xencons.c			1.8
+
+	Add polling support to the domain controller. Use this in xencons
+	instead of relying on the fact that the domain controller is still
+	getting interrupts when xenconscn_getc()/xenconscn_putc() is called.
+	Now that polling is fixed, move IPL_CTRL down between IPL_SOFTSERIAL
+	and IPL_TTY, fixing port-xen/29999 by YAMAMOTO Takashi.
+	Now that IPL_CTRL is low enouth, remove the softintr stuff from the
+	domain controller, and call wakeup() directly.
 	[bouyer, ticket #193]
 
 sys/arch/xen/xen/evtchn.c			1.12
