@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.14.2.3 2005/04/25 13:45:44 tron Exp $ */
+/* $NetBSD: xbd.c,v 1.14.2.4 2005/04/28 10:19:56 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.3 2005/04/25 13:45:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.4 2005/04/28 10:19:56 tron Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -362,7 +362,6 @@ static unsigned int state = STATE_CLOSED;
 
 static int in_autoconf; /* are we still in autoconf ? */
 static unsigned int blkif_evtchn = 0;
-static unsigned int blkif_irq = 0;
 static unsigned int blkif_handle = 0;
 
 static int blkif_control_rsp_valid = 0;
@@ -506,17 +505,8 @@ free_interface(void)
 		blk_ring = NULL;
 	}
 
-	if (blkif_irq) {
-#if 0
-		free_irq(blkif_irq, NULL);
-#endif
-		blkif_irq = 0;
-	}
-
 	if (blkif_evtchn) {
-#if 0
-		unbind_evtchn_from_irq(blkif_evtchn);
-#endif
+		event_remove_handler(blkif_evtchn, &xbd_response_handler, NULL);
 		blkif_evtchn = 0;
 	}
 }
@@ -557,12 +547,11 @@ connect_interface(blkif_fe_interface_status_t *status)
 	int i;
 
 	blkif_evtchn = status->evtchn;
-	blkif_irq = bind_evtchn_to_irq(blkif_evtchn);
 
-	aprint_verbose("xbd: using irq %d\n", blkif_irq);
+	aprint_verbose("xbd: using event channel %d\n", blkif_evtchn);
 
-	event_set_handler(blkif_irq, &xbd_response_handler, NULL, IPL_BIO);
-	hypervisor_enable_irq(blkif_irq);
+	event_set_handler(blkif_evtchn, &xbd_response_handler, NULL, IPL_BIO);
+	hypervisor_enable_event(blkif_evtchn);
 
 	/* Transition to connected in case we need to do 
 	 *  a partition probe on a whole disk. */
