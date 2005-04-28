@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.4.2.3 2005/04/28 10:28:20 tron Exp $	*/
+/*	$NetBSD: xencons.c,v 1.4.2.4 2005/04/28 11:26:20 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.3 2005/04/28 10:28:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.4 2005/04/28 11:26:20 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -461,7 +461,7 @@ xenconscn_getc(dev_t dev)
 		
 	while (xencons_console_device->buf_write ==
 	    xencons_console_device->buf_read) {
-		HYPERVISOR_yield();
+		ctrl_if_console_poll();
 	}
 
 	ret = xencons_console_device->buf[xencons_console_device->buf_read];
@@ -490,9 +490,7 @@ xenconscn_putc(dev_t dev, int c)
 		msg.length = 1;
 		msg.msg[0] = c;
 		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
-			HYPERVISOR_yield();
-			/* XXX check return value and queue wait for space
-			 * thread/softint */
+			ctrl_if_console_poll();
 		}
 	}
 }
