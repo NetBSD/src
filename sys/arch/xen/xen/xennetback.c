@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.2.2 2005/04/28 10:19:33 tron Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.3 2005/04/28 10:25:36 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -363,7 +363,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xneti->status = DISCONNECTED;
 		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-		hypervisor_disable_event(xneti->xni_evtchn);
+		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
