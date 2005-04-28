@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.2.3 2005/04/28 10:25:36 tron Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.4 2005/04/28 10:28:30 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -338,7 +338,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		xneti->xni_txring = (void *)ring_txaddr;
 		xneti->xni_evtchn = req->evtchn;
 		event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
-		    xneti, IPL_NET);
+		    xneti, IPL_NET, xneti->xni_if.if_xname);
 		printf("%s using event channel %d\n",
 		    xneti->xni_if.if_xname, xneti->xni_evtchn);
 		hypervisor_enable_event(xneti->xni_evtchn);
