@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3.2.8 2005/04/28 10:36:43 tron Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3.2.9 2005/04/28 10:39:00 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.8 2005/04/28 10:36:43 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.9 2005/04/28 10:39:00 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,6 @@ static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
 
 /* event handlers */
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
-uint8_t evtch_maskcount[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels */
 static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
@@ -149,6 +148,7 @@ do_event(int evtch, struct intrframe *regs)
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
+	u_int32_t iplmask;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
@@ -188,11 +188,13 @@ do_event(int evtch, struct intrframe *regs)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
-		hypervisor_set_ipending(evtch, evtch / 32, evtch % 32);
+		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
+		    evtch / 32, evtch % 32);
 		/* leave masked */
 		return 0;
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
+	iplmask = evtsource[evtch]->ev_imask;
 	/* sti */
 	ci->ci_idepth++;
 #ifdef MULTIPROCESSOR
@@ -208,12 +210,14 @@ do_event(int evtch, struct intrframe *regs)
 #ifdef MULTIPROCESSOR
 			x86_intunlock(regs);
 #endif
-			hypervisor_set_ipending(evtch, evtch / 32, evtch % 32);
+			hypervisor_set_ipending(iplmask,
+			    evtch / 32, evtch % 32);
 			/* leave masked */
 			ci->ci_idepth--;
 			splx(ilevel);
 			return 0;
 		}
+		iplmask &= ~IUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
@@ -404,7 +408,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 {
 	struct iplsource *ipls;
 	struct evtsource *evts;
-	struct intrhand *ih;
+	struct intrhand *ih, **ihp;
 	struct cpu_info *ci;
 	int s;
 
@@ -468,8 +472,19 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		    ci->ci_dev->dv_xname, evts->ev_evname);
 	} else {
 		evts = evtsource[evtch];
-		ih->ih_evt_next = evts->ev_handlers;
-		evts->ev_handlers = ih;
+		/* sort by IPL order, higher first */
+		for (ihp = &evts->ev_handlers; ; ihp = &((*ihp)->ih_evt_next)) {
+			if ((*ihp)->ih_level < ih->ih_level) {
+				/* insert before *ihp */
+				ih->ih_evt_next = *ihp;
+				*ihp = ih;
+				break;
+			}
+			if ((*ihp)->ih_evt_next == NULL) {
+				(*ihp)->ih_evt_next = ih;
+				break;
+			}
+		}
 	}
 
 	intr_calculatemasks(evts);
