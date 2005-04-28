@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4.2.1 2005/04/13 21:38:58 tron Exp $	*/
+/*	$NetBSD: intr.c,v 1.4.2.2 2005/04/28 10:19:24 tron Exp $	*/
 /*	NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp	*/
 
 /*
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4.2.1 2005/04/13 21:38:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4.2.2 2005/04/28 10:19:24 tron Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -124,77 +124,27 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4.2.1 2005/04/13 21:38:58 tron Exp $");
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-struct pic softintr_pic = {
-	.pic_dev = {
-		.dv_xname = "softintr_fakepic",
-	},
-	.pic_type = PIC_SOFT,
-	.pic_lock = __SIMPLELOCK_UNLOCKED,
-};
-
 /*
- * Recalculate the interrupt masks from scratch.
+ * Recalculate the interrupt from scratch for an event source.
  */
 void
-intr_calculatemasks(struct cpu_info *ci)
+intr_calculatemasks(struct evtsource *evts)
 {
-	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
-	struct intrhand *q;
+	struct intrhand *ih;
 
-	/* First, figure out which levels each IRQ uses. */
-	unusedirqs = 0xffffffff;
-	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
-		int levels = 0;
-
-		if (ci->ci_isources[irq] == NULL) {
-			intrlevel[irq] = 0;
-			continue;
-		}
-		for (q = ci->ci_isources[irq]->is_handlers; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
-		if (levels)
-			unusedirqs &= ~(1 << irq);
+	evts->ev_maxlevel = IPL_NONE;
+	evts->ev_imask = 0;
+	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
+		if (ih->ih_level > evts->ev_maxlevel)
+			evts->ev_maxlevel = ih->ih_level;
+		evts->ev_imask |= (1 << ih->ih_level);
 	}
 
-	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < MAX_INTR_SOURCES; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		ci->ci_imask[level] = irqs | unusedirqs;
-	}
-
-	for (level = 0; level<(NIPL-1); level++)
-		ci->ci_imask[level+1] |= ci->ci_imask[level];
-
-	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
-		int maxlevel = IPL_NONE;
-		int minlevel = IPL_HIGH;
-
-		if (ci->ci_isources[irq] == NULL)
-			continue;
-		for (q = ci->ci_isources[irq]->is_handlers; q;
-		     q = q->ih_next) {
-			if (q->ih_level < minlevel)
-				minlevel = q->ih_level;
-			if (q->ih_level > maxlevel)
-				maxlevel = q->ih_level;
-		}
-		ci->ci_isources[irq]->is_maxlevel = maxlevel;
-		ci->ci_isources[irq]->is_minlevel = minlevel;
-	}
-
-	for (level = 0; level < NIPL; level++)
-		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
-
-#define CONCAT(x,y)	__CONCAT(x,y)
 
 /*
  * Fake interrupt handler structures for the benefit of symmetry with
- * other interrupt sources, and the benefit of intr_calculatemasks()
+ * other interrupt sources.
  */
 struct intrhand fake_softclock_intrhand;
 struct intrhand fake_softnet_intrhand;
@@ -208,69 +158,78 @@ extern void Xsoftxenevt(void);
 #endif
 
 /*
+ * Event counters for the software interrupts.
+ */
+struct evcnt softclock_evtcnt;
+struct evcnt softnet_evtcnt;
+struct evcnt softserial_evtcnt;
+#if defined(DOM0OPS)
+struct evcnt softxenevt_evtcnt;
+#endif
+
+/*
  * Initialize all handlers that aren't dynamically allocated, and exist
- * for each CPU.
+ * for each CPU. Also init ci_iunmask[].
  */
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-	struct intrsource *isp;
+	struct iplsource *ipl;
+	int i;
 
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	ci->ci_iunmask[0] = 0xfffffffe;
+	for (i = 1; i < NIPL; i++)
+		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
+
+	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
+	if (ipl == NULL)
 		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftclock;
-	isp->is_resume = Xsoftclock;
+	ipl->ipl_recurse = Xsoftclock;
+	ipl->ipl_resume = Xsoftclock;
 	fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
-	isp->is_handlers = &fake_softclock_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_CLOCK] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	ipl->ipl_handlers = &fake_softclock_intrhand;
+	ci->ci_isources[SIR_CLOCK] = ipl;
+	evcnt_attach_dynamic(&softclock_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "softclock");
 
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
+	if (ipl == NULL)
 		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftnet;
-	isp->is_resume = Xsoftnet;
+	ipl->ipl_recurse = Xsoftnet;
+	ipl->ipl_resume = Xsoftnet;
 	fake_softnet_intrhand.ih_level = IPL_SOFTNET;
-	isp->is_handlers = &fake_softnet_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_NET] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	ipl->ipl_handlers = &fake_softnet_intrhand;
+	ci->ci_isources[SIR_NET] = ipl;
+	evcnt_attach_dynamic(&softnet_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "softnet");
 
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
+	if (ipl == NULL)
 		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftserial;
-	isp->is_resume = Xsoftserial;
+	ipl->ipl_recurse = Xsoftserial;
+	ipl->ipl_resume = Xsoftserial;
 	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-	isp->is_handlers = &fake_softserial_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_SERIAL] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	ipl->ipl_handlers = &fake_softserial_intrhand;
+	ci->ci_isources[SIR_SERIAL] = ipl;
+	evcnt_attach_dynamic(&softserial_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "softserial");
 
 #if defined(DOM0OPS)
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
+	if (ipl == NULL)
 		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftxenevt;
-	isp->is_resume = Xsoftxenevt;
+	ipl->ipl_recurse = Xsoftxenevt;
+	ipl->ipl_resume = Xsoftxenevt;
 	fake_softxenevt_intrhand.ih_level = IPL_SOFTXENEVT;
-	isp->is_handlers = &fake_softxenevt_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_XENEVT] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	ipl->ipl_handlers = &fake_softxenevt_intrhand;
+	ci->ci_isources[SIR_XENEVT] = ipl;
+	evcnt_attach_dynamic(&softxenevt_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "xenevt");
 #endif /* defined(DOM0OPS) */
-
-	intr_calculatemasks(ci);
 
 }
 
