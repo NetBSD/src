@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.281 2005/04/28 11:30:55 elad Exp $
+.\"	$NetBSD: main,v 1.282 2005/04/28 19:52:04 seanb Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1480,6 +1480,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Mason Loring Bliss Ta Mt mason@NetBSD.org
 .It Ta Charles Blundell Ta Mt cb@NetBSD.org
 .It Ta Rafal Boni Ta Mt rafal@NetBSD.org
+.It Ta Sean Boudreau Ta Mt seanb@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta John Brezak Ta Mt brezak@NetBSD.org
 .It Ta Allen Briggs Ta Mt briggs@NetBSD.org
