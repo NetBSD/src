@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100 2005/03/07 22:10:14 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.101 2005/04/28 06:22:41 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2005/03/07 22:10:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.101 2005/04/28 06:22:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -147,6 +147,7 @@ struct intrmap intrmap[] = {
 	{ "block",	PIL_FD },	/* Floppy disk */
 	{ "serial",	PIL_SER },	/* zs */
 	{ "scsi",	PIL_SCSI },
+	{ "scsi-2",	PIL_SCSI },
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
 	{ "audio",	PIL_AUD },
