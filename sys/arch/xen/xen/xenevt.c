@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.2.2.2 2005/04/28 10:19:03 tron Exp $      */
+/*      $NetBSD: xenevt.c,v 1.2.2.3 2005/04/28 10:36:54 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -124,9 +124,6 @@ xenevt_event(int port)
 {
 	struct xenevt_d *d;
 	struct cpu_info *ci;
-
-        hypervisor_mask_event(port);
-	hypervisor_clear_event(port);
 
 	d = devevent[port];
 	if (d != NULL) {
