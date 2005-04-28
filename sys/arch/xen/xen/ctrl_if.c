@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2.2.4 2005/04/28 10:19:17 tron Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.2.2.5 2005/04/28 10:28:12 tron Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.4 2005/04/28 10:19:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.5 2005/04/28 10:28:12 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,8 @@ void ctrl_if_resume(void)
     aprint_verbose("Domain controller: using event channel %d\n",
 	ctrl_if_evtchn);
 
-    event_set_handler(ctrl_if_evtchn, &ctrl_if_interrupt, NULL, IPL_CTRL);
+    event_set_handler(ctrl_if_evtchn, &ctrl_if_interrupt, NULL, IPL_CTRL,
+	"ctrlev");
     hypervisor_enable_event(ctrl_if_evtchn);
 }
 
