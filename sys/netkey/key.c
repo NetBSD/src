@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.129.2.2 2005/04/28 10:49:05 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.129.2.3 2005/04/28 10:51:38 tron Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.2 2005/04/28 10:49:05 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.3 2005/04/28 10:51:38 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -742,8 +742,6 @@ key_do_allocsa_policy(sah, state)
  * keep source address in IPsec SA.  We see a tricky situation here.
  *
  * sport and dport are used for NAT-T. network order is always used.
- * If NAT-T is in use, we check source and destination with ports.
- * XXX This might turn to be wrong.
  */
 struct secasvar *
 key_allocsa(family, src, dst, proto, spi, sport, dport)
@@ -796,7 +794,7 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 		if (tmpidx >= matchidx)
 			continue;
 
-#ifdef IPSEC_NAT_T
+#if 0 /* src address check ignored for RFC 2401 conformance */
 		/* check src address */
 		switch (family) {
 		case AF_INET:
