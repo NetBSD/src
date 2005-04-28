@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3.2.2 2005/04/28 10:19:17 tron Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3.2.3 2005/04/28 10:25:29 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.2 2005/04/28 10:19:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.3 2005/04/28 10:25:29 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,6 @@ static int pirq_to_evtch[NR_PIRQS];
 /* PIRQ needing notify */
 static u_int32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
 int pirq_interrupt(void *);
-void pirq_notify(int);
 physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
 };
@@ -164,7 +163,8 @@ do_event(int evtch, struct intrframe *regs)
 #endif
 	ci = &cpu_info_primary;
 
-	hypervisor_acknowledge_event(evtch);
+	hypervisor_mask_event(evtch);
+	hypervisor_clear_event(evtch);
 
 	/*
 	 * Shortcut for the debug handler, we want it to always run,
@@ -397,19 +397,6 @@ pirq_interrupt(void *arg)
 	return ret;
 }
 
-void
-pirq_notify(int evtch)
-{
-
-	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
-#ifdef  IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
-		    printf("pirq_notify(%d)\n", evtch);
-#endif
-		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
-	}
-}
-
 #endif /* DOM0OPS */
 
 int
@@ -541,30 +528,14 @@ hypervisor_enable_event(unsigned int evtch)
 
 	hypervisor_unmask_event(evtch);
 #ifdef DOM0OPS
-	pirq_notify(evtch);
+	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
+#ifdef  IRQ_DEBUG
+		if (irq == IRQ_DEBUG)
+		    printf("pirq_notify(%d)\n", evtch);
 #endif
-}
-
-void
-hypervisor_disable_event(unsigned int evtch)
-{
-#ifdef IRQ_DEBUG
-	if (evtch == IRQ_DEBUG)
-		printf("hypervisor_disable_evtch: evtch %d\n", evtch);
-#endif
-
-	hypervisor_mask_event(evtch);
-}
-
-void
-hypervisor_acknowledge_event(unsigned int evtch)
-{
-#ifdef IRQ_DEBUG
-	if (evtch == IRQ_DEBUG)
-		printf("hypervisor_acknowledge_evtch: evtch %d\n", evtch);
-#endif
-	hypervisor_mask_event(evtch);
-	hypervisor_clear_event(evtch);
+		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
+	}
+#endif /* DOM0OPS */
 }
 
 #if 0
