@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.10 2005/04/20 14:48:29 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.11 2005/04/28 18:26:26 yamt Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.10 2005/04/20 14:48:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11 2005/04/28 18:26:26 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -191,7 +191,7 @@ do_hypervisor_callback(struct intrframe *regs)
 			 * mask and clear the pending events.
 			 * Doing it here for all event that will be processed
 			 * avoids a race with stipending (which can be called
-			 * though do_event->splx) that could cause an event to
+			 * though evtchn_do_event->splx) that could cause an event to
 			 * be both processed and marked pending.
 			 */
 			x86_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
@@ -207,7 +207,7 @@ do_hypervisor_callback(struct intrframe *regs)
 					printf("do_hypervisor_callback event %d%d\n", port);
 #endif
 				if (evtsource[port])
-					do_event(port, regs);
+					evtchn_do_event(port, regs);
 #ifdef DOM0OPS
 				else
 					xenevt_event(port);

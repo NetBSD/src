@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.13 2005/04/20 14:48:29 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.14 2005/04/28 18:26:26 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.13 2005/04/20 14:48:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14 2005/04/28 18:26:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -141,7 +141,7 @@ init_events()
 }
 
 unsigned int
-do_event(int evtch, struct intrframe *regs)
+evtchn_do_event(int evtch, struct intrframe *regs)
 {
 	struct cpu_info *ci;
 	int ilevel;
@@ -153,13 +153,13 @@ do_event(int evtch, struct intrframe *regs)
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
 		printf("event number %d > NR_IRQS\n", evtch);
-		panic("do_event");
+		panic("evtchn_do_event");
 	}
 #endif
 
 #ifdef IRQ_DEBUG
 	if (evtch == IRQ_DEBUG)
-		printf("do_event: evtch %d\n", evtch);
+		printf("evtchn_do_event: evtch %d\n", evtch);
 #endif
 	ci = &cpu_info_primary;
 
@@ -176,7 +176,7 @@ do_event(int evtch, struct intrframe *regs)
 
 #ifdef DIAGNOSTIC
 	if (evtsource[evtch] == NULL) {
-		panic("do_event: unknown event");
+		panic("evtchn_do_event: unknown event");
 	}
 #endif
 	uvmexp.intrs++;
