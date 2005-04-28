@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.7 2005/04/28 10:20:03 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.8 2005/04/28 10:28:53 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.7 2005/04/28 10:20:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.8 2005/04/28 10:28:53 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -516,7 +516,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		aprint_verbose("%s: using event channel %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_evtchn);
 		event_set_handler(sc->sc_evtchn,
-		    &xen_network_handler, sc, IPL_NET);
+		    &xen_network_handler, sc, IPL_NET, sc->sc_dev.dv_xname);
 		hypervisor_enable_event(sc->sc_evtchn);
 		xennet_driver_count_connected();
 
