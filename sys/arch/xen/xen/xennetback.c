@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.9 2005/04/17 14:50:11 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.10 2005/04/28 18:28:00 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -708,7 +708,7 @@ xennetback_ifstart(struct ifnet *ifp)
 			xennetback_get_new_xmit_pages();
 	}
 	/* send event, if needed */
-	if (do_event) {
+	if (need_event) {
 		x86_lfence();
 		XENPRINTF(("%s receive event\n", xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
