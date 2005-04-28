@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.2.1 2005/04/28 10:18:48 tron Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.2.2 2005/04/28 10:28:05 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2005/04/28 10:18:48 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.2 2005/04/28 10:28:05 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ xen_initclocks()
 	processed_system_time = shadow_system_time;
 
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    NULL, IPL_CLOCK);
+	    NULL, IPL_CLOCK, "clock");
 	hypervisor_enable_event(evtch);
 }
 
