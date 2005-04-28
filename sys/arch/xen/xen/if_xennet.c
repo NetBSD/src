@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.6 2005/04/25 13:44:20 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.7 2005/04/28 10:20:03 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.6 2005/04/25 13:44:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.7 2005/04/28 10:20:03 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -419,8 +419,9 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 			spin_unlock_irq(&np->tx_lock);
 
 			/* Free resources. */
-			free_irq(np->irq, dev);
 			unbind_evtchn_from_irq(np->evtchn);
+			event_remove_handler(np->evtchn,
+			    &xen_network_handler, sc);
 			free_page((unsigned long)np->tx);
 			free_page((unsigned long)np->rx);
 		}
@@ -512,11 +513,11 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		ether_ifattach(ifp, sc->sc_enaddr);
 
 		sc->sc_evtchn = status->evtchn;
-		sc->sc_irq = bind_evtchn_to_irq(sc->sc_evtchn);
-		aprint_verbose("%s: using irq %d\n", sc->sc_dev.dv_xname,
-		    sc->sc_irq);
-		event_set_handler(sc->sc_irq, &xen_network_handler, sc, IPL_NET);
-		hypervisor_enable_irq(sc->sc_irq);
+		aprint_verbose("%s: using event channel %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_evtchn);
+		event_set_handler(sc->sc_evtchn,
+		    &xen_network_handler, sc, IPL_NET);
+		hypervisor_enable_event(sc->sc_evtchn);
 		xennet_driver_count_connected();
 
 		aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
