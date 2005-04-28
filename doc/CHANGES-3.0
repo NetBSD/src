@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.68 2005/04/26 13:19:07 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.69 2005/04/28 11:07:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7693,4 +7693,114 @@ sys/dev/pci/if_hme_pci.c			1.19
 
 	Correct order of args in hmevpdoff() to fix build problem.
 	[atatat, ticket #208]
+
+sys/arch/xen/i386/genassym.cf			1.2
+sys/arch/xen/i386/hypervisor_machdep.c		1.7-1.9
+sys/arch/xen/i386/vector.S			1.9
+sys/arch/xen/include/cpu.h			1.8
+sys/arch/xen/include/evtchn.h			1.5-1.7
+sys/arch/xen/include/hypervisor.h		1.11-1.12
+sys/arch/xen/include/if_xennetvar.h		1.5
+sys/arch/xen/include/intr.h			1.3
+sys/arch/xen/include/intrdefs.h			1.1
+sys/arch/xen/include/pci_machdep.h		1.3
+sys/arch/xen/x86/intr.c				1.6
+sys/arch/xen/xen/clock.c			1.10-1.11
+sys/arch/xen/xen/ctrl_if.c			1.5-1.6
+sys/arch/xen/xen/evtchn.c			1.5-1.11
+sys/arch/xen/xen/if_xennet.c			1.20-1.21
+sys/arch/xen/xen/isa_machdep.c			1.4
+sys/arch/xen/xen/pci_machdep.c			1.4
+sys/arch/xen/xen/pciide_machdep.c		1.3
+sys/arch/xen/xen/xbd.c				1.17-1.18
+sys/arch/xen/xen/xbdback.c			1.8-1.10
+sys/arch/xen/xen/xencons.c			1.6-1.7
+sys/arch/xen/xen/xenevt.c			1.4-1.5
+sys/arch/xen/xen/xennetback.c			1.7-1.9
+
+	Bug fixes for interface to the domain controller.
+	[bouyer, ticket #193]
+
+sys/arch/xen/xen/evtchn.c			1.12
+
+	Fix spelling error.
+	[bouyer, ticket #194]
+
+sys/netinet/udp_usrreq.c			1.136
+sys/netinet6/ah_input.c				1.45
+sys/netinet6/esp_input.c			1.36
+sys/netinet6/esp_output.c			1.21
+sys/netinet6/ipcomp_input.c			1.23
+sys/netkey/key.c				1.131
+sys/netkey/key.h				1.18
+sys/netkey/keydb.h				1.24
+sys/sys/mbuf.h					1.106
+
+	Enhance IPSEC_NAT_T so that it can work with multiple machines behind
+	the same NAT.
+	[man, ticket #201]
+
+sys/netkey/key.c				1.132
+
+	After more testing, it turns out that we don't really need to check the
+	source address to make NAT-T working with multiple clients behind the
+	NAT. Remove that check for the sake of RFC 2401 conformance.
+	[manu, ticket #202]
+
+sys/netinet/udp_usrreq.c			1.137
+
+	Don't sleep when handling ESP over UDP packets.
+	[manu, ticket #203]
+
+sys/dev/pci/ahd_pci.c				1.16-1.17
+
+	Fix the *_IROC_* masks so that the correct bits get masked out for the
+	HostRaid features. The 29320 and 29320B really are 7902 based, not
+	7901A based. Use the approriate chip setup routine. Recognise generic
+	7901 based boards by matching against ID_9005_GENERIC_MASK.
+	Recognise the Dell OEM version of the ASR-29320B as found in recent
+	e.g. Dell SC1420 boxen. This adapter can't be put out of HostRaid mode,
+	so recognise it in that mode regardless.
+	[bad, ticket #204]
+
+usr.sbin/postinstall/postinstall		1.3
+
+	If /etc/ssh/sshd_config contains the following deprecated options,
+	comment them out:
+		rhostsauthentication
+		verifyreversemapping
+		reversemappingcheck
+	[lukem, ticket #205]
+
+sys/netinet/tcp_input.c				1.227
+
+	Fix build problem after recent NAT-T changes.
+	[manu, ticket #206]
+
+sys/dev/pci/if_wm.c				1.102
+
+	In wm_stop():
+	 - Clear the interrupt mask to ensure the device cannot assert its
+	   interrupt line.
+	 - Clear sc->sc_icr to ensure wm_intr() makes no attempt to service any
+	   currently pending or shared interrupt.
+	This should address the problem reported in both PR/29903 and PR/22493.
+	(wm(4) is susceptible to crashing in wm_intr() when the interface is 
+	downed)
+	[scw, ticket #207]
+
+share/man/man4/tlp.4				1.14
+
+	Mention the Compu-Shack FASTline-II PCI adapters as supported.
+	The 4-port 21143 based board has been working like a charm for me.
+	[bad, ticket #209]
+
+sys/arch/sparc/stand/boot/boot.c		1.20
+sys/arch/sparc/stand/common/promdev.c		1.16
+sys/arch/sparc/stand/common/promdev.h		1.10
+
+	Do not rely on strings to which pointers are returned by promlib
+	functions to persist accross further promlib calls.
+	This fixes (at least) bootjs.net.
+	[martin, ticket #210]
 
