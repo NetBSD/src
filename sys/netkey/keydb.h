@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.23 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: keydb.h,v 1.23.2.1 2005/04/28 10:48:46 tron Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -108,10 +108,10 @@ struct secasvar {
 
 	u_int32_t id;			/* SA id */
 	/* Nat-Traversal state */
+#ifdef IPSEC_NAT_T
 	u_int16_t	natt_type;
-	u_int16_t	remote_ike_port;
-	u_int16_t	local_ike_port;
 	u_int16_t	esp_frag;
+#endif
 };
 
 /* replay prevention */
