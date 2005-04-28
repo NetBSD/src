@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.2.2.1 2005/04/28 10:18:56 tron Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -50,7 +50,7 @@ struct xen_pci_tag {
 
 struct xen_intr_handle {
 	int pirq;
-	int irq;
+	int evtch;
 };
 
 typedef struct xen_pci_tag pcitag_t;
