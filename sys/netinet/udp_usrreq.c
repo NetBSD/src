@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.134.2.1 2005/04/28 10:49:13 tron Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.134.2.2 2005/04/28 10:53:40 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.1 2005/04/28 10:49:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.2 2005/04/28 10:53:40 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1464,8 +1464,11 @@ udp4_espinudp(m, off, src, so)
 	 * to select the right SPD for multiple hosts behind 
 	 * same NAT 
 	 */
-	tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
-	    sizeof(sport) + sizeof(dport), M_WAITOK);
+	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
+		printf("udp4_espinudp: m_tag_get failed\n");
+		return 0;
+	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(n, tag);
