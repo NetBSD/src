@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3.2.5 2005/04/28 10:31:32 tron Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3.2.6 2005/04/28 10:33:16 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.5 2005/04/28 10:31:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.6 2005/04/28 10:33:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,6 +63,7 @@ static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
 
 /* event handlers */
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
+uint8_t evtch_maskcount[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels */
 static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
