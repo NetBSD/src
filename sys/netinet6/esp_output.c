@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.20 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.20.2.1 2005/04/28 10:48:32 tron Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.20 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.20.2.1 2005/04/28 10:48:32 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -533,9 +533,10 @@ esp_output(m, nexthdrp, md, isr, af)
 		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
 			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
 		else
-			udp->uh_sport = htons(sav->local_ike_port);
+			udp->uh_sport = 
+			    KEY_PORTFROMSADDR(&sav->sah->saidx.src);
 
-		udp->uh_dport = htons(sav->remote_ike_port);
+		udp->uh_dport = KEY_PORTFROMSADDR(&sav->sah->saidx.dst);
 		udp->uh_sum = 0;
 	} else {
 		*nexthdrp = IPPROTO_ESP;
