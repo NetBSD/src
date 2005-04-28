@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.4.2.1 2005/04/13 21:36:16 tron Exp $	*/
+/*	$NetBSD: xencons.c,v 1.4.2.2 2005/04/28 10:19:24 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.1 2005/04/13 21:36:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.2 2005/04/28 10:19:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -155,14 +155,14 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
-			int irq = bind_virq_to_irq(VIRQ_CONSOLE);
-			aprint_verbose("%s: using irq %d\n",
-			    sc->sc_dev.dv_xname, irq);
-			if (event_set_handler(irq, xencons_intr, sc,
+			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
+			aprint_verbose("%s: using event channel %d\n",
+			    sc->sc_dev.dv_xname, evtch);
+			if (event_set_handler(evtch, xencons_intr, sc,
 			    IPL_TTY) != 0)
 				printf("console: "
 				    "can't register xencons_intr\n");
-			hypervisor_enable_irq(irq);
+			hypervisor_enable_event(evtch);
 		} else {
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
