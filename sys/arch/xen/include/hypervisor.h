@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.10 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.10.2.1 2005/04/28 10:19:09 tron Exp $	*/
 
 /*
  * 
@@ -86,9 +86,11 @@ extern union start_info_union start_info_union;
 struct intrframe;
 void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_notify_via_evtchn(unsigned int);
-void hypervisor_enable_irq(unsigned int);
-void hypervisor_disable_irq(unsigned int);
-void hypervisor_acknowledge_irq(unsigned int);
+void hypervisor_enable_event(unsigned int);
+void hypervisor_disable_event(unsigned int);
+void hypervisor_acknowledge_event(unsigned int);
+void hypervisor_enable_ipl(unsigned int);
+void hypervisor_set_ipending(int, int, int);
 
 /* hypervisor_machdep.c */
 void hypervisor_unmask_event(unsigned int);
