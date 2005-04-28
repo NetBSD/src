@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.2.2.5 2005/04/28 10:33:00 tron Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.2.2.6 2005/04/28 10:39:11 tron Exp $	*/
 
 /*
  *
@@ -37,7 +37,6 @@
 #define NR_PIRQS	32
 
 extern struct evtsource *evtsource[];
-extern uint8_t evtch_maskcount[];
 
 void events_default_setup(void);
 void init_events(void);
