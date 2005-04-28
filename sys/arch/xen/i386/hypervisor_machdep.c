@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.4 2005/04/28 10:33:08 tron Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.5 2005/04/28 10:37:02 tron Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.4 2005/04/28 10:33:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.5 2005/04/28 10:37:02 tron Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -122,14 +122,18 @@ stipending()
 			l1 &= ~(1 << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
+			/*
+			 * mask and clear event. More efficient than calling
+			 * hypervisor_mask/clear_event for each event.
+			 */
+			x86_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
+			x86_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
 			while ((l2i = ffs(l2)) != 0) {
 				l2i--;
 				l2 &= ~(1 << l2i);
 
 				port = (l1i << 5) + l2i;
 				if (evtsource[port]) {
-					hypervisor_mask_event(port);
-					hypervisor_clear_event(port);
 					hypervisor_set_ipending(port, l1i, l2i);
 					evtsource[port]->ev_evcnt.ev_count++;
 					if (ret == 0 && ci->ci_ilevel <
@@ -181,6 +185,16 @@ do_hypervisor_callback(struct intrframe *regs)
 			l1 &= ~(1 << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
+			/*
+			 * mask and clear the pending events.
+			 * Doing it here for all event that will be processed
+			 * avoids a race with stipending (which can be called
+			 * though do_event->splx) that could cause an event to
+			 * be both processed and marked pending.
+			 */
+			x86_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
+			x86_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
+
 			while ((l2i = ffs(l2)) != 0) {
 				l2i--;
 				l2 &= ~(1 << l2i);
