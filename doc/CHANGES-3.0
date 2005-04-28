@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.70 2005/04/28 11:34:28 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.71 2005/04/28 15:12:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7817,4 +7817,15 @@ sys/arch/sparc/stand/common/promdev.h		1.10
 	functions to persist accross further promlib calls.
 	This fixes (at least) bootjs.net.
 	[martin, ticket #210]
+
+sys/arch/sparc/stand/bootxx/bootxx.c		1.12
+
+	Missed this file when changing the bootdevice signature.
+	[martin, ticket #211]
+
+lib/libc/db/hash/hash_bigkey.c			1.19
+
+	Don't attempt to delete a NULL key. Can happen if we were the only key
+	in a 64K page. Thanks to Juergen Hannken-Illjes for the test.
+	[christos, ticket #212]
 
