@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.188 2005/04/07 06:44:15 dbj Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.189 2005/04/28 14:40:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.188 2005/04/07 06:44:15 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.189 2005/04/28 14:40:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -804,6 +804,8 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	if (!error) {
 		error = uvm_map_enter(map, &args, new_entry);
 		*startp = args.uma_start;
+	} else if (new_entry) {
+		uvm_mapent_free(new_entry);
 	}
 
 #if defined(DEBUG)
