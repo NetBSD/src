@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.14 2005/02/20 20:32:45 heas Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.15 2005/04/28 15:03:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ struct kbd_softc {
 	int k_repeatsym;	/* repeating symbol */
 	int k_repeating;	/* callout is active (use callout_active?) */
 	struct callout k_repeat_ch;
+	int k_leds;
 };
 
 
