@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.14.2.4 2005/04/28 10:19:56 tron Exp $ */
+/* $NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.4 2005/04/28 10:19:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -550,7 +550,8 @@ connect_interface(blkif_fe_interface_status_t *status)
 
 	aprint_verbose("xbd: using event channel %d\n", blkif_evtchn);
 
-	event_set_handler(blkif_evtchn, &xbd_response_handler, NULL, IPL_BIO);
+	event_set_handler(blkif_evtchn, &xbd_response_handler, NULL, IPL_BIO,
+	    "xbd");
 	hypervisor_enable_event(blkif_evtchn);
 
 	/* Transition to connected in case we need to do 
@@ -810,7 +811,8 @@ enable_update_events(struct device *self)
 {
 
 	kthread_create(xbd_update_create_kthread, self);
-	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO);
+	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO,
+	    "xbdup");
 	hypervisor_enable_event(_EVENT_VBD_UPD);
 }
 #endif
