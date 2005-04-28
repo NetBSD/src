@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.5 2005/04/28 10:37:02 tron Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.6 2005/04/28 10:38:47 tron Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.5 2005/04/28 10:37:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.6 2005/04/28 10:38:47 tron Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -134,7 +134,9 @@ stipending()
 
 				port = (l1i << 5) + l2i;
 				if (evtsource[port]) {
-					hypervisor_set_ipending(port, l1i, l2i);
+					hypervisor_set_ipending(
+					    evtsource[port]->ev_imask,
+					    l1i, l2i);
 					evtsource[port]->ev_evcnt.ev_count++;
 					if (ret == 0 && ci->ci_ilevel <
 					    evtsource[port]->ev_maxlevel)
@@ -276,7 +278,11 @@ hypervisor_enable_ipl(unsigned int ipl)
 	int l1i, l2i;
 	struct cpu_info *ci = curcpu();
 
-	/* enable all events for ipl */
+	/*
+	 * enable all events for ipl. As we only set an event in ipl_evt_mask
+	 * for its lowest IPL, and pending IPLs are processed high to low,
+	 * we know that all callback for this event have been processed.
+	 */
 
 	l1 = ci->ci_isources[ipl]->ipl_evt_mask1;
 	ci->ci_isources[ipl]->ipl_evt_mask1 = 0;
@@ -292,35 +298,28 @@ hypervisor_enable_ipl(unsigned int ipl)
 			l2 &= ~(1 << l2i);
 
 			evtch = (l1i << 5) + l2i;
-			KASSERT(evtch_maskcount[evtch] > 0);
-			if ((--evtch_maskcount[evtch]) == 0) {
-				hypervisor_enable_event(evtch);
-			}
+			hypervisor_enable_event(evtch);
 		}
 	}
 }
 
 void
-hypervisor_set_ipending(int port, int l1, int l2)
+hypervisor_set_ipending(u_int32_t iplmask, int l1, int l2)
 {
-	int ipl, imask;
+	int ipl;
 	struct cpu_info *ci = curcpu();
 
-	KASSERT(port == (l1 << 5) + l2);
-	KASSERT(evtch_maskcount[port] == 0);
-
 	/* set pending bit for the appropriate IPLs */	
-	ci->ci_ipending |= evtsource[port]->ev_imask;
+	ci->ci_ipending |= iplmask;
 
-	/* and set event pending bit for each IPL */
-	imask = evtsource[port]->ev_imask;
-	while ((ipl = ffs(imask)) != 0) {
-		ipl--;
-		imask &= ~(1 << ipl);
-		ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
-		ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
-
-		evtch_maskcount[port]++;
-		KASSERT(evtch_maskcount[port] <= 32);
-	}
+	/*
+	 * And set event pending bit for the lowest IPL. As IPL are handled
+	 * from high to low, this ensure that all callbacks will have been
+	 * called when we ack the event
+	 */
+	ipl = ffs(iplmask);
+	KASSERT(ipl > 0);
+	ipl--;
+	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
+	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
 }
