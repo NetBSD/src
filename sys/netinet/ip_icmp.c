@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.91 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.92 2005/04/29 10:39:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.91 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92 2005/04/29 10:39:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.91 2005/02/26 22:45:12 perry Exp $");
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
 
 #ifdef IPSEC
