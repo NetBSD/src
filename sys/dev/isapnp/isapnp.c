@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.43.4.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43.4.1 2005/04/29 11:28:55 kent Exp $");
 
 #include "isadma.h"
 
@@ -64,31 +64,30 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $")
 #define ISAPNP_ALLOC_INTR_MASK (~0)
 #endif
 
-static void isapnp_init __P((struct isapnp_softc *));
-static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
-static int isapnp_findcard __P((struct isapnp_softc *));
-static void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
-static int isapnp_alloc_drq __P((isa_chipset_tag_t, struct isapnp_pin *));
-static int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
-    struct isapnp_attach_args *, int));
-static struct isapnp_attach_args *isapnp_bestconfig __P((struct isapnp_softc *,
-    struct isapnp_attach_args **));
-static void isapnp_print_region __P((const char *, struct isapnp_region *,
-    size_t));
-static void isapnp_configure __P((struct isapnp_softc *,
-    const struct isapnp_attach_args *));
-static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
-static int isapnp_print __P((void *, const char *));
+static void isapnp_init(struct isapnp_softc *);
+static __inline u_char isapnp_shift_bit(struct isapnp_softc *);
+static int isapnp_findcard(struct isapnp_softc *);
+static void isapnp_free_region(bus_space_tag_t, struct isapnp_region *);
+static int isapnp_alloc_region(bus_space_tag_t, struct isapnp_region *);
+static int isapnp_alloc_irq(isa_chipset_tag_t, struct isapnp_pin *);
+static int isapnp_alloc_drq(isa_chipset_tag_t, struct isapnp_pin *);
+static int isapnp_testconfig(bus_space_tag_t, bus_space_tag_t,
+    struct isapnp_attach_args *, int);
+static struct isapnp_attach_args *isapnp_bestconfig(struct isapnp_softc *,
+    struct isapnp_attach_args **);
+static void isapnp_print_region(const char *, struct isapnp_region *, size_t);
+static void isapnp_configure(struct isapnp_softc *,
+    const struct isapnp_attach_args *);
+static void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
+static int isapnp_print(void *, const char *);
 #ifdef _KERNEL
-static int isapnp_submatch __P((struct device *, struct cfdata *,
-				const locdesc_t *, void *));
+static int isapnp_submatch(struct device *, struct cfdata *,
+				const locdesc_t *, void *);
 #endif
-static int isapnp_find __P((struct isapnp_softc *, int));
-static int isapnp_match __P((struct device *, struct cfdata *, void *));
-static void isapnp_attach __P((struct device *, struct device *, void *));
-static void isapnp_callback __P((struct device *));
+static int isapnp_find(struct isapnp_softc *, int);
+static int isapnp_match(struct device *, struct cfdata *, void *);
+static void isapnp_attach(struct device *, struct device *, void *);
+static void isapnp_callback(struct device *);
 
 CFATTACH_DECL(isapnp, sizeof(struct isapnp_softc),
     isapnp_match, isapnp_attach, NULL, NULL);
@@ -485,7 +484,7 @@ isapnp_bestconfig(sc, ipa)
 				else {
 					if (n)
 						n->ipa_sibling = c;
-				
+
 					else
 						l = c;
 					n = c;
@@ -511,7 +510,7 @@ isapnp_id_to_vendor(v, id)
 {
 	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
-	
+
 	*p++ = 'A' + (id[0] >> 2) - 1;
 	*p++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*p++ = 'A' + (id[1] & 0x1f) - 1;
@@ -655,7 +654,7 @@ isapnp_isa_attach_hook(isa_sc)
 	struct isa_softc *isa_sc;
 {
 	struct isapnp_softc sc;
-	
+
 	sc.sc_iot = isa_sc->sc_iot;
 	sc.sc_ncards = 0;
 
@@ -674,7 +673,7 @@ isapnp_isa_attach_hook(isa_sc)
 	 * non-responsive state.
 	 * The read has to happen at this point in time (or earlier) so
 	 * it cannot be moved to the wss_isapnp.c driver.
-	 * (BTW, We're not alone in having problems with these chips: 
+	 * (BTW, We're not alone in having problems with these chips:
 	 * Windoze 98 couldn't detect the sound chip on a Dell when I tried.)
 	 *
 	 *     Lennart Augustsson <augustss@NetBSD.org>
@@ -789,7 +788,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem_range); i++) {
 		if (i < ipa->ipa_nmem)
 			r = &ipa->ipa_mem[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,
@@ -852,7 +851,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem32_range); i++) {
 		if (i < ipa->ipa_nmem32)
 			r = &ipa->ipa_mem32[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,

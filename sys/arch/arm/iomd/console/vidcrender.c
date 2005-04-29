@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.13 2003/09/21 15:12:19 matt Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.13.8.1 2005/04/29 11:28:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.13 2003/09/21 15:12:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.13.8.1 2005/04/29 11:28:03 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1246,7 +1246,8 @@ vidc_cursor_init(vc)
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
-		cursor_data = (char *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		cursor_data = (char *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
@@ -1266,7 +1267,7 @@ vidc_cursor_init(vc)
  	cursor_transparent += 32;
 	cursor_transparent = (char *)((int)cursor_transparent & (~31) );
 
-	for ( line = 0; line<R_DATA->font->pixel_height; ++ line )
+	for ( line = 0; line<R_DATA->font->pixel_height; ++line )
 	{
 	    for ( counter=0; counter<R_DATA->font->pixel_width/4;counter++ )
 		cursor_normal[line*R_DATA->font->pixel_width + counter]=0x55;
@@ -1274,7 +1275,7 @@ vidc_cursor_init(vc)
 		cursor_normal[line*R_DATA->font->pixel_width + counter]=0;
 	}
 
-	for ( line = 0; line<R_DATA->font->pixel_height; ++ line )
+	for ( line = 0; line<R_DATA->font->pixel_height; ++line )
 	{
 	    for ( counter=0; counter<R_DATA->font->pixel_width/4;counter++ )
 		cursor_transparent[line*R_DATA->font->pixel_width + counter]=0x00;

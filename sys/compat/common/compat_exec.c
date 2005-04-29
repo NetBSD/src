@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.11 2003/11/19 15:48:21 christos Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.11.8.1 2005/04/29 11:28:31 kent Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.11 2003/11/19 15:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.11.8.1 2005/04/29 11:28:31 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,10 @@ exec_aout_prep_oldzmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss)
+	    NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		epp->ep_daddr + execp->a_data, NULLVP, 0,
+		VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
@@ -172,7 +173,7 @@ exec_aout_prep_oldomagic(p, epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);

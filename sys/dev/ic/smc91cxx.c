@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.49.4.1 2005/04/29 11:28:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*      
+/*
  * Copyright (c) 1996 Gardner Buchanan <gbuchanan@shl.com>
  * All rights reserved.
- *      
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -55,7 +55,7 @@
  * 4. The name of Gardner Buchanan may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
- *       
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -66,9 +66,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *      
+ *
  *   from FreeBSD Id: if_sn.c,v 1.4 1996/03/18 15:47:16 gardner Exp
- */      
+ */
 
 /*
  * Core driver for the SMC 91Cxx family of Ethernet chips.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49.4.1 2005/04/29 11:28:52 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $"
 #include "bpfilter.h"
 #include "rnd.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $"
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/ioctl.h> 
+#include <sys/ioctl.h>
 #include <sys/errno.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -107,10 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $"
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_media.h> 
+#include <net/if_media.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
@@ -184,8 +184,8 @@ const int smc91cxx_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t smc91cxx_mii_bitbang_read __P((struct device *));
-void smc91cxx_mii_bitbang_write __P((struct device *, u_int32_t));
+u_int32_t smc91cxx_mii_bitbang_read(struct device *);
+void smc91cxx_mii_bitbang_write(struct device *, u_int32_t);
 
 const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 	smc91cxx_mii_bitbang_read,
@@ -200,27 +200,27 @@ const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 };
 
 /* MII callbacks */
-int	smc91cxx_mii_readreg __P((struct device *, int, int));
-void	smc91cxx_mii_writereg __P((struct device *, int, int, int));
-void	smc91cxx_statchg __P((struct device *));
-void	smc91cxx_tick __P((void *));
+int	smc91cxx_mii_readreg(struct device *, int, int);
+void	smc91cxx_mii_writereg(struct device *, int, int, int);
+void	smc91cxx_statchg(struct device *);
+void	smc91cxx_tick(void *);
 
-int	smc91cxx_mediachange __P((struct ifnet *));
-void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	smc91cxx_mediachange(struct ifnet *);
+void	smc91cxx_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	smc91cxx_set_media __P((struct smc91cxx_softc *, int));
+int	smc91cxx_set_media(struct smc91cxx_softc *, int);
 
-void	smc91cxx_init __P((struct smc91cxx_softc *));
-void	smc91cxx_read __P((struct smc91cxx_softc *));
-void	smc91cxx_reset __P((struct smc91cxx_softc *));
-void	smc91cxx_start __P((struct ifnet *));
-void	smc91cxx_copy_tx_frame __P((struct smc91cxx_softc *, struct mbuf *));
-void	smc91cxx_resume __P((struct smc91cxx_softc *));
-void	smc91cxx_stop __P((struct smc91cxx_softc *));
-void	smc91cxx_watchdog __P((struct ifnet *));
-int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
+void	smc91cxx_init(struct smc91cxx_softc *);
+void	smc91cxx_read(struct smc91cxx_softc *);
+void	smc91cxx_reset(struct smc91cxx_softc *);
+void	smc91cxx_start(struct ifnet *);
+void	smc91cxx_copy_tx_frame(struct smc91cxx_softc *, struct mbuf *);
+void	smc91cxx_resume(struct smc91cxx_softc *);
+void	smc91cxx_stop(struct smc91cxx_softc *);
+void	smc91cxx_watchdog(struct ifnet *);
+int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
 
-static __inline int ether_cmp __P((void *, void *));
+static __inline int ether_cmp(void *, void *);
 static __inline int
 ether_cmp(va, vb)
 	void *va, *vb;

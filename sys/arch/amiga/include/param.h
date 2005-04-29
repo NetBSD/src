@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 2003/08/07 16:26:46 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.41.8.1 2005/04/29 11:28:00 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -108,12 +108,12 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
+#ifdef	_KERNEL
 /*
  * spl functions; all are normally done in-line
  */
-#include <machine/psl.h>
+#include <machine/intr.h>
 
-#ifdef	_KERNEL
 /*
  * point to the custom.intenar and custom.intenaw respectively.
  */

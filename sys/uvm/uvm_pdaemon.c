@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.60 2004/10/03 08:47:48 enami Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.60.4.1 2005/04/29 11:29:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.60 2004/10/03 08:47:48 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.60.4.1 2005/04/29 11:29:45 kent Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -102,6 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.60 2004/10/03 08:47:48 enami Exp $
 void		uvmpd_scan(void);
 void		uvmpd_scan_inactive(struct pglist *);
 void		uvmpd_tune(void);
+
+/*
+ * XXX hack to avoid hangs when large processes fork.
+ */
+int uvm_extrapages;
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -183,6 +188,9 @@ uvmpd_tune(void)
 	if (uvmexp.freetarg <= uvmexp.freemin)
 		uvmexp.freetarg = uvmexp.freemin + 1;
 
+	uvmexp.freetarg += uvm_extrapages;
+	uvm_extrapages = 0;
+
 	/* uvmexp.inactarg: computed in main daemon loop */
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
@@ -198,6 +206,7 @@ void
 uvm_pageout(void *arg)
 {
 	int bufcnt, npages = 0;
+	int extrapages = 0;
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
@@ -230,8 +239,9 @@ uvm_pageout(void *arg)
 		 */
 
 		uvm_lock_pageq();
-		if (npages != uvmexp.npages) {	/* check for new pages? */
+		if (npages != uvmexp.npages || extrapages != uvm_extrapages) {
 			npages = uvmexp.npages;
+			extrapages = uvm_extrapages;
 			uvmpd_tune();
 		}
 
@@ -413,6 +423,9 @@ uvmpd_scan_inactive(pglst)
 	anonreact = anonunder || (!anonover && (fileover || execover));
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));
+	if (filereact && execreact && (anonreact || uvm_swapisfull())) {
+		anonreact = filereact = execreact = FALSE;
+	}
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 		uobj = NULL;
 		anon = NULL;
@@ -900,4 +913,46 @@ uvmpd_scan(void)
 
 		simple_unlock(slock);
 	}
+}
+
+/*
+ * uvm_reclaimable: decide whether to wait for pagedaemon.
+ *
+ * => return TRUE if it seems to be worth to do uvm_wait.
+ *
+ * XXX should be tunable.
+ * XXX should consider pools, etc?
+ */
+
+boolean_t
+uvm_reclaimable(void)
+{
+	int filepages;
+
+	/*
+	 * if swap is not full, no problem.
+	 */
+
+	if (!uvm_swapisfull()) {
+		return TRUE;
+	}
+
+	/*
+	 * file-backed pages can be reclaimed even when swap is full.
+	 * if we have more than 1/16 of pageable memory or 5MB, try to reclaim.
+	 *
+	 * XXX assume the worst case, ie. all wired pages are file-backed.
+	 */
+
+	filepages = uvmexp.filepages + uvmexp.execpages - uvmexp.wired;
+	if (filepages >= MIN((uvmexp.active + uvmexp.inactive) >> 4,
+	    5 * 1024 * 1024 >> PAGE_SHIFT)) {
+		return TRUE;
+	}
+
+	/*
+	 * kill the process, fail allocation, etc..
+	 */
+
+	return FALSE;
 }

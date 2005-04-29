@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2004/06/30 03:26:26 jmc Exp $
-#	$OpenBSD: Makefile,v 1.2 1997/05/19 09:35:24 pefo Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2005/04/29 11:28:02 kent Exp $
 
-SUBDIR=	mbr
+SUBDIR=	boot
 
 .include <bsd.subdir.mk>

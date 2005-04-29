@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.19 2004/06/26 21:48:30 kleink Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.19.4.1 2005/04/29 11:28:20 kent Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.19 2004/06/26 21:48:30 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.19.4.1 2005/04/29 11:28:20 kent Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -682,7 +682,7 @@ oea_startup(const char *model)
 	}
 	initmsgbuf(v, sz);
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
 	cpu_identify(NULL, 0);
@@ -802,7 +802,7 @@ mapiodev(paddr_t pa, psize_t len)
 	faddr = trunc_page(pa);
 	off = pa - faddr;
 	len = round_page(off + len);
-	va = taddr = uvm_km_valloc(kernel_map, len);
+	va = taddr = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return NULL;

@@ -27,13 +27,13 @@
  *	i4b_ipac.h - definitions for the Siemens IPAC PSB2115 chip
  *	==========================================================
  *
- *	$Id: ipac.h,v 1.1 2001/02/20 22:24:36 martin Exp $
+ *	$Id: ipac.h,v 1.1.34.1 2005/04/29 11:28:50 kent Exp $
  *
  *      last edit-date: [Thu Jan  6 14:54:19 2000]
  *
  *---------------------------------------------------------------------------
  */
- 
+
 #ifndef _I4B_IPAC_H_
 #define _I4B_IPAC_H_
 
@@ -52,7 +52,7 @@
 /*
  * definitions of registers and bits for the IPAC ISDN chip.
  */
- 
+
 typedef struct ipac_reg {
 
 	/* most registers can be read/written, but have different names */

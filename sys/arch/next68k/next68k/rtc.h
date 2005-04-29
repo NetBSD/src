@@ -34,10 +34,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void poweroff __P((void));
-void rtc_init __P((void));
-u_char rtc_read __P((u_char));
-void rtc_write __P((u_char, u_char));
-void rtc_print __P((void));
-time_t getsecs __P((void));
-void setsecs __P((time_t));
+void poweroff(void);
+void rtc_init(void);
+u_char rtc_read(u_char);
+void rtc_write(u_char, u_char);
+void rtc_print(void);
+time_t getsecs(void);
+void setsecs(time_t);

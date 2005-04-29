@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.32 2003/08/07 16:34:05 agc Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.32.8.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -88,7 +88,7 @@ struct ioctl_pt {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ioctl __P((int, unsigned long, ...));
+int	ioctl(int, unsigned long, ...);
 __END_DECLS
 #endif /* !_KERNEL */
 #endif /* !_SYS_IOCTL_H_ */

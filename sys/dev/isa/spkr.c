@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.15 2003/06/29 22:30:22 fvdl Exp $	*/
+/*	$NetBSD: spkr.c,v 1.15.10.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15 2003/06/29 22:30:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.10.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15 2003/06/29 22:30:22 fvdl Exp $");
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 
+#include <machine/bus.h>
+
 #include <dev/isa/pcppivar.h>
 
 #include <dev/isa/spkrio.h>
 
-int spkrprobe __P((struct device *, struct cfdata *, void *));
-void spkrattach __P((struct device *, struct device *, void *));
+int spkrprobe(struct device *, struct cfdata *, void *);
+void spkrattach(struct device *, struct device *, void *);
 
 struct spkr_softc {
 	struct device sc_dev;
@@ -84,11 +86,11 @@ static pcppi_tag_t ppicookie;
 
 #define SPKRPRI (PZERO - 1)
 
-static void tone __P((u_int, u_int));
-static void rest __P((int));
-static void playinit __P((void));
-static void playtone __P((int, int, int));
-static void playstring __P((char *, int));
+static void tone(u_int, u_int);
+static void rest(int);
+static void playinit(void);
+static void playtone(int, int, int);
+static void playstring(char *, int);
 
 static
 void tone(hz, ticks)

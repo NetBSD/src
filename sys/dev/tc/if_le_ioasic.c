@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.21 2002/10/02 16:53:03 thorpej Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.21.14.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.21 2002/10/02 16:53:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.21.14.1 2005/04/29 11:29:17 kent Exp $");
 
 #include "opt_inet.h"
 
@@ -71,21 +71,18 @@ struct le_ioasic_softc {
 	bus_dmamap_t sc_dmamap;		/* bus dmamap */
 };
 
-static int  le_ioasic_match __P((struct device *, struct cfdata *, void *));
-static void le_ioasic_attach __P((struct device *, struct device *, void *));
+static int  le_ioasic_match(struct device *, struct cfdata *, void *);
+static void le_ioasic_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le_ioasic, sizeof(struct le_softc),
     le_ioasic_match, le_ioasic_attach, NULL, NULL);
 
-static void le_ioasic_copytobuf_gap2 __P((struct lance_softc *, void *,
-	    int, int));
-static void le_ioasic_copyfrombuf_gap2 __P((struct lance_softc *, void *,
-	    int, int));
-static void le_ioasic_copytobuf_gap16 __P((struct lance_softc *, void *,
-	    int, int));
-static void le_ioasic_copyfrombuf_gap16 __P((struct lance_softc *, void *,
-	    int, int));
-static void le_ioasic_zerobuf_gap16 __P((struct lance_softc *, int, int));
+static void le_ioasic_copytobuf_gap2(struct lance_softc *, void *, int, int);
+static void le_ioasic_copyfrombuf_gap2(struct lance_softc *, void *, int, int);
+static void le_ioasic_copytobuf_gap16(struct lance_softc *, void *, int, int);
+static void le_ioasic_copyfrombuf_gap16(struct lance_softc *, void *,
+	    int, int);
+static void le_ioasic_zerobuf_gap16(struct lance_softc *, int, int);
 
 static int
 le_ioasic_match(parent, match, aux)
@@ -197,20 +194,20 @@ le_ioasic_attach(parent, self, aux)
 
 void
 le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
-	struct lance_softc *sc;  
+	struct lance_softc *sc;
 	void *fromv;
 	int boff;
 	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
-	volatile u_int16_t *bptr;  
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
-		bptr += 2;  
+		bptr += 2;
 		len--;
 	} else
 		bptr = ((volatile u_int16_t *)buf) + boff;
@@ -331,7 +328,7 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 		} while (len >= 16);
 		break;
 
-		default: 
+		default:
 		/* Does odd-aligned case ever happen? */
 		do {
 			bcopy(from, bptr, 16);

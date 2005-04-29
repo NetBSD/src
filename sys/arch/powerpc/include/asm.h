@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 2003/08/08 07:14:26 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.15.8.1 2005/04/29 11:28:20 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,6 +117,9 @@
 	stptr	er,CI_INTSTK(tmp1);					\
 	stptr	er,CI_IDLE_PCB(tmp1);					\
 	addi	er,er,USPACE;		/* space for idle_u */		\
+	lis	tmp2,_C_LABEL(emptyidlespin)@h;				\
+	ori	tmp2,tmp2,_C_LABEL(emptyidlespin)@l;			\
+	stptr	tmp2,CI_IDLESPIN(tmp1);					\
 	li	tmp2,-1;						\
 	stint	tmp2,CI_INTRDEPTH(tmp1);				\
 	li	tmp2,0;							\

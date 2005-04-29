@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.7 2002/09/28 10:31:02 scw Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.7.14.1 2005/04/29 11:29:07 kent Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,13 +40,13 @@
  * where pmem_extent is "pre-fetchable" memory -- if NULL, mem_extent will
  * be used for both
  */
-int	pci_configure_bus __P((pci_chipset_tag_t, struct extent *,
-	    struct extent *, struct extent *, int, int));
+int	pci_configure_bus(pci_chipset_tag_t, struct extent *,
+	    struct extent *, struct extent *, int, int);
 
 /* Defined in machdep code.  Returns the interrupt line to set */
 /* args: chipset_tag, bus, dev, ipin, ptr to interrupt line */
 #ifndef pci_conf_interrupt
-void	pci_conf_interrupt __P((pci_chipset_tag_t, int, int, int, int, int *));
+void	pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 #endif
 
 #define PCI_CONF_MAP_IO		0x01
@@ -55,5 +55,7 @@ void	pci_conf_interrupt __P((pci_chipset_tag_t, int, int, int, int, int *));
 #define PCI_CONF_ENABLE_IO	0x08
 #define PCI_CONF_ENABLE_MEM	0x10
 #define PCI_CONF_ENABLE_BM	0x20
+#define PCI_CONF_ENABLE_PARITY	0x40
+#define PCI_CONF_ENABLE_SERR	0x80
 
-#define PCI_CONF_ALL		0x3f
+#define PCI_CONF_ALL		0xff

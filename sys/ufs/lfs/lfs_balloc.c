@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.48.8.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48.8.1 2005/04/29 11:29:39 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
+#include <sys/tree.h>
 #include <sys/trace.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -96,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp 
 
 int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
 
+u_int64_t locked_fakequeue_count;
+
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
  * and for any indirect blocks the may need to be created in order for
@@ -104,7 +107,7 @@ int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucre
  * Blocks which have never been accounted for (i.e., which "do not exist")
  * have disk address 0, which is translated by ufs_bmap to the special value
  * UNASSIGNED == -1, as in the historical UFS.
- * 
+ *
  * Blocks which have been accounted for but which have not yet been written
  * to disk are given the new special disk address UNWRITTEN == -2, so that
  * they can be differentiated from completely new blocks.
@@ -133,7 +136,7 @@ lfs_balloc(void *v)
 	int bb, bcount;
 	int error, frags, i, nsize, osize, num;
 
-	vp = ap->a_vp;	
+	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	offset = blkoff(fs, ap->a_startoffset);
@@ -143,7 +146,9 @@ lfs_balloc(void *v)
 	/* (void)lfs_check(vp, lbn, 0); */
 	bpp = ap->a_bpp;
 
-	/* 
+	ASSERT_MAYBE_SEGLOCK(fs);
+
+	/*
 	 * Three cases: it's a block beyond the end of file, it's a block in
 	 * the file that may or may not have been assigned a disk address or
 	 * we're writing an entire block.
@@ -158,10 +163,10 @@ lfs_balloc(void *v)
 	 * check if the old last block was a fragment.	If it was, we need
 	 * to rewrite it.
 	 */
-	
+
 	if (bpp)
 		*bpp = NULL;
-	
+
 	/* Check for block beyond end of file and fragment extension needed. */
 	lastblock = lblkno(fs, ip->i_size);
 	if (lastblock < NDADDR && lastblock < lbn) {
@@ -196,6 +201,8 @@ lfs_balloc(void *v)
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
 			bb = fragstofsb(fs, frags);
+			if (!ISSPACE(fs, bb, ap->a_cred))
+				return ENOSPC;
 			if (bpp) {
 				*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 				bp->b_blkno = UNWRITTEN;
@@ -203,7 +210,9 @@ lfs_balloc(void *v)
 					clrbuf(bp);
 			}
 			ip->i_lfs_effnblks += bb;
-			ip->i_lfs->lfs_bfree -= bb;
+			simple_lock(&fs->lfs_interlock);
+			fs->lfs_bfree -= bb;
+			simple_unlock(&fs->lfs_interlock);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
 			if (nsize <= osize) {
@@ -227,6 +236,10 @@ lfs_balloc(void *v)
 	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL, NULL);
 	if (error)
 		return (error);
+
+	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
+	KASSERT(daddr <= LFS_MAX_DADDR);
+
 	/*
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
@@ -242,7 +255,9 @@ lfs_balloc(void *v)
 		}
 	}
 	if (ISSPACE(fs, bcount, ap->a_cred)) {
-		ip->i_lfs->lfs_bfree -= bcount;
+		simple_lock(&fs->lfs_interlock);
+		fs->lfs_bfree -= bcount;
+		simple_unlock(&fs->lfs_interlock);
 		ip->i_lfs_effnblks += bcount;
 	} else {
 		return ENOSPC;
@@ -281,11 +296,18 @@ lfs_balloc(void *v)
 						UNWRITTEN;
 				/* XXX ondisk32 */
 				idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
+#ifdef DEBUG
+				if (vp == fs->lfs_ivnode) {
+					LFS_ENTER_LOG("balloc", __FILE__,
+						__LINE__, indirs[i].in_lbn,
+						ibp->b_flags, curproc->p_pid);
+				}
+#endif
 				if ((error = VOP_BWRITE(ibp)))
 					return error;
 			}
 		}
-	}	
+	}
 
 
 	/*
@@ -294,8 +316,14 @@ lfs_balloc(void *v)
 	frags = fsbtofrags(fs, bb);
 	if (bpp)
 		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
-	
-	/* 
+
+	/*
+	 * Do accounting on blocks that represent pages.
+	 */
+	if (!bpp)
+		lfs_register_block(vp, lbn);
+
+	/*
 	 * The block we are writing may be a brand new block
 	 * in which case we need to do accounting.
 	 *
@@ -307,11 +335,11 @@ lfs_balloc(void *v)
 		if (bpp) {
 			if (ap->a_flags & B_CLRBUF)
 				clrbuf(bp);
-		
+
 			/* Note the new address */
 			bp->b_blkno = UNWRITTEN;
 		}
-		
+
 		switch (num) {
 		    case 0:
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
@@ -327,6 +355,13 @@ lfs_balloc(void *v)
 				    (long long)idp->in_lbn);
 			/* XXX ondisk32 */
 			((int32_t *)ibp->b_data)[idp->in_off] = UNWRITTEN;
+#ifdef DEBUG
+			if (vp == fs->lfs_ivnode) {
+				LFS_ENTER_LOG("balloc", __FILE__,
+					__LINE__, idp->in_lbn,
+					ibp->b_flags, curproc->p_pid);
+			}
+#endif
 			VOP_BWRITE(ibp);
 		}
 	} else if (bpp && !(bp->b_flags & (B_DONE|B_DELWRI))) {
@@ -348,7 +383,7 @@ lfs_balloc(void *v)
 			return (biowait(bp));
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -367,6 +402,8 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	fs = ip->i_lfs;
 	bb = (long)fragstofsb(fs, numfrags(fs, nsize - osize));
 	error = 0;
+
+	ASSERT_DUNNO_SEGLOCK(fs);
 
 	/*
 	 * Get the seglock so we don't enlarge blocks while a segment
@@ -423,7 +460,9 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		fs->lfs_avail -= bb;
 	}
 
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree -= bb;
+	simple_unlock(&fs->lfs_interlock);
 	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
@@ -432,8 +471,11 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		allocbuf(*bpp, nsize, 1);
 
 		/* Adjust locked-list accounting */
-		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
+			simple_lock(&lfs_subsys_lock);
 			locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
+			simple_unlock(&lfs_subsys_lock);
+		}
 
 		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 	}
@@ -443,4 +485,119 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	}
 	return (error);
+}
+
+static __inline int
+lge(struct lbnentry *a, struct lbnentry *b)
+{
+	return a->lbn - b->lbn;
+}
+
+SPLAY_PROTOTYPE(lfs_splay, lbnentry, entry, lge);
+
+SPLAY_GENERATE(lfs_splay, lbnentry, entry, lge);
+
+/*
+ * Record this lbn as being "write pending".  We used to have this information
+ * on the buffer headers, but since pages don't have buffer headers we
+ * record it here instead.
+ */
+void
+lfs_register_block(struct vnode *vp, daddr_t lbn)
+{
+	struct lfs *fs;
+	struct inode *ip;
+	struct lbnentry *lbp;
+
+	ip = VTOI(vp);
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
+		return;
+
+	fs = ip->i_lfs;
+
+	ASSERT_NO_SEGLOCK(fs);
+
+	/* If no space, wait for the cleaner */
+	lfs_availwait(fs, btofsb(fs, 1 << fs->lfs_bshift));
+
+	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
+	lbp->lbn = lbn;
+	if (SPLAY_INSERT(lfs_splay, &ip->i_lfs_lbtree, lbp) != NULL) {
+		/* Already there */
+		pool_put(&lfs_lbnentry_pool, lbp);
+		return;
+	}
+
+	++ip->i_lfs_nbtree;
+	simple_lock(&fs->lfs_interlock);
+	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_pages += fs->lfs_bsize >> PAGE_SHIFT;
+	simple_lock(&lfs_subsys_lock);
+	++locked_fakequeue_count;
+	lfs_subsys_pages += fs->lfs_bsize >> PAGE_SHIFT;
+	simple_unlock(&lfs_subsys_lock);
+	simple_unlock(&fs->lfs_interlock);
+}
+
+static void
+lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
+{
+	ASSERT_MAYBE_SEGLOCK(fs);
+
+	--ip->i_lfs_nbtree;
+	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
+	pool_put(&lfs_lbnentry_pool, lbp);
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
+		fs->lfs_favail -= btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_pages -= fs->lfs_bsize >> PAGE_SHIFT;
+	simple_lock(&lfs_subsys_lock);
+	if (locked_fakequeue_count > 0)
+		--locked_fakequeue_count;
+	lfs_subsys_pages -= fs->lfs_bsize >> PAGE_SHIFT;
+	simple_unlock(&lfs_subsys_lock);
+	simple_unlock(&fs->lfs_interlock);
+}
+
+void
+lfs_deregister_block(struct vnode *vp, daddr_t lbn)
+{
+	struct lfs *fs;
+	struct inode *ip;
+	struct lbnentry *lbp;
+	struct lbnentry tmp;
+
+	ip = VTOI(vp);
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
+		return;
+
+	fs = ip->i_lfs;
+	tmp.lbn = lbn;
+	lbp = SPLAY_FIND(lfs_splay, &ip->i_lfs_lbtree, &tmp);
+	if (lbp == NULL)
+		return;
+
+	lfs_do_deregister(fs, ip, lbp);
+}
+
+void
+lfs_deregister_all(struct vnode *vp)
+{
+	struct lbnentry *lbp, *nlbp;
+	struct lfs_splay *hd;
+	struct lfs *fs;
+	struct inode *ip;
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+	hd = &ip->i_lfs_lbtree;
+
+	for (lbp = SPLAY_MIN(lfs_splay, hd); lbp != NULL; lbp = nlbp) {
+		nlbp = SPLAY_NEXT(lfs_splay, hd, lbp);
+		lfs_do_deregister(fs, ip, lbp);
+	}
 }

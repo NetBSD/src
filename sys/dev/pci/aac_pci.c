@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.10 2004/05/10 06:21:09 gendalia Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.10.4.1 2005/04/29 11:29:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.10 2004/05/10 06:21:09 gendalia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.10.4.1 2005/04/29 11:29:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,14 +96,14 @@ int	aac_pci_match(struct device *, struct cfdata *, void *);
 void	aac_pci_attach(struct device *, struct device *, void *);
 const struct	aac_ident *aac_find_ident(struct pci_attach_args *);
 
-/* i960Rx interface */    
+/* i960Rx interface */
 int	aac_rx_get_fwstatus(struct aac_softc *);
 void	aac_rx_qnotify(struct aac_softc *, int);
 int	aac_rx_get_istatus(struct aac_softc *);
 void	aac_rx_clear_istatus(struct aac_softc *, int);
 void	aac_rx_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 			   u_int32_t, u_int32_t, u_int32_t);
-int	aac_rx_get_mailboxstatus(struct aac_softc *);
+uint32_t aac_rx_get_mailbox(struct aac_softc *, int);
 void	aac_rx_set_interrupts(struct aac_softc *, int);
 
 /* StrongARM interface */
@@ -113,7 +113,7 @@ int	aac_sa_get_istatus(struct aac_softc *);
 void	aac_sa_clear_istatus(struct aac_softc *, int);
 void	aac_sa_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 			   u_int32_t, u_int32_t, u_int32_t);
-int	aac_sa_get_mailboxstatus(struct aac_softc *);
+uint32_t aac_sa_get_mailbox(struct aac_softc *, int);
 void	aac_sa_set_interrupts(struct aac_softc *, int);
 
 const struct aac_interface aac_rx_interface = {
@@ -122,7 +122,7 @@ const struct aac_interface aac_rx_interface = {
 	aac_rx_get_istatus,
 	aac_rx_clear_istatus,
 	aac_rx_set_mailbox,
-	aac_rx_get_mailboxstatus,
+	aac_rx_get_mailbox,
 	aac_rx_set_interrupts
 };
 
@@ -132,7 +132,7 @@ const struct aac_interface aac_sa_interface = {
 	aac_sa_get_istatus,
 	aac_sa_clear_istatus,
 	aac_sa_set_mailbox,
-	aac_sa_get_mailboxstatus,
+	aac_sa_get_mailbox,
 	aac_sa_set_interrupts
 };
 
@@ -237,6 +237,15 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_CERC_1_5,
+		AAC_HWIF_I960RX,
+		AAC_QUIRK_NO4GB,
+		"Dell CERC SATA RAID 1.5/6ch"
+	},
+	{
+		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_AAC2622,
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_AAC2622,
@@ -293,7 +302,7 @@ struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
 		PCI_VENDOR_ADP2,
-		0x0290,
+		PCI_PRODUCT_ADP2_ASR2410SA,
 		AAC_HWIF_I960RX,
 		0,
 		"Adaptec ASR-2410SA"
@@ -585,20 +594,20 @@ aac_rx_set_mailbox(struct aac_softc *sc, u_int32_t command,
 }
 
 /*
- * Fetch the immediate command status word
+ * Fetch the specified mailbox
  */
-int
-aac_sa_get_mailboxstatus(struct aac_softc *sc)
+uint32_t
+aac_sa_get_mailbox(struct aac_softc *sc, int mb)
 {
 
-	return (AAC_GETREG4(sc, AAC_SA_MAILBOX));
+	return (AAC_GETREG4(sc, AAC_SA_MAILBOX + (mb * 4)));
 }
 
-int
-aac_rx_get_mailboxstatus(struct aac_softc *sc)
+uint32_t
+aac_rx_get_mailbox(struct aac_softc *sc, int mb)
 {
 
-	return (AAC_GETREG4(sc, AAC_RX_MAILBOX));
+	return (AAC_GETREG4(sc, AAC_RX_MAILBOX + (mb * 4)));
 }
 
 /*

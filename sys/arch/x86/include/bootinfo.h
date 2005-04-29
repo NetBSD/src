@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.6 2004/10/23 17:20:04 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6.4.1 2005/04/29 11:28:28 kent Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -66,7 +66,7 @@ struct btinfo_bootwedge {
 	daddr_t matchblk;
 	uint64_t matchnblks;
 	uint8_t matchhash[16];	/* MD5 hash */
-};
+} __attribute__((packed));
 
 struct btinfo_netif {
 	struct btinfo_common common;

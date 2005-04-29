@@ -1,3 +1,5 @@
+$NetBSD: giodevs,v 1.3.8.1 2005/04/29 11:28:21 kent Exp $
+
 product XPI	0x01	XPI low cost FDDI
 product GTR	0x02	GTR TokenRing
 product ISDN	0x04	Synchronous ISDN

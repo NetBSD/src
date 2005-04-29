@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.7 2003/10/25 18:37:03 christos Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.7.8.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  * I wish all vendors would be like that!
  * I'd like to thank to Alfred Arnold, author of the Linux driver, for
  * giving me contact to The Right Syskonnect person, too :-)
- * 
+ *
  * Sources:
  * SKNET MC+ Technical Manual, version 1.1, July 21 1993
  * SKNET personal Technisches Manual, version 1.2, April 14 1988
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.7 2003/10/25 18:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.7.8.1 2005/04/29 11:28:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.7 2003/10/25 18:37:03 christos Exp $
 
 #include <dev/mca/if_lereg.h>
 
-int 	le_mca_match __P((struct device *, struct cfdata *, void *));
-void	le_mca_attach __P((struct device *, struct device *, void *));
+int 	le_mca_match(struct device *, struct cfdata *, void *);
+void	le_mca_attach(struct device *, struct device *, void *);
 
 struct le_mca_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
@@ -93,16 +93,16 @@ struct le_mca_softc {
 	bus_space_handle_t sc_memh;
 };
 
-static void le_mca_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t le_mca_rdcsr __P((struct lance_softc *, u_int16_t));  
-static void le_mca_hwreset __P((struct lance_softc *));
-static int le_mca_intredge __P((void *));
+static void le_mca_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static u_int16_t le_mca_rdcsr(struct lance_softc *, u_int16_t);
+static void le_mca_hwreset(struct lance_softc *);
+static int le_mca_intredge(void *);
 
 static void	le_mca_copytobuf(struct lance_softc *, void *, int, int);
 static void	le_mca_copyfrombuf(struct lance_softc *, void *, int, int);
 static void	le_mca_zerobuf(struct lance_softc *, int, int);
 
-static __inline void le_mca_wrreg __P((struct le_mca_softc *, int, int));
+static __inline void le_mca_wrreg(struct le_mca_softc *, int, int);
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 
@@ -147,7 +147,7 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 	 * SKNET Personal:
 	 *
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *       | \___/ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *        \    \____ Memory: 0xC0000-0xC3FFF + XX*0x4000
@@ -156,26 +156,26 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * SKNET MC+:
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *       \___/ \ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *           \  \___ BootEPROM disable
 	 *            \_____ BootEPROM start address: 0xC0000 + XX*0x4000
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * 0 0 1 1 \_____/
 	 *               \__ RAM: 0xC0000 + XX*0x4000
 	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \_/     \_/ \_/
 	 *   \       \   \__ Need to be reset to 0 0 after boot
 	 *    \       \_____ IRQ: 00=3 01=5 10=10 11=11
 	 *     \____________ Medium: 00=BNC 01=UTP 10=AUI 11=not allowed
-	 */ 
+	 */
 
 	switch (ma->ma_id) {
 	case MCA_PRODUCT_SKNETPER:
@@ -288,7 +288,7 @@ le_mca_intredge(arg)
 	 * at this time anyway.
 	 */
 
-	if (am7990_intr(arg) == 0);
+	if (am7990_intr(arg) == 0)
 		return (0);
 	for(;;)
 		if (am7990_intr(arg) == 0)

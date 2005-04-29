@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.155.4.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,9 +67,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.155.4.1 2005/04/29 11:29:39 kent Exp $");
 
-#define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
+#ifdef DEBUG
+# define vndebug(vp, str) do {						\
+	if (VTOI(vp)->i_flag & IN_CLEANING)				\
+		DLOG((DLOG_WVNODE, "not writing ino %d because %s (op %d)\n", \
+		     VTOI(vp)->i_number, (str), op));			\
+} while(0)
+#else
+# define vndebug(vp, str)
+#endif
+#define ivndebug(vp, str) \
+	DLOG((DLOG_WVNODE, "ino %d: %s\n", VTOI(vp)->i_number, (str)))
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -156,7 +166,8 @@ lfs_imtime(struct lfs *fs)
 {
 	struct timespec ts;
 	struct inode *ip;
-	
+
+	ASSERT_MAYBE_SEGLOCK(fs);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	ip = VTOI(fs->lfs_ivnode);
 	ip->i_ffs1_mtime = ts.tv_sec;
@@ -190,10 +201,9 @@ lfs_vflush(struct vnode *vp)
 	ip = VTOI(vp);
 	fs = VFSTOUFS(vp->v_mount)->um_lfs;
 
+	ASSERT_NO_SEGLOCK(fs);
 	if (ip->i_flag & IN_CLEANING) {
-#ifdef DEBUG_LFS
 		ivndebug(vp,"vflush/in_cleaning");
-#endif
 		LFS_CLR_UINO(ip, IN_CLEANING);
 		LFS_SET_UINO(ip, IN_MODIFIED);
 
@@ -259,14 +269,14 @@ lfs_vflush(struct vnode *vp)
 	}
 
 	/* If the node is being written, wait until that is done */
+	simple_lock(&vp->v_interlock);
 	s = splbio();
 	if (WRITEINPROG(vp)) {
-#ifdef DEBUG_LFS
 		ivndebug(vp,"vflush/writeinprog");
-#endif
-		tsleep(vp, PRIBIO+1, "lfs_vw", 0);
+		ltsleep(vp, (PRIBIO+1), "lfs_vw", 0, &vp->v_interlock);
 	}
 	splx(s);
+	simple_unlock(&vp->v_interlock);
 
 	/* Protect against VXLOCK deadlock in vinvalbuf() */
 	lfs_seglock(fs, SEGM_SYNC);
@@ -274,8 +284,8 @@ lfs_vflush(struct vnode *vp)
 	/* If we're supposed to flush a freed inode, just toss it */
 	/* XXX - seglock, so these buffers can't be gathered, right? */
 	if (ip->i_mode == 0) {
-		printf("lfs_vflush: ino %d is freed, not flushing\n",
-			ip->i_number);
+		DLOG((DLOG_VNODE, "lfs_vflush: ino %d freed, not flushing\n",
+		      ip->i_number));
 		s = splbio();
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
@@ -293,15 +303,15 @@ lfs_vflush(struct vnode *vp)
 					 B_GATHERED);
 				bp->b_flags |= B_DONE;
 				reassignbuf(bp, vp);
-				brelse(bp);  
+				brelse(bp);
 			}
 		}
 		splx(s);
 		LFS_CLR_UINO(ip, IN_CLEANING);
 		LFS_CLR_UINO(ip, IN_MODIFIED | IN_ACCESSED);
 		ip->i_flag &= ~IN_ALLMOD;
-		printf("lfs_vflush: done not flushing ino %d\n",
-			ip->i_number);
+		DLOG((DLOG_VNODE, "lfs_vflush: done not flushing ino %d\n",
+		      ip->i_number));
 		lfs_segunlock(fs);
 		return 0;
 	}
@@ -322,24 +332,19 @@ lfs_vflush(struct vnode *vp)
 		++flushed;
 	} else if ((ip->i_flag & IN_CLEANING) &&
 		  (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
-#ifdef DEBUG_LFS
 		ivndebug(vp,"vflush/clean");
-#endif
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_CLEAN);
 		++flushed;
 	} else if (lfs_dostats) {
 		if (!VPISEMPTY(vp) || (VTOI(vp)->i_flag & IN_ALLMOD))
 			++lfs_stats.vflush_invoked;
-#ifdef DEBUG_LFS
 		ivndebug(vp,"vflush");
-#endif
 	}
 
 #ifdef DIAGNOSTIC
-	/* XXX KS This actually can happen right now, though it shouldn't(?) */
 	if (vp->v_flag & VDIROP) {
-		printf("lfs_vflush: flushing VDIROP, this shouldn\'t be\n");
-		/* panic("VDIROP being flushed...this can\'t happen"); */
+		DLOG((DLOG_VNODE, "lfs_vflush: flushing VDIROP\n"));
+		/* panic("lfs_vflush: VDIROP being flushed...this can\'t happen"); */
 	}
 	if (vp->v_usecount < 0) {
 		printf("usecount=%ld\n", (long)vp->v_usecount);
@@ -358,11 +363,15 @@ lfs_vflush(struct vnode *vp)
 	if (flushed && vp != fs->lfs_ivnode)
 		lfs_writeseg(fs, sp);
 	else do {
+		simple_lock(&fs->lfs_interlock);
 		fs->lfs_flags &= ~LFS_IFDIRTY;
+		simple_unlock(&fs->lfs_interlock);
 		lfs_writefile(fs, sp, vp);
 		redo = lfs_writeinode(fs, sp, ip);
 		redo += lfs_writeseg(fs, sp);
+		simple_lock(&fs->lfs_interlock);
 		redo += (fs->lfs_flags & LFS_IFDIRTY);
+		simple_unlock(&fs->lfs_interlock);
 	} while (redo && vp == fs->lfs_ivnode);
 #endif
 	if (lfs_dostats) {
@@ -384,12 +393,11 @@ lfs_vflush(struct vnode *vp)
 	 */
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock > 1) {
-		simple_unlock(&fs->lfs_interlock);
 		while (fs->lfs_iocount > 1)
-			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
-				     "lfs_vflush", 0);
-	} else
-		simple_unlock(&fs->lfs_interlock);
+			(void)ltsleep(&fs->lfs_iocount, PRIBIO + 1,
+				     "lfs_vflush", 0, &fs->lfs_interlock);
+	}
+	simple_unlock(&fs->lfs_interlock);
 
 	lfs_segunlock(fs);
 
@@ -408,12 +416,6 @@ lfs_vflush(struct vnode *vp)
 	return (0);
 }
 
-#ifdef DEBUG_LFS_VERBOSE
-# define vndebug(vp,str) if (VTOI(vp)->i_flag & IN_CLEANING) printf("not writing ino %d because %s (op %d)\n",VTOI(vp)->i_number,(str),op)
-#else
-# define vndebug(vp,str)
-#endif
-
 int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
@@ -421,6 +423,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
 
+	ASSERT_SEGLOCK(fs);
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
 #define	VN_OFFSET	\
@@ -430,7 +433,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 #define	BEG_OF_VLIST	\
 	((struct vnode *)(((caddr_t)&LIST_FIRST(&mp->mnt_vnodelist)) \
 	- VN_OFFSET))
-	
+
 	/* Find last vnode. */
  loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 	     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
@@ -447,7 +450,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp) {
-			printf("lfs_writevnodes: starting over\n");
+			DLOG((DLOG_VNODE, "lfs_writevnodes: starting over\n"));
 			/*
 			 * After this, pages might be busy
 			 * due to our own previous putpages.
@@ -456,7 +459,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			(void)lfs_writeseg(fs, sp);
 			goto loop;
 		}
-		
+
 		if (vp->v_type == VNON) {
 			continue;
 		}
@@ -468,7 +471,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			vndebug(vp,"dirop");
 			continue;
 		}
-		
+
 		if (op == VN_EMPTY && !VPISEMPTY(vp)) {
 			vndebug(vp,"empty");
 			continue;
@@ -494,22 +497,18 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			only_cleaning =
 			    ((ip->i_flag & IN_ALLMOD) == IN_CLEANING);
 
-			if (ip->i_number != LFS_IFILE_INUM)
+			if (ip->i_number != LFS_IFILE_INUM) {
 				lfs_writefile(fs, sp, vp);
-			if (!VPISEMPTY(vp)) {
-				if (WRITEINPROG(vp)) {
-#ifdef DEBUG_LFS
-					ivndebug(vp,"writevnodes/write2");
-#endif
-				} else if (!(ip->i_flag & IN_ALLMOD)) {
-#ifdef DEBUG_LFS
-					printf("<%d>",ip->i_number);
-#endif
-					LFS_SET_UINO(ip, IN_MODIFIED);
+				if (!VPISEMPTY(vp)) {
+					if (WRITEINPROG(vp)) {
+						ivndebug(vp,"writevnodes/write2");
+					} else if (!(ip->i_flag & IN_ALLMOD)) {
+						LFS_SET_UINO(ip, IN_MODIFIED);
+					}
 				}
+				(void) lfs_writeinode(fs, sp, ip);
+				inodes_written++;
 			}
-			(void) lfs_writeinode(fs, sp, ip);
-			inodes_written++;
 		}
 
 		if (lfs_clean_vnhead && only_cleaning)
@@ -537,8 +536,9 @@ lfs_segwrite(struct mount *mp, int flags)
 	int writer_set = 0;
 	int dirty;
 	int redo;
-	
+
 	fs = VFSTOUFS(mp)->um_lfs;
+	ASSERT_MAYBE_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
 		return EROFS;
@@ -570,7 +570,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		if (!fs->lfs_dirops || !fs->lfs_flushvp) {
 			error = lfs_writer_enter(fs, "lfs writer");
 			if (error) {
-				printf("segwrite mysterious error\n");
+				DLOG((DLOG_SEG, "segwrite mysterious error\n"));
 				/* XXX why not segunlock? */
 				pool_put(&fs->lfs_bpppool, sp->bpp);
 				sp->bpp = NULL;
@@ -582,7 +582,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			lfs_writevnodes(fs, mp, sp, VN_DIROP);
 			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 		}
-	}	
+	}
 
 	/*
 	 * If we are doing a checkpoint, mark everything since the
@@ -593,7 +593,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		curseg = 0;
 		for (n = 0; n < fs->lfs_segtabsz; n++) {
 			dirty = 0;
-			if (bread(fs->lfs_ivnode, 
+			if (bread(fs->lfs_ivnode,
 			    fs->lfs_cleansz + n, fs->lfs_bsize, NOCRED, &bp))
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
@@ -614,7 +614,7 @@ lfs_segwrite(struct mount *mp, int flags)
 					segusep = (SEGUSE *)
 						((SEGUSE_V1 *)segusep + 1);
 			}
-				
+
 			if (dirty)
 				error = LFS_BWRITE_LOG(bp); /* Ifile */
 			else
@@ -624,15 +624,19 @@ lfs_segwrite(struct mount *mp, int flags)
 		}
 	}
 
+	LOCK_ASSERT(LFS_SEGLOCK_HELD(fs));
+
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
+		vp = fs->lfs_ivnode;
+		vn_lock(vp, LK_EXCLUSIVE);
 		do {
-			vp = fs->lfs_ivnode;
-
 #ifdef DEBUG
-			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0);
+			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
 #endif
+			simple_lock(&fs->lfs_interlock);
 			fs->lfs_flags &= ~LFS_IFDIRTY;
+			simple_unlock(&fs->lfs_interlock);
 
 			ip = VTOI(vp);
 
@@ -643,7 +647,9 @@ lfs_segwrite(struct mount *mp, int flags)
 				++did_ckp;
 			redo = lfs_writeinode(fs, sp, ip);
 			redo += lfs_writeseg(fs, sp);
+			simple_lock(&fs->lfs_interlock);
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
+			simple_unlock(&fs->lfs_interlock);
 		} while (redo && do_ckp);
 
 		/*
@@ -659,20 +665,27 @@ lfs_segwrite(struct mount *mp, int flags)
 		}
 #ifdef DIAGNOSTIC
 		else if (do_ckp) {
+			int do_panic = 0;
 			LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
 				if (bp->b_lblkno < fs->lfs_cleansz +
 				    fs->lfs_segtabsz &&
 				    !(bp->b_flags & B_GATHERED)) {
-					panic("dirty blocks");
+					printf("ifile lbn %ld still dirty (flags %lx)\n",
+						(long)bp->b_lblkno,
+						(long)bp->b_flags);
+					++do_panic;
 				}
 			}
+			if (do_panic)
+				panic("dirty blocks");
 		}
 #endif
 		splx(s);
+		VOP_UNLOCK(vp, 0);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
-	
+
 	/* Note Ifile no longer needs to be written */
 	fs->lfs_doifile = 0;
 	if (writer_set)
@@ -712,26 +725,27 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	struct inode *ip;
 	IFILE *ifp;
 	int i, frag;
-	
+
+	ASSERT_SEGLOCK(fs);
 	ip = VTOI(vp);
 
 	if (sp->seg_bytes_left < fs->lfs_bsize ||
 	    sp->sum_bytes_left < sizeof(struct finfo))
 		(void) lfs_writeseg(fs, sp);
-	
+
 	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 
 	if (vp->v_flag & VDIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
-	
+
 	fip = sp->fip;
 	fip->fi_nblocks = 0;
 	fip->fi_ino = ip->i_number;
 	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
 	fip->fi_version = ifp->if_version;
 	brelse(bp);
-	
+
 	if (sp->seg_flags & SEGM_CLEAN) {
 		lfs_gather(fs, sp, vp, lfs_match_fake);
 		/*
@@ -821,10 +835,11 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	int redo_ifile = 0;
 	struct timespec ts;
 	int gotblk = 0;
-	
+
+	ASSERT_SEGLOCK(fs);
 	if (!(ip->i_flag & IN_ALLMOD))
 		return (0);
-	
+
 	/* Allocate a new inode block if necessary. */
 	if ((ip->i_number != LFS_IFILE_INUM || sp->idp == NULL) &&
 	    sp->ibp == NULL) {
@@ -879,39 +894,68 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	bp = sp->ibp;
 	cdp = ((struct ufs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
-#ifdef LFS_IFILE_FRAG_ADDRESSING
-	if (fs->lfs_version > 1)
-		fsb = (sp->ninodes % INOPB(fs)) / INOPF(fs);
-#endif
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
-	 * addresses to disk; possibly revert the inode size.
-	 * XXX By not writing these blocks, we are making the lfs_avail
+	 * addresses to disk; possibly change the on-disk record of
+	 * the inode size, either by reverting to the previous size
+	 * (in the case of cleaning) or by verifying the inode's block
+	 * holdings (in the case of files being allocated as they are being
+	 * written).
+	 * XXX By not writing UNWRITTEN blocks, we are making the lfs_avail
 	 * XXX count on disk wrong by the same amount.	We should be
 	 * XXX able to "borrow" from lfs_avail and return it after the
 	 * XXX Ifile is written.  See also in lfs_writeseg.
 	 */
+
+	/* Check file size based on highest allocated block */
+	if (((ip->i_ffs1_mode & IFMT) == IFREG ||
+	     (ip->i_ffs1_mode & IFMT) == IFDIR) &&
+	    ip->i_size > ((ip->i_lfs_hiblk + 1) << fs->lfs_bshift)) {
+		cdp->di_size = (ip->i_lfs_hiblk + 1) << fs->lfs_bshift;
+		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
+		      PRId64 "\n", (int)ip->i_number, ip->i_size, cdp->di_size));
+	}
 	if (ip->i_lfs_effnblks != ip->i_ffs1_blocks) {
-		cdp->di_size = ip->i_lfs_osize;
-#ifdef DEBUG_LFS
-		printf("lfs_writeinode: cleansing ino %d (%d != %d)\n",
-		       ip->i_number, ip->i_lfs_effnblks, ip->i_ffs1_blocks);
-#endif
+		if (ip->i_flags & IN_CLEANING)
+			cdp->di_size = ip->i_lfs_osize;
+		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %d != nblk %d)"
+		      " at %x\n", ip->i_number, ip->i_lfs_effnblks,
+		      ip->i_ffs1_blocks, fs->lfs_offset));
 		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + NIADDR;
 		     daddrp++) {
 			if (*daddrp == UNWRITTEN) {
-#ifdef DEBUG_LFS
-				printf("lfs_writeinode: wiping UNWRITTEN\n");
-#endif
+				DLOG((DLOG_SEG, "lfs_writeinode: wiping UNWRITTEN\n"));
 				*daddrp = 0;
 			}
 		}
 	} else {
-		/* If all blocks are goig to disk, update the "size on disk" */
+		/* If all blocks are going to disk, update "size on disk" */
 		ip->i_lfs_osize = ip->i_size;
 	}
-	
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Check dinode held blocks against dinode size.
+	 * This should be identical to the check in lfs_vget().
+	 */
+	for (i = (cdp->di_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
+	     i < NDADDR; i++) {
+		KASSERT(i >= 0);
+		if ((cdp->di_mode & IFMT) == IFLNK)
+			continue;
+		if (((cdp->di_mode & IFMT) == IFBLK ||
+		     (cdp->di_mode & IFMT) == IFCHR) && i == 0)
+			continue;
+		if (cdp->di_db[i] != 0) {
+# ifdef DEBUG
+			lfs_dump_dinode(cdp);
+# endif
+			panic("writing inconsistent inode");
+		}
+	}
+#endif /* DIAGNOSTIC */
+
 	if (ip->i_flag & IN_CLEANING)
 		LFS_CLR_UINO(ip, IN_CLEANING);
 	else {
@@ -920,29 +964,27 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			     IN_UPDATE | IN_MODIFY);
 		if (ip->i_lfs_effnblks == ip->i_ffs1_blocks)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
-#ifdef DEBUG_LFS
 		else
-			printf("lfs_writeinode: ino %d: real blks=%d, "
-			       "eff=%d\n", ip->i_number, ip->i_ffs1_blocks,
-			       ip->i_lfs_effnblks);
-#endif
+			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real blks=%d, "
+			      "eff=%d\n", ip->i_number, ip->i_ffs1_blocks,
+			      ip->i_lfs_effnblks));
 	}
 
 	if (ip->i_number == LFS_IFILE_INUM) /* We know sp->idp == NULL */
-		sp->idp = ((struct ufs1_dinode *)bp->b_data) + 
+		sp->idp = ((struct ufs1_dinode *)bp->b_data) +
 			(sp->ninodes % INOPB(fs));
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
 		brelse(bp);
 	}
-	
+
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *)(sp->segsum))->ss_ninos;
-	
+
 	/* If this page is full, set flag to allocate a new page. */
 	if (++sp->ninodes % INOPB(fs) == 0)
 		sp->ibp = NULL;
-	
+
 	/*
 	 * If updating the ifile, update the super-block.  Update the disk
 	 * address and access times for this inode in the ifile.
@@ -955,16 +997,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = ifp->if_daddr;
 		ifp->if_daddr = dbtofsb(fs, bp->b_blkno) + fsb;
-#ifdef LFS_DEBUG_NEXTFREE
-		if (ino > 3 && ifp->if_nextfree) {
-			vprint("lfs_writeinode",ITOV(ip));
-			printf("lfs_writeinode: updating free ino %d\n",
-				ip->i_number);
-		}
-#endif
 		error = LFS_BWRITE_LOG(ibp); /* Ifile */
 	}
-	
+
 	/*
 	 * The inode's last address should not be in the current partial
 	 * segment, except under exceptional circumstances (lfs_writevnodes
@@ -972,14 +1007,14 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * to a vnode).	 Both inodes will be accounted to this segment
 	 * in lfs_writeseg so we need to subtract the earlier version
 	 * here anyway.	 The segment count can temporarily dip below
-	 * zero here; keep track of how many duplicates we have in 
+	 * zero here; keep track of how many duplicates we have in
 	 * "dupino" so we don't panic below.
 	 */
 	if (daddr >= fs->lfs_lastpseg && daddr <= dbtofsb(fs, bp->b_blkno)) {
 		++sp->ndupino;
-		printf("lfs_writeinode: last inode addr in current pseg "
-		       "(ino %d daddr 0x%llx) ndupino=%d\n", ino,
-			(long long)daddr, sp->ndupino);
+		DLOG((DLOG_SEG, "lfs_writeinode: last inode addr in current pseg "
+		      "(ino %d daddr 0x%llx) ndupino=%d\n", ino,
+		      (long long)daddr, sp->ndupino));
 	}
 	/*
 	 * Account the inode: it no longer belongs to its former segment,
@@ -1011,15 +1046,16 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			sup->su_nbytes = sizeof (struct ufs1_dinode);
 		}
 #endif
-#ifdef DEBUG_SU_NBYTES
-		printf("seg %d -= %d for ino %d inode\n", 
-		       dtosn(fs, daddr), sizeof (struct ufs1_dinode), ino);
-#endif
+		DLOG((DLOG_SU, "seg %d -= %d for ino %d inode\n",
+		      dtosn(fs, daddr), sizeof (struct ufs1_dinode), ino));
 		sup->su_nbytes -= sizeof (struct ufs1_dinode);
 		redo_ifile =
 			(ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
-		if (redo_ifile)
+		if (redo_ifile) {
+			simple_lock(&fs->lfs_interlock);
 			fs->lfs_flags |= LFS_IFDIRTY;
+			simple_unlock(&fs->lfs_interlock);
+		}
 		LFS_WRITESEGENTRY(sup, fs, oldsn, bp); /* Ifile */
 	}
 	return (redo_ifile);
@@ -1032,6 +1068,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 	int version;
 	int j, blksinblk;
 
+	ASSERT_SEGLOCK(sp->fs);
 	/*
 	 * If full, finish this segment.  We may be doing I/O, so
 	 * release and reacquire the splbio().
@@ -1047,36 +1084,38 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 		if (sptr)
 			splx(*sptr);
 		lfs_updatemeta(sp);
-		
+
 		version = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
-		
+
 		sp->fip->fi_version = version;
 		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 		sp->sum_bytes_left -= FINFOSIZE;
-		
+
 		if (sptr)
 			*sptr = splbio();
 		return (1);
 	}
-	
-#ifdef DEBUG
+
 	if (bp->b_flags & B_GATHERED) {
-		printf("lfs_gatherblock: already gathered! Ino %d,"
-		       " lbn %" PRId64 "\n",
-		       sp->fip->fi_ino, bp->b_lblkno);
+		DLOG((DLOG_SEG, "lfs_gatherblock: already gathered! Ino %d,"
+		      " lbn %" PRId64 "\n",
+		      sp->fip->fi_ino, bp->b_lblkno));
 		return (0);
 	}
-#endif
+
 	/* Insert into the buffer list, update the FINFO block. */
 	bp->b_flags |= B_GATHERED;
 
 	*sp->cbpp++ = bp;
-	for (j = 0; j < blksinblk; j++)
+	for (j = 0; j < blksinblk; j++) {
 		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno + j;
-	
+		/* This block's accounting moves from lfs_favail to lfs_avail */
+		lfs_deregister_block(sp->vp, bp->b_lblkno + j);
+	}
+
 	sp->sum_bytes_left -= sizeof(int32_t) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;
 	return (0);
@@ -1088,7 +1127,8 @@ lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp,
 {
 	struct buf *bp, *nbp;
 	int s, count = 0;
-	
+
+	ASSERT_SEGLOCK(fs);
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
 	s = splbio();
@@ -1116,22 +1156,18 @@ loop:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 #endif /* LFS_NO_BACKBUF_HACK */
 		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp)) {
-#ifdef DEBUG_LFS
+#ifdef DEBUG
 			if (vp == fs->lfs_ivnode &&
 			    (bp->b_flags & (B_BUSY|B_GATHERED)) == B_BUSY)
-				printf("(%" PRId64 ":%x)",
-				    bp->b_lblkno, bp->b_flags);
+				DLOG((DLOG_SEG, "lfs_gather: ifile lbn %"
+				      PRId64 " busy (%x)",
+				      bp->b_lblkno, bp->b_flags));
 #endif
 			continue;
 		}
 		if (vp->v_type == VBLK) {
 			/* For block devices, just write the blocks. */
-			/* XXX Do we really need to even do this? */
-#ifdef DEBUG_LFS
-			if (count == 0)
-				printf("BLK(");
-			printf(".");
-#endif
+			/* XXX Do we even need to do this? */
 			/*
 			 * Get the block before bwrite,
 			 * so we don't corrupt the free list
@@ -1143,18 +1179,18 @@ loop:
 #ifdef DIAGNOSTIC
 # ifdef LFS_USE_B_INVAL
 			if ((bp->b_flags & (B_CALL|B_INVAL)) == B_INVAL) {
-				printf("lfs_gather: lbn %" PRId64 " is "
-					"B_INVAL\n", bp->b_lblkno);
+				DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
+				      " is B_INVAL\n", bp->b_lblkno));
 				VOP_PRINT(bp->b_vp);
 			}
 # endif /* LFS_USE_B_INVAL */
 			if (!(bp->b_flags & B_DELWRI))
 				panic("lfs_gather: bp not B_DELWRI");
 			if (!(bp->b_flags & B_LOCKED)) {
-				printf("lfs_gather: lbn %" PRId64 " blk "
-					"%" PRId64 " not B_LOCKED\n", 
-					bp->b_lblkno,
-					dbtofsb(fs, bp->b_blkno));
+				DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
+				      " blk %" PRId64 " not B_LOCKED\n",
+				      bp->b_lblkno,
+				      dbtofsb(fs, bp->b_blkno)));
 				VOP_PRINT(bp->b_vp);
 				panic("lfs_gather: bp not B_LOCKED");
 			}
@@ -1166,10 +1202,6 @@ loop:
 		count++;
 	}
 	splx(s);
-#ifdef DEBUG_LFS
-	if (vp->v_type == VBLK && count)
-		printf(")\n");
-#endif
 	lfs_updatemeta(sp);
 	KASSERT(sp->vp == vp);
 	sp->vp = NULL;
@@ -1179,10 +1211,10 @@ loop:
 #if DEBUG
 # define DEBUG_OOFF(n) do {						\
 	if (ooff == 0) {						\
-		printf("lfs_updatemeta[%d]: warning: writing "		\
+		DLOG((DLOG_SEG, "lfs_updatemeta[%d]: warning: writing " \
 			"ino %d lbn %" PRId64 " at 0x%" PRIx32		\
 			", was 0x0 (or %" PRId64 ")\n",			\
-			(n), ip->i_number, lbn, ndaddr, daddr);		\
+			(n), ip->i_number, lbn, ndaddr, daddr));	\
 	}								\
 } while (0)
 #else
@@ -1208,7 +1240,8 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	daddr_t daddr, ooff;
 	int num, error;
 	int bb, osize, obb;
-	
+
+	ASSERT_SEGLOCK(fs);
 	KASSERT(sp == NULL || sp->vp == vp);
 	ip = VTOI(vp);
 
@@ -1216,10 +1249,11 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	if (error)
 		panic("lfs_updatemeta: ufs_bmaparray returned %d", error);
 
+	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
 	KASSERT(daddr <= LFS_MAX_DADDR);
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
-	
+
 	bb = fragstofsb(fs, numfrags(fs, size));
 	switch (num) {
 	    case 0:
@@ -1258,6 +1292,10 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	}
 
 	KASSERT(ooff == 0 || ooff == UNWRITTEN || ooff == daddr);
+
+	/* Update hiblk when extending the file */
+	if (lbn > ip->i_lfs_hiblk)
+		ip->i_lfs_hiblk = lbn;
 
 	/*
 	 * Though we'd rather it couldn't, this *can* happen right now
@@ -1304,15 +1342,16 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 			    sizeof (struct ufs1_dinode) * ndupino;
 		}
 #endif
-#ifdef DEBUG_SU_NBYTES
-		printf("seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
-		       " db 0x%" PRIx64 "\n",
-		       dtosn(fs, daddr), osize,
-		       ip->i_number, lbn, daddr);
-#endif
+		DLOG((DLOG_SU, "seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
+		      " db 0x%" PRIx64 "\n",
+		      dtosn(fs, daddr), osize,
+		      ip->i_number, lbn, daddr));
 		sup->su_nbytes -= osize;
-		if (!(bp->b_flags & B_GATHERED))
+		if (!(bp->b_flags & B_GATHERED)) {
+			simple_lock(&fs->lfs_interlock);
 			fs->lfs_flags |= LFS_IFDIRTY;
+			simple_unlock(&fs->lfs_interlock);
+		}
 		LFS_WRITESEGENTRY(sup, fs, oldsn, bp);
 	}
 	/*
@@ -1338,7 +1377,8 @@ lfs_updatemeta(struct segment *sp)
 	int i, nblocks, num;
 	int bb;
 	int bytesleft, size;
-	
+
+	ASSERT_SEGLOCK(sp->fs);
 	vp = sp->vp;
 	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
 	KASSERT(nblocks >= 0);
@@ -1353,7 +1393,7 @@ lfs_updatemeta(struct segment *sp)
 	fs = sp->fs;
 	for (i = 0; i < nblocks; i++) {
 		if (sp->start_bpp[i] == NULL) {
-			printf("nblocks = %d, not %d\n", i, nblocks);
+			DLOG((DLOG_SEG, "lfs_updatemeta: nblocks = %d, not %d\n", i, nblocks));
 			nblocks = i;
 			break;
 		}
@@ -1365,7 +1405,7 @@ lfs_updatemeta(struct segment *sp)
 	KASSERT(vp->v_type == VREG ||
 	   nblocks == &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp);
 	KASSERT(nblocks == sp->cbpp - sp->start_bpp);
-	
+
 	/*
 	 * Sort the blocks.
 	 *
@@ -1375,7 +1415,7 @@ lfs_updatemeta(struct segment *sp)
 	 * present, blocks may be written in the wrong place.
 	 */
 	lfs_shellsort(sp->start_bpp, sp->start_lbp, nblocks, fs->lfs_bsize);
-	
+
 	/*
 	 * Record the length of the last block in case it's a fragment.
 	 * If there are indirect blocks present, they sort last.  An
@@ -1389,7 +1429,7 @@ lfs_updatemeta(struct segment *sp)
 	 */
 	sp->fip->fi_lastlength = ((sp->start_bpp[nblocks - 1]->b_bcount - 1) &
 		fs->lfs_bmask) + 1;
-	
+
 	/*
 	 * Assign disk addresses, and update references to the logical
 	 * block and the segment usage information.
@@ -1431,6 +1471,45 @@ lfs_updatemeta(struct segment *sp)
 }
 
 /*
+ * Move lfs_offset to a segment earlier than sn.
+ */
+int
+lfs_rewind(struct lfs *fs, int newsn)
+{
+	int sn, osn, isdirty;
+	struct buf *bp;
+	SEGUSE *sup;
+
+	ASSERT_SEGLOCK(fs);
+
+	osn = dtosn(fs, fs->lfs_offset);
+	if (osn < newsn)
+		return 0;
+
+	/* lfs_avail eats the remaining space in this segment */
+	fs->lfs_avail -= fs->lfs_fsbpseg - (fs->lfs_offset - fs->lfs_curseg);
+
+	/* Find a low-numbered segment */
+	for (sn = 0; sn < fs->lfs_nseg; ++sn) {
+		LFS_SEGENTRY(sup, fs, sn, bp);
+		isdirty = sup->su_flags & SEGUSE_DIRTY;
+		brelse(bp);
+
+		if (!isdirty)
+			break;
+	}
+	if (sn == fs->lfs_nseg)
+		panic("lfs_rewind: no clean segments");
+	if (sn >= newsn)
+		return ENOENT;
+	fs->lfs_nextseg = sn;
+	lfs_newseg(fs);
+	fs->lfs_offset = fs->lfs_curseg;
+
+	return 0;
+}
+
+/*
  * Start a new partial segment.
  *
  * Return 1 when we entered to a new segment.
@@ -1444,6 +1523,7 @@ lfs_initseg(struct lfs *fs)
 	struct buf *sbp;	/* buffer for SEGSUM */
 	int repeat = 0;		/* return value */
 
+	ASSERT_SEGLOCK(fs);
 	/* Advance to the next segment. */
 	if (!LFS_PARTIAL_FITS(fs)) {
 		SEGUSE *sup;
@@ -1458,7 +1538,7 @@ lfs_initseg(struct lfs *fs)
 		lfs_newseg(fs);
 		repeat = 1;
 		fs->lfs_offset = fs->lfs_curseg;
-	
+
 		sp->seg_number = dtosn(fs, fs->lfs_curseg);
 		sp->seg_bytes_left = fsbtob(fs, fs->lfs_fsbpseg);
 
@@ -1486,16 +1566,18 @@ lfs_initseg(struct lfs *fs)
 				      (fs->lfs_offset - fs->lfs_curseg));
 	}
 	fs->lfs_lastpseg = fs->lfs_offset;
-	
+
 	/* Record first address of this partial segment */
 	if (sp->seg_flags & SEGM_CLEAN) {
 		fs->lfs_cleanint[fs->lfs_cleanind] = fs->lfs_offset;
 		if (++fs->lfs_cleanind >= LFS_MAX_CLEANIND) {
 			/* "1" is the artificial inc in lfs_seglock */
+			simple_lock(&fs->lfs_interlock);
 			while (fs->lfs_iocount > 1) {
-				tsleep(&fs->lfs_iocount, PRIBIO + 1,
-				    "lfs_initseg", 0);
+				ltsleep(&fs->lfs_iocount, PRIBIO + 1,
+				    "lfs_initseg", 0, &fs->lfs_interlock);
 			}
+			simple_unlock(&fs->lfs_interlock);
 			fs->lfs_cleanind = 0;
 		}
 	}
@@ -1518,7 +1600,7 @@ lfs_initseg(struct lfs *fs)
 	fs->lfs_offset += btofsb(fs, fs->lfs_sumsize);
 
 	sp->start_bpp = sp->cbpp;
-	
+
 	/* Set point to SEGSUM, initialize it. */
 	ssp = sp->segsum = sbp->b_data;
 	memset(ssp, 0, fs->lfs_sumsize);
@@ -1531,11 +1613,31 @@ lfs_initseg(struct lfs *fs)
 	sp->fip->fi_nblocks = 0;
 	sp->start_lbp = &sp->fip->fi_blocks[0];
 	sp->fip->fi_lastlength = 0;
-	
+
 	sp->seg_bytes_left -= fs->lfs_sumsize;
 	sp->sum_bytes_left = fs->lfs_sumsize - SEGSUM_SIZE(fs);
 
 	return (repeat);
+}
+
+/*
+ * Remove SEGUSE_INVAL from all segments.
+ */
+void
+lfs_unset_inval_all(struct lfs *fs)
+{
+	SEGUSE *sup;
+	struct buf *bp;
+	int i;
+
+	for (i = 0; i < fs->lfs_nseg; i++) {
+		LFS_SEGENTRY(sup, fs, i, bp);
+		if (sup->su_flags & SEGUSE_INVAL) {
+			sup->su_flags &= ~SEGUSE_INVAL;
+			VOP_BWRITE(bp);
+		} else
+			brelse(bp);
+	}
 }
 
 /*
@@ -1547,13 +1649,12 @@ lfs_newseg(struct lfs *fs)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
-	int curseg, isdirty, sn;
-	
+	int curseg, isdirty, sn, skip_inval;
+
+	ASSERT_SEGLOCK(fs);
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
-#ifdef DEBUG_SU_NBYTES
-	printf("lfs_newseg: seg %d := 0 in newseg\n",	/* XXXDEBUG */
-	       dtosn(fs, fs->lfs_nextseg)); /* XXXDEBUG */
-#endif
+	DLOG((DLOG_SU, "lfs_newseg: seg %d := 0 in newseg\n",
+	      dtosn(fs, fs->lfs_nextseg)));
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 	sup->su_nbytes = 0;
 	sup->su_nsums = 0;
@@ -1568,12 +1669,17 @@ lfs_newseg(struct lfs *fs)
 
 	fs->lfs_lastseg = fs->lfs_curseg;
 	fs->lfs_curseg = fs->lfs_nextseg;
+	skip_inval = 1;
 	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
-		if (sn == curseg)
-			panic("lfs_nextseg: no clean segments");
+		if (sn == curseg) {
+			if (skip_inval)
+				skip_inval = 0;
+			else
+				panic("lfs_nextseg: no clean segments");
+		}
 		LFS_SEGENTRY(sup, fs, sn, bp);
-		isdirty = sup->su_flags & SEGUSE_DIRTY;
+		isdirty = sup->su_flags & (SEGUSE_DIRTY | (skip_inval ? SEGUSE_INVAL : 0));
 		/* Check SEGUSE_EMPTY as we go along */
 		if (isdirty && sup->su_nbytes == 0 &&
 		    !(sup->su_flags & SEGUSE_EMPTY))
@@ -1584,7 +1690,9 @@ lfs_newseg(struct lfs *fs)
 		if (!isdirty)
 			break;
 	}
-	
+	if (skip_inval == 0)
+		lfs_unset_inval_all(fs);
+
 	++fs->lfs_nactive;
 	fs->lfs_nextseg = sntod(fs, sn);
 	if (lfs_dostats) {
@@ -1599,6 +1707,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 	struct buf **bpp, *bp;
 	int s;
 
+	ASSERT_SEGLOCK(fs);
 	cl = (struct lfs_cluster *)pool_get(&fs->lfs_clpool, PR_WAITOK);
 	bpp = (struct buf **)pool_get(&fs->lfs_bpppool, PR_WAITOK);
 	memset(cl, 0, sizeof(*cl));
@@ -1612,7 +1721,6 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 		cl->flags |= LFS_CL_SYNC;
 		cl->seg = fs->lfs_sp;
 		++cl->seg->seg_iocount;
-		/* printf("+ %x => %d\n", cl->seg, cl->seg->seg_iocount); */
 	}
 
 	/* Get an empty buffer header, or maybe one with something on it */
@@ -1649,15 +1757,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;
 	u_int32_t sum;
-#if defined(DEBUG) && defined(LFS_PROPELLER)
-	static int propeller;
-	char propstring[4] = "-\\|/";
-	
-	printf("%c\b",propstring[propeller++]);
-	if (propeller == 4)
-		propeller = 0;
-#endif
 
+	ASSERT_SEGLOCK(fs);
 	/*
 	 * If there are no buffers other than the segment summary to write
 	 * and it is not a checkpoint, don't do anything.  On a checkpoint,
@@ -1665,33 +1766,30 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	 */
 	if ((nblocks = sp->cbpp - sp->bpp) == 1)
 		return (0);
-	
+
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
 	/* Update the segment usage information. */
 	LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
-	
+
 	/* Loop through all blocks, except the segment summary. */
 	for (bpp = sp->bpp; ++bpp < sp->cbpp; ) {
 		if ((*bpp)->b_vp != devvp) {
 			sup->su_nbytes += (*bpp)->b_bcount;
-#ifdef DEBUG_SU_NBYTES
-		printf("seg %" PRIu32 " += %ld for ino %d lbn %" PRId64
-		    " db 0x%" PRIx64 "\n", sp->seg_number, (*bpp)->b_bcount,
-		    VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
-		    (*bpp)->b_blkno);
-#endif
+			DLOG((DLOG_SU, "seg %" PRIu32 " += %ld for ino %d"
+			      " lbn %" PRId64 " db 0x%" PRIx64 "\n",
+			      sp->seg_number, (*bpp)->b_bcount,
+			      VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
+			      (*bpp)->b_blkno));
 		}
 	}
-	
+
 	ssp = (SEGSUM *)sp->segsum;
-	
+
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-#ifdef DEBUG_SU_NBYTES
-	printf("seg %d += %d for %d inodes\n",	 /* XXXDEBUG */
-	       sp->seg_number, ssp->ss_ninos * sizeof (struct ufs1_dinode),
-	       ssp->ss_ninos);
-#endif
+	DLOG((DLOG_SU, "seg %d += %d for %d inodes\n",
+	      sp->seg_number, ssp->ss_ninos * sizeof (struct ufs1_dinode),
+	      ssp->ss_ninos));
 	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ufs1_dinode);
 	/* sup->su_nbytes += fs->lfs_sumsize; */
 	if (fs->lfs_version == 1)
@@ -1722,21 +1820,24 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			bp->b_flags |= B_BUSY;
 			continue;
 		}
-	    again:
+
+		simple_lock(&bp->b_interlock);
 		s = splbio();
-		if (bp->b_flags & B_BUSY) {
-#ifdef DEBUG
-			printf("lfs_writeseg: avoiding potential data summary "
-			       "corruption for ino %d, lbn %" PRId64 "\n",
-			       VTOI(bp->b_vp)->i_number, bp->b_lblkno);
-#endif
+		while (bp->b_flags & B_BUSY) {
+			DLOG((DLOG_SEG, "lfs_writeseg: avoiding potential"
+			      " data summary corruption for ino %d, lbn %"
+			      PRId64 "\n",
+			      VTOI(bp->b_vp)->i_number, bp->b_lblkno));
 			bp->b_flags |= B_WANTED;
-			tsleep(bp, (PRIBIO + 1), "lfs_writeseg", 0);
+			ltsleep(bp, (PRIBIO + 1), "lfs_writeseg", 0,
+				&bp->b_interlock);
 			splx(s);
-			goto again;
+			s = splbio();
 		}
 		bp->b_flags |= B_BUSY;
 		splx(s);
+		simple_unlock(&bp->b_interlock);
+
 		/*
 		 * Check and replace indirect block UNWRITTEN bogosity.
 		 * XXX See comment in lfs_writefile.
@@ -1744,12 +1845,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		if (bp->b_lblkno < 0 && bp->b_vp != devvp && bp->b_vp &&
 		   VTOI(bp->b_vp)->i_ffs1_blocks !=
 		   VTOI(bp->b_vp)->i_lfs_effnblks) {
-#ifdef DEBUG_LFS
-			printf("lfs_writeseg: cleansing ino %d (%d != %d)\n",
-			       VTOI(bp->b_vp)->i_number,
-			       VTOI(bp->b_vp)->i_lfs_effnblks,
-			       VTOI(bp->b_vp)->i_ffs1_blocks);
-#endif
+			DLOG((DLOG_VNODE, "lfs_writeseg: cleansing ino %d (%d != %d)\n",
+			      VTOI(bp->b_vp)->i_number,
+			      VTOI(bp->b_vp)->i_lfs_effnblks,
+			      VTOI(bp->b_vp)->i_ffs1_blocks));
 			/* Make a copy we'll make changes to */
 			newbp = lfs_newbuf(fs, bp->b_vp, bp->b_lblkno,
 					   bp->b_bcount, LFS_NB_IBLOCK);
@@ -1763,35 +1862,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			     daddrp < (int32_t *)(newbp->b_data +
 						  newbp->b_bcount); daddrp++) {
 				if (*daddrp == UNWRITTEN) {
-#ifdef DEBUG_LFS
-					off_t doff;
-					int32_t ioff;
-					
-					ioff =
-					    daddrp - (int32_t *)(newbp->b_data);
-					doff =
-					 (-bp->b_lblkno + ioff) * fs->lfs_bsize;
-					printf("ino %d lbn %" PRId64
-					    " entry %d off %" PRIx64 "\n",
-					    VTOI(bp->b_vp)->i_number,
-					    bp->b_lblkno, ioff, doff);
-					if (bp->b_vp->v_type == VREG) {
-						/*
-						 * What is up with this page?
-						 */
-		struct vm_page *pg;
-		for (; doff / fs->lfs_bsize == (-bp->b_lblkno + ioff);
-		    doff += PAGE_SIZE) {
-			pg = uvm_pagelookup(&bp->b_vp->v_uobj, doff);
-			if (pg == NULL)
-				printf("  page at %" PRIx64 " is NULL\n", doff);
-			else
-				printf("  page at %" PRIx64
-				    " flags 0x%x pqflags 0x%x\n",
-				    doff, pg->flags, pg->pqflags);
-		}
-					}
-#endif /* DEBUG_LFS */
 					++changed;
 					*daddrp = 0;
 				}
@@ -1801,16 +1871,14 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			 * though, if it still has dirty data on it.
 			 */
 			if (changed) {
-#ifdef DEBUG_LFS
-				printf("lfs_writeseg: replacing UNWRITTEN(%d):"
-					" bp = %p newbp = %p\n", changed, bp,
-					newbp);
-#endif
+				DLOG((DLOG_SEG, "lfs_writeseg: replacing UNWRITTEN(%d):"
+				      " bp = %p newbp = %p\n", changed, bp,
+				      newbp));
 				*bpp = newbp;
 				bp->b_flags &= ~(B_ERROR | B_GATHERED);
 				if (bp->b_flags & B_CALL) {
-					printf("lfs_writeseg: "
-					    "indir bp should not be B_CALL\n");
+					DLOG((DLOG_SEG, "lfs_writeseg: "
+					      "indir bp should not be B_CALL\n"));
 					s = splbio();
 					biodone(bp);
 					splx(s);
@@ -1879,13 +1947,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	ssp->ss_datasum = lfs_cksum_fold(sum);
 	ssp->ss_sumsum = cksum(&ssp->ss_datasum,
 	    fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
-#ifdef DIAGNOSTIC
-	if (fs->lfs_bfree <
-	    btofsb(fs, ninos * fs->lfs_ibsize) + btofsb(fs, fs->lfs_sumsize))
-		panic("lfs_writeseg: No diskspace for summary");
-#endif
+
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
+	simple_unlock(&fs->lfs_interlock);
 
 	/*
 	 * When we simply write the blocks we lose a rotation for every block
@@ -1921,7 +1987,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		/*
 		 * Construct the cluster.
 		 */
+		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_iocount;
+		simple_unlock(&fs->lfs_interlock);
 		while (i && cbp->b_bcount < CHUNKSIZE) {
 			bp = *bpp;
 
@@ -1974,7 +2042,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				memcpy(p, bp->b_data, bp->b_bcount);
 				p += bp->b_bcount;
 			}
-  
+
 			cbp->b_bcount += bp->b_bcount;
 			cl->bufsize += bp->b_bcount;
 
@@ -2020,17 +2088,24 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	int s;
 	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
+	ASSERT_MAYBE_SEGLOCK(fs);
+#ifdef DIAGNOSTIC
+	KASSERT(fs->lfs_magic == LFS_MAGIC);
+#endif
 	/*
 	 * If we can write one superblock while another is in
 	 * progress, we risk not having a complete checkpoint if we crash.
 	 * So, block here if a superblock write is in progress.
 	 */
+	simple_lock(&fs->lfs_interlock);
 	s = splbio();
 	while (fs->lfs_sbactive) {
-		tsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0);
+		ltsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0,
+			&fs->lfs_interlock);
 	}
 	fs->lfs_sbactive = daddr;
 	splx(s);
+	simple_unlock(&fs->lfs_interlock);
 
 	/* Set timestamp of this version of the superblock */
 	if (fs->lfs_version == 1)
@@ -2044,7 +2119,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	memset(bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
-	
+
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
 	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
 	bp->b_iodone = lfs_supercallback;
@@ -2057,7 +2132,9 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	s = splbio();
 	V_INCR_NUMOUTPUT(bp->b_vp);
 	splx(s);
+	simple_lock(&fs->lfs_interlock);
 	++fs->lfs_iocount;
+	simple_unlock(&fs->lfs_interlock);
 	VOP_STRATEGY(devvp, bp);
 }
 
@@ -2069,6 +2146,7 @@ int
 lfs_match_fake(struct lfs *fs, struct buf *bp)
 {
 
+	ASSERT_SEGLOCK(fs);
 	return LFS_IS_MALLOC_BUF(bp);
 }
 
@@ -2077,6 +2155,7 @@ int
 lfs_match_real(struct lfs *fs, struct buf *bp)
 {
 
+	ASSERT_SEGLOCK(fs);
 	return (lfs_match_data(fs, bp) && !lfs_match_fake(fs, bp));
 }
 #endif
@@ -2085,6 +2164,7 @@ int
 lfs_match_data(struct lfs *fs, struct buf *bp)
 {
 
+	ASSERT_SEGLOCK(fs);
 	return (bp->b_lblkno >= 0);
 }
 
@@ -2093,6 +2173,7 @@ lfs_match_indir(struct lfs *fs, struct buf *bp)
 {
 	daddr_t lbn;
 
+	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 0);
 }
@@ -2102,6 +2183,7 @@ lfs_match_dindir(struct lfs *fs, struct buf *bp)
 {
 	daddr_t lbn;
 
+	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 1);
 }
@@ -2111,6 +2193,7 @@ lfs_match_tindir(struct lfs *fs, struct buf *bp)
 {
 	daddr_t lbn;
 
+	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 2);
 }
@@ -2118,7 +2201,7 @@ lfs_match_tindir(struct lfs *fs, struct buf *bp)
 /*
  * XXX - The only buffers that are going to hit these functions are the
  * segment write blocks, or the segment summaries, or the superblocks.
- * 
+ *
  * All of the above are created by lfs_newbuf, and so do not need to be
  * released via brelse.
  */
@@ -2128,6 +2211,7 @@ lfs_callback(struct buf *bp)
 	struct lfs *fs;
 
 	fs = bp->b_private;
+	ASSERT_NO_SEGLOCK(fs);
 	lfs_freebuf(fs, bp);
 }
 
@@ -2137,10 +2221,13 @@ lfs_super_aiodone(struct buf *bp)
 	struct lfs *fs;
 
 	fs = bp->b_private;
+	ASSERT_NO_SEGLOCK(fs);
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_sbactive = 0;
-	wakeup(&fs->lfs_sbactive);
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
+	simple_unlock(&fs->lfs_interlock);
+	wakeup(&fs->lfs_sbactive);
 	lfs_freebuf(fs, bp);
 }
 
@@ -2160,6 +2247,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	cl = bp->b_private;
 	fs = cl->fs;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
+	ASSERT_NO_SEGLOCK(fs);
 
 	/* Put the pages back, and release the buffer */
 	while (cl->bufcount--) {
@@ -2196,15 +2284,12 @@ lfs_cluster_aiodone(struct buf *bp)
 		if ((tbp->b_flags & (B_LOCKED | B_DELWRI)) == B_LOCKED)
 			LFS_UNLOCK_BUF(tbp);
 
-#ifdef DIAGNOSTIC
 		if (tbp->b_flags & B_DONE) {
-			printf("blk %d biodone already (flags %lx)\n",
-				cl->bufcount, (long)tbp->b_flags);
+			DLOG((DLOG_SEG, "blk %d biodone already (flags %lx)\n",
+				cl->bufcount, (long)tbp->b_flags));
 		}
-#endif
 
 		if ((tbp->b_flags & B_CALL) && !LFS_IS_MALLOC_BUF(tbp)) {
-			/* printf("flags 0x%lx\n", tbp->b_flags); */
 			/*
 			 * A buffer from the page daemon.
 			 * We use the same iodone as it does,
@@ -2241,10 +2326,8 @@ lfs_cluster_aiodone(struct buf *bp)
 		if (vp != devvp && vp->v_numoutput == 0 &&
 		    (fbp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL) {
 			ip = VTOI(vp);
-#ifdef DEBUG_LFS
-			printf("lfs_cluster_aiodone: marking ino %d\n",
-			       ip->i_number);
-#endif
+			DLOG((DLOG_SEG, "lfs_cluster_aiodone: mark ino %d\n",
+			       ip->i_number));
 			if (LFS_IS_MALLOC_BUF(fbp))
 				LFS_SET_UINO(ip, IN_CLEANING);
 			else
@@ -2264,16 +2347,17 @@ lfs_cluster_aiodone(struct buf *bp)
 
 	/* Note i/o done */
 	if (cl->flags & LFS_CL_SYNC) {
-		if (--cl->seg->seg_iocount == 0) 
+		if (--cl->seg->seg_iocount == 0)
 			wakeup(&cl->seg->seg_iocount);
-		/* printf("- %x => %d\n", cl->seg, cl->seg->seg_iocount); */
 	}
+	simple_lock(&fs->lfs_interlock);
 #ifdef DIAGNOSTIC
 	if (fs->lfs_iocount == 0)
 		panic("lfs_cluster_aiodone: zero iocount");
 #endif
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
+	simple_unlock(&fs->lfs_interlock);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
@@ -2384,13 +2468,14 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 int
 lfs_vref(struct vnode *vp)
 {
+	ASSERT_MAYBE_SEGLOCK(VTOI(vp)->i_lfs);
 	/*
 	 * If we return 1 here during a flush, we risk vinvalbuf() not
 	 * being able to flush all of the pages from this vnode, which
 	 * will cause it to panic.  So, return 0 if a flush is in progress.
 	 */
 	if (vp->v_flag & VXLOCK) {
-		if (IS_FLUSHING(VTOI(vp)->i_lfs,vp)) {
+		if (IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
 			return 0;
 		}
 		return (1);
@@ -2405,10 +2490,11 @@ lfs_vref(struct vnode *vp)
 void
 lfs_vunref(struct vnode *vp)
 {
+	ASSERT_MAYBE_SEGLOCK(VTOI(vp)->i_lfs);
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
 	 */
-	if ((vp->v_flag & VXLOCK) && IS_FLUSHING(VTOI(vp)->i_lfs,vp)) {
+	if ((vp->v_flag & VXLOCK) && IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
 		return;
 	}
 
@@ -2418,7 +2504,7 @@ lfs_vunref(struct vnode *vp)
 		printf("lfs_vunref: inum is %d\n", VTOI(vp)->i_number);
 		printf("lfs_vunref: flags are 0x%lx\n", (u_long)vp->v_flag);
 		printf("lfs_vunref: usecount = %ld\n", (long)vp->v_usecount);
-		panic("lfs_vunref: v_usecount<0");
+		panic("lfs_vunref: v_usecount < 0");
 	}
 #endif
 	vp->v_usecount--;
@@ -2450,6 +2536,7 @@ void
 lfs_vunref_head(struct vnode *vp)
 {
 
+	ASSERT_SEGLOCK(VTOI(vp)->i_lfs);
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0) {

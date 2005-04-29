@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.h,v 1.1 2001/02/06 16:37:58 eeh Exp $	 */
+/*	$NetBSD: svr4_32_sockio.h,v 1.1.34.1 2005/04/29 11:28:43 kent Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct svr4_32_ifreq {
 		struct	osockaddr	ifru_broadaddr;
 		short			ifru_flags;
 		int			ifru_metric;
-		char			ifru_data;	
+		char			ifru_data;
 		char			ifru_enaddr[6];
 		int			if_muxid[2];
 

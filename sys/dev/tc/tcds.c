@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.12 2004/09/13 14:08:39 drochner Exp $ */
+/* $NetBSD: tcds.c,v 1.12.4.1 2005/04/29 11:29:18 kent Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,17 +42,17 @@
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.12 2004/09/13 14:08:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.12.4.1 2005/04/29 11:29:18 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,17 +106,17 @@ struct tcds_softc {
 #define	TCDSF_FASTSCSI		0x02	/* supports Fast SCSI */
 
 /* Definition of the driver for autoconfig. */
-int	tcdsmatch __P((struct device *, struct cfdata *, void *));
-void	tcdsattach __P((struct device *, struct device *, void *));
-int     tcdsprint __P((void *, const char *));
-int	tcdssubmatch __P((struct device *, struct cfdata *,
-			  const locdesc_t *, void *));
+int	tcdsmatch(struct device *, struct cfdata *, void *);
+void	tcdsattach(struct device *, struct device *, void *);
+int     tcdsprint(void *, const char *);
+int	tcdssubmatch(struct device *, struct cfdata *,
+			  const locdesc_t *, void *);
 
 CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
     tcdsmatch, tcdsattach, NULL, NULL);
 
-/*static*/ int	tcds_intr __P((void *));
-/*static*/ int	tcds_intrnull __P((void *));
+/*static*/ int	tcds_intr(void *);
+/*static*/ int	tcds_intrnull(void *);
 
 struct tcds_device {
 	const char *td_name;
@@ -131,8 +131,8 @@ struct tcds_device {
 	{ NULL,		0 },
 };
 
-struct tcds_device *tcds_lookup __P((const char *));
-void	tcds_params __P((struct tcds_softc *, int, int *, int *));
+struct tcds_device *tcds_lookup(const char *);
+void	tcds_params(struct tcds_softc *, int, int *, int *);
 
 struct tcds_device *
 tcds_lookup(modname)
@@ -360,7 +360,7 @@ void
 tcds_intr_establish(tcds, slot, func, arg)
 	struct device *tcds;
 	int slot;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct tcds_softc *sc = (struct tcds_softc *)tcds;
@@ -450,7 +450,7 @@ tcds_dma_enable(sc, on)
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
 	/* XXX Clear/set IOSLOT/PBS bits. */
-	if (on) 
+	if (on)
 		TCDS_CIR_SET(cir, sc->sc_dmabits);
 	else
 		TCDS_CIR_CLR(cir, sc->sc_dmabits);
@@ -517,7 +517,7 @@ tcds_intr(arg)
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
-	/* 
+	/*
 	 * Interrupts not currently handled, but would like to know if they
 	 * occur.
 	 *

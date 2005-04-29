@@ -1,6 +1,6 @@
-/*	$NetBSD: memcpy.S,v 1.5 1998/05/28 22:07:59 matthias Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.5.56.1 2005/04/29 11:29:25 kent Exp $	*/
 
-/* 
+/*
  * Written by Matthias Pfaller, 1996
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.5 1998/05/28 22:07:59 matthias Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.5.56.1 2005/04/29 11:29:25 kent Exp $")
 # if defined(BCOPY)
 	RCSID("$Masqueraded: as bcopy $")
 # endif

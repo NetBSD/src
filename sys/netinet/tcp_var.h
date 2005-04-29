@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.115 2004/12/21 05:51:31 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.115.2.1 2005/04/29 11:29:34 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,12 +70,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -167,16 +169,35 @@
 #endif /* TCP_SIGNATURE */
 
 /*
+ * SACK option block.
+ */
+struct sackblk {
+	tcp_seq left;		/* Left edge of sack block. */
+	tcp_seq right;		/* Right edge of sack block. */
+};
+
+TAILQ_HEAD(sackhead, sackhole);
+struct sackhole {
+	tcp_seq start;
+	tcp_seq end;
+	tcp_seq rxmit;
+
+	TAILQ_ENTRY(sackhole) sackhole_q;
+};
+
+/*
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
+	int	t_segqlen;		/* length of the above */
 	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
+	short	t_partialacks;		/* partials acks during fast rexmit */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
 	u_short t_segsz;		/* current segment size in use */
@@ -193,10 +214,8 @@ struct tcpcb {
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
 #define	TF_SYN_REXMT	0x0400		/* rexmit timer fired on SYN */
 #define	TF_WILL_SACK	0x0800		/* try to use SACK */
-#define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
-#define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
-#define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
-#define	TF_DEAD		0x8000		/* dead and to-be-released */
+#define	TF_REASSEMBLING	0x1000		/* we're busy reassembling */
+#define	TF_DEAD		0x2000		/* dead and to-be-released */
 #define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
@@ -217,6 +236,7 @@ struct tcpcb {
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
 	tcp_seq snd_recover;		/* for use in fast recovery */
+	tcp_seq	snd_high;		/* NewReno false fast rexmit seq */
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -267,7 +287,19 @@ struct tcpcb {
 	tcp_seq	last_ack_sent;
 
 /* SACK stuff */
-	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
+#define TCP_SACK_MAX 3
+#define TCPSACK_NONE 0
+#define TCPSACK_HAVED 1
+	u_char rcv_sack_flags;		/* SACK flags. */
+	struct sackblk rcv_dsack_block;	/* RX D-SACK block. */
+	struct ipqehead timeq;		/* time sequenced queue. */
+	struct sackhead snd_holes;	/* TX SACK holes. */
+	int	snd_numholes;		/* Number of TX SACK holes. */
+	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
+	tcp_seq sack_newdata;		/* New data xmitted in this recovery
+					   episode starts at this seq number*/
+	tcp_seq snd_fack;		/* FACK TCP.  Forward-most data held by
+					   peer. */
 
 /* path MTU discovery blackhole detection */
 	int t_mtudisc;			/* perform mtudisc for this tcb */
@@ -281,6 +313,14 @@ struct tcpcb {
 	int	t_lastoff;		/* last data address in mbuf chain */
 	int	t_lastlen;		/* last length read from mbuf chain */
 };
+
+/*
+ * Macros to aid SACK/FACK TCP.
+ */
+#define TCP_SACK_ENABLED(tp)	(tp->t_flags & TF_WILL_SACK)
+#define TCP_FACK_FASTRECOV(tp)	\
+	(TCP_SACK_ENABLED(tp) && \
+	(SEQ_GT(tp->snd_fack, tp->snd_una + tcprexmtthresh * tp->t_segsz)))
 
 #ifdef _KERNEL
 /*
@@ -434,6 +474,7 @@ struct syn_cache {
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 #define	SCF_DEAD		0x0004		/* this entry to be released */
+#define SCF_SACK_PERMIT		0x0008		/* peer will do SACK */
 #define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
@@ -679,6 +720,9 @@ extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 extern	int tcp_do_loopback_cksum;/* do TCP checksum on loopback? */
+extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
+extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
+extern int tcp_sack_globalholes;	/* Number of holes present. */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
@@ -686,8 +730,6 @@ extern	int tcp_ackdrop_ppslim;
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
-
-extern	struct pool tcpipqent_pool;
 
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
@@ -781,6 +823,10 @@ void	 tcp_quench(struct inpcb *, int);
 #ifdef INET6
 void	 tcp6_quench(struct in6pcb *, int);
 #endif
+
+struct ipqent *tcpipqent_alloc(void);
+void	 tcpipqent_free(struct ipqent *);
+
 int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);
@@ -793,16 +839,25 @@ int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
-void	 tcp_trace(int, int, struct tcpcb *, struct mbuf *, int);
+void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
-int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
 tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
+
+void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
+void	 tcp_sack_option(struct tcpcb *, struct tcphdr *, u_char *, int);
+void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+void	 tcp_free_sackholes(struct tcpcb *);
+void	 tcp_sack_adjust(struct tcpcb *tp);
+struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
+void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
+int	 tcp_sack_numblks(const struct tcpcb *);
+#define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
@@ -822,7 +877,8 @@ int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
 
-int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
+void	 tcp_reno_newack(struct tcpcb *, struct tcphdr *);
+void	 tcp_newreno_newack(struct tcpcb *, struct tcphdr *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);

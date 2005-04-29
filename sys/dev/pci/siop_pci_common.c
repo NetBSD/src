@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.22 2004/03/10 22:02:53 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.22.8.1 2005/04/29 11:29:12 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.22 2004/03/10 22:02:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.22.8.1 2005/04/29 11:29:12 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
 	SF_CHIP_AAIP |
-	SF_BUS_ULTRA3 | SF_BUS_WIDE, 
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
 	7, 62, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
@@ -237,11 +237,11 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 	struct siop_pci_common_softc *pci_sc;
 	struct siop_common_softc *siop_sc;
 	struct pci_attach_args *pa;
-	int (*intr) __P((void*));
+	int (*intr)(void*);
 
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;    
+	pcitag_t tag = pa->pa_tag;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	bus_space_tag_t iot, memt;

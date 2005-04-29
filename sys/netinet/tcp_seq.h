@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.13 2003/08/07 16:33:18 agc Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.13.8.1 2005/04/29 11:29:34 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -43,6 +43,8 @@
 #define	SEQ_LEQ(a,b)	((int)((a)-(b)) <= 0)
 #define	SEQ_GT(a,b)	((int)((a)-(b)) > 0)
 #define	SEQ_GEQ(a,b)	((int)((a)-(b)) >= 0)
+#define SEQ_MIN(a, b)	((SEQ_LT(a, b)) ? (a) : (b))
+#define SEQ_MAX(a, b)	((SEQ_GT(a, b)) ? (a) : (b))
 
 #define	SEQ_SUB(a,b)	((long)((a)-(b)))
 
@@ -56,7 +58,7 @@
 
 #define	tcp_sendseqinit(tp) \
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
-	    (tp)->snd_recover = (tp)->iss
+	    (tp)->snd_recover = (tp)->snd_high = (tp)->iss
 
 #define TCP_ISS_RANDOM_MASK 0x00ffffff /* bits of randomness in a TCP ISS */
 #define TCP_ISSINCR         0x01000000 /* increment per time and per conn */

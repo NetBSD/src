@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.9 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.9.8.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.9 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.9.8.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.9 2003/12/04 13:57:30 keihan Exp $"
 #include <sys/select.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
+
+#include <machine/bus.h>
 
 #include <dev/isa/pcppivar.h>
 
@@ -65,12 +67,12 @@ struct midi_pcppi_softc {
 	midisyn sc_midisyn;
 };
 
-int	midi_pcppi_match __P((struct device *, struct cfdata *, void *));
-void	midi_pcppi_attach __P((struct device *, struct device *, void *));
+int	midi_pcppi_match(struct device *, struct cfdata *, void *);
+void	midi_pcppi_attach(struct device *, struct device *, void *);
 
-void	midi_pcppi_on    __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	midi_pcppi_off   __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	midi_pcppi_close __P((midisyn *));
+void	midi_pcppi_on   (midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	midi_pcppi_off  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	midi_pcppi_close(midisyn *);
 
 CFATTACH_DECL(midi_pcppi, sizeof(struct midi_pcppi_softc),
     midi_pcppi_match, midi_pcppi_attach, NULL, NULL);

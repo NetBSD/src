@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.34 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.34.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.34 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.34.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #define	PCICISADEBUG
 
@@ -126,8 +126,8 @@ int	pcicsubr_debug = 0;
  * just use socket 0
  */
 
-void pcic_isa_probe_interrupts __P((struct pcic_softc *, struct pcic_handle *));
-static int pcic_isa_count_intr __P((void *));
+void pcic_isa_probe_interrupts(struct pcic_softc *, struct pcic_handle *);
+static int pcic_isa_count_intr(void *);
 
 static int
 pcic_isa_count_intr(arg)
@@ -428,7 +428,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	 * apparently missing a bit or more of address lines. (e.g.
 	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
 	 * TravelMate 5000--not clear which is at fault)
-	 * 
+	 *
 	 * Add a kludge to detect 10 bit wide buses and deal with them,
 	 * and also a config file option to override the probe.
 	 */
@@ -461,7 +461,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*fct) __P((void *));
+	int (*fct)(void *);
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
@@ -507,7 +507,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	return (ih);
 }
 
-void 
+void
 pcic_isa_chip_intr_disestablish(pch, ih)
 	pcmcia_chipset_handle_t pch;
 	void *ih;

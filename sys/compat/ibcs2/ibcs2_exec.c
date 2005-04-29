@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.60 2004/09/12 10:38:25 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.60.4.1 2005/04/29 11:28:32 kent Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.60 2004/09/12 10:38:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.60.4.1 2005/04/29 11:28:32 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.60 2004/09/12 10:38:25 jdolecek Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/ibcs2_machdep.h>
 
@@ -108,13 +110,15 @@ const struct emul emul_ibcs2 = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 /*
  * This is exec process hook. Find out if this is x.out executable, if
  * yes, set flag appropriately, so that emul code which needs to adjust
  * behaviour accordingly can do so.
- */ 
+ */
 static void
 ibcs2_e_proc_exec(p, epp)
 	struct proc *p;
@@ -124,4 +128,65 @@ ibcs2_e_proc_exec(p, epp)
 		p->p_emuldata = IBCS2_EXEC_XENIX;
 	else
 		p->p_emuldata = IBCS2_EXEC_OTHER;
+}
+
+/*
+ * ibcs2_exec_setup_stack(): Set up the stack segment for an
+ * executable.
+ *
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ *
+ * This function returns an int for uniformity with other (future) formats'
+ * stack setup functions.  They might have errors to return.
+ */
+
+int
+ibcs2_exec_setup_stack(struct proc *p, struct exec_package *epp)
+{
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
+
+#ifndef	USRSTACK32
+#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
+#endif
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = USRSTACK32;
+		max_stack_size = MAXSSIZ;
+	} else {
+		epp->ep_minsaddr = USRSTACK;
+		max_stack_size = MAXSSIZ;
+	}
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
+		max_stack_size);
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 */
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
+	    access_size), noaccess_size);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
+	/* XXX: some ibcs2 binaries need an executable stack. */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE |
+	    VM_PROT_EXECUTE);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.12 2004/07/24 18:59:16 christos Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.12.4.1 2005/04/29 11:28:51 kent Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #define LMD_SENSORBASE	0x20	/* Sensors occupy 0x20 -- 0x2a */
 
-#define LMD_CONFIG	0x40	/* Configuration */ 
+#define LMD_CONFIG	0x40	/* Configuration */
 #define LMD_ISR1	0x41	/* Interrupt Status 1 */
 #define LMD_ISR2	0x42	/* Interrupt Status 2 */
 #define LMD_SMI1	0x43	/* SMI Mask 1 */
@@ -138,16 +138,18 @@
 #define ITEC_TEMP3	0x31	/* TMPIN1 temperature */
 #define ITEC_RES48	0x48	/* reserved, used for probing the chip */
 #define ITEC_RES52	0x52	/* reserved, used for probing the chip */
-#define ITEC_VENDID	0x58	/* vendor ID register */
+#define	ITEC_VENDID	0x58	/* vendor ID register */
+#define ITEC_COREID	0x5b	/* core ID register, only 8712F */
 
 /*
  * misc values
  */
-#define ITEC_VENDID_ITE	0x90	/* iTE vendor ID */
+#define ITEC_VENDID_ITE		0x90	/* iTE vendor ID */
+#define ITEC_COREID_ITE		0x12	/* iTE core ID */
 #define ITEC_RES48_DEFAULT	0x2d
 #define ITEC_RES52_DEFAULT	0x7f
 #define ITEC_NUM_SENSORS	15
-#define ITEC_VREF	4096		/* VREF in mV */
+#define ITEC_VREF		4096	/* VREF in mV */
 
 
 struct lm_softc {
@@ -162,7 +164,7 @@ struct lm_softc {
 	struct	envsys_tre_data sensors[WB_NUM_SENSORS];
 	struct	envsys_basic_info info[WB_NUM_SENSORS];
 	u_int numsensors;
-	void (*refresh_sensor_data) __P((struct lm_softc *));
+	void (*refresh_sensor_data)(struct lm_softc *);
 
 	int (*lm_banksel)(struct lm_softc *, int);
 	u_int8_t (*lm_readreg)(struct lm_softc *, int);
@@ -171,7 +173,7 @@ struct lm_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-void lm_attach __P((struct lm_softc *));
-int lm_probe __P((bus_space_tag_t, bus_space_handle_t));
+void lm_attach(struct lm_softc *);
+int lm_probe(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */

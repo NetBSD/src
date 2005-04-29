@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp $	*/
+/*	$NetBSD: locore.S,v 1.31.4.1 2005/04/29 11:28:12 kent Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1162,6 +1162,7 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1216,6 +1217,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -2051,8 +2053,6 @@ ENTRY(cpu_switchto)
 #ifndef MULTIPROCESSOR
 	.globl	_C_LABEL(lwp0)
 #endif
-	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
 /* LINTSTUB: Func: void cpu_exit(struct lwp *l) */
 ENTRY(cpu_exit)
 	movl	4(%esp),%edi		# old process

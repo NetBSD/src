@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.22 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.22.8.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.22 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.22.8.1 2005/04/29 11:29:38 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -330,8 +330,8 @@ fail:
 			*allocib = 0;
 		} else {
 			int r;
-	
-			r = bread(vp, indirs[unwindidx].in_lbn, 
+
+			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->e2fs_bsize, NOCRED, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
@@ -392,10 +392,18 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		 * EOF be up-to-date before each call.
 		 */
 
-		if (ip->i_e2fs_size < off + bsize) {
-			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
-				    ip->i_e2fs_size, off + bsize,0,0);
-			ip->i_e2fs_size = off + bsize;
+		if (ext2fs_size(ip) < off + bsize) {
+			UVMHIST_LOG(ubchist, "old 0x%lx%8lx new 0x%lx%8lx",
+			    /* Note that arguments are always cast to u_long. */
+				    ext2fs_size(ip) >> 32,
+				    ext2fs_size(ip) & 0xffffffff,
+				    (off + bsize) >> 32,
+				    (off + bsize) & 0xffffffff);
+			error = ext2fs_setsize(ip, off + bsize);
+			if (error) {
+				UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
+				return error;
+			}
 		}
 
 		off += bsize;

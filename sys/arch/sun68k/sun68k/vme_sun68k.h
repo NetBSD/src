@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.h,v 1.1 2001/06/27 02:48:32 fredette Exp $	*/
+/*	$NetBSD: vme_sun68k.h,v 1.1.32.1 2005/04/29 11:28:27 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	vmebus_translate __P((vme_am_t, vme_addr_t, 
-			      bus_type_t *, bus_addr_t *));
-
+int	vmebus_translate(vme_am_t, vme_addr_t, bus_type_t *, bus_addr_t *);

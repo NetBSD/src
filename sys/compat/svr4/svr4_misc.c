@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.110 2004/09/17 14:11:24 skrll Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.110.4.1 2005/04/29 11:28:42 kent Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.110 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.110.4.1 2005/04/29 11:28:42 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ svr4_sys_wait(l, v, retval)
 
 	if ((error = sys_wait4(l, &w4, retval)) != 0)
 		return error;
-	
+
 	if ((error = copyin(SCARG(&w4, status), &st, sizeof(st))) != 0)
 		return error;
 
@@ -327,7 +327,10 @@ again:
 			panic("svr4_getdents64: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		svr4_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -336,7 +339,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -445,7 +451,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("svr4_getdents: bad reclen");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			compat_offseterr(vp, "svr4_getdents");
 			error = EINVAL;
@@ -801,10 +810,10 @@ svr4_sys_break(l, v, retval)
 	if (new > old) {
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 			UVM_UNKNOWN_OFFSET, 0,
-           		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
-			UVM_ADV_NORMAL, 
+           		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+			UVM_ADV_NORMAL,
 			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
-			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
+			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 			uprintf("sbrk: grow failed, error = %d\n", error);
 			return error;
@@ -897,7 +906,7 @@ svr4_sys_ulimit(l, v, retval)
 			struct sys_setrlimit_args srl;
 			struct rlimit krl;
 			caddr_t sg = stackgap_init(p, 0);
-			struct rlimit *url = (struct rlimit *) 
+			struct rlimit *url = (struct rlimit *)
 				stackgap_alloc(p, &sg, sizeof *url);
 
 			krl.rlim_cur = SCARG(uap, newlimit) * 512;
@@ -1064,7 +1073,7 @@ svr4_hrtcntl(l, uap, retval)
 
 
 int
-svr4_sys_hrtsys(l, v, retval) 
+svr4_sys_hrtsys(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1153,7 +1162,7 @@ svr4_setinfo(p, st, s)
 
 
 int
-svr4_sys_waitsys(l, v, retval) 
+svr4_sys_waitsys(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1165,7 +1174,7 @@ svr4_sys_waitsys(l, v, retval)
 	struct proc *child;
 
 	switch (SCARG(uap, grp)) {
-	case SVR4_P_PID:	
+	case SVR4_P_PID:
 		break;
 
 	case SVR4_P_PGID:
@@ -1191,7 +1200,7 @@ svr4_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
+	DPRINTF(("waitsys(%d, %d, %p, %x)\n",
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
@@ -1228,7 +1237,7 @@ static void
 bsd_statvfs_to_svr4_statvfs(const struct statvfs *bfs,
     struct svr4_statvfs *sfs)
 {
-	sfs->f_bsize = bfs->f_bsize; 
+	sfs->f_bsize = bfs->f_bsize;
 	sfs->f_frsize = bfs->f_frsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
@@ -1275,7 +1284,7 @@ bsd_statvfs_to_svr4_statvfs64(const struct statvfs *bfs,
 
 
 int
-svr4_sys_statvfs(l, v, retval) 
+svr4_sys_statvfs(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1307,7 +1316,7 @@ svr4_sys_statvfs(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs(l, v, retval) 
+svr4_sys_fstatvfs(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1370,7 +1379,7 @@ svr4_sys_statvfs64(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs64(l, v, retval) 
+svr4_sys_fstatvfs64(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;

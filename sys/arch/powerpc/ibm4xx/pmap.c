@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2004/07/31 13:28:53 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29.4.1 2005/04/29 11:28:19 kent Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2004/07/31 13:28:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.4.1 2005/04/29 11:28:19 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -146,7 +146,9 @@ static char *pmap_attrib;
 
 #define PV_WIRED	0x1
 #define PV_WIRE(pv)	((pv)->pv_va |= PV_WIRED)
-#define	PV_CMPVA(va,pv)	(!(((pv)->pv_va^(va))&(~PV_WIRED)))
+#define PV_UNWIRE(pv)	((pv)->pv_va &= ~PV_WIRED)
+#define PV_ISWIRED(pv)	((pv)->pv_va & PV_WIRED)
+#define PV_CMPVA(va,pv)	(!(((pv)->pv_va ^ (va)) & (~PV_WIRED)))
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* Linked list of mappings */
@@ -167,9 +169,7 @@ static inline char *pa_to_attr(paddr_t);
 static inline volatile u_int *pte_find(struct pmap *, vaddr_t);
 static inline int pte_enter(struct pmap *, vaddr_t, u_int);
 
-static void pmap_pinit(pmap_t);
-static void pmap_release(pmap_t);
-static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t);
+static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, boolean_t);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
 
@@ -207,10 +207,12 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
-		if (!pte) return (0);
+		if (!pte)
+			return (0);
 		/* Allocate a page XXXX this will sleep! */
 		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		    (uint *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	}
 	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
@@ -442,7 +444,7 @@ pmap_init(void)
 
 	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
-	addr = uvm_km_zalloc(kernel_map, sz);
+	addr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	s = splvm();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -503,8 +505,7 @@ extern void vm_page_free1 __P((struct vm_page *));
 vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
 
 vaddr_t
-pmap_growkernel(maxkvaddr)
-	vaddr_t maxkvaddr;
+pmap_growkernel(vaddr_t maxkvaddr)
 {
 	int s;
 	int seg;
@@ -518,7 +519,8 @@ pmap_growkernel(maxkvaddr)
 	     kbreak += PTMAP) {
 		seg = STIDX(kbreak);
 
-		if (pte_find(pm, kbreak)) continue;
+		if (pte_find(pm, kbreak))
+			continue;
 
 		if (uvm.page_init_done) {
 			pg = (paddr_t)VM_PAGE_TO_PHYS(vm_page_alloc1());
@@ -526,7 +528,8 @@ pmap_growkernel(maxkvaddr)
 			if (!uvm_page_physget(&pg))
 				panic("pmap_growkernel: no memory");
 		}
-		if (!pg) panic("pmap_growkernel: no pages");
+		if (!pg)
+			panic("pmap_growkernel: no pages");
 		pmap_zero_page((paddr_t)pg);
 
 		/* XXX This is based on all phymem being addressable */
@@ -542,9 +545,11 @@ pmap_growkernel(maxkvaddr)
  *	Allocate and return a memory cell with no associated object.
  */
 struct vm_page *
-vm_page_alloc1()
+vm_page_alloc1(void)
 {
-	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	struct vm_page *pg;
+
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg) {
 		pg->wire_count = 1;	/* no mappings yet */
 		pg->flags &= ~PG_BUSY;	/* never busy */
@@ -561,8 +566,7 @@ vm_page_alloc1()
  *	Object and page must be locked prior to entry.
  */
 void
-vm_page_free1(mem)
-	struct vm_page *mem;
+vm_page_free1(struct vm_page *mem)
 {
 #ifdef DIAGNOSTIC
 	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
@@ -588,26 +592,10 @@ pmap_create(void)
 {
 	struct pmap *pm;
 
-	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
-	memset((caddr_t)pm, 0, sizeof *pm);
-	pmap_pinit(pm);
-	return pm;
-}
-
-/*
- * Initialize a preallocated and zeroed pmap structure.
- */
-void
-pmap_pinit(struct pmap *pm)
-{
-	int i;
-
-	/*
-	 * Allocate some segment registers for this pmap.
-	 */
+	pm = malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
+	memset(pm, 0, sizeof *pm);
 	pm->pm_refs = 1;
-	for (i = 0; i < STSZ; i++)
-		pm->pm_ptbl[i] = NULL;
+	return pm;
 }
 
 /*
@@ -627,29 +615,22 @@ pmap_reference(struct pmap *pm)
 void
 pmap_destroy(struct pmap *pm)
 {
-
-	if (--pm->pm_refs == 0) {
-		pmap_release(pm);
-		free((caddr_t)pm, M_VMPMAP);
-	}
-}
-
-/*
- * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
- */
-static void
-pmap_release(struct pmap *pm)
-{
 	int i;
 
+	if (--pm->pm_refs > 0) {
+		return;
+	}
+	KASSERT(pm->pm_stats.resident_count == 0);
+	KASSERT(pm->pm_stats.wired_count == 0);
 	for (i = 0; i < STSZ; i++)
 		if (pm->pm_ptbl[i]) {
 			uvm_km_free(kernel_map, (vaddr_t)pm->pm_ptbl[i],
-			    PAGE_SIZE);
+			    PAGE_SIZE, UVM_KMF_WIRED);
 			pm->pm_ptbl[i] = NULL;
 		}
-	if (pm->pm_ctx) ctx_free(pm);
+	if (pm->pm_ctx)
+		ctx_free(pm);
+	free(pm, M_VMPMAP);
 }
 
 /*
@@ -721,7 +702,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  * This returns whether this is the first mapping of a page.
  */
 static inline int
-pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
+pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, boolean_t wired)
 {
 	struct pv_entry *pv, *npv = NULL;
 	int s;
@@ -730,17 +711,7 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 		return 0;
 
 	s = splvm();
-
 	pv = pa_to_pv(pa);
-for (npv = pv; npv; npv = npv->pv_next)
-if (npv->pv_va == va && npv->pv_pm == pm) {
-printf("Duplicate pv: va %lx pm %p\n", va, pm);
-#ifdef DDB
-Debugger();
-#endif
-return (1);
-}
-
 	if (!pv->pv_pm) {
 		/*
 		 * No entries yet, use header as the first entry.
@@ -754,11 +725,15 @@ return (1);
 		 * Place this entry after the header.
 		 */
 		npv = pool_get(&pv_pool, PR_WAITOK);
-		if (!npv) return (0);
 		npv->pv_va = va;
 		npv->pv_pm = pm;
 		npv->pv_next = pv->pv_next;
 		pv->pv_next = npv;
+		pv = npv;
+	}
+	if (wired) {
+		PV_WIRE(pv);
+		pm->pm_stats.wired_count++;
 	}
 	splx(s);
 	return (1);
@@ -773,7 +748,8 @@ pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 	 * Remove from the PV table.
 	 */
 	pv = pa_to_pv(pa);
-	if (!pv) return;
+	if (!pv)
+		return;
 
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -782,6 +758,9 @@ pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 	 * the entry.  In either case we free the now unused entry.
 	 */
 	if (pm == pv->pv_pm && PV_CMPVA(va, pv)) {
+		if (PV_ISWIRED(pv)) {
+			pm->pm_stats.wired_count--;
+		}
 		if ((npv = pv->pv_next)) {
 			*pv = *npv;
 			pool_put(&pv_pool, npv);
@@ -793,6 +772,9 @@ pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 				break;
 		if (npv) {
 			pv->pv_next = npv->pv_next;
+			if (PV_ISWIRED(npv)) {
+				pm->pm_stats.wired_count--;
+			}
 			pool_put(&pv_pool, npv);
 		}
 	}
@@ -813,11 +795,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	pmap_remove(pm, va, va + PAGE_SIZE);
 
-	if (flags & PMAP_WIRED) flags |= prot;
-
-	/* If it has no protections don't bother w/the rest */
-	if (!(flags & VM_PROT_ALL))
-		return (0);
+	if (flags & PMAP_WIRED)
+		flags |= prot;
 
 	managed = 0;
 	if (vm_physseg_find(atop(pa), NULL) != -1)
@@ -861,7 +840,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pmap_initialized && managed) {
 		char *attr;
 
-		if (!pmap_enter_pv(pm, va, pa)) {
+		if (!pmap_enter_pv(pm, va, pa, flags & PMAP_WIRED)) {
 			/* Could not enter pv on a managed page */
 			return 1;
 		}
@@ -873,9 +852,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			panic("managed but no attr");
 #endif
 		if (flags & VM_PROT_ALL)
-			*attr |= PTE_HI_REF;
+			*attr |= PMAP_ATTR_REF;
 		if (flags & VM_PROT_WRITE)
-			*attr |= PTE_HI_CHG;
+			*attr |= PMAP_ATTR_CHG;
 	}
 
 	s = splvm();
@@ -899,34 +878,28 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 void
 pmap_unwire(struct pmap *pm, vaddr_t va)
 {
-	struct pv_entry *pv, *npv;
+	struct pv_entry *pv;
 	paddr_t pa;
-	int s = splvm();
-
-	if (pm == NULL) {
-		return;
-	}
+	int s;
 
 	if (!pmap_extract(pm, va, &pa)) {
 		return;
 	}
 
-	va |= PV_WIRED;
-
 	pv = pa_to_pv(pa);
-	if (!pv) return;
+	if (!pv)
+		return;
 
-	/*
-	 * If it is the first entry on the list, it is actually
-	 * in the header and we must copy the following entry up
-	 * to the header.  Otherwise we must search the list for
-	 * the entry.  In either case we free the now unused entry.
-	 */
-	for (npv = pv; (npv = pv->pv_next) != NULL; pv = npv) {
-		if (pm == npv->pv_pm && PV_CMPVA(va, npv)) {
-			npv->pv_va &= ~PV_WIRED;
+	s = splvm();
+	while (pv != NULL) {
+		if (pm == pv->pv_pm && PV_CMPVA(va, pv)) {
+			if (PV_ISWIRED(pv)) {
+				PV_UNWIRE(pv);
+				pm->pm_stats.wired_count--;
+			}
 			break;
 		}
+		pv = pv->pv_next;
 	}
 	splx(s);
 }
@@ -1028,8 +1001,9 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	int seg = STIDX(va);
 	int ptn = PTIDX(va);
 	u_int pa = 0;
-	int s = splvm();
+	int s;
 
+	s = splvm();
 	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn])) {
 		*pap = TTE_PA(pa) | (va & PGOFSET);
 	}
@@ -1075,25 +1049,25 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 }
 
 boolean_t
-check_attr(struct vm_page *pg, u_int mask, int clear)
+pmap_check_attr(struct vm_page *pg, u_int mask, int clear)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	int s;
+	paddr_t pa;
 	char *attr;
-	int rv;
+	int s, rv;
 
 	/*
 	 * First modify bits in cache.
 	 */
-	s = splvm();
+	pa = VM_PAGE_TO_PHYS(pg);
 	attr = pa_to_attr(pa);
 	if (attr == NULL)
 		return FALSE;
 
+	s = splvm();
 	rv = ((*attr & mask) != 0);
 	if (clear) {
 		*attr &= ~mask;
-		pmap_page_protect(pg, (mask == PTE_HI_CHG) ? VM_PROT_READ : 0);
+		pmap_page_protect(pg, mask == PMAP_ATTR_CHG ? VM_PROT_READ : 0);
 	}
 	splx(s);
 	return rv;
@@ -1319,7 +1293,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 
 #ifdef DIAGNOSTIC
 	if ((idx < TLB_NRESERVED) || (idx >= NTLB)) {
-		panic("ppc4xx_tlb_enter: repacing entry %ld", idx);
+		panic("ppc4xx_tlb_enter: replacing entry %ld", idx);
 	}
 #endif
 
@@ -1554,14 +1528,15 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+	va = (vaddr_t)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	loc = (int*)va;
 
 	pmap_extract(pmap_kernel(), va, &pa);
 	pg = PHYS_TO_VM_PAGE(pa);
 	pmap_unwire(pmap_kernel(), va);
 
-	pmap_remove(pmap_kernel(), va, va+1);
+	pmap_kremove(va, PAGE_SIZE);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 
@@ -1808,8 +1783,8 @@ pmap_testout()
 	printf("Checking cleared page: ref %d, mod %d\n",
 	       ref, mod);
 
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
-		VM_PROT_ALL|PMAP_WIRED);
-	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE);
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL);
+	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif

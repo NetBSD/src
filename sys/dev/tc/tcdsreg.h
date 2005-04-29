@@ -1,21 +1,21 @@
-/* $NetBSD: tcdsreg.h,v 1.4 2004/02/24 15:16:05 wiz Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.4.8.1 2005/04/29 11:29:18 kent Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -123,19 +123,19 @@
 #define	TCDS_DUD_BYTE11		0xff000000	/* byte 11 mask */
 
 #if 0
-int  tcds_scsi_iserr __P((struct dma_softc *));
-int  tcds_scsi_isintr __P((int, int));
-void tcds_dma_disable __P((int));
-void tcds_dma_enable __P((int));
-void tcds_dma_init __P((struct dma_softc *, int));
-void tcds_scsi_disable __P((int));
-void tcds_scsi_enable __P((int));
-void tcds_scsi_reset __P((int));
+int  tcds_scsi_iserr(struct dma_softc *);
+int  tcds_scsi_isintr(int, int);
+void tcds_dma_disable(int);
+void tcds_dma_enable(int);
+void tcds_dma_init(struct dma_softc *, int);
+void tcds_scsi_disable(int);
+void tcds_scsi_enable(int);
+void tcds_scsi_reset(int);
 
 /*
  * XXX
  * Start of MACH #defines, minimal changes to port to NetBSD.
- * 
+ *
  * The following register is the SCSI control interrupt register.  It
  * starts, stops and resets scsi DMA.  It takes over the SCSI funtions
  * that were handled by the ASIC on the 3min.

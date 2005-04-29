@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.47 2004/12/14 09:13:13 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.47.2.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -265,6 +265,8 @@ struct nfsdircache *nfs_searchdircache __P((struct vnode *, off_t, int, int *));
 struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   int, daddr_t));
 void nfs_putdircache __P((struct nfsnode *, struct nfsdircache *));
 void nfs_invaldircache __P((struct vnode *, int));
+#define	NFS_INVALDIRCACHE_FORCE		1
+#define	NFS_INVALDIRCACHE_KEEPEOF	2
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *, int flags));
@@ -272,6 +274,8 @@ int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
 			   struct vattr *, int flags));
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
 void nfs_delayedtruncate __P((struct vnode *));
+int nfs_check_wccdata __P((struct nfsnode *, const struct timespec *,
+    struct timespec *, boolean_t));
 int nfs_namei __P((struct nameidata *, fhandle_t *, uint32_t,
 		   struct nfssvc_sock *, struct mbuf *, struct mbuf **,
 		   caddr_t *, struct vnode **, struct proc *, int, int));

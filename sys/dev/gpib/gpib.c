@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.2 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: gpib.c,v 1.2.4.1 2005/04/29 11:28:47 kent Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.2 2004/09/13 12:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.2.4.1 2005/04/29 11:28:47 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ int gpibdebug = 0xff;
 #define DPRINTF(mask, str)	/* nothing */
 #endif
 
-int	gpibmatch __P((struct device *, struct cfdata *, void *));
-void	gpibattach __P((struct device *, struct device *, void *));
+int	gpibmatch(struct device *, struct cfdata *, void *);
+void	gpibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);
@@ -451,7 +451,7 @@ _gpibsend(sc, slave, sec, ptr, origcnt)
 senderror:
 	(*sc->sc_ic->ifc)(sc->sc_ic->cookie);
 	DPRINTF(DBG_FAIL,
-	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n", 
+	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n",
 	    sc->sc_dev.dv_xname, slave, sec, cnt, origcnt));
 	return (cnt);
 }
@@ -505,7 +505,7 @@ _gpibrecv(sc, slave, sec, ptr, origcnt)
 			goto recverror;
 		if ((sc->sc_ic->tc)(sc->sc_ic->cookie, 0))
 			goto recverror;
-		cmds[0] = (slave == GPIB_BROADCAST_ADDR) ? 
+		cmds[0] = (slave == GPIB_BROADCAST_ADDR) ?
 		    GPIBCMD_UNA : GPIBCMD_UNT;
 		if ((*sc->sc_ic->sendcmds)(sc->sc_ic->cookie, cmds, 1) != 1)
 			goto recverror;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.86.4.1 2005/04/29 11:28:41 kent Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.86.4.1 2005/04/29 11:28:41 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -154,6 +154,8 @@ const struct emul emul_netbsd32 = {
 #endif
 	&netbsd32_sysctl_root,
 	NULL,
+
+	netbsd32_vm_default_addr,
 };
 
 /*
@@ -1692,6 +1694,24 @@ netbsd32_setrlimit(l, v, retval)
 	    sizeof(struct rlimit));
 	if (error)
 		return (error);
+
+	switch (which) {
+	case RLIMIT_DATA:
+		if (alim.rlim_cur > MAXDSIZ32)
+			alim.rlim_cur = MAXDSIZ32;
+		if (alim.rlim_max > MAXDSIZ32)
+			alim.rlim_max = MAXDSIZ32;
+		break;
+
+	case RLIMIT_STACK:
+		if (alim.rlim_cur > MAXSSIZ32)
+			alim.rlim_cur = MAXSSIZ32;
+		if (alim.rlim_max > MAXSSIZ32)
+			alim.rlim_max = MAXSSIZ32;
+	default:
+		break;
+	}
+
 	return (dosetrlimit(p, p->p_cred, which, &alim));
 }
 
@@ -2118,7 +2138,7 @@ netbsd32_fktrace(l, v, retval)
 }
 #endif /* KTRACE */
 
-int netbsd32___sigpending14(l, v, retval) 
+int netbsd32___sigpending14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2132,7 +2152,7 @@ int netbsd32___sigpending14(l, v, retval)
 	return (sys___sigpending14(l, &ua, retval));
 }
 
-int netbsd32___sigprocmask14(l, v, retval) 
+int netbsd32___sigprocmask14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2150,7 +2170,7 @@ int netbsd32___sigprocmask14(l, v, retval)
 	return (sys___sigprocmask14(l, &ua, retval));
 }
 
-int netbsd32___sigsuspend14(l, v, retval) 
+int netbsd32___sigsuspend14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2173,7 +2193,7 @@ int netbsd32_fchroot(l, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fchroot_args ua;
-	
+
 	NETBSD32TO64_UAP(fd);
 	return (sys_fchroot(l, &ua, retval));
 }
@@ -2233,3 +2253,22 @@ netbsd32_ovadvise(l, v, retval)
 	return (sys_ovadvise(l, &ua, retval));
 }
 
+void
+netbsd32_adjust_limits(struct proc *p)
+{
+	rlim_t *valp;
+
+	valp = &p->p_rlimit[RLIMIT_DATA].rlim_cur;
+	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
+		*valp = MAXDSIZ32;
+	valp = &p->p_rlimit[RLIMIT_DATA].rlim_max;
+	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
+		*valp = MAXDSIZ32;
+
+	valp = &p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
+		*valp = MAXSSIZ32;
+	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
+	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
+		*valp = MAXSSIZ32;
+}

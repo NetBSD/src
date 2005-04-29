@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.20 2004/06/10 01:28:25 jonathan Exp $	*/
+/*	$NetBSD: key.c,v 1.20.6.1 2005/04/29 11:29:34 kent Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.20 2004/06/10 01:28:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.20.6.1 2005/04/29 11:29:34 kent Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -183,6 +183,11 @@ static const int minsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	sizeof(struct sadb_x_policy),	/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
+	sizeof(struct sadb_address),		/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 static const int maxsize[] = {
 	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
@@ -205,6 +210,11 @@ static const int maxsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	0,				/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
+	0,					/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 
 static int ipsec_esp_keymin = 256;
@@ -3928,10 +3938,10 @@ key_ismyaddr6(sin6)
  * flag can specify to compare 2 saidxes.
  * compare two secasindex structure without both mode and reqid.
  * don't compare port.
- * IN:  
+ * IN:
  *      saidx0: source, it can be in SAD.
  *      saidx1: object.
- * OUT: 
+ * OUT:
  *      1 : equal
  *      0 : not equal
  */
@@ -4066,7 +4076,7 @@ key_cmpspidx_withmask(
 			return 0;
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
-		 * as a wildcard scope, which matches any scope zone ID. 
+		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (spidx0->src.sin6.sin6_scope_id &&
 		    spidx1->src.sin6.sin6_scope_id &&
@@ -4098,7 +4108,7 @@ key_cmpspidx_withmask(
 			return 0;
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
-		 * as a wildcard scope, which matches any scope zone ID. 
+		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (spidx0->src.sin6.sin6_scope_id &&
 		    spidx1->src.sin6.sin6_scope_id &&
@@ -4477,7 +4487,7 @@ key_timehandler(void* arg)
 }
 
 #ifdef __NetBSD__
-void srandom(int arg); 
+void srandom(int arg);
 void srandom(int arg) {return;}
 #endif
 
@@ -5195,7 +5205,7 @@ key_setident(sah, m, mhp)
 		sah->identd = NULL;
 		return 0;
 	}
-	
+
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_IDENTITY_DST] == NULL) {
 		ipseclog((LOG_DEBUG, "key_setident: invalid identity.\n"));
@@ -5245,7 +5255,7 @@ key_setident(sah, m, mhp)
 
 /*
  * m will not be freed on return.
- * it is caller's responsibility to free the result. 
+ * it is caller's responsibility to free the result.
  */
 static struct mbuf *
 key_getmsgbuf_x1(m, mhp)
@@ -5438,7 +5448,7 @@ key_delete_all(so, m, mhp, proto)
 					       state, sav->state));
 					continue;
 				}
-				
+
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
 			}
@@ -6422,7 +6432,7 @@ key_freereg(so)
 			}
 		}
 	}
-	
+
 	return;
 }
 
@@ -6892,6 +6902,7 @@ static int (*key_typesw[]) __P((struct socket *, struct mbuf *,
 	key_spdadd,	/* SADB_X_SPDSETIDX */
 	NULL,		/* SADB_X_SPDEXPIRE */
 	key_spddelete2,	/* SADB_X_SPDDELETE2 */
+	NULL,		/* SADB_X_NAT_T_NEW_MAPPING */
 };
 
 /*

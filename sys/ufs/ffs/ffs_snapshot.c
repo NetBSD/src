@@ -36,7 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.7 2004/09/17 14:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.7.4.1 2005/04/29 11:29:39 kent Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.7 2004/09/17 14:11:27 skrll Exp $
 #define MNT_ILOCK(v)	simple_lock(&mntvnode_slock)
 #define MNT_IUNLOCK(v)	simple_unlock(&mntvnode_slock)
 
+#if !defined(FFS_NO_SNAPSHOT)
 static int cgaccount(int, struct vnode *, caddr_t, int);
 static int expunge_ufs1(struct vnode *, struct inode *, struct fs *,
     int (*)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *, struct fs *,
@@ -102,9 +107,11 @@ static int snapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
 static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
+#endif /* !defined(FFS_NO_SNAPSHOT) */
+
 static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
-static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
+static int __unused readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static inline int cow_enter(void);
 static inline void cow_leave(int);
@@ -127,6 +134,10 @@ ffs_snapshot(mp, vp, ctime)
 	struct vnode *vp;
 	struct timespec *ctime;
 {
+#if defined(FFS_NO_SNAPSHOT)
+	return EOPNOTSUPP;
+}
+#else /* defined(FFS_NO_SNAPSHOT) */
 	ufs2_daddr_t numblks, blkno, *blkp, snaplistsize = 0, *snapblklist;
 	int error, ns, cg, snaploc;
 	int i, size, len, loc;
@@ -163,12 +174,16 @@ ffs_snapshot(mp, vp, ctime)
 		return 0;
 	}
 	/*
-	 * Check mount and check for exclusive reference.
+	 * Check mount, exclusive reference and owner.
 	 */
 	if (vp->v_mount != mp)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
+	if (suser(p->p_ucred, &p->p_acflag) != 0 &&
+	    VTOI(vp)->i_uid != p->p_ucred->cr_uid)
+		return EACCES;
+
 	if (vp->v_size != 0) {
 		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, p);
 		if (error)
@@ -277,6 +292,16 @@ ffs_snapshot(mp, vp, ctime)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	microtime(&starttime);
 	/*
+	 * If the last cylinder group has changed the last block
+	 * saved before may have changed too so update it now.
+	 */
+	if (!ACTIVECG_ISSET(fs, fs->fs_ncg-1)) {
+		if ((error = readfsblk(vp, cgbuf, numblks - 1)) != 0)
+			goto out1;
+		if ((error = writevnblk(vp, cgbuf, numblks - 1)) != 0)
+			goto out1;
+	}
+	/*
 	 * First, copy all the cylinder group maps that have changed.
 	 */
 	for (cg = 0; cg < fs->fs_ncg; cg++) {
@@ -307,7 +332,7 @@ ffs_snapshot(mp, vp, ctime)
 	space = malloc((u_long)size, M_UFSMNT, M_WAITOK);
 	copy_fs->fs_csp = space;
 	bcopy(fs->fs_csp, copy_fs->fs_csp, fs->fs_cssize);
-	(char *)space += fs->fs_cssize;
+	space = (char *)space + fs->fs_cssize;
 	loc = howmany(fs->fs_cssize, fs->fs_fsize);
 	i = fs->fs_frag - loc % fs->fs_frag;
 	len = (i == fs->fs_frag) ? 0 : i * fs->fs_fsize;
@@ -319,7 +344,7 @@ ffs_snapshot(mp, vp, ctime)
 			goto out1;
 		}
 		bcopy(bp->b_data, space, (u_int)len);
-		(char *)space += len;
+		space = (char *)space + len;
 		bp->b_flags |= B_INVAL | B_NOCACHE;
 		brelse(bp);
 	}
@@ -573,10 +598,12 @@ out1:
 	blkno = fragstoblks(fs, fs->fs_csaddr);
 	len = howmany(fs->fs_cssize, fs->fs_bsize);
 	space = copy_fs->fs_csp;
+#ifdef FFS_EI
 	if (ns) {
 		ffs_sb_swap(copy_fs, copy_fs);
 		ffs_csum_swap(space, space, fs->fs_cssize);
 	}
+#endif
 	for (loc = 0; loc < len; loc++) {
 		if ((error = writevnblk(vp, space, blkno + loc)) != 0) {
 			fs->fs_snapinum[snaploc] = 0;
@@ -688,7 +715,7 @@ cgaccount(cg, vp, data, passno)
 		}
 	}
 	if ((error = VOP_BALLOC(vp, lblktosize(fs, (off_t)(base + loc)),
-	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)	
+	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)
 		return (error);
 	indiroff = (base + loc - NDADDR) % NINDIR(fs);
 	for ( ; loc < len; loc++, indiroff++) {
@@ -814,7 +841,7 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs1(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1103,7 +1130,7 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs2(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1290,6 +1317,7 @@ mapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
 	}
 	return (0);
 }
+#endif /* defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Decrement extra reference on snapshot when last name is removed.
@@ -1816,7 +1844,7 @@ ffs_copyonwrite(v, bp)
 	ip = TAILQ_FIRST(&ump->um_snapshots);
 	if (ip == NULL) {
 		VI_UNLOCK(devvp);
-		return 0; 
+		return 0;
 	}
 	/*
 	 * First check to see if it is in the preallocated list.

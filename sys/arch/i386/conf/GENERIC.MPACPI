@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.15 2005/01/12 00:18:16 reinoud Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.15.2.1 2005/04/29 11:28:12 kent Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.15.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -156,6 +156,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -300,6 +301,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 fdc* 		at acpi?		# Floppy disk controller
 joy*		at acpi?		# Joystick/Game port
@@ -307,6 +309,7 @@ lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
+pcppi*          at acpi?                # AT-style speaker sound
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
@@ -340,6 +343,7 @@ wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
+#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide* 	at pnpbios? index ?
@@ -441,6 +445,7 @@ pcmcia* 	at cardslot?
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -451,6 +456,7 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 
@@ -961,6 +967,10 @@ urio*	at uhub? port ?
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
 
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
+
 # USB scanners
 uscanner* at uhub? port ?
 
@@ -1167,6 +1177,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 
 # Vinum
 # pseudo-device	vinum		8	# Vinum
@@ -1185,6 +1196,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

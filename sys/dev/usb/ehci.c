@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $ */
+/*	$NetBSD: ehci.c,v 1.90.2.1 2005/04/29 11:29:18 kent Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -52,20 +52,20 @@
  *
  * 2) The EHCI driver lacks support for interrupt isochronous transfers, so
  *    devices using them don't work.
- *    Interrupt transfers are not difficult, it's just not done. 
+ *    Interrupt transfers are not difficult, it's just not done.
  *
  * 3) The meaty part to implement is the support for USB 2.0 hubs.
  *    They are quite complicated since the need to be able to do
  *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
  *    So the hub driver needs to handle and schedule these things, to
  *    assign place in frame where different devices get to go. See chapter
- *    on hubs in USB 2.0 for details. 
+ *    on hubs in USB 2.0 for details.
  *
  * 4) command failures are not recovered correctly
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.90.2.1 2005/04/29 11:29:18 kent Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -312,6 +312,17 @@ Static struct usbd_pipe_methods ehci_device_isoc_methods = {
 	ehci_device_isoc_done,
 };
 
+static uint8_t revbits[EHCI_MAX_POLLRATE] = {
+0x00,0x40,0x20,0x60,0x10,0x50,0x30,0x70,0x08,0x48,0x28,0x68,0x18,0x58,0x38,0x78,
+0x04,0x44,0x24,0x64,0x14,0x54,0x34,0x74,0x0c,0x4c,0x2c,0x6c,0x1c,0x5c,0x3c,0x7c,
+0x02,0x42,0x22,0x62,0x12,0x52,0x32,0x72,0x0a,0x4a,0x2a,0x6a,0x1a,0x5a,0x3a,0x7a,
+0x06,0x46,0x26,0x66,0x16,0x56,0x36,0x76,0x0e,0x4e,0x2e,0x6e,0x1e,0x5e,0x3e,0x7e,
+0x01,0x41,0x21,0x61,0x11,0x51,0x31,0x71,0x09,0x49,0x29,0x69,0x19,0x59,0x39,0x79,
+0x05,0x45,0x25,0x65,0x15,0x55,0x35,0x75,0x0d,0x4d,0x2d,0x6d,0x1d,0x5d,0x3d,0x7d,
+0x03,0x43,0x23,0x63,0x13,0x53,0x33,0x73,0x0b,0x4b,0x2b,0x6b,0x1b,0x5b,0x3b,0x7b,
+0x07,0x47,0x27,0x67,0x17,0x57,0x37,0x77,0x0f,0x4f,0x2f,0x6f,0x1f,0x5f,0x3f,0x7f,
+};
+
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
@@ -439,7 +450,6 @@ ehci_init(ehci_softc_t *sc)
 			    EHCI_LINK_QH);
 		}
 		sqh->qh.qh_endp = htole32(EHCI_QH_SET_EPS(EHCI_QH_SPEED_HIGH));
-		sqh->qh.qh_link = EHCI_NULL;
 		sqh->qh.qh_curqtd = EHCI_NULL;
 		sqh->next = NULL;
 		sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
@@ -449,7 +459,11 @@ ehci_init(ehci_softc_t *sc)
 	}
 	/* Point the frame list at the last level (128ms). */
 	for (i = 0; i < sc->sc_flsize; i++) {
-		sc->sc_flist[i] = htole32(EHCI_LINK_QH |
+		int j;
+
+		j = (i & ~(EHCI_MAX_POLLRATE-1)) |
+		    revbits[i & (EHCI_MAX_POLLRATE-1)];
+		sc->sc_flist[j] = htole32(EHCI_LINK_QH |
 		    sc->sc_islots[EHCI_IQHIDX(EHCI_IPOLLRATES - 1,
 		    i)].sqh->physaddr);
 	}
@@ -803,12 +817,12 @@ ehci_idone(struct ehci_xfer *ex)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
 	}
 
-	/* 
+	/*
 	 * If there are left over TDs we need to update the toggle.
 	 * The default pipe doesn't need it since control transfers
 	 * start the toggle at 0 every time.
 	 */
-	if (sqtd != lsqtd->nextqtd && 
+	if (sqtd != lsqtd->nextqtd &&
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
 #if 0
@@ -818,7 +832,7 @@ ehci_idone(struct ehci_xfer *ex)
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
-	/* 
+	/*
 	 * For a short transfer we need to update the toggle for the missing
 	 * packets within the qTD.
 	 */
@@ -1360,12 +1374,14 @@ ehci_open(usbd_pipe_handle pipe)
 	}
 	if (speed != EHCI_QH_SPEED_HIGH) {
 		printf("%s: *** WARNING: opening low/full speed device, this "
-		       "does not work yet.\n",
+		       "may not work yet.\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 			    hshubaddr, hshubport));
+#if 0
 		if (xfertype != UE_CONTROL)
 			return USBD_INVAL;
+#endif
 	}
 
 	naks = 8;		/* XXX */
@@ -1387,8 +1403,8 @@ ehci_open(usbd_pipe_handle pipe)
 		EHCI_QH_SET_MULT(1) |
 		EHCI_QH_SET_HUBA(hshubaddr) |
 		EHCI_QH_SET_PORT(hshubport) |
-		EHCI_QH_SET_CMASK(0xf0) | /* XXX */
-		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
+		EHCI_QH_SET_CMASK(0x08) | /* XXX */
+		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x02 : 0)
 		);
 	sqh->qh.qh_curqtd = EHCI_NULL;
 	/* Fill the overlay qTD */

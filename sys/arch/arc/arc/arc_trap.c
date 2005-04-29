@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.27 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.27.8.1 2005/04/29 11:28:01 kent Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.27 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.27.8.1 2005/04/29 11:28:01 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,23 +95,20 @@ __KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.27 2003/08/07 16:26:47 agc Exp $");
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 
-int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+uint32_t arc_hardware_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 
 #define	MIPS_INT_LEVELS	8
 
 struct {
-	int int_mask;
-	int (*int_hand)(u_int, struct clockframe *);
+	uint32_t int_mask;
+	uint32_t (*int_hand)(uint32_t, struct clockframe *);
 } cpu_int_tab[MIPS_INT_LEVELS];
 
-int cpu_int_mask;	/* External cpu interrupt mask */
+uint32_t cpu_int_mask;	/* External cpu interrupt mask */
 
-int
-arc_hardware_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+uint32_t
+arc_hardware_intr(uint32_t status, uint32_t cause, uint32_t pc,
+    uint32_t ipending)
 {
 	int i;
 	struct clockframe cf;
@@ -140,11 +137,10 @@ arc_hardware_intr(status, cause, pc, ipending)
  *	Events are checked in priority order.
  */
 void
-arc_set_intr(mask, int_hand, prio)
-	int mask;
-	int (*int_hand)(u_int, struct clockframe *);
-	int prio;
+arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
+    int prio)
 {
+
 	if (prio > MIPS_INT_LEVELS)
 		panic("set_intr: to high priority");
 
@@ -164,11 +160,7 @@ arc_set_intr(mask, int_hand, prio)
  * N.B., curlwp might be NULL.
  */
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;		/* pending interrupts & enable mask */
+cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	if (ipending & MIPS_INT_MASK_CLOCK) {

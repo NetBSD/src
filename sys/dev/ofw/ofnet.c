@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.31 2003/01/15 22:01:57 bouyer Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.31.10.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.31 2003/01/15 22:01:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.31.10.1 2005/04/29 11:29:04 kent Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -105,7 +105,7 @@ ofnet_match(struct device *parent, struct cfdata *match, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	char type[32];
 	int l;
-	
+
 #if NIPKDB_OFN > 0
 	if (!parent)
 		return ipkdbprobe(match, aux);
@@ -132,7 +132,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 	char path[256];
 	int l;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	
+
 	of->sc_phandle = oba->oba_phandle;
 #if NIPKDB_OFN > 0
 	if (kifp &&
@@ -166,7 +166,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, myaddr);
 }
 
-static char buf[ETHERMTU + sizeof(struct ether_header)];
+static char buf[ETHER_MAX_LEN];
 
 static void
 ofnet_read(struct ofnet_softc *of)
@@ -179,7 +179,7 @@ ofnet_read(struct ofnet_softc *of)
 	s = splnet();
 #if NIPKDB_OFN > 0
 	ipkdbrint(kifp, ifp);
-#endif	
+#endif
 	for (;;) {
 		len = OF_read(of->sc_ihandle, buf, sizeof buf);
 		if (len == -2 || len == 0)
@@ -190,6 +190,17 @@ ofnet_read(struct ofnet_softc *of)
 		}
 		bufp = buf;
 
+		/*
+		 * We don't know if the interface included the FCS
+		 * or not.  For now, assume that it did if we got
+		 * a packet length that looks like it could include
+		 * the FCS.
+		 *
+		 * XXX Yuck.
+		 */
+		if (len > ETHER_MAX_LEN - ETHER_CRC_LEN)
+			len = ETHER_MAX_LEN - ETHER_CRC_LEN;
+
 		/* Allocate a header mbuf */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == 0) {
@@ -199,22 +210,10 @@ ofnet_read(struct ofnet_softc *of)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-		/*
-		 * We don't know if the interface included the FCS
-		 * or not.  For now, assume that it did if we got
-		 * a packet length that looks like it could include
-		 * the FCS.
- 		 *
-		 * XXX Yuck.
-		 */
-
-		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-			m->m_flags |= M_HASFCS;
-
 		l = MHLEN;
 		head = 0;
 		mp = &head;
-		
+
 		while (len > 0) {
 			if (head) {
 				MGET(m, M_DONTWAIT, MT_DATA);
@@ -312,19 +311,19 @@ ofnet_start(struct ifnet *ifp)
 	struct mbuf *m, *m0;
 	char *bufp;
 	int len;
-	
+
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
 	for (;;) {
 		/* First try reading any packets */
 		ofnet_read(of);
-		
+
 		/* Now get the first packet on the queue */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0)
 			return;
-		
+
 		if (!(m0->m_flags & M_PKTHDR))
 			panic("ofnet_start: no header mbuf");
 		len = m0->m_pkthdr.len;
@@ -373,11 +372,11 @@ ofnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	/* struct ifreq *ifr = (struct ifreq *)data; */
 	int error = 0;
-	
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		
+
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef	INET
 		case AF_INET:
@@ -413,7 +412,7 @@ static void
 ofnet_watchdog(struct ifnet *ifp)
 {
 	struct ofnet_softc *of = ifp->if_softc;
-	
+
 	log(LOG_ERR, "%s: device timeout\n", of->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	ofnet_stop(of);
@@ -425,7 +424,7 @@ static void
 ipkdbofstart(struct ipkdb_if *kip)
 {
 	int unit = kip->unit - 1;
-	
+
 	if (ipkdb_of)
 		ipkdbattach(kip, &ipkdb_of->sc_ethercom);
 }
@@ -439,7 +438,7 @@ static int
 ipkdbofrcv(struct ipkdb_if *kip, u_char *buf, int poll)
 {
 	int l;
-	
+
 	do {
 		l = OF_read(kip->port, buf, ETHERMTU);
 		if (l < 0)
@@ -461,7 +460,7 @@ ipkdbprobe(struct cfdata *match, void *aux)
 	static char name[256];
 	int len;
 	int phandle;
-	
+
 	kip->unit = match->cf_unit + 1;
 
 	if (!(kip->port = OF_open("net")))
@@ -475,7 +474,7 @@ ipkdbprobe(struct cfdata *match, void *aux)
 	if (OF_getprop(phandle, "mac-address", kip->myenetaddr,
 	    sizeof kip->myenetaddr) < 0)
 		return -1;
-	
+
 	kip->flags |= IPKDB_MYHW;
 	kip->name = name;
 	kip->start = ipkdbofstart;
@@ -484,7 +483,7 @@ ipkdbprobe(struct cfdata *match, void *aux)
 	kip->send = ipkdbofsend;
 
 	kifp = kip;
-	
+
 	return 0;
 }
 #endif

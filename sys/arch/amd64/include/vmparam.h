@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2004/06/04 07:42:34 sekiya Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.4.1 2005/04/29 11:28:00 kent Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,13 +71,31 @@
 #define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(8L*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * 32bit memory related constants.
+ */
+
+#define MAXTSIZ32	(64*1024*1024)
+#ifndef DFLDSIZ32
+#define	DFLDSIZ32	(256*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ32
+#define	MAXDSIZ32	(2L*1024*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ32
+#define	DFLSSIZ32	(2*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ32
+#define	MAXSSIZ32	(32*1024*1024)		/* max stack size */
 #endif
 
 /*

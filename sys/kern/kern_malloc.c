@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.95 2005/01/14 17:03:58 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.95.2.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95 2005/01/14 17:03:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95.2.1 2005/04/29 11:29:23 kent Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -307,10 +307,11 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
 		simple_unlock(&malloc_slock);
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
-		    (vsize_t)ctob(npg),
+		va = (caddr_t) uvm_km_alloc(kmem_map,
+		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
-		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
+		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0) |
+		    UVM_KMF_WIRED);
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -517,7 +518,8 @@ free(void *addr, struct malloc_type *ksp)
 		    addr, size, ksp->ks_shortdesc, alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
-		uvm_km_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt));
+		uvm_km_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt),
+		    UVM_KMF_WIRED);
 #ifdef KMEMSTATS
 		size = kup->ku_pagecnt << PGSHIFT;
 		ksp->ks_memuse -= size;
@@ -842,11 +844,12 @@ kmeminit(void)
 	 */
 	kmeminit_nkmempages();
 
-	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
-	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
+	kmemusage = (struct kmemusage *) uvm_km_alloc(kernel_map,
+	    (vsize_t)(nkmempages * sizeof(struct kmemusage)), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
-	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT), 
+	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT),
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
@@ -902,11 +905,11 @@ dump_kmemstats(void)
 
 
 #if 0
-/* 
+/*
  * Diagnostic messages about "Data modified on
  * freelist" indicate a memory corruption, but
  * they do not help tracking it down.
- * This function can be called at various places 
+ * This function can be called at various places
  * to sanity check malloc's freelist and discover
  * where does the corruption take place.
  */
@@ -916,15 +919,15 @@ freelist_sanitycheck(void) {
 	struct kmembuckets *kbp;
 	struct freelist *freep;
 	int rv = 0;
-		
+
 	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
-		kbp = &bucket[i];	
+		kbp = &bucket[i];
 		freep = (struct freelist *)kbp->kb_next;
 		j = 0;
 		while(freep) {
 			vm_map_lock(kmem_map);
 			rv = uvm_map_checkprot(kmem_map, (vaddr_t)freep,
-			    (vaddr_t)freep + sizeof(struct freelist), 
+			    (vaddr_t)freep + sizeof(struct freelist),
 			    VM_PROT_WRITE);
 			vm_map_unlock(kmem_map);
 

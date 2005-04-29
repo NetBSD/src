@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.35 2004/08/11 03:56:03 mycroft Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.35.4.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35 2004/08/11 03:56:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35 2004/08/11 03:56:03 mycroft E
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	mbe_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	mbe_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void	mbe_pcmcia_attach __P((struct device *, struct device *, void *));
-int	mbe_pcmcia_detach __P((struct device *, int));
+int	mbe_pcmcia_match(struct device *, struct cfdata *, void *);
+int	mbe_pcmcia_validate_config(struct pcmcia_config_entry *);
+void	mbe_pcmcia_attach(struct device *, struct device *, void *);
+int	mbe_pcmcia_detach(struct device *, int);
 
 struct mbe_pcmcia_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb" softc */
@@ -76,18 +76,18 @@ struct mbe_pcmcia_softc {
 CFATTACH_DECL(mbe_pcmcia, sizeof(struct mbe_pcmcia_softc),
     mbe_pcmcia_match, mbe_pcmcia_attach, mbe_pcmcia_detach, mb86960_activate);
 
-int	mbe_pcmcia_enable __P((struct mb86960_softc *));
-void	mbe_pcmcia_disable __P((struct mb86960_softc *));
+int	mbe_pcmcia_enable(struct mb86960_softc *);
+void	mbe_pcmcia_disable(struct mb86960_softc *);
 
 struct mbe_pcmcia_get_enaddr_args {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int maddr;
 };
-int	mbe_pcmcia_get_enaddr_from_cis __P((struct pcmcia_tuple *, void *));
-int	mbe_pcmcia_get_enaddr_from_mem __P((struct mbe_pcmcia_softc *,
-	    struct mbe_pcmcia_get_enaddr_args *));
-int	mbe_pcmcia_get_enaddr_from_io __P((struct mbe_pcmcia_softc *,
-	    struct mbe_pcmcia_get_enaddr_args *));
+int	mbe_pcmcia_get_enaddr_from_cis(struct pcmcia_tuple *, void *);
+int	mbe_pcmcia_get_enaddr_from_mem(struct mbe_pcmcia_softc *,
+	    struct mbe_pcmcia_get_enaddr_args *);
+int	mbe_pcmcia_get_enaddr_from_io(struct mbe_pcmcia_softc *,
+	    struct mbe_pcmcia_get_enaddr_args *);
 
 static const struct mbe_pcmcia_product {
 	struct pcmcia_product mpp_product;
@@ -97,7 +97,7 @@ static const struct mbe_pcmcia_product {
 } mbe_pcmcia_products[] = {
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX },
-	  -1 }, 
+	  -1 },
 
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
 	    PCMCIA_CIS_TDK_LAK_CF010 },
@@ -303,7 +303,7 @@ int
 mbe_pcmcia_get_enaddr_from_io(psc, ea)
 	struct mbe_pcmcia_softc *psc;
 	struct mbe_pcmcia_get_enaddr_args *ea;
-{                       
+{
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	int i;
 
@@ -327,14 +327,14 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 		goto bad_memaddr;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
-		printf("%s: can't alloc mem for enet addr\n", 
+		printf("%s: can't alloc mem for enet addr\n",
 		    sc->sc_dev.dv_xname);
 		goto memalloc_failed;
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
 	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
-		printf("%s: can't map mem for enet addr\n", 
+		printf("%s: can't map mem for enet addr\n",
 		    sc->sc_dev.dv_xname);
 		goto memmap_failed;
 	}

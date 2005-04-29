@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.13.4.1 2005/04/29 11:28:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.13.4.1 2005/04/29 11:28:11 kent Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -176,9 +176,21 @@ enter_s4_with_bios(void)
 }
 
 static u_int16_t	r_ldt;
-static u_int16_t	r_cs, r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
-static u_int32_t	r_eax, r_ebx, r_ecx, r_edx, r_ebp, r_esi, r_edi,
-			r_efl, r_cr0, r_cr2, r_cr3, r_cr4, r_esp;
+static u_int16_t	r_cs __used;
+static u_int16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
+static u_int32_t	r_eax __used;
+static u_int32_t	r_ebx __used;
+static u_int32_t	r_ecx __used;
+static u_int32_t	r_edx __used;
+static u_int32_t	r_ebp __used;
+static u_int32_t	r_esi __used;
+static u_int32_t	r_edi __used;
+static u_int32_t	r_efl __used;
+static u_int32_t	r_cr0 __used;
+static u_int32_t	r_cr2 __used;
+static u_int32_t	r_cr3 __used;
+static u_int32_t	r_cr4 __used;
+static u_int32_t	r_esp __used;
 static u_int32_t	ret_addr;
 static struct region_descriptor	r_idt, r_gdt;
 
@@ -304,6 +316,10 @@ acpi_md_sleep(int state)
 	int				ret = 0;
 	u_long				ef;
 	struct region_descriptor	*p_gdt;
+	struct proc 			*p;
+	struct pmap			*pm;
+	uint32_t			cr3;
+	paddr_t				oldphys;
 
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
@@ -312,11 +328,23 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
-	clear_reg();
-	ret_addr = 0;
-
 	ef = read_eflags();
 	disable_intr();
+
+	/* Create identity mapping */
+	if ((p = curproc) == NULL)
+		p = &proc0;
+	pm = vm_map_pmap(&p->p_vmspace->vm_map);
+	cr3 = rcr3();
+	lcr3(pm->pm_pdirpa);
+	if (!pmap_extract(pm, phys_wakeup, &oldphys))
+		oldphys = 0;
+	pmap_enter(pm, phys_wakeup, phys_wakeup,
+			VM_PROT_READ | VM_PROT_WRITE,
+			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pm);
+
+	ret_addr = 0;
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -409,6 +437,18 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	/* Clean up identity mapping. */
+	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
+	if (oldphys) {
+		pmap_enter(pm, phys_wakeup, oldphys,
+				VM_PROT_READ | VM_PROT_WRITE,
+				PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+	}
+	pmap_update(pm);
+
+	lcr3(cr3);
+
+	enable_intr();
 	write_eflags(ef);
 	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 

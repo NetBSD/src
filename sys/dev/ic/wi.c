@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.193.2.1 2005/04/29 11:28:53 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  * without an NDA (if at all). What they do release is an API library
  * called the HCF (Hardware Control Functions) which is supposed to
  * do the device-specific operations of a device driver for you. The
- * publically available version of the HCF library (the 'HCF Light') is 
+ * publically available version of the HCF library (the 'HCF Light') is
  * a) extremely gross, b) lacks certain features, particularly support
  * for 802.11 frames, and c) is contaminated by the GNU Public License.
  *
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.193.2.1 2005/04/29 11:28:53 kent Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -320,16 +320,17 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 		return 1;
 	}
 
-	if (!macaddr) {
-		if (wi_read_xrid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
-		                 IEEE80211_ADDR_LEN) != 0 ||
-		    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
+	if (wi_read_xrid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
+			 IEEE80211_ADDR_LEN) != 0 ||
+	    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
+		if (macaddr != NULL)
+			memcpy(ic->ic_myaddr, macaddr, IEEE80211_ADDR_LEN);
+		else {
 			printf(" could not get mac address, attach failed\n");
 			splx(s);
 			return 1;
 		}
-	} else
-		memcpy(ic->ic_myaddr, macaddr, IEEE80211_ADDR_LEN);
+	}
 
 	printf(" 802.11 address %s\n", ether_sprintf(ic->ic_myaddr));
 
@@ -610,13 +611,6 @@ wi_intr(void *arg)
 
 	/* maximum 10 loops per interrupt */
 	for (i = 0; i < 10; i++) {
-		/*
-		 * Only believe a status bit when we enter wi_intr, or when
-		 * the bit was "off" the last time through the loop. This is
-		 * my strategy to avoid racing the hardware/firmware if I
-		 * can re-read the event status register more quickly than
-		 * it is updated.
-		 */
 		status = CSR_READ_2(sc, WI_EVENT_STAT);
 #ifdef WI_DEBUG
 		if (wi_debug > 1) {
@@ -1000,7 +994,7 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 * accidentally send a packet on the MAC's queue
 		 * too fast. TBD find out if the MAC labels Tx
 		 * packets w/ rate when enqueued or dequeued.
-		 */   
+		 */
 		for (i = 0; i < rateidx && sc->sc_txpending[i] == 0; i++);
 		rateidx = i;
 	}
@@ -1082,7 +1076,7 @@ wi_start(struct ifnet *ifp)
 		else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 			struct llc *llc;
 
-			/* 
+			/*
 			 * Should these packets be processed after the
 			 * regular packets or before?  Since they are being
 			 * probed for, they are probably less time critical
@@ -1106,7 +1100,7 @@ wi_start(struct ifnet *ifp)
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			ifp->if_opackets++;
-			m_copydata(m0, 0, ETHER_HDR_LEN, 
+			m_copydata(m0, 0, ETHER_HDR_LEN,
 			    (caddr_t)&frmhdr.wi_ehdr);
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
@@ -2820,11 +2814,11 @@ wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_ALLOC)
 			break;
-		if (i == WI_TIMEOUT) {
-			printf("%s: timeout in alloc\n", sc->sc_dev.dv_xname);
-			return ETIMEDOUT;
-		}
 		DELAY(1);
+	}
+	if (i == WI_TIMEOUT) {
+		printf("%s: timeout in alloc\n", sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
 	}
 	*idp = CSR_READ_2(sc, WI_ALLOC_FID);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);

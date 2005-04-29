@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.44 2004/03/24 15:34:47 atatat Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.44.8.1 2005/04/29 11:28:02 kent Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.44 2004/03/24 15:34:47 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.44.8.1 2005/04/29 11:28:02 kent Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -241,7 +241,7 @@ cpu_startup()
 	 * Identify ourselves for the msgbuf (everything printed earlier will
 	 * not be buffered).
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
 	printf("total memory = %s\n", pbuf);

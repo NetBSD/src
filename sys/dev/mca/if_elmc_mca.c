@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.15 2004/12/29 18:14:12 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.15.2.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.15 2004/12/29 18:14:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.15.2.1 2005/04/29 11:28:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,17 +79,17 @@ struct elmc_mca_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-int	elmc_mca_match __P((struct device *, struct cfdata *, void *));
-void	elmc_mca_attach __P((struct device *, struct device *, void *));
+int	elmc_mca_match(struct device *, struct cfdata *, void *);
+void	elmc_mca_attach(struct device *, struct device *, void *);
 
-static void	elmc_mca_copyin __P((struct ie_softc *, void *, int, size_t));
-static void	elmc_mca_copyout __P((struct ie_softc *, const void *, int, size_t));
-static u_int16_t elmc_mca_read_16 __P((struct ie_softc *, int));
-static void	elmc_mca_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	elmc_mca_write_24 __P((struct ie_softc *, int, int));
-static void	elmc_mca_attn __P((struct ie_softc *, int));
-static void	elmc_mca_hwreset __P((struct ie_softc *, int));
-static int	elmc_mca_intrhook __P((struct ie_softc *, int));
+static void	elmc_mca_copyin(struct ie_softc *, void *, int, size_t);
+static void	elmc_mca_copyout(struct ie_softc *, const void *, int, size_t);
+static u_int16_t elmc_mca_read_16(struct ie_softc *, int);
+static void	elmc_mca_write_16(struct ie_softc *, int, u_int16_t);
+static void	elmc_mca_write_24(struct ie_softc *, int, int);
+static void	elmc_mca_attn(struct ie_softc *, int);
+static void	elmc_mca_hwreset(struct ie_softc *, int);
+static int	elmc_mca_intrhook(struct ie_softc *, int);
 
 int
 elmc_mca_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -120,7 +120,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *     \ \_/ \_/ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *      \  \   \____ I/O Address Range: 00=300-307, 01=1300-1307,
@@ -131,7 +131,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	 *           \______ Transceiver Type: 0=onboard(BNC) 1=ext(DIX)
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *          \____/
 	 *               \__ Interrupt level: 0100=3, 0010=7, 1000=9, 0001=12
@@ -172,7 +172,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: memory space 0xc0000 may conflict with vga\n",
 				sc->sc_dev.dv_xname);
 		}
-				
+
 		bus_space_unmap(ma->ma_iot, ioh, ELMC_IOADDR_SIZE);
 		return;
 	}
@@ -395,7 +395,7 @@ elmc_mca_attn(sc, why)
 }
 
 /*
- * Do full card hardware reset. 
+ * Do full card hardware reset.
  */
 static void
 elmc_mca_hwreset(sc, why)

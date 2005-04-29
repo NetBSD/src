@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.8.14.1 2005/04/29 11:28:46 kent Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
+ *	This product includes software developed at Ludd, University of
  *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.8.14.1 2005/04/29 11:28:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $");
 
 #define	BUA(uba)	((struct dwbua_regs *)(uba))
 
-static	int uba_bi_match __P((struct device *, struct cfdata *, void *));
-static	void uba_bi_attach __P((struct device *, struct device *, void *));
-static	void bua_init __P((struct uba_softc *));
-static	void bua_purge __P((struct uba_softc *, int));
+static	int uba_bi_match(struct device *, struct cfdata *, void *);
+static	void uba_bi_attach(struct device *, struct device *, void *);
+static	void bua_init(struct uba_softc *);
+static	void bua_purge(struct uba_softc *, int);
 
 /* bua_csr */
 #define BUACSR_ERR      0x80000000      /* composite error */
@@ -176,7 +176,7 @@ uba_bi_attach(parent, self, aux)
 		}
 
 	BUA(sc->uh_uba)->bn_biic.bi_intrdes = ba->ba_intcpu;
-	BUA(sc->uh_uba)->bn_biic.bi_csr = 
+	BUA(sc->uh_uba)->bn_biic.bi_csr =
 	    (BUA(sc->uh_uba)->bn_biic.bi_csr&~BICSR_ARB_MASK) | BICSR_ARB_HIGH;
 	BUA(sc->uh_uba)->bn_vor = VAX_NBPG + (VAX_NBPG * allocvec++);
 

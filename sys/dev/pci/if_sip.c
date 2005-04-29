@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.96.4.1 2005/04/29 11:29:06 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  * SiS 7016 10/100, National Semiconductor DP83815 10/100, and
  * National Semiconductor DP83820 10/100/1000 PCI Ethernet
  * controllers.
- *    
+ *
  * Originally written to support the SiS 900 by Jason R. Thorpe for
  * Network Computer, Inc.
  *
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.96.4.1 2005/04/29 11:29:06 kent Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -309,6 +309,8 @@ struct sip_softc {
 	struct sip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
+	short	sc_if_flags;
+
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
 #if defined(DP83820)
 	int	sc_rxdiscard;
@@ -483,7 +485,7 @@ struct sip_variant {
 	void	(*sipv_mii_writereg)(struct device *, int, int, int);
 	void	(*sipv_mii_statchg)(struct device *);
 	void	(*sipv_set_filter)(struct sip_softc *);
-	void	(*sipv_read_macaddr)(struct sip_softc *, 
+	void	(*sipv_read_macaddr)(struct sip_softc *,
 		    const struct pci_attach_args *, u_int8_t *);
 };
 
@@ -979,6 +981,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_ioctl = SIP_DECL(ioctl);
 	ifp->if_start = SIP_DECL(start);
 	ifp->if_watchdog = SIP_DECL(watchdog);
@@ -1219,7 +1222,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
-				m_freem(m0); 
+				m_freem(m0);
 				continue;
 			}
 			/*
@@ -1351,11 +1354,10 @@ SIP_DECL(start)(struct ifnet *ifp)
 		 * This apparently has to be on the last descriptor of
 		 * the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 			sc->sc_txdescs[lasttx].sipd_extsts |=
 			    htole32(EXTSTS_VPKT |
-				    (*(u_int *)(mtag + 1) & EXTSTS_VTCI));
+				    (VLAN_TAG_VALUE(mtag) & EXTSTS_VTCI));
 		}
 
 		/*
@@ -1551,10 +1553,26 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			/* Set up the receive filter. */
+			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+			error = 0;
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -1569,6 +1587,7 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	/* Try to get more packets going. */
 	SIP_DECL(start)(ifp);
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -1799,9 +1818,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
-	struct mbuf *m, *tailm;
+	struct mbuf *m;
 	u_int32_t cmdsts, extsts;
-	int i, len, frame_len;
+	int i, len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1810,6 +1829,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
+		len = CMDSTS_SIZE(cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1859,22 +1879,26 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		SIP_RXCHAIN_LINK(sc, m);
 
+		m->m_len = len;
+
 		/*
 		 * If this is not the end of the packet, keep
 		 * looking.
 		 */
 		if (cmdsts & CMDSTS_MORE) {
-			sc->sc_rxlen += m->m_len;
+			sc->sc_rxlen += len;
 			continue;
 		}
 
 		/*
-		 * Okay, we have the entire packet now...
+		 * Okay, we have the entire packet now.  The chip includes
+		 * the FCS, so we need to trim it.
 		 */
+		m->m_len -= ETHER_CRC_LEN;
+
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
-		tailm = sc->sc_rxtail;
-		frame_len = sc->sc_rxlen;
+		len = m->m_len + sc->sc_rxlen;
 
 		SIP_RXCHAIN_RESET(sc);
 
@@ -1902,16 +1926,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			m_freem(m);
 			continue;
 		}
-
-		/*
-		 * No errors.
-		 *
-		 * Note, the DP83820 includes the CRC with
-		 * every packet.
-		 */
-		len = CMDSTS_SIZE(cmdsts);
-		frame_len += len;
-		tailm->m_len = len;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1955,21 +1969,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (extsts & EXTSTS_VPKT) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL) {
-				ifp->if_ierrors++;
-				printf("%s: unable to allocate VLAN tag\n",
-				    sc->sc_dev.dv_xname);
-				m_freem(m);
-				continue;
-			}
-
-			*(u_int *)(vtag + 1) = ntohs(extsts & EXTSTS_VTCI);
+		if ((extsts & EXTSTS_VPKT) != 0) {
+			VLAN_INPUT_TAG(ifp, m, ntohs(extsts & EXTSTS_VTCI),
+			    continue);
 		}
 
 		/*
@@ -1997,9 +1999,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = frame_len;
+		m->m_pkthdr.len = len;
 
 #if NBPFILTER > 0
 		/*
@@ -2091,7 +2092,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * No errors; receive the packet.  Note, the SiS 900
 		 * includes the CRC with every packet.
 		 */
-		len = CMDSTS_SIZE(cmdsts);
+		len = CMDSTS_SIZE(cmdsts) - ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -2166,7 +2167,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -2462,7 +2462,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	if (ifp->if_capenable &
 	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		reg |= VRCR_IPEN;
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VRCR_VTDEN|VRCR_VTREN;
 	bus_space_write_4(st, sh, SIP_VRCR, reg);
 
@@ -2475,7 +2475,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	if (ifp->if_capenable &
 	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		reg |= VTCR_PPCHK;
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VTCR_VPPTI;
 	bus_space_write_4(st, sh, SIP_VTCR, reg);
 
@@ -2484,7 +2484,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * To understand why we bswap the VLAN Ethertype, see section
 	 * 4.2.36 of the DP83820 manual.
 	 */
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		bus_space_write_4(st, sh, SIP_VDR, bswap16(ETHERTYPE_VLAN));
 #endif /* DP83820 */
 
@@ -2549,6 +2549,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error)
@@ -2682,13 +2683,13 @@ SIP_DECL(read_eeprom)(struct sip_softc *sc, int word, int wordcnt,
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
 			delay(4);
 		}
-		
+
 		/* Shift in address. */
 		for (x = 6; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EROMAR_EEDI;
 			else
-				reg &= ~EROMAR_EEDI; 
+				reg &= ~EROMAR_EEDI;
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
 			bus_space_write_4(st, sh, SIP_EROMAR,
 			    reg | EROMAR_EESK);
@@ -2729,7 +2730,7 @@ SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);
@@ -2922,10 +2923,10 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ethercom *ec = &sc->sc_ethercom;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;    
-	struct ether_multistep step; 
+	u_int8_t *cp;
+	struct ether_multistep step;
 	u_int32_t crc, hash, slot, bit;
 #ifdef DP83820
 #define	MCHASH_NWORDS	128
@@ -3046,7 +3047,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	 * Re-enable the receiver filter.
 	 */
 	bus_space_write_4(st, sh, SIP_RFCR, sc->sc_rfcr);
-} 
+}
 
 #if defined(DP83820)
 /*

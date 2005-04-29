@@ -13,7 +13,7 @@ cmd - u_int8_t cmd[12]
       int r/w
       void (*cb)(void *, sbp2_status *)
       void *cb_arg
- 
+
 status -
 
 	u_int8_t resp;
@@ -30,7 +30,7 @@ status orb
 src
 resp
 dead
-len 
+len
 sbp status
 u_int32_t *data
 
@@ -81,14 +81,14 @@ return dummy orb or NULL on error
 
 scsi-init
 
-setup generic status callback 
+setup generic status callback
 
 request -
  Accept packet through request routine
 
 examine packet for data vs. cmd
 
-cmd: 
+cmd:
 
 construct orb with no data addr
 
@@ -98,7 +98,7 @@ determine direction bit
 
 examine packet for uio vs direct map:
 
-direct map: 
+direct map:
 
 setup read callback if <= 64k in size
 
@@ -112,7 +112,7 @@ setup callback for page table
 
 find current end of orb chain
 DIAG - make sure there's room for a new orb
-add new orb into chain 
+add new orb into chain
 setup callback to read that orb
 ring doorbell
 
@@ -134,7 +134,7 @@ a typical match routine will
 	...
 
 	ex
-		
+
 	find_type(unit spec id) == sbp2
 	find_type(unit sw version) == scsi
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.14 2004/09/14 20:20:49 drochner Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.14.4.1 2005/04/29 11:28:55 kent Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,28 +26,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.14 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.14.4.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>  
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
-int	pckbc_isa_match __P((struct device *, struct cfdata *, void *));
-void	pckbc_isa_attach __P((struct device *, struct device *, void *));
+int	pckbc_isa_match(struct device *, struct cfdata *, void *);
+void	pckbc_isa_attach(struct device *, struct device *, void *);
 
 struct pckbc_isa_softc {
 	struct pckbc_softc sc_pckbc;
@@ -59,7 +59,7 @@ struct pckbc_isa_softc {
 CFATTACH_DECL(pckbc_isa, sizeof(struct pckbc_isa_softc),
     pckbc_isa_match, pckbc_isa_attach, NULL, NULL);
 
-void	pckbc_isa_intr_establish __P((struct pckbc_softc *, pckbc_slot_t));
+void	pckbc_isa_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
 pckbc_isa_match(parent, match, aux)

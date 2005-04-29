@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.95.4.1 2005/04/29 11:28:43 kent Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -72,11 +72,11 @@
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95.4.1 2005/04/29 11:28:43 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -124,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <compat/ultrix/ultrix_syscall.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
@@ -142,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $
 
 #ifdef __mips
 #include <mips/cachectl.h>
+#include <mips/frame.h>
 #endif
 
 static int ultrix_to_bsd_flock(struct ultrix_flock *, struct flock *);
@@ -169,7 +172,11 @@ const struct emul emul_ultrix = {
 #endif
 	ultrix_sysent,
 	ultrix_syscallnames,
+#ifdef __mips
+	sendsig_sigcontext,
+#else /* vax */
 	sendsig,
+#endif
 	trapsignal,
 	NULL,
 	ultrix_sigcode,
@@ -188,6 +195,8 @@ const struct emul emul_ultrix = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 #define GSI_PROG_ENV 1
@@ -255,7 +264,7 @@ ultrix_sys_wait3(struct lwp *l, void *v, register_t *retval)
  * Ultrix binaries pass in FD_MAX as the first arg to select().
  * On Ultrix, FD_MAX is 4096, which is more than the NetBSD sys_select()
  * can handle.
- * Since we can't have more than the (native) FD_MAX descriptors open, 
+ * Since we can't have more than the (native) FD_MAX descriptors open,
  * limit nfds to at most FD_MAX.
  */
 int

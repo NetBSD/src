@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.20 2003/09/27 12:24:25 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.20.8.1 2005/04/29 11:29:36 kent Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,8 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.20 2003/09/27 12:24:25 jdolecek Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.20.8.1 2005/04/29 11:29:36 kent Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

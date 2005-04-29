@@ -1,5 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2004/06/30 09:21:26 tron Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2005/04/29 11:29:28 kent Exp $
 
-SUBDIR=	bsdcomp deflate pf
+.include <bsd.own.mk>
+
+SUBDIR=	bsdcomp deflate tap
+
+.if (${MKPF} != "no")
+SUBDIR+= pf
+.endif
 
 .include <bsd.subdir.mk>

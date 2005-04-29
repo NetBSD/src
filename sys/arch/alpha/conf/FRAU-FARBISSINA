@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.33 2004/11/24 20:49:20 bouyer Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.33.4.1 2005/04/29 11:27:59 kent Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.33 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.33.4.1 $"
 
 maxusers 64
 
@@ -55,6 +55,7 @@ file-system	FDESC		# File descriptor file system (/dev/fd)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -73,6 +74,8 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
@@ -263,6 +266,7 @@ mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
+attimer* at	isa?				# AT Timer
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
@@ -404,6 +408,10 @@ fd*	at	fdc? drive ?
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
+
 # USB Generic driver
 #ugen*	at uhub? port ?
 
@@ -419,6 +427,7 @@ pseudo-device	bpfilter	16
 pseudo-device	ccd		4
 pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1

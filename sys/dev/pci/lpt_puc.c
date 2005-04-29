@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.6.14.1 2005/04/29 11:29:07 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,14 +31,14 @@
  */
 
 /*
- * Machine-independent parallel port ('lpt') driver attachment to "PCI 
+ * Machine-independent parallel port ('lpt') driver attachment to "PCI
  * Universal Communications" controller driver.
  *
  * Author: Christopher G. Demetriou, May 17, 1998.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.14.1 2005/04/29 11:29:07 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $");
 #include <dev/pci/pucvar.h>
 #include <dev/ic/lptvar.h>
 
-int	lpt_puc_probe __P((struct device *, struct cfdata *, void *));
-void	lpt_puc_attach __P((struct device *, struct device *, void *));
+int	lpt_puc_probe(struct device *, struct cfdata *, void *);
+void	lpt_puc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
     lpt_puc_probe, lpt_puc_attach, NULL, NULL);

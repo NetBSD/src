@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.53 2004/02/10 20:57:20 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.53.8.1 2005/04/29 11:29:34 kent Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.53 2004/02/10 20:57:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.53.8.1 2005/04/29 11:29:34 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -503,7 +503,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, 
+	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0,
 	    &im6o, (struct socket *)NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
@@ -1236,33 +1236,8 @@ nd6_dad_timer(ifa)
 		}
 
 		if (dp->dad_ns_icount) {
-#if 0 /* heuristics */
-			/*
-			 * if
-			 * - we have sent many(?) DAD NS, and
-			 * - the number of NS we sent equals to the
-			 *   number of NS we've got, and
-			 * - we've got no NA
-			 * we may have a faulty network card/driver which
-			 * loops back multicasts to myself.
-			 */
-			if (3 < dp->dad_count
-			 && dp->dad_ns_icount == dp->dad_count
-			 && dp->dad_na_icount == 0) {
-				log(LOG_INFO, "DAD questionable for %s(%s): "
-				    "network card loops back multicast?\n",
-				    ip6_sprintf(&ia->ia_addr.sin6_addr),
-				    if_name(ifa->ifa_ifp));
-				/* XXX consider it a duplicate or not? */
-				/* duplicate++; */
-			} else {
-				/* We've seen NS, means DAD has failed. */
-				duplicate++;
-			}
-#else
 			/* We've seen NS, means DAD has failed. */
 			duplicate++;
-#endif
 		}
 
 		if (duplicate) {

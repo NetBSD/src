@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.1.2.1 2005/04/29 11:29:31 kent Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -6,7 +6,7 @@
  *
  *  This code is derived from software contributed to the NetBSD Foundation
  *   by Quentin Garnier.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -22,7 +22,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -43,9 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.2.1 2005/04/29 11:29:31 kent Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bpfilter.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $");
  */
 static int tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
+SYSCTL_SETUP_PROTO(sysctl_tap_setup);
 
 /*
  * Since we're an Ethernet device, we need the 3 following
@@ -250,7 +253,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
 	u_int8_t enaddr[ETHER_ADDR_LEN] =
-	    { 0xf0, 0x0b, 0xa4, 0xff, 0xff, 0xff };
+	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[18];
 	uint32_t ui;
 	int error;
@@ -322,7 +325,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    tap_sysctl_handler, 0, sc, 18,
-	    CTL_NET, PF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 
@@ -375,7 +378,7 @@ tap_detach(struct device* self, int flags)
 	 * sysctl_destroyv.  One should be sure to always end the path with
 	 * CTL_EOL.
 	 */
-	if ((error = sysctl_destroyv(NULL, CTL_NET, PF_LINK, tap_node,
+	if ((error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, tap_node,
 	    sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
@@ -706,7 +709,8 @@ tap_dev_cloner(struct proc *p)
 
 	sc->sc_flags |= TAP_INUSE;
 
-	return fdclone(p, fp, fd, &tap_fileops, (void *)(intptr_t)sc->sc_dev.dv_unit);
+	return fdclone(p, fp, fd, FREAD|FWRITE, &tap_fileops,
+	    (void *)(intptr_t)sc->sc_dev.dv_unit);
 }
 
 /*
@@ -1068,7 +1072,7 @@ tap_dev_poll(int unit, int events, struct proc *p)
 		if (m != NULL)
 			revents |= events & (POLLIN|POLLRDNORM);
 		else {
-			(void)simple_lock(&sc->sc_kqlock);
+			simple_lock(&sc->sc_kqlock);
 			selrecord(p, &sc->sc_rsel);
 			simple_unlock(&sc->sc_kqlock);
 		}
@@ -1116,7 +1120,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	}
 
 	kn->kn_hook = sc;
-	(void)simple_lock(&sc->sc_kqlock);
+	simple_lock(&sc->sc_kqlock);
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
 	return (0);
@@ -1127,7 +1131,7 @@ tap_kqdetach(struct knote *kn)
 {
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 
-	(void)simple_lock(&sc->sc_kqlock);
+	simple_lock(&sc->sc_kqlock);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
 }
@@ -1195,7 +1199,7 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "link", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_NET, PF_LINK, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, CTL_EOL)) != 0)
 		return;
 
 	/*
@@ -1215,7 +1219,7 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "tap", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_NET, PF_LINK, CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, CTL_CREATE, CTL_EOL)) != 0)
 		return;
 	tap_node = node->sysctl_num;
 }

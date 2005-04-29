@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Creatix PnP cards
  *	============================================================
  *
- *	$Id: isic_isapnp_ctx_s0P.c,v 1.4 2002/03/24 20:35:50 martin Exp $ 
+ *	$Id: isic_isapnp_ctx_s0P.c,v 1.4.18.1 2005/04/29 11:28:55 kent Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.4 2002/03/24 20:35:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.4.18.1 2005/04/29 11:28:55 kent Exp $");
 
 #include "opt_isicpnp.h"
 #if ISICPNP_CRTX_S0_P
@@ -86,10 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.4 2002/03/24 20:35:50 mart
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t ctxs0P_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void ctxs0P_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void ctxs0P_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void ctxs0P_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+static u_int8_t ctxs0P_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void ctxs0P_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void ctxs0P_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void ctxs0P_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
 void isic_attach_Cs0P(struct isic_softc *sc);
 #endif
 
@@ -103,7 +103,7 @@ extern void isicintr ( int unit );
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
-static void             
+static void
 ctxs0P_read_fifo(void *buf, const void *base, size_t len)
 {
         insb((int)base + 0x3e, (u_char *)buf, (u_int)len);
@@ -201,15 +201,15 @@ int
 isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Creatix ISDN-S0 P&P!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -223,7 +223,7 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 		case 11:
 		case 12:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Creatix ISDN-S0 P&P!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
@@ -241,7 +241,7 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	if(iobase2 == 0)
 	{
 		printf("isic%d: Error, iobase2 is 0 for Creatix ISDN-S0 P&P!\n",
@@ -256,7 +256,7 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 		case 0x120:
 		case 0x180:
 /*XXX*/			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid iobase 0x%x specified for Creatix ISDN-S0 P&P!\n",
 				dev->id_unit, dev->id_iobase);
@@ -275,23 +275,23 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 	sc->writefifo = ctxs0P_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_CS0P;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC and HSCX base addr */
-	
+
 	ISAC_BASE   = (caddr_t) dev->id_iobase - 0x20;
 	HSCX_A_BASE = (caddr_t) iobase2 - 0x20;
 	HSCX_B_BASE = (caddr_t) iobase2;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the Creatix PnP card is
 	 * 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -306,7 +306,7 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	return (1);
 }
@@ -347,15 +347,15 @@ isic_attach_Cs0P(struct isic_softc *sc)
 	sc->writefifo = ctxs0P_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_CS0P;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;	
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
 }
 #endif
 

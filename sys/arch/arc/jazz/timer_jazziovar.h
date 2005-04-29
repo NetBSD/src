@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazziovar.h,v 1.1 2001/06/13 15:02:16 soda Exp $	*/
+/*	$NetBSD: timer_jazziovar.h,v 1.1.34.1 2005/04/29 11:28:02 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 struct timer_jazzio_config {
-	int tjc_intr_mask;
-	int (*tjc_intr) __P((u_int, struct clockframe *));
-	void (*tjc_init) __P((int));
+	uint32_t tjc_intr_mask;
+	uint32_t (*tjc_intr)(uint32_t, struct clockframe *);
+	void (*tjc_init)(int);
 };
 
 extern struct timer_jazzio_config *timer_jazzio_conf;

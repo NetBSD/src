@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.44 2004/11/29 13:33:37 yamt Exp $	*/
+/*	$NetBSD: rnd.c,v 1.44.4.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.44 2004/11/29 13:33:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.44.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -154,7 +154,7 @@ static rndsource_t rnd_source_no_collect = {
 
 struct callout rnd_callout = CALLOUT_INITIALIZER;
 
-void	rndattach __P((int));
+void	rndattach(int);
 
 dev_type_open(rndopen);
 dev_type_read(rndread);
@@ -194,7 +194,7 @@ rnd_counter(void)
 	if (rnd_ready) {
 		microtime(&tv);
 		return (tv.tv_sec * 1000000 + tv.tv_usec);
-	} 
+	}
 	/* when called from rnd_init, its too early to call microtime safely */
 	return (0);
 }
@@ -226,9 +226,6 @@ rnd_wakeup_readers(void)
 			printf("rnd: have initial entropy (%u)\n",
 			       rndpool_get_entropy_count(&rnd_pool));
 #endif
-		/*
-		 * Allow open of /dev/random now, too.
-		 */
 		rnd_have_entropy = 1;
 	}
 }
@@ -312,9 +309,9 @@ rnd_init(void)
 	if (rnd_ready)
 		return;
 
-	/* 
+	/*
 	 * take a counter early, hoping that there's some variance in
-	 * the following operations 
+	 * the following operations
 	 */
 	c = rnd_counter();
 
@@ -323,11 +320,11 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 
-	/* Mix *something*, *anything* into the pool to help it get started. 
+	/* Mix *something*, *anything* into the pool to help it get started.
 	 * However, it's not safe for rnd_counter() to call microtime() yet,
 	 * so on some platforms we might just end up with zeros anyway.
 	 * XXX more things to add would be nice.
-	 */ 
+	 */
 	if (c) {
 		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 		c = rnd_counter();
@@ -349,20 +346,8 @@ rndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (rnd_ready == 0)
 		return (ENXIO);
 
-	if (minor(dev) == RND_DEV_URANDOM)
+	if (minor(dev) == RND_DEV_URANDOM || minor(dev) == RND_DEV_RANDOM)
 		return (0);
-
-	/*
-	 * If this is the strong random device and we have never collected
-	 * entropy (or have not yet) don't allow it to be opened.  This will
-	 * prevent waiting forever for something that just will not appear.
-	 */
-	if (minor(dev) == RND_DEV_RANDOM) {
-		if (rnd_have_entropy == 0)
-			return (ENXIO);
-		else
-			return (0);
-	}
 
 	return (ENXIO);
 }
@@ -861,7 +846,7 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 	printf(")\n");
 #endif
 
-	/* 
+	/*
 	 * Again, put some more initial junk in the pool.
 	 * XXX Bogus, but harder to guess than zeros.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.27 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.27.4.1 2005/04/29 11:29:31 kent Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,12 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
@@ -80,26 +80,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.27 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.27.4.1 2005/04/29 11:29:31 kent Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 #include "bpfilter.h"
+#include "gif.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/pool.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
@@ -356,7 +357,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 	sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-	sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;   
+	sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
 	sc->sc_bridge_hello_time = BSTP_DEFAULT_HELLO_TIME;
 	sc->sc_bridge_forward_delay = BSTP_DEFAULT_FORWARD_DELAY;
 	sc->sc_bridge_priority = BSTP_DEFAULT_BRIDGE_PRIORITY;
@@ -580,7 +581,10 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 		 */
 		(void) ifpromisc(ifs, 0);
 		break;
-
+#if NGIF > 0
+	case IFT_GIF:
+		break;
+#endif
 	default:
 #ifdef DIAGNOSTIC
 		panic("bridge_delete_member: impossible");
@@ -633,7 +637,10 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		if (error)
 			goto out;
 		break;
-
+#if NGIF > 0
+	case IFT_GIF:
+		break;
+#endif
 	default:
 		error = EINVAL;
 		goto out;
@@ -937,7 +944,7 @@ bridge_ioctl_gfd(struct bridge_softc *sc, void *arg)
 int
 bridge_ioctl_sfd(struct bridge_softc *sc, void *arg)
 {
-	struct ifbrparam *param = arg; 
+	struct ifbrparam *param = arg;
 
 	if (param->ifbrp_fwddelay == 0)
 		return (EINVAL);
@@ -1006,7 +1013,7 @@ bridge_ioctl_gfilt(struct bridge_softc *sc, void *arg)
 int
 bridge_ioctl_sfilt(struct bridge_softc *sc, void *arg)
 {
-	struct ifbrparam *param = arg; 
+	struct ifbrparam *param = arg;
 	uint32_t nflags, oflags;
 
 	if (param->ifbrp_filter & ~IFBF_FILT_MASK)
@@ -1157,6 +1164,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 #endif /* ALTQ */
 
 	len = m->m_pkthdr.len;
+	m->m_flags |= M_PROTO1;
 	mflags = m->m_flags;
 	IFQ_ENQUEUE(&dst_ifp->if_snd, m, &pktattr, error);
 	if (error) {
@@ -1480,6 +1488,20 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			return (m);
 
 		/* Perform the bridge forwarding function with the copy. */
+#if NGIF > 0
+		if (ifp->if_type == IFT_GIF) {
+			LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+				if (bif->bif_ifp->if_type == IFT_ETHER)
+				break;
+			}
+			if (bif != NULL) {
+				m->m_flags |= M_PROTO1;
+				m->m_pkthdr.rcvif = bif->bif_ifp;
+				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
+				m = NULL;
+			}
+		}
+#endif
 		bridge_forward(sc, mc);
 
 		/* Return the original packet for local processing. */
@@ -1499,6 +1521,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 * Unicast.  Make sure it's not for us.
 	 */
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+		if(bif->bif_ifp->if_type != IFT_ETHER)
+			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
 		    ETHER_ADDR_LEN) == 0) {
@@ -1506,6 +1530,14 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = bif->bif_ifp;
+#if NGIF > 0
+			if (ifp->if_type == IFT_GIF) {
+				m->m_flags |= M_PROTO1;
+				m->m_pkthdr.rcvif = bif->bif_ifp;
+				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
+				m = NULL;
+			}
+#endif
 			return (m);
 		}
 
@@ -1947,9 +1979,9 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	/*
 	 * Check for SNAP/LLC.
 	 */
-        if (ether_type < ETHERMTU) { 
+        if (ether_type < ETHERMTU) {
                 struct llc *llc = (struct llc *)(eh1 + 1);
-                            
+
                 if ((*mp)->m_len >= ETHER_HDR_LEN + 8 &&
                     llc->llc_dsap == LLC_SNAP_LSAP &&
                     llc->llc_ssap == LLC_SNAP_LSAP &&
@@ -1957,7 +1989,7 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
                 	ether_type = htons(llc->llc_un.type_snap.ether_type);
 			snap = 1;
                 }
-        }       
+        }
 
 	/*
 	 * If we're trying to filter bridge traffic, don't look at anything
@@ -2076,7 +2108,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
 			ipstat.ips_toosmall++;
 			goto bad;
-		} 
+		}
 	}
 	ip = mtod(m, struct ip *);
 	if (ip == NULL) goto bad;

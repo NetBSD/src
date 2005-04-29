@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.210 2004/09/17 23:04:02 enami Exp $	*/
+/*	$NetBSD: pciide.c,v 1.210.4.1 2005/04/29 11:29:12 kent Exp $	*/
 
 
 /*
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.210 2004/09/17 23:04:02 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.210.4.1 2005/04/29 11:29:12 kent Exp $");
 
 #include <sys/param.h>
 
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.210 2004/09/17 23:04:02 enami Exp $");
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-int	pciide_match __P((struct device *, struct cfdata *, void *));
-void	pciide_attach __P((struct device *, struct device *, void *));
+int	pciide_match(struct device *, struct cfdata *, void *);
+void	pciide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
     pciide_match, pciide_attach, NULL, NULL);

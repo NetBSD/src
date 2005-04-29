@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.13 2004/08/04 18:55:06 drochner Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.13.4.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.13 2004/08/04 18:55:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.13.4.1 2005/04/29 11:29:04 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.13 2004/08/04 18:55:06 drochner Exp 
 #include <dev/isa/essreg.h>
 #include <dev/isa/essvar.h>
 
-int	ess_ofisa_match __P((struct device *, struct cfdata *, void *));
-void	ess_ofisa_attach __P((struct device *, struct device *, void *));
+int	ess_ofisa_match(struct device *, struct cfdata *, void *);
+void	ess_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ess_ofisa, sizeof(struct ess_softc),
     ess_ofisa_match, ess_ofisa_attach, NULL, NULL);
@@ -160,7 +160,7 @@ ess_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	/* 
+	/*
 	 * The Shark firmware doesn't program the ESS ISA address registers.
 	 * Do that here instead of inside essmatch() since we want to defer
 	 * to the firmware on other platforms.

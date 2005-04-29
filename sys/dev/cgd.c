@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.21 2004/10/28 07:07:39 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.21.4.1 2005/04/29 11:28:44 kent Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.21 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.21.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,7 +133,7 @@ static void	hexprint(char *, void *, int);
 #endif
 
 #ifdef DIAGNOSTIC
-#define DIAGPANIC(x)		panic x 
+#define DIAGPANIC(x)		panic x
 #define DIAGCONDPANIC(x,y)	if (x) panic y
 #else
 #define DIAGPANIC(x)
@@ -311,7 +311,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	 * We attempt to allocate all of our resources up front, so that
 	 * we can fail quickly if they are unavailable.
 	 */
-	
+
 	s = splbio();
 	nbp = pool_get(&bufpool, PR_NOWAIT);
 	splx(s);
@@ -365,7 +365,7 @@ cgdiodone(struct buf *nbp)
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
-	
+
 	KDASSERT(cs);
 
 	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
@@ -587,17 +587,11 @@ bail:
 static int
 cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 {
-	struct	buf *bp;
 	int	s;
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_GET(&cs->sc_dksc.sc_bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
+	bufq_drain(&cs->sc_dksc.sc_bufq);
 	splx(s);
 	bufq_free(&cs->sc_dksc.sc_bufq);
 
@@ -634,7 +628,7 @@ cgdinit(struct cgd_softc *cs, char *cpath, struct vnode *vp,
 	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
 	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
 
-	if ((ret = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0) 
+	if ((ret = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0)
 		goto bail;
 
 	cs->sc_tdev = va.va_rdev;
@@ -678,13 +672,13 @@ bail:
  * IV mode and passes off the work to the specific cipher.
  * We implement here the IV method ``encrypted block
  * number''.
- * 
+ *
  * For the encryption case, we accomplish this by setting
  * up a struct uio where the first iovec of the source is
  * the blocknumber and the first iovec of the dest is a
  * sink.  We then call the cipher with an IV of zero, and
  * the right thing happens.
- * 
+ *
  * For the decryption case, we use the same basic mechanism
  * for symmetry, but we encrypt the block number in the
  * first iovec.
@@ -739,7 +733,7 @@ cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
-	DIAGCONDPANIC(len % blocksize != 0, 
+	DIAGCONDPANIC(len % blocksize != 0,
 	    ("cgd_cipher: len %% blocksize != 0"));
 
 	/* ensure that sizeof(daddr_t) <= blocksize (for encblkno IVing) */
