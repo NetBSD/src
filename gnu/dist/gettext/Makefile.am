@@ -1,5 +1,5 @@
-## Makefile for the toplevel directory of the GNU NLS Utilities
-## Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+## Makefile for the toplevel directory of GNU gettext
+## Copyright (C) 1995-1999, 2000-2005 Free Software Foundation, Inc.
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,19 +17,44 @@
 
 ## Process this file with automake to produce Makefile.in.
 
-AUTOMAKE_OPTIONS = 1.3 gnits
-MAINT_CHARSET = latin1
-ACLOCAL_AMFLAGS = -I m4
+AUTOMAKE_OPTIONS = 1.5 gnu no-dependencies
 
-gettextsrcdir = $(datadir)/gettext
-gettextsrc_DATA = ABOUT-NLS
+SUBDIRS = autoconf-lib-link gettext-runtime gettext-tools
 
-EXTRA_DIST = BUGS DISCLAIM README.gemtext
-SUBDIRS = doc lib intl src po m4 misc tests
+EXTRA_DIST = \
+  version.sh PACKAGING ChangeLog.0 autogen.sh \
+  build-aux/config.libpath build-aux/reloc-ldflags build-aux/install-reloc \
+  build-aux/ac-help.sed \
+  m4/fixautomake.m4 \
+  m4/libtool.m4
 
-DISTCLEANFILES = intl/libintl.h
+# Additional dependencies for configure, due to the use of autoconf --trace.
+$(srcdir)/configure: $(srcdir)/autoconf-lib-link/configure.ac $(srcdir)/gettext-runtime/configure.ac $(srcdir)/gettext-tools/configure.ac 
 
-#ABOUT-NLS: $(srcdir)/doc/nls.texi $(srcdir)/doc/matrix.texi
-#	rm -f $(srcdir)/ABOUT-NLS \
-#	  && $(MAKEINFO) --output=$(srcdir)/ABOUT-NLS --no-header \
-#	    -I $(srcdir)/doc --no-validate nls.texi
+
+# DJGPP port.
+
+EXTRA_DIST += djgpp/COPYING.DJ djgpp/Makefile.maint djgpp/README.DJ \
+              djgpp/README.in djgpp/README djgpp/config.bat djgpp/config.in \
+              djgpp/config.sed djgpp/config.site djgpp/djpwd.h \
+              djgpp/edtests.bat djgpp/fnchange.in djgpp/fnchange.lst \
+              djgpp/getpwnam.c djgpp/msginit.sed djgpp/tscript.sed \
+              djgpp/unsetenv.c
+
+
+# OS/2 port.
+
+EXTRA_DIST += os2/README.OS2 os2/Makefile os2/backward.def os2/configure.awk
+
+
+# VMS support.
+
+EXTRA_DIST += README.vms Makefile.vms \
+              vms/link_options.opt \
+              vms/with-libiconv.opt vms/without-libiconv.opt
+
+
+# Woe32 support.
+
+EXTRA_DIST += README.woe32 Makefile.msvc
+EXTRA_DIST += README.mingw
