@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.76 2004/04/27 04:03:28 atatat Exp $	*/
+/*	$NetBSD: db_command.c,v 1.77 2005/04/29 10:40:16 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.76 2004/04/27 04:03:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.77 2005/04/29 10:40:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,6 +152,11 @@ static const struct db_command db_show_cmds[] = {
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
+
+/* arch/<arch>/<arch>/db_interface.c */
+#ifdef DB_MACHINE_COMMANDS
+extern const struct db_command db_machine_command_table[];
+#endif
 
 static const struct db_command db_command_table[] = {
 	{ "b",		db_breakpoint_cmd,	0,		NULL },
