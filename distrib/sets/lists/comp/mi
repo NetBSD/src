@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.779 2005/04/25 11:38:01 wiz Exp $
+#	$NetBSD: mi,v 1.780 2005/04/29 15:27:33 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -35,11 +35,18 @@
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
 ./usr/bin/msgc					comp-c-bin
+./usr/bin/msgattrib				comp-c-bin
 ./usr/bin/msgcmp				comp-c-bin
+./usr/bin/msgcat				comp-c-bin
+./usr/bin/msgconv				comp-c-bin
 ./usr/bin/msgcomm				comp-c-bin
+./usr/bin/msgexec				comp-c-bin
+./usr/bin/msgen					comp-c-bin
 ./usr/bin/msgfmt				comp-c-bin
-./usr/bin/msgmerge				comp-c-bin
+./usr/bin/msginit				comp-c-bin
 ./usr/bin/msgunfmt				comp-c-bin
+./usr/bin/msgmerge				comp-c-bin
+./usr/bin/msguniq				comp-c-bin
 ./usr/bin/nm					comp-util-bin		bfd
 ./usr/bin/objcopy				comp-util-bin		bfd
 ./usr/bin/objdump				comp-util-bin		bfd
@@ -1860,18 +1867,51 @@
 ./usr/share/ldscripts/sun4.xn			comp-obsolete		obsolete
 ./usr/share/ldscripts/sun4.xr			comp-obsolete		obsolete
 ./usr/share/ldscripts/sun4.xu			comp-obsolete		obsolete
-./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-c_locale-da	nls
-./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-c_locale-de	nls
-./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-c_locale-es	nls
-./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-c_locale-fr	nls
-./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-c_locale-ko	nls
-./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-c_locale-nl	nls
-./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-c_locale-no	nls
+./usr/share/locale/be/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-be	nls
+./usr/share/locale/ca/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ca	nls
+./usr/share/locale/cs/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-cs	nls
+./usr/share/locale/da/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-da	nls
+./usr/share/locale/de/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-de	nls
+./usr/share/locale/el/LC_MESSAGES/gettext-tools.mo	comp-c_locale-el	nls
+./usr/share/locale/en@boldquot/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-en@boldquot	nls
+./usr/share/locale/en@quot/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-en@quot	nls
+./usr/share/locale/es/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-es	nls
+./usr/share/locale/et/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-et	nls
+./usr/share/locale/fi/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-fi	nls
+./usr/share/locale/fr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-fr	nls
+./usr/share/locale/gl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-gl	nls
+./usr/share/locale/id/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-id	nls
+./usr/share/locale/it/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-it	nls
+./usr/share/locale/ja/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ja	nls
+./usr/share/locale/ko/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ko	nls
+./usr/share/locale/nl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-nl	nls
+./usr/share/locale/nn/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-nn	nls
+./usr/share/locale/no/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-no	nls
+./usr/share/locale/pl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pl	nls
+./usr/share/locale/pt/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pr	nls
+./usr/share/locale/pt_BR/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pt_BR	nls
+./usr/share/locale/ro/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ro	nls
+./usr/share/locale/ru/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ru	nls
+./usr/share/locale/sk/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sk	nls
+./usr/share/locale/sl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sl	nls
+./usr/share/locale/sr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sr	nls
+./usr/share/locale/sv/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sv	nls
+./usr/share/locale/tr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-tr	nls
+./usr/share/locale/uk/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-uk	nls
+./usr/share/locale/zh_CN/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-zh_CN	nls
+./usr/share/locale/zh_TW/LC_MESSAGES/gettext-tools.mo	comp-c_locale-zh_TW	nls
+./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-c_locale-da	obsolete
+./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-c_locale-de	obsolete
+./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-c_locale-es	obsolete
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-c_locale-fr	obsolete
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-c_locale-ko	obsolete
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-c_locale-nl	obsolete
+./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-c_locale-no	obsolete
 ./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c_locale-no	nls
-./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-c_locale-pl	nls
-./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-c_locale-pt	nls
-./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-c_locale-sl	nls
-./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-c_locale-sv	nls
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-c_locale-pl	obsolete
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-c_locale-pt	obsolete
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-c_locale-sl	obsolete
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-c_locale-sv	obsolete
 ./usr/share/man/cat1/addr2line.0		comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat

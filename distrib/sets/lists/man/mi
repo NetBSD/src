@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.785 2005/04/25 11:38:02 wiz Exp $
+# $NetBSD: mi,v 1.786 2005/04/29 15:27:34 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -139,6 +139,7 @@
 ./usr/share/man/cat1/getconf.0			man-util-catman		.cat
 ./usr/share/man/cat1/getent.0			man-util-catman		.cat
 ./usr/share/man/cat1/getextattr.0		man-util-catman		.cat
+./usr/share/man/cat1/gettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/getopt.0			man-util-catman		.cat
 ./usr/share/man/cat1/grep.0			man-util-catman		.cat
 ./usr/share/man/cat1/grfinfo.0			man-sysutil-catman	.cat
@@ -248,7 +249,19 @@
 ./usr/share/man/cat1/moptrace.0			man-bootserver-catman	.cat
 ./usr/share/man/cat1/more.0			man-util-catman		.cat
 ./usr/share/man/cat1/mset.0			man-tn3270-catman	.cat
+./usr/share/man/cat1/msgattrib.0		man-locale-catman	.cat
+./usr/share/man/cat1/msgcat.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgcmp.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgcomm.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgconv.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgen.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgexec.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgfmt.0			man-locale-catman	.cat
+./usr/share/man/cat1/msginit.0			man-locale-catman	.cat
+./usr/share/man/cat1/msgmerge.0			man-locale-catman	.cat
 ./usr/share/man/cat1/msgs.0			man-util-catman		.cat
+./usr/share/man/cat1/msgunfmt.0			man-locale-catman	.cat
+./usr/share/man/cat1/msguniq.0			man-locale-catman	.cat
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
@@ -471,6 +484,7 @@
 ./usr/share/man/cat1/x68k/palette.0		man-util-catman		.cat
 ./usr/share/man/cat1/x68k/tvctrl.0		man-util-catman		.cat
 ./usr/share/man/cat1/xargs.0			man-util-catman		.cat
+./usr/share/man/cat1/xgettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/yes.0			man-util-catman		.cat
 ./usr/share/man/cat1/ypcat.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat1/ypmatch.0			man-nis-catman		yp,.cat
@@ -2350,6 +2364,7 @@
 ./usr/share/man/man1/gencat.1			man-locale-man		.man
 ./usr/share/man/man1/getconf.1			man-util-man		.man
 ./usr/share/man/man1/getent.1			man-util-man		.man
+./usr/share/man/man1/gettext.1			man-locale-man		.man
 ./usr/share/man/man1/getextattr.1		man-util-man		.man
 ./usr/share/man/man1/getopt.1			man-util-man		.man
 ./usr/share/man/man1/grep.1			man-util-man		.man
@@ -2460,7 +2475,19 @@
 ./usr/share/man/man1/moptrace.1			man-bootserver-man	.man
 ./usr/share/man/man1/more.1			man-util-man		.man
 ./usr/share/man/man1/mset.1			man-tn3270-man		.man
+./usr/share/man/man1/msgattrib.1		man-locale-man		.man
+./usr/share/man/man1/msgcat.1			man-locale-man		.man
+./usr/share/man/man1/msgcmp.1			man-locale-man		.man
+./usr/share/man/man1/msgcomm.1			man-locale-man		.man
+./usr/share/man/man1/msgconv.1			man-locale-man		.man
+./usr/share/man/man1/msgen.1			man-locale-man		.man
+./usr/share/man/man1/msgexec.1			man-locale-man		.man
+./usr/share/man/man1/msgfmt.1			man-locale-man		.man
+./usr/share/man/man1/msginit.1			man-locale-man		.man
+./usr/share/man/man1/msgmerge.1			man-locale-man		.man
 ./usr/share/man/man1/msgs.1			man-util-man		.man
+./usr/share/man/man1/msgunfmt.1			man-locale-man		.man
+./usr/share/man/man1/msguniq.1			man-locale-man		.man
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
@@ -2683,6 +2710,7 @@
 ./usr/share/man/man1/x68k/palette.1		man-util-man		.man
 ./usr/share/man/man1/x68k/tvctrl.1		man-util-man		.man
 ./usr/share/man/man1/xargs.1			man-util-man		.man
+./usr/share/man/man1/xgettext.1			man-locale-man		.man
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man
