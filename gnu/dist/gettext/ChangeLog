@@ -1,990 +1,444 @@
-1998-04-30 23:20  Ulrich Drepper  <drepper@cygnus.com>
+2005-04-11  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Remove commands in AC_OUTPUT.  Moved into
-	AM_GNU_GETTEXT macro in m4/gettext.m4.
+	* gettext-0.14.4 released.
 
-	* configure.in: Bump version number to 0.10.35.
+2005-04-11  Bruno Haible  <bruno@clisp.org>
 
-1998-04-28 16:07  Ulrich Drepper  <drepper@cygnus.com>
+	* version.sh: Bump version number to 0.14.4.
 
-	* configure.in: Bump version number to 0.10.34.
-	Don't test for basename function.
+2005-04-06  Bruno Haible  <bruno@clisp.org>
 
-1998-04-27 20:36  Ulrich Drepper  <drepper@cygnus.com>
+	* README: Recommend --program-transform-name instead of
+	--program-prefix.
+	Reported by Joel Reicher <joel@panacea.null.org>.
 
-	* Makefile.am (AUTOMAKE_OPTIONS): Require version 1.3.
-	(ACLOCAL_AMFLAGS): New variable, set to -I m4.
-	(aclocaldir): Definition removed.
-	(gettextsrc_DATA): New variable, set to ABOUT_NLS.
+2005-03-22  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Bump version number to 0.10.33.
-	Define INCLUDE_LOCALE_H in gettext.m4.  Remove AC_LINK_FILES line,
-	can now be in gettext.m4.  Rewrite also m4/Makefile.
+	* m4: New directory, renamed from config/m4/.
+	* build-aux: New directory, renamed from config/.
+	* configure.ac (AC_CONFIG_AUX_DIR): Use build-aux.
+	* Makefile.am (EXTRA_DIST): Update.
 
-1997-09-06 01:11  Ulrich Drepper  <drepper@cygnus.com>
+2005-03-14  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Bump version number to 0.10.32.
+	* gettext-0.14.3 released.
 
-1997-09-05 05:44  Ulrich Drepper  <drepper@cygnus.com>
+2005-03-14  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (ALL_LINGUAS): Add da.
+	* version.sh: Bump version number to 0.14.3.
 
-1997-08-21 15:02  Ulrich Drepper  <drepper@cygnus.com>
+2005-02-24  Bruno Haible  <bruno@clisp.org>
 
-	* progtest.m4: Change copyright.
-	* lcmessage.m4: Change copyright.
-	* gettext.m4: Change copyright.
+	* gettext-0.14.2 released.
 
-1997-08-19 03:20  Ulrich Drepper  <drepper@cygnus.com>
+2005-02-24  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Bump version number to 0.10.31.
+	* version.sh: Bump version number to 0.14.2.
 
-1997-08-18 13:47  Philippe De Muyter  <phdm@info.ucl.ac.be>
+2005-02-23  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (ACLOCAL_VERSION): Do not use nested \(..\) with sed.
+	* config/mdate-sh: Upgrade to automake-1.9.5.
+	* config/missing: Upgrade to automake-1.9.5.
 
-1997-08-15 03:04  Ulrich Drepper  <drepper@cygnus.com>
+2005-02-12  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump version number to 0.10.30.
+	* config/ltmain.sh: Upgrade to libtool-1.5.14.
+	2003-11-27  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: In the trampoline code, include string.h,
+		ctype.h, and return 127. Fixes warnings on cygwin.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
 
-	* acconfig.h: Change DEFAULT_ALIGNMENT to DEFAULT_OUTPUT_ALIGNMENT
-	to avoid clash with macro with same name in obstack.c.
-	Reported by Akim Demaille <demaille@inf.enst.fr>.
+2005-02-11  Bruno Haible  <bruno@clisp.org>
+
+	* config/config.guess, config/config.sub: Update to GNU version
+	2005-02-10.
 
-1997-08-15 12:40  Ulrich Drepper  <drepper@cygnus.com>
+2005-02-07  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.29.
+	* config/config.libpath: Use LC_ALL=C to protect range expression
+	against Estonian locale.
 
-1997-08-01 15:47  Ulrich Drepper  <drepper@cygnus.com>
+2005-02-07  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Remove obstack test.
-	Don't always rewrite po/Makefile.in, only if in CONFIG_FILES.
+	* config/ltmain.sh: Upgrade to libtool-1.5.12.
+	2003-11-27  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: In the trampoline code, include string.h,
+		ctype.h, and return 127. Fixes warnings on cygwin.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
+	* config/m4/libtool.m4: Upgrade to libtool-1.5.12.
+	2004-02-22  Bruno Haible  <bruno@clisp.org>
+		* config/m4/libtool.m4: Add support for Comeau C++ on Linux.
+		Reported by Prof. Roberto Bagnara <bagnara@cs.unipr.it>.
 
-	* Makefile.am (EXTRA_DIST): Add README.gemtext.
+2005-02-06  Bruno Haible  <bruno@clisp.org>
 
-	* Makefile.am (AUTOMAKE_OPTIONS): Require version 1.2.
+	* config/compile: Upgrade to automake-1.9.4.
+	* config/elisp-comp: Upgrade to automake-1.9.4.
+	* config/install-sh: Upgrade to automake-1.9.4.
+	* config/mdate-sh: Upgrade to automake-1.9.4.
+	* config/missing: Upgrade to automake-1.9.4.
+	2002-03-07  Bruno Haible  <bruno@clisp.org>
+		* config/missing (makeinfo): Don't call touch without arguments
+		if the source texinfo file doesn't contain a @setfilename
+		command.
+		Reported by Miroslaw Dobrzanski-Neumann <mne@mosaic-ag.com>.
+	* config/mkinstalldirs: Upgrade to automake-1.9.4.
+	* config/ylwrap: Upgrade to automake-1.9.4.
+	Reported by Albert Chin-A-Young <china@thewrittenword.com>.
 
-1997-05-29 12:44  Ulrich Drepper  <drepper@cygnus.com>
+2005-01-20  Bruno Haible  <bruno@clisp.org>
 
-	* gettext.m4: Don't use INTLDEPS="../intl/libintl.a" which forces
-	a to use only one level of subdirs.  Use $(top_builddir)/intl
-	instead.
-	Patch by Akim Demaille <demaille@inf.enst.fr>.
+	* PACKAGING: Add some notes about Java and C#.
 
-1997-05-01 02:26  Ulrich Drepper  <drepper@cygnus.com>
+2005-01-05  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.28.
+	Fix the "configure --help" output.
+	* config/ac-help.sed: New file.
+	* configure.ac: Use it.
+	* Makefile.am (EXTRA_DIST): Add config/ac-help.sed.
 
-	* gettext.m4: Check for sys/param.h header.
-	Patch by Bruno Haible <haible@ilog.fr>.
+2005-01-05  Bruno Haible  <bruno@clisp.org>
 
-	* gettext.m4: Be safe and call test with quoted arguments and
-	explicit -n option.
-	Patch by Bruno Haible <haible@ilog.fr>.
+	* version.sh: Bump version number to 0.14.2-pre1.
 
-	* gettext.m4: Require AC_PROG_RANLIB.
-	Reported by Tom Tromey <tromey@cygnus.com>.
+2005-01-05  Bruno Haible  <bruno@clisp.org>
 
-	* gettext.m4: Remove POTFILES before generating it.
-	Patch by Jim Meyering <meyering@eng.ascend.com>.
+	* config/ltmain.sh: Upgrade to libtool-1.5.10.
+	2003-11-27  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: In the trampoline code, include string.h,
+		ctype.h, and return 127. Fixes warnings on cygwin.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
+	* config/m4/libtool.m4: Upgrade to libtool-1.5.10.
+	2004-02-22  Bruno Haible  <bruno@clisp.org>
+		* config/m4/libtool.m4: Add support for Comeau C++ on Linux.
+		Reported by Prof. Roberto Bagnara <bagnara@cs.unipr.it>.
 
-Wed Dec  4 00:36:11 1996  Ulrich Drepper  <drepper@cygnus.com>
+2004-09-06  Bruno Haible  <bruno@clisp.org>
 
-	* Makefile.am (EXTRA_DIST): Remove @DIST-ALPHA@.
+	* Makefile.am (EXTRA_DIST): Add autogen.sh.
 
-Tue Dec  3 23:55:43 1996  Ulrich Drepper  <drepper@cygnus.com>
+2004-08-25  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Make sure aclocaldir gets substituted.
+	* config/ltmain.sh: Upgrade to libtool-1.5.6.
+	2003-11-27  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: In the trampoline code, include string.h,
+		ctype.h, and return 127. Fixes warnings on cygwin.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
+	* config/m4/libtool.m4: Upgrade to libtool-1.5.6.
+	2004-02-22  Bruno Haible  <bruno@clisp.org>
+		* config/m4/libtool.m4: Add support for Comeau C++ on Linux.
+		Reported by Prof. Roberto Bagnara <bagnara@cs.unipr.it>.
 
-Tue Dec  3 19:38:41 1996  Ulrich Drepper  <drepper@cygnus.com>
+2004-02-22  Bruno Haible  <bruno@clisp.org>
 
-	* Makefile.am (aclocal_DATA): Install aclocal macros for gettext.
+	* config/m4/libtool.m4: Add support for Comeau C++ on Linux.
+	Reported by Prof. Roberto Bagnara <bagnara@cs.unipr.it>.
 
-	* configure.in: Bump version number to 0.10.26.
+2004-02-21  Bruno Haible  <bruno@clisp.org>
 
-Fri Nov 22 22:57:48 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* PACKAGING: Add FAQ.html.
 
-	* Makefile.am (EXTRA_DIST): Add gettext.m4, lcmessage.m4, and
-	progtest.m4.
-	Reported by Tom Tromey.
+2004-01-26  Bruno Haible  <bruno@clisp.org>
 
-Thu Nov 21 23:07:20 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/config.libpath: Upgrade to libtool-1.5.2.
 
-	* configure.in: Use AM_INIT_AUTOMAKE.  Rename various tests to
-	official AM_*.  Write tests/Makefile.
+2004-01-26  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4: Removed.  The test are now in separate files.
-	* gettext.m4, progtext.m4, lcmessage.m4: New files.
+	* config/ltmain.sh: Upgrade to libtool-1.5.2.
+	2003-11-27  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: In the trampoline code, include string.h,
+		ctype.h, and return 127. Fixes warnings on cygwin.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
+	* config/m4/libtool.m4: Upgrade to libtool-1.5.2.
 
-	* Makefile.am (AUTOMAKE_OPTIONS): Require 1.1.
-	(MAINT_CHARSET): Latin 1 is used here.
-	(gettextdemodir): Removed.
-	(gettextdemo_DATA): Removed.
+2004-02-02  Bruno Haible  <bruno@clisp.org>
 
-Fri Sep 20 12:41:23 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* PACKAGING: Add glibc2.m4.
 
-	* configure.in (ALL_LINGUAS): Add pt.
+2004-01-29  Bruno Haible  <bruno@clisp.org>
 
-Wed Sep 18 17:55:23 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* gettext-0.14.1 released.
 
-	* Makefile.am (SUBDIRS): Change checks to tests.
+2004-01-29  Bruno Haible  <bruno@clisp.org>
 
-Sat Aug 31 14:19:04 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* version.sh: Bump version number to 0.14.1.
 
-	* configure.in (VERSION): Bump to 0.10.25.
+2004-01-28  Bruno Haible  <bruno@clisp.org>
 
-Sat Aug 31 04:50:13 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* gettext-0.14 released.
 
-	* configure.in: Add test for error which is part of GNU libc.
+2004-01-28  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4: Check for gettext in libc.  Necessary for GNU libc.
+	* version.sh: Bump version number to 0.14.
 
-Tue Aug 27 04:05:19 1996  Ulrich Drepper  <drepper@cygnus.com>
+2004-01-17  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (ALL_LINGUAS): Add es.
+	* version.sh: Bump version number to 0.14-pre1.
 
-Sun Aug 18 18:49:34 1996  Ulrich Drepper  <drepper@cygnus.com>
+2004-01-17  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Use AM_PROG_INSTALL instead of fp_PROG_INSTALL.
+	* config/config.guess, config/config.sub: Update to GNU version
+	2004-01-05.
 
-	* aclocal.m4 (fp_PROG_INSTALL): Rename to AM_PROG_INSTALL.
+2003-12-12  Bruno Haible  <bruno@clisp.org>
 
-Fri Jul 19 12:18:55 1996  Ulrich Drepper  <drepper@cygnus.com>
+	Assume automake-1.8.
+	* Makefile.am (html): Remove rule.
 
-	* configure.in: Don't use NULL in check for obstack.
+2003-11-30  Bruno Haible  <bruno@clisp.org>
 
-Tue Jul 16 01:51:47 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/install-reloc: Compile also the allocsa.c file.
 
-	* aclocal.m4: Correct text for --with-included-gettext option.
-	Patch by François Pinard.
+2003-12-17  Bruno Haible  <bruno@clisp.org>
 
-Sun Jul 14 01:16:19 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* gettext-0.13.1 released.
 
-	* configure.in (VERSION): Bump to 0.10.24.
+2003-12-17  Bruno Haible  <bruno@clisp.org>
 
-Sat Jul  6 01:49:26 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* version.sh: Bump version number to 0.13.1.
 
-	* configure.in (VERSION): Bump to 0.10.23.
+2003-11-30  Bruno Haible  <bruno@clisp.org>
 
-Tue Jul  2 16:42:20 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* gettext-0.13 released.
 
-	* configure.in (ALL_LINGUAS): Add nl.
-	Add AC_PROG_MKINSTALLDIRS test.
-	Set AC_PREREQ to 2.99 since no official autoconf has the
-	bugs fixed.
+2003-11-30  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4: Fix check for obsolete xgettext implementation.
-	Patch by Marcus Daniels.
+	* version.sh: Bump version number to 0.13.
 
-Sat Jun 22 04:25:23 1996  Ulrich Drepper  <drepper@cygnus.com>
+2003-11-27  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4: Define MKINSTALLDIRS.
+	* config/ltmain.sh: In the trampoline code, include string.h, ctype.h,
+	and return 127. Fixes warnings on cygwin.
 
- 	* configure.in (VERSION): Bump to 0.10.22.
+2003-11-23  Bruno Haible  <bruno@clisp.org>
 
-Wed Jun 19 01:26:09 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* PACKAGING: Remove ssize_t.m4.
 
-	* configure.in (AC_REPLACE_FUNCS): Add stpncpy.
+2003-11-16  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.21.
+	* PACKAGING: Add size_max.m4, ssize_t.m4, xsize.m4.
 
-	* configure.in (AC_REPLACE_FUNCS): Add strncasecmp.
+2003-11-16  Bruno Haible  <bruno@clisp.org>
 
-Tue Jun 18 15:11:01 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/config.guess, config/config.sub: Update to GNU version
+	2003-11-03.
 
-	* acconfig.h (PAGE_WIDTH): Define to 79.  This allows even in
-        Emacs nice looking lines.
+2003-11-16  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4 (md_PATH_PROG): remove macro.
-	(ud_PATH_PROG_WITH_TEST): New macro.  Similar to AC_PATH_PROG, only
-	that an additional, user-given test is performed before a program
-	is accepted.
+	* version.sh: Bump version number to 0.13-pre1.
 
-	Rewrite all tests for msgfmt and xgettext to use
-	ud_PATH_PROG_WITH_TEST to make sure no XView versions are used.
+2003-11-15  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (ACLOCAL_VERSION): Determine version number in
-	aclocal.m4 file which is used in misc/gettextize.
-	(VERSION): Bump to 0.10.20.
+	* PACKAGING: Add examples.
 
-Fri Jun 14 04:07:10 1996  Ulrich Drepper  <drepper@cygnus.com>
+2003-10-31  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.19.
+	* config/m4/fixautomake.m4 (FIX_MAKEFILE_COMPILE, FIX_MAKEFILE_DISTRIB,
+	FIX_MAKEFILE_INFO): Drop argument, use $ac_file instead.
 
-Thu Jun 13 15:19:45 1996  Ulrich Drepper  <drepper@cygnus.com>
+2003-09-13  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.18.
+	* PACKAGING: Add envsubst related files and gettext.sh.
 
-Tue Jun 11 15:02:49 1996  Ulrich Drepper  <drepper@cygnus.com>
+2003-08-23  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (ALL_LINGUAS): Add `sl' for Slowenian.
+	* version.sh: Bump version number to 0.12.2.
 
-	* Makefile.am (EXTRA_DIST): Add DISCLAIM.
-	Reported by François Pinard.
+2003-07-01  Bruno Haible  <bruno@clisp.org>
 
-Sun Jun  9 12:46:31 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/install-reloc: Also compile readlink.c.
 
-	* configure.in (ALL_LINGUAS): Do not write intlh.inst.in, but
-	intlh.inst.  Reported by Marcus Daniels.
+2003-06-19  Bruno Haible  <bruno@clisp.org>
 
-Fri Jun  7 01:51:57 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* PACKAGING: Add intmax.m4, longdouble.m4, longlong.m4,
+	printf-posix.m4, signed.m4, wchar_t.m4, wint_t.m4.
 
-	* configure.in (VERSION): Bump to 0.10.17.
+2003-06-18  Bruno Haible  <bruno@clisp.org>
 
-Thu Jun  6 01:55:47 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/install-sh: Update from automake-1.7.5.
+	Reported by Paul Eggert.
 
-	* aclocal.m4: Define USE_INCLUDED_LIBINTL in case we need the code
-        from the intl/ subdir.
+2003-06-11  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Undo patch from Wed Jun 5 00:10:36 1996.  We do
-        need intlh.inst.
+	* README.gemtext: Remove outdated file.
+	* Makefile.am (EXTRA_DIST): Remove it.
+	Reported by Guido Flohr <guido@imperia.net>.
 
-	* aclocal.m4: Remove definition of INTLSUB.  Add definition of
-	GT_NO and GT_YES (needed in intl/Makefile.in).
+2003-06-08  Bruno Haible  <bruno@clisp.org>
 
-Wed Jun  5 00:10:36 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* vms/link_options.opt: New file.
+	* vms/with-libiconv.opt, vms/without-libiconv.opt: New files.
+	* Makefile.am (EXTRA_DIST): Add them.
+	Reported by Jouk Jansen <joukj@hrem.stm.tudelft.nl>.
 
-	* configure.in (VERSION): Bump to 0.10.16.
+2003-05-22  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Don't write intlh.inst.
+	* gettext-0.12.1 released.
 
-	* configure.in (VERSION): Bump to 0.10.15.
+2003-05-22  Bruno Haible  <bruno@clisp.org>
 
-Tue Jun  4 00:10:25 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* version.sh: Bump version number to 0.12.1.
 
-	* configure.in: Rewrite intl/intlh.inst.in depending on whether
-	<locale.h> is available or not.
-	Reported by Peter Miller.
+2003-05-19  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4 (ud_WITH_NLS): Using `AC_CHECK_LIB(intl, main)' is
-	not useful.  Use `AC_CHECK_LIB(intl, bindtextdomain)' instead.
-	Patch by Uwe Ohse.
+	* config/mdate-sh: Update from automake-1.7.5.
 
-	* configure.in (AC_REPLACE_GNU_GETOPT): Removed.  We don't need
-	this because the getopt source itself knows when it can be
-	omitted.
+2003-05-17  Bruno Haible  <bruno@clisp.org>
 
-Mon Jun  3 00:04:55 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* gettext-0.12 released.
 
-	* aclocal.m4 (AC_REPLACE_GNU_GETOPT): Don't need this anymore.
-	The getopt sources should recognize when the getopt is available
-	in the library.
+2003-05-17  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.14.
+	* version.sh: Bump version number to 0.12.
 
-	* Makefile.am (AUTOMAKE_OPTIONS): Add variable to control Automake
-        behaviour.  Thanks, Tom.
+2003-05-08  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Check for __argz_count, __argz_stringify, and
-        __argz_next in aclocal.m4.
-	* aclocal.m4: Add above checks.
+	* PACKAGING: Update for changed default value of $mandir and $docdir.
 
-	* aclocal.m4: Fix typo in --with-included-gettext handling.
+2003-05-06  Bruno Haible  <bruno@clisp.org>
 
-Sun Jun  2 01:50:03 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/config.guess, config/config.sub: Update to GNU version
+	2003-02-22.
 
-	* aclocal.m4 (ud_WITH_NLS): If used in gettext always define
-        USE_NLS to yes.
+2003-04-24  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Add AC_ARG_PROGRAM.  Don't write tupdate because
-	it does not exist anymore.
+	Support for libtool-1.5.
+	* configure.ac: Postprocess the esyscmd output by replacing
+	]AC_ENABLE_SHARED_DEFAULT[ -> yes
+	]AC_ENABLE_STATIC_DEFAULT[ -> yes
+	]AC_ENABLE_FAST_INSTALL_DEFAULT[ -> yes
 
-Sat Jun  1 03:18:15 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/ltmain.sh: Upgrade to libtool-1.5.
+	2003-02-18  Bruno Haible  <bruno@clisp.org>
+		* config/ltmain.sh (install): Use "ln -s -f" instead of
+		"rm -f && ln -s" to make a symlink for a shared library. Take
+		care of Solaris /bin/ln.
+		Reported by Nelson H. F. Beebe <beebe@math.utah.edu>.
+	2001-11-03  Bruno Haible  <bruno@clisp.org>
+		* config/m4/ltmain.sh: chmod 777 the .libs directory, so that
+		"make install" succeeds.
+	* config/m4/libtool.m4: Upgrade to libtool-1.5.
+	2002-07-14  Bruno Haible  <bruno@clisp.org>
+		* config/m4/libtool.m4 (AC_LIBTOOL_SYS_DYNAMIC_LINKER): Add
+		support for GNU/FreeBSD.
 
-	* configure.in (VERSION): Bump to 0.10.13.  Remove check for Perl.
+2003-04-12  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Add the test for __argz_next.
+	* Makefile.vms: Don't use the force target.
+	Suggested by Jouk Jansen <joukj@hrem.stm.tudelft.nl>.
 
-	* configure.in: We don't want to replace the __argz_* function,
-        just check.
+2003-04-12  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Add __argz_count and __argz_stringify to
-        AC_CHECK_FUNC list.
+	* Makefile.msvc (mandir, docdir): Use datadir instead of prefix.
 
-	* aclocal.m4 (ud_WITH_NLS): Change command line option
-	`--with-gnu-gettext' to `--with-included-gettext'.  The former was
-	misleading because this option really means to ignore a possibly
-	installed GNU libintl.
+2003-04-06  Bruno Haible  <bruno@clisp.org>
 
-Sun May 26 03:09:43 1996  Ulrich Drepper  <drepper@cygnus.com>
+	* config/install-reloc: Also compile progreloc.c.
 
-	* Makefile.in (ABOUT-NLS): Don't cd to doc/ dir.  Use -I option of
-	makeinfo instead.  Patch by Tran Huu Da <tranhu@IRO.UMontreal.CA>.
+2003-04-05  Bruno Haible  <bruno@clisp.org>
 
-Sat May 11 11:40:17 1996  Ulrich Drepper  <drepper@myware>
+	* config/install-reloc: Don't define NO_LIBRARIES.
 
-	* aclocal.m4: Move INSTOBJECT initialization out of recently
-	introduced AC_TRY_LINK macro.  Reported by Jim Meyering.
+2003-04-01  Bruno Haible  <bruno@clisp.org>
 
-Sat May 11 00:31:40 1996  Ulrich Drepper  <drepper@myware>
+	* README.mingw: New file.
+	* README.vms: New file.
+	* Makefile.am (EXTRA_DIST): Add them.
 
-	* aclocal.m4: Check whether locally available libintl is GNU
-	gettext library.  In this case we use .gmo files and share/ as
-	datadir.
+2003-03-30  Bruno Haible  <bruno@clisp.org>
 
-Wed Apr 24 23:49:29 1996  Ulrich Drepper  <drepper@myware>
+	* Makefile.vms: New file.
+	* Makefile.am (EXTRA_DIST): Add Makefile.vms.
 
-	* aclocal.m4 (AC_REPLACE_GNU_GETOPT): New macro by Jim Meyering.
-	Test for GNU's getopt implementation.
+2003-03-17  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in: Use AC_REPLACE_GNU_GETOPT.
+	Native Woe32/MSVC support.
+	* Makefile.msvc: New file.
+	* README.woe32: New file.
+	* Makefile.am (EXTRA_DIST): Add them.
 
-Thu Apr  4 23:35:56 1996  Ulrich Drepper  <drepper@myware>
+2003-02-28  Bruno Haible  <bruno@clisp.org>
 
-	* Makefile.in (ABOUT-NLS): Adapt rule for using matrix.texi.
+	Support for relocatable installation.
+	* config/config.libpath: New file.
+	* config/install-reloc: New file.
+	* config/reloc-ldflags: New file.
+	* Makefile.am (EXTRA_DIST): Add them.
+	* config/compile: New file, from automake-1.7.2.
+	* INSTALL: Document --enable-relocatable and --with-libintl-prefix.
 
-Thu Apr  4 01:58:14 1996  Ulrich Drepper  <drepper@myware>
+2003-02-27  Bruno Haible  <bruno@clisp.org>
 
-	* configure.in (VERSION): Bump to 0.10.12.
+	* configure.ac: Include AC_CANONICAL_HOST, AC_ARG_ENABLE, AC_ARG_WITH,
+	AC_ARG_VAR calls from the subdir configures.
+	* Makefile.am (configure): Depend on each subdir's configure.ac.
 
-Tue Apr  2 18:55:50 1996  Ulrich Drepper  <drepper@myware>
+2003-02-22  Bruno Haible  <bruno@clisp.org>
 
-	* aclocal.m4: Test whether found xgettext program is really GNU
-	xgettext.  Else ignore it.
+	* Makefile.am (ps, pdf): Remove rules, redundant with automake 1.7.2.
 
-	* Makefile.in (all): Do all-gettext-recursive instead of
-	all-recursive.  We need a special all goal in intl/ because we
-	always have to build libintl.a.
+2003-02-18  Bruno Haible  <bruno@clisp.org>
 
-Tue Apr  2 17:34:55 1996  Ulrich Drepper  <drepper@myware>
+	Fix the 2002-09-16 fix.
+	* ltmain.sh (install): If "ln -s -f" fails (this is the case with
+	/usr/bin/ln on Solaris 2.7), fall back to "rm && ln -s".
 
-	* aclocal.m4: Major change!!!  By default the catgets emulation is
-	*not* selected anymore.  The installer explicitely has to select
-	--with-catgets.  Looking at all the nice features GNU gettext and
-	which cannot be emulated portably using the catgets interface, it
-	became unreasonable to stay with the old default.
+2003-02-18  Bruno Haible  <haible@clisp.cons.org>
 
-Tue Apr  2 03:20:19 1996  Ulrich Drepper  <drepper@myware>
+	* config/config.guess, config/config.sub: Update to GNU version
+	2003-02-03.
 
-	* configure.in (VERSION): Bump to 0.10.11.
+2003-02-16  Bruno Haible  <bruno@clisp.org>
 
-Mon Apr  1 03:37:08 1996  Ulrich Drepper  <drepper@myware>
+	Workaround autoconf >= 2.52 breakage.
+	* config/m4/libtool.m4 (AC_LIBTOOL_ARG_WITH): New macro.
+	(_LT_AC_LTCONFIG_HACK, AC_PROG_LD): Use it.
 
-	* aclocal.m4 (md_PATH_PROG): Correct quotation in message.
-        Reported by Tom Tromey.
+2003-02-12  Bruno Haible  <bruno@clisp.org>
 
-Thu Mar 28 23:03:01 1996  Karl Eichwalder  <ke@ke.central.de>
+	Big restructuring.
+	* autoconf-lib-link: New subdirectory.
+	* gettext-runtime: New subdirectory.
+	* gettext-tools: New subdirectory.
+	* config: New subdirectory.
+	* configure.ac: New file.
+	* Makefile.am: New file.
+	* version.sh: New file.
 
-	* Makefile.in (datadir): Define from @datadir@.
-	(gettextsrcdir): Define using $(datadir).
 
-Thu Mar 28 13:52:14 1996  Marcus Daniels  <marcus@sysc.pdx.edu>
-
-	* aclocal.m4: Initialize CATOBJEXT.
-
-Wed Mar 27 03:21:24 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.10.
-
-Mon Mar 25 11:20:09 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.9.
-
-	* acconfig.h (PAGE_WIDTH): Set to reasonable value 78.
-
-Mon Mar 25 01:24:12 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in: Check for strstr() functions and add to @LIBOBJS@
-        if necessary.
-
-Sun Mar 24 17:37:29 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.8.
-
-Sat Mar 23 02:49:04 1996  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: Remove trailing empty lines.
-	(md_PATH_PROG): Move near to other definitions necessary for
-	internationalized packages.
-
-Fri Mar  1 15:04:38 1996  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: Reorganized tests a bit: - don't look for libi.a
-	when test for gettext() functions - before looking for libintl.a
-	look for libintl.h
-
-	* configure.in (VERSION): Bump to 0.10.7.
-
-Thu Feb 29 23:43:55 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.6.
-
-Thu Feb 15 04:40:53 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.5.
-
-	* aclocal.m4 (nls_cv_use_nls): Rename to `USE_NLS' and substitute
-        in Makefiles.
-
-	* Makefile.in (SUBDIRS): Always run through `po'.
-
-Wed Feb 14 01:56:43 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): BUMP to 0.10.4.
-
-Mon Feb 12 02:21:18 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.3.
-
-Sat Feb 10 18:21:24 1996  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (ALL_LINGUAS): Add pl.
-
-Thu Jan  4 12:05:01 1996  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_GNU_GETTEXT): Require AC_ISC_POSIX.
-
-Thu Jan  4 11:38:31 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
-
-	* aclocal.m4 (ud_WITH_NLS): Fix typo.
-
-Wed Jan  3 20:53:53 1996  G\vran Uddeborg  <gvran@uddeborg.pp.se>
-
-	* configure.in: Add AC_ISC_POSIX test.
-
-Sat Dec 30 15:27:54 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (INTLSUB): We don't have to process it always.
-
-Fri Dec 29 21:14:14 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (stamp-h): Remove file before touching.
-
-Fri Dec 29 16:38:32 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump version to 0.10.2.
-
-Sun Dec 24 14:27:15 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (ALL_LINGUAS): Add ko.
-
-Tue Dec 19 22:05:22 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (stamp-h, Makefile, config.status): Explicitly use
-	$(SHELL) for running shell scripts.
-
-Fri Dec 15 17:25:46 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: Clear nls_cv_header_intl and nls_cv_header_libgt to
-	prevent using wrong values from cache.  Reported by Andreas
-	Schwab.
-
-Sat Dec  9 18:36:42 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h: Use PARAMS instead of __P.  Suggested by Roland
-        McGrath.
-
-Sat Dec  9 12:22:38 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (distclean-local): Add `intl/VERSION' and remove
-        `tupdate.perl'.
-
-Fri Dec  8 01:20:28 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.10.1.
-
-Wed Dec  6 16:03:58 1995  ghazi@caip.rutgers.edu  <Kaveh R. Ghazi>
-
-	* aclocal.m4 (md_TYPE_PTRDIFF_T): Fix check.
-
-Mon Dec  4 01:01:16 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h (PAGE__WIDTH): Because tupdate does not know about
-	breaking lines after PAGE_WIDTH characters it is turned off for
-	now.  When msgmerge will be used it will be enabled again.
-
-	* configure.in (VERSION): Bump to 0.10.
-
-Sun Dec  3 02:22:00 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (DISTFILES): New file BUGS.
-
-Sat Dec  2 03:17:10 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in: Add handling of README-alpha file.  If current
-	version is a test release we ship this file.  Inspired by Jim
-	Meyering configure.in.
-
-	* Makefile.in (DISTFILES): Add @DIST_ALPHA@.
-
-Tue Nov 21 02:27:48 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in: Make recursion loop aware of Make's -k option.
-	Kudos to Jim Meyering.
-
-	* Makefile.in (DISTFILES): Add AUTHORS.
-
-Mon Nov 20 20:15:12 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.14.
-
-Sat Nov 18 16:38:11 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in, aclocal.m4: Fix typo.
-
-	* aclocal.m4, configure.in:
-	Now requires autoconf-2.5.  Use new macro AC_CACHE_CHECK.
-
-Thu Nov 16 21:16:44 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h (PAGE_WIDTH): Add definition.
-
-Sat Nov 11 17:52:03 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.13.
-
-Thu Nov  9 00:29:28 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (AC_CHECK_FUNCS): Add getcwd.
-
-Tue Nov  7 13:45:47 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: Don't prepend $INTLDEPS to $LIBS.
-
-	* configure.in (VERSION): Bump to 0.9.12.
-
-	* aclocal.m4 (ud_WITH_NLS):
-	Set LIBS to correct value and filter out -intl if necessary.
-
-	* Makefile.in (ABOUT-NLS): Forgot to continue line.
-
-	* aclocal.m4: Move ud_PATH_LISPDIR out of NLS region.
-
-	* Makefile.in (uninstall-local):
-	Remove root-ABOUT-NLS instead of root-NLS.
-
-Mon Nov  6 17:27:52 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in: Be consistent with rm and &&.
-
-	* Makefile.in (ABOUT-NLS): Place file in $(srcdir).
-
-	* Makefile.in: Eliminate duplicate all-recursive rule.
-
-	* Makefile.in:
-	Renamed README.NLS to ABOUT-NLS.  Never again MS-DOG names!
-
-	* Makefile.in: Some more cleanups by Franc,ois Pinard.
-
-	* configure.in (VERSION): Bump to 0.9.11.
-
-	* aclocal.m4 (ud_GNU_GETTEXT):
-	Always create intl/ dir if it does not exist.
-
-	* aclocal.m4 (ud_PATH_LISP):
-	Prefer share/ directory to lib/ directory if both exist.
-
-	* Makefile.in (all):
-	Now a local call.  Depends on all-local and all-recursive.
-	(all-local): Depend on README.NLS.
-
-	* Makefile.in (install-src-local):
-	Add README.NLS as dependency.  Patch by Franc,ois Pinard.
-
-Mon Nov  6 00:46:48 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (md_TYPE_PTRDIFF_T): Cache result.
-
-	* configure.in (VERSION): Bump to 0.9.10.
-
-Sun Nov  5 21:58:34 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.9.
-
-Sun Nov  5 21:52:22 1995  Ulrich Drepper  <drepper@myware>
-
-	* README: Move advise for using GNU getetxt to intl/nls.texi.
-
-	* aclocal.m4:
-	Franc,ois reported that po2tbl.sed is not always generated.
-
-	* README: Some typos fixed by Franc,ois Pinard.
-
-Sun Nov  5 19:39:05 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (dist-gettext):
-	Make synonym for dist.  Recursive goal is now named
-	dist-gettext.
-
-	* configure.in (VERSION): Bump to 0.9.8.
-
-	* Makefile.in: Rename NLS to README.NLS.
-	Add rule for automatical generation of README.NLS.
-
-Sun Nov  5 11:36:53 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (dist): Suppress error message when ln failed.
-	Get files from $(srcdir) explicitly.
-
-Sat Nov  4 23:37:38 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4:
-	Fix typo: "Do not you" -> "Do not use".  Reported by Tom Tromey.
-
-Fri Nov  3 00:03:34 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (DISTFILES): Add TODO.
-
-Wed Nov  1 11:38:30 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in:
-	Remove AC_FUNC_MMAP.  This is tested in the intl/ specific part.
-
-	* configure.in (VERSION): Bump to 0.9.7.
-
-Sun Oct 29 12:02:01 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in: Replace AC_INSTALL_PROG with fp_INSTALL_PROG.
-
-	* aclocal.m4 (fp_PROG_INSTALL): Replace shell comments (#) by m4
-	comments (dnl).  This is necessary because autoconf would else
-	find the AC_PROG_INSTALL word in the comment and report a missing
-	definition.
-
-	* aclocal.m4: Use Franc,ois' fp_PROG_INSTALL macro.
-
-Sat Oct 28 23:28:11 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4:
-	Test for dcgettext function when gettext is found in C library.  This
-	works around the missing function in Solaris 2.3.
-
-	* configure.in (VERSION): Bump to 0.9.6.
-
-Sat Oct 28 14:02:28 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.5.
-
-Fri Oct 27 02:26:10 1995  Ulrich Drepper  <drepper@myware>
-
-	* THANKS: Fix typo.
-
-	* configure.in (ALL_LINGUAS): Add sv.
-
-	* aclocal.m4:
-	Use single quote where possible.  Reported by Christian von Roques.
-
-	* Makefile.in (DISTFILES): Add DISCLAIM.
-
-Tue Sep 26 00:53:48 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (md_TYPE_PTRDIFF_T):
-	Add this macro for type in obstack.h.
-
-	* aclocal.m4: Handling of AC_FD_MSG is now correct in md_PATH_PROG.
-
-	* aclocal.m4: Correct last changes.  Some newline were missing.
-
-Mon Sep 25 22:17:09 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (md_PATH_PROG):
-	Use this new macro instead of AC_PATH_PROG for msgfmt and
-	xgettext program.  This warns about uses of OpenWin versions (Wrgg).
-	(md_TYPE_PTRDIFF_T): New test.  Sun's compiler does not like the
-	definition in obstack.h.
-	All provided by Marcus Daniels.
-
-	* acconfig.h (HAVE_PTRDIFF_T):
-	Add symbol because Sun's compiler cannot live with
-	the definition in obstack.h.  Reported by Marcus Daniels.
-
-Sat Sep 23 21:17:53 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (stpcpy): One argument in test can be empty.
-	Reported by Nelson Beebe.
-
-Thu Sep 21 18:05:41 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h (HAVE_STPCPY): Define for autoconf work around.
-
-	* aclocal.m4: Some strange things with autoconf-2.4.2: If a
- 	function is tested once in AC_REPLACE_FUNCS and later with
- 	AC_CHECK_FUNCS the second definition does not define the symbol in
- 	the header.  Work around this.
-
-Wed Sep 20 22:36:04 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h, configure.in: Remove unneeded STD_INC_PATH definition.
-
-Tue Sep 19 00:09:23 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.4.
-
-Sun Sep 17 17:37:45 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (AC_PROG_YACC):
-	Add check.  Is now needed for msgfmt program.
-
-Thu Sep  7 00:19:11 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (dist): Don't use long --gzip option for tar.
-
-Tue Aug 29 23:37:44 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h: Remove comment followinf #endif.  We now use
- 	indentation.  Reported by Franc,ois Pinard.
-
-Sat Aug 19 23:21:19 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in: Correct install vs install-src goals.
-
-	* README: Add comment about alias data base.
-
-	* Makefile.in: Remove Emacs mode selection.
-
-	* configure.in:
-	Generate intl/VERSION file in configure run.  config.status will *not*
-	create the file.
-	(AC_OUTPUT): Remove intl/VERSION.
-
-	* Makefile.in: Make install call install-src-recursive and install-src.
-
-	* Makefile.in:
-	Make install-local depend on install-src.  I.e. the sources and
-	gettextize will always be installed.
-
-	* Makefile.in: Make goal more appropriate for parallel build.
-	Inspired by Franc,ois Pinard.
-
-Fri Aug 18 23:44:56 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (ALL_LINGUAS):
-	Add no@nynorsk for nynorsk dialect of norwegian language.
-	Provided by norwegian translation team.
-
-	* aclocal.m4, configure.in: Use AC_CHECK_FUNC instead of
- 	AC_FUNC_CHECK.
-
-	* configure.in (VERSION): Bump to 0.9.3.
-
-	* aclocal.m4 (ud_GNU_GETTEXT): Add stpcpy to AC_REPLACE_FUNCS.
-
-Tue Aug 15 13:15:17 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (AC_OUTPUT):
-	Generation of intl/VERSION in extra shell code failed.  Now
-	make it a autoconf'ed file.
-
-	* configure.in (AC_OUTPUT): Generate intl/VERSION file.
-
-Tue Aug 15 05:52:53 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (AC_CHECK_FUNCS): Remove getcwd, putenv, and setenv.
-
-	* Makefile.in (install-src):
-	Install NLS as root-NLS.  Now also install aclocal.m4.
-
-Mon Aug 14 23:51:36 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (AC_OUTPUT):
-	Rewrite misc/gettextize instead of misc/makelinks.
-
-	* Makefile.in (prefix, gettextsrcdir):
-	Directory values needed for installation.
-	(INSTALL, INSTALL_DATA): Programs now needed for installing NLS file.
-	(install-src, install-src-recursive): New rules for installing gettext
-	sources for use in gettextize shell script.
-
-Sun Aug 13 14:38:19 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (AC_CHECK_FUNCS):
-	Unless the AC_FUNC_MMAP function does not check for the
-	existence of the munmap function (which does not exist on NeXT)
- 	we do it ourself.  Report by Marcus Daniels.
-
-	* aclocal.m4:
-	Generate po/POTFILES correct even if srcdir is an absolute path.
-	Report by Marcus Daniels.
-
-Wed Aug  9 01:21:56 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.2.
-
-	* README: Mention points for normal user to install GNU gettext.
-
-Tue Aug  8 21:34:12 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (AC_REPLACE_FUNCS): New, to test for strcasecmp.
-
-	* aclocal.m4: Fix typo: ditribution -> distribution.
-	Report by Franc,ois Pinard.
-
-Mon Aug  7 22:52:43 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_GNU_GETTEXT):
-	Add AC_REQUIRE(...) for all test necessary for intl/
-	subdirectory.
-	(AC_CHECK_HEADERS): Add limits.h, malloc.h, string.h, unistd.h,
- 	and values.h.
-	(AC_CHECK_FUNCS): Add getcwd, putenv, setenv, strchr.
-	Reported by Franc,ois Pinard.
-
-	* configure.in (AC_REPLACE_FUNCS):
-	strcspn is now placed here instead of in AC_CHECK_FUNCS.
-	(AC_HAVE_HEADERS): Don't test for stdlib.h.
-  	Reported by Franc,ois Pinard.
-
-Fri Aug  4 22:16:58 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (Version): Bump to 0.9.1.
-
-	* configure.in (AC_OUTPUT): Remove unneeded `;'.
-
-	* Makefile.in (dist): Remove `copying instead' message.
-
-	* Makefile.in (dist): Change mode of directories to 777.
-	Add option -o to tar command.
-
-Wed Aug  2 19:37:09 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.9.
-
-	* configure.in (AC_OUTPUT):
-	Add new file misc/makelinks and make it executable.
-
-Tue Aug  1 22:51:27 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h: Remove unneeded definition of HAVE_ASPRINTF.
-
-	* Makefile.in (SUBDIRS):
-	make int doc/ first and unconditionally make in intl/.
-
-	* configure.in (VERSION): Bump to 0.8.2.
-
-Sun Jul 30 12:12:40 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_WITH_NLS):
-	Don't define INTLOBJS when using systems gettext.
-	Always define DATADIRNAME.
-	Don't compute catalogs to be installed when --disable-nls is
- 	selected.
-
-Sat Jul 29 23:22:39 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (ALL_LINGUAS): Add norwegian catalog.
-
-Sat Jul 22 01:13:06 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.8.1.
-	(ud_PATH_SITELISP): Replace with call to ud_PATH_LISPDIR.
-
-	* aclocal.m4 (ud_EMACS_TRY_PREFIX): Remove rule.
-	(ud_PATH_SITELISP): Rename to ud_PATH_LISPDIR and simplify it it.
-	By François Pinard.
-
-Wed Jul 19 02:22:18 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_PATH_SITELISP):
-	If no Emacs program is found define ac_cv_path_sitelisp
-	to `no'.
-
-	* configure.in (GETTEXTPRG):
-	Remove variable.  Always create and install gettext.
-
-Tue Jul 18 20:09:41 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.8.
-
-Tue Jul 18 01:32:09 1995  Ulrich Drepper  <drepper@myware>
-
-	* Makefile.in (DISTFILES): Remove magic.add.  Now in misc/.
-	(SUBDIRS): Add misc.
-
-	* README: Fix typo: one -> once.  Reported by Franc,ois Pinard.
-	Mention that magic.add is now found in misc/.
-
-	* configure.in (VERSION): Bump to 0.7.5.
-	(AC_OUTPUT): Add misc/Makefile.
-
-	* aclocal.m4 (ud_PATH_SITELISP):
-	Remove command for test files was incorrectly placed.
-
-Tue Jul 18 00:27:22 1995  Ulrich Drepper  <drepper@myware>
-
-	* magic.add: Moved to misc/.
-
-	* acconfig.h: Uniform test for __STDC__.
-
-Mon Jul 17 00:23:22 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_PATH_SITELISP):
-	Try path given with configures --prefix option.
-
-Sun Jul 16 22:36:07 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (SITELISPDIR, ELCFILES):
-	Test for Emacs and generation of substition values
-	is extended and now found in aclocal.m4.
-
-	* aclocal.m4 (ud_PATH_SITELISP, ud_EMACS_TRY_PREFIX):
-	New rules to test for Emacs' site-lisp directory.
-
-Sun Jul 16 00:09:24 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (ELCFILES):
-	Substitute as Make variable: $(ELCFILES) instead of $ELCFILES.
-	Reported by Eric Backus.
-
-	* configure.in (VERSION): Bump to 0.7.4.
-
-Sat Jul 15 00:48:11 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h (INVALID_PATH_CHAR): De-ANSI-fy string.
-
-	* configure.in (VERSION): Bump to 0.7.3.
-	(AC_CHECK_FUNCS): Add mblen.
-	(AC_OUTPUT): Due shorted file names now write src/tupdate.
-
-Thu Jul 13 22:35:36 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.7.2.
-
-Thu Jul 13 01:40:17 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: po-to-msg.sed and po-to-tbl.sed are now called
- 	po2msg.sed and po2tbl.sed resp.
-
-	* configure.in: Check for Emacs.
-	If Emacs exists, enable regeneration of *.elc files.
-	(AC_OUTPUT): New file checks/Makefile.
-
-	* Makefile.in (SUBDIRS): New subdirectory `checks'.
-	New goal check: simply recurse through all subdirectories.
-
-Wed Jul 12 00:26:12 1995  Ulrich Drepper  <drepper@myware>
-
-	* NLS: New version by Franc,ois Pinard.
-
-Tue Jul 11 21:43:49 1995  Ulrich Drepper  <drepper@myware>
-
-	* acconfig.h (WARN_ID_LEN):
-	new constant.  Specifies length of messages from which
-	on warnings are given to prevent breaking limits of compilers and
-	tools.
-
-	* configure.in (AC_OUTPUT): tupdate.perl is now found in src/
-
-Tue Jul 11 01:30:24 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4 (ud_GNU_GETTEXT): Construct po-to-tbl.sed
-	by removing comments.
-
-	* configure.in: Don't have default path for Perl.
-	strtoul can now be substituted when necessary.
-
-Tue Jul  4 22:27:48 1995  Ulrich Drepper  <drepper@myware>
-
-	* configure.in (VERSION): Bump to 0.7.1.
-
-	* aclocal.m4 (ud_GNU_GETTEXT): Correct loop for determining LINGUAS.
-
-	* configure.in (AC_REPLACE_FUNCS): Add memmove.
-
-Tue Jul  4 00:22:30 1995  Ulrich Drepper  <drepper@myware>
-
-	* aclocal.m4: aclocal.m4: Create intl/ before writing sed script.
-
-Sun Jul  2 01:51:36 1995  Ulrich Drepper  <drepper@myware>
-
-	* First official release.  This directory solely contains
-	the usual configuration stuff.
+See ChangeLog.0 for earlier changes.

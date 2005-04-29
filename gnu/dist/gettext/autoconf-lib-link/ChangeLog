@@ -1,0 +1,165 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* tests/rpath-1, tests/rpath-2_a, tests/rpath-2_b, tests/rpath-3_a:
+	* tests/rpath-3_b, tests/rpathcfg.sh: Use build-aux instead of config.
+
+2005-03-22  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac (AC_CONFIG_AUX_DIR): Use ../build-aux.
+	* tests/rpath*/configure.ac (AC_CONFIG_AUX_DIR): Use ../../../build-aux.
+	* Makefile.am: Replace config/m4 with m4 and config/ with build-aux/.
+	(build-aux-dir): Renamed from config-dir.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-02-07  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Upgrade to libtool-1.5.12: support for Portland Group
+	compiler, support for DragonFly BSD, relaxed copyright permissions.
+
+2005-02-07  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Use 'sed' with ranges only in C locale. Needed because
+	in the et_EE locale, the letters T U V W C Y come after Z.
+	Reported by Mike Frysinger <vapier@gentoo.org>.
+
+2005-01-09  Bruno Haible  <bruno@clisp.org>
+
+	Adaptation to automake-1.9.
+	* Makefile.am (tests/rpath*/aclocal.m4): Turn the m4 directories
+	into absolute pathnames, so that aclocal-1.9 includes the files
+	literally into the created aclocal.m4 file, instead of putting
+	m4_include(...) statements that don't work after the directory has
+	been copied to a different location.
+
+2005-01-05  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Upgrade to libtool-1.5.10.
+
+2004-11-11  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Upgrade to libtool-1.5.8 and libtool-1.5.10.
+
+2004-11-11  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Upgrade to libtool-1.5.6.
+
+2004-10-30  James Youngman  <jay@gnu.org>
+
+	* config.rpath: Modify comment to be consistent with the code.
+
+2004-02-22  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Add support for Comeau C++ on Linux.
+	Patch by Prof. Roberto Bagnara <bagnara@cs.unipr.it>.
+
+2004-02-21  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Upgrade to libtool-1.5.2.
+
+2004-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.1 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14 released.
+
+2003-12-12  Bruno Haible  <bruno@clisp.org>
+
+	Assume automake-1.8.
+	* Makefile.am (html): Remove rule.
+	(distclean-local): Renamed from distclean-am.
+	* tests/Makefile.am (distclean-local): Renamed from distclean-am.
+
+2003-12-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13.1 released.
+
+2003-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13 released.
+
+2003-10-31  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Remove argument of FIX_MAKEFILE_DISTRIB.
+
+2003-06-17  Paul Eggert  <eggert@twinsun.com>
+
+	* config.rpath: Use grep instead of egrep, since POSIX 1003.1-2001 no
+	longer requires egrep.
+
+2003-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12.1 released.
+
+2003-05-20  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (config-dir): New target.
+	(config/config.guess, config/config.sub, config/install-sh,
+	config/ltmain.sh, config/mkinstalldirs, config/missing,
+	config/config.rpath): Depend on it.
+	(distclean-am): Remove config-dir as well.
+	Reported by Frédéric L. W. Meunier <0@pervalidus.tk>.
+
+2003-05-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12 released.
+
+2003-05-02  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Document limitation on IRIX.
+
+2003-04-24  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Update to libtool-1.5. Small changes for AIX, HP-UX,
+	Irix, Linux, MacOS X, Windows.
+
+2003-04-24  Bruno Haible  <bruno@clisp.org>
+
+	* config.rpath: Don't set sys_lib_search_path_spec and
+	sys_lib_dlsearch_path_spec.
+
+2003-02-28  Bruno Haible  <bruno@clisp.org>
+
+	Support for relocatable installation.
+	* INSTALL: Document --enable-relocatable and --with-libintl-prefix.
+
+2003-02-22  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (ps, pdf): Remove rules, redundant with automake 1.7.2.
+
+2003-02-12  Bruno Haible  <bruno@clisp.org>
+
+	Extracted from gettext package.
+	* configure.ac: New file.
+	* Makefile.am: New file.
+	* AUTHORS, COPYING, INSTALL, NEWS, README: New files.
+	* m4/Makefile.am: New file.
+	* tests/Makefile.am: New file.
+	* tests/rpath-1: Move temporary directories down under tstdir.
+	Rename global_top_srcdir to global_top_auxdir.
+	* tests/rpath-2_a: Likewise.
+	* tests/rpath-2_b: Likewise.
+	* tests/rpath-3_a: Likewise.
+	* tests/rpath-3_b: Likewise.
+	* tests/rpath-2???: Use $srcdir instead of $top_srcdir/tests.
+	* tests/rpath-3???: Likewise.
+	* tests/rpathcfg.sh: Move temporary directories down under tstdir.
+	Use $srcdir instead of $top_srcdir/tests.
+	* tests/rpath*/Makefile.am: Use global_top_auxdir instead of
+	global_top_srcdir.
+	* tests/rpath*/configure.ac: Use AC_CONFIG_AUX_DIR instead of
+	AC_CONFIG_AUX_DIRS; the latter is undocumented and doesn't work
+	with automake-1.7.2.
+
