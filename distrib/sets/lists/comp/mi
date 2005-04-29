@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.780 2005/04/29 15:27:33 christos Exp $
+#	$NetBSD: mi,v 1.781 2005/04/29 21:08:13 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1900,18 +1900,18 @@
 ./usr/share/locale/uk/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-uk	nls
 ./usr/share/locale/zh_CN/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-zh_CN	nls
 ./usr/share/locale/zh_TW/LC_MESSAGES/gettext-tools.mo	comp-c_locale-zh_TW	nls
-./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-c_locale-da	obsolete
-./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-c_locale-de	obsolete
-./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-c_locale-es	obsolete
-./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-c_locale-fr	obsolete
-./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-c_locale-ko	obsolete
-./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-c_locale-nl	obsolete
-./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-c_locale-no	obsolete
-./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c_locale-no	nls
-./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-c_locale-pl	obsolete
-./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-c_locale-pt	obsolete
-./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-c_locale-sl	obsolete
-./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-c_locale-sv	obsolete
+./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-obsolete	nls
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/man/cat1/addr2line.0		comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat
