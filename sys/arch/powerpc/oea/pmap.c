@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2004/08/24 21:31:49 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26.4.1 2005/04/29 11:28:20 kent Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2004/08/24 21:31:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26.4.1 2005/04/29 11:28:20 kent Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1544,13 +1544,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int i;
 	int poolflags = PR_NOWAIT;
 
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if (pmap_pvo_remove_depth > 0)
-		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
-	if (++pmap_pvo_enter_depth > 1)
-		panic("pmap_pvo_enter: called recursively!");
-#endif
-
 	/*
 	 * Compute the PTE Group index.
 	 */
@@ -1558,6 +1551,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	ptegidx = va_to_pteg(pm, va);
 
 	msr = pmap_interrupts_off();
+
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+	if (pmap_pvo_remove_depth > 0)
+		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
+	if (++pmap_pvo_enter_depth > 1)
+		panic("pmap_pvo_enter: called recursively!");
+#endif
+
 	/*
 	 * Remove any existing mapping for this page.  Reuse the
 	 * pvo entry if there a mapping.
@@ -2030,7 +2031,8 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    battable[va >> ADDR_SR_SHFT].batl;
 				register_t mask =
 				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
-				*pap = (batl & mask) | (va & ~mask);
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
 				return TRUE;
 			}
 		} else {
@@ -2041,11 +2043,13 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			    BAT601_VA_MATCH_P(batu, batl, va)) {
 				register_t mask =
 				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
-				*pap = (batl & mask) | (va & ~mask);
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
 				return TRUE;
 			} else if (SR601_VALID_P(sr) &&
 				   SR601_PA_MATCH_P(sr, va)) {
-				*pap = va;
+				if (pap)
+					*pap = va;
 				return TRUE;
 			}
 		}
@@ -2056,7 +2060,9 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
-		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
+		if (pap)
+			*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN)
+			    | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
 	return pvo != NULL;
@@ -2493,11 +2499,10 @@ pmap_print_mmuregs(void)
 	register_t sdr1;
 	
 	cpuvers = MFPVR() >> 16;
-
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PPC_OEA64
 	addr = 0;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
@@ -2529,22 +2534,22 @@ pmap_print_mmuregs(void)
 	printf("SDR1:\t0x%lx\n", (long) sdr1);
 #ifndef PPC_OEA64
 	printf("SR[]:\t");
-	for (i=0; i<4; i++)
+	for (i = 0; i < 4; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<8; i++)
+	for ( ; i < 8; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<12; i++)
+	for ( ; i < 12; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<16; i++)
+	for ( ; i < 16; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n");
 #endif
 
 	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		printf("0x%08lx 0x%08lx, ",
 			soft_ibat[i].batu, soft_ibat[i].batl);
 		if (i == 1)
@@ -2552,7 +2557,7 @@ pmap_print_mmuregs(void)
 	}
 	if (cpuvers != MPC601) {
 		printf("\ndBAT[]:\t");
-		for (i=0; i<4; i++) {
+		for (i = 0; i < 4; i++) {
 			printf("0x%08lx 0x%08lx, ",
 				soft_dbat[i].batu, soft_dbat[i].batl);
 			if (i == 1)

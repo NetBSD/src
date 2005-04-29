@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_wfq.h,v 1.2.34.1 2005/04/29 11:27:58 kent Exp $	*/
 /*	$KAME: altq_wfq.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 /*
  *  March 27, 1997.  Written by Hiroshi Kyusojin of Keio University
- *  (kyu@mt.cs.keio.ac.jp). 
+ *  (kyu@mt.cs.keio.ac.jp).
  */
 
 #ifndef _ALTQ_ALTQ_WFQ_H_

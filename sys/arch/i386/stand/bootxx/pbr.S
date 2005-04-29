@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.11 2004/03/22 07:11:00 lukem Exp $	*/
+/*	$NetBSD: pbr.S,v 1.11.8.1 2005/04/29 11:28:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ boot:
 	testl	%ebx, %ebx		/* was it an extended ptn? */
 	jnz	boot_lba		/* yes - boot with LBA reads */
 
-/* get maximum (BIOS) sector */
+/* get CHS values from BIOS */
 	push	%dx				/* save drive number */
 	movb	$8, %ah
 	int	$0x13				/* chs info */

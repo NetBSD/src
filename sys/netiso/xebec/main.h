@@ -1,9 +1,9 @@
-/*	$NetBSD: main.h,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: main.h,v 1.5.30.1 2005/04/29 11:29:36 kent Exp $	*/
 
 #define TRUE 1
 #define FALSE 0
 #define LINELEN 2350
-	/* approx limit on token size for C compiler 
+	/* approx limit on token size for C compiler
 	 * which matters for the purpose of debugging (astring.c...)
 	 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $	*/
+/*	$NetBSD: elink3.c,v 1.109.2.1 2005/04/29 11:28:49 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.109.2.1 2005/04/29 11:28:49 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,51 +188,50 @@ const struct ep_media ep_509_media[] = {
 	  0 },
 };
 
-void	ep_internalconfig __P((struct ep_softc *sc));
-void	ep_vortex_probemedia __P((struct ep_softc *sc));
-void	ep_509_probemedia __P((struct ep_softc *sc));
+void	ep_internalconfig(struct ep_softc *sc);
+void	ep_vortex_probemedia(struct ep_softc *sc);
+void	ep_509_probemedia(struct ep_softc *sc);
 
-static void eptxstat __P((struct ep_softc *));
-static int epstatus __P((struct ep_softc *));
-int	epinit __P((struct ifnet *));
-void	epstop __P((struct ifnet *, int));
-int	epioctl __P((struct ifnet *, u_long, caddr_t));
-void	epstart __P((struct ifnet *));
-void	epwatchdog __P((struct ifnet *));
-void	epreset __P((struct ep_softc *));
-static void epshutdown __P((void *));
-void	epread __P((struct ep_softc *));
-struct mbuf *epget __P((struct ep_softc *, int));
-void	epmbuffill __P((void *));
-void	epmbufempty __P((struct ep_softc *));
-void	epsetfilter __P((struct ep_softc *));
-void	ep_roadrunner_mii_enable __P((struct ep_softc *));
-void	epsetmedia __P((struct ep_softc *));
+static void eptxstat(struct ep_softc *);
+static int epstatus(struct ep_softc *);
+int	epinit(struct ifnet *);
+void	epstop(struct ifnet *, int);
+int	epioctl(struct ifnet *, u_long, caddr_t);
+void	epstart(struct ifnet *);
+void	epwatchdog(struct ifnet *);
+void	epreset(struct ep_softc *);
+static void epshutdown(void *);
+void	epread(struct ep_softc *);
+struct mbuf *epget(struct ep_softc *, int);
+void	epmbuffill(void *);
+void	epmbufempty(struct ep_softc *);
+void	epsetfilter(struct ep_softc *);
+void	ep_roadrunner_mii_enable(struct ep_softc *);
+void	epsetmedia(struct ep_softc *);
 
 /* ifmedia callbacks */
-int	ep_media_change __P((struct ifnet *ifp));
-void	ep_media_status __P((struct ifnet *ifp, struct ifmediareq *req));
+int	ep_media_change(struct ifnet *ifp);
+void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 
 /* MII callbacks */
-int	ep_mii_readreg __P((struct device *, int, int));
-void	ep_mii_writereg __P((struct device *, int, int, int));
-void	ep_statchg __P((struct device *));
+int	ep_mii_readreg(struct device *, int, int);
+void	ep_mii_writereg(struct device *, int, int, int);
+void	ep_statchg(struct device *);
 
-void	ep_tick __P((void *));
+void	ep_tick(void *);
 
-static int epbusyeeprom __P((struct ep_softc *));
-u_int16_t ep_read_eeprom __P((struct ep_softc *, u_int16_t));
-static inline void ep_reset_cmd __P((struct ep_softc *sc, 
-					u_int cmd, u_int arg));
-static inline void ep_finish_reset __P((bus_space_tag_t, bus_space_handle_t));
-static inline void ep_discard_rxtop __P((bus_space_tag_t, bus_space_handle_t));
-static __inline int ep_w1_reg __P((struct ep_softc *, int));
+static int epbusyeeprom(struct ep_softc *);
+u_int16_t ep_read_eeprom(struct ep_softc *, u_int16_t);
+static inline void ep_reset_cmd(struct ep_softc *sc, u_int cmd, u_int arg);
+static inline void ep_finish_reset(bus_space_tag_t, bus_space_handle_t);
+static inline void ep_discard_rxtop(bus_space_tag_t, bus_space_handle_t);
+static __inline int ep_w1_reg(struct ep_softc *, int);
 
 /*
  * MII bit-bang glue.
  */
-u_int32_t ep_mii_bitbang_read __P((struct device *));
-void ep_mii_bitbang_write __P((struct device *, u_int32_t));
+u_int32_t ep_mii_bitbang_read(struct device *);
+void ep_mii_bitbang_write(struct device *, u_int32_t);
 
 const struct mii_bitbang_ops ep_mii_bitbang_ops = {
 	ep_mii_bitbang_read,
@@ -380,14 +379,14 @@ epconfig(sc, chipset, enaddr)
 	 * 11-bit parameter, and  11 bits isn't enough to hold a full-size
 	 * packet length.
 	 * Commands to these cards implicitly upshift a packet size
-	 * or threshold by 2 bits. 
+	 * or threshold by 2 bits.
 	 * To detect  cards with large-packet support, we probe by setting
 	 * the transmit threshold register, then change windows and
 	 * read back the threshold register directly, and see if the
 	 * threshold value was shifted or not.
 	 */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-	    SET_TX_AVAIL_THRESH | ELINK_LARGEWIN_PROBE); 
+	    SET_TX_AVAIL_THRESH | ELINK_LARGEWIN_PROBE);
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, ELINK_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
@@ -410,7 +409,7 @@ epconfig(sc, chipset, enaddr)
 	}
 
 	/*
-	 * Ensure Tx-available interrupts are enabled for 
+	 * Ensure Tx-available interrupts are enabled for
 	 * start the interface.
 	 * XXX should be in epinit()?
 	 */
@@ -432,7 +431,7 @@ epconfig(sc, chipset, enaddr)
 	ether_ifattach(ifp, enaddr);
 
 	/*
-	 * Finish configuration: 
+	 * Finish configuration:
 	 * determine chipset if the front-end couldn't do so,
 	 * show board details, set media.
 	 */
@@ -872,7 +871,7 @@ epinit(ifp)
 
 
 /*
- * Set multicast receive filter. 
+ * Set multicast receive filter.
  * elink3 hardware has no selective multicast filter in hardware.
  * Enable reception of all multicasts and filter in software.
  */
@@ -1283,7 +1282,7 @@ readcheck:
 		if ((status & INTR_LATCH) == 0) {
 			/*
 			 * No interrupt, read the packet and continue
-			 * Is  this supposed to happen? Is my motherboard 
+			 * Is  this supposed to happen? Is my motherboard
 			 * completely busted?
 			 */
 			epread(sc);
@@ -1476,7 +1475,7 @@ epintr(arg)
 		if (status)
 			rnd_add_uint32(&sc->rnd_source, status);
 #endif
-	}	
+	}
 
 	/* no more interrupts */
 	return (ret);
@@ -1850,7 +1849,7 @@ epshutdown(arg)
 	void *arg;
 {
 	struct ep_softc *sc = arg;
-	int s = splnet(); 
+	int s = splnet();
 
 	if (sc->enabled) {
 		epstop(&sc->sc_ethercom.ec_if, 0);

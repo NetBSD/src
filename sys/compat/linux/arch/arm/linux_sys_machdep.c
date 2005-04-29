@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.9 2003/10/10 14:44:42 matt Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.9.8.1 2005/04/29 11:28:33 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.9 2003/10/10 14:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.9.8.1 2005/04/29 11:28:33 kent Exp $");
 
 #include <sys/systm.h>
 

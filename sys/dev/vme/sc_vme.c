@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.9.10.1 2005/04/29 11:29:19 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9.10.1 2005/04/29 11:29:19 kent Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,9 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $");
 
 int sunsc_vme_options = 0;
 
-static int	sc_vme_match __P((struct device *, struct cfdata *, void *));
-static void	sc_vme_attach __P((struct device *, struct device *, void *));
-static int	sc_vme_intr __P((void *));
+static int	sc_vme_match(struct device *, struct cfdata *, void *);
+static void	sc_vme_attach(struct device *, struct device *, void *);
+static int	sc_vme_intr(void *);
 
 /* Auto-configuration glue. */
 CFATTACH_DECL(sc_vme, sizeof(struct sunscpal_softc),
@@ -128,7 +128,7 @@ sc_vme_match(parent, cf, aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
-        vme_am_t		mod; 
+        vme_am_t		mod;
         vme_addr_t		vme_addr;
 
 	/* Make sure there is something there... */
@@ -226,7 +226,7 @@ sc_vme_attach(parent, self, aux)
 	}
 
 	/*
-	 * Set up interrupts on the board. 
+	 * Set up interrupts on the board.
 	 */
 	SUNSCPAL_WRITE_1(sc, sunscpal_intvec, va->ivector & 0xFF);
 

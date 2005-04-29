@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.24 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.24.8.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,14 +68,17 @@
 
 #ifdef DEBUG
 
+#include <machine/stdarg.h>
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.24 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.24.8.1 2005/04/29 11:29:39 kent Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/syslog.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
@@ -90,31 +93,43 @@ int lfs_bwrite_log(struct buf *bp, char *file, int line)
 	a.a_desc = VDESC(vop_bwrite);
 	a.a_bp = bp;
 
-	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
-		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
+	if (!(bp->b_flags & (B_DELWRI | B_GATHERED))) {
+		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags,
+			curproc->p_pid);
+	}
 	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
 }
 
 void lfs_dumplog(void)
 {
 	int i;
+	char *cp;
 
-	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
+	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH;
+	     i = (i + 1) % LFS_LOGLENGTH)
 		if (lfs_log[i].file) {
-			printf("lbn %" PRId64 " %s %lx %d %s\n",
+			/* Only print out basename, for readability */
+			cp = lfs_log[i].file;
+			while(*cp)
+				++cp;
+			while(*cp != '/' && cp > lfs_log[i].file)
+				--cp;
+
+			printf("lbn %" PRId64 " %s %lx %d, %d %s\n",
 				lfs_log[i].block,
 				lfs_log[i].op,
 				lfs_log[i].flags,
+				lfs_log[i].pid,
 				lfs_log[i].line,
-				lfs_log[i].file + 56);
+				cp);
 		}
 }
 
-void 
+void
 lfs_dump_super(struct lfs *lfsp)
 {
 	int i;
-	
+
 	printf("%s%x\t%s%x\t%s%d\t%s%d\n",
 	       "magic	 ", lfsp->lfs_magic,
 	       "version	 ", lfsp->lfs_version,
@@ -125,42 +140,42 @@ lfs_dump_super(struct lfs *lfsp)
 	       "bsize	 ", lfsp->lfs_bsize,
 	       "fsize	 ", lfsp->lfs_fsize,
 	       "frag	 ", lfsp->lfs_frag);
-	
+
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 	       "minfree	 ", lfsp->lfs_minfree,
 	       "inopb	 ", lfsp->lfs_inopb,
 	       "ifpb	 ", lfsp->lfs_ifpb,
 	       "nindir	 ", lfsp->lfs_nindir);
-	
+
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 	       "nseg	 ", lfsp->lfs_nseg,
 	       "nspf	 ", lfsp->lfs_nspf,
 	       "cleansz	 ", lfsp->lfs_cleansz,
 	       "segtabsz ", lfsp->lfs_segtabsz);
-	
+
 	printf("%s%x\t%s%d\t%s%lx\t%s%d\n",
 	       "segmask	 ", lfsp->lfs_segmask,
 	       "segshift ", lfsp->lfs_segshift,
 	       "bmask	 ", (unsigned long)lfsp->lfs_bmask,
 	       "bshift	 ", lfsp->lfs_bshift);
-	
+
 	printf("%s%lu\t%s%d\t%s%lx\t%s%u\n",
 	       "ffmask	 ", (unsigned long)lfsp->lfs_ffmask,
 	       "ffshift	 ", lfsp->lfs_ffshift,
 	       "fbmask	 ", (unsigned long)lfsp->lfs_fbmask,
 	       "fbshift	 ", lfsp->lfs_fbshift);
-	
+
 	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
 	       "sushift	 ", lfsp->lfs_sushift,
 	       "fsbtodb	 ", lfsp->lfs_fsbtodb,
 	       "cksum	 ", lfsp->lfs_cksum,
 	       "maxfilesize ", (long long)lfsp->lfs_maxfilesize);
-	
+
 	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
 		printf(" %x", lfsp->lfs_sboffs[i]);
 	printf("\n");
-	
+
 	printf("Checkpoint Info\n");
 	printf("%s%d\t%s%x\t%s%d\n",
 	       "freehd	 ", lfsp->lfs_freehd,
@@ -180,7 +195,7 @@ void
 lfs_dump_dinode(struct ufs1_dinode *dip)
 {
 	int i;
-	
+
 	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\t%s%d\n",
 	       "mode   ", dip->di_mode,
 	       "nlink  ", dip->di_nlink,
@@ -205,12 +220,12 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 {
 	int actual;
 #if 0
-	static int offset; 
+	static int offset;
 #endif
-	
+
 	if ((actual = 1) == 1)
 		return; /* XXXX not checking this anymore, really */
-	
+
 	if (sp->sum_bytes_left >= FINFOSIZE
 	   && sp->fip->fi_nblocks > 512) {
 		printf("%s:%d: fi_nblocks = %d\n",file,line,sp->fip->fi_nblocks);
@@ -218,21 +233,21 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 		Debugger();
 #endif
 	}
-	
+
 	if (sp->sum_bytes_left > 484) {
 		printf("%s:%d: bad value (%d = -%d) for sum_bytes_left\n",
 		       file, line, sp->sum_bytes_left, fs->lfs_sumsize-sp->sum_bytes_left);
 		panic("too many bytes");
 	}
-	
+
 	actual = fs->lfs_sumsize
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
 			- sizeof(int32_t)*((sp->ninodes+INOPB(fs)-1) / INOPB(fs));
 #if 0
-	if (actual - sp->sum_bytes_left < offset) 
-	{  
+	if (actual - sp->sum_bytes_left < offset)
+	{
 		printf("%s:%d: offset changed %d -> %d\n", file, line,
 		       offset, actual-sp->sum_bytes_left);
 		offset = actual - sp->sum_bytes_left;
@@ -266,7 +281,7 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 	daddr_t blkno;
 	struct buf **bpp;
 	struct vnode *devvp;
-	
+
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	blkno = (*(sp->bpp))->b_blkno;
 	for (bpp = sp->bpp; bpp < sp->cbpp; bpp++) {
@@ -288,5 +303,25 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 		}
 		blkno += fsbtodb(fs, btofsb(fs, (*bpp)->b_bcount));
 	}
+}
+
+int lfs_debug_log_subsys[DLOG_MAX];
+
+/*
+ * Log events from various debugging areas of LFS, depending on what
+ * the user has enabled.
+ */
+void
+lfs_debug_log(int subsys, const char *fmt, ...)
+{
+	va_list ap;
+
+	/* If not debugging this subsys, exit */
+	if (lfs_debug_log_subsys[subsys] == 0)
+		return;
+
+	va_start(ap, fmt);
+	vlog(LOG_DEBUG, fmt, ap);
+	va_end(ap);
 }
 #endif /* DEBUG */

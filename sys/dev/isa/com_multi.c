@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.18 2004/09/14 17:38:30 drochner Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.18.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.18 2004/09/14 17:38:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.18.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.18 2004/09/14 17:38:30 drochner Exp 
 
 #include "locators.h"
 
-int com_multi_probe __P((struct device *, struct cfdata *, void *));
-void com_multi_attach __P((struct device *, struct device *, void *));
+int com_multi_probe(struct device *, struct cfdata *, void *);
+void com_multi_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_multi, sizeof(struct com_softc),
     com_multi_probe, com_multi_attach, NULL, NULL);
@@ -114,7 +114,7 @@ com_multi_probe(parent, match, aux)
 	int iobase;
 	struct cfdata *cf = match;
 	struct commulti_attach_args *ca = aux;
- 
+
 	if (cf->cf_loc[COMMULTICF_SLAVE] != COMMULTICF_SLAVE_DEFAULT &&
 	    cf->cf_loc[COMMULTICF_SLAVE] != ca->ca_slave)
 		return (0);

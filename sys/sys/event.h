@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.13 2004/04/25 16:42:43 simonb Exp $	*/
+/*	$NetBSD: event.h,v 1.13.4.1 2005/04/29 11:29:37 kent Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -121,7 +121,7 @@ struct kevent {
  * This is currently visible to userland to work around broken
  * programs which pull in <sys/proc.h> or <sys/select.h>.
  */
-#include <sys/queue.h> 
+#include <sys/queue.h>
 struct knote;
 SLIST_HEAD(klist, knote);
 
@@ -137,7 +137,7 @@ struct kfilter_mapping {
 	uint32_t	filter;		/* filter to lookup or return */
 };
 
-/* map filter to name (max size len) */ 
+/* map filter to name (max size len) */
 #define KFILTER_BYFILTER	_IOWR('k', 0, struct kfilter_mapping)
 /* map name to filter (len ignored) */
 #define KFILTER_BYNAME		_IOWR('k', 1, struct kfilter_mapping)
@@ -160,11 +160,11 @@ MALLOC_DECLARE(M_KEVENT);
  */
 struct filterops {
 	int	f_isfd;			/* true if ident == filedescriptor */
-	int	(*f_attach)	__P((struct knote *));
+	int	(*f_attach)	(struct knote *);
 					/* called when knote is ADDed */
-	void	(*f_detach)	__P((struct knote *));
+	void	(*f_detach)	(struct knote *);
 					/* called when knote is DELETEd */
-	int	(*f_event)	__P((struct knote *, long));
+	int	(*f_event)	(struct knote *, long);
 					/* called when event is triggered */
 };
 
@@ -218,9 +218,9 @@ struct timespec;
 
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
-int	kqueue __P((void));
-int	kevent __P((int, const struct kevent *, size_t, struct kevent *, size_t,
-		    const struct timespec *));
+int	kqueue(void);
+int	kevent(int, const struct kevent *, size_t, struct kevent *, size_t,
+		    const struct timespec *);
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 

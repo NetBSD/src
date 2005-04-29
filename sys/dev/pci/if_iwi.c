@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.4 2005/01/15 13:27:23 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.4.2.1 2005/04/29 11:29:06 kent Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.4 2005/01/15 13:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.4.2.1 2005/04/29 11:29:06 kent Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -151,14 +151,14 @@ static int
 iwi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	
+
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
 		return 0;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2200BG ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG)
 		return 1;
-		
+
 	return 0;
 }
 
@@ -807,7 +807,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		iwi_fix_channel(ic, m);
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	
+
 	/* Send the frame to the upper layer */
 	ieee80211_input(ifp, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
 
@@ -1509,7 +1509,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could allocate firmware DMA memory\n",
+		aprint_error("%s: could not allocate firmware DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
@@ -1618,7 +1618,7 @@ fail5:	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
 fail4:	bus_dmamem_unmap(sc->sc_dmat, virtaddr, size);
 fail3:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
 fail2:	bus_dmamap_destroy(sc->sc_dmat, map);
-	
+
 fail1:	return error;
 }
 
@@ -1688,7 +1688,7 @@ iwi_free_firmware(struct iwi_softc *sc)
 {
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
-			
+
 	free(sc->fw.boot, M_DEVBUF);
 	free(sc->fw.ucode, M_DEVBUF);
 	free(sc->fw.main, M_DEVBUF);

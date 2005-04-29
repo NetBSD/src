@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.6 2005/01/11 01:39:36 uwe Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.6.2.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.6 2005/01/11 01:39:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.6.2.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -275,7 +275,7 @@ static const keysym_t pckbd_keydesc_fr[] = {
     KC(13),  KS_equal,		KS_plus,	KS_braceright,
     KC(16),  KS_a,
     KC(17),  KS_z,
-    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,
     KC(27),  KS_dollar,		KS_sterling,	KS_currency,
     KC(30),  KS_q,
     KC(39),  KS_m,
@@ -399,7 +399,7 @@ static const keysym_t pckbd_keydesc_pt[] = {
     KC(10),  KS_9,		KS_parenright,	KS_bracketright,
     KC(11),  KS_0,		KS_equal,	KS_braceright,
     KC(12),  KS_apostrophe,	KS_question,
-    KC(13),  KS_less,		KS_greater,
+    KC(13),  KS_guillemotleft,	KS_guillemotright,
     KC(26),  KS_plus,		KS_asterisk,
     KC(27),  KS_dead_acute,	KS_dead_grave,
     KC(39),  KS_ccedilla,	KS_Ccedilla,

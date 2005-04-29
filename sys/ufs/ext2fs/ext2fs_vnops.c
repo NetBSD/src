@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.57 2004/09/21 03:10:35 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.57.4.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.57 2004/09/21 03:10:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.57.4.1 2005/04/29 11:29:38 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ ext2fs_mknod(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
-	struct mount	*mp;	
+	struct mount	*mp;
 	ino_t		ino;
 
 	if ((error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
@@ -417,7 +417,7 @@ ext2fs_setattr(v)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
 			(error = suser(cred, &p->p_acflag)) &&
-			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -793,7 +793,7 @@ abortit:
 	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
+	 * as to be able to change "..". We must repeat the call
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
@@ -820,7 +820,7 @@ abortit:
 	}
 	/*
 	 * 2) If target doesn't exist, link the target
-	 *    to the source and unlink the source. 
+	 *    to the source and unlink the source.
 	 *    Otherwise, rewrite the target directory
 	 *    entry to reference the source inode and
 	 *    expunge the original entry's existence.
@@ -978,7 +978,7 @@ abortit:
 			dp->i_flag |= IN_CHANGE;
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
-				UIO_SYSSPACE, IO_NODELOCKED, 
+				UIO_SYSSPACE, IO_NODELOCKED,
 				tcnp->cn_cred, (size_t *)0, NULL);
 			if (error == 0) {
 					namlen = dirbuf.dotdot_namlen;
@@ -1117,7 +1117,12 @@ ext2fs_mkdir(v)
 	if (VTOI(dvp)->i_e2fs->e2fs_bsize > dvp->v_mount->mnt_stat.f_bsize)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
-		ip->i_e2fs_size = VTOI(dvp)->i_e2fs->e2fs_bsize;
+		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
+		if (error) {
+			dp->i_e2fs_nlink--;
+			dp->i_flag |= IN_CHANGE;
+			goto bad;
+		}
 		ip->i_flag |= IN_CHANGE;
 	}
 
@@ -1258,12 +1263,15 @@ ext2fs_symlink(v)
 	ip = VTOI(vp);
 	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)ip->i_din.e2fs_din->e2di_shortlink, ap->a_target, len);
-		ip->i_e2fs_size = len;
+		error = ext2fs_setsize(ip, len);
+		if (error)
+			goto bad;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred,
 		    (size_t *)0, NULL);
+bad:
 	if (error)
 		vput(vp);
 	return (error);
@@ -1286,7 +1294,7 @@ ext2fs_readlink(v)
 	struct ufsmount	*ump = ip->i_ump;
 	int		isize;
 
-	isize = ip->i_e2fs_size;
+	isize = ext2fs_size(ip);
 	if (isize < ump->um_maxsymlinklen ||
 	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
@@ -1311,7 +1319,7 @@ ext2fs_advlock(v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 
-	return lf_advlock(ap, &ip->i_lockf, ip->i_e2fs_size);
+	return lf_advlock(ap, &ip->i_lockf, ext2fs_size(ip));
 }
 
 /*

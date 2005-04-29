@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.13 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.13.8.1 2005/04/29 11:28:51 kent Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * m i d w a y v a r . h
  *
  * we define the en_softc here so that bus specific modules can allocate
- * it as the first item in their softc.   note that BSD-required 
+ * it as the first item in their softc.   note that BSD-required
  * "struct device" is in the mid_softc!
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
@@ -114,7 +114,7 @@ struct en_softc {
   bus_space_tag_t en_memt;	/* for EN_READ/EN_WRITE */
   bus_space_handle_t en_base;	/* base of en card */
   bus_size_t en_obmemsz;	/* size of en card (bytes) */
-  void (*en_busreset) __P((void *));
+  void (*en_busreset)(void *);
 				/* bus specific reset function */
 
   /* serv list */
@@ -123,7 +123,7 @@ struct en_softc {
   u_int16_t swsl_head, 		/* ends of swslist (index into swslist) */
 	    swsl_tail;
   u_int32_t swsl_size;		/* # of items in swsl */
-  
+
 
   /* xmit DMA */
   u_int32_t dtq[MID_DTQ_N];	/* sw copy of DMA q (see ENIDQ macros) */
@@ -220,6 +220,6 @@ struct en_softc {
  * exported functions
  */
 
-void	en_attach __P((struct en_softc *));
-EN_INTR_TYPE	en_intr __P((void *));
-void	en_reset __P((struct en_softc *));
+void	en_attach(struct en_softc *);
+EN_INTR_TYPE	en_intr(void *);
+void	en_reset(struct en_softc *);

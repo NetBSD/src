@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.7 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: auacer.c,v 1.7.2.1 2005/04/29 11:29:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.7 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.7.2.1 2005/04/29 11:29:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,7 +508,7 @@ auacer_set_rate(struct auacer_softc *sc, int mode, u_int srate)
 	int ret;
 	u_int ratetmp;
 
-	DPRINTF(ALI_DEBUG_API, ("auacer_set_rate: srate=%lu\n", srate));
+	DPRINTF(ALI_DEBUG_API, ("auacer_set_rate: srate=%u\n", srate));
 
 	ratetmp = srate;
 	if (mode == AUMODE_RECORD)

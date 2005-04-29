@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.22 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.22.8.1 2005/04/29 11:29:16 kent Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.22 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.22.8.1 2005/04/29 11:29:16 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -114,10 +114,10 @@ struct bpp_softc {
 	struct hwstate		sc_hwcurrent;
 };
 
-static int	bppmatch	__P((struct device *, struct cfdata *, void *));
-static void	bppattach	__P((struct device *, struct device *, void *));
-static int	bppintr		__P((void *));
-static void	bpp_setparams	__P((struct bpp_softc *, struct hwstate *));
+static int	bppmatch(struct device *, struct cfdata *, void *);
+static void	bppattach(struct device *, struct device *, void *);
+static int	bppintr		(void *);
+static void	bpp_setparams(struct bpp_softc *, struct hwstate *);
 
 CFATTACH_DECL(bpp, sizeof(struct bpp_softc),
     bppmatch, bppattach, NULL, NULL);
@@ -355,9 +355,9 @@ bppwrite(dev, uio, flags)
 			u_int8_t tcr;
 			size_t size = len;
 			DMA_SETUP(lsi, &bp, &len, 0, &size);
-	
+
 #ifdef DEBUG
-			if (bppdebug) { 
+			if (bppdebug) {
 				int i;
 				printf("bpp: writing %ld : ", len);
 				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
@@ -384,7 +384,7 @@ bppwrite(dev, uio, flags)
 			if ((error = sc->sc_error) != 0)
 				goto out;
 
-			/* 
+			/*
 			 * lsi64854_pp_intr() does this part.
 			 *
 			 * len -= size;

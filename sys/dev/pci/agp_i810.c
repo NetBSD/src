@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.23 2004/11/06 07:43:30 xtraeme Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.23.4.1 2005/04/29 11:29:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.23 2004/11/06 07:43:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.23.4.1 2005/04/29 11:29:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,9 @@ struct agp_i810_softc {
 	bus_space_tag_t bst;		/* bus_space tag */
 	bus_space_handle_t bsh;		/* bus_space handle */
 	struct pci_attach_args vga_pa;
+
+	void *sc_powerhook;
+	struct pci_conf_state sc_pciconf;
 };
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
@@ -86,6 +89,7 @@ static struct agp_memory *agp_i810_alloc_memory(struct agp_softc *, int,
 static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
+static void agp_i810_powerhook(int, void *);
 
 struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -221,7 +225,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);
-		
+
 		agp_flush_cache();
 		/* Install the GATT. */
 		WRITE4(AGP_I810_PGTBL_CTL, gatt->ag_physical | 1);
@@ -237,10 +241,10 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		case AGP_I830_GCC1_GMS_STOLEN_512:
 			isc->stolen = (512 - 132) * 1024 / 4096;
 			break;
-		case AGP_I830_GCC1_GMS_STOLEN_1024: 
+		case AGP_I830_GCC1_GMS_STOLEN_1024:
 			isc->stolen = (1024 - 132) * 1024 / 4096;
 			break;
-		case AGP_I830_GCC1_GMS_STOLEN_8192: 
+		case AGP_I830_GCC1_GMS_STOLEN_8192:
 			isc->stolen = (8192 - 132) * 1024 / 4096;
 			break;
 		default:
@@ -309,6 +313,11 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
+
+	isc->sc_powerhook = powerhook_establish(agp_i810_powerhook, sc);
+	if (isc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish PCI power hook\n",
+		    sc->as_dev.dv_xname);
 
 	return 0;
 }
@@ -658,4 +667,19 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 		WRITE4(AGP_I810_GTT + (i >> AGP_PAGE_SHIFT) * 4, 0);
 	mem->am_is_bound = 0;
 	return 0;
+}
+
+static void
+agp_i810_powerhook(int why, void *arg)
+{
+	struct agp_softc *sc = (struct agp_softc *)arg;
+	struct agp_i810_softc *isc = sc->as_chipc;
+
+	if (why == PWR_RESUME) {
+		pci_conf_restore(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+		agp_flush_cache();
+	} else if ((why == PWR_STANDBY) || (why == PWR_SUSPEND))
+		pci_conf_capture(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+
+	return;
 }

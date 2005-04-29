@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.4 2003/08/07 16:34:06 agc Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.4.8.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -50,7 +50,7 @@
 
 extern struct simplelock kprintf_slock;
 
-/* 
+/*
  * Use cpu_simple_lock() and cpu_simple_unlock().  These are the actual
  * atomic locking operations, and never attempt to print debugging
  * information.
@@ -85,7 +85,7 @@ do {									\
 /*
  * NOTE: the kprintf mutex must be held when these functions are called!
  */
-int	kprintf __P((const char *, int, void *, char *, _BSD_VA_LIST_));
-void	klogpri __P((int));
+int	kprintf(const char *, int, void *, char *, _BSD_VA_LIST_);
+void	klogpri(int);
 
 #endif /* _SYS_KPRINTF_H_ */

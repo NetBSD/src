@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.19 2004/11/15 17:16:28 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.19.4.1 2005/04/29 11:29:15 kent Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.19 2004/11/15 17:16:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.19.4.1 2005/04/29 11:29:15 kent Exp $");
 
 #include <sys/errno.h>
 
@@ -57,7 +57,7 @@ static void rf_ShutdownReconEvent(void *ignored)
 	pool_destroy(&rf_pools.revent);
 }
 
-int 
+int
 rf_ConfigureReconEvent(RF_ShutdownList_t **listp)
 {
 
@@ -100,10 +100,10 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 
 		RF_ETIMER_STOP(reconDesc->recon_exec_timer);
 		RF_ETIMER_EVAL(reconDesc->recon_exec_timer);
-		reconDesc->reconExecTicks += 
+		reconDesc->reconExecTicks +=
 			RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
 		if (reconDesc->reconExecTicks > reconDesc->maxReconExecTicks)
-			reconDesc->maxReconExecTicks = 
+			reconDesc->maxReconExecTicks =
 				reconDesc->reconExecTicks;
 		if (reconDesc->reconExecTicks >= MAX_RECON_EXEC_USECS) {
 			/* we've been running too long.  delay for
@@ -112,7 +112,7 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 			reconDesc->numReconExecDelays++;
 #endif				/* RF_RECON_STATS > 0 */
 
-			status = ltsleep(&reconDesc->reconExecTicks, PRIBIO, 
+			status = ltsleep(&reconDesc->reconExecTicks, PRIBIO,
 					 "recon delay", RECON_TIMO,
 					 &rctrl->eq_mutex);
 			RF_ASSERT(status == EWOULDBLOCK);
@@ -146,8 +146,8 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 	return (event);
 }
 /* enqueues a reconstruction event on the indicated queue */
-void 
-rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg, 
+void
+rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg,
 		   RF_Revent_t type)
 {
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
@@ -181,7 +181,32 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 	return (t);
 }
 
-void 
+/*
+  rf_DrainReconEventQueue() -- used in the event of a reconstruction
+  problem, this function simply drains all pending events from the
+  reconstruct event queue.
+ */
+
+void
+rf_DrainReconEventQueue(RF_RaidReconDesc_t *reconDesc)
+{
+	RF_ReconCtrl_t *rctrl = reconDesc->raidPtr->reconControl;
+	RF_ReconEvent_t *event;
+
+	RF_LOCK_MUTEX(rctrl->eq_mutex);
+	while (rctrl->eventQueue!=NULL) {
+
+		event = rctrl->eventQueue;
+		rctrl->eventQueue = event->next;
+		event->next = NULL;
+		rctrl->eq_count--;
+		/* dump it */
+		rf_FreeReconEventDesc(event);
+	}
+	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
+}
+
+void
 rf_FreeReconEventDesc(RF_ReconEvent_t *event)
 {
 	pool_put(&rf_pools.revent, event);

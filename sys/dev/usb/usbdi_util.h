@@ -1,7 +1,7 @@
-/*	$NetBSD: usbdi_util.h,v 1.31 2004/12/03 08:53:40 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.31.4.1 2005/04/29 11:29:19 kent Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,5 +90,8 @@ void usb_detach_wakeup(device_ptr_t);
 
 const usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type,
 				      int subtype);
+const usb_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type,
+					 int subtype,
+					 usb_interface_descriptor_t *id);
 #define USBD_SUBTYPE_ANY (~0)
 

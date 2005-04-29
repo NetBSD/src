@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop_pci.c,v 1.6 2003/04/09 01:35:12 thorpej Exp $	*/
+/*	$NetBSD: esiop_pci.c,v 1.6.10.1 2005/04/29 11:29:05 kent Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.6 2003/04/09 01:35:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.6.10.1 2005/04/29 11:29:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.6 2003/04/09 01:35:12 thorpej Exp $"
 #include <dev/pci/siop_pci_common.h>
 #include <dev/ic/esiopvar.h>
 
-int     esiop_pci_match __P((struct device *, struct cfdata *, void *));
-void    esiop_pci_attach __P((struct device *, struct device *, void *));
+int     esiop_pci_match(struct device *, struct cfdata *, void *);
+void    esiop_pci_attach(struct device *, struct device *, void *);
 
 struct esiop_pci_softc {
 	struct esiop_softc esiop;

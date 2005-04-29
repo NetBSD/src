@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.30.4.1 2005/04/29 11:29:33 kent Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,6 +6,8 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Heiko W.Rupp <hwr@pilhuhn.de>
+ *
+ * IPv6-over-GRE contributed by Gert Doering <gert@greenie.muc.de>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30.4.1 2005/04/29 11:29:33 kent Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -102,9 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $");
 void gre_inet_ntoa(struct in_addr in); 	/* XXX */
 #endif
 
-struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
+struct gre_softc *gre_lookup(struct mbuf *, u_int8_t);
 
-int	gre_input2 __P((struct mbuf *, int, u_char));
+int gre_input2(struct mbuf *, int, u_char);
 
 /*
  * De-encapsulate a packet and feed it back through ip input (this
@@ -125,7 +127,7 @@ gre_input(struct mbuf *m, ...)
 
 	ret = gre_input2(m, off, proto);
 	/*
-	 * ret == 0 : packet not processed, meaning that 
+	 * ret == 0 : packet not processed, meaning that
 	 * no matching tunnel that is up is found.
 	 * we inject it to raw ip socket to see if anyone picks it up.
 	 */
@@ -145,7 +147,7 @@ int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
 	struct greip *gip;
-	int s;
+	int s, isr;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_int16_t flags;
@@ -186,22 +188,31 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
+			isr = NETISR_IP;
 			break;
 #ifdef NS
 		case ETHERTYPE_NS:
 			ifq = &nsintrq;
-			schednetisr(NETISR_NS);
+			isr = NETISR_NS;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
 			ifq = &atintrq1;
-			schednetisr(NETISR_ATALK);
+			isr = NETISR_ATALK;
 			break;
 #endif
+#ifdef INET6
 		case ETHERTYPE_IPV6:
-			/* FALLTHROUGH */
+#ifdef GRE_DEBUG
+			printf( "ip_gre.c/gre_input2: IPv6 packet\n" );
+#endif
+			ifq = &ip6intrq;
+			isr = NETISR_IPV6;
+			break;
+#endif
 		default:	   /* others not yet supported */
+			printf( "ip_gre.c/gre_input2: unhandled ethertype 0x%04x\n", (int) ntohs(gip->gi_ptype) );
 			return (0);
 		}
 		break;
@@ -239,6 +250,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	} else {
 		IF_ENQUEUE(ifq, m);
 	}
+	/* we need schednetisr since the address family may change */
+	schednetisr(isr);
 	splx(s);
 
 	return (1);	/* packet is done, no further processing needed */
@@ -341,9 +354,7 @@ gre_mobile_input(struct mbuf *m, ...)
  * Find the gre interface associated with our src/dst/proto set.
  */
 struct gre_softc *
-gre_lookup(m, proto)
-	struct mbuf *m;
-	u_int8_t proto;
+gre_lookup(struct mbuf *m, u_int8_t proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;

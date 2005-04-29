@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2003/08/07 16:28:28 agc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44.8.1 2005/04/29 11:28:15 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,8 +171,8 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
  * the virtually-indexed cache on mips3 CPUs.
  */
 #ifdef MIPS3_PLUS
-#define PMAP_PREFER(pa, va)             pmap_prefer((pa), (va))
-void	pmap_prefer(vaddr_t, vaddr_t *);
+#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (td))
+void	pmap_prefer(vaddr_t, vaddr_t *, int);
 #endif /* MIPS3_PLUS */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
@@ -180,8 +180,10 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
-#define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
-#define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
+vaddr_t mips_pmap_map_poolpage(paddr_t);
+paddr_t mips_pmap_unmap_poolpage(vaddr_t);
+#define	PMAP_MAP_POOLPAGE(pa)	mips_pmap_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)	mips_pmap_unmap_poolpage(va)
 
 /*
  * Other hooks for the pool allocator.

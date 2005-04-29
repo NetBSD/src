@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.7 2003/10/30 22:46:17 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.7.8.1 2005/04/29 11:28:11 kent Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -69,12 +69,14 @@ struct ieee_ext {
  * Floats whose exponent is zero are either zero (iff all fraction
  * bits are zero) or subnormal values.
  *
- * A NaN is a `signalling NaN' if its QUIETNAN bit is clear in its
- * high fraction; if the bit is set, it is a `quiet NaN'.
+ * A NaN is a `signalling NaN' if its QUIETNAN bit is set in its
+ * high fraction; if the bit is clear, it is a `quiet NaN'.
  */
 #define	EXT_EXP_INFNAN	32767
 
 #if 0
+#define	SNG_QUIETNAN	(1 << 22)
+#define	DBL_QUIETNAN	(1 << 19)
 #define	EXT_QUIETNAN	(1 << 15)
 #endif
 

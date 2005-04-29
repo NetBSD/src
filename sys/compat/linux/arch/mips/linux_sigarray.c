@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.5 2002/03/31 22:40:18 christos Exp $ */
+/*	$NetBSD: linux_sigarray.c,v 1.5.18.1 2005/04/29 11:28:33 kent Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.5 2002/03/31 22:40:18 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.5.18.1 2005/04/29 11:28:33 kent Exp $");
 
-/* 
- * From Linux's include/asm-mips/signal.h 
+/*
+ * From Linux's include/asm-mips/signal.h
  */
 const int linux_to_native_signo[LINUX__NSIG] = {
 	0,				/* 0 */
@@ -49,7 +49,7 @@ const int linux_to_native_signo[LINUX__NSIG] = {
 	SIGILL,
 	SIGTRAP,		/* 5 */
 	SIGABRT,
-	SIGEMT, 
+	SIGEMT,
 	SIGFPE,
 	SIGKILL,
 	SIGBUS,		/* 10 */

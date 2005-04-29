@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2003/07/15 01:31:41 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.8.1 2005/04/29 11:28:07 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2003/07/15 01:31:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.8.1 2005/04/29 11:28:07 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ int
 mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
@@ -76,5 +76,5 @@ int
 mainbus_print(void *aux, const char *pnp)
 {
 
-	return (pnp ? QUIET : UNCONF);
+	return pnp ? QUIET : UNCONF;
 }

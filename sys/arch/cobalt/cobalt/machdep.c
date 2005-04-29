@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2004/08/28 12:32:48 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.4.1 2005/04/29 11:28:06 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2004/08/28 12:32:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.4.1 2005/04/29 11:28:06 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -270,7 +270,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

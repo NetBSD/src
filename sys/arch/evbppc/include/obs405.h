@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.1 2005/01/13 17:07:24 shige Exp $	*/
+/*	$NetBSD: obs405.h,v 1.1.2.1 2005/04/29 11:28:09 kent Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -65,11 +65,10 @@
 
 #include <dev/ic/comreg.h>
 
-#define OBS405_COM_FREQ		(COM_FREQ * 4)	/* UART CLK 7.3728 MHz */
-
 /*
  * extern variables and functions
  */
-extern void obs405_device_register(struct device *dev, void *aux);
+extern void obs405_consinit(int com_freq);
+extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
 
 #endif	/* _EVBPPC_OBS405_H_ */

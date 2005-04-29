@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.256 2004/12/06 19:28:12 cube Exp $
+#	$NetBSD: INSTALL,v 1.256.4.1 2005/04/29 11:28:12 kent Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -91,6 +91,7 @@ options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -123,6 +124,7 @@ file-system 	KERNFS		# /kern
 #options 	NFSSERVER	# Network File System server
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -275,6 +277,7 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 
@@ -660,6 +663,7 @@ umass*	at uhub? port ? configuration ? interface ?
 #ugen*	at uhub? port ? configuration ? interface ?
 
 # USB Ethernet adapters
+#atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -740,6 +744,7 @@ include	"arch/i386/conf/GENERIC.local"
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

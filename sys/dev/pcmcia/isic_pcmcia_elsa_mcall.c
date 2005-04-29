@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.7 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.7.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -87,10 +87,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.7 2004/08/08 23:17:13 m
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */
-static u_int8_t elsa_mcall_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void elsa_mcall_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void elsa_mcall_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void elsa_mcall_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+static u_int8_t elsa_mcall_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void elsa_mcall_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void elsa_mcall_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void elsa_mcall_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -98,7 +98,7 @@ static void elsa_mcall_write_fifo __P((struct isic_softc *sc, int what, const vo
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 static int PCMCIA_IO_BASE = 0;		/* ap: XXX hack */
-static void		
+static void
 elsa_mcall_read_fifo(void *buf, const void *base, size_t len)
 {
 }
@@ -229,7 +229,7 @@ isic_attach_elsamcall(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry 
 	sc->writefifo = elsa_mcall_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.18 2004/03/15 23:51:12 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.18.8.1 2005/04/29 11:29:19 kent Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -116,7 +116,7 @@
  *
  *	The page map to control where ram appears in the address space.
  *	We choose to have RAM start at 0 in the 24 bit address space.
- * 
+ *
  *	to get the phyiscal address of the board's RAM you must take the
  *	top 12 bits of the physical address of the register address and
  *	or in the 4 bits from the status word as bits 17-20 (remember that
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.18 2004/03/15 23:51:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.18.8.1 2005/04/29 11:29:19 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ struct ievme {
 /* Supported media */
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
-};      
+};
 #define NMEDIA	(sizeof(media) / sizeof(media[0]))
 
 /*
@@ -233,13 +233,13 @@ static int media[] = {
  */
 
 
-static void ie_vmereset __P((struct ie_softc *, int));
-static void ie_vmeattend __P((struct ie_softc *, int));
-static void ie_vmerun __P((struct ie_softc *));
-static int  ie_vmeintr __P((struct ie_softc *, int));
+static void ie_vmereset(struct ie_softc *, int);
+static void ie_vmeattend(struct ie_softc *, int);
+static void ie_vmerun(struct ie_softc *);
+static int  ie_vmeintr(struct ie_softc *, int);
 
-int ie_vme_match __P((struct device *, struct cfdata *, void *));
-void ie_vme_attach __P((struct device *, struct device *, void *));
+int ie_vme_match(struct device *, struct cfdata *, void *);
+void ie_vme_attach(struct device *, struct device *, void *);
 
 struct ie_vme_softc {
 	struct ie_softc ie;
@@ -315,8 +315,8 @@ ie_vmeintr(sc, where)
 	return (0);
 }
 
-void ie_memcopyin __P((struct ie_softc *, void *, int, size_t));
-void ie_memcopyout __P((struct ie_softc *, const void *, int, size_t));
+void ie_memcopyin(struct ie_softc *, void *, int, size_t);
+void ie_memcopyout(struct ie_softc *, const void *, int, size_t);
 
 /*
  * Copy board memory to kernel.
@@ -387,10 +387,10 @@ ie_memcopyout(sc, p, offset, size)
 }
 
 /* read a 16-bit value at BH offset */
-u_int16_t ie_vme_read16 __P((struct ie_softc *, int offset));
+u_int16_t ie_vme_read16(struct ie_softc *, int offset);
 /* write a 16-bit value at BH offset */
-void ie_vme_write16 __P((struct ie_softc *, int offset, u_int16_t value));
-void ie_vme_write24 __P((struct ie_softc *, int offset, int addr));
+void ie_vme_write16(struct ie_softc *, int offset, u_int16_t value);
+void ie_vme_write24(struct ie_softc *, int offset, int addr);
 
 u_int16_t
 ie_vme_read16(sc, offset)
@@ -406,7 +406,7 @@ ie_vme_read16(sc, offset)
 
 void
 ie_vme_write16(sc, offset, v)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	u_int16_t v;
 {
@@ -417,7 +417,7 @@ ie_vme_write16(sc, offset, v)
 
 void
 ie_vme_write24(sc, offset, addr)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	int addr;
 {

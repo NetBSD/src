@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.11.8.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.11.8.1 2005/04/29 11:28:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -106,8 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp 
 #define MCA_CBIO		0x200	/* Configuration Base IO Address */
 #define MCA_IOSZ		0x10	/* I/O space size */
 
-int ep_mca_match __P((struct device *, struct cfdata *, void *));
-void ep_mca_attach __P((struct device *, struct device *, void *));
+int ep_mca_match(struct device *, struct cfdata *, void *);
+void ep_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ep_mca, sizeof(struct ep_softc),
     ep_mca_match, ep_mca_attach, NULL, NULL);
@@ -126,7 +126,7 @@ const struct ep_mca_product {
 };
 
 static const struct ep_mca_product *ep_mca_lookup
-    __P((const struct mca_attach_args *));
+   (const struct mca_attach_args *);
 
 static const struct ep_mca_product *
 ep_mca_lookup(ma)
@@ -175,21 +175,21 @@ ep_mca_attach(parent, self, aux)
 	 *               \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \________/
 	 *          \_______ Boot ROM Address Range: 0=disabled
 	 *                     X=0xc2000-0xc3fff + (x * 0x2000)
 	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
-	 * \________/  \_/ 
+	 * \________/  \_/
 	 *          \    \__ Transceiver Type: 00=on-board (RJ45), 01=ext(AUI)
 	 *           \______ I/O Address Range: 0x200-0x20f + ((x>>2) * 0x400)
 	 *
 	 * POS register 5: (adf pos3)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *          \____/
 	 *               \__ Interrupt level

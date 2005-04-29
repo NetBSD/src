@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.8 2004/07/19 01:04:35 heas Exp $	*/
+/*	$NetBSD: ffb.c,v 1.8.4.1 2005/04/29 11:28:24 kent Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8 2004/07/19 01:04:35 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8.4.1 2005/04/29 11:28:24 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,8 +252,9 @@ ffb_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+		return EIO; /* not supported yet */
 	default:
-		return -1; /* not supported yet */
+		return EPASSTHROUGH;
         }
 
 	return (0);

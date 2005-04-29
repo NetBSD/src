@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/06/14 12:57:14 fredette Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.32.1 2005/04/29 11:28:27 kent Exp $	*/
 
 
 #include <sys/types.h>
@@ -8,8 +8,8 @@
 
 int hz = 1000;
 
-long
-getsecs()
+long 
+getsecs(void)
 {
 	long ticks;
 
@@ -17,8 +17,8 @@ getsecs()
 	return ((ticks / hz));
 }
 
-long
-getticks()
+long 
+getticks(void)
 {
 	long ticks;
 

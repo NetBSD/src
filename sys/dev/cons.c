@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.53 2004/05/16 15:44:11 wiz Exp $	*/
+/*	$NetBSD: cons.c,v 1.53.4.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.53 2004/05/16 15:44:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.53.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,7 +159,7 @@ cnopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 	return ((*cdev->d_open)(cndev, flag, mode, p));
 }
- 
+
 int
 cnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -190,7 +190,7 @@ cnclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (0);
 	return ((*cdev->d_close)(dev, flag, mode, p));
 }
- 
+
 int
 cnread(dev_t dev, struct uio *uio, int flag)
 {
@@ -209,7 +209,7 @@ cnread(dev_t dev, struct uio *uio, int flag)
 		return error;
 	return ((*cdev->d_read)(dev, uio, flag));
 }
- 
+
 int
 cnwrite(dev_t dev, struct uio *uio, int flag)
 {
@@ -349,7 +349,7 @@ cnputc(int c)
 {
 
 	if (cn_tab == NULL)
-		return;			
+		return;
 
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
@@ -395,7 +395,7 @@ cnflush(void)
 		return;
 	(*cn_tab->cn_flush)(cn_tab->cn_dev);
 }
-  
+
 void
 cnhalt(void)
 {
@@ -415,7 +415,7 @@ cn_redirect(dev_t *devp, int is_read, int *error)
 	 */
 	*error = ENXIO;
 	if (constty != NULL && minor(dev) == 0 &&
-	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE ))) {
+	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {
 		if (is_read) {
 			*error = 0;
 			return NULL;

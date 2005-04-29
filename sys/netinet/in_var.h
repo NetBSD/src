@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.53 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: in_var.h,v 1.53.4.1 2005/04/29 11:29:33 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ extern	const	int	inetctlerrmap[];
 { \
 	struct ifaddr *ifa; \
 \
-	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) { \
+	IFADDR_FOREACH(ifa, ifp) { \
 		if (ifa->ifa_addr->sa_family == AF_INET) \
 			break; \
 	} \
@@ -308,6 +308,10 @@ void	in_purgeaddr(struct ifaddr *, struct ifnet *);
 void	in_purgeif(struct ifnet *);
 void	ip_input(struct mbuf *);
 int	ipflow_fastforward(struct mbuf *);
+
+#ifdef SYSCTLFN_PROTO
+int	sysctl_inpcblist(SYSCTLFN_PROTO);
+#endif
 
 #endif
 

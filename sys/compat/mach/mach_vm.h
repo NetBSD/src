@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.26 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.26.8.1 2005/04/29 11:28:41 kent Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	_MACH_VM_H_
 
 
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/param.h>
 
 #include <compat/mach/mach_types.h>
@@ -212,7 +212,7 @@ typedef struct {
 } mach_vm_inherit_reply_t;
 
 /*
- * make_memory_entry_64 
+ * make_memory_entry_64
  */
 
 typedef struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.81.2.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.81.2.1 2005/04/29 11:29:23 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -75,8 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $
 
 struct vm_map *lkm_map;
 
-#define	LKM_SPACE_ALLOC(size)		uvm_km_alloc(lkm_map, (size))
-#define	LKM_SPACE_FREE(addr, size)	uvm_km_free(lkm_map, (addr), (size))
+#define	LKM_SPACE_ALLOC(size) \
+	uvm_km_alloc(lkm_map, (size), 0, UVM_KMF_WIRED)
+#define	LKM_SPACE_FREE(addr, size) \
+	uvm_km_free(lkm_map, (addr), (size), UVM_KMF_WIRED)
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG
@@ -101,7 +103,7 @@ static int	lkm_state = LKMS_IDLE;
 static TAILQ_HEAD(lkms_head, lkm_table) lkmods;	/* table of loaded modules */
 static struct lkm_table	*curp;			/* global for in-progress ops */
 
-static struct lkm_table *lkmlookup(int, char *, int *);
+static struct lkm_table *lkmlookup(int, char *, int, int *);
 static struct lkm_table *lkmalloc(void);
 static void lkmfree(void);
 static void lkmunreserve(int);
@@ -173,7 +175,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
  * Look up for a LKM in the list.
  */
 static struct lkm_table *
-lkmlookup(int i, char *name, int *error)
+lkmlookup(int i, char *name, int need_copyin, int *error)
 {
 	struct lkm_table *p;
 	char istr[MAXLKMNAME];
@@ -195,9 +197,12 @@ lkmlookup(int i, char *name, int *error)
 		 * Copy name and lookup id from all loaded
 		 * modules.  May fail.
 		 */
-		*error = copyinstr(name, istr, MAXLKMNAME - 1, NULL);
-		if (*error)
-			return (NULL);
+		if (need_copyin) {
+			*error = copyinstr(name, istr, MAXLKMNAME - 1, NULL);
+			if (*error)
+				return (NULL);
+		} else
+			strncpy(istr, name, MAXLKMNAME - 1);
 		istr[MAXLKMNAME - 1] = '\0';
 
 		TAILQ_FOREACH(p, &lkmods, link) {
@@ -273,7 +278,7 @@ lkmunreserve(int delsymtab)
 	if (curp && curp->syms) {
 		if (delsymtab)
 			ksyms_delsymtab(curp->private.lkm_any->lkm_name);
-		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
+		LKM_SPACE_FREE(curp->syms, curp->sym_size);
 		curp->syms = 0;
 	}
 	/*
@@ -404,6 +409,9 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (error)
 			break;
 
+#ifdef PMAP_NEED_PROCWR
+		pmap_procwr(&proc0, curp->area + curp->offset, i);
+#endif
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
@@ -560,7 +568,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		unloadp = (struct lmc_unload *)data;
 
-		curp = lkmlookup(unloadp->id, unloadp->name, &error);
+		curp = lkmlookup(unloadp->id, unloadp->name, 1, &error);
 		if (curp == NULL)
 			break;
 
@@ -580,7 +588,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		statp = (struct lmc_stat *)data;
 
-		if ((curp = lkmlookup(statp->id, statp->name, &error)) == NULL)
+		if ((curp = lkmlookup(statp->id, statp->name, 0, &error)) == NULL)
 			break;
 
 		if ((error = (*curp->entry)(curp, LKM_E_STAT, LKM_VERSION)))
@@ -973,7 +981,7 @@ drvlkm_unload(struct cfdriver **cd, const struct cfattachlkminit *cai,
 			if (error) {
 				printf("%s: unable to deregister cfattach\n",
 				       cfai->cfai_list[i]->ca_name);
-				return (error);	
+				return (error);
 			}
 		}
 	}

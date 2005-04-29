@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.23 2004/09/14 20:20:49 drochner Exp $	*/
+/*	$NetBSD: satlink.c,v 1.23.4.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.23 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.23.4.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,9 @@ struct satlink_softc {
  */
 #define	SATLINK_TIMEOUT		(hz/10)
 
-int	satlinkprobe __P((struct device *, struct cfdata *, void *));
-void	satlinkattach __P((struct device *, struct device *, void *));
-void	satlinktimeout __P((void *));
+int	satlinkprobe(struct device *, struct cfdata *, void *);
+void	satlinkattach(struct device *, struct device *, void *);
+void	satlinktimeout(void *);
 
 CFATTACH_DECL(satlink, sizeof(struct satlink_softc),
     satlinkprobe, satlinkattach, NULL, NULL);
@@ -274,8 +274,8 @@ satlinkopen(dev, flags, fmt, p)
 		    SATLINK_CMD_RESET);
 
 	/* Reset the ring buffer, and start the DMA loop. */
-	sc->sc_uptr = 0; 
-	sc->sc_sptr = 0; 
+	sc->sc_uptr = 0;
+	sc->sc_sptr = 0;
 	sc->sc_lastresid = sc->sc_bufsize;
 	memset(sc->sc_buf, 0, sc->sc_bufsize);
 	error = isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_buf,

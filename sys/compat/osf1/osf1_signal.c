@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.24 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.24.4.1 2005/04/29 11:28:42 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.24 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.24.4.1 2005/04/29 11:28:42 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,43 +81,29 @@ osf1_sys_sigaction(l, v, retval)
 	struct osf1_sys_sigaction_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
-	struct sigaction *nbsa, *obsa, tmpbsa;
-	struct compat_16_sys___sigaction14_args sa;
-	caddr_t sg;
+	struct sigaction nbsa, obsa;
 	int error;
 
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
 		return EINVAL;
-	sg = stackgap_init(p, 0);
 	nosa = SCARG(uap, nsa);
 	oosa = SCARG(uap, osa);
 
-	if (oosa != NULL)
-		obsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
-	else
-		obsa = NULL;
-
 	if (nosa != NULL) {
-		nbsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 		if ((error = copyin(nosa, &tmposa, sizeof(tmposa))) != 0)
 			return error;
-		osf1_cvt_sigaction_to_native(&tmposa, &tmpbsa);
-		if ((error = copyout(&tmpbsa, nbsa, sizeof(tmpbsa))) != 0)
-			return error;
-	} else
-		nbsa = NULL;
+		osf1_cvt_sigaction_to_native(&tmposa, &nbsa);
+	}
 
-	SCARG(&sa, signum) = osf1_to_native_signo[SCARG(uap, signum)];
-	SCARG(&sa, nsa) = nbsa;
-	SCARG(&sa, osa) = obsa;
-
-	if ((error = compat_16_sys___sigaction14(l, &sa, retval)) != 0)
+	if ((error = sigaction1(p,
+				osf1_to_native_signo[SCARG(uap, signum)],
+				(nosa ? &nbsa : NULL),
+				(oosa ? &obsa : NULL),
+				NULL, 0)) != 0)
 		return error;
 
 	if (oosa != NULL) {
-		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
-			return error;
-		osf1_cvt_sigaction_from_native(&tmpbsa, &tmposa);
+		osf1_cvt_sigaction_from_native(&obsa, &tmposa);
 		if ((error = copyout(&tmposa, oosa, sizeof(tmposa))) != 0)
 			return error;
 	}
@@ -125,7 +111,7 @@ osf1_sys_sigaction(l, v, retval)
 	return 0;
 }
 
-int 
+int
 osf1_sys_sigaltstack(l, v, retval)
 	struct lwp *l;
 	void *v;

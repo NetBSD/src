@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.80 2004/12/22 05:11:24 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.80.2.1 2005/04/29 11:29:31 kent Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -21,8 +21,8 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY 
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE FREEBSD PROJECT OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -30,7 +30,7 @@
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE   
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * From: Version 2.4, Thu Apr 30 17:17:21 MSD 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.80 2004/12/22 05:11:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.80.2.1 2005/04/29 11:29:31 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -689,7 +689,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;
 	struct ifqueue *ifq = NULL;		/* XXX */
-	int s, len, rv = 0;
+	int s, error = 0;
 	u_int16_t protocol;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -746,7 +746,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * become invalid. So we
 		 * - don't let packets with src ip addr 0 thru
 		 * - we flag TCP packets with src ip 0 as an error
-		 */	
+		 */
 		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
 			u_int8_t proto = ip->ip_p;
 
@@ -757,12 +757,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			else
 				return (0);
 		}
-		
+
 		/*
 		 * Put low delay, telnet, rlogin and ftp control packets
 		 * in front of the queue.
 		 */
-		 
+
 		if (!IF_QFULL(&sp->pp_fastq) &&
 		    ((ip && (ip->ip_tos & IPTOS_LOWDELAY)) ||
 		     (th && (INTERACTIVE(ntohs(th->th_sport)) ||
@@ -821,7 +821,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 */
 			protocol = htons(PPP_IP);
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
-				rv = ENETDOWN;
+				error = ENETDOWN;
 		}
 		break;
 #endif
@@ -841,7 +841,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 */
 			protocol = htons(PPP_IPV6);
 			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
-				rv = ENETDOWN;
+				error = ENETDOWN;
 		}
 		break;
 #endif
@@ -887,43 +887,21 @@ nosupport:
 		h->protocol = protocol;
 	}
 
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	len = m->m_pkthdr.len;
-	if (ifq != NULL
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
-#endif
-	    ) {
-		if (IF_QFULL(ifq)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m);
-			if (rv == 0)
-				rv = ENOBUFS;
-		}
-		else
-			IF_ENQUEUE(ifq, m);
-	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
-	if (rv != 0) {
-		++ifp->if_oerrors;
-		splx(s);
-		return (rv);
+
+	error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+
+	if (error == 0) {
+		/*
+		 * Count output packets and bytes.
+		 * The packet length includes header + additional hardware
+		 * framing according to RFC 1333.
+		 */
+		if (!(ifp->if_flags & IFF_OACTIVE))
+			(*ifp->if_start)(ifp);
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 	}
-
-	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
-
-	/*
-	 * Count output packets and bytes.
-	 * The packet length includes header + additional hardware framing
-	 * according to RFC 1333.
-	 */
-	ifp->if_obytes += len + sp->pp_framebytes;
 	splx(s);
-	return (0);
+	return error;
 }
 
 void
@@ -2554,7 +2532,7 @@ sppp_lcp_tlu(struct sppp *sp)
 	/* notify low-level driver of state change */
 	if (sp->pp_chg)
 		sp->pp_chg(sp, (int)sp->pp_phase);
-	
+
 	if (sp->pp_phase == SPPP_PHASE_NETWORK)
 		/* if no NCP is starting, close down */
 		sppp_lcp_check_and_close(sp);
@@ -3087,14 +3065,14 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		case IPCP_OPT_PRIMDNS:
 			if (len >= 6 && p[1] == 6) {
 				sp->dns_addrs[0] = p[2] << 24 | p[3] << 16 |
-					p[4] << 8 | p[5]; 
+					p[4] << 8 | p[5];
 			}
 			break;
 
 		case IPCP_OPT_SECDNS:
 			if (len >= 6 && p[1] == 6) {
 				sp->dns_addrs[1] = p[2] << 24 | p[3] << 16 |
-					p[4] << 8 | p[5]; 
+					p[4] << 8 | p[5];
 			}
 			break;
 #ifdef notyet
@@ -3851,7 +3829,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			}
 			break;
 		}
-		
+
 		if (debug) {
 			log(LOG_DEBUG,
 			    "%s: chap input <%s id=0x%x len=%d name=",
@@ -3962,7 +3940,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 				    h->ident, sp->confid[IDX_CHAP]);
 			break;
 		}
-		if (sp->hisauth.name != NULL && 
+		if (sp->hisauth.name != NULL &&
 		    (name_len != sp->hisauth.name_len
 		    || memcmp(name, sp->hisauth.name, name_len) != 0)) {
 			log(LOG_INFO, "%s: chap response, his name ",
@@ -4539,7 +4517,7 @@ sppp_pap_scr(struct sppp *sp)
 	    	sp->pp_if.if_xname);
 	    return;
 	}
-	
+
 	sp->confid[IDX_PAP] = ++sp->pp_seq[IDX_PAP];
 	pwdlen = sp->myauth.secret_len;
 	idlen = sp->myauth.name_len;
@@ -4669,7 +4647,7 @@ sppp_keepalive(void *dummy)
 		    /* idle timeout is enabled for this interface */
 		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
 		    	if (ifp->if_flags & IFF_DEBUG)
-			    printf("%s: no activitiy for %lu seconds\n",
+			    printf("%s: no activity for %lu seconds\n",
 				sp->pp_if.if_xname,
 				(unsigned long)(now-sp->pp_last_activity));
 			lcp.Close(sp);
@@ -4749,7 +4727,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *sr
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			sm = (struct sockaddr_in *)ifa->ifa_netmask;
@@ -4789,7 +4767,7 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4832,7 +4810,7 @@ found:
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 #endif
 	}
-}			
+}
 
 /*
  * Clear IP addresses.  Must be called at splnet.
@@ -4855,7 +4833,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4880,7 +4858,7 @@ found:
 		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
 #endif
 	}
-}			
+}
 #endif
 
 #ifdef INET6
@@ -4904,7 +4882,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			si = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -4957,7 +4935,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{
@@ -5147,7 +5125,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		if (cfg->hisauth)
 		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->pp_auth_failures = 0;
-		if (sp->hisauth.proto != 0) 
+		if (sp->hisauth.proto != 0)
 		    sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
 		else
 		    sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
@@ -5273,7 +5251,7 @@ sppp_phase_network(struct sppp *sp)
 	/* if no NCP is starting, all this was in vain, close down */
 	sppp_lcp_check_and_close(sp);
 }
-	
+
 
 static const char *
 sppp_cp_type_name(u_char type)

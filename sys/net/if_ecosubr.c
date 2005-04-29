@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.14.4.1 2005/04/29 11:29:31 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14.4.1 2005/04/29 11:29:31 kent Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14.4.1 2005/04/29 11:29:31 kent Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -175,11 +175,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	struct eco_header ehdr, *eh;
-	int error, s;
+	int error;
 	struct mbuf *m = m0, *mcopy = NULL;
 	struct rtentry *rt;
 	int hdrcmplt;
-	size_t len;
 	int delay, count;
 	struct m_tag *mtag;
 	struct eco_retryparms *erp;
@@ -199,7 +198,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				if (rt->rt_ifp != ifp)
 					return (*rt->rt_ifp->if_output)
 							(ifp, m0, dst, rt);
-			} else 
+			} else
 				senderr(EHOSTUNREACH);
 		}
 		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
@@ -333,24 +332,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (m == NULL)
 		return (0);
 #endif
-	
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
 
-	len = m->m_pkthdr.len;
-	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-	return (error);
+	return ifq_enqueue(&ifp->if_snd, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
 	if (m)
@@ -838,7 +821,7 @@ eco_sprintf(const u_int8_t *ea)
 		snprintf(buf, sizeof(buf), "%d.%d", ea[1], ea[0]);
 	return buf;
 }
-		    
+
 /*
  * Econet retry handling.
  */
@@ -882,22 +865,11 @@ eco_retry(void *arg)
 	struct eco_retry *er = arg;
 	struct mbuf *m;
 	struct ifnet *ifp;
-	int s, error, len;
 
 	ifp = er->er_ifp;
 	m = er->er_packet;
 	len = m->m_pkthdr.len;
 	LIST_REMOVE(er, er_link);
-	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		splx(s);
-		/* XXX should defer again? */
-		m_freem(m);
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
+	(void)ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(NULL));
 	FREE(er, M_TEMP);
 }

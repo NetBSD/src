@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.55 2004/11/24 20:52:23 bouyer Exp $
+# $NetBSD: HADES,v 1.55.4.1 2005/04/29 11:28:05 kent Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.41 2004/11/10 17:54:03 christos Exp $
+#		NetBSD: GENERIC.in,v 1.47 2005/02/25 13:46:48 simonb Exp $
 include "arch/atari/conf/std.hades"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -59,6 +59,7 @@ file-system LFS # log-structured file system
 options QUOTA # Disk quotas for local disks
 
 options SOFTDEP # FFS soft updates support.
+
 options NFSSERVER # Network File System server side code
 
 options PANICWAIT # Require keystroke to dump/reboot
@@ -67,13 +68,14 @@ options DDB # Kernel debugger
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
 
 options COMPAT_43 # 4.3 BSD compatible system calls (required)
-options COMPAT_10 # Compatibility to NetBSD1.0
-options COMPAT_11 # Compatibility to NetBSD1.1
-options COMPAT_12 # Compatibility to NetBSD1.2
-options COMPAT_13 # Compatibility to NetBSD1.3
-options COMPAT_14 # Compatibility to NetBSD1.4
-options COMPAT_15 # Compatibility to NetBSD1.5
-options COMPAT_16 # Compatibility to NetBSD1.6
+options COMPAT_10 # Compatibility with NetBSD 1.0
+options COMPAT_11 # Compatibility with NetBSD 1.1
+options COMPAT_12 # Compatibility with NetBSD 1.2
+options COMPAT_13 # Compatibility with NetBSD 1.3
+options COMPAT_14 # Compatibility with NetBSD 1.4
+options COMPAT_15 # Compatibility with NetBSD 1.5
+options COMPAT_16 # Compatibility with NetBSD 1.6
+options COMPAT_20 # Compatibility with NetBSD 2.0
 
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
@@ -126,6 +128,7 @@ pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter 2 # berkeley packet filters
 pseudo-device tun 2 # network tunnel
+pseudo-device tap # virtual Ethernet
 
 pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
 
@@ -136,6 +139,7 @@ pseudo-device ccd 4 # concatenating disk driver
 
 pseudo-device raid 8 # RAIDframe disk driver
 options RAID_AUTOCONFIG # auto-configuration of RAID components
+pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem

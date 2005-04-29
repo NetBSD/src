@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.31 2004/09/01 11:53:38 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.31.4.1 2005/04/29 11:29:40 kent Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.31 2004/09/01 11:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.31.4.1 2005/04/29 11:29:40 kent Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -107,7 +107,8 @@ uvm_anon_add(count)
 	if (needed <= 0) {
 		return 0;
 	}
-	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed);
+	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed, 0, 
+	    UVM_KMF_WIRED);
 	if (anon == NULL) {
 		simple_lock(&uvm.afreelock);
 		uvmexp.nanonneeded -= count;

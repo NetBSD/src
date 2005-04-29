@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.7 2004/06/30 21:41:36 pk Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.7.4.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,4 +72,4 @@ struct qec_ring {
 	int	rb_td_nbusy;
 };
 
-void	qec_meminit __P((struct qec_ring *, unsigned int));
+void	qec_meminit(struct qec_ring *, unsigned int);

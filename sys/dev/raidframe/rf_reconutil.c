@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.23 2004/03/18 16:54:54 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.23.8.1 2005/04/29 11:29:15 kent Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.23 2004/03/18 16:54:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.23.8.1 2005/04/29 11:29:15 kent Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.23 2004/03/18 16:54:54 oster Exp 
  */
 
 RF_ReconCtrl_t *
-rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc, 
+rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 		    RF_RowCol_t fcol, RF_RowCol_t scol)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
@@ -83,13 +83,15 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	reconCtrlPtr->spareCol = scol;
 	reconCtrlPtr->lastPSID = layoutPtr->numStripe / layoutPtr->SUsPerPU;
 	reconCtrlPtr->percentComplete = 0;
+	reconCtrlPtr->error = 0;
+	reconCtrlPtr->pending_writes = 0;
 
 	/* initialize each per-disk recon information structure */
 	for (i = 0; i < raidPtr->numCol; i++) {
 		reconCtrlPtr->perDiskInfo[i].reconCtrl = reconCtrlPtr;
 		reconCtrlPtr->perDiskInfo[i].col = i;
 		/* make it appear as if we just finished an RU */
-		reconCtrlPtr->perDiskInfo[i].curPSID = -1;	
+		reconCtrlPtr->perDiskInfo[i].curPSID = -1;
 		reconCtrlPtr->perDiskInfo[i].ru_count = RUsPerPU - 1;
 	}
 
@@ -135,7 +137,7 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		rbuf = rf_MakeReconBuffer(raidPtr, fcol, 
+		rbuf = rf_MakeReconBuffer(raidPtr, fcol,
 					  RF_RBUF_TYPE_FLOATING);
 		rbuf->next = reconCtrlPtr->floatingRbufs;
 		reconCtrlPtr->floatingRbufs = rbuf;
@@ -150,7 +152,7 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	return (reconCtrlPtr);
 }
 
-void 
+void
 rf_FreeReconControl(RF_Raid_t *raidPtr)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
@@ -161,15 +163,17 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 	for (i = 0; i < raidPtr->numCol; i++)
 		if (reconCtrlPtr->perDiskInfo[i].rbuf)
 			rf_FreeReconBuffer(reconCtrlPtr->perDiskInfo[i].rbuf);
-	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		t = reconCtrlPtr->floatingRbufs;
-		RF_ASSERT(t);
+
+	t = reconCtrlPtr->floatingRbufs;
+	while (t) {
 		reconCtrlPtr->floatingRbufs = t->next;
 		rf_FreeReconBuffer(t);
+		t = reconCtrlPtr->floatingRbufs;
 	}
+
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
-	RF_Free(reconCtrlPtr->perDiskInfo, 
+	RF_Free(reconCtrlPtr->perDiskInfo,
 		raidPtr->numCol * sizeof(RF_PerDiskReconCtrl_t));
 	RF_Free(reconCtrlPtr, sizeof(*reconCtrlPtr));
 }
@@ -178,7 +182,7 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 /******************************************************************************
  * computes the default head separation limit
  *****************************************************************************/
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimit(RF_Raid_t *raidPtr)
 {
 	RF_HeadSepLimit_t hsl;
@@ -195,7 +199,7 @@ rf_GetDefaultHeadSepLimit(RF_Raid_t *raidPtr)
 /******************************************************************************
  * computes the default number of floating recon buffers
  *****************************************************************************/
-int 
+int
 rf_GetDefaultNumFloatingReconBuffers(RF_Raid_t *raidPtr)
 {
 	const RF_LayoutSW_t *lp;
@@ -232,7 +236,7 @@ rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t col, RF_RbufType_t type)
 /******************************************************************************
  * frees a reconstruction buffer
  *****************************************************************************/
-void 
+void
 rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
@@ -249,7 +253,7 @@ XXXX IF you use this, you really want to fix the locking in here.
 /******************************************************************************
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/
-void 
+void
 rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 {
 	RF_ReconParityStripeStatus_t *p;
@@ -282,17 +286,17 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 		RF_UNLOCK_MUTEX(pssTable[i].mutex);
 	}
 
-	for (rbuf = raidPtr->reconControl->floatingRbufs; rbuf; 
+	for (rbuf = raidPtr->reconControl->floatingRbufs; rbuf;
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl->committedRbufs; rbuf; 
+	for (rbuf = raidPtr->reconControl->committedRbufs; rbuf;
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl->fullBufferList; rbuf; 
+	for (rbuf = raidPtr->reconControl->fullBufferList; rbuf;
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;

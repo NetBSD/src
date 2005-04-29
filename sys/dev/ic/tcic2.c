@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.17 2004/09/13 12:34:00 drochner Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.17.4.1 2005/04/29 11:28:52 kent Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.17 2004/09/13 12:34:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.17.4.1 2005/04/29 11:28:52 kent Exp $");
 
 #undef	TCICDEBUG
 
@@ -67,25 +67,25 @@ int	tcic_debug = 1;
 
 #define	TCIC_MEM_ALIGN	TCIC_MEM_PAGESIZE
 
-void	tcic_attach_socket __P((struct tcic_handle *));
-void	tcic_init_socket __P((struct tcic_handle *));
+void	tcic_attach_socket(struct tcic_handle *);
+void	tcic_init_socket(struct tcic_handle *);
 
-int	tcic_submatch __P((struct device *, struct cfdata *,
-			   const locdesc_t *, void *));
-int	tcic_print  __P((void *arg, const char *pnp));
-int	tcic_intr_socket __P((struct tcic_handle *));
+int	tcic_submatch(struct device *, struct cfdata *,
+			   const locdesc_t *, void *);
+int	tcic_print(void *arg, const char *pnp);
+int	tcic_intr_socket(struct tcic_handle *);
 
-void	tcic_attach_card __P((struct tcic_handle *));
-void	tcic_detach_card __P((struct tcic_handle *, int));
-void	tcic_deactivate_card __P((struct tcic_handle *));
+void	tcic_attach_card(struct tcic_handle *);
+void	tcic_detach_card(struct tcic_handle *, int);
+void	tcic_deactivate_card(struct tcic_handle *);
 
-void	tcic_chip_do_mem_map __P((struct tcic_handle *, int));
-void	tcic_chip_do_io_map __P((struct tcic_handle *, int));
+void	tcic_chip_do_mem_map(struct tcic_handle *, int);
+void	tcic_chip_do_io_map(struct tcic_handle *, int);
 
-void	tcic_create_event_thread __P((void *));
-void	tcic_event_thread __P((void *));
+void	tcic_create_event_thread(void *);
+void	tcic_event_thread(void *);
 
-void	tcic_queue_event __P((struct tcic_handle *, int));
+void	tcic_queue_event(struct tcic_handle *, int);
 
 /* Map between irq numbers and internal representation */
 #if 1
@@ -366,7 +366,7 @@ tcic_attach(sc)
 		/* XXX make more clear what happens here -chb */
 		tcic_sel_sock(&sc->handle[i]);
 		tcic_write_ind_2(&sc->handle[i], TCIC_IR_SCF1_N(i), 0);
-		tcic_write_ind_2(&sc->handle[i], TCIC_IR_SCF2_N(i), 
+		tcic_write_ind_2(&sc->handle[i], TCIC_IR_SCF2_N(i),
 		    (TCIC_SCF2_MCD|TCIC_SCF2_MWP|TCIC_SCF2_MRDY
 #if 1		/* XXX explain byte routing issue */
 		    |TCIC_SCF2_MLBAT2|TCIC_SCF2_MLBAT1|TCIC_SCF2_IDBR));
@@ -755,7 +755,7 @@ tcic_deactivate_card(h)
 }
 
 /* XXX the following routine may need to be rewritten. -chb */
-int 
+int
 tcic_chip_mem_alloc(pch, size, pcmhp)
 	pcmcia_chipset_handle_t pch;
 	bus_size_t size;
@@ -820,7 +820,7 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 }
 
 /* XXX the following routine may need to be rewritten. -chb */
-void 
+void
 tcic_chip_mem_free(pch, pcmhp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_mem_handle *pcmhp;
@@ -830,7 +830,7 @@ tcic_chip_mem_free(pch, pcmhp)
 	h->sc->subregionmask |= pcmhp->mhandle;
 }
 
-void 
+void
 tcic_chip_do_mem_map(h, win)
 	struct tcic_handle *h;
 	int win;
@@ -911,7 +911,7 @@ tcic_chip_do_mem_map(h, win)
 }
 
 /* XXX needs work */
-int 
+int
 tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	pcmcia_chipset_handle_t pch;
 	int kind;
@@ -984,7 +984,7 @@ tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	return (0);
 }
 
-void 
+void
 tcic_chip_mem_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;
@@ -1001,7 +1001,7 @@ tcic_chip_mem_unmap(pch, window)
 	h->memalloc &= ~(1 << window);
 }
 
-int 
+int
 tcic_chip_io_alloc(pch, start, size, align, pcihp)
 	pcmcia_chipset_handle_t pch;
 	bus_addr_t start;
@@ -1067,7 +1067,7 @@ tcic_chip_io_alloc(pch, start, size, align, pcihp)
 	return (0);
 }
 
-void 
+void
 tcic_chip_io_free(pch, pcihp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_io_handle *pcihp;
@@ -1085,7 +1085,7 @@ tcic_chip_io_free(pch, pcihp)
 static int tcic_iowidth_map[] =
     { TCIC_ICTL_AUTOSZ, TCIC_ICTL_B8, TCIC_ICTL_B16 };
 
-void 
+void
 tcic_chip_do_io_map(h, win)
 	struct tcic_handle *h;
 	int win;
@@ -1143,7 +1143,7 @@ tcic_chip_do_io_map(h, win)
 #endif
 }
 
-int 
+int
 tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	pcmcia_chipset_handle_t pch;
 	int width;
@@ -1199,7 +1199,7 @@ tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	return (0);
 }
 
-void 
+void
 tcic_chip_io_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;

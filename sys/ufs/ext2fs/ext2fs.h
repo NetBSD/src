@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.15 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.15.8.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -213,7 +213,8 @@ struct m_ext2fs {
 
 /* features supported in this implementation */
 #define EXT2F_COMPAT_SUPP		0x0000
-#define EXT2F_ROCOMPAT_SUPP		EXT2F_ROCOMPAT_SPARSESUPER
+#define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
+					 | EXT2F_ROCOMPAT_LARGEFILE)
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
@@ -339,12 +340,12 @@ void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
-/* 
+/*
  * Determine the number of available frags given a
  * percentage to hold in reserve.
- */   
+ */
 #define freespace(fs) \
-   ((fs)->e2fs.e2fs_fbcount - (fs)->e2fs.e2fs_rbcount) 
+   ((fs)->e2fs.e2fs_fbcount - (fs)->e2fs.e2fs_rbcount)
 
 /*
  * Number of indirects in a file system block.

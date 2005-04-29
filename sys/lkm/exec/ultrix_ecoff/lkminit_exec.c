@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.5 2004/11/13 06:09:48 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.5.4.1 2005/04/29 11:29:28 kent Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5 2004/11/13 06:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5.4.1 2005/04/29 11:29:28 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ MOD_EXEC("exec_ultrix_ecoff", -1, &exec_ultrix_ecoff, "ultrix");
  */
 int
 exec_ultrix_ecoff_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

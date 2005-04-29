@@ -1,11 +1,11 @@
-/*	$NetBSD: synaptics.c,v 1.3 2005/01/02 22:37:12 scw Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.3.2.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
  * Copyright (c) 2004, Ales Krenek
  * Copyright (c) 2004, Kentaro A. Kurahone
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -45,6 +45,8 @@
  *	- Maybe add some more gestures (can we use Palm support somehow?)
  *	- Support pass-through mode (whatever that is; my docs are too old).
  */
+
+#include "opt_pms.h"
 
 #include <sys/cdefs.h>
 
@@ -685,7 +687,7 @@ pms_synaptics_input(void *vsc, int data)
 		/*FALLTHROUGH*/
 
 	case 3:
-		if ((data & 8) == 8) { 
+		if ((data & 8) == 8) {
 #ifdef SYNAPTICS_DEBUG
 			printf("%s: pms_input: dropped in relative mode, "
 			    "reset\n", psc->sc_dev.dv_xname);

@@ -1,9 +1,9 @@
-/*      $NetBSD: advmcode.h,v 1.4 2001/01/18 20:28:17 jdolecek Exp $        */
+/*      $NetBSD: advmcode.h,v 1.4.32.1 2005/04/29 11:28:48 kent Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
- * 
+ *
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *

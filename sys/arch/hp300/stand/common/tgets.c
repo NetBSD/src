@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: tgets.c,v 1.3.8.1 2005/04/29 11:28:10 kent Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,8 +38,7 @@
 #include <hp300/stand/common/samachdep.h>
 
 int
-tgets(buf)
-	char *buf;
+tgets(char *buf)
 {
 	int c;
 	int i;

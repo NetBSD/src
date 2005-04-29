@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.130.4.1 2005/04/29 11:28:42 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  *
  *	@(#)sunos_misc.c	8.1 (Berkeley) 6/18/93
  *
- *	Header: sunos_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ *	Header: sunos_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.130.4.1 2005/04/29 11:28:42 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -451,7 +451,7 @@ sunos_sys_sigpending(l, v, retval)
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
 }
 
-int     
+int
 sunos_sys_sigsuspend(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -462,7 +462,7 @@ sunos_sys_sigsuspend(l, v, retval)
 	} */ *uap = v;
 	int mask;
 	sigset_t ss;
-        
+
 	mask = SCARG(uap, mask);
 	sunos_to_native_sigset(mask, &ss);
 	return (sigsuspend1(l->l_proc, &ss));
@@ -554,7 +554,10 @@ again:
 		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
@@ -563,7 +566,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Sun-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -847,7 +853,7 @@ sunos_sys_open(l, v, retval)
 	int smode, nmode;
 	int noctty;
 	int ret;
-	
+
 	caddr_t sg = stackgap_init(p, 0);
 
 	/* convert mode into NetBSD mode */
@@ -992,7 +998,7 @@ sunstatfs(sp, buf)
 	ssfs.f_ffree = sp->f_ffree;
 	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
-}	
+}
 
 int
 sunos_sys_statfs(l, v, retval)

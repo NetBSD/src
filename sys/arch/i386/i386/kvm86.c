@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.7 2003/06/23 11:01:18 martin Exp $ */
+/* $NetBSD: kvm86.c,v 1.7.10.1 2005/04/29 11:28:12 kent Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.7 2003/06/23 11:01:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.7.10.1 2005/04/29 11:28:12 kent Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -118,7 +118,7 @@ kvm86_init()
 	kvm86_map(vmd, vtophys((vaddr_t)bioscallscratchpage),
 		  BIOSCALLSCRATCHPAGE_VMVA);
 	bioscallvmd = vmd;
-	bioscalltmpva = uvm_km_valloc(kernel_map, PAGE_SIZE);
+	bioscalltmpva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 }
 
 /*

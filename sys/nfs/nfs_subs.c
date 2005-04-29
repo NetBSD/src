@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.140 2005/01/09 01:32:32 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.140.2.1 2005/04/29 11:29:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.140 2005/01/09 01:32:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.140.2.1 2005/04/29 11:29:36 kent Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -607,7 +607,7 @@ nfsm_reqh(np, procid, hsiz, bposp)
 		m_clget(mb, M_WAIT);
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
-	
+
 #ifndef NFS_V2_ONLY
 	/*
 	 * For NQNFS, add lease request.
@@ -954,7 +954,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
  * Get at least "siz" bytes of correctly aligned data.
  * When called the mbuf pointers are not necessarily correct,
  * dsosp points to what ought to be in m_data and left contains
- * what ought to be in m_len. 
+ * what ought to be in m_len.
  * This is used by the macros nfsm_dissect and nfsm_dissecton for tough
  * cases. (The macros use the vars. dpos and dpos2)
  */
@@ -974,7 +974,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 
 #ifdef DEBUG
 	if (left < 0)
-		panic("nfsm_disct: left < 0"); 
+		panic("nfsm_disct: left < 0");
 #endif
 	m1 = *mdp;
 	/*
@@ -1016,7 +1016,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			 * If the first mbuf has a external data
 			 * and there is no previous empty mbuf
 			 * allocate a new mbuf and move the external
-			 * data to the new mbuf. Also make the first 
+			 * data to the new mbuf. Also make the first
 			 * mbuf look empty.
 			 */
 			m2 = m_get(M_WAIT, MT_DATA);
@@ -1046,7 +1046,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 		m1->m_data = dst;
 		if (dst != src)
 			memmove(dst, src, left);
-		dst += left; 
+		dst += left;
 		m1->m_len = left;
 		m2 = m1->m_next;
 	}
@@ -1488,7 +1488,7 @@ retry:
 		nfs_unlinkdircache(np, TAILQ_FIRST(&np->n_dirchain));
 	} else
 		np->n_dircachesize++;
-		
+
 	KASSERT(ndp->dc_refcnt == 1);
 	LIST_INSERT_HEAD(ndhp, ndp, dc_hash);
 	TAILQ_INSERT_TAIL(&np->n_dirchain, ndp, dc_chain);
@@ -1502,18 +1502,22 @@ done:
 }
 
 void
-nfs_invaldircache(vp, forcefree)
+nfs_invaldircache(vp, flags)
 	struct vnode *vp;
-	int forcefree;
+	int flags;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	const boolean_t forcefree = flags & NFS_INVALDIRCACHE_FORCE;
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
 		panic("nfs: invaldircache: not dir");
 #endif
+
+	if ((flags & NFS_INVALDIRCACHE_KEEPEOF) == 0)
+		np->n_flag &= ~NEOFVALID;
 
 	if (!np->n_dircache)
 		return;
@@ -1709,7 +1713,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 
 	/*
 	 * If v_type == VNON it is a new node, so fill in the v_type,
-	 * n_mtime fields. Check to see if it represents a special 
+	 * n_mtime fields. Check to see if it represents a special
 	 * device, and if so, check for a possible alias. Once the
 	 * correct vnode has been obtained, fill in the rest of the
 	 * information.
@@ -1832,7 +1836,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			}
 		}
 	}
-	np->n_attrstamp = time.tv_sec;
+	np->n_attrstamp = mono_time.tv_sec;
 	if (vaper != NULL) {
 		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1859,7 +1863,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -1901,6 +1905,98 @@ nfs_delayedtruncate(vp)
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
 	}
+}
+
+#define	NFS_WCCKLUDGE_TIMEOUT	(24 * 60 * 60)	/* 1 day */
+#define	NFS_WCCKLUDGE(nmp, now) \
+	(((nmp)->nm_iflag & NFSMNT_WCCKLUDGE) && \
+	((now) - (nmp)->nm_wcckludgetime - NFS_WCCKLUDGE_TIMEOUT) < 0)
+
+/*
+ * nfs_check_wccdata: check inaccurate wcc_data
+ *
+ * => return non-zero if we shouldn't trust the wcc_data.
+ * => NFS_WCCKLUDGE_TIMEOUT is for the case that the server is "fixed".
+ */
+
+int
+nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
+    struct timespec *mtime, boolean_t docheck)
+{
+	int error = 0;
+
+#if !defined(NFS_V2_ONLY)
+
+	if (docheck) {
+		struct vnode *vp = NFSTOV(np);
+		struct nfsmount *nmp;
+		long now = mono_time.tv_sec;
+#if defined(DEBUG)
+		const char *reason = NULL; /* XXX: gcc */
+#endif
+
+		if (timespeccmp(&np->n_vattr->va_mtime, mtime, <=)) {
+#if defined(DEBUG)
+			reason = "mtime";
+#endif
+			error = EINVAL;
+		}
+
+		if (vp->v_type == VDIR &&
+		    timespeccmp(&np->n_vattr->va_ctime, ctime, <=)) {
+#if defined(DEBUG)
+			reason = "ctime";
+#endif
+			error = EINVAL;
+		}
+
+		nmp = VFSTONFS(vp->v_mount);
+		if (error) {
+
+			/*
+			 * despite of the fact that we've updated the file,
+			 * timestamps of the file were not updated as we
+			 * expected.
+			 * it means that the server has incompatible
+			 * semantics of timestamps or (more likely)
+			 * the server time is not precise enough to
+			 * track each modifications.
+			 * in that case, we disable wcc processing.
+			 *
+			 * yes, strictly speaking, we should disable all
+			 * caching.  it's a compromise.
+			 */
+
+			simple_lock(&nmp->nm_slock);
+#if defined(DEBUG)
+			if (!NFS_WCCKLUDGE(nmp, now)) {
+				printf("%s: inaccurate wcc data (%s) detected,"
+				    " disabling wcc\n",
+				    vp->v_mount->mnt_stat.f_mntfromname,
+				    reason);
+			}
+#endif
+			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
+			nmp->nm_wcckludgetime = now;
+			simple_unlock(&nmp->nm_slock);
+		} else if (NFS_WCCKLUDGE(nmp, now)) {
+			error = EPERM; /* XXX */
+		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
+			simple_lock(&nmp->nm_slock);
+			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
+#if defined(DEBUG)
+				printf("%s: re-enabling wcc\n",
+				    vp->v_mount->mnt_stat.f_mntfromname);
+#endif
+				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
+			}
+			simple_unlock(&nmp->nm_slock);
+		}
+	}
+
+#endif /* !defined(NFS_V2_ONLY) */
+
+	return error;
 }
 
 /*
@@ -2008,6 +2104,8 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 
 	if ((len + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
+	if (len == 0)
+		return (EACCES);
 	cnp->cn_pnbuf = PNBUF_GET();
 
 	/*
@@ -2586,7 +2684,7 @@ nfs_clearcommit(mp)
 
 	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
-		if (vp->v_type == VNON)
+		if (vp->v_type != VREG)
 			continue;
 		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =

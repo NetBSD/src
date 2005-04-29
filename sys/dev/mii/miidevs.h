@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.56 2004/12/23 06:18:49 jonathan Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.56.2.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.55 2004/12/23 06:13:24 jonathan Exp 
+ *	NetBSD: miidevs,v 1.58 2005/03/16 17:20:28 briggs Exp
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
@@ -81,6 +82,9 @@
 
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
+
+/* Some VIA 6122's use an alternative OUI. */
+#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
 
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
@@ -143,6 +147,8 @@
 #define	MII_STR_xxBROADCOM_BCM5214	"BCM5214 Quad 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
 #define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5222	0x0032
+#define	MII_STR_xxBROADCOM_BCM5222	"BCM5222 Dual 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM4401	0x0036
 #define	MII_STR_xxBROADCOM_BCM4401	"BCM4401 10/100 media interface"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
@@ -163,6 +169,16 @@
 #define	MII_STR_BROADCOM_BCM5705	"BCM5705 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5750	0x0018
 #define	MII_STR_BROADCOM_BCM5750	"BCM5750 1000BASE-T media interface"
+
+/* Cicada Semiconductor PHYs (now owned by Vitesse?) */
+#define	MII_MODEL_CICADA_CS8201	0x0001
+#define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8201A	0x0020
+#define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8201B	0x0021
+#define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_CS8201B	0x0021
+#define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */

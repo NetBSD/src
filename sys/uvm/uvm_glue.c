@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.81 2004/05/12 20:09:51 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.81.4.1 2005/04/29 11:29:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.81 2004/05/12 20:09:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.81.4.1 2005/04/29 11:29:44 kent Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -108,7 +108,7 @@ static void uvm_uarea_free(vaddr_t);
 /*
  * uvm_kernacc: can the kernel access a region of memory
  *
- * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
+ * - used only by /dev/kmem driver (mem.c)
  */
 
 boolean_t
@@ -319,7 +319,8 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 		return TRUE;
 	} else {
 		simple_unlock(&uvm_uareas_slock);
-		*uaddrp = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
+		    UVM_KMF_PAGEABLE);
 		return FALSE;
 	}
 }
@@ -358,7 +359,7 @@ uvm_uarea_drain(boolean_t empty)
 		uvm_uareas = *(void **)uvm_uareas;
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
-		uvm_km_free(kernel_map, uaddr, USPACE);
+		uvm_km_free(kernel_map, uaddr, USPACE, UVM_KMF_PAGEABLE);
 		simple_lock(&uvm_uareas_slock);
 	}
 	simple_unlock(&uvm_uareas_slock);
@@ -717,10 +718,7 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 	struct vmspace *vm = p->p_vmspace;
 	struct vm_map *map = &vm->vm_map;
 	struct vm_map_entry *entry;
-	vaddr_t maxstack;
 	int error;
-
-	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	entry = NULL;
 	vm_map_lock_read(map);
@@ -732,37 +730,42 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		if (entry == &map->header)
 			break;
 
-		/* Should never happen for a user process. */
-		if (UVM_ET_ISSUBMAP(entry))
-			panic("uvm_coredump_walkmap: user process with "
-			    "submap?");
-
 		state.cookie = cookie;
 		state.start = entry->start;
 		state.end = entry->end;
 		state.prot = entry->protection;
 		state.flags = 0;
 
-		if (state.start >= VM_MAXUSER_ADDRESS)
-			continue;
+		/*
+		 * Dump the region unless one of the following is true:
+		 *
+		 * (1) the region has neither object nor amap behind it
+		 *     (ie. it has never been accessed).
+		 *
+		 * (2) the region has no amap and is read-only
+		 *     (eg. an executable text section).
+		 *
+		 * (3) the region's object is a device.
+		 */
 
-		if (state.end > VM_MAXUSER_ADDRESS)
-			state.end = VM_MAXUSER_ADDRESS;
-
+		KASSERT(!UVM_ET_ISSUBMAP(entry));
+		KASSERT(state.start < VM_MAXUSER_ADDRESS);
+		KASSERT(state.end <= VM_MAXUSER_ADDRESS);
+		if (entry->object.uvm_obj == NULL &&
+		    entry->aref.ar_amap == NULL) {
+			state.flags |= UVM_COREDUMP_NODUMP;
+		}
+		if ((entry->protection & VM_PROT_WRITE) == 0 &&
+		    entry->aref.ar_amap == NULL) {
+			state.flags |= UVM_COREDUMP_NODUMP;
+		}
+		if (entry->object.uvm_obj != NULL &&
+		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
+			state.flags |= UVM_COREDUMP_NODUMP;
+		}
 		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
-			if (state.end <= maxstack)
-				continue;
-			if (state.start < maxstack)
-				state.start = maxstack;
 			state.flags |= UVM_COREDUMP_STACK;
 		}
-
-		if ((entry->protection & VM_PROT_WRITE) == 0)
-			state.flags |= UVM_COREDUMP_NODUMP;
-
-		if (entry->object.uvm_obj != NULL &&
-		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
-			state.flags |= UVM_COREDUMP_NODUMP;
 
 		vm_map_unlock_read(map);
 		error = (*func)(p, vp, cred, &state);

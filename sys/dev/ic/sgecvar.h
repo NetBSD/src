@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.3 2003/01/06 21:05:38 matt Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.3.10.1 2005/04/29 11:28:52 kent Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -68,7 +68,7 @@ struct	ze_softc {
 	u_int8_t 	sc_enaddr[ETHER_ADDR_LEN];
 };
 
-void	sgec_attach __P((struct ze_softc *));
-int	sgec_intr __P((struct ze_softc *));
+void	sgec_attach(struct ze_softc *);
+int	sgec_intr(struct ze_softc *);
 
 #endif /* _DEV_IC_SGECVAR_H_ */

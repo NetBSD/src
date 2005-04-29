@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.56 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.56.2.1 2005/04/29 11:29:40 kent Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.56 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.56.2.1 2005/04/29 11:29:40 kent Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -204,6 +204,17 @@ fail2:
 	free(amap->am_slots, M_UVMAMAP);
 fail1:
 	pool_put(&uvm_amap_pool, amap);
+
+	/*
+	 * XXX hack to tell the pagedaemon how many pages we need,
+	 * since we can need more than it would normally free.
+	 */
+	if (waitf == M_NOWAIT) {
+		extern int uvm_extrapages;
+		uvm_extrapages += ((sizeof(int) * 2 +
+				    sizeof(struct vm_anon *)) *
+				   totalslots) >> PAGE_SHIFT;
+	}
 	return (NULL);
 }
 
@@ -665,17 +676,6 @@ amap_wipeout(amap)
 
 			uvm_anfree(anon);
 		}
-
-		/*
-		 * XXX
-		 * releasing the swap space held by an N anons is an O(N^2)
-		 * operation because of the implementation of extents.
-		 * if there are many anons, tearing down an exiting process'
-		 * address space can take many seconds, which causes very
-		 * annoying pauses.  we yield here to give other processes
-		 * a chance to run.  this should be removed once the performance
-		 * of swap space management is improved.
-		 */
 
 		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(1);

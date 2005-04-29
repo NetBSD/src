@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.5 2003/07/14 15:47:19 lukem Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.5.8.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.5 2003/07/14 15:47:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.5.8.1 2005/04/29 11:29:04 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.5 2003/07/14 15:47:19 lukem Exp $
 #include <dev/mvme/pcctworeg.h>
 
 
-int clock_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void clock_pcctwo_attach __P((struct device *, struct device *, void *));
+int clock_pcctwo_match(struct device *, struct cfdata *, void *);
+void clock_pcctwo_attach(struct device *, struct device *, void *);
 
 struct clock_pcctwo_softc {
 	struct device sc_dev;
@@ -67,16 +67,16 @@ struct clock_pcctwo_softc {
 	u_char sc_clock_lvl;
 };
 
-CFATTACH_DECL(clock_pcctwo, sizeof(struct device),
+CFATTACH_DECL(clock_pcctwo, sizeof(struct clock_pcctwo_softc),
     clock_pcctwo_match, clock_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver clock_cd;
 
-static int clock_pcctwo_profintr __P((void *));
-static int clock_pcctwo_statintr __P((void *));
-static void clock_pcctwo_initclocks __P((void *, int, int));
-static long clock_pcctwo_microtime __P((void *));
-static void clock_pcctwo_shutdown __P((void *));
+static int clock_pcctwo_profintr(void *);
+static int clock_pcctwo_statintr(void *);
+static void clock_pcctwo_initclocks(void *, int, int);
+static long clock_pcctwo_microtime(void *);
+static void clock_pcctwo_shutdown(void *);
 
 static struct clock_pcctwo_softc *clock_pcctwo_sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.37.8.1 2005/04/29 11:29:24 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.37.8.1 2005/04/29 11:29:24 kent Exp $");
 
 #define SYSVMSG
 
@@ -119,7 +119,9 @@ msginit()
 		+ msginfo.msgseg * sizeof(struct msgmap)
 		+ msginfo.msgtql * sizeof(struct __msg)
 		+ msginfo.msgmni * sizeof(struct msqid_ds);
-	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
 	msgmaps = (void *) (msgpool + msginfo.msgmax);
@@ -369,7 +371,7 @@ sys_msgget(l, v, retval)
 		}
 		if (msqid == msginfo.msgmni) {
 			MSG_PRINTF(("no more msqid_ds's available\n"));
-			return (ENOSPC);	
+			return (ENOSPC);
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
 		msqptr->msg_perm._key = key;

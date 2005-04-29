@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.17 2005/01/11 07:45:34 imp Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.17.2.1 2005/04/29 11:29:18 kent Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct ehci_soft_islot {
 #define EHCI_FRAMELIST_MAXCOUNT	1024
 #define EHCI_IPOLLRATES		8 /* Poll rates (1ms, 2, 4, 8 .. 128) */
 #define EHCI_INTRQHS		((1 << EHCI_IPOLLRATES) - 1)
+#define EHCI_MAX_POLLRATE	(1 << (EHCI_IPOLLRATES - 1))
 #define EHCI_IQHIDX(lev, pos) \
 	((((pos) & ((1 << (lev)) - 1)) | (1 << (lev))) - 1)
 #define EHCI_ILEV_IVAL(lev)	(1 << (lev))

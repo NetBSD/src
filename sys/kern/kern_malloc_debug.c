@@ -1,20 +1,20 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.13 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.13.4.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -25,7 +25,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * OpenBSD: kern_malloc_debug.c,v 1.10 2001/07/26 13:33:52 art Exp
  */
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.13 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.13.4.1 2005/04/29 11:29:23 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -239,8 +239,8 @@ debug_malloc_allocate_free(int wait)
 	if (md == NULL)
 		return;
 
-	va = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE * 2,
-	    UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
+	va = uvm_km_alloc(kmem_map, PAGE_SIZE * 2, 0,
+	    UVM_KMF_VAONLY | (wait ? UVM_KMF_NOWAIT : 0));
 	if (va == 0) {
 		pool_put(&debug_malloc_pool, md);
 		return;
@@ -258,7 +258,8 @@ debug_malloc_allocate_free(int wait)
 			break;
 
 		if (wait == 0) {
-			uvm_unmap(kmem_map, va, va + PAGE_SIZE * 2);
+			uvm_km_free(kmem_map, va, va + PAGE_SIZE * 2,
+			    UVM_KMF_VAONLY);
 			pool_put(&debug_malloc_pool, md);
 			return;
 		}

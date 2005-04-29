@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.15 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.15.4.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.

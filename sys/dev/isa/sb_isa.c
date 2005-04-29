@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.29 2002/10/02 03:10:50 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.29.14.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.29 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.29.14.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.29 2002/10/02 03:10:50 thorpej Exp $");
 
 #include <dev/isa/sbdspvar.h>
 
-static	int sbfind __P((struct device *, struct sbdsp_softc *, int,
-	    struct isa_attach_args *));
+static	int sbfind(struct device *, struct sbdsp_softc *, int,
+	    struct isa_attach_args *);
 
-int	sb_isa_match __P((struct device *, struct cfdata *, void *));
-void	sb_isa_attach __P((struct device *, struct device *, void *));
+int	sb_isa_match(struct device *, struct cfdata *, void *);
+void	sb_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sb_isa, sizeof(struct sbdsp_softc),
     sb_isa_match, sb_isa_attach, NULL, NULL);
@@ -172,7 +172,7 @@ sb_isa_attach(parent, self, aux)
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = aux;
 
-	if (!sbfind(parent, sc, 0, ia) || 
+	if (!sbfind(parent, sc, 0, ia) ||
 	    bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);

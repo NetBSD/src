@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2004/03/24 15:34:51 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158.8.1 2005/04/29 11:28:19 kent Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158.8.1 2005/04/29 11:28:19 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,7 +186,6 @@ static void	map __P((pd_entry_t *, vaddr_t, paddr_t, int, int));
 void
 cpu_startup()
 {
-	extern char kernel_text[];
 	char pbuf[9];
 	vaddr_t minaddr, maxaddr;
 	int i;
@@ -194,7 +193,8 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	msgbuf_vaddr =  uvm_km_valloc(kernel_map, ns532_round_page(MSGBUFSIZE));
+	msgbuf_vaddr =  uvm_km_alloc(kernel_map, ns532_round_page(MSGBUFSIZE),
+	    0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
@@ -206,7 +206,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf(version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -229,16 +229,6 @@ cpu_startup()
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map,
-			   ns532_round_page(&kernel_text),
-			   ns532_round_page(&etext),
-			   UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

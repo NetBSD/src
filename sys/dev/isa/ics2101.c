@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.9 2001/11/13 08:01:15 lukem Exp $ */
+/* $NetBSD: ics2101.c,v 1.9.24.1 2005/04/29 11:28:54 kent Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *        This product includes software developed by the NetBSD
  *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.9 2001/11/13 08:01:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.9.24.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.9 2001/11/13 08:01:15 lukem Exp $");
 
 #define cvt_value(val) ((val) >> 1)
 
-static void ics2101_mix_doit __P((struct ics2101_softc *, u_int, u_int, u_int,
-    u_int));
+static void ics2101_mix_doit(struct ics2101_softc *, u_int, u_int, u_int,
+    u_int);
 /*
  * Program one channel of the ICS mixer
  */

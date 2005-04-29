@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.34 2004/12/06 04:15:03 briggs Exp $	*/
+/*	$NetBSD: spr.h,v 1.34.4.1 2005/04/29 11:28:20 kent Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -91,7 +91,9 @@
 #define	  MPC7450		  0x8000
 #define	  MPC7455		  0x8001
 #define   MPC7457		  0x8002
-#define MPC745X_P(v)		  ((v & 0xFFFC) == 0x8000)
+#define   MPC7447A		  0x8003
+#define   MPC7448		  0x8004
+#define MPC745X_P(v)		  ((v & 0xFFF8) == 0x8000)
 #define	  MPC7410		  0x800c
 #define	  MPC8245		  0x8081
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: epevar.h,v 1.1 2004/12/22 19:11:10 joff Exp $        */
+/*      $NetBSD: epevar.h,v 1.1.2.1 2005/04/29 11:28:03 kent Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  * All rights reserved
@@ -53,6 +53,7 @@ struct epe_softc {
 	struct ethercom		sc_ec;
 	mii_data_t		sc_mii;
 	caddr_t			ctrlpage;
+	bus_addr_t		ctrlpage_dsaddr;
 	bus_dmamap_t		ctrlpage_dmamap;
 	u_int32_t		*TXDQ;
 	u_int32_t		TXDQ_avail;

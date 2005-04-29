@@ -1,8 +1,8 @@
-/*	$NetBSD: md4.h,v 1.2 2003/12/04 12:42:54 keihan Exp $	*/
+/*	$NetBSD: md4.h,v 1.2.8.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*
- * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest 
- * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>      
+ * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
+ * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>
  * for portability and formatting.
  */
 
@@ -35,6 +35,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#define MD4_DIGEST_LENGTH 16
+
 /* MD4 context. */
 typedef struct MD4Context {
 	u_int32_t state[4];	/* state (ABCD) */
@@ -43,13 +45,13 @@ typedef struct MD4Context {
 } MD4_CTX;
 
 __BEGIN_DECLS
-void	MD4Init __P((MD4_CTX *));
-void	MD4Update __P((MD4_CTX *, const unsigned char *, unsigned int));
-void	MD4Final __P((unsigned char[16], MD4_CTX *));
+void	MD4Init(MD4_CTX *);
+void	MD4Update(MD4_CTX *, const unsigned char *, unsigned int);
+void	MD4Final(unsigned char[MD4_DIGEST_LENGTH], MD4_CTX *);
 #ifndef _KERNEL
-char	*MD4End __P((MD4_CTX *, char *));
-char	*MD4File __P((const char *, char *));
-char	*MD4Data __P((const unsigned char *, unsigned int, char *));
+char	*MD4End(MD4_CTX *, char *);
+char	*MD4File(const char *, char *);
+char	*MD4Data(const unsigned char *, unsigned int, char *);
 #endif /* _KERNEL */
 __END_DECLS
 

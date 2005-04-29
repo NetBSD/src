@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.177 2005/01/03 19:47:30 heas Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.177.2.1 2005/04/29 11:29:34 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.177 2005/01/03 19:47:30 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.177.2.1 2005/04/29 11:29:34 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -200,7 +200,10 @@ int	tcp_compat_42 = 0;
 #endif
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
-int	tcp_do_loopback_cksum = 0;
+int	tcp_sack_tp_maxholes = 32;
+int	tcp_sack_globalmaxholes = 1024;
+int	tcp_sack_globalholes = 0;
+
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -216,18 +219,18 @@ int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 
-int	tcp_freeq __P((struct tcpcb *));
+int	tcp_freeq(struct tcpcb *);
 
 #ifdef INET
-void	tcp_mtudisc_callback __P((struct in_addr));
+void	tcp_mtudisc_callback(struct in_addr);
 #endif
 #ifdef INET6
-void	tcp6_mtudisc_callback __P((struct in6_addr *));
+void	tcp6_mtudisc_callback(struct in6_addr *);
 #endif
 
-void	tcp_mtudisc __P((struct inpcb *, int));
+void	tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6
-void	tcp6_mtudisc __P((struct in6pcb *, int));
+void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
 
 POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL);
@@ -347,7 +350,7 @@ struct mowner tcp_tx_mowner = { "tcp", "tx" };
  * Tcp initialization
  */
 void
-tcp_init()
+tcp_init(void)
 {
 	int hlen;
 
@@ -391,8 +394,7 @@ tcp_init()
  * necessary when the connection is used.
  */
 struct mbuf *
-tcp_template(tp)
-	struct tcpcb *tp;
+tcp_template(struct tcpcb *tp)
 {
 	struct inpcb *inp = tp->t_inpcb;
 #ifdef INET6
@@ -559,13 +561,8 @@ tcp_template(tp)
  * segment are as specified by the parameters.
  */
 int
-tcp_respond(tp, template, m, th0, ack, seq, flags)
-	struct tcpcb *tp;
-	struct mbuf *template;
-	struct mbuf *m;
-	struct tcphdr *th0;
-	tcp_seq ack, seq;
-	int flags;
+tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
+    struct tcphdr *th0, tcp_seq ack, tcp_seq seq, int flags)
 {
 	struct route *ro;
 	int error, tlen, win = 0;
@@ -804,7 +801,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		th->th_sum = 0;
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 				tlen);
-		ip6->ip6_plen = ntohs(tlen);
+		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
 			ro = (struct route *)&tp->t_in6pcb->in6p_route;
@@ -913,6 +910,9 @@ static struct tcpcb tcpcb_template = {
 
 	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
+	.snd_numholes = 0,
+
+	.t_partialacks = -1,
 };
 
 /*
@@ -934,11 +934,6 @@ tcp_tcpcb_template(void)
 		flags |= TF_REQ_SCALE;
 	if (tcp_do_rfc1323 && tcp_do_timestamps)
 		flags |= TF_REQ_TSTMP;
-	if (tcp_do_sack == 2)
-		flags |= TF_WILL_SACK;
-	else if (tcp_do_sack == 1)
-		flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
-	flags |= TF_CANT_TXSACK;
 	tp->t_flags = flags;
 
 	/*
@@ -956,10 +951,9 @@ tcp_tcpcb_template(void)
  * empty reassembly queue and hooking it to the argument
  * protocol control block.
  */
+/* family selects inpcb, or in6pcb */
 struct tcpcb *
-tcp_newtcpcb(family, aux)
-	int family;	/* selects inpcb, or in6pcb */
-	void *aux;
+tcp_newtcpcb(int family, void *aux)
 {
 	struct tcpcb *tp;
 	int i;
@@ -972,6 +966,7 @@ tcp_newtcpcb(family, aux)
 	TAILQ_INIT(&tp->segq);
 	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
+	TAILQ_INIT(&tp->snd_holes);
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
@@ -1029,9 +1024,7 @@ tcp_newtcpcb(family, aux)
  * then send a RST to peer.
  */
 struct tcpcb *
-tcp_drop(tp, errno)
-	struct tcpcb *tp;
-	int errno;
+tcp_drop(struct tcpcb *tp, int errno)
 {
 	struct socket *so = NULL;
 
@@ -1073,8 +1066,7 @@ tcp_drop(tp, errno)
  * functions is 0.
  */
 int
-tcp_isdead(tp)
-	struct tcpcb *tp;
+tcp_isdead(struct tcpcb *tp)
 {
 	int dead = (tp->t_flags & TF_DEAD);
 
@@ -1095,8 +1087,7 @@ tcp_isdead(tp)
  *	wake up any sleepers
  */
 struct tcpcb *
-tcp_close(tp)
-	struct tcpcb *tp;
+tcp_close(struct tcpcb *tp)
 {
 	struct inpcb *inp;
 #ifdef INET6
@@ -1198,6 +1189,9 @@ tcp_close(tp)
 	(void) tcp_freeq(tp);
 	TCP_REASS_UNLOCK(tp);
 
+	/* free the SACK holes list. */
+	tcp_free_sackholes(tp);
+
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
@@ -1248,9 +1242,11 @@ tcp_freeq(tp)
 		TAILQ_REMOVE(&tp->segq, qe, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
-		pool_put(&tcpipqent_pool, qe);
+		tcpipqent_free(qe);
 		rv = 1;
 	}
+	tp->t_segqlen = 0;
+	KASSERT(TAILQ_EMPTY(&tp->timeq));
 	return (rv);
 }
 
@@ -1258,7 +1254,7 @@ tcp_freeq(tp)
  * Protocol drain routine.  Called when memory is in short supply.
  */
 void
-tcp_drain()
+tcp_drain(void)
 {
 	struct inpcb_hdr *inph;
 	struct tcpcb *tp;
@@ -1301,9 +1297,7 @@ tcp_drain()
  * (for now, won't do anything until can select for soft error).
  */
 void
-tcp_notify(inp, error)
-	struct inpcb *inp;
-	int error;
+tcp_notify(struct inpcb *inp, int error)
 {
 	struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
 	struct socket *so = inp->inp_socket;
@@ -1331,9 +1325,7 @@ tcp_notify(inp, error)
 
 #ifdef INET6
 void
-tcp6_notify(in6p, error)
-	struct in6pcb *in6p;
-	int error;
+tcp6_notify(struct in6pcb *in6p, int error)
 {
 	struct tcpcb *tp = (struct tcpcb *)in6p->in6p_ppcb;
 	struct socket *so = in6p->in6p_socket;
@@ -1362,13 +1354,10 @@ tcp6_notify(in6p, error)
 
 #ifdef INET6
 void
-tcp6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 {
 	struct tcphdr th;
-	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
+	void (*notify)(struct in6pcb *, int) = tcp6_notify;
 	int nmatch;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *sa6_src = NULL;
@@ -1470,16 +1459,13 @@ tcp6_ctlinput(cmd, sa, d)
 #ifdef INET
 /* assumes that ip header and tcp header are contiguous on mbuf */
 void *
-tcp_ctlinput(cmd, sa, v)
-	int cmd;
-	struct sockaddr *sa;
-	void *v;
+tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct tcphdr *th;
 	struct icmp *icp;
 	extern const int inetctlerrmap[];
-	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	void (*notify)(struct inpcb *, int) = tcp_notify;
 	int errno;
 	int nmatch;
 #ifdef INET6
@@ -1563,14 +1549,12 @@ tcp_ctlinput(cmd, sa, v)
 }
 
 /*
- * When a source quence is received, we are being notifed of congestion.
+ * When a source quench is received, we are being notified of congestion.
  * Close the congestion window down to the Loss Window (one segment).
  * We will gradually open it again as we proceed.
  */
 void
-tcp_quench(inp, errno)
-	struct inpcb *inp;
-	int errno;
+tcp_quench(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
@@ -1581,9 +1565,7 @@ tcp_quench(inp, errno)
 
 #ifdef INET6
 void
-tcp6_quench(in6p, errno)
-	struct in6pcb *in6p;
-	int errno;
+tcp6_quench(struct in6pcb *in6p, int errno)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 
@@ -1597,8 +1579,7 @@ tcp6_quench(in6p, errno)
  * Path MTU Discovery handlers.
  */
 void
-tcp_mtudisc_callback(faddr)
-	struct in_addr faddr;
+tcp_mtudisc_callback(struct in_addr faddr)
 {
 #ifdef INET6
 	struct in6_addr in6;
@@ -1619,9 +1600,7 @@ tcp_mtudisc_callback(faddr)
  * that all packets will be received.
  */
 void
-tcp_mtudisc(inp, errno)
-	struct inpcb *inp;
-	int errno;
+tcp_mtudisc(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 	struct rtentry *rt = in_pcbrtentry(inp);
@@ -1665,8 +1644,7 @@ tcp_mtudisc(inp, errno)
  * Path MTU Discovery handlers.
  */
 void
-tcp6_mtudisc_callback(faddr)
-	struct in6_addr *faddr;
+tcp6_mtudisc_callback(struct in6_addr *faddr)
 {
 	struct sockaddr_in6 sin6;
 
@@ -1679,9 +1657,7 @@ tcp6_mtudisc_callback(faddr)
 }
 
 void
-tcp6_mtudisc(in6p, errno)
-	struct in6pcb *in6p;
-	int errno;
+tcp6_mtudisc(struct in6pcb *in6p, int errno)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 	struct rtentry *rt = in6_pcbrtentry(in6p);
@@ -1734,9 +1710,7 @@ tcp6_mtudisc(in6p, errno)
  *	 max(if mtu) - ip header - tcp header
  */
 u_long
-tcp_mss_to_advertise(ifp, af)
-	const struct ifnet *ifp;
-	int af;
+tcp_mss_to_advertise(const struct ifnet *ifp, int af)
 {
 	extern u_long in_maxmtu;
 	u_long mss = 0;
@@ -1813,9 +1787,7 @@ tcp_mss_to_advertise(ifp, af)
  * before this routine is called!
  */
 void
-tcp_mss_from_peer(tp, offer)
-	struct tcpcb *tp;
-	int offer;
+tcp_mss_from_peer(struct tcpcb *tp, int offer)
 {
 	struct socket *so;
 #if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
@@ -1905,8 +1877,7 @@ tcp_mss_from_peer(tp, offer)
  * Processing necessary when a TCP connection is established.
  */
 void
-tcp_established(tp)
-	struct tcpcb *tp;
+tcp_established(struct tcpcb *tp)
 {
 	struct socket *so;
 #ifdef RTV_RPIPE
@@ -1960,8 +1931,7 @@ tcp_established(tp)
  * Called only during the 3-way handshake.
  */
 void
-tcp_rmx_rtt(tp)
-	struct tcpcb *tp;
+tcp_rmx_rtt(struct tcpcb *tp)
 {
 #ifdef RTV_RTT
 	struct rtentry *rt = NULL;
@@ -2157,8 +2127,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #if defined(IPSEC) || defined(FAST_IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
-ipsec4_hdrsiz_tcp(tp)
-	struct tcpcb *tp;
+ipsec4_hdrsiz_tcp(struct tcpcb *tp)
 {
 	struct inpcb *inp;
 	size_t hdrsiz;
@@ -2181,8 +2150,7 @@ ipsec4_hdrsiz_tcp(tp)
 
 #ifdef INET6
 size_t
-ipsec6_hdrsiz_tcp(tp)
-	struct tcpcb *tp;
+ipsec6_hdrsiz_tcp(struct tcpcb *tp)
 {
 	struct in6pcb *in6p;
 	size_t hdrsiz;
@@ -2216,8 +2184,7 @@ ipsec6_hdrsiz_tcp(tp)
  */
 
 u_int
-tcp_optlen(tp)
-	struct tcpcb *tp;
+tcp_optlen(struct tcpcb *tp)
 {
 	u_int optlen;
 
@@ -2228,7 +2195,7 @@ tcp_optlen(tp)
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) 
+	if (tp->t_family == AF_INET)
 #endif
 	if (tp->t_flags & TF_SIGNATURE)
 		optlen += TCPOLEN_SIGNATURE + 2;

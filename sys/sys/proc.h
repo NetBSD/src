@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.195 2004/10/01 16:30:52 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.195.4.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -100,37 +100,37 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((const struct ksiginfo *,
-					  const sigset_t *));
-	void		(*e_trapsignal) __P((struct lwp *,
-					     const struct ksiginfo *));
-	int		(*e_tracesig) __P((struct proc *, int));
+	void		(*e_sendsig)(const struct ksiginfo *,
+					  const sigset_t *);
+	void		(*e_trapsignal)(struct lwp *, const struct ksiginfo *);
+	int		(*e_tracesig)(struct proc *, int);
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
 	struct uvm_object **e_sigobject;/* shared sigcode object */
-	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
-					  u_long));
+	void		(*e_setregs)(struct lwp *, struct exec_package *,
+					  u_long);
 
 					/* Per-process hooks */
-	void		(*e_proc_exec) __P((struct proc *,
-					    struct exec_package *));
-	void		(*e_proc_fork) __P((struct proc *, struct proc *, int));
-	void		(*e_proc_exit) __P((struct proc *));
-	void		(*e_lwp_fork)  __P((struct lwp *, struct lwp *));
-	void		(*e_lwp_exit)  __P((struct lwp *));
+	void		(*e_proc_exec)(struct proc *, struct exec_package *);
+	void		(*e_proc_fork)(struct proc *, struct proc *, int);
+	void		(*e_proc_exit)(struct proc *);
+	void		(*e_lwp_fork)(struct lwp *, struct lwp *);
+	void		(*e_lwp_exit)(struct lwp *);
 
 #ifdef __HAVE_SYSCALL_INTERN
-	void		(*e_syscall_intern) __P((struct proc *));
+	void		(*e_syscall_intern)(struct proc *);
 #else
-	void		(*e_syscall) __P((void));
+	void		(*e_syscall)(void);
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
+	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+
+	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 };
 
-/* 
+/*
  * Emulation miscelaneous flags
  */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
@@ -216,13 +216,13 @@ struct proc {
 
 	const struct emul *p_emul;	/* Emulation information */
 	void		*p_emuldata;	/* Per-process emulation data, or NULL.
-					 * Malloc type M_EMULDATA 
+					 * Malloc type M_EMULDATA
 					 */
-	
-	void 		(*p_userret)(struct lwp *, void *); 
-					/* Function to call at userret(). */ 
+
+	void 		(*p_userret)(struct lwp *, void *);
+					/* Function to call at userret(). */
 	void		*p_userret_arg;
-	
+
 	const struct execsw *p_execsw;	/* Exec package information */
 	struct klist	p_klist;	/* Knotes attached to this process */
 
@@ -249,7 +249,7 @@ struct proc {
 	size_t 		p_psenv;	/* offset of ps_envstr in above */
 	size_t 		p_psnenv;	/* offset of ps_nenvstr in above */
 
-/* 
+/*
  * End area that is copied on creation
  */
 #define	p_endcopy	p_xstat
@@ -292,6 +292,7 @@ struct proc {
 #define	P_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
+#define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
 #define	P_INEXEC	0x00100000 /* Process is exec'ing and can't be traced */
 #define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
 #define	P_CHTRACED	0x00400000 /* Child has been traced & reparented */

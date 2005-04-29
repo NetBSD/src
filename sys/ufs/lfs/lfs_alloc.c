@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.73 2004/08/14 01:08:03 mycroft Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.73.4.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.73 2004/08/14 01:08:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.73.4.1 2005/04/29 11:29:39 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.73 2004/08/14 01:08:03 mycroft Exp $
 #include <sys/mount.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/tree.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -120,6 +121,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	int error;
 	CLEANERINFO *cip;
 
+	ASSERT_SEGLOCK(fs); /* XXX it doesn't, really */
+
 	/*
 	 * First, just try a vget. If the version number is the one we want,
 	 * we don't have to do anything else.  If the version number is wrong,
@@ -127,7 +130,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 */
 	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp);
 	if (error == 0) {
-		/* printf("lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp); */
+		DLOG((DLOG_RF, "lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp));
 
 		*vpp = vp;
 		ip = VTOI(vp);
@@ -139,8 +142,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
 		} else {
-			/* printf("ino %d: asked for version %d but got %d\n",
-			       ino, version, ip->i_ffs1_gen); */
+			DLOG((DLOG_RF, "ino %d: sought version %d, got %d\n",
+			       ino, version, ip->i_ffs1_gen));
 			vput(vp);
 			*vpp = NULLVP;
 			return EEXIST;
@@ -151,8 +154,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 * The inode is not in use.  Find it on the free list.
 	 */
 	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_size <= (ino / 
-		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz) 
+	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
+		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
 		<< fs->lfs_bshift) {
 		extend_ifile(fs, NOCRED);
 	}
@@ -196,14 +199,18 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);
 
-		/* printf("lfs_rf_valloc: ino %d vp %p\n", ino, vp); */
+		DLOG((DLOG_RF, "lfs_rf_valloc: ino %d vp %p\n", ino, vp));
 
 		/* The dirop-nature of this vnode is past */
 		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
-		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
+		simple_lock(&fs->lfs_interlock);
+		simple_lock(&lfs_subsys_lock);
+		--lfs_dirvcount;
+		simple_unlock(&lfs_subsys_lock);
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+		simple_unlock(&fs->lfs_interlock);
 	}
 	*vpp = vp;
 	return error;
@@ -226,6 +233,8 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	ino_t oldlast;
 	CLEANERINFO *cip;
 
+	ASSERT_SEGLOCK(fs);
+
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
 	blkno = lblkno(fs, ip->i_size);
@@ -236,7 +245,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	ip->i_size += fs->lfs_bsize;
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(vp, ip->i_size);
-	
+
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
@@ -246,7 +255,6 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
 	max = i + fs->lfs_ifpb;
-	/* printf("extend_ifile: new block ino %d--%d\n", i, max - 1); */
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
@@ -295,9 +303,11 @@ lfs_valloc(void *v)
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	if (fs->lfs_ronly)
 		return EROFS;
-	*ap->a_vpp = NULL;
-	
+
+	ASSERT_NO_SEGLOCK(fs);
+
 	lfs_seglock(fs, SEGM_PROT);
+	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	/* Get the head of the freelist. */
 	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
@@ -310,10 +320,8 @@ lfs_valloc(void *v)
 		panic("inode 0 allocated [1]");
 	}
 #endif /* DIAGNOSTIC */
-#ifdef ALLOCPRINT
-	printf("lfs_valloc: allocate inode %d\n", new_ino);
-#endif
-	
+	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %d\n", new_ino));
+
 	/*
 	 * Remove the inode from the free list and write the new start
 	 * of the free list into the superblock.
@@ -322,7 +330,8 @@ lfs_valloc(void *v)
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
-	/* printf("lfs_valloc: headfree %d -> %d\n", new_ino, ifp->if_nextfree); */
+	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %d -> %d\n", new_ino,
+	      ifp->if_nextfree));
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
@@ -331,6 +340,7 @@ lfs_valloc(void *v)
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
 		if ((error = extend_ifile(fs, ap->a_cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
+			VOP_UNLOCK(fs->lfs_ivnode, 0);
 			lfs_segunlock(fs);
 			return error;
 		}
@@ -340,6 +350,13 @@ lfs_valloc(void *v)
 		panic("inode 0 allocated [3]");
 #endif /* DIAGNOSTIC */
 
+	/* Set superblock modified bit and increment file count. */
+	simple_lock(&fs->lfs_interlock);
+	fs->lfs_fmod = 1;
+	simple_unlock(&fs->lfs_interlock);
+	++fs->lfs_nfiles;
+
+	VOP_UNLOCK(fs->lfs_ivnode, 0);
 	lfs_segunlock(fs);
 
 	return lfs_ialloc(fs, ap->a_pvp, new_ino, new_gen, ap->a_vpp);
@@ -354,16 +371,10 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 {
 	struct inode *ip;
 	struct vnode *vp;
-	IFILE *ifp;
-	struct buf *bp, *cbp;
-	int error;
-	CLEANERINFO *cip;
 
-	error = getnewvnode(VT_LFS, pvp->v_mount, lfs_vnodeop_p, &vp);
-	/* printf("lfs_ialloc: ino %d vp %p error %d\n", new_ino, vp, error);*/
-	if (error)
-		goto errout;
+	ASSERT_NO_SEGLOCK(fs);
 
+	vp = *vpp;
 	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
@@ -372,6 +383,9 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	LFS_SET_UINO(ip, IN_CHANGE);
 	/* on-disk structure has been zeroed out by lfs_vcreate */
 	ip->i_din.ffs1_din->di_inumber = new_ino;
+
+	/* Note no blocks yet */
+	ip->i_lfs_hiblk = -1;
 
 	/* Set a new generation number for this inode. */
 	if (new_gen) {
@@ -383,36 +397,17 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
-	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
+	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
+	vp = *vpp;
 	ip = VTOI(vp);
-	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 
 	uvm_vnp_setsize(vp, 0);
-	*vpp = vp;
 	lfs_mark_vnode(vp);
 	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
-	/* Set superblock modified bit and increment file count. */
-	fs->lfs_fmod = 1;
-	++fs->lfs_nfiles;
 	return (0);
-
-    errout:
-	/*
-	 * Put the new inum back on the free list.
-	 */
-	lfs_seglock(fs, SEGM_PROT);
-	LFS_IENTRY(ifp, fs, new_ino, bp);
-	ifp->if_daddr = LFS_UNUSED_DADDR;
-	LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
-	LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
-	(void) LFS_BWRITE_LOG(bp); /* Ifile */
-	lfs_segunlock(fs);
-
-	*vpp = NULLVP;
-	return (error);
 }
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
@@ -425,16 +420,19 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 #ifdef QUOTA
 	int i;
 #endif
-	
+
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
-	
+
+	ASSERT_NO_SEGLOCK(ump->um_lfs);
+
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(*ip));
 	dp = pool_get(&lfs_dinode_pool, PR_WAITOK);
 	memset(dp, 0, sizeof(*dp));
 	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
 	vp->v_data = ip;
 	ip->i_din.ffs1_din = dp;
 	ip->i_ump = ump;
@@ -444,11 +442,13 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	ip->i_number = dp->di_inumber = ino;
 	ip->i_lfs = ump->um_lfs;
 	ip->i_lfs_effnblks = 0;
+	SPLAY_INIT(&ip->i_lfs_lbtree);
+	ip->i_lfs_nbtree = 0;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
 #endif
-#ifdef DEBUG_LFS_VNLOCK
+#ifdef DEBUG
 	if (ino == LFS_IFILE_INUM)
 		vp->v_vnlock->lk_wmesg = "inlock";
 #endif
@@ -475,26 +475,35 @@ lfs_vfree(void *v)
 	daddr_t old_iaddr;
 	ino_t ino, otail;
 	int s;
-	
+
 	/* Get the inode number and file system. */
 	vp = ap->a_pvp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 
+	ASSERT_NO_SEGLOCK(fs);
+
 	/* Drain of pending writes */
+	simple_lock(&vp->v_interlock);
 	s = splbio();
 	if (fs->lfs_version > 1 && WRITEINPROG(vp))
-		tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
+		ltsleep(vp, (PRIBIO+1), "lfs_vfree", 0, &vp->v_interlock);
 	splx(s);
+	simple_unlock(&vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
-	
+	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
+
 	lfs_unmark_vnode(vp);
 	if (vp->v_flag & VDIROP) {
-		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
+		simple_lock(&fs->lfs_interlock);
+		simple_lock(&lfs_subsys_lock);
+		--lfs_dirvcount;
+		simple_unlock(&lfs_subsys_lock);
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+		simple_unlock(&fs->lfs_interlock);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
 	}
@@ -528,7 +537,8 @@ lfs_vfree(void *v)
 		ifp->if_nextfree = ino;
 		LFS_BWRITE_LOG(bp);
 		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
-		/* printf("lfs_vfree: tailfree %d -> %d\n", otail, ino); */
+		DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %d -> %d\n", otail,
+		      ino));
 	}
 #ifdef DIAGNOSTIC
 	if (ino == LFS_UNUSED_INUM) {
@@ -551,11 +561,14 @@ lfs_vfree(void *v)
 		sup->su_nbytes -= sizeof (struct ufs1_dinode);
 		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
-	
+
 	/* Set superblock modified bit and decrement file count. */
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_fmod = 1;
+	simple_unlock(&fs->lfs_interlock);
 	--fs->lfs_nfiles;
-	
+
+	VOP_UNLOCK(fs->lfs_ivnode, 0);
 	lfs_segunlock(fs);
 
 	return (0);

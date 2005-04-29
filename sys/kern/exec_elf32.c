@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.99.4.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.99.4.1 2005/04/29 11:29:23 kent Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -222,8 +222,7 @@ ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 	if (eh->e_type != type)
 		return (ENOEXEC);
 
-	if (eh->e_shnum > 1024 ||
-	    eh->e_phnum > 128)
+	if (eh->e_shnum > 32768 || eh->e_phnum > 128)
 		return (ENOEXEC);
 
 	return (0);
@@ -257,7 +256,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		 * But make sure to not map any pages before the start of the
 		 * psection by limiting the difference to within a page.
 		 */
-		diff &= PAGE_MASK;  
+		diff &= PAGE_MASK;
 	} else
 		diff = 0;
 
@@ -424,7 +423,8 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 		/*
 		 * Now compute the size and load address.
 		 */
-		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr,
+		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,	
+		    epp->ep_daddr,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr));
 	} else
 		addr = *last; /* may be ELF_LINK_ADDR */

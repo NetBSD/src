@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.33.4.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.33.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include "rnd.h"
 
@@ -104,7 +104,7 @@ ldattach(struct ld_softc *sc)
 	char buf[9];
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
-		printf("%s: disabled\n", sc->sc_dv.dv_xname);
+		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -134,7 +134,7 @@ ldattach(struct ld_softc *sc)
 
 		sc->sc_nsectors = 63;
 		sc->sc_ncylinders = INT_MAX;
-		ncyl = sc->sc_secperunit / 
+		ncyl = sc->sc_secperunit /
 		    (sc->sc_nheads * sc->sc_nsectors);
 		if (ncyl < INT_MAX)
 			sc->sc_ncylinders = (int)ncyl;
@@ -142,7 +142,7 @@ ldattach(struct ld_softc *sc)
 
 	format_bytes(buf, sizeof(buf), sc->sc_secperunit *
 	    sc->sc_secsize);
-	printf("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
+	aprint_normal("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
 	    sc->sc_dv.dv_xname, buf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
@@ -201,7 +201,6 @@ ldbegindetach(struct ld_softc *sc, int flags)
 void
 ldenddetach(struct ld_softc *sc)
 {
-	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
@@ -218,14 +217,10 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
-	bufq_free(&sc->sc_bufq);
+	bufq_drain(&sc->sc_bufq);
 	splx(s);
+
+	bufq_free(&sc->sc_bufq);
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
@@ -445,8 +440,8 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 #endif
 		    ))
 			error = writedisklabel(
-			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART), 
-			    ldstrategy, sc->sc_dk.dk_label, 
+			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
+			    ldstrategy, sc->sc_dk.dk_label,
 			    sc->sc_dk.dk_cpulabel);
 
 		sc->sc_flags &= ~LDF_LABELLING;
@@ -508,7 +503,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
 	    	struct dkwedge_info *dkw = (void *) addr;
@@ -520,7 +515,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;

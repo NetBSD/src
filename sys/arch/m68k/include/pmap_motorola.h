@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.5 2004/08/28 21:31:07 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.5.4.1 2005/04/29 11:28:14 kent Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -183,14 +183,13 @@ pmap_remove_all(struct pmap *pmap)
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
-void	pmap_init_md(void);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
 #ifdef CACHE_HAVE_VAC
 void	pmap_prefer(vaddr_t, vaddr_t *);
-#define	PMAP_PREFER(foff, vap)	pmap_prefer((foff), (vap))
+#define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif
 
 #ifdef mvme68k

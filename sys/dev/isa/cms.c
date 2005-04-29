@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.8 2004/09/14 20:20:46 drochner Exp $ */
+/* $NetBSD: cms.c,v 1.8.4.1 2005/04/29 11:28:54 kent Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.8 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.8.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,16 +75,16 @@ struct cms_softc {
 	midisyn sc_midisyn;
 };
 
-int	cms_probe __P((struct device *, struct cfdata *, void *));
-void	cms_attach __P((struct device *, struct device *, void *));
+int	cms_probe(struct device *, struct cfdata *, void *);
+void	cms_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cms, sizeof(struct cms_softc),
     cms_probe, cms_attach, NULL, NULL);
 
-int	cms_open __P((midisyn *, int));
-void	cms_close __P((midisyn *));
-void	cms_on __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	cms_off	__P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
+int	cms_open(midisyn *, int);
+void	cms_close(midisyn *);
+void	cms_on(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	cms_off(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 
 struct midisyn_methods midi_cms_hw = {
 	cms_open,		/* open */
@@ -101,7 +101,7 @@ struct midisyn_methods midi_cms_hw = {
 	0,			/* sysex */
 };
 
-static void cms_reset __P((struct cms_softc *));
+static void cms_reset(struct cms_softc *);
 
 static char cms_note_table[] = {
 	/* A  */ 3,
@@ -282,7 +282,7 @@ cms_on(ms, chan, note, vel)
 	/* enable the voice */
 	reg = CMS_READ(sc, chip, CMS_IREG_FREQ_CTL);
 	reg |= (1<<voice);
-	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);	
+	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);
 }
 
 void
@@ -303,7 +303,7 @@ cms_off(ms, chan, note, vel)
 	/* disable the channel */
 	reg = CMS_READ(sc, chip, CMS_IREG_FREQ_CTL);
 	reg &= ~(1<<voice);
-	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);	
+	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);
 }
 
 static void
@@ -323,8 +323,8 @@ cms_reset(sc)
 	}
 
 	for (i = 0; i < 3; i++) {
-		CMS_WRITE(sc, 0, CMS_IREG_OCTAVE_1_0+i, 0x00);	
-		CMS_WRITE(sc, 1, CMS_IREG_OCTAVE_1_0+i, 0x00);	
+		CMS_WRITE(sc, 0, CMS_IREG_OCTAVE_1_0+i, 0x00);
+		CMS_WRITE(sc, 1, CMS_IREG_OCTAVE_1_0+i, 0x00);
 	}
 
 	CMS_WRITE(sc, 0, CMS_IREG_FREQ_CTL, 0x00);

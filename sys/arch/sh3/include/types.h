@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.18 2004/01/18 18:23:19 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.18.8.1 2005/04/29 11:28:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,7 +65,6 @@ typedef	__volatile unsigned char __cpu_simple_lock_t;
 #define	__SWAP_BROKEN
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
-#define	__BROKEN_CONFIG_UNIT_USAGE	/* scif, sci driver */
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

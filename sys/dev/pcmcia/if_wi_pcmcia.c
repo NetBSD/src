@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.58 2004/08/10 22:49:12 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.58.4.1 2005/04/29 11:29:13 kent Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.58 2004/08/10 22:49:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.58.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,19 +73,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.58 2004/08/10 22:49:12 mycroft Ex
 
 #include <dev/microcode/wi/spectrum24t_cf.h>
 
-static int	wi_pcmcia_match __P((struct device *, struct cfdata *, void *));
-static int	wi_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-static void	wi_pcmcia_attach __P((struct device *, struct device *, void *));
-static int	wi_pcmcia_detach __P((struct device *, int));
-static int	wi_pcmcia_enable __P((struct wi_softc *));
-static void	wi_pcmcia_disable __P((struct wi_softc *));
-static void	wi_pcmcia_powerhook __P((int, void *));
-static void	wi_pcmcia_shutdown __P((void *));
+static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
+static void	wi_pcmcia_attach(struct device *, struct device *, void *);
+static int	wi_pcmcia_detach(struct device *, int);
+static int	wi_pcmcia_enable(struct wi_softc *);
+static void	wi_pcmcia_disable(struct wi_softc *);
+static void	wi_pcmcia_powerhook(int, void *);
+static void	wi_pcmcia_shutdown(void *);
 
 /* support to download firmware for symbol CF card */
-static int	wi_pcmcia_load_firm __P((struct wi_softc *, const void *, int, const void *, int));
-static int	wi_pcmcia_write_firm __P((struct wi_softc *, const void *, int, const void *, int));
-static int	wi_pcmcia_set_hcr __P((struct wi_softc *, int));
+static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int, const void *, int);
+static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int, const void *, int);
+static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -142,10 +142,10 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
 	  PCMCIA_CIS_INTEL_PRO_WLAN_2011 },
 
-	{ PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_PRISM2,
-	  PCMCIA_CIS_INTERSIL_PRISM2 },
+	{ PCMCIA_VENDOR_INTERSIL2, PCMCIA_PRODUCT_INTERSIL2_PRISM2,
+	  PCMCIA_CIS_INTERSIL2_PRISM2 },
 
-	{ PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_GEMTEK_WLAN,
+	{ PCMCIA_VENDOR_INTERSIL2, PCMCIA_PRODUCT_GEMTEK_WLAN,
 	  PCMCIA_CIS_GEMTEK_WLAN },
 
 	{ PCMCIA_VENDOR_SAMSUNG, PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
@@ -184,8 +184,14 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN },
 
-	{ PCMCIA_VENDOR_NETGEAR_2, PCMCIA_PRODUCT_NETGEAR_2_MA401,
-	  PCMCIA_CIS_NETGEAR_2_MA401 },
+	{ PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37100P,
+	  PCMCIA_CIS_INTERSIL_ISL37100P },
+
+	{ PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37110P,
+	  PCMCIA_CIS_INTERSIL_ISL37110P },
+
+	{ PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37300P,
+	  PCMCIA_CIS_INTERSIL_ISL37300P },
 
 	{ PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24,
 	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24 },
@@ -204,6 +210,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_WCF11,
 	  PCMCIA_CIS_LINKSYS2_WCF11 },
+
+	{ PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	  PCMCIA_CIS_MICROSOFT_MN_520 },
 
 	{ PCMCIA_VENDOR_PLANEX, PCMCIA_PRODUCT_PLANEX_GWNS11H,
 	  PCMCIA_CIS_PLANEX_GWNS11H },
@@ -225,6 +234,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
 	  PCMCIA_CIS_ASUSTEK_WL_100 },
+
+	{ PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	  PCMCIA_CIS_PROXIM_RANGELANDS_8430 },
 };
 static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
@@ -342,7 +354,7 @@ wi_pcmcia_attach(parent, self, aux)
 	error = wi_pcmcia_enable(sc);
 	if (error)
 		goto fail;
-	
+
 	sc->sc_pci = 0;
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
@@ -411,7 +423,7 @@ wi_pcmcia_shutdown(arg)
 	struct wi_pcmcia_softc *psc = arg;
 	struct wi_softc *sc = &psc->sc_wi;
 
-	wi_shutdown(sc);  
+	wi_shutdown(sc);
 }
 
 /*
@@ -509,7 +521,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 		    (const u_int16_t *)p, len / 2);
 		p += len;
 	}
-	
+
 	/*
 	 * PDR: id[4], address[4], length[4];
 	 */

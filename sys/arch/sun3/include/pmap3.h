@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.36 2002/09/22 07:53:50 chs Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.36.14.1 2005/04/29 11:28:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,11 +59,11 @@ extern	struct pmap	kernel_pmap_store;
  * This function does that, and calls vm_fault if it
  * could not resolve the fault by reloading the MMU.
  */
-int _pmap_fault __P((struct vm_map *, vaddr_t, vm_prot_t));
+int _pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vaddr_t, vaddr_t *);
-#define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
+#define PMAP_PREFER(fo, ap, sz, td) pmap_prefer((fo), (ap))
 
 /* This needs to be a macro for kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);
@@ -79,7 +79,7 @@ extern segsz_t pmap_wired_pages(pmap_t);
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
-extern vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 
 static __inline void
 pmap_remove_all(struct pmap *pmap)

@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.13 2004/11/10 17:54:04 christos Exp $
+#	$NetBSD: NAPPI,v 1.13.4.1 2005/04/29 11:28:07 kent Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -48,6 +48,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -78,6 +79,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
