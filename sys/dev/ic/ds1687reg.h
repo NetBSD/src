@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.3 2003/07/08 10:06:30 itojun Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.3.8.1 2005/04/29 11:28:49 kent Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Rafal K. Boni.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -21,7 +21,7 @@
  *	Foundation, Inc. and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -39,17 +39,17 @@
  *
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -93,7 +93,7 @@
  * bit cleared to indicate AM and set to indicate PM.  In 24-hour mode,
  * hours must be in the range 0-23.
  *
- * In order to support extended features like the century register and 
+ * In order to support extended features like the century register and
  * an embedded silicon serial number while keeping backwards compatibility
  * with the DS1287/MC146818, the DS1687 provides a bank-switching method
  * which allows the user to switch the RTC between a "compatible" mode in
@@ -103,7 +103,7 @@
  * to 50 bytes of user RAM.  In addition, bank 0 provides access to an
  * additional 64 bytes of user RAM in the upper half of the RTC address
  * space.
- * 
+ *
  * Bank 1, on the other hand, provides access to an extended register set,
  * including a silicon serial number -- including a model ID byte, century
  * register for Y2k compatibility and memory address/data registers which
@@ -166,7 +166,6 @@
 #define	DS1687_BANK1_ADATE	0x49	/* BANK1: Alarm: Date (1-31) */
 
 #define	DS1687_NBASEREGS	0x0d	/* 14 registers; CMOS follows */
-#define	D1687_NVRAM_START	0xe	/* start of NVRAM: offset 14 */
 
 /* Layout of software shadow copy of TOD registers */
 #define DS1687_NHDW_TODREGS	0x0a	/* 10 basic TOD registers */
@@ -189,8 +188,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int ds1687_read __P((void *, u_int));
-void ds1687_write __P((void *, u_int, u_int));
+u_int ds1687_read(void *, u_int);
+void ds1687_write(void *, u_int, u_int);
 
 /*
  * A collection of TOD/Alarm registers.

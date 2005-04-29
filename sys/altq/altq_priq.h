@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.h,v 1.4 2003/01/06 14:09:42 christos Exp $	*/
+/*	$NetBSD: altq_priq.h,v 1.4.10.1 2005/04/29 11:27:58 kent Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -36,7 +36,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 #define	PRIQ_MAXPRI	16	/* upper limit of the number of priorities */
 
@@ -156,6 +156,6 @@ struct priq_if {
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* _ALTQ_ALTQ_PRIQ_H_ */

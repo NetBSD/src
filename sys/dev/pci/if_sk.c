@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.12 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.12.4.1 2005/04/29 11:29:06 kent Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  * XMAC registers. This driver takes advantage of these features to allow
  * both XMACs to operate as independent interfaces.
  */
- 
+
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -244,7 +244,7 @@ void sk_dump_bytes(const char *, int);
 	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
 
 /* supported device vendors */
-static const struct sk_product { 
+static const struct sk_product {
 	pci_vendor_id_t		sk_vendor;
 	pci_product_id_t	sk_product;
 } sk_products[] = {
@@ -255,6 +255,7 @@ static const struct sk_product {
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
 	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET, },
+	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN, },
 	{ 0, 0, }
 };
 
@@ -513,7 +514,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
 		      YU_SMICR_REGAD(reg) | YU_SMICR_OP_READ);
-        
+
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
 		val = SK_YU_READ_2(sc_if, YUKON_SMICR);
@@ -526,7 +527,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 		       sc_if->sk_dev.dv_xname);
 		return 0;
 	}
-        
+
  	DPRINTFN(9, ("sk_marv_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
@@ -576,7 +577,7 @@ sk_xmac_hash(caddr_t addr)
 	u_int32_t		crc;
 
 	crc = ether_crc32_le(addr,ETHER_ADDR_LEN);
-	crc = ~crc & ((1<< SK_HASH_BITS) - 1);	
+	crc = ~crc & ((1<< SK_HASH_BITS) - 1);
 	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
 	return (crc);
 }
@@ -955,7 +956,7 @@ static const struct sk_product *
 sk_lookup(const struct pci_attach_args *pa)
 {
 	const struct sk_product *psk;
-	
+
 	for ( psk = &sk_products[0]; psk->sk_vendor != 0; psk++ ) {
 		if (PCI_VENDOR(pa->pa_id) == psk->sk_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == psk->sk_product)
@@ -973,7 +974,7 @@ skc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	const struct sk_product *psk;
-	
+
 	if ((psk = sk_lookup(pa))) {
 		return(1);
 	}
@@ -1555,13 +1556,13 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		if ( sc->sk_type == SK_YUKON ) {
 			uint32_t flashaddr;
 			uint8_t testbyte;
-			
+
 			flashaddr = sk_win_read_4(sc,SK_EP_ADDR);
-			
+
 			/* test Flash-Address Register */
 			sk_win_write_1(sc,SK_EP_ADDR+3, 0xff);
 			testbyte = sk_win_read_1(sc, SK_EP_ADDR+3);
-			
+
 			if (testbyte != 0) {
 				/* this is yukon lite Rev. A0 */
 				sc->sk_type = SK_YUKON_LITE;
@@ -1571,11 +1572,14 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 		break;
+	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_BELKIN):
+		sc->sk_name = sc->sk_vpd_prodname;
+		break;
  	default:
 		sc->sk_name = "Unkown Marvell";
 	}
 
-		
+
 	if ( sc->sk_type == SK_YUKON_LITE ) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_LITE_REV_A0:
@@ -2387,7 +2391,7 @@ void sk_init_yukon(sc_if)
 	DPRINTFN(6, ("sk_init_yukon: YUKON_PAR=%#x\n", reg));
 	DPRINTFN(6, ("sk_init_yukon: 4b\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_PAR, reg);
-        
+
 	/* MIB Counter Clear Mode clear */
 	DPRINTFN(6, ("sk_init_yukon: 5\n"));
         reg &= ~YU_PAR_MIB_CLR;
@@ -2412,7 +2416,7 @@ void sk_init_yukon(sc_if)
 	/* Setup Yukon's address */
 	for (i = 0; i < 3; i++) {
 		/* Write Source Address 1 (unicast filter) */
-		SK_YU_WRITE_2(sc_if, YUKON_SAL1 + i * 4, 
+		SK_YU_WRITE_2(sc_if, YUKON_SAL1 + i * 4,
 			      sc_if->sk_enaddr[i * 2] |
 			      sc_if->sk_enaddr[i * 2 + 1] << 8);
 	}
@@ -2436,11 +2440,11 @@ void sk_init_yukon(sc_if)
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON);
-	
+
 	/* Configure TX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON);
-		
+
 	DPRINTFN(6, ("sk_init_yukon: end\n"));
 }
 
@@ -2472,7 +2476,7 @@ sk_init(struct ifnet *ifp)
 		/* Configure RX LED */
 		SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL,
 			      SK_RXLEDCTL_COUNTER_START);
-		
+
 		/* Configure TX LED */
 		SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL,
 			      SK_TXLEDCTL_COUNTER_START);
@@ -2498,7 +2502,7 @@ sk_init(struct ifnet *ifp)
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_UNRESET);
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_END, SK_FIFO_END);
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_ON);
-		
+
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_CTL, SK_FIFO_UNRESET);
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_END, SK_FIFO_END);
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_CTL, SK_FIFO_ON);
@@ -2720,7 +2724,7 @@ sk_dump_bytes(const char *data, int len)
 			if ((j & 0xf) == 7 && j > 0)
 				printf(" ");
 		}
-		
+
 		for (; j < 16; j++)
 			printf("   ");
 		printf("  ");
@@ -2729,9 +2733,9 @@ sk_dump_bytes(const char *data, int len)
 			int ch = data[i + j] & 0xff;
 			printf("%c", ' ' <= ch && ch <= '~' ? ch : ' ');
 		}
-		
+
 		printf("\n");
-		
+
 		if (c < 16)
 			break;
 	}

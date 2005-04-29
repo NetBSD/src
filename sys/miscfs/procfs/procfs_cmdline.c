@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.18 2004/04/22 00:31:00 itojun Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.18.4.1 2005/04/29 11:29:30 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.18 2004/04/22 00:31:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.18.4.1 2005/04/29 11:29:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	auio.uio_offset = (vaddr_t)pss.ps_argvstr;
 	auio.uio_resid = sizeof(argv);
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_rw = UIO_READ; 
+	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)

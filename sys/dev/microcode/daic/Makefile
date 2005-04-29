@@ -5,7 +5,7 @@
 # We can not deliver either of these files. The user is assumed to use
 # the ones distributed with his card or download the newest version from
 # http://www.diehl.de.
-# The bootstrap loader is compiled into the kernel, as it is needed to 
+# The bootstrap loader is compiled into the kernel, as it is needed to
 # identify the card. The protocol specific part is later downloaded by
 # the ISDN management daemon.
 

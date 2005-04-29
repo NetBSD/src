@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.12 2004/09/17 14:11:23 skrll Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.12.4.1 2005/04/29 11:28:32 kent Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.12 2004/09/17 14:11:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.12.4.1 2005/04/29 11:28:32 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.12 2004/09/17 14:11:23 skrll Exp $
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 
-/* 
+/*
  * irix_sys_ngetdents() is nearly a plain copy of svr4_sys_getdents(), from
- * sys/compat/svr4/svr4_misc.c. We need a customized version to handle the 
+ * sys/compat/svr4/svr4_misc.c. We need a customized version to handle the
  * eof flag.
  * Obviously the code should be merged, but it would require some
  * change to the way COMPAT_SVR4 code is set up.
@@ -147,7 +147,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("irix_getdents: bad reclen");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			compat_offseterr(vp, "irix_getdents");
 			error = EINVAL;
@@ -224,7 +227,7 @@ irix_sys_getdents(l, v, retval)
 
 
 /*
- * The 64 versions are very close to the 
+ * The 64 versions are very close to the
  * 32 bit versions (only 3 lines of diff)
  */
 int
@@ -306,7 +309,10 @@ again:
 			panic("irix_getdents64: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		svr4_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -315,7 +321,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

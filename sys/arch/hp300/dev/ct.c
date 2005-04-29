@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.39 2004/10/28 07:07:36 yamt Exp $	*/
+/*	$NetBSD: ct.c,v 1.39.4.1 2005/04/29 11:28:09 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.39 2004/10/28 07:07:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.39.4.1 2005/04/29 11:28:09 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.39 2004/10/28 07:07:36 yamt Exp $");
 #include <hp300/dev/hpibvar.h>
 
 #include <hp300/dev/ctreg.h>
+
+#include "ioconf.h"
 
 /* number of eof marks to remember */
 #define EOFS	128
@@ -149,8 +151,6 @@ static void	ctattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ct, sizeof(struct ct_softc),
     ctmatch, ctattach, NULL, NULL);
-
-extern struct cfdriver ct_cd;
 
 static dev_type_open(ctopen);
 static dev_type_close(ctclose);
@@ -668,7 +668,7 @@ cteof(struct ct_softc *sc, struct buf *bp)
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("cteof: bc %ld oblk %d nblk %ld read %ld, resid %ld\n",
+		printf("cteof: bc %d oblk %d nblk %ld read %ld, resid %ld\n",
 		       bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 		       blks, bp->b_bcount - CTKTOB(blks));
 #endif

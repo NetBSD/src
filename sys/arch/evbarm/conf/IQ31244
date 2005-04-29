@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.18 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: IQ31244,v 1.18.4.1 2005/04/29 11:28:07 kent Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -49,6 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -79,6 +80,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
@@ -108,7 +110,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is speed is 115200 baud.
-options 	CONSPEED=9600		# Console speed
+#options 	CONSPEED=9600		# Console speed
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -135,10 +137,11 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=370000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
+config		netbsd-wd0	root on wd0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -149,6 +152,10 @@ cpu0		at mainbus?
 # On-board device support
 obio*		at mainbus?
 com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
+# Default setting of J7 is open, which means that the interrupt is not 
+# connected
+wdc0		at obio? addr 0xfe8f0000 width 16 # on-board CF reader
+#wdc0		at obio? addr 0xfe8f0000 width 16 xint 1 # on-board CF reader
 
 # i80321 I/O Processor peripheral support
 iopxs*		at mainbus?
@@ -159,6 +166,16 @@ iic0		at iopiic?
 iic1		at iopiic?
 iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
+
+# IIC devices
+# XXX These don't seem to work yet
+
+# Temperature sensors
+#lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
+#lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
+
+# RTC
+#strtc0		at iic0 addr 0x68	# M41ST84 RTC
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
@@ -196,6 +213,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter

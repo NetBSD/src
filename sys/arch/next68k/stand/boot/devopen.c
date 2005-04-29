@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1999/03/26 06:54:40 dbj Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2.50.1 2005/04/29 11:28:18 kent Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -32,17 +32,16 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-int atoi __P((const char *cp));
-int devlookup __P((const char *d, int len));
-int devparse __P((const char *fname, int *dev,
-	 char *count, char *lun, char *part, char **file));
+int atoi(const char *);
+int devlookup(const char *, int);
+int devparse(const char *, int *, char *, char *, char *, char **);
 
 int
 atoi(const char *cp)
 {
     int val = 0;
 
-    while(isdigit(*cp))
+    while(isdigit((unsigned char)*cp))
 	val = val * 10 + (*cp++ - '0');
     return val;
 }

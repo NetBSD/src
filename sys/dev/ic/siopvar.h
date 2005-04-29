@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.19 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.19.8.1 2005/04/29 11:28:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -97,7 +97,7 @@ struct siop_lunsw {
 	u_int32_t lunsw_size; /* size of this lun sw */
 };
 
-static __inline__ void siop_table_sync __P((struct siop_cmd *, int));
+static __inline__ void siop_table_sync(struct siop_cmd *, int);
 static __inline__ void
 siop_table_sync(siop_cmd, ops)
 	struct siop_cmd *siop_cmd;
@@ -134,7 +134,7 @@ struct siop_softc {
 /* defs for sc_flags */
 #define SCF_CHAN_NOSLOT	0x0001		/* channel out of scheduler slot */
 
-void    siop_attach __P((struct siop_softc *));
-int	siop_intr __P((void *));
-void	siop_add_dev __P((struct siop_softc *, int, int));
-void	siop_del_dev __P((struct siop_softc *, int, int));
+void    siop_attach(struct siop_softc *);
+int	siop_intr(void *);
+void	siop_add_dev(struct siop_softc *, int, int);
+void	siop_del_dev(struct siop_softc *, int, int);

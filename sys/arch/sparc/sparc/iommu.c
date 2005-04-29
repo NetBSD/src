@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.80.4.1 2005/04/29 11:28:23 kent Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80.4.1 2005/04/29 11:28:23 kent Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -107,6 +107,7 @@ void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 
 int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, size_t size, caddr_t *kvap, int flags));
+void	iommu_dmamem_unmap __P((bus_dma_tag_t t, caddr_t kva, size_t size));
 paddr_t	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, off_t off, int prot, int flags));
 int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
@@ -230,7 +231,7 @@ iommu_attach(parent, self, aux)
 			    size, 0, &mlist, 1, 0) != 0)
 		panic("iommu_attach: no memory");
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("iommu_attach: no memory");
 
@@ -838,6 +839,25 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	return (0);
 }
+
+void
+iommu_dmamem_unmap(t, kva, size)
+	bus_dma_tag_t t;
+	caddr_t kva;
+	size_t size;
+{
+
+#ifdef DIAGNOSTIC
+	if ((u_long)kva & PAGE_MASK)
+		panic("iommu_dmamem_unmap");
+#endif
+
+	size = round_page(size);
+	pmap_kremove((vaddr_t)kva, size);
+	pmap_update(pmap_kernel());
+	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+}
+
 
 /*
  * mmap(2)'ing DMA-safe memory.

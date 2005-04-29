@@ -1,4 +1,4 @@
-/*	$NetBSD: timeb.h,v 1.12 2003/08/07 16:34:19 agc Exp $	*/
+/*	$NetBSD: timeb.h,v 1.12.8.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,7 +51,7 @@ struct timeb {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int ftime __P((struct timeb *));
+int ftime(struct timeb *);
 __END_DECLS
 #endif /* _KERNEL */
 

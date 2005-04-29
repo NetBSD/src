@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.81 2005/01/11 00:19:36 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.81.2.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.81 2005/01/11 00:19:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.81.2.1 2005/04/29 11:29:38 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -141,6 +141,7 @@ struct vfsops ext2fs_vfsops = {
 	vfs_stdextattrctl,
 	ext2fs_vnodeopv_descs,
 };
+VFS_ATTACH(ext2fs_vfsops);
 
 struct genfs_ops ext2fs_genfsops = {
 	genfs_size,
@@ -165,7 +166,7 @@ ext2fs_init()
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-	    "ext2dinopl", &pool_allocator_nointr); 
+	    "ext2dinopl", &pool_allocator_nointr);
 #endif
 	ufs_init();
 }
@@ -205,7 +206,7 @@ ext2fs_mountroot()
 
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
-	
+
 	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -506,7 +507,7 @@ ext2fs_reload(mountp, cred, p)
 	}
 
 	fs = VFSTOUFS(mountp)->um_e2fs;
-	/* 
+	/*
 	 * copy in new superblock, and compute in-memory values
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
@@ -541,7 +542,7 @@ ext2fs_reload(mountp, cred, p)
 		    fs->e2fs_bsize);
 		brelse(bp);
 	}
-	
+
 loop:
 	simple_lock(&mntvnode_slock);
 	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
@@ -877,7 +878,7 @@ loop:
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
-		{   
+		{
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -1010,7 +1011,8 @@ ext2fs_vget(mp, ino, vpp)
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
-		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
+		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
+		(void)ext2fs_setsize(ip, 0);
 		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
 
@@ -1045,7 +1047,7 @@ ext2fs_vget(mp, ino, vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-	vp->v_size = ip->i_e2fs_size;
+	vp->v_size = ext2fs_size(ip);
 	*vpp = vp;
 	return (0);
 }
@@ -1081,7 +1083,7 @@ ext2fs_fhtovp(mp, fhp, vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 ||
 		ip->i_e2fs_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;

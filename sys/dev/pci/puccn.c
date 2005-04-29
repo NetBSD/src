@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.6 2003/06/14 17:01:06 thorpej Exp $ */
+/*	$NetBSD: puccn.c,v 1.6.10.1 2005/04/29 11:29:12 kent Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.6 2003/06/14 17:01:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.6.10.1 2005/04/29 11:29:12 kent Exp $");
 
 #include "opt_kgdb.h"
 
@@ -175,7 +175,7 @@ resume_scan:
 		foundport = 1;
 		break;
 	}
-		
+
 	if (foundport == 0) {
 		func++;
 		goto resume_scan;

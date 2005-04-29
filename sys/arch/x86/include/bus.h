@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2004/06/20 18:04:08 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.4.1 2005/04/29 11:28:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1159,7 +1159,7 @@ struct x86_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
@@ -1169,81 +1169,10 @@ struct x86_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
-
-#ifdef _X86_BUS_DMA_PRIVATE
-int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *);
-void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
-int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
-int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
-int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
-int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
-void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int);
-
-int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
-void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs);
-int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags);
-void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
-paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags);
-
-int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    paddr_t low, paddr_t high);
-
-
-
-/*
- * Cookie used for bounce buffers. A pointer to one of these it stashed in
- * the DMA map.
- */
-struct x86_bus_dma_cookie {
-	int	id_flags;		/* flags; see below */
-
-	/*
-	 * Information about the original buffer used during
-	 * DMA map syncs.  Note that origibuflen is only used
-	 * for ID_BUFTYPE_LINEAR.
-	 */
-	void	*id_origbuf;		/* pointer to orig buffer if
-					   bouncing */
-	bus_size_t id_origbuflen;	/* ...and size */
-	int	id_buftype;		/* type of buffer */
-
-	void	*id_bouncebuf;		/* pointer to the bounce buffer */
-	bus_size_t id_bouncebuflen;	/* ...and size */
-	int	id_nbouncesegs;		/* number of valid bounce segs */
-	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
-					       physical memory segments */
-};
-
-/* id_flags */
-#define	X86_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
-#define	X86_DMA_HAS_BOUNCE		0x02	/* has bounce buffers */
-#define	X86_DMA_IS_BOUNCING		0x04	/* is bouncing current xfer */
-
-/* id_buftype */
-#define	X86_DMA_BUFTYPE_INVALID		0
-#define	X86_DMA_BUFTYPE_LINEAR		1
-#define	X86_DMA_BUFTYPE_MBUF		2
-#define	X86_DMA_BUFTYPE_UIO		3
-#define	X86_DMA_BUFTYPE_RAW		4
-
-#endif /* _X86_BUS_DMA_PRIVATE */
 
 #endif /* _X86_BUS_H_ */

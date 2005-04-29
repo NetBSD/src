@@ -1,6 +1,6 @@
-/*	$NetBSD: vndvar.h,v 1.12 2003/08/07 16:30:52 agc Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.12.8.1 2005/04/29 11:28:44 kent Exp $	*/
 
-/*-     
+/*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -16,13 +16,13 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:  
+ *    must display the following acknowledgement:
  *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors. 
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission. 
- *      
+ *    from this software without specific prior written permission.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -162,6 +162,7 @@ struct vnd_softc {
 	struct vndgeom	 sc_geom;	/* virtual geometry */
 	struct pool	 sc_vxpool;	/* vndxfer pool */
 	struct pool	 sc_vbpool;	/* vndbuf pool */
+	struct proc 	*sc_kthread;	/* kernel thread */
 };
 #endif
 
@@ -171,10 +172,11 @@ struct vnd_softc {
 #define	VNF_LABELLING	0x004	/* unit is currently being labelled */
 #define	VNF_WANTED	0x008	/* someone is waiting to obtain a lock */
 #define	VNF_LOCKED	0x010	/* unit is locked */
-#define	VNF_BUSY	0x020	/* unit is busy */
-#define	VNF_READONLY	0x040	/* unit is read-only */
-#define	VNF_KLABEL	0x080	/* keep label on close */
-#define	VNF_VLABEL	0x100	/* label is valid */
+#define	VNF_READONLY	0x020	/* unit is read-only */
+#define	VNF_KLABEL	0x040	/* keep label on close */
+#define	VNF_VLABEL	0x080	/* label is valid */
+#define	VNF_KTHREAD	0x100	/* thread is running */
+#define	VNF_VUNCONF	0x200	/* device is unconfiguring */
 
 /*
  * A simple structure for describing which vnd units are in use.

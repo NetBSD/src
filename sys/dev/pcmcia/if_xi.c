@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.49.4.1 2005/04/29 11:29:13 kent Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -146,24 +146,24 @@ int xidebug = 0;
 
 #define STATIC
 
-STATIC int xi_enable __P((struct xi_softc *));
-STATIC void xi_disable __P((struct xi_softc *));
-STATIC void xi_cycle_power __P((struct xi_softc *));
-STATIC int xi_ether_ioctl __P((struct ifnet *, u_long cmd, caddr_t));
-STATIC void xi_full_reset __P((struct xi_softc *));
-STATIC void xi_init __P((struct xi_softc *));
-STATIC int xi_ioctl __P((struct ifnet *, u_long, caddr_t));
-STATIC int xi_mdi_read __P((struct device *, int, int));
-STATIC void xi_mdi_write __P((struct device *, int, int, int));
-STATIC int xi_mediachange __P((struct ifnet *));
-STATIC void xi_mediastatus __P((struct ifnet *, struct ifmediareq *));
-STATIC u_int16_t xi_get __P((struct xi_softc *));
-STATIC void xi_reset __P((struct xi_softc *));
-STATIC void xi_set_address __P((struct xi_softc *));
-STATIC void xi_start __P((struct ifnet *));
-STATIC void xi_statchg __P((struct device *));
-STATIC void xi_stop __P((struct xi_softc *));
-STATIC void xi_watchdog __P((struct ifnet *));
+STATIC int xi_enable(struct xi_softc *);
+STATIC void xi_disable(struct xi_softc *);
+STATIC void xi_cycle_power(struct xi_softc *);
+STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, caddr_t);
+STATIC void xi_full_reset(struct xi_softc *);
+STATIC void xi_init(struct xi_softc *);
+STATIC int xi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int xi_mdi_read(struct device *, int, int);
+STATIC void xi_mdi_write(struct device *, int, int, int);
+STATIC int xi_mediachange(struct ifnet *);
+STATIC void xi_mediastatus(struct ifnet *, struct ifmediareq *);
+STATIC u_int16_t xi_get(struct xi_softc *);
+STATIC void xi_reset(struct xi_softc *);
+STATIC void xi_set_address(struct xi_softc *);
+STATIC void xi_start(struct ifnet *);
+STATIC void xi_statchg(struct device *);
+STATIC void xi_stop(struct xi_softc *);
+STATIC void xi_watchdog(struct ifnet *);
 
 void
 xi_attach(sc, myea)
@@ -336,7 +336,7 @@ xi_intr(arg)
 	esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
 	isr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ISR0);
 	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
-				
+
 	/* Check to see if card has been ejected. */
 	if (isr == 0xff) {
 #ifdef DIAGNOSTIC
@@ -379,7 +379,7 @@ xi_intr(arg)
 		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
 		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
 	}
-	
+
 	/* Packet too long? */
 	if (rsr & RSR_TOO_LONG) {
 		ifp->if_ierrors++;
@@ -404,7 +404,7 @@ xi_intr(arg)
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
 	}
-			
+
 	/* Try to start more packets transmitting. */
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		xi_start(ifp);
@@ -415,13 +415,13 @@ xi_intr(arg)
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, RESTART_TX);
 		ifp->if_oerrors++;
 	}
-	
+
 	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
 		ifp->if_oerrors++;
 
 	/* have handled the interrupt */
-#if NRND > 0    
-	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, tx_status);
 #endif
 
 end:
@@ -443,7 +443,7 @@ xi_get(sc)
 	struct mbuf *top, **mp, *m;
 	u_int16_t pktlen, len, recvcount = 0;
 	u_int8_t *data;
-	
+
 	DPRINTF(XID_CONFIG, ("xi_get()\n"));
 
 	PAGE(sc, 0);
@@ -468,11 +468,10 @@ xi_get(sc)
 		return (recvcount);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
-	m->m_flags |= M_HASFCS;
 	len = MHLEN;
 	top = 0;
 	mp = &top;
-	
+
 	while (pktlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
@@ -514,14 +513,17 @@ xi_get(sc)
 
 	/* Skip Rx packet. */
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0, DO_SKIP_RX_PKT);
-	
+
+	/* Trim the CRC off the end of the packet. */
+	m_adj(top, -ETHER_CRC_LEN);
+
 	ifp->if_ipackets++;
-	
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
-	
+
 	(*ifp->if_input)(ifp, top);
 	return (recvcount);
 }
@@ -534,7 +536,7 @@ xi_get(sc)
  */
 
 /* Let the MII serial management be idle for one period. */
-static INLINE void xi_mdi_idle __P((struct xi_softc *));
+static INLINE void xi_mdi_idle(struct xi_softc *);
 static INLINE void
 xi_mdi_idle(sc)
 	struct xi_softc *sc;
@@ -552,7 +554,7 @@ xi_mdi_idle(sc)
 }
 
 /* Pulse out one bit of data. */
-static INLINE void xi_mdi_pulse __P((struct xi_softc *, int));
+static INLINE void xi_mdi_pulse(struct xi_softc *, int);
 static INLINE void
 xi_mdi_pulse(sc, data)
 	struct xi_softc *sc;
@@ -572,7 +574,7 @@ xi_mdi_pulse(sc, data)
 }
 
 /* Probe one bit of data. */
-static INLINE int xi_mdi_probe __P((struct xi_softc *sc));
+static INLINE int xi_mdi_probe(struct xi_softc *sc);
 static INLINE int
 xi_mdi_probe(sc)
 	struct xi_softc *sc;
@@ -594,7 +596,7 @@ xi_mdi_probe(sc)
 }
 
 /* Pulse out a sequence of data bits. */
-static INLINE void xi_mdi_pulse_bits __P((struct xi_softc *, u_int32_t, int));
+static INLINE void xi_mdi_pulse_bits(struct xi_softc *, u_int32_t, int);
 static INLINE void
 xi_mdi_pulse_bits(sc, data, len)
 	struct xi_softc *sc;
@@ -754,7 +756,7 @@ xi_stop(sc)
 
 	PAGE(sc, 1);
 	bus_space_write_1(bst, bsh, IMR0, 0);
-	
+
 	/* Cancel watchdog timer. */
 	sc->sc_ethercom.ec_if.if_timer = 0;
 }

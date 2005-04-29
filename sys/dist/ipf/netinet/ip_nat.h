@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.2 2004/12/16 17:01:02 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.2.2.1 2005/04/29 11:29:21 kent Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.4 2004/06/20 10:25:28 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.9 2005/03/28 11:09:55 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -137,7 +137,6 @@ typedef	struct	nat	{
 #define	nat_seq		nat_un.nat_uni.ici_seq
 #define	nat_id		nat_un.nat_uni.ici_id
 #define	nat_tcpstate	nat_tqe.tqe_state
-#define	nat_gre		nat_un.nat_ugre
 
 /*
  * Values for nat_dir
@@ -251,6 +250,8 @@ typedef	struct	ipnat	{
 #define	IPN_STICKY	0x80000
 #define	IPN_FRAG	0x100000
 #define	IPN_FIXEDDPORT	0x200000
+#define	IPN_FINDFORWARD	0x400000
+#define	IPN_IN		0x800000
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
 			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|\
 			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY)
@@ -429,6 +430,7 @@ extern	int	fr_nat_lock;
 extern	void	fr_natsync __P((void *));
 extern	u_long	fr_defnatage;
 extern	u_long	fr_defnaticmpage;
+extern	u_long	fr_defnatipage;
 	/* nat_table[0] -> hashed list sorted by inside (ip, port) */
 	/* nat_table[1] -> hashed list sorted by outside (ip, port) */
 extern	nat_t	**nat_table[2];

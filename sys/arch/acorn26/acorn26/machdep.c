@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 2004/02/13 11:36:09 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.13.8.1 2005/04/29 11:27:58 kent Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2004/02/13 11:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.8.1 2005/04/29 11:27:58 kent Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ cpu_startup()
 	/* Stuff to do here: */
 	/* initmsgbuf() is called from start() */
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -163,7 +163,6 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	minaddr = kernel_map->min_offset;
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 

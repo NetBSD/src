@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 2002/09/27 15:36:49 provos Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.14.1 2005/04/29 11:28:24 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,31 +48,6 @@ int OF_free_phys __P((paddr_t paddr, int len));
 extern int openfirmware(void *);
 
 void setup __P((void));
-
-#if 0
-#ifdef XCOFF_GLUE
-asm (".text; .globl _entry; _entry: .long _start,0,0");
-#endif
-
-__dead void
-_start(vpd, res, openfirm, arg, argl)
-	void *vpd;
-	int res;
-	int (*openfirm)(void *);
-	char *arg;
-	int argl;
-{
-	extern char etext[];
-
-#ifdef	FIRMWORKSBUGS
-	syncicache((void *)RELOC, etext - (char *)RELOC);
-#endif
-	openfirmware = openfirm;	/* Save entry to Open Firmware */
-	setup();
-	main(arg, argl);
-	exit(0);
-}
-#endif
 
 __dead void
 _rtt()
@@ -402,8 +377,8 @@ OF_chain(virt, size, entry, arg, len)
 	if (debug) {
 		printf("OF_chain: prom returned!\n");
 
-	/* OK, firmware failed us.  Try calling prog directly */
-		printf("Calling entry(0, %p, %x, %lx, %lx)\n", arg, len,
+		/* OK, firmware failed us.  Try calling prog directly */
+		printf("Calling entry(%p, %p, %x, %lx, %lx)\n", entry, arg, len,
 			(unsigned long)romp, (unsigned long)romp);
 	}
 	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);

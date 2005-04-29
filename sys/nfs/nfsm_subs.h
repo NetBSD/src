@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.38 2004/09/29 11:24:28 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.38.4.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -247,38 +247,45 @@
  *	NFSV3_WCCCHK	return true if pre_op_attr's mtime is the same
  *			as our n_mtime.  (ie. our cache isn't stale.)
  * flags: (IN) flags for nfsm_loadattrcache
+ * docheck: (IN) TRUE if timestamp change is expected
  */
 
 /* Used as (f) for nfsm_wcc_data() */
 #define NFSV3_WCCRATTR	0
 #define NFSV3_WCCCHK	1
 
-#define	nfsm_wcc_data(v, f, flags) \
+#define	nfsm_wcc_data(v, f, flags, docheck) \
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
+		struct timespec ctime, mtime; \
+		struct nfsnode *np = VTONFS(v); \
+		boolean_t haspreopattr = FALSE; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
-			struct timespec ctime; \
+			haspreopattr = TRUE; \
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
+			fxdr_nfsv3time(tl + 2, &mtime); \
 			fxdr_nfsv3time(tl + 4, &ctime); \
-			if (VTONFS(v)->n_ctime == ctime.tv_sec) \
+			if (np->n_ctime == ctime.tv_sec) \
 				renewctime = 1; \
 			if ((v)->v_type == VDIR) { \
-				if (timespeccmp(&VTONFS(v)->n_nctime, \
-				    &ctime, ==)) \
+				if (timespeccmp(&np->n_nctime, &ctime, ==)) \
 					renewnctime = 1; \
 			} \
 			if (f) { \
-				struct timespec mtime; \
-				fxdr_nfsv3time(tl + 2, &mtime); \
-				ttretf = timespeccmp(&VTONFS(v)->n_mtime, \
-				    &mtime, ==); \
+				ttretf = timespeccmp(&np->n_mtime, &mtime, ==);\
 			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
-		if (renewctime && ttattrf) \
-			VTONFS(v)->n_ctime = VTONFS(v)->n_vattr->va_ctime.tv_sec; \
-		if (renewnctime && ttattrf) \
-			VTONFS(v)->n_nctime = VTONFS(v)->n_vattr->va_ctime; \
+		np = VTONFS(v); \
+		if (ttattrf) { \
+			if (haspreopattr && \
+			    nfs_check_wccdata(np, &ctime, &mtime, (docheck))) \
+				renewctime = renewnctime = ttretf = 0; \
+			if (renewctime) \
+				np->n_ctime = np->n_vattr->va_ctime.tv_sec; \
+			if (renewnctime) \
+				np->n_nctime = np->n_vattr->va_ctime; \
+		} \
 		if (f) { \
 			(f) = ttretf; \
 		} else { \
@@ -346,7 +353,7 @@
 			*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);		\
 		}								\
 		}
-				
+
 
 #define	nfsm_strsiz(s,m) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
@@ -383,7 +390,7 @@
 		mb = mreq = nfsm_reqh((n),(a),(s),&bpos)
 
 #define nfsm_reqdone	m_freem(mrep); \
-		nfsmout: 
+		nfsmout:
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 #define nfsm_padlen(a)	(nfsm_rndup(a) - (a))

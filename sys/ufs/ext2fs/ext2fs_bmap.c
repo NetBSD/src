@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.17 2004/12/15 07:11:51 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.17.2.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.17 2004/12/15 07:11:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.17.2.1 2005/04/29 11:29:38 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	}
 #endif
 	for (bp = NULL, ++xap; --num; ++xap) {
-		/* 
+		/*
 		 * Exit the loop if there is no disk address assigned yet and
 		 * the indirect block isn't in the cache, or if we were
 		 * looking for an indirect block and we've found it.
@@ -225,6 +225,16 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
+		if (bp == NULL) {
+
+			/*
+			 * getblk() above returns NULL only iff we are
+			 * pagedaemon.  See the implementation of getblk
+			 * for detail.
+			 */
+
+			 return (ENOMEM);
+		}
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}

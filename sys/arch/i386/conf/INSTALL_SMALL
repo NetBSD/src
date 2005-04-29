@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.108 2004/11/10 17:25:22 christos Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.108.4.1 2005/04/29 11:28:12 kent Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -91,6 +91,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -124,6 +125,7 @@ file-system 	KERNFS		# /kern
 				# immutable) behave as system flags.
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -218,6 +220,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
 
+#attimer0	at isa?
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
 
@@ -478,6 +481,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

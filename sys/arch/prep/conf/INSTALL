@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29 2004/11/10 17:54:06 christos Exp $
+#	$NetBSD: INSTALL,v 1.29.4.1 2005/04/29 11:28:20 kent Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -17,6 +17,7 @@ options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 maxusers	8
 
 # Platform support
+options 	PLATFORM_IBM_6015		# IBM RS/6000 40P
 options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
@@ -44,6 +45,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 # File system options
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
@@ -252,6 +254,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

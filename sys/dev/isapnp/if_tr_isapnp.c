@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.9 2002/10/02 16:34:02 thorpej Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.9.14.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -19,7 +19,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.9 2002/10/02 16:34:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.9.14.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.9 2002/10/02 16:34:02 thorpej Exp
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-int	tr_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	tr_isapnp_attach __P((struct device *, struct device *, void *));
+int	tr_isapnp_match(struct device *, struct cfdata *, void *);
+void	tr_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tr_isapnp, sizeof(struct tr_softc),
     tr_isapnp_match, tr_isapnp_attach, NULL, NULL);
@@ -132,7 +132,7 @@ tr_isapnp_attach(parent, self, aux)
 
 	sc->sc_aca = TR_ACA_OFFSET;
 	sc->sc_maddr = ipa->ipa_mem[sramidx].base;
-	/* 
+	/*
 	 * Reset the card.
 	 */
 	if (tr_reset(sc))

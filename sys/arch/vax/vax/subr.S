@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.10 2004/01/04 11:33:31 jdolecek Exp $	   */
+/*	$NetBSD: subr.S,v 1.10.8.1 2005/04/29 11:28:27 kent Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -162,7 +162,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
  */
 
 	.align	2
-	.globl	_C_LABEL(sigcode),_C_LABEL(upcallcode),_C_LABEL(esigcode)
+	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 	pushr	$0x3f
 	subl2	$0xc,%sp
@@ -172,14 +172,6 @@ _C_LABEL(sigcode):
 	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
-
-/*
- * Trampoline for SA upcalls.  This would be totally unnecessary if we
- * didn't need to account for the saved registers in the callee.
- */
-_C_LABEL(upcallcode):
-	callg	(%sp),(%r0)
-	halt
 _C_LABEL(esigcode):
 
 #ifdef COMPAT_IBCS2

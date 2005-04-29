@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.16 2003/08/07 16:31:25 agc Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.16.8.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.16 2003/08/07 16:31:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.16.8.1 2005/04/29 11:29:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,15 +77,18 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.16 2003/08/07 16:31:25 agc Exp $");
 #include <dev/sun/kbdvar.h>
 #include <dev/sun/kbdsunvar.h>
 
+#if NWSKBD > 0
+void kbd_wskbd_attach(struct kbd_softc *k, int isconsole);
+#endif
 
 /****************************************************************
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void kbd_zs_rxint __P((struct zs_chanstate *));
-static void kbd_zs_stint __P((struct zs_chanstate *, int));
-static void kbd_zs_txint __P((struct zs_chanstate *));
-static void kbd_zs_softint __P((struct zs_chanstate *));
+static void kbd_zs_rxint(struct zs_chanstate *);
+static void kbd_zs_stint(struct zs_chanstate *, int);
+static void kbd_zs_txint(struct zs_chanstate *);
+static void kbd_zs_softint(struct zs_chanstate *);
 
 struct zsops zsops_kbd = {
 	kbd_zs_rxint,	/* receive char available */
@@ -96,7 +99,7 @@ struct zsops zsops_kbd = {
 
 static int	kbd_zs_match(struct device *, struct cfdata *, void *);
 static void	kbd_zs_attach(struct device *, struct device *, void *);
-static void	kbd_zs_write_data __P((struct kbd_sun_softc *, int));
+static void	kbd_zs_write_data(struct kbd_sun_softc *, int);
 
 CFATTACH_DECL(kbd_zs, sizeof(struct kbd_sun_softc),
     kbd_zs_match, kbd_zs_attach, NULL, NULL);
@@ -107,7 +110,7 @@ int	kbd_zs_bps = KBD_DEFAULT_BPS;
 /*
  * kbd_zs_match: how is this zs channel configured?
  */
-int 
+int
 kbd_zs_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -122,7 +125,7 @@ kbd_zs_match(parent, cf, aux)
 	return 0;
 }
 
-void 
+void
 kbd_zs_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -188,6 +191,9 @@ kbd_zs_attach(parent, self, aux)
 	/* Magic sequence. */
 	k->k_magic1 = KBD_L1;
 	k->k_magic2 = KBD_A;
+#if NWSKBD > 0
+	kbd_wskbd_attach(&k->k_kbd, k->k_kbd.k_isconsole);
+#endif
 }
 
 /*

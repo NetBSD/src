@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.24 2004/10/01 05:16:36 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.24.4.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.

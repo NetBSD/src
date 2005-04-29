@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.243 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.243.2.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.243 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.243.2.1 2005/04/29 11:29:23 kent Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -147,6 +147,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.243 2005/01/09 03:11:48 mycroft Exp 
 #endif
 #ifdef LKM
 #include <sys/lkm.h>
+#endif
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
 #endif
 
 #include <sys/syscall.h>
@@ -242,7 +245,6 @@ main(void)
 	 * in case of early panic or other messages.
 	 */
 	consinit();
-	printf("%s", copyright);
 
 	KERNEL_LOCK_INIT();
 
@@ -250,9 +252,6 @@ main(void)
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
-
-	/* Initialise pools. */
-	link_pool_init();
 
 	/* Initialize callouts. */
 	callout_startup();
@@ -427,6 +426,15 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
+
+#ifdef VERIFIED_EXEC
+	  /*
+	   * Initialise the fingerprint operations vectors before
+	   * fingerprints can be loaded.
+	   */
+	veriexec_init_fp_ops();
+#endif
+	
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.101.4.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.101.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,6 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = ccdunit(dev);
 	int s, i, j, lookedup = 0, error;
 	int part, pmask;
-	struct buf *bp;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ucred *uc;
@@ -1057,7 +1056,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EINVAL;
 			goto out;
 		}
-			
+
 		/* Fill in some important bits. */
 		cs->sc_ileave = ccio->ccio_ileave;
 		cs->sc_nccdisks = ccio->ccio_ndisks;
@@ -1155,12 +1154,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		/* Kill off any queued buffers. */
 		s = splbio();
-		while ((bp = BUFQ_GET(&cs->sc_bufq)) != NULL) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-		}
+		bufq_drain(&cs->sc_bufq);
 		splx(s);
 
 		bufq_free(&cs->sc_bufq);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.17 2002/09/05 08:02:29 petrov Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.17.14.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.17 2002/09/05 08:02:29 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.17.14.1 2005/04/29 11:29:16 kent Exp $");
 
 #include "opt_rasops.h"
 
@@ -52,14 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.17 2002/09/05 08:02:29 petrov Exp $")
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops24_erasecols __P((void *, int, int, int, long));
-static void 	rasops24_eraserows __P((void *, int, int, long));
-static void 	rasops24_putchar __P((void *, int, int, u_int, long attr));
+static void 	rasops24_erasecols(void *, int, int, int, long);
+static void 	rasops24_eraserows(void *, int, int, long);
+static void 	rasops24_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops24_putchar8 __P((void *, int, int, u_int, long attr));
-static void 	rasops24_putchar12 __P((void *, int, int, u_int, long attr));
-static void 	rasops24_putchar16 __P((void *, int, int, u_int, long attr));
-static void	rasops24_makestamp __P((struct rasops_info *, long));
+static void 	rasops24_putchar8(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar12(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar16(void *, int, int, u_int, long attr);
+static void	rasops24_makestamp(struct rasops_info *, long);
 #endif
 
 /*
@@ -375,7 +375,7 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 	if (uc == (u_int)-1) {
 		int32_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = rp[3] = 
+			rp[0] = rp[1] = rp[2] = rp[3] =
 			rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = c;
 			DELTA(rp, ri->ri_stride, int32_t *);
 		}
@@ -463,8 +463,8 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	if (uc == (u_int)-1) {
 		int32_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = rp[3] = 
-			rp[4] = rp[5] = rp[6] = rp[7] = 
+			rp[0] = rp[1] = rp[2] = rp[3] =
+			rp[4] = rp[5] = rp[6] = rp[7] =
 			rp[8] = rp[9] = rp[10] = rp[11] = c;
 			DELTA(rp, ri->ri_stride, int32_t *);
 		}
@@ -504,8 +504,8 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 		int32_t c = STAMP_READ(52);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = rp[1] = rp[2] = rp[3] = 
-		rp[4] = rp[5] = rp[6] = rp[7] = 
+		rp[0] = rp[1] = rp[2] = rp[3] =
+		rp[4] = rp[5] = rp[6] = rp[7] =
 		rp[8] = rp[9] = rp[10] = rp[11] = c;
 	}
 

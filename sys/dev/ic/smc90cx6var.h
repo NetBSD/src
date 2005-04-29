@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.5 2000/03/23 07:01:32 thorpej Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.5.36.1 2005/04/29 11:28:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  *
  * The SMC 8bit ARCnet chip family uses a register and a memory window, which
  * we get passed via bus_space_tags and bus_space_handles.
- * 
+ *
  * As the reset functionality differs between the Amiga boards (using the
  * 90c26 chip) and middle-aged ISA boards (using the 90c56 chip), we have
  * a sc_reset callback function in the softc, which does a stop function
@@ -77,7 +77,7 @@ struct bah_softc {
 	u_char	sc_retransmits[2];	/* unused at the moment */
 };
 
-void	bah_attach_subr __P((struct bah_softc *));
-int	bahintr __P((void *));
+void	bah_attach_subr(struct bah_softc *);
+int	bahintr(void *);
 
 #endif

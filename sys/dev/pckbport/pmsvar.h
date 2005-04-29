@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.1 2004/12/24 18:33:06 christos Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.1.2.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -40,7 +40,7 @@ struct pms_protocol {
 	int rates[3];
 	int response;
 	const char *name;
-}; 
+};
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
@@ -62,9 +62,11 @@ struct pms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 	struct proc *sc_event_thread;
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 	union {
 		struct synaptics_softc synaptics;
 	} u;
+#endif
 };
 
 #endif

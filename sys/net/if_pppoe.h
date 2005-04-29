@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.5 2003/11/28 08:56:48 keihan Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.5.8.1 2005/04/29 11:29:31 kent Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,14 +65,6 @@ struct pppoeconnectionstate {
 };
 
 #define PPPOEGETSESSION	_IOWR('i', 112, struct pppoeconnectionstate)
-
-struct pppoeidletimeoutcfg {
-	char	ifname[IFNAMSIZ];	/* pppoe interface name */
-	u_long	idle_timeout;		/* idle timeout in seconds */
-};
-
-#define	PPPOEGETIDLETIMEOUT	_IOWR('i', 113, struct pppoeidletimeoutcfg)
-#define	PPPOESETIDLETIMEOUT	_IOW('i', 114, struct pppoeidletimeoutcfg)
 
 #ifdef _KERNEL
 

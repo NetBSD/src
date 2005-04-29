@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6.8.1 2005/04/29 11:28:10 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ atoi(char *cp)
 {
 	int val = 0;
 
-	while (isdigit(*cp))
+	while (isdigit((unsigned char)*cp))
 		val = val * 10 + (*cp++ - '0');
 	return val;
 }
@@ -99,9 +99,7 @@ usage(void)
 }
 
 static int
-devlookup(d, len)
-	const char *d;
-	int len;
+devlookup(const char *d, int len)
 {
 	struct devsw *dp = devsw;
 	int i;
@@ -155,10 +153,8 @@ devlookup(d, len)
  *    dev   unit  part
  */
 static int
-devparse(fname, dev, adapt, ctlr, unit, part, file)
-	const char *fname;
-	int *dev, *adapt, *ctlr, *unit, *part;
-	char **file;
+devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
+    int *part, char **file)
 {
 	int i;
 	char *s, *args[4];
@@ -249,10 +245,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int error;
 	int dev, adapt, ctlr, unit, part;

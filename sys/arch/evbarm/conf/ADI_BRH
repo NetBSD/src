@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.22 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: ADI_BRH,v 1.22.4.1 2005/04/29 11:28:07 kent Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -49,6 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -79,6 +80,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
@@ -213,6 +215,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter

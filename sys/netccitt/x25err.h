@@ -1,4 +1,4 @@
-/*	$NetBSD: x25err.h,v 1.7 2003/08/07 16:33:06 agc Exp $	*/
+/*	$NetBSD: x25err.h,v 1.7.8.1 2005/04/29 11:29:33 kent Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,9 +73,9 @@
  *	@(#)x25err.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
- *  
- *  X.25 Reset and Clear errors and diagnostics.  These values are 
+/*
+ *
+ *  X.25 Reset and Clear errors and diagnostics.  These values are
  *  returned in the u_error field of the u structure.
  *
  */

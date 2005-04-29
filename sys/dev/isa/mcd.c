@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.87 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.87.4.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.87 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.87.4.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,40 +156,40 @@ struct mcd_softc {
 	u_char	probe;
 };
 
-static int bcd2bin __P((bcd_t));
-static bcd_t bin2bcd __P((int));
-static void hsg2msf __P((int, bcd_t *));
-static daddr_t msf2hsg __P((bcd_t *, int));
+static int bcd2bin(bcd_t);
+static bcd_t bin2bcd(int);
+static void hsg2msf(int, bcd_t *);
+static daddr_t msf2hsg(bcd_t *, int);
 
-int mcd_playtracks __P((struct mcd_softc *, struct ioc_play_track *));
-int mcd_playmsf __P((struct mcd_softc *, struct ioc_play_msf *));
-int mcd_playblocks __P((struct mcd_softc *, struct ioc_play_blocks *));
-int mcd_stop __P((struct mcd_softc *));
-int mcd_eject __P((struct mcd_softc *));
-int mcd_read_subchannel __P((struct mcd_softc *, struct ioc_read_subchannel *));
-int mcd_pause __P((struct mcd_softc *));
-int mcd_resume __P((struct mcd_softc *));
-int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
-int mcd_toc_entries __P((struct mcd_softc *, struct ioc_read_toc_entry *));
+int mcd_playtracks(struct mcd_softc *, struct ioc_play_track *);
+int mcd_playmsf(struct mcd_softc *, struct ioc_play_msf *);
+int mcd_playblocks(struct mcd_softc *, struct ioc_play_blocks *);
+int mcd_stop(struct mcd_softc *);
+int mcd_eject(struct mcd_softc *);
+int mcd_read_subchannel(struct mcd_softc *, struct ioc_read_subchannel *);
+int mcd_pause(struct mcd_softc *);
+int mcd_resume(struct mcd_softc *);
+int mcd_toc_header(struct mcd_softc *, struct ioc_toc_header *);
+int mcd_toc_entries(struct mcd_softc *, struct ioc_read_toc_entry *);
 
-int mcd_getreply __P((struct mcd_softc *));
-int mcd_getstat __P((struct mcd_softc *));
-int mcd_getresult __P((struct mcd_softc *, struct mcd_result *));
-void mcd_setflags __P((struct mcd_softc *));
-int mcd_get __P((struct mcd_softc *, char *, int));
-int mcd_send __P((struct mcd_softc *, struct mcd_mbox *, int));
-int mcdintr __P((void *));
-void mcd_soft_reset __P((struct mcd_softc *));
-int mcd_hard_reset __P((struct mcd_softc *));
-int mcd_setmode __P((struct mcd_softc *, int));
-int mcd_setupc __P((struct mcd_softc *, int));
-int mcd_read_toc __P((struct mcd_softc *));
-int mcd_getqchan __P((struct mcd_softc *, union mcd_qchninfo *, int));
-int mcd_setlock __P((struct mcd_softc *, int));
+int mcd_getreply(struct mcd_softc *);
+int mcd_getstat(struct mcd_softc *);
+int mcd_getresult(struct mcd_softc *, struct mcd_result *);
+void mcd_setflags(struct mcd_softc *);
+int mcd_get(struct mcd_softc *, char *, int);
+int mcd_send(struct mcd_softc *, struct mcd_mbox *, int);
+int mcdintr(void *);
+void mcd_soft_reset(struct mcd_softc *);
+int mcd_hard_reset(struct mcd_softc *);
+int mcd_setmode(struct mcd_softc *, int);
+int mcd_setupc(struct mcd_softc *, int);
+int mcd_read_toc(struct mcd_softc *);
+int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
+int mcd_setlock(struct mcd_softc *, int);
 
-int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
-int mcdprobe __P((struct device *, struct cfdata *, void *));
-void mcdattach __P((struct device *, struct device *, void *));
+int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
+int mcdprobe(struct device *, struct cfdata *, void *);
+void mcdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
     mcdprobe, mcdattach, NULL, NULL);
@@ -214,11 +214,11 @@ const struct cdevsw mcd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
-void	mcdgetdisklabel __P((struct mcd_softc *));
-int	mcd_get_parms __P((struct mcd_softc *));
-void	mcdstart __P((struct mcd_softc *));
-void	mcd_pseudointr __P((void *));
+void	mcdgetdefaultlabel(struct mcd_softc *, struct disklabel *);
+void	mcdgetdisklabel(struct mcd_softc *);
+int	mcd_get_parms(struct mcd_softc *);
+void	mcdstart(struct mcd_softc *);
+void	mcd_pseudointr(void *);
 
 struct dkdriver mcddkdriver = { mcdstrategy };
 
@@ -352,7 +352,7 @@ mcdopen(dev, flag, fmt, p)
 	    sc->disksize, sc->blksize, 0);
 
 	part = MCDPART(dev);
-	
+
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sc->sc_dk.dk_label->d_npartitions ||
@@ -400,7 +400,7 @@ mcdclose(dev, flag, fmt, p)
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
 	int error;
-	
+
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
 	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
@@ -437,13 +437,13 @@ mcdstrategy(bp)
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
-	
+
 	/* Test validity. */
 	MCD_TRACE("strategy: buf=0x%lx blkno=%ld bcount=%ld\n", bp,
 	    bp->b_blkno, bp->b_bcount, 0);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = %d bcount = %ld\n",
+		printf("%s: strategy: blkno = " PRId64 " bcount = %ld\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -459,7 +459,7 @@ mcdstrategy(bp)
 	/* No data to read. */
 	if (bp->b_bcount == 0)
 		goto done;
-	
+
 	/*
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
@@ -477,7 +477,7 @@ mcdstrategy(bp)
 	if (MCDPART(bp->b_dev) != RAW_PART)
 		blkno += lp->d_partitions[MCDPART(bp->b_dev)].p_offset;
 
-	bp->b_rawblkno = blkno; 
+	bp->b_rawblkno = blkno;
 
 	/* Queue it. */
 	s = splbio();
@@ -500,7 +500,7 @@ mcdstart(sc)
 {
 	struct buf *bp;
 	int s;
-	
+
 loop:
 	s = splbio();
 
@@ -579,7 +579,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	
+
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
@@ -777,7 +777,7 @@ mcdgetdisklabel(sc)
 	struct mcd_softc *sc;
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
-	
+
 	memset(sc->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	mcdgetdefaultlabel(sc, lp);
@@ -954,7 +954,7 @@ mcdprobe(parent, match, aux)
 
 	if (rv)	{
 		ia->ia_nio = 1;
-		ia->ia_io[0].ir_addr = MCD_NPORT;
+		ia->ia_io[0].ir_size = MCD_NPORT;
 
 		ia->ia_nirq = 1;
 
@@ -1089,7 +1089,7 @@ mcd_send(sc, mbx, diskin)
 	int retry, i, error;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	
+
 	if (sc->debug) {
 		printf("%s: mcd_send: %d %02x", sc->sc_dev.dv_xname,
 		    mbx->cmd.length, (u_int)mbx->cmd.opcode);
@@ -1365,7 +1365,7 @@ mcd_hard_reset(sc)
 	mbx.res.length = 0;
 	return mcd_send(sc, &mbx, 0);
 }
-	
+
 int
 mcd_setmode(sc, mode)
 	struct mcd_softc *sc;
@@ -1643,7 +1643,7 @@ mcd_read_subchannel(sc, ch)
 	case CD_MEDIA_CATALOG:
 		data.what.media_catalog.mc_valid = 1;
 #if 0
-		data.what.media_catalog.mc_number = 
+		data.what.media_catalog.mc_number =
 #endif
 		break;
 
@@ -1855,7 +1855,7 @@ mcd_setlock(sc, mode)
 	int mode;
 {
 	struct mcd_mbox mbx;
-	
+
 	mbx.cmd.opcode = MCD_CMDSETLOCK;
 	mbx.cmd.length = sizeof(mbx.cmd.data.lockmode);
 	mbx.cmd.data.lockmode.mode = mode;

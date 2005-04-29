@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.2 2004/11/25 04:52:23 yamt Exp $	*/
+/*	$NetBSD: bufq.h,v 1.2.4.1 2005/04/29 11:29:37 kent Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -108,6 +108,7 @@ struct bufq_state {
 extern int bufq_disk_default_strat;
 #define	BUFQ_DISK_DEFAULT_STRAT()	bufq_disk_default_strat
 void	bufq_alloc(struct bufq_state *, int);
+void	bufq_drain(struct bufq_state *);
 void	bufq_free(struct bufq_state *);
 
 #define BUFQ_PUT(bufq, bp) \

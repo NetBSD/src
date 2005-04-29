@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.25 2003/07/15 03:36:19 lukem Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.25.8.1 2005/04/29 11:28:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.25 2003/07/15 03:36:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.25.8.1 2005/04/29 11:28:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,7 @@ static const struct {
  * need to do peek/write/read tricks.
  */
 void *
-bus_tmapin(bustype, pa)
-	int bustype, pa;
+bus_tmapin(int bustype, int pa)
 {
 	vaddr_t pgva;
 	int off, s;
@@ -117,8 +116,8 @@ bus_tmapin(bustype, pa)
 	return ((void *)(pgva + off));
 }
 
-void bus_tmapout(vp)
-	void *vp;
+void 
+bus_tmapout(void *vp)
 {
 	vaddr_t pgva;
 	int s;
@@ -138,8 +137,7 @@ void bus_tmapout(vp)
  * Make a permanent mapping for a device.
  */
 void *
-bus_mapin(bustype, pa, sz)
-	int bustype, pa, sz;
+bus_mapin(int bustype, int pa, int sz)
 {
 	vaddr_t va;
 	int off;
@@ -164,7 +162,7 @@ bus_mapin(bustype, pa, sz)
 	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
-	va = uvm_km_valloc_wait(kernel_map, sz);
+	va = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (va == 0)
 		panic("bus_mapin");
 
@@ -175,10 +173,8 @@ done:
 	return ((void*)(va + off));
 }
 
-void
-bus_mapout(ptr, sz)
-	void *ptr;
-	int sz;
+void 
+bus_mapout(void *ptr, int sz)
 {
 	vaddr_t va;
 	int off;
@@ -194,5 +190,5 @@ bus_mapout(ptr, sz)
 	sz += off;
 	sz = m68k_round_page(sz);
 
-	uvm_km_free_wakeup(kernel_map, va, sz);
+	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }

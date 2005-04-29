@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.25 2003/07/15 03:36:17 lukem Exp $	*/
+/*	$NetBSD: dvma.c,v 1.25.8.1 2005/04/29 11:28:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.25 2003/07/15 03:36:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.25.8.1 2005/04/29 11:28:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ vsize_t dvma_segmap_size = 6 * NBSG;
 /* Using phys_map to manage DVMA scratch-memory pages. */
 /* Note: Could use separate pagemap for obio if needed. */
 
-void
-dvma_init()
+void 
+dvma_init(void)
 {
 	vaddr_t segmap_addr;
 
@@ -98,7 +98,8 @@ dvma_init()
 	 * The remainder of phys_map is used for DVMA scratch
 	 * memory pages (i.e. driver control blocks, etc.)
 	 */
-	segmap_addr = uvm_km_valloc_wait(phys_map, dvma_segmap_size);
+	segmap_addr = uvm_km_alloc(phys_map, dvma_segmap_size, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (segmap_addr != DVMA_MAP_BASE)
 		panic("dvma_init: unable to allocate DVMA segments");
 
@@ -116,8 +117,7 @@ dvma_init()
  * (idea for implementation borrowed from Chris Torek.)
  */
 void *
-dvma_malloc(bytes)
-	size_t bytes;
+dvma_malloc(size_t bytes)
 {
     caddr_t new_mem;
     vsize_t new_size;
@@ -125,7 +125,7 @@ dvma_malloc(bytes)
     if (!bytes)
 		return NULL;
     new_size = m68k_round_page(bytes);
-    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size);
+    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size, 0, UVM_KMF_WIRED);
     if (!new_mem)
 		panic("dvma_malloc: no space in phys_map");
     /* The pmap code always makes DVMA pages non-cached. */
@@ -135,14 +135,12 @@ dvma_malloc(bytes)
 /*
  * Free pages from dvma_malloc()
  */
-void
-dvma_free(addr, size)
-	void *addr;
-	size_t size;
+void 
+dvma_free(void *addr, size_t size)
 {
 	vsize_t sz = m68k_round_page(size);
 
-	uvm_km_free(phys_map, (vaddr_t)addr, sz);
+	uvm_km_free(phys_map, (vaddr_t)addr, sz, UVM_KMF_WIRED);
 }
 
 /*
@@ -150,10 +148,8 @@ dvma_free(addr, size)
  * would be used by some OTHER bus-master besides the CPU.
  * (Examples: on-board ie/le, VME xy board).
  */
-u_long
-dvma_kvtopa(kva, bustype)
-	void *kva;
-	int bustype;
+u_long 
+dvma_kvtopa(void *kva, int bustype)
 {
 	u_long addr, mask;
 
@@ -181,10 +177,7 @@ dvma_kvtopa(kva, bustype)
  * (Typically called at SPLBIO)
  */
 void *
-dvma_mapin(kva, len, canwait)
-	void *kva;
-	int len;
-	int canwait; /* ignored */
+dvma_mapin(void *kva, int len, int canwait /* ignored */)
 {
 	vaddr_t seg_kva, seg_dma;
 	vsize_t seg_len, seg_off;
@@ -244,10 +237,8 @@ dvma_mapin(kva, len, canwait)
  * This IS safe to call at interrupt time.
  * (Typically called at SPLBIO)
  */
-void
-dvma_mapout(dma, len)
-	void *dma;
-	int len;
+void 
+dvma_mapout(void *dma, int len)
 {
 	vaddr_t seg_dma;
 	vsize_t seg_len, seg_off;

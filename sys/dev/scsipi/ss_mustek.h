@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.h,v 1.5 1998/02/13 08:28:59 enami Exp $	*/
+/*	$NetBSD: ss_mustek.h,v 1.5.56.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -116,7 +116,7 @@ struct mustek_get_status_cmd {
 
 struct mustek_get_status_data {
 #define MUSTEK_READY 0
-#define MUSTEK_BUSY  -1	
+#define MUSTEK_BUSY  -1
 	u_int8_t ready_busy;		/* 0 = ready */
 	u_int8_t bytes_per_line[2];	/* LSB */
 	u_int8_t lines[3];		/* LSB */

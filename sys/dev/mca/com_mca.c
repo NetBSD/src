@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.10 2003/08/07 16:31:08 agc Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.10.8.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.10 2003/08/07 16:31:08 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.10.8.1 2005/04/29 11:28:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,13 @@ struct com_mca_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_mca_probe __P((struct device *, struct cfdata *, void *));
-void com_mca_attach __P((struct device *, struct device *, void *));
-void com_mca_cleanup __P((void *));
+int com_mca_probe(struct device *, struct cfdata *, void *);
+void com_mca_attach(struct device *, struct device *, void *);
+void com_mca_cleanup(void *);
 
-static int ibm_modem_getcfg __P((struct mca_attach_args *, int *, int *));
-static int neocom1_getcfg __P((struct mca_attach_args *, int *, int *));
-static int ibm_mpcom_getcfg __P((struct mca_attach_args *, int *, int *));
+static int ibm_modem_getcfg(struct mca_attach_args *, int *, int *);
+static int neocom1_getcfg(struct mca_attach_args *, int *, int *);
+static int ibm_mpcom_getcfg(struct mca_attach_args *, int *, int *);
 
 CFATTACH_DECL(com_mca, sizeof(struct com_mca_softc),
     com_mca_probe, com_mca_attach, NULL, NULL);
@@ -117,7 +117,7 @@ CFATTACH_DECL(com_mca, sizeof(struct com_mca_softc),
 static const struct com_mca_product {
 	u_int32_t	cp_prodid;	/* MCA product ID */
 	const char	*cp_name;	/* device name */
-	int (*cp_getcfg) __P((struct mca_attach_args *, int *iobase, int *irq));
+	int (*cp_getcfg)(struct mca_attach_args *, int *iobase, int *irq);
 					/* get device i/o base and irq */
 } com_mca_products[] = {
 	{ MCA_PRODUCT_IBM_MOD,	"IBM Internal Modem",	ibm_modem_getcfg },
@@ -128,7 +128,7 @@ static const struct com_mca_product {
 	{ 0,			NULL,			NULL },
 };
 
-static const struct com_mca_product *com_mca_lookup __P((int));
+static const struct com_mca_product *com_mca_lookup(int);
 
 static const struct com_mca_product *
 com_mca_lookup(ma_id)
@@ -251,9 +251,9 @@ ibm_modem_getcfg(ma, iobasep, irqp)
 	 * POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
 	 *         \__/  \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *            \_____ Serial Configuration: XX=SERIAL_XX 
-	 */ 
-	
+	 *            \_____ Serial Configuration: XX=SERIAL_XX
+	 */
+
 	snum = (pos2 & 0x0e) >> 1;
 
 	*iobasep = MCA_SERIAL[snum].iobase;
@@ -292,8 +292,8 @@ neocom1_getcfg(ma, iobasep, irqp)
 	 * 7 6 5 4 3 2 1 0
 	 * \_____________/
 	 *               \__ I/O Address: bits 15-8
-	 */ 
-	
+	 */
+
 	*iobasep = (pos4 << 8) | (pos3 & 0xf8);
 	*irqp = neotech_irq[(pos2 & 0x06) >> 1];
 
@@ -319,9 +319,9 @@ ibm_mpcom_getcfg(ma, iobasep, irqp)
 	 * POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
 	 *       0 \__/  \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *            \_____ Serial Configuration: XX=SERIAL_XX 
-	 */ 
-	
+	 *            \_____ Serial Configuration: XX=SERIAL_XX
+	 */
+
 	if (pos2 & 0x10) {
 		printf(": not set to SERIAL mode, ignored\n");
 		return (1);

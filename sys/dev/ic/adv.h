@@ -1,9 +1,9 @@
-/*      $NetBSD: adv.h,v 1.9 2003/07/08 10:06:30 itojun Exp $        */
+/*      $NetBSD: adv.h,v 1.9.8.1 2005/04/29 11:28:47 kent Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. Narrow SCSI controllers
- * 
+ *
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -51,7 +51,7 @@ struct adv_ccb
 	ASC_SG_HEAD	sghead;
 	ASC_SCSI_Q	scsiq;
 
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 
 	struct callout ccb_watchdog;
 
@@ -92,11 +92,11 @@ struct adv_control
 
 /******************************************************************************/
 
-int adv_init __P((ASC_SOFTC *));
-void adv_attach __P((ASC_SOFTC *));
-int adv_detach __P((ASC_SOFTC *, int));
-int adv_intr __P((void *));
-ADV_CCB *adv_ccb_phys_kv __P((ASC_SOFTC *, u_long));
+int adv_init(ASC_SOFTC *);
+void adv_attach(ASC_SOFTC *);
+int adv_detach(ASC_SOFTC *, int);
+int adv_intr(void *);
+ADV_CCB *adv_ccb_phys_kv(ASC_SOFTC *, u_long);
 
 /******************************************************************************/
 

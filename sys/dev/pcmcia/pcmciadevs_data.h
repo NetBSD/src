@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.208 2004/08/10 18:45:36 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.208.4.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.207 2004/08/10 18:45:25 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -540,6 +540,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Intel EtherExpress PRO/100",	}
 	,
 	{
+	    PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37100P,
+	    PCMCIA_CIS_INTERSIL_ISL37100P,
+	    0,
+	    "Netgear",
+	    "Intersil ISL37100P",	}
+	,
+	{
+	    PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37110P,
+	    PCMCIA_CIS_INTERSIL_ISL37110P,
+	    0,
+	    "Netgear",
+	    "Intersil ISL37110P",	}
+	,
+	{
+	    PCMCIA_VENDOR_INTERSIL, PCMCIA_PRODUCT_INTERSIL_ISL37300P,
+	    PCMCIA_CIS_INTERSIL_ISL37300P,
+	    0,
+	    "Netgear",
+	    "Intersil ISL37300P",	}
+	,
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
 	    PCMCIA_CIS_IODATA_PCLATE,
 	    0,
@@ -708,6 +729,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Melco LPC3-TX",	}
 	,
 	{
+	    PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	    PCMCIA_CIS_MICROSOFT_MN_520,
+	    0,
+	    "Microsoft Corporation",
+	    "Microsoft MN-520 WLAN Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
 	    PCMCIA_CIS_MOTOROLA_POWER144,
 	    0,
@@ -799,13 +827,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Netgear FA411",	}
 	,
 	{
-	    PCMCIA_VENDOR_NETGEAR_2, PCMCIA_PRODUCT_NETGEAR_2_MA401,
-	    PCMCIA_CIS_NETGEAR_2_MA401,
-	    0,
-	    "Netgear",
-	    "Netgear MA401",	}
-	,
-	{
 	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
 	    PCMCIA_CIS_NI_PCMCIA_GPIB,
 	    0,
@@ -881,6 +902,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Proxim",
 	    "Proxim RangeLAN2 7401",	}
+	,
+	{
+	    PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	    PCMCIA_CIS_PROXIM_RANGELANDS_8430,
+	    0,
+	    "Proxim",
+	    "Proxim RangeLAN-DS 8430",	}
 	,
 	{
 	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
@@ -1422,8 +1450,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Icom SL-200",	}
 	,
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_INTERSIL_PRISM2,
-	    PCMCIA_CIS_INTERSIL_PRISM2,
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_INTERSIL2_PRISM2,
+	    PCMCIA_CIS_INTERSIL2_PRISM2,
 	    0,
 	    "Intersil",
 	    "Intersil Prism II",	}
@@ -1668,7 +1696,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_NETGEAR_2,
+	    PCMCIA_VENDOR_INTERSIL,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,
@@ -2076,6 +2104,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_MICROSOFT,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Microsoft Corporation",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_BREEZECOM,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2340,7 +2376,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_INTERSIL,
+	    PCMCIA_VENDOR_INTERSIL2,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,

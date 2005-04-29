@@ -1,10 +1,10 @@
-/*	$NetBSD: adv_pci.c,v 1.14 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.14.10.1 2005/04/29 11:29:05 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
- * 
+ *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.10.1 2005/04/29 11:29:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14 2003/01/31 00:07:39 thorpej Exp $")
 
 /******************************************************************************/
 
-int	adv_pci_match __P((struct device *, struct cfdata *, void *));
-void	adv_pci_attach __P((struct device *, struct device *, void *));
+int	adv_pci_match(struct device *, struct cfdata *, void *);
+void	adv_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
     adv_pci_match, adv_pci_attach, NULL, NULL);
@@ -104,7 +104,7 @@ CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int 
+int
 adv_pci_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -124,7 +124,7 @@ adv_pci_match(parent, match, aux)
 }
 
 
-void 
+void
 adv_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

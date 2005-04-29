@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.707.2.1 2005/01/16 15:05:11 kent Exp $
+#	$NetBSD: files,v 1.707.2.2 2005/04/29 11:28:43 kent Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -442,7 +442,7 @@ defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
-file	dev/ic/isp_target.c		isp
+file	dev/ic/isp_target.c		isp & isp_target_mode
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
@@ -623,6 +623,10 @@ define	hd44780
 file	dev/ic/hd44780_subr.c		hd44780
 file	dev/ic/lcdkp_subr.c		hd44780
 
+# Matrix keypad
+define	matrixkp
+file	dev/ic/matrixkp_subr.c		matrixkp
+
 # Hitachi HD64570 serial controller
 #
 define	hd64570
@@ -667,6 +671,11 @@ file	dev/ic/smc83c170.c		epic
 define	sgec
 file	dev/ic/sgec.c			sgec
 
+# MB86950 Ethernet Controller
+#
+define	mb86950
+file	dev/ic/mb86950.c		mb86950
+
 # MB8696x Ethernet Controller
 #
 define	mb86960
@@ -705,6 +714,9 @@ file	dev/ic/com.c			com			needs-flag
 #
 device	pckbc: pckbport
 file	dev/ic/pckbc.c			pckbc			needs-flag
+
+device	attimer
+file	dev/ic/attimer.c		attimer			needs-flag
 
 # Cirrus Logic CD240[01] 4-port Multi-Protocol Communications Controller
 #
@@ -785,6 +797,7 @@ file	dev/ic/rtl81x9.c		rtk | re
 # Realtek 8169 Ethernet controllers
 #
 device	re: ether, ifnet, arp, mii
+file	dev/ic/rtl8169.c		re
 
 # Common code for ESDI/IDE/etc. controllers
 #
@@ -955,7 +968,7 @@ device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
-defflag	opt_slhci.h	SLHCI_DEBUG	
+defflag	opt_slhci.h	SLHCI_DEBUG
 device	slhci: usbus
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
@@ -1097,9 +1110,9 @@ defpseudo kttcp
 file	dev/kttcp.c			kttcp		needs-flag
 
 # Verified exec fingerprint loader pseudo-device
-defpseudo verifiedexec
-file	kern/kern_verifiedexec.c	verifiedexec		needs-flag
-file	dev/verified_exec.c		verifiedexec		needs-flag
+defpseudo veriexec
+file	kern/kern_verifiedexec.c	veriexec		needs-flag
+file	dev/verified_exec.c		veriexec		needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire
 defpseudo fwiso:	ieee1394
@@ -1152,6 +1165,7 @@ file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
+file	dev/audiomix.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
@@ -1229,6 +1243,7 @@ file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
+file	kern/subr_blist.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_evcnt.c
@@ -1311,7 +1326,7 @@ file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
-file	net/if_tap.c			tap
+file	net/if_tap.c			tap			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
@@ -1405,3 +1420,5 @@ device	joy
 file	dev/ic/joy.c			joy needs-flag
 
 file	dev/ieee1394/fwiso.c		fwiso			needs-count
+
+include	"net/agr/files.agr"

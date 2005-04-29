@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.11 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.11.8.1 2005/04/29 11:29:15 kent Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -56,7 +56,7 @@ int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 int rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component);
-int rf_incorporate_hot_spare(RF_Raid_t *raidPtr, 
+int rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
 			     RF_SingleComponent_t *component);
 
 #endif				/* !_RF__RF_DISKS_H_ */

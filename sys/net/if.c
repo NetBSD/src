@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.151.2.1 2005/04/29 11:29:31 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -51,7 +51,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.151.2.1 2005/04/29 11:29:31 kent Exp $");
 
 #include "opt_inet.h"
 
@@ -417,7 +417,7 @@ if_attach(ifp)
 	    ifp->if_index >= if_indexlim) {
 		size_t m, n, oldlim;
 		caddr_t q;
-		
+
 		oldlim = if_indexlim;
 		while (ifp->if_index >= if_indexlim)
 			if_indexlim <<= 1;
@@ -480,7 +480,7 @@ if_attach(ifp)
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 #endif
 
-	if (domains)
+	if (!STAILQ_EMPTY(&domains))
 		if_attachdomain1(ifp);
 
 	/* Announce the interface. */
@@ -510,7 +510,7 @@ if_attachdomain1(ifp)
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
-	for (dp = domains; dp; dp = dp->dom_next) {
+	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifattach)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
@@ -647,7 +647,7 @@ if_detach(ifp)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
 	}
 
-	for (dp = domains; dp; dp = dp->dom_next) {
+	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
@@ -1392,7 +1392,7 @@ ifioctl(so, cmd, data, p)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
-	case SIOCSDRVSPEC:  
+	case SIOCSDRVSPEC:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1534,7 +1534,7 @@ ifioctl(so, cmd, data, p)
 		if (ifp->if_mtu != oldmtu) {
 #ifdef INET6
 			nd6_setmtu(ifp);
-#endif 
+#endif
 		}
 		break;
 	}
@@ -1556,7 +1556,7 @@ ifioctl(so, cmd, data, p)
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
-	case SIOCSDRVSPEC:  
+	case SIOCSDRVSPEC:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1662,7 +1662,7 @@ ifconf(cmd, data)
 	} else {
 		sign = 1;
 	}
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
@@ -1727,6 +1727,66 @@ ifconf(cmd, data)
 		ifc->ifc_len = space;
 	return (error);
 }
+
+/*
+ * Queue message on interface, and start output if interface
+ * not yet active.
+ */
+int
+ifq_enqueue(struct ifnet *ifp, struct mbuf *m
+    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+{
+	int len = m->m_pkthdr.len;
+	int mflags = m->m_flags;
+	int s = splnet();
+	int error;
+
+	IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	if (error) {
+		splx(s);
+		return error;
+	}
+	ifp->if_obytes += len;
+	if (mflags & M_MCAST)
+		ifp->if_omcasts++;
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+	splx(s);
+	return error;
+}
+
+/*
+ * Queue message on interface, possibly using a second fast queue
+ */
+int
+ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
+    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+{
+	int error = 0;
+
+	if (ifq != NULL
+#ifdef ALTQ
+	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
+#endif
+	    ) {
+		if (IF_QFULL(ifq)) {
+			IF_DROP(&ifp->if_snd);
+			m_freem(m);
+			if (error == 0)
+				error = ENOBUFS;
+		}
+		else
+			IF_ENQUEUE(ifq, m);
+	} else
+		IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	if (error != 0) {
+		++ifp->if_oerrors;
+		return error;
+	}
+
+	return 0;
+}
+
 
 #if defined(INET) || defined(INET6)
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.35 2004/10/31 12:52:55 he Exp $ */
+/*	$NetBSD: kdb.c,v 1.35.4.1 2005/04/29 11:28:46 kent Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
+ *	This product includes software developed at Ludd, University of
  *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.35 2004/10/31 12:52:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.35.4.1 2005/04/29 11:28:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,14 +90,14 @@ struct	kdb_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-int	kdbmatch __P((struct device *, struct cfdata *, void *));
-void	kdbattach __P((struct device *, struct device *, void *));
-void	kdbreset __P((int));
-void	kdbintr __P((void *));
-void	kdbctlrdone __P((struct device *));
-int	kdbprint __P((void *, const char *));
-void	kdbsaerror __P((struct device *, int));
-void	kdbgo __P((struct device *, struct mscp_xi *));
+int	kdbmatch(struct device *, struct cfdata *, void *);
+void	kdbattach(struct device *, struct device *, void *);
+void	kdbreset(int);
+void	kdbintr(void *);
+void	kdbctlrdone(struct device *);
+int	kdbprint(void *, const char *);
+void	kdbsaerror(struct device *, int);
+void	kdbgo(struct device *, struct mscp_xi *);
 
 CFATTACH_DECL(kdb, sizeof(struct kdb_softc),
     kdbmatch, kdbattach, NULL, NULL);
@@ -187,7 +187,7 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, sc->sc_kdb,
 		    sizeof(struct mscp_pack));
 		goto err;
 	}
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap, 
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
 	    sc->sc_kdb, sizeof(struct mscp_pack), 0, BUS_DMA_NOWAIT))) {
 		printf("Load ctrl map %d\n", error);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
@@ -237,7 +237,7 @@ kdbgo(usc, mxi)
 	 * should never fail!).
 	 *
 	 * On VAX, point to the corresponding page tables. (user/sys)
-	 * On other systems, do something else... 
+	 * On other systems, do something else...
 	 */
 	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
 	    bp->b_bcount, (bp->b_flags & B_PHYS ? bp->b_proc : 0),

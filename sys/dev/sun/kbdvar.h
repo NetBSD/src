@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.13 2003/08/27 01:37:38 uwe Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.13.8.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ struct kbd_softc {
 	struct callout k_wsbell;/* to shut the bell off */
 #endif
 
-	/* ACSII translation state */
+	/* ASCII translation state */
 	struct kbd_state k_state;
 
 	/* console hooks */
@@ -73,6 +73,7 @@ struct kbd_softc {
 	int k_repeatsym;	/* repeating symbol */
 	int k_repeating;	/* callout is active (use callout_active?) */
 	struct callout k_repeat_ch;
+	int k_leds;
 };
 
 

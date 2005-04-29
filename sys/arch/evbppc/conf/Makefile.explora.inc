@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.explora.inc,v 1.2 2003/05/31 12:00:59 hannken Exp $
+#	$NetBSD: Makefile.explora.inc,v 1.2.10.1 2005/04/29 11:28:08 kent Exp $
 
 CFLAGS+=-mcpu=403
 AFLAGS+=-mcpu=403
@@ -13,5 +13,5 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 .endif
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo objcopy --adjust-vma 0x81000000 netbsd netbsd.img ; \
+	echo ${OBJCOPY} --adjust-vma 0x81000000 netbsd netbsd.img ; \
 	${OBJCOPY} --adjust-vma 0x81000000 netbsd netbsd.img

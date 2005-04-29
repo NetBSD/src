@@ -1,3 +1,4 @@
+/*	$NetBSD: pmap.c,v 1.87.2.1 2005/04/29 11:28:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2005/01/01 21:02:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87.2.1 2005/04/29 11:28:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +521,7 @@ pmap_init()
 	s += page_cnt * sizeof(char);			/* attribute table */
 	s = round_page(s);
 
-	addr = uvm_km_zalloc(kernel_map, s);
+	addr = uvm_km_alloc(kernel_map, s, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
 	Segtabzero   = (u_int *) addr;
@@ -585,7 +586,7 @@ pmap_init()
 	 * Now allocate the space and link the pages together to
 	 * form the KPT free list.
 	 */
-	addr = uvm_km_zalloc(kernel_map, s);
+	addr = uvm_km_alloc(kernel_map, s, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (addr == 0)
 		panic("pmap_init: cannot allocate KPT free list");
 	s = ptoa(npg);
@@ -679,7 +680,8 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		pvp = (struct pv_page *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -723,7 +725,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
 		break;
 	}
 }
@@ -859,12 +861,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE);
-		uvm_km_pgremove(uvm.kernel_object,
-		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
-		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE
-				- vm_map_min(kernel_map));
-		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
-				   ATARI_UPTSIZE);
+		uvm_km_pgremove((vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE);
+		uvm_km_free(pt_map, (vaddr_t)pmap->pm_ptab,
+				   ATARI_UPTSIZE, UVM_KMF_VAONLY);
 	}
 	KASSERT(pmap->pm_stab == Segtabzero);
 }
@@ -1093,7 +1093,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (u_int *)
-			uvm_km_valloc_wait(pt_map, ATARI_UPTSIZE);
+		    uvm_km_alloc(pt_map, ATARI_UPTSIZE, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -2164,13 +2165,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    printf("remove: free stab %p\n",
 					    ptpmap->pm_stab);
 #endif
-				pmap_remove(pmap_kernel(),
-				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + ATARI_STSIZE);
-				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
-							     ptpmap->pm_stpa));
-				uvm_km_free_wakeup(kernel_map,
-				    (vaddr_t)ptpmap->pm_stab, ATARI_STSIZE);
+				uvm_km_free(kernel_map,
+				    (vaddr_t)ptpmap->pm_stab, ATARI_STSIZE,
+				    UVM_KMF_WIRED);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
@@ -2405,7 +2402,8 @@ pmap_enter_ptpage(pmap, va)
 	 */
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (u_int *)
-			uvm_km_zalloc(kernel_map, ATARI_STSIZE);
+		    uvm_km_alloc(kernel_map, ATARI_STSIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		(void) pmap_extract(pmap_kernel(),
 		    (vaddr_t)pmap->pm_stab, (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)

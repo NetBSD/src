@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2004/03/24 15:34:51 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.8.1 2005/04/29 11:28:25 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.8.1 2005/04/29 11:28:25 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -272,8 +272,8 @@ static struct extent *dvmamap;
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
 
-static void identifycpu __P((void));
-static void initcpu __P((void));
+static void identifycpu(void);
+static void initcpu(void);
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -283,8 +283,8 @@ static void initcpu __P((void));
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void
-cpu_startup()
+void 
+cpu_startup(void)
 {
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
@@ -315,7 +315,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	fputype = FPU_NONE;
 #ifdef  FPU_EMULATE
@@ -338,7 +338,8 @@ cpu_startup()
 	/*
 	 * Get scratch page for dumpsys().
 	 */
-	if ((dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE)) == 0)
+	if ((dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE,0, UVM_KMF_WIRED))
+	    == 0)
 		panic("startup: alloc dumppage");
 
 
@@ -371,7 +372,8 @@ cpu_startup()
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
+	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Allocate DMA map for devices on the bus.
@@ -391,11 +393,8 @@ cpu_startup()
 /*
  * Set registers on exec.
  */
-void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+void 
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 
@@ -434,8 +433,8 @@ char	cpu_model[120];
 /*
  * Determine which Sun2 model we are running on.
  */
-void
-identifycpu()
+void 
+identifycpu(void)
 {
 	extern char *cpu_string;	/* XXX */
 
@@ -514,7 +513,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void
-reboot_sync __P((void))
+reboot_sync(void)
 {
 
 	/* Check waittime here to localize its use to this function. */
@@ -527,10 +526,8 @@ reboot_sync __P((void))
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void
-cpu_reboot(howto, user_boot_string)
-	int howto;
-	char *user_boot_string;
+__dead void 
+cpu_reboot(int howto, char *user_boot_string)
 {
 	char *bs, *p;
 	char default_boot_string[8];
@@ -606,7 +603,7 @@ cpu_reboot(howto, user_boot_string)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -619,13 +616,13 @@ long	dumplo = 0; 		/* blocks */
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
-void
-cpu_dumpconf()
+void 
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int (*getsize)__P((dev_t));
+	int (*getsize)(dev_t);
 
 	if (dumpdev == NODEV)
 		return;
@@ -671,8 +668,8 @@ extern paddr_t avail_start;
  *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
-void
-dumpsys()
+void 
+dumpsys(void)
 {
 	const struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
@@ -804,8 +801,8 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void
-initcpu()
+static void 
+initcpu(void)
 {
 	/* XXX: Enable RAM parity/ECC checking? */
 	/* XXX: parityenable(); */
@@ -826,10 +823,8 @@ initcpu()
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+int 
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	return ENOEXEC;
 }
@@ -837,8 +832,8 @@ cpu_exec_aout_makecmds(p, epp)
 /*
  * Soft interrupt support.
  */
-void isr_soft_request(level)
-	int level;
+void 
+isr_soft_request(int level)
 {
 	u_char bit;
 
@@ -849,8 +844,8 @@ void isr_soft_request(level)
 	enable_reg_or(bit);
 }
 
-void isr_soft_clear(level)
-	int level;
+void 
+isr_soft_clear(int level)
 {
 	u_char bit;
 
@@ -865,14 +860,9 @@ void isr_soft_clear(level)
  * Like _bus_dmamap_load(), but for raw memory allocated with
  * bus_dmamem_alloc().
  */
-int
-_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+int 
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
 {
 	struct vm_page *m;
 	paddr_t pa;
@@ -946,14 +936,9 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 /*
  * load DMA map with a linear buffer.
  */
-int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+int 
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
@@ -1054,10 +1039,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 /*
  * unload a DMA map.
  */
-void
-_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+void 
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
@@ -1124,11 +1107,8 @@ _bus_dmamap_unload(t, map)
  * into a CPU physical address and page type.
  */
 int
-vmebus_translate(mod, addr, btp, bap)
-	vme_am_t	mod;
-	vme_addr_t	addr;
-	bus_type_t	*btp;
-	bus_addr_t	*bap;
+vmebus_translate(vme_am_t mod, vme_addr_t addr, bus_type_t *btp,
+    bus_addr_t *bap)
 {
 	bus_addr_t base;
 

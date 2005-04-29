@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.41 2004/12/31 14:18:35 bjh21 Exp $	*/
+/*	$NetBSD: kbd.c,v 1.41.2.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2004/12/31 14:18:35 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41.2.1 2005/04/29 11:29:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,14 +91,15 @@ const struct cdevsw kbd_cdevsw = {
 };
 
 #if NWSKBD > 0
-int	wssunkbd_enable __P((void *, int));
-void	wssunkbd_set_leds __P((void *, int));
-int	wssunkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	wssunkbd_enable(void *, int);
+void	wssunkbd_set_leds(void *, int);
+int	wssunkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-void    sunkbd_wskbd_cngetc __P((void *, u_int *, int *));
-void    sunkbd_wskbd_cnpollc __P((void *, int));
-void    sunkbd_wskbd_cnbell __P((void *, u_int, u_int, u_int));
+void    sunkbd_wskbd_cngetc(void *, u_int *, int *);
+void    sunkbd_wskbd_cnpollc(void *, int);
+void    sunkbd_wskbd_cnbell(void *, u_int, u_int, u_int);
 static void sunkbd_bell_off(void *v);
+void 	kbd_enable(struct device *);	/* deferred keyboard initialization */
 
 const struct wskbd_accessops sunkbd_wskbd_accessops = {
 	wssunkbd_enable,
@@ -182,12 +183,16 @@ kbdopen(dev, flags, mode, p)
 	if (k == NULL)
 		return (ENXIO);
 
+#if NWSKBD > 0
 	/*
 	 * NB: wscons support: while we can track if wskbd has called
 	 * enable(), we can't tell if that's for console input or for
 	 * events input, so we should probably just let the open to
 	 * always succeed regardless (e.g. Xsun opening /dev/kbd).
 	 */
+	if (!k->k_wsenabled)
+		wssunkbd_enable(k, 1);
+#endif
 
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
@@ -364,6 +369,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
+		printf("kbd: returning ENOTTY\n");
 		error = ENOTTY;
 		break;
 	}
@@ -683,7 +689,6 @@ kbd_input_keysym(k, keysym)
 {
 	struct kbd_state *ks = &k->k_state;
 	int data;
-
 	/* Check if a recipient has been configured */
 	if (k->k_cc == NULL || k->k_cc->cc_upstream == NULL)
 		return (0);
@@ -956,20 +961,20 @@ wssunkbd_enable(v, on)
 	int on;
 {
 	struct kbd_softc *k = v;
-
-	k->k_wsenabled = on;
-	if (on) {
-		/* open actual underlying device */
-		if (k->k_ops != NULL && k->k_ops->open != NULL)
-			(*k->k_ops->open)(k);
-		ev_init(&k->k_events);
-		k->k_evmode = 0;	/* XXX: OK? */
-	} else {
-		/* close underlying device */
-		if (k->k_ops != NULL && k->k_ops->close != NULL)
-			(*k->k_ops->close)(k);
+	if (k->k_wsenabled != on) {
+		k->k_wsenabled = on;
+		if (on) {
+			/* open actual underlying device */
+			if (k->k_ops != NULL && k->k_ops->open != NULL)
+				(*k->k_ops->open)(k);
+			ev_init(&k->k_events);
+			k->k_evmode = 0;	/* XXX: OK? */
+		} else {
+			/* close underlying device */
+			if (k->k_ops != NULL && k->k_ops->close != NULL)
+				(*k->k_ops->close)(k);
+		}
 	}
-	
 	return 0;
 }
 
@@ -991,6 +996,7 @@ wssunkbd_set_leds(v, leds)
 		l |= LED_COMPOSE;
 	if (k->k_ops != NULL && k->k_ops->setleds != NULL)
 		(*k->k_ops->setleds)(k, l, 0);
+	k->k_leds=l;
 }
 
 int
@@ -1001,8 +1007,30 @@ wssunkbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	struct kbd_softc *k = v;
+	
+	switch (cmd) {
+		case WSKBDIO_GTYPE:
+			*(int *)data = WSKBD_TYPE_SUN5;
+			return (0);
+		case WSKBDIO_SETLEDS:
+			wssunkbd_set_leds(v, *(int *)data);
+			return (0);
+		case WSKBDIO_GETLEDS:
+			*(int *)data = k->k_leds;
+			return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD___
+	case WSKBDIO_SETMODE:
+		DPRINTF(("wssunkbd_ioctl: set raw = %d\n", *(int *)data));
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+		return (0);
+#endif
+	}
 	return EPASSTHROUGH;
 }
+
+extern int	prom_cngetc(dev_t);
 
 void
 sunkbd_wskbd_cngetc(v, type, data)
@@ -1011,6 +1039,8 @@ sunkbd_wskbd_cngetc(v, type, data)
 	int *data;
 {
 	/* struct kbd_sun_softc *k = v; */
+	*data = prom_cngetc(0);
+	*type = WSCONS_EVENT_ASCII;
 }
 
 void
@@ -1040,25 +1070,43 @@ sunkbd_wskbd_cnbell(v, pitch, period, volume)
 }
 
 void
+kbd_enable(dev)
+	struct device *dev;
+{
+	struct kbd_softc *k=(struct kbd_softc *)dev;
+	struct wskbddev_attach_args a;
+
+	if (k->k_isconsole)
+		wskbd_cnattach(&sunkbd_wskbd_consops, k,
+		    &sunkbd_wskbd_keymapdata);
+
+	a.console = k->k_isconsole;
+	a.keymap = &sunkbd_wskbd_keymapdata;
+	a.accessops = &sunkbd_wskbd_accessops;
+	a.accesscookie = k;
+
+	/* XXX why? */
+	k->k_wsenabled = 0;
+
+	/* Attach the wskbd */
+	k->k_wskbd = config_found(&k->k_dev, &a, wskbddevprint);
+
+	callout_init(&k->k_wsbell);
+
+	wssunkbd_enable(k,1);
+	
+	wssunkbd_set_leds(k, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
+	delay(100000);
+	wssunkbd_set_leds(k, 0);
+}
+
+void
 kbd_wskbd_attach(k, isconsole)
 	struct kbd_softc *k;
 	int isconsole;
 {
-	struct wskbddev_attach_args a;
-
-	a.console = isconsole;
-
-	if (a.console)
-		wskbd_cnattach(&sunkbd_wskbd_consops, k, &sunkbd_wskbd_keymapdata);
-
-	a.keymap = &sunkbd_wskbd_keymapdata;
-
-	a.accessops = &sunkbd_wskbd_accessops;
-	a.accesscookie = k;
-
-	/* Attach the wskbd */
-	k->k_wskbd = config_found(&k->k_dev, &a, wskbddevprint);
-	k->k_wsenabled = 0;
-	callout_init(&k->k_wsbell);
+	k->k_isconsole=isconsole;
+	
+	config_interrupts(&k->k_dev,kbd_enable);
 }
 #endif

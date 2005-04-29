@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.1 2004/12/23 06:26:30 jonathan Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.1.2.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.1 2004/12/23 06:26:30 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.1.2.1 2005/04/29 11:29:04 kent Exp $");
 
 
 /*
@@ -68,7 +68,6 @@ static int	rgephy_service(struct mii_softc *, struct mii_data *, int);
 static void	rgephy_status(struct mii_softc *);
 static int	rgephy_mii_phy_auto(struct mii_softc *);
 static void	rgephy_reset(struct mii_softc *);
-static void	rgephy_reset(struct mii_softc *);
 static void	rgephy_loop(struct mii_softc *);
 static void	rgephy_load_dspcode(struct mii_softc *);
 static int	rgephy_mii_model;
@@ -84,6 +83,8 @@ static const struct mii_phydesc rgephys[] = {
 	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8169S,
 	  MII_STR_REALTEK_RTL8169S },
 
+	{ 0,				0,
+	  NULL }
 };
 
 static int
@@ -144,7 +145,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
-	 * media explicitly. Why? 
+	 * media explicitly. Why?
 	 */
 	aprint_normal("%s: ", sc->mii_dev.dv_xname);
 #ifdef __FreeBSD__
@@ -240,7 +241,7 @@ setit:
 			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed);
 			PHY_WRITE(sc, RGEPHY_MII_ANAR, RGEPHY_SEL_TYPE);
 
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) 
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
 
 			PHY_WRITE(sc, RGEPHY_MII_1000CTL, gig);
@@ -307,7 +308,7 @@ setit:
 		 */
 		if (++sc->mii_ticks <= 5/*10*/)
 			break;
-		
+
 		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
 		return (0);
@@ -321,7 +322,7 @@ setit:
 	 * the DSP on the RealTek PHYs if the media changes.
 	 *
 	 */
-	if (sc->mii_media_active != mii->mii_media_active || 
+	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
 	  	/* XXX only for v0/v1 phys. */
@@ -349,6 +350,12 @@ rgephy_status(sc)
 	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 
 	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
+
+	if (bmcr & RGEPHY_BMCR_ISO) {
+		mii->mii_media_active |= IFM_NONE;
+		mii->mii_media_status = 0;
+		return;
+	}
 
 	if (bmcr & RGEPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
@@ -431,8 +438,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-
-	  
 #if 1
 	PHY_WRITE(sc, 31, 0x0001);
 	PHY_WRITE(sc, 21, 0x1000);
@@ -518,12 +523,8 @@ rgephy_load_dspcode(struct mii_softc *sc)
 	PHY_WRITE(sc, 0x0b, 0x0000);
 
 #endif
-	
+
 	DELAY(40);
-
-	printf(" complete\n");
-	
-
 }
 
 static void

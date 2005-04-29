@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.11 2004/10/29 15:39:38 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.11.4.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.11 2004/10/29 15:39:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.11.4.1 2005/04/29 11:28:44 kent Exp $");
 
 #include "fss.h"
 
@@ -172,10 +172,19 @@ fssattach(int num)
 int
 fss_open(dev_t dev, int flags, int mode, struct proc *p)
 {
+	int s, mflag;
 	struct fss_softc *sc;
+
+	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
 	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
 		return ENODEV;
+
+	FSS_LOCK(sc, s);
+
+	sc->sc_flags |= mflag;
+
+	FSS_UNLOCK(sc, s);
 
 	return 0;
 }
@@ -183,10 +192,31 @@ fss_open(dev_t dev, int flags, int mode, struct proc *p)
 int
 fss_close(dev_t dev, int flags, int mode, struct proc *p)
 {
+	int s, mflag, error;
 	struct fss_softc *sc;
+
+	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
 	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
 		return ENODEV;
+
+	FSS_LOCK(sc, s); 
+
+	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag) {
+		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
+		    (sc->sc_flags & FSS_ACTIVE) != 0) {
+			FSS_UNLOCK(sc, s);
+			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, p);
+			if (error)
+				return error;
+			FSS_LOCK(sc, s);
+		}
+		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
+	}
+
+	sc->sc_flags &= ~mflag;
+
+	FSS_UNLOCK(sc, s);
 
 	return 0;
 }
@@ -254,8 +284,6 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	sc->sc_flags |= FSS_EXCL;
 	FSS_UNLOCK(sc, s);
 
-	error = EINVAL;
-
 	switch (cmd) {
 	case FSSIOCSET:
 		if ((flag & FWRITE) == 0)
@@ -297,6 +325,20 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = ENXIO;
 			break;
 		}
+		break;
+
+	case FSSIOFSET:
+		sc->sc_uflags = *(int *)data;
+		error = 0;
+		break;
+
+	case FSSIOFGET:
+		*(int *)data = sc->sc_uflags;
+		error = 0;
+		break;
+
+	default:
+		error = EINVAL;
 		break;
 	}
 
@@ -499,7 +541,7 @@ static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct proc *p)
 {
-	int error, fsbsize;
+	int error, bits, fsbsize;
 	struct timespec ts;
 	struct partinfo dpart;
 	struct vattr va;
@@ -519,7 +561,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 
 	sc->sc_mount = nd.ni_vp->v_mount;
-	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN); 
+	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN);
 
 	vrele(nd.ni_vp);
 
@@ -541,16 +583,17 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		sc->sc_bs_vp = nd.ni_vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
-		if (fsbsize & (fsbsize-1))	/* No power of two */
-			return EINVAL;
-		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < 32;
+		bits = sizeof(sc->sc_bs_bshift)*NBBY;
+		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < bits;
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= 32)
+		if (sc->sc_bs_bshift >= bits) {
+			VOP_UNLOCK(sc->sc_bs_vp, 0);
 			return EINVAL;
-		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
+		}
 
+		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 		sc->sc_clshift = 0;
 
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
@@ -769,7 +812,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
 	sc->sc_bs_vp = NULL;
-	sc->sc_flags &= ~FSS_PERSISTENT;
+	sc->sc_flags &= ~(FSS_PERSISTENT|FSS_BS_ALLOC);
 
 	FSS_STAT_CLEAR(sc);
 
@@ -780,7 +823,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
  * Get the block address and number of contiguous blocks.
  * If the file contains a hole, try to allocate.
  * Backing store is locked by caller.
- */  
+ */
 static int
 fss_bmap(struct fss_softc *sc, off_t start, int len,
     struct vnode **vpp, daddr_t *bnp, int *runp)
@@ -1132,7 +1175,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 	VOP_UNLOCK(sc->sc_bs_vp, 0);
 
-	return error;           
+	return error;
 }
 
 /*

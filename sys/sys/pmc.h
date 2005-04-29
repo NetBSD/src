@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.2 2002/08/08 16:23:19 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.2.20.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -46,12 +46,12 @@ struct pmc_counter_cfg {
 
 #if defined(_KERNEL)
 
-/* 
+/*
  *      The following functions are defined in machine/pmc.h as either
  * functions or macros.
  *
  * int	pmc_get_num_counters(void);
- * 
+ *
  * void	pmc_save_context(struct proc *p);
  * void	pmc_restore_context(struct proc *p);
  *

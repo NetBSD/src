@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.20 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.20.8.1 2005/04/29 11:29:06 kent Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 /*
  *
- * i f _ e n _ p c i . c  
+ * i f _ e n _ p c i . c
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  * started: spring, 1996.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.20 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.20.8.1 2005/04/29 11:29:06 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,19 +81,17 @@ struct en_pci_softc {
  */
 
 #if !defined(MIDWAY_ENIONLY)
-static  void eni_get_macaddr __P((struct en_pci_softc *,
-		struct pci_attach_args *));
+static  void eni_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
 #endif
 #if !defined(MIDWAY_ADPONLY)
-static  void adp_get_macaddr __P((struct en_pci_softc *,
-		struct pci_attach_args *));
+static  void adp_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
 #endif
 
-/* 
+/*
  * address of config base memory address register in PCI config space
  * (this is card specific)
  */
-        
+
 #define PCI_CBMA        0x10
 
 /*
@@ -121,8 +119,8 @@ static  void adp_get_macaddr __P((struct en_pci_softc *,
  * prototypes
  */
 
-static	int en_pci_match __P((struct device *, struct cfdata *, void *));
-static	void en_pci_attach __P((struct device *, struct device *, void *));
+static	int en_pci_match(struct device *, struct cfdata *, void *);
+static	void en_pci_attach(struct device *, struct device *, void *);
 
 /*
  * PCI autoconfig attachments
@@ -133,7 +131,7 @@ CFATTACH_DECL(en_pci, sizeof(struct en_pci_softc),
 
 #if !defined(MIDWAY_ENIONLY)
 
-static void adp_busreset __P((void *));
+static void adp_busreset(void *);
 
 /*
  * bus specific reset function [ADP only!]
@@ -150,7 +148,7 @@ void *v;
   bus_space_write_4(sc->en_memt, sc->en_base, ADP_PCIREG, ADP_PCIREG_RESET);
   DELAY(1000);  /* let it reset */
   dummy = bus_space_read_4(sc->en_memt, sc->en_base, ADP_PCIREG);
-  bus_space_write_4(sc->en_memt, sc->en_base, ADP_PCIREG, 
+  bus_space_write_4(sc->en_memt, sc->en_base, ADP_PCIREG,
                 (ADP_PCIREG_SWAP_WORD|ADP_PCIREG_SWAP_DMA|ADP_PCIREG_IENABLE));
   dummy = bus_space_read_4(sc->en_memt, sc->en_base, ADP_PCIREG);
   if ((dummy & (ADP_PCIREG_SWAP_WORD|ADP_PCIREG_SWAP_DMA)) !=
@@ -176,14 +174,14 @@ void *aux;
   struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 #if !defined(MIDWAY_ADPONLY)
-  if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_EFFICIENTNETS && 
+  if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_EFFICIENTNETS &&
       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_EFFICIENTNETS_ENI155PF ||
        PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_EFFICIENTNETS_ENI155PA))
     return 1;
 #endif
 
 #if !defined(MIDWAY_ENIONLY)
-  if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP && 
+  if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP &&
       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADP_AIC5900 ||
        PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADP_AIC5905))
     return 1;
@@ -250,7 +248,7 @@ void *aux;
     aprint_error("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
     return;
   }
-	
+
   /*
    * set up pci bridge
    */
@@ -267,7 +265,7 @@ void *aux;
   if (!sc->is_adaptec) {
     eni_get_macaddr(scp, pa);
     sc->en_busreset = NULL;
-    pci_conf_write(scp->en_pc, pa->pa_tag, EN_TONGA, 
+    pci_conf_write(scp->en_pc, pa->pa_tag, EN_TONGA,
 		  (TONGA_SWAP_DMA|TONGA_SWAP_WORD));
   }
 #endif
@@ -287,7 +285,7 @@ en_pci_shutdown(
 	void *sc)
 {
     struct en_pci_softc *psc = (struct en_pci_softc *)sc;
-    
+
     en_reset(&psc->esc);
     DELAY(10);
 }
@@ -300,7 +298,7 @@ en_pci_shutdown(
   		((void)t, (*(volatile u_int8_t *)((h) + (o))))
 #endif
 
-static void 
+static void
 adp_get_macaddr(scp, pa)
      struct en_pci_softc *scp;
      struct pci_attach_args *pa;
@@ -326,7 +324,7 @@ adp_get_macaddr(scp, pa)
 #define EN_PROM_CLK    0x01
 #define EN_ESI         64
 
-static void 
+static void
 eni_get_macaddr(scp, pa)
   struct en_pci_softc *scp;
   struct pci_attach_args *pa;
@@ -337,7 +335,7 @@ eni_get_macaddr(scp, pa)
   int i, j, address;
   u_int32_t data, t_data;
   u_int8_t tmp;
-  
+
   t_data = pci_conf_read(id, tag, EN_TONGA) & 0xffffff00;
 
   data =  EN_PROM_MAGIC | EN_PROM_DATA | EN_PROM_CLK;

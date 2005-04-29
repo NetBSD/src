@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,11 +31,11 @@
  *---------------------------------------------------------------------------
  *
  * Card format:
- * 
+ *
  * iobase + 0 : reset on  (0x03)
  * iobase + 1 : reset off (0x0)
  * iobase + 2 : isac read/write
- * iobase + 3 : hscx read/write ( offset 0-0x3f    hscx0 , 
+ * iobase + 3 : hscx read/write ( offset 0-0x3f    hscx0 ,
  *                                offset 0x40-0x7f hscx1 )
  * iobase + 4 : offset for indirect addressing
  *
@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.5.8.1 2005/04/29 11:28:55 kent Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,9 +57,9 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5.8.1 2005/04/29 11:28:55 kent Exp $");
 
-#include "opt_isicpnp.h"  
+#include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
 
 #define SWS_RESON  0 /* reset on                 */
@@ -123,11 +123,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp 
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t sws_read_reg   __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void     sws_write_reg  __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void     sws_read_fifo  __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void     sws_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-void		isic_attach_sws __P((struct isic_softc *sc));
+static u_int8_t sws_read_reg  (struct isic_softc *sc, int what, bus_size_t offs);
+static void     sws_write_reg (struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void     sws_read_fifo (struct isic_softc *sc, int what, void *buf, size_t size);
+static void     sws_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+void		isic_attach_sws(struct isic_softc *sc);
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -308,7 +308,7 @@ isic_attach_sws(struct isa_device *dev)
 	HSCX_A_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX0);
 	HSCX_B_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX1);
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the SWS PnP card is
 	 * 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -323,7 +323,7 @@ isic_attach_sws(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	/* reset card */
 
@@ -331,7 +331,7 @@ isic_attach_sws(struct isa_device *dev)
 	DELAY(SEC_DELAY / 5);
 	outb( ((u_int) sc->sc_port) + SWS_RESOFF, 0);
 	DELAY(SEC_DELAY / 5);
-		
+
 	return(1);
 }
 
@@ -349,17 +349,17 @@ isic_attach_sws(struct isic_softc *sc)
 	sc->writefifo = sws_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_SWS;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the SWS PnP card is
 	 * 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -374,7 +374,7 @@ isic_attach_sws(struct isic_softc *sc)
 		printf("%s: HSC1: VSTR: %#x\n",
 			sc->sc_dev.dv_xname, HSCX_READ(1, H_VSTR));
 		return;
-	}                   
+	}
 
 	/* reset card */
         {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.h,v 1.1 2000/12/10 14:12:16 fvdl Exp $	*/
+/*	$NetBSD: linux_fdio.h,v 1.1.36.1 2005/04/29 11:28:39 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@ struct linux_floppy_drive_struct {
 #define LINUX_FD_DISK_WRITABLE	0x20
 
 
-struct linux_floppy_fdc_state {       
+struct linux_floppy_fdc_state {
 	int spec1;
 	int spec2;
 	int dtr;

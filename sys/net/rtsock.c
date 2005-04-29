@@ -1,9 +1,9 @@
-/*	$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.72.4.1 2005/04/29 11:29:32 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.72.4.1 2005/04/29 11:29:32 kent Exp $");
 
 #include "opt_inet.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $")
 
 #include <machine/stdarg.h>
 
-extern	struct domain routedomain;		/* or at least forward */
+DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
 
 struct	sockaddr route_dst = { 2, PF_ROUTE, };
 struct	sockaddr route_src = { 2, PF_ROUTE, };
@@ -408,7 +408,7 @@ flush:
 	if (rtm) {
 		if (error)
 			rtm->rtm_errno = error;
-		else 
+		else
 			rtm->rtm_flags |= RTF_DONE;
 	}
 	family = dst ? dst->sa_family : 0;
@@ -799,7 +799,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 		if ((cmd == RTM_ADD && pass == 2) ||
 		    (cmd == RTM_DELETE && pass == 1)) {
 			struct rt_msghdr rtm;
-			
+
 			if (rt == 0)
 				continue;
 			netmask = rt_mask(rt);
@@ -896,7 +896,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 	int	len, error = 0;
 
 	memset(&info, 0, sizeof(info));
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);

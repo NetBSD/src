@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.66 2004/01/02 15:51:04 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.66.8.1 2005/04/29 11:29:34 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,12 +30,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.66 2004/01/02 15:51:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.66.8.1 2005/04/29 11:29:34 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -242,7 +244,7 @@ tcp_delack(void *arg)
  * causes finite state machine actions if timers expire.
  */
 void
-tcp_slowtimo()
+tcp_slowtimo(void)
 {
 	int s;
 
@@ -257,8 +259,7 @@ tcp_slowtimo()
  * Cancel all timers for TCP tp.
  */
 void
-tcp_canceltimers(tp)
-	struct tcpcb *tp;
+tcp_canceltimers(struct tcpcb *tp)
 {
 	int i;
 
@@ -304,6 +305,12 @@ tcp_timer_rexmt(void *arg)
 #endif
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
+
+	/*
+	 * Clear the SACK scoreboard, reset FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 	/*
 	 * Retransmission timer went off.  Message has not
@@ -372,6 +379,7 @@ tcp_timer_rexmt(void *arg)
 		tp->t_srtt = 0;
 	}
 	tp->snd_nxt = tp->snd_una;
+	tp->snd_high = tp->snd_max;
 	/*
 	 * If timing a segment in this window, stop the timer.
 	 */
@@ -414,6 +422,7 @@ tcp_timer_rexmt(void *arg)
 	/* Loss Window MUST be one segment. */
 	tp->snd_cwnd = tp->t_segsz;
 	tp->snd_ssthresh = win * tp->t_segsz;
+	tp->t_partialacks = -1;
 	tp->t_dupacks = 0;
 	}
 	(void) tcp_output(tp);
@@ -598,6 +607,13 @@ tcp_timer_2msl(void *arg)
 		splx(s);
 		return;
 	}
+
+	/*
+	 * 2 MSL timeout went off, clear the SACK scoreboard, reset
+	 * the FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 #ifdef TCP_DEBUG
 #ifdef INET

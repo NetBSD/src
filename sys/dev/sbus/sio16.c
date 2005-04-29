@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.12 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: sio16.c,v 1.12.8.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.12 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.12.8.1 2005/04/29 11:29:16 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.12 2004/03/17 17:04:59 pk Exp $");
  * device cfattach and cfdriver definitions, plus the routine we pass
  * to the cd18xx code or interrupt acknowledgement.
  */
-static int	sio16_match __P((struct device *, struct cfdata *, void *));
-static void	sio16_attach __P((struct device *, struct device *, void *));
+static int	sio16_match(struct device *, struct cfdata *, void *);
+static void	sio16_attach(struct device *, struct device *, void *);
 static u_char	sio16_ackfunc(void *, int who);
 
 /*
@@ -109,7 +109,7 @@ struct sio16_attach_args {
  * illegal name, so we have to hard code it here.
  */
 #define	SIO16_ROM_NAME	"sio16"
-int 
+int
 sio16_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -127,7 +127,7 @@ sio16_match(parent, cf, aux)
 /*
  * device attach routine:  go attach all sub devices.
  */
-void 
+void
 sio16_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -203,7 +203,7 @@ sio16_attach(parent, self, aux)
 		printf(", no model property, bailing\n");
 		return;
 	}
-		
+
 	/* are we an 1600se? */
 	if (strcmp(model, "1600se") == 0) {
 		printf(", 16 channels");
@@ -294,7 +294,7 @@ clcd_match(parent, cf, aux)
 	return 1;
 }
 
-static void 
+static void
 clcd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

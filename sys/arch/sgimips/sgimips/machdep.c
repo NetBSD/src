@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2004/12/17 22:59:49 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.1 2005/04/29 11:28:21 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2004/12/17 22:59:49 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.1 2005/04/29 11:28:21 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -635,7 +635,7 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
-	printf(version);
+	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -865,14 +865,6 @@ void mips_machdep_cache_config(void)
 #if defined(MIPS3)
 	case MIPS_R5000:
 	case MIPS_RM5200:
-#ifdef notyet
-		r5k_enable_sdcache();
-#else
-		mips3_cp0_config_write( (mips3_cp0_config_read())
-			& ~MIPS3_CONFIG_SE);
-		mips_sdcache_size = 0;
-		mips_sdcache_line_size = 0;
-#endif
 		break;
 #endif
 	}

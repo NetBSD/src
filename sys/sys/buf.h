@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.78 2004/12/18 03:08:48 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.78.2.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,8 +87,8 @@ struct vnode;
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
- * To avoid including <ufs/ffs/softdep.h> 
- */   
+ * To avoid including <ufs/ffs/softdep.h>
+ */
 LIST_HEAD(workhead, worklist);
 
 
@@ -102,7 +102,7 @@ struct bio_ops {
  	void	(*io_start)(struct buf *);
  	void	(*io_complete)(struct buf *);
  	void	(*io_deallocate)(struct buf *);
- 	int	(*io_fsync)(struct vnode *);
+ 	int	(*io_fsync)(struct vnode *, int);
  	int	(*io_sync)(struct mount *);
 	void	(*io_movedeps)(struct buf *, struct buf *);
 	int	(*io_countdeps)(struct buf *, int);

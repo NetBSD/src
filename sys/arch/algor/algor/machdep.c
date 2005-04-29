@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2003/12/30 12:33:13 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.8.1 2005/04/29 11:27:59 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2003/12/30 12:33:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.8.1 2005/04/29 11:27:59 kent Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -625,7 +625,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);

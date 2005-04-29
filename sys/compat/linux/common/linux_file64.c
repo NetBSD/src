@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.23.4.1 2005/04/29 11:28:40 kent Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.23.4.1 2005/04/29 11:28:40 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,11 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
+#ifdef LINUX_STAT64_HAS_NSEC
+	lsp->lst_atime_nsec   = bsp->st_atimensec;
+	lsp->lst_mtime_nsec   = bsp->st_mtimensec;
+	lsp->lst_ctime_nsec   = bsp->st_ctimensec;
+#endif
 #if LINUX_STAT64_HAS_BROKEN_ST_INO
 	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
 #endif
@@ -264,7 +269,7 @@ linux_sys_ftruncate64(l, v, retval)
 #if !defined(__m68k__)
 static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
     const struct flock *));
-static void linux_to_bsd_flock64 __P((struct flock *, 
+static void linux_to_bsd_flock64 __P((struct flock *,
     const struct linux_flock64 *));
 
 static void
@@ -474,7 +479,10 @@ again:
 			panic("linux_readdir");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
@@ -483,7 +491,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.19 2003/08/07 16:31:03 agc Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.19.8.1 2005/04/29 11:28:53 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.19 2003/08/07 16:31:03 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.19.8.1 2005/04/29 11:28:53 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ zs_iflush(cs)
 		}
 	}
 }
-	
+
 
 /*
  * Write the given register set to the given zs channel in the proper order.
@@ -373,10 +373,10 @@ zsc_intr_soft(arg)
  * Provide a null zs "ops" vector.
  */
 
-static void zsnull_rxint   __P((struct zs_chanstate *));
-static void zsnull_stint   __P((struct zs_chanstate *, int));
-static void zsnull_txint   __P((struct zs_chanstate *));
-static void zsnull_softint __P((struct zs_chanstate *));
+static void zsnull_rxint  (struct zs_chanstate *);
+static void zsnull_stint  (struct zs_chanstate *, int);
+static void zsnull_txint  (struct zs_chanstate *);
+static void zsnull_softint(struct zs_chanstate *);
 
 static void
 zsnull_rxint(cs)

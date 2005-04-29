@@ -1,9 +1,9 @@
-/*	$NetBSD: socket.h,v 1.69 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: socket.h,v 1.69.4.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -271,7 +271,7 @@ struct sockaddr_storage {
 #define	PF_INET6	AF_INET6
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
 #if defined(_NETBSD_SOURCE)
-#define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
+#define PF_RTIP		pseudo_AF_RTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
 #endif
 #define PF_ISDN		AF_ISDN		/* same as E164 */
@@ -359,6 +359,47 @@ struct sockcred {
 	{ "arp", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
 }
+
+struct kinfo_pcb {
+	__uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
+	__uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */
+	__uint64_t	ki_sockaddr;	/* PTR: socket addr */
+
+	__uint32_t	ki_family;	/* INT: protocol family */
+	__uint32_t	ki_type;	/* INT: socket type */
+	__uint32_t	ki_protocol;	/* INT: protocol */
+	__uint32_t	ki_pflags;	/* INT: generic protocol flags */
+
+	__uint32_t	ki_sostate;	/* INT: socket state */
+	__uint32_t	ki_prstate;	/* INT: protocol state */
+	__int32_t	ki_tstate;	/* INT: tcp state */
+	__uint32_t	ki_tflags;	/* INT: tcp flags */
+
+	__uint64_t	ki_rcvq;	/* U_LONG: receive queue len */
+	__uint64_t	ki_sndq;	/* U_LONG: send queue len */
+
+	union {
+		struct sockaddr	_kis_src; /* STRUCT: local address */
+		char _kis_pad[256 + 8];		/* pad to max addr length */
+	} ki_s;
+	union {
+		struct sockaddr	_kid_dst; /* STRUCT: remote address */
+		char _kid_pad[256 + 8];		/* pad to max addr length */
+	} ki_d;
+
+	__uint64_t	ki_inode;	/* INO_T: fake inode number */
+	__uint64_t	ki_vnode;	/* PTR: if associated with file */
+	__uint64_t	ki_conn;	/* PTR: control block of peer */
+	__uint64_t	ki_refs;	/* PTR: referencing socket */
+	__uint64_t	ki_nextref;	/* PTR: link in refs list */
+};
+
+#define ki_src ki_s._kis_src
+#define ki_dst ki_d._kid_dst
+
+#define PCB_SLOP		20
+#define PCB_ALL			0
+
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
@@ -508,35 +549,32 @@ struct omsghdr {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	__cmsg_alignbytes __P((void));
+int	__cmsg_alignbytes(void);
 __END_DECLS
 
 #ifndef	_KERNEL
 
 __BEGIN_DECLS
-int	accept __P((int, struct sockaddr * __restrict, socklen_t * __restrict));
-int	bind __P((int, const struct sockaddr *, socklen_t));
-int	connect __P((int, const struct sockaddr *, socklen_t));
-int	getpeername __P((int, struct sockaddr * __restrict,
-	    socklen_t * __restrict));
-int	getsockname __P((int, struct sockaddr * __restrict,
-	    socklen_t * __restrict));
-int	getsockopt __P((int, int, int, void * __restrict,
-	    socklen_t * __restrict));
-int	listen __P((int, int));
-ssize_t	recv __P((int, void *, size_t, int));
-ssize_t	recvfrom __P((int, void * __restrict, size_t, int,
-	    struct sockaddr * __restrict, socklen_t * __restrict));
-ssize_t	recvmsg __P((int, struct msghdr *, int));
-ssize_t	send __P((int, const void *, size_t, int));
-ssize_t	sendto __P((int, const void *,
-	    size_t, int, const struct sockaddr *, socklen_t));
-ssize_t	sendmsg __P((int, const struct msghdr *, int));
-int	setsockopt __P((int, int, int, const void *, socklen_t));
-int	shutdown __P((int, int));
-int	sockatmark __P((int));
-int	socket __P((int, int, int));
-int	socketpair __P((int, int, int, int *));
+int	accept(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	bind(int, const struct sockaddr *, socklen_t);
+int	connect(int, const struct sockaddr *, socklen_t);
+int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	getsockname(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	getsockopt(int, int, int, void * __restrict, socklen_t * __restrict);
+int	listen(int, int);
+ssize_t	recv(int, void *, size_t, int);
+ssize_t	recvfrom(int, void * __restrict, size_t, int,
+	    struct sockaddr * __restrict, socklen_t * __restrict);
+ssize_t	recvmsg(int, struct msghdr *, int);
+ssize_t	send(int, const void *, size_t, int);
+ssize_t	sendto(int, const void *,
+	    size_t, int, const struct sockaddr *, socklen_t);
+ssize_t	sendmsg(int, const struct msghdr *, int);
+int	setsockopt(int, int, int, const void *, socklen_t);
+int	shutdown(int, int);
+int	sockatmark(int);
+int	socket(int, int, int);
+int	socketpair(int, int, int, int *);
 __END_DECLS
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.89.2.1 2005/04/29 11:29:40 kent Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.89.2.1 2005/04/29 11:29:40 kent Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -377,6 +377,9 @@ uvmfault_anonget(ufi, amap, anon)
 				uvmexp.fltnoram++;
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
 				    0,0,0);
+				if (!uvm_reclaimable()) {
+					return ENOMEM;
+				}
 				uvm_wait("flt_noram1");
 			} else {
 				/* we set the PG_BUSY bit */
@@ -561,7 +564,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot, check_prot;
 	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
-	vaddr_t startva, objaddr, currva;
+	vaddr_t startva, currva;
 	voff_t uoff;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -767,10 +770,9 @@ ReFault:
 
 		/* flush object? */
 		if (uobj) {
-			objaddr =
-			    (startva - ufi.entry->start) + ufi.entry->offset;
+			uoff = (startva - ufi.entry->start) + ufi.entry->offset;
 			simple_lock(&uobj->vmobjlock);
-			(void) (uobj->pgops->pgo_put)(uobj, objaddr, objaddr +
+			(void) (uobj->pgops->pgo_put)(uobj, uoff, uoff +
 				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
 		}
 
@@ -1191,7 +1193,7 @@ ReFault:
 				uvm_anfree(anon);
 			}
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			if (anon == NULL || uvm_swapisfull()) {
+			if (anon == NULL || !uvm_reclaimable()) {
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1211,7 +1213,7 @@ ReFault:
 		uvm_unlock_pageq();
 		UVM_PAGE_OWN(pg, NULL);
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 1);
+		    anon, TRUE);
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
@@ -1255,7 +1257,7 @@ ReFault:
 		if (anon != oanon)
 			simple_unlock(&anon->an_lock);
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
-		if (uvm_swapisfull()) {
+		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
@@ -1559,7 +1561,7 @@ Case2:
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			if (anon == NULL || uvm_swapisfull()) {
+			if (anon == NULL || !uvm_reclaimable()) {
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1624,7 +1626,7 @@ Case2:
 			    anon, pg, 0, 0);
 		}
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 0);
+		    anon, FALSE);
 	}
 
 	/*
@@ -1668,7 +1670,7 @@ Case2:
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, anon);
-		if (uvm_swapisfull()) {
+		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */

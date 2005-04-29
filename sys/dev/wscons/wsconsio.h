@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.70 2004/08/26 16:48:06 jkunz Exp $ */
+/* $NetBSD: wsconsio.h,v 1.70.4.1 2005/04/29 11:29:19 kent Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -71,6 +71,7 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
 #define	WSCONS_EVENT_SCREEN_SWITCH	12	/* New screen number */
+#define	WSCONS_EVENT_ASCII		13	/* key code is already ascii */
 
 
 /*
@@ -97,6 +98,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
 #define	WSKBD_TYPE_SUN5		17	/* Sun Type5 */
 #define WSKBD_TYPE_SGI		18	/* SGI keyboard */
+#define WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -191,7 +193,7 @@ struct wskbd_scroll_data {
 #define	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 #define	WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 #define	WSMOUSE_TYPE_HIL	9	/* HIL mouse */
-#define	WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */      
+#define	WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */
 #define	WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 #define	WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
 #define WSMOUSE_TYPE_SGI	13	/* SGI mouse */
@@ -284,6 +286,7 @@ struct wsmouse_id {
 #define	WSDISPLAY_TYPE_SUNTCX	38	/* Sun TCX */
 #define	WSDISPLAY_TYPE_SUNFFB	39	/* Sun creator FFB */
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI frambuffers */
+#define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -301,7 +304,7 @@ struct wsdisplay_cmap {
 	u_char	*red;				/* red color map elements */
 	u_char	*green;				/* green color map elements */
 	u_char	*blue;				/* blue color map elements */
-};      
+};
 #define	WSDISPLAYIO_GETCMAP	_IOW('W', 66, struct wsdisplay_cmap)
 #define	WSDISPLAYIO_PUTCMAP	_IOW('W', 67, struct wsdisplay_cmap)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.10 2004/05/17 18:37:02 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.10.4.1 2005/04/29 11:28:50 kent Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -119,7 +119,7 @@ struct esiop_target {
 	u_int32_t lun_table_offset; /* pointer to our DSA table */
 };
 
-static __inline__ void esiop_table_sync __P((struct esiop_cmd *, int));
+static __inline__ void esiop_table_sync(struct esiop_cmd *, int);
 static __inline__ void
 esiop_table_sync(esiop_cmd, ops)
 	struct esiop_cmd *esiop_cmd;
@@ -159,7 +159,7 @@ struct esiop_softc {
 #define SCF_CHAN_NOSLOT	0x0001		/* channel out of scheduler slot */
 #define SCF_CHAN_ADAPTREQ 0x0002	/* esiop_scsipi_request() is running */
 
-void    esiop_attach __P((struct esiop_softc *));
-int	esiop_intr __P((void *));
-void	esiop_add_dev __P((struct esiop_softc *, int, int));
-void	esiop_del_dev __P((struct esiop_softc *, int, int));
+void    esiop_attach(struct esiop_softc *);
+int	esiop_intr(void *);
+void	esiop_add_dev(struct esiop_softc *, int, int);
+void	esiop_del_dev(struct esiop_softc *, int, int);

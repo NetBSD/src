@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2005/01/01 04:54:29 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.1 2005/04/29 11:28:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/01/01 04:54:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2005/04/29 11:28:17 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -154,9 +154,9 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 int	safepri = PSL_LOWIPL;
 
 extern paddr_t avail_start, avail_end;
-extern char *kernel_text, *etext;
 extern int end, *esym;
 extern u_int lowram;
+extern u_int ctrl_led_phys;
 
 /* prototypes for local functions */
 static void identifycpu(void);
@@ -263,7 +263,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -293,25 +293,6 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Tell the VM system that the area before the text segment
-	 * is invalid.
-	 *
-	 * XXX This is bogus; should just fix KERNBASE and
-	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
-	 */
-	if (uvm_map_protect(kernel_map, 0, m68k_round_page(&kernel_text),
-	    UVM_PROT_NONE, TRUE) != 0)
-		panic("can't mark pre-text pages off-limits");
-
-	/*
-	 * Tell the VM system that writing to the kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map, m68k_trunc_page(&kernel_text),
-	    m68k_round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -828,7 +809,8 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 static volatile u_char *dip_switch, *int_status;
 
 volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
-volatile u_char *lance_mem, *sccport0a;
+volatile u_char *ctrl_led, *sccport0a;
+uint32_t lance_mem_phys;
 
 #ifdef news1700
 static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
@@ -898,8 +880,9 @@ news1700_init(void)
 	ctrl_ast	= (u_char *)IIOV(0xe1280000);
 	ctrl_int2	= (u_char *)IIOV(0xe1180000);
 
-	lance_mem	= (u_char *)IIOV(0xe0e00000);
 	sccport0a	= (u_char *)IIOV(0xe0d40002);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	lance_mem_phys	= 0xe0e00000;
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;
@@ -988,8 +971,9 @@ news1200_init(void)
 	ctrl_ast	= (u_char *)IIOV(0xe1100000);
 	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
 
-	lance_mem	= (u_char *)IIOV(0xe1a00000);
 	sccport0a	= (u_char *)IIOV(0xe1780002);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	lance_mem_phys	= 0xe1a00000;
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;

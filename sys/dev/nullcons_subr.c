@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.1 2003/10/17 20:27:38 cdi Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.1.10.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1 2003/10/17 20:27:38 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.10.1 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -60,7 +60,7 @@ dev_type_read(nullcndev_read);
 dev_type_ioctl(nullcndev_ioctl);
 dev_type_tty(nullcndev_tty);
 
-static int	nullcons_newdev __P((struct consdev *));
+static int	nullcons_newdev(struct consdev *);
 
 const struct cdevsw nullcn_devsw = {
 	nullopen, nullclose, nullcndev_read, nullwrite, nullcndev_ioctl,
@@ -196,7 +196,7 @@ nullcons_newdev(cn)
 
 /*
  * Pseudo-device attach function -- it's the right time to do the rest of
- * initialization. 
+ * initialization.
  */
 void
 nullconsattach(pdev_count)

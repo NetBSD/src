@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.87 2004/09/13 12:34:00 drochner Exp $	*/
+/*	$NetBSD: i82365.c,v 1.87.4.1 2005/04/29 11:28:50 kent Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.87 2004/09/13 12:34:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.87.4.1 2005/04/29 11:28:50 kent Exp $");
 
 #define	PCICDEBUG
 
@@ -86,33 +86,33 @@ int	pcic_debug = 0;
 
 #define	PCIC_MEM_ALIGN	PCIC_MEM_PAGESIZE
 
-void	pcic_attach_socket __P((struct pcic_handle *));
-void	pcic_attach_socket_finish __P((struct pcic_handle *));
+void	pcic_attach_socket(struct pcic_handle *);
+void	pcic_attach_socket_finish(struct pcic_handle *);
 
-int	pcic_submatch __P((struct device *, struct cfdata *,
-			   const locdesc_t *, void *));
-int	pcic_print  __P((void *arg, const char *pnp));
-int	pcic_intr_socket __P((struct pcic_handle *));
-void	pcic_poll_intr __P((void *));
+int	pcic_submatch(struct device *, struct cfdata *,
+			   const locdesc_t *, void *);
+int	pcic_print (void *arg, const char *pnp);
+int	pcic_intr_socket(struct pcic_handle *);
+void	pcic_poll_intr(void *);
 
-void	pcic_attach_card __P((struct pcic_handle *));
-void	pcic_detach_card __P((struct pcic_handle *, int));
-void	pcic_deactivate_card __P((struct pcic_handle *));
+void	pcic_attach_card(struct pcic_handle *);
+void	pcic_detach_card(struct pcic_handle *, int);
+void	pcic_deactivate_card(struct pcic_handle *);
 
-void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
-void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
+void	pcic_chip_do_mem_map(struct pcic_handle *, int);
+void	pcic_chip_do_io_map(struct pcic_handle *, int);
 
-void	pcic_create_event_thread __P((void *));
-void	pcic_event_thread __P((void *));
+void	pcic_create_event_thread(void *);
+void	pcic_event_thread(void *);
 
-void	pcic_queue_event __P((struct pcic_handle *, int));
-void	pcic_power __P((int, void *));
+void	pcic_queue_event(struct pcic_handle *, int);
+void	pcic_power(int, void *);
 
-static int	pcic_wait_ready __P((struct pcic_handle *));
-static void	pcic_delay __P((struct pcic_handle *, int, const char *));
+static int	pcic_wait_ready(struct pcic_handle *);
+static void	pcic_delay(struct pcic_handle *, int, const char *);
 
-static u_int8_t st_pcic_read __P((struct pcic_handle *, int));
-static void st_pcic_write __P((struct pcic_handle *, int, u_int8_t));
+static u_int8_t st_pcic_read(struct pcic_handle *, int);
+static void st_pcic_write(struct pcic_handle *, int, u_int8_t);
 
 int
 pcic_ident_ok(ident)
@@ -274,7 +274,7 @@ pcic_attach(sc)
 			    (reg & PCIC_CIRRUS_CHIP_INFO_SLOTS))
 				h->flags = PCIC_FLAG_SOCKETP;
 			break;
-		default: 
+		default:
 			/*
 			 * During the socket probe, read the ident register
 			 * twice.  I don't understand why, but sometimes the
@@ -593,7 +593,7 @@ pcic_event_thread(arg)
 				}
 			}
 			splx(s);
-				
+
 			DPRINTF(("%s: insertion event\n",
 			    h->ph_parent->dv_xname));
 			pcic_attach_card(h);
@@ -838,7 +838,7 @@ pcic_deactivate_card(h)
 	pcic_write(h, PCIC_PWRCTL, 0);
 }
 
-int 
+int
 pcic_chip_mem_alloc(pch, size, pcmhp)
 	pcmcia_chipset_handle_t pch;
 	bus_size_t size;
@@ -885,7 +885,7 @@ pcic_chip_mem_alloc(pch, size, pcmhp)
 	return (1);
 }
 
-void 
+void
 pcic_chip_mem_free(pch, pcmhp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_mem_handle *pcmhp;
@@ -952,7 +952,7 @@ static const struct mem_map_index_st {
 	},
 };
 
-void 
+void
 pcic_chip_do_mem_map(h, win)
 	struct pcic_handle *h;
 	int win;
@@ -1013,7 +1013,7 @@ pcic_chip_do_mem_map(h, win)
 #endif
 }
 
-int 
+int
 pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	pcmcia_chipset_handle_t pch;
 	int kind;
@@ -1083,7 +1083,7 @@ pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	return (0);
 }
 
-void 
+void
 pcic_chip_mem_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;
@@ -1101,7 +1101,7 @@ pcic_chip_mem_unmap(pch, window)
 	h->memalloc &= ~(1 << window);
 }
 
-int 
+int
 pcic_chip_io_alloc(pch, start, size, align, pcihp)
 	pcmcia_chipset_handle_t pch;
 	bus_addr_t start;
@@ -1147,7 +1147,7 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 	return (0);
 }
 
-void 
+void
 pcic_chip_io_free(pch, pcihp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_io_handle *pcihp;
@@ -1206,7 +1206,7 @@ static const struct io_map_index_st {
 	},
 };
 
-void 
+void
 pcic_chip_do_io_map(h, win)
 	struct pcic_handle *h;
 	int win;
@@ -1236,7 +1236,7 @@ pcic_chip_do_io_map(h, win)
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 }
 
-int 
+int
 pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	pcmcia_chipset_handle_t pch;
 	int width;
@@ -1293,7 +1293,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	return (0);
 }
 
-void 
+void
 pcic_chip_io_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;
@@ -1340,7 +1340,7 @@ pcic_wait_ready(h)
 
 /*
  * Perform long (msec order) delay.
- */  
+ */
 static void
 pcic_delay(h, timo, wmesg)
 	struct pcic_handle *h;

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.3 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.3.10.1 2005/04/29 11:29:13 kent Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -49,13 +49,13 @@ struct pckbport_accessops {
 	void	(*t_slot_enable)   (void *, pckbport_slot_t, int);
 	void	(*t_intr_establish)(void *, pckbport_slot_t);
 	void	(*t_set_poll)      (void *, pckbport_slot_t, int);
-};	
+};
 
 /*
  * external representation (pckbport_tag_t),
  * needed early for console operation
  */
-struct pckbport_tag { 
+struct pckbport_tag {
 	struct pckbport_slotdata *t_slotdata[PCKBPORT_NSLOTS];
 
 	struct callout t_cleanup;
@@ -74,7 +74,6 @@ struct pckbport_attach_args {
 	pckbport_slot_t pa_slot;
 };
 
-extern const char * const pckbport_slot_names[];
 extern struct pckbport_tag pckbport_consdata;
 extern int pckbport_console_attached;
 

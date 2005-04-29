@@ -1,31 +1,31 @@
-/*	$NetBSD: tropicvar.h,v 1.8 2000/06/13 20:00:03 soren Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.8.34.1 2005/04/29 11:28:53 kent Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
- * Copyright (c) 1991 IBM Corporation 
+ * Copyright (c) 1991 IBM Corporation
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation,
- * and that the name IBM not be used in advertising or publicity 
+ * and that the name IBM not be used in advertising or publicity
  * pertaining to distribution of the software without specific, written
  * prior permission.
- * 
+ *
  * CARNEGIE MELLON AND IBM ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON AND IBM DISCLAIM ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -74,8 +74,8 @@ struct	tr_softc {
 	struct callout sc_init_callout;
 	struct callout sc_reinit_callout;
 
-	int (*sc_mediachange) __P((struct tr_softc *));
-	void (*sc_mediastatus) __P((struct tr_softc *, struct ifmediareq *));
+	int (*sc_mediachange)(struct tr_softc *);
+	void (*sc_mediastatus)(struct tr_softc *, struct ifmediareq *);
 	struct rbcb rbc;	/* receiver buffer control block */
 	bus_size_t sc_aca;	/* offset of adapter ACA */
 	bus_size_t sc_ssb;	/* offset of System Status Block */
@@ -96,22 +96,22 @@ struct	tr_softc {
 
 	void *sc_sdhook;
 
-	/* Power management hooks */    
-	int (*sc_enable) __P((struct tr_softc *));
-	void (*sc_disable) __P((struct tr_softc *));
+	/* Power management hooks */
+	int (*sc_enable)(struct tr_softc *);
+	void (*sc_disable)(struct tr_softc *);
 	int sc_enabled;
 };
 
-int tr_config __P((struct tr_softc *));
-int tr_attach __P((struct tr_softc *));
-int tr_intr __P((void *));
-void tr_init __P((void *));
-int tr_ioctl __P((struct ifnet *, u_long, caddr_t));
-void tr_stop __P((struct tr_softc *));
-int tr_reset __P((struct tr_softc *));
-void tr_sleep __P((struct tr_softc *));
-int tr_setspeed __P((struct tr_softc *, u_int8_t));
-int tr_enable __P((struct tr_softc *));
-void tr_disable __P((struct tr_softc *));
-int tr_activate __P((struct device *, enum devact));
-int tr_detach __P((struct device *, int flags));
+int tr_config(struct tr_softc *);
+int tr_attach(struct tr_softc *);
+int tr_intr(void *);
+void tr_init(void *);
+int tr_ioctl(struct ifnet *, u_long, caddr_t);
+void tr_stop(struct tr_softc *);
+int tr_reset(struct tr_softc *);
+void tr_sleep(struct tr_softc *);
+int tr_setspeed(struct tr_softc *, u_int8_t);
+int tr_enable(struct tr_softc *);
+void tr_disable(struct tr_softc *);
+int tr_activate(struct device *, enum devact);
+int tr_detach(struct device *, int flags);

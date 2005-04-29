@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.60 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.60.2.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.60 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.60.2.1 2005/04/29 11:29:39 kent Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -280,13 +280,6 @@ WRITE(void *v)
 	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
 	async = TRUE;
-
-	/* Account writes.  This overcounts if pages are already dirty. */
-	if (usepc) {
-		simple_lock(&lfs_subsys_lock);
-		lfs_subsys_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
-		simple_unlock(&lfs_subsys_lock);
-	}
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)

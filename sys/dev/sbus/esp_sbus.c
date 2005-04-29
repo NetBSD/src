@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.29 2004/03/17 17:04:58 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.29.8.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.29 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.29.8.1 2005/04/29 11:29:16 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,9 @@ struct esp_softc {
 	int	sc_pri;				/* SBUS priority */
 };
 
-void	espattach_sbus	__P((struct device *, struct device *, void *));
-void	espattach_dma	__P((struct device *, struct device *, void *));
-int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
+void	espattach_sbus(struct device *, struct device *, void *);
+void	espattach_dma(struct device *, struct device *, void *);
+int	espmatch_sbus(struct device *, struct cfdata *, void *);
 
 
 CFATTACH_DECL(esp_sbus, sizeof(struct esp_softc),
@@ -92,18 +92,18 @@ CFATTACH_DECL(esp_dma, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-static void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-static u_char	esp_rdreg1 __P((struct ncr53c9x_softc *, int));
-static void	esp_wrreg1 __P((struct ncr53c9x_softc *, int, u_char));
-static int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-static void	esp_dma_reset __P((struct ncr53c9x_softc *));
-static int	esp_dma_intr __P((struct ncr53c9x_softc *));
-static int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-				    size_t *, int, size_t *));
-static void	esp_dma_go __P((struct ncr53c9x_softc *));
-static void	esp_dma_stop __P((struct ncr53c9x_softc *));
-static int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+static u_char	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static u_char	esp_rdreg1(struct ncr53c9x_softc *, int);
+static void	esp_wrreg1(struct ncr53c9x_softc *, int, u_char);
+static int	esp_dma_isintr(struct ncr53c9x_softc *);
+static void	esp_dma_reset(struct ncr53c9x_softc *);
+static int	esp_dma_intr(struct ncr53c9x_softc *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+				    size_t *, int, size_t *);
+static void	esp_dma_go(struct ncr53c9x_softc *);
+static void	esp_dma_stop(struct ncr53c9x_softc *);
+static int	esp_dma_isactive(struct ncr53c9x_softc *);
 
 static struct ncr53c9x_glue esp_sbus_glue = {
 	esp_read_reg,
@@ -131,7 +131,7 @@ static struct ncr53c9x_glue esp_sbus_glue1 = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-static void	espattach __P((struct esp_softc *, struct ncr53c9x_glue *));
+static void	espattach(struct esp_softc *, struct ncr53c9x_glue *);
 
 int
 espmatch_sbus(parent, cf, aux)
@@ -499,8 +499,8 @@ espattach(esc, gluep)
 
 	/*
 	 * Alas, we must now modify the value a bit, because it's
-	 * only valid when can switch on FASTCLK and FASTSCSI bits  
-	 * in config register 3... 
+	 * only valid when can switch on FASTCLK and FASTSCSI bits
+	 * in config register 3...
 	 */
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP100:
@@ -549,7 +549,7 @@ int esp_sbus_debug = 0;
 
 static struct {
 	char *r_name;
-	int   r_flag; 
+	int   r_flag;
 } esp__read_regnames [] = {
 	{ "TCL", 0},			/* 0/00 */
 	{ "TCM", 0},			/* 1/04 */
@@ -721,7 +721,7 @@ esp_dma_isactive(sc)
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 
-void db_esp __P((db_expr_t, int, db_expr_t, char*));
+void db_esp(db_expr_t, int, db_expr_t, char*);
 
 void
 db_esp(addr, have_addr, count, modif)
@@ -741,7 +741,7 @@ db_esp(addr, have_addr, count, modif)
 		if (!sc) continue;
 
 		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
-			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase, 
+			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
 			  sc->sc_dp, sc->sc_dleft, sc->sc_msgify);
 		db_printf("\tmsgout %x msgpriq %x msgin %x:%x:%x:%x:%x\n",
 			  sc->sc_msgout, sc->sc_msgpriq, sc->sc_imess[0],
@@ -756,7 +756,7 @@ db_esp(addr, have_addr, count, modif)
 			}
 		}
 		db_printf("\n");
-		
+
 		for (t=0; t<sc->sc_ntarg; t++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
 				db_printf("t%d lun %d untagged %p busy %d used %x\n",

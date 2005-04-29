@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.36 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.36.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.36 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.36.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,12 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.36 2004/09/14 20:20:48 drochner Exp 
 
 #include <dev/isa/if_levar.h>
 
-int ne2100_isa_probe __P((struct device *, struct cfdata *, void *));
-int bicc_isa_probe __P((struct device *, struct cfdata *, void *));
-void le_dummyattach __P((struct device *, struct device *, void *));
-int le_dummyprobe __P((struct device *, struct cfdata *, void *));
-void le_ne2100_attach __P((struct device *, struct device *, void *));
-void le_bicc_attach __P((struct device *, struct device *, void *));
+int ne2100_isa_probe(struct device *, struct cfdata *, void *);
+int bicc_isa_probe(struct device *, struct cfdata *, void *);
+void le_dummyattach(struct device *, struct device *, void *);
+int le_dummyprobe(struct device *, struct cfdata *, void *);
+void le_ne2100_attach(struct device *, struct device *, void *);
+void le_bicc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(nele, sizeof(struct device),
     ne2100_isa_probe, le_dummyattach, NULL, NULL);
@@ -135,12 +135,11 @@ struct le_isa_params {
 	0, 2
 };
 
-int lance_isa_probe __P((struct isa_attach_args *, 
-			 struct le_isa_params *, int));
-void le_isa_attach __P((struct device *, struct le_softc *,
-			struct isa_attach_args *, struct le_isa_params *));
+int lance_isa_probe(struct isa_attach_args *, struct le_isa_params *, int);
+void le_isa_attach(struct device *, struct le_softc *,
+			struct isa_attach_args *, struct le_isa_params *);
 
-int le_isa_intredge __P((void *));
+int le_isa_intredge(void *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -154,8 +153,8 @@ int le_isa_intredge __P((void *));
 #define hide		static
 #endif
 
-hide void le_isa_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_isa_rdcsr __P((struct lance_softc *, u_int16_t));  
+hide void le_isa_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+hide u_int16_t le_isa_rdcsr(struct lance_softc *, u_int16_t);
 
 #define	LE_ISA_MEMSIZE	16384
 
@@ -179,11 +178,11 @@ le_isa_rdcsr(sc, port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
-	bus_space_handle_t ioh = lesc->sc_ioh; 
+	bus_space_handle_t ioh = lesc->sc_ioh;
 	u_int16_t val;
 
 	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
-	val = bus_space_read_2(iot, ioh, lesc->sc_rdp); 
+	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);
 	return (val);
 }
 
@@ -234,7 +233,7 @@ lance_isa_probe(ia, p, flags)
 		return (0);
 	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
-	if ((flags & LANCEISA_FLAG_LOCALBUS) == 0 && 
+	if ((flags & LANCEISA_FLAG_LOCALBUS) == 0 &&
 	    ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		return (0);
 
@@ -394,7 +393,7 @@ le_isa_attach(parent, lesc, ia, p)
 	sc->sc_hwinit = NULL;
 
 	if (ia->ia_ndrq > 0) {
-		if ((error = isa_dmacascade(ia->ia_ic, 
+		if ((error = isa_dmacascade(ia->ia_ic,
 					    ia->ia_drq[0].ir_drq)) != 0) {
 			printf("%s: unable to cascade DRQ, error = %d\n",
 				    sc->sc_dev.dv_xname, error);

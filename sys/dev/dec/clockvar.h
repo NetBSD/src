@@ -1,21 +1,21 @@
-/* $NetBSD: clockvar.h,v 1.5 2004/02/13 11:36:21 wiz Exp $ */
+/* $NetBSD: clockvar.h,v 1.5.8.1 2005/04/29 11:28:46 kent Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -54,9 +54,9 @@ struct clocktime {
  * chip-dependent routines.
  */
 struct clockfns {
-	void	(*cf_init) __P((struct device *));
-	void	(*cf_get) __P((struct device *, time_t, struct clocktime *));
-	void	(*cf_set) __P((struct device *, struct clocktime *));
+	void	(*cf_init)(struct device *);
+	void	(*cf_get)(struct device *, time_t, struct clocktime *);
+	void	(*cf_set)(struct device *, struct clocktime *);
 };
 
-void clockattach __P((struct device *, const struct clockfns *));
+void clockattach(struct device *, const struct clockfns *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.26 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: psl.h,v 1.26.8.1 2005/04/29 11:28:24 kent Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,7 +247,6 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-extern u_int64_t ver;	/* Copy of v9 version register.  We need to read this only once, in locore.s. */
 static __inline int getpstate __P((void));
 static __inline void setpstate __P((int));
 static __inline int getcwp __P((void));

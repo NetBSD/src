@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.3 2004/10/04 19:59:51 he Exp $	 */
+/*	$NetBSD: getchar.c,v 1.3.4.1 2005/04/29 11:28:21 kent Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,11 +42,13 @@
 extern const struct arcbios_fv *ARCBIOS;
 
 int
-getchar()
+getchar(void)
 {
 	char ch;
-	paddr_t count;
+	u_long count;
 
-	(*ARCBIOS->Read)(0, &ch, 1, &count);
-	return(ch);
+	if ((*ARCBIOS->Read)(0, &ch, 1, &count) != ARCBIOS_ESUCCESS)
+		return -1;
+
+	return ch;
 }

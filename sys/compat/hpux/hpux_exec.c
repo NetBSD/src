@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.44 2004/09/12 10:38:25 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.44.4.1 2005/04/29 11:28:31 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.44 2004/09/12 10:38:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.44.4.1 2005/04/29 11:28:31 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -90,11 +90,13 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.44 2004/09/12 10:38:25 jdolecek Exp 
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
 #include <sys/sa.h>
-#include <sys/syscallargs.h>    
+#include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_util.h>
@@ -149,6 +151,8 @@ const struct emul emul_hpux = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 /*

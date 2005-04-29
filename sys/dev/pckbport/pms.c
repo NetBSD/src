@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $ */
+/* $NetBSD: pms.c,v 1.3.2.1 2005/04/29 11:29:13 kent Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -25,8 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pms.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3.2.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $");
 #include <machine/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 #include <dev/pckbport/synapticsvar.h>
+#endif
 
 #include <dev/pckbport/pmsreg.h>
 #include <dev/pckbport/pmsvar.h>
@@ -192,14 +196,16 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	sc->buttons = 0;
 	sc->protocol = PMS_UNKNOWN;
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 	/* Probe for synaptics touchpad. */
 	if (pms_synaptics_probe_init(sc) == 0) {
 		sc->protocol = PMS_SYNAPTICS;
-	} else {
+	} else
+#endif
 		/* Install generic handler. */
 		pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 		    pmsinput, sc, sc->sc_dev.dv_xname);
-	}
+
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;
 
@@ -237,8 +243,10 @@ do_enable(struct pms_softc *sc)
 
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 	if (sc->protocol == PMS_SYNAPTICS)
 		pms_synaptics_enable(sc);
+#endif
 
 	cmd[0] = PMS_DEV_ENABLE;
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
@@ -339,14 +347,20 @@ pms_power(int why, void *v)
 		}
 		break;
 	case PWR_RESUME:
-		if (sc->protocol == PMS_SYNAPTICS)
+#ifdef PMS_SYNAPTICS_TOUCHPAD
+		if (sc->protocol == PMS_SYNAPTICS) {
 			pms_synaptics_resume(sc);
+			sc->sc_suspended = 0;
+			do_enable(sc);
+		}
+#endif
 		if (sc->sc_enabled && sc->sc_suspended) {
 			/* recheck protocol & init mouse */
 			sc->protocol = PMS_UNKNOWN;
 			sc->sc_suspended = 0;
 			do_enable(sc); /* only if we were suspended */
 		}
+		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:
@@ -366,21 +380,21 @@ pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_PS2;
 		break;
-		
+
 	case WSMOUSEIO_SRES:
 		i = (*(u_int *)data - 12) / 25;
-		
+
 		if (i < 0)
 			i = 0;
-			
+
 		if (i > 3)
 			i = 3;
 
 		kbcmd[0] = PMS_SET_RES;
-		kbcmd[1] = i;			
-		i = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
+		kbcmd[1] = i;
+		i = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd,
 		    2, 0, 1, 0);
-		
+
 		if (i)
 			printf("pms_ioctl: SET_RES command error\n");
 		break;
@@ -414,7 +428,7 @@ pms_reset_thread(void *arg)
 		if (pmsdebug)
 #endif
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
-			printf("%s: resetting mouse interface\n", 
+			printf("%s: resetting mouse interface\n",
 			    sc->sc_dev.dv_xname);
 #endif
 		save_protocol = sc->protocol;
@@ -423,13 +437,15 @@ pms_reset_thread(void *arg)
 		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 		    1, 2, 1, resp);
 		if (res)
-			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
+			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname,
 			    res));
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 		/* For the synaptics case, leave the protocol alone. */
-		if (sc->protocol != PMS_SYNAPTICS) {
+		if (sc->protocol != PMS_SYNAPTICS)
+#endif
 			sc->protocol = PMS_UNKNOWN;
-		}
+
 		pms_enable(sc);
 		if (sc->protocol != save_protocol) {
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
@@ -600,7 +616,7 @@ pmsinput(void *vsc, int data)
 			dy -= 256;
 		if (dy == -128)
 			dy = -127;
-		
+
 		sc->inputstate = 0;
 		changed = (sc->buttons ^ newbuttons);
 		sc->buttons = newbuttons;

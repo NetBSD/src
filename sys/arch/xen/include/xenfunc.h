@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.3 2004/12/10 18:47:52 christos Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.3.4.1 2005/04/29 11:28:29 kent Exp $	*/
 
 /*
  *
@@ -37,6 +37,7 @@
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+#include <machine/evtchn.h>
 #include <machine/xenpmap.h>
 #include <machine/pte.h>
 
@@ -102,6 +103,8 @@ tlbflush(void)
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
 }
+
+#define	tlbflushg()	tlbflush()	/* we don't use PGE */
 
 static __inline u_int
 rdr6(void)

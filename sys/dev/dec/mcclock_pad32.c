@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.c,v 1.10 2001/11/13 12:49:45 lukem Exp $	*/
+/*	$NetBSD: mcclock_pad32.c,v 1.10.24.1 2005/04/29 11:28:46 kent Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,21 +28,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.10 2001/11/13 12:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.10.24.1 2005/04/29 11:28:46 kent Exp $");
 
 
 /*
  * mc1461818 (or compatible) clock chip driver,  for machines where each
- * byte-wide mcclock chip register is  mapped 
+ * byte-wide mcclock chip register is  mapped
  * into the low-order byte of a little-endian 32-bit word.
- * 
+ *
  *  DECstation 2100/3100
  *  DECstation 5100
  *  DECstation 5000/200 baseboard
  *  IOCTL asic machines (Alpha  3000 series, Decstation 5000 series)
  *
  * bus-specific frontends should just declare an attach and match
- * entry, and set up a initializea switch to call the functions below. 
+ * entry, and set up a initializea switch to call the functions below.
  */
 
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.10 2001/11/13 12:49:45 lukem Exp
 #include <dev/dec/mcclock_pad32.h>
 
 
-void	mcclock_pad32_write __P((struct mcclock_softc *, u_int, u_int));
-u_int	mcclock_pad32_read __P((struct mcclock_softc *, u_int));
+void	mcclock_pad32_write(struct mcclock_softc *, u_int, u_int);
+u_int	mcclock_pad32_read(struct mcclock_softc *, u_int);
 
 const struct mcclock_busfns mcclock_pad32_busfns = {
 	mcclock_pad32_write, mcclock_pad32_read,

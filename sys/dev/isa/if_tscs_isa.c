@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.1 2005/01/08 02:55:52 joff Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.1.2.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.1 2005/01/08 02:55:52 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.1.2.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.1 2005/01/08 02:55:52 joff Exp $")
 #include <dev/ic/cs89x0var.h>
 #include <dev/isa/cs89x0isavar.h>
 
-int	tscs_isa_probe __P((struct device *, struct cfdata *, void *));
-void	tscs_isa_attach __P((struct device *, struct device *, void *));
+int	tscs_isa_probe(struct device *, struct cfdata *, void *);
+void	tscs_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tscs_isa, sizeof(struct cs_softc),
     tscs_isa_probe, tscs_isa_attach, NULL, NULL);
 
-int 
+int
 tscs_isa_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -177,7 +177,7 @@ tscs_isa_probe(parent, cf, aux)
 	return (rv);
 }
 
-void 
+void
 tscs_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.684 2005/01/15 13:23:31 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.684.2.1 2005/04/29 11:29:12 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp 
+ *	NetBSD: pcidevs,v 1.706 2005/04/20 21:33:39 bouyer Exp
  */
 
 /*
@@ -2896,6 +2896,10 @@ const struct pci_product pci_products[] = {
 	    "ASR-2200S",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2410SA,
+	    "ASR-2410SA",
+	},
+	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA,
 	    "AAR-2810SA",
 	},
@@ -3328,6 +3332,54 @@ const struct pci_product pci_products[] = {
 	    "Intrepid I/O Controller",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID_USB,
+	    "Intrepid USB Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_USB,
+	    "K2 USB Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
+	    "K2 MAC-IO Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_FW,
+	    "K2 Firewire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA,
+	    "K2 UATA Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB1,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB2,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB3,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB4,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB5,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP,
+	    "U3 AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
+	    "GMAC Ethernet",
+	},
+	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
 	    "1000PV",
 	},
@@ -3376,6 +3428,30 @@ const struct pci_product pci_products[] = {
 	    "IXP AC'97 Audio Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_PPB,
+	    "SB200 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_EHCI,
+	    "SB200 USB2 Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_1,
+	    "SB200 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_2,
+	    "SB200 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
+	    "SB200 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB,
+	    "SB200 SMBus Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
 	    "IXP AC'97 Audio Controller",
 	},
@@ -3384,7 +3460,15 @@ const struct pci_product pci_products[] = {
 	    "IXP AC'97 Audio Controller",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
+	    "IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
+	    "IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
 	    "IXP IDE Controller",
 	},
 	{
@@ -3560,6 +3644,14 @@ const struct pci_product pci_products[] = {
 	    "Radeon 9600TX",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_PRO,
+	    "Radeon 9700 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO,
+	    "Radeon 9800 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_MOB_T2,
 	    "Radeon Mobility T2 (M10) NT",
 	},
@@ -3574,6 +3666,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_2,
 	    "Radeon 9600TX Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO_2,
+	    "Radeon 9800 Pro Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
@@ -3756,7 +3852,27 @@ const struct pci_product pci_products[] = {
 	    "Mach64 VT4",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB,
+	    "RS300 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_IGP,
+	    "Radeon 9100 IGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_AGP,
+	    "RS300 AGP Interface",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200,
+	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_2,
+	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_3,
 	    "Radeon 9200",
 	},
 	{
@@ -4018,6 +4134,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5788,
 	    "BCM5788 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401_B0,
+	    "BCM4401-B0 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901,
@@ -4376,6 +4496,10 @@ const struct pci_product pci_products[] = {
 	    "Netelligent 10/100 TX",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T2,
+	    "Netelligent 10 T/2 UTP/Coax",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INT100TX,
 	    "Integrated Netelligent 10/100 TX",
 	},
@@ -4684,6 +4808,10 @@ const struct pci_product pci_products[] = {
 	    "PERC 3/Di",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
+	    "CERC SATA RAID 1.5/6ch",
+	},
+	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    "8139 Ethernet",
 	},
@@ -4780,14 +4908,6 @@ const struct pci_product pci_products[] = {
 	    "MCR510 PCI Memory Card Reader Controller",
 	},
 	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
-	    "CB710 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
-	    "CB720 CardBus Controller",
-	},
-	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
 	    "CB1211 CardBus Controller",
 	},
@@ -4800,8 +4920,16 @@ const struct pci_product pci_products[] = {
 	    "CB1410 CardBus Controller",
 	},
 	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
+	    "CB710 CardBus Controller",
+	},
+	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
 	    "CB1420 CardBus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
+	    "CB720 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
@@ -5006,6 +5134,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
 	    "GT-64120 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    "Belkin Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
@@ -5514,6 +5646,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES,
 	    "i82546GB Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI,
+	    "i82541PI Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -7168,6 +7304,26 @@ const struct pci_product pci_products[] = {
 	    "GeForce 6800 GT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS,
+	    "nForce4 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
+	    "nForce4 ATA133 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
+	    "nForce4 Serial ATA 1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
+	    "nForce4 Serial ATA 2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC,
+	    "nForce4 AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
 	    "nForce2 PCI-ISA bridge",
 	},
@@ -7226,6 +7382,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI,
 	    "nForce2 Ultra 400 USB2 Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_MCPT_AC,
+	    "nForce2 Ultra 400 AC-97",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
@@ -8006,6 +8166,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4,
 	    "Savage4",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_KM133,
+	    "ProSavage KM133",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
@@ -9252,6 +9416,10 @@ const struct pci_product pci_products[] = {
 	    "VT6305 IEEE 1394 Host Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
 	    "VT8363 (Apollo KT133) Host Bridge",
 	},
@@ -9332,12 +9500,20 @@ const struct pci_product pci_products[] = {
 	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_1,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    "VT82C586 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
 	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2,
+	    "KT880 CPU to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
@@ -9396,8 +9572,8 @@ const struct pci_product pci_products[] = {
 	    "VT6105 (Rhine III) 10/100 Ethernet",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT61XX,
-	    "VT61XX (Velocity) 10/100/1000 Ethernet",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612X,
+	    "VT612X (Velocity) 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA,
@@ -9416,6 +9592,14 @@ const struct pci_product pci_products[] = {
 	    "VT8237 Integrated SATA Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
+	    "VT6421 Serial RAID Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3,
+	    "KT880 CPU to PCI bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
 	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
@@ -9424,12 +9608,28 @@ const struct pci_product pci_products[] = {
 	    "VT8377 Apollo KT400 CPU to PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378,
+	    "VT8378 Apollo KM400 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237,
 	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG,
+	    "VT8378 KM400 UniChrome Integrated Graphics",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5,
+	    "KT880 CPU to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
@@ -9477,7 +9677,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
-	    "VT8377CE CPU-AGP Bridge (KT600)",
+	    "VT8377CE CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
@@ -9944,4 +10144,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1907;
+const int pci_nproducts = 1957;

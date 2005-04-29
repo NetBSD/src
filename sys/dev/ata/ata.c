@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $      */
+/*      $NetBSD: ata.c,v 1.63.4.1 2005/04/29 11:28:45 kent Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.63.4.1 2005/04/29 11:28:45 kent Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $");
 #include "atapibus.h"
 #include "ataraid.h"
 
-#if NATARAID > 0 
-#include <dev/ata/ata_raidvar.h> 
+#if NATARAID > 0
+#include <dev/ata/ata_raidvar.h>
 #endif
 
 #define DEBUG_FUNCS  0x08
@@ -105,6 +105,7 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
+static void atabus_powerhook(int, void *);
 
 /*
  * atabusprint:
@@ -116,7 +117,7 @@ int
 atabusprint(void *aux, const char *pnp)
 {
 	struct ata_channel *chan = aux;
-	
+
 	if (pnp)
 		aprint_normal("atabus at %s", pnp);
 	aprint_normal(" channel %d", chan->ch_channel);
@@ -152,7 +153,7 @@ ata_channel_attach(struct ata_channel *chp)
 
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
-	
+
 	callout_init(&chp->ch_callout);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
@@ -321,7 +322,11 @@ atabus_thread(void *arg)
 	splx(s);
 
 	/* Configure the devices on the bus. */
-	atabusconfig(sc);
+	if (sc->sc_sleeping == 1) {
+		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
+		sc->sc_sleeping = 0;
+	} else
+		atabusconfig(sc);
 
 	for (;;) {
 		s = splbio();
@@ -391,11 +396,11 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (chp == NULL)
 		return (0);
-	
+
 	if (cf->cf_loc[ATACF_CHANNEL] != chp->ch_channel &&
 	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
 	    	return (0);
-	
+
 	return (1);
 }
 
@@ -424,6 +429,12 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
+
+	sc->sc_sleeping = 0;
+	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
 }
 
 /*
@@ -444,7 +455,7 @@ atabus_activate(struct device *self, enum devact act)
 	case DVACT_ACTIVATE:
 		error = EOPNOTSUPP;
 		break;
-	
+
 	case DVACT_DEACTIVATE:
 		/*
 		 * We might deactivate the children of atapibus twice
@@ -504,7 +515,11 @@ atabus_detach(struct device *self, int flags)
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
-	
+
+	/* power hook */
+	if (sc->sc_powerhook)
+	      powerhook_disestablish(sc->sc_powerhook);
+
 	/*
 	 * Detach atapibus and its children.
 	 */
@@ -786,7 +801,7 @@ atastart(struct ata_channel *chp)
 	}
 	chp->ch_queue->active_xfer = xfer;
 	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	
+
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
 
@@ -927,7 +942,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 int
 ata_addref(struct ata_channel *chp)
 {
-	struct atac_softc *atac = chp->ch_atac; 
+	struct atac_softc *atac = chp->ch_atac;
 	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	int s, error = 0;
 
@@ -963,14 +978,14 @@ ata_print_modes(struct ata_channel *chp)
 	int drive;
 	struct ata_drive_datas *drvp;
 
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
 		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
-			chp->ch_channel, drive, drvp->PIO_mode);
+			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -1043,7 +1058,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 
 /*
  * Probe drive's capabilities, for use by the controller later
- * Assumes drvp points to an existing drive. 
+ * Assumes drvp points to an existing drive.
  */
 void
 ata_probe_caps(struct ata_drive_datas *drvp)
@@ -1082,7 +1097,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
-	if (params.atap_ata_major > 0x01 && 
+	if (params.atap_ata_major > 0x01 &&
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
@@ -1100,7 +1115,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		drvp->PIO_mode = 3;
 
 	/*
-	 * It's not in the specs, but it seems that some drive 
+	 * It's not in the specs, but it seems that some drive
 	 * returns 0xffff in atap_extensions when this field is invalid
 	 */
 	if (params.atap_extensions != 0xffff &&
@@ -1131,7 +1146,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				if (ata_set_mode(drvp, 0x08 | (i + 3),
 				   AT_WAIT) != CMD_OK)
 					continue;
-			if (!printed) { 
+			if (!printed) {
 				aprint_normal("%s: drive supports PIO mode %d",
 				    drv_dev->dv_xname, i + 3);
 				sep = ",";
@@ -1149,7 +1164,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			}
 		}
 		if (!printed) {
-			/* 
+			/*
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
@@ -1228,10 +1243,10 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	s = splbio();
 	drvp->drive_flags &= ~DRIVE_NOSTREAM;
 	if (drvp->drive_flags & DRIVE_ATAPI) {
-		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	} else {
-		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	}
 	splx(s);
@@ -1291,11 +1306,11 @@ atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
         struct atabus_softc *sc;
         int error, unit = minor(dev);
-   
+
         if (unit >= atabus_cd.cd_ndevs ||
             (sc = atabus_cd.cd_devs[unit]) == NULL)
                 return (ENXIO);
- 
+
         if (sc->sc_flags & ATABUSCF_OPEN)
                 return (EBUSY);
 
@@ -1396,3 +1411,34 @@ atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	}
 	return (error);
 };
+
+static void
+atabus_powerhook(int why, void *hdl)
+{
+	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct ata_channel *chp = sc->sc_chan;
+	int s;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+		sc->sc_sleeping = 1;
+		s = splbio();
+		chp->ch_flags = ATACH_SHUTDOWN;
+		splx(s);
+		wakeup(&chp->ch_thread);
+		while (chp->ch_thread != NULL)
+			(void) tsleep((void *)&chp->ch_flags, PRIBIO,
+			    "atadown", 0);
+		break;
+	case PWR_RESUME:
+		atabus_create_thread(sc);
+		break;
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+
+	return;
+}

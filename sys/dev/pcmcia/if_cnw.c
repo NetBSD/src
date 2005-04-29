@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.29 2004/10/30 18:10:06 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.29.4.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  * John Markus Bjørndalen
  * Department of Computer Science
  * University of Tromsø
- * Norway             
+ * Norway
  * johnm@staff.cs.uit.no, http://www.cs.uit.no/~johnm/
  */
 
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.29 2004/10/30 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.29.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -184,11 +184,11 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
  */
 #define MEMORY_MAPPED
 
-int	cnw_match __P((struct device *, struct cfdata *, void *));
-void	cnw_attach __P((struct device *, struct device *, void *));
-int	cnw_detach __P((struct device *, int));
+int	cnw_match(struct device *, struct cfdata *, void *);
+void	cnw_attach(struct device *, struct device *, void *);
+int	cnw_detach(struct device *, int);
 
-int	cnw_activate __P((struct device *, enum devact));
+int	cnw_activate(struct device *, enum devact);
 
 struct cnw_softc {
 	struct device sc_dev;		    /* Device glue (must be first) */
@@ -224,31 +224,31 @@ struct cnw_softc {
 CFATTACH_DECL(cnw, sizeof(struct cnw_softc),
     cnw_match, cnw_attach, cnw_detach, cnw_activate);
 
-void cnw_reset __P((struct cnw_softc *));
-void cnw_init __P((struct cnw_softc *));
-int cnw_enable __P((struct cnw_softc *sc));
-void cnw_disable __P((struct cnw_softc *sc));
-void cnw_config __P((struct cnw_softc *sc, u_int8_t *));
-void cnw_start __P((struct ifnet *));
-void cnw_transmit __P((struct cnw_softc *, struct mbuf *));
-struct mbuf *cnw_read __P((struct cnw_softc *));
-void cnw_recv __P((struct cnw_softc *));
-int cnw_intr __P((void *arg));
-int cnw_ioctl __P((struct ifnet *, u_long, caddr_t));
-void cnw_watchdog __P((struct ifnet *));
-static int cnw_setdomain __P((struct cnw_softc *, int));
-static int cnw_setkey __P((struct cnw_softc *, int));
+void cnw_reset(struct cnw_softc *);
+void cnw_init(struct cnw_softc *);
+int cnw_enable(struct cnw_softc *sc);
+void cnw_disable(struct cnw_softc *sc);
+void cnw_config(struct cnw_softc *sc, u_int8_t *);
+void cnw_start(struct ifnet *);
+void cnw_transmit(struct cnw_softc *, struct mbuf *);
+struct mbuf *cnw_read(struct cnw_softc *);
+void cnw_recv(struct cnw_softc *);
+int cnw_intr(void *arg);
+int cnw_ioctl(struct ifnet *, u_long, caddr_t);
+void cnw_watchdog(struct ifnet *);
+static int cnw_setdomain(struct cnw_softc *, int);
+static int cnw_setkey(struct cnw_softc *, int);
 
 /* ---------------------------------------------------------------- */
 
 /* Help routines */
-static int wait_WOC __P((struct cnw_softc *, int));
-static int read16 __P((struct cnw_softc *, int));
-static int cnw_cmd __P((struct cnw_softc *, int, int, int, int));
+static int wait_WOC(struct cnw_softc *, int);
+static int read16(struct cnw_softc *, int);
+static int cnw_cmd(struct cnw_softc *, int, int, int, int);
 
-/* 
- * Wait until the WOC (Write Operation Complete) bit in the 
- * ASR (Adapter Status Register) is asserted. 
+/*
+ * Wait until the WOC (Write Operation Complete) bit in the
+ * ASR (Adapter Status Register) is asserted.
  */
 static int
 wait_WOC(sc, line)
@@ -276,7 +276,7 @@ wait_WOC(sc, line)
 
 
 /*
- * Read a 16 bit value from the card. 
+ * Read a 16 bit value from the card.
  */
 static int
 read16(sc, offset)
@@ -697,7 +697,7 @@ cnw_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
-		
+
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
 		ifp->if_timer = 3; /* start watchdog timer */
@@ -1017,7 +1017,7 @@ cnw_intr(arg)
 			/* Continue to send packets from the queue */
 			cnw_start(&sc->sc_ethercom.ec_if);
 		}
-				
+
 	}
 }
 

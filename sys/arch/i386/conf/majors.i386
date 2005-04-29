@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.23 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.i386,v 1.23.8.1 2005/04/29 11:28:12 kent Exp $
 #
 # Device majors for i386
 #
@@ -93,7 +93,7 @@ device-major	systrace	char 90			systrace
 device-major	kttcp		char 91			kttcp
 device-major	dmoverio	char 92			dmoverio
 device-major	cgd		char 93  block 21	cgd
-device-major	verifiedexec	char 94			verifiedexec
+device-major	veriexec	char 94			veriexec
 device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
@@ -108,6 +108,16 @@ device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
 
-# Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+#
+# Device majors for Xen. These are assigned here so that:
+# - we are sure there are no conflicts with plain i386 
+# - they appear in the i386 MAKEDEV
+#
+
+device-major	xenevt		char 141		xenevt
+device-major	xbd		char 142 block 142	xbd
+device-major	xencons		char 143		xencons
+
+# Majors up to 143 are reserved for machine-dependent drivers.
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

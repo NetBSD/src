@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.25 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.25.8.1 2005/04/29 11:28:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.25 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.25.8.1 2005/04/29 11:28:44 kent Exp $");
 
 #include "sequencer.h"
 
@@ -111,43 +111,41 @@ int	sequencerdebug = 0;
 
 struct sequencer_softc seqdevs[NSEQUENCER];
 
-void sequencerattach __P((int));
-void seq_reset __P((struct sequencer_softc *));
-int seq_do_command __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_extcommand __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_chnvoice __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_chncommon __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_timing __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_local __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_sysex __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, 
-			 struct uio *));
-int seq_timer __P((struct sequencer_softc *, int, int, seq_event_rec *));
-static int seq_input_event __P((struct sequencer_softc *, seq_event_rec *));
-int seq_drain __P((struct sequencer_softc *));
-void seq_startoutput __P((struct sequencer_softc *));
-void seq_timeout __P((void *));
-int seq_to_new __P((seq_event_rec *, struct uio *));
+void sequencerattach(int);
+void seq_reset(struct sequencer_softc *);
+int seq_do_command(struct sequencer_softc *, seq_event_rec *);
+int seq_do_extcommand(struct sequencer_softc *, seq_event_rec *);
+int seq_do_chnvoice(struct sequencer_softc *, seq_event_rec *);
+int seq_do_chncommon(struct sequencer_softc *, seq_event_rec *);
+int seq_do_timing(struct sequencer_softc *, seq_event_rec *);
+int seq_do_local(struct sequencer_softc *, seq_event_rec *);
+int seq_do_sysex(struct sequencer_softc *, seq_event_rec *);
+int seq_do_fullsize(struct sequencer_softc *, seq_event_rec *, struct uio *);
+int seq_timer(struct sequencer_softc *, int, int, seq_event_rec *);
+static int seq_input_event(struct sequencer_softc *, seq_event_rec *);
+int seq_drain(struct sequencer_softc *);
+void seq_startoutput(struct sequencer_softc *);
+void seq_timeout(void *);
+int seq_to_new(seq_event_rec *, struct uio *);
 static int seq_sleep_timo(int *, char *, int);
 static int seq_sleep(int *, char *);
 static void seq_wakeup(int *);
 
 struct midi_softc;
-int midiseq_out __P((struct midi_dev *, u_char *, u_int, int));
-struct midi_dev *midiseq_open __P((int, int));
-void midiseq_close __P((struct midi_dev *));
-void midiseq_reset __P((struct midi_dev *));
-int midiseq_noteon __P((struct midi_dev *, int, int, int));
-int midiseq_noteoff __P((struct midi_dev *, int, int, int));
-int midiseq_keypressure __P((struct midi_dev *, int, int, int));
-int midiseq_pgmchange __P((struct midi_dev *, int, int));
-int midiseq_chnpressure __P((struct midi_dev *, int, int));
-int midiseq_ctlchange __P((struct midi_dev *, int, int, int));
-int midiseq_pitchbend __P((struct midi_dev *, int, int));
-int midiseq_loadpatch __P((struct midi_dev *, struct sysex_info *, 
-			   struct uio *));
-int midiseq_putc __P((struct midi_dev *, int));
-void midiseq_in __P((struct midi_dev *, u_char *, int));
+int midiseq_out(struct midi_dev *, u_char *, u_int, int);
+struct midi_dev *midiseq_open(int, int);
+void midiseq_close(struct midi_dev *);
+void midiseq_reset(struct midi_dev *);
+int midiseq_noteon(struct midi_dev *, int, int, int);
+int midiseq_noteoff(struct midi_dev *, int, int, int);
+int midiseq_keypressure(struct midi_dev *, int, int, int);
+int midiseq_pgmchange(struct midi_dev *, int, int);
+int midiseq_chnpressure(struct midi_dev *, int, int);
+int midiseq_ctlchange(struct midi_dev *, int, int, int);
+int midiseq_pitchbend(struct midi_dev *, int, int);
+int midiseq_loadpatch(struct midi_dev *, struct sysex_info *, struct uio *);
+int midiseq_putc(struct midi_dev *, int);
+void midiseq_in(struct midi_dev *, u_char *, int);
 
 dev_type_open(sequenceropen);
 dev_type_close(sequencerclose);
@@ -301,7 +299,7 @@ seq_timeout(addr)
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 	}
-		
+
 }
 
 void
@@ -353,7 +351,7 @@ seq_input_event(sc, cmd)
 {
 	struct sequencer_queue *q = &sc->inq;
 
-	DPRINTFN(2, ("seq_input_event: %02x %02x %02x %02x %02x %02x %02x %02x\n", 
+	DPRINTFN(2, ("seq_input_event: %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		     cmd->arr[0], cmd->arr[1], cmd->arr[2], cmd->arr[3],
 		     cmd->arr[4], cmd->arr[5], cmd->arr[6], cmd->arr[7]));
 	if (SEQ_QFULL(q))
@@ -411,7 +409,7 @@ sequencerread(dev, uio, ioflag)
 	seq_event_rec ev;
 	int error, s;
 
-	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
+	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n",
 		     sc, (int) uio->uio_resid, ioflag));
 
 	if (sc->mode == SEQ_OLD) {
@@ -561,7 +559,7 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case SEQUENCER_OUTOFBAND:
-		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n", 
+		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n",
 			     *(u_char *)addr, *(u_char *)(addr+1),
 			     *(u_char *)(addr+2), *(u_char *)(addr+3),
 			     *(u_char *)(addr+4), *(u_char *)(addr+5),
@@ -804,7 +802,7 @@ seq_do_command(sc, b)
 			return (ENXIO);
 		return midiseq_putc(sc->devs[dev], b->arr[1]);
 	default:
-		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n", 
+		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n",
 			     SEQ_CMD(b)));
 		return (EINVAL);
 	}
@@ -827,7 +825,7 @@ seq_do_chnvoice(sc, b)
 	chan = SEQ_ECHAN(b);
 	note = SEQ_ENOTE(b);
 	parm = SEQ_EPARM(b);
-	DPRINTFN(2,("seq_do_chnvoice: cmd=%02x dev=%d chan=%d note=%d parm=%d\n", 
+	DPRINTFN(2,("seq_do_chnvoice: cmd=%02x dev=%d chan=%d note=%d parm=%d\n",
 		    cmd, dev, chan, note, parm));
 	voice = chan;
 	if (cmd == MIDI_NOTEON && parm == 0) {
@@ -836,7 +834,7 @@ seq_do_chnvoice(sc, b)
 	}
 	switch(cmd) {
 	case MIDI_NOTEON:
-		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n", 
+		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n",
 			     md, voice, note, parm));
 		error = midiseq_noteon(md, voice, note, parm);
 		break;
@@ -1082,7 +1080,7 @@ seq_to_new(ev, uio)
 	if (cmd >= 0x80) {
 		/* Fill the event record */
 		if (uio->uio_resid >= sizeof *ev - SEQOLD_CMDSIZE) {
-			error = uiomove(&ev->arr[SEQOLD_CMDSIZE], 
+			error = uiomove(&ev->arr[SEQOLD_CMDSIZE],
 					sizeof *ev - SEQOLD_CMDSIZE, uio);
 			if (error)
 				return error;
@@ -1151,7 +1149,7 @@ midiseq_in(md, msg, len)
 	seq_event_rec ev;
 	int status, chan;
 
-	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n", 
+	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n",
 		     md, msg[0], msg[1], msg[2]));
 
 	status = MIDI_GET_STATUS(msg[0]);
@@ -1175,7 +1173,7 @@ midiseq_in(md, msg, len)
 		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, msg[1], 0, 0);
 		break;
 	case MIDI_PITCH_BEND:
-		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, 0, 0, 
+		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, 0, 0,
 				  (msg[1] & 0x7f) | ((msg[2] & 0x7f) << 7));
 		break;
 	default:
@@ -1260,7 +1258,7 @@ midiseq_noteon(md, chan, note, vel)
 {
 	u_char buf[3];
 
-	DPRINTFN(6, ("midiseq_noteon 0x%02x %d %d\n", 
+	DPRINTFN(6, ("midiseq_noteon 0x%02x %d %d\n",
 		     MIDI_NOTEON | chan, note, vel));
 	if (chan < 0 || chan > 15 ||
 	    note < 0 || note > 127)
@@ -1416,8 +1414,8 @@ midiseq_loadpatch(md, sysex, uio)
 		if (i != cc)
 			break;
 	}
-	/* Any leftover data in uio is rubbish; 
-	 * the SYSEX should be one write ending in SYSEX_END. 
+	/* Any leftover data in uio is rubbish;
+	 * the SYSEX should be one write ending in SYSEX_END.
 	 */
 	uio->uio_resid = 0;
 	c = MIDI_SYSEX_END;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.214 2005/01/02 16:08:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.214.2.1 2005/04/29 11:29:24 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.214 2005/01/02 16:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.214.2.1 2005/04/29 11:29:24 kent Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -63,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.214 2005/01/02 16:08:29 thorpej E
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
 #endif
 
 #include <miscfs/genfs/genfs.h>
@@ -139,6 +142,15 @@ sys_mount(l, v, retval)
 	struct vattr va;
 	struct nameidata nd;
 	struct vfsops *vfs;
+
+	/*
+	 * if MNT_GETARGS is specified, it should be only flag.
+	 */
+
+	if ((SCARG(uap, flags) & MNT_GETARGS) != 0 &&
+	    (SCARG(uap, flags) & ~MNT_GETARGS) != 0) {
+		return EINVAL;
+	}
 
 	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
 	    (error = suser(p->p_ucred, &p->p_acflag)))
@@ -312,22 +324,24 @@ sys_mount(l, v, retval)
 	 */
 	mp->mnt_flag |= SCARG(uap, flags) & MNT_FORCE;
  update:
-	/*
-	 * Set the mount level flags.
-	 */
-	if (SCARG(uap, flags) & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
-	mp->mnt_flag &=
-	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
-	mp->mnt_flag |= SCARG(uap, flags) &
-	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_IGNORE);
+	if ((SCARG(uap, flags) & MNT_GETARGS) == 0) {
+		/*
+		 * Set the mount level flags.
+		 */
+		if (SCARG(uap, flags) & MNT_RDONLY)
+			mp->mnt_flag |= MNT_RDONLY;
+		else if (mp->mnt_flag & MNT_RDONLY)
+			mp->mnt_iflag |= IMNT_WANTRDWR;
+		mp->mnt_flag &=
+		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
+		mp->mnt_flag |= SCARG(uap, flags) &
+		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
+		    MNT_IGNORE);
+	}
 	/*
 	 * Mount the filesystem.
 	 */
@@ -335,7 +349,7 @@ sys_mount(l, v, retval)
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
 		if (mp->mnt_iflag & IMNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
-		if (error || (mp->mnt_flag & MNT_GETARGS))
+		if (error)
 			mp->mnt_flag = flag;
 		mp->mnt_flag &=~
 		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
@@ -402,6 +416,8 @@ checkdirs(olddp)
 	proclist_lock_read();
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
+		if (!cwdi)
+			continue;
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
 			VREF(newdp);
@@ -1814,6 +1830,22 @@ restart:
 		error = EBUSY;
 		goto out;
 	}
+
+	  /*
+	   * Remove the fingerprint from the list if there was one.
+	   */
+#ifdef VERIFIED_EXEC
+	if ((error = veriexec_removechk(p, vp, nd.ni_dirp)) != 0) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vput(vp);
+		goto out;
+	}
+#endif
+	
 	if (vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
@@ -3023,7 +3055,7 @@ sys_fsync(l, v, retval)
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, p);
 	if (error == 0 && bioops.io_fsync != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp);
+		(*bioops.io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
 	FILE_UNUSE(fp, p);
@@ -3076,6 +3108,8 @@ sys_fsync_range(l, v, retval)
 		nflags = FSYNC_DATAONLY | FSYNC_WAIT;
 	else
 		nflags = FSYNC_WAIT;
+	if (flags & FDISKSYNC)
+		nflags |= FSYNC_CACHE;
 
 	len = SCARG(uap, length);
 	/* If length == 0, we do the whole file, and s = l = 0 will do that */
@@ -3097,7 +3131,7 @@ sys_fsync_range(l, v, retval)
 
 	if (error == 0 && bioops.io_fsync != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp);
+		(*bioops.io_fsync)(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
@@ -3603,12 +3637,12 @@ sys_extattrctl(struct lwp *l, void *v, register_t *retval)
 	error = VFS_EXTATTRCTL(mp, SCARG(uap, cmd), vp,
 	    SCARG(uap, attrnamespace),
 	    SCARG(uap, attrname) != NULL ? attrname : NULL, p);
-	
+
 	vn_finished_write(mp, 0);
 
 	if (vp != NULL)
 		vrele(vp);
-	
+
 	return (error);
 }
 
@@ -3677,7 +3711,7 @@ sys_extattr_set_fd(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
@@ -3709,12 +3743,12 @@ sys_extattr_set_file(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_set_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 
@@ -3741,12 +3775,12 @@ sys_extattr_set_link(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_set_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 
@@ -3795,10 +3829,10 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		cnt = nbytes;
 	} else
 		sizep = &size;
-	
+
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, auiop, sizep,
 	    p->p_ucred, p);
-	
+
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
@@ -3830,7 +3864,7 @@ sys_extattr_get_fd(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
@@ -3862,12 +3896,12 @@ sys_extattr_get_file(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_get_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 
@@ -3894,12 +3928,12 @@ sys_extattr_get_link(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_get_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 
@@ -3927,7 +3961,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	if (error == EOPNOTSUPP)
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
 		    p->p_ucred, p);
-	
+
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
 	return (error);
@@ -3951,7 +3985,7 @@ sys_extattr_delete_fd(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
@@ -3980,12 +4014,12 @@ sys_extattr_delete_file(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_delete_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    p);
 
@@ -4010,12 +4044,12 @@ sys_extattr_delete_link(struct lwp *l, void *v, register_t *retval)
 	    NULL);
 	if (error)
 		return (error);
-	
+
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_delete_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
 	    p);
 
@@ -4059,16 +4093,16 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		cnt = nbytes;
 	} else
 		sizep = &size;
-	
+
 	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep,
 	    p->p_ucred, p);
-	
+
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
 	} else
 		retval[0] = size;
-	
+
  done:
 	VOP_UNLOCK(vp, 0);
 	return (error);
@@ -4117,7 +4151,7 @@ sys_extattr_list_file(struct lwp *l, void *v, register_t *retval)
 	error = namei(&nd);
 	if (error)
 		return (error);
-	
+
 	error = extattr_list_vp(nd.ni_vp, SCARG(uap, attrnamespace),
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 

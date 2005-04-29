@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.7.14.1 2005/04/29 11:29:04 kent Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7.14.1 2005/04/29 11:29:04 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,8 +62,8 @@ struct lpt_ofisa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int lpt_ofisa_probe __P((struct device *, struct cfdata *, void *));
-void lpt_ofisa_attach __P((struct device *, struct device *, void *));
+int lpt_ofisa_probe(struct device *, struct cfdata *, void *);
+void lpt_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_ofisa, sizeof(struct lpt_ofisa_softc),
     lpt_ofisa_probe, lpt_ofisa_attach, NULL, NULL);
@@ -140,7 +140,7 @@ lpt_ofisa_attach(parent, self, aux)
 
 	printf("\n");
 
-	lpt_attach_subr(sc);	
+	lpt_attach_subr(sc);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);

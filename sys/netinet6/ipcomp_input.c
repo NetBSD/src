@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.22 2004/02/11 10:47:29 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.22.8.1 2005/04/29 11:29:34 kent Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.22 2004/02/11 10:47:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.22.8.1 2005/04/29 11:29:34 kent Exp $");
 
 #include "opt_inet.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.22 2004/02/11 10:47:29 itojun Exp
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/in_proto.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ecn.h>
@@ -136,7 +137,8 @@ ipcomp4_input(m, va_alist)
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
-			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi));
+			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi), 
+			0, 0);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||
 		     sav->state == SADB_SASTATE_DYING)) {
@@ -280,7 +282,8 @@ ipcomp6_input(mp, offp, proto)
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
-			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, htonl(cpi));
+			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, 
+			htonl(cpi), 0, 0);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||
 		     sav->state == SADB_SASTATE_DYING)) {

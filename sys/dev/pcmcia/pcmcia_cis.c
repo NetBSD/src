@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.37 2004/10/15 21:25:04 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.37.4.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.37 2004/10/15 21:25:04 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.37.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@ struct cis_state {
 	struct pcmcia_function *pf;
 };
 
-int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
-static int decode_funce __P((struct pcmcia_tuple *, struct pcmcia_function *));
-static void create_pf __P((struct cis_state *));
+int	pcmcia_parse_cis_tuple(struct pcmcia_tuple *, void *);
+static int decode_funce(struct pcmcia_tuple *, struct pcmcia_function *);
+static void create_pf(struct cis_state *);
 
 
 static void
@@ -124,7 +124,7 @@ pcmcia_read_cis(sc)
 int
 pcmcia_scan_cis(dev, fct, arg)
 	struct device *dev;
-	int (*fct) __P((struct pcmcia_tuple *, void *));
+	int (*fct)(struct pcmcia_tuple *, void *);
 	void *arg;
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
@@ -709,7 +709,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	switch (tuple->code) {
 	case PCMCIA_CISTPL_END:
 		/* if we've seen a LONGLINK_MFC, and this is the first
-		 * END after it, reset the function list.  
+		 * END after it, reset the function list.
 		 *
 		 * XXX This might also be the right place to start a
 		 * new function, but that assumes that a function

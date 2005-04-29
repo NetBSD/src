@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.4 2003/04/08 23:46:04 thorpej Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.4.10.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -55,8 +55,8 @@ struct gfe_dmamem {
 
 /* With a 4096 page size, we get 256 descriptors per page.
  */
-#define	GE_TXMEM_SIZE			(1 * PAGE_SIZE)
-#define	GE_TXDESC_MAX			(GE_TXMEM_SIZE / 16)
+#define	GE_TXDESC_MEMSIZE		(1 * PAGE_SIZE)
+#define	GE_TXDESC_MAX			(GE_TXDESC_MEMSIZE / 16)
 #define	GE_TXBUF_SIZE			(4 * PAGE_SIZE)
 
 struct gfe_txqueue {
@@ -121,7 +121,7 @@ struct gfe_softc {
 	mii_data_t sc_mii;		/* mii interface */
 
 	/*
-	 * 
+	 *
 	 */
 	bus_space_tag_t sc_gt_memt;
 	bus_space_handle_t sc_gt_memh;
@@ -136,6 +136,7 @@ struct gfe_softc {
 #define	GE_ALLMULTI	0x0001
 #define	GE_PHYSTSCHG	0x0002
 #define	GE_RXACTIVE	0x0004
+#define	GE_NOFREE	0x0008		/* Don't free on disable */
 	uint32_t sc_pcr;		/* current EPCR value */
 	uint32_t sc_pcxr;		/* current EPCXR value */
 	uint32_t sc_intrmask;		/* current EIMR value */
@@ -152,10 +153,10 @@ struct gfe_softc {
 	/*
 	 * Transmit related members
 	 */
-	struct gfe_txqueue *sc_txq[2];	/* High & Low transmit queues */
+	struct gfe_txqueue sc_txq[2];	/* High & Low transmit queues */
 
 	/*
 	 * Receive related members
 	 */
-	struct gfe_rxqueue *sc_rxq[4];	/* Hi/MedHi/MedLo/Lo receive queues */
+	struct gfe_rxqueue sc_rxq[4];	/* Hi/MedHi/MedLo/Lo receive queues */
 };

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.53 2004/07/15 03:53:51 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.53.4.1 2005/04/29 11:28:19 kent Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -56,6 +56,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 
 # Networking options
@@ -140,6 +141,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
+#pseudo-device	fss		 4	# file system snapshot device
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 1	# only 1 framebuffer supported

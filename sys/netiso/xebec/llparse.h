@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.h,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: llparse.h,v 1.5.30.1 2005/04/29 11:29:36 kent Exp $	*/
 
 	/************************************************************
 		attributes stack garbage
@@ -41,7 +41,7 @@
 	extern	struct	lltoken {
 		short		llterm;		/* token number */
 		short		llstate;	/* inserted deleted normal */
-		LLattrib	llattrib; 
+		LLattrib	llattrib;
 	} 	lltoken;
 	typedef	struct lltoken	LLtoken;
 

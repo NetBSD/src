@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.25 2002/10/02 16:34:01 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.25.14.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.25 2002/10/02 16:34:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.25.14.1 2005/04/29 11:28:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.25 2002/10/02 16:34:01 thorpej Ex
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
-int ep_isapnp_match __P((struct device *, struct cfdata *, void *));
-void ep_isapnp_attach __P((struct device *, struct device *, void *));
+int ep_isapnp_match(struct device *, struct cfdata *, void *);
+void ep_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ep_isapnp, sizeof(struct ep_softc),
     ep_isapnp_match, ep_isapnp_attach, NULL, NULL);

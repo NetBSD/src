@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.6 2002/10/02 16:34:12 thorpej Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.6.14.1 2005/04/29 11:28:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.6 2002/10/02 16:34:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.6.14.1 2005/04/29 11:28:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,8 @@ struct ne_mca_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-int	ne_mca_match __P((struct device *, struct cfdata *, void *));
-void	ne_mca_attach __P((struct device *, struct device *, void *));
+int	ne_mca_match(struct device *, struct cfdata *, void *);
+void	ne_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ne_mca, sizeof(struct ne_mca_softc),
     ne_mca_match, ne_mca_attach, NULL, NULL);
@@ -99,14 +99,14 @@ static const struct ne_mca_products {
 	{ 0, NULL }
 };
 
-static const struct ne_mca_products *ne_mca_lookup __P((int id));
+static const struct ne_mca_products *ne_mca_lookup(int id);
 
 static const struct ne_mca_products *
 ne_mca_lookup(int id)
 {
 	const struct ne_mca_products *np;
 
-	for(np = ne_mca_products; np->ne_name; np++) 
+	for(np = ne_mca_products; np->ne_name; np++)
 		if (id == np->ne_id)
 			return (np);
 
@@ -150,7 +150,7 @@ ne_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *   \_/ | \___/ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *    |  |     \____ I/O, Mem: 001=0x1000-0x102f 010=0x2020-0x204f
@@ -165,7 +165,7 @@ ne_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	iobase = ne_mca_iobase[(pos2 & 0x0e) >> 1];
 	irq = ne_mca_irq[(pos2 & 0x60) >> 5];
-	
+
 	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, np->ne_name);
 
 	nict = ma->ma_iot;

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.24 2004/11/10 17:54:05 christos Exp $
+#	$NetBSD: MMEYE,v 1.24.4.1 2005/04/29 11:28:16 kent Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,6 +39,8 @@ options 	USERCONF	# userconf(4) support
 
 # Compatibility options
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_16	# NetBSD 1.6,
+options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_43	# and 4.3BSD
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
@@ -53,6 +55,7 @@ file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	PROCFS		# /proc
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -95,6 +98,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback

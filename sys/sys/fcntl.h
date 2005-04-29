@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.28 2004/01/05 00:35:53 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.28.8.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -124,6 +124,7 @@
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
+#define	FKIOCTL		0x80000000	/* kernel originated ioctl */
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
 			 FRSYNC|FALTIO)
@@ -260,11 +261,11 @@ struct flock {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	open __P((const char *, int, ...));
-int	creat __P((const char *, mode_t));
-int	fcntl __P((int, int, ...));
+int	open(const char *, int, ...);
+int	creat(const char *, mode_t);
+int	fcntl(int, int, ...);
 #if defined(_NETBSD_SOURCE)
-int	flock __P((int, int));
+int	flock(int, int);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* !_KERNEL */

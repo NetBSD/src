@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.10.4.1 2005/04/29 11:28:49 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.10.4.1 2005/04/29 11:28:49 kent Exp $");
 
 #include "bpfilter.h"
 
@@ -403,7 +403,7 @@ sonic_start(struct ifnet *ifp)
 				totlen = ETHER_PAD_LEN;
 				seg++;
 			}
-				    
+
 			tda32->tda_status = 0;
 			tda32->tda_pktconfig = 0;
 			tda32->tda_pktsize = htosonic32(sc, totlen);
@@ -766,7 +766,7 @@ sonic_rxintr(struct sonic_softc *sc)
 		/*
 		 * The SONIC includes the CRC with every packet.
 		 */
-		len = bytecount;
+		len = bytecount - ETHER_CRC_LEN;
 
 		/*
 		 * Ok, if the chip is in 32-bit mode, then receive
@@ -835,7 +835,6 @@ sonic_rxintr(struct sonic_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1126,7 +1125,7 @@ sonic_add_rxbuf(struct sonic_softc *sc, int idx)
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
-	if (error) {    
+	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
 		panic("sonic_add_rxbuf");	/* XXX */

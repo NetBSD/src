@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.131 2005/01/03 16:33:33 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.131.2.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -100,7 +100,7 @@ struct vnode {
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
-	int		(**v_op) __P((void *));	/* vnode operations vector */
+	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
@@ -170,7 +170,7 @@ struct vnode {
 #define	VSIZENOTSET	((voff_t)-1)
 
 /*
- * Use a global lock for all v_numoutput updates.	
+ * Use a global lock for all v_numoutput updates.
  * Define a convenience macro to increment by one.
  * Note: the only place where v_numoutput is decremented is in vwakeup().
  */
@@ -185,13 +185,12 @@ extern struct simplelock global_v_numoutput_slock;
  * Valid states for the fingerprint flag - if signed exec is being used
  */
 #ifdef VERIFIED_EXEC
-#define FINGERPRINT_INVALID  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
 #define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
 #define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
                                    indirect execs allowed */
 #define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
 #define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
-#define FINGERPRINT_NODEV    5  /* fingerprint evaluated but no dev list */
 #endif
 
 /*
@@ -287,6 +286,7 @@ extern const int	vttoif_tab[];
 #define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+#define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
 
 #define	UPDATE_WAIT	0x0001		/* update: wait for completion */
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
@@ -681,7 +681,7 @@ int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
-int	vfinddev(dev_t, enum vtype, struct vnode **); 
+int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);

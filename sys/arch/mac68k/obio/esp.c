@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.37 2005/01/15 22:39:09 chs Exp $	*/
+/*	$NetBSD: esp.c,v 1.37.2.1 2005/04/29 11:28:15 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.37 2005/01/15 22:39:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.37.2.1 2005/04/29 11:28:15 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,16 +158,15 @@ struct ncr53c9x_glue esp_glue = {
 int
 espmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	int	found = 0;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 
-	if ((cf->cf_unit == 0) && mac68k_machine.scsi96) {
-		found = 1;
+	if (oa->oa_addr == 0 && mac68k_machine.scsi96) {
+		return 1;
 	}
-	if ((cf->cf_unit == 1) && mac68k_machine.scsi96_2) {
-		found = 1;
+	if (oa->oa_addr == 1 && mac68k_machine.scsi96_2) {
+		return 1;
 	}
-
-	return found;
+	return 0;
 }
 
 /*
@@ -197,7 +196,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	 * pseudo-DMA timing.  The default value is 0x1d1.
 	 */
 	esp_have_dreq = esp_dafb_have_dreq;
-	if (sc->sc_dev.dv_unit == 0) {
+	if (oa->oa_addr == 0) {
 		if (reg_offset == 0x10000) {
 			quick = 1;
 			esp_have_dreq = esp_iosb_have_dreq;
@@ -237,7 +236,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Save the regs
 	 */
-	if (sc->sc_dev.dv_unit == 0) {
+	if (oa->oa_addr == 0) {
 		esp0 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;

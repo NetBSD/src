@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.6 2003/02/17 11:35:01 simonb Exp $	*/
+/*	$NetBSD: cache.h,v 1.6.10.1 2005/04/29 11:28:15 kent Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -198,6 +198,8 @@ extern u_int mips_dcache_align_mask;
 
 extern u_int mips_cache_alias_mask;
 extern u_int mips_cache_prefer_mask;
+
+extern int mips_cache_virtual_alias;
 
 /*
  * XXX XXX XXX THIS SHOULD NOT EXIST XXX XXX XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.2 2004/02/08 13:15:42 sekiya Exp $	*/
+/*	$NetBSD: disk.h,v 1.2.8.1 2005/04/29 11:28:21 kent Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-int diskstrategy (void *, int, daddr_t, size_t, void *, size_t *);
-int diskopen (struct open_file *, ...);
-int diskclose (struct open_file *);
-int diskioctl (struct open_file *, u_long, void *);
+int diskstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int diskopen(struct open_file *, ...);
+int diskclose(struct open_file *);
+int diskioctl(struct open_file *, u_long, void *);

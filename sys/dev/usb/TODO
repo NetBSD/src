@@ -78,9 +78,6 @@ now doesn't work because it's done in an interrupt context.
 
 Factor out the common code from the Ethernet drivers and reuse that.
 
-Rewrite HID driver to handle report IDs properly.  Perhaps there should
-be a hiddev to which hid with different IDs can attach?
-
 Get rid of hcpriv.
 
 Keyspan serial driver

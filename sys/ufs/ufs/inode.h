@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.39 2004/08/14 14:32:04 mycroft Exp $	*/
+/*	$NetBSD: inode.h,v 1.39.4.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -129,6 +129,8 @@ struct inode {
 	u_int32_t i_uid;	/* File owner. */
 	u_int32_t i_gid;	/* File group. */
 
+	struct dirhash *i_dirhash;	/* Hashing for large directories */
+
 	/*
 	 * The on-disk dinode itself.
 	 */
@@ -208,7 +210,7 @@ struct inode {
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
 #define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */	
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
 #define	IN_RENAME	0x0020		/* Inode is being renamed. */

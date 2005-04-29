@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101var.h,v 1.5 1997/10/09 07:57:24 jtc Exp $ */
+/* $NetBSD: ics2101var.h,v 1.5.58.1 2005/04/29 11:28:54 kent Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *        This product includes software developed by the NetBSD
  *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -51,5 +51,5 @@ struct ics2101_softc {
 	u_char sc_mute[ICSMIX_CHAN_5+1][2];/* muted? */
 };
 
-void ics2101_mix_attenuate __P((struct ics2101_softc *, u_int, u_int, u_int));
-void ics2101_mix_mute __P((struct ics2101_softc *, u_int, u_int, u_int));
+void ics2101_mix_attenuate(struct ics2101_softc *, u_int, u_int, u_int);
+void ics2101_mix_mute(struct ics2101_softc *, u_int, u_int, u_int);

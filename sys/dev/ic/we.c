@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $	*/
+/*	$NetBSD: we.c,v 1.5.10.1 2005/04/29 11:28:53 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.5.10.1 2005/04/29 11:28:53 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,21 +90,21 @@ __KERNEL_RCSID(0, "$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $");
 #define	bus_space_write_region_stream_2	bus_space_write_region_2
 #endif
 
-static void	we_set_media __P((struct we_softc *, int));
+static void	we_set_media(struct we_softc *, int);
 
-static void	we_media_init __P((struct dp8390_softc *));
+static void	we_media_init(struct dp8390_softc *);
 
-static int	we_mediachange __P((struct dp8390_softc *));
-static void	we_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
+static int	we_mediachange(struct dp8390_softc *);
+static void	we_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
-static void	we_recv_int __P((struct dp8390_softc *));
-static void	we_init_card __P((struct dp8390_softc *));
-static int	we_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-static int	we_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-static void	we_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-static int	we_test_mem __P((struct dp8390_softc *));
+static void	we_recv_int(struct dp8390_softc *);
+static void	we_init_card(struct dp8390_softc *);
+static int	we_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+static int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+static void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+static int	we_test_mem(struct dp8390_softc *);
 
-static __inline void we_readmem __P((struct we_softc *, int, u_int8_t *, int));
+static __inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 /*
  * Delay needed when switching 16-bit access to shared memory.
@@ -115,27 +115,27 @@ static __inline void we_readmem __P((struct we_softc *, int, u_int8_t *, int));
  * Enable card RAM, and 16-bit access.
  */
 #define	WE_MEM_ENABLE(wsc) \
-do { \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto | WE_LAAR_M16EN); \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, wsc->sc_msr_proto | WE_MSR_MENB); \
-	WE_DELAY((wsc)); \
-} while (0)
+if (((wsc)->sc_flags & WE_16BIT_NOTOGGLE) == 0) {			\
+	if ((wsc)->sc_flags & WE_16BIT_ENABLE)				\
+		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich,	\
+		    WE_LAAR, (wsc)->sc_laar_proto | WE_LAAR_M16EN);	\
+	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich,		\
+	    WE_MSR, wsc->sc_msr_proto | WE_MSR_MENB);			\
+	WE_DELAY((wsc));						\
+}
 
 /*
  * Disable card RAM, and 16-bit access.
  */
 #define	WE_MEM_DISABLE(wsc) \
-do { \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, (wsc)->sc_msr_proto); \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto); \
-	WE_DELAY((wsc)); \
-} while (0)
+if (((wsc)->sc_flags & WE_16BIT_NOTOGGLE) == 0) {			\
+	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich,		\
+	    WE_MSR, (wsc)->sc_msr_proto);				\
+	if ((wsc)->sc_flags & WE_16BIT_ENABLE)				\
+		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich,	\
+		    WE_LAAR, (wsc)->sc_laar_proto);			\
+	WE_DELAY((wsc));						\
+}
 
 int
 we_config(self, wsc, typestr)
@@ -151,11 +151,11 @@ we_config(self, wsc, typestr)
 	 * Allow user to override 16-bit mode.  8-bit takes precedence.
 	 */
 	if (self->dv_cfdata->cf_flags & DP8390_FORCE_16BIT_MODE) {
-		wsc->sc_16bitp = 1;
+		wsc->sc_flags |= WE_16BIT_ENABLE;
 		forced_16bit = 1;
 	}
 	if (self->dv_cfdata->cf_flags & DP8390_FORCE_8BIT_MODE)
-		wsc->sc_16bitp = 0;
+		wsc->sc_flags &= ~WE_16BIT_ENABLE;
 
 	/* Registers are linear. */
 	for (i = 0; i < 16; i++)
@@ -164,7 +164,7 @@ we_config(self, wsc, typestr)
 	/* Now we can use the NIC_{GET,PUT}() macros. */
 
 	printf("%s: %s Ethernet (%s-bit)\n", sc->sc_dev.dv_xname,
-	    typestr, wsc->sc_16bitp ? "16" : "8");
+	    typestr, wsc->sc_flags & WE_16BIT_ENABLE ? "16" : "8");
 
 	/* Get station address from EEPROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -179,7 +179,7 @@ we_config(self, wsc, typestr)
 		    bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE_LAAR) &
 		    ~WE_LAAR_M16EN;
 		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE_LAAR,
-		    wsc->sc_laar_proto | (wsc->sc_16bitp ? WE_LAAR_M16EN : 0));
+		    wsc->sc_laar_proto | (wsc->sc_flags & WE_16BIT_ENABLE ? WE_LAAR_M16EN : 0));
 	} else if ((wsc->sc_type & WE_SOFTCONFIG) ||
 #ifdef TOSH_ETHER
 	    (wsc->sc_type == WE_TYPE_TOSHIBA1) ||
@@ -188,10 +188,10 @@ we_config(self, wsc, typestr)
 	    (forced_16bit) ||
 	    (wsc->sc_type == WE_TYPE_WD8013EBT)) {
 		wsc->sc_laar_proto = (wsc->sc_maddr >> 19) & WE_LAAR_ADDRHI;
-		if (wsc->sc_16bitp)
+		if (wsc->sc_flags & WE_16BIT_ENABLE)
 			wsc->sc_laar_proto |= WE_LAAR_L16EN;
 		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE_LAAR,
-		    wsc->sc_laar_proto | (wsc->sc_16bitp ? WE_LAAR_M16EN : 0));
+		    wsc->sc_laar_proto | (wsc->sc_flags & WE_16BIT_ENABLE ? WE_LAAR_M16EN : 0));
 	}
 
 	/*
@@ -240,7 +240,7 @@ we_config(self, wsc, typestr)
 	 * 16-bit cards also get word-wide DMA transfers.
 	 */
 	sc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
-	    (wsc->sc_16bitp ? ED_DCR_WTS : 0);
+	    (wsc->sc_flags & WE_16BIT_ENABLE ? ED_DCR_WTS : 0);
 
 	sc->test_mem = we_test_mem;
 	sc->ring_copy = we_ring_copy;
@@ -294,12 +294,12 @@ we_test_mem(sc)
 	bus_size_t memsize = sc->mem_size;
 	int i;
 
-	if (wsc->sc_16bitp)
+	if (wsc->sc_flags & WE_16BIT_ENABLE)
 		bus_space_set_region_2(memt, memh, 0, 0, memsize >> 1);
 	else
 		bus_space_set_region_1(memt, memh, 0, 0, memsize);
 
-	if (wsc->sc_16bitp) {
+	if (wsc->sc_flags & WE_16BIT_ENABLE) {
 		for (i = 0; i < memsize; i += 2) {
 			if (bus_space_read_2(memt, memh, i) != 0)
 				goto fail;
@@ -338,7 +338,7 @@ we_readmem(wsc, from, to, len)
 	if (len & 1)
 		++len;
 
-	if (wsc->sc_16bitp)
+	if (wsc->sc_flags & WE_16BIT_ENABLE)
 		bus_space_read_region_stream_2(memt, memh, from,
 		    (u_int16_t *)to, len >> 1);
 	else
@@ -368,7 +368,7 @@ we_write_mbuf(sc, m, buf)
 	/*
 	 * 8-bit boards are simple; no alignment tricks are necessary.
 	 */
-	if (wsc->sc_16bitp == 0) {
+	if ((wsc->sc_flags & WE_16BIT_ENABLE) == 0) {
 		for (; m != NULL; buf += m->m_len, m = m->m_next)
 			bus_space_write_region_1(memt, memh,
 			    buf, mtod(m, u_int8_t *), m->m_len);

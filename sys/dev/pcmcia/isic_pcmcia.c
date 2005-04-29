@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25 2004/08/10 18:43:49 mycroft Exp
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
-static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
-static const struct isic_pcmcia_card_entry * find_matching_card __P((struct pcmcia_attach_args *pa));
-static int isic_pcmcia_isdn_attach __P((struct isic_softc *sc, const char*));
+static int isic_pcmcia_match(struct device *, struct cfdata *, void *);
+static void isic_pcmcia_attach(struct device *, struct device *, void *);
+static const struct isic_pcmcia_card_entry * find_matching_card(struct pcmcia_attach_args *pa);
+static int isic_pcmcia_isdn_attach(struct isic_softc *sc, const char*);
 static int isic_pcmcia_detach(struct device *self, int flags);
 static int isic_pcmcia_activate(struct device *self, enum devact act);
 
@@ -284,7 +284,7 @@ isic_pcmcia_activate(self, act)
 	splx(s);
 	return (error);
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	card independend attach for pcmicia cards
  *---------------------------------------------------------------------------*/
@@ -361,7 +361,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	/* HSCX setup */
 
 	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
-	
+
 	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
@@ -392,7 +392,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 #endif
 
 	/* announce chip versions */
-	
+
 	if(sc->sc_isac_version >= ISAC_UNKN)
 	{
 		printf(ISIC_FMT "ISAC Version UNKNOWN (VN=0x%x)" TERMFMT,

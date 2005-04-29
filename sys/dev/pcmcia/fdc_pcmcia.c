@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.14 2004/08/10 19:54:30 mycroft Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.14.4.1 2005/04/29 11:29:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.14 2004/08/10 19:54:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.14.4.1 2005/04/29 11:29:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ struct fdc_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-int fdc_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int fdc_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void fdc_pcmcia_attach __P((struct device *, struct device *, void *));
-static void fdc_conf __P((struct fdc_softc *));
+int fdc_pcmcia_match(struct device *, struct cfdata *, void *);
+int fdc_pcmcia_validate_config(struct pcmcia_config_entry *);
+void fdc_pcmcia_attach(struct device *, struct device *, void *);
+static void fdc_conf(struct fdc_softc *);
 
 CFATTACH_DECL(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
     fdc_pcmcia_match, fdc_pcmcia_attach, NULL, NULL);
@@ -88,7 +88,7 @@ fdc_conf(fdc)
 	int n;
 
 	/* Figure out what we have */
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_VERSION) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_VERSION) == -1 ||
 	    (n = fdcresult(fdc, 1)) != 1)
 		return;
 
@@ -98,7 +98,7 @@ fdc_conf(fdc)
 
 #if 0
 	/* ns8477 check */
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_NSC) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_NSC) == -1 ||
 	    (n = fdcresult(fdc, 1)) != 1) {
 		printf("NSC command failed\n");
 		return;
@@ -107,7 +107,7 @@ fdc_conf(fdc)
 		printf("Version %x\n", fdc->sc_status[0]);
 #endif
 
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_DUMPREG) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_DUMPREG) == -1 ||
 	    (n = fdcresult(fdc, -1)) == -1)
 		return;
 

@@ -1,9 +1,9 @@
-/*      $NetBSD: adwmcode.h,v 1.8 2003/02/21 17:14:06 tsutsui Exp $        */
+/*      $NetBSD: adwmcode.h,v 1.8.10.1 2005/04/29 11:28:48 kent Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
- * 
+ *
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ struct adw_mcode {
 
 /******************************************************************************/
 
-ADW_CARRIER *AdwInitCarriers __P((bus_dmamap_t, ADW_CARRIER *));
+ADW_CARRIER *AdwInitCarriers(bus_dmamap_t, ADW_CARRIER *);
 
 extern const struct adw_mcode adw_asc3550_mcode_data;
 extern const struct adw_mcode adw_asc38C0800_mcode_data;

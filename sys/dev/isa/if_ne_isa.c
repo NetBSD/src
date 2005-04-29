@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.18 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.18.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18 2004/09/14 20:20:48 drochner Exp 
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/rtl80x9reg.h>
-#include <dev/ic/rtl80x9var.h>          
+#include <dev/ic/rtl80x9var.h>
 
 #include <dev/isa/isavar.h>
 
-int	ne_isa_match __P((struct device *, struct cfdata *, void *));
-void	ne_isa_attach __P((struct device *, struct device *, void *));
+int	ne_isa_match(struct device *, struct cfdata *, void *);
+void	ne_isa_attach(struct device *, struct device *, void *);
 
 struct ne_isa_softc {
 	struct	ne2000_softc sc_ne2000;		/* real "ne2000" softc */

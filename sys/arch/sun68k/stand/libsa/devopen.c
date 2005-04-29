@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2001/06/14 12:57:14 fredette Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.32.1 2005/04/29 11:28:27 kent Exp $	*/
 
 
 #include <sys/types.h>
@@ -17,11 +17,8 @@
  * do not accept a "device" part in the "fname" string.
  * Pass the PROM device name to open in case it needs it.
  */
-int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+int 
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct devsw *dp;
 	int error;

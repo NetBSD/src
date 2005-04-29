@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.8 2004/03/24 16:21:06 drochner Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.8.8.1 2005/04/29 11:29:26 kent Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -107,8 +107,10 @@ fn_match(const char *fname, const char *pattern)
 
 	if (pc != '*')
 		return 0;
-	/* Too hard (and unnecessary really) too check for "*?name" etc....
-	   "**" will look for a '*' and "*?" a '?' */
+	/*
+	 * Too hard (and unnecessary really) too check for "*?name" etc....
+	 * "**" will look for a '*' and "*?" a '?'
+	 */
 	pc = *pattern++;
 	if (!pc)
 		return 1;
@@ -118,7 +120,7 @@ fn_match(const char *fname, const char *pattern)
 	return 0;
 }
 
-void 
+void
 ufs_ls(const char *path)
 {
 	int             fd;

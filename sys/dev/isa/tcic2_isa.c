@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.11 2004/09/14 20:20:49 drochner Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.11.4.1 2005/04/29 11:28:55 kent Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.11 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.11.4.1 2005/04/29 11:28:55 kent Exp $");
 
 #undef	TCICISADEBUG
 
@@ -110,12 +110,12 @@ int	tcic_isa_debug = 1;
 #define	DPRINTF(arg)
 #endif
 
-int	tcic_isa_probe __P((struct device *, struct cfdata *, void *));
-void	tcic_isa_attach __P((struct device *, struct device *, void *));
+int	tcic_isa_probe(struct device *, struct cfdata *, void *);
+void	tcic_isa_attach(struct device *, struct device *, void *);
 
-void	*tcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
-void	tcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
+void	*tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *);
+void	tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 
 CFATTACH_DECL(tcic_isa, sizeof(struct tcic_softc),
     tcic_isa_probe, tcic_isa_attach, NULL, NULL);
@@ -294,7 +294,7 @@ tcic_isa_attach(parent, self, aux)
 	 * apparently missing a bit or more of address lines. (e.g.
 	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
 	 * TravelMate 5000--not clear which is at fault)
-	 * 
+	 *
 	 * Add a kludge to detect 10 bit wide buses and deal with them,
 	 * and also a config file option to override the probe.
 	 */
@@ -343,7 +343,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*fct) __P((void *));
+	int (*fct)(void *);
 	void *arg;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
@@ -376,7 +376,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	return (ih);
 }
 
-void 
+void
 tcic_isa_chip_intr_disestablish(pch, ih)
 	pcmcia_chipset_handle_t pch;
 	void *ih;

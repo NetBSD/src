@@ -1,0 +1,10 @@
+#	$NetBSD: SMDK2800_INSTALL,v 1.1.8.2 2005/04/29 11:28:07 kent Exp $
+#
+#	SMDK2800_INSTALL -- SMDK2800 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/SMDK2800"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

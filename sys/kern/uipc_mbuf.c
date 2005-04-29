@@ -346,14 +346,14 @@ mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, NULL, waitok));
+	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
 
 void
 mclpool_release(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+	uvm_km_free_poolpage(mb_map, (vaddr_t)v);
 }
 
 /*ARGSUSED*/
@@ -378,14 +378,16 @@ m_reclaim(void *arg, int flags)
 	struct ifnet *ifp;
 	int s = splvm();
 
-	for (dp = domains; dp; dp = dp->dom_next)
+	DOMAIN_FOREACH(dp) {
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	}
+	IFNET_FOREACH(ifp) {
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
+	}
 	splx(s);
 	mbstat.m_drain++;
 }

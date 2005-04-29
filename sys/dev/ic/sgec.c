@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.23 2004/10/30 18:08:40 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.23.4.1 2005/04/29 11:28:52 kent Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -31,7 +31,7 @@
 
 /*
  * Driver for the SGEC (Second Generation Ethernet Controller), sitting
- * on for example the VAX 4000/300 (KA670). 
+ * on for example the VAX 4000/300 (KA670).
  *
  * The SGEC looks like a mixture of the DEQNA and the TULIP. Fun toy.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.23 2004/10/30 18:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.23.4.1 2005/04/29 11:28:52 kent Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -76,13 +76,13 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.23 2004/10/30 18:08:40 thorpej Exp $");
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
 
-static	void	zeinit __P((struct ze_softc *));
-static	void	zestart __P((struct ifnet *));
-static	int	zeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	ze_add_rxbuf __P((struct ze_softc *, int));
-static	void	ze_setup __P((struct ze_softc *));
-static	void	zetimeout __P((struct ifnet *));
-static	int	zereset __P((struct ze_softc *));
+static	void	zeinit(struct ze_softc *);
+static	void	zestart(struct ifnet *);
+static	int	zeioctl(struct ifnet *, u_long, caddr_t);
+static	int	ze_add_rxbuf(struct ze_softc *, int);
+static	void	ze_setup(struct ze_softc *);
+static	void	zetimeout(struct ifnet *);
+static	int	zereset(struct ze_softc *);
 
 #define	ZE_WCSR(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)
@@ -346,7 +346,7 @@ zestart(ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
-		
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -416,7 +416,7 @@ sgec_intr(sc)
 		return 0;
 	ZE_WCSR(ZE_CSR5, csr);
 
-	if (csr & ZE_NICSR5_RI)
+	if (csr & ZE_NICSR5_RI) {
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
@@ -424,17 +424,23 @@ sgec_intr(sc)
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = len;
-			m->m_flags |= M_HASFCS;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
+			if (len < ETHER_MIN_LEN) {
+				ifp->if_ierrors++;
+				m_freem(m);
+			} else {
+				m->m_pkthdr.rcvif = ifp;
+				m->m_pkthdr.len = m->m_len =
+				    len - ETHER_CRC_LEN;
 #if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m);
 #endif
-			(*ifp->if_input)(ifp, m);
+				(*ifp->if_input)(ifp, m);
+			}
 		}
+	}
 
 	if (csr & ZE_NICSR5_TI) {
 		while ((zc->zc_xmit[sc->sc_lastack].ze_tdr & ZE_TDR_OW) == 0) {
@@ -624,7 +630,7 @@ ze_setup(sc)
 	memcpy(zc->zc_setup, enaddr, ETHER_ADDR_LEN);
 
 	/*
-	 * Multicast handling. The SGEC can handle up to 16 direct 
+	 * Multicast handling. The SGEC can handle up to 16 direct
 	 * ethernet addresses.
 	 */
 	j = 16;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.48.2.1 2005/04/29 11:28:15 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.48.2.1 2005/04/29 11:28:15 kent Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -199,18 +199,20 @@ uint32_t
 gc_read_irq()
 {
 	uint32_t rv = 0;
+	uint32_t int_state;
 	uint32_t events, e;
 	uint32_t levels;
 
 	/* Get the internal interrupts */
-	events = in32rb(INT_STATE_REG_L) & ~intr_level_mask;
+	int_state = in32rb(INT_STATE_REG_L);
+	events = int_state & ~intr_level_mask;
 
 	/* Get the enabled external interrupts */
 	levels = in32rb(INT_LEVEL_REG_L) & in32rb(INT_ENABLE_REG_L);
 	events = events | (levels & intr_level_mask);
 
-	/* Clear any interrupts that we've read (and all external ints) */
-	out32rb(INT_CLEAR_REG_L, events | intr_level_mask);
+	/* Clear any interrupts that we've read */
+	out32rb(INT_CLEAR_REG_L, events | int_state);
 	while (events) {
 		e = 31 - cntlzw(events);
 		rv |= 1 << virq[e];
@@ -224,14 +226,14 @@ gc_read_irq()
 		if (events)
 			out32rb(INT_CLEAR_REG_H, events);
 
-			while (events) {
-				e = 31 - cntlzw(events);
-				rv |= 1 << virq[e + 32];
-				events &= ~(1 << e);
-			}
+		while (events) {
+			e = 31 - cntlzw(events);
+			rv |= 1 << virq[e + 32];
+			events &= ~(1 << e);
 		}
+	}
 
-	/* 1 << 0 is invalid. */
+	/* 1 << 0 is invalid because virq will always be at least 1. */
 	return rv & ~1;
 }
 
@@ -677,6 +679,13 @@ ext_intr()
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			ih = is->is_hand;
 			while (ih) {
+#ifdef DIAGNOSTIC
+				if (!ih->ih_fun) {
+					printf("NULL interrupt handler!\n");
+					panic("irq %02d, hwirq %02d, is %p\n",
+						irq, is->is_hwirq, is);
+				}
+#endif
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
 			}
@@ -820,6 +829,13 @@ again:
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = is->is_hand;
 		while (ih) {
+#ifdef DIAGNOSTIC
+			if (!ih->ih_fun) {
+				printf("NULL interrupt handler!\n");
+				panic("irq %02d, hwirq %02d, is %p\n",
+					irq, is->is_hwirq, is);
+			}
+#endif
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
@@ -947,9 +963,12 @@ void
 softintr(ipl)
 	int ipl;
 {
+	int msrsave;
 
-	atomic_setbits_ulong((volatile unsigned long *) &curcpu()->ci_ipending,
-			     1 << ipl);
+	msrsave = mfmsr();
+	mtmsr(msrsave & ~PSL_EE);
+	curcpu()->ci_ipending |= 1 << ipl;
+	mtmsr(msrsave);
 }
 
 void

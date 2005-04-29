@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_scanner.h,v 1.8 2004/12/07 23:07:31 thorpej Exp $	*/
+/*	$NetBSD: scsi_scanner.h,v 1.8.2.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.

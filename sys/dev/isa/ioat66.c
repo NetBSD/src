@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.9 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.9.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.9 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.9.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ struct ioat66_softc {
 int ioatbases[NSLAVES]={0x220,0x228,0x240,0x248,0x260,0x268};
 #define IOAT66SHARED 0x208
 
-int ioat66probe __P((struct device *, struct cfdata *, void *));
-void ioat66attach __P((struct device *, struct device *, void *));
-int ioat66intr __P((void *));
+int ioat66probe(struct device *, struct cfdata *, void *);
+void ioat66attach(struct device *, struct device *, void *);
+int ioat66intr(void *);
 
 CFATTACH_DECL(ioat, sizeof(struct ioat_softc),
     ioat66probe, ioat66attach, NULL, NULL);
@@ -159,7 +159,7 @@ ioat66attach(parent, self, aux)
 	}
 
 	if(bus_space_map(iot, IOAT66SHARED, 1, 0, &sc->sc_intmasq)) {
-	  printf("%s: can't map shared interrupt mask\n", 
+	  printf("%s: can't map shared interrupt mask\n",
 	 	 sc->sc_dev.dv_xname);
 	  return;
 	}

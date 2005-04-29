@@ -1,4 +1,4 @@
-/*	$NetBSD: audiomix.c,v 1.1.2.2 2005/04/10 12:14:06 kent Exp $	*/
+/*	$NetBSD: audiomix.c,v 1.1.2.3 2005/04/29 11:28:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audiomix.c,v 1.1.2.2 2005/04/10 12:14:06 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiomix.c,v 1.1.2.3 2005/04/29 11:28:44 kent Exp $");
 
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ audiomix_mix32be(const audio_stream_t *dst, int max_used, audio_stream_t *src)
 #else
 		sum = a + b;
 #endif	/* AUDIOMIX_SATURATION */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 		*(int32_t*)w = sum;
 #else
 		w[0] = sum >> 24;

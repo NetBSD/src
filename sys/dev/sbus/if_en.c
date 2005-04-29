@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.18.14.1 2005/04/29 11:29:16 kent Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 /*
  *
- * i f _ e n _ s b u s . c  
+ * i f _ e n _ s b u s . c
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  * started: spring, 1996.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18.14.1 2005/04/29 11:29:16 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ struct en_sbus_softc {
 /*
  * prototypes
  */
-static	int en_sbus_match __P((struct device *, struct cfdata *, void *));
-static	void en_sbus_attach __P((struct device *, struct device *, void *));
+static	int en_sbus_match(struct device *, struct cfdata *, void *);
+static	void en_sbus_attach(struct device *, struct device *, void *);
 
 /*
  * SBus autoconfig attachments

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.160 2005/01/11 00:19:36 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.160.2.1 2005/04/29 11:29:39 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.160 2005/01/11 00:19:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.160.2.1 2005/04/29 11:29:39 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,6 +111,7 @@ struct vfsops ffs_vfsops = {
 	vfs_stdextattrctl,
 	ffs_vnodeopv_descs,
 };
+VFS_ATTACH(ffs_vfsops);
 
 struct genfs_ops ffs_genfsops = {
 	ffs_gop_size,
@@ -526,7 +527,7 @@ ffs_reload(mp, cred, p)
 	} else
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
-	if ((newfs->fs_magic != FS_UFS1_MAGIC &&	
+	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
 	     newfs->fs_magic != FS_UFS2_MAGIC)||
 	     newfs->fs_bsize > MAXBSIZE ||
 	     newfs->fs_bsize < sizeof(struct fs)) {
@@ -536,7 +537,7 @@ ffs_reload(mp, cred, p)
 	}
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
 	sblockloc = fs->fs_sblockloc;
-	/* 
+	/*
 	 * Copy pointer fields back into superblock before copying in	XXX
 	 * new superblock. These should really be in the ufsmount.	XXX
 	 * Note that important parameters (eg fs_ncg) are unchanged.
@@ -916,7 +917,7 @@ ffs_mountfs(devvp, mp, p)
 		else
 #endif
 			memcpy(space, bp->b_data, (u_int)size);
-			
+
 		space = (char *)space + size;
 		brelse(bp);
 		bp = NULL;
@@ -1048,7 +1049,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	fs->fs_csaddr = fs->fs_old_csaddr;
 	fs->fs_sblockloc = sblockloc;
 
-	fs->fs_flags = fs->fs_old_flags;
+        fs->fs_flags = fs->fs_old_flags | (fs->fs_flags & FS_INTERNAL);
 
 	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
 		fs->fs_old_nrpos = 8;
@@ -1569,7 +1570,7 @@ ffs_init()
 #ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "ffsinopl", &pool_allocator_nointr);
-	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, 
+	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
 		  "dino1pl", &pool_allocator_nointr);
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr);
@@ -1667,7 +1668,7 @@ ffs_sbupdate(mp, waitfor)
 	    (int)fs->fs_sbsize, 0, 0);
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
-	
+
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.91 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: nd6.c,v 1.91.4.1 2005/04/29 11:29:34 kent Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.91 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.91.4.1 2005/04/29 11:29:34 kent Exp $");
 
 #include "opt_ipsec.h"
 
@@ -636,6 +636,13 @@ nd6_purge(ifp)
 	for (pr = nd_prefix.lh_first; pr; pr = npr) {
 		npr = pr->ndpr_next;
 		if (pr->ndpr_ifp == ifp) {
+			/*
+			 * Because if_detach() does *not* release prefixes
+			 * while purging addresses the reference count will
+			 * still be above zero. We therefore reset it to
+			 * make sure that the prefix really gets purged.
+			 */
+			pr->ndpr_refcnt = 0;
 			/*
 			 * Previously, pr->ndpr_addr is removed as well,
 			 * but I strongly believe we don't have to do it.

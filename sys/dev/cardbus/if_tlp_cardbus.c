@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.43 2004/08/02 19:31:52 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.43.4.1 2005/04/29 11:28:46 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,15 +43,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.43 2004/08/02 19:31:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.43.4.1 2005/04/29 11:28:46 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -60,18 +60,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.43 2004/08/02 19:31:52 mycroft 
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 
@@ -124,9 +124,9 @@ struct tulip_cardbus_softc {
 	int	sc_intrline;		/* interrupt line */
 };
 
-int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
-void	tlp_cardbus_attach __P((struct device *, struct device *, void *));
-int	tlp_cardbus_detach __P((struct device *, int));
+int	tlp_cardbus_match(struct device *, struct cfdata *, void *);
+void	tlp_cardbus_attach(struct device *, struct device *, void *);
+int	tlp_cardbus_detach(struct device *, int);
 
 CFATTACH_DECL(tlp_cardbus, sizeof(struct tulip_cardbus_softc),
     tlp_cardbus_match, tlp_cardbus_attach, tlp_cardbus_detach, tlp_activate);
@@ -171,31 +171,31 @@ const struct tulip_cardbus_product {
 };
 
 struct tlp_cardbus_quirks {
-	void		(*tpq_func) __P((struct tulip_cardbus_softc *,
-			    const u_int8_t *));
+	void		(*tpq_func)(struct tulip_cardbus_softc *,
+			    const u_int8_t *);
 	u_int8_t	tpq_oui[3];
 };
 
-void	tlp_cardbus_lxt_quirks __P((struct tulip_cardbus_softc *,
-	    const u_int8_t *));
+void	tlp_cardbus_lxt_quirks(struct tulip_cardbus_softc *,
+	    const u_int8_t *);
 
 const struct tlp_cardbus_quirks tlp_cardbus_21142_quirks[] = {
 	{ tlp_cardbus_lxt_quirks,	{ 0x00, 0x40, 0x05 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
-void	tlp_cardbus_setup __P((struct tulip_cardbus_softc *));
+void	tlp_cardbus_setup(struct tulip_cardbus_softc *);
 
-int	tlp_cardbus_enable __P((struct tulip_softc *));
-void	tlp_cardbus_disable __P((struct tulip_softc *));
-void	tlp_cardbus_power __P((struct tulip_softc *, int));
+int	tlp_cardbus_enable(struct tulip_softc *);
+void	tlp_cardbus_disable(struct tulip_softc *);
+void	tlp_cardbus_power(struct tulip_softc *, int);
 
-void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
+void	tlp_cardbus_x3201_reset(struct tulip_softc *);
 
 const struct tulip_cardbus_product *tlp_cardbus_lookup
-    __P((const struct cardbus_attach_args *));
-void tlp_cardbus_get_quirks __P((struct tulip_cardbus_softc *,
-    const u_int8_t *, const struct tlp_cardbus_quirks *));
+   (const struct cardbus_attach_args *);
+void tlp_cardbus_get_quirks(struct tulip_cardbus_softc *,
+    const u_int8_t *, const struct tlp_cardbus_quirks *);
 
 const struct tulip_cardbus_product *
 tlp_cardbus_lookup(ca)

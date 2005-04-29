@@ -1,19 +1,19 @@
-/*	$NetBSD: mc146818reg.h,v 1.5 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mc146818reg.h,v 1.5.8.1 2005/04/29 11:28:51 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -152,8 +152,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int mc146818_read __P((void *, u_int));
-void mc146818_write __P((void *, u_int, u_int));
+u_int mc146818_read(void *, u_int);
+void mc146818_write(void *, u_int, u_int);
 
 /*
  * A collection of TOD/Alarm registers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.6.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -21,7 +21,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -63,26 +63,26 @@ __KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6 2004/09/14 20:20:48 drochner Ex
 
 #include <dev/ic/elink3reg.h>
 
-u_int16_t	tcmreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
+u_int16_t	tcmreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
 #ifdef TRTCMISADEBUG
-void	tcmdumpeeprom __P((bus_space_tag_t, bus_space_handle_t));
+void	tcmdumpeeprom(bus_space_tag_t, bus_space_handle_t);
 #endif
 
-int	trtcm_isa_probe __P((struct device *, struct cfdata *, void *));
+int	trtcm_isa_probe(struct device *, struct cfdata *, void *);
 
-int	trtcm_isa_mediachange __P((struct tr_softc *));
-void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
+int	trtcm_isa_mediachange(struct tr_softc *);
+void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
 
 /*
  * TODO:
- * 
+ *
  * if_media handling in the 3com case
  * mediachange() and mediastatus() function
  * certain newer cards can set their speed on the fly via
  * DIR_SET_DEFAULT_RING_SPEED or set the speed in the eeprom ??
  */
 
-static	void tcmaddcard __P((int, int, int, int, u_int, int, int));
+static	void tcmaddcard(int, int, int, int, u_int, int, int);
 
 /*
  * This keeps track of which ISAs have been through a 3com probe sequence.

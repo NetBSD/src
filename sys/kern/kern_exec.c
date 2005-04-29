@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.191 2004/10/01 16:30:52 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.191.4.1 2005/04/29 11:29:23 kent Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191.4.1 2005/04/29 11:29:23 kent Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -63,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191 2004/10/01 16:30:52 yamt Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -176,6 +179,8 @@ const struct emul emul_netbsd = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 #ifdef LKM
@@ -265,7 +270,8 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 #ifdef VERIFIED_EXEC
         /* Evaluate signature for file... */
-        if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
+        if ((error = veriexec_verify(p, vp, epp->ep_vap,
+				     epp->ep_name, direct_exec)) != 0)
                 goto bad2;
 #endif
 
@@ -442,7 +448,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
+	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
 #ifdef DIAGNOSTIC
 	if (argp == (vaddr_t) 0)
 		panic("execve: argp == NULL");
@@ -762,7 +769,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	doexechooks(p);
 
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 
@@ -784,7 +791,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	free(pack.ep_hdr, M_EXEC);
 
 	/*
-	 * Call emulation specific exec hook. This can setup setup per-process
+	 * Call emulation specific exec hook. This can setup per-process
 	 * p->p_emuldata or do any other per-process stuff an emulation needs.
 	 *
 	 * If we are executing process of different emulation than the
@@ -853,7 +860,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
 	l->l_flag |= oldlwpflags;
@@ -881,7 +888,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
@@ -1330,7 +1337,8 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	}
 
 	/* Just a hint to uvm_map where to put it. */
-	va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, round_page(sz));
+	va = e->e_vm_default_addr(p, (vaddr_t)p->p_vmspace->vm_daddr,
+	    round_page(sz));
 
 #ifdef __alpha__
 	/*
@@ -1338,7 +1346,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	 * which causes the above calculation to put the sigcode at
 	 * an invalid address.  Put it just below the text instead.
 	 */
-	if (va == (vaddr_t)p->p_vmspace->vm_map.max_offset) {
+	if (va == (vaddr_t)vm_map_max(&p->p_vmspace->vm_map)) {
 		va = (vaddr_t)p->p_vmspace->vm_taddr - round_page(sz);
 	}
 #endif

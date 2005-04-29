@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.28.2.1 2005/04/29 11:28:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.28.2.1 2005/04/29 11:28:11 kent Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -445,6 +445,11 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dispparam = (struct wsdisplay_param *)data;
 		dispparam->min = 0;
 		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			id = CONFIG_HOOK_POWER_LCDLIGHT;
+			idmax = -1;
+			dispparam->max = ~0;
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			id = CONFIG_HOOK_BRIGHTNESS;
 			idmax = CONFIG_HOOK_BRIGHTNESS_MAX;
@@ -456,16 +461,22 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		default:
 			return (EINVAL);
 		}
-		error = config_hook_call(CONFIG_HOOK_GET, idmax,
-					 &dispparam->max);
-		if (error)
-			return (error);
+
+		if (idmax >= 0) {
+			error = config_hook_call(CONFIG_HOOK_GET, idmax,
+						 &dispparam->max);
+			if (error)
+				return (error);
+		}
 		return config_hook_call(CONFIG_HOOK_GET, id,
 					&dispparam->curval);
 
 	case WSDISPLAYIO_SETPARAM:
 		dispparam = (struct wsdisplay_param *)data;
 		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			id = CONFIG_HOOK_POWER_LCDLIGHT;
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			id = CONFIG_HOOK_BRIGHTNESS;
 			break;
@@ -1216,7 +1227,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 	printf("---[LCD]---\n");
 	/* Base Address Register */
 	r = hd64461_reg_read_2(HD64461_LCDCBAR_REG16);
-	printf("LCDCBAR Frame buffer base address (4k Byte align): 0x%08x\n",
+	printf("LCDCBAR Frame buffer base address (4KB align): 0x%08x\n",
 	    HD64461_LCDCBAR_BASEADDR(r));
 
 	/* Line Address Offset Register */
@@ -1236,7 +1247,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 	DBG_BITMASK_PRINT(r, SPON);
 	printf("\n");
 #undef	DBG_BITMASK_PRINT
-	printf("LCDCCR Display selct LCD[%c] CRT[%c]\n",
+	printf("LCDCCR Display select LCD[%c] CRT[%c]\n",
 	    i == HD64461_LCDCCR_DSPSEL_LCD_CRT ||
 	    i == HD64461_LCDCCR_DSPSEL_LCD ? 'x' : '_',
 	    i == HD64461_LCDCCR_DSPSEL_LCD_CRT ||

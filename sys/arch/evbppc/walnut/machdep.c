@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2004/09/14 08:22:33 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.4.1 2005/04/29 11:28:09 kent Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/09/14 08:22:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.4.1 2005/04/29 11:28:09 kent Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -149,7 +149,6 @@ struct mem_region physmemr[MEMREGIONS];		/* Hard code memory */
 struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
 
 struct board_cfg_data board_data;
-struct propdb *board_info = NULL;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
@@ -366,7 +365,8 @@ cpu_startup(void)
 	 * Besides, do we really have to put it at the end of core?
 	 * Let's use static buffer for now
 	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE), 0,
+	    UVM_KMF_VAONLY)))
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
@@ -376,7 +376,7 @@ cpu_startup(void)
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	printf("Walnut PowerPC 405GP Evaluation Board\n");
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));

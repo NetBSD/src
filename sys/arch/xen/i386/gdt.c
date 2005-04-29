@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.1.12.1 2005/04/29 11:28:29 kent Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.12.1 2005/04/29 11:28:29 kent Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -146,7 +146,8 @@ gdt_init()
 	gdt_free[1] = GNULL_SEL;
 
 	old_gdt = gdt;
-	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len + max_len);
+	gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len + max_len, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + min_len; va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL) {
@@ -174,7 +175,8 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	struct vm_page *pg;
 	vaddr_t va;
 
-	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
+	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
 	    va += PAGE_SIZE) {
 		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
@@ -210,6 +212,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	unsigned long frames[len >> PAGE_SHIFT];
 	vaddr_t va;
 	pt_entry_t *ptp;
+	pt_entry_t *maptp;
 	int f;
 
 	for (va = (vaddr_t)ci->ci_gdt, f = 0;
@@ -218,7 +221,8 @@ gdt_init_cpu(struct cpu_info *ci)
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
 		frames[f] = *ptp >> PAGE_SHIFT;
-		PTE_CLEARBITS(ptp, PG_RW);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)ptp);
+		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
 	PTE_UPDATES_FLUSH();
 	/* printk("loading gdt %x, %d entries, %d pages", */
@@ -347,12 +351,17 @@ gdt_put_slot(int slot)
 void
 gdt_put_slot1(int slot, int which)
 {
+	union descriptor d;
+	d.raw[0] = 0;
+	d.raw[1] = 0;
 
 	gdt_lock();
 	gdt_count[which]--;
 
-	gdt[slot].gd.gd_type = SDT_SYSNULL;
-	gdt[slot].gd.gd_selector = gdt_free[which];
+	d.gd.gd_type = SDT_SYSNULL;
+	d.gd.gd_selector = gdt_free[which];
+	xen_update_descriptor(&gdt[slot], &d);
+
 	gdt_free[which] = slot;
 
 	gdt_unlock();
@@ -361,19 +370,28 @@ gdt_put_slot1(int slot, int which)
 int
 tss_alloc(struct pcb *pcb)
 {
+#ifndef XEN
 	int slot;
 
 	slot = gdt_get_slot();
 	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	return GSEL(slot, SEL_KPL);
+#else
+
+	return GSEL(GNULL_SEL, SEL_KPL);
+#endif
 }
 
 void
 tss_free(int sel)
 {
 
+#ifndef XEN
 	gdt_put_slot(IDXSEL(sel));
+#else
+	KASSERT(sel == GSEL(GNULL_SEL, SEL_KPL));
+#endif
 }
 
 /*

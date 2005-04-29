@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.18 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.18.4.1 2005/04/29 11:29:33 kent Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.18 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.18.4.1 2005/04/29 11:29:33 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.18 2004/09/17 14:11:25 skrll Exp $");
 
 
 struct	vnode *pkacctp;
-/* 
+/*
  *  Turn on packet accounting
  */
 int
@@ -128,7 +128,7 @@ pk_accton(path)
 	return (error);
 }
 
-/* 
+/*
  *  Write a record on the accounting file.
  */
 

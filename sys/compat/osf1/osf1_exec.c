@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.37 2004/09/12 10:38:25 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.37.4.1 2005/04/29 11:28:41 kent Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.37 2004/09/12 10:38:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.37.4.1 2005/04/29 11:28:41 kent Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.37 2004/09/12 10:38:25 jdolecek Exp 
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -73,7 +75,7 @@ const struct emul emul_osf1 = {
 #else
 	NULL,
 #endif
-	sendsig,
+	sendsig_sigcontext,
 	trapsignal,
 	NULL,
 	osf1_sigcode,
@@ -92,4 +94,6 @@ const struct emul emul_osf1 = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };

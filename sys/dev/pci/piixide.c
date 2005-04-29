@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.17 2004/11/10 17:19:05 cube Exp $	*/
+/*	$NetBSD: piixide.c,v 1.17.4.1 2005/04/29 11:29:12 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -46,6 +46,7 @@ static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
+static void piixide_powerhook(int, void *);
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
 
@@ -186,6 +187,33 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
+	/* Setup our powerhook */
+	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish PCI power hook\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+}
+
+static void
+piixide_powerhook(int why, void *hdl)
+{
+	struct pciide_softc *sc = (struct pciide_softc *)hdl;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+
+	return;
 }
 
 static void
@@ -429,7 +457,7 @@ ok:	/* The modes are setup */
 	if (mode[0] >= 2)
 		idetim |= piix_setup_idetim_timings(
 		    mode[0], 0, chp->ch_channel);
-	else 
+	else
 		idetim |= piix_setup_idetim_timings(
 		    mode[1], 0, chp->ch_channel);
 end:	/*
@@ -563,7 +591,7 @@ piix3_4_setup_channel(struct ata_channel *chp)
 			}
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-	
+
 pio:		/* use PIO mode */
 		idetim |= piix_setup_idetim_drvs(drvp);
 		if (drive == 0) {
@@ -595,15 +623,15 @@ piix_setup_idetim_timings(mode, dma, channel)
 	u_int8_t dma;
 	u_int8_t channel;
 {
-	
+
 	if (dma)
 		return PIIX_IDETIM_SET(0,
-		    PIIX_IDETIM_ISP_SET(piix_isp_dma[mode]) | 
+		    PIIX_IDETIM_ISP_SET(piix_isp_dma[mode]) |
 		    PIIX_IDETIM_RTC_SET(piix_rtc_dma[mode]),
 		    channel);
-	else 
+	else
 		return PIIX_IDETIM_SET(0,
-		    PIIX_IDETIM_ISP_SET(piix_isp_pio[mode]) | 
+		    PIIX_IDETIM_ISP_SET(piix_isp_pio[mode]) |
 		    PIIX_IDETIM_RTC_SET(piix_rtc_pio[mode]),
 		    channel);
 }
@@ -674,7 +702,7 @@ piix_setup_sidetim_timings(mode, dma, channel)
 	if (dma)
 		return PIIX_SIDETIM_ISP_SET(piix_isp_dma[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_dma[mode], channel);
-	else 
+	else
 		return PIIX_SIDETIM_ISP_SET(piix_isp_pio[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
 }

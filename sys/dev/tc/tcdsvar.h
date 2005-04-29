@@ -1,21 +1,21 @@
-/* $NetBSD: tcdsvar.h,v 1.2 2001/08/22 05:00:27 nisimura Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.2.28.1 2005/04/29 11:29:18 kent Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -36,7 +36,7 @@ struct tcds_slotconfig {
 	bus_space_tag_t sc_bst;			/* to frob TCDS regs */
 	bus_space_handle_t sc_bsh;
 
-	int	(*sc_intrhand) __P((void *));	/* intr. handler */
+	int	(*sc_intrhand)(void *);	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 	struct evcnt sc_evcnt;			/* intr. count */
 	char	sc_name[8];			/* ev_name */
@@ -76,11 +76,10 @@ struct tcdsdev_attach_args {
 /*
  * TCDS functions.
  */
-void	tcds_intr_establish __P((struct device *, int,
-	    int (*)(void *), void *));
-void	tcds_intr_disestablish __P((struct device *, int));
-void	tcds_dma_enable __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
-int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
-int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_reset __P((struct tcds_slotconfig *));
+void	tcds_intr_establish(struct device *, int, int (*)(void *), void *);
+void	tcds_intr_disestablish(struct device *, int);
+void	tcds_dma_enable(struct tcds_slotconfig *, int);
+void	tcds_scsi_enable(struct tcds_slotconfig *, int);
+int	tcds_scsi_iserr(struct tcds_slotconfig *);
+int	tcds_scsi_isintr(struct tcds_slotconfig *, int);
+void	tcds_scsi_reset(struct tcds_slotconfig *);

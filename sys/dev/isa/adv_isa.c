@@ -1,10 +1,10 @@
-/*	$NetBSD: adv_isa.c,v 1.8 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.8.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
- * 
+ *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -44,9 +44,9 @@
  *
  *   Single Channel Products:
  *	ABP542 - Bus-Master ISA with floppy (240 CDB)
- *	ABP842 - Bus-Master VL (240 CDB) 
+ *	ABP842 - Bus-Master VL (240 CDB)
  *
- *   Dual Channel Products:  
+ *   Dual Channel Products:
  *	ABP852 - Dual Channel Bus-Master VL (240 CDB Per Channel)
  *
  *   Footnotes:
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.8 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.8.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,10 @@ static int asc_ioport[ASC_IOADR_TABLE_MAX_IX] =
 
 /******************************************************************************/
 
-int	adv_isa_probe __P((struct device *, struct cfdata *, void *));
-void	adv_isa_attach __P((struct device *, struct device *, void *));
+int	adv_isa_probe(struct device *, struct cfdata *, void *);
+void	adv_isa_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC), 
+CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC),
     adv_isa_probe, adv_isa_attach, NULL, NULL);
 
 /******************************************************************************/
@@ -147,7 +147,7 @@ adv_isa_probe(parent, match, aux)
 					continue;
 
 				rv = AscFindSignature(iot, ioh);
-				
+
 				if (rv) {
 					ia->ia_io[0].ir_addr = iobase;
 					break;

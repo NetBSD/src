@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.14 1998/02/05 04:56:51 gwr Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.14.56.1 2005/04/29 11:28:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -206,5 +206,5 @@ struct eeprom {
 
 #ifdef	_KERNEL
 extern struct eeprom *eeprom_copy;
-int	eeprom_uio __P((struct uio *));
+int	eeprom_uio(struct uio *);
 #endif	/* _KERNEL */

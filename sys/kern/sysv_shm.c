@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.82 2004/10/17 11:24:42 jdolecek Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.82.4.1 2005/04/29 11:29:24 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.82 2004/10/17 11:24:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.82.4.1 2005/04/29 11:29:24 kent Exp $");
 
 #define SYSVSHM
 
@@ -358,7 +358,8 @@ sys_shmat(l, v, retval)
 			return EINVAL;
 	} else {
 		/* This is just a hint to uvm_mmap() about where to put it. */
-		attach_va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size);
+		attach_va = p->p_emul->e_vm_default_addr(p,
+		    (vaddr_t)p->p_vmspace->vm_daddr, size);
 	}
 	uobj = shmseg->_shm_internal;
 	(*uobj->pgops->pgo_reference)(uobj);
@@ -675,7 +676,8 @@ shminit()
 
 	/* Allocate pageable memory for our structures */
 	sz = shminfo.shmmni * sizeof(struct shmid_ds);
-	if ((v = uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0, UVM_KMF_WIRED);
+	if (v == 0)
 		panic("sysv_shm: cannot allocate memory");
 	shmsegs = (void *)v;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.10 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: bt485.c,v 1.10.8.1 2005/04/29 11:28:49 kent Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,11 +28,11 @@
  */
 
  /* This code was derived from and originally located in sys/dev/pci/
-  *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp 
+  *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.10 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.10.8.1 2005/04/29 11:28:49 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,21 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.10 2003/11/13 03:09:29 chs Exp $");
 /*
  * Functions exported via the RAMDAC configuration table.
  */
-void	bt485_init __P((struct ramdac_cookie *));
-int	bt485_set_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	bt485_get_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	bt485_set_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	bt485_get_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	bt485_set_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	bt485_get_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	bt485_get_curmax __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
+void	bt485_init(struct ramdac_cookie *);
+int	bt485_set_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	bt485_get_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	bt485_set_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	bt485_get_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	bt485_set_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	bt485_get_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	bt485_get_curmax(struct ramdac_cookie *, struct wsdisplay_curpos *);
 
 /* XXX const */
 struct ramdac_funcs bt485_funcsstruct = {
@@ -95,10 +88,10 @@ struct bt485data {
 					 * around, and is probably
 					 * struct tga_devconfig *
 					 */
-	
-	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
-	void            (*ramdac_wr) __P((void *, u_int, u_int8_t));
-	u_int8_t        (*ramdac_rd) __P((void *, u_int));
+
+	int             (*ramdac_sched_update)(void *, void (*)(void *));
+	void            (*ramdac_wr)(void *, u_int, u_int8_t);
+	u_int8_t        (*ramdac_rd)(void *, u_int);
 
 	int	changed;			/* what changed; see below */
 	int	curenb;				/* cursor enabled */
@@ -126,10 +119,10 @@ struct bt485data {
 /*
  * Internal functions.
  */
-inline void	bt485_wr_i  __P((struct bt485data *, u_int8_t, u_int8_t));
-inline u_int8_t bt485_rd_i __P((struct bt485data *, u_int8_t));
-void	bt485_update __P((void *));
-void	bt485_update_curpos __P((struct bt485data *));
+inline void	bt485_wr_i (struct bt485data *, u_int8_t, u_int8_t);
+inline u_int8_t bt485_rd_i(struct bt485data *, u_int8_t);
+void	bt485_update(void *);
+void	bt485_update_curpos(struct bt485data *);
 
 /*****************************************************************************/
 
@@ -556,7 +549,7 @@ bt485_update(vp)
 		for (i = 0; i < count; i++)
 			data->ramdac_wr(data->cookie, BT485_REG_CURSOR_RAM,
 			    data->curimage[i]);
-		
+
 		/*
 		 * Write the cursor mask data:
 		 *	set addr[9:8] to 2,

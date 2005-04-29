@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.14 2004/03/17 08:58:23 martin Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.14.8.1 2005/04/29 11:29:06 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.14 2004/03/17 08:58:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.14.8.1 2005/04/29 11:29:06 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ struct hme_pci_softc {
 	void			*hsc_ih;
 };
 
-int	hmematch_pci __P((struct device *, struct cfdata *, void *));
-void	hmeattach_pci __P((struct device *, struct device *, void *));
+int	hmematch_pci(struct device *, struct cfdata *, void *);
+void	hmeattach_pci(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hme_pci, sizeof(struct hme_pci_softc),
     hmematch_pci, hmeattach_pci, NULL, NULL);
@@ -90,12 +90,40 @@ hmematch_pci(parent, cf, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_HMENETWORK)
 		return (1);
 
 	return (0);
 }
+
+#if HME_USE_LOCAL_MAC_ADDRESS
+static inline int
+hmepromvalid(u_int8_t* buf)
+{
+	return buf[0] == 0x18 && buf[1] == 0x00 &&	/* structure length */
+	    buf[2] == 0x00 &&				/* revision */
+	    (buf[3] == 0x00 ||				/* hme */
+	     buf[3] == 0x80) &&				/* qfe */
+	    buf[4] == PCI_SUBCLASS_NETWORK_ETHERNET &&	/* subclass code */
+	    buf[5] == PCI_CLASS_NETWORK;		/* class code */
+}
+
+static inline int
+hmevpdoff(bus_space_tag_t romt, bus_space_handle_t romh, int vpdoff, int dev)
+{
+#define VPDLEN (3 + sizeof(struct pci_vpd) + ETHER_ADDR_LEN)
+	if (bus_space_read_1(romt, romh, vpdoff + VPDLEN) != 0x79 &&
+	    bus_space_read_1(romt, romh, vpdoff + 4 * VPDLEN) == 0x79) {
+		/*
+		 * Use the Nth NA for the Nth HME on
+		 * this SUNW,qfe.
+		 */
+		vpdoff += dev * VPDLEN;
+	}
+	return vpdoff;
+}
+#endif
 
 void
 hmeattach_pci(parent, self, aux)
@@ -116,7 +144,7 @@ hmeattach_pci(parent, self, aux)
 	bus_space_tag_t		romt;
 	bus_space_handle_t	romh;
 	bus_size_t		romsize;
-	u_int8_t		buf[32];
+	u_int8_t		buf[64];
 	int			dataoff, vpdoff;
 	struct pci_vpd		*vpd;
 	static const u_int8_t promhdr[] = { 0x55, 0xaa };
@@ -128,14 +156,7 @@ hmeattach_pci(parent, self, aux)
 		PCI_PRODUCT_SUN_HMENETWORK >> 8
 	};
 #define PROMDATA_PTR_VPD	0x08
-#define PROMDATA_DATA2		0x0a		
-	static const u_int8_t promdat2[] = {
-		0x18, 0x00,			/* structure length */
-		0x00,				/* structure revision */
-		0x00,				/* interface revision */
-		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
-		PCI_CLASS_NETWORK		/* class code */
-	};
+#define PROMDATA_DATA2		0x0a
 #endif	/* HME_USE_LOCAL_MAC_ADDRESS */
 
 	printf(": Sun Happy Meal Ethernet, rev. %d\n",
@@ -247,8 +268,7 @@ hmeattach_pci(parent, self, aux)
 			bus_space_read_region_1(romt, romh, dataoff,
 			    buf, sizeof buf);
 			if (memcmp(buf, promdat, sizeof promdat) == 0 &&
-			    memcmp(buf + PROMDATA_DATA2, promdat2,
-				sizeof promdat2) == 0 &&
+			    hmepromvalid(buf + PROMDATA_DATA2) &&
 			    (vpdoff = (buf[PROMDATA_PTR_VPD] |
 				(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
 
@@ -259,6 +279,8 @@ hmeattach_pci(parent, self, aux)
 				 * properly terminated (only one resource
 				 * and no end tag).
 				 */
+				vpdoff = hmevpdoff(romt, romh, vpdoff,
+				    pa->pa_device);
 				/* read PCI VPD */
 				bus_space_read_region_1(romt, romh,
 				    vpdoff, buf, sizeof buf);
@@ -296,7 +318,7 @@ hmeattach_pci(parent, self, aux)
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
-	}	
+	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
 	if (hsc->hsc_ih == NULL) {

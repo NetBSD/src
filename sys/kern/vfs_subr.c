@@ -1,12 +1,14 @@
-/*	$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.240.2.1 2005/04/29 11:29:24 kent Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.240.2.1 2005/04/29 11:29:24 kent Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -603,7 +605,7 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
 #ifdef VERIFIED_EXEC
-		vp->fp_status = FINGERPRINT_INVALID;
+		vp->fp_status = FINGERPRINT_NOTEVAL;
 #endif
 	}
 	vp->v_type = VNON;
@@ -2345,12 +2347,13 @@ vfs_hang_addrlist(mp, nep, argp)
 		 * Seems silly to initialize every AF when most are not
 		 * used, do so on demand here
 		 */
-		for (dom = domains; dom; dom = dom->dom_next)
+		DOMAIN_FOREACH(dom) {
 			if (dom->dom_family == i && dom->dom_rtattach) {
 				dom->dom_rtattach((void **)&nep->ne_rtable[i],
 					dom->dom_rtoffset);
 				break;
 			}
+		}
 		if ((rnh = nep->ne_rtable[i]) == 0) {
 			error = ENOBUFS;
 			goto out;
@@ -3100,10 +3103,10 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
 		 * these requests come from kernel code (NOCRED case above)?
 		 */
 		return (suser(cred, &p->p_acflag));
-	
+
 	case EXTATTR_NAMESPACE_USER:
 		return (VOP_ACCESS(vp, access, cred, p));
-	
+
 	default:
 		return (EPERM);
 	}

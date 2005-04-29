@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2004/11/28 17:34:46 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.175.4.1 2005/04/29 11:28:24 kent Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2004/11/28 17:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.4.1 2005/04/29 11:28:24 kent Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -198,7 +198,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int64_t)physmem));
 	printf("total memory = %s\n", pbuf);
@@ -985,10 +985,11 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|
 				   BUS_DMA_NOWRITE|BUS_DMA_NOCACHE);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -1038,6 +1039,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 	{ 
@@ -1073,7 +1075,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		if (map->dm_segs[i].ds_len == 0)
 			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-		    && ((map->dm_segs[i].ds_len + incr) <= map->_dm_maxsegsz)) {
+		    && ((map->dm_segs[i].ds_len + incr) <= map->dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
 			map->dm_segs[i].ds_len += incr;
 			incr = PAGE_SIZE;
@@ -1103,6 +1105,8 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	int i;
 	size_t len;
 
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+
 	/* Record mbuf for *_unload */
 	map->_dm_type = _DM_TYPE_MBUF;
 	map->_dm_source = (void *)m;
@@ -1112,9 +1116,6 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	while (m) {
 		vaddr_t vaddr = mtod(m, vaddr_t);
 		long buflen = (long)m->m_len;
-
-		if (buflen == 0)
-			continue;
 
 		len += buflen;
 		while (buflen > 0 && i < MAX_DMA_SEGS) {
@@ -1140,7 +1141,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			if (i > 0 && 
 				pa == (segs[i-1].ds_addr + segs[i-1].ds_len) &&
 				((segs[i-1].ds_len + incr) <= 
-					map->_dm_maxsegsz)) {
+					map->dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
 				segs[i-1].ds_len += incr;
 				continue;
@@ -1181,15 +1182,17 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 				sglen, len);
 		retval = bus_dmamap_load_raw(t, map, segs, i,
 			(bus_size_t)len, flags);
-		if (map->dm_mapsize != len)
-			panic("load_mbuf: mapsize %ld != len %lx\n",
-				(long)map->dm_mapsize, len);
-		sglen = 0;
-		for (j = 0; j < map->dm_nsegs; j++)
-			sglen += map->dm_segs[j].ds_len;
-		if (sglen != len)
-			panic("load_mbuf: dmamap sglen %ld != len %lx\n",
-				sglen, len);
+		if (retval == 0) {
+			if (map->dm_mapsize != len)
+				panic("load_mbuf: mapsize %ld != len %lx\n",
+					(long)map->dm_mapsize, len);
+			sglen = 0;
+			for (j = 0; j < map->dm_nsegs; j++)
+				sglen += map->dm_segs[j].ds_len;
+			if (sglen != len)
+				panic("load_mbuf: dmamap sglen %ld != len %lx\n",
+					sglen, len);
+		}
 		return (retval);
 	}
 #endif
@@ -1217,6 +1220,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	size_t len;
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
+
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
 		pm = p->p_vmspace->vm_map.pmap;
@@ -1255,7 +1260,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
 
 			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
-			    && ((segs[i-1].ds_len + incr) <= map->_dm_maxsegsz)) {
+			    && ((segs[i-1].ds_len + incr) <= map->dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
 				segs[i-1].ds_len += incr;
 				continue;
@@ -1334,6 +1339,7 @@ _bus_dmamap_unload(t, map)
 	}
 
 	/* Mark the mappings as invalid. */
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
@@ -1894,7 +1900,7 @@ cpu_getmcontext(l, mcp, flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if (rwindow_save(l))
+	if ((l->l_flag & L_SA_SWITCHING) == 0 && rwindow_save(l))
 		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */

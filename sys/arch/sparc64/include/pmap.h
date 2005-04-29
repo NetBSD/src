@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2004/03/14 18:18:54 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31.8.1 2005/04/29 11:28:24 kent Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,9 +73,9 @@
 
 #define HOLESHIFT	(43)
 
-#define PTSZ	(PAGE_SIZE/8)
-#define PDSZ	(PTSZ)
-#define STSZ	(PTSZ)
+#define PTSZ	(PAGE_SIZE/8)			/* page table entry */
+#define PDSZ	(PTSZ)				/* page directory */
+#define STSZ	(PTSZ)				/* psegs */
 
 #define PTSHIFT		(13)
 #define	PDSHIFT		(10+PTSHIFT)
@@ -112,7 +112,7 @@ struct pmap {
 	struct uvm_object pm_obj;
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
-	LIST_ENTRY(pmap) pm_list;
+	LIST_ENTRY(pmap) pm_list;		/* pmap_ctxlist */
 
 	struct pmap_statistics pm_stats;
 
@@ -175,7 +175,7 @@ void pmap_activate_pmap(struct pmap *);
 void pmap_update(struct pmap *);
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define	PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
+#define	PMAP_PREFER(pa, va, sz, td)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 #define PMAP_NEED_PROCWR

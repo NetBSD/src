@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2004/02/13 11:36:13 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.8.1 2005/04/29 11:28:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2004/02/13 11:36:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86.8.1 2005/04/29 11:28:11 kent Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -557,7 +557,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	sprintf(cpu_model, "%s (%s)", platid_name(&platid), cpu_name);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));

@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.36 2004/11/10 17:54:06 christos Exp $
+#	$NetBSD: STEELHEAD,v 1.36.4.1 2005/04/29 11:28:18 kent Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -29,6 +29,8 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -44,6 +46,7 @@ file-system	KERNFS			# kernel file system; recommended
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server
 #options 	FASTLINKS		# fast symbolic links in FFS
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 options 	GATEWAY			# packet forwarding
@@ -74,5 +77,6 @@ pseudo-device	bpfilter	4	# packet filter
 pseudo-device	sl		3	# compressed SLIP
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	vnd		4	# Vnode devices
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ether			#
 pseudo-device	clockctl		# user control of clock subsystem

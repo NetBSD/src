@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.69 2004/12/15 04:25:19 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.69.2.1 2005/04/29 11:29:33 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -192,7 +192,6 @@ struct ipflow {
 #define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
 #endif
 
-extern const struct protosw inetsw[];
 extern struct domain inetdomain;
 
 extern struct ipstat ipstat;		/* ip statistics */
@@ -263,13 +262,33 @@ static __inline uint16_t ip_newid(void);
 u_int16_t ip_randomid(void);
 extern int ip_do_randomid;
 
+/*
+ * ip_newid_range: "allocate" num contiguous ip_ids.
+ *
+ * => return the first id.
+ */
+
+static __inline uint16_t
+ip_newid_range(unsigned int num)
+{
+	uint16_t id;
+
+	if (ip_do_randomid) {
+		/* XXX ignore num */
+		return ip_randomid();
+	}
+
+	id = htons(ip_id);
+	ip_id += num;
+
+	return id;
+}
+
 static __inline uint16_t
 ip_newid(void)
 {
-	if (ip_do_randomid)
-		return ip_randomid();
 
-	return htons(ip_id++);
+	return ip_newid_range(1);
 }
 
 #endif  /* _KERNEL */

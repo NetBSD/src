@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r94.c,v 1.5 2005/01/01 04:00:25 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_r94.c,v 1.5.2.1 2005/04/29 11:28:01 kent Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.5 2005/01/01 04:00:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.5.2.1 2005/04/29 11:28:01 kent Exp $");
 
 #include <sys/param.h>
 
@@ -76,7 +76,7 @@ struct pica_dev nec_r94_cpu[] = {
  * critical i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_nec_r94_init()
+p_nec_r94_init(void)
 {
 
 	c_nec_eisa_init();

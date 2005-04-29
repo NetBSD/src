@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.65 2004/09/04 23:30:07 manu Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.65.4.1 2005/04/29 11:29:33 kent Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.65 2004/09/04 23:30:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.65.4.1 2005/04/29 11:29:33 kent Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.65 2004/09/04 23:30:07 manu Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_proto.h>
 
 #ifdef INET6
 #ifndef INET
@@ -146,6 +147,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.65 2004/09/04 23:30:07 manu Exp $");
 #include <netinet/ip_gre.h>
 #endif
 
+#include "bridge.h"
+
+DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
+
 const struct protosw inetsw[] = {
 { 0,		&inetdomain,	0,		0,
   0,		ip_output,	0,		0,
@@ -153,7 +158,7 @@ const struct protosw inetsw[] = {
   ip_init,	0,		ip_slowtimo,	ip_drain,	NULL
 },
 { SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
-  udp_input,	0,		udp_ctlinput,	ip_ctloutput,
+  udp_input,	0,		udp_ctlinput,	udp_ctloutput,
   udp_usrreq,
   udp_init,	0,		0,		0,		NULL
 },
@@ -222,6 +227,13 @@ const struct protosw inetsw[] = {
   encap_init,	0,		0,		0,
 },
 #endif /* INET6 */
+#if NBRIDGE > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ETHERIP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+  encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
+  rip_usrreq,
+  encap_init,		0,		0,		0,
+},
+#endif
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   gre_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
@@ -286,7 +298,7 @@ const struct protosw inetsw[] = {
 
 struct domain inetdomain =
     { PF_INET, "internet", 0, 0, 0,
-      inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
+      inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 
 u_char	ip_protox[IPPROTO_MAX];

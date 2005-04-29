@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.124.2.1 2005/04/29 11:29:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.124.2.1 2005/04/29 11:29:36 kent Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -154,7 +154,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
@@ -164,7 +163,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
 		    nfs_invaldircache(vp, 0);
 		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		    np->n_direofoffset = 0;
 		    if (error)
 			return (error);
 		}
@@ -183,7 +181,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		case VDIR:
 			break;
 		default:
-			printf(" NQNFSNONCACHE: type %x unexpected\n",	
+			printf(" NQNFSNONCACHE: type %x unexpected\n",
 			    vp->v_type);
 		};
 	    }
@@ -251,11 +249,11 @@ diragain:
 			 */
 			if (nmp->nm_flag & NFSMNT_XLATECOOKIE)
 				return (EINVAL);
-			ndp = nfs_enterdircache(vp, uio->uio_offset, 
+			ndp = nfs_enterdircache(vp, uio->uio_offset,
 				uio->uio_offset, 0, 0);
 		}
 
-		if (uio->uio_offset != 0 &&
+		if (NFS_EOFVALID(np) &&
 		    ndp->dc_cookie == np->n_direofoffset) {
 			nfs_putdircache(np, ndp);
 			nfsstats.direofcache_hits++;
@@ -291,12 +289,19 @@ diragain:
 		 * block. Always check here, because direofoffset
 		 * may have been set by an nfsiod since the last
 		 * check.
+		 *
+		 * also, empty block implies EOF.
 		 */
-		if (np->n_direofoffset != 0 && 
-			ndp->dc_blkcookie == np->n_direofoffset) {
+
+		if (bp->b_bcount == bp->b_resid ||
+		    (NFS_EOFVALID(np) &&
+		    ndp->dc_blkcookie == np->n_direofoffset)) {
+			KASSERT(bp->b_bcount != bp->b_resid ||
+			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
+			bp->b_flags |= B_NOCACHE;
 			brelse(bp);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -364,7 +369,7 @@ diragain:
 		 * (if requested) as we go.
 		 */
 
-		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {	
+		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {
 			if (cflag & NFSBIO_CACHECOOKIES) {
 				nndp = nfs_enterdircache(vp, NFS_GETCOOKIE(pdp),
 				    ndp->dc_blkcookie, enn, bp->b_lblkno);
@@ -382,7 +387,7 @@ diragain:
 
 		/*
 		 * If the last requested entry was not the last in the
-		 * buffer (happens if NFS_DIRFRAGSIZ < NFS_DIRBLKSIZ),	
+		 * buffer (happens if NFS_DIRFRAGSIZ < NFS_DIRBLKSIZ),
 		 * cache the cookie of the last requested one, and
 		 * set of the offset to it.
 		 */
@@ -419,7 +424,7 @@ diragain:
 		 *  directory offset cookie of the next block.)
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    np->n_direofoffset == 0 && !(np->n_flag & NQNFSNONCACHE)) {
+		    !NFS_EOFVALID(np) && !(np->n_flag & NQNFSNONCACHE)) {
 			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, p);
 			if (rabp) {
@@ -738,7 +743,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 }
 
 /*
- * nfs_flushstalebuf: flush cache if it's stale. 
+ * nfs_flushstalebuf: flush cache if it's stale.
  *
  * => caller shouldn't own any pages or buffers which belong to the vnode.
  */
@@ -759,7 +764,6 @@ nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct proc *p,
 				return error;
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 		} else {
 			/*
@@ -778,7 +782,6 @@ nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct proc *p,
 		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
@@ -812,7 +815,7 @@ again:
 	if (nmp->nm_flag & NFSMNT_INT)
 		slpflag = PCATCH;
 	gotiod = FALSE;
- 
+
 	/*
 	 * Find a free iod to process this request.
 	 */
@@ -853,7 +856,7 @@ again:
 
 	/*
 	 * If we have an iod which can process the request, then queue
-	 * the buffer.  However, even if we have an iod, do not initiate 
+	 * the buffer.  However, even if we have an iod, do not initiate
 	 * queue cleaning if curproc is the pageout daemon. if the NFS mount
 	 * is via local loopback, we may put curproc (pagedaemon) to sleep
 	 * waiting for the writes to complete. But the server (ourself)
@@ -863,7 +866,7 @@ again:
 	 * let pagedaemon start loopback writes anyway?
 	 */
 	if (gotiod) {
-	  
+
 		/*
 		 * Ensure that the queue never grows too large.
 		 */

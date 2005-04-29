@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.9 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.9.4.1 2005/04/29 11:28:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.9 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.9.4.1 2005/04/29 11:28:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,16 +90,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.9 2004/09/14 20:20:48 drochner Exp $
 #define	bus_space_write_region_stream_2	bus_space_write_region_2
 #endif
 
-int	we_isa_probe __P((struct device *, struct cfdata *, void *));
-void	we_isa_attach __P((struct device *, struct device *, void *));
+int	we_isa_probe(struct device *, struct cfdata *, void *);
+void	we_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(we_isa, sizeof(struct we_softc),
     we_isa_probe, we_isa_attach, NULL, NULL);
 
 extern struct cfdriver we_cd;
 
-static const char *we_params __P((bus_space_tag_t, bus_space_handle_t,
-		u_int8_t *, bus_size_t *, int *, int *));
+static const char *we_params(bus_space_tag_t, bus_space_handle_t,
+		u_int8_t *, bus_size_t *, u_int8_t *, int *);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,
@@ -331,7 +331,7 @@ we_isa_attach(parent, self, aux)
 	}
 
 	typestr = we_params(asict, asich, &wsc->sc_type, NULL,
-	    &wsc->sc_16bitp, &sc->is790);
+	    &wsc->sc_flags, &sc->is790);
 	if (typestr == NULL) {
 		printf("%s: where did the card go?\n", sc->sc_dev.dv_xname);
 		return;
@@ -390,12 +390,12 @@ we_isa_attach(parent, self, aux)
 }
 
 static const char *
-we_params(asict, asich, typep, memsizep, is16bitp, is790p)
+we_params(asict, asich, typep, memsizep, flagp, is790p)
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
-	u_int8_t *typep;
+	u_int8_t *typep, *flagp;
 	bus_size_t *memsizep;
-	int *is16bitp, *is790p;
+	int *is790p;
 {
 	const char *typestr;
 	bus_size_t memsize;
@@ -407,19 +407,19 @@ we_params(asict, asich, typep, memsizep, is16bitp, is790p)
 
 	type = bus_space_read_1(asict, asich, WE_CARD_ID);
 	switch (type) {
-	case WE_TYPE_WD8003S: 
-		typestr = "WD8003S"; 
+	case WE_TYPE_WD8003S:
+		typestr = "WD8003S";
 		break;
 	case WE_TYPE_WD8003E:
 		typestr = "WD8003E";
 		break;
-	case WE_TYPE_WD8003EB: 
+	case WE_TYPE_WD8003EB:
 		typestr = "WD8003EB";
 		break;
 	case WE_TYPE_WD8003W:
 		typestr = "WD8003W";
 		break;
-	case WE_TYPE_WD8013EBT: 
+	case WE_TYPE_WD8013EBT:
 		typestr = "WD8013EBT";
 		memsize = 16384;
 		is16bit = 1;
@@ -533,8 +533,8 @@ we_params(asict, asich, typep, memsizep, is16bitp, is790p)
 		*typep = type;
 	if (memsizep != NULL)
 		*memsizep = memsize;
-	if (is16bitp != NULL)
-		*is16bitp = is16bit;
+	if (flagp != NULL && is16bit)
+		*flagp |= WE_16BIT_ENABLE;
 	if (is790p != NULL)
 		*is790p = is790;
 	return (typestr);

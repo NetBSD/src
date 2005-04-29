@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.5 2004/06/16 17:45:03 fvdl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.5.4.1 2005/04/29 11:27:59 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.5 2004/06/16 17:45:03 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.5.4.1 2005/04/29 11:27:59 kent Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -103,17 +103,21 @@ set_mem_gdt(sd, base, limit, type, dpl, gran, def32, is64)
 	size_t limit;
 	int type, dpl, gran, def32, is64;
 {
+#if 0
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int off;
+#endif
 
         set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64);
+#if 0
 	off = (char *)sd - gdtstore;
         for (CPU_INFO_FOREACH(cii, ci)) {
                 if (ci->ci_gdt != NULL)
 			*(struct mem_segment_descriptor *)(ci->ci_gdt + off) =
 			    *sd;
         }
+#endif
 }
 
 void
@@ -123,17 +127,21 @@ set_sys_gdt(sd, base, limit, type, dpl, gran)
 	size_t limit;
 	int type, dpl, gran;
 {
+#if 0
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int off;
+#endif
 
         set_sys_segment(sd, base, limit, type, dpl, gran);
+#if 0
 	off = (char *)sd - gdtstore;
         for (CPU_INFO_FOREACH(cii, ci)) {
                 if (ci->ci_gdt != NULL)
 			*(struct sys_segment_descriptor *)(ci->ci_gdt + off) =
 			    *sd;
         }
+#endif
 }
 
 
@@ -158,7 +166,8 @@ gdt_init()
 	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
 
 	old_gdt = gdtstore;
-	gdtstore = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+	gdtstore = (char *)uvm_km_alloc(kernel_map, MAXGDTSIZ, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MINGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -182,12 +191,16 @@ gdt_init()
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
+#if 0
         ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
         uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
             (vaddr_t)ci->ci_gdt + MINGDTSIZ, FALSE, FALSE);
         memset(ci->ci_gdt, 0, MINGDTSIZ);
         memcpy(ci->ci_gdt, gdtstore,
 	   DYNSEL_START + gdt_dyncount * sizeof(struct sys_segment_descriptor));
+#else
+	ci->ci_gdt = gdtstore;
+#endif
 }
 
 

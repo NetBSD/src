@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.99 2004/09/21 21:57:30 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.99.4.1 2005/04/29 11:29:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -139,11 +139,13 @@ struct m_hdr {
 /*
  * record/packet header in first mbuf of chain; valid if M_PKTHDR set
  *
- * A note about csum_data: For the out-bound direction, this indicates the
- * offset after the L4 header where the final L4 checksum value is to be
- * stored.  For the in-bound direction, it is only valid if the M_CSUM_DATA
- * flag is set.  In this case, an L4 checksum has been calculated by
- * hardware, but it is up to software to perform final verification.
+ * A note about csum_data: For the out-bound direction, the low 16 bits
+ * indicates the offset after the L4 header where the final L4 checksum value
+ * is to be stored and the high 16 bits is the length of the L3 header (the
+ * start of the data to be checksumed).  For the in-bound direction, it is only
+ * valid if the M_CSUM_DATA flag is set.  In this case, an L4 checksum has been
+ * calculated by hardware, but it is up to software to perform final
+ * verification.
  *
  * Note for in-bound TCP/UDP checksums, we expect the csum_data to NOT
  * be bit-wise inverted (the final step in the calculation of an IP
@@ -156,6 +158,7 @@ struct	pkthdr {
 	int	len;			/* total packet length */
 	int	csum_flags;		/* checksum flags */
 	u_int32_t csum_data;		/* checksum data */
+	u_int	segsz;			/* segment size */
 };
 
 /*
@@ -170,12 +173,20 @@ struct	pkthdr {
 #define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
+#define	M_CSUM_TSOv4		0x00000100	/* TCPv4 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
-#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx M_CSUM_DATA does not include
+#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
 						 * the UDP/TCP pseudo-hdr, and
 						 * is not yet 1s-complemented.
 						 */
+
+/*
+ * Macros for manipulating csum_data on outgoing packets.  These are
+ * used to pass information down from the L4/L3 to the L2.
+ */
+#define	M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
+#define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
@@ -272,6 +283,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
+#define	M_PROTO1	0x0008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
 #define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
@@ -867,6 +879,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
 #define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
+#define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two u_int16_t */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
@@ -877,7 +890,7 @@ m_length(struct mbuf *m)
 	struct mbuf *m0;
 	u_int pktlen;
 
-	if ((m->m_flags & M_PKTHDR) != 0) 
+	if ((m->m_flags & M_PKTHDR) != 0)
 		return m->m_pkthdr.len;
 
 	pktlen = 0;
@@ -887,7 +900,7 @@ m_length(struct mbuf *m)
 }
 
 /*
- * m_ext_free: release a reference to the mbuf external storage. 
+ * m_ext_free: release a reference to the mbuf external storage.
  *
  * => if 'dofree', free the mbuf m itsself as well.
  * => called at splvm.

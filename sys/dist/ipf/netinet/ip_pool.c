@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.1.6.1 2005/04/29 11:29:21 kent Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -79,7 +79,7 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.9 2004/06/13 23:45:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.12 2005/02/01 04:04:46 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
@@ -307,7 +307,11 @@ iplookupop_t *op;
 		for (i = 0; i < IPL_LOGSIZE; i++)
 			stats.ipls_list[i] = ip_pool_list[i];
 	} else if (unit >= 0 && unit < IPL_LOGSIZE) {
-		stats.ipls_list[unit] = ip_pool_list[unit];
+		if (op->iplo_name[0] != '\0')
+			stats.ipls_list[unit] = ip_pool_find(unit,
+							     op->iplo_name);
+		else
+			stats.ipls_list[unit] = ip_pool_list[unit];
 	} else
 		err = EINVAL;
 	if (err == 0)
@@ -332,7 +336,7 @@ char *name;
 	ip_pool_t *p;
 
 	for (p = ip_pool_list[unit]; p != NULL; p = p->ipo_next)
-		if (strcmp(p->ipo_name, name) == 0)
+		if (strncmp(p->ipo_name, name, sizeof(p->ipo_name)) == 0)
 			break;
 	return p;
 }
@@ -367,7 +371,7 @@ addrfamily_t *addr, *mask;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    ip_pool_search                                              */
-/* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve match       */
+/* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve/no match    */
 /* Parameters:  tptr(I)    - pointer to the pool to search                  */
 /*              version(I) - IP protocol version (4 or 6)                   */
 /*              dptr(I)    - pointer to address information                 */
@@ -390,7 +394,7 @@ void *dptr;
 	if (ipo == NULL)
 		return -1;
 
-	rv = -1;
+	rv = 1;
 	m = NULL;
 	addr = (i6addr_t *)dptr;
 	bzero(&v, sizeof(v));
@@ -532,7 +536,8 @@ iplookupop_t *op;
 #endif
 
 		for (p = ip_pool_list[unit]; p != NULL; ) {
-			if (strcmp(name, p->ipo_name) == 0) {
+			if (strncmp(name, p->ipo_name,
+				    sizeof(p->ipo_name)) == 0) {
 				poolnum++;
 #if defined(SNPRINTF) && defined(_KERNEL)
 				SNPRINTF(name, sizeof(name), "%x", poolnum);

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.64 2005/01/02 18:33:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.64.2.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -230,9 +230,9 @@ typedef intptr_t semid_t;
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-off_t	 lseek __P((int, off_t, int));
-int	 ftruncate __P((int, off_t));
-int	 truncate __P((const char *, off_t));
+off_t	 lseek(int, off_t, int);
+int	 ftruncate(int, off_t);
+int	 truncate(const char *, off_t);
 __END_DECLS
 #endif /* !_KERNEL */
 #endif /* __OFF_T_SYSCALLS_DECLARED */
@@ -290,6 +290,7 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 
 /*

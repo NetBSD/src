@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2004/04/08 07:35:34 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.19.4.1 2005/04/29 11:28:23 kent Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -235,7 +235,7 @@ int
 main()
 {
 	int	error, i;
-	char	*kernel;
+	char	kernel[MAX_PROM_PATH], *k;
 	u_long	marks[MARK_MAX], bootinfo;
 	struct btinfo_symtab bi_sym;
 	void	*arg;
@@ -258,16 +258,19 @@ main()
 	/*
 	 * get default kernel.
 	 */
-	prom_bootdevice = prom_getbootpath();
-	kernel = prom_getbootfile();
-	boothowto = bootoptions(prom_getbootargs());
-
-	if (kernel != NULL && *kernel != '\0') {
+	k = prom_getbootfile();
+	if (k != NULL && *k != '\0') {
 		i = -1;	/* not using the kernels */
+		strcpy(kernel, k);
 	} else {
 		i = 0;
-		kernel = kernels[i];
+		strcpy(kernel, kernels[i]);
 	}
+
+	k = prom_getbootpath();
+	if (k && *k)
+		strcpy(prom_bootdevice, k);
+	boothowto = bootoptions(prom_getbootargs());
 
 	for (;;) {
 		/*
@@ -280,15 +283,15 @@ main()
 			if (strcmp(dbuf, "halt") == 0)
 				_rtt();
 			if (dbuf[0])
-				prom_bootdevice = dbuf;
+				strcpy(prom_bootdevice, dbuf);
 			printf("boot (press RETURN to try default list): ");
 			gets(fbuf);
 			if (fbuf[0])
-				kernel = fbuf;
+				strcpy(kernel, fbuf);
 			else {
 				boothowto &= ~RB_ASKNAME;
 				i = 0;
-				kernel = kernels[i];
+				strcpy(kernel, kernels[i]);
 			}
 		}
 
@@ -308,7 +311,7 @@ main()
 		 */
 		if ((boothowto & RB_ASKNAME) == 0 &&
 		    i != -1 && kernels[++i]) {
-			kernel = kernels[i];
+			strcpy(kernel, kernels[i]);
 			printf(": trying %s...\n", kernel);
 		} else {
 			printf("\n");

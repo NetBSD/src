@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.8 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.8.8.1 2005/04/29 11:29:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,7 +119,7 @@ struct	ext2fs_direct {
 
 /* Ext2 directory file types (not the same as FFS. Sigh. */
 #define EXT2_FT_UNKNOWN         0
-#define EXT2_FT_REG_FILE        1 
+#define EXT2_FT_REG_FILE        1
 #define EXT2_FT_DIR             2
 #define EXT2_FT_CHRDEV          3
 #define EXT2_FT_BLKDEV          4

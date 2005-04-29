@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.50.4.1 2005/04/29 11:29:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.50.4.1 2005/04/29 11:29:17 kent Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"

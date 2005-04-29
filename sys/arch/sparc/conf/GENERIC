@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164 2004/11/10 17:54:07 christos Exp $
+# $NetBSD: GENERIC,v 1.164.4.1 2005/04/29 11:28:22 kent Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.164 $"
+#ident 		"GENERIC-$Revision: 1.164.4.1 $"
 
 maxusers	32
 
@@ -192,6 +192,8 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -568,6 +570,7 @@ pseudo-device	pppoe
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 pseudo-device	tun		4
+pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
@@ -673,3 +676,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	fss		4	# file system snapshot device
