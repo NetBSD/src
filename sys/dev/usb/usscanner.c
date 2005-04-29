@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.15 2005/02/21 00:29:08 thorpej Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.16 2005/04/29 17:52:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,8 +54,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.15 2005/02/21 00:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.16 2005/04/29 17:52:46 augustss Exp $");
 
+#include "scsibus.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -312,6 +313,7 @@ USB_ATTACH(usscanner)
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_minphys = usscanner_scsipi_minphys;
 
+#if NSCSIBUS > 0
 	/*
 	 * fill in the scsipi_channel.
 	 */
@@ -330,6 +332,13 @@ USB_ATTACH(usscanner)
 	DPRINTFN(10, ("usscanner_attach: %p\n", sc->sc_udev));
 
 	USB_ATTACH_SUCCESS_RETURN;
+
+#else
+	/* No SCSI bus, just ignore it */
+	usscanner_cleanup(sc);
+	USB_ATTACH_ERROR_RETURN;
+
+#endif
 }
 
 USB_DETACH(usscanner)
