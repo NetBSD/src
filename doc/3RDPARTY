@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.327 2005/04/25 17:44:41 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.328 2005/04/29 15:31:55 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -247,7 +247,7 @@ Responsible:	thorpej, mrg
 Notes:
 
 Package:	gettext
-Version:	0.10.35
+Version:	0.14.4
 Current Vers:	0.14.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
