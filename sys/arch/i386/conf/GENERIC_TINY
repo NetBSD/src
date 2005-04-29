@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.82 2005/03/25 23:28:44 cube Exp $
+#	$NetBSD: GENERIC_TINY,v 1.83 2005/04/29 16:58:39 augustss Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -193,7 +193,8 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" /* for pckbd driver */
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  /* for ukbd driver */
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.138 2005/04/15 17:27:21 itohy Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.139 2005/04/29 16:58:39 augustss Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 maxusers	32		# estimated number of users
 
@@ -213,7 +213,8 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" /* for pckbd driver */
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  /* for ukbd driver */
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
