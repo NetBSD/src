@@ -1,0 +1,10 @@
+Installation on Mingw32:
+
+See file INSTALL.
+
+When configuring with the default options, the build will attempt to create
+shared libraries and fail because libtool 1.4.3 does not support shared
+libraries on Mingw32.  To remedy:
+  - Either configure with option --disable-shared, to create non-shared
+    libraries only.
+  - Or update this package with the libtool CVS, and configure normally.
