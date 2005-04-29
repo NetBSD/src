@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2005/04/29 14:59:32 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2005/04/29 15:05:02 christos Exp $
 
 PROG=	msguniq
 

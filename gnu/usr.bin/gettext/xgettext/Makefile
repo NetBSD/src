@@ -1,10 +1,31 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/13 00:31:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2005/04/29 15:05:02 christos Exp $
 
 PROG=	xgettext
-SRCS=	message.c open-po.c po-gram.gen.c po-hash.gen.c po-lex.c \
-	po.c str-list.c xget-lex.c xgettext.c dir-list.c
+SRCS=	\
+po-time.c \
+uniname.c \
+xgettext.c \
+x-awk.c \
+x-c.c \
+x-csharp.c \
+x-elisp.c \
+x-glade.c \
+x-java.c \
+x-librep.c \
+x-lisp.c \
+x-perl.c \
+x-php.c \
+x-po.c \
+x-python.c \
+x-rst.c \
+x-scheme.c \
+x-sh.c \
+x-smalltalk.c \
+x-tcl.c \
+x-ycp.c 
 
 .include <bsd.prog.mk>
 .include "${.CURDIR}/../Makefile.inc.prog"
 
-CPPFLAGS+=	-I${DIST}/gettext/intl
+.PATH: ${DIST}/gettext/gettext-tools/libuniname
+CPPFLAGS+=	-I${DIST}/gettext/gettext-tools/libuniname

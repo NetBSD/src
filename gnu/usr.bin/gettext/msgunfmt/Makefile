@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/13 00:31:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2005/04/29 15:05:02 christos Exp $
 
 PROG=	msgunfmt
-SRCS=	message.c msgunfmt.c str-list.c
 
 .include <bsd.prog.mk>
 .include "${.CURDIR}/../Makefile.inc.prog"
 
-CPPFLAGS+=	-I${DIST}/gettext/intl
+CPPFLAGS+=	-I${DIST}/gettext/gettext-tools/intl
