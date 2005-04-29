@@ -1,0 +1,38 @@
+Version 0.14.4 - April 2005
+
+* The gettext autoconf macros will now work with the forthcoming g++ 4.0.
+* Fix improved detection of the locale on MacOS X.
+
+Version 0.14.2 - January 2005
+
+* Improved detection of the locale on MacOS X.
+* The gettext autoconf macros now require autoconf 2.50 or newer.
+
+Version 0.14 - January 2004
+
+* New library: GNU.Gettext.dll contains the runtime for using GNU gettext
+  message catalogs in C#.
+
+* Special advice for Norwegian users: The language code for Norwegian
+  bokmål changed from 'no' to 'nb' recently (in 2003). During the transition
+  period, while some message catalogs for this language are installed under
+  'nb' and some older ones under 'no', it's recommended for Norwegian users to
+  set the LANGUAGE environment variable to 'nb:no' so that both newer and
+  older translations are used.
+
+Version 0.13 - November 2003
+
+* On those few platforms (NetBSD and Woe32) for which the native
+  printf()/fprintf()/... functions don't support POSIX/XSI format strings
+  with positions, replacements are provided through <libintl.h>.
+
+* New function library:
+    gettext.sh - shell functions for internationalized shell scripts
+* New program:
+    envsubst - substitutes environment variables in shell format strings
+
+Version 0.12 - May 2003
+
+* A new C++ class, called gnu::autosprintf, makes it possible to use C format
+  strings in C++. This is needed for proper internationalization of C++
+  programs.
