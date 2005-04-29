@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.271 2005/04/29 20:03:47 augustss Exp $
+.\"	$NetBSD: options.4,v 1.272 2005/04/29 22:48:25 uwe Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2327,7 +2327,11 @@ This mask is a logical-or of power-of-2s of allowable interrupts:
  3  0x0008    7  0x0080   11  0x0800    15  0x8000
 .Ed
 .It Cd options PCKBC_CNATTACH_SELFTEST
-Perform a self test of the keyboard before attaching it as a console.
+Perform a self test of the keyboard conroller before attaching it as a
+console.
+This might be necessary on machines where we boot on cold iron, and
+pckbc refuses to talk until we request a self test.
+Currently only netwinder port uses it.
 .It Cd options PCKBD_LAYOUT=layout
 Sets the default keyboard layout, see
 .Xr pckbd 4 .
