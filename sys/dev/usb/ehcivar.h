@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.18 2005/04/27 21:23:41 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ typedef struct ehci_softc {
 	bus_size_t sc_size;
 	u_int sc_offs;			/* offset to operational regs */
 
-	char sc_vendor[16];		/* vendor string for root hub */
+	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
