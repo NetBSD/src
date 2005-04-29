@@ -575,6 +575,7 @@ quotearg_n_options (int n, char const *arg, size_t argsize,
     };
   static struct slotvec slotvec0 = {sizeof slot0, slot0};
   static struct slotvec *slotvec = &slotvec0;
+  static size_t sz = sizeof(*slotvec);
 
   if (n < 0)
     abort ();
@@ -583,7 +584,7 @@ quotearg_n_options (int n, char const *arg, size_t argsize,
     {
       unsigned int n1 = n0 + 1;
 
-      if (xalloc_oversized (n1, sizeof *slotvec))
+      if (xalloc_oversized (n1, sz))
 	xalloc_die ();
 
       if (slotvec == &slotvec0)
