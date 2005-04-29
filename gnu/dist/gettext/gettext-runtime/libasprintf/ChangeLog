@@ -1,0 +1,371 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-03-22  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac (AC_CONFIG_AUX_DIR): Use ../../build-aux.
+	* Makefile.am (ACLOCAL_AMFLAGS): Replace config/m4 with m4.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-02-13  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (libasprintf.la): New rule. Needed for BeOS.
+
+2005-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.msvc (install): Update for 2004-01-18 change.
+	* Makefile.vms (install): Likewise.
+
+2005-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (EOVERFLOW): Define to a fallback if needed.
+
+2004-12-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloca_.h: Conditionalize on _GNULIB_ALLOCA_H, not _ALLOCA_H.
+
+2004-09-08  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (VASNPRINTF): Signal EOVERFLOW if the resulting length
+	is > INT_MAX.
+	* vasprintf.c (vasprintf): Don't test for length > INT_MAX any more.
+
+2004-05-14  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (VASNPRINTF): Correctly handle the case of a precision
+	that consists of a '.' followed by an empty digit string.
+	Patch by Tor Lillqvist <tml@iki.fi>.
+
+2004-04-19  Bruno Haible  <bruno@clisp.org>
+
+	* gettext.m4: Change jm_ to gl_ in all uses of AC_DEFINE'd names.
+
+2004-03-11  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (config.h.msvc): Fix the value of SIZE_MAX.
+
+2004-02-02  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (RM): New variable.
+
+2004-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.1 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14 released.
+
+2004-01-18  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (autosprintf_all.html): Renamed from autosprintf.html.
+	Works around a problem with automake-1.8: It removes autosprintf.html
+	during "make mostlyclean".
+
+2003-10-30  Paul Eggert  <eggert@twinsun.com>
+            Bruno Haible  <bruno@clisp.org>
+
+	* vasprintf.c: Include <limits.h>, <stdlib.h>.
+	(vasprintf): Fail if the resulting length doesn't fit in an 'int'.
+
+2003-12-12  Bruno Haible  <bruno@clisp.org>
+
+	Assume automake-1.8.
+	* Makefile.am (clean-local): Renamed from clean-am.
+	(html-local): Renamed from html.
+	(ps, pdf, .texi.pdf): Remove rules.
+	(TEXI2PDF): Remove variable.
+
+2003-12-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13.1 released.
+
+2003-12-09  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (MAKEINFOFLAGS): New variable.
+
+2003-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13 released.
+
+2003-11-28  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Invoke AC_C_INLINE.
+	* Makefile.am (config.h.msvc): Define SIZE_MAX and inline.
+
+2003-11-23  Paul Eggert  <eggert@twinsun.com>
+            Bruno Haible  <bruno@clisp.org>
+
+	* printf-parse.h: Don't include sys/types.h.
+	(ARG_NONE): New macro.
+	(char_directive): Change type of *arg_index fields to size_t.
+	* printf-parse.c: Don't include sys/types.h.
+	(SSIZE_MAX): Remove macro.
+	(PRINTF_PARSE): Change the type of the arg_index variables to size_t.
+	Remove unnecessary overflow check.
+	* vasnprintf.c (VASNPRINTF): Update for type change of *arg_index
+	fields.
+	* configure.ac: Don't invoke gt_TYPE_SSIZE_T.
+
+2003-11-19  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Better test for ptrdiff_t. Invoke gt_TYPE_SSIZE_T and
+	gl_XSIZE.
+
+2003-11-17  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (alloca): Remove fallback definition.
+	(freea): Remove definition.
+	(VASNPRINTF): Use alloca only for small sizes, say <= 4000 bytes.
+	Reported by Paul Eggert.
+
+2003-11-16  Paul Eggert  <eggert@twinsun.com>
+            Bruno Haible  <bruno@clisp.org>
+
+	Protect against address arithmetic overflow.
+	* printf-args.h: Include stddef.h.
+	(arguments): Change type of field 'count' to size_t.
+	* printf-args.c (printf_fetchargs): Use size_t instead of
+	'unsigned int' where appropriate.
+	* printf-parse.h: Include sys/types.h.
+	(char_directive): Change type of *arg_index fields to ssize_t.
+	(char_directives): Change type of fields 'count', max_*_length to
+	size_t.
+	* printf-parse.c: Include sys/types.h and xsize.h.
+	(SSIZE_MAX): Define fallback value.
+	(PRINTF_PARSE): Use size_t instead of 'unsigned int' and ssize_t
+	instead of 'int' where appropriate. Check a_allocated, d_allocated
+	against overflow. Reject %m$ argument numbers > SSIZE_MAX + 1.
+	* vasnprintf.c: Include xsize.h.
+	(VASNPRINTF): Use size_t instead of 'unsigned int' where appropriate.
+	Check alloca, malloc, realloc, ENSURE_ALLOCATION arguments against
+	overflow. Avoid wraparound when converting a width or precision from
+	decimal to binary.
+	* xsize.h: New file, from gnulib.
+	* Makefile.am (lib_asprintf_EXTRASOURCES): Add xsize.h.
+
+2003-11-04  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (MAKEINFO): Set LC_MESSAGES and LC_ALL to empty as well.
+
+2003-10-31  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Remove argument of FIX_MAKEFILE_COMPILE,
+	FIX_MAKEFILE_INFO.
+
+2003-10-19  Jim Meyering  <jim@meyering.net>
+
+	* vasnprintf.c (VASNPRINTF): Work around losing snprintf on HPUX 10.20.
+
+2003-08-29  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Test whether _snprintf is declared, not only existent
+	as a function.
+	* vasnprintf.c: Test HAVE_DECL__SNPRINTF instead of HAVE__SNPRINTF.
+	Test HAVE_DECL__SNWPRINTF instead of HAVE__SNWPRINTF.
+	* Makefile.am (config.h.msvc): Define HAVE_DECL__SNPRINTF instead of
+	defining snprintf as a macro.
+
+2003-08-24  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (local_wcslen): Protect against multiple definition.
+	(USE_SNPRINTF): Define also if only _snprintf() is available.
+	(SNPRINTF): Possibly define as _snprintf or _snwprintf.
+	* configure.ac: Also check for _snprintf.
+
+2003-08-11  Bruno Haible  <bruno@clisp.org>
+
+	* vasnprintf.c (local_wcslen): New function, for Solaris 2.5.1.
+	(VASNPRINTF): Use it instead of wcslen.
+	* configure.ac: Also check for wcslen.
+	* Makefile.am (config.h_vms): Set HAVE_WCSLEN.
+	(config.h.msvc): Likewise.
+
+2003-06-20  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Invoke gt_PRINTF_POSIX.
+	* lib-asprintf.h: Ignore an existing vasprintf() if it doesn't support
+	POSIX/XSI format strings.
+	* lib-asprintf.c: Likewise.
+	* Makefile.am (config.h_vms): Define HAVE_POSIX_PRINTF.
+
+2003-06-19  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac (jm_AC_TYPE_LONG_LONG): Replaces gt_TYPE_LONGLONG.
+	* printf-parse.c: Generalize to it can be compiled for wide strings.
+	(PRINTF_PARSE, CHAR_T, DIRECTIVE, DIRECTIVES): New macros.
+	* vasnprintf.c: Generalize to it can be compiled for wide strings.
+	(VASNPRINTF, CHAR_T, DIRECTIVE, DIRECTIVES, PRINTF_PARSE, USE_SNPRINTF,
+	SNPRINTF): New macros.
+	Don't include <alloca.h> if the file is used inside libintl.
+
+2003-05-30  Bruno Haible  <bruno@clisp.org>
+
+	* autosprintf.texi: Tweak @dircategory and @direntry.
+	Reported by Karl Berry <karl@freefriends.org>.
+
+2003-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12.1 released.
+
+2003-05-20  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (config.h_vms, config.h.msvc, autosprintf.h.msvc-shared):
+	Don't use $< here.
+
+2003-05-19  Bruno Haible  <bruno@clisp.org>
+
+	* windows/asprintf.rc: Include <winver.h>.
+	Reported by Perry Rapp.
+
+2003-05-18  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.msvc (DEBUGFLAGS): New variable.
+	(asprintf.lib): Use it.
+
+2003-05-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12 released.
+
+2003-04-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (config.h_vms): Renamed from config.h.vms.
+	* Makefile.vms: New variables ABIFLAGS, DEFS. Avoid rules with no
+	lines. Update library creation rule. Don't use the force target.
+	Correct wildcard syntax.
+	Suggested by Jouk Jansen <joukj@hrem.stm.tudelft.nl>.
+
+2003-04-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (docdir): Use datadir instead of prefix.
+	* Makefile.msvc (datadir): New variable.
+	(sub_docdir): Use it instead of prefix.
+	(install, installdirs): Update.
+	* Makefile.vms (datadir): New variable.
+	(sub_docdir): Use it instead of prefix.
+
+2003-03-30  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.vms: New file.
+	* Makefile.am (config.h.vms): New rule.
+	(EXTRA_DIST): Add Makefile.vms and config.h.vms.
+
+2003-03-17  Bruno Haible  <bruno@clisp.org>
+
+	Native Woe32/MSVC support.
+	* autosprintf.h.in: Renamed from autosprintf.h.
+	* Makefile.msvc: New file.
+	* README.woe32: New file.
+	* windows/dllexport.h: New file.
+	* windows/asprintf.rc: New file.
+	* Makefile.am (EXTRA_DIST): Add them and config.h.msvc and
+	autosprintf.h.in.
+	(autosprintf.h): New rule.
+	(MOSTLYCLEANFILES): Add autosprintf.h.
+	(dist-hook): Don't distribute autosprintf.h.
+	(config.h.msvc, autosprintf.h.msvc-shared): New rules.
+
+2003-02-22  Bruno Haible  <bruno@clisp.org>
+
+	* autosprintf.texi: Add comment about indices.
+	* Makefile.am (MOSTLYCLEANFILES): No need to clean the unused indices.
+	(The automake generated rule already cleans them.)
+
+2003-02-22  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (installdirs): Remove dependency, redundant with
+	automake >= 1.6.
+
+2003-02-18  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (clean-am): New rule. For Solaris cc.
+
+2003-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Renamed from configure.in. Invoke AC_CONFIG_AUX_DIR.
+	Invoke AC_FUNC_ALLOCA instead of gl_FUNC_ALLOCA. Remove redundant
+	postprocessing of Makefile.
+	* Makefile.am (ACLOCAL_AMFLAGS): Add -I ../../config/m4.
+	($(libasprintf_la_OBJECTS)): Make alloca.h dependency effective.
+
+2003-01-03  Albert Chin  <libtool@thewrittenword.com>
+
+	* ltmain.sh: Don't pass -R flags found in a .la's dependency_libs
+	variable directly down to the linker.
+	Reported by Tim Mooney <mooney@dogbert.cc.ndsu.nodak.edu>.
+
+2003-01-12  Bruno Haible  <bruno@clisp.org>
+
+	* configure.in: Invoke gl_FUNC_ALLOCA instead of AC_FUNC_ALLOCA.
+	* alloca_.h: New file, from gnulib.
+	* liballoca.h: Remove file.
+	* Makefile.am: Add snippet from gnulib module alloca.
+	(lib_asprintf_EXTRASOURCES): Remove liballoca.h.
+	* vasnprintf.c: Include alloca.h instead of liballoca.h.
+
+2003-01-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am: Make use of += for variables.
+
+2003-01-12  Bruno Haible  <bruno@clisp.org>
+
+	Portability to FreeBSD.
+	* configure.in: Invoke gt_TYPE_WINT_T.
+	* printf-args.h: Use HAVE_WINT_T, not HAVE_WCHAR_T, to check for
+	availability of wint_t.
+	* printf-argc.c: Likewise.
+	* printf-parse.c: Likewise.
+	* vasnprintf.c: Likewise.
+
+2002-12-07  Bruno Haible  <bruno@clisp.org>
+
+	Switch to autoconf-2.57 and automake-1.7.2.
+	* configure.in: Use AC_CONFIG_FILES, because the AC_OUTPUT commands
+	and not run any more when config.status is called to create a single
+	file.
+
+2002-11-13  Bruno Haible  <bruno@clisp.org>
+
+	Assume ANSI C.
+	* libstdarg.h: Remove file.
+	* Makefile.am (lib_asprintf_EXTRASOURCES): Remove libstdarg.h.
+	* asnprintf.c: Include <stdarg.h> instead of libstdarg.h.
+	(asnprintf): Use ANSI C function declarations. Use va_start instead of
+	VA_START.
+	* asprintf.c: Include <stdarg.h> instead of libstdarg.h.
+	(asnprintf): Use ANSI C function declarations. Use va_start instead of
+	VA_START.
+	* printf-args.h (PARAMS): Remove macro.
+	(printf_fetchargs): Use ANSI C function declarations.
+	* printf-args.c (printf_fetchargs): Likewise.
+	* printf-parse.h (printf_parse): Likewise.
+	* printf-parse.c (printf_parse): Likewise.
+	* vasnprintf.h (PARAMS): Remove macro.
+	(asnprintf, vasnprintf): Use ANSI C function declarations.
+	* vasnprintf.c (vasnprintf): Likewise.
+	* vasprintf.h (PARAMS): Remove macro.
+	(asprintf, vasprintf): Use ANSI C function declarations.
+	* vasprintf.c (vasprintf): Likewise.
+
+2002-10-27  Bruno Haible  <bruno@clisp.org>
+
+	* printf-args.h, printf-args.c: New files.
+	* printf-parse.h, printf-parse.c: New files.
+	* vasnprintf.h, vasnprintf.c, asnprintf.c: New files.
+	* vasprintf.h, vasprintf.c, asprintf.c: New files.
+	* lib-asprintf.h, lib-asprintf.c: New files.
+	* autosprintf.h, autosprintf.cc: New files.
+	* README, NEWS, AUTHORS, COPYING, autosprintf.texi: New files.
+	* Makefile.am, configure.in: New files.
+	* liballoca.h, libstdarg.h: New files, from gettext-0.11.6/lib.
+	* COPYING.LIB, INSTALL, config.guess, config.sub, install-sh,
+	ltmain.sh, missing, mkinstalldirs, texi2html, texinfo.tex: Standard
+	infrastructure files, from gettext-0.11.6.

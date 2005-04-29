@@ -1,0 +1,30 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-01-11  Bruno Haible  <bruno@clisp.org>
+
+	* intl.cs (GettextResourceManager, GettextResourceSet): Use casts
+	instead of 'as' expressions.
+
+2004-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.1 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14 released.
+
+2003-12-26  Bruno Haible  <bruno@clisp.org>
+
+	* intl.cs: New file.
+	* Makefile.am: New file.
+
