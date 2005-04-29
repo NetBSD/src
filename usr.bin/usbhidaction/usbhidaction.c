@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.17 2004/11/05 22:43:47 dsl Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.18 2005/04/29 17:18:30 augustss Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.17 2004/11/05 22:43:47 dsl Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.18 2005/04/29 17:18:30 augustss Exp $");
 #endif
 
 #include <stdio.h>
@@ -145,6 +145,9 @@ main(int argc, char **argv)
 		dev = devnamebuf;
 	}
 
+	if (demon && conf[0] != '/')
+		errx(1, "config file must have an absolute path, %s", conf);
+
 	fd = open(dev, O_RDWR);
 	if (fd < 0)
 		err(1, "%s", dev);
@@ -243,7 +246,6 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 	struct hid_item h;
 	int u, lo, hi, range;
 	
-
 	f = fopen(conf, "r");
 	if (f == NULL)
 		err(1, "%s", conf);
