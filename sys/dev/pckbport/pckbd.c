@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.5 2005/04/01 05:49:26 matt Exp $ */
+/* $NetBSD: pckbd.c,v 1.6 2005/04/29 10:41:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.5 2005/04/01 05:49:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.6 2005/04/29 10:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +87,14 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.5 2005/04/01 05:49:26 matt Exp $");
 
 #include <dev/pckbport/pckbportvar.h>
 
-#include <dev/pckbport/pckbdreg.h>
-#include <dev/pckbport/pckbdvar.h>
-#include <dev/pckbport/wskbdmap_mfii.h>
-
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include <dev/pckbport/pckbdreg.h>
+#include <dev/pckbport/pckbdvar.h>
+#include <dev/pckbport/wskbdmap_mfii.h>
 
 #include "locators.h"
 
