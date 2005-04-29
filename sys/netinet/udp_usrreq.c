@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.137 2005/04/25 20:37:06 manu Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.138 2005/04/29 13:06:23 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.137 2005/04/25 20:37:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138 2005/04/29 13:06:23 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1459,6 +1459,7 @@ udp4_espinudp(m, off, src, so)
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
 		printf("udp4_espinudp: m_tag_get failed\n");
+		m_freem(n);
 		return 0;
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
