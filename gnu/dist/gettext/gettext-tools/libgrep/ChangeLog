@@ -1,0 +1,71 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.msvc (INCLUDES): Add -I., needed for <regex.h>, and
+	-I..\intl, needed for <libintl.h>.
+
+2005-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* libgrep.h: Add extern "C" for C++.
+
+2003-07-08  David Kaelbling  <drk@sgi.com>
+
+	* dfa.c (lex): Remove non-constant initializers.
+
+2005-02-08  Bruno Haible  <bruno@clisp.org>
+
+	* kwset.h (kwsincr, kwsprep): Change return type to 'const char *'.
+	* kwset.c (kwsincr, kwsprep): Likewise.
+
+2005-02-03  Bruno Haible  <bruno@clisp.org>
+
+	* dfa.c (dfaexec): Avoid continuing the loop past the end of the
+	string.
+
+2005-01-27  Bruno Haible  <bruno@clisp.org>
+
+	* dfa.c (parse_bracket_exp_mb): Don't confuse wctype_t with wchar_t.
+
+2005-01-27  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (libgrep_a_DEPENDENCIES): New variable.
+	(AM_CPPFLAGS): Add -I../intl, so that libintl.h is found before gettext
+	is installed.
+
+2005-01-14  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (EXTRA_DIST): Add $(LIBADD_SOURCE).
+
+2005-01-08  Bruno Haible  <bruno@clisp.org>
+
+	* libgrep.h: New file.
+	* kwset.h: From grep-2.5.1 with modifications.
+	* kwset.c: From grep-2.5.1 with modifications.
+	* dfa.h: From grep-2.5.1 with modifications.
+	* dfa.c: From grep-2.5.1 with modifications.
+	* m-common.h: New file.
+	* m-common.c: New file, with code from grep-2.5.1/src/search.c.
+	* m-fgrep.c: New file, with code from grep-2.5.1/src/search.c.
+	* m-regex.c: New file, with code from grep-2.5.1/src/search.c.
+	* hard-locale.h: New file, from gnulib.
+	* hard-locale.c: New file, from gnulib.
+	* memchr.c: New file, from gnulib.
+	* regex.h: New file, from gnulib.
+	* regex.c: New file, from gnulib.
+	* strdup.h: New file, from gnulib.
+	* strdup.c: New file, from gnulib.
+	* Makefile.am: New file.
+	* Makefile.msvc: New file.
+	* Makefile.vms: New file.
+

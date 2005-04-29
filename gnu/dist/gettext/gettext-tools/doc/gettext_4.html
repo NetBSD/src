@@ -1,0 +1,546 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52a
+     from gettext.texi on 11 April 2005 -->
+
+<TITLE>GNU gettext utilities - 4  Making the PO Template File</TITLE>
+</HEAD>
+<BODY>
+Go to the <A HREF="gettext_1.html">first</A>, <A HREF="gettext_3.html">previous</A>, <A HREF="gettext_5.html">next</A>, <A HREF="gettext_22.html">last</A> section, <A HREF="gettext_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC22" HREF="gettext_toc.html#TOC22">4  Making the PO Template File</A></H1>
+<P>
+<A NAME="IDX188"></A>
+
+</P>
+<P>
+After preparing the sources, the programmer creates a PO template file.
+This section explains how to use <CODE>xgettext</CODE> for this purpose.
+
+</P>
+<P>
+<CODE>xgettext</CODE> creates a file named <TT>`<VAR>domainname</VAR>.po&acute;</TT>.  You
+should then rename it to <TT>`<VAR>domainname</VAR>.pot&acute;</TT>.  (Why doesn't
+<CODE>xgettext</CODE> create it under the name <TT>`<VAR>domainname</VAR>.pot&acute;</TT>
+right away?  The answer is: for historical reasons.  When <CODE>xgettext</CODE>
+was specified, the distinction between a PO file and PO file template
+was fuzzy, and the suffix <SAMP>`.pot&acute;</SAMP> wasn't in use at that time.)
+
+</P>
+
+
+
+<H2><A NAME="SEC23" HREF="gettext_toc.html#TOC23">4.1  Invoking the <CODE>xgettext</CODE> Program</A></H2>
+
+<P>
+<A NAME="IDX189"></A>
+<A NAME="IDX190"></A>
+
+<PRE>
+xgettext [<VAR>option</VAR>] [<VAR>inputfile</VAR>] ...
+</PRE>
+
+<P>
+The <CODE>xgettext</CODE> program extracts translatable strings from given
+input files.
+
+</P>
+
+
+<H3><A NAME="SEC24" HREF="gettext_toc.html#TOC24">4.1.1  Input file location</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`<VAR>inputfile</VAR> ...&acute;</SAMP>
+<DD>
+Input files.
+
+<DT><SAMP>`-f <VAR>file</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--files-from=<VAR>file</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX191"></A>
+<A NAME="IDX192"></A>
+Read the names of the input files from <VAR>file</VAR> instead of getting
+them from the command line.
+
+<DT><SAMP>`-D <VAR>directory</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--directory=<VAR>directory</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX193"></A>
+<A NAME="IDX194"></A>
+Add <VAR>directory</VAR> to the list of directories.  Source files are
+searched relative to this list of directories.  The resulting <TT>`.po&acute;</TT>
+file will be written relative to the current directory, though.
+
+</DL>
+
+<P>
+If <VAR>inputfile</VAR> is <SAMP>`-&acute;</SAMP>, standard input is read.
+
+</P>
+
+
+<H3><A NAME="SEC25" HREF="gettext_toc.html#TOC25">4.1.2  Output file location</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`-d <VAR>name</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--default-domain=<VAR>name</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX195"></A>
+<A NAME="IDX196"></A>
+Use <TT>`<VAR>name</VAR>.po&acute;</TT> for output (instead of <TT>`messages.po&acute;</TT>).
+
+<DT><SAMP>`-o <VAR>file</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--output=<VAR>file</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX197"></A>
+<A NAME="IDX198"></A>
+Write output to specified file (instead of <TT>`<VAR>name</VAR>.po&acute;</TT> or
+<TT>`messages.po&acute;</TT>).
+
+<DT><SAMP>`-p <VAR>dir</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--output-dir=<VAR>dir</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX199"></A>
+<A NAME="IDX200"></A>
+Output files will be placed in directory <VAR>dir</VAR>.
+
+</DL>
+
+<P>
+<A NAME="IDX201"></A>
+If the output <VAR>file</VAR> is <SAMP>`-&acute;</SAMP> or <SAMP>`/dev/stdout&acute;</SAMP>, the output
+is written to standard output.
+
+</P>
+
+
+<H3><A NAME="SEC26" HREF="gettext_toc.html#TOC26">4.1.3  Choice of input file language</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`-L <VAR>name</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--language=<VAR>name</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX202"></A>
+<A NAME="IDX203"></A>
+<A NAME="IDX204"></A>
+Specifies the language of the input files.  The supported languages
+are <CODE>C</CODE>, <CODE>C++</CODE>, <CODE>ObjectiveC</CODE>, <CODE>PO</CODE>, <CODE>Python</CODE>,
+<CODE>Lisp</CODE>, <CODE>EmacsLisp</CODE>, <CODE>librep</CODE>, <CODE>Scheme</CODE>, <CODE>Smalltalk</CODE>,
+<CODE>Java</CODE>, <CODE>JavaProperties</CODE>, <CODE>C#</CODE>, <CODE>awk</CODE>, <CODE>YCP</CODE>,
+<CODE>Tcl</CODE>, <CODE>Perl</CODE>, <CODE>PHP</CODE>, <CODE>GCC-source</CODE>, <CODE>NXStringTable</CODE>,
+<CODE>RST</CODE>, <CODE>Glade</CODE>.
+
+<DT><SAMP>`-C&acute;</SAMP>
+<DD>
+<DT><SAMP>`--c++&acute;</SAMP>
+<DD>
+<A NAME="IDX205"></A>
+<A NAME="IDX206"></A>
+This is a shorthand for <CODE>--language=C++</CODE>.
+
+</DL>
+
+<P>
+By default the language is guessed depending on the input file name
+extension.
+
+</P>
+
+
+<H3><A NAME="SEC27" HREF="gettext_toc.html#TOC27">4.1.4  Input file interpretation</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`--from-code=<VAR>name</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX207"></A>
+Specifies the encoding of the input files.  This option is needed only
+if some untranslated message strings or their corresponding comments
+contain non-ASCII characters.  Note that Python, Tcl, and Glade input
+files are always assumed to be in UTF-8, regardless of this option.
+
+</DL>
+
+<P>
+By default the input files are assumed to be in ASCII.
+
+</P>
+
+
+<H3><A NAME="SEC28" HREF="gettext_toc.html#TOC28">4.1.5  Operation mode</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`-j&acute;</SAMP>
+<DD>
+<DT><SAMP>`--join-existing&acute;</SAMP>
+<DD>
+<A NAME="IDX208"></A>
+<A NAME="IDX209"></A>
+Join messages with existing file.
+
+<DT><SAMP>`-x <VAR>file</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--exclude-file=<VAR>file</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX210"></A>
+<A NAME="IDX211"></A>
+Entries from <VAR>file</VAR> are not extracted.  <VAR>file</VAR> should be a PO or
+POT file.
+
+<DT><SAMP>`-c [<VAR>tag</VAR>]&acute;</SAMP>
+<DD>
+<DT><SAMP>`--add-comments[=<VAR>tag</VAR>]&acute;</SAMP>
+<DD>
+<A NAME="IDX212"></A>
+<A NAME="IDX213"></A>
+Place comment block with <VAR>tag</VAR> (or those preceding keyword lines)
+in output file.
+
+</DL>
+
+
+
+<H3><A NAME="SEC29" HREF="gettext_toc.html#TOC29">4.1.6  Language specific options</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`-a&acute;</SAMP>
+<DD>
+<DT><SAMP>`--extract-all&acute;</SAMP>
+<DD>
+<A NAME="IDX214"></A>
+<A NAME="IDX215"></A>
+Extract all strings.
+
+This option has an effect with most languages, namely C, C++, ObjectiveC,
+Shell, Python, Lisp, EmacsLisp, librep, Java, C#, awk, Tcl, Perl, PHP,
+GCC-source, Glade.
+
+<DT><SAMP>`-k <VAR>keywordspec</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--keyword[=<VAR>keywordspec</VAR>]&acute;</SAMP>
+<DD>
+<A NAME="IDX216"></A>
+<A NAME="IDX217"></A>
+Additional keyword to be looked for (without <VAR>keywordspec</VAR> means not to
+use default keywords).
+
+<A NAME="IDX218"></A>
+If <VAR>keywordspec</VAR> is a C identifer <VAR>id</VAR>, <CODE>xgettext</CODE> looks
+for strings in the first argument of each call to the function or macro
+<VAR>id</VAR>.  If <VAR>keywordspec</VAR> is of the form
+<SAMP>`<VAR>id</VAR>:<VAR>argnum</VAR>&acute;</SAMP>, <CODE>xgettext</CODE> looks for strings in the
+<VAR>argnum</VAR>th argument of the call.  If <VAR>keywordspec</VAR> is of the form
+<SAMP>`<VAR>id</VAR>:<VAR>argnum1</VAR>,<VAR>argnum2</VAR>&acute;</SAMP>, <CODE>xgettext</CODE> looks for
+strings in the <VAR>argnum1</VAR>st argument and in the <VAR>argnum2</VAR>nd argument
+of the call, and treats them as singular/plural variants for a message
+with plural handling.
+<BR>
+The default keyword specifications, which are always looked for if not
+explicitly disabled, are <CODE>gettext</CODE>, <CODE>dgettext:2</CODE>,
+<CODE>dcgettext:2</CODE>, <CODE>ngettext:1,2</CODE>, <CODE>dngettext:2,3</CODE>,
+<CODE>dcngettext:2,3</CODE>, and <CODE>gettext_noop</CODE>.
+<BR>
+This option has an effect with most languages, namely C, C++, ObjectiveC,
+Shell, Python, Lisp, EmacsLisp, librep, Java, C#, awk, Tcl, Perl, PHP,
+GCC-source, Glade.
+
+<DT><SAMP>`--flag=<VAR>word</VAR>:<VAR>arg</VAR>:<VAR>flag</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX219"></A>
+Specifies additional flags for strings occurring as part of the <VAR>arg</VAR>th
+argument of the function <VAR>word</VAR>.  The possible flags are the possible
+format string indicators, such as <SAMP>`c-format&acute;</SAMP>, and their negations,
+such as <SAMP>`no-c-format&acute;</SAMP>, possibly prefixed with <SAMP>`pass-&acute;</SAMP>.
+<BR>
+<A NAME="IDX220"></A>
+The meaning of <CODE>--flag=<VAR>function</VAR>:<VAR>arg</VAR>:<VAR>lang</VAR>-format</CODE>
+is that in language <VAR>lang</VAR>, the specified <VAR>function</VAR> expects as
+<VAR>arg</VAR>th argument a format string.  (For those of you familiar with
+GCC function attributes, <CODE>--flag=<VAR>function</VAR>:<VAR>arg</VAR>:c-format</CODE> is
+roughly equivalent to the declaration
+<SAMP>`__attribute__ ((__format__ (__printf__, <VAR>arg</VAR>, ...)))&acute;</SAMP> attached
+to <VAR>function</VAR> in a C source file.)
+For example, if you use the <SAMP>`error&acute;</SAMP> function from GNU libc, you can
+specify its behaviour through <CODE>--flag=error:3:c-format</CODE>.  The effect of
+this specification is that <CODE>xgettext</CODE> will mark as format strings all
+<CODE>gettext</CODE> invocations that occur as <VAR>arg</VAR>th argument of
+<VAR>function</VAR>.
+This is useful when such strings contain no format string directives:
+together with the checks done by <SAMP>`msgfmt -c&acute;</SAMP> it will ensure that
+translators cannot accidentally use format string directives that would
+lead to a crash at runtime.
+<BR>
+<A NAME="IDX221"></A>
+The meaning of <CODE>--flag=<VAR>function</VAR>:<VAR>arg</VAR>:pass-<VAR>lang</VAR>-format</CODE>
+is that in language <VAR>lang</VAR>, if the <VAR>function</VAR> call occurs in a
+position that must yield a format string, then its <VAR>arg</VAR>th argument
+must yield a format string of the same type as well.  (If you know GCC
+function attributes, the <CODE>--flag=<VAR>function</VAR>:<VAR>arg</VAR>:pass-c-format</CODE>
+option is roughly equivalent to the declaration
+<SAMP>`__attribute__ ((__format_arg__ (<VAR>arg</VAR>)))&acute;</SAMP> attached to <VAR>function</VAR>
+in a C source file.)
+For example, if you use the <SAMP>`_&acute;</SAMP> shortcut for the <CODE>gettext</CODE> function,
+you should use <CODE>--flag=_:1:pass-c-format</CODE>.  The effect of this
+specification is that <CODE>xgettext</CODE> will propagate a format string
+requirement for a <CODE>_("string")</CODE> call to its first argument, the literal
+<CODE>"string"</CODE>, and thus mark it as a format string.
+This is useful when such strings contain no format string directives:
+together with the checks done by <SAMP>`msgfmt -c&acute;</SAMP> it will ensure that
+translators cannot accidentally use format string directives that would
+lead to a crash at runtime.
+<BR>
+This option has an effect with most languages, namely C, C++, ObjectiveC,
+Shell, Python, Lisp, EmacsLisp, librep, Scheme, Java, C#, awk, YCP, Tcl, Perl, PHP,
+GCC-source.
+
+<DT><SAMP>`-T&acute;</SAMP>
+<DD>
+<DT><SAMP>`--trigraphs&acute;</SAMP>
+<DD>
+<A NAME="IDX222"></A>
+<A NAME="IDX223"></A>
+<A NAME="IDX224"></A>
+Understand ANSI C trigraphs for input.
+<BR>
+This option has an effect only with the languages C, C++, ObjectiveC.
+
+<DT><SAMP>`--qt&acute;</SAMP>
+<DD>
+<A NAME="IDX225"></A>
+<A NAME="IDX226"></A>
+Recognize Qt format strings.
+<BR>
+This option has an effect only with the language C++.
+
+<DT><SAMP>`--debug&acute;</SAMP>
+<DD>
+<A NAME="IDX227"></A>
+<A NAME="IDX228"></A>
+Use the flags <CODE>c-format</CODE> and <CODE>possible-c-format</CODE> to show who was
+responsible for marking a message as a format string.  The latter form is
+used if the <CODE>xgettext</CODE> program decided, the format form is used if
+the programmer prescribed it.
+
+By default only the <CODE>c-format</CODE> form is used.  The translator should
+not have to care about these details.
+
+</DL>
+
+<P>
+This implementation of <CODE>xgettext</CODE> is able to process a few awkward
+cases, like strings in preprocessor macros, ANSI concatenation of
+adjacent strings, and escaped end of lines for continued strings.
+
+</P>
+
+
+<H3><A NAME="SEC30" HREF="gettext_toc.html#TOC30">4.1.7  Output details</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`--force-po&acute;</SAMP>
+<DD>
+<A NAME="IDX229"></A>
+Always write an output file even if no message is defined.
+
+<DT><SAMP>`-i&acute;</SAMP>
+<DD>
+<DT><SAMP>`--indent&acute;</SAMP>
+<DD>
+<A NAME="IDX230"></A>
+<A NAME="IDX231"></A>
+Write the .po file using indented style.
+
+<DT><SAMP>`--no-location&acute;</SAMP>
+<DD>
+<A NAME="IDX232"></A>
+Do not write <SAMP>`#: <VAR>filename</VAR>:<VAR>line</VAR>&acute;</SAMP> lines.
+
+<DT><SAMP>`-n&acute;</SAMP>
+<DD>
+<DT><SAMP>`--add-location&acute;</SAMP>
+<DD>
+<A NAME="IDX233"></A>
+<A NAME="IDX234"></A>
+Generate <SAMP>`#: <VAR>filename</VAR>:<VAR>line</VAR>&acute;</SAMP> lines (default).
+
+<DT><SAMP>`--strict&acute;</SAMP>
+<DD>
+<A NAME="IDX235"></A>
+Write out a strict Uniforum conforming PO file.  Note that this
+Uniforum format should be avoided because it doesn't support the
+GNU extensions.
+
+<DT><SAMP>`--properties-output&acute;</SAMP>
+<DD>
+<A NAME="IDX236"></A>
+Write out a Java ResourceBundle in Java <CODE>.properties</CODE> syntax.  Note
+that this file format doesn't support plural forms and silently drops
+obsolete messages.
+
+<DT><SAMP>`--stringtable-output&acute;</SAMP>
+<DD>
+<A NAME="IDX237"></A>
+Write out a NeXTstep/GNUstep localized resource file in <CODE>.strings</CODE> syntax.
+Note that this file format doesn't support plural forms.
+
+<DT><SAMP>`-w <VAR>number</VAR>&acute;</SAMP>
+<DD>
+<DT><SAMP>`--width=<VAR>number</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX238"></A>
+<A NAME="IDX239"></A>
+Set the output page width.  Long strings in the output files will be
+split across multiple lines in order to ensure that each line's width
+(= number of screen columns) is less or equal to the given <VAR>number</VAR>.
+
+<DT><SAMP>`--no-wrap&acute;</SAMP>
+<DD>
+<A NAME="IDX240"></A>
+Do not break long message lines.  Message lines whose width exceeds the
+output page width will not be split into several lines.  Only file reference
+lines which are wider than the output page width will be split.
+
+<DT><SAMP>`-s&acute;</SAMP>
+<DD>
+<DT><SAMP>`--sort-output&acute;</SAMP>
+<DD>
+<A NAME="IDX241"></A>
+<A NAME="IDX242"></A>
+<A NAME="IDX243"></A>
+Generate sorted output.  Note that using this option makes it much harder
+for the translator to understand each message's context.
+
+<DT><SAMP>`-F&acute;</SAMP>
+<DD>
+<DT><SAMP>`--sort-by-file&acute;</SAMP>
+<DD>
+<A NAME="IDX244"></A>
+<A NAME="IDX245"></A>
+Sort output by file location.
+
+<DT><SAMP>`--omit-header&acute;</SAMP>
+<DD>
+<A NAME="IDX246"></A>
+Don't write header with <SAMP>`msgid ""&acute;</SAMP> entry.
+
+<A NAME="IDX247"></A>
+This is useful for testing purposes because it eliminates a source
+of variance for generated <CODE>.gmo</CODE> files.  With <CODE>--omit-header</CODE>,
+two invocations of <CODE>xgettext</CODE> on the same files with the same
+options at different times are guaranteed to produce the same results.
+
+<DT><SAMP>`--copyright-holder=<VAR>string</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX248"></A>
+Set the copyright holder in the output.  <VAR>string</VAR> should be the
+copyright holder of the surrounding package.  (Note that the msgstr
+strings, extracted from the package's sources, belong to the copyright
+holder of the package.)  Translators are expected to transfer or disclaim
+the copyright for their translations, so that package maintainers can
+distribute them without legal risk.  If <VAR>string</VAR> is empty, the output
+files are marked as being in the public domain; in this case, the translators
+are expected to disclaim their copyright, again so that package maintainers
+can distribute them without legal risk.
+
+The default value for <VAR>string</VAR> is the Free Software Foundation, Inc.,
+simply because <CODE>xgettext</CODE> was first used in the GNU project.
+
+<DT><SAMP>`--foreign-user&acute;</SAMP>
+<DD>
+<A NAME="IDX249"></A>
+Omit FSF copyright in output.  This option is equivalent to
+<SAMP>`--copyright-holder="&acute;</SAMP>.  It can be useful for packages outside the GNU
+project that want their translations to be in the public domain.
+
+<DT><SAMP>`--msgid-bugs-address=<VAR>email@address</VAR>&acute;</SAMP>
+<DD>
+<A NAME="IDX250"></A>
+Set the reporting address for msgid bugs.  This is the email address or URL
+to which the translators shall report bugs in the untranslated strings:
+
+
+<UL>
+<LI>Strings which are not entire sentences, see the maintainer guidelines
+
+in section <A HREF="gettext_3.html#SEC15">3.2  Preparing Translatable Strings</A>.
+<LI>Strings which use unclear terms or require additional context to be
+
+understood.
+<LI>Strings which make invalid assumptions about notation of date, time or
+
+money.
+<LI>Pluralisation problems.
+
+<LI>Incorrect English spelling.
+
+<LI>Incorrect formatting.
+
+</UL>
+
+It can be your email address, or a mailing list address where translators
+can write to without being subscribed, or the URL of a web page through
+which the translators can contact you.
+
+The default value is empty, which means that translators will be clueless!
+Don't forget to specify this option.
+
+<DT><SAMP>`-m [<VAR>string</VAR>]&acute;</SAMP>
+<DD>
+<DT><SAMP>`--msgstr-prefix[=<VAR>string</VAR>]&acute;</SAMP>
+<DD>
+<A NAME="IDX251"></A>
+<A NAME="IDX252"></A>
+Use <VAR>string</VAR> (or "" if not specified) as prefix for msgstr entries.
+
+<DT><SAMP>`-M [<VAR>string</VAR>]&acute;</SAMP>
+<DD>
+<DT><SAMP>`--msgstr-suffix[=<VAR>string</VAR>]&acute;</SAMP>
+<DD>
+<A NAME="IDX253"></A>
+<A NAME="IDX254"></A>
+Use <VAR>string</VAR> (or "" if not specified) as suffix for msgstr entries.
+
+</DL>
+
+
+
+<H3><A NAME="SEC31" HREF="gettext_toc.html#TOC31">4.1.8  Informative output</A></H3>
+
+<DL COMPACT>
+
+<DT><SAMP>`-h&acute;</SAMP>
+<DD>
+<DT><SAMP>`--help&acute;</SAMP>
+<DD>
+<A NAME="IDX255"></A>
+<A NAME="IDX256"></A>
+Display this help and exit.
+
+<DT><SAMP>`-V&acute;</SAMP>
+<DD>
+<DT><SAMP>`--version&acute;</SAMP>
+<DD>
+<A NAME="IDX257"></A>
+<A NAME="IDX258"></A>
+Output version information and exit.
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="gettext_1.html">first</A>, <A HREF="gettext_3.html">previous</A>, <A HREF="gettext_5.html">next</A>, <A HREF="gettext_22.html">last</A> section, <A HREF="gettext_toc.html">table of contents</A>.
+</BODY>
+</HTML>

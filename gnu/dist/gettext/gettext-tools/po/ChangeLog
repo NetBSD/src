@@ -1,0 +1,363 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* it.po: Update from Marco Colombo <m.colombo@ed.ac.uk>.
+	* ru.po: Update from Oleg S. Tihonov <ost@tatnipi.ru>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-03-13  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (Makefile): Depend on Makevars.
+	Reported by Alexandre Duret-Lutz <adl@src.lip6.fr>.
+
+2005-03-06  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (dist2): Fail if some of the files to be distributed
+	do not exist or cannot be copied.
+	Suggested by Alexandre Duret-Lutz <adl@src.lip6.fr>.
+
+2005-03-06  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (DISTFILES): Remove $(DOMAIN).pot, stamp-po.
+	(stamp-po): Do nothing if $(DOMAIN).pot does not exist.
+	(dist2): Depend on stamp-po. If $(DOMAIN).pot exists, distribute also
+	$(DOMAIN).pot and stamp-po.
+	Reported by Alexandre Duret-Lutz <adl@src.lip6.fr>.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-02-21  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* ru.po: Update from Oleg S. Tihonov <tihonov@ffke-campus.mipt.ru>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+	* tr.po: Update from Nilgün Belma Bugüner <nilgun@superonline.com>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2005-02-06  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (PACKAGE_BUGREPORT): New variable.
+	($(DOMAIN).pot-update): If MSGID_BUGS_ADDRESS is empty and
+	PACKAGE_BUGREPORT is available, use the latter.
+	Reported by Simon Josefsson <jas@extundo.com>.
+
+2005-01-26  Bruno Haible  <bruno@clisp.org>
+
+	* ru.po: Update from Oleg S. Tihonov <tihonov@ffke-campus.mipt.ru>.
+
+2005-01-06  Bruno Haible  <bruno@clisp.org>
+
+	* uk.po: New file, from Maxim V. Dziumanenko <mvd@mylinux.com.ua>.
+	* de.po: Downgrade to old orthography from Karl Eichwalder <ke@suse.de>.
+	* LINGUAS: Add uk.
+
+2004-09-06  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Update.
+
+2004-09-06  Bruno Haible  <bruno@clisp.org>
+
+	* Makevars (XGETTEXT_OPTIONS): Recognize error_logger calls.
+
+2004-09-05  Bruno Haible  <bruno@clisp.org>
+
+	* Makevars (XGETTEXT_OPTIONS): Recognize po_error and po_error_at_line.
+
+2004-03-21  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* es.po: Update from Max de Mendizábal <max@upn.mx>.
+	* sr.po: Update from Danilo Segan <dsegan@gmx.net>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2004-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.1 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+	* tr.po: Update from Nilgün Belma Bugüner <nilgun@superonline.com>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2004-01-17  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2004-01-16  Bruno Haible  <bruno@clisp.org>
+
+	Create en@quot.po when it doesn't exist.
+	* Makefile.in.in (.SUFFIXES): Add .po-create.
+	($(POFILES)): Invoke .po-create target when the PO file does not exist.
+	(.nop.po-create): New rule.
+	* Rules-quot (en@quot.po-create, en@boldquot.po-create): New rules.
+
+2003-12-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13.1 released.
+
+2003-12-07  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* es.po: Update from Max de Mendizábal <max@upn.mx>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+	* sr.po: Update from Danilo Segan <dsegan@gmx.net>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+	* tr.po: Update from Nilgün Belma Bugüner <nilgun@superonline.com>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2003-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13 released.
+
+2003-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* es.po: Update from Max de Mendizábal <max@upn.mx>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+	* sr.po: New file, from Danilo Segan <dsegan@gmx.net>.
+	* LINGUAS: Add sr.
+
+2003-11-24  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl> and
+	Jakub Bogusz <qboosh@pld.org.pl>.
+	* ro.po: New file, from Eugen Hoanca <eugenh@urban-grafx.ro>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+	* tr.po: Update from Nilgün Belma Bugüner <nilgun@superonline.com>.
+	* LINGUAS: Add ro.
+
+2003-11-22  Bruno Haible  <bruno@clisp.org>
+
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+
+2003-11-19  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* zh_CN.po: Update from Funda Wang <fundawang@linux.net.cn>.
+
+2003-11-09  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (stamp-po): Remake all GMOFILES, not just those
+	needed in this build. This is necessary because stamp-po persists
+	across "make distclean".
+
+2003-11-05  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/user-email.sh.in.
+
+2003-10-19  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/format-qt.c and src/write-qt.c.
+
+2003-10-14  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/read-stringtable.c.
+
+2003-10-09  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/java.c.
+
+2003-10-05  Bruno Haible  <bruno@clisp.org>
+
+	* Makevars (XGETTEXT_OPTIONS): Add --flag options.
+
+2003-09-14  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/format-sh.c, src/x-sh.c, lib/closeout.c.
+
+2003-08-25  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add format-gcc-internal.c.
+
+2003-08-22  Bruno Haible  <bruno@clisp.org>
+
+	* zh_CN.po: New file, from Funda Wang <fundawang@linux.net.cn>.
+	* LINGUAS: Add zh_CN.
+
+2003-07-05  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add format-perl-brace.c, remove format-perl-bracket.c.
+
+2003-07-31  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+
+2003-06-22  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add lib/w32spawn.h, src/read-properties.c,
+	(both present since gettext-0.12), src/format-perl-bracket.c.
+
+2003-06-22  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in: Add a version number, to be used by intltools.
+
+2003-06-12  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Remove duplicate entry.
+
+2003-06-11  Guido Flohr  <guido@imperia.net>
+
+	* POTFILES.in: Add src/format-perl.c and src/x-perl.c.
+
+2003-06-11  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+
+2003-05-27  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+
+2003-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12.1 released.
+
+2003-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+	* ko.po: Update from Changwoo Ryu <cwryu@debian.org>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+	* tr.po: Update from Nilgün Belma Bugüner <nilgun@superonline.com>.
+
+2003-05-20  Bruno Haible  <bruno@clisp.org>
+
+	* fr.po: Update from Michel Robitaille <robitail@iro.umontreal.ca>.
+
+2003-05-19  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+
+2003-05-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12 released.
+
+2003-05-12  Bruno Haible  <bruno@clisp.org>
+
+	* es.po: Update from Max de Mendizábal <max@upn.mx>.
+
+2003-05-08  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* sl.po: Update from
+	Primož Peterlin <primoz.peterlin@biofiz.mf.uni-lj.si>.
+
+2003-05-07  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+
+2003-04-29  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (stamp-po, update-po): Avoid infinite recursion if
+	LINGUAS is empty.
+
+2003-04-22  Bruno Haible  <bruno@clisp.org>
+
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+
+2003-04-12  Bruno Haible  <bruno@clisp.org>
+
+	VMS support.
+	* Rules-vms: New file.
+	* Makefile.vms.sh: New file.
+
+2003-03-17  Bruno Haible  <bruno@clisp.org>
+
+	Native Woe32/MSVC support.
+	* Makefile.msvc.sh: New file.
+	* Rules-msvc: New file.
+
+2003-03-29  Bruno Haible  <bruno@clisp.org>
+
+	* da.po: Update from Keld Simonsen <keld@dkuug.dk>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* sl.po: Update from
+	Primož Peterlin <primoz.peterlin@biofiz.mf.uni-lj.si>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+
+2003-02-28  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in.in (mkinstalldirs): Simplify. Prepending
+	"$(top_builddir)/" in the case of a relative $srcdir is now handled
+	in gettext.m4.
+
+2003-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* ca.po: Update from Ivan Vilata i Balaguer <ivan@selidor.net>.
+	* de.po: Update from Karl Eichwalder <ke@suse.de>.
+	* ja.po: Update from Masahito Yamaga <ma@yama-ga.com>.
+	* pl.po: Update from Rafał Maszkowski <rzm@icm.edu.pl>.
+	* ru.po: Update from Oleg S. Tihonov <tihonov@ffke-campus.mipt.ru>.
+	* sv.po: Update from Jan Djärv <jan.h.d@swipnet.se>.
+
+2003-02-23  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Add src/format-invalid.h. Replace src/po-gram-gen.c
+	with src/po-gram-gen.y.
+
+2003-02-16  Bruno Haible  <bruno@clisp.org>
+
+	* Makevars.template: New file.
+	* Makevars (MSGID_BUGS_ADDRESS): New variable.
+	* Makefile.in.in (DISTFILES.common): Remove Makevars.
+	(DISTFILES): Add Makevars here.
+	($(DOMAIN).pot-update): Pass --msgid-bugs-address to xgettext.
+	(install-data): Install Makevars.template. Uninstall Makevars.
+	(uninstall-data): Uninstall Makevars.template.
+	(dist2): Distribute Makevars.template, in gettext-tools package only.
+
+2003-02-12  Bruno Haible  <bruno@clisp.org>
+
+	* POTFILES.in: Bring up to date.
+
+	* Makefile.in.in (install-data, installdirs-data, uninstall-data):
+	Special case package 'gettext-tools'.
+	(.nop.po-update): Likewise.
+	(dist2): Distribute also ChangeLog.[0-9] if present.
+
+
+See ChangeLog.0 for earlier changes.

@@ -1,0 +1,127 @@
+2005-04-11  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.4 released.
+
+2005-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.3 released.
+
+2005-02-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.2 released.
+
+2005-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (test_names_LDADD): Add INTL_MACOSX_LIBS.
+
+2004-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14.1 released.
+
+2004-01-28  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.14 released.
+
+2003-12-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13.1 released.
+
+2003-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.13 released.
+
+2003-11-15  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (AM_CPPFLAGS): Renamed from INCLUDES.
+
+2003-10-09  Bruno Haible  <bruno@clisp.org>
+
+	* test-names.c: Include xalloc.h instead of xmalloc.h.
+
+2003-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12.1 released.
+
+2003-05-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.12 released.
+
+2003-04-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.vms: New variables ABIFLAGS, DEFS. Avoid rules with no
+	lines. Update library creation rule. Don't use the force target.
+	Correct wildcard syntax.
+	Suggested by Jouk Jansen <joukj@hrem.stm.tudelft.nl>.
+
+2003-03-30  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.vms: New file.
+	* Makefile.am (EXTRA_DIST): Add Makefile.vms.
+
+2003-03-17  Bruno Haible  <bruno@clisp.org>
+
+	Native Woe32/MSVC support.
+	* Makefile.msvc: New file.
+	* Makefile.am (EXTRA_DIST): Add it.
+
+2003-01-12  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am: Make use of += for variables.
+
+2002-12-19  Bruno Haible  <bruno@clisp.org>
+
+	* gen-uninames: Update for Unicode 3.2.0.
+	* uninames.h: Regenerated for Unicode 3.2.0 by gen-uninames.
+	* uniname.c: (unicode_character_name, unicode_name_character): Update
+	for Unicode 3.2.0.
+	* UnicodeDataNames.txt: Update for Unicode 3.2.0.
+
+2002-11-13  Bruno Haible  <bruno@clisp.org>
+
+	Assume ANSI C.
+	* uniname.h (PARAMS): Remove macro.
+	(unicode_character_name, unicode_name_character): Use ANSI C function
+	declarations.
+	* uniname.c (unicode_name_word, unicode_name_word_lookup,
+	unicode_character_name, unicode_name_character): Likewise.
+	* test-names.c (getfield, fill_names, main): Likewise.
+
+2002-08-06  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.11.5 released.
+
+2002-07-25  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.11.4 released.
+
+2002-07-17  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.11.3 released.
+
+2002-04-24  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.11.2 released.
+
+2002-03-12  Bruno Haible  <bruno@clisp.org>
+
+	* gettext-0.11.1 released.
+
+2002-03-07  Bruno Haible  <bruno@clisp.org>
+
+	* uniname.c: Include <stdio.h>, needed by assert() on SunOS 4.
+
+2002-02-19  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (EXTRA_DIST): Add $(TESTS).
+
+2002-02-02  Bruno Haible  <bruno@clisp.org>
+
+	* gen-uninames: New file.
+	* uninames.h: New file.
+	* uniname.h: New file.
+	* uniname.c: New file.
+	* test-names.c: New file.
+	* test-names.sh: New file.
+	* UnicodeDataNames.txt: New file.
+	* Makefile.am: New file.
+
