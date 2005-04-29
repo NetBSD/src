@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.469 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.470 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -32,3 +32,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	am-utils: Upgrade to 6.1-rc2 [christos 20050423]
 	crypto: Upgrade to OpenSSL 0.9.7g [christos 20050423]
 	gettext: Upgrade to 0.14.4 [christos 20050429]
+	sparc64: Switch to wscons [martin 20050429]
