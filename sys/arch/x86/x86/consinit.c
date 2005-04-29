@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2005/04/29 20:11:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/04/29 20:11:01 augustss Exp $");
 
 #include "opt_kgdb.h"
 
@@ -144,6 +144,7 @@ consinit()
 {
 	const struct btinfo_console *consinfo;
 	static int initted;
+	int error;
 
 	if (initted)
 		return;
@@ -176,11 +177,14 @@ consinit()
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		error = pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
+#else
+		error = EIO;
 #endif
-#if NPCKBC == 0 && NUKBD > 0
-		ukbd_cnattach();
+#if (NUKBD > 0)
+		if (error)
+			ukbd_cnattach();
 #endif
 		return;
 	}
