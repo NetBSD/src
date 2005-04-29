@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.270 2005/03/27 16:28:55 peter Exp $
+.\"	$NetBSD: options.4,v 1.271 2005/04/29 20:03:47 augustss Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 27, 2005
+.Dd April 29, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2326,6 +2326,11 @@ This mask is a logical-or of power-of-2s of allowable interrupts:
  2  0x0004    6  0x0040   10  0x0400    14  0x4000
  3  0x0008    7  0x0080   11  0x0800    15  0x8000
 .Ed
+.It Cd options PCKBC_CNATTACH_SELFTEST
+Perform a self test of the keyboard before attaching it as a console.
+.It Cd options PCKBD_LAYOUT=layout
+Sets the default keyboard layout, see
+.Xr pckbd 4 .
 .El
 .Ss m68k-specific Options
 .Bl -ohang
