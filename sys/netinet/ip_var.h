@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.70 2005/04/07 12:22:47 yamt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.71 2005/04/29 10:39:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -192,7 +192,6 @@ struct ipflow {
 #define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
 #endif
 
-extern const struct protosw inetsw[];
 extern struct domain inetdomain;
 
 extern struct ipstat ipstat;		/* ip statistics */

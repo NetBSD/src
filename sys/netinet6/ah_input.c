@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.45 2005/04/23 14:05:28 manu Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.46 2005/04/29 10:39:09 yamt Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.45 2005/04/23 14:05:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.46 2005/04/29 10:39:09 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.45 2005/04/23 14:05:28 manu Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/in_proto.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ecn.h>
