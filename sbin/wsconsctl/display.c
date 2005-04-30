@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.10 2005/02/27 15:26:16 uwe Exp $ */
+/*	$NetBSD: display.c,v 1.11 2005/04/30 16:38:21 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 
 struct field display_field_tab[] = {
-    { "border",			&border,	FMT_COLOR,	FLG_MODIFY },
+    { "border",			&border,	FMT_COLOR,	0 },
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
     { "backlight",		&backlight.curval,  FMT_UINT,	0 },
@@ -67,12 +67,12 @@ struct field display_field_tab[] = {
     { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
     { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
     { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT, FLG_MODIFY },
-    { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	FLG_MODIFY },
-    { "msg.default.bg",		&msg_default_bg, FMT_COLOR,	FLG_MODIFY },
-    { "msg.default.fg",		&msg_default_fg, FMT_COLOR,	FLG_MODIFY },
-    { "msg.kernel.attrs",	&msg_kernel_attrs, FMT_ATTRS,	FLG_MODIFY },
-    { "msg.kernel.bg",		&msg_kernel_bg, FMT_COLOR,	FLG_MODIFY },
-    { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	FLG_MODIFY },
+    { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	0 },
+    { "msg.default.bg",		&msg_default_bg, FMT_COLOR,	0 },
+    { "msg.default.fg",		&msg_default_fg, FMT_COLOR,	0 },
+    { "msg.kernel.attrs",	&msg_kernel_attrs, FMT_ATTRS,	0 },
+    { "msg.kernel.bg",		&msg_kernel_bg, FMT_COLOR,	0 },
+    { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	0 },
 };
 
 int display_field_tab_len = sizeof(display_field_tab)/
