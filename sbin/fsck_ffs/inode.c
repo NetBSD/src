@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.52 2005/04/30 20:24:32 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.53 2005/04/30 20:29:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.52 2005/04/30 20:24:32 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.53 2005/04/30 20:29:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 				markclean = 0;
 				getpathname(pathbuf, sizeof(pathbuf),
 				    idesc->id_number, idesc->id_number);
-				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS I",
+				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
