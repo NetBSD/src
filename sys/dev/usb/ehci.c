@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.95 2005/04/27 23:39:54 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.96 2005/04/30 14:38:40 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.95 2005/04/27 23:39:54 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.96 2005/04/30 14:38:40 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2443,6 +2443,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	u_int32_t qhstatus;
 	int s;
 	int hit;
+	int wake;
 
 	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p\n", xfer, epipe));
 
@@ -2458,6 +2459,26 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ehci_abort_xfer: not in process context");
+
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
+	if (xfer->hcflags & UXFER_ABORTING) {
+		DPRINTFN(2, ("ehci_abort_xfer: already aborting\n"));
+#ifdef DIAGNOSTIC
+		if (status == USBD_TIMEOUT)
+			printf("ehci_abort_xfer: TIMEOUT while aborting\n");
+#endif
+		/* Override the status which might be USBD_TIMEOUT. */
+		xfer->status = status;
+		DPRINTFN(2, ("ehci_abort_xfer: waiting for abort to finish\n"));
+		xfer->hcflags |= UXFER_ABORTWAIT;
+		while (xfer->hcflags & UXFER_ABORTING)
+			tsleep(&xfer->hcflags, PZERO, "ehciaw", 0);
+		return;
+	}
+	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -2521,7 +2542,11 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 #ifdef DIAGNOSTIC
 	exfer->isdone = 1;
 #endif
+	wake = xfer->hcflags & UXFER_ABORTWAIT;
+	xfer->hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
+	if (wake)
+		wakeup(&xfer->hcflags);
 
 	splx(s);
 #undef exfer
