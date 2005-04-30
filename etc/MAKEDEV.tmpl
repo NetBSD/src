@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.41 2005/04/01 21:07:01 peter Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.42 2005/04/30 16:26:06 augustss Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -497,15 +497,14 @@ std)
 	fi
 	;;
 
+usb)
+	mkdev usb c %usb_chr% 255 444
+	;;
+
 usb*)
 	unit=${i#usb}
-	if [ "$unit" = "" ]; then
-		unit=255
-		usb=usb
-	else
-		usb=usb$unit
-	fi
-	mkdev $usb c %usb_chr% $unit
+	usb=usb$unit
+	mkdev usb$unit c %usb_chr% $unit
 	;;
 
 uhid*)
