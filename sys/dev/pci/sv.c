@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.28 2005/02/27 00:27:34 perry Exp $ */
+/*      $NetBSD: sv.c,v 1.29 2005/04/30 15:24:51 hannken Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.28 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.29 2005/04/30 15:24:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,6 +694,9 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 					 AUMODE_PLAY, play, FALSE, pfil) < 0)
 			return EINVAL;
 	}
+
+	if (p == NULL)
+		return 0;
 
 	val = p->sample_rate * 65536 / 48000;
 	/*
