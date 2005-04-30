@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.781 2005/04/29 21:08:13 wiz Exp $
+#	$NetBSD: mi,v 1.782 2005/04/30 14:26:38 agc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1907,7 +1907,7 @@
 ./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-obsolete	nls
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
