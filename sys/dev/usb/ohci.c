@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.158 2005/04/17 14:46:49 toshii Exp $	*/
+/*	$NetBSD: ohci.c,v 1.159 2005/04/30 14:38:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.158 2005/04/17 14:46:49 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.159 2005/04/30 14:38:40 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2146,6 +2146,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	ohci_soft_td_t *p, *n;
 	ohci_physaddr_t headp;
 	int s, hit;
+	int wake;
 
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,sed));
 
@@ -2160,6 +2161,26 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ohci_abort_xfer: not in process context");
+
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
+	if (xfer->hcflags & UXFER_ABORTING) {
+		DPRINTFN(2, ("ohci_abort_xfer: already aborting\n"));
+#ifdef DIAGNOSTIC
+		if (status == USBD_TIMEOUT)
+			printf("0hci_abort_xfer: TIMEOUT while aborting\n");
+#endif
+		/* Override the status which might be USBD_TIMEOUT. */
+		xfer->status = status;
+		DPRINTFN(2, ("ohci_abort_xfer: waiting for abort to finish\n"));
+		xfer->hcflags |= UXFER_ABORTWAIT;
+		while (xfer->hcflags & UXFER_ABORTING)
+			tsleep(&xfer->hcflags, PZERO, "ohciaw", 0);
+		return;
+	}
+	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -2198,6 +2219,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	p = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (p == NULL) {
+		xfer->hcflags &= ~UXFER_ABORTING; /* XXX */
 		splx(s);
 		printf("ohci_abort_xfer: hcpriv is NULL\n");
 		return;
@@ -2234,7 +2256,11 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 5: Execute callback.
 	 */
+	wake = xfer->hcflags & UXFER_ABORTWAIT;
+	xfer->hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
+	if (wake)
+		wakeup(&xfer->hcflags);
 
 	splx(s);
 }
