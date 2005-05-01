@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.146 2005/04/16 14:51:46 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.147 2005/05/01 10:12:11 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1709,4 +1709,38 @@ sys/dev/pci/trm.c				1.19
 	Avoid the driver to negotiate wide transfers with a wide drive
 	connected to a non-wide capable controller.
 	[bouyer, ticket #5751]
+
+sys/dev/ic/esiop.c				1.33
+
+	Don't assume all LUNs are probed before scsipi sets the mode, and
+	always check if lun_tagtbl needs to be allocated. Fixes PR kern/29603.
+	[bouyer, ticket #5755]
+
+sys/dev/pci/if_tl.c				1.69
+sys/dev/pci/pcidevs				1.706
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add "Compaq Netelligent 10 T/2 PCI UTP/Coax Controller". Fix kern/29218
+	by A L Meyers.
+	[bouyer, ticket #5756]
+
+sys/dev/pci/if_wm.c				1.102
+
+	In wm_stop():
+	 - Clear the interrupt mask to ensure the device cannot assert its
+	   interrupt line.
+	 - Clear sc->sc_icr to ensure wm_intr() makes no attempt to service any
+	   currently pending or shared interrupt.
+	This should address the problem reported in both PR/29903 and PR/22493.
+	(wm(4) is susceptible to crashing in wm_intr() when the interface is 
+	downed)
+	[scw, ticket #5761]
+
+sys/compat/linux/common/linux_file.c		1.62 via patch
+
+	Fix linux_sys_p{read|write}() to actually call correct syscall after
+	arg massage, i.e. sys_p{read|write} as appropriate; up to now, the
+	functions called sys_{read|write}() by mistake.
+	[bad, ticket #5762]
 
