@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.15 2004/09/03 21:55:17 thorpej Exp $
+# $NetBSD: Makefile.bootxx,v 1.16 2005/05/01 03:07:12 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -87,11 +87,10 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86 lib
+depend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
