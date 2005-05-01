@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.16.2.5 2005/03/19 01:47:26 tron Exp $	*/
+/*	$NetBSD: esiop.c,v 1.16.2.6 2005/05/01 09:59:59 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.2.5 2005/03/19 01:47:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.2.6 2005/05/01 09:59:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1643,8 +1643,7 @@ esiop_scsipi_request(chan, req, arg)
 		if (sc->sc_c.targets[xm->xm_target] == NULL)
 			return;
 		s = splbio();
-		if ((xm->xm_mode & PERIPH_CAP_TQING) &&
-		    (sc->sc_c.targets[xm->xm_target]->flags & TARF_TAG) == 0) {
+		if (xm->xm_mode & PERIPH_CAP_TQING) {
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_TAG;
 			/* allocate tag tables for this device */
 			for (lun = 0;
@@ -2091,6 +2090,9 @@ esiop_add_dev(sc, target, lun)
 	struct esiop_target *esiop_target =
 	    (struct esiop_target *)sc->sc_c.targets[target];
 	struct esiop_lun *esiop_lun = esiop_target->esiop_lun[lun];
+
+	if (esiop_lun->lun_tagtbl != NULL)
+		return; /* already allocated */
 
 	/* we need a tag DSA table */
 	esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
