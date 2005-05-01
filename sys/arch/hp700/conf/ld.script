@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.6 2004/10/30 18:38:38 thorpej Exp $	*/
+/*	$NetBSD: ld.script,v 1.7 2005/05/01 19:01:48 chs Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -20,6 +20,7 @@ SECTIONS
 		*(.stub)
 		/* .gnu.warning sections are handled specially by elf32.em.  */
 		*(.gnu.warning)
+		. = ALIGN(8);
 		__unwind_start = .;
 		*(.PARISC.unwind)
 		__unwind_end = .;
