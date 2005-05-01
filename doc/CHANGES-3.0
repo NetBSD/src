@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.74 2005/05/01 18:48:19 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.75 2005/05/01 22:15:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7968,4 +7968,60 @@ lib/libc/nls/de.msg				1.13
 
 	Fix some typos. From Christian Brueffer in PR lib/30109.
 	[martin, ticket #232]
+
+sys/arch/xen/include/cpufunc.h			1.7
+sys/arch/xen/include/xenfunc.h			1.5
+
+	Don't use block scope static function decl.
+	[yamt, ticket #233]
+
+lib/libintl/strhash.c				1.2
+lib/libintl/sysdep.c				1.2
+
+	Remove unnecessary #include.
+	[yamt, ticket #234]
+
+lib/libpam/modules/pam_nologin/pam_nologin.8	1.5
+
+	Replace "/var/run/nologin" by "/etc/nologin" to match the code.
+	[yamt, ticket #235]
+
+usr.sbin/vipw/vipw.c				1.12
+
+	When checking timestamp, check tv_nsec as well.
+	[yamt, ticket #236]
+
+lib/libintl/gettext.c				1.21
+
+	Correct size of memory allocation.
+	[yamt, ticket #237]
+
+sys/arch/xen/i386/hypervisor_machdep.c		1.11
+sys/arch/xen/include/evtchn.h			1.9
+sys/arch/xen/xen/evtchn.c			1.14
+
+	Rename do_event to evtchan_do_event. The former is a too generic name
+	and it actually hides a bug in xennetback.
+	[yamt, ticket #238]
+
+sys/arch/xen/xen/xennetback.c			1.10
+
+	xennetback_ifstart: test a correct variable, rather than a function.
+	[yamt, ticket #239]
+
+sys/dev/usb/ehci.c				1.98
+sys/dev/usb/ehcireg.h				1.21
+
+	Fix the error check on completion of an xfer. Just because the qTD
+	status field has error bits set doesn't mean there has been an error,
+	unless the HALTED bit is set as well. The old behaviour could result
+	in a transfer being considered failed by the software, but a success
+	by the device. This seems to have affected mostly mass storage devices.
+	Pointed out by Dan Ellis in kern/29731.
+	[augustss, ticket #240]
+
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c 1.4
+
+	Return statements in void functions make lint very confused.
+	[uwe, ticket #241]
 
