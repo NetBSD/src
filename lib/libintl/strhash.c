@@ -1,4 +1,4 @@
-/*	$NetBSD: strhash.c,v 1.1 2004/09/23 16:44:26 tshiozak Exp $	*/
+/*	$NetBSD: strhash.c,v 1.1.2.1 2005/05/01 22:03:34 tron Exp $	*/
 
 /*-
  * Copyright (c)2003, 2004 Citrus Project,
@@ -28,14 +28,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strhash.c,v 1.1 2004/09/23 16:44:26 tshiozak Exp $");
+__RCSID("$NetBSD: strhash.c,v 1.1.2.1 2005/05/01 22:03:34 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 #include "libintl_local.h"
 
