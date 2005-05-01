@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2004/05/11 17:12:26 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2005/05/01 02:59:28 christos Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -46,6 +46,9 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 .endif
 
 MAN=	pax.1 tar.1 cpio.1
+
+# XXX: Interix does not have it; we need a conditional for it.
+CPPFLAGS+=	-DHAVE_MTIO_H
 
 .if defined(HOSTPROG)
 CPPFLAGS+=	-DHOSTPROG
