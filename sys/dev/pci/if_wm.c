@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.9 2003/06/16 13:44:27 grant Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.10 2005/05/01 10:05:55 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -2142,6 +2142,15 @@ wm_stop(struct ifnet *ifp, int disable)
 	/* Stop the transmit and receive processes. */
 	CSR_WRITE(sc, WMREG_TCTL, 0);
 	CSR_WRITE(sc, WMREG_RCTL, 0);
+
+	/*
+	 * Clear the interrupt mask to ensure the device cannot assert its
+	 * interrupt line.
+	 * Clear sc->sc_icr to ensure wm_intr() makes no attempt to service
+	 * any currently pending or shared interrupt.
+	 */
+	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
+	sc->sc_icr = 0;
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < WM_TXQUEUELEN; i++) {
