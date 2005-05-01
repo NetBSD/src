@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.97 2005/05/01 14:21:27 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.98 2005/05/01 19:24:39 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.97 2005/05/01 14:21:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.98 2005/05/01 19:24:39 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -809,10 +809,6 @@ ehci_idone(struct ehci_xfer *ex)
 			break;
 
 		status = nstatus;
-		/* halt is ok if descriptor is last, and complete */
-		if (sqtd->qtd.qtd_next == EHCI_NULL &&
-		    EHCI_QTD_GET_BYTES(status) == 0)
-			status &= ~EHCI_QTD_HALTED;
 		if (EHCI_QTD_GET_PID(status) !=	EHCI_QTD_PID_SETUP)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
 	}
@@ -840,20 +836,18 @@ ehci_idone(struct ehci_xfer *ex)
 	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	epipe->nexttoggle ^= pkts_left % 2;
 
-	status &= EHCI_QTD_STATERRS;
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
 			   xfer->length, actlen, status));
 	xfer->actlen = actlen;
-	if (status != 0) {
+	if (status & EHCI_QTD_HALTED) {
 #ifdef EHCI_DEBUG
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
 				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-				 "\3MISSED", sbuf, sizeof(sbuf));
+				 "\3MISSED\1PINGSTATE", sbuf, sizeof(sbuf));
 
-		DPRINTFN((status == EHCI_QTD_HALTED) ? 2 : 0,
-			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
+		DPRINTFN(2, ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
 			  xfer->pipe->device->address,
 			  xfer->pipe->endpoint->edesc->bEndpointAddress,
@@ -863,10 +857,25 @@ ehci_idone(struct ehci_xfer *ex)
 			ehci_dump_sqtds(ex->sqtdstart);
 		}
 #endif
-		if (status == EHCI_QTD_HALTED)
+		/* low&full speed has an extra error flag */
+		if (EHCI_QH_GET_EPS(epipe->sqh->qh.qh_endp) !=
+		    EHCI_QH_SPEED_HIGH)
+			status &= EHCI_QTD_STATERRS | EHCI_QTD_PINGSTATE;
+		else
+			status &= EHCI_QTD_STATERRS;
+		if (status == 0) /* no other errors means a stall */
 			xfer->status = USBD_STALLED;
 		else
 			xfer->status = USBD_IOERROR; /* more info XXX */
+		/* XXX need to reset TT on missed microframe */
+		if (status & EHCI_QTD_MISSEDMICRO) {
+			ehci_softc_t *sc = (ehci_softc_t *)
+			    xfer->pipe->device->bus;
+
+			printf("%s: missed microframe, TT reset not "
+			    "implemented, hub might be inoperational\n",
+			    USBDEVNAME(sc->sc_bus.bdev));
+		}
 	} else {
 		xfer->status = USBD_NORMAL_COMPLETION;
 	}
