@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.91.2.1 2005/05/01 16:35:24 tron Exp $ */
+/*	$NetBSD: ehci.c,v 1.91.2.2 2005/05/01 16:37:03 tron Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.1 2005/05/01 16:35:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.2 2005/05/01 16:37:03 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1359,12 +1359,14 @@ ehci_open(usbd_pipe_handle pipe)
 	}
 	if (speed != EHCI_QH_SPEED_HIGH) {
 		printf("%s: *** WARNING: opening low/full speed device, this "
-		       "does not work yet.\n",
+		       "may not work yet.\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 			    hshubaddr, hshubport));
+#if 0
 		if (xfertype != UE_CONTROL)
 			return USBD_INVAL;
+#endif
 	}
 
 	naks = 8;		/* XXX */
@@ -1386,8 +1388,8 @@ ehci_open(usbd_pipe_handle pipe)
 		EHCI_QH_SET_MULT(1) |
 		EHCI_QH_SET_HUBA(hshubaddr) |
 		EHCI_QH_SET_PORT(hshubport) |
-		EHCI_QH_SET_CMASK(0xf0) | /* XXX */
-		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
+		EHCI_QH_SET_CMASK(0x08) | /* XXX */
+		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x02 : 0)
 		);
 	sqh->qh.qh_curqtd = EHCI_NULL;
 	/* Fill the overlay qTD */
