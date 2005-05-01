@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.40 2005/03/22 09:28:24 tron Exp $
+#	$NetBSD: sets.subr,v 1.41 2005/05/01 07:06:09 lukem Exp $
 #
 
 #
@@ -57,6 +57,9 @@ MKVARS="\
 	MKUUCP		\
 	MKX11		\
 	MKYP		\
+	USE_INET6	\
+	USE_KERBEROS	\
+	USE_YP		\
 "
 
 oIFS=$IFS
@@ -124,7 +127,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.40 2005/03/22 09:28:24 tron Exp $
+# 	# $NetBSD: sets.subr,v 1.41 2005/05/01 07:06:09 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -174,6 +177,10 @@ fi
 #	uucp			${MKUUCP} != no
 #	yp			${MKYP} != no
 #
+#	use_inet6		${USE_INET6} != no
+#	use_kerberos		${USE_KERBEROS} != no
+#	use_yp			${USE_YP} != no
+#
 #	.cat			if ${MKMANZ} != "no" && ${MKCATPAGES} != "no"
 #				  automatically append ".gz" to the filename
 #
@@ -191,7 +198,8 @@ list_set_files()
 				split("'"${MKVARS}"'", needvars)
 				for (vi in needvars) {
 					nv = needvars[vi]
-					kw = tolower(substr(nv, 3))
+					kw = tolower(nv)
+					sub(/^mk/, "", kw)
 					if (ENVIRON[nv] != "no")
 						wanted[kw] = 1 
 				}
