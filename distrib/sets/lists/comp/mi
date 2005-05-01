@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770.2.1 2005/04/17 10:35:07 tron Exp $
+#	$NetBSD: mi,v 1.770.2.2 2005/05/01 18:45:46 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -964,6 +964,7 @@
 ./usr/include/netinet/ip_state.h		comp-c-include		ipfilter
 ./usr/include/netinet/ip_sync.h			comp-c-include		ipfilter
 ./usr/include/netinet/ip_var.h			comp-c-include
+./usr/include/netinet/ipl.h			comp-c-include		ipfilter
 ./usr/include/netinet/pim.h			comp-c-include
 ./usr/include/netinet/pim_var.h			comp-c-include
 ./usr/include/netinet/tcp.h			comp-c-include
