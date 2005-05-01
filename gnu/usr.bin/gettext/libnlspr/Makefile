@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/04/29 15:05:01 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2005/05/01 06:51:04 lukem Exp $
 
 MKPRIVATELIB=	yes
 
@@ -74,3 +74,9 @@ CPPFLAGS+=-DGETTEXTJAR=\"${DESTDIR}/usr/share/gettext/gettext.jar\"
 CPPFLAGS+=-DGETTEXTDATADIR=\"${DESTDIR}/usr/share/gettext\"
 
 .include <bsd.lib.mk>
+
+# Override <sys.mk> double suffix rules to prevent *.y being yacced to *.[ch]
+# (The latter already exist in the ${DIST}/gettext directory.)
+#
+.y.c:
+	@${_MKSHECHO} "# skipping yacc ${.CURDIR:T}/${.TARGET:T}"
