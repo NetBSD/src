@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.786 2005/04/29 15:27:34 christos Exp $
+# $NetBSD: mi,v 1.787 2005/05/01 07:28:14 lukem Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -190,7 +190,7 @@
 ./usr/share/man/cat1/kill.0			man-util-catman		.cat
 ./usr/share/man/cat1/kinit.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/klist.0			man-krb5-catman		kerberos,.cat
-./usr/share/man/cat1/kpasswd.0			man-krb5-catman		kerberos,.cat
+./usr/share/man/cat1/kpasswd.0			man-krb5-catman		use_kerberos,.cat
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
@@ -488,7 +488,7 @@
 ./usr/share/man/cat1/yes.0			man-util-catman		.cat
 ./usr/share/man/cat1/ypcat.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat1/ypmatch.0			man-nis-catman		yp,.cat
-./usr/share/man/cat1/yppasswd.0			man-nis-catman		yp,.cat
+./usr/share/man/cat1/yppasswd.0			man-nis-catman		use_yp,.cat
 ./usr/share/man/cat1/ypwhich.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat1/zcat.0			man-util-catman		.cat
 ./usr/share/man/cat1/zcmp.0			man-util-catman		.cat
@@ -1538,7 +1538,7 @@
 ./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
 ./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
-./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	inet6,.cat
+./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	use_inet6,.cat
 ./usr/share/man/cat5/securenet.0		man-obsolete		obsolete
 ./usr/share/man/cat5/security.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/services.0			man-net-catman		.cat
@@ -1884,7 +1884,7 @@
 ./usr/share/man/cat8/mkalias.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat8/mknetid.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/mld6query.0		man-netutil-catman	inet6,.cat
+./usr/share/man/cat8/mld6query.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mmeye/makedev.0		man-obsolete		obsolete
@@ -2006,7 +2006,7 @@
 ./usr/share/man/cat8/pim6dd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pim6sd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ping.0			man-netutil-catman	.cat
-./usr/share/man/cat8/ping6.0			man-netutil-catman	inet6,.cat
+./usr/share/man/cat8/ping6.0			man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/pipe.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/playstation2/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/playstation2/makedev.0	man-obsolete		obsolete
@@ -2069,7 +2069,7 @@
 ./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
-./usr/share/man/cat8/route6d.0			man-router-catman	inet6,.cat
+./usr/share/man/cat8/route6d.0			man-router-catman	use_inet6,.cat
 ./usr/share/man/cat8/routed.0			man-router-catman	.cat
 ./usr/share/man/cat8/rpc.bootparamd.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/rpc.lockd.0		man-nfsserver-catman	.cat
@@ -2087,7 +2087,7 @@
 ./usr/share/man/cat8/rrestore.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rshd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rstatd.0			man-netutil-catman	.cat
-./usr/share/man/cat8/rtadvd.0			man-router-catman	inet6,.cat
+./usr/share/man/cat8/rtadvd.0			man-router-catman	use_inet6,.cat
 ./usr/share/man/cat8/rtquery.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rtsol.0			man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/rtsold.0			man-netutil-catman	inet6,.cat
@@ -2183,7 +2183,7 @@
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
-./usr/share/man/cat8/traceroute6.0		man-netutil-catman	inet6,.cat
+./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-netutil-catman	.cat
@@ -2416,7 +2416,7 @@
 ./usr/share/man/man1/kill.1			man-util-man		.man
 ./usr/share/man/man1/kinit.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/klist.1			man-krb5-man		kerberos,.man
-./usr/share/man/man1/kpasswd.1			man-krb5-man		kerberos,.man
+./usr/share/man/man1/kpasswd.1			man-krb5-man		use_kerberos,.man
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
@@ -2714,7 +2714,7 @@
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man
-./usr/share/man/man1/yppasswd.1			man-nis-man		yp,.man
+./usr/share/man/man1/yppasswd.1			man-nis-man		use_yp,.man
 ./usr/share/man/man1/ypwhich.1			man-nis-man		yp,.man
 ./usr/share/man/man1/zcat.1			man-util-man		.man
 ./usr/share/man/man1/zcmp.1			man-util-man		.man
@@ -3768,7 +3768,7 @@
 ./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
 ./usr/share/man/man5/route.conf.5		man-sys-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
-./usr/share/man/man5/rtadvd.conf.5		man-router-man		inet6,.man
+./usr/share/man/man5/rtadvd.conf.5		man-router-man		use_inet6,.man
 ./usr/share/man/man5/securenet.5		man-obsolete		obsolete
 ./usr/share/man/man5/security.conf.5		man-sys-man		.man
 ./usr/share/man/man5/services.5			man-net-man		.man
@@ -4114,7 +4114,7 @@
 ./usr/share/man/man8/mkalias.8			man-nis-man		yp,.man
 ./usr/share/man/man8/mknetid.8			man-nis-man		yp,.man
 ./usr/share/man/man8/mknod.8			man-sysutil-man		.man
-./usr/share/man/man8/mld6query.8		man-netutil-man		inet6,.man
+./usr/share/man/man8/mld6query.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/mmeye/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mmeye/makedev.8		man-obsolete		obsolete
@@ -4236,7 +4236,7 @@
 ./usr/share/man/man8/pim6dd.8			man-obsolete		obsolete
 ./usr/share/man/man8/pim6sd.8			man-obsolete		obsolete
 ./usr/share/man/man8/ping.8			man-netutil-man		.man
-./usr/share/man/man8/ping6.8			man-netutil-man		inet6,.man
+./usr/share/man/man8/ping6.8			man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/pipe.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/playstation2/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/playstation2/makedev.8	man-obsolete		obsolete
@@ -4299,7 +4299,7 @@
 ./usr/share/man/man8/rndc.8			man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
-./usr/share/man/man8/route6d.8			man-router-man		inet6,.man
+./usr/share/man/man8/route6d.8			man-router-man		use_inet6,.man
 ./usr/share/man/man8/routed.8			man-router-man		.man
 ./usr/share/man/man8/rpc.bootparamd.8		man-bootserver-man	.man
 ./usr/share/man/man8/rpc.lockd.8		man-nfsserver-man	.man
@@ -4317,7 +4317,7 @@
 ./usr/share/man/man8/rrestore.8			man-netutil-man		.man
 ./usr/share/man/man8/rshd.8			man-netutil-man		.man
 ./usr/share/man/man8/rstatd.8			man-netutil-man		.man
-./usr/share/man/man8/rtadvd.8			man-router-man		inet6,.man
+./usr/share/man/man8/rtadvd.8			man-router-man		use_inet6,.man
 ./usr/share/man/man8/rtquery.8			man-netutil-man		.man
 ./usr/share/man/man8/rtsol.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rtsold.8			man-netutil-man		inet6,.man
@@ -4413,7 +4413,7 @@
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
-./usr/share/man/man8/traceroute6.8		man-netutil-man		inet6,.man
+./usr/share/man/man8/traceroute6.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
 ./usr/share/man/man8/trsp.8			man-netutil-man		.man
