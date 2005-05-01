@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.18 2004/09/03 21:55:17 thorpej Exp $
+# $NetBSD: Makefile.boot,v 1.19 2005/05/01 03:07:12 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -81,11 +81,10 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86 lib
+depend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
