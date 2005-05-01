@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.6 2004/12/21 11:33:07 yamt Exp $	*/
+/*	$NetBSD: iconv.c,v 1.6.2.1 2005/05/01 18:30:44 tron Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.6 2004/12/21 11:33:07 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.6.2.1 2005/05/01 18:30:44 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -206,9 +206,8 @@ main(int argc, char **argv)
 			for (i=0; i<argc; i++) {
 				fp = fopen(argv[i], "r");
 				if (fp == NULL)
-					errx(EXIT_FAILURE, "%s: %s:%s",
-					     getprogname(), argv[i],
-					     strerror(errno));
+					errx(EXIT_FAILURE, "%s: %s",
+					     argv[i], strerror(errno));
 				do_conv(argv[i], fp, opt_f, opt_t, opt_s,
 					opt_c);
 				fclose(fp);
