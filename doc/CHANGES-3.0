@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.73 2005/05/01 16:54:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.74 2005/05/01 18:48:19 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7915,4 +7915,57 @@ sys/netinet/tcp_usrreq.c			1.101
 
 	s of sack is selective, not selection.
 	[yamt, ticket #221]
+
+sys/dev/pci/sv.c				1.29
+
+	sv_set_params(): avoid null pointer dereference when `setmode' is 0.
+	[hannken, ticket #222]
+
+usr.bin/iconv/Makefile				1.4
+usr.bin/iconv/iconv.c				1-7-1.9
+
+	Fix error message when input file does not exist.
+	Make the error message kindly if the last character is incompleted.
+	This fixes PR bin/30051.
+	[tshiozak, ticket #224]
+
+lib/libc/iconv/iconv.c				1.5
+
+	Make sure to set errno to EINVAL if _citrus_iconv_open() returns
+	ENOENT.
+	[tshiozak, ticket #225]
+
+sbin/wsconsctl/display.c			1.11
+
+	Do not use FLG_MODIFY to mark color settings.
+	[jmmv, ticket #227]
+
+distrib/arc/ramdisk/list			1.7
+
+	Add newfs_msdos(8) for install ramdiskbin.
+	ARCBIOS can load binaries only from msdosfs on disks (or iso9660 on
+	cdroms).
+	[tsutsui, ticket #229]
+
+sbin/newfs_msdos/newfs_msdos.c			1.19
+
+	Add a tweak to default value settings for a number of drive heads
+	and a number of sectors per track.
+	According to sys/fs/msdosfs/msdosfs_vfsops.c:msdosfs_mountfs(),
+	the kernel doesn't accept BPB with spt (sector per track) > 63
+	or hds (drive heads) > 255, so if values taken from disklabel
+	don't match these restrictions, use popular BIOS default values
+	(255/63) instead.
+	[tsutsui, ticket #230]
+
+distrib/sets/lists/comp/mi			1.783
+sys/netinet/Makefile				1.12
+
+	Install netinet/ipl.h (PR bin/30095).
+	[martti, ticket #231]
+
+lib/libc/nls/de.msg				1.13
+
+	Fix some typos. From Christian Brueffer in PR lib/30109.
+	[martin, ticket #232]
 
