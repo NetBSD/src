@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.10 2005/04/22 07:00:49 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.11 2005/05/01 11:25:22 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -57,4 +57,10 @@ sys/netinet/tcp_input.c				patch
 	Fix TCP performance problems introduced in ticket 1401.
 	[chs, ticket #1445]
 
+sys/arch/sparc64/sparc64/locore.c		1.197-1.204 via patch
+
+	Various changes from NetBSD-current, revisions 1.197 to 1.204.
+	Interrupt and soft-interrupt handling changes that appear to fix
+	the "sleep forever" problem (PR port-sparc64/21750).
+	[martin, ticket #1487]
 
