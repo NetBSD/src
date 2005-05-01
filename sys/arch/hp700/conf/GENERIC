@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2005/02/18 21:05:51 dsl Exp $
+# $NetBSD: GENERIC,v 1.44 2005/05/01 20:22:02 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32		# estimated number of users
 
@@ -82,7 +82,6 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_16	# compatability with NetBSD 1.6,
 options 	COMPAT_20	# compatability with NetBSD 2.0,
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
