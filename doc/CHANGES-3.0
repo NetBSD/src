@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.71 2005/04/28 15:12:32 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.72 2005/05/01 11:09:20 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7806,7 +7806,6 @@ sys/dev/pci/if_wm.c				1.102
 share/man/man4/tlp.4				1.14
 
 	Mention the Compu-Shack FASTline-II PCI adapters as supported.
-	The 4-port 21143 based board has been working like a charm for me.
 	[bad, ticket #209]
 
 sys/arch/sparc/stand/boot/boot.c		1.20
@@ -7828,4 +7827,59 @@ lib/libc/db/hash/hash_bigkey.c			1.19
 	Don't attempt to delete a NULL key. Can happen if we were the only key
 	in a 64K page. Thanks to Juergen Hannken-Illjes for the test.
 	[christos, ticket #212]
+
+sys/dev/ic/nslm7x.c				1.22
+sys/dev/ic/nslm7xvar.h				1.15
+
+	Identify correctly ITE Super I/O chipsets by checking the core ID
+	register (only available in the model 8712F), if that fails we check
+	the vendor ID register as before.
+	[xtraeme, ticket #213]
+
+share/man/man4/lm.4				1.16
+
+	ITE8712F was supported, but it was detected as 8705F, now we can say
+	it's supported, bump date.
+	[xtraeme, ticket #214]
+
+crypto/dist/ipsec-tools/src/libipsec/ipsec_dump_policy.c 1.2
+crypto/dist/ipsec-tools/src/libipsec/libpfkey.h	1.4
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c 1.3
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	1.3
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.3
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.3
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	1.3
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c 1.3
+crypto/dist/ipsec-tools/src/racoon/nattraversal.c 1.2
+crypto/dist/ipsec-tools/src/racoon/nattraversal.h 1.2
+crypto/dist/ipsec-tools/src/racoon/pfkey.c	1.3
+crypto/dist/ipsec-tools/src/setkey/setkey.8	1.3-1.10
+crypto/dist/ipsec-tools/src/setkey/setkey.c	1.4
+lib/libipsec/package_version.h			1.7
+
+	Bug fixes from the ipsec-tools 0.6 branch:
+	- Fix NAT-T problems that prevented multiple peers behind the same NAT
+	  to talk to the same machine outside the NAT. This also require kernel
+	  fixes (already committed eralier)
+	- Fix a LP64 bug
+	- Fix NAT-T RFC conformance bugs (missing non ESP marker in packets)
+	- Add a -p option to setkey to display ports that could be used for ESP
+	  over UDP when printing policies
+	[manu, ticket #215]
+
+sys/netinet/udp_usrreq.c			1.138
+
+	Fix memory leak.
+	[manu, ticket #216]
+
+sys/uvm/uvm_map.c				1.189
+
+	uvm_map: don't leak a preallocated map entry on error.
+	[oster, ticket #223]
+
+sbin/fsck_ffs/inode.c				1.52
+sbin/fsck_ffs/pass1.c				1.37
+
+	Remove debugging abort() calls.
+	[christos, ticket #228]
 
