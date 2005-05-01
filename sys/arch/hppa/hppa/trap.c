@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2005/02/17 14:19:49 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2005/05/01 19:17:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2005/02/17 14:19:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2005/05/01 19:17:52 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -632,19 +632,29 @@ trap(int type, struct trapframe *frame)
 #endif /* !FPEMUL */
 		break;
 
-#ifdef DIAGNOSTIC
-	case T_EXCEPTION:
-		panic("FPU/SFU emulation botch");
+	case T_DATALIGN:
+		if (l->l_addr->u_pcb.pcb_onfault) {
+do_onfault:
+			pcbp = &l->l_addr->u_pcb;
+			frame->tf_iioq_tail = 4 +
+				(frame->tf_iioq_head =
+				 pcbp->pcb_onfault);
+			pcbp->pcb_onfault = 0;
+			break;
+		}
+		/*FALLTHROUGH*/
 
+#ifdef DIAGNOSTIC
 		/* these just can't happen ever */
 	case T_PRIV_OP:
 	case T_PRIV_REG:
 		/* these just can't make it to the trap() ever */
-	case T_HPMC:      case T_HPMC | T_USER:
+	case T_HPMC:
+	case T_HPMC | T_USER:
 	case T_EMULATION:
+	case T_EXCEPTION:
 #endif
 	case T_IBREAK:
-	case T_DATALIGN:
 	case T_DBREAK:
 	dead_end:
 		if (type & T_USER) {
@@ -855,15 +865,7 @@ trap(int type, struct trapframe *frame)
 				trapsignal(l, &ksi);
 			} else {
 				if (l->l_addr->u_pcb.pcb_onfault) {
-#ifdef TRAPDEBUG
-					printf("trap: copyin/out %d\n",ret);
-#endif
-					pcbp = &l->l_addr->u_pcb;
-					frame->tf_iioq_tail = 4 +
-					    (frame->tf_iioq_head =
-						pcbp->pcb_onfault);
-					pcbp->pcb_onfault = 0;
-					break;
+					goto do_onfault;
 				}
 				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
 				    map, va, 0, vftype, ret);
