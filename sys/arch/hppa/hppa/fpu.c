@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 2004/07/24 19:04:53 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9 2005/05/01 19:18:12 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2004/07/24 19:04:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2005/05/01 19:18:12 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -426,8 +426,6 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 		break;
         }
 
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs,
-		sizeof(l->l_addr->u_pcb.pcb_fpregs));
 	if (exception) {
 		KSI_INIT_TRAP(&ksi);
 		if (exception & UNIMPLEMENTEDEXCEPTION) {
@@ -451,6 +449,8 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 		trapsignal(l, &ksi);
 	}
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs,
+		sizeof(l->l_addr->u_pcb.pcb_fpregs));
 }
 
 #endif /* FPEMUL */
