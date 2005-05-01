@@ -1,10 +1,6 @@
-/*	$NetBSD: cpudevs.h,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
+/*	$NetBSD: cpudevs.h,v 1.3 2005/05/01 19:03:39 chs Exp $	*/
 
 /* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */
-
-/* generated from: NetBSD: cpudevs,v 1.1 2002/06/06 19:48:03 fredette Exp  */
-
-/* generated from: OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp  */
 
 #define	HPPA_TYPE_NPROC	0x00
 #define	HPPA_TYPE_MEMORY	0x01
