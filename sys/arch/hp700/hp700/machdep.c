@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:05 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2005/05/01 20:40:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/04/25 15:02:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2005/05/01 20:40:02 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -203,10 +203,10 @@ static struct btlb_slot {
 } *btlb_slots;
 int	btlb_slots_count;
 
-	/* w/ a little deviation should be the same for all installed cpus */
+/* w/ a little deviation should be the same for all installed cpus */
 u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 
-	/* exported info */
+/* exported info */
 char	machine[] = MACHINE;
 char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
@@ -347,7 +347,7 @@ const struct hppa_cpu_info hppa_cpu_pa7200 = {
 	  "T-Bird",
 	  "PCX-T'", HPPA_PA_SPEC_MAKE(1, 1, 'd'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  NULL
+	  hpti_g
 #else  /* !HP7200_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7200_CPU */
@@ -483,6 +483,8 @@ hppa_init(paddr_t start)
 		printf("WARNING: PDC_BTLB error %d", error);
 #endif
 	} else {
+#define BTLBDEBUG 1
+
 #ifdef BTLBDEBUG
 		printf("btlb info: minsz=%d, maxsz=%d\n",
 		    pdc_btlb.min_size, pdc_btlb.max_size);
@@ -515,10 +517,14 @@ hppa_init(paddr_t start)
 hptsize=256;	/* XXX one page for now */
 	hptsize *= 16;	/* sizeof(hpt_entry) */
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
-	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
+	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
+#ifdef DEBUG
+	printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
+	printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
+#endif
+	if (error) {
 		printf("WARNING: no HPT support, fine!\n");
-		mtctl(hptsize - 1, CR_HPTMASK);
+		mtctl(0, CR_HPTMASK);
 		hptsize = 0;
 	} else {
 		if (hptsize > pdc_hwtlb.max_size)
@@ -757,11 +763,11 @@ do {									\
 	 */
 
 	/* Turn on the HW TLB assist */
-	if (hptsize) {
+	if (hptsize && cpu_hpt_init) {
 		u_int hpt;
 
 		mfctl(CR_VTOP, hpt);
-		if ((error = (cpu_hpt_init)(hpt, hptsize)) < 0) {
+		if ((error = (*cpu_hpt_init)(hpt, hptsize)) < 0) {
 #ifdef DEBUG
 			printf("WARNING: HPT init error %d\n", error);
 #endif
@@ -1336,59 +1342,50 @@ hp700_pagezero_unmap(int was_mapped_before)
 int waittime = -1;
 
 __dead void
-cpu_reboot(howto, user_boot_string)
-	int howto;
-	char *user_boot_string;
+cpu_reboot(int howto, char *user_boot_string)
 {
 #ifdef POWER_SWITCH
 	int i;
 #endif /* POWER_SWITCH */
 
-	/* If the system is cold, just give up and halt. */
-	if (cold)
-		howto |= RB_HALT;
-	else {
+	boothowto = howto | (boothowto & RB_HALT);
 
-		boothowto = howto | (boothowto & RB_HALT);
-
-		if (!(howto & RB_NOSYNC) && waittime < 0) {
-			waittime = 0;
-			vfs_shutdown();
+	if (!(howto & RB_NOSYNC) && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
 #if 0
-			if ((howto & RB_TIMEBAD) == 0)
-				resettodr();
-			else
+		resettodr();
 #endif
-				printf("WARNING: not updating battery clock\n");
-		}
+		printf("WARNING: not updating battery clock\n");
+	}
 
-		/* XXX probably save howto into stable storage */
+	/* XXX probably save howto into stable storage */
 
-		/* Disable interrupts. */
-		splhigh();
+	/* Disable interrupts. */
+	splhigh();
 
-		/* Make a crash dump. */
-		if (howto & RB_DUMP)
-			dumpsys();
+	/* Make a crash dump. */
+	if (howto & RB_DUMP)
+		dumpsys();
 
-		/* Run any shutdown hooks. */
-		doshutdownhooks();
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
 
 #ifdef POWER_SWITCH
-		if (pwr_sw_state == 0 &&
-		    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
-			printf("Soft power down in 10 seconds...");
-			for (i = 10; i > 0; i--) {
-				printf(" %d", i);
-				DELAY(1000000);
-			}
-			printf("\n");
-			howto &= ~RB_HALT;
+	if (pwr_sw_state == 0 &&
+	    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		printf("Soft power down in 10 seconds...");
+		for (i = 10; i > 0; i--) {
+			printf(" %d", i);
+			DELAY(1000000);
 		}
-		pwr_sw_ctrl(PWR_SW_CTRL_DISABLE);
-		DELAY(1000000);
-#endif /* POWER_SWITCH */
+		printf("\n");
+		howto &= ~RB_HALT;
 	}
+	pwr_sw_ctrl(PWR_SW_CTRL_DISABLE);
+	DELAY(1000000);
+#endif /* POWER_SWITCH */
+
 	if (howto & RB_HALT) {
 		printf("System halted!\n");
 		DELAY(1000000);
@@ -1401,7 +1398,8 @@ cpu_reboot(howto, user_boot_string)
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
 	}
 
-	for(;;); /* loop while bus reset is comming up */
+	for (;;)
+		/* loop while bus reset is coming up */ ;
 	/* NOTREACHED */
 }
 
@@ -1693,16 +1691,12 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* reset any of the pending FPU exceptions */
+	hppa_fpu_flush(l);
 	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs[1] = 0;
 	pcb->pcb_fpregs[2] = 0;
 	pcb->pcb_fpregs[3] = 0;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
-	if (tf->tf_cr30 == fpu_cur_uspace) {
-		fpu_cur_uspace = 0;
-		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
-		mtctl(0, CR_CCR);
-	}
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
