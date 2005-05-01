@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.550 2005/04/27 00:59:46 christos Exp $
+# $NetBSD: mi,v 1.551 2005/05/01 07:28:13 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -173,7 +173,7 @@
 ./sbin/pfctl					base-netutil-root	pf
 ./sbin/pflogd					base-netutil-root	pf
 ./sbin/ping					base-netutil-root
-./sbin/ping6					base-netutil-root	inet6
+./sbin/ping6					base-netutil-root	use_inet6
 ./sbin/poweroff					base-sysutil-root
 ./sbin/pppoectl					base-netutil-root
 ./sbin/quotacheck				base-obsolete		obsolete
@@ -188,7 +188,7 @@
 ./sbin/route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
-./sbin/rtsol					base-netutil-root	inet6
+./sbin/rtsol					base-netutil-root	use_inet6
 ./sbin/savecore					base-sysutil-root
 ./sbin/scsictl					base-sysutil-root
 ./sbin/setkey					base-netutil-root
@@ -473,7 +473,7 @@
 ./usr/bin/kgetcred				base-krb5-bin		kerberos
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
-./usr/bin/kpasswd				base-krb5-bin		kerberos
+./usr/bin/kpasswd				base-krb5-bin		use_kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
 ./usr/bin/lam					base-util-bin
@@ -668,7 +668,7 @@
 ./usr/bin/yes					base-util-bin
 ./usr/bin/ypcat					base-nis-bin		yp
 ./usr/bin/ypmatch				base-nis-bin		yp
-./usr/bin/yppasswd				base-nis-bin		yp
+./usr/bin/yppasswd				base-nis-bin		use_yp
 ./usr/bin/ypwhich				base-nis-bin		yp
 ./usr/bin/zcat					base-util-bin
 ./usr/bin/zcmp					base-util-bin
@@ -1016,7 +1016,7 @@
 ./usr/sbin/mk-amd-map				base-amd-bin
 ./usr/sbin/mkalias				base-nis-bin		yp
 ./usr/sbin/mknetid				base-nis-bin		yp
-./usr/sbin/mld6query				base-netutil-bin	inet6
+./usr/sbin/mld6query				base-netutil-bin	use_inet6
 ./usr/sbin/mlxctl				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin
@@ -1104,14 +1104,14 @@
 ./usr/sbin/rndc					base-bind-bin
 ./usr/sbin/rndc-confgen				base-bind-bin
 ./usr/sbin/rmt					base-sysutil-bin
-./usr/sbin/route6d				base-router-bin		inet6
+./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
 ./usr/sbin/rpc.lockd				base-nfsserver-bin
 ./usr/sbin/rpc.pcnfsd				base-nfsserver-bin
 ./usr/sbin/rpc.statd				base-nfsserver-bin
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
 ./usr/sbin/rpcbind				base-rpcbind-bin
-./usr/sbin/rtadvd				base-router-bin		inet6
+./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
 ./usr/sbin/rwhod				base-netutil-bin
@@ -1150,7 +1150,7 @@
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/traceroute				base-netutil-bin
-./usr/sbin/traceroute6				base-netutil-bin	inet6
+./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-netutil-bin
 ./usr/sbin/unlink				base-sysutil-bin
