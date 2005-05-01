@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.31 2004/01/03 10:11:41 dbj Exp $	*/
+/*	$NetBSD: pass1.c,v 1.31.4.1 2005/05/01 10:32:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.31 2004/01/03 10:11:41 dbj Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.31.4.1 2005/05/01 10:32:46 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ pass1()
 		if (info == NULL) {
 			pfatal("cannot alloc %u bytes for inoinfo\n",
 			    (unsigned)(sizeof(struct inostat) * inosused));
-			abort();
+			exit(EEXIT);
 		}
 		inostathead[c].il_stat = info;
 		/*
@@ -184,7 +184,7 @@ pass1()
 		if (info == NULL) {
 			pfatal("cannot alloc %u bytes for inoinfo\n",
 			    (unsigned)(sizeof(struct inostat) * inosused));
-			abort();
+			exit(EEXIT);
 		}
 		memmove(info, inostathead[c].il_stat, inosused * sizeof(*info));
 		free(inostathead[c].il_stat);
