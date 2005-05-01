@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.1.1.2.2.6 2005/05/01 10:56:01 tron Exp $
+.\"	$NetBSD: setkey.8,v 1.1.1.2.2.7 2005/05/01 10:56:54 tron Exp $
 .\"
 .\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
 .\"
@@ -420,9 +420,9 @@ sections.
 .Pp
 .It Ar src_range
 .It Ar dst_range
-These are selections of the secure communication specified as
-IPv4/v6 address or IPv4/v6 address range, and may be accompanied
-by a TCP/UDP port specification.
+These select the communications that should be secured by IPsec.
+They can be an IPv4/v6 address or an IPv4/v6 address range, and
+may be accompanied by a TCP/UDP port specification.
 This takes the following form:
 .Bd -literal -offset
 .Ar address
@@ -589,8 +589,8 @@ is to be one of the following:
 .Li default , use , require ,
 or
 .Li unique .
-If the SA is not available in every level, the kernel will request
-getting SA to the key exchange daemon.
+If the SA is not available in every level, the kernel will
+ask the key exchange daemon to establish a suitable SA.
 .Li default
 means the kernel consults the system wide default for the protocol
 you specified, e.g. the
@@ -603,7 +603,8 @@ otherwise the kernel keeps normal operation.
 means SA is required whenever the kernel sends a packet matched
 with the policy.
 .Li unique
-is the same to require,
+is the same as
+.Li require ;
 in addition, it allows the policy to bind with the unique out-bound SA.
 You just specify the policy level
 .Li unique ,
@@ -738,9 +739,15 @@ mode,
 .Nm
 .Bl -item
 .It
-creates fwd policies for every in policy inserted
+creates
+.Ar fwd
+policies for every
+.Ar in
+policy inserted
 .It
-(not implemented yet) filters out all fwd policies
+(not implemented yet) filters out all
+.Ar fwd
+policies
 .El
 .Sh RETURN VALUES
 The command exits with 0 on success, and non-zero on errors.
