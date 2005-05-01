@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.162 2005/05/01 01:10:06 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.163 2005/05/01 01:14:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.162 2005/05/01 01:10:06 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.163 2005/05/01 01:14:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1570,12 +1570,11 @@ ohci_root_ctrl_done(usbd_xfer_handle xfer)
 void
 ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	int timo = xfer->timeout;
-	int usecs;
+	int timo;
 	u_int32_t intrs;
 
 	xfer->status = USBD_IN_PROGRESS;
-	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
+	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
 		if (sc->sc_dying)
 			break;
