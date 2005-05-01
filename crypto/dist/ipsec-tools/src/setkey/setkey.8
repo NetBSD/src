@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.1.1.2.2.1 2005/04/12 09:29:41 tron Exp $
+.\"	$NetBSD: setkey.8,v 1.1.1.2.2.2 2005/05/01 10:48:11 tron Exp $
 .\"
 .\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
 .\"
@@ -124,7 +124,7 @@ No action.
 The program will check validity of input, but no changes to the SPD will
 be made.
 .It Fl r
-Use semantics described in IPSec RFCs. This mode is default. For details see section 
+Use semantics described in IPSec RFCs. This mode is default. For details see section
 .Xr RFC vs Linux kernel semantics.
 Available only in Linux.
 .It Fl k
@@ -498,15 +498,15 @@ are used.
 .Pp
 .Ar priority specification
 is used to control the placement of the policy within the SPD. Policy position
-is determined by 
-a signed integer where higher priorities indicate the policy is placed 
-closer to the beginning of the list and lower priorities indicate the 
-policy is placed closer to the end of the list. Policies with equal 
+is determined by
+a signed integer where higher priorities indicate the policy is placed
+closer to the beginning of the list and lower priorities indicate the
+policy is placed closer to the end of the list. Policies with equal
 priorities are added at the end of the group of such policies.
 .Pp
 Priority can only
 be specified when setkey has been compiled against kernel headers that
-support policy priorities (>= 2.6.6). 
+support policy priorities (>= 2.6.6).
 If the kernel does not support priorities,
 a warning message will be printed the first time a priority specification is
 used.
@@ -528,7 +528,7 @@ or
 .Li high (1073741824)
 .Pp
 .Ar offset
-is an unsigned integer. It can be up to 1073741824 for 
+is an unsigned integer. It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
@@ -711,19 +711,19 @@ deflate		rfc2394
 .Ed
 .\"
 .Ss RFC vs Linux kernel semantics
-Linux kernel uses 
-.Ar fwd 
-policy instead of 
+Linux kernel uses
+.Ar fwd
+policy instead of
 .Ar in
 policy for packets what are forwarded through that particular box.
 .Pp
-In 
+In
 .Ar kernel
 mode setkey manages and shows policies and SAs exactly as they are stored in the kernel.
 .Pp
-In 
+In
 .Ar RFC
-mode 
+mode
 .Ar setkey
 .Bd -literal
 creates fwd policies for every in policy inserted.
