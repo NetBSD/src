@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.96 2005/04/30 14:38:40 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.97 2005/05/01 14:21:27 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.96 2005/04/30 14:38:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.97 2005/05/01 14:21:27 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -883,12 +883,11 @@ ehci_idone(struct ehci_xfer *ex)
 void
 ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	int timo = xfer->timeout;
-	int usecs;
+	int timo;
 	u_int32_t intrs;
 
 	xfer->status = USBD_IN_PROGRESS;
-	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
+	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
 		if (sc->sc_dying)
 			break;
