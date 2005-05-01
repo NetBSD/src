@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2003/01/19 12:26:57 tsutsui Exp $
+#	$NetBSD: list,v 1.6.6.1 2005/05/01 18:42:15 tron Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -38,6 +38,7 @@ PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/mount_ntfs
 PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/newfs_msdos
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
