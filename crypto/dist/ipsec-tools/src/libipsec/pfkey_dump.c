@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.1.1.2.2.2 2005/05/01 11:01:04 tron Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.1.1.2.2.3 2005/05/01 22:15:51 tron Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -413,14 +413,14 @@ void
 pfkey_spdump(m)
 	struct sadb_msg *m;
 {
-	return pfkey_spdump1(m, 0);
+	pfkey_spdump1(m, 0);
 }
 
 void
 pfkey_spdump_withports(m)
 	struct sadb_msg *m;
 {
-	return pfkey_spdump1(m, 1);
+	pfkey_spdump1(m, 1);
 }
 
 static void
