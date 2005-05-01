@@ -1,7 +1,7 @@
-/*	$NetBSD: ehci.c,v 1.99 2005/05/01 19:35:07 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.100 2005/05/01 19:45:40 augustss Exp $ */
 
 /*
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,22 +50,18 @@
  * TODO:
  * 1) hold off explorations by companion controllers until ehci has started.
  *
- * 2) The EHCI driver lacks support for interrupt isochronous transfers, so
+ * 2) The EHCI driver lacks support for isochronous transfers, so
  *    devices using them don't work.
- *    Interrupt transfers are not difficult, it's just not done.
  *
- * 3) The meaty part to implement is the support for USB 2.0 hubs.
- *    They are quite complicated since the need to be able to do
- *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
- *    So the hub driver needs to handle and schedule these things, to
- *    assign place in frame where different devices get to go. See chapter
+ * 3) The hub driver needs to handle and schedule the transaction translaor,
+ *    to assign place in frame where different devices get to go. See chapter
  *    on hubs in USB 2.0 for details.
  *
  * 4) command failures are not recovered correctly
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.99 2005/05/01 19:35:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.100 2005/05/01 19:45:40 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
