@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.72 2005/05/01 11:09:20 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.73 2005/05/01 16:54:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -7882,4 +7882,37 @@ sbin/fsck_ffs/pass1.c				1.37
 
 	Remove debugging abort() calls.
 	[christos, ticket #228]
+
+sys/dev/usb/ehci.c				1.92-1.95
+sys/dev/usb/ehcivar.h				1.18
+
+	Fix bug in interrupt transfer scheduling in the ehci(4) driver.
+	It is now possible to attach low/full speed devices to USB2 hubs.
+
+doc/3RDPARTY					1.325
+src/share/zoneinfo/africa			patch
+src/share/zoneinfo/asia				patch
+src/share/zoneinfo/northamerica			patch
+
+	tzdata2005i out and imported.
+	[kleink, ticket #218]
+
+sys/dev/usb/ukbd.c				1.86
+
+	If UKBD_LAYOUT isn't defined, but PCKBD_LAYOUT is, use the latter as
+	the default layout. Fixes half of kern/28668.
+	[augustss, ticket #219]
+
+sbin/wsconsctl/wsconsctl.8			1.17
+sbin/wsconsctl/wsconsctl.c			1.11
+
+	Change the default controlling devices to /dev/wskbd and /dev/wsmouse
+	(instead wskbd0 and wsmouse0), this way changes will affect all devices
+	instead of just the first one.
+	[augustss, ticket #220]
+
+sys/netinet/tcp_usrreq.c			1.101
+
+	s of sack is selective, not selection.
+	[yamt, ticket #221]
 
