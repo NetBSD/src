@@ -62,13 +62,13 @@ $ EROFS
 $ EMLINK
 31 Zu viele Links
 $ EPIPE
-32 Unterbrochene pipe
+32 Unterbrochene Pipe
 $ EDOM
 33 Numerisches Argument ausserhalb des Wertebereichs
 $ ERANGE
 34 Ergebnis zu groß oder zu klein
 $ EAGAIN, EWOULDBLOCK
-35 Resource vorübergehend nicht verfügbar
+35 Ressource vorübergehend nicht verfügbar
 $ EINPROGRESS
 36 Operation wird jetzt fortgesetzt
 $ EALREADY
@@ -94,7 +94,7 @@ $ EPFNOSUPPORT
 $ EAFNOSUPPORT
 47 Addressart wird von der Protokollfamilie nicht unterstützt
 $ EADDRINUSE
-48 Addresse wird bereits benutzt
+48 Adresse wird bereits benutzt
 $ EADDRNOTAVAIL
 49 Kann angeforderte Adresse nicht belegen
 $ ENETDOWN
@@ -219,7 +219,7 @@ $ SIGTERM
 $ SIGURG
 16 Dringende Ein/Ausgabeanforderung
 $ SIGSTOP
-17 Gestoppt (signal)
+17 Gestoppt (Signal)
 $ SIGTSTP
 18 Gestoppt
 $ SIGCONT
@@ -241,7 +241,7 @@ $ SIGVTALRM
 $ SIGPROF
 27 Profil-Wecker abgelaufen
 $ SIGWINCH
-28 Fenstergöße hat sich geändert
+28 Fenstergröße hat sich geändert
 $ SIGINFO
 29 Informationsanforderung
 $ SIGUSR1
