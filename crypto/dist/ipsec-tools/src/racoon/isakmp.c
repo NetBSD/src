@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.3.2.1 2005/04/21 16:51:40 tron Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.3.2.2 2005/05/01 11:01:04 tron Exp $	*/
 
 /* Id: isakmp.c,v 1.34.2.2 2005/03/13 17:31:55 vanhu Exp */
 
@@ -431,14 +431,14 @@ isakmp_main(msg, remote, local)
 
 #ifdef ENABLE_NATT
 		/* Floating ports for NAT-T */
-		if ((iph1->natt_flags & NAT_DETECTED) &&
+		if (NATT_AVAILABLE(iph1) &&
 		    ! (iph1->natt_flags & NAT_PORTS_CHANGED) &&
 		    ((cmpsaddrstrict(iph1->remote, remote) != 0) ||
 		    (cmpsaddrstrict(iph1->local, local) != 0)))
 		{
 			/* prevent memory leak */
-			racoon_free (iph1->remote);
-			racoon_free (iph1->local);
+			racoon_free(iph1->remote);
+			racoon_free(iph1->local);
 
 			/* copy-in new addresses */
 			iph1->remote = dupsaddr(remote);
@@ -447,7 +447,7 @@ isakmp_main(msg, remote, local)
 			/* set the flag to prevent further port floating
 			   (FIXME: should we allow it? E.g. when the NAT gw 
 			    is rebooted?) */
-			iph1->natt_flags |= NAT_PORTS_CHANGED;
+			iph1->natt_flags |= NAT_PORTS_CHANGED | NAT_ADD_NON_ESP_MARKER;
 			
 			/* print some neat info */
 			plog (LLV_INFO, LOCATION, NULL, 
@@ -1209,11 +1209,15 @@ isakmp_ph2begin_r(iph1, msg)
 	}
 	switch (iph2->dst->sa_family) {
 	case AF_INET:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
+#endif
 		break;
 #ifdef INET6
 	case AF_INET6:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in6 *)iph2->dst)->sin6_port = 0;
+#endif
 		break;
 #endif
 	default:
@@ -1230,11 +1234,15 @@ isakmp_ph2begin_r(iph1, msg)
 	}
 	switch (iph2->src->sa_family) {
 	case AF_INET:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in *)iph2->src)->sin_port = 0;
+#endif
 		break;
 #ifdef INET6
 	case AF_INET6:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in6 *)iph2->src)->sin6_port = 0;
+#endif
 		break;
 #endif
 	default:
@@ -1673,7 +1681,7 @@ isakmp_send(iph1, sbuf)
 	vchar_t *vbuf = NULL;
 
 #ifdef ENABLE_NATT
-	size_t extralen = NON_ESP_MARKER_USE(iph1) * NON_ESP_MARKER_LEN;
+	size_t extralen = NON_ESP_MARKER_USE(iph1) ? NON_ESP_MARKER_LEN : 0;
 
 #ifdef ENABLE_FRAG
 	/* 
@@ -2677,6 +2685,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		delph1(iph1);
 		return -1;
 	}
+	port = NULL;
 	switch (iph1->local->sa_family) {
 	case AF_INET:
 		port = &((struct sockaddr_in *)iph1->local)->sin_port;
@@ -2704,7 +2713,12 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		delph1(iph1);
 		return -1;
 	}
-
+#ifdef ENABLE_NATT
+	if ( port != NULL && *port == htons(lcconf->port_isakmp_natt) ) {
+	    plog (LLV_DEBUG, LOCATION, NULL, "Marking ports as changed\n");
+	    iph1->natt_flags |= NAT_ADD_NON_ESP_MARKER;
+	}
+#endif
 	return 0;
 }
 
