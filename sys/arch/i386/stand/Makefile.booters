@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.58 2004/09/06 23:41:21 thorpej Exp $
+#	$NetBSD: Makefile.booters,v 1.59 2005/05/01 00:31:23 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -50,11 +50,10 @@ CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 SRCS+=	vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86 lib
+depend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine:: x86
