@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.68 2005/04/22 07:01:25 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.69 2005/05/01 10:35:58 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1427,4 +1427,36 @@ sys/netinet/tcp_input.c				patch
 
 	Fix TCP performance problems introduced in ticket 1401.
 	[chs, ticket #1445]
+
+sys/dev/pci/if_tl.c				1.69
+sys/dev/pci/pcidevs				1.706
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add "Compaq Netelligent 10 T/2 PCI UTP/Coax Controller". Fix kern/29218
+	by A L Meyers.
+	[bouyer, ticket #1438]
+
+sys/dev/pci/if_wm.c				1.102
+
+	In wm_stop():
+	 - Clear the interrupt mask to ensure the device cannot assert its
+	   interrupt line.
+	 - Clear sc->sc_icr to ensure wm_intr() makes no attempt to service any
+	   currently pending or shared interrupt.
+	This should address the problem reported in both PR/29903 and PR/22493.
+	(wm(4) is susceptible to crashing in wm_intr() when the interface is 
+	downed)
+	[scw, ticket #1481]
+
+share/man/man4/tlp.4				1.14
+
+	Mention the Compu-Shack FASTline-II PCI adapters as supported.
+	[bad, ticket #1483]
+
+sbin/fsck_ffs/inode.c				1.52
+sbin/fsck_ffs/pass1.c				1.37
+
+	Remove debugging abort() calls.
+	[christos, ticket #1493]
 
