@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.51 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: inode.c,v 1.51.2.1 2005/05/01 11:07:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.51 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: inode.c,v 1.51.2.1 2005/05/01 11:07:16 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,6 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS I",
 				    pathbuf);
-				abort();
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
 					DIP(dp, size) = iswap64(i *
@@ -394,10 +393,8 @@ getnextinode(ino_t inumber)
 	static union dinode *dp;
 	union dinode *ret;
 
-	if (inumber != nextino++ || inumber > lastvalidinum) {
-		abort();
+	if (inumber != nextino++ || inumber > lastvalidinum)
 		errx(EEXIT, "bad inode number %d to nextinode", inumber);
-	}
 
 	if (inumber >= lastinum) {
 		readcnt++;
