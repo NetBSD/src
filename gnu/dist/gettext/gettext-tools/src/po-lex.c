@@ -310,7 +310,11 @@ mb_width (const mbchar_t mbc)
     {
       if (mbc->bytes == 1)
 	{
-	  if (mbc->buf[0] >= 0x00 && mbc->buf[0] <= 0x1F)
+	  if (
+#if CHAR_MIN < 0x00 /* to avoid gcc warning */
+	    mbc->buf[0] >= 0x00 &&
+#endif
+	    mbc->buf[0] <= 0x1F)
 	    {
 	      if (mbc->buf[0] == 0x09)
 		return 8 - (gram_pos_column & 7);
