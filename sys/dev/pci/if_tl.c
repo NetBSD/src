@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.64.2.1.2.2 2005/04/16 12:19:04 tron Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.64.2.1.2.3 2005/05/01 10:19:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.64.2.1.2.2 2005/04/16 12:19:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.64.2.1.2.3 2005/05/01 10:19:50 tron Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -221,6 +221,8 @@ const struct tl_product_desc tl_compaq_products[] = {
 	  "Integrated Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
 	  "Compaq Netelligent 10 T" },
+	{ PCI_PRODUCT_COMPAQ_N10T2, TLPHY_MEDIA_10_2,
+	  "Compaq Netelligent 10 T/2 UTP/Coax" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
 	  "Compaq Integrated NetFlex 3/P" },
 	{ PCI_PRODUCT_COMPAQ_IntPL100TX, TLPHY_MEDIA_10_2|TLPHY_MEDIA_NO_10_T,
