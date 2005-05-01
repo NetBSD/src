@@ -1,4 +1,4 @@
-/* $NetBSD: setkey.c,v 1.3 2005/02/23 15:17:51 manu Exp $ /
+/* $NetBSD: setkey.c,v 1.3.2.1 2005/05/01 11:01:11 tron Exp $ /
 
 /*	KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp	*/
 
@@ -108,6 +108,7 @@ int f_policy = 0;
 int f_hexdump = 0;
 int f_tflag = 0;
 int f_notreally = 0;
+int f_withports = 0;
 #ifdef HAVE_POLICY_FWD
 int f_rfcmode = 1;
 #define RK_OPTS "rk"
@@ -175,7 +176,7 @@ main(argc, argv)
 
 	thiszone = gmt2local(0);
 
-	while ((c = getopt(argc, argv, "acdf:HlnvxDFPhVrk?")) != -1) {
+	while ((c = getopt(argc, argv, "acdf:HlnvxDFPphVrk?")) != -1) {
 		switch (c) {
 		case 'c':
 			f_mode = MODE_STDIN;
@@ -214,6 +215,9 @@ main(argc, argv)
 			break;
 		case 'P':
 			f_policy = 1;
+			break;
+		case 'p':
+			f_withports = 1;
 			break;
 		case 'v':
 			f_verbose = 1;
@@ -608,11 +612,17 @@ postproc(msg, len)
 		break;
 
 	case SADB_X_SPDGET:
-		pfkey_spdump(msg);
+		if (f_withports) 
+			pfkey_spdump_withports(msg);
+		else
+			pfkey_spdump(msg);
 		break;
 
 	case SADB_X_SPDDUMP:
-		pfkey_spdump(msg);
+		if (f_withports) 
+			pfkey_spdump_withports(msg);
+		else
+			pfkey_spdump(msg);
 		if (msg->sadb_msg_seq == 0) break;
 		msg = (struct sadb_msg *)((caddr_t)msg +
 				     PFKEY_UNUNIT64(msg->sadb_msg_len));
