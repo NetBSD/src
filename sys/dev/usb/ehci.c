@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.100 2005/05/01 19:45:40 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.101 2005/05/01 21:47:11 wiz Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  * 2) The EHCI driver lacks support for isochronous transfers, so
  *    devices using them don't work.
  *
- * 3) The hub driver needs to handle and schedule the transaction translaor,
+ * 3) The hub driver needs to handle and schedule the transaction translator,
  *    to assign place in frame where different devices get to go. See chapter
  *    on hubs in USB 2.0 for details.
  *
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.100 2005/05/01 19:45:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.101 2005/05/01 21:47:11 wiz Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
