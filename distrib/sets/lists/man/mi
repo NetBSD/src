@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.787 2005/05/01 07:28:14 lukem Exp $
+# $NetBSD: mi,v 1.788 2005/05/01 10:34:50 lukem Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2183,7 +2183,7 @@
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
-./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6.cat
+./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-netutil-catman	.cat
