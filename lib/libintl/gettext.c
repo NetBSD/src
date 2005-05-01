@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.20 2004/09/23 21:35:27 tshiozak Exp $	*/
+/*	$NetBSD: gettext.c,v 1.20.2.1 2005/05/01 22:09:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.20 2004/09/23 21:35:27 tshiozak Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.20.2.1 2005/05/01 22:09:47 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -439,7 +439,7 @@ setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 		return -1;
 
 	/* get sysdep segments */
-	l = sizeof(struct mosysdepsegs_h *) * mohandle->mo.mo_sysdep_nsegs;
+	l = sizeof(struct mosysdepsegs_h) * mohandle->mo.mo_sysdep_nsegs;
 	mohandle->mo.mo_sysdep_segs = (struct mosysdepsegs_h *)malloc(l);
 	if (!mohandle->mo.mo_sysdep_segs)
 		return -1;
