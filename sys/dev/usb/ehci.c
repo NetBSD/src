@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.98 2005/05/01 19:24:39 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.99 2005/05/01 19:35:07 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.98 2005/05/01 19:24:39 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.99 2005/05/01 19:35:07 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1380,16 +1380,13 @@ ehci_open(usbd_pipe_handle pipe)
 	case USB_SPEED_HIGH: speed = EHCI_QH_SPEED_HIGH; break;
 	default: panic("ehci_open: bad device speed %d", dev->speed);
 	}
-	if (speed != EHCI_QH_SPEED_HIGH) {
-		printf("%s: *** WARNING: opening low/full speed device, this "
-		       "may not work yet.\n",
+	if (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_ISOCHRONOUS) {
+		printf("%s: *** WARNING: opening low/full speed isoc device, "
+		       "this does not work yet.\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 			    hshubaddr, hshubport));
-#if 0
-		if (xfertype != UE_CONTROL)
-			return USBD_INVAL;
-#endif
+		return USBD_INVAL;
 	}
 
 	naks = 8;		/* XXX */
