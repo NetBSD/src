@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.36 2005/02/09 14:21:37 xtraeme Exp $   */
+/*      $NetBSD: raidctl.c,v 1.37 2005/05/01 22:37:34 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.36 2005/02/09 14:21:37 xtraeme Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.37 2005/05/01 22:37:34 oster Exp $");
 #endif
 
 
@@ -864,21 +864,18 @@ static void
 do_meter(int fd, u_long option)
 {
 	int percent_done;
-	int last_value;
-	int start_value;
+	RF_uint64 start_value;
 	RF_ProgressInfo_t progressInfo;
 	void *pInfoPtr;
 	struct timeval start_time;
-	struct timeval last_time;
 	struct timeval current_time;
 	double elapsed;
 	int elapsed_sec;
 	int elapsed_usec;
 	int simple_eta,last_eta;
 	double rate;
-	int amount;
+	RF_uint64 amount;
 	int tbit_value;
-	int wait_for_more_data;
 	char buffer[1024];
 	char bar_buffer[1024];
 	char eta_buffer[1024];
@@ -892,12 +889,9 @@ do_meter(int fd, u_long option)
 
 	percent_done = 0;
 	do_ioctl(fd, option, &pInfoPtr, "");
-	last_value = progressInfo.completed;
-	start_value = last_value;
-	last_time = start_time;
+	start_value = progressInfo.completed;
 	current_time = start_time;
 	
-	wait_for_more_data = 0;
 	tbit_value = 0;
 	while(progressInfo.completed < progressInfo.total) {
 
@@ -920,9 +914,6 @@ do_meter(int fd, u_long option)
 
 		if (amount <= 0) { /* we don't do negatives (yet?) */
 			amount = 0;
-			wait_for_more_data = 1;
-		} else {
-			wait_for_more_data = 0;
 		}
 
 		if (elapsed == 0)
@@ -951,14 +942,6 @@ do_meter(int fd, u_long option)
 
 		write(fileno(stdout),buffer,strlen(buffer));
 		fflush(stdout);
-
-		/* resolution wasn't high enough... wait until we get another
-		   timestamp and perhaps more "work" done. */
-
-		if (!wait_for_more_data) {
-			last_time = current_time;
-			last_value = progressInfo.completed;
-		}
 
 		if (++tbit_value>3) 
 			tbit_value = 0;
