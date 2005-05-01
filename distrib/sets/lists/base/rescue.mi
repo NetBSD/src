@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.10 2005/04/01 08:35:17 lukem Exp $
+# $NetBSD: rescue.mi,v 1.11 2005/05/01 07:28:13 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -91,7 +91,7 @@
 ./rescue/newfs_msdos				base-rescue-root
 ./rescue/pax					base-rescue-root
 ./rescue/ping					base-rescue-root
-./rescue/ping6					base-rescue-root	inet6
+./rescue/ping6					base-rescue-root	use_inet6
 ./rescue/pppoectl				base-rescue-root
 ./rescue/ps					base-rescue-root
 ./rescue/pwd					base-rescue-root
@@ -109,7 +109,7 @@
 ./rescue/route					base-rescue-root
 ./rescue/routed					base-rescue-root
 ./rescue/rrestore				base-rescue-root
-./rescue/rtsol					base-rescue-root	inet6
+./rescue/rtsol					base-rescue-root	use_inet6
 ./rescue/savecore				base-rescue-root
 ./rescue/scp					base-rescue-root	crypto
 ./rescue/scsictl				base-rescue-root
