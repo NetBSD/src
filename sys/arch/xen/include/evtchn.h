@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.2.2.6 2005/04/28 10:39:11 tron Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.2.2.7 2005/05/01 22:11:39 tron Exp $	*/
 
 /*
  *
@@ -40,7 +40,7 @@ extern struct evtsource *evtsource[];
 
 void events_default_setup(void);
 void init_events(void);
-unsigned int do_event(int, struct intrframe *);
+unsigned int evtchn_do_event(int, struct intrframe *);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
