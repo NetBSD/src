@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.105 2005/02/23 17:22:29 sjg Exp $
+.\"	$NetBSD: make.1,v 1.106 2005/05/01 00:37:10 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 6, 2004
+.Dd April 30, 2005
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1334,6 +1334,8 @@ the only target specified.
 .It Ic .BEGIN
 Any command lines attached to this target are executed before anything
 else is done.
+Note that dependencies do not make sense in this context and they will
+not be processed.
 .It Ic .DEFAULT
 This is sort of a
 .Ic .USE
@@ -1351,6 +1353,8 @@ to the target's own name.
 .It Ic .END
 Any command lines attached to this target are executed after everything
 else is done.
+Note that dependencies do not make sense in this context and they will
+not be processed.
 .It Ic .IGNORE
 Mark each of the sources with the
 .Ic .IGNORE
@@ -1362,6 +1366,8 @@ option.
 If
 .Nm
 is interrupted, the commands for this target will be executed.
+Note that dependencies do not make sense in this context and they will
+not be processed.
 .It Ic .MAIN
 If no target is specified when
 .Nm
