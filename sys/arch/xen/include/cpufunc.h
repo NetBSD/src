@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5.2.1 2005/03/30 10:04:30 tron Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5.2.2 2005/05/01 22:02:17 tron Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -159,12 +159,10 @@ tlbflush(void)
 	val = rcr3();
 	lcr3(val);
 }
-#endif
 
 static __inline void
 tlbflushg(void)
 {
-	static __inline void tlbflush(void);
 	/*
 	 * Big hammer: flush all TLB entries, including ones from PTE's
 	 * with the G bit set.  This should only be necessary if TLB
@@ -194,7 +192,7 @@ tlbflushg(void)
 #endif
 		tlbflush();
 }
-
+#endif
 
 #ifdef notyet
 void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
