@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.161 2005/05/01 01:03:11 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.162 2005/05/01 01:10:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.161 2005/05/01 01:03:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.162 2005/05/01 01:10:06 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ int ohcidebug = 0;
 
 /*
  * The OHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
@@ -999,7 +999,7 @@ ohci_shutdown(void *v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
