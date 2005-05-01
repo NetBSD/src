@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.47 2005/05/01 23:19:01 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.48 2005/05/02 00:00:33 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.47 2005/05/01 23:19:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.48 2005/05/02 00:00:33 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -398,16 +398,16 @@ rasops_allocattr_color(cookie, fg, bg, flg, attr)
 		return (EINVAL);
 
 	if ((flg & WSATTR_WSCOLORS) == 0) {
-		#ifdef WS_DEFAULT_FG
-			fg = WS_DEFAULT_FG;
-		#else
-			fg = WSCOL_WHITE;
-		#endif
-		#ifdef WS_DEFAULT_BG
-			bg = WS_DEFAULT_BG;
-		#else	
-			bg = WSCOL_BLACK;
-		#endif
+#ifdef WS_DEFAULT_FG
+		fg = WS_DEFAULT_FG;
+#else
+		fg = WSCOL_WHITE;
+#endif
+#ifdef WS_DEFAULT_BG
+		bg = WS_DEFAULT_BG;
+#else	
+		bg = WSCOL_BLACK;
+#endif
 	}
 
 	if ((flg & WSATTR_REVERSE) != 0) {
