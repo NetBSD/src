@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.52 2002/05/13 05:31:42 simonb Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.52.4.1 2005/05/01 10:09:09 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.52 2002/05/13 05:31:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.52.4.1 2005/05/01 10:09:09 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,7 +980,7 @@ linux_sys_pread(p, v, retval)
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
-	return sys_read(p, &pra, retval);
+	return sys_pread(p, &pra, retval);
 }
 
 /*
@@ -1005,5 +1005,5 @@ linux_sys_pwrite(p, v, retval)
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
-	return sys_write(p, &pra, retval);
+	return sys_pwrite(p, &pra, retval);
 }
