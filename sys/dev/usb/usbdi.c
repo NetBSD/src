@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.106 2004/10/24 12:52:40 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.107 2005/05/02 15:32:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.106 2004/10/24 12:52:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.107 2005/05/02 15:32:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1210,13 +1210,19 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 	n = size / 2 - 1;
 	for (i = 0; i < n; i++) {
 		c = UGETW(us.bString[i]);
-		/* Convert from Unicode, handle buggy strings. */
-		if ((c & 0xff00) == 0)
+		if (swap)
+			c = (c >> 8) | (c << 8);
+		/* Encode (16-bit) Unicode as UTF8. */
+		if (c < 0x0080) {
 			*s++ = c;
-		else if ((c & 0x00ff) == 0 && swap)
-			*s++ = c >> 8;
-		else
-			*s++ = '?';
+		} else if (c < 0x0800) {
+			*s++ = 0xc0 | (c >> 6);
+			*s++ = 0x80 | (c & 0x3f);
+		} else {
+			*s++ = 0xe0 | (c >> 12);
+			*s++ = 0x80 | ((c >> 6) & 0x3f);
+			*s++ = 0x80 | (c & 0x3f);
+		}
 	}
 	*s++ = 0;
 	return (USBD_NORMAL_COMPLETION);
