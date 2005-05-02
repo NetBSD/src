@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.328 2005/04/29 15:31:55 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.329 2005/05/02 15:09:59 kochi Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,8 +25,8 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20040211
-Current Vers:	20050309
+Version:	20050408
+Current Vers:	20050408
 Maintainer:	INTEL
 Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
 Mailing List:	acpi-devel@lists.sourceforge.net
