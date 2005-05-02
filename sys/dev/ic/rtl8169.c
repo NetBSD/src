@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.17 2005/03/30 11:38:06 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.18 2005/05/02 15:34:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -750,7 +750,9 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_start = re_start;
 	ifp->if_stop = re_stop;
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
@@ -1245,7 +1247,7 @@ re_rxeof(struct rtk_softc *sc)
 
 		/* Do RX checksumming if enabled */
 
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 
 			/* Check IP header checksum */
 			if (rxstat & RTK_RDESC_STAT_PROTOID)
@@ -1256,13 +1258,13 @@ re_rxeof(struct rtk_softc *sc)
 
 		/* Check TCP/UDP checksum */
 		if (RTK_TCPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_TCPv4)) {
+		    (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
 			if (rxstat & RTK_RDESC_STAT_TCPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 		if (RTK_UDPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_UDPv4)) {
+		    (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
 			if (rxstat & RTK_RDESC_STAT_UDPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
@@ -1781,7 +1783,8 @@ re_init(struct ifnet *ifp)
 	if (1)  {/* not for 8169S ? */
 		reg |= RTK_CPLUSCMD_VLANSTRIP |
 		    (ifp->if_capenable &
-		    (IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4) ?
+		    (IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx |
+		     IFCAP_CSUM_UDPv4_Rx) ?
 		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
 	}
 

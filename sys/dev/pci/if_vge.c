@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.4 2005/03/05 14:51:21 jdolecek Exp $ */
+/* $NetBSD: if_vge.c,v 1.5 2005/05/02 15:34:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.4 2005/03/05 14:51:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5 2005/05/02 15:34:32 yamt Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -958,8 +958,10 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
 	 */
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 #ifdef DEVICE_POLLING
 #ifdef IFCAP_POLLING

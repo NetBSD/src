@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.87 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.88 2005/05/02 15:34:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.87 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.88 2005/05/02 15:34:32 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2471,7 +2471,9 @@ bge_attach(parent, self, aux)
 
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
 		sc->ethercom.ec_if.if_capabilities |=
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 
