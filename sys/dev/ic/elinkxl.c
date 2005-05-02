@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.80 2005/05/02 15:34:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.80 2005/05/02 15:34:31 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -439,8 +439,10 @@ ex_config(sc)
 	 * The 3c90xB has hardware IPv4/TCPv4/UDPv4 checksum support.
 	 */
 	if (sc->ex_conf & EX_CONF_90XB)
-		sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
-		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		sc->sc_ethercom.ec_if.if_capabilities |=
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);

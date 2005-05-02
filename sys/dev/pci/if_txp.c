@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $ */
+/* $NetBSD: if_txp.c,v 1.11 2005/05/02 15:34:32 yamt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.11 2005/05/02 15:34:32 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2065,14 +2065,15 @@ txp_capabilities(sc)
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPCKSUM) {
 		sc->sc_tx_capability |= OFFLOAD_IPCKSUM;
 		sc->sc_rx_capability |= OFFLOAD_IPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx;
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
 		sc->sc_rx_capability |= OFFLOAD_TCPCKSUM;
 #ifdef TRY_TX_TCP_CSUM
 		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
 #endif
 	}
 
@@ -2080,7 +2081,8 @@ txp_capabilities(sc)
 		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
 #ifdef TRY_TX_UDP_CSUM
 		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 	}
 
