@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.122 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.123 2005/05/02 21:20:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.122 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.123 2005/05/02 21:20:27 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -182,6 +182,11 @@ extern struct ifqueue pkintrq;
 extern u_char	at_org_code[3];
 extern u_char	aarp_org_code[3];
 #endif /* NETATALK */
+
+static struct timeval bigpktppslim_last;
+static int bigpktppslim = 2;	/* XXX */
+static int bigpktpps_count;
+
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -672,8 +677,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
-		printf("%s: discarding oversize frame (len=%d)\n",
-		    ifp->if_xname, m->m_pkthdr.len);
+		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
+			    bigpktppslim)) {
+			printf("%s: discarding oversize frame (len=%d)\n",
+			    ifp->if_xname, m->m_pkthdr.len);
+		}
 		m_freem(m);
 		return;
 	}
