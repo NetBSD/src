@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: achware.h -- hardware specific interfaces
- *       xRevision: 68 $
+ *       xRevision: 77 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -119,22 +119,26 @@
 
 
 /* PM Timer ticks per second (HZ) */
+
 #define PM_TIMER_FREQUENCY  3579545
+
+/* Values for the _SST reserved method */
+
+#define ACPI_SST_INDICATOR_OFF  0
+#define ACPI_SST_WORKING        1
+#define ACPI_SST_WAKING         2
+#define ACPI_SST_SLEEPING       3
+#define ACPI_SST_SLEEP_CONTEXT  4
 
 
 /* Prototypes */
 
 
+/*
+ * hwacpi - high level functions
+ */
 ACPI_STATUS
 AcpiHwInitialize (
-    void);
-
-ACPI_STATUS
-AcpiHwShutdown (
-    void);
-
-ACPI_STATUS
-AcpiHwInitializeSystemInfo (
     void);
 
 ACPI_STATUS
@@ -145,12 +149,10 @@ UINT32
 AcpiHwGetMode (
     void);
 
-UINT32
-AcpiHwGetModeCapabilities (
-    void);
 
-/* Register I/O Prototypes */
-
+/*
+ * hwregs - ACPI Register I/O
+ */
 ACPI_BIT_REGISTER_INFO *
 AcpiHwGetBitRegisterInfo (
     UINT32                  RegisterId);
@@ -184,28 +186,17 @@ AcpiHwClearAcpiStatus (
     UINT32                  Flags);
 
 
-/* GPE support */
-
+/*
+ * hwgpe - GPE support
+ */
 ACPI_STATUS
-AcpiHwEnableGpe (
-    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
-
-void
-AcpiHwEnableGpeForWakeup (
-    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
-
-ACPI_STATUS
-AcpiHwDisableGpe (
+AcpiHwWriteGpeEnableReg (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 ACPI_STATUS
 AcpiHwDisableGpeBlock (
     ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
     ACPI_GPE_BLOCK_INFO     *GpeBlock);
-
-void
-AcpiHwDisableGpeForWakeup (
-    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 ACPI_STATUS
 AcpiHwClearGpe (
@@ -222,16 +213,26 @@ AcpiHwGetGpeStatus (
     ACPI_EVENT_STATUS       *EventStatus);
 
 ACPI_STATUS
-AcpiHwDisableNonWakeupGpes (
-    void);
+AcpiHwDisableAllGpes (
+    UINT32                  Flags);
 
 ACPI_STATUS
-AcpiHwEnableNonWakeupGpes (
-    void);
+AcpiHwEnableAllRuntimeGpes (
+    UINT32                  Flags);
+
+ACPI_STATUS
+AcpiHwEnableAllWakeupGpes (
+    UINT32                  Flags);
+
+ACPI_STATUS
+AcpiHwEnableRuntimeGpeBlock (
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
+    ACPI_GPE_BLOCK_INFO     *GpeBlock);
 
 
-/* ACPI Timer prototypes */
-
+/*
+ * hwtimer - ACPI Timer prototypes
+ */
 ACPI_STATUS
 AcpiGetTimerResolution (
     UINT32                  *Resolution);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsxface - Public interfaces to the resource manager
- *              xRevision: 28 $
+ *              xRevision: 33 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.10 2004/02/14 16:57:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
 
 #define __RSXFACE_C__
 
@@ -125,6 +125,23 @@ __KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.10 2004/02/14 16:57:25 kochi Exp $");
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsxface")
+
+/* Local macros for 16,32-bit to 64-bit conversion */
+
+#define ACPI_COPY_FIELD(Out, In, Field)  ((Out)->Field = (In)->Field)
+#define ACPI_COPY_ADDRESS(Out, In)                      \
+    ACPI_COPY_FIELD(Out, In, ResourceType);              \
+    ACPI_COPY_FIELD(Out, In, ProducerConsumer);          \
+    ACPI_COPY_FIELD(Out, In, Decode);                    \
+    ACPI_COPY_FIELD(Out, In, MinAddressFixed);           \
+    ACPI_COPY_FIELD(Out, In, MaxAddressFixed);           \
+    ACPI_COPY_FIELD(Out, In, Attribute);                 \
+    ACPI_COPY_FIELD(Out, In, Granularity);               \
+    ACPI_COPY_FIELD(Out, In, MinAddressRange);           \
+    ACPI_COPY_FIELD(Out, In, MaxAddressRange);           \
+    ACPI_COPY_FIELD(Out, In, AddressTranslationOffset);  \
+    ACPI_COPY_FIELD(Out, In, AddressLength);             \
+    ACPI_COPY_FIELD(Out, In, ResourceSource);
 
 
 /*******************************************************************************
@@ -323,6 +340,7 @@ AcpiWalkResources (
     ACPI_STATUS                 Status;
     ACPI_BUFFER                 Buffer = {ACPI_ALLOCATE_BUFFER, NULL};
     ACPI_RESOURCE               *Resource;
+    ACPI_RESOURCE               *BufferEnd;
 
 
     ACPI_FUNCTION_TRACE ("AcpiWalkResources");
@@ -341,7 +359,14 @@ AcpiWalkResources (
         return_ACPI_STATUS (Status);
     }
 
-    Resource = (ACPI_RESOURCE *) Buffer.Pointer;
+    /* Setup pointers */
+
+    Resource  = (ACPI_RESOURCE *) Buffer.Pointer;
+    BufferEnd = ACPI_CAST_PTR (ACPI_RESOURCE,
+                    ((UINT8 *) Buffer.Pointer + Buffer.Length));
+
+    /* Walk the resource list */
+
     for (;;)
     {
         if (!Resource || Resource->Id == ACPI_RSTYPE_END_TAG)
@@ -357,6 +382,7 @@ AcpiWalkResources (
         case AE_CTRL_DEPTH:
 
             /* Just keep going */
+
             Status = AE_OK;
             break;
 
@@ -374,7 +400,16 @@ AcpiWalkResources (
             goto Cleanup;
         }
 
+        /* Get the next resource descriptor */
+
         Resource = ACPI_NEXT_RESOURCE (Resource);
+
+        /* Check for end-of-buffer */
+
+        if (Resource >= BufferEnd)
+        {
+            goto Cleanup;
+        }
     }
 
 Cleanup:
@@ -413,9 +448,8 @@ AcpiSetCurrentResources (
     ACPI_FUNCTION_TRACE ("AcpiSetCurrentResources");
 
 
-    /*
-     * Must have a valid handle and buffer
-     */
+    /* Must have a valid handle and buffer */
+
     if ((!DeviceHandle)       ||
         (!InBuffer)           ||
         (!InBuffer->Pointer)  ||
@@ -428,21 +462,6 @@ AcpiSetCurrentResources (
     return_ACPI_STATUS (Status);
 }
 
-
-#define ACPI_COPY_FIELD(Out, In, Field)  ((Out)->Field = (In)->Field)
-#define ACPI_COPY_ADDRESS(Out, In)                      \
-    ACPI_COPY_FIELD(Out, In, ResourceType);              \
-    ACPI_COPY_FIELD(Out, In, ProducerConsumer);          \
-    ACPI_COPY_FIELD(Out, In, Decode);                    \
-    ACPI_COPY_FIELD(Out, In, MinAddressFixed);           \
-    ACPI_COPY_FIELD(Out, In, MaxAddressFixed);           \
-    ACPI_COPY_FIELD(Out, In, Attribute);                 \
-    ACPI_COPY_FIELD(Out, In, Granularity);               \
-    ACPI_COPY_FIELD(Out, In, MinAddressRange);           \
-    ACPI_COPY_FIELD(Out, In, MaxAddressRange);           \
-    ACPI_COPY_FIELD(Out, In, AddressTranslationOffset);  \
-    ACPI_COPY_FIELD(Out, In, AddressLength);             \
-    ACPI_COPY_FIELD(Out, In, ResourceSource);
 
 /******************************************************************************
  *
@@ -475,14 +494,14 @@ AcpiResourceToAddress64 (
     case ACPI_RSTYPE_ADDRESS16:
 
         Address16 = (ACPI_RESOURCE_ADDRESS16 *) &Resource->Data;
-        ACPI_COPY_ADDRESS(Out, Address16);
+        ACPI_COPY_ADDRESS (Out, Address16);
         break;
 
 
     case ACPI_RSTYPE_ADDRESS32:
 
         Address32 = (ACPI_RESOURCE_ADDRESS32 *) &Resource->Data;
-        ACPI_COPY_ADDRESS(Out, Address32);
+        ACPI_COPY_ADDRESS (Out, Address32);
         break;
 
 
