@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.68 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: acpi.c,v 1.69 2005/05/02 14:53:59 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.68 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.69 2005/05/02 14:53:59 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -947,6 +947,36 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 	}
 
 	return 0;
+}
+
+/*
+ * acpi_set_wake_gpe
+ *
+ *	Set GPE as both Runtime and Wake
+ */
+void
+acpi_set_wake_gpe(ACPI_HANDLE handle)
+{
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	ACPI_OBJECT *p, *elt;
+
+	rv = acpi_eval_struct(handle, METHOD_NAME__PRW, &buf);
+	if (ACPI_FAILURE(rv))
+		return;			/* just ignore */
+
+	p = buf.Pointer;
+	if (p->Type != ACPI_TYPE_PACKAGE || p->Package.Count < 2)
+		goto out;		/* just ignore */
+
+	elt = p->Package.Elements;
+
+	/* TBD: package support */
+	AcpiSetGpeType(NULL, elt[0].Integer.Value, ACPI_GPE_TYPE_WAKE_RUN);
+	AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+
+ out:
+	AcpiOsFree(buf.Pointer);
 }
 
 
