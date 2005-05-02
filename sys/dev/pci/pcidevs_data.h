@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.705 2005/04/20 21:34:37 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.706 2005/05/02 03:37:01 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.706 2005/04/20 21:33:39 bouyer Exp
+ *	NetBSD: pcidevs,v 1.707 2005/05/02 03:36:22 rh Exp
  */
 
 /*
@@ -2028,6 +2028,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "eTIMedia Technology",
 	},
 	{
+	    PCI_VENDOR_ICENSEMBLE,
+	    "IC Ensemble / VIA Technologies",
+	},
+	{
 	    PCI_VENDOR_MICROSOFT,
 	    "Microsoft",
 	},
@@ -2312,7 +2316,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 568;
+const int pci_nvendors = 569;
 
 const struct pci_product pci_products[] = {
 	{
@@ -5330,6 +5334,14 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
 	    "MPIC-II",
+	},
+	{
+	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712,
+	    "Envy24 Multichannel Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT1720,
+	    "Envy24PT/HT Multi-Channel Audio Controller",
 	},
 	{
 	    PCI_VENDOR_ICOMPRESSION, PCI_PRODUCT_ICOMPRESSION_ITVC15,
@@ -10144,4 +10156,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1957;
+const int pci_nproducts = 1959;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.707 2005/04/20 21:34:36 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.708 2005/05/02 03:37:01 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.706 2005/04/20 21:33:39 bouyer Exp
+ *	NetBSD: pcidevs,v 1.707 2005/05/02 03:36:22 rh Exp
  */
 
 /*
@@ -554,6 +554,7 @@
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing */
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology */
+#define	PCI_VENDOR_ICENSEMBLE	0x1412		/* IC Ensemble / VIA Technologies */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
@@ -1593,6 +1594,10 @@
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
+
+/* IC Ensemble / VIA Technologies products */
+#define	PCI_PRODUCT_ICENSEMBLE_ICE1712	0x1712		/* Envy24 Multichannel Audio Controller */
+#define	PCI_PRODUCT_ICENSEMBLE_VT1720	0x1724		/* Envy24PT/HT Multi-Channel Audio Controller */
 
 /* Conexant (iCompression, GlobeSpan) products */
 #define	PCI_PRODUCT_ICOMPRESSION_ITVC15	0x0803		/* iTVC15 MPEG2 codec */
