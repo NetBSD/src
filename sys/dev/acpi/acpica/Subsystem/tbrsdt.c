@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbrsdt - ACPI RSDT table utilities
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -159,7 +159,8 @@ AcpiTbVerifyRsdp (
         /*
          * Obtain access to the RSDP structure
          */
-        Status = AcpiOsMapMemory (Address->Pointer.Physical, sizeof (RSDP_DESCRIPTOR),
+        Status = AcpiOsMapMemory (Address->Pointer.Physical,
+                    sizeof (RSDP_DESCRIPTOR),
                                     (void *) &Rsdp);
         if (ACPI_FAILURE (Status))
         {
@@ -236,9 +237,9 @@ Cleanup:
  *
  * FUNCTION:    AcpiTbGetRsdtAddress
  *
- * PARAMETERS:  None
+ * PARAMETERS:  OutAddress          - Where the address is returned
  *
- * RETURN:      RSDT physical address
+ * RETURN:      None, Address
  *
  * DESCRIPTION: Extract the address of the RSDT or XSDT, depending on the
  *              version of the RSDP
@@ -265,7 +266,8 @@ AcpiTbGetRsdtAddress (
     }
     else
     {
-        OutAddress->Pointer.Value = ACPI_GET_ADDRESS (AcpiGbl_RSDP->XsdtPhysicalAddress);
+        OutAddress->Pointer.Value = ACPI_GET_ADDRESS (
+            AcpiGbl_RSDP->XsdtPhysicalAddress);
     }
 }
 
@@ -311,7 +313,8 @@ AcpiTbValidateRsdt (
     {
         /* Invalid RSDT or XSDT signature */
 
-        ACPI_REPORT_ERROR (("Invalid signature where RSDP indicates RSDT/XSDT should be located\n"));
+        ACPI_REPORT_ERROR ((
+            "Invalid signature where RSDP indicates RSDT/XSDT should be located\n"));
 
         ACPI_DUMP_BUFFER (AcpiGbl_RSDP, 20);
 
@@ -366,11 +369,13 @@ AcpiTbGetTableRsdt (
 
     AcpiTbGetRsdtAddress (&Address);
 
+    TableInfo.Type = ACPI_TABLE_XSDT;
     Status = AcpiTbGetTable (&Address, &TableInfo);
     if (ACPI_FAILURE (Status))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not get the RSDT/XSDT, %s\n",
             AcpiFormatException (Status)));
+
         return_ACPI_STATUS (Status);
     }
 
@@ -389,7 +394,8 @@ AcpiTbGetTableRsdt (
 
     /* Get the number of tables defined in the RSDT or XSDT */
 
-    AcpiGbl_RsdtTableCount = AcpiTbGetTableCount (AcpiGbl_RSDP, TableInfo.Pointer);
+    AcpiGbl_RsdtTableCount = AcpiTbGetTableCount (AcpiGbl_RSDP,
+                                TableInfo.Pointer);
 
     /* Convert and/or copy to an XSDT structure */
 

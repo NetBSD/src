@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1.1.4 $
+ *       $Revision: 1.1.1.5 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,16 +117,6 @@
 #ifndef __ACNETBSD_H__
 #define __ACNETBSD_H__
 
-#if 0
-/*
- * XXX this is technically correct, but will cause problems with some ASL
- *     which only works if the string names a Microsoft operating system.
- */
-#define ACPI_OS_NAME                "NetBSD"
-#else
-#define ACPI_OS_NAME                "Microsoft Windows NT"
-#endif
-
 /* NetBSD uses GCC */
 
 #include "acgcc.h"
@@ -158,7 +148,6 @@
 #define ACPI_EXTERNAL_XFACE
 #define ACPI_INTERNAL_XFACE
 #define ACPI_INTERNAL_VAR_XFACE
-#define ACPI_DISASSEMBLER
 
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
@@ -169,6 +158,7 @@
 #define DEBUGGER_THREADING 0    /* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
+#define ACPI_DISASSEMBLER
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
@@ -198,15 +188,4 @@ isprint(int ch)
 #define ACPI_USE_SYSTEM_CLIBRARY
 #define ACPI_USE_NATIVE_DIVIDE
 
-/* NetBSD doesn't have strupr, should be fixed. (move to libkern) */
-static __inline char *
-strupr(char *str)
-{
-    char *c = str;
-    while(*c) {
-        *c = toupper(*c);
-        c++;
-    }
-    return(str);
-}
 #endif /* __ACNETBSD_H__ */

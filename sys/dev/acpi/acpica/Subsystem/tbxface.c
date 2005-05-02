@@ -2,7 +2,7 @@
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -140,7 +140,8 @@
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiLoadTables (void)
+AcpiLoadTables (
+    void)
 {
     ACPI_POINTER            RsdpAddress;
     ACPI_STATUS             Status;
@@ -156,7 +157,7 @@ AcpiLoadTables (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: Could not get RSDP, %s\n",
-                        AcpiFormatException (Status)));
+            AcpiFormatException (Status)));
         goto ErrorExit;
     }
 
@@ -168,7 +169,7 @@ AcpiLoadTables (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: RSDP Failed validation: %s\n",
-                        AcpiFormatException (Status)));
+            AcpiFormatException (Status)));
         goto ErrorExit;
     }
 
@@ -178,7 +179,7 @@ AcpiLoadTables (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load RSDT: %s\n",
-                        AcpiFormatException (Status)));
+            AcpiFormatException (Status)));
         goto ErrorExit;
     }
 
@@ -187,13 +188,13 @@ AcpiLoadTables (void)
     Status = AcpiTbGetRequiredTables ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("AcpiLoadTables: Error getting required tables (DSDT/FADT/FACS): %s\n",
-                        AcpiFormatException (Status)));
+        ACPI_REPORT_ERROR ((
+            "AcpiLoadTables: Error getting required tables (DSDT/FADT/FACS): %s\n",
+            AcpiFormatException (Status)));
         goto ErrorExit;
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "ACPI Tables successfully acquired\n"));
-
 
     /* Load the namespace from the tables */
 
@@ -201,7 +202,7 @@ AcpiLoadTables (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load namespace: %s\n",
-                        AcpiFormatException (Status)));
+            AcpiFormatException (Status)));
         goto ErrorExit;
     }
 
@@ -332,7 +333,6 @@ AcpiUnloadTable (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     /* Find all tables of the requested type */
 
     TableDesc = AcpiGbl_TableLists[TableType].Next;
@@ -406,7 +406,6 @@ AcpiGetTableHeader (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     /* Get a pointer to the entire table */
 
     Status = AcpiTbGetTablePtr (TableType, Instance, &TblPtr);
@@ -415,19 +414,17 @@ AcpiGetTableHeader (
         return_ACPI_STATUS (Status);
     }
 
-    /*
-     * The function will return a NULL pointer if the table is not loaded
-     */
+    /* The function will return a NULL pointer if the table is not loaded */
+
     if (TblPtr == NULL)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
 
-    /*
-     * Copy the header to the caller's buffer
-     */
+    /* Copy the header to the caller's buffer */
+
     ACPI_MEMCPY ((void *) OutTableHeader, (void *) TblPtr,
-                sizeof (ACPI_TABLE_HEADER));
+        sizeof (ACPI_TABLE_HEADER));
 
     return_ACPI_STATUS (Status);
 }
@@ -492,7 +489,6 @@ AcpiGetTable (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     /* Get a pointer to the entire table */
 
     Status = AcpiTbGetTablePtr (TableType, Instance, &TblPtr);
@@ -514,9 +510,8 @@ AcpiGetTable (
 
     if (TableType == ACPI_TABLE_RSDP)
     {
-        /*
-         *  RSD PTR is the only "table" without a header
-         */
+        /* RSD PTR is the only "table" without a header */
+
         TableLength = sizeof (RSDP_DESCRIPTOR);
     }
     else

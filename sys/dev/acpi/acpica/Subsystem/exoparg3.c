@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -172,12 +172,13 @@ AcpiExOpcode_3A_0T_0R (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_0T_0R", AcpiPsGetOpcodeName (WalkState->Opcode));
+    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_0T_0R",
+        AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
     switch (WalkState->Opcode)
     {
-    case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg)    */
+    case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg) */
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "FatalOp: Type %X Code %X Arg %X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
@@ -193,9 +194,8 @@ AcpiExOpcode_3A_0T_0R (
             Fatal->Argument = (UINT32) Operand[2]->Integer.Value;
         }
 
-        /*
-         * Always signal the OS!
-         */
+        /* Always signal the OS! */
+
         Status = AcpiOsSignal (ACPI_SIGNAL_FATAL, Fatal);
 
         /* Might return while OS is shutting down, just continue */
@@ -239,22 +239,24 @@ AcpiExOpcode_3A_1T_1R (
     ACPI_OPERAND_OBJECT     *ReturnDesc = NULL;
     char                    *Buffer;
     ACPI_STATUS             Status = AE_OK;
-    ACPI_NATIVE_UINT        Index;
+    ACPI_INTEGER            Index;
     ACPI_SIZE               Length;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_1T_1R", AcpiPsGetOpcodeName (WalkState->Opcode));
+    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_1T_1R",
+        AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
     switch (WalkState->Opcode)
     {
-    case AML_MID_OP:        /* Mid  (Source[0], Index[1], Length[2], Result[3]) */
+    case AML_MID_OP:    /* Mid (Source[0], Index[1], Length[2], Result[3]) */
 
         /*
          * Create the return object.  The Source operand is guaranteed to be
          * either a String or a Buffer, so just use its type.
          */
-        ReturnDesc = AcpiUtCreateInternalObject (ACPI_GET_OBJECT_TYPE (Operand[0]));
+        ReturnDesc = AcpiUtCreateInternalObject (
+                        ACPI_GET_OBJECT_TYPE (Operand[0]));
         if (!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
@@ -263,7 +265,7 @@ AcpiExOpcode_3A_1T_1R (
 
         /* Get the Integer values from the objects */
 
-        Index = (ACPI_NATIVE_UINT) Operand[1]->Integer.Value;
+        Index = Operand[1]->Integer.Value;
         Length = (ACPI_SIZE) Operand[2]->Integer.Value;
 
         /*
@@ -278,7 +280,8 @@ AcpiExOpcode_3A_1T_1R (
             if ((Index + Length) >
                 Operand[0]->String.Length)
             {
-                Length = (ACPI_SIZE) Operand[0]->String.Length - Index;
+                Length = (ACPI_SIZE) Operand[0]->String.Length - 
+                            (ACPI_SIZE) Index;
             }
 
             /* Allocate a new buffer for the String/Buffer */
@@ -300,6 +303,10 @@ AcpiExOpcode_3A_1T_1R (
             ReturnDesc->String.Pointer = Buffer;
             ReturnDesc->String.Length = (UINT32) Length;
         }
+
+        /* Mark buffer initialized */
+
+        ReturnDesc->Buffer.Flags |= AOPOBJ_DATA_VALID;
         break;
 
 

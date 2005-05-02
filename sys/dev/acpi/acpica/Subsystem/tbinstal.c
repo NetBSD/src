@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbinstal - ACPI table installation and removal
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -124,6 +124,14 @@
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbinstal")
 
+/* Local prototypes */
+
+static ACPI_STATUS
+AcpiTbMatchSignature (
+    char                    *Signature,
+    ACPI_TABLE_DESC         *TableInfo,
+    UINT8                   SearchType);
+
 
 /*******************************************************************************
  *
@@ -131,6 +139,7 @@
  *
  * PARAMETERS:  Signature           - Table signature to match
  *              TableInfo           - Return data
+ *              SearchType          - Table type to match (primary/secondary)
  *
  * RETURN:      Status
  *
@@ -139,7 +148,7 @@
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiTbMatchSignature (
     char                    *Signature,
     ACPI_TABLE_DESC         *TableInfo,
@@ -151,9 +160,8 @@ AcpiTbMatchSignature (
     ACPI_FUNCTION_TRACE ("TbMatchSignature");
 
 
-    /*
-     * Search for a signature match among the known table types
-     */
+    /* Search for a signature match among the known table types */
+
     for (i = 0; i < NUM_ACPI_TABLE_TYPES; i++)
     {
         if (!(AcpiGbl_TableData[i].Flags & SearchType))
@@ -242,6 +250,7 @@ AcpiTbInstallTable (
  * FUNCTION:    AcpiTbRecognizeTable
  *
  * PARAMETERS:  TableInfo           - Return value from AcpiTbGetTableBody
+ *              SearchType          - Table type to match (primary/secondary)
  *
  * RETURN:      Status
  *
@@ -285,7 +294,8 @@ AcpiTbRecognizeTable (
      * This can be any one of many valid ACPI tables, it just isn't one of
      * the tables that is consumed by the core subsystem
      */
-    Status = AcpiTbMatchSignature (TableHeader->Signature, TableInfo, SearchType);
+    Status = AcpiTbMatchSignature (TableHeader->Signature,
+                TableInfo, SearchType);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -338,9 +348,8 @@ AcpiTbInitTableDescriptor (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
-    /*
-     * Install the table into the global data structure
-     */
+    /* Install the table into the global data structure */
+
     ListHead = &AcpiGbl_TableLists[TableType];
 
     /*
@@ -352,10 +361,11 @@ AcpiTbInitTableDescriptor (
     {
         /*
          * Only one table allowed, and a table has alread been installed
-         *  at this location, so return an error.
+         * at this location, so return an error.
          */
         if (ListHead->Next)
         {
+            ACPI_MEM_FREE (TableDesc);
             return_ACPI_STATUS (AE_ALREADY_EXISTS);
         }
 
@@ -407,7 +417,8 @@ AcpiTbInitTableDescriptor (
     TableDesc->AmlStart             = (UINT8 *) (TableDesc->Pointer + 1),
     TableDesc->AmlLength            = (UINT32) (TableDesc->Length -
                                         (UINT32) sizeof (ACPI_TABLE_HEADER));
-    TableDesc->TableId              = AcpiUtAllocateOwnerId (ACPI_OWNER_TYPE_TABLE);
+    TableDesc->TableId              = AcpiUtAllocateOwnerId (
+                                        ACPI_OWNER_TYPE_TABLE);
     TableDesc->LoadedIntoNamespace  = FALSE;
 
     /*
@@ -441,7 +452,8 @@ AcpiTbInitTableDescriptor (
  ******************************************************************************/
 
 void
-AcpiTbDeleteAllTables (void)
+AcpiTbDeleteAllTables (
+    void)
 {
     ACPI_TABLE_TYPE         Type;
 

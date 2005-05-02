@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -121,12 +121,25 @@
 #include "acnamesp.h"
 #include "acdebug.h"
 #include "acdispat.h"
+#include "acdisasm.h"
 
 
 #ifdef ACPI_DEBUGGER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbutils")
+
+/* Local prototypes */
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+ACPI_STATUS
+AcpiDbSecondPassParse (
+    ACPI_PARSE_OBJECT       *Root);
+
+void
+AcpiDbDumpBuffer (
+    UINT32                  Address);
+#endif
 
 
 /*******************************************************************************
@@ -177,7 +190,7 @@ AcpiDbMatchArgument (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set the current destination for debugger output.  Alos sets
+ * DESCRIPTION: Set the current destination for debugger output.  Also sets
  *              the debug output level accordingly.
  *
  ******************************************************************************/
@@ -197,31 +210,6 @@ AcpiDbSetOutputDestination (
     {
         AcpiDbgLevel = AcpiGbl_DbConsoleDebugLevel;
     }
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiDbDumpBuffer
- *
- * PARAMETERS:  Address             - Pointer to the buffer
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print a portion of a buffer
- *
- ******************************************************************************/
-
-void
-AcpiDbDumpBuffer (
-    UINT32                  Address)
-{
-
-    AcpiOsPrintf ("\nLocation %X:\n", Address);
-
-    AcpiDbgLevel |= ACPI_LV_TABLES;
-    AcpiUtDumpBuffer (ACPI_TO_POINTER (Address), 64, DB_BYTE_DISPLAY,
-            ACPI_UINT32_MAX);
 }
 
 
@@ -261,7 +249,8 @@ AcpiDbDumpObject (
     {
     case ACPI_TYPE_ANY:
 
-        AcpiOsPrintf ("[Object Reference] = %p\n", ObjDesc->Reference.Handle);
+        AcpiOsPrintf ("[Object Reference] = ", ObjDesc->Reference.Handle);
+        AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
         break;
 
 
@@ -312,7 +301,8 @@ AcpiDbDumpObject (
 
     case ACPI_TYPE_LOCAL_REFERENCE:
 
-        AcpiOsPrintf ("[Object Reference] = %p\n", ObjDesc->Reference.Handle);
+        AcpiOsPrintf ("[Object Reference] = ", ObjDesc->Reference.Handle);
+        AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
         break;
 
 
@@ -353,13 +343,12 @@ AcpiDbPrepNamestring (
     char                    *Name)
 {
 
-
     if (!Name)
     {
         return;
     }
 
-    ACPI_STRUPR (Name);
+    AcpiUtStrupr (Name);
 
     /* Convert a leading forward slash to a backslash */
 
@@ -390,6 +379,59 @@ AcpiDbPrepNamestring (
 }
 
 
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbLocalNsLookup
+ *
+ * PARAMETERS:  Name            - Name to lookup
+ *
+ * RETURN:      Pointer to a namespace node, null on failure
+ *
+ * DESCRIPTION: Lookup a name in the ACPI namespace
+ *
+ * Note: Currently begins search from the root.  Could be enhanced to use
+ * the current prefix (scope) node as the search beginning point.
+ *
+ ******************************************************************************/
+
+ACPI_NAMESPACE_NODE *
+AcpiDbLocalNsLookup (
+    char                    *Name)
+{
+    char                    *InternalPath;
+    ACPI_STATUS             Status;
+    ACPI_NAMESPACE_NODE     *Node = NULL;
+
+
+    AcpiDbPrepNamestring (Name);
+
+    /* Build an internal namestring */
+
+    Status = AcpiNsInternalizeName (Name, &InternalPath);
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiOsPrintf ("Invalid namestring: %s\n", Name);
+        return (NULL);
+    }
+
+    /*
+     * Lookup the name.
+     * (Uses root node as the search starting point)
+     */
+    Status = AcpiNsLookup (NULL, InternalPath, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
+                    ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiOsPrintf ("Could not locate name: %s %s\n",
+                Name, AcpiFormatException (Status));
+    }
+
+    ACPI_MEM_FREE (InternalPath);
+    return (Node);
+}
+
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbSecondPassParse
@@ -440,7 +482,8 @@ AcpiDbSecondPassParse (
             WalkState->ParserState.Aml          =
             WalkState->ParserState.AmlStart     = Method->Named.Data;
             WalkState->ParserState.AmlEnd       =
-            WalkState->ParserState.PkgEnd       = Method->Named.Data + Method->Named.Length;
+            WalkState->ParserState.PkgEnd       = Method->Named.Data +
+                                                  Method->Named.Length;
             WalkState->ParserState.StartScope   = Op;
 
             WalkState->DescendingCallback       = AcpiDsLoad1BeginOp;
@@ -485,55 +528,28 @@ AcpiDbSecondPassParse (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDbLocalNsLookup
+ * FUNCTION:    AcpiDbDumpBuffer
  *
- * PARAMETERS:  Name            - Name to lookup
+ * PARAMETERS:  Address             - Pointer to the buffer
  *
- * RETURN:      Pointer to a namespace node
+ * RETURN:      None
  *
- * DESCRIPTION: Lookup a name in the ACPI namespace
- *
- * Note: Currently begins search from the root.  Could be enhanced to use
- * the current prefix (scope) node as the search beginning point.
+ * DESCRIPTION: Print a portion of a buffer
  *
  ******************************************************************************/
 
-ACPI_NAMESPACE_NODE *
-AcpiDbLocalNsLookup (
-    char                    *Name)
+void
+AcpiDbDumpBuffer (
+    UINT32                  Address)
 {
-    char                    *InternalPath;
-    ACPI_STATUS             Status;
-    ACPI_NAMESPACE_NODE     *Node = NULL;
 
+    AcpiOsPrintf ("\nLocation %X:\n", Address);
 
-    AcpiDbPrepNamestring (Name);
-
-    /* Build an internal namestring */
-
-    Status = AcpiNsInternalizeName (Name, &InternalPath);
-    if (ACPI_FAILURE (Status))
-    {
-        AcpiOsPrintf ("Invalid namestring: %s\n", Name);
-        return (NULL);
-    }
-
-    /*
-     * Lookup the name.
-     * (Uses root node as the search starting point)
-     */
-    Status = AcpiNsLookup (NULL, InternalPath, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
-                    ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
-    if (ACPI_FAILURE (Status))
-    {
-        AcpiOsPrintf ("Could not locate name: %s %s\n",
-                Name, AcpiFormatException (Status));
-    }
-
-    ACPI_MEM_FREE (InternalPath);
-    return (Node);
+    AcpiDbgLevel |= ACPI_LV_TABLES;
+    AcpiUtDumpBuffer (ACPI_TO_POINTER (Address), 64, DB_BYTE_DISPLAY,
+            ACPI_UINT32_MAX);
 }
-
+#endif
 
 #endif /* ACPI_DEBUGGER */
 

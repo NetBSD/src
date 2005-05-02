@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -129,7 +129,7 @@ static char     *AcpiGbl_FnEntryStr = "----Entry";
 static char     *AcpiGbl_FnExitStr  = "----Exit-";
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtInitStackPtrTrace
  *
@@ -137,9 +137,9 @@ static char     *AcpiGbl_FnExitStr  = "----Exit-";
  *
  * RETURN:      None
  *
- * DESCRIPTION: Save the current stack pointer
+ * DESCRIPTION: Save the current CPU stack pointer at subsystem startup
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtInitStackPtrTrace (
@@ -152,7 +152,7 @@ AcpiUtInitStackPtrTrace (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtTrackStackPtr
  *
@@ -160,9 +160,9 @@ AcpiUtInitStackPtrTrace (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Save the current stack pointer
+ * DESCRIPTION: Save the current CPU stack pointer
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtTrackStackPtr (
@@ -185,16 +185,16 @@ AcpiUtTrackStackPtr (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtDebugPrint
  *
- * PARAMETERS:  DebugLevel          - Requested debug print level
- *              ProcName            - Caller's procedure name
- *              ModuleName          - Caller's module name (for error output)
+ * PARAMETERS:  RequestedDebugLevel - Requested debug print level
  *              LineNumber          - Caller's line number (for error output)
- *              ComponentId         - Caller's component ID (for error output)
- *
+ *              DbgInfo             - Contains:
+ *                  ProcName            - Caller's procedure name
+ *                  ModuleName          - Caller's module name
+ *                  ComponentId         - Caller's component ID
  *              Format              - Printf format field
  *              ...                 - Optional printf arguments
  *
@@ -203,7 +203,7 @@ AcpiUtTrackStackPtr (
  * DESCRIPTION: Print error message with prefix consisting of the module name,
  *              line number, and component ID.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void  ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrint (
@@ -235,7 +235,8 @@ AcpiUtDebugPrint (
     {
         if (ACPI_LV_THREADS & AcpiDbgLevel)
         {
-            AcpiOsPrintf ("\n**** Context Switch from TID %X to TID %X ****\n\n",
+            AcpiOsPrintf (
+                "\n**** Context Switch from TID %X to TID %X ****\n\n",
                 AcpiGbl_PrevThreadId, ThreadId);
         }
 
@@ -253,14 +254,15 @@ AcpiUtDebugPrint (
         AcpiOsPrintf ("[%04lX] ", ThreadId);
     }
 
-    AcpiOsPrintf ("[%02ld] %-22.22s: ", AcpiGbl_NestingLevel, DbgInfo->ProcName);
+    AcpiOsPrintf ("[%02ld] %-22.22s: ",
+        AcpiGbl_NestingLevel, DbgInfo->ProcName);
 
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtDebugPrintRaw
  *
@@ -278,7 +280,7 @@ AcpiUtDebugPrint (
  * DESCRIPTION: Print message with no headers.  Has same interface as
  *              DebugPrint so that the same macros can be used.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void  ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrintRaw (
@@ -302,7 +304,7 @@ AcpiUtDebugPrintRaw (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtTrace
  *
@@ -317,7 +319,7 @@ AcpiUtDebugPrintRaw (
  * DESCRIPTION: Function entry trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtTrace (
@@ -333,7 +335,7 @@ AcpiUtTrace (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtTracePtr
  *
@@ -349,7 +351,7 @@ AcpiUtTrace (
  * DESCRIPTION: Function entry trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtTracePtr (
@@ -365,7 +367,7 @@ AcpiUtTracePtr (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtTraceStr
  *
@@ -381,7 +383,7 @@ AcpiUtTracePtr (
  * DESCRIPTION: Function entry trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtTraceStr (
@@ -398,7 +400,7 @@ AcpiUtTraceStr (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtTraceU32
  *
@@ -414,7 +416,7 @@ AcpiUtTraceStr (
  * DESCRIPTION: Function entry trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtTraceU32 (
@@ -431,7 +433,7 @@ AcpiUtTraceU32 (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtExit
  *
@@ -446,7 +448,7 @@ AcpiUtTraceU32 (
  * DESCRIPTION: Function exit trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtExit (
@@ -461,7 +463,7 @@ AcpiUtExit (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtStatusExit
  *
@@ -477,7 +479,7 @@ AcpiUtExit (
  * DESCRIPTION: Function exit trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel.  Prints exit status also.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtStatusExit (
@@ -503,7 +505,7 @@ AcpiUtStatusExit (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtValueExit
  *
@@ -519,7 +521,7 @@ AcpiUtStatusExit (
  * DESCRIPTION: Function exit trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel.  Prints exit value also.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtValueExit (
@@ -536,7 +538,7 @@ AcpiUtValueExit (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtPtrExit
  *
@@ -545,14 +547,14 @@ AcpiUtValueExit (
  *                  ProcName            - Caller's procedure name
  *                  ModuleName          - Caller's module name
  *                  ComponentId         - Caller's component ID
- *              Value               - Value to be printed with exit msg
+ *              Ptr                 - Pointer to display
  *
  * RETURN:      None
  *
  * DESCRIPTION: Function exit trace.  Prints only if TRACE_FUNCTIONS bit is
  *              set in DebugLevel.  Prints exit value also.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtPtrExit (
@@ -570,7 +572,7 @@ AcpiUtPtrExit (
 #endif
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiUtDumpBuffer
  *
@@ -583,7 +585,7 @@ AcpiUtPtrExit (
  *
  * DESCRIPTION: Generic dump buffer in both hex and ascii.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 void
 AcpiUtDumpBuffer (
@@ -611,16 +613,13 @@ AcpiUtDumpBuffer (
         Display = DB_BYTE_DISPLAY;
     }
 
-    AcpiOsPrintf ("\nOffset   Value\n");
+    /* Nasty little dump buffer routine! */
 
-    /*
-     * Nasty little dump buffer routine!
-     */
     while (i < Count)
     {
         /* Print current offset */
 
-        AcpiOsPrintf ("%05X    ", (UINT32) i);
+        AcpiOsPrintf ("%6.4X: ", (UINT32) i);
 
         /* Print 16 hex chars */
 
@@ -628,21 +627,18 @@ AcpiUtDumpBuffer (
         {
             if (i + j >= Count)
             {
-                AcpiOsPrintf ("\n");
-                return;
-            }
+                /* Dump fill spaces */
 
-            /* Make sure that the INT8 doesn't get sign-extended! */
+                AcpiOsPrintf ("%*s", ((Display * 2) + 1), " ");
+                j += Display;
+                continue;
+            }
 
             switch (Display)
             {
-            /* Default is BYTE display */
+            default:    /* Default is BYTE display */
 
-            default:
-
-                AcpiOsPrintf ("%02X ",
-                        *((UINT8 *) &Buffer[i + j]));
-                j += 1;
+                AcpiOsPrintf ("%02X ", Buffer[i + j]);
                 break;
 
 
@@ -650,7 +646,6 @@ AcpiUtDumpBuffer (
 
                 ACPI_MOVE_16_TO_32 (&Temp32, &Buffer[i + j]);
                 AcpiOsPrintf ("%04X ", Temp32);
-                j += 2;
                 break;
 
 
@@ -658,7 +653,6 @@ AcpiUtDumpBuffer (
 
                 ACPI_MOVE_32_TO_32 (&Temp32, &Buffer[i + j]);
                 AcpiOsPrintf ("%08X ", Temp32);
-                j += 4;
                 break;
 
 
@@ -669,15 +663,17 @@ AcpiUtDumpBuffer (
 
                 ACPI_MOVE_32_TO_32 (&Temp32, &Buffer[i + j + 4]);
                 AcpiOsPrintf ("%08X ", Temp32);
-                j += 8;
                 break;
             }
+
+            j += Display;
         }
 
         /*
          * Print the ASCII equivalent characters
          * But watch out for the bad unprintable ones...
          */
+        AcpiOsPrintf (" ");
         for (j = 0; j < 16; j++)
         {
             if (i + j >= Count)
