@@ -266,14 +266,7 @@ mb_isascii (const mbchar_t mbc)
     return (mbc->uc >= 0x0000 && mbc->uc <= 0x007F);
   else
 #endif
-    return (mbc->bytes == 1
-#if CHAR_MIN < 0x00 /* to avoid gcc warning */
-	    && mbc->buf[0] >= 0x00
-#endif
-#if CHAR_MAX > 0x7F /* to avoid gcc warning */
-	    && mbc->buf[0] <= 0x7F
-#endif
-	   );
+    return mbc->bytes == 1 && (mbc->buf[0] & 0x80) == 0;
 }
 
 /* Extra <wchar.h> function.  */
