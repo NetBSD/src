@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.102 2005/04/26 07:55:17 scw Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.103 2005/05/02 15:34:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.102 2005/04/26 07:55:17 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103 2005/05/02 15:34:32 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1218,7 +1218,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->sc_type >= WM_T_82543)
 		ifp->if_capabilities |=
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/* 
 	 * If we're a i82544 or greater (except i82547), we can do
@@ -2691,15 +2693,15 @@ wm_init(struct ifnet *ifp)
 	 * Set up checksum offload parameters.
 	 */
 	reg = CSR_READ(sc, WMREG_RXCSUM);
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		reg |= RXCSUM_IPOFL;
 	else
 		reg &= ~RXCSUM_IPOFL;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		reg |= RXCSUM_IPOFL | RXCSUM_TUOFL;
 	else {
 		reg &= ~RXCSUM_TUOFL;
-		if ((ifp->if_capenable & IFCAP_CSUM_IPv4) == 0)
+		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) == 0)
 			reg &= ~RXCSUM_IPOFL;
 	}
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);

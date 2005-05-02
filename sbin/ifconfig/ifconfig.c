@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.167 2005/03/20 02:51:47 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.168 2005/05/02 15:35:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.167 2005/03/20 02:51:47 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.168 2005/05/02 15:35:16 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,20 +267,46 @@ const struct cmd {
 	{ "mode",	NEXTARG,	A_MEDIAMODE,	setmediamode },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
-	{ "ip4csum",	IFCAP_CSUM_IPv4,0,		setifcaps },
-	{ "-ip4csum",	-IFCAP_CSUM_IPv4,0,		setifcaps },
-	{ "tcp4csum",	IFCAP_CSUM_TCPv4,0,		setifcaps },
-	{ "-tcp4csum",	-IFCAP_CSUM_TCPv4,0,		setifcaps },
-	{ "udp4csum",	IFCAP_CSUM_UDPv4,0,		setifcaps },
-	{ "-udp4csum",	-IFCAP_CSUM_UDPv4,0,		setifcaps },
-	{ "tcp6csum",	IFCAP_CSUM_TCPv6,0,		setifcaps },
-	{ "-tcp6csum",	-IFCAP_CSUM_TCPv6,0,		setifcaps },
-	{ "udp6csum",	IFCAP_CSUM_UDPv6,0,		setifcaps },
-	{ "-udp6csum",	-IFCAP_CSUM_UDPv6,0,		setifcaps },
+	{ "ip4csum-tx",	IFCAP_CSUM_IPv4_Tx,0,		setifcaps },
+	{ "-ip4csum-tx",-IFCAP_CSUM_IPv4_Tx,0,		setifcaps },
+	{ "ip4csum-rx",	IFCAP_CSUM_IPv4_Rx,0,		setifcaps },
+	{ "-ip4csum-rx",-IFCAP_CSUM_IPv4_Rx,0,		setifcaps },
+	{ "tcp4csum-tx",IFCAP_CSUM_TCPv4_Tx,0,		setifcaps },
+	{ "-tcp4csum-tx",-IFCAP_CSUM_TCPv4_Tx,0,	setifcaps },
 	{ "tcp4csum-rx",IFCAP_CSUM_TCPv4_Rx,0,		setifcaps },
 	{ "-tcp4csum-rx",-IFCAP_CSUM_TCPv4_Rx,0,	setifcaps },
+	{ "udp4csum-tx",IFCAP_CSUM_UDPv4_Tx,0,		setifcaps },
+	{ "-udp4csum-tx",-IFCAP_CSUM_UDPv4_Tx,0,	setifcaps },
 	{ "udp4csum-rx",IFCAP_CSUM_UDPv4_Rx,0,		setifcaps },
 	{ "-udp4csum-rx",-IFCAP_CSUM_UDPv4_Rx,0,	setifcaps },
+	{ "tcp6csum-tx",IFCAP_CSUM_TCPv6_Tx,0,		setifcaps },
+	{ "-tcp6csum-tx",-IFCAP_CSUM_TCPv6_Tx,0,	setifcaps },
+	{ "tcp6csum-rx",IFCAP_CSUM_TCPv6_Rx,0,		setifcaps },
+	{ "-tcp6csum-rx",-IFCAP_CSUM_TCPv6_Rx,0,	setifcaps },
+	{ "udp6csum-tx",IFCAP_CSUM_UDPv6_Tx,0,		setifcaps },
+	{ "-udp6csum-tx",-IFCAP_CSUM_UDPv6_Tx,0,	setifcaps },
+	{ "udp6csum-rx",IFCAP_CSUM_UDPv6_Rx,0,		setifcaps },
+	{ "-udp6csum-rx",-IFCAP_CSUM_UDPv6_Rx,0,	setifcaps },
+	{ "ip4csum",	IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx,
+					0,		setifcaps },
+	{ "-ip4csum",	-(IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx),
+					0,		setifcaps },
+	{ "tcp4csum",	IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx,
+					0,		setifcaps },
+	{ "-tcp4csum",	-(IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx),
+					0,		setifcaps },
+	{ "udp4csum",	IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx,
+					0,		setifcaps },
+	{ "-udp4csum",	-(IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx),
+					0,		setifcaps },
+	{ "tcp6csum",	IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx,
+					0,		setifcaps },
+	{ "-tcp6csum",	-(IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx),
+					0,		setifcaps },
+	{ "udp6csum",	IFCAP_CSUM_UDPv6_Tx|IFCAP_CSUM_UDPv6_Rx,
+					0,		setifcaps },
+	{ "-udp6csum",	-(IFCAP_CSUM_UDPv6_Tx|IFCAP_CSUM_UDPv6_Rx),
+					0,		setifcaps },
 	{ "tso4",	IFCAP_TSOv4,	0,		setifcaps },
 	{ "-tso4",	-IFCAP_TSOv4,	0,		setifcaps },
 	{ "agrport",	NEXTARG,	0,		agraddport } ,

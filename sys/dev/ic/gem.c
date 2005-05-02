@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.38 2005/03/05 18:32:59 heas Exp $ */
+/*	$NetBSD: gem.c,v 1.39 2005/05/02 15:34:31 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.38 2005/03/05 18:32:59 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.39 2005/05/02 15:34:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -251,8 +251,9 @@ gem_attach(sc, enaddr)
 	ifp->if_softc = sc;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx
-				| IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	ifp->if_start = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;

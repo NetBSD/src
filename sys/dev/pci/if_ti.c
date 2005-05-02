@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.66 2005/02/27 00:27:33 perry Exp $ */
+/* $NetBSD: if_ti.c,v 1.67 2005/05/02 15:34:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.66 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.67 2005/05/02 15:34:32 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -786,10 +786,10 @@ static int ti_newbuf_std(sc, i, m, dmamap)
 	TI_HOSTADDR(r->ti_addr) = dmamap->dm_segs[0].ds_addr;
 	r->ti_type = TI_BDTYPE_RECV_BD;
 	r->ti_flags = 0;
-	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4_Rx)
 		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
 	if (sc->ethercom.ec_if.if_capenable &
-	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	    (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len; /* == ds_len */
 	r->ti_idx = i;
@@ -855,10 +855,10 @@ static int ti_newbuf_mini(sc, i, m, dmamap)
 	TI_HOSTADDR(r->ti_addr) = dmamap->dm_segs[0].ds_addr;
 	r->ti_type = TI_BDTYPE_RECV_BD;
 	r->ti_flags = TI_BDFLAG_MINI_RING;
-	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4_Rx)
 		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
 	if (sc->ethercom.ec_if.if_capenable &
-	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	    (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len; /* == ds_len */
 	r->ti_idx = i;
@@ -918,10 +918,10 @@ static int ti_newbuf_jumbo(sc, i, m)
 		 - (caddr_t)sc->ti_cdata.ti_jumbo_buf);
 	r->ti_type = TI_BDTYPE_RECV_JUMBO_BD;
 	r->ti_flags = TI_BDFLAG_JUMBO_RING;
-	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4_Rx)
 		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
 	if (sc->ethercom.ec_if.if_capenable &
-	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	    (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len;
 	r->ti_idx = i;
@@ -1416,7 +1416,9 @@ static int ti_chipinit(sc)
 	 * Incompatible with hardware assisted checksums.
 	 */
 	if ((sc->ethercom.ec_if.if_capenable &
-	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|IFCAP_CSUM_IPv4)) == 0)
+	    (IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	     IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+	     IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx)) == 0)
 		TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
 
 	/* Recommended settings from Tigon manual. */
@@ -1495,9 +1497,9 @@ static int ti_gibinit(sc)
 	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXSTDADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
 	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
@@ -1507,9 +1509,9 @@ static int ti_gibinit(sc)
 	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXJUMBOADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
 	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
@@ -1526,9 +1528,9 @@ static int ti_gibinit(sc)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
 	else
 		rcb->ti_flags = 0;
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
 	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
@@ -1564,14 +1566,14 @@ static int ti_gibinit(sc)
 		rcb->ti_flags = 0;
 	else
 		rcb->ti_flags = TI_RCB_FLAG_HOST_RING;
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	/*
 	 * When we get the packet, there is a pseudo-header seed already
 	 * in the th_sum or uh_sum field.  Make sure the firmware doesn't
 	 * compute the pseudo-header checksum again!
 	 */
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_UDPv4_Tx))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|
 		    TI_RCB_FLAG_NO_PHDR_CKSUM;
 	if (VLAN_ATTACHED(&sc->ethercom))
@@ -1882,8 +1884,10 @@ static void ti_attach(parent, self, aux)
 	/*
 	 * We can do IPv4, TCPv4, and UDPv4 checksums in hardware.
 	 */
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/* Set up ifmedia support. */
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);

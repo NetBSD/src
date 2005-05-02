@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.50 2005/03/17 15:51:28 rafal Exp $	*/
+/*	$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.50 2005/03/17 15:51:28 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -257,8 +257,9 @@ hme_config(sc)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
-				IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures and MII info */

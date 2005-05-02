@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.24 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.25 2005/05/02 15:34:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.24 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.25 2005/05/02 15:34:32 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -646,8 +646,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
 	 */
-	sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	sc->sc_ethercom.ec_if.if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/*
 	 * Attach the interface.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.156 2005/03/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.157 2005/05/02 15:34:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.156 2005/03/31 21:14:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.157 2005/05/02 15:34:32 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1463,30 +1463,38 @@ ifioctl(so, cmd, data, p)
 			/* Pre-compute the checksum flags mask. */
 			ifp->if_csum_flags_tx = 0;
 			ifp->if_csum_flags_rx = 0;
-			if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_IPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_IPv4;
 			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
-			} else if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
-				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
-			} else if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
-				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv6) {
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
 			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv6) {
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
 			}
 

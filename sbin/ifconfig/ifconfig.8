@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.76 2005/03/18 14:18:06 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.77 2005/05/02 15:35:16 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -513,47 +513,75 @@ interface.
 .Pq inet6 only
 Set valid lifetime for the address.
 .It Cm ip4csum
-Enable hardware-assisted IPv4 header checksums on interfaces that
-support it.
+Shorthand of
+.Dq ip4csum-tx ip4csum-rx
 .It Cm -ip4csum
-Disable hardware-assisted IPv4 header checksums on interfaces that
-support it.
+Shorthand of
+.Dq -ip4csum-tx -ip4csum-rx
 .It Cm tcp4csum
-Enable hardware-assisted TCP/IPv4 checksums on interfaces that
-support it.
+Shorthand of
+.Dq tcp4csum-tx tcp4csum-rx
 .It Cm -tcp4csum
-Disable hardware-assisted TCP/IPv4 checksums on interfaces that
-support it.
+Shorthand of
+.Dq -tcp4csum-tx -tcp4csum-rx
 .It Cm udp4csum
-Enable hardware-assisted UDP/IPv4 checksums on interfaces that
-support it.
+Shorthand of
+.Dq udp4csum-tx udp4csum-rx
 .It Cm -udp4csum
-Disable hardware-assisted UDP/IPv4 checksums on interfaces that
-support it.
+Shorthand of
+.Dq -udp4csum-tx -udp4csum-rx
 .It Cm tcp6csum
-Enable hardware-assisted TCP/IPv6 checksums on interfaces that
-support it.
+Shorthand of
+.Dq tcp6csum-tx tcp6csum-rx
 .It Cm -tcp6csum
-Disable hardware-assisted TCP/IPv6 checksums on interfaces that
-support it.
+Shorthand of
+.Dq -tcp6csum-tx -tcp6csum-rx
 .It Cm udp6csum
-Enable hardware-assisted UDP/IPv6 checksums on interfaces that
-support it.
+Shorthand of
+.Dq udp6csum-tx udp6csum-rx
 .It Cm -udp6csum
-Disable hardware-assisted UDP/IPv6 checksums on interfaces that
-support it.
+Shorthand of
+.Dq -udp6csum-tx -udp6csum-rx
+.It Cm ip4csum-tx
+Enable hardware-assisted IPv4 header checksums for the out-bound direction.
+.It Cm -ip4csum-tx
+Disable hardware-assisted IPv4 header checksums for the out-bound direction.
+.It Cm ip4csum-rx
+Enable hardware-assisted IPv4 header checksums for the in-bound direction.
+.It Cm -ip4csum-rx
+Disable hardware-assisted IPv4 header checksums for the in-bound direction.
+.It Cm tcp4csum-tx
+Enable hardware-assisted TCP/IPv4 checksums for the out-bound direction.
+.It Cm -tcp4csum-tx
+Disable hardware-assisted TCP/IPv4 checksums for the out-bound direction.
 .It Cm tcp4csum-rx
-Enable hardware-assisted TCP/IPv4 checksums on interfaces that
-support it only for the in-bound direction.
+Enable hardware-assisted TCP/IPv4 checksums for the in-bound direction.
 .It Cm -tcp4csum-rx
-Disable hardware-assisted TCP/IPv4 checksums on interfaces that
-support it only for the in-bound direction.
+Disable hardware-assisted TCP/IPv4 checksums for the in-bound direction.
+.It Cm udp4csum-tx
+Enable hardware-assisted UDP/IPv4 checksums for the out-bound direction.
+.It Cm -udp4csum-tx
+Disable hardware-assisted UDP/IPv4 checksums for the out-bound direction.
 .It Cm udp4csum-rx
-Enable hardware-assisted UDP/IPv4 checksums on interfaces that
-support it only for the in-bound direction.
+Enable hardware-assisted UDP/IPv4 checksums for the in-bound direction.
 .It Cm -udp4csum-rx
-Disable hardware-assisted UDP/IPv4 checksums on interfaces that
-support it only for the in-bound direction.
+Disable hardware-assisted UDP/IPv4 checksums for the in-bound direction.
+.It Cm tcp6csum-tx
+Enable hardware-assisted TCP/IPv6 checksums for the out-bound direction.
+.It Cm -tcp6csum-tx
+Disable hardware-assisted TCP/IPv6 checksums for the out-bound direction.
+.It Cm tcp6csum-rx
+Enable hardware-assisted TCP/IPv6 checksums for the in-bound direction.
+.It Cm -tcp6csum-rx
+Disable hardware-assisted TCP/IPv6 checksums for the in-bound direction.
+.It Cm udp6csum-tx
+Enable hardware-assisted UDP/IPv6 checksums for the out-bound direction.
+.It Cm -udp6csum-tx
+Disable hardware-assisted UDP/IPv6 checksums for the out-bound direction.
+.It Cm udp6csum-rx
+Enable hardware-assisted UDP/IPv6 checksums for the in-bound direction.
+.It Cm -udp6csum-rx
+Disable hardware-assisted UDP/IPv6 checksums for the in-bound direction.
 .It Cm tso4
 Enable hardware-assisted TCP/IPv4 segmentation on interfaces that
 support it.
