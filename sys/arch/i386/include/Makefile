@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2004/05/08 21:51:49 kleink Exp $
+#	$NetBSD: Makefile,v 1.27 2005/05/02 12:31:08 tron Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h atomic.h \
 	intr.h intrdefs.h \
 	joystick.h \
 	kcore.h \
-	limits.h lock.h \
+	limits.h loadfile_machdep.h lock.h \
 	math.h mcontext.h mtrr.h \
 	npx.h \
 	param.h pcb.h pccons.h pio.h pmap.h pmc.h proc.h profile.h psl.h \
