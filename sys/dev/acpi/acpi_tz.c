@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.14 2004/06/06 17:27:05 martin Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.15 2005/05/02 14:54:00 kochi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.14 2004/06/06 17:27:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.15 2005/05/02 14:54:00 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,7 +508,7 @@ static void
 acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
-	OSD_EXECUTION_CALLBACK func = NULL;
+	ACPI_OSD_EXEC_CALLBACK func = NULL;
 	const char *name;
 	int rv;
 
