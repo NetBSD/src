@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.471 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.472 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -36,3 +36,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ehci(4): Various bug fixes.  The most visible is that low/full speed
 		devices can now be connected to high speed hubs.
 		[augustss 20050501]
+	acpi(4): Import ACPI-CA 20050408 [kochi 20050502]
