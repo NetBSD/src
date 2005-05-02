@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrcs.c - "Small" Resource Descriptor disassembly
- *              xRevision: 5 $
+ *              xRevision: 6 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.5 2004/02/14 16:57:24 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              xRevision: 85 $
+ *              xRevision: 89 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.5 2004/02/14 16:57:24 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -126,6 +126,12 @@ __KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.5 2004/02/14 16:57:24 kochi Exp $");
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmopcode")
+
+/* Local prototypes */
+
+static void
+AcpiDmMatchKeyword (
+    ACPI_PARSE_OBJECT       *Op);
 
 
 /*******************************************************************************
@@ -331,7 +337,7 @@ AcpiDmMatchOp (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDmMatchKeyword (
     ACPI_PARSE_OBJECT       *Op)
 {
@@ -343,7 +349,8 @@ AcpiDmMatchKeyword (
     }
     else
     {
-        AcpiOsPrintf ("%s", (char *) AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]);
+        AcpiOsPrintf ("%s", (char *)
+            AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]);
     }
 }
 
@@ -516,14 +523,14 @@ AcpiDmDisassembleOneOp (
     case AML_INT_NAMEPATH_OP:
 
         AcpiDmNamestring (Op->Common.Value.Name);
-        AcpiDmValidateName (Op->Common.Value.Name, Op);
         break;
 
 
     case AML_INT_NAMEDFIELD_OP:
 
         Length = AcpiDmDumpName ((char *) &Op->Named.Name);
-        AcpiOsPrintf (",%*.s  %d", (int) (5 - Length), " ", (UINT32) Op->Common.Value.Integer);
+        AcpiOsPrintf (",%*.s  %d", (int) (5 - Length), " ",
+            (UINT32) Op->Common.Value.Integer);
         AcpiDmCommaIfFieldMember (Op);
 
         Info->BitOffset += (UINT32) Op->Common.Value.Integer;
@@ -593,7 +600,8 @@ AcpiDmDisassembleOneOp (
             (WalkState->Results->Results.NumResults))
         {
             AcpiDmDecodeInternalObject (
-                WalkState->Results->Results.ObjDesc [WalkState->Results->Results.NumResults-1]);
+                WalkState->Results->Results.ObjDesc [
+                    WalkState->Results->Results.NumResults-1]);
         }
 #endif
         break;
