@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.25 2005/05/02 14:49:08 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.26 2005/05/02 16:02:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.25 2005/05/02 14:49:08 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.26 2005/05/02 16:02:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,20 +488,15 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
-	sc->sc_dacw=-1;
-	sc->sc_mode=WSDISPLAYIO_MODE_EMUL;
+	sc->sc_dacw = -1;
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 	
 	/* enable memory and IO access */
-	screg=pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	screg|=PCI_FLAGS_IO_ENABLED|PCI_FLAGS_MEM_ENABLED;
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag,PCI_COMMAND_STATUS_REG,screg);
-
-	/* enable memory and IO access */
-	screg=pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	screg|=PCI_FLAGS_IO_ENABLED|PCI_FLAGS_MEM_ENABLED;
+	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag,PCI_COMMAND_STATUS_REG,screg);
 
 	for (bar = 0; bar < NBARS; bar++) {
@@ -511,7 +506,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		(void)pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, reg,
 		    sc->sc_bars[bar].vb_type, &sc->sc_bars[bar].vb_base,
 		    &sc->sc_bars[bar].vb_size, &sc->sc_bars[bar].vb_flags);
-		sc->sc_bars[bar].vb_busaddr=pci_conf_read(sc->sc_pc,
+		sc->sc_bars[bar].vb_busaddr = pci_conf_read(sc->sc_pc,
 		    sc->sc_pcitag, reg)&0xfffffff0;
 	}
 	sc->sc_memt = pa->pa_memt;
@@ -540,8 +535,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX is there any way to calculate reference frequency from
 	   known values? */
 	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
-	    ((mach64_chip_id>=PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
-	    (mach64_chip_id<=PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
+	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
+	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
 		printf("ref_freq=29.498MHz\n");
 		sc->ref_freq = 29498;
 	} else
@@ -614,8 +609,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_console_screen.ri.ri_bits=(void *)(uintptr_t)sc->sc_aperbase;
 
 	mach64_console_screen.ri.ri_flg = RI_CENTER;
-	mach64_console_screen.active=1;
-	sc->active=&mach64_console_screen;
+	mach64_console_screen.active = 1;
+	sc->active = &mach64_console_screen;
 
 	/* XXX width/height are nonsense, we only want to pick a font */
 	rasops_init(&mach64_console_screen.ri,
@@ -629,15 +624,15 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	    mach64_console_screen.ri.ri_width /
 	    mach64_console_screen.ri.ri_font->fontwidth);
 
-	set_address(&mach64_console_screen.ri,sc->sc_aperbase);
+	set_address(&mach64_console_screen.ri, sc->sc_aperbase);
 
 	/* enable acceleration */
-	mach64_console_screen.ri.ri_ops.copyrows=mach64_copyrows;
-	mach64_console_screen.ri.ri_ops.eraserows=mach64_eraserows;
-	mach64_console_screen.ri.ri_ops.copycols=mach64_copycols;
-	mach64_console_screen.ri.ri_ops.erasecols=mach64_erasecols;
-	mach64_console_screen.ri.ri_ops.putchar=mach64_putchar;
-	mach64_console_screen.ri.ri_ops.cursor=mach64_cursor;
+	mach64_console_screen.ri.ri_ops.copyrows = mach64_copyrows;
+	mach64_console_screen.ri.ri_ops.eraserows = mach64_eraserows;
+	mach64_console_screen.ri.ri_ops.copycols = mach64_copycols;
+	mach64_console_screen.ri.ri_ops.erasecols = mach64_erasecols;
+	mach64_console_screen.ri.ri_ops.putchar = mach64_putchar;
+	mach64_console_screen.ri.ri_ops.cursor = mach64_cursor;
 
 	mach64_defaultscreen.nrows = mach64_console_screen.ri.ri_rows;
 	mach64_defaultscreen.ncols = mach64_console_screen.ri.ri_cols;
@@ -648,8 +643,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bg=WS_DEFAULT_BG;
 
 	/* really necessary? */
-	mach64_defaultscreen.capabilities=mach64_console_screen.ri.ri_caps;
-	mach64_defaultscreen.textops=&mach64_console_screen.ri.ri_ops;
+	mach64_defaultscreen.capabilities = mach64_console_screen.ri.ri_caps;
+	mach64_defaultscreen.textops = &mach64_console_screen.ri.ri_ops;
 
 	/* Initialize fonts */
 	/* XXX shouldn't that happen /before/ we call rasops_init()? */
@@ -679,6 +674,7 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 {
 	struct rasops_info *ri=&scr->ri;
 	int cnt;
+
 	scr->sc = sc;
 	scr->type = type;
 	scr->mindispoffset = 0;
@@ -688,9 +684,9 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 	scr->cursorrow = 0;
 
 	cnt=type->nrows * type->ncols;
-	scr->attrs=(long *)malloc(cnt * (sizeof(long) + sizeof(u_int)),
+	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(u_int)),
 	    M_DEVBUF, M_WAITOK);
-	scr->chars=(u_int *)&scr->attrs[cnt];
+	scr->chars = (u_int *)&scr->attrs[cnt];
 	
 	/* 
 	 * we allocate both chars and attributes in one chunk, attributes first 
@@ -704,7 +700,7 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 
 	if (existing) {
 		scr->active = 1;
-		ri->ri_flg|=RI_CLEAR;
+		ri->ri_flg |= RI_CLEAR;
 		if (setmode && mach64_set_screentype(sc, type)) {
 			panic("%s: failed to switch video mode",
 			    sc->sc_dev.dv_xname);
@@ -1152,31 +1148,33 @@ void
 mach64_init_lut(struct mach64_softc *sc)
 {
 	int i,idx;
-	idx=0;
-	for(i=0;i<256;i++) {
-		mach64_putpalreg(sc, i, rasops_cmap[idx], rasops_cmap[idx+1], 
-		    rasops_cmap[idx+2]);
-		idx+=3;
+
+	idx = 0;
+	for (i = 0; i < 256; i++) {
+		mach64_putpalreg(sc, i, rasops_cmap[idx], rasops_cmap[idx + 1], 
+		    rasops_cmap[idx + 2]);
+		idx += 3;
 	}
 }
 
 int
-mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g, 
+    uint8_t b)
 {
-	sc->sc_cmap_red[index]=r;
-	sc->sc_cmap_green[index]=g;
-	sc->sc_cmap_blue[index]=b;
+	sc->sc_cmap_red[index] = r;
+	sc->sc_cmap_green[index] = g;
+	sc->sc_cmap_blue[index] = b;
 	/* 
 	 * writing the dac index takes a while, in theory we can poll some
 	 * register to see when it's ready - but we better avoid writing it
 	 * unnecessarily 
 	 */
-	if(index!=sc->sc_dacw)
+	if (index != sc->sc_dacw)
 	{
 		regwb(sc, DAC_MASK, 0xff);
 		regwb(sc, DAC_WINDEX, index);
 	}
-	sc->sc_dacw=index+1;
+	sc->sc_dacw = index + 1;
 	regwb(sc, DAC_DATA, r);
 	regwb(sc, DAC_DATA, g);
 	regwb(sc, DAC_DATA, b);
@@ -1215,7 +1213,7 @@ mach64_putcmap(struct mach64_softc *sc, struct wsdisplay_cmap *cm)
 	b = &sc->sc_cmap_blue[index];
 
 	for (i = 0; i < count; i++) {
-		mach64_putpalreg(sc,index,*r, *g, *b);
+		mach64_putpalreg(sc, index, *r, *g, *b);
 		index++;
 		r++, g++, b++;
 	}
@@ -1272,11 +1270,12 @@ mach64_is_console(struct pci_attach_args *pa)
 #elif defined(__powerpc__)
 	/* check if we're the /chosen console device */
 	int chosen, stdout, node, us;
-	us=pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+
+	us = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	chosen = OF_finddevice("/chosen");
 	OF_getprop(chosen, "stdout", &stdout, 4);
 	node = OF_instance_to_package(stdout);
-	return(us == node);
+	return (us == node);
 #else
 	return 1;
 #endif
@@ -1292,28 +1291,34 @@ mach64_cursor(void *cookie, int on, int row, int col)
 	struct rasops_info *ri=cookie;
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
-	int x,y,wi=ri->ri_font->fontwidth,he=ri->ri_font->fontheight;
-	if(scr->active) {
-		x=scr->cursorcol*wi+ri->ri_xorigin;
-		y=scr->cursorrow*he+ri->ri_yorigin;
-		if(scr->cursordrawn) {
-			mach64_bitblt(sc,x,y,x,y,wi,he,MIX_NOT_SRC,0xff);
+	int x, y, wi,he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (scr->active) {
+		x = scr->cursorcol * wi + ri->ri_xorigin;
+		y = scr->cursorrow * he + ri->ri_yorigin;
+		if (scr->cursordrawn) {
+			mach64_bitblt(sc, x, y, x, y, wi, he, MIX_NOT_SRC,
+			    0xff);
 			scr->cursordrawn=0;
 		}
-		scr->cursorrow=row;
-		scr->cursorcol=col;
-		if((scr->cursoron=on)!=0)
+		scr->cursorrow = row;
+		scr->cursorcol = col;
+		if ((scr->cursoron = on) != 0)
 		{
-			x=scr->cursorcol*wi+ri->ri_xorigin;
-			y=scr->cursorrow*he+ri->ri_yorigin;
-			mach64_bitblt(sc,x,y,x,y,wi,he,MIX_NOT_SRC,0xff);
-			scr->cursordrawn=1;
+			x = scr->cursorcol * wi + ri->ri_xorigin;
+			y = scr->cursorrow * he + ri->ri_yorigin;
+			mach64_bitblt(sc, x, y, x, y, wi, he, MIX_NOT_SRC, 
+			    0xff);
+			scr->cursordrawn = 1;
 		}
 	} else {
-		scr->cursoron=on;
-		scr->cursorrow=row;
-		scr->cursorcol=col;
-		scr->cursordrawn=0;
+		scr->cursoron = on;
+		scr->cursorrow = row;
+		scr->cursorcol = col;
+		scr->cursordrawn = 0;
 	}
 }
 
@@ -1321,7 +1326,6 @@ mach64_cursor(void *cookie, int on, int row, int col)
 int
 mach64_mapchar(void *cookie, int uni, u_int *index)
 {
-
 	return 0;
 }
 #endif
@@ -1333,29 +1337,32 @@ mach64_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
 	int offset=ri->ri_cols*row+col;
-	scr->attrs[offset]=attr;
-	scr->chars[offset]=c;
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		int fg,bg,uc;
+	
+	scr->attrs[offset] = attr;
+	scr->chars[offset] = c;
+	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		int fg, bg, uc;
 		uint8_t *data;
-		int x,y,wi=ri->ri_font->fontwidth,he=ri->ri_font->fontheight;
+		int x, y, wi, he;
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
 
 		/*scr->putchar(cookie,row,col,c,attr);*/
 		if (!CHAR_IN_FONT(c, ri->ri_font))
 			return;
 		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
 		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
-		x=ri->ri_xorigin+col*wi;
-		y=ri->ri_yorigin+row*he;
-		if(c == 0x20) {
-			mach64_rectfill(sc,x,y,wi,he,bg);
+		x = ri->ri_xorigin + col * wi;
+		y = ri->ri_yorigin + row * he;
+		if (c == 0x20) {
+			mach64_rectfill(sc, x, y, wi, he, bg);
 		} else {
 			uc = c-ri->ri_font->firstchar;
 			data = (uint8_t *)ri->ri_font->data + uc * 
 			    ri->ri_fontscale;
 
-			mach64_setup_mono(sc,x,y,wi,he,fg,bg);
-			mach64_feed_bytes(sc,ri->ri_fontscale,data);
+			mach64_setup_mono(sc, x, y, wi, he, fg, bg);
+			mach64_feed_bytes(sc, ri->ri_fontscale, data);
 		}
 	}
 }
@@ -1368,19 +1375,21 @@ mach64_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
 	int32_t xs,xd,y,width,height;
+	int from, to;
+	
+	from = srccol + row * ri->ri_cols;
+	to = dstcol + row * ri->ri_cols;
 
-	int from=srccol+row*ri->ri_cols;
-	int to=dstcol+row*ri->ri_cols;
-	memmove(&scr->attrs[to],&scr->attrs[from],ncols*sizeof(long));
-	memmove(&scr->chars[to],&scr->chars[from],ncols*sizeof(u_int));
+	memmove(&scr->attrs[to], &scr->attrs[from], ncols * sizeof(long));
+	memmove(&scr->chars[to], &scr->chars[from], ncols * sizeof(u_int));
 
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		xs=ri->ri_xorigin+ri->ri_font->fontwidth*srccol;
-		xd=ri->ri_xorigin+ri->ri_font->fontwidth*dstcol;
-		y=ri->ri_yorigin+ri->ri_font->fontheight*row;
-		width=ri->ri_font->fontwidth*ncols;
-		height=ri->ri_font->fontheight;
-		mach64_bitblt(sc,xs,y,xd,y,width,height,MIX_SRC,0xff);
+	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		mach64_bitblt(sc, xs, y, xd, y, width, height, MIX_SRC, 0xff);
 	}
 }
 
@@ -1390,22 +1399,24 @@ mach64_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct rasops_info *ri=cookie;
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
-	int32_t x,y,width,height,fg,bg,ul;;
+	int32_t x, y, width, height, fg, bg, ul;
+	int start, end, i;
+	
+	start = startcol + row * ri->ri_cols;
+	end = start + ncols;
 
-	int start=startcol+row*ri->ri_cols;
-	int end=start+ncols, i;
-	for(i=start;i<end;i++) {
-		scr->attrs[i]=fillattr;
-		scr->chars[i]=0x20;
+	for (i = start; i < end; i++) {
+		scr->attrs[i] = fillattr;
+		scr->chars[i] = 0x20;
 	}
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x=ri->ri_xorigin+ri->ri_font->fontwidth*startcol;
-		y=ri->ri_yorigin+ri->ri_font->fontheight*row;
-		width=ri->ri_font->fontwidth*ncols;
-		height=ri->ri_font->fontheight;
-		rasops_unpack_attr(fillattr,&fg,&bg,&ul);
+	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
-		mach64_rectfill(sc,x,y,width,height,bg);
+		mach64_rectfill(sc, x, y, width, height, bg);
 	}
 }
 
@@ -1416,22 +1427,22 @@ mach64_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
 	int32_t x, ys, yd, width, height;
-
 	int from, to, len;
-	from=ri->ri_cols*srcrow;
-	to=ri->ri_cols*dstrow;
-	len=ri->ri_cols*nrows;
+
+	from = ri->ri_cols * srcrow;
+	to = ri->ri_cols * dstrow;
+	len = ri->ri_cols * nrows;
 	
-	memmove(&scr->attrs[to],&scr->attrs[from],len*sizeof(long));
-	memmove(&scr->chars[to],&scr->chars[from],len*sizeof(u_int));
+	memmove(&scr->attrs[to], &scr->attrs[from], len*sizeof(long));
+	memmove(&scr->chars[to], &scr->chars[from], len*sizeof(u_int));
 	
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x=ri->ri_xorigin;
-		ys=ri->ri_yorigin+ri->ri_font->fontheight*srcrow;
-		yd=ri->ri_yorigin+ri->ri_font->fontheight*dstrow;
-		width=ri->ri_emuwidth;
-		height=ri->ri_font->fontheight*nrows;
-		mach64_bitblt(sc,x,ys,x,yd,width,height,MIX_SRC,0xff);
+	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight*nrows;
+		mach64_bitblt(sc, x, ys, x, yd, width, height, MIX_SRC, 0xff);
 	}
 }
 
@@ -1442,56 +1453,60 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct mach64screen *scr=ri->ri_hw;
 	struct mach64_softc *sc=scr->sc;
 	int32_t x,y,width,height,fg,bg,ul;
-
-	int start=ri->ri_cols*row, end=ri->ri_cols*(row+nrows),i;
-	for(i=start;i<end;i++) {
-		scr->attrs[i]=fillattr;
-		scr->chars[i]=0x20;
+	int start, end, i;
+	
+	start = ri->ri_cols * row;
+	end = ri->ri_cols * (row + nrows);
+	
+	for (i=start;i<end;i++) {
+		scr->attrs[i] = fillattr;
+		scr->chars[i] = 0x20;
 	}
 
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x=ri->ri_xorigin;
-		y=ri->ri_yorigin+ri->ri_font->fontheight*row;
-		width=ri->ri_emuwidth;
-		height=ri->ri_font->fontheight*nrows;
-		rasops_unpack_attr(fillattr,&fg,&bg,&ul);
+	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
-		mach64_rectfill(sc,x,y,width,height,bg);
+		mach64_rectfill(sc, x, y, width, height, bg);
 	}
 }
 
 void
 mach64_bitblt(struct mach64_softc *sc, int xs, int ys, int xd, int yd, int width, int height, int rop, int mask)
 {
-	uint32_t dest_ctl=0;
+	uint32_t dest_ctl = 0;
+	
 	wait_for_idle(sc);
-	regw(sc,DP_WRITE_MASK,mask);	/* XXX only good for 8 bit */
-	regw(sc,DP_PIX_WIDTH,DST_8BPP|SRC_8BPP|HOST_8BPP);
-	regw(sc,DP_SRC,FRGD_SRC_BLIT);
-	regw(sc,DP_MIX,(rop&0xffff)<<16);
-	regw(sc,CLR_CMP_CNTL,0);	/* no transparency */
-	if(yd<ys) {
-		dest_ctl=DST_Y_TOP_TO_BOTTOM;
+	regw(sc, DP_WRITE_MASK, mask);	/* XXX only good for 8 bit */
+	regw(sc, DP_PIX_WIDTH, DST_8BPP | SRC_8BPP | HOST_8BPP);
+	regw(sc, DP_SRC, FRGD_SRC_BLIT);
+	regw(sc, DP_MIX, (rop & 0xffff) << 16);
+	regw(sc, CLR_CMP_CNTL, 0);	/* no transparency */
+	if (yd < ys) {
+		dest_ctl = DST_Y_TOP_TO_BOTTOM;
 	} else {
-		ys+=height-1;
-		yd+=height-1;
-		dest_ctl=DST_Y_BOTTOM_TO_TOP;
+		ys += height - 1;
+		yd += height - 1;
+		dest_ctl = DST_Y_BOTTOM_TO_TOP;
 	}
-	if(xd<xs) {
-		dest_ctl|=DST_X_LEFT_TO_RIGHT;
-		regw(sc,SRC_CNTL,SRC_LINE_X_LEFT_TO_RIGHT);
+	if (xd < xs) {
+		dest_ctl |= DST_X_LEFT_TO_RIGHT;
+		regw(sc, SRC_CNTL, SRC_LINE_X_LEFT_TO_RIGHT);
 	} else {
-		dest_ctl|=DST_X_RIGHT_TO_LEFT;
-		xs+=width-1;
-		xd+=width-1;
-		regw(sc,SRC_CNTL,SRC_LINE_X_RIGHT_TO_LEFT);
+		dest_ctl |= DST_X_RIGHT_TO_LEFT;
+		xs += width - 1;
+		xd += width - 1;
+		regw(sc, SRC_CNTL, SRC_LINE_X_RIGHT_TO_LEFT);
 	}
-	regw(sc,DST_CNTL,dest_ctl);
+	regw(sc, DST_CNTL, dest_ctl);
 
-	regw(sc,SRC_Y_X,(xs<<16)|ys);
-	regw(sc,SRC_WIDTH1,width);
-	regw(sc,DST_Y_X,(xd<<16)|yd);
-	regw(sc,DST_HEIGHT_WIDTH,(width<<16)|height);
+	regw(sc, SRC_Y_X, (xs << 16) | ys);
+	regw(sc, SRC_WIDTH1, width);
+	regw(sc, DST_Y_X, (xd << 16) | yd);
+	regw(sc, DST_HEIGHT_WIDTH, (width << 16) | height);
 }
 
 void
@@ -1499,20 +1514,20 @@ mach64_setup_mono(struct mach64_softc *sc, int xd, int yd, int width,
      int height, uint32_t fg, uint32_t bg)
 {
 	wait_for_idle(sc);
-	regw(sc,DP_WRITE_MASK,0xff);	/* XXX only good for 8 bit */
-	regw(sc,DP_PIX_WIDTH,DST_8BPP|SRC_1BPP|HOST_1BPP);
-	regw(sc,DP_SRC,MONO_SRC_HOST|BKGD_SRC_BKGD_CLR|FRGD_SRC_FRGD_CLR);
-	regw(sc,DP_MIX,((MIX_SRC&0xffff)<<16)|MIX_SRC);
-	regw(sc,CLR_CMP_CNTL,0);	/* no transparency */
-	regw(sc,SRC_CNTL,SRC_LINE_X_LEFT_TO_RIGHT);
-	regw(sc,DST_CNTL,DST_Y_TOP_TO_BOTTOM|DST_X_LEFT_TO_RIGHT);
-	regw(sc,HOST_CNTL,HOST_BYTE_ALIGN);
-	regw(sc,DP_BKGD_CLR,bg);
-	regw(sc,DP_FRGD_CLR,fg);
-	regw(sc,SRC_Y_X,0);
-	regw(sc,SRC_WIDTH1,width);
-	regw(sc,DST_Y_X,(xd<<16)|yd);
-	regw(sc,DST_HEIGHT_WIDTH,(width<<16)|height);
+	regw(sc, DP_WRITE_MASK, 0xff);	/* XXX only good for 8 bit */
+	regw(sc, DP_PIX_WIDTH, DST_8BPP | SRC_1BPP | HOST_1BPP);
+	regw(sc, DP_SRC, MONO_SRC_HOST | BKGD_SRC_BKGD_CLR | FRGD_SRC_FRGD_CLR);
+	regw(sc, DP_MIX, ((MIX_SRC & 0xffff) << 16) | MIX_SRC);
+	regw(sc, CLR_CMP_CNTL ,0);	/* no transparency */
+	regw(sc, SRC_CNTL, SRC_LINE_X_LEFT_TO_RIGHT);
+	regw(sc, DST_CNTL, DST_Y_TOP_TO_BOTTOM | DST_X_LEFT_TO_RIGHT);
+	regw(sc, HOST_CNTL, HOST_BYTE_ALIGN);
+	regw(sc, DP_BKGD_CLR, bg);
+	regw(sc, DP_FRGD_CLR, fg);
+	regw(sc, SRC_Y_X, 0);
+	regw(sc, SRC_WIDTH1, width);
+	regw(sc, DST_Y_X, (xd << 16) | yd);
+	regw(sc, DST_HEIGHT_WIDTH, (width << 16) | height);
 	/* now feed the data into the chip */
 }
 
@@ -1520,22 +1535,23 @@ void
 mach64_feed_bytes(struct mach64_softc *sc, int count, uint8_t *data)
 {
 	int i;
-	uint32_t latch=0, bork;
-	int shift=0;
-	int reg=0;
-	for(i=0;i<count;i++) {
-		bork=data[i];
-		latch|=(bork<<shift);
-		if(shift == 24) {
-			regw(sc,HOST_DATA0+reg,latch);
-			latch=0;
-			shift=0;
-			reg=(reg+4)&0x3c;
+	uint32_t latch = 0, bork;
+	int shift = 0;
+	int reg = 0;
+	
+	for (i=0;i<count;i++) {
+		bork = data[i];
+		latch |= (bork << shift);
+		if (shift == 24) {
+			regw(sc, HOST_DATA0 + reg, latch);
+			latch = 0;
+			shift = 0;
+			reg = (reg + 4) & 0x3c;
 		} else
-			shift+=8;
+			shift += 8;
 	}
-	if(shift!=0)	/* 24 */
-		regw(sc,HOST_DATA0+reg,latch);
+	if (shift != 0)	/* 24 */
+		regw(sc, HOST_DATA0 + reg, latch);
 }
 
 
@@ -1544,47 +1560,48 @@ mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height,
     int colour)
 {
 	wait_for_idle(sc);
-	regw(sc,DP_WRITE_MASK,0xff);
-	regw(sc,DP_FRGD_CLR,colour);
-	regw(sc,DP_PIX_WIDTH,DST_8BPP|SRC_8BPP|HOST_8BPP);
-	regw(sc,DP_SRC,FRGD_SRC_FRGD_CLR);
-	regw(sc,DP_MIX,(MIX_SRC)<<16);
-	regw(sc,CLR_CMP_CNTL,0);	/* no transparency */
-	regw(sc,SRC_CNTL,SRC_LINE_X_LEFT_TO_RIGHT);
-	regw(sc,DST_CNTL,DST_X_LEFT_TO_RIGHT|DST_Y_TOP_TO_BOTTOM);
+	regw(sc, DP_WRITE_MASK, 0xff);
+	regw(sc, DP_FRGD_CLR, colour);
+	regw(sc, DP_PIX_WIDTH, DST_8BPP | SRC_8BPP | HOST_8BPP);
+	regw(sc, DP_SRC, FRGD_SRC_FRGD_CLR);
+	regw(sc, DP_MIX, MIX_SRC << 16);
+	regw(sc, CLR_CMP_CNTL, 0);	/* no transparency */
+	regw(sc, SRC_CNTL, SRC_LINE_X_LEFT_TO_RIGHT);
+	regw(sc, DST_CNTL, DST_X_LEFT_TO_RIGHT | DST_Y_TOP_TO_BOTTOM);
 
-	regw(sc,SRC_Y_X,(x<<16)|y);
-	regw(sc,SRC_WIDTH1,width);
-	regw(sc,DST_Y_X,(x<<16)|y);
-	regw(sc,DST_HEIGHT_WIDTH,(width<<16)|height);
+	regw(sc, SRC_Y_X, (x << 16) | y);
+	regw(sc, SRC_WIDTH1, width);
+	regw(sc, DST_Y_X, (x << 16) | y);
+	regw(sc, DST_HEIGHT_WIDTH, (width << 16) | height);
 }
 
 void
 mach64_clearscreen(struct mach64_softc *sc)
 {
-	mach64_rectfill(sc,0,0,sc->virt_x,sc->virt_y,sc->sc_bg);
+	mach64_rectfill(sc, 0, 0, sc->virt_x, sc->virt_y, sc->sc_bg);
 }
 
 
 void
 mach64_showpal(struct mach64_softc *sc)
 {
-	int i,x=0;
-	for (i=0;i<16;i++) {
-		mach64_rectfill(sc,x,0,64,64,i);
-		x+=64;
+	int i, x = 0;
+
+	for (i = 0; i < 16; i++) {
+		mach64_rectfill(sc, x, 0, 64, 64, i);
+		x += 64;
 	}
 }
 
 int
 mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
-	if((fg == 0)&&(bg == 0))
+	if ((fg == 0) && (bg == 0))
 	{
-		fg=WS_DEFAULT_FG;
-		bg=WS_DEFAULT_BG;
+		fg = WS_DEFAULT_FG;
+		bg = WS_DEFAULT_BG;
 	}
-	*attrp=(fg&0xf)<<24|(bg&0xf)<<16|(flags&0xff)<<8;
+	*attrp = (fg & 0xf) << 24 | (bg & 0xf) << 16 | (flags & 0xff) << 8;
 	return 0;
 }
 
@@ -1598,6 +1615,7 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct mach64_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
 	struct mach64screen *ms=sc->active;
+	
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
 			/* XXX is this the right type to return? */
@@ -1611,6 +1629,7 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			wdf->depth = ms->ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
+			
 		case WSDISPLAYIO_GETCMAP:
 			return mach64_getcmap(sc, 
 			    (struct wsdisplay_cmap *)data);
@@ -1618,18 +1637,21 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case WSDISPLAYIO_PUTCMAP:
 			return mach64_putcmap(sc, 
 			    (struct wsdisplay_cmap *)data);
+			    
 		/* PCI config read/write passthrough. */
 		case PCI_IOC_CFGREAD:
 		case PCI_IOC_CFGWRITE:
 			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
 			    cmd, data, flag, p));
+			    
 		case WSDISPLAYIO_SMODE:
 			{
-				int new_mode=*(int*)data;
-				if(new_mode!=sc->sc_mode)
+				int new_mode = *(int*)data;
+
+				if (new_mode != sc->sc_mode)
 				{
-					sc->sc_mode=new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL)
+					sc->sc_mode = new_mode;
+					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
 						/*
 						 * reset a few things the 
@@ -1644,9 +1666,11 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 				}
 			}
 			return 0;
+			
 		case WSDISPLAYIO_GETWSCHAR:
 			return mach64_getwschar(sc,
 			    (struct wsdisplay_char *)data);
+			    
 		case WSDISPLAYIO_PUTWSCHAR:
 			return mach64_putwschar(sc,
 			    (struct wsdisplay_char *)data);
@@ -1659,30 +1683,31 @@ mach64_mmap(void *v, off_t offset, int prot)
 {
 	struct mach64_softc *sc = v;
 	paddr_t pa;
+	
 	/* 'regular' framebuffer mmap()ing */
-	if(offset<sc->sc_apersize) {
+	if (offset<sc->sc_apersize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase+offset, 0, 
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 #if 0
 	/* evil hack to allow mmap()ing other devices as well */
-	if((offset>0x80000000) && (offset<=0xffffffff)) {
+	if ((offset > 0x80000000) && (offset <= 0xffffffff)) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 #endif
 
-	if((offset>=sc->sc_aperphys) && 
-	    (offset<(sc->sc_aperphys+sc->sc_apersize))) {
+	if ((offset >= sc->sc_aperphys) && 
+	    (offset < (sc->sc_aperphys + sc->sc_apersize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 
-	if((offset>=sc->sc_regphys) && 
-	    (offset<(sc->sc_regphys+sc->sc_regsize))) {
+	if ((offset >= sc->sc_regphys) && 
+	    (offset < (sc->sc_regphys + sc->sc_regsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
@@ -1700,30 +1725,30 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct rasops_info *ri;
 	int cnt=type->nrows * type->ncols;
 
-	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK|M_ZERO);
+	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK | M_ZERO);
 	mach64_init_screen(sc, scr, type, 0, defattrp, sc->active == NULL);
-	ri=&scr->ri;
+	ri = &scr->ri;
 
-	ri->ri_hw=scr;
+	ri->ri_hw = scr;
 	/*ri->ri_bits=(void *)sc->sc_aperbase;*/
 	rasops_init(ri, mach64_console_screen.ri.ri_height / 8,
 	    mach64_console_screen.ri.ri_width / 8);
 
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
-	set_address(ri,sc->sc_aperbase);
-	mach64_allocattr(ri,WS_DEFAULT_FG,WS_DEFAULT_BG,0,defattrp);
+	set_address(ri, sc->sc_aperbase);
+	mach64_allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG, 0, defattrp);
 
-	scr->ri.ri_ops.copyrows=mach64_copyrows;
-	scr->ri.ri_ops.eraserows=mach64_eraserows;
-	scr->ri.ri_ops.copycols=mach64_copycols;
-	scr->ri.ri_ops.erasecols=mach64_erasecols;
-	scr->ri.ri_ops.putchar=mach64_putchar;
-	scr->ri.ri_ops.cursor=mach64_cursor;
+	scr->ri.ri_ops.copyrows = mach64_copyrows;
+	scr->ri.ri_ops.eraserows = mach64_eraserows;
+	scr->ri.ri_ops.copycols = mach64_copycols;
+	scr->ri.ri_ops.erasecols = mach64_erasecols;
+	scr->ri.ri_ops.putchar = mach64_putchar;
+	scr->ri.ri_ops.cursor = mach64_cursor;
 
-	scr->attrs=(long *)malloc((cnt)*(sizeof(long)+sizeof(u_int)),
+	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(u_int)),
 	    M_DEVBUF, M_WAITOK);
-	scr->chars=(u_int *)&scr->attrs[cnt];
+	scr->chars = (u_int *)&scr->attrs[cnt];
 	mach64_eraserows(ri, 0, ri->ri_rows, *defattrp);
 
 	if (sc->active == NULL) {
@@ -1747,7 +1772,7 @@ mach64_free_screen(void *v, void *cookie)
 
 	LIST_REMOVE(scr, next);
 	if (scr != &mach64_console_screen) {
-		free(scr->attrs,M_DEVBUF);
+		free(scr->attrs, M_DEVBUF);
 		free(scr, M_DEVBUF);
 	} else
 		panic("mach64_free_screen: console");
@@ -1846,10 +1871,11 @@ void
 mach64_restore_screen(struct mach64screen *scr,
     const struct wsscreen_descr *type, u_int *mem)
 {
-	int i, j, offset=0;
+	int i, j, offset = 0;
 	/*struct rasops_info *ri=&scr->ri;*/
-	u_int *charptr=scr->chars;
-	long *attrptr=scr->attrs;
+	u_int *charptr = scr->chars;
+	long *attrptr = scr->attrs;
+	
 	mach64_clearscreen(scr->sc);
 	for (i = 0; i < scr->ri.ri_rows; i++) {
 		for (j = 0; j < scr->ri.ri_cols; j++) {
@@ -1858,7 +1884,7 @@ mach64_restore_screen(struct mach64screen *scr,
 			offset++;
 		}
 	}
-	scr->cursordrawn=0;
+	scr->cursordrawn = 0;
 }
 
 /* set ri->ri_bits according to fb, ri_xorigin and ri_yorigin */
@@ -1873,18 +1899,20 @@ set_address(struct rasops_info *ri, bus_addr_t fb)
 int
 mach64_getwschar(void *cookie, struct wsdisplay_char *wsc)
 {
-	struct mach64_softc *sc=cookie;
-	struct mach64screen *scr=sc->active;
-	int fg,bg,fl;
-	if(scr){
-		if((wsc->col>=0) && (wsc->col<scr->ri.ri_cols) && 
-		    (wsc->row>=0) && (wsc->row<scr->ri.ri_rows)) {
+	struct mach64_softc *sc = cookie;
+	struct mach64screen *scr = sc->active;
+	int fg, bg, fl;
+
+	if (scr){
+		if ((wsc->col >= 0) && (wsc->col < scr->ri.ri_cols) && 
+		    (wsc->row >= 0) && (wsc->row < scr->ri.ri_rows)) {
 			int pos = scr->ri.ri_cols * wsc->row + wsc->col;
-			wsc->letter=scr->chars[pos];
+			
+			wsc->letter = scr->chars[pos];
 			rasops_unpack_attr(scr->attrs[pos], &fg, &bg, &fl);
-			wsc->foreground=fg;
-			wsc->background=bg;
-			wsc->flags=fl;
+			wsc->foreground = fg;
+			wsc->background = bg;
+			wsc->flags = fl;
 			return 0;
 		}
 	}
@@ -1897,13 +1925,14 @@ mach64_putwschar(void *cookie, struct wsdisplay_char *wsc)
 	struct mach64_softc *sc=cookie;
 	struct mach64screen *scr=sc->active;
 	long attr;
-	if(scr){
-		if((wsc->col>=0) && (wsc->col<scr->ri.ri_cols) &&
-		    (wsc->row>=0) && (wsc->row<scr->ri.ri_rows)) {
-			mach64_allocattr(&scr->ri,wsc->foreground, 
+	
+	if (scr){
+		if ((wsc->col >= 0) && (wsc->col < scr->ri.ri_cols) &&
+		    (wsc->row >= 0) && (wsc->row < scr->ri.ri_rows)) {
+			mach64_allocattr(&scr->ri, wsc->foreground, 
 			    wsc->background, wsc->flags,&attr);
-			mach64_putchar(&scr->ri,wsc->row, wsc->col, 
-			    wsc->letter,attr);
+			mach64_putchar(&scr->ri, wsc->row, wsc->col, 
+			    wsc->letter, attr);
 			return 0;
 		}
 	}
