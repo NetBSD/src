@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.84 2005/04/17 23:12:40 lukem Exp $
+#	$NetBSD: special,v 1.85 2005/05/02 03:23:43 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -111,6 +111,26 @@
 ./etc/newsyslog.conf		type=file mode=0644
 ./etc/nsswitch.conf		type=file mode=0644
 ./etc/ntp.conf			type=file mode=0644 optional
+./etc/pam.conf			type=file mode=0644 optional
+./etc/pam.d			type=dir  mode=0755
+./etc/pam.d/display_manager	type=file mode=0644
+./etc/pam.d/ftpd		type=file mode=0644
+./etc/pam.d/gdm			type=file mode=0644
+./etc/pam.d/imap		type=file mode=0644
+./etc/pam.d/kde			type=file mode=0644
+./etc/pam.d/login		type=file mode=0644
+./etc/pam.d/other		type=file mode=0644
+./etc/pam.d/passwd		type=file mode=0644
+./etc/pam.d/pop3		type=file mode=0644
+./etc/pam.d/ppp			type=file mode=0644
+./etc/pam.d/rexecd		type=file mode=0644
+./etc/pam.d/rsh			type=file mode=0644
+./etc/pam.d/sshd		type=file mode=0644
+./etc/pam.d/su			type=file mode=0644
+./etc/pam.d/system		type=file mode=0644
+./etc/pam.d/telnetd		type=file mode=0644
+./etc/pam.d/xdm			type=file mode=0644
+./etc/pam.d/xserver		type=file mode=0644
 ./etc/passwd			type=file mode=0644
 ./etc/passwd.conf		type=file mode=0644 optional
 ./etc/phones			type=file mode=0644
