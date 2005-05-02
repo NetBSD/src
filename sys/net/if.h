@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.107 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.108 2005/05/02 15:34:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -350,18 +350,31 @@ struct ifnet {				/* and the entries */
 #define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
 
 /* Capabilities that interfaces can advertise. */
-#define	IFCAP_CSUM_IPv4		0x0001	/* can do IPv4 header checksums */
-#define	IFCAP_CSUM_TCPv4	0x0002	/* can do IPv4/TCP checksums */
-#define	IFCAP_CSUM_UDPv4	0x0004	/* can do IPv4/UDP checksums */
-#define	IFCAP_CSUM_TCPv6	0x0008	/* can do IPv6/TCP checksums */
-#define	IFCAP_CSUM_UDPv6	0x0010	/* can do IPv6/UDP checksums */
-#define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
-#define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
-#define	IFCAP_TSOv4		0x0080	/* can do TCPv4 segmentation offload */
+#define	IFCAP_TSOv4		0x00080	/* can do TCPv4 segmentation offload */
+#define	IFCAP_CSUM_IPv4_Rx	0x00100	/* can do IPv4 header checksums (Rx) */
+#define	IFCAP_CSUM_IPv4_Tx	0x00200	/* can do IPv4 header checksums (Tx) */
+#define	IFCAP_CSUM_TCPv4_Rx	0x00400	/* can do IPv4/TCP checksums (Rx) */
+#define	IFCAP_CSUM_TCPv4_Tx	0x00800	/* can do IPv4/TCP checksums (Tx) */
+#define	IFCAP_CSUM_UDPv4_Rx	0x01000	/* can do IPv4/UDP checksums (Rx) */
+#define	IFCAP_CSUM_UDPv4_Tx	0x02000	/* can do IPv4/UDP checksums (Tx) */
+#define	IFCAP_CSUM_TCPv6_Rx	0x04000	/* can do IPv6/TCP checksums (Rx) */
+#define	IFCAP_CSUM_TCPv6_Tx	0x08000	/* can do IPv6/TCP checksums (Tx) */
+#define	IFCAP_CSUM_UDPv6_Rx	0x10000	/* can do IPv6/UDP checksums (Rx) */
+#define	IFCAP_CSUM_UDPv6_Tx	0x20000	/* can do IPv6/UDP checksums (Tx) */
 
-#define	IFCAPBITS \
-    "\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx" \
-    "\7UDP4CSUM_Rx\10TSO4"
+#define	IFCAPBITS		\
+	"\020"			\
+	"\10TSO4"		\
+	"\11IP4CSUM_Rx"		\
+	"\12IP4CSUM_Tx"		\
+	"\13TCP4CSUM_Rx"	\
+	"\14TCP4CSUM_Tx"	\
+	"\15UDP4CSUM_Rx"	\
+	"\16UDP4CSUM_Tx"	\
+	"\17TCP6CSUM_Rx"	\
+	"\20TCP6CSUM_Tx"	\
+	"\21UDP6CSUM_Rx"	\
+	"\22UDP6CSUM_Tx"
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
