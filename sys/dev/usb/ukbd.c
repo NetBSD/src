@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.86 2005/04/29 17:02:06 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.87 2005/05/03 13:15:21 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.86 2005/04/29 17:02:06 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.87 2005/05/03 13:15:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,15 +173,17 @@ struct ukbd_softc {
 	struct hid_location sc_scroloc;
 	int sc_leds;
 #if defined(__NetBSD__)
-	usb_callout_t sc_rawrepeat_ch;
-
 	struct device *sc_wskbddev;
+
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
+	int sc_rawkbd;
+#if defined(UKBD_REPEAT)
+	usb_callout_t sc_rawrepeat_ch;
 #define REP_DELAY1 400
 #define REP_DELAYN 100
-	int sc_rawkbd;
 	int sc_nrep;
 	char sc_rep[MAXKEYS];
+#endif /* defined(UKBD_REPEAT) */
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 	int sc_spl;
@@ -346,7 +348,9 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
+#ifdef UKBD_REPEAT
 	usb_callout_init(sc->sc_rawrepeat_ch);
+#endif
 
 	usb_callout_init(sc->sc_delay);
 
@@ -610,12 +614,14 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 			cbuf[j] = c & 0x7f;
 			if (key & RELEASE)
 				cbuf[j] |= 0x80;
+#if defined(UKBD_REPEAT)
 			else {
 				/* remember pressed keys for autorepeat */
 				if (c & 0x80)
 					sc->sc_rep[npress++] = 0xe0;
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
+#endif
 			DPRINTFN(1,("ukbd_intr: raw = %s0x%02x\n",
 				    c & 0x80 ? "0xe0 " : "",
 				    cbuf[j]));
@@ -624,12 +630,14 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
+#ifdef UKBD_REPEAT
 		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
 			usb_callout(sc->sc_rawrepeat_ch,
 			    hz * REP_DELAY1 / 1000, ukbd_rawrepeat, sc);
 		}
+#endif
 		return;
 	}
 #endif
@@ -670,7 +678,7 @@ ukbd_set_leds(void *v, int leds)
 	uhidev_set_report_async(&sc->sc_hdev, UHID_OUTPUT_REPORT, &res, 1);
 }
 
-#ifdef WSDISPLAY_COMPAT_RAWKBD
+#if defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
 void
 ukbd_rawrepeat(void *v)
 {
@@ -683,7 +691,7 @@ ukbd_rawrepeat(void *v)
 	usb_callout(sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
 	    ukbd_rawrepeat, sc);
 }
-#endif
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT) */
 
 int
 ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
@@ -700,11 +708,13 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
 		return (0);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+#if defined(UKBD_REPEAT)
 		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+#endif
 		return (0);
 #endif
 	}
