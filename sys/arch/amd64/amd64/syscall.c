@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6 2005/05/03 16:26:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2005/05/03 16:26:28 manu Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $");
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
-#include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,27 +63,61 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $");
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall_intern __P((struct proc *));
-void syscall_plain __P((struct trapframe *));
-void syscall_fancy __P((struct trapframe *));
+#ifndef EMULNAME
+#include <sys/syscall.h>
+ 
+#define EMULNAME(x)     (x)
+#define EMULNAMEU(x)    (x)
+#include <sys/syscall.h>
 
 void
-syscall_intern(p)
+child_return(arg)
+	void *arg;
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
+
+	tf->tf_rax = 0;
+	tf->tf_rflags &= ~PSL_C;
+
+	KERNEL_PROC_UNLOCK(l);
+
+	userret(l);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(l);
+		ktrsysret(p, EMULNAMEU(SYS_fork), 0, 0);
+		KERNEL_PROC_UNLOCK(l);
+	}
+#endif
+}
+#endif /* EMULNAME */
+
+void EMULNAME(syscall_intern) __P((struct proc *));
+void EMULNAME(syscall_plain) __P((struct trapframe *));
+void EMULNAME(syscall_fancy) __P((struct trapframe *));
+
+void
+EMULNAME(syscall_intern)(p) /*
+syscall_intern(p) */
 	struct proc *p;
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
 
 /*
@@ -93,7 +126,8 @@ syscall_intern(p)
  * Like trap(), argument is call by reference.
  */
 void
-syscall_plain(frame)
+EMULNAME(syscall_plain)(frame) /*
+syscall_plain(frame) */
 	struct trapframe *frame;
 {
 	caddr_t params;
@@ -113,9 +147,10 @@ syscall_plain(frame)
 	argoff = 0;
 	argp = &args[0];
 
+#ifndef COMPAT_LINUX
 	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
+	case EMULNAMEU(SYS_syscall):
+	case EMULNAMEU(SYS___syscall):
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -126,8 +161,9 @@ syscall_plain(frame)
 	default:
 		break;
 	}
+#endif /* !COMPAT_LINUX */
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (EMULNAMEU(SYS_NSYSENT) - 1);
 	callp += code;
 
 	argsize = (callp->sy_argsize >> 3) + argoff;
@@ -188,7 +224,11 @@ syscall_plain(frame)
 		break;
 	default:
 	bad:
+#ifdef COMPAT_LINUX
+		frame->tf_rax = LINUX_SCERR_SIGN error;
+#else
 		frame->tf_rax = error;
+#endif
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -200,7 +240,8 @@ syscall_plain(frame)
 }
 
 void
-syscall_fancy(frame)
+EMULNAME(syscall_fancy)(frame) /*
+syscall_fancy(frame) */
 	struct trapframe *frame;
 {
 	caddr_t params;
@@ -220,9 +261,10 @@ syscall_fancy(frame)
 	argp = &args[0];
 	argoff = 0;
 
+#ifndef COMPAT_LINUX
 	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
+	case EMULNAMEU(SYS_syscall):
+	case EMULNAMEU(SYS___syscall):
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -233,7 +275,8 @@ syscall_fancy(frame)
 	default:
 		break;
 	}
-	code &= (SYS_NSYSENT - 1);
+#endif /* !COMPAT_LINUX */
+	code &= (EMULNAMEU(SYS_NSYSENT) - 1);
 	callp += code;
 
 	argsize = (callp->sy_argsize >> 3) + argoff;
@@ -294,7 +337,11 @@ syscall_fancy(frame)
 		break;
 	default:
 	bad:
+#ifdef COMPAT_LINUX
+		frame->tf_rax = LINUX_SCERR_SIGN error;
+#else
 		frame->tf_rax = error;
+#endif
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -304,27 +351,3 @@ syscall_fancy(frame)
 	userret(l);
 }
 
-void
-child_return(arg)
-	void *arg;
-{
-	struct lwp *l = arg;
-	struct trapframe *tf = l->l_md.md_regs;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-
-	tf->tf_rax = 0;
-	tf->tf_rflags &= ~PSL_C;
-
-	KERNEL_PROC_UNLOCK(l);
-
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
-}

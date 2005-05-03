@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.136 2005/04/19 19:00:25 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.137 2005/05/03 16:26:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.136 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.137 2005/05/03 16:26:28 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,10 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 #endif
 
 /* Local linux_misc.c functions: */
+#ifndef __amd64__
 static void bsd_to_linux_statfs __P((const struct statvfs *,
     struct linux_statfs *));
+#endif
 static int linux_to_bsd_limit __P((int));
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
@@ -300,6 +302,7 @@ linux_sys_brk(l, v, retval)
 	return 0;
 }
 
+#ifndef __amd64__
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.
  * Linux doesn't have f_flag, and we can't set f_frsize due
@@ -425,6 +428,7 @@ linux_sys_fstatfs(l, v, retval)
 
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
+#endif /* __amd64__ */
 
 /*
  * uname(). Just copy the info from the various strings stored in the
@@ -1272,7 +1276,7 @@ out:
 	return error;
 }
 
-#endif /* __i386__ || __m68k__ */
+#endif /* __i386__ || __m68k__ || __amd64__ */
 
 /*
  * We have nonexistent fsuid equal to uid.
@@ -1375,7 +1379,7 @@ linux_sys_ptrace(l, v, retval)
 {
 	struct linux_sys_ptrace_args /* {
 		i386, m68k, powerpc: T=int
-		alpha: T=long
+		alpha, amd64: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
 		syscallarg(T) addr;
@@ -1412,7 +1416,8 @@ linux_sys_ptrace(l, v, retval)
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (caddr_t)SCARG(uap, data), sizeof *retval);
+				    (caddr_t)SCARG(uap, data), 
+				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
 			default:
@@ -1681,7 +1686,7 @@ linux_sys_setrlimit(l, v, retval)
 	return sys_setrlimit(l, &ap, retval);
 }
 
-#ifndef __mips__
+#if !defined(__mips__) && !defined(__amd64__)
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
 linux_sys_ugetrlimit(l, v, retval)

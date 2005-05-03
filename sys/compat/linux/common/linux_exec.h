@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.33 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.34 2005/05/03 16:26:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <compat/linux/arch/mips/linux_exec.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_exec.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_exec.h>
 #endif
 
 
@@ -92,6 +94,7 @@
 #define LINUX_AT_PLATFORM	15	/* CPU string for optimizations */
 #define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
 #define LINUX_AT_CLKTCK		17	/* frequency times() increments */
+#define LINUX_AT_SECURE		23	/* secure mode boolean */
 
 /*
  * Emulation specific sysctls.
