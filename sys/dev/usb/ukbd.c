@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.87 2005/05/03 13:15:21 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.88 2005/05/03 18:37:46 jonathan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.87 2005/05/03 13:15:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.88 2005/05/03 18:37:46 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ Static void	ukbd_set_leds(void *, int);
 
 #if defined(__NetBSD__)
 Static int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
-#ifdef WSDISPLAY_COMPAT_RAWKBD
+#if  defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
 Static void	ukbd_rawrepeat(void *v);
 #endif
 
