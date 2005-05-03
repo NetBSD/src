@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.17 2005/04/29 16:51:33 augustss Exp $
+.\" $NetBSD: wsconsctl.8,v 1.18 2005/05/03 11:51:34 augustss Exp $
 .\"
 .\" Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd April 29, 2005
+.Dd May 2, 2005
 .Dt WSCONSCTL 8
 .Os
 .Sh NAME
@@ -193,6 +193,11 @@ Adds 200 to the current pitch of the bell.
 .Pp
 Sets the color of kernel messages to brown on red with the highlighting
 flag set (becoming yellow on red).
+.Pp
+.Dl wsconsctl -w repeat.del1=200 repeat.deln=50
+.Pp
+Sets the initial delay for keyboard auto repeat to 200 ms, and subsequent
+delay tp 50 ms.
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
