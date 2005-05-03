@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.19 2005/05/03 11:57:11 wiz Exp $
+.\" $NetBSD: wsconsctl.8,v 1.20 2005/05/03 13:26:25 augustss Exp $
 .\"
 .\" Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,6 +198,10 @@ flag set (becoming yellow on red).
 .Pp
 Sets the initial delay for keyboard auto repeat to 200 ms, and subsequent
 delays to 50 ms.
+.Pp
+.Dl wsconsctl -w repeat.del1=0
+.Pp
+Turns off auto repeat.
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
