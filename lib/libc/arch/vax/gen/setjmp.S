@@ -29,7 +29,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: setjmp.S,v 1.6 2003/08/07 16:42:31 agc Exp $"
+	.asciz "$NetBSD: setjmp.S,v 1.7 2005/05/03 04:37:33 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -44,6 +44,7 @@
  */
 
 #include "DEFS.h"
+#include "assym.h"
 
 ENTRY(setjmp, R6)
 	movl	4(%ap),%r6		# construct sigcontext
@@ -52,11 +53,14 @@ ENTRY(setjmp, R6)
 	pushl	$0			# no new values
 	calls	$4,_C_LABEL(__sigaltstack14) # pop args plus signal stack value
 	movl	(%sp)+,(%r6)+		# save onsigstack status of caller
+	subl2	$SS_LEN,%sp
+	pushl	%sp
 	pushl	$0
-	calls	$1,_C_LABEL(sigblock)	# get signal mask
-	movl	%r0,(%r6)+		# save signal mask of caller
+	pushl	$SIG_BLOCK
+	calls	$3,_C_LABEL(sigprocmask)# get signal mask
+	movl	(%sp),(%r6)+		# save signal mask of caller
 	movl	(%ap),%r0
-	moval	4(%ap)[%r0],(%r6)+		# save sp of caller
+	moval	4(%ap)[%r0],(%r6)+	# save sp of caller
 	movl	12(%fp),(%r6)+		# save frame pointer of caller
 	movl	8(%fp),(%r6)+		# save argument pointer of caller
 	movl	16(%fp),(%r6)+		# save pc of caller
@@ -85,9 +89,27 @@ loop:
 	ret				# pop another frame
 
 done:
-	pushl	%r1			# pointer to sigcontext
-	calls	$1,_C_LABEL(sigreturn)	# restore previous context
-					# we should never return
+	pushl	SC13_LEN+20(%r1)	# here we fake a sigcontext
+	pushl	SC13_LEN+16(%r1)	# from a sigcontext13
+	pushl	SC13_LEN+12(%r1)
+	pushl	SC13_LEN+8(%r1)		# first do save registers
+	pushl	SC13_LEN+4(%r1)
+	pushl	SC13_LEN+0(%r1)
+	pushl	$0			# fill out the sigset
+	pushl	$0
+	pushl	$0
+	pushl	SC13_MASK(%r1)
+	pushl	SC13_PS(%r1)		# now do everything else
+	pushl	SC13_PC(%r1)
+	pushl	SC13_AP(%r1)
+	pushl	SC13_FP(%r1)
+	pushl	SC13_AP(%r1)
+	pushl	$0
+	pushl	SC13_ONSTACK(%r1)
+	movl	%sp,%r1
+	pushl	%r0			# the return value
+	pushl	%r1			# the sigcontext
+	calls	$2,_C_LABEL(__longjmp14)
 botch:
 	calls	$0,_C_LABEL(longjmperror)
 	halt

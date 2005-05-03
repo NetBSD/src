@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2004/03/04 00:16:47 matt Exp $
+#	$NetBSD: genassym.cf,v 1.3 2005/05/03 04:37:33 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,11 +67,24 @@ define	SS_SIZE		offsetof(stack_t, ss_size)
 define	SS_FLAGS	offsetof(stack_t, ss_flags)
 define	SS_ONSTACK	SS_ONSTACK
 
+define	SC13_LEN	sizeof(struct sigcontext13)
+define	SC13_ONSTACK	offsetof(struct sigcontext13, sc_onstack)
+define	SC13_MASK	offsetof(struct sigcontext13, sc_mask)
+define	SC13_SP		offsetof(struct sigcontext13, sc_sp)
+define	SC13_FP		offsetof(struct sigcontext13, sc_fp)
+define	SC13_AP		offsetof(struct sigcontext13, sc_ap)
+define	SC13_PC		offsetof(struct sigcontext13, sc_pc)
+define	SC13_PS		offsetof(struct sigcontext13, sc_ps)
+
 define	SC_LEN		sizeof(struct sigcontext)
 define	SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
+define	SC_MASK13	offsetof(struct sigcontext, __sc_mask13)
 define	SC_SP		offsetof(struct sigcontext, sc_sp)
 define	SC_FP		offsetof(struct sigcontext, sc_fp)
 define	SC_AP		offsetof(struct sigcontext, sc_ap)
 define	SC_PC		offsetof(struct sigcontext, sc_pc)
 define	SC_PS		offsetof(struct sigcontext, sc_ps)
 define	SC_MASK		offsetof(struct sigcontext, sc_mask)
+
+define	SIG_BLOCK	SIG_BLOCK
+define	SS_LEN		sizeof(sigset_t)
