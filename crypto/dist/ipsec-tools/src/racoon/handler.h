@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.2 2005/04/19 19:42:09 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.3 2005/05/03 21:08:47 manu Exp $	*/
 
 /* Id: handler.h,v 1.11 2004/11/16 15:44:46 ludvigm Exp */
 
@@ -436,6 +436,8 @@ extern struct ph2handle *getph2byspidx __P((struct policyindex *));
 extern struct ph2handle *getph2byspid __P((u_int32_t));
 extern struct ph2handle *getph2byseq __P((u_int32_t));
 extern struct ph2handle *getph2bymsgid __P((struct ph1handle *, u_int32_t));
+extern struct ph2handle *getph2byid __P((struct sockaddr *,
+	struct sockaddr *, u_int32_t));
 extern struct ph2handle *getph2bysaidx __P((struct sockaddr *,
 	struct sockaddr *, u_int, u_int32_t));
 extern struct ph2handle *newph2 __P((void));
