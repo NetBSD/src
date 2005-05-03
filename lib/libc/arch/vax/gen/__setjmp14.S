@@ -29,7 +29,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __setjmp14.S,v 1.9 2004/03/21 18:19:52 matt Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.10 2005/05/03 04:37:33 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -44,6 +44,7 @@
  */
 
 #include "DEFS.h"
+#include "assym.h"
 
 ENTRY(__setjmp14, R6)
 	movl	4(%ap),%r2		# construct sigcontext
@@ -68,7 +69,7 @@ ENTRY(__setjmp14, R6)
 	movpsl	(%r2)			# save current psl
 	movw	4(%fp),(%r2)		# save psw of caller
 #ifdef __ELF__
-	addl3	$44,4(%ap),%r2		# point to past signal context
+	addl3	$SC_LEN,4(%ap),%r2	# point to past signal context
 	movq	%r6,(%r2)+		# save r6/r7
 	movq	%r8,(%r2)+		# save r8/r9
 	movq	%r10,(%r2)+		# save r10/r11
@@ -84,7 +85,7 @@ ENTRY(__longjmp14, 0)
 	beql	botch
 
 #ifdef __ELF__
-	moval	44(%r1),%r2		# get ptr to saved registers
+	moval	$SC_LEN(%r1),%r2	# get ptr to saved registers
 	movq	(%r2)+,%r6		# restore r6/r7
 	movq	(%r2)+,%r8		# restore r8/r9
 	movq	(%r2)+,%r10		# restore r10/r11
