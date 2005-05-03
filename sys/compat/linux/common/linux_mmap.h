@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.15 2003/06/23 21:26:00 christos Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.16 2005/05/03 16:26:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@
 #include <compat/linux/arch/mips/linux_mmap.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_mmap.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_mmap.h>
 /*
  * XXX ERH: All below here are guesses.  The header
  * XXX ERH: files are correct but the defined(*)

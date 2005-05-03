@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.11 2004/11/13 07:19:27 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.12 2005/05/03 16:26:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,11 @@ struct linux_sysinfo {
 #define	LINUX_RLIMIT_MEMLOCK	8
 #define	LINUX_RLIMIT_AS		9
 #define	LINUX_RLIMIT_LOCKS	10
+#ifdef __mips__  /* XXX only mips32. On mips64, it's ~0ul */
+#define	LINUX_RLIM_INFINITY	0x7fffffffUL
+#else
 #define	LINUX_RLIM_INFINITY	~0ul
+#endif
 
 
 /* When we don't know what to do, let it believe it is local */

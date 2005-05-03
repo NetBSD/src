@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.7 2002/09/05 22:27:36 christos Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.8 2005/05/03 16:26:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <compat/linux/arch/mips/linux_siginfo.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_siginfo.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_siginfo.h>
 #endif
 
 #endif /* !_LINUX_SIGINFO_H */

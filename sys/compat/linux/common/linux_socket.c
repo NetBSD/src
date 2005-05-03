@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.55 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.56 2005/05/03 16:26:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.55 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56 2005/05/03 16:26:29 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1618,6 +1618,7 @@ linux_sa_put(osa)
 	return (0);
 }
 
+#ifndef __amd64__
 int
 linux_sys_recv(l, v, retval)
 	struct lwp *l;
@@ -1666,6 +1667,7 @@ linux_sys_send(l, v, retval)
 
 	return (sys_sendto(l, &bsa, retval));
 }
+#endif /* __amd64__ */
 
 int
 linux_sys_accept(l, v, retval)
