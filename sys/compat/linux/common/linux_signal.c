@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.42 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.43 2005/05/03 16:26:29 manu Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.42 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.43 2005/05/03 16:26:29 manu Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -134,7 +134,7 @@ native_to_linux_old_extra_sigset(lss, extra, bss)
 		memcpy(extra, &lsnew.sig[1],
 		    sizeof(linux_sigset_t) - sizeof(linux_old_sigset_t));
 }
-#endif
+#endif /* LINUX__NSIG_WORDS > 1 */
 
 void
 linux_to_native_sigset(bss, lss)
@@ -236,7 +236,7 @@ linux_old_to_native_sigaction(bsa, lsa)
 	if (lsa->linux_sa_restorer != NULL)
 		DPRINTF(("linux_old_to_native_sigaction: "
 		    "sa_restorer ignored\n"));
-#endif
+#endif /* !__alpha__ */
 }
 
 void
@@ -457,6 +457,7 @@ linux_sys_rt_sigpending(l, v, retval)
 	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
 
+#ifndef __amd64__
 int
 linux_sys_sigpending(l, v, retval)
 	struct lwp *l;
@@ -494,6 +495,8 @@ linux_sys_sigsuspend(l, v, retval)
 	linux_old_to_native_sigset(&bss, &lss);
 	return (sigsuspend1(p, &bss));
 }
+#endif /* __amd64__ */
+
 int
 linux_sys_rt_sigsuspend(l, v, retval)
 	struct lwp *l;
@@ -600,6 +603,7 @@ native_to_linux_sigaltstack(lss, bss)
 	else
 	    lss->ss_flags = 0;
 }
+#endif /* LINUX_SS_ONSTACK */
 
 int
 linux_sys_sigaltstack(l, v, retval)
@@ -634,4 +638,3 @@ linux_sys_sigaltstack(l, v, retval)
 	}
 	return 0;
 }
-#endif
