@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.67 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.68 2005/05/03 16:26:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.67 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.68 2005/05/03 16:26:28 manu Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -296,6 +296,9 @@ ELFNAME2(linux,signature)(p, epp, eh, itp)
 	/* Check for certain intepreter names. */
 	if (itp) {
 		if (!strncmp(itp, "/lib/ld-linux", 13) ||
+#if (ELFSIZE == 64)
+		    !strncmp(itp, "/lib64/ld-linux", 15) ||
+#endif
 		    !strncmp(itp, "/lib/ld.so.", 11))
 			error = 0;
 		else
