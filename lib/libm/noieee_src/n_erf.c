@@ -1,4 +1,4 @@
-/*	$NetBSD: n_erf.c,v 1.6 2003/08/07 16:44:50 agc Exp $	*/
+/*	$NetBSD: n_erf.c,v 1.7 2005/05/03 04:18:32 matt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -146,7 +146,7 @@ static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
 
 #if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
-#define TRUNC(x) (double)(x) = (float)(x)
+#define TRUNC(x) (x) = (float)(x)
 #else
 #define _IEEE	1
 #define TRUNC(x) *(((int *) &x) + 1) &= 0xf8000000
