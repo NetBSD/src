@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.75 2005/05/01 22:15:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.76 2005/05/03 11:57:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8024,4 +8024,25 @@ crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c 1.4
 
 	Return statements in void functions make lint very confused.
 	[uwe, ticket #241]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/suncg6/Imakefile 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6.h 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_accel.c 1.1
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c 1.2
+
+	Added acceleration:
+	- screen-to-screen copies
+	- solid filled rectangles
+	- mono-to-colour expansion
+	- off-screen buffers
+	Off-screen buffers require a change in cgsix to allow mapping of the
+	whole framebuffer, if this fails the driver will fall back to map only
+	width*height bytes and not use any off-screen memory.
+	[macallan, ticket #243]
+
+sys/ufs/ffs/ffs_snapshot.c			1.14
+
+	Fix last commit. The last block of the file system may have changed
+	even if the last cylinder group is not modified.
+	[hannken, ticket #244]
 
