@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.193 2005/04/25 13:19:46 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.194 2005/05/04 01:57:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.193 2005/04/25 13:19:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.194 2005/05/04 01:57:23 augustss Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1505,15 +1505,8 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 	if (hw->close != NULL)
 		hw->close(sc->hw_hdl);
 
-	if (flags & FREAD) {
-		sc->sc_open &= ~AUOPEN_READ;
-		sc->sc_mode &= ~AUMODE_RECORD;
-	}
-	if (flags & FWRITE) {
-		sc->sc_open &= ~AUOPEN_WRITE;
-		sc->sc_mode &= ~(AUMODE_PLAY|AUMODE_PLAY_ALL);
-	}
-
+	sc->sc_open = 0;
+	sc->sc_mode = 0;
 	sc->sc_async_audio = 0;
 	sc->sc_full_duplex = 0;
 	splx(s);
