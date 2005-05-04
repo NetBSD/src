@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.26 2005/02/26 22:25:34 perry Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.27 2005/05/04 23:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@ struct	lwp {
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
 	struct sadata_vp *l_savp; /* SA "virtual processor" */
 
+	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
+	void	*l_private;	/* svr4-style lwp-private data */
+
 #define l_endzero l_priority
 
 #define l_startcopy l_priority
@@ -81,16 +84,12 @@ struct	lwp {
 	u_char	l_priority;	/* Process priority. */
 	u_char	l_usrpri;	/* User-priority based on p_cpu and p_nice. */
 
-#define l_endcopy l_private
+#define l_endcopy l_emuldata
 
-	void	*l_private;	/* svr4-style lwp-private data */
 	void	*l_emuldata;	/* kernel lwp-private data */
-
-	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
 
 	struct	user *l_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
-
 };
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
