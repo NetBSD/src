@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.273 2005/05/02 15:13:43 wiz Exp $
+.\"	$NetBSD: options.4,v 1.274 2005/05/04 02:39:19 augustss Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 29, 2005
+.Dd May 4, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2332,6 +2332,10 @@ console.
 This might be necessary on machines where we boot on cold iron, and
 pckbc refuses to talk until we request a self test.
 Currently only the netwinder port uses it.
+.It Cd options PCKBD_CNATTACH_MAY_FAIL
+If this option is set the PS/2 keyboard will not be used as the console
+if it cannot be found during boot.
+This allows other keyboards, like USB, to be the console keyboard.
 .It Cd options PCKBD_LAYOUT=layout
 Sets the default keyboard layout, see
 .Xr pckbd 4 .
