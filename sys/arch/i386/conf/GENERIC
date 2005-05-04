@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.669 2005/04/29 16:58:39 augustss Exp $
+# $NetBSD: GENERIC,v 1.670 2005/05/04 01:55:24 augustss Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.669 $"
+#ident 		"GENERIC-$Revision: 1.670 $"
 
 maxusers	32		# estimated number of users
 
@@ -265,6 +265,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" /* for pckbd driver */
 #options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  /* for ukbd driver */
