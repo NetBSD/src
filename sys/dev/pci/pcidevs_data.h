@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.706 2005/05/02 03:37:01 rh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.707 2005/05/04 09:12:14 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.707 2005/05/02 03:36:22 rh Exp
+ *	NetBSD: pcidevs,v 1.708 2005/05/04 09:11:09 cube Exp
  */
 
 /*
@@ -5420,6 +5420,14 @@ const struct pci_product pci_products[] = {
 	    "80321 I/O Processor",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE0,
+	    "6700PXH PCI Express-to-PCI Bridge #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE1,
+	    "6700PXH PCI Express-to-PCI Bridge #1",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB/SB PCI-EISA Bridge",
 	},
@@ -6336,6 +6344,22 @@ const struct pci_product pci_products[] = {
 	    "82855PM Power Management Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
+	    "82830MP CPU to I/O Bridge 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
+	    "82830MP CPU to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV,
+	    "82830MP Integrated Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
+	    "82830MP CPU to I/O Bridge 2",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH,
 	    "82855GM Host-Hub Controller",
 	},
@@ -6352,20 +6376,24 @@ const struct pci_product pci_products[] = {
 	    "82855GM GMCH Configuration Process",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
-	    "82830MP CPU to I/O Bridge 1",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH,
+	    "E7525 Memory Controller Hub",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
-	    "82830MP CPU to AGP Bridge",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCHER,
+	    "E7525 Error Reporting Device",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV,
-	    "82830MP Integrated Video",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A,
+	    "E7525 PCI Express Port A",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
-	    "82830MP CPU to I/O Bridge 2",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A1,
+	    "E7525 PCI Express Port A1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_B,
+	    "E7525 PCI Express Port B",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
@@ -10156,4 +10184,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1959;
+const int pci_nproducts = 1966;
