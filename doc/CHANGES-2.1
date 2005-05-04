@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.70 2005/05/01 11:26:32 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.71 2005/05/04 23:53:01 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1466,4 +1466,10 @@ sys/arch/sparc64/sparc64/locore.c		1.197-1.204 via patch
 	Interrupt and soft-interrupt handling changes that appear to fix
 	the "sleep forever" problem (PR port-sparc64/21750).
 	[martin, ticket #1487]
+
+xfree/xc/programs/xterm/charproc.c		1.6
+
+	Fix handling of ST sequences outside of complex escape sequences.
+	Patch provided by Johnny Billquist in PR xsrc/29003.
+	[tron, ticket #1107]
 
