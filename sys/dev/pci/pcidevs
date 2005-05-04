@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.707 2005/05/02 03:36:22 rh Exp $
+$NetBSD: pcidevs,v 1.708 2005/05/04 09:11:09 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1624,6 +1624,8 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 /* Intel products */
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
+product INTEL 6700PXH_PCIE0	0x0329	6700PXH PCI Express-to-PCI Bridge #0
+product INTEL 6700PXH_PCIE1	0x032a	6700PXH PCI Express-to-PCI Bridge #1
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller
 product INTEL SIO		0x0484	82378ZB System I/O
@@ -1853,14 +1855,19 @@ product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
 product INTEL 82855PM_PM	0x3342	82855PM Power Management Controller
-product INTEL 82855GM_MCH	0x3580	82855GM Host-Hub Controller
-product INTEL 82855GM_IGD	0x3582	82855GM GMCH Integrated Graphics Device
-product INTEL 82855GM_MC	0x3584	82855GM GMCH Memory Controller
-product INTEL 82855GM_CP	0x3585	82855GM GMCH Configuration Process
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
 product INTEL 82830MP_IO_2	0x3578	82830MP CPU to I/O Bridge 2
+product INTEL 82855GM_MCH	0x3580	82855GM Host-Hub Controller
+product INTEL 82855GM_IGD	0x3582	82855GM GMCH Integrated Graphics Device
+product INTEL 82855GM_MC	0x3584	82855GM GMCH Memory Controller
+product INTEL 82855GM_CP	0x3585	82855GM GMCH Configuration Process
+product INTEL E7525_MCH		0x3590	E7525 Memory Controller Hub
+product INTEL E7525_MCHER	0x3591	E7525 Error Reporting Device
+product INTEL E7525_PCIE_A	0x3595	E7525 PCI Express Port A
+product INTEL E7525_PCIE_A1	0x3596	E7525 PCI Express Port A1
+product INTEL E7525_PCIE_B	0x3597	E7525 PCI Express Port B
 product INTEL PRO_WL_2200BG	0x4220	PRO/Wireless LAN 2200BG Mini-PCI Adapter
 product INTEL PRO_WL_2915ABG	0x4223	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
