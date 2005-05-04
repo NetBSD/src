@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.62 2005/04/12 13:11:45 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.63 2005/05/04 23:23:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.62 2005/04/12 13:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.63 2005/05/04 23:23:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -942,6 +942,9 @@ uvm_reclaimable(void)
 	 * if we have more than 1/16 of pageable memory or 5MB, try to reclaim.
 	 *
 	 * XXX assume the worst case, ie. all wired pages are file-backed.
+	 *
+	 * XXX should consider about other reclaimable memory.
+	 * XXX ie. pools, traditional buffer cache.
 	 */
 
 	filepages = uvmexp.filepages + uvmexp.execpages - uvmexp.wired;
