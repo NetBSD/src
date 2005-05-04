@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.6 2005/04/29 10:41:18 yamt Exp $ */
+/* $NetBSD: pckbd.c,v 1.7 2005/05/04 02:35:22 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.6 2005/04/29 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.7 2005/05/04 02:35:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.6 2005/04/29 10:41:18 yamt Exp $");
 #include "locators.h"
 
 #include "opt_pckbd_layout.h"
+#include "opt_pckbd_cnattach_may_fail.h"
 #include "opt_wsdisplay_compat.h"
 
 struct pckbd_internal {
@@ -602,7 +603,8 @@ pckbd_cnattach(pckbport_tag_t kbctag, int kbcslot)
 	u_char cmd[1];
 
 	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
-#if 0 /* we allow the console to be attached if no keyboard is present */
+	/* We may allow the console to be attached if no keyboard is present */
+#if defined(PCKBD_CNATTACH_MAY_FAIL)
 	if (res)
 		return res;
 #endif
@@ -611,7 +613,7 @@ pckbd_cnattach(pckbport_tag_t kbctag, int kbcslot)
 	cmd[0] = KBC_ENABLE;
 	res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
 
-#if 0
+#if defined(PCKBD_CNATTACH_MAY_FAIL)
 	if (res)
 		return res;
 #endif
