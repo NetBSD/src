@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.79 2005/05/03 13:13:07 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.79 2005/05/03 13:13:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -521,9 +521,11 @@ wskbd_repeat(void *v)
 						   sc->id->t_symbols[i]);
 		}
 	} else {
+#if defined(WSKBD_EVENT_AUTOREPEAT)
 		/* queue event */
 		wskbd_deliver_event(sc, sc->sc_repeat_type,
 				    sc->sc_repeat_value);
+#endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
 	}
 	callout_reset(&sc->sc_repeat_ch,
 	    (hz * sc->sc_keyrepeat_data.delN) / 1000, wskbd_repeat, sc);
@@ -640,6 +642,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 
 	wskbd_deliver_event(sc, type, value);
 
+#if defined(WSKBD_EVENT_AUTOREPEAT)
 	/* Repeat key presses if set. */
 	if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_keyrepeat_data.del1 != 0) {
 		sc->sc_repeat_type = type;
@@ -649,6 +652,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 		    (hz * sc->sc_keyrepeat_data.del1) / 1000,
 		    wskbd_repeat, sc);
 	}
+#endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
 }
 
 /*
