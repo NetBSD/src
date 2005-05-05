@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.190 2005/04/29 09:05:21 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.191 2005/05/05 01:58:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.190 2005/04/29 09:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.191 2005/05/05 01:58:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1052,7 +1052,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 			error = amap_extend(prev_entry, size,
 			    amapwaitflag | AMAP_EXTEND_FORWARDS);
 			if (error)
-				goto done;
+				goto nomerge;
 		}
 
 		if (kmap)
@@ -1175,7 +1175,7 @@ forwardmerge:
 				error = amap_extend(prev_entry->next, size,
 				    amapwaitflag | AMAP_EXTEND_BACKWARDS);
 				if (error)
-					goto done;
+					goto nomerge;
 			}
 		}
 
