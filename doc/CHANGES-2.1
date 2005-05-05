@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.72 2005/05/05 15:37:06 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.73 2005/05/05 19:34:06 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1485,4 +1485,19 @@ xfree/xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c 1.2
 
 	Stop core dump when configuring ATI driver. PR#29155.
 	[dsl, ticket #1135]
+
+etc/Makefile					1.302
+share/man/man7/release.7			1.17-1.18
+
+	Permit a "README", "SOURCE_DATE", and "source" at the top-level
+	to be added to the CD-ROM (only if they exist), as proposed
+	on tech-install and tech-toolchain without objections, and
+	tweak release(7) to clarify how to to multi-platform releases.
+	[fredb, ticket #1121]
+
+usr.bin/db/db.c					1.13
+
+	When vis encoding with -S, only remove the trailing NUL if -N
+	isn't used and the item's size is > 0.
+	[seb, ticket #1142]
 
