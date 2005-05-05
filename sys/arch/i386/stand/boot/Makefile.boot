@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.19 2005/05/01 03:07:12 christos Exp $
+# $NetBSD: Makefile.boot,v 1.20 2005/05/05 18:03:04 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -84,7 +84,7 @@ I386_STAND_DIR?= $S/arch/i386/stand
 .NOPATH: machine x86
 .endif
 
-depend realall: machine x86 lib
+depend dependall realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
