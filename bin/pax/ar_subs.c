@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.38 2005/04/24 03:36:54 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.39 2005/05/05 14:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.38 2005/04/24 03:36:54 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.39 2005/05/05 14:54:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static int path_check(ARCHD *, int);
 static void wr_archive(ARCHD *, int is_app);
 static int get_arc(void);
 static int next_head(ARCHD *);
+static int fdochroot(int);
 extern sigset_t s_mask;
 
 /*
@@ -92,9 +93,9 @@ updatepath(void)
 }
 
 int
-fdochdir(int fdwd)
+fdochdir(int fcwd)
 {
-	if (fchdir(fdwd) == -1) {
+	if (fchdir(fcwd) == -1) {
 		syswarn(1, errno, "Cannot chdir to `.'");
 		return -1;
 	}
@@ -106,6 +107,16 @@ dochdir(const char *name)
 {
 	if (chdir(name) == -1)
 		syswarn(1, errno, "Cannot chdir to `%s'", name);
+	return updatepath();
+}
+
+static int
+fdochroot(int fcwd)
+{
+	if (fchroot(fcwd) != 0) {
+		syswarn(1, errno, "Can't fchroot to \".\"");
+		return -1;
+	}
 	return updatepath();
 }
 
@@ -260,10 +271,8 @@ extract(void)
 
 	now = time((time_t *)NULL);
 #if !HAVE_NBTOOL_CONFIG_H
-	if (do_chroot && fchroot(cwdfd) != 0) {
-		syswarn(1, errno, "Can't fchroot to \".\"");
-		return;
-	}
+	if (do_chroot)
+		(void)fdochroot(cwdfd);
 #endif
 
 	/*
