@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.71 2005/05/04 23:53:01 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.72 2005/05/05 15:37:06 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1472,4 +1472,17 @@ xfree/xc/programs/xterm/charproc.c		1.6
 	Fix handling of ST sequences outside of complex escape sequences.
 	Patch provided by Johnny Billquist in PR xsrc/29003.
 	[tron, ticket #1107]
+
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c 1.2
+
+	Don't switch to primary virtual console during startup under
+	NetBSD 2.0 and above as suggested by Cliff Wright in
+	PR xsrc/29123. This hack is not necessary any more (probably
+	because of wscons).
+	[tron, ticket #1127]
+
+xfree/xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c 1.2
+
+	Stop core dump when configuring ATI driver. PR#29155.
+	[dsl, ticket #1135]
 
