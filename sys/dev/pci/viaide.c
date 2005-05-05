@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.11.4.1 2005/04/07 16:11:02 tron Exp $	*/
+/*	$NetBSD: viaide.c,v 1.11.4.2 2005/05/05 21:40:30 riz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -124,6 +124,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  NULL,
 	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
+	  0,
+	  "VIA Technologies VT6421 Serial RAID Controller",
+	  via_sata_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
