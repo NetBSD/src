@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.58 2005/04/06 13:58:40 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.59 2005/05/05 01:58:51 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.58 2005/04/06 13:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.59 2005/05/05 01:58:51 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -462,6 +462,11 @@ amap_extend(entry, addsize, flags)
 	 */
 
 	amap_unlock(amap);	/* unlock in case we sleep in malloc */
+
+	if (slotneed >= UVM_AMAP_LARGE) {
+		return E2BIG;
+	}
+
 	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
