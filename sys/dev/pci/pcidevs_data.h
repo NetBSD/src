@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.3 2005/05/01 10:27:09 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.4 2005/05/05 21:41:17 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.3 2005/05/01 10:20:01 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.4 2005/05/05 21:40:27 riz Exp 
  */
 
 /*
@@ -10040,6 +10040,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8237 Integrated SATA Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
+	    0,
+	    "VIA Technologies",
+	    "VT6421 Serial RAID Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
