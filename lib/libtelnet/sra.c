@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.5 2005/05/05 22:43:56 lukem Exp $");
+__RCSID("$NetBSD: sra.c,v 1.6 2005/05/05 23:21:58 lukem Exp $");
 #endif
 
 #ifdef	SRA
@@ -419,6 +419,7 @@ sra_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 	}
 }
 
+#ifdef NOPAM
 static int
 isroot(const char *usr)
 {
@@ -444,11 +445,11 @@ rootterm(const char *ttyname)
 	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
 }
 
-#ifdef NOPAM
 static int
 check_user(char *name, char *cred)
 {
-	char *cp;
+	struct passwd pws, *pw;
+	char pwbuf[1024];
 	char *xpasswd, *salt;
 
 	if (isroot(name) && !rootterm(line))
@@ -457,25 +458,23 @@ check_user(char *name, char *cred)
 		return(0);
 	}
 
-	if (pw = sgetpwnam(name)) {
+	if (getpwnam_r(name, &pws, pwbuf, sizeof(pwbuf), &pw) == 0 &&
+	    pw != NULL) {
 		if (pw->pw_shell == NULL) {
-			pw = (struct passwd *) NULL;
 			return(0);
 		}
 
 		salt = pw->pw_passwd;
 		xpasswd = crypt(cred, salt);
 		/* The strcmp does not catch null passwords! */
-		if (pw == NULL || *pw->pw_passwd == '\0' ||
-			strcmp(xpasswd, pw->pw_passwd)) {
-			pw = (struct passwd *) NULL;
+		if (*pw->pw_passwd == '\0' || strcmp(xpasswd, pw->pw_passwd)) {
 			return(0);
 		}
 		return(1);
 	}
 	return(0);
 }
-#else
+#else	/* !NOPAM */
 
 /*
  * The following is stolen from ftpd, which stole it from the imap-uw
@@ -584,9 +583,11 @@ check_user(char *name, char *cred)
 		} else
 			syslog(LOG_ERR, "Couldn't get PAM_USER: %s",
 			pam_strerror(pamh, e));
+#if 0	/* pam_securetty(8) should be used to enforce this */
 		if (isroot(name) && !rootterm(line))
 			rval = 0;
 		else
+#endif
 			rval = 1;
 		break;
 
@@ -609,7 +610,7 @@ check_user(char *name, char *cred)
 	return rval;
 }
 
-#endif
+#endif /* !NOPAM */
 
 #endif /* ENCRYPTION */
 #endif /* SRA */
