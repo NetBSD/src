@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.73 2005/05/05 19:34:06 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.74 2005/05/05 22:15:19 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1500,4 +1500,25 @@ usr.bin/db/db.c					1.13
 	When vis encoding with -S, only remove the trailing NUL if -N
 	isn't used and the item's size is > 0.
 	[seb, ticket #1142]
+
+usr.bin/calendar/calendars/calendar.holiday	1.10
+
+	Fix the date of the Australia Day holiday.
+	[simonb, ticket #1147]
+
+sbin/raidctl/raidctl.8				1.41-1.42, 1.44-1.46 via patch
+
+	Sync raidctl(8) with raid(4) regarding booting from RAID 1.
+	[fredb, ticket #1151]
+
+sys/dev/pci/pcidevs				1.691-1.692
+sys/dev/pci/viaide.c				1.22-1.23
+share/man/man4/viaide.4				1.4-1.5 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add 'VT642 SATA RAID Controller'. It looks like a viaide, it smells
+	like a viaide... but you can only address the drives once you have
+	put two or more of them into a RAID or JBOD.
+	[abs, ticket #1153]
 
