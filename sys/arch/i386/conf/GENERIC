@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.671 2005/05/04 02:40:55 augustss Exp $
+# $NetBSD: GENERIC,v 1.672 2005/05/06 04:42:24 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.671 $"
+#ident 		"GENERIC-$Revision: 1.672 $"
 
 maxusers	32		# estimated number of users
 
@@ -1279,7 +1279,7 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	nsmb			# experimental - SMB requester
 
 # a pseudo device needed for verified exec
-#pseudo-device verifiedexec        1
+#pseudo-device veriexec		1
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
