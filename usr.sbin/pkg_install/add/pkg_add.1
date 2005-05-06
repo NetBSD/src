@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.58 2005/05/06 22:45:56 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.59 2005/05/06 23:02:39 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -318,8 +318,7 @@ ftp.
 .Sh TECHNICAL DETAILS
 .Nm
 extracts each package's
-.Dq
-packing list
+.Dq packing list
 into a special staging directory in /var/tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
