@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2005/04/29 20:11:01 augustss Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2005/05/06 00:10:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/04/29 20:11:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2005/05/06 00:10:00 augustss Exp $");
 
 #include "opt_kgdb.h"
 
@@ -144,7 +144,6 @@ consinit()
 {
 	const struct btinfo_console *consinfo;
 	static int initted;
-	int error;
 
 	if (initted)
 		return;
@@ -158,6 +157,8 @@ consinit()
 
 #if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
+		int error;
+
 #if (NVGA > 0)
 		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 				  -1, 1))
