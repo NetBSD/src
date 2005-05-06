@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.14 2003/09/09 21:03:15 erh Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.14.4.1 2005/05/06 14:42:16 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,7 +19,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: ex_tag.c,v 1.14.4.1 2005/05/06 14:42:16 riz Exp $");
 #endif
 #endif /* not lint */
 
