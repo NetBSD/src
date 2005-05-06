@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.74 2005/05/05 22:15:19 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.75 2005/05/06 01:11:34 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1521,4 +1521,27 @@ sys/dev/pci/pcidevs_data.h			regen
 	like a viaide... but you can only address the drives once you have
 	put two or more of them into a RAID or JBOD.
 	[abs, ticket #1153]
+
+sys/arch/sparc/sparc/locore.s			1.215
+
+	sun4/sun4c sw interrupt entry: check interrupt register to determine to
+	see whether there is a pending software interrupt at the given level.
+	If not, it must be a device interrupt sharing that level.
+	[pk, ticket #1154]
+
+bin/pax/cpio.c					1.18
+
+	Don't write hardlinked file contents in sv4cpio mode.
+	[matt, ticket #1164]
+
+share/man/man9/namecache.9			1.9-1.10
+share/man/man9/vnode.9				1.23-1.26 via patch
+
+	Update documentation to match with the recent reality.  PR#28793
+	[yamt, ticket #1168]
+
+sys/netinet/ip_encap.c				1.20
+
+	Get zero-cleared field on malloc. PR#27277
+	[bouyer, ticket #1188]
 
