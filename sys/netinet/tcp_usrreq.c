@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.100.2.1 2005/05/01 16:53:04 tron Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.100.2.2 2005/05/06 08:35:27 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.100.2.1 2005/05/01 16:53:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.100.2.2 2005/05/06 08:35:27 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1364,6 +1364,7 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
+	struct sysctlnode *sack_node;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1444,11 +1445,11 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Use interface MTU for calculating MSS"),
 		       NULL, 0, &tcp_mss_ifmtu, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSS_IFMTU, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sack",
-		       SYSCTL_DESCR("Enable RFC2018 Selective ACKnowledgement"),
-		       NULL, 0, &tcp_do_sack, 0,
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "sack",
+		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
+		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1574,6 +1575,32 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+
+	/* SACK gets it's own little subtree. */
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable RFC2018 Selective ACKnowledgement"),
+		       NULL, 0, &tcp_do_sack, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxholes",
+		       SYSCTL_DESCR("Maximum number of TCP SACK holes allowed per connection"),
+		       NULL, 0, &tcp_sack_tp_maxholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "globalmaxholes",
+		       SYSCTL_DESCR("Global maximum number of TCP SACK holes"),
+		       NULL, 0, &tcp_sack_globalmaxholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "globalholes",
+		       SYSCTL_DESCR("Global number of TCP SACK holes"),
+		       NULL, 0, &tcp_sack_globalholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
 }
 
 /*
