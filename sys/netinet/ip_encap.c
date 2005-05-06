@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.17 2004/03/04 15:15:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.17.4.1 2005/05/06 01:06:58 riz Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -591,18 +591,18 @@ encap_attach(af, proto, sp, sm, dp, dm, psw, arg)
 	}
 #endif
 
-	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT);	/* M_NETADDR ok? */
+	/* M_NETADDR ok? */
+	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep == NULL) {
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(ep, sizeof(*ep));
-	ep->addrpack = malloc(l, M_NETADDR, M_NOWAIT);
+	ep->addrpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep->addrpack == NULL) {
 		error = ENOBUFS;
 		goto gc;
 	}
-	ep->maskpack = malloc(l, M_NETADDR, M_NOWAIT);
+	ep->maskpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep->maskpack == NULL) {
 		error = ENOBUFS;
 		goto gc;
