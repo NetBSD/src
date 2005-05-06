@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.84 2005/04/01 11:59:38 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.85 2005/05/06 19:34:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.84 2005/04/01 11:59:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.85 2005/05/06 19:34:47 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -746,6 +746,8 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		 *     (eg. an executable text section).
 		 *
 		 * (3) the region's object is a device.
+		 *
+		 * (4) the region is unreadable by the process.
 		 */
 
 		KASSERT(!UVM_ET_ISSUBMAP(entry));
@@ -761,6 +763,9 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		}
 		if (entry->object.uvm_obj != NULL &&
 		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
+			state.flags |= UVM_COREDUMP_NODUMP;
+		}
+		if ((entry->protection & VM_PROT_READ) == 0) {
 			state.flags |= UVM_COREDUMP_NODUMP;
 		}
 		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
