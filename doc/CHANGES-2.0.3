@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.11 2005/05/01 11:25:22 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.12 2005/05/06 23:51:35 snj Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -63,4 +63,10 @@ sys/arch/sparc64/sparc64/locore.c		1.197-1.204 via patch
 	Interrupt and soft-interrupt handling changes that appear to fix
 	the "sleep forever" problem (PR port-sparc64/21750).
 	[martin, ticket #1487]
+
+sys/kern/uipc_mbuf2.c				1.19
+
+	In m_pulldown avoid a prepend to the next mbuf in the chain if the
+	result would still not have all data we want continous. Fixes PR#30098
+	[martin, ticket #1503]
 
