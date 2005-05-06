@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/05/01 06:51:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/05/06 21:02:21 jmc Exp $
 
 MKPRIVATELIB=	yes
 
@@ -68,7 +68,8 @@ write-tcl.c
 .include "${.CURDIR}/../Makefile.inc"
 
 .PATH:	${DIST}/gettext/gettext-tools/src ${DIST}/gettext/gettext-tools/lib
-CPPFLAGS+= -I${DIST}/gettext/gettext-runtime/intl
+CPPFLAGS+=-I${DIST}/gettext/gettext-runtime/intl
+CPPFLAGS+=-I${DIST}/gettext/gettext-tools/src
 CPPFLAGS+=-DLIBDIR=\"${DESTDIR}/usr/share\"
 CPPFLAGS+=-DGETTEXTJAR=\"${DESTDIR}/usr/share/gettext/gettext.jar\"
 CPPFLAGS+=-DGETTEXTDATADIR=\"${DESTDIR}/usr/share/gettext\"
