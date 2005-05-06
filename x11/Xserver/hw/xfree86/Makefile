@@ -1,12 +1,17 @@
-#	$NetBSD: Makefile,v 1.13 2004/04/15 14:54:32 drochner Exp $
+#	$NetBSD: Makefile,v 1.14 2005/05/06 22:54:06 martin Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	ddc doc drivers dummy etc fbdevhw i2c input int10 loader \
 	pcidata rac ramdac scanpci shadowfb vbe vgahw xaa xf1bpp \
 	xf24_32bpp xf4bpp xf86 xf86_os xf86config xf8_16bpp \
-	xf8_32bpp xloader \
-	.WAIT bin
+	xf8_32bpp
+
+.if ${MACHINE} == "sparc64"
+SUBDIR+=	xf8_32wid
+.endif
+
+SUBDIR+=	xloader .WAIT bin
 
 .if ${X11DRI} != "no"
 SUBDIR+=	drm
