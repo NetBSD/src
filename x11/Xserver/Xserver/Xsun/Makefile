@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/03/17 00:18:57 kleink Exp $
+#	$NetBSD: Makefile,v 1.8 2005/05/06 22:55:09 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,10 @@ DPADD+=	${LIBDIR.hw/sun}/sunInit.o ${DPADD.hw/sun} ${DPADD.dix} ${DPADD.os} \
 	${DPADD.render} ${LIBXFONT} ${LDADD.dix/xpstubs} ${LIBFREETYPE} \
 	${LIBXAU} ${LIBXDMCP} ${LIBZ} ${LIBM}
 
+.if ${MACHINE} != "sparc64"
+# sparc64 uses XFree86 as default X link
 SYMLINKS=	${X11BINDIR}/Xsun ${X11BINDIR}/X
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
