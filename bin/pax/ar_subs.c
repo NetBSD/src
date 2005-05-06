@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.39 2005/05/05 14:54:49 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.40 2005/05/06 16:49:25 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.39 2005/05/05 14:54:49 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.40 2005/05/06 16:49:25 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,7 @@ dochdir(const char *name)
 	return updatepath();
 }
 
+#if !HAVE_NBTOOL_CONFIG_H
 static int
 fdochroot(int fcwd)
 {
@@ -119,6 +120,7 @@ fdochroot(int fcwd)
 	}
 	return updatepath();
 }
+#endif
 
 static int
 path_check(ARCHD *arcn, int level)
