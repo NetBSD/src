@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.10.2.1 2005/05/06 08:32:17 tron Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.10.2.2 2005/05/06 08:35:02 tron Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10.2.1 2005/05/06 08:32:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10.2.2 2005/05/06 08:35:02 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -168,9 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10.2.1 2005/05/06 08:32:17 tron Exp $
 
 #include <machine/stdarg.h>
 
-#define SEQ_MIN(a, b)	((SEQ_LT(a, b)) ? (a) : (b))
-#define SEQ_MAX(a, b)	((SEQ_GT(a, b)) ? (a) : (b))
-
 /* SACK block pool. */
 POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl", NULL);
 
@@ -203,6 +200,13 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	 */
 	if (!TCP_SACK_ENABLED(tp) || ((th->th_flags & TH_ACK) == 0) ||
 			(optlen % 8 != 2 || optlen < 10)) {
+		return;
+	}
+
+	/*
+	 * If we don't want any SACK holes to be allocated, just return.
+	 */
+	if (tcp_sack_globalmaxholes == 0 || tcp_sack_tp_maxholes == 0) {
 		return;
 	}
 
@@ -255,6 +259,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 
 		if (TAILQ_EMPTY(&tp->snd_holes)) {
 			/* First hole. */
+			if (tcp_sack_globalholes >= tcp_sack_globalmaxholes) {
+				return;
+			}
 			cur = (struct sackhole *)
 			    pool_get(&sackhole_pool, PR_NOWAIT);
 			if (cur == NULL) {
@@ -265,6 +272,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			cur->end = sack->left;
 			cur->rxmit = cur->start;
 			tp->rcv_lastsack = sack->right;
+			tp->snd_numholes++;
+			tcp_sack_globalholes++;
 			TAILQ_INSERT_HEAD(&tp->snd_holes, cur, sackhole_q);
 			continue; /* With next sack block */
 		}
@@ -287,6 +296,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 					/* Acks entire hole, so delete hole */
 					tmp = cur;
 					cur = TAILQ_NEXT(cur, sackhole_q);
+					tp->snd_numholes--;
+					tcp_sack_globalholes--;
 					TAILQ_REMOVE(&tp->snd_holes, tmp,
 					    sackhole_q);
 					pool_put(&sackhole_pool, tmp);
@@ -313,6 +324,12 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * ACKs some data in middle of a hole; need to
 				 * split current hole
 				 */
+				if (tcp_sack_globalholes >=
+						tcp_sack_globalmaxholes ||
+						tp->snd_numholes >=
+						tcp_sack_tp_maxholes) {
+					return;
+				}
 				tmp = (struct sackhole *)
 				    pool_get(&sackhole_pool, PR_NOWAIT);
 				if (tmp == NULL) {
@@ -324,6 +341,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				tmp->rxmit = SEQ_MAX(cur->rxmit, tmp->start);
 				cur->end = sack->left;
 				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
+				tp->snd_numholes++;
+				tcp_sack_globalholes++;
 				TAILQ_INSERT_AFTER(&tp->snd_holes, cur, tmp,
 						sackhole_q);
 				cur = tmp;
@@ -336,6 +355,12 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			/*
 			 * Need to append new hole at end.
 			 */
+			if (tcp_sack_globalholes >=
+					tcp_sack_globalmaxholes ||
+					tp->snd_numholes >=
+					tcp_sack_tp_maxholes) {
+				return;
+			}
 			tmp = (struct sackhole *)
 			    pool_get(&sackhole_pool, PR_NOWAIT);
 			if (tmp == NULL)
@@ -343,6 +368,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tmp->start = tp->rcv_lastsack;
 			tmp->end = sack->left;
 			tmp->rxmit = tmp->start;
+			tp->snd_numholes++;
+			tcp_sack_globalholes++;
 			TAILQ_INSERT_TAIL(&tp->snd_holes, tmp, sackhole_q);
 			cur = tmp;
 		}
@@ -365,6 +392,8 @@ tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
 		if (SEQ_LEQ(cur->end, lastack)) {
 			tmp = cur;
 			cur = TAILQ_NEXT(cur, sackhole_q);
+			tp->snd_numholes--;
+			tcp_sack_globalholes--;
 			TAILQ_REMOVE(&tp->snd_holes, tmp, sackhole_q);
 			pool_put(&sackhole_pool, tmp);
 		} else if (SEQ_LT(cur->start, lastack)) {
@@ -386,9 +415,12 @@ tcp_free_sackholes(struct tcpcb *tp)
 	/* Free up the SACK hole list. */
 	while (!TAILQ_EMPTY(&tp->snd_holes)) {
 		sack = TAILQ_FIRST(&tp->snd_holes);
+		tcp_sack_globalholes--;
 		TAILQ_REMOVE(&tp->snd_holes, sack, sackhole_q);
 		pool_put(&sackhole_pool, sack);
 	}
+
+	tp->snd_numholes = 0;
 }
 
 /*
