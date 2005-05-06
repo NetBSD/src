@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.134.2.3 2005/05/01 11:03:37 tron Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.134.2.4 2005/05/06 08:40:21 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.3 2005/05/01 11:03:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.4 2005/05/06 08:40:21 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,7 +146,6 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
-int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;
@@ -1080,18 +1079,11 @@ udp_output(struct mbuf *m, ...)
 		/*
 		 * XXX Cache pseudo-header checksum part for
 		 * XXX "connected" UDP sockets.
-		 * Maybe skip checksums on loopback interfaces.
 		 */
 		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
 		    ui->ui_dst.s_addr, htons((u_int16_t)len +
 		    sizeof(struct udphdr) + IPPROTO_UDP));
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   udp_do_loopback_cksum))
-			m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
-		else
-			m->m_pkthdr.csum_flags = 0;
+		m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 	} else
 		ui->ui_sum = 0;
