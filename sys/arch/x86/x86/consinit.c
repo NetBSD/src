@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2005/05/06 00:10:00 augustss Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2005/05/06 14:03:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2005/05/06 00:10:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2005/05/06 14:03:55 augustss Exp $");
 
 #include "opt_kgdb.h"
 
@@ -177,16 +177,18 @@ consinit()
 #endif
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
+		error = ENODEV;
 #if (NPCKBC > 0)
 		error = pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
-#else
-		error = EIO;
 #endif
 #if (NUKBD > 0)
 		if (error)
-			ukbd_cnattach();
+			error = ukbd_cnattach();
 #endif
+		if (error)
+			printf("WARNING: no console keyboard, error=%d\n",
+			       error);
 		return;
 	}
 #endif /* PC | VT | VGA | PCDISPLAY */
