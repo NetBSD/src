@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.76 2005/05/03 11:57:45 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.77 2005/05/06 08:43:34 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8045,4 +8045,35 @@ sys/ufs/ffs/ffs_snapshot.c			1.14
 	Fix last commit. The last block of the file system may have changed
 	even if the last cylinder group is not modified.
 	[hannken, ticket #244]
+
+sys/netinet/tcp_sack.c				1.11
+
+	Ignore the SACK option if
+	 * The packet is not an ACK.
+	 * The ACK is outside of snd_una -> snd_max
+	[yamt, ticket #250]
+
+sys/netinet/tcp_sack.c				1.12
+sys/netinet/tcp_seq.h				1.15
+sys/netinet/tcp_subr.c				1.189
+sys/netinet/tcp_usrreq.c			1.102
+sys/netinet/tcp_var.h				1.125
+
+	Added sysctl tunable limits for the number of maximum SACK holes
+	per connection and per system.
+	[kurahone, ticket #199]
+
+sys/netinet/ip_input.c				1.214
+sys/netinet/ip_output.c				1.151
+sys/netinet/tcp_output.c			1.130
+sys/netinet/tcp_subr.c				1.190
+sys/netinet/udp_usrreq.c			1.135
+sys/netinet6/udp6_output.c			1.20
+
+	Fix problems related to loopback interface checksum omission. PR/29971.
+	- For ipv4, defer decision to ip layer as h/w checksum offloading does
+	  so that it can check the actual interface the packet is going to.
+	- For ipv6, disable it.
+	  (maybe will be revisited when it implements h/w checksum offloading.)
+	[yamt, ticket #251]
 
