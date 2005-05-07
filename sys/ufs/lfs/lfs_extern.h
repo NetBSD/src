@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.64 2005/03/08 00:18:19 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.64.2.1 2005/05/07 11:21:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -184,6 +184,8 @@ int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(str
 void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
     daddr_t, int32_t, int);
 void lfs_updatemeta(struct segment *);
+int lfs_rewind(struct lfs *, int);
+void lfs_unset_inval_all(struct lfs *);
 int lfs_initseg(struct lfs *);
 int lfs_writeseg(struct lfs *, struct segment *);
 void lfs_writesuper(struct lfs *, daddr_t);
@@ -228,7 +230,8 @@ int lfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *);
-void lfs_vinit(struct mount *mp, struct vnode **);
+void lfs_vinit(struct mount *, struct vnode **);
+int lfs_resize_fs(struct lfs *, int);
 
 /* lfs_vnops.c */
 void lfs_mark_vnode(struct vnode *);

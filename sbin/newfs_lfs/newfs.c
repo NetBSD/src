@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.15 2005/02/26 05:45:54 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.15.2.1 2005/05/07 11:21:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.15 2005/02/26 05:45:54 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.15.2.1 2005/05/07 11:21:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: newfs.c,v 1.15 2005/02/26 05:45:54 perseant Exp $");
 #include <util.h>
 #include "config.h"
 #include "extern.h"
+#include "bufcache.h"
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -169,6 +170,7 @@ main(int argc, char **argv)
 	daddr_t start;
 	char *cp, *opstring;
 	int byte_sized = 0;
+	int r;
 
 	version = DFL_VERSION;		/* what version of lfs to make */
 
@@ -346,9 +348,12 @@ main(int argc, char **argv)
 	}
 
 	/* If we're making a LFS, we break out here */
-	exit(make_lfs(fso, secsize, pp, minfree, bsize, fsize, segsize,
+	r = make_lfs(fso, secsize, pp, minfree, bsize, fsize, segsize,
 		      minfreeseg, version, start, ibsize, interleave,
-                      roll_id));
+                      roll_id);
+	if (debug)
+		bufstats();
+	exit(r);
 }
 
 #ifdef COMPAT

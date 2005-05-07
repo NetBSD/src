@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.12 2005/02/06 06:13:47 perry Exp $	 */
+/* $NetBSD: pass2.c,v 1.12.2.1 2005/05/07 11:21:29 tron Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -410,6 +410,9 @@ again:
 			if (dirp->d_type != typemap[dirp->d_ino]) {
 				fileerror(idesc->id_number, dirp->d_ino,
 				    "BAD TYPE VALUE");
+				if (debug)
+					pwarn("dir has %d, typemap has %d\n",
+						dirp->d_type, typemap[dirp->d_ino]);
 				dirp->d_type = typemap[dirp->d_ino];
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
