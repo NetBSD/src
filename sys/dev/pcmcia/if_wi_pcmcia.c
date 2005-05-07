@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.61 2005/02/27 00:27:43 perry Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.61.2.1 2005/05/07 23:08:34 tron Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.61 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.61.2.1 2005/05/07 23:08:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI800_IEEE,
 	  PCMCIA_CIS_ELSA_XI800_IEEE },
+
+	{ PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_SMC2531WB,
+	  PCMCIA_CIS_ELSA_SMC2531WB },
 
 	{ PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
 	  PCMCIA_CIS_COMPAQ_NC5004 },
