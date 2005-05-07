@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.11 2003/03/25 23:15:22 provos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.12 2005/05/07 15:11:02 provos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -72,6 +72,7 @@ static int print_number(char *, size_t, struct intercept_translate *);
 static int print_uname(char *, size_t, struct intercept_translate *);
 static int print_pidname(char *, size_t, struct intercept_translate *);
 static int print_signame(char *, size_t, struct intercept_translate *);
+static int print_fcntlcmd(char *, size_t, struct intercept_translate *);
 static int get_argv(struct intercept_translate *, int, pid_t, void *);
 static int print_argv(char *, size_t, struct intercept_translate *);
 
@@ -389,6 +390,50 @@ print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 static int
+print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int cmd = (intptr_t)tl->trans_addr;
+	char *name;
+
+	switch (cmd) {
+	case F_DUPFD:
+		name = "F_DUPFD";
+		break;
+	case F_GETFD:
+		name = "F_GETFD";
+		break;
+	case F_SETFD:
+		name = "F_SETFD";
+		break;
+	case F_GETFL:
+		name = "F_GETFL";
+		break;
+	case F_SETFL:
+		name = "F_SETFL";
+		break;
+	case F_GETOWN:
+		name = "F_GETOWN";
+		break;
+	case F_SETOWN:
+		name = "F_SETOWN";
+		break;
+	case F_CLOSEM:
+		name = "F_CLOSEM";
+		break;
+	case F_MAXFD:
+		name = "F_MAXFD";
+		break;
+	default:
+		snprintf(buf, buflen, "<unknown>: %d", cmd);
+		return (0);
+	}
+
+	snprintf(buf, buflen, "%s", name);
+	return (0);
+}
+
+
+static int
 get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *arg;
@@ -499,4 +544,9 @@ struct intercept_translate ic_pidname = {
 struct intercept_translate ic_signame = {
 	"signame",
 	NULL, print_signame,
+};
+
+struct intercept_translate ic_fcntlcmd = {
+	"cmd",
+	NULL, print_fcntlcmd,
 };
