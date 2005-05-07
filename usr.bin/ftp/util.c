@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.119 2005/04/11 01:49:31 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.120 2005/05/07 16:19:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.119 2005/04/11 01:49:31 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.120 2005/05/07 16:19:13 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1334,7 +1334,7 @@ xlisten(int sock, int backlog)
 
 /*
  * Internal version of poll(2), to allow reimplementation by select(2)
- * on platforms without the form.
+ * on platforms without the former.
  */
 int
 xpoll(struct pollfd *fds, int nfds, int timeout)
