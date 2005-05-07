@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.20 2004/10/20 23:48:01 wiz Exp $
+.\" $NetBSD: tar.1,v 1.21 2005/05/07 22:27:33 christos Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -264,6 +264,10 @@ as a path component.
 With this option, files that contain
 .Sq ..
 can be processed.
+.It Fl -no-recursion
+Cause files of type directory being copied or archived, or archive members of
+type directory being extracted, to match only the directory file or archive
+member and not the file hierarchy rooted at the directory.
 .El
 .Pp
 The options
