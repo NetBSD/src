@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.1 2005/04/20 11:39:36 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.2 2005/05/07 11:28:16 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1595,6 +1595,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
+.It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
 .It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
 .It Ta Federico Lupi Ta Mt federico@NetBSD.org
