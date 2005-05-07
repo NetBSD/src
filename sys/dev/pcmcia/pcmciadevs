@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.208.6.2 2005/05/07 23:05:46 tron Exp $
+$NetBSD: pcmciadevs,v 1.208.6.3 2005/05/07 23:06:26 tron Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -208,6 +208,7 @@ product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 product ELSA XI325_IEEE		0x0005 XI325 Wireless LAN
+product ELSA SMC2531WB          0x0010 SMC2531W-B EliteConnect Wireless Adapter
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
