@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2005/04/13 16:25:42 tron Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2005/05/07 14:55:17 riz Exp $
 #	$OpenBSD: Makefile,v 1.3 2004/01/21 08:07:41 deraadt Exp $
 
 PROG=	pfspamd-setup
@@ -14,6 +14,8 @@ BINDIR=	/usr/libexec
 
 pfspamd-setup.8: spamd-setup.8
 	cp $> $@
+
+CLEANFILES+=	pfspamd-setup.8
 
 .include <bsd.prog.mk>
 
