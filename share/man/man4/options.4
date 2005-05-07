@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.232.2.6.2.1 2005/04/16 12:14:41 tron Exp $
+.\"	$NetBSD: options.4,v 1.232.2.6.2.2 2005/05/07 04:11:58 snj Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 24, 2004
+.Dd January 21, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1277,8 +1277,10 @@ file itself, e.g.
 .Pa GENERIC.local
 or
 .Pa std.$MACHINE .
-The embedded config file can be extracted from the resulting kernel by
-the following command:
+The embedded config file can be extracted from the resulting kernel with
+.Xr config 8
+.Ar -x ,
+or by the following command:
 .Bd -literal -offset indent
 strings netbsd | sed -n 's/^_CFG_//p' | unvis
 .Ed
