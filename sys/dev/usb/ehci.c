@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.91.2.5 2005/05/01 21:53:14 tron Exp $ */
+/*	$NetBSD: ehci.c,v 1.91.2.6 2005/05/07 11:41:27 tron Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.5 2005/05/01 21:53:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.6 2005/05/07 11:41:27 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2274,6 +2274,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	int len, curlen, mps;
 	int i, tog;
 	usb_dma_t *dma = &xfer->dmabuf;
+	u_int16_t flags = xfer->flags;
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
@@ -2335,7 +2336,14 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 			    len, curlen));
 		len -= curlen;
 
-		if (len != 0) {
+		/*
+		 * Allocate another transfer if there's more data left, 
+		 * or if force last short transfer flag is set and we're 
+		 * allocating a multiple of the max packet size.
+		 */
+		if (len != 0 ||
+		    ((curlen % mps) == 0 && !rd && curlen != 0 &&
+		     (flags & USBD_FORCE_SHORT_XFER))) {
 			next = ehci_alloc_sqtd(sc);
 			if (next == NULL)
 				goto nomem;
@@ -2372,7 +2380,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 			tog ^= 1;
 			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
 		}
-		if (len == 0)
+		if (next == NULL)
 			break;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		dataphys += curlen;
