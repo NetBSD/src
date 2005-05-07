@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.102 2005/04/05 01:07:17 kurahone Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.103 2005/05/07 17:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.102 2005/04/05 01:07:17 kurahone Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.103 2005/05/07 17:42:09 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1108,7 +1108,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 					   laddr, lport);
 		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
 			return (ESRCH);
-		uid = sockp->so_uid;
+		uid = sockp->so_uidinfo->ui_uid;
 		if (oldp) {
 			sz = MIN(sizeof(uid), *oldlenp);
 			error = copyout(&uid, oldp, sz);
@@ -1167,7 +1167,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		return (EPROTONOSUPPORT);
 	}
 
-	uid = sockp->so_uid;
+	uid = sockp->so_uidinfo->ui_uid;
 	if (oldp) {
 		sz = MIN(sizeof(uid), *oldlenp);
 		error = copyout(&uid, oldp, sz);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.93 2005/03/29 18:18:06 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.94 2005/05/07 17:42:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.93 2005/03/29 18:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.94 2005/05/07 17:42:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -919,6 +919,7 @@ again:
 
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
+	simple_lock_init(&uip->ui_slock);
 	simple_unlock(&uihashtbl_slock);
 
 	return uip;
@@ -937,23 +938,27 @@ chgproccnt(uid_t uid, int diff)
 		return 0;
 
 	uip = uid_find(uid);
+	simple_lock(&uip->ui_slock);
 	uip->ui_proccnt += diff;
 	KASSERT(uip->ui_proccnt >= 0);
+	simple_unlock(&uip->ui_slock);
 	return uip->ui_proccnt;
 }
 
 int
-chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
+chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t max)
 {
-	struct uidinfo *uip;
 	rlim_t nsb;
 
-	uip = uid_find(uid);
+	simple_lock(&uip->ui_slock);
 	nsb = uip->ui_sbsize + to - *hiwat;
-	if (to > *hiwat && nsb > max)
+	if (to > *hiwat && nsb > max) {
+		simple_unlock(&uip->ui_slock);
 		return 0;
+	}
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
 	KASSERT(uip->ui_sbsize >= 0);
+	simple_unlock(&uip->ui_slock);
 	return 1;
 }

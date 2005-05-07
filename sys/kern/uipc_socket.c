@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.109 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.110 2005/05/07 17:42:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.109 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.110 2005/05/07 17:42:09 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -480,9 +480,9 @@ socreate(int dom, struct socket **aso, int type, int proto, struct proc *p)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (p != 0)
-		so->so_uid = p->p_ucred->cr_uid;
+		so->so_uidinfo = uid_find(p->p_ucred->cr_uid);
 	else
-		so->so_uid = UID_MAX;
+		so->so_uidinfo = uid_find(0);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
 	if (error) {
@@ -545,10 +545,10 @@ sofree(struct socket *so)
 			return;
 	}
 	if (so->so_rcv.sb_hiwat)
-		(void)chgsbsize(so->so_uid, &so->so_rcv.sb_hiwat, 0,
+		(void)chgsbsize(so->so_uidinfo, &so->so_rcv.sb_hiwat, 0,
 		    RLIM_INFINITY);
 	if (so->so_snd.sb_hiwat)
-		(void)chgsbsize(so->so_uid, &so->so_snd.sb_hiwat, 0,
+		(void)chgsbsize(so->so_uidinfo, &so->so_snd.sb_hiwat, 0,
 		    RLIM_INFINITY);
 	sbrelease(&so->so_snd, so);
 	sorflush(so);
