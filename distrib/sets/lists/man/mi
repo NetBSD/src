@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.788 2005/05/01 10:34:50 lukem Exp $
+# $NetBSD: mi,v 1.789 2005/05/07 02:23:39 perry Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1587,6 +1587,7 @@
 ./usr/share/man/cat7/packages.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
+./usr/share/man/cat7/script.0			man-reference-catman	.cat
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
@@ -3816,6 +3817,7 @@
 ./usr/share/man/man7/packages.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
+./usr/share/man/man7/script.7			man-reference-man	.man
 ./usr/share/man/man7/setuid.7			man-reference-man	.man
 ./usr/share/man/man7/signal.7			man-reference-man	.man
 ./usr/share/man/man7/sticky.7			man-reference-man	.man
