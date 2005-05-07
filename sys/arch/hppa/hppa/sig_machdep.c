@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.12 2005/05/01 19:19:25 chs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.13 2005/05/07 14:27:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2005/05/01 19:19:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13 2005/05/07 14:27:14 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -215,6 +215,7 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 	tf->tf_arg2 = (__greg_t)&fp->sf_uc;
 	tf->tf_r3 = (__greg_t)&fp->sf_uc;
 
+	tf->tf_iisq_head = tf->tf_iisq_tail = l->l_addr->u_pcb.pcb_space;
 	tf->tf_iioq_head =
 		(__greg_t)ps->sa_sigdesc[sig].sd_tramp | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
