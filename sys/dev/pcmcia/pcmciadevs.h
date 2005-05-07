@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.210 2005/02/27 15:29:37 perry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.210.2.1 2005/05/07 23:07:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
+ *	NetBSD: pcmciadevs,v 1.208.6.3 2005/05/07 23:06:26 tron Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -263,6 +263,8 @@
 #define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
 #define	PCMCIA_CIS_ELSA_XI325_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI325_IEEE	0x0005
+#define	PCMCIA_CIS_ELSA_SMC2531WB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_SMC2531WB	0x0010
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
