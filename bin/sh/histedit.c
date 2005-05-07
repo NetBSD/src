@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.34 2003/10/27 06:19:29 lukem Exp $	*/
+/*	$NetBSD: histedit.c,v 1.35 2005/05/07 19:52:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.34 2003/10/27 06:19:29 lukem Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.35 2005/05/07 19:52:17 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ History *hist;	/* history cookie */
 EditLine *el;	/* editline cookie */
 int displayhist;
 static FILE *el_in, *el_out;
+unsigned char _el_fn_complete(EditLine *, int);
 
 STATIC const char *fc_replace(const char *, char *, char *);
 
@@ -149,6 +150,12 @@ bad:
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
+			if (tabcomplete) {
+				el_set(el, EL_ADDFN, "rl_complete",
+				    "ReadLine compatible completion function",
+				    _el_fn_complete);
+				el_set(el, EL_BIND, "^I", "rl_complete", NULL);
+			}
 			el_source(el, NULL);
 		}
 	} else {
