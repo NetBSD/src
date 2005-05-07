@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.78 2005/05/07 00:11:00 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.79 2005/05/07 11:56:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8082,4 +8082,150 @@ sys/kern/uipc_mbuf2.c				1.19
 	In m_pulldown avoid a prepend to the next mbuf in the chain if the
 	result would still not have all data we want continous. Fixes PR#30098
 	[martin, ticket #254]
+
+distrib/sets/lists/base/mi			1.549
+distrib/sets/lists/man/mi			1.781
+libexec/lfs_cleanerd/cleanerd.c			1.54
+libexec/lfs_cleanerd/library.c			1.42
+sbin/Makefile					1.92
+sbin/fsck_lfs/bufcache.c			1.4-1.6
+sbin/fsck_lfs/bufcache.h			1.4
+sbin/fsck_lfs/fsck.h				1.14
+sbin/fsck_lfs/fsck_lfs.8			1.18-1.20
+sbin/fsck_lfs/fsck_vars.h			1.9
+sbin/fsck_lfs/inode.c				1.26
+sbin/fsck_lfs/lfs.c				1.9-1.12
+sbin/fsck_lfs/lfs.h				1.4-1.5
+sbin/fsck_lfs/main.c				1.21-1.24
+sbin/fsck_lfs/pass0.c				1.19-1.20
+sbin/fsck_lfs/pass2.c				1.13
+sbin/fsck_lfs/pass5.c				1.15-1.16
+sbin/fsck_lfs/pass6.c				1.4-1.7
+sbin/fsck_lfs/segwrite.c			1.8-1.9
+sbin/fsck_lfs/setup.c				1.20-1.21
+sbin/fsck_lfs/vars.c				1.9
+sbin/fsck_lfs/vnode.c				1.3
+sbin/fsck_lfs/vnode.h				1.2
+sbin/newfs_lfs/make_lfs.c			1.2-1.3
+sbin/newfs_lfs/newfs.c				1.16
+sbin/resize_lfs/Makefile			1.1
+sbin/resize_lfs/resize_lfs.8			1.1-1.2
+sbin/resize_lfs/resize_lfs.c			1.1
+sys/ufs/lfs/TODO				1.9
+sys/ufs/lfs/lfs.h				1.78-1.86
+sys/ufs/lfs/lfs_alloc.c				1.78-1.82
+sys/ufs/lfs/lfs_balloc.c			1.52-1.56
+sys/ufs/lfs/lfs_bio.c				1.82-1.85
+sys/ufs/lfs/lfs_debug.c				1.28-1.29
+sys/ufs/lfs/lfs_debug.c				1.30
+sys/ufs/lfs/lfs_extern.h			1.65-1.67
+sys/ufs/lfs/lfs_inode.c				1.91-1.95
+sys/ufs/lfs/lfs_segment.c			1.159-1.163
+sys/ufs/lfs/lfs_subr.c				1.51-1.52
+sys/ufs/lfs/lfs_syscalls.c			1.104-1.105
+sys/ufs/lfs/lfs_vfsops.c			1.169-1.177
+sys/ufs/lfs/lfs_vnops.c				1.141-1.150
+sys/ufs/ufs/ufs_readwrite.c			1.62-1.63
+usr.sbin/mountd/mountd.c			1.94
+
+	* fsck_lfs buffer cache fixes, including PR #29151
+	* Change fsck_lfs phase 0 message to reflect reality
+	* fsck_lfs: check phase 5 (cleanerinfo accounting) even on
+	  roll-forward
+	* Keep better track of the free list during roll-forward, avoiding
+	  a core dump
+	* Improve hash table use for fsck_lfs buffer and vnode cache
+	* Document fsck_lfs flag -f, and implement -q
+	* Add resize_lfs, including kernel support
+	* Add LFS to mountd's list of exportable filesystem types
+	* Make the LFS lkm work again [christos@]
+	* Add MP locking to the LFS kernel subsystem
+	* Fix pager_map deadlock in lfs_putpages()
+	* Avoid incomplete file extension that looks like "partial
+	  truncation" to fsck
+	* Use lfs_malloc for cleaner malloc, since the cleaner often runs
+	  in low-memory conditions.
+	* Use splay trees, not hash table, to track page allocation for
+	  write.
+	* Fix mkdir panic on full fs
+	* Fix page accounting leak by counting differently.
+	* Use rightly named structure for lfs_getattr [skrll@]
+	* Cosmetic changes for readability.
+	[perseant, ticket #242]
+
+distrib/notes/common/main			1.283
+
+	Add Michael Lorenz to the list of NetBSD developers.
+	[martin, ticket #245]
+
+x11/Xserver/hw/xfree86/drivers/suncg6/Makefile	1.2
+
+	Added missing files cg6_cursor.c, cg6_accel.c and missing include path
+	for xaa.
+	[macallan, ticket #246]
+
+sys/arch/hpcmips/conf/GENERIC			1.167
+sys/arch/hpcmips/conf/files.hpcmips		1.97
+sys/arch/hpcmips/conf/std.hpcmips.tx39		1.2
+sys/arch/hpcmips/dev/optpoint.c			1.1
+sys/arch/hpcmips/tx/tx39spi.c			1.1
+sys/arch/hpcmips/tx/tx39spivar.h		1.1
+
+	Add OptPoint on Telios HC-AJ2 (and maybe AJ1) support.
+	[hamajima, ticket #247]
+
+lib/libtelnet/sra.c				1.4
+
+	Fix the check for insecure root logins in rootterm():
+	- It was originally referring to a bogus version of `line'.
+	  (problem solved by using 'extern char *line' instead of 'extern
+	  char line[]')
+	- It wasn't stripping the leading "/dev/" off `line' before calling
+	  getttynam(3)
+	[lukem, ticket #248]
+
+sys/dev/usb/ehci.c				1.102-1.103
+
+	- Make sure to honor the USBD_FORCE_SHORT_XFER flag and generate an
+	  empty transfer when necessary.
+	- Make sure all physical addresses are filled in the qTD even when we
+	  have a page offset.
+	[augustss, ticket #249]
+
+lib/libtelnet/sra.c				1.5
+
+	PAM may change the user name during the authentication process;
+	ensure that we deal with this so that SRA authenticated logins
+	will pass the changed user name to login(1).
+	[lukem, ticket #252]
+
+lib/libtelnet/sra.c				1.6
+
+	Don't perform a check for "secure" tty for root logins when using PAM;
+	that is what we provide pam_securetty(8) for.
+	Fix the -DNOPAM build option by allowing it to compile
+	(even though we don't use this source file when USE_PAM=no).
+	[lukem, ticket #253]
+
+lib/libc/arch/arm/string/ffs.S			1.8
+
+	On ARMv5 reduce the value to the LSB before using CLZ. Otherwise we'll
+	calculate the position of the MSB not the LSB.
+	[rearnsha, ticket #255]
+
+etc/MAKEDEV.tmpl				1.43
+
+	Add hexprint(); display the given number as hex.
+	Add a comment to document zeropad()'s purpose.
+	[lukem, ticket #256]
+
+etc/etc.vax/MAKEDEV.conf			1.8
+
+	Use zeropad() and hexprint() instead of printf(1).
+	[lukem, ticket #257]
+
+etc/etc.vax/MAKEDEV.conf			1.9
+
+	Fix previous, caused by premature optimization...
+	[lukem, ticket #258]
 
