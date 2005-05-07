@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.77 2005/05/06 08:43:34 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.78 2005/05/07 00:11:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8076,4 +8076,10 @@ sys/netinet6/udp6_output.c			1.20
 	- For ipv6, disable it.
 	  (maybe will be revisited when it implements h/w checksum offloading.)
 	[yamt, ticket #251]
+
+sys/kern/uipc_mbuf2.c				1.19
+
+	In m_pulldown avoid a prepend to the next mbuf in the chain if the
+	result would still not have all data we want continous. Fixes PR#30098
+	[martin, ticket #254]
 
