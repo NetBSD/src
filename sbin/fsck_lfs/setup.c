@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.19 2005/02/26 05:45:54 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.19.2.1 2005/05/07 11:21:29 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,6 +131,27 @@ calcmaxfilesize(int bshift)
 
 	return maxblock << bshift;
 }
+
+void
+reset_maxino(ino_t len)
+{
+	din_table = (ufs_daddr_t *) realloc(din_table, len * sizeof(*din_table));
+	statemap = realloc(statemap, len * sizeof(char));
+	typemap = realloc(typemap, len * sizeof(char));
+	lncntp = (int16_t *) realloc(lncntp, len * sizeof(int16_t));
+
+	if (din_table == NULL || statemap == NULL || typemap == NULL ||
+	    lncntp == NULL) {
+		errexit("expanding tables failed: out of memory");
+	}
+
+	memset(din_table + maxino, 0, (len - maxino) * sizeof(*din_table));
+	memset(statemap + maxino, 0, (len - maxino) * sizeof(char));
+	memset(typemap + maxino, 0, (len - maxino) * sizeof(char));
+	memset(lncntp + maxino, 0, (len - maxino) * sizeof(int16_t));
+
+	return;
+}
  
 int
 setup(const char *dev)
@@ -166,19 +187,18 @@ setup(const char *dev)
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if (preen == 0)
-		printf("** %s", dev);
 	if (nflag) {
 		if (preen)
 			pfatal("NO WRITE ACCESS");
-		printf(" (NO WRITE)");
-	}
-	if (preen == 0)
-		printf("\n");
+		printf("** %s (NO WRITE)\n", dev);
+		quiet = 0;
+	} else if (!preen && !quiet)
+		printf("** %s\n", dev);
+
 	fsmodified = 0;
 	lfdir = 0;
 
-	bufinit();
+	bufinit(0); /* XXX we could make a better guess */
 	fs = lfs_init(fsreadfd, bflag, idaddr, 0, debug);
 	if (fs == NULL) {
 		if (preen)
@@ -190,10 +210,14 @@ setup(const char *dev)
 	else
 		dev_bsize = secsize = DEV_BSIZE;
 
+        /* Resize buffer cache now that we have a superblock to guess from. */ 
+        bufrehash((fs->lfs_segtabsz + maxino / fs->lfs_ifpb) << 4);
+
 	if (fs->lfs_pflags & LFS_PF_CLEAN) {
 		if (doskipclean) {
-			pwarn("%sile system is clean; not checking\n",
-				preen ? "f" : "** F");
+			if (!quiet)
+				pwarn("%sile system is clean; not checking\n",
+				      preen ? "f" : "** F");
 			return (-1);
 		}
 		if (!preen)
@@ -255,13 +279,13 @@ setup(const char *dev)
 	}
 	if (fs->lfs_maxfilesize != maxfilesize) {
 		pwarn(
-		    "INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK (should be %llu)",
+		    "INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK (should be %llu with bshift %d)",
 		    (unsigned long long) fs->lfs_maxfilesize,
-		    (unsigned long long) maxfilesize);
-		fs->lfs_maxfilesize = maxfilesize;
+		    (unsigned long long) maxfilesize, (int)fs->lfs_bshift);
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
+			fs->lfs_maxfilesize = maxfilesize;
 			sbdirty();
 		}
 	}

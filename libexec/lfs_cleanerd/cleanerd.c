@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.52.2.1 2005/04/03 13:25:50 tron Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.52.2.2 2005/05/07 11:21:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.52.2.1 2005/04/03 13:25:50 tron Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.52.2.2 2005/05/07 11:21:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,7 @@ int	 bi_tossold(const void *, const void *, const void *);
 int	 choose_segments(FS_INFO *, struct seglist *, 
 	     unsigned long (*)(FS_INFO *, SEGUSE *));
 void	 clean_fs(FS_INFO	*, unsigned long (*)(FS_INFO *, SEGUSE *), int, long);
+int	 invalidate_segment(FS_INFO *, int);
 int	 clean_loop(FS_INFO *, int, long);
 int	 add_segment(FS_INFO *, struct seglist *, SEGS_AND_BLOCKS *);
 int	 clean_segments(FS_INFO *, SEGS_AND_BLOCKS *);
@@ -214,6 +215,7 @@ main(int argc, char **argv)
 	struct timeval timeout;		/* sleep timeout */
 	fsid_t fsid;
 	long clean_opts;		/* cleaning options */
+	int inval_segment;
 	int segs_per_clean;
 	int opt, cmd_err;
 	int do_coaleace;
@@ -227,7 +229,8 @@ main(int argc, char **argv)
 	cmd_err = debug = do_quit = 0;
 	do_coaleace = clean_opts = 0;
 	segs_per_clean = 1;
-	while ((opt = getopt(argc, argv, "bcdfl:mn:qr:st:")) != -1) {
+	inval_segment = -1;
+	while ((opt = getopt(argc, argv, "bcdfi:l:mn:qr:st:")) != -1) {
 		switch (opt) {
 			case 'b':
 				/*
@@ -245,6 +248,9 @@ main(int argc, char **argv)
 				break;
 			case 'f':
 				use_fs_idle = 1;
+				break;
+			case 'i':
+				inval_segment = atoi(optarg);
 				break;
 			case 'l':       /* Load below which to clean */
 				load_threshold = atof(optarg);
@@ -284,7 +290,7 @@ main(int argc, char **argv)
 	}
 
 	/* should we become a daemon, chdir to / & close fd's */
-	if (debug == 0) {
+	if (debug == 0 && inval_segment < 0) {
 		if (daemon(0, 0) == -1)
 			err(1, "lfs_cleanerd: couldn't become a daemon!");
 		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | 0, LOG_DAEMON);
@@ -360,6 +366,12 @@ main(int argc, char **argv)
 			exit(0);
 		}
 
+		/* Likewise for invalidation */
+		if (inval_segment >= 0) {
+			invalidate_segment(fsp, inval_segment);
+			exit(0);
+		}
+		  
 		/*
 		 * clean the filesystem, and, if it needed cleaning
 		 * (i.e. it returned nonzero) try it again
@@ -380,6 +392,30 @@ main(int argc, char **argv)
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner waking up.");
 	}
+}
+
+int
+invalidate_segment(FS_INFO *fsp, int sn)
+{
+	struct seglist sl;
+	SEGS_AND_BLOCKS sb;
+
+	/* Make the kernel back up the the beginning, and sync */
+	fcntl(ifile_fd, LFCNREWIND, &sn);
+	fsync(ifile_fd);
+
+	/* Clean the segment */
+	memset(&sb, 0, sizeof(SEGS_AND_BLOCKS));
+	sl.sl_id = sn;
+	if (add_segment(fsp, &sl, &sb) < 0)
+		err(1, "add_segment %d", sn);
+	clean_segments(fsp, &sb);
+
+	/* Now do the actual invalidation */
+	if (fcntl(ifile_fd, LFCNINVAL, &sn) < 0)
+		err(1, "LFCNINVAL segment %d", sn);
+
+	return 0;
 }
 
 /* return the number of segments cleaned */

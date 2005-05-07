@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.20 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: main.c,v 1.20.2.1 2005/05/07 11:21:29 tron Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -107,7 +107,8 @@ main(int argc, char **argv)
 		case 'P':		/* Progress meter not implemented. */
 			break;
 
-		case 'q':		/* Quiet not implemented */
+		case 'q':
+			quiet++;
 			break;
 
 		case 'y':
@@ -187,7 +188,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		/*
 		 * 0: check segment checksums, inode ranges
 		 */
-		printf("** Phase 0 - Check Segment Summaries and Inode Free List\n");
+		printf("** Phase 0 - Check Inode Free List\n");
 	}
 	if (idaddr)
 		pwarn("-i given, skipping free list check\n");
@@ -218,28 +219,30 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		 */
 		printf("** Phase 4 - Check Reference Counts\n");
 		pass4();
+	}
 
-		/*
-		 * 5: check segment byte totals and dirty flags
-		 */
+	/*
+	 * 5: check segment byte totals and dirty flags, and cleanerinfo
+	 */
+	if (!preen)
 		printf("** Phase 5 - Check Segment Block Accounting\n");
-		pass5();
+	pass5();
 
-		if (debug) {
-			if (duplist != NULL) {
-				printf("The following duplicate blocks remain:");
-				for (dp = duplist; dp; dp = dp->next)
-					printf(" %lld,", (long long) dp->dup);
-				printf("\n");
-			}
-			if (zlnhead != NULL) {
-				printf("The following zero link count inodes remain:");
-				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
-					printf(" %u,", zlnp->zlncnt);
-				printf("\n");
-			}
+	if (debug && !preen) {
+		if (duplist != NULL) {
+			printf("The following duplicate blocks remain:");
+			for (dp = duplist; dp; dp = dp->next)
+				printf(" %lld,", (long long) dp->dup);
+			printf("\n");
+		}
+		if (zlnhead != NULL) {
+			printf("The following zero link count inodes remain:");
+			for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
+				printf(" %u,", zlnp->zlncnt);
+			printf("\n");
 		}
 	}
+
 	if (!rerun) {
 		if (!preen)
 			printf("** Phase 6 - Roll Forward\n");
@@ -303,7 +306,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "usage: %s [-dnpy] [-b block] [-m mode] filesystem ...\n",
+	    "usage: %s [-dfpq] [-b block] [-m mode] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(1);
 }

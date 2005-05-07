@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.18 2005/02/26 05:45:54 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.18.2.1 2005/05/07 11:21:29 tron Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include "fsutil.h"
 
 extern int fake_cleanseg;
+int extend_ifile(void);
 
 /*
  * Pass 0.  Check the LFS partial segments for valid checksums, correcting
@@ -108,8 +109,10 @@ pass0(void)
 	CLEANERINFO *cip;
 	IFILE *ifp;
 	struct ubuf *bp;
-	ino_t ino, plastino, nextino, *visited;
+	ino_t ino, plastino, nextino, *visited, lowfreeino;
 	int writeit = 0;
+	int count;
+	long long totaldist;
 
 	/*
          * Check the inode free list for inuse inodes, and cycles.
@@ -118,9 +121,66 @@ pass0(void)
 	visited = (ino_t *) malloc(maxino * sizeof(ino_t));
 	memset(visited, 0, maxino * sizeof(ino_t));
 
+#ifdef BAD
+	/*
+	 * Scramble the free list, to trigger the optimizer below.
+	 * You don't want this unless you are debugging fsck_lfs itself.
+	 */
+	if (!preen && reply("SCRAMBLE FREE LIST") == 1) {
+		ino_t topino, botino, tail;
+		botino = 0;
+		topino = maxino;
+		while (botino < topino) {
+			for (--topino; botino < topino; --topino) {
+				LFS_IENTRY(ifp, fs, topino, bp);
+				if (ifp->if_daddr == 0)
+					break;
+				brelse(bp);
+				bp = NULL;
+			}
+			if (topino == botino)
+				break;
+			if (botino > 0) {
+				ifp->if_nextfree = botino;
+			} else {
+				ifp->if_nextfree = 0x0;
+				tail = topino;
+			}
+			VOP_BWRITE(bp);
+			ino = topino;
+		
+			for (++botino; botino < topino; ++botino) {
+				LFS_IENTRY(ifp, fs, botino, bp);
+				if (ifp->if_daddr == 0)
+					break;
+				brelse(bp);
+				bp = NULL;
+			}
+			if (topino == botino)
+				break;
+			ifp->if_nextfree = topino;
+			VOP_BWRITE(bp);
+			ino = botino;
+		}
+		LFS_CLEANERINFO(cip, fs, bp);
+		cip->free_head = fs->lfs_freehd = ino;
+		cip->free_tail = tail;
+		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
+	}
+#endif /* BAD */
+
+	count = 0;
 	plastino = 0;
+	totaldist = 0;
+	lowfreeino = maxino;
 	ino = fs->lfs_freehd;
 	while (ino) {
+		if (lowfreeino > ino)
+			lowfreeino = ino;
+		if (plastino > 0) {
+			totaldist += abs(ino - plastino);
+			++count;
+		}
 		if (ino >= maxino) {
 			printf("! Ino %d out of range (last was %d)\n", ino,
 			    plastino);
@@ -206,4 +266,43 @@ pass0(void)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, writeit);
 	else
 		brelse(bp);
+
+	if (fs->lfs_freehd == 0) {
+		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");
+		if (preen || reply("FIX"))
+			extend_ifile();
+	}
+
+	/*
+	 * Check the distance between sequential free list entries.
+	 * An ideally ordered free list will have the sum of these
+	 * distances <= the number of inodes in the inode list.
+	 * If the observed distance is too high, reorder the list.
+	 * Strictly speaking, this is not an error, but it optimizes the
+	 * speed in creation of files and should help a tiny bit with
+	 * cleaner thrash as well.
+	 */
+	if (totaldist > 4 * maxino) {
+		pwarn("%sotal inode list traversal length %lldx list length%s\n",
+		      (preen ? "t" : "T"), totaldist/maxino,
+		      (preen ? ", optimizing" : ""));
+		if (preen || reply("OPTIMIZE") == 1) {
+			plastino = lowfreeino;
+			for (ino = lowfreeino + 1; ino < maxino; ino++) {
+				LFS_IENTRY(ifp, fs, ino, bp);
+				daddr = ifp->if_daddr;
+				brelse(bp);
+				if (daddr == 0) {
+					LFS_IENTRY(ifp, fs, plastino, bp);
+					ifp->if_nextfree = ino;
+					VOP_BWRITE(bp);
+					plastino = ino;
+				}
+			}
+			LFS_CLEANERINFO(cip, fs, bp);
+			cip->free_head = fs->lfs_freehd = lowfreeino;
+			cip->free_tail = plastino;
+			LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
+		}
+	}
 }

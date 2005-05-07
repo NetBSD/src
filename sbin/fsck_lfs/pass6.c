@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.3 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: pass6.c,v 1.3.6.1 2005/05/07 11:21:29 tron Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
+int extend_ifile(void);
 
 extern ufs_daddr_t badblk;
 extern SEGUSE *seg_table;
@@ -218,9 +219,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
 		idesc.id_type = ADDR;
 		idesc.id_lblkno = 0;
 		clri(&idesc, "unknown", 2); /* XXX magic number 2 */
-
-		/* Get rid of this vnode for good */
-		vnode_destroy(vp);
+		/* vp has been destroyed */
 	}
 }
 
@@ -294,7 +293,7 @@ pass6check(struct inodesc * idesc)
 /*
  * Add a new block to the Ifile, to accommodate future file creations.
  */
-static int
+int
 extend_ifile(void)
 {
 	struct uvnode *vp;
@@ -318,7 +317,7 @@ extend_ifile(void)
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 	max = i + fs->lfs_ifpb;
-	maxino = max;
+	reset_maxino(max);
 	fs->lfs_bfree -= btofsb(fs, fs->lfs_bsize);
 
 	if (fs->lfs_version == 1) {
@@ -390,17 +389,14 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	SEGUSE *sup;
 	struct ubuf *bp;
 
+	while (thisino >= maxino)
+		extend_ifile();
+
 	LFS_IENTRY(ifp, fs, thisino, bp);
 	nextfree = ifp->if_nextfree;
 	ifp->if_nextfree = 0;
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
-
-	while (thisino > (lblkno(fs, VTOI(fs->lfs_ivnode)->i_ffs1_size) -
-			  fs->lfs_segtabsz - fs->lfs_cleansz + 1) *
-	       fs->lfs_ifpb) {
-		extend_ifile();
-	}
 
 	if (fs->lfs_freehd == thisino) {
 		fs->lfs_freehd = nextfree;
@@ -409,6 +405,7 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 			extend_ifile();
 		}
 	} else {
+		/* Search the free list for this inode */
 		ino = fs->lfs_freehd;
 		while (ino) {
 			LFS_IENTRY(ifp, fs, ino, bp);
@@ -461,7 +458,7 @@ pass6(void)
 	int i, j, bc;
 	ufs_daddr_t hassuper;
 
-	devvp = fs->lfs_unlockvp;
+	devvp = fs->lfs_devvp;
 
 	/* Find last valid partial segment */
 	lastgood = try_verify(fs, devvp, 0, debug);
@@ -471,12 +468,12 @@ pass6(void)
 		return;
 	}
 
+	if (debug)
+		pwarn("could roll forward from %" PRIx32 " to %" PRIx32 "\n",
+			fs->lfs_offset, lastgood);
+
 	if (!preen && reply("roll forward") == 0)
 		return;
-
-	if (debug)
-		pwarn("rolling forward between %" PRIx32 " and %" PRIx32 "\n",
-			fs->lfs_offset, lastgood);
 	/*
 	 * Pass 1: find inode blocks.  We ignore the Ifile inode but accept
 	 * changes to any other inode.
@@ -723,4 +720,9 @@ pass6(void)
 		pwarn("** Phase 6b - Recheck Segment Block Accounting\n");
 		pass5();
 	}
+
+	/* Likewise for pass 0 */
+	if (!preen)
+		pwarn("** Phase 6c - Recheck Inode Free List\n");
+	pass0();
 }

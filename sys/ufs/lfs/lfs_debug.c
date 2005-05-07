@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.27 2005/03/08 04:49:35 simonb Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.27.2.1 2005/05/07 11:21:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,14 +71,13 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.27 2005/03/08 04:49:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.27.2.1 2005/05/07 11:21:30 tron Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/kprintf.h>
 #include <sys/syslog.h>
 
 #include <ufs/ufs/inode.h>
@@ -94,23 +93,35 @@ int lfs_bwrite_log(struct buf *bp, char *file, int line)
 	a.a_desc = VDESC(vop_bwrite);
 	a.a_bp = bp;
 
-	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
-		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
+	if (!(bp->b_flags & (B_DELWRI | B_GATHERED))) {
+		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags,
+			curproc->p_pid);
+	}
 	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
 }
 
 void lfs_dumplog(void)
 {
 	int i;
+	char *cp;
 
-	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
+	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH;
+	     i = (i + 1) % LFS_LOGLENGTH)
 		if (lfs_log[i].file) {
-			printf("lbn %" PRId64 " %s %lx %d %s\n",
+			/* Only print out basename, for readability */
+			cp = lfs_log[i].file;
+			while(*cp)
+				++cp;
+			while(*cp != '/' && cp > lfs_log[i].file)
+				--cp;
+
+			printf("lbn %" PRId64 " %s %lx %d, %d %s\n",
 				lfs_log[i].block,
 				lfs_log[i].op,
 				lfs_log[i].flags,
+				lfs_log[i].pid,
 				lfs_log[i].line,
-				lfs_log[i].file + 56);
+				cp);
 		}
 }
 
@@ -299,35 +310,18 @@ int lfs_debug_log_subsys[DLOG_MAX];
 /*
  * Log events from various debugging areas of LFS, depending on what
  * the user has enabled.
- * XXX This should call a vlog() function instead.
  */
 void
 lfs_debug_log(int subsys, const char *fmt, ...)
 {
-	int s;
 	va_list ap;
-	extern int log_open;
 
 	/* If not debugging this subsys, exit */
 	if (lfs_debug_log_subsys[subsys] == 0)
 		return;
 
-	/* If we are, do what log(9) does */
-	/* XXX want a vlog() */
-	KPRINTF_MUTEX_ENTER(s);
-
-	klogpri(LOG_DEBUG);	/* log the level first */
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	vlog(LOG_DEBUG, fmt, ap);
 	va_end(ap);
-	if (!log_open) {
-		va_start(ap, fmt);
-		kprintf(fmt, TOCONS, NULL, NULL, ap);
-		va_end(ap);
-	}
-
-	KPRINTF_MUTEX_EXIT(s);
-
-	logwakeup();	/* wake up anyone waiting for log msgs */
 }
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.2 2003/04/02 10:39:28 fvdl Exp $ */
+/* $NetBSD: vnode.c,v 1.2.6.1 2005/05/07 11:21:29 tron Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,7 +61,7 @@
 #include "vnode.h"
 
 struct uvnodelst vnodelist;
-struct uvnodelst getvnodelist;
+struct uvnodelst getvnodelist[VNODE_HASH_MAX];
 struct vgrlst    vgrlist;
 
 int nvnodes;
@@ -151,6 +151,8 @@ vnode_destroy(struct uvnode *tossvp)
 	free(tossvp);
 }
 
+int hits, misses;
+
 /*
  * Find a vnode in the cache; if not present, get it from the
  * filesystem-specific vget routine.
@@ -159,15 +161,19 @@ struct uvnode *
 vget(void *fs, ino_t ino)
 {
 	struct uvnode *vp, *tossvp;
+	int hash;
 
 	/* Look in the uvnode cache */
 	tossvp = NULL;
-	LIST_FOREACH(vp, &getvnodelist, v_getvnodes) {
+	hash = ((unsigned long)fs + ino) & (VNODE_HASH_MAX - 1);
+	LIST_FOREACH(vp, &getvnodelist[hash], v_getvnodes) {
 		if (vp->v_fs != fs)
 			continue;
 		if (VTOI(vp)->i_number == ino) {
+			/* Move to the front of the list */
 			LIST_REMOVE(vp, v_getvnodes);
-			LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
+			LIST_INSERT_HEAD(&getvnodelist[hash], vp, v_getvnodes);
+			++hits;
 			break;
 		}
 		if (LIST_EMPTY(&vp->v_dirtyblkhd) &&
@@ -182,14 +188,18 @@ vget(void *fs, ino_t ino)
 	if (vp)
 		return vp;
 
+	++misses;
 	return VFS_VGET(fs, ino);
 }
 
 void
 vfs_init(void)
 {
+	int i;
+
 	nvnodes = 0;
 	LIST_INIT(&vnodelist);
-	LIST_INIT(&getvnodelist);
+	for (i = 0; i < VNODE_HASH_MAX; i++)
+		LIST_INIT(&getvnodelist[i]);
 	LIST_INIT(&vgrlist);
 }

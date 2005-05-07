@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.13 2005/04/20 11:15:29 tron Exp $
+# $NetBSD: mi,v 1.532.2.14 2005/05/07 11:21:29 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -182,6 +182,7 @@
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root
 ./sbin/reboot					base-sysutil-root
+./sbin/resize_lfs				base-sysutil-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
 ./sbin/route					base-netutil-root
