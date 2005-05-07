@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.85 2005/05/01 02:59:28 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.86 2005/05/07 22:27:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.85 2005/05/01 02:59:28 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.86 2005/05/07 22:27:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -746,6 +746,8 @@ struct option tar_longopts[] = {
 						OPT_INSECURE },
 	{ "exclude",		required_argument,	0,
 						OPT_EXCLUDE },
+	{ "no-recursion",	no_argument,		0,
+						OPT_NORECURSE },
 #if !HAVE_NBTOOL_CONFIG_H
 	{ "chroot",		no_argument,		0,
 						OPT_CHROOT },
@@ -787,8 +789,6 @@ struct option tar_longopts[] = {
 	{ "verify",		no_argument,		0,	'W' },
 	{ "block-compress",	no_argument,		0,
 						OPT_BLOCK_COMPRESS },
-	{ "norecurse",		no_argument,		0,
-						OPT_NORECURSE },
 #endif
 	{ 0,			0,			0,	0 },
 };
@@ -1070,6 +1070,9 @@ tar_options(int argc, char **argv)
 		case OPT_EXCLUDE:
 			if (tar_gnutar_minus_minus_exclude(optarg) != 0)
 				tar_usage();
+			break;
+		case OPT_NORECURSE:
+			dflag = 1;
 			break;
 #if !HAVE_NBTOOL_CONFIG_H
 		case OPT_CHROOT:
