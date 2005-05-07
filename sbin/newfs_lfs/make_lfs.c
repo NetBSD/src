@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.1 2005/02/26 05:45:54 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.1.2.1 2005/05/07 11:21:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.1 2005/02/26 05:45:54 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.1.2.1 2005/05/07 11:21:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,17 +344,25 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	struct ubuf *bp;
 	struct uvnode *vp, *save_devvp;
 	int bb, ubb, dmeta, labelskew;
+	u_int64_t tsepb, tnseg;
 
-	/* Initialize buffer cache */
-	bufinit();
+	/*
+	 * Initialize buffer cache.  Use a ballpark guess of the length of
+	 * the segment table for the number of hash chains.
+	 */
+	tnseg = partp->p_size / ((seg_size ? seg_size : DFL_LFSSEG) / secsize);
+	tsepb = (block_size ? block_size : DFL_LFSBLOCK) / sizeof(SEGSUM);
+	if (tnseg == 0)
+		fatal("zero size partition");
+	bufinit(tnseg / tsepb);
 
 	/* Initialize LFS subsystem with blank superblock and ifile. */
 	fs = lfs_init(devfd, start, (ufs_daddr_t)0, 1, 1/* XXX debug*/);
-	save_devvp = fs->lfs_unlockvp;
+	save_devvp = fs->lfs_devvp;
 	vp = fs->lfs_ivnode;
 	*fs = lfs_default;
 	fs->lfs_ivnode = vp;
-	fs->lfs_unlockvp = save_devvp;
+	fs->lfs_devvp = save_devvp;
 
 
 	/* Set version first of all since it is used to compute other fields */

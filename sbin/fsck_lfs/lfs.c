@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.8 2005/02/26 05:45:54 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.8.2.1 2005/05/07 11:21:29 tron Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -104,7 +104,7 @@ extern u_int32_t lfs_sb_cksum(struct dlfs *);
 extern void pwarn(const char *, ...);
 
 extern struct uvnodelst vnodelist;
-extern struct uvnodelst getvnodelist;
+extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
 extern int nvnodes;
 
 int fsdirty = 0;
@@ -341,7 +341,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	struct inode *ip;
 	struct ufs1_dinode *dip;
 	struct ubuf *bp;
-	int i;
+	int i, hash;
 
 	vp = (struct uvnode *) malloc(sizeof(*vp));
 	memset(vp, 0, sizeof(*vp));
@@ -374,7 +374,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
-		bread(fs->lfs_unlockvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
+		bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
@@ -387,7 +387,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 		brelse(bp);
 	}
 	ip->i_number = ino;
-	/* ip->i_devvp = fs->lfs_unlockvp; */
+	/* ip->i_devvp = fs->lfs_devvp; */
 	ip->i_lfs = fs;
 
 	ip->i_ffs_effnlink = ip->i_ffs1_nlink;
@@ -406,7 +406,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	++nvnodes;
-	LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
+	hash = ((int)(intptr_t)fs + ino) & (VNODE_HASH_MAX - 1);
+	LIST_INSERT_HEAD(&getvnodelist[hash], vp, v_getvnodes);
 	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
 
 	return vp;
@@ -478,7 +479,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			sblkno = btodb(LFS_LABELPAD);
 		fs = (struct lfs *) malloc(sizeof(*fs));
 		memset(fs, 0, sizeof(*fs));
-		fs->lfs_unlockvp = devvp;
+		fs->lfs_devvp = devvp;
 	} else {
 		if (sblkno == 0) {
 			sblkno = btodb(LFS_LABELPAD);
@@ -490,7 +491,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		fs = (struct lfs *) malloc(sizeof(*fs));
 		memset(fs, 0, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-		fs->lfs_unlockvp = devvp;
+		fs->lfs_devvp = devvp;
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	
@@ -500,7 +501,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			altfs = (struct lfs *) malloc(sizeof(*altfs));
 			memset(altfs, 0, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-			altfs->lfs_unlockvp = devvp;
+			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 	
@@ -548,6 +549,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 	if (idaddr == 0)
 		idaddr = fs->lfs_idaddr;
+	else
+		fs->lfs_idaddr = idaddr;
 	/* NB: If dummy_read!=0, idaddr==0 here so we get a fake inode. */
 	fs->lfs_ivnode = lfs_raw_vget(fs,
 		(dummy_read ? LFS_IFILE_INUM : fs->lfs_ifile), devvp->v_fd,
@@ -560,8 +563,13 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 /*
  * Check partial segment validity between fs->lfs_offset and the given goal.
- * If goal == 0, just keep on going until the segments stop making sense.
- * Return the address of the first partial segment that failed.
+ *
+ * If goal == 0, just keep on going until the segments stop making sense,
+ * and return the address of the last valid partial segment.
+ *
+ * If goal != 0, return the address of the first partial segment that failed,
+ * or "goal" if we reached it without failure (the partial segment *at* goal
+ * need not be valid).
  */
 ufs_daddr_t
 try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
@@ -573,6 +581,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 	ufs_daddr_t nodirop_daddr;
 	u_int64_t serial;
 
+	odaddr = -1;
 	daddr = osb->lfs_offset;
 	nodirop_daddr = daddr;
 	serial = osb->lfs_serial;
