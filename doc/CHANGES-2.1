@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.80 2005/05/07 04:13:33 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.81 2005/05/07 05:51:12 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1616,4 +1616,17 @@ share/man/man4/options.4			1.259 via patch
 	reference config(8) -x as another way to recover the result of using
 	INCLUDE_CONFIG_FILE; bump date
 	[hubertf, ticket #1272]
+
+sys/arch/amd64/amd64/db_disasm.c		1.2
+
+	Add disasm support for amd64 (x86-64).
+	From Cliff Neighbors.
+	[matt, ticket #1275]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.57
+
+	Don't enable interrupts while calling trap() if the trapping frame
+	didn't have them enabled either.
+	Addresses PR#29559.
+	[matt, ticket #1286]
 
