@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.63 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.64 2005/05/07 14:24:14 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.63 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.64 2005/05/07 14:24:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5136,7 +5136,6 @@ flush_inodedep_deps(fs, ino)
 	struct vnode *vp;
 
 	vp = softdep_lookupvp(fs, ino);
-	KASSERT(vp != NULL);
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -5166,16 +5165,26 @@ flush_inodedep_deps(fs, ino)
 		 * let's just do it here.
 		 */
 
-		FREE_LOCK(&lk);
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
-		    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
-		if (waitfor == MNT_WAIT) {
-			drain_output(vp, 0);
-		}
-		ACQUIRE_LOCK(&lk);
-		if (error) {
-			return error;
+		if (vp != NULL) {
+			FREE_LOCK(&lk);
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, 0, 0,
+			    PGO_ALLPAGES | PGO_CLEANIT |
+			    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
+			if (waitfor == MNT_WAIT) {
+				drain_output(vp, 0);
+			}
+			ACQUIRE_LOCK(&lk);
+			if (error) {
+				return error;
+			}
+		} else {
+			/*
+			 * The inode has been reclaimed. Be sure no
+			 * dependencies to flush pages remain.
+			 */
+			KASSERT(TAILQ_EMPTY(&inodedep->id_inoupdt));
+			KASSERT(TAILQ_EMPTY(&inodedep->id_newinoupdt));
 		}
 
 		for (adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
