@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.1 2005/04/03 13:42:14 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.2 2005/05/07 11:51:39 tron Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -296,7 +296,11 @@ _USAGE_
 	exit 1
 }
 
-zeropad() {
+# zeropad width number
+#	display number with a zero (`0') padding of width digits.
+#
+zeropad()
+{
 	case $(($1 - ${#2})) in
 	5)	echo 00000$2;;
 	4)	echo 0000$2;;
@@ -305,6 +309,23 @@ zeropad() {
 	1)	echo 0$2;;
 	0)	echo $2;;
 	*)	echo "$0: bad padding" 1>&2; exit 1;;
+	esac
+}
+
+# hexprint number
+#	display (base10) number as hexadecimal
+#
+hexprint()
+{
+	case $1 in
+	[0-9])	echo $1 ;;
+	10)	echo a ;;
+	11)	echo b ;;
+	12)	echo c ;;
+	13)	echo d ;;
+	14)	echo e ;;
+	15)	echo f ;;
+	*)	echo $(hexprint $(($1 / 16)))$(hexprint $(($1 % 16))) ;;
 	esac
 }
 
