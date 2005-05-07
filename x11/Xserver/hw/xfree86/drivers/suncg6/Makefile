@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2005/04/06 21:42:07 tron Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2005/05/07 11:32:55 tron Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -8,11 +8,12 @@ MODULE=	suncg6_drv
 MAN=	suncg6.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/suncg6
 
-SRCS=	cg6_driver.c
+SRCS=	cg6_driver.c cg6_cursor.c cg6_accel.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/suncg6 \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xaa \
 		-I${X11SRCDIR.xc}/programs/Xserver/fb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
