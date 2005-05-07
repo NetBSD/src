@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.1 2005/05/07 16:01:25 dsl Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.2 2005/05/07 16:28:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.1 2005/05/07 16:01:25 dsl Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.2 2005/05/07 16:28:32 dsl Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ tilde_expand(char *txt)
  *
  * it's caller's responsibility to free returned string
  */
-static char *
+char *
 filename_completion_function(const char *text, int state)
 {
 	static DIR *dir = NULL;
