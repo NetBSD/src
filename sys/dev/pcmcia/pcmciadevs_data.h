@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.210 2005/02/27 15:29:37 perry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.210.2.1 2005/05/07 23:07:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
+ *	NetBSD: pcmciadevs,v 1.208.6.3 2005/05/07 23:06:26 tron Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -398,6 +398,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Elsa",
 	    "XI325 Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_SMC2531WB,
+	    PCMCIA_CIS_ELSA_SMC2531WB,
+	    0,
+	    "Elsa",
+	    "SMC2531W-B EliteConnect Wireless Adapter",	}
 	,
 	{
 	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
