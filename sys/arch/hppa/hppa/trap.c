@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2005/05/01 19:17:52 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2005/05/07 15:06:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2005/05/01 19:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2005/05/07 15:06:51 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -411,9 +411,9 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 struct trapframe *sanity_frame;
 struct lwp *sanity_lwp;
 int sanity_checked = 0;
-void frame_sanity_check(struct trapframe *, struct lwp *);
+void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
 void
-frame_sanity_check(struct trapframe *tf, struct lwp *l)
+frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 {
 	extern int kernel_text;
 	extern int etext;
@@ -462,8 +462,9 @@ do {							\
 	}
 #undef SANITY
 	if (sanity_frame == tf) {
-		printf("insanity: tf %p lwp %p line %d sp 0x%x pc 0x%x\n",
-		       sanity_frame, sanity_lwp, sanity_checked,
+		printf("insanity: where 0x%x type 0x%x tf %p lwp %p line %d "
+		       "sp 0x%x pc 0x%x\n",
+		       where, type, sanity_frame, sanity_lwp, sanity_checked,
 		       tf->tf_sp, tf->tf_iioq_head);
 		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
@@ -545,7 +546,7 @@ trap(int type, struct trapframe *frame)
 #endif /* DIAGNOSTIC */
 		
 #ifdef DEBUG
-	frame_sanity_check(frame, l);
+	frame_sanity_check(0xdead01, type, frame, l);
 #endif /* DEBUG */
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
@@ -915,9 +916,10 @@ do_onfault:
 		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
 #ifdef DEBUG
-	frame_sanity_check(frame, l);
+	frame_sanity_check(0xdead02, type, frame, l);
 	if (frame->tf_flags & TFF_LAST && curlwp != NULL)
-		frame_sanity_check(curlwp->l_md.md_regs, curlwp);
+		frame_sanity_check(0xdead03, type, curlwp->l_md.md_regs,
+				   curlwp);
 #endif /* DEBUG */
 }
 
@@ -933,7 +935,7 @@ child_return(void *arg)
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 #ifdef DEBUG
-	frame_sanity_check(l->l_md.md_regs, l);
+	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
 }
 
@@ -957,7 +959,7 @@ syscall(struct trapframe *frame, int *args)
 	uvmexp.syscalls++;
 
 #ifdef DEBUG
-	frame_sanity_check(frame, curlwp);
+	frame_sanity_check(0xdead04, 0, frame, curlwp);
 #endif /* DEBUG */
 
 	if (!USERMODE(frame->tf_iioq_head))
@@ -1207,7 +1209,7 @@ syscall(struct trapframe *frame, int *args)
 
 	userret(l, frame->tf_iioq_head, 0);
 #ifdef DEBUG
-	frame_sanity_check(frame, l);
+	frame_sanity_check(0xdead05, 0, frame, l);
 #endif /* DEBUG */
 }
 
