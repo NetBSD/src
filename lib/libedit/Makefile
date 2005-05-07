@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/12/05 13:37:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2005/05/07 16:01:25 dsl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -6,7 +6,8 @@ USE_SHLIBDIR=	yes
 WARNS=	3
 LIB=	edit
 
-OSRCS=	chared.c common.c el.c emacs.c fcns.c help.c hist.c key.c map.c \
+OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c hist.c \
+	key.c map.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c
 
 MAN=	editline.3 editrc.5

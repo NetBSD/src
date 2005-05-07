@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.25 2003/12/05 13:37:48 lukem Exp $	*/
+/*	$NetBSD: histedit.h,v 1.26 2005/05/07 16:01:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@ int		 el_parse(EditLine *, int, const char **);
  */
 int		 el_set(EditLine *, int, ...);
 int		 el_get(EditLine *, int, void *);
+unsigned char	_el_fn_complete(EditLine *, int);
 
 /*
  * el_set/el_get parameters
