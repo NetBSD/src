@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.12 2005/03/09 22:09:36 kleink Exp $       */
+/*      $NetBSD: functions.c,v 1.13 2005/05/07 22:43:21 wiz Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ ftp_pkgcats(char *subdir)
  *	dirs are, e.g. ftp://ftp.NetBSD.org/pub/NetBSD/packages.
  *	If $PKG_PATH is set, is returned unchanged, overriding everything.
  *	In any case, a trailing '/' is *not* passed.
- *	See also Appendix B of /usr/pkgsrc/Packages.txt.
+ *	See also Appendix C of /usr/pkgsrc/doc/pkgsrc.txt.
  *
  *	The returned pointer will be overwritten on next call of
  *	this function.
