@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.91.2.6 2005/05/07 11:41:27 tron Exp $ */
+/*	$NetBSD: ehci.c,v 1.91.2.7 2005/05/07 11:42:23 tron Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.6 2005/05/07 11:41:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.91.2.7 2005/05/07 11:42:23 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2281,10 +2281,6 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	len = alen;
 	dataphys = DMAADDR(dma, 0);
 	dataphyslastpage = EHCI_PAGE(dataphys + len - 1);
-#if 0
-printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
-    epipe->nexttoggle);
-#endif
 	qtdstatus = EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
 	    EHCI_QTD_SET_CERR(3)
@@ -2327,7 +2323,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 				    "curlen=%d\n", curlen));
 #ifdef DIAGNOSTIC
 			if (curlen == 0)
-				panic("ehci_alloc_std: curlen == 0");
+				panic("ehci_alloc_sqtd_chain: curlen == 0");
 #endif
 		}
 		DPRINTFN(4,("ehci_alloc_sqtd_chain: dataphys=0x%08x "
@@ -2353,7 +2349,8 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 			nextphys = EHCI_NULL;
 		}
 
-		for (i = 0; i * EHCI_PAGE_SIZE < curlen; i++) {
+		for (i = 0; i * EHCI_PAGE_SIZE < 
+		            curlen + EHCI_PAGE_OFFSET(dataphys); i++) {
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */
 				a = EHCI_PAGE(a);
