@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.101 2005/03/09 14:17:13 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.102 2005/05/07 17:44:11 christos Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.101 2005/03/09 14:17:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102 2005/05/07 17:44:11 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1211,7 +1211,7 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 	}
 	bzero(new, sizeof(*new));
 
-	if (so->so_uid == 0)	/* XXX */
+	if (so->so_uidinfo->ui_uid == 0)	/* XXX */
 		new->priv = 1;
 	else
 		new->priv = 0;
