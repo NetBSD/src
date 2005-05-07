@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $	*/
+/*	$NetBSD: ffs.S,v 1.7.2.1 2005/05/07 11:49:39 tron Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $")
+RCSID("$NetBSD: ffs.S,v 1.7.2.1 2005/05/07 11:49:39 tron Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -38,8 +38,8 @@ RCSID("$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $")
  * 6 bits as an index into the table.  This algorithm should be a win
  * over the checking each bit in turn as per the C compiled version.
  *
- * under ARMv5 there's an instruction called CLZ (count leading Zero's) that
- * could be used
+ * On ARMv5 we use CLZ (count leading Zero's) and then subtract the result
+ * from 32.
  *
  * This is the ffs algorithm devised by d.seal and posted to comp.sys.arm on
  * 16 Feb 1994.
@@ -47,6 +47,9 @@ RCSID("$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $")
 
 ENTRY(ffs)
 #ifdef _ARM_ARCH_5
+	/* (X & -X) gives LSB or zero.  */
+ 	rsb	r1, r0, #0
+ 	and	r0, r0, r1
 	clz	r0, r0
 	rsb	r0, r0, #32
 	RET
