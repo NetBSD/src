@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.12 2005/05/06 23:51:35 snj Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.13 2005/05/07 07:11:13 snj Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -69,4 +69,11 @@ sys/kern/uipc_mbuf2.c				1.19
 	In m_pulldown avoid a prepend to the next mbuf in the chain if the
 	result would still not have all data we want continous. Fixes PR#30098
 	[martin, ticket #1503]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.57
+
+	Don't enable interrupts while calling trap() if the trapping frame
+	didn't have them enabled either.
+	Addresses PR#29559.
+	[matt, ticket #1286]
 
