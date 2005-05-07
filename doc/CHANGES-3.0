@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.79 2005/05/07 11:56:01 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.80 2005/05/07 15:06:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8228,4 +8228,10 @@ etc/etc.vax/MAKEDEV.conf			1.9
 
 	Fix previous, caused by premature optimization...
 	[lukem, ticket #258]
+
+sys/ufs/ffs/ffs_softdep.c			1.64
+
+	Flush_inodedep_deps(): If softdep_lookupvp() returns NULL it means the
+	inode has been reclaimed.  Skip the VOP_PUTPAGES() in this case.
+	[hannken, ticket #259]
 
