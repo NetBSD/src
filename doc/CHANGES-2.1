@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.81 2005/05/07 05:51:12 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.82 2005/05/07 07:22:49 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1629,4 +1629,12 @@ sys/arch/powerpc/powerpc/trap_subr.S		1.57
 	didn't have them enabled either.
 	Addresses PR#29559.
 	[matt, ticket #1286]
+
+lib/libc/stdlib/getopt_long.3			1.15
+
+	Document index argument, and mention that long_options
+	needs to be terminated with a structure containing zeroes.
+	Slightly modified version of patch from PR#30002 by Kailash Sethuraman.
+	Bump date.
+	[wiz, ticket #1432]
 
