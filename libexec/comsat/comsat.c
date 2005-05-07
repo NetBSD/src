@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.32 2004/09/15 08:44:02 martin Exp $	*/
+/*	$NetBSD: comsat.c,v 1.33 2005/05/07 23:37:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.32 2004/09/15 08:44:02 martin Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.33 2005/05/07 23:37:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,25 +239,31 @@ notify(const struct utmpentry *ep, off_t offset)
 	struct stat stb;
 	struct termios ttybuf;
 	char tty[sizeof(_PATH_DEV) + sizeof(ep->line) + 1];
-	const char *cr;
+	const char *cr = ep->line;
 
-	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, ep->line);
-	if (strchr(tty + sizeof(_PATH_DEV) - 1, '/')) {
+	if (strncmp(cr, "pts/", 4) == 0)
+		cr += 4;
+	if (strchr(cr, '/')) {
 		/* A slash is an attempt to break security... */
-		/*
-		 * XXX but what about something like "/dev/pts/5"
-		 * that we may one day "support". ?
-		 */
-		syslog(LOG_AUTH | LOG_NOTICE, "'/' in \"%s\"", tty);
+		syslog(LOG_AUTH | LOG_NOTICE, "Unexpected `/' in `%s'",
+		    ep->line);
 		return;
 	}
-	if (stat(tty, &stb) || !(stb.st_mode & S_IEXEC)) {
+	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, ep->line);
+	if (stat(tty, &stb) == -1 || !(stb.st_mode & S_IEXEC)) {
 		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", ep->name, tty);
 		return;
 	}
 	dsyslog(LOG_DEBUG, "notify %s on %s", ep->name, tty);
-	if (fork())
+	switch (fork()) {
+	case -1:
+		syslog(LOG_NOTICE, "fork failed (%m)");
 		return;
+	case 0:
+		break;
+	default:
+		return;
+	}
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
