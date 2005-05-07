@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.1.2.1 2005/05/07 11:35:45 tron Exp $");
+__RCSID("$NetBSD: sra.c,v 1.1.2.2 2005/05/07 11:45:39 tron Exp $");
 #endif
 
 #ifdef	SRA
@@ -210,6 +210,8 @@ sra_is(Authenticator *ap, unsigned char *data, int cnt)
 		valid = check_user(user,pass);
 
 		if(valid) {
+			    /* PAM (via check_user()) may have changed 'user' */
+			auth_encrypt_user(user);
 			Data(ap, SRA_ACCEPT, (void *)0, 0);
 			skey.data = ck;
 			skey.type = SK_DES;
