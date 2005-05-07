@@ -32,13 +32,14 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.1 2005/02/19 21:55:52 christos Exp $");
+__RCSID("$NetBSD: sra.c,v 1.1.2.1 2005/05/07 11:35:45 tron Exp $");
 #endif
 
 #ifdef	SRA
 #ifdef	ENCRYPTION
 #include <sys/types.h>
 #include <arpa/telnet.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +64,7 @@ DesData ck;
 IdeaData ik;
 
 extern int auth_debug_mode;
-extern char line[];
+extern char *line;		/* see sys_term.c */
 
 static int sra_valid = 0;
 static int passwd_sent = 0;
@@ -427,9 +428,14 @@ isroot(const char *usr)
 }
 
 static int
-rootterm(char *ttyn)
+rootterm(const char *ttyname)
 {
 	struct ttyent *t;
+	const char *ttyn;
+
+	ttyn = ttyname;
+	if (strncmp(ttyn, _PATH_DEV, sizeof(_PATH_DEV)-1) == 0)
+		ttyn += sizeof(_PATH_DEV) - 1;
 
 	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
 }
