@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.93 2004/06/23 15:28:19 jmc Exp $
+#	$NetBSD: bsd.man.mk,v 1.93.2.1 2005/05/07 14:55:20 riz Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -209,6 +209,10 @@ cleanhtml: .PHONY
 .undef _F
 
 cleandir: cleanman
+.if !empty(CLEANFILES)
+	rm -f ${CLEANFILES}
+.endif
+
 cleanman: .PHONY
 .if !empty(MAN) && (${MKMAN} != "no")
 .if (${MKCATPAGES} != "no")
