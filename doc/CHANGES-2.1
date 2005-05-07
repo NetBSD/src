@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.79 2005/05/06 23:46:02 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.80 2005/05/07 04:13:33 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1610,4 +1610,10 @@ sys/kern/uipc_mbuf2.c				1.19
 	In m_pulldown avoid a prepend to the next mbuf in the chain if the
 	result would still not have all data we want continous. Fixes PR#30098
 	[martin, ticket #1503]
+
+share/man/man4/options.4			1.259 via patch
+
+	reference config(8) -x as another way to recover the result of using
+	INCLUDE_CONFIG_FILE; bump date
+	[hubertf, ticket #1272]
 
