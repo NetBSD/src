@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2005/05/07 15:54:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2004/07/18 23:21:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2005/05/07 15:54:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1551,8 +1551,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	s = splvm();
 	for(; sva < eva; sva += PAGE_SIZE) {
-		if((pv = pmap_pv_find_va(space, sva))) {
-			KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
+		if ((pv = pmap_pv_find_va(space, sva))) {
+
 			/*
 			 * Compare new protection with old to see if
 			 * anything needs to be changed.
