@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/08/19 09:41:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2005/05/07 00:23:01 lukem Exp $
 
 NOPIC=		# defined
 
@@ -7,7 +7,9 @@ NOPIC=		# defined
 LIB=		l
 SRCS=		libmain.c libyywrap.c
 
+.if ${MKSTATICLIB} != "no"
 LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
+.endif
 
 .PATH:		${NETBSDSRCDIR}/usr.bin/lex
 
