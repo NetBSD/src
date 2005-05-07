@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.11 2005/02/26 22:45:13 perry Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.12 2005/05/07 17:42:09 christos Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 
 #ifdef __NetBSD__
 /* superuser opened socket? */
-#define IPSEC_PRIVILEGED_SO(so) ((so)->so_uid == 0)
+#define IPSEC_PRIVILEGED_SO(so) ((so)->so_uidinfo->ui_uid == 0)
 #endif	/* __NetBSD__ */
 
 /*
