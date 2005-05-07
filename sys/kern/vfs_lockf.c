@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.39 2005/03/25 22:48:23 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.40 2005/05/07 17:42:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.39 2005/03/25 22:48:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.40 2005/05/07 17:42:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,13 +118,17 @@ lf_alloc(uid_t uid, int allowfail)
 	struct lockf *lock;
 
 	uip = uid_find(uid);
+	simple_lock(&uip->ui_slock);
 	if (uid && allowfail && uip->ui_lockcnt >
-	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2)))
-		return (NULL);
+	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2))) {
+		simple_unlock(&uip->ui_slock);
+		return NULL;
+	}
 	uip->ui_lockcnt++;
+	simple_unlock(&uip->ui_slock);
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
-	return (lock);
+	return lock;
 }
 
 void
@@ -133,7 +137,9 @@ lf_free(struct lockf *lock)
 	struct uidinfo *uip;
 
 	uip = uid_find(lock->lf_uid);
+	simple_lock(&uip->ui_slock);
 	uip->ui_lockcnt--;
+	simple_unlock(&uip->ui_slock);
 	pool_put(&lockfpool, lock);
 }
 

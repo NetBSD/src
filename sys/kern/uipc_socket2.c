@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.66 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.67 2005/05/07 17:42:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.66 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.67 2005/05/07 17:42:09 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -175,7 +175,7 @@ sonewconn1(struct socket *head, int connstatus)
 	so->so_pgid = head->so_pgid;
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
-	so->so_uid = head->so_uid;
+	so->so_uidinfo = head->so_uidinfo;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
@@ -404,22 +404,22 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
 	struct proc *p = curproc; /* XXX */
 	rlim_t maxcc;
-	uid_t uid;
+	struct uidinfo *uidinfo;
 
 	KDASSERT(sb_max_adj != 0);
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && p->p_ucred->cr_uid == so->so_uid)
+		if (p && p->p_ucred->cr_uid == so->so_uidinfo->ui_uid)
 			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
-		uid = so->so_uid;
+		uidinfo = so->so_uidinfo;
 	} else {
-		uid = 0;	/* XXX: nothing better */
+		uidinfo = uid_find(0);	/* XXX: nothing better */
 		maxcc = RLIM_INFINITY;
 	}
-	if (!chgsbsize(uid, &sb->sb_hiwat, cc, maxcc))
+	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
 		return 0;
 	sb->sb_mbmax = min(cc * 2, sb_max);
 	if (sb->sb_lowat > sb->sb_hiwat)
@@ -435,7 +435,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	(void)chgsbsize(so->so_uid, &sb->sb_hiwat, 0,
+	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0,
 	    RLIM_INFINITY);
 	sb->sb_mbmax = 0;
 }

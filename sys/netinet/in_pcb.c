@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.98 2005/02/03 03:49:01 perry Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.99 2005/05/07 17:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.98 2005/02/03 03:49:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.99 2005/05/07 17:42:09 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -278,7 +278,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 		if (t6 && (reuseport & t6->in6p_socket->so_options) == 0)
 			return (EADDRINUSE);
 #endif
-		if (so->so_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
+		if (so->so_uidinfo->ui_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
 			t = in_pcblookup_port(table, sin->sin_addr, lport, 1);
 		/*
 		 * XXX:	investigate ramifications of loosening this
@@ -289,7 +289,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 			    (!in_nullhost(sin->sin_addr) ||
 			     !in_nullhost(t->inp_laddr) ||
 			     (t->inp_socket->so_options & SO_REUSEPORT) == 0)
-			    && (so->so_uid != t->inp_socket->so_uid)) {
+			    && (so->so_uidinfo->ui_uid != t->inp_socket->so_uidinfo->ui_uid)) {
 				return (EADDRINUSE);
 			}
 		}

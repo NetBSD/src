@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.25 2005/03/20 19:13:23 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.26 2005/05/07 17:42:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -95,13 +95,14 @@ struct uidinfo {
 	long	ui_proccnt;	/* Number of processes */
 	long	ui_lockcnt;	/* Number of locks */
 	rlim_t	ui_sbsize;	/* socket buffer size */
+	struct simplelock ui_slock; /* mutex for everything */
 
 };
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 extern u_long uihash;		/* size of hash table - 1 */
 int       chgproccnt(uid_t, int);
-int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
+int       chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
 
 extern char defcorename[];
