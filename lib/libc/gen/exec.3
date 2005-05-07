@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.18 2003/08/07 16:42:47 agc Exp $
+.\"	$NetBSD: exec.3,v 1.19 2005/05/07 02:38:41 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)exec.3	8.3 (Berkeley) 1/24/94
 .\"
-.Dd August 10, 2002
+.Dd May 6, 2005
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -66,7 +66,11 @@ The functions described in this manual page are front-ends for the function
 .Xr execve 2 .
 (See the manual page for
 .Xr execve 2
-for detailed information about the replacement of the current process.)
+for detailed information about the replacement of the current process.
+The
+.Xr script 7
+manual page provides detailed information about the execution of
+interpreter scripts.)
 .Pp
 The initial argument for these functions is the pathname of a file which
 is to be executed.
@@ -216,7 +220,8 @@ for any of the errors specified for the library function
 .Xr execve 2 ,
 .Xr fork 2 ,
 .Xr ptrace 2 ,
-.Xr environ 7
+.Xr environ 7 ,
+.Xr script 7
 .Sh COMPATIBILITY
 Historically, the default path for the
 .Fn execlp
