@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -640,6 +640,7 @@ Compat_Run(Lst targs)
     }
 
     ENDNode = Targ_FindNode(".END", TARG_CREATE);
+    ENDNode->type = OP_SPECIAL;
     /*
      * If the user has defined a .BEGIN target, execute the commands attached
      * to it.
