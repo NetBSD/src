@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.19 2005/05/08 20:29:53 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.20 2005/05/08 20:32:36 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -595,7 +595,7 @@ message netinfo
 }
 
 message net_domain
-{DNS Domäne}
+{DNS Domain}
 
 message net_host
 {Hostname}
@@ -624,7 +624,7 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS Domäne:		%s 
+DNS Domain:		%s 
 Hostname:		%s 
 Netzwerkadapter:	%s 
 IP Adresse:		%s 
@@ -637,7 +637,7 @@ Verbindungstyp:		%s
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS Domäne:		%s 
+DNS Domain:		%s 
 Hostname:		%s 
 Netzwerkadapter:	%s 
 IP Adresse:		%s 
