@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.57 2005/05/08 00:38:47 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -122,7 +122,6 @@ static char 	    meta[256];
 static GNode	    *curTarg = NILGNODE;
 static GNode	    *ENDNode;
 static void CompatInterrupt(int);
-static int CompatMake(ClientData, ClientData);
 
 static void
 Compat_Init(void)
@@ -176,7 +175,7 @@ CompatInterrupt(int signo)
 	if (signo == SIGINT) {
 	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
 	    if (gn != NILGNODE) {
-		Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
+		Compat_Make(gn, gn);
 	    }
 	}
 
@@ -433,7 +432,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 
 /*-
  *-----------------------------------------------------------------------
- * CompatMake --
+ * Compat_Make --
  *	Make a target.
  *
  * Input:
@@ -448,12 +447,14 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
  *
  *-----------------------------------------------------------------------
  */
-static int
-CompatMake(ClientData gnp, ClientData pgnp)
+int
+Compat_Make(ClientData gnp, ClientData pgnp)
 {
     GNode *gn = (GNode *) gnp;
     GNode *pgn = (GNode *) pgnp;
 
+    if (!meta[0])		/* we came here from jobs */
+	Compat_Init();
     if (gn->made == UNMADE && (gn == pgn || (pgn->type & OP_MADE) == 0)) {
 	/*
 	 * First mark ourselves to be made, then apply whatever transformations
@@ -467,7 +468,7 @@ CompatMake(ClientData gnp, ClientData pgnp)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEach(gn->children, CompatMake, (ClientData)gn);
+	Lst_ForEach(gn->children, Compat_Make, (ClientData)gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~REMAKE;
@@ -597,7 +598,7 @@ CompatMake(ClientData gnp, ClientData pgnp)
     }
 
 cohorts:
-    Lst_ForEach(gn->cohorts, CompatMake, pgnp);
+    Lst_ForEach(gn->cohorts, Compat_Make, pgnp);
     return (0);
 }
 
@@ -646,7 +647,7 @@ Compat_Run(Lst targs)
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NILGNODE) {
-	    Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
+	    Compat_Make(gn, gn);
             if (gn->made == ERROR) {
                 PrintOnError("\n\nStop.");
                 exit(1);
@@ -661,8 +662,8 @@ Compat_Run(Lst targs)
     Lst_Destroy(Make_ExpandUse(targs), NOFREE);
 
     /*
-     * For each entry in the list of targets to create, call CompatMake on
-     * it to create the thing. CompatMake will leave the 'made' field of gn
+     * For each entry in the list of targets to create, call Compat_Make on
+     * it to create the thing. Compat_Make will leave the 'made' field of gn
      * in one of several states:
      *	    UPTODATE	    gn was already up-to-date
      *	    MADE  	    gn was recreated successfully
@@ -673,7 +674,7 @@ Compat_Run(Lst targs)
     errors = 0;
     while (!Lst_IsEmpty (targs)) {
 	gn = (GNode *) Lst_DeQueue(targs);
-	CompatMake(gn, gn);
+	Compat_Make(gn, gn);
 
 	if (gn->made == UPTODATE) {
 	    printf ("`%s' is up to date.\n", gn->name);
@@ -687,7 +688,7 @@ Compat_Run(Lst targs)
      * If the user has defined a .END target, run its commands.
      */
     if (errors == 0) {
-	Lst_ForEach(ENDNode->commands, CompatRunCommand, (ClientData)gn);
+	Compat_Make(ENDNode, ENDNode);
 	if (gn->made == ERROR) {
 	    PrintOnError("\n\nStop.");
 	    exit(1);
