@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.131 2005/04/18 21:55:06 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.132 2005/05/08 04:48:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.131 2005/04/18 21:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.132 2005/05/08 04:48:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -804,8 +804,13 @@ again:
 			 * sending new data, having retransmitted all the
 			 * data possible in the scoreboard.
 			 */
-			len = ((long)ulmin(so->so_snd.sb_cc, tp->snd_wnd) 
-				       - off);
+			if (tp->snd_wnd < so->so_snd.sb_cc) {
+				len = tp->snd_wnd - off;
+				flags &= ~TH_FIN;
+			} else {
+				len = so->so_snd.sb_cc - off;
+			}
+
 			/*
 			 * From FreeBSD:
 			 *  Don't remove this (len > 0) check !
@@ -821,7 +826,10 @@ again:
 						sack_bytes_rxmt;
 				if (cwin < 0)
 					cwin = 0;
-				len = lmin(len, cwin);
+				if (cwin < len) {
+					len = cwin;
+					flags &= ~TH_FIN;
+				}
 			}
 		} else if (win < so->so_snd.sb_cc) {
 			len = win - off;
