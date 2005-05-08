@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.91 2005/05/08 00:38:47 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.91 2005/05/08 00:38:47 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.91 2005/05/08 00:38:47 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1353,7 +1353,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn, 0);
 	    if (p1)
 		free(p1);
-	} else if (Dir_MTime(gn) == 0) {
+	} else if (Dir_MTime(gn) == 0 && (gn->type & OP_SPECIAL) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT
 	     * rule to go on and the target doesn't already exist. There's
