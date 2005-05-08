@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.83 2005/05/08 13:59:30 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.84 2005/05/08 18:04:49 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1660,4 +1660,35 @@ share/man/man8/rc.subr.8			1.16
 
 	* Improve required_vars warning message.
 	[lukem, ticket #1268]
+
+usr.bin/pkill/pkill.c				1.8
+
+	If a user or group is not known, report the problem user/group, rather
+	than the first user/group.
+	[abs, ticket #1294]
+
+sys/net/if_stf.c				1.46
+sys/net/if_stf.h				1.2
+
+	Add support for changing the MTU to stf(4).
+	[tron, ticket #1312]
+
+sys/arch/macppc/pci/pci_machdep.c		1.26
+
+	OpenFirmware on machines with the "Grackle" bridge assign an
+	'AAPL,interrupts' property instead of 'interrupt-map' and
+	'interrupt-map-mask' properties.  Adjust for this by checking
+	for the latter, and if they're not present (and the parent isn't
+	'pci-bridge'), then look for 'AAPL,interrupts'.
+
+	Problem analyzed and patched by Tim Kelly on port-macppc.  I modified
+	the patch to move the fallback into find_node_intr(), tweaking some
+	previously-disabled code.
+	[briggs, ticket #1330]
+
+sys/net/if_gre.c				1.56
+sys/netinet/ip_gre.c				1.34
+
+	Add IPv6 over GRE (contributed by Gert Doering in PR#29150).
+	[is, ticket #1382]
 
