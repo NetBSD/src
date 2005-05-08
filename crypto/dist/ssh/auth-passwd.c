@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.13 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.14 2005/05/08 21:15:04 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth-passwd.c,v 1.33 2005/01/24 11:47:13 dtucker Exp $");
-__RCSID("$NetBSD: auth-passwd.c,v 1.13 2005/04/23 16:53:28 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.14 2005/05/08 21:15:04 christos Exp $");
 
 #include "packet.h"
 #include "buffer.h"
@@ -59,8 +59,8 @@ extern login_cap_t *lc;
 #define DAY		(24L * 60 * 60) /* 1 day in seconds */
 #define TWO_WEEKS	(2L * 7 * DAY)	/* 2 weeks in seconds */
 
-#ifdef BSD_AUTH
-static void
+#if defined(BSD_AUTH) || defined(USE_PAM)
+void
 disable_forwarding(void)
 {
 	no_port_forwarding_flag = 1;
