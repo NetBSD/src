@@ -1,3 +1,27 @@
+2005-05-07  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/{admin.c|isakmp.c|isakmp_inf.c}: factor various
+	  ISAKMP SA termination (for DPD timeouts and delete message) to
+	  use purge_remote() so that SA and generated SPD get correctly flushed
+	* src/racoon/{handler.c|handler.h}: Introduce getph1byaddrwop() and
+	  getph2bysaddr()
+	* src/racoon/{isakmp.c|isakmp_var.h|isakmp_inf.c|isakmp_inf.h}: make
+	  purge_remote(), setcopeid() and delete_spd() public
+	* src/racoon/isakmp_quick.c: remove duplicated setscopeid()
+	* src/racoon/{sockmisc.c|sockmisc.h} introduce a CMPSADDR() macro
+	  to compare with ports when ENABLE_NATT and without otherwise
+
+	* src/libipsec/{policy_parse.y|policy_token.l}
+	  src/setkey/{setkey.8|token.l}: Allow ports to be supplied in SP
+	  endpoints, for accurate ESP over UDP matching
+	* src/racoon/{isakmp.c|racoon.conf.5}: Send IKE local and remote
+	  ports to the hook scripts
+	* src/racoon/remoteconf.c: do not honour ports when looking up
+	  a remote config, as our remote config have no port information
+	* src/racoon/samples/roadwarrior/client/{phase1-up.sh|phase1-down.sh}:
+	  use the IKE ports supplied by racoon to set up acurate endpoints
+	  ports in SP endpoints
+
 2005-05-04  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Manisha Malla <mmanisha@novell.com>

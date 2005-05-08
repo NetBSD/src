@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.2 2005/04/10 21:20:55 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.3 2005/05/08 08:57:26 manu Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -141,7 +141,7 @@ spddump		{ return(SPDDUMP); }
 spdflush	{ return(SPDFLUSH); }
 tagged		{ return(TAGGED); }
 {hyphen}P	{ BEGIN S_PL; return(F_POLICY); }
-<S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.%\-+_/ \n\t]* {
+<S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.%\-+_/ \n\t\]\[]* {
 			yymore();
 
 			/* count up for nl */
