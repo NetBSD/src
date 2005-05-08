@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.171 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: tty.c,v 1.172 2005/05/08 18:44:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.171 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.172 2005/05/08 18:44:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2173,11 +2173,8 @@ ttyrub(int c, struct tty *tp)
 					(void)ttyoutput('\b', tp);
 				break;
 			default:			/* XXX */
-#define	PANICSTR	"ttyrub: would panic c = %d, val = %d\n"
-				(void)printf(PANICSTR, c, CCLASS(c));
-#ifdef notdef
-				panic(PANICSTR, c, CCLASS(c));
-#endif
+				(void)printf("ttyrub: would panic c = %d, "
+				    "val = %d\n", c, CCLASS(c));
 			}
 		}
 	} else if (ISSET(tp->t_lflag, ECHOPRT)) {

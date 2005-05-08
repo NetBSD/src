@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.110 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111 2005/05/08 18:44:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.110 2005/05/07 17:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111 2005/05/08 18:44:39 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -132,7 +132,7 @@ soinit(void)
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
-		panic("bad initial sb_max value: %lu\n", sb_max);
+		panic("bad initial sb_max value: %lu", sb_max);
 
 }
 
