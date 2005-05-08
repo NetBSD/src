@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.133 2005/05/08 04:51:05 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.134 2005/05/08 04:52:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.133 2005/05/08 04:51:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.134 2005/05/08 04:52:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1118,7 +1118,8 @@ send:
 			KASSERT(tiqe != NULL);
 			sack_numblks--;
 			*lp++ = htonl(tiqe->ipqe_seq);
-			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len);
+			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
+			    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
 		}
 		optlen += sack_len + 2;
 	}
