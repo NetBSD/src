@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.25 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.26 2005/05/08 21:15:04 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth2.c,v 1.107 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: auth2.c,v 1.25 2005/02/13 18:14:04 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.26 2005/05/08 21:15:04 christos Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: auth2.c,v 1.25 2005/02/13 18:14:04 christos Exp $");
 #include "dispatch.h"
 #include "pathnames.h"
 #include "monitor_wrap.h"
+#include "buffer.h"
 
 #ifdef GSSAPI
 #include "ssh-gss.h"
@@ -46,6 +47,7 @@ __RCSID("$NetBSD: auth2.c,v 1.25 2005/02/13 18:14:04 christos Exp $");
 extern ServerOptions options;
 extern u_char *session_id2;
 extern u_int session_id2_len;
+extern Buffer loginmsg;
 
 /* methods */
 
@@ -158,6 +160,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	if (authctxt->attempt++ == 0) {
 		/* setup auth context */
 		authctxt->pw = PRIVSEP(getpwnamallow(user));
+		authctxt->user = xstrdup(user);
 		if (authctxt->pw && strcmp(service, "ssh-connection")==0) {
 			authctxt->valid = 1;
 			debug2("input_userauth_request: setting up authctxt for %s", user);
@@ -175,7 +178,6 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 		}
 		setproctitle("%s%s", authctxt->valid ? user : "unknown",
 		    use_privsep ? " [net]" : "");
-		authctxt->user = xstrdup(user);
 		authctxt->service = xstrdup(service);
 		authctxt->style = style ? xstrdup(style) : NULL;
 		if (use_privsep)
@@ -224,8 +226,18 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 		authenticated = 0;
 
 #ifdef USE_PAM
-	if (options.use_pam && authenticated && !PRIVSEP(do_pam_account()))
-		authenticated = 0;
+	if (options.use_pam && authenticated) {
+		if (!PRIVSEP(do_pam_account())) {
+			/* if PAM returned a message, send it to the user */
+			if (buffer_len(&loginmsg) > 0) {
+				buffer_append(&loginmsg, "\0", 1);
+				userauth_send_banner(buffer_ptr(&loginmsg));
+				packet_write_wait();
+			}
+			fatal("Access denied for user %s by PAM account "
+			   "configuration", authctxt->user);
+		}
+	}
 #endif
 
 	/* Log before sending the reply */

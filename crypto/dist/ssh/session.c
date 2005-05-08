@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.40 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.41 2005/05/08 21:15:04 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.181 2004/12/23 17:35:48 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.40 2005/04/23 16:53:28 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.41 2005/05/08 21:15:04 christos Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1337,7 +1337,20 @@ do_child(Session *s, const char *command)
 	if (!options.use_login) {
 		do_nologin(pw);
 		do_setusercontext(pw);
+		/*
+		 * PAM session modules in do_setusercontext may have
+		 * generated messages, so if this in an interactive
+		 * login then display them too.
+		 */
+		if (!check_quietlogin(s, command))
+			display_loginmsg();
 	}
+#ifdef USE_PAM
+	if (options.use_pam && !is_pam_session_open()) {
+		display_loginmsg();
+		exit(254);
+	}
+#endif
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is

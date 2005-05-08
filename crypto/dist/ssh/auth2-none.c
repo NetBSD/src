@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-none.c,v 1.5 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.6 2005/05/08 21:15:04 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth2-none.c,v 1.7 2004/05/11 19:01:43 deraadt Exp $");
-__RCSID("$NetBSD: auth2-none.c,v 1.5 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.6 2005/05/08 21:15:04 christos Exp $");
 
 #include "auth.h"
 #include "xmalloc.h"
@@ -74,6 +74,19 @@ auth2_read_banner(void)
 	banner[n] = '\0';
 
 	return (banner);
+}
+
+void
+userauth_send_banner(const char *msg)
+{
+	if (datafellows & SSH_BUG_BANNER)
+		return;
+
+	packet_start(SSH2_MSG_USERAUTH_BANNER);
+	packet_put_cstring(msg);
+	packet_put_cstring("");		/* language, unused */
+	packet_send();
+	debug("%s: sent", __func__);
 }
 
 static void
