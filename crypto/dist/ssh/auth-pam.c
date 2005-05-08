@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.3 2005/05/08 21:15:04 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.4 2005/05/08 23:30:46 lukem Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_PAM_GETENVLIST
 #define HAVE_PAM_PUTENV
@@ -409,7 +409,6 @@ sshpam_thread(void *ctxtp)
 		setproctitle("%s [pam]",
 		    sshpam_authctxt->valid ? pam_user : "unknown");
 	}
-#endif
 
 	sshpam_conv.conv = sshpam_thread_conv;
 	sshpam_conv.appdata_ptr = ctxt;
@@ -1155,3 +1154,4 @@ sshpam_auth_passwd(Authctxt *authctxt, const char *password)
 		return 0;
 	}
 }
+#endif /* USE_PAM */
