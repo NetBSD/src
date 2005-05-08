@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.81 2005/05/08 17:16:34 he Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.81 2005/05/08 17:16:34 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -514,12 +514,14 @@ wskbd_repeat(void *v)
 	}
 	if (sc->sc_translating) {
 		/* deliver keys */
+#if NWSDISPLAY > 0
 		if (sc->sc_base.me_dispdv != NULL) {
 			int i;
 			for (i = 0; i < sc->sc_repeating; i++)
 				wsdisplay_kbdinput(sc->sc_base.me_dispdv,
 						   sc->id->t_symbols[i]);
 		}
+#endif
 	} else {
 #if defined(WSKBD_EVENT_AUTOREPEAT)
 		/* queue event */
