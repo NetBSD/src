@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.18 2005/05/08 19:46:33 christos Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.19 2005/05/08 20:29:53 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -604,7 +604,7 @@ message net_ip
 {IPv4 Adresse}
 
 message net_ip_2nd
-{Server IPv4 number}
+{IPv4 Adressse des Servers}
 
 message net_mask
 {IPv4 Netzmaske}
@@ -635,17 +635,17 @@ Verbindungstyp:		%s
 }
 
 message netok_slip
-{The following are the values you entered.  Are they OK?
+{Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS Domain:		%s
-Host Name:		%s
-Primary Interface:	%s
-Host IP:		%s
-Server IP:		%s
-Netmask:		%s
-IPv4 Nameserver:	%s
-IPv4 Gateway:		%s
-Media type:		%s
+DNS Domäne:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP Adresse:		%s 
+IP Adresse des Servers:	%s
+Netzmaske:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netokv6
@@ -658,7 +658,7 @@ message netok_ok
 {Sind diese OK?}
 
 message slattach {
-Enter slattach flags
+Flags für slattach
 }
 
 message netagain
