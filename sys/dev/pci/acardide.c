@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.14 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.15 2005/05/08 11:26:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -147,7 +147,7 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_ACARD_ATP865:
 	case PCI_PRODUCT_ACARD_ATP865A:
-		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 		break;
 	default:
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
