@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.53 2005/05/01 01:25:36 christos Exp $	*/
+/*	$NetBSd: make.h,v 1.53 2005/05/01 01:25:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -253,7 +253,7 @@ typedef struct GNode {
 				     * children was out-of-date */
 #define	OP_MADE		0x00000800  /* Assume the children of the node have
 				     * been already made */
-#define OP_NODEP	0x00001000  /* Dependencies are invalid */
+#define OP_SPECIAL	0x00001000  /* Special .BEGIN, .END, .INTERRUPT */
 #define	OP_USEBEFORE	0x00002000  /* Like .USE, only prepend commands */
 #define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's

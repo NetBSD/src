@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.98 2005/05/01 01:25:36 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.98 2005/05/01 01:25:36 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.98 2005/05/01 01:25:36 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1089,7 +1089,7 @@ ParseDoDependency(char *line)
 		    case End:
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
-			gn->type |= OP_NOTMAIN|OP_NODEP;
+			gn->type |= OP_NOTMAIN|OP_SPECIAL;
 			(void)Lst_AtEnd(targets, (ClientData)gn);
 			break;
 		    case Default:
@@ -1259,11 +1259,6 @@ ParseDoDependency(char *line)
 	cp++;
     }
     line = cp;
-
-    if (gn && (gn->type & OP_NODEP) && *line)
-	Parse_Error(PARSE_FATAL,
-	    "Cannot specify dependency `%s' for target `%s'",
-	    line, gn->name);
 
     /*
      * Several special targets take different actions if present with no
