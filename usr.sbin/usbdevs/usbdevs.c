@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.23 2004/01/05 23:23:39 jmmv Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.24 2005/05/08 08:12:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ usbdev(int f, int a, int rec)
 		printf("%s(0x%04x), %s(0x%04x), rev %s",
 		       di.udi_product, di.udi_productNo,
 		       di.udi_vendor, di.udi_vendorNo, di.udi_release);
+		if (di.udi_serial[0])
+			printf(", serial %s", di.udi_serial);
 	} else
 		printf("%s, %s", di.udi_product, di.udi_vendor);
 	printf("\n");
