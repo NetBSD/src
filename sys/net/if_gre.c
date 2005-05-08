@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.49.2.1 2004/05/20 12:24:05 grant Exp $ */
+/*	$NetBSD: if_gre.c,v 1.49.2.1.2.1 2005/05/08 18:01:22 snj Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,6 +6,8 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Heiko W.Rupp <hwr@pilhuhn.de>
+ *
+ * IPv6-over-GRE contributed by Gert Doering <gert@greenie.muc.de>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.49.2.1 2004/05/20 12:24:05 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.49.2.1.2.1 2005/05/08 18:01:22 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,6 +190,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *ip;
+	u_int8_t ip_tos = 0;
 	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
@@ -280,9 +283,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			goto end;
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
+#ifdef GRE_DEBUG
+               printf( "start gre_output/GRE, dst->sa_family=%d\n",
+                        dst->sa_family );
+#endif
 		switch (dst->sa_family) {
 		case AF_INET:
 			ip = mtod(m, struct ip *);
+			ip_tos = ip->ip_tos;
 			etype = ETHERTYPE_IP;
 			break;
 #ifdef NETATALK
@@ -293,6 +301,11 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #ifdef NS
 		case AF_NS:
 			etype = ETHERTYPE_NS;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			etype = ETHERTYPE_IPV6;
 			break;
 #endif
 		default:
@@ -329,7 +342,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		gh->gi_dst = sc->g_dst;
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
 		((struct ip*)gh)->ip_ttl = ip_gre_ttl;
-		((struct ip*)gh)->ip_tos = ip->ip_tos;
+		((struct ip*)gh)->ip_tos = ip_tos;
 		gh->gi_len = htons(m->m_pkthdr.len);
 	}
 
@@ -396,6 +409,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
 			break;
 #endif
 		default:
