@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.28 2005/02/22 02:29:32 elric Exp $	*/
+/*	$NetBSD: auth1.c,v 1.29 2005/05/08 21:15:04 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth1.c,v 1.59 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: auth1.c,v 1.28 2005/02/22 02:29:32 elric Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.29 2005/05/08 21:15:04 christos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -27,9 +27,11 @@ __RCSID("$NetBSD: auth1.c,v 1.28 2005/02/22 02:29:32 elric Exp $");
 #include "session.h"
 #include "uidswap.h"
 #include "monitor_wrap.h"
+#include "buffer.h"
 
 /* import */
 extern ServerOptions options;
+extern Buffer loginmsg;
 
 /*
  * convert ssh auth msg type into description
@@ -86,7 +88,24 @@ do_authloop(Authctxt *authctxt)
 #endif
 	    PRIVSEP(auth_password(authctxt, ""))) {
 #ifdef USE_PAM
-		if (options.use_pam && (PRIVSEP(do_pam_account())))
+ 		if (options.use_pam && authenticated &&
+		    !PRIVSEP(do_pam_account())) {
+			char *msg;
+			size_t len;
+
+			error("Access denied for user %s by PAM account "
+			   "configuration", authctxt->user);
+			len = buffer_len(&loginmsg);
+			buffer_append(&loginmsg, "\0", 1);
+			msg = buffer_ptr(&loginmsg);
+			/* strip trailing newlines */
+			if (len > 0)
+				while (len > 0 && msg[--len] == '\n')
+					msg[len] = '\0';
+			else
+				msg = "Access denied.";
+			packet_disconnect(msg);
+		}
 #endif
 		{
 			auth_log(authctxt, 1, "without authentication", "");
