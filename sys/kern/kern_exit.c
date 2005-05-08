@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.146 2005/03/30 17:07:50 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.147 2005/05/08 18:44:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.146 2005/03/30 17:07:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.147 2005/05/08 18:44:39 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -614,7 +614,7 @@ exit_lwps(struct lwp *l)
 		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
 		if (error)
-			panic("exit_lwps: lwp_wait1 failed with error %d\n",
+			panic("exit_lwps: lwp_wait1 failed with error %d",
 			    error);
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}

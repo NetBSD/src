@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.13 2005/04/26 10:45:41 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.14 2005/05/08 18:44:39 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.13 2005/04/26 10:45:41 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.14 2005/05/08 18:44:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -197,7 +197,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 
 	/* XXX: This should not happen. Print more details? */
 	if (vhe->ops == NULL) {
-		panic("Veriexec: Operations vector NULL\n");
+		panic("veriexec: Operations vector is NULL");
 	}
 
 	bzero(fp, vhe->ops->hash_len);
@@ -320,7 +320,7 @@ veriexec_hashadd(struct veriexec_hashtbl *tbl, struct veriexec_hash_entry *e)
 	vhh = &(tbl->hash_tbl[indx]);
 
 	if (vhh == NULL)
-		panic("Veriexec: veriexec_hashadd: vhh is NULL.");
+		panic("veriexec: veriexec_hashadd: vhh is NULL.");
 
 	LIST_INSERT_HEAD(vhh, e, entries);
 
@@ -349,7 +349,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 			goto out;
 		}
  
-		veriexec_dprintf(("Veriexec: veriexec_verify: Got entry for "
+		veriexec_dprintf(("veriexec: veriexec_verify: Got entry for "
 				  "%s. (dev=%d, inode=%u)\n", name,
 				  va->va_fsid, va->va_fileid));
 
@@ -359,7 +359,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
 		
 		if (error) {
-			veriexec_dprintf(("Veriexec: veriexec_verify: "
+			veriexec_dprintf(("veriexec: veriexec_verify: "
 					  "Calculation error.\n"));
 			free(digest, M_TEMP);
 			return (error);
@@ -381,13 +381,13 @@ out:
         switch (vp->fp_status) {
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
-		panic("Veriexec: Not-evaluated status post-evaluation. "
+		panic("veriexec: Not-evaluated status post-evaluation. "
 		      "Inconsistency detected. Report a bug.");
 
 	case FINGERPRINT_VALID:
 		/* Valid fingerprint. */
 		if ((securelevel >= 1) && security_veriexec_verbose)
-			printf("Veriexec: veriexec_verify: Fingerprint "
+			printf("veriexec: veriexec_verify: Fingerprint "
 			       "matches. (file=%s, dev=%ld, inode=%lu)\n",
 			       name, va->va_fsid, va->va_fileid);
 		break;
@@ -395,7 +395,7 @@ out:
 	case FINGERPRINT_INDIRECT:
 		/* Fingerprint is okay; Make sure it's indirect execution. */
 		if (flag == VERIEXEC_DIRECT) {
-			printf("Veriexec: Attempt to execute %s "
+			printf("veriexec: Attempt to execute %s "
 			       "(dev=%ld, inode=%lu) directly by uid=%u "
 			       "(pid=%u, ppid=%u, gppid=%u)\n", name,
 			       va->va_fsid, va->va_fileid,
@@ -406,7 +406,7 @@ out:
 		}
 
 		if ((securelevel >= 1) && security_veriexec_verbose)
-			printf("Veriexec: veriexec_verify: Fingerprint "
+			printf("veriexec: veriexec_verify: Fingerprint "
 			       "matches on indirect. (file=%s, dev=%ld, "
 			       "inode=%lu)\n",
 			       name, va->va_fsid, va->va_fileid);
@@ -414,7 +414,7 @@ out:
 
 	case FINGERPRINT_NOMATCH:
 		/* Fingerprint mismatch. Deny execution. */
-		printf("Veriexec: Fingerprint mismatch for %s "
+		printf("veriexec: Fingerprint mismatch for %s "
 		       "(dev=%ld, inode=%lu). Execution "
 		       "attempt by uid=%u, pid=%u.\n", name,
 		       va->va_fsid, va->va_fileid, 
@@ -428,7 +428,7 @@ out:
 		/* No entry in the list. */
 		if (securelevel >= 1) {
 			if (security_veriexec_verbose)
-				printf("Veriexec: veriexec_verify: No "
+				printf("veriexec: veriexec_verify: No "
 				       "fingerprint for %s (dev=%ld, "
 				       "inode=%lu)\n", name, va->va_fsid,
 				       va->va_fileid);
@@ -450,7 +450,7 @@ out:
 		 * Should never happen.
 		 * XXX: Print vnode/process?
 		 */
-		panic("Veriexec: Invalid status post-evaluation in "
+		panic("veriexec: Invalid status post-evaluation in "
 		      "veriexec_verify(). Report a bug. (vnode=%p, pid=%u)",
 		      vp, p->p_pid);
         }
@@ -482,7 +482,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	case FINGERPRINT_INDIRECT:
 	case FINGERPRINT_NOMATCH:
 		if ((securelevel >= 2) || security_veriexec_strict) {
-			printf("Veriexec: Denying unlink request for %s "
+			printf("veriexec: Denying unlink request for %s "
 			       "from uid=%u: File in fingerprint tables. "
 			       "(pid=%u, dev=%ld, inode=%lu)\n", pathbuf,
 			       p->p_ucred->cr_uid, p->p_pid,
@@ -491,14 +491,14 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 			error = EPERM;
 		} else {
 			if (security_veriexec_verbose) {
-				printf("Veriexec: veriexec_removechk: Removing"
+				printf("veriexec: veriexec_removechk: Removing"
 				       " entry from Veriexec table. (file=%s, "
 				       "dev=%ld, inode=%lu)\n", pathbuf,
 				       va.va_fsid, va.va_fileid);
 			}
 
 			if (vhe == NULL) {
-				panic("Veriexec: tables inconsistent, vnode "
+				panic("veriexec: tables inconsistent, vnode "
 				      "has status but no fp entry found");
 			}
 			
@@ -521,7 +521,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		}
 
 		if (securelevel >= 2) {
-			printf("Veriexec: Denying unlink request for %s from"
+			printf("veriexec: Denying unlink request for %s from"
 			       " uid=%u: File in fingerprint tables. (pid=%u, "
 			       "dev=%ld, inode=%lu)\n", pathbuf,
 			       p->p_ucred->cr_uid, p->p_pid,
@@ -535,7 +535,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		break;
 
 	default:
-		panic("Veriexec: inconsistency in verified exec state"
+		panic("veriexec: inconsistency in verified exec state"
 		      "data");
 		break;
 		
@@ -546,7 +546,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 veriexec_rm:
 	tbl = veriexec_tblfind(va.va_fsid);
 	if (tbl == NULL) {
-		panic("Veriexec: Inconsistency: Could not get table for file"
+		panic("veriexec: Inconsistency: Could not get table for file"
 		      " in lists. Report a bug.");
 	}
 
