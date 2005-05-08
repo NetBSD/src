@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.58 2005/05/08 18:44:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.58 2005/05/08 18:44:40 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -102,11 +102,11 @@ namei(ndp)
 
 #ifdef DIAGNOSTIC
 	if (!cnp->cn_cred || !cnp->cn_proc)
-		panic ("namei: bad cred/proc");
+		panic("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
-		panic ("namei: nameiop contaminated with flags");
+		panic("namei: nameiop contaminated with flags");
 	if (cnp->cn_flags & OPMASK)
-		panic ("namei: flags contaminated with nameiops");
+		panic("namei: flags contaminated with nameiops");
 #endif
 	cwdi = cnp->cn_proc->p_cwdi;
 
@@ -710,7 +710,7 @@ relookup(dvp, vpp, cnp)
 	if (newhash != cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
-		panic ("relookup: bad len");
+		panic("relookup: bad len");
 	while (*cp == '/')
 		cp++;
 	if (*cp != 0)
@@ -729,7 +729,7 @@ relookup(dvp, vpp, cnp)
 		panic("relookup: null name");
 
 	if (cnp->cn_flags & ISDOTDOT)
-		panic ("relookup: lookup on dot-dot");
+		panic("relookup: lookup on dot-dot");
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -766,7 +766,7 @@ relookup(dvp, vpp, cnp)
 	 * Check for symbolic link
 	 */
 	if (dp->v_type == VLNK && (cnp->cn_flags & FOLLOW))
-		panic ("relookup: symlink found.\n");
+		panic("relookup: symlink found");
 #endif
 
 	/*
