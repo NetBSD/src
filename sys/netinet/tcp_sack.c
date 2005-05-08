@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.12 2005/04/05 01:07:17 kurahone Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.13 2005/05/08 04:46:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.12 2005/04/05 01:07:17 kurahone Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.13 2005/05/08 04:46:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -228,7 +228,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		left = ntohl(left);
 		right = ntohl(right);
 
-		if (SEQ_LEQ(right, acked) || SEQ_GEQ(left, tp->snd_max) ||
+		if (SEQ_LEQ(right, acked) || SEQ_GT(right, tp->snd_max) ||
 		    SEQ_GEQ(left, right)) {
 			/* SACK entry that's old, or invalid. */
 			i--;
