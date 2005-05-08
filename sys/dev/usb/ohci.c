@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.163 2005/05/01 01:14:30 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.164 2005/05/08 08:12:08 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.163 2005/05/01 01:14:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.164 2005/05/08 08:12:08 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 		dataphys += curlen;
 		cur = next;
 	}
-	if ((flags & USBD_FORCE_SHORT_XFER) &&
+	if (!rd && (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
 		/* Force a 0 length transfer at the end. */
 
