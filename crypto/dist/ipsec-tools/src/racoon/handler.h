@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.3 2005/05/03 21:08:47 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.4 2005/05/08 08:57:26 manu Exp $	*/
 
 /* Id: handler.h,v 1.11 2004/11/16 15:44:46 ludvigm Exp */
 
@@ -423,7 +423,9 @@ extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
 	struct sockaddr *));
-extern struct ph1handle *getph1bydstaddr __P((struct sockaddr *));
+extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
+	struct sockaddr *));
+extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
 extern vchar_t *dumpph1 __P((void));
 extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));

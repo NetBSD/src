@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.2 2005/05/03 21:08:47 manu Exp $	*/
+/*	$NetBSD: handler.c,v 1.3 2005/05/08 08:57:26 manu Exp $	*/
 
 /* Id: handler.c,v 1.13 2004/11/21 19:36:26 manubsd Exp */
 
@@ -143,6 +143,23 @@ getph1byaddr(local, remote)
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (p->status == PHASE1ST_EXPIRED)
 			continue;
+		if (CMPSADDR(local, p->local) == 0
+		 && CMPSADDR(remote, p->remote) == 0)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph1handle *
+getph1byaddrwop(local, remote)
+	struct sockaddr *local, *remote;
+{
+	struct ph1handle *p;
+
+	LIST_FOREACH(p, &ph1tree, chain) {
+		if (p->status == PHASE1ST_EXPIRED)
+			continue;
 		if (cmpsaddrwop(local, p->local) == 0
 		 && cmpsaddrwop(remote, p->remote) == 0)
 			return p;
@@ -157,7 +174,7 @@ getph1byaddr(local, remote)
  * with phase 2's destinaion.
  */
 struct ph1handle *
-getph1bydstaddr(remote)
+getph1bydstaddrwop(remote)
 	struct sockaddr *remote;
 {
 	struct ph1handle *p;
@@ -392,6 +409,21 @@ getph2byspid(spid)
 		 * such like informational exchange.
 		 */
 		if (p->spid == spid)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph2handle *
+getph2bysaddr(src, dst)
+	struct sockaddr *src, *dst;
+{
+	struct ph2handle *p;
+
+	LIST_FOREACH(p, &ph2tree, chain) {
+		if (cmpsaddrstrict(src, p->src) == 0 &&
+		    cmpsaddrstrict(dst, p->dst) == 0)
 			return p;
 	}
 
@@ -634,6 +666,7 @@ flushph2()
 		if (p->status == PHASE2ST_ESTABLISHED) 
 			isakmp_info_send_d2(p);
 
+		delete_spd(p);
 		unbindph12(p);
 		remph2(p);
 		delph2(p);
