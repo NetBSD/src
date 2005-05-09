@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.28 2005/05/09 18:34:09 jmc Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29 2005/05/09 23:43:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -99,8 +99,16 @@ struct uidinfo {
 
 };
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-#define UILOCK(uip, s)		s = splsoftnet(); simple_lock(&uip->ui_slock)
-#define UIUNLOCK(uip, s)	simple_lock(&uip->ui_slock); splx(s)
+#define UILOCK(uip, s) \
+    do { \
+	s = splsoftnet(); \
+	simple_lock(&uip->ui_slock); \
+    } while (/*CONSTCOND*/0)
+#define UIUNLOCK(uip, s) \
+    do { \
+	simple_unlock(&uip->ui_slock); \
+	splx(s); \
+    } while (/*CONSTCOND*/0)
 
 extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 extern u_long uihash;		/* size of hash table - 1 */
