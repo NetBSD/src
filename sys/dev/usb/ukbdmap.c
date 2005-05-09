@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.13 2004/09/11 04:47:43 christos Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.13.10.1 2005/05/09 17:21:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.13 2004/09/11 04:47:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.13.10.1 2005/05/09 17:21:48 tron Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -433,6 +433,32 @@ Static const keysym_t ukbd_keydesc_es[] = {
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
+Static const keysym_t ukbd_keydesc_pt[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(31),  KS_2,		KS_quotedbl,	KS_at,
+    KC(32),  KS_3,		KS_numbersign,	KS_sterling,
+    KC(35),  KS_6,		KS_ampersand,
+    KC(36),  KS_7,		KS_slash,	KS_braceleft,
+    KC(37),  KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(38),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(39),  KS_0,		KS_equal,	KS_braceright,
+    KC(45),  KS_apostrophe,	KS_question,
+    KC(46),  KS_plus,		KS_asterisk,
+    KC(47),  KS_plus,		KS_asterisk,
+    KC(48),  KS_dead_acute,	KS_dead_grave,
+    KC(49),  KS_less,		KS_greater,
+    KC(50),  KS_dead_tilde,	KS_dead_circumflex,
+    KC(51),  KS_ccedilla,	KS_Ccedilla,
+    KC(52),  KS_masculine,	KS_ordfeminine,
+    KC(53),  KS_backslash,	KS_bar,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,
+    KC(226), KS_Mode_switch,	KS_Multi_key,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 Static const keysym_t ukbd_keydesc_sg[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(30),  KS_1,		KS_plus,	KS_bar,
@@ -498,6 +524,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_NO,			KB_DK,	ukbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	ukbd_keydesc_no_nodead),
 	KBD_MAP(KB_ES ,			KB_US,	ukbd_keydesc_es),
+	KBD_MAP(KB_PT,			KB_US,	ukbd_keydesc_pt),
 	KBD_MAP(KB_SG,			KB_US,	ukbd_keydesc_sg),
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	ukbd_keydesc_sg_nodead),
 	KBD_MAP(KB_SF,			KB_SG,	ukbd_keydesc_sf),
