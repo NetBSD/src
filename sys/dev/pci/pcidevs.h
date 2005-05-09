@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.709 2005/05/04 09:12:14 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.710 2005/05/09 06:57:52 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.708 2005/05/04 09:11:09 cube Exp
+ *	NetBSD: pcidevs,v 1.709 2005/05/09 06:55:02 martin Exp
  */
 
 /*
@@ -1321,6 +1321,7 @@
 /* Corega products */
 #define	PCI_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
 #define	PCI_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 Ethernet */
+#define	PCI_PRODUCT_COREGA_LAPCIGT	0xc107		/* CG-LAPCIGT */
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
