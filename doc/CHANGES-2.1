@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.85 2005/05/09 22:34:53 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.86 2005/05/09 23:00:23 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1731,4 +1731,19 @@ share/zoneinfo/iso3166.tab			1.1.1.12
 
 	Update to tzdata2005h, with fixes affecting Kazakhstan right now.
 	[kleink, ticket #1397]
+
+etc/rc.d/amd					1.13
+etc/rc.d/ipnat					1.13
+etc/rc.d/network				1.47
+etc/rc.d/nfsd					1.7
+etc/rc.d/nfslocking				1.8
+etc/rc.d/routed					1.9
+etc/rc.d/smmsp					1.4
+etc/rc.d/yppasswdd				1.10
+etc/rc.d/ypserv					1.8
+
+	Use 'load_rc_config_var CMD VAR' to set VAR for "foreign" rc.conf(5)
+	variables that may be set in /etc/rc.conf.d/CMD instead of /etc/rc.conf.
+	Fixes PR 20786 from Pavel Cahyna.
+	[lukem, ticket #1269]
 
