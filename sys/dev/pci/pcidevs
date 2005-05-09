@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.708 2005/05/04 09:11:09 cube Exp $
+$NetBSD: pcidevs,v 1.709 2005/05/09 06:55:02 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1314,6 +1314,7 @@ product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 /* Corega products */
 product COREGA CB_TXD		0xa117	FEther CB-TXD 10/100 Ethernet
 product COREGA 2CB_TXD		0xa11e	FEther II CB-TXD 10/100 Ethernet
+product COREGA LAPCIGT		0xc107	CG-LAPCIGT
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
