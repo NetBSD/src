@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.1 2005/05/09 17:01:49 tron Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.2 2005/05/09 17:05:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -80,7 +80,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.1 2005/05/09 17:01:49 tron Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.2 2005/05/09 17:05:19 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ hookup(char *host, char *port)
 	else
 		(void)strlcpy(hostnamebuf, host, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
-	
+
 	for (res = res0; res; res = res->ai_next) {
 		/*
 		 * make sure that ai_addr is NOT an IPv4 mapped address.
@@ -1300,7 +1300,7 @@ initconn(void)
 		switch (data_addr.su_family) {
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
-			  	pasvcmd = "EPSV";
+				pasvcmd = "EPSV";
 				result = command("EPSV");
 				if (!connected)
 					return (1);
@@ -1323,7 +1323,7 @@ initconn(void)
 				}
 			}
 			if (result != COMPLETE) {
-			  	pasvcmd = "PASV";
+				pasvcmd = "PASV";
 				result = command("PASV");
 				if (!connected)
 					return (1);
@@ -1331,7 +1331,7 @@ initconn(void)
 			break;
 #ifdef INET6
 		case AF_INET6:
-		  	pasvcmd = "EPSV";
+			pasvcmd = "EPSV";
 			result = command("EPSV");
 			if (!connected)
 				return (1);
@@ -1651,7 +1651,7 @@ initconn(void)
 		if (!connected)
 			return (1);
 	skip_port:
-		
+
 		if (result == ERROR && sendport == -1) {
 			sendport = 0;
 			tmpno = 1;
@@ -1748,7 +1748,7 @@ dataconn(const char *lmode)
 	}
 #endif
 	return (fdopen(data, lmode));
-		
+
  dataconn_failed:
 	(void)close(data);
 	data = -1;
@@ -2037,7 +2037,7 @@ gunique(const char *local)
 	}
 	len = strlcpy(new, local, sizeof(new));
 	cp = &new[len];
-	*cp++ = '.';    
+	*cp++ = '.';
 	while (!d) {
 		if (++count == 100) {
 			fputs("runique: can't find unique file name.\n",
