@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: yppasswdd,v 1.6 2002/03/22 04:34:01 thorpej Exp $
+# $NetBSD: yppasswdd,v 1.6.6.1 2005/05/09 22:42:07 riz Exp $
 #
 
 # PROVIDE: yppasswdd
@@ -25,4 +25,6 @@ yppasswdd_precmd()
 }
 
 load_rc_config $name
+load_rc_config_var rpcbind rpcbind
+load_rc_config_var ypserv ypserv
 run_rc_command "$1"
