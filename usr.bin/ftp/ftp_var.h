@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.69 2005/01/03 09:50:09 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.69.2.1 2005/05/09 17:02:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <poll.h>
 
 #include <setjmp.h>
 #include <stringlist.h>
