@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: smmsp,v 1.2 2003/04/02 18:00:14 atatat Exp $
+# $NetBSD: smmsp,v 1.2.4.1 2005/05/09 22:42:09 riz Exp $
 #
 
 # REQUIRE: mail
@@ -84,4 +84,5 @@ smmsp_precmd()
 }
 
 load_rc_config $name
+load_rc_config_var sendmail sendmail_suidroot
 run_rc_command "$1"
