@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.8 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.9 2005/05/09 06:58:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -106,6 +106,8 @@ static const struct rtk_type re_devs[] = {
 		"RealTek 8169 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, RTK_HWREV_8169S,
+		"Corega CG-LAPCIGT Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
 		"RealTek 8110S Single-chip Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
