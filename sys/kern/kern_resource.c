@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.95 2005/05/09 03:27:21 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.96 2005/05/09 11:10:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.95 2005/05/09 03:27:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.96 2005/05/09 11:10:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,15 +933,16 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
+	int s;
 
 	if (diff == 0)
 		return 0;
 
 	uip = uid_find(uid);
-	simple_lock(&uip->ui_slock);
+	UILOCK(uip, s);
 	uip->ui_proccnt += diff;
 	KASSERT(uip->ui_proccnt >= 0);
-	simple_unlock(&uip->ui_slock);
+	UIUNLOCK(uip, s);
 	return uip->ui_proccnt;
 }
 
@@ -949,19 +950,18 @@ int
 chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t max)
 {
 	rlim_t nsb;
-	int s = splsoftnet();
+	int s;
 
-	simple_lock(&uip->ui_slock);
+	UILOCK(uip, s);
 	nsb = uip->ui_sbsize + to - *hiwat;
 	if (to > *hiwat && nsb > max) {
-		simple_unlock(&uip->ui_slock);
+		UIUNLOCK(uip, s);
 		splx(s);
 		return 0;
 	}
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
 	KASSERT(uip->ui_sbsize >= 0);
-	simple_unlock(&uip->ui_slock);
-	splx(s);
+	UIUNLOCK(uip, s);
 	return 1;
 }
