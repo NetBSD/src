@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.35 2005/05/07 19:52:17 dsl Exp $	*/
+/*	$NetBSD: histedit.c,v 1.36 2005/05/09 11:35:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.35 2005/05/07 19:52:17 dsl Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.36 2005/05/09 11:35:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,9 @@ histedit(void)
 					el_set(el, EL_HIST, history, hist);
 				el_set(el, EL_PROMPT, getprompt);
 				el_set(el, EL_SIGNAL, 1);
+				el_set(el, EL_ADDFN, "rl-complete",
+				    "ReadLine compatible completion function",
+				    _el_fn_complete);
 			} else {
 bad:
 				out2str("sh: can't initialize editing\n");
@@ -150,12 +153,8 @@ bad:
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
-			if (tabcomplete) {
-				el_set(el, EL_ADDFN, "rl_complete",
-				    "ReadLine compatible completion function",
-				    _el_fn_complete);
-				el_set(el, EL_BIND, "^I", "rl_complete", NULL);
-			}
+			el_set(el, EL_BIND, "^I", 
+			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
 			el_source(el, NULL);
 		}
 	} else {
