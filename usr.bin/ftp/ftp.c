@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.2 2005/05/09 17:05:19 tron Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.3 2005/05/09 17:12:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.2 2005/05/09 17:05:19 tron Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.3 2005/05/09 17:12:14 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1718,7 +1718,7 @@ dataconn(const char *lmode)
 		goto dataconn_failed;
 	}
 	if (rv == 0) {
-		warn("poll timeout waiting before accept")
+		warn("poll timeout waiting before accept");
 		goto dataconn_failed;
 	}
 
