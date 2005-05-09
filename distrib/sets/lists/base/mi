@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470.2.2 2004/05/10 19:30:47 tron Exp $
+# $NetBSD: mi,v 1.470.2.2.2.1 2005/05/09 21:34:36 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3203,6 +3203,7 @@
 ./usr/share/zoneinfo/Europe/Luxembourg		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Madrid		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Malta		base-sys-share		share
+./usr/share/zoneinfo/Europe/Mariehamn		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Minsk		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Monaco		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Moscow		base-sys-share		share
