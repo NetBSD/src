@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.126 2004/07/20 10:40:22 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.1 2005/05/09 17:01:49 tron Exp $	*/
 
 /*-
- * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126 2004/07/20 10:40:22 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.1 2005/05/09 17:01:49 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ __RCSID("$NetBSD: ftp.c,v 1.126 2004/07/20 10:40:22 lukem Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,9 +126,6 @@ __RCSID("$NetBSD: ftp.c,v 1.126 2004/07/20 10:40:22 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#ifndef USE_SELECT
-#include <poll.h>
-#endif
 
 #include "ftp_var.h"
 
@@ -539,39 +537,10 @@ getreply(int expecteof)
 static int
 empty(FILE *cin, FILE *din, int sec)
 {
-	int nr;
-	int nfd = 0;
+	int		nr, nfd;
+	struct pollfd	pfd[2];
 
-#ifdef USE_SELECT
-	struct timeval t;
-	fd_set rmask;
-
-	FD_ZERO(&rmask);
-	if (cin) {
-		if (nfd < fileno(cin))
-			nfd = fileno(cin);
-		FD_SET(fileno(cin), &rmask);
-	}
-	if (din) {
-		if (nfd < fileno(din))
-			nfd = fileno(din);
-		FD_SET(fileno(din), &rmask);
-	}
-		
-	t.tv_sec = (long) sec;
-	t.tv_usec = 0;
-	if ((nr = select(nfd, &rmask, NULL, NULL, &t)) <= 0)
-		return nr;
-
-	nr = 0;
-	if (cin)
-		nr |= FD_ISSET(fileno(cin), &rmask) ? 1 : 0;
-	if (din)
-		nr |= FD_ISSET(fileno(din), &rmask) ? 2 : 0;
-
-#else
-	struct pollfd pfd[2];
-
+	nfd = 0;
 	if (cin) {
 		pfd[nfd].fd = fileno(cin);
 		pfd[nfd++].events = POLLIN;
@@ -582,7 +551,7 @@ empty(FILE *cin, FILE *din, int sec)
 		pfd[nfd++].events = POLLIN;
 	}
 
-	if ((nr = poll(pfd, nfd, sec * 1000)) <= 0)
+	if ((nr = xpoll(pfd, nfd, sec * 1000)) <= 0)
 		return nr;
 
 	nr = 0;
@@ -591,7 +560,6 @@ empty(FILE *cin, FILE *din, int sec)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 1 : 0;
 	if (din)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 2 : 0;
-#endif
 	return nr;
 }
 
@@ -1704,7 +1672,8 @@ initconn(void)
 #endif
 	return (0);
  bad:
-	(void)close(data), data = -1;
+	(void)close(data);
+	data = -1;
 	if (tmpno)
 		sendport = 1;
 	return (1);
@@ -1713,20 +1682,61 @@ initconn(void)
 FILE *
 dataconn(const char *lmode)
 {
-	struct sockinet from;
-	int s, fromlen = myctladdr.su_len;
+	struct sockinet	from;
+	int		s, fromlen, flags, rv, timeout;
+	struct timeval	endtime, now, td;
+	struct pollfd	pfd[1];
 
-	if (passivemode)
+	if (passivemode)	/* passive data connection */
 		return (fdopen(data, lmode));
 
-	s = accept(data, (struct sockaddr *) &from.si_su, &fromlen);
-	if (s < 0) {
-		warn("accept");
-		(void)close(data), data = -1;
-		return (NULL);
+				/* active mode data connection */
+
+	if ((flags = fcntl(data, F_GETFL, 0)) == -1)
+		goto dataconn_failed;		/* get current socket flags  */
+	if (fcntl(data, F_SETFL, flags | O_NONBLOCK) == -1)
+		goto dataconn_failed;		/* set non-blocking connect */
+
+		/* NOTE: we now must restore socket flags on successful exit */
+
+				/* limit time waiting on listening socket */
+	pfd[0].fd = data;
+	pfd[0].events = POLLIN;
+	(void)gettimeofday(&endtime, NULL);	/* determine end time */
+	endtime.tv_sec += (quit_time > 0) ? quit_time: 60;
+						/* without -q, default to 60s */
+	do {
+		(void)gettimeofday(&now, NULL);
+		timersub(&endtime, &now, &td);
+		timeout = td.tv_sec * 1000 + td.tv_usec/1000;
+		if (timeout < 0)
+			timeout = 0;
+		rv = xpoll(pfd, 1, timeout);
+	} while (rv == -1 && errno == EINTR);	/* loop until poll ! EINTR */
+	if (rv == -1) {
+		warn("poll waiting before accept");
+		goto dataconn_failed;
 	}
+	if (rv == 0) {
+		warn("poll timeout waiting before accept")
+		goto dataconn_failed;
+	}
+
+				/* (non-blocking) accept the connection */
+	fromlen = myctladdr.su_len;
+	do {
+		s = accept(data, (struct sockaddr *) &from.si_su, &fromlen);
+	} while (s == -1 && errno == EINTR);	/* loop until accept ! EINTR */
+	if (s == -1) {
+		warn("accept");
+		goto dataconn_failed;
+	}
+
 	(void)close(data);
 	data = s;
+	if (fcntl(data, F_SETFL, flags) == -1)	/* restore socket flags */
+		goto dataconn_failed;
+
 #ifdef IPTOS_THROUGHPUT
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
@@ -1738,6 +1748,11 @@ dataconn(const char *lmode)
 	}
 #endif
 	return (fdopen(data, lmode));
+		
+ dataconn_failed:
+	(void)close(data);
+	data = -1;
+	return (NULL);
 }
 
 void
