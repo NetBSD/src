@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.1.4.1 2005/04/17 11:40:26 tron Exp $
+#	$NetBSD: TWINTAIL,v 1.1.4.2 2005/05/09 17:17:05 tron Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -25,7 +25,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core
 #options 	XSCALE_CACHE_WRITE_THROUGH
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
-makeoptions	COPTS="-O2 -mcpu=xscale"
+makeoptions	CPUFLAGS="-mcpu=xscale"
 
 # Architecture options
 
