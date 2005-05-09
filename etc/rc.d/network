@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.44 2003/10/12 09:50:05 jdc Exp $
+# $NetBSD: network,v 1.44.4.1 2005/05/09 22:42:08 riz Exp $
 #
 
 # PROVIDE: network
@@ -396,5 +396,7 @@ network_stop()
 
 }
 
-load_rc_config $name ipfilter
+load_rc_config $name
+load_rc_config_var dhclient dhclient
+load_rc_config_var ipfilter ipfilter
 run_rc_command "$1"
