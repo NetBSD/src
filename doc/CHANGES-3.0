@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.82 2005/05/07 23:13:34 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.83 2005/05/09 17:25:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8284,4 +8284,57 @@ sys/dev/pcmcia/pcmciadevs_data.h		regen
 	Add support for SMC2531W-B EliteConnect Wireless Adapter.
 	This fixes PR kern/30001.
 	[martin, ticket #260, #261, #262, #263]
+
+usr.bin/ftp/fetch.c				1.156
+usr.bin/ftp/version.h				1.45
+
+	In fetch_url(), don't call freeaddrinfo(res0) too early, as we use
+	pointers to its contents later in the function.
+	[lukem, ticket #264]
+
+usr.bin/ftp/extern.h				1.65
+usr.bin/ftp/ftp.c				1.127
+usr.bin/ftp/ftp_var.h				1.70
+usr.bin/ftp/util.c				1.118
+usr.bin/ftp/version.h				1.46
+
+	Implement a timeout on the accept(2) in dataconn() and the
+	connect(2) in xconnect() by temporarily setting O_NONBLOCK
+	on the socket and using xpoll() to wait for the operation
+	to succeed.
+	The timeout used is the '-q quittime' argument (defaults to
+	60s for accept(2), and the system default for connect(2)).
+	Idea inspired by discussion with Chuck Cranor.
+	This may (indirectly) fix various problems with timeouts
+	in active mode through broken firewalls.
+	Implement xpoll() as a wrapper around poll(2), to make it
+	easier to replace on systems without a functional poll(2).
+	Unconditionally use xpoll() instead of conditionally using
+	select(2) or poll(2).
+	[lukem, ticket #265]
+
+usr.bin/ftp/cmds.c				1.112
+usr.bin/ftp/cmdtab.c				1.44
+usr.bin/ftp/extern.h				1.66
+usr.bin/ftp/fetch.c				1.157
+usr.bin/ftp/ftp.c				1.128-1.129
+usr.bin/ftp/ftp_var.h				1.71
+usr.bin/ftp/main.c				1.91
+usr.bin/ftp/progressbar.c			1.7
+usr.bin/ftp/util.c				1.119-1.120
+
+	Whitespace cleanup and comment corrections.
+	[lukem, ticket #266]
+
+sys/arch/evbarm/conf/TWINTAIL			1.3
+
+	Use makeoptions CPUFLAGS not COPTS.
+	[rearnsha, ticket #267]
+
+sys/arch/mac68k/dev/akbdmap.h			1.7
+sys/dev/pckbport/wskbdmap_mfii.c		1.8-1.9
+sys/dev/usb/ukbdmap.c				1.14
+
+	Fixes for existing and new Portuguese keymaps.
+	[abs, ticket #268]
 
