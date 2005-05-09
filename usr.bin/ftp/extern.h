@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.64 2005/02/09 23:17:27 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.64.2.1 2005/05/09 17:01:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ void	usage(void);
 void	user(int, char **);
 int	xconnect(int, const struct sockaddr *, int);
 int	xlisten(int, int);
+int	xpoll(struct pollfd *, int, int);
 void   *xmalloc(size_t);
 StringList *xsl_init(void);
 void	xsl_add(StringList *, char *);
