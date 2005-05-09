@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: routed,v 1.7 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: routed,v 1.7.6.1 2005/05/09 22:42:14 riz Exp $
 #
 
 # PROVIDE: routed
@@ -23,4 +23,5 @@ routed_precmd()
 }
 
 load_rc_config $name
+load_rc_config_var gated gated
 run_rc_command "$1"
