@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ypserv,v 1.5 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: ypserv,v 1.5.6.1 2005/05/09 22:42:13 riz Exp $
 #
 
 # PROVIDE: ypserv
@@ -29,4 +29,5 @@ ypserv_precmd()
 }
 
 load_rc_config $name
+load_rc_config_var rpcbind rpcbind
 run_rc_command "$1"
