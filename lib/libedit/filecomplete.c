@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.2 2005/05/07 16:28:32 dsl Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.3 2005/05/09 20:10:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.2 2005/05/07 16:28:32 dsl Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.3 2005/05/09 20:10:33 dsl Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -104,8 +104,13 @@ tilde_expand(char *txt)
 		(void)strncpy(temp, txt + 1, len - 2);
 		temp[len - 2] = '\0';
 	}
-	if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
-		pass = NULL;
+	if (temp[0] == 0) {
+		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
+			pass = NULL;
+	} else {
+		if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
+			pass = NULL;
+	}
 	free(temp);		/* value no more needed */
 	if (pass == NULL)
 		return (strdup(txt));
@@ -134,7 +139,7 @@ char *
 filename_completion_function(const char *text, int state)
 {
 	static DIR *dir = NULL;
-	static char *filename = NULL, *dirname = NULL;
+	static char *filename = NULL, *dirname = NULL, *dirpath = NULL;
 	static size_t filename_len = 0;
 	struct dirent *entry;
 	char *temp;
@@ -172,31 +177,25 @@ filename_completion_function(const char *text, int state)
 			dirname = NULL;
 		}
 
-		/* support for ``~user'' syntax */
-		if (dirname && *dirname == '~') {
-			char *nptr;
-			temp = tilde_expand(dirname);
-			if (temp == NULL)
-				return NULL;
-			nptr = realloc(dirname, strlen(temp) + 1);
-			if (nptr == NULL) {
-				free(dirname);
-				return NULL;
-			}
-			dirname = nptr;
-			(void)strcpy(dirname, temp);	/* safe */
-			free(temp);	/* no longer needed */
-		}
-		/* will be used in cycle */
-		filename_len = filename ? strlen(filename) : 0;
-
 		if (dir != NULL) {
 			(void)closedir(dir);
 			dir = NULL;
 		}
-		dir = opendir(dirname ? dirname : ".");
+
+		/* support for ``~user'' syntax */
+		free(dirpath);
+		if (dirname && *dirname == '~') {
+			dirpath = tilde_expand(dirname);
+			if (dirpath == NULL)
+				return NULL;
+		} else
+			dirpath = strdup(dirname ? dirname : "./");
+		dir = opendir(dirpath);
 		if (!dir)
 			return (NULL);	/* cannot open the directory */
+
+		/* will be used in cycle */
+		filename_len = filename ? strlen(filename) : 0;
 	}
 
 	/* find the match */
@@ -221,23 +220,27 @@ filename_completion_function(const char *text, int state)
 	}
 
 	if (entry) {		/* match found */
-
 		struct stat stbuf;
+		const char *isdir = "";
+
 #if defined(__SVR4) || defined(__linux__)
-		len = strlen(entry->d_name) +
+		len = strlen(entry->d_name);
 #else
-		len = entry->d_namlen +
+		len = entry->d_namlen;
 #endif
-		    ((dirname) ? strlen(dirname) : 0) + 1 + 1;
-		temp = malloc(len);
+		temp = malloc(strlen(dirpath) + len + 1);
 		if (temp == NULL)
 			return NULL;
-		(void)sprintf(temp, "%s%s",
-		    dirname ? dirname : "", entry->d_name);	/* safe */
+		(void)sprintf(temp, "%s%s", dirpath, entry->d_name); /* safe */
 
 		/* test, if it's directory */
 		if (stat(temp, &stbuf) == 0 && S_ISDIR(stbuf.st_mode))
-			strcat(temp, "/");	/* safe */
+			isdir = "/";
+		free(temp);
+		temp = malloc(strlen(dirname) + len + 1 + 1);
+		if (temp == NULL)
+			return NULL;
+		(void)sprintf(temp, "%s%s%s", dirname, entry->d_name, isdir);
 	} else {
 		(void)closedir(dir);
 		dir = NULL;
