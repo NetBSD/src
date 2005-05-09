@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.41 2005/05/09 11:10:07 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.42 2005/05/09 23:40:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.41 2005/05/09 11:10:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.42 2005/05/09 23:40:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ lf_free(struct lockf *lock)
 	uip = uid_find(lock->lf_uid);
 	UILOCK(uip, s);
 	uip->ui_lockcnt--;
-	simple_unlock(&uip->ui_slock);
 	UIUNLOCK(uip, s);
 	pool_put(&lockfpool, lock);
 }
