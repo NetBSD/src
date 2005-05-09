@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.43 2005/05/03 16:26:29 manu Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.44 2005/05/09 19:04:50 jmc Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.43 2005/05/03 16:26:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.44 2005/05/09 19:04:50 jmc Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -603,7 +603,6 @@ native_to_linux_sigaltstack(lss, bss)
 	else
 	    lss->ss_flags = 0;
 }
-#endif /* LINUX_SS_ONSTACK */
 
 int
 linux_sys_sigaltstack(l, v, retval)
@@ -638,3 +637,4 @@ linux_sys_sigaltstack(l, v, retval)
 	}
 	return 0;
 }
+#endif /* LINUX_SS_ONSTACK */
