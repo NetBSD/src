@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.4 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.ibmnws,v 1.5 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for ibmnws
 #
@@ -48,6 +48,8 @@ device-major	clockctl	char 58			clockctl
 device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

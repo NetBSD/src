@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.12 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.mac68k,v 1.13 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for mac68k
 #
@@ -50,6 +50,8 @@ device-major	systrace	char 50			systrace
 device-major	cgd		char 51  block 23	cgd
 device-major	ksyms		char 52			ksyms
 device-major	wsfont		char 53			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

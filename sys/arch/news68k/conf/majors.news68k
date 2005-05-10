@@ -1,4 +1,4 @@
-#	$NetBSD: majors.news68k,v 1.12 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.news68k,v 1.13 2005/05/10 00:02:37 jdolecek Exp $
 #
 # Device majors for news68k
 #
@@ -46,6 +46,8 @@ device-major	systrace	char 77			systrace
 device-major	cgd		char 78  block 33	cgd
 device-major	ksyms		char 79			ksyms
 device-major	wsfont		char 80			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

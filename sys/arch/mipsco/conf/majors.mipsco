@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.11 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.mipsco,v 1.12 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for mipsco
 #
@@ -42,6 +42,8 @@ device-major	raid		char 74  block 32	raid
 device-major	clockctl	char 75			clockctl
 device-major	systrace	char 76			systrace
 device-major	ksyms		char 77			ksyms
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
