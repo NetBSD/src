@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.88 2005/05/10 18:05:12 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.89 2005/05/10 23:58:23 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1846,4 +1846,30 @@ sbin/init/init.c				1.69
 	Bump the number of inodes to 1024 in the MFS case, needed to
 	create more devices in the ramdisk images, ok'ed by thorpej@.
 	[martin, ticket #1331]
+
+usr.sbin/pkg_install/lib/ftpio.c		1.67
+
+	* ftp.fi.netbsd.org returns "257" in return to a "cd" command,
+	  accept that (in addition to 250 and 550). Seems to be allowed
+	  per RFC 959. (PR#24744.)
+	* Make buffer for reply bigger (not too big, as it may hit
+	  performance).
+	[hubertf, ticket #1333]
+
+sys/dev/pci/pcidevs				1.702
+
+	Add missing PCI id for Adaptec ASR-2410SA.
+	[tron, ticket #1341]
+
+sys/ufs/ext2fs/ext2fs_bmap.c			1.19
+
+	getblk() can return NULL if we are the pagedaemon. Check for this.
+	[bouyer, ticket #1355]
+
+lib/libc/citrus/citrus_none.c			1.13
+
+	Don't sign extend characters when they get converted to wide
+	characters in mbtowc. Otherwise you are not going to be able
+	to wctomb them. Added regression test.  From kim, many thanks.
+	[christos, ticket #1361]
 
