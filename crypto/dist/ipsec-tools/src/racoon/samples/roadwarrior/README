@@ -23,20 +23,14 @@ authentication, IP allocation and accounting. The address and secret
 to be used for the RADIUS server are configured in /etc/radius.conf, 
 see radius.conf(5).
 
-Both config files use the server/phase1-down.sh script, which is
-used to work around a bug in raccon with flushing automatically
-generated SAD and SPD entries.  This script will not be needed
-anymore when this problem will be fixed.
-
 Both configurations can be used with the Cisco VPN client if it
 is set up to use hybrid authentication (aka mutual group authentication,
 available in Cisco VPN client version 4.0.5 and above). The group 
 password configured in the Cisco VPN client is not used by racoon.
 
-After you have installed /etc/racoon/racoon.conf and 
-/etc/racoon/phase1-down.sh, you will also have to install a server
-certificate and key in /etc/openssl/certs/server.crt and 
-/etc/openssl/certs/server.key
+After you have installed /etc/racoon/racoon.conf, you will also have 
+to install a server certificate and key in /etc/openssl/certs/server.crt
+and /etc/openssl/certs/server.key
 
 
 Client setup
