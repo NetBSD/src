@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2005/04/11 01:49:31 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2005/05/10 22:59:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.91 2005/04/11 01:49:31 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.92 2005/05/10 22:59:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,7 +655,8 @@ cmdscanner(void)
 					break;
 				line[num] = '\0';
 			} else if (num == sizeof(line) - 2) {
-				fputs("sorry, input line too long.\n", ttyout);
+				fputs("Sorry, input line is too long.\n",
+				    ttyout);
 				while ((num = getchar()) != '\n' && num != EOF)
 					/* void */;
 				break;
@@ -666,20 +667,23 @@ cmdscanner(void)
 			HistEvent ev;
 			cursor_pos = NULL;
 
-			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
+			buf = el_gets(el, &num);
+			if (buf == NULL || num == 0) {
 				if (fromatty)
 					putc('\n', ttyout);
 				quit(0, NULL);
 			}
-			if (buf[--num] == '\n') {
-				if (num == 0)
-					break;
-			} else if (num >= sizeof(line)) {
-				fputs("sorry, input line too long.\n", ttyout);
+			if (num >= sizeof(line)) {
+				fputs("Sorry, input line is too long.\n",
+				    ttyout);
 				break;
 			}
 			memcpy(line, buf, num);
-			line[num] = '\0';
+			if (line[--num] == '\n') {
+				line[num] = '\0';
+				if (num == 0)
+					break;
+			}
 			history(hist, &ev, H_ENTER, buf);
 		}
 #endif /* !NO_EDITCOMPLETE */
