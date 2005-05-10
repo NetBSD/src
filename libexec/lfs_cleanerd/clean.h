@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.18 2003/08/07 09:46:43 agc Exp $	*/
+/*	$NetBSD: clean.h,v 1.18.4.1 2005/05/10 05:08:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -158,6 +158,7 @@ void		 munmap_segment(FS_INFO *, caddr_t, int);
 void		 reread_fs_info(FS_INFO *, int);
 void		 toss (void *, int *, size_t,
 		     int (*)(const void *, const void *, const void *), void *);
+void		 log_exit(int, int, char *, ...);
 
 void		 dump_super(struct lfs *);
 void		 dump_cleaner_info(void *);
