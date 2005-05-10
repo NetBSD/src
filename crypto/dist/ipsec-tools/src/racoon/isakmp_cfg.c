@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3.2.2 2005/05/01 11:01:05 tron Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3.2.3 2005/05/10 16:09:00 tron Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.26.2.1 2005/03/16 00:13:38 manubsd Exp */
 
@@ -130,7 +130,7 @@ isakmp_cfg_r(iph1, msg)
 {
 	struct isakmp *packet;
 	struct isakmp_gen *ph;
-	size_t tlen;
+	int tlen;
 	char *npp;
 	int np;
 	vchar_t *dmsg;
@@ -303,7 +303,7 @@ isakmp_cfg_reply(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	int type;
@@ -440,7 +440,7 @@ isakmp_cfg_request(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	vchar_t *payload;
@@ -586,7 +586,7 @@ isakmp_cfg_set(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	vchar_t *payload;
