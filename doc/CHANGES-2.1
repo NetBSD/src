@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.87 2005/05/10 05:27:08 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.88 2005/05/10 18:05:12 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1840,4 +1840,10 @@ sbin/newfs_lfs/newfs.c				1.15 via patch
 	  a fcntl call on the root inode to find the Ifile filehandle.  (As a
 	  side-effect, addresses PR #29144.)
 	[perseant, ticket #1281]
+
+sbin/init/init.c				1.69
+
+	Bump the number of inodes to 1024 in the MFS case, needed to
+	create more devices in the ramdisk images, ok'ed by thorpej@.
+	[martin, ticket #1331]
 
