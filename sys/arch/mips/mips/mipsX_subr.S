@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.15 2005/02/26 00:06:28 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.15.2.1 2005/05/10 12:39:45 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1598,13 +1598,13 @@ END(MIPSX(SetPID))
  *
  * mipsN_TLBUpdate --
  *
- *	Update the TLB if highreg is found; otherwise, enter the data.
+ *	Update the TLB if highreg is found; otherwise do nothing.
  *
  *	mips3_TLBUpdate(virpageadr, lowregx)
  *		unsigned virpageadr, lowregx;
  *
  * Results:
- *	< 0 if loaded >= 0 if updated.
+ *	< 0 if skipped, >= 0 if updated.
  *
  * Side effects:
  *	None.
@@ -1628,7 +1628,7 @@ LEAF(MIPSX(TLBUpdate))
 	COP0_SYNC
 	_SLL	a1, a1, WIRED_SHIFT		# Clear top 34 bits of EntryLo
 	_SRL	a1, a1, WIRED_SHIFT
-	bne	t1, zero, 2f			# Decide even odd
+	bne	t1, zero, 1f			# Decide even odd
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 # EVEN
 	nop
@@ -1652,31 +1652,9 @@ LEAF(MIPSX(TLBUpdate))
 	b	4f
 	nop
 1:
-#if defined(MIPS3) && defined(MIPS3_4100)		/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
-#else
-	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif
-	COP0_SYNC
-	_MTC0	a0, MIPS_COP_0_TLB_HI		# init high reg.
-	COP0_SYNC
-	_MTC0	a1, MIPS_COP_0_TLB_LO0		# init low reg0.
-	COP0_SYNC
-	_MTC0	a2, MIPS_COP_0_TLB_LO1		# init low reg1.
-	COP0_SYNC
-	nop
-	nop					# required for QED5230
-	tlbwr					# enter into a random slot
-	COP0_SYNC
-	nop					# required for QED5230
-	nop					# required for QED5230
-	b	4f
-	nop
 # ODD
-2:
 	nop
-	bltz	v0, 3f				# index < 0 => !found
+	bltz	v0, 4f				# index < 0 => !found
 	nop
 	nop					# required for QED5230
 
@@ -1693,30 +1671,11 @@ LEAF(MIPSX(TLBUpdate))
 	COP0_SYNC
 	nop					# required for QED5230
 	nop					# required for QED5230
-	b	4f
 	nop
-3:
-#if defined(MIPS3) && defined(MIPS3_4100)		/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
-#else
-	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif
-	COP0_SYNC
-	_MTC0	a0, MIPS_COP_0_TLB_HI		# init high reg.
-	COP0_SYNC
-	_MTC0	a2, MIPS_COP_0_TLB_LO0		# init low reg0.
-	COP0_SYNC
-	_MTC0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
-	COP0_SYNC
-	nop
-	nop					# required for QED5230
-	tlbwr					# enter into a random slot
-	COP0_SYNC
-4:						# Make shure pipeline
+4:
+	nop					# Make sure pipeline
 	nop					# advances before we
-	nop					# uses the tlb.
-	nop
+	nop					# use the TLB.
 	nop
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	COP0_SYNC
