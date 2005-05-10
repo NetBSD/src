@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.117 2005/05/01 07:28:14 lukem Exp $
+# $NetBSD: mi,v 1.118 2005/05/10 10:23:14 manu Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -638,7 +638,6 @@
 ./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	crypto,share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
