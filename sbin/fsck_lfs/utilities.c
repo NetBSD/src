@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.16 2003/10/20 12:04:38 dsl Exp $	 */
+/* $NetBSD: utilities.c,v 1.16.4.1 2005/05/10 05:08:57 riz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -136,8 +136,9 @@ ckfini(int markclean)
 		}
 	}
 
-	if ((fs->lfs_flags & LFS_PF_CLEAN) == 0)
+	if ((fs->lfs_pflags & LFS_PF_CLEAN) == 0) {
 		fsmodified = 1;
+	}
 	fs->lfs_pflags |= LFS_PF_CLEAN;
 
 	if (fsmodified && (preen || reply("UPDATE STANDARD SUPERBLOCK"))) {
