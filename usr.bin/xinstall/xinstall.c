@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.87.2.1 2005/05/10 12:42:02 tron Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.87.2.2 2005/05/10 12:43:53 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.87.2.1 2005/05/10 12:42:02 tron Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.87.2.2 2005/05/10 12:43:53 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1057,8 +1057,10 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	p = buf;
 							/* print details */
 	fprintf(metafp, ".%s%s type=%s mode=%#o", *p ? "/" : "", p, type, mode);
-	if (link)
-		fprintf(metafp, " link=%s", link);
+	if (link) {
+		strsvis(buf, link, VIS_CSTYLE, extra);	/* encode link */
+		fprintf(metafp, " link=%s", buf);
+	}
 	if (owner)
 		fprintf(metafp, " uname=%s", owner);
 	if (group)
