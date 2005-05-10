@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2005/02/19 16:55:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2005/05/10 10:23:13 manu Exp $
 
 NOOBJ=	# defined
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILES=	phase1-down.sh racoon.conf racoon.conf-radius
+FILES=	racoon.conf racoon.conf-radius
 FILESDIR=/usr/share/examples/racoon/roadwarrior/server
 .endif
 
