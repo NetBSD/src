@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.68 2004/12/22 19:18:13 joff Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.69 2005/05/10 12:59:22 rearnsha Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.68 2004/12/22 19:18:13 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.69 2005/05/10 12:59:22 rearnsha Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -987,7 +987,8 @@ set_cpufuncs()
 #endif /* CPU_ARM9 */
 #ifdef CPU_ARM10
 	if (/* cputype == CPU_ID_ARM1020T || */
-	    cputype == CPU_ID_ARM1020E) {
+	    cputype == CPU_ID_ARM1020E ||
+	    cputype == CPU_ID_ARM1026EJS) {
 		/*
 		 * Select write-through cacheing (this isn't really an
 		 * option on ARM1020T).
