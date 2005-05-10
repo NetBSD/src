@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.86 2005/05/09 23:00:23 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.87 2005/05/10 05:27:08 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1746,4 +1746,98 @@ etc/rc.d/ypserv					1.8
 	variables that may be set in /etc/rc.conf.d/CMD instead of /etc/rc.conf.
 	Fixes PR 20786 from Pavel Cahyna.
 	[lukem, ticket #1269]
+
+sys/ufs/lfs/TODO				1.8
+sys/ufs/lfs/lfs.h				1.75 via patch
+sys/ufs/lfs/lfs_alloc.c				1.74 via patch
+sys/ufs/lfs/lfs_balloc.c			1.49, 1.51 via patch
+sys/ufs/lfs/lfs_bio.c				1.78
+sys/ufs/lfs/lfs_extern.h			1.62 via patch
+sys/ufs/lfs/lfs_segment.c			1.156 via patch
+sys/ufs/lfs/lfs_subr.c				1.48
+sys/ufs/lfs/lfs_syscalls.c			1.101
+sys/ufs/lfs/lfs_vfsops.c			1.163 via patch
+sys/ufs/lfs/lfs_vnops.c				1.134 via patch
+sys/ufs/ufs/ufs_readwrite.c			1.61 via patch
+libexec/lfs_cleanerd/clean.h			1.20 via patch
+libexec/lfs_cleanerd/cleanerd.c			1.52 via patch
+libexec/lfs_cleanerd/library.c			1.41 via patch
+regress/sys/fs/lfs/newfs_fsck/Makefile		1.4
+regress/sys/fs/lfs/newfs_fsck/mkfs_mount	1.2
+regress/sys/fs/lfs/newfs_fsck/smallfiles	1.2
+sbin/fsck_lfs/bufcache.c			1.3
+sbin/fsck_lfs/bufcache.h			1.3
+sbin/fsck_lfs/lfs.h				1.3
+sbin/fsck_lfs/lfs.c				1.8
+sbin/fsck_lfs/pass3.c				1.8 via patch
+sbin/fsck_lfs/pass0.c				1.18 via patch
+sbin/fsck_lfs/utilities.c			1.18 via patch
+sbin/fsck_lfs/segwrite.c			1.7
+sbin/fsck_lfs/setup.c				1.19 via patch
+sbin/newfs_lfs/Makefile				1.3
+sbin/newfs_lfs/lfs.c				removed
+sbin/newfs_lfs/make_lfs.c			1.1
+sbin/newfs_lfs/newfs.c				1.15 via patch
+
+	Various minor LFS improvements.
+
+	Kernel:
+
+	* Note when lfs_putpages(9) thinks it is not going to be writing any
+	  pages before calling genfs_putpages(9).  This prevents a situation in
+	  which blocks can be queued for writing without a segment header.
+	* Correct computation of NRESERVE(), though it is still a gross
+	  overestimate in most cases.  Note that if NRESERVE() is too high, it
+	  may be impossible to create files on the filesystem.  We catch this
+	  case on filesystem mount and refuse to mount r/w.
+	* Allow filesystems to be mounted whose block size is == MAXBSIZE.
+	* Somewhere along the line, ufs_bmaparray(9) started mangling UNWRITTEN
+	  entries in indirect blocks again, triggering a failed assertion "daddr	  <= LFS_MAX_DADDR".  Explicitly convert to and from int32_t to correct
+	  this.  Should fix PR #29045.
+	* Add a high-water mark for the number of dirty pages any given LFS can
+	  hold before triggering a flush.  This is settable by sysctl, but off
+	  (zero) by default.
+	* Be more careful about the MAX_BYTES and MAX_BUFS computations so we
+	  shouldn't see "please increase to at least zero" messages.
+	* Note that VBLK and VCHR vnodes can have nonzero values in di_db[0]
+	  even though their v_size == 0.  Don't panic when we see this.
+	  Fixes PR #26680.
+	* Change lfs_bfree to a signed quantity.  The manner in which it is
+	  processed before being passed to the cleaner means that sometimes it
+	  may drop below zero, and the cleaner must be aware of this.
+	* Never report bfree < 0 (or higher than lfs_dsize) through
+	  lfs_statfs(9).  This prevents df(1) from ever telling us that our full
+	  filesystems have 16TB free.
+	* Account space allocated through lfs_balloc(9) that does not have
+	  associated buffer headers, so that the pagedaemon doesn't run us out
+	  of segments.
+	* Return ENOSPC from lfs_balloc(9) when bfree drops to zero.
+	* Address a deadlock in lfs_bmapv/lfs_markv when the filesystem is being
+	  unmounted.  Because vfs_busy() is a shared lock, and
+	  lfs_bmapv/lfs_markv mark the filesystem vfs_busy(), the cleaner can be
+	  holding the lock that umount() is blocking on, then try to vfs_busy()
+	  again in getnewvnode().
+
+	cleaner:
+
+	* Adapt lfs_cleanerd to use the fcntl call to get the Ifile filehandle,
+	  so it need not be in the namespace.
+	* Make lfs_cleanerd be more careful when there are very few available
+	  segments.
+	* Make lfs_cleanerd less verbose when the filesystem is unmounted.
+
+	newfs_lfs, fsck_lfs, and regression:
+
+	* Extend the lfs library from fsck_lfs(8) so that it can be used with a
+	  not-yet-existent LFS.  Make newfs_lfs(8) use this library, so it can
+	  create LFSs whose Ifile is larger than one segment.
+	  Addresses PR #11110.
+	* Make newfs_lfs(8) use strsuftoi64() for its arguments, a la newfs(8).
+	* Make fsck_lfs(8) respect the "file system is clean" flag.
+	* Don't let fsck_lfs(8) think it has dirty blocks when invoked with the
+	  -n flag.
+	* Remove the Ifile from the filesystem namespace.  The cleaner now uses
+	  a fcntl call on the root inode to find the Ifile filehandle.  (As a
+	  side-effect, addresses PR #29144.)
+	[perseant, ticket #1281]
 
