@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.12 2003/12/10 02:04:00 jmc Exp $
+#	$NetBSD: majors.cesfic,v 1.13 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for cesfic
 #
@@ -27,6 +27,8 @@ device-major	clockctl	char 22			clockctl
 device-major	systrace	char 23			systrace
 device-major	cgd		char 24  block 4	cgd
 device-major	ksyms		char 25			ksyms
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.11 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.luna68k,v 1.12 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for luna68k
 #
@@ -38,6 +38,8 @@ device-major	systrace	char 36			systrace
 device-major	cgd		char 37  block 15	cgd
 device-major	ksyms		char 38			ksyms
 device-major	wsfont		char 39			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
