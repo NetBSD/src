@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.13 2003/12/10 02:04:00 jmc Exp $
+#	$NetBSD: majors.arc,v 1.14 2005/05/10 00:02:36 jdolecek Exp $
 #
 # Device majors for arc
 #
@@ -51,6 +51,8 @@ device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
 device-major	wsfont		char 56			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
