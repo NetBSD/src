@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.5 2005/04/21 18:51:19 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.6 2005/05/10 12:46:20 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.5 2005/04/21 18:50:40 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.6 2005/05/10 12:45:38 tron Exp
  */
 
 /*
@@ -4570,6 +4570,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD,
 	    "FEther II CB-TXD 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT,
+	    "CG-LAPCIGT",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
@@ -10144,4 +10148,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1957;
+const int pci_nproducts = 1958;
