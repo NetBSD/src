@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.87 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.87.2.1 2005/05/10 12:42:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.87 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.87.2.1 2005/05/10 12:42:02 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1022,7 +1022,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	const char *link, const char *digestresult)
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
-	char		*buf, *p;
+	const char	*p;
+	char		*buf;
 	size_t		destlen;
 	struct flock	metalog_lock;
 
@@ -1043,8 +1044,7 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 		return;
 	}
 
-	strsvis(buf, path, VIS_CSTYLE, extra);		/* encode name */
-	p = buf;					/* remove destdir */
+	p = path;					/* remove destdir */
 	if (destdir) {
 		destlen = strlen(destdir);
 		if (strncmp(p, destdir, destlen) == 0 &&
@@ -1053,6 +1053,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	}
 	while (*p && *p == '/')				/* remove leading /s */
 		p++;
+	strsvis(buf, p, VIS_CSTYLE, extra);		/* encode name */
+	p = buf;
 							/* print details */
 	fprintf(metafp, ".%s%s type=%s mode=%#o", *p ? "/" : "", p, type, mode);
 	if (link)
