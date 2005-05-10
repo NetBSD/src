@@ -1,6 +1,6 @@
-/*	$NetBSD: cfparse.y,v 1.1.1.4 2005/03/16 23:52:08 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.2 2005/05/10 09:54:43 manu Exp $	*/
 
-/* Id: cfparse.y,v 1.37.2.2 2005/03/14 16:36:44 manubsd Exp */
+/* $Id: cfparse.y,v 1.2 2005/05/10 09:54:43 manu Exp $ */
 
 %{
 /*
@@ -196,6 +196,7 @@ static int fix_lifebyte __P((u_long));
 %token MODECFG CFG_NET4 CFG_MASK4 CFG_DNS4 CFG_NBNS4
 %token CFG_AUTH_SOURCE CFG_SYSTEM CFG_RADIUS CFG_PAM CFG_LOCAL CFG_NONE
 %token CFG_ACCOUNTING CFG_CONF_SOURCE CFG_MOTD CFG_POOL_SIZE CFG_AUTH_THROTTLE
+%token CFG_PFS_GROUP CFG_SAVE_PASSWD
 	/* timer */
 %token RETRY RETRY_COUNTER RETRY_INTERVAL RETRY_PERSEND
 %token RETRY_PHASE1 RETRY_PHASE2 NATT_KA
@@ -628,6 +629,24 @@ modecfg_stmt
 			if (isakmp_cfg_config.port_pool == NULL)
 				yyerror("cannot allocate memory for pool");
 			bzero(isakmp_cfg_config.port_pool, len);
+#else /* ENABLE_HYBRID */
+			yyerror("racoon not configured with --enable-hybrid");
+#endif /* ENABLE_HYBRID */
+		}
+		EOS
+	|	CFG_PFS_GROUP NUMBER
+		{
+#ifdef ENABLE_HYBRID
+			isakmp_cfg_config.pfs_group = $2;
+#else /* ENABLE_HYBRID */
+			yyerror("racoon not configured with --enable-hybrid");
+#endif /* ENABLE_HYBRID */
+		}
+		EOS
+	|	CFG_SAVE_PASSWD SWITCH
+		{
+#ifdef ENABLE_HYBRID
+			isakmp_cfg_config.save_passwd = $2;
 #else /* ENABLE_HYBRID */
 			yyerror("racoon not configured with --enable-hybrid");
 #endif /* ENABLE_HYBRID */

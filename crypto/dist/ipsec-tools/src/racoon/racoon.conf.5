@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.conf.5,v 1.14 2005/05/08 08:57:26 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.15 2005/05/10 09:54:43 manu Exp $
 .\"
-.\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
+.\" $Id: racoon.conf.5,v 1.15 2005/05/10 09:54:43 manu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -1033,6 +1033,12 @@ more seconds.
 This is to avoid dictionary attacks on Xauth passwords.
 Default is one second.
 Set to zero to disable authentication delay.
+.It Ic pfs_group Ar group ;
+Sets the PFS group used in the client proposal (Cisco VPN client only).
+Default is 0.
+.It Ic save_passwd (on | off) ;
+Allow the client to save the Xauth password (Cisco VPN client only). 
+Default is off.
 .El
 .El
 .Ss Special directives
