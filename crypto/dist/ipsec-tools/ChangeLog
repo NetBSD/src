@@ -1,3 +1,8 @@
+2005-05-04  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Manisha Malla <mmanisha@novell.com>
+	* src/racoon/isakmp_cfg.c: fix unsigned int checked for being negative
+
 2005-05-03  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Patrick McHardy <kaber@trash.net>
