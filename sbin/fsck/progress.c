@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.1 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: progress.c,v 1.2 2005/05/10 00:39:04 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef SMALL
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: progress.c,v 1.1 2005/01/13 15:22:35 christos Exp $");
+__RCSID("$NetBSD: progress.c,v 1.2 2005/05/10 00:39:04 atatat Exp $");
 
 /*
  * File system independent fsck progress bar routines.
@@ -137,6 +137,9 @@ progress_done(void)
 {
 	char buf[256];
 	int len;
+
+	if (progress_onoff == 0)
+		return;
 
 	len = MIN(sizeof(buf) - 2, ttywidth);
 	memset(buf, ' ', len);
