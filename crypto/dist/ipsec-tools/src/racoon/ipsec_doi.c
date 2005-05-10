@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.3 2005/04/27 05:19:50 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.4 2005/05/10 09:23:36 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.26.2.1 2005/02/17 13:19:18 vanhu Exp */
 
@@ -221,13 +221,14 @@ get_ph1approval(iph1, pair)
 		if (pair[i] == NULL)
 			continue;
 		for (s = pair[i]; s; s = s->next) {
-			prophlen = sizeof(struct isakmp_pl_p)
-					+ s->prop->spi_size;
+			prophlen = 
+			    sizeof(struct isakmp_pl_p) + s->prop->spi_size;
+
 			/* compare proposal and select one */
 			for (p = s; p; p = p->tnext) {
-				sa = get_ph1approvalx(p, iph1->rmconf->proposal,
-						      &tsa, iph1->rmconf->pcheck_level);
-				if (sa != NULL)
+				if ((sa = get_ph1approvalx(p, 
+				    iph1->rmconf->proposal, &tsa, 
+				    iph1->rmconf->pcheck_level)) != NULL)
 					goto found;
 			}
 		}
@@ -388,27 +389,46 @@ get_ph1approvalx(p, proposal, sap, check_level)
 		    tsap->authmethod == authmethod &&
 		    tsap->hashtype == s->hashtype &&
 		    tsap->dh_group == s->dh_group &&
-		    tsap->encklen == s->encklen)
-			switch(check_level){
+		    tsap->encklen == s->encklen) {
+			switch(check_level) {
 			case PROP_CHECK_OBEY:
-				if (s->rmconf && s->rmconf->remote->sa_family != AF_UNSPEC)
-					s->lifetime=tsap->lifetime;
+				s->lifetime = tsap->lifetime;
+				s->lifebyte = tsap->lifebyte;
 				goto found;
 				break;
+
 			case PROP_CHECK_STRICT:
-			case PROP_CHECK_CLAIM:
-				if (tsap->lifetime > s->lifetime) 
-					continue ;
-				if (s->rmconf && s->rmconf->remote->sa_family != AF_UNSPEC)
-					s->lifetime=tsap->lifetime;
+				if ((tsap->lifetime > s->lifetime) ||
+				    (tsap->lifebyte > s->lifebyte))
+					continue;
+
+				s->lifetime = tsap->lifetime;
+				s->lifebyte = tsap->lifebyte;
 				goto found;
 				break;
-			case PROP_CHECK_EXACT:
-				if (tsap->lifetime != s->lifetime) 
-					continue ;
+
+			case PROP_CHECK_CLAIM:
+				if (tsap->lifetime < s->lifetime)
+					s->lifetime = tsap->lifetime;
+				if (tsap->lifebyte < s->lifebyte)
+					s->lifebyte = tsap->lifebyte;
 				goto found;
+				break;
+
+			case PROP_CHECK_EXACT:
+				if ((tsap->lifetime != s->lifetime) ||
+				    (tsap->lifebyte != s->lifebyte))
+					continue;
+				goto found;
+				break;
+
+			default:
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Unexpected proposal_check value\n");
+				continue;
 				break;
 			}
+		}
 	}
 
 found:

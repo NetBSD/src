@@ -1,3 +1,8 @@
+2005-05-10  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/ipsec_doi.c: check for lifebyte in proposals
+	* src/racoon/ipsec_doi.c: fix a bug in proposal_check claim for phase 1
+
 2005-05-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/{admin.c|isakmp.c|isakmp_inf.c}: factor various
