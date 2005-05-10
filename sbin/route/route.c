@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.75 2005/02/05 14:05:23 xtraeme Exp $	*/
+/*	$NetBSD: route.c,v 1.76 2005/05/10 18:12:22 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.75 2005/02/05 14:05:23 xtraeme Exp $");
+__RCSID("$NetBSD: route.c,v 1.76 2005/05/10 18:12:22 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1503,7 +1503,7 @@ rtmsg(int cmd, int flags)
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
 	    l = ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
-	    if (verbose && ! shortoutput) sodump(&(u),"u");\
+	    if (verbose && ! shortoutput) sodump(&(u),#u);\
 	}
 
 	errno = 0;
