@@ -3,6 +3,10 @@
 	* src/racoon/ipsec_doi.c: check for lifebyte in proposals
 	* src/racoon/ipsec_doi.c: fix a bug in proposal_check claim for phase 1
 
+	* src/racoon/{cfparse.y|cftoken.l|racoon.conf.5|isakmp_cfg.c}
+	  src/racoon/{isakmp_cfg.h|isakmp_unity.c}: add Cisco extensions for
+	  pushing PFS group and save password setting through ISAKMP mode cfg
+
 2005-05-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/{admin.c|isakmp.c|isakmp_inf.c}: factor various
