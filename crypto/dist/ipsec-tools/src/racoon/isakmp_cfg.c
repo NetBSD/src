@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.4 2005/05/04 17:23:10 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.5 2005/05/10 09:54:43 manu Exp $	*/
 
-/* Id: isakmp_cfg.c,v 1.26.2.1 2005/03/16 00:13:38 manubsd Exp */
+/* $Id: isakmp_cfg.c,v 1.5 2005/05/10 09:54:43 manu Exp $ */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -101,6 +101,8 @@ struct isakmp_cfg_config isakmp_cfg_config = {
 	ISAKMP_CFG_MAX_CNX,		/* pool_size */
 	THROTTLE_PENALTY,		/* auth_throttle */
 	ISAKMP_CFG_MOTD,		/* motd */
+	0,				/* pfs_group */
+	0,				/* save_passwd */
 };
 
 static vchar_t *buffer_cat(vchar_t *s, vchar_t *append);
