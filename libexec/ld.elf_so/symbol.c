@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.38 2005/01/11 21:58:27 martin Exp $	 */
+/*	$NetBSD: symbol.c,v 1.39 2005/05/10 13:15:56 chs Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.38 2005/01/11 21:58:27 martin Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.39 2005/05/10 13:15:56 chs Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -58,36 +58,24 @@ __RCSID("$NetBSD: symbol.c,v 1.38 2005/01/11 21:58:27 martin Exp $");
 #include "debug.h"
 #include "rtld.h"
 
+typedef void (*fptr_t)(void);
+
 static bool
 _rtld_is_exported(const Elf_Sym *def)
 {
-	static Elf_Addr _rtld_exports[] = {
-		(Elf_Addr)dlopen,
-		(Elf_Addr)dlclose,
-		(Elf_Addr)dlsym,
-		(Elf_Addr)dlerror,
-		(Elf_Addr)dladdr,
-
-#if 0
-	/*
-	 * Don't need to list these since they are aliases of the
-	 * above symbols, and thus have the same value.
-	 */
-		(Elf_Addr)__dlopen,
-		(Elf_Addr)__dlclose,
-		(Elf_Addr)__dlsym,
-		(Elf_Addr)__dlerror,
-		(Elf_Addr)__dladdr,
-#endif
-
-		0
+	static fptr_t _rtld_exports[] = {
+		(fptr_t)dlopen,
+		(fptr_t)dlclose,
+		(fptr_t)dlsym,
+		(fptr_t)dlerror,
+		(fptr_t)dladdr,
+		NULL
 	};
 	int i;
+	fptr_t value;
 
-	Elf_Addr value;
-	value = (Elf_Addr)(_rtld_objself.relocbase + def->st_value);
-
-	for (i = 0; _rtld_exports[i] != 0; i++) {
+	value = (fptr_t)(_rtld_objself.relocbase + def->st_value);
+	for (i = 0; _rtld_exports[i] != NULL; i++) {
 		if (value == _rtld_exports[i])
 			return true;
 	}
@@ -273,6 +261,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	 * in the "_rtld_exports" array can be resolved from the dynamic linker.
 	 */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("search rtld itself"));
 		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
 		if (symp != NULL && _rtld_is_exported(symp)) {
 			def = symp;
