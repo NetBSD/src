@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2004/08/13 15:51:45 uch Exp $
+#	$NetBSD: Makefile,v 1.17 2005/05/11 15:00:49 uwe Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -50,6 +50,8 @@ clean:
 	find . -name "*.vcp" -print |xargs rm -f
 	rm -f hpcboot/hpcboot.vcl hpcboot/HPCBOOT.VCO hpcboot/HPCBOOT.VCW
 	rm -f hpcboot/HPCBOOT.vcb
+	rm -f hpcboot/res/hpcmenu.aps
+	rm -f libsa/libsa.vcl libz/libz.vcl
 # vc6 temporary files
 	find . -name "*.dsp" -print |xargs rm -f
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
