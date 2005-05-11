@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.45 2005/05/09 17:19:06 jmc Exp $
+# $NetBSD: HACKS,v 1.46 2005/05/11 13:10:21 chs Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -408,12 +408,12 @@ port	sun2
 	kcah
 
 
-port	sun2, m68k
+port	sun2 m68k
 
 	hack	gcc 3.3.2/gcc/ra-colorize.c
 	cdate	Wed Nov  5 11:03:13 EST 2003
 	who	mrg
-	file	gnu/usr.bin/gcc/backend/Makefile : 1.11
+	file	gnu/usr.bin/gcc3/backend/Makefile : 1.11
 	descr
 		ra-colorize.c causes a whole spew of unreferenced .L* local
 		symbols.  using -O0 (or even -O2 reportedly) avoids the problem.
@@ -443,4 +443,15 @@ port	macppc
 		.* named[368]: rbt.c:1584: INSIST(child != (void *)0) >failed
 		.* named[368]: exiting (due to assertion failure)
 		This is reportedly fixed in gcc-3.4
+	kcah
+
+port	hppa
+
+	hack	hppa-gcc-3.3.3/grep/dfa.c
+	cdate	Sun Aug  8 08:34:32 PDT 2004
+	who	chs
+	file	gnu/usr.bin/grep/grep/Makefile : 1.4
+	descr
+		gcc 3.3.3 generates bad code for dfa.c with -O2,
+		reduce optimization to -O1 to avoid the bug.
 	kcah
