@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.95 2005/05/11 21:25:13 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.96 2005/05/11 23:25:19 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2010,4 +2010,24 @@ sys/dev/audio.c					patch
 
 	Correct audio recording buffer handling. PR#26706.
 	[kent, ticket #1414]
+
+sys/arch/hpcsh/dev/hd64461/hd64461video.c	1.26
+
+	Make Xhpc work in 8-bit mode on Jornada 680.
+	[uwe, ticket #1415]
+
+bin/sh/expand.c					1.68
+
+	expbackq() was incorrectly backing up a temporary buffer
+	when removing \n from the end of output of commands
+	inside $(...) substitutions.  If the program output
+	is n*128+1 bytes long (ending in a \n) then the code checks
+	buf[-1] for another \n - looking an uninitialised stack.
+	On a big-endian system an integer of value 10
+	will satisfy this (unlikely on little endian) and can
+	happen depending on the last code path to use a lot of stack!
+	This caused the problem with newvers.sh on
+	sparc64 after ', 2005' was added to the date list.
+	PR#28852.
+	[martin, ticket #1418]
 
