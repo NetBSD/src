@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.164.2.3.2.1 2005/04/06 15:23:22 he Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.164.2.3.2.2 2005/05/11 19:15:43 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164.2.3.2.1 2005/04/06 15:23:22 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164.2.3.2.2 2005/05/11 19:15:43 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3214,6 +3214,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	struct vm_page *pg;
 	vaddr_t offset;
 	vsize_t size;
+	voff_t uoff;
 	int error, refs;
 	UVMHIST_FUNC("uvm_map_clean"); UVMHIST_CALLED(maphist);
 
@@ -3342,13 +3343,13 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		 * data from files.
 		 */
 
-		offset = current->offset + (start - current->start);
+		uoff = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
 			if (uobj->pgops->pgo_put != NULL)
-				error = (uobj->pgops->pgo_put)(uobj, offset,
-				    offset + size, flags | PGO_CLEANIT);
+				error = (uobj->pgops->pgo_put)(uobj, uoff,
+				    uoff + size, flags | PGO_CLEANIT);
 			else
 				error = 0;
 		}
