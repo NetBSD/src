@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.8.2.2 2004/10/08 03:07:51 jmc Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.8.2.2.2.1 2005/05/11 17:29:09 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.8.2.2 2004/10/08 03:07:51 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.8.2.2.2.1 2005/05/11 17:29:09 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +234,15 @@ struct aac_ident {
 		AAC_HWIF_I960RX,
 		0,
 		"Dell PERC 3/Si"
+	},
+	{
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_CERC_1_5,
+		AAC_HWIF_I960RX,
+		AAC_QUIRK_NO4GB,
+		"Dell CERC SATA RAID 1.5/6ch"
 	},
 	{
 		PCI_VENDOR_ADP2,
