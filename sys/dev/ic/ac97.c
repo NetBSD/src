@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.73 2005/04/12 21:11:43 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.74 2005/05/11 13:13:11 scw Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.73 2005/04/12 21:11:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.74 2005/05/11 13:13:11 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,7 @@ struct ac97_softc {
 	enum ac97_host_flags host_flags;
 	unsigned int ac97_clock; /* usually 48000 */
 #define AC97_STANDARD_CLOCK	48000U
+	uint16_t power_all;
 	uint16_t caps;		/* -> AC97_REG_RESET */
 	uint16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
 	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
@@ -840,28 +841,27 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 
 	as = (struct ac97_softc *) self;
 
-	/* make sure chip is fully operational */
-#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
-			| AC97_POWER_ADC)
-	for (idx = 50000; idx >= 0; idx--) {
-		ac97_read(as, AC97_REG_POWER, &val);
-		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
-		       break;
-		DELAY(10);
-	}
-#undef AC97_POWER_ALL
+	if (as->type == AC97_CODEC_TYPE_AUDIO) {
+		/* make sure chip is fully operational */
+		for (idx = 50000; idx >= 0; idx--) {
+			ac97_read(as, AC97_REG_POWER, &val);
+			if ((val & as->power_all) == as->power_all)
+				break;
+			DELAY(10);
+		}
 
-       /*
-	* actually try changing a value!
-	* The default value of AC97_REG_MASTER_VOLUME is 0x8000.
-	*/
-       for (idx = 50000; idx >= 0; idx--) {
-	       ac97_write(as, AC97_REG_MASTER_VOLUME, 0x1010);
-	       ac97_read(as, AC97_REG_MASTER_VOLUME, &val);
-	       if (val == 0x1010)
-		       break;
-	       DELAY(10);
-       }
+		/*
+		 * actually try changing a value!
+		 * The default value of AC97_REG_MASTER_VOLUME is 0x8000.
+		 */
+		for (idx = 50000; idx >= 0; idx--) {
+			ac97_write(as, AC97_REG_MASTER_VOLUME, 0x1010);
+			ac97_read(as, AC97_REG_MASTER_VOLUME, &val);
+			if (val == 0x1010)
+				break;
+			DELAY(10);
+		}
+	}
 
        for (idx = 0; idx < SOURCE_INFO_SIZE(as); idx++) {
 		if (as->type == AC97_CODEC_TYPE_MODEM)
@@ -1080,19 +1080,35 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 
 	if (host_if->flags)
 		as->host_flags = host_if->flags(host_if->arg);
+
+	/*
+	 * Assume codec has all four power bits.
+	 * XXXSCW: what to do for modems?
+	 */
+	as->power_all = AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC |
+	    AC97_POWER_ADC;
 	if (as->type == AC97_CODEC_TYPE_AUDIO) {
 		host_if->write(host_if->arg, AC97_REG_RESET, 0);
+
+		/*
+		 * Power-up everything except the analogue mixer.
+		 * If this codec doesn't support analogue mixer power-down,
+		 * AC97_POWER_MIXER will read back as zero.
+		 */
+		host_if->write(host_if->arg, AC97_REG_POWER, AC97_POWER_MIXER);
+		ac97_read(as, AC97_REG_POWER, &val);
+		if ((val & AC97_POWER_MIXER) == 0) {
+			/* Codec doesn't support analogue mixer power-down */
+			as->power_all &= ~AC97_POWER_ANL;
+		}
 		host_if->write(host_if->arg, AC97_REG_POWER, 0);
 
-#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
-			| AC97_POWER_ADC)
 		for (i = 500000; i >= 0; i--) {
 			ac97_read(as, AC97_REG_POWER, &val);
-			if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
+			if ((val & as->power_all) == as->power_all)
 			       break;
 			DELAY(1);
 		}
-#undef AC97_POWER_ALL
 	} else if (as->type == AC97_CODEC_TYPE_MODEM) {
 		host_if->write(host_if->arg, AC97_REG_EXT_MODEM_ID, 0);
 	}
