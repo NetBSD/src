@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.14 2005/05/07 11:21:29 tron Exp $
+# $NetBSD: mi,v 1.532.2.15 2005/05/11 18:03:05 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3475,6 +3475,7 @@
 ./var/chroot/ntpd/var				base-ntp-root
 ./var/chroot/ntpd/var/db			base-ntp-root
 ./var/chroot/ntpd/var/run			base-ntp-root
+./var/chroot/pflogd				base-sys-root
 ./var/chroot/pfspamd				base-sys-root
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
