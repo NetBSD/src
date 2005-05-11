@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.113.2.2.2.1 2005/04/02 21:30:14 he Exp $
+.\"	$NetBSD: hardware,v 1.113.2.2.2.2 2005/05/11 17:29:12 riz Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -584,6 +584,8 @@ PERC 4/Di
 PERC 4/SC
 .It
 PERC 4e/Si
+.It
+CERC 1.5
 .bullet)
 .It
 DPT SCSI RAID boards (ISA [*], EISA and PCI)
