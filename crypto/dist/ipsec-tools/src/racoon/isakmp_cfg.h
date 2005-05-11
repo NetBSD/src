@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.1.1.3 2005/03/16 23:52:42 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.1.1.3.2.1 2005/05/11 17:42:02 tron Exp $	*/
 
 /*	$KAME$ */
 
@@ -85,6 +85,8 @@ struct isakmp_cfg_config {
 	size_t pool_size;
 	int auth_throttle;
 	char motd[MAXPATHLEN + 1];
+	int pfs_group;
+	int save_passwd;
 };
 
 /* For authsource */

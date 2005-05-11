@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.4 2005/03/16 23:52:10 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $	*/
 
-/* Id: cftoken.l,v 1.31.2.2 2005/03/16 23:18:43 manubsd Exp */
+/* $Id: cftoken.l,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $ */
 
 %{
 /*
@@ -230,6 +230,8 @@ hexstring	0x{hexdigit}+
 <S_CFG>pool_size	{ YYD; return(CFG_POOL_SIZE); }
 <S_CFG>banner		{ YYD; return(CFG_MOTD); }
 <S_CFG>auth_throttle	{ YYD; return(CFG_AUTH_THROTTLE); }
+<S_CFG>pfs_group	{ YYD; return(CFG_PFS_GROUP); }
+<S_CFG>save_passwd	{ YYD; return(CFG_SAVE_PASSWD); }
 <S_CFG>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* timer */
