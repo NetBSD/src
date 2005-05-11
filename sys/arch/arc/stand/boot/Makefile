@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/04/18 16:27:54 tsutsui Exp $
+# $NetBSD: Makefile,v 1.2 2005/05/11 16:55:31 jmc Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -36,7 +36,6 @@ TEXTADDR=  0x80f00000
 
 .BEGIN: machine mips
 .NOPATH: machine mips
-realdepend realall: machine mips
 
 machine::
 	-rm -f $@
