@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.3 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: uep.c,v 1.4 2005/05/11 10:02:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.3 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.4 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,15 +133,14 @@ USB_ATTACH(uep)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct wsmousedev_attach_args a;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int i, found;
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
-
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
 	sc->sc_intr_number = -1;

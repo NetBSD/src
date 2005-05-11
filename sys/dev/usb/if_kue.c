@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.52 2004/10/22 09:41:01 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.53 2005/05/11 10:02:28 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.52 2004/10/22 09:41:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.53 2005/05/11 10:02:28 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -420,7 +420,7 @@ USB_MATCH(kue)
 USB_ATTACH(kue)
 {
 	USB_ATTACH_START(kue, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	struct ifnet		*ifp;
 	usbd_device_handle	dev = uaa->device;
@@ -432,9 +432,10 @@ USB_ATTACH(kue)
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.5 2005/05/02 15:32:18 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.6 2005/05/11 10:02:28 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.5 2005/05/02 15:32:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.6 2005/05/11 10:02:28 augustss Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ USB_MATCH(cdce)
 USB_ATTACH(cdce)
 {
 	USB_ATTACH_START(cdce, sc, uaa);
-	char				 devinfo[1024];
+	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
 	usbd_device_handle		 dev = uaa->device;
@@ -169,9 +169,10 @@ USB_ATTACH(cdce)
 	const usb_cdc_ethernet_descriptor_t *ue;
 	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
 	sc->cdce_ctl_iface = uaa->iface;
