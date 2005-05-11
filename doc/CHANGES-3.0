@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.86 2005/05/11 17:56:08 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.87 2005/05/11 18:17:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8474,4 +8474,54 @@ share/examples/racoon/roadwarrior/server/Makefile 1.2
 
 	Update sample config file to higher security settings.
 	[manu, ticket #286]
+
+usr.bin/xinstall/xinstall.c			1.90
+
+	When creating a relative symlink (-lr), use the originally provided
+	`to_name' to create and metalog, rather than using the realpath(3)
+	modified version. Fixes a problem with -lr when -ddestdir contains a
+	symlink.
+	[lukem, ticket #287]
+
+usr.bin/ftp/main.c				1.92
+usr.bin/ftp/version.h				1.47
+
+	Prevent an overly-long input line causing a core dump when editing is
+	enabled. Issue noted by Ryoji Kanai in FreeBSD Problem Report # 77158.
+	[lukem, ticket #289]
+
+distrib/sets/lists/base/mi			1.553
+etc/mtree/NetBSD.dist				1.285
+etc/mtree/special				1.86
+
+	Create "/var/chroot/pflogd" by default. This fixes PR bin/30177.
+	[peter, ticket #290]
+
+sys/sys/lwp.h					1.27
+
+	Move l_private and l_locks so that they're initialized.
+	[yamt, ticket #291]
+
+sys/arch/xen/i386/hypervisor_machdep.c		1.12
+
+	Include atomic.h for x86_atomic_setbits/clearbits_l.
+	[yamt, ticket #292]
+
+sys/netinet/tcp_sack.c				1.13
+sys/netinet/tcp_output.c			1.132-1.133
+
+	tcp_sack_option: ignore sack beyond snd_max.
+	tcp_output: clear TH_FIN where appropriate.  related to PR/30160.
+	tcp_output: don't try to send more data than we have.  PR/30160.
+	[yamt, ticket #293]
+
+sys/netinet/tcp_output.c			1.134
+
+	tcp_output: account FIN when building sack option.
+	[yamt, ticket #294]
+
+sys/dev/pci/iavc_pci.c				1.3
+
+	Fix wrong type in CFATTACH_DECL, PR kern/30197.
+	[martin, ticket #295]
 
