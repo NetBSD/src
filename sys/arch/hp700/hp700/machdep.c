@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2005/05/01 20:40:02 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2005/05/11 02:59:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2005/05/01 20:40:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/05/11 02:59:49 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -784,9 +784,13 @@ do {									\
 	    &pdc_coproc)) < 0) {
 		printf("WARNING: PDC_COPROC error %d\n", error);
 		pdc_coproc.ccr_enable = 0;
+
+		/* XXX boot-from-disk causes this PDC call to fail */
+		printf("... assuming FPU is present\n");
+		pdc_coproc.ccr_enable = 0xc0;
 	} else {
 #ifdef DEBUG
-		printf("pdc_coproc: %x, %x\n", pdc_coproc.ccr_enable,
+		printf("pdc_coproc: 0x%x, 0x%x\n", pdc_coproc.ccr_enable,
 		    pdc_coproc.ccr_present);
 #endif
 	}
