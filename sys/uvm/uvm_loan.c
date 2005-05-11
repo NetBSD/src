@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.52 2004/11/23 04:51:56 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.53 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.52 2004/11/23 04:51:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.53 2005/05/11 13:02:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,7 @@ uvm_loananon(ufi, output, flags, anon)
 
 	if (flags & UVM_LOAN_TOANON) {
 		simple_lock(&anon->an_lock);
-		pg = anon->u.an_page;
+		pg = anon->an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1) {
 			if (pg->wire_count > 0) {
 				UVMHIST_LOG(loanhist, "->A wired %p", pg,0,0,0);
@@ -428,7 +428,7 @@ uvm_loananon(ufi, output, flags, anon)
 	 * we have the page and its owner locked: do the loan now.
 	 */
 
-	pg = anon->u.an_page;
+	pg = anon->an_page;
 	uvm_lock_pageq();
 	if (pg->wire_count > 0) {
 		uvm_unlock_pageq();
@@ -795,14 +795,14 @@ uvm_loanuobj(ufi, output, flags, va)
 	if (anon == NULL) {
 		goto fail;
 	}
-	anon->u.an_page = pg;
+	anon->an_page = pg;
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	if (pg->wire_count > 0) {
 		uvm_unlock_pageq();
 		UVMHIST_LOG(loanhist, "wired %p", pg,0,0,0);
 		pg->uanon = NULL;
-		anon->u.an_page = NULL;
+		anon->an_page = NULL;
 		anon->an_ref--;
 		simple_unlock(&anon->an_lock);
 		uvm_anfree(anon);
@@ -937,7 +937,7 @@ again:
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return (-1);
 	}
-	anon->u.an_page = pg;
+	anon->an_page = pg;
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	pg->loan_count++;

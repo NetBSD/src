@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.191 2005/05/05 01:58:51 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.192 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.191 2005/05/05 01:58:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.192 2005/05/11 13:02:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3493,7 +3493,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				continue;
 
 			simple_lock(&anon->an_lock);
-			pg = anon->u.an_page;
+			pg = anon->an_page;
 			if (pg == NULL) {
 				simple_unlock(&anon->an_lock);
 				continue;
@@ -4501,9 +4501,9 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 	/* cross-verify object/anon */
 	if ((pg->pqflags & PQ_FREE) == 0) {
 		if (pg->pqflags & PQ_ANON) {
-			if (pg->uanon == NULL || pg->uanon->u.an_page != pg)
+			if (pg->uanon == NULL || pg->uanon->an_page != pg)
 			    (*pr)("  >>> ANON DOES NOT POINT HERE <<< (%p)\n",
-				(pg->uanon) ? pg->uanon->u.an_page : NULL);
+				(pg->uanon) ? pg->uanon->an_page : NULL);
 			else
 				(*pr)("  anon backpointer is OK\n");
 		} else {
