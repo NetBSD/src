@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.13 2005/04/20 14:48:29 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.14 2005/05/11 13:53:41 yamt Exp $	*/
 
 /*
  * 
@@ -92,7 +92,8 @@ void hypervisor_enable_event(unsigned int);
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
-void hypervisor_force_callback(void);
+void hypervisor_force_callback(void)
+    __attribute__((no_instrument_function)); /* used by mcount */
 void hypervisor_enable_ipl(unsigned int);
 void hypervisor_set_ipending(u_int32_t, int, int);
 
