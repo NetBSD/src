@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.18 2005/02/19 20:50:26 christos Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.18.2.1 2005/05/11 12:25:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.18 2005/02/19 20:50:26 christos Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.18.2.1 2005/05/11 12:25:49 tron Exp $");
 #endif
 
 
@@ -300,7 +300,17 @@ main(int argc, char **argv)
 		    FPARSELN_UNESCALL)) != NULL) {
 			if (line[0] != '\0')
 				pppoectl_argument(line);
-			free(line);
+			/*
+			 * We do not free(line) here, because we
+			 * still have references to parts of the
+			 * string collected in the various ioctl
+			 * argument structures (and need those).
+			 * Yes, this is a memory leak.
+			 * We could copy the partial strings instead,
+			 * and free those later - but this is a one-shot
+			 * program and memory will be freed at process
+			 * exit time anyway.
+			 */
 		}
 
        
