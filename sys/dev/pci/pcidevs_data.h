@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.5 2005/05/10 23:41:02 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.6 2005/05/11 17:29:59 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.5 2005/05/10 23:40:09 riz Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.6 2005/05/11 17:29:10 riz Exp 
  */
 
 /*
@@ -3356,6 +3356,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Dell Computer",
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
+	    0,
+	    "Dell Computer",
+	    "CERC SATA RAID 1.5/6ch",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
