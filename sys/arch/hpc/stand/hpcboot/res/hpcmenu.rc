@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.13 2005/05/11 13:59:27 uwe Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.14 2005/05/11 14:19:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #undef APSTUDIO_HIDDEN_SYMBOLS
 #include "resource.h"
 #undef APSTUDIO_READONLY_SYMBOLS
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
