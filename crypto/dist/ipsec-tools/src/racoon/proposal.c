@@ -1,4 +1,4 @@
-/*	$NetBSD: proposal.c,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.1.1.2.2.1 2005/05/11 17:33:49 tron Exp $	*/
 
 /* Id: proposal.c,v 1.13 2004/09/13 14:09:19 ludvigm Exp */
 
@@ -222,6 +222,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		newpp->lifebyte = pp1->lifebyte;
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	case PROP_CHECK_STRICT:
 		if (pp1->lifetime > pp2->lifetime) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -250,6 +251,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		}
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	case PROP_CHECK_CLAIM:
 		/* lifetime */
 		if (pp1->lifetime <= pp2->lifetime) {
@@ -276,6 +278,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 
     		goto prop_pfs_check;
 		break;
+
 	case PROP_CHECK_EXACT:
 		if (pp1->lifetime != pp2->lifetime) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -284,6 +287,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 				(int)pp2->lifetime, (int)pp1->lifetime);
 			goto err;
 		}
+
 		if (pp1->lifebyte != pp2->lifebyte) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"lifebyte mismatched: "
@@ -302,6 +306,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		newpp->lifebyte = pp1->lifebyte;
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid pcheck_level why?.\n");
