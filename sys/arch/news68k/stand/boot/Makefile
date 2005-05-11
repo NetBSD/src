@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2005/05/01 00:32:53 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2005/05/11 18:14:49 jmc Exp $
 
 NOMAN= # defined
 
@@ -31,7 +31,7 @@ L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
 .NOPATH: machine m68k
-depend realall: machine m68k
+.BEGIN: machine m68k
 
 machine::
 	-rm -f $@
