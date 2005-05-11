@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.94 2005/05/11 19:46:20 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.95 2005/05/11 21:25:13 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1998,4 +1998,16 @@ distrib/atari/misc/rawwrite.ttp.uue		1.1
 	CVS and provide rules for putting them into installation/misc
 	along with checksums.
 	[jmc, ticket #1411]
+
+sys/dev/pci/neo.c				1.28
+
+	* neo_intr()
+	  update the watermark for the recording buffer
+	  The fix was provided in PR#26706 by Chapman Flack.
+	[kent, ticket #1413]
+
+sys/dev/audio.c					patch
+
+	Correct audio recording buffer handling. PR#26706.
+	[kent, ticket #1414]
 
