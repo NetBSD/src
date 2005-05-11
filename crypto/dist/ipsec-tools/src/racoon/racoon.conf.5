@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.1.1.4 2005/03/16 23:53:17 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.1 2005/05/11 12:17:26 tron Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.2 2005/03/16 23:18:43 manubsd Exp
 .\"
@@ -496,8 +496,12 @@ variable are set in their environment:
 .Bl -tag -width Ds -compact
 .It Ev LOCAL_ADDR
 The local address of the phase 1 SA.
+.It Ev LOCAL_PORT
+The local port used for IKE for the phase 1 SA.
 .It Ev REMOTE_ADDR
 The remote address of the phase 1 SA.
+.It Ev REMOTE_PORT
+The remote port used for IKE for the phase 1 SA.
 .El
 The following variables are only set if 
 .Ic mode_cfg 
