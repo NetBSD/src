@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.92 2005/05/11 15:27:38 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.93 2005/05/11 17:39:18 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1857,6 +1857,8 @@ usr.sbin/pkg_install/lib/ftpio.c		1.67
 	[hubertf, ticket #1333]
 
 sys/dev/pci/pcidevs				1.702
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 
 	Add missing PCI id for Adaptec ASR-2410SA.
 	[tron, ticket #1341]
@@ -1939,4 +1941,40 @@ sys/arch/i386/conf/GENERIC.MPACPI		1.1 via patch
 	Add new kernel configuration for ACPI based SMP systems which can
 	also be used to utilize Hyper-Threading.
 	[tron, ticket #1398]
+
+sys/arch/alpha/common/shared_intr.c		1.17
+sys/arch/alpha/include/intr.h			1.50
+sys/arch/alpha/pci/pci_1000.c			1.15
+sys/arch/alpha/pci/pci_1000a.c			1.17
+sys/arch/alpha/pci/pci_2100_a500.c		1.6
+sys/arch/alpha/pci/pci_550.c			1.25
+sys/arch/alpha/pci/pci_6600.c			1.11
+sys/arch/alpha/pci/pci_eb164.c			1.33
+sys/arch/alpha/pci/pci_eb64plus.c		1.13
+sys/arch/alpha/pci/pci_eb66.c			1.13
+sys/arch/alpha/pci/pci_kn20aa.c			1.45
+sys/arch/alpha/pci/pci_kn300.c			1.27
+sys/arch/alpha/pci/sio_pic.c			1.33
+
+	- Add a alpha_shared_intr_reset_strays() function that resets the  
+	  stray interrupt counter for a given shared interrupt descriptor.
+	- When an interrupt is successfully handled, reset the strays counter,
+	  thus preventing a "slow leak" from eventually shutting off the  
+	  interrupt vector.  Idea taken from pci_kn300.c (which was changed
+	  to use the new alpha_shared_intr_reset_strays() function).
+	[thorpej, ticket #1373]
+
+distrib/notes/i386/hardware			1.119
+sys/dev/pci/aac_pci.c				1.14
+sys/dev/pci/pcidevs				1.705
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Added support for Dell CERC SATA RAID 1.5/6ch.
+	[martti, ticket #1402]
+
+share/man/man4/aac.4				1.8 via patch
+
+	Note CERC SATA RAID 1.5/6ch
+	[martti, ticket #1403]
 
