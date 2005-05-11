@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.13 2005/05/07 07:11:13 snj Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.14 2005/05/11 13:44:10 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -76,4 +76,9 @@ sys/arch/powerpc/powerpc/trap_subr.S		1.57
 	didn't have them enabled either.
 	Addresses PR#29559.
 	[matt, ticket #1286]
+
+sys/ufs/ext2fs/ext2fs_bmap.c			1.19
+
+	getblk() can return NULL if we are the pagedaemon. Check for this.
+	[bouyer, ticket #1355]
 
