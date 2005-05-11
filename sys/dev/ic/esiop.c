@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.27.4.3 2005/05/11 03:59:07 snj Exp $	*/
+/*	$NetBSD: esiop.c,v 1.27.4.4 2005/05/11 04:11:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.27.4.3 2005/05/11 03:59:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.27.4.4 2005/05/11 04:11:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1699,12 +1699,10 @@ esiop_start(sc, esiop_cmd)
 		 */
 		scsipi_channel_freeze(&sc->sc_c.sc_chan, 1);
 		sc->sc_flags |= SCF_CHAN_NOSLOT;
-		esiop_script_sync(sc,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		esiop_script_write(sc, sc->sc_semoffset,
 		    esiop_script_read(sc, sc->sc_semoffset) & ~A_sem_start);
 		esiop_script_sync(sc,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
 		esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
 		esiop_scsicmd_end(esiop_cmd, 0);
