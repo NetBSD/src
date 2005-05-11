@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.17.2.5 2005/05/10 23:40:09 riz Exp $
+$NetBSD: pcidevs,v 1.615.2.17.2.6 2005/05/11 17:29:10 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1304,6 +1304,7 @@ product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 product DELL PERC_3DI_3_SUB	0x0106	PERC 3/Di
 product DELL PERC_3DI_3_SUB2	0x011b	PERC 3/Di
 product DELL PERC_3DI_3_SUB3	0x0121	PERC 3/Di
+product DELL CERC_1_5		0x0291	CERC SATA RAID 1.5/6ch
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
