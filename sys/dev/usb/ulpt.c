@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.66 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.67 2005/05/11 10:02:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.66 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.67 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,17 +224,19 @@ USB_ATTACH(ulpt)
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
 	usb_interface_descriptor_t *id;
 	usbd_status err;
-	char devinfo[1024];
+	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i, altno;
 	usbd_desc_iter_t iter;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-	       devinfo, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
+	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
+	usbd_devinfo_free(devinfop);
 
 	/* Loop through descriptors looking for a bidir mode. */
 	usb_desc_iter_init(dev, &iter);

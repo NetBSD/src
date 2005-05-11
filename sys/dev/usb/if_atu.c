@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.10 2005/03/03 09:23:24 itojun Exp $ */
+/*	$NetBSD: if_atu.c,v 1.11 2005/05/11 10:02:28 augustss Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.10 2005/03/03 09:23:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.11 2005/05/11 10:02:28 augustss Exp $");
 
 #include "bpfilter.h"
 
@@ -1157,7 +1157,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 USB_ATTACH(atu)
 {
 	USB_ATTACH_START(atu, sc, uaa);
-	char				devinfo[1024];
+	char				*devinfop;
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
 	u_int8_t			mode, channel;
@@ -1165,9 +1165,10 @@ USB_ATTACH(atu)
 
 	sc->sc_state = ATU_S_UNCONFIG;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->atu_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->atu_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
 	if (err) {
