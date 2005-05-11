@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.16 2003/10/05 17:48:49 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.16.4.1 2005/05/11 03:20:02 snj Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -208,6 +208,7 @@ waitphase:
 
 handle_cmpl:
 	CALL REL(disconnect);
+	STORE NOFLUSH SCRATCHA0, 4, from tlq_offset; save current offset
 	MOVE SCRATCHE1 to SFBR;
 	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
 	MOVE SCRATCHF0 to SFBR; load pointer in done ring
