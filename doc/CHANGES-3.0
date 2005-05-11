@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.87 2005/05/11 18:17:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.88 2005/05/11 18:19:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8524,4 +8524,9 @@ sys/dev/pci/iavc_pci.c				1.3
 
 	Fix wrong type in CFATTACH_DECL, PR kern/30197.
 	[martin, ticket #295]
+
+sys/netkey/key.c				1.133
+
+	Yet another NAT-T fix: don't forbid SP with ports in the policy.
+	[manu, ticket #276]
 
