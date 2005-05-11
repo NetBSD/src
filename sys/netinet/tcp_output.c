@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.128.2.3 2005/05/11 18:10:07 tron Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.128.2.4 2005/05/11 18:11:03 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.128.2.3 2005/05/11 18:10:07 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.128.2.4 2005/05/11 18:11:03 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -749,6 +749,12 @@ again:
 		} else
 			len = ((long)ulmin(cwin, p->end - p->rxmit));
 		off = p->rxmit - tp->snd_una;
+		if (off + len > so->so_snd.sb_cc) {
+			/* 1 for TH_FIN */
+			KASSERT(off + len == so->so_snd.sb_cc + 1);
+			KASSERT(p->rxmit + len == tp->snd_max);
+			len = so->so_snd.sb_cc - off;
+		}
 		if (len > 0) {
 			sack_rxmit = 1;
 			sendalot = 1;
