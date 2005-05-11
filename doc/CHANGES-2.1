@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.93 2005/05/11 17:39:18 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.94 2005/05/11 19:46:20 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1977,4 +1977,25 @@ share/man/man4/aac.4				1.8 via patch
 
 	Note CERC SATA RAID 1.5/6ch
 	[martti, ticket #1403]
+
+sys/uvm/uvm_fault.c				1.90
+sys/uvm/uvm_map.c				1.188
+
+	Address 32bit overflow issues when handling memory mapped
+	regions on large files.
+	[dbj, ticket #1409]
+
+distrib/atari/Makefile				1.5
+distrib/atari/misc/Makefile			1.1
+distrib/atari/misc/aptck.ttp.uue		1.1
+distrib/atari/misc/chg_pid.ttp.uue		1.1
+distrib/atari/misc/file2swp.ttp.uue		1.1
+distrib/atari/misc/gzip.ttp.uue			1.1
+distrib/atari/misc/loadbsd.ttp.uue		1.1
+distrib/atari/misc/rawwrite.ttp.uue		1.1
+
+	Last remaining bits of hand built releases. Get all TOS utils into
+	CVS and provide rules for putting them into installation/misc
+	along with checksums.
+	[jmc, ticket #1411]
 
