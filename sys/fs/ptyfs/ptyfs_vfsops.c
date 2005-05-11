@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.6 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.7 2005/05/11 17:38:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.6 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.7 2005/05/11 17:38:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		if (args.version != PTYFS_ARGSVERSION)
 			return EINVAL;
 	} else {
-		/* Compat code; remove and return an error */
-		args.gid = 4;	/* XXX tty gid */
-		args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
+		/*
+		 * Arguments are mandatory.
+		 */
+		return EINVAL;
 	}
 
 	pmnt = malloc(sizeof(struct ptyfsmount), M_UFSMNT, M_WAITOK);
