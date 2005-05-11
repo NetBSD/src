@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2005/05/11 18:14:49 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2005/05/11 18:36:30 jmc Exp $
 
 NOMAN= # defined
 
@@ -41,7 +41,7 @@ m68k::
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
 
-${PROG}: ${OBJS} machine m68k
+${PROG}: ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	-${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
