@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.21 2005/02/28 15:31:04 chs Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.22 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  *
@@ -134,9 +134,9 @@ amap_add(aref, offset, anon, replace)
 
 		if (amap->am_anon[slot] == NULL)
 			panic("amap_add: replacing null anon");
-		if (amap->am_anon[slot]->u.an_page != NULL &&
+		if (amap->am_anon[slot]->an_page != NULL &&
 		    (amap->am_flags & AMAP_SHARED) != 0) {
-			pmap_page_protect(amap->am_anon[slot]->u.an_page,
+			pmap_page_protect(amap->am_anon[slot]->an_page,
 			    VM_PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?
@@ -253,11 +253,15 @@ amap_unref(amap, offset, len, all)
 	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
 	    amap, amap->am_ref, amap->am_nused, 0);
 
+	KASSERT(amap_refs(amap) > 0);
+
 	/*
 	 * if we are the last reference, free the amap and return.
 	 */
 
-	if (amap->am_ref == 1) {
+	amap->am_ref--;
+
+	if (amap_refs(amap) == 0) {
 		amap_wipeout(amap);	/* drops final ref and frees */
 		UVMHIST_LOG(maphist,"<- done (was last ref)!", 0, 0, 0, 0);
 		return;			/* no need to unlock */
@@ -267,8 +271,7 @@ amap_unref(amap, offset, len, all)
 	 * otherwise just drop the reference count(s)
 	 */
 
-	amap->am_ref--;
-	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0)
+	if (amap_refs(amap) == 1 && (amap->am_flags & AMAP_SHARED) != 0)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)

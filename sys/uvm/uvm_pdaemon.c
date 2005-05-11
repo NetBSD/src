@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.63 2005/05/04 23:23:28 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.64 2005/05/11 13:02:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.63 2005/05/04 23:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.64 2005/05/11 13:02:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -598,7 +598,7 @@ uvmpd_scan_inactive(pglst)
 
 				if (anon) {
 					KASSERT(anon->an_swslot != 0);
-					anon->u.an_page = NULL;
+					anon->an_page = NULL;
 					slot = anon->an_swslot;
 				} else {
 					slot = uao_find_swslot(uobj, pageidx);

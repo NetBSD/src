@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.90 2005/04/01 11:59:39 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.90 2005/04/01 11:59:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -228,7 +228,7 @@ sys_mincore(l, v, retval)
 				anon = amap_lookup(&entry->aref,
 				    start - entry->start);
 				/* Don't need to lock anon here. */
-				if (anon != NULL && anon->u.an_page != NULL) {
+				if (anon != NULL && anon->an_page != NULL) {
 
 					/*
 					 * Anon has the page for this entry

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.39 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.40 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  *
@@ -105,10 +105,6 @@ struct uvm {
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
 	struct simplelock hashlock;	/* lock on page_hash array */
-
-	/* anon stuff */
-	struct vm_anon *afree;		/* anon free list */
-	struct simplelock afreelock; 	/* lock on anon free list */
 
 	struct simplelock kentry_lock;
 

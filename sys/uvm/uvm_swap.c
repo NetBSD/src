@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.90 2005/04/06 13:51:33 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.91 2005/05/11 13:02:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.90 2005/04/06 13:51:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.91 2005/05/11 13:02:26 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -934,15 +934,6 @@ swap_on(p, sdp)
 		printf("leaving %d pages of swap\n", size);
 	}
 
-  	/*
-	 * try to add anons to reflect the new swap space.
-	 */
-
-	error = uvm_anon_add(size);
-	if (error) {
-		goto bad;
-	}
-
 	/*
 	 * add a ref to vp to reflect usage as a swap device.
 	 */
@@ -990,7 +981,8 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
-	int npages =  sdp->swd_npages;
+	int npages = sdp->swd_npages;
+	int error = 0;
 
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "  dev=%x, npages=%d", sdp->swd_dev,npages,0,0);
@@ -1009,16 +1001,21 @@ swap_off(p, sdp)
 
 	if (uao_swap_off(sdp->swd_drumoffset,
 			 sdp->swd_drumoffset + sdp->swd_drumsize) ||
-	    anon_swap_off(sdp->swd_drumoffset,
+	    amap_swap_off(sdp->swd_drumoffset,
 			  sdp->swd_drumoffset + sdp->swd_drumsize)) {
+		error = ENOMEM;
+	} else if (sdp->swd_npginuse > sdp->swd_npgbad) {
+		error = EBUSY;
+	}
 
+	if (error) {
 		simple_lock(&uvm.swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
 		uvmexp.swpgavail += npages;
 		simple_unlock(&uvm.swap_data_lock);
-		return ENOMEM;
+
+		return error;
 	}
-	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
 	 * done with the vnode.
@@ -1029,9 +1026,6 @@ swap_off(p, sdp)
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
 	}
-
-	/* remove anons from the system */
-	uvm_anon_remove(npages);
 
 	simple_lock(&uvm.swap_data_lock);
 	uvmexp.swpages -= npages;
