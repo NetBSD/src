@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.84 2005/05/10 16:42:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.85 2005/05/11 12:42:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8383,4 +8383,61 @@ crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.4
 
 	Fix unsigned int checked for being negative.
 	[manu, ticket #275]
+
+crypto/dist/ipsec-tools/ChangeLog		1.4
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y 1.2
+crypto/dist/ipsec-tools/src/libipsec/policy_token.l 1.2
+crypto/dist/ipsec-tools/src/racoon/admin.c	1.3
+crypto/dist/ipsec-tools/src/racoon/handler.c	1.3
+crypto/dist/ipsec-tools/src/racoon/handler.h	1.4
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.4
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	1.4
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c 1.4
+crypto/dist/ipsec-tools/src/racoon/isakmp_var.h	1.2
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.14
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c	1.2
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/client/phase1-down.sh 1.2
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/client/phase1-up.sh 1.2
+crypto/dist/ipsec-tools/src/racoon/sockmisc.h	1.2
+crypto/dist/ipsec-tools/src/setkey/setkey.8	1.11
+crypto/dist/ipsec-tools/src/setkey/token.l	1.3
+lib/libipsec/package_version.h			1.9
+
+	More NAT-T fixes for the situation where racoon acts as a VPN client.
+	Flush SA and generated SP on DPD timeout and deletion payloads.
+	[manu, ticket #277]
+
+crypto/dist/ipsec-tools/src/racoon/handler.h	1.5
+
+	Add a prototype for getph2bysaddr(), fixes build problem for isakmp.c.
+	[manu, ticket #278]
+
+sbin/fsck/progress.c				1.2
+
+	If progress is disabled, don't clear the progress bar.
+	[atatat, ticket #280]
+
+usr.sbin/ypserv/ypserv/ypserv.c			1.19
+
+	Use SA_NOCLDWAIT instead of catching the signal and waiting. Avoids
+	signal races the easy way.
+	[chuck, ticket #281]
+
+sbin/pppoectl/pppoectl.c			1.19
+
+	Partly back out previous - do not free the linebuffer while still
+	having pointers into parts of it. Add a comment explaining why we
+	prefer to leak memory. Fixes PR bin/30174.
+	[martin, ticket #282]
+
+x11/Xserver/Xserver/Makefile.Xserver		1.20-1.21
+x11/bin/xdm/Makefile.xdm			1.10-1.11
+
+	Fixes build problem for evbsh5 which does static linking only.
+	[he, ticket #283]
+
+x11/Xserver/hw/dmx/Makefile			1.4
+
+	Need a .WAIT before going into bin.
+	[jmc, ticket #288]
 
