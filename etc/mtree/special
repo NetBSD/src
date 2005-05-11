@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.82.2.2 2005/04/20 11:39:53 tron Exp $
+#	$NetBSD: special,v 1.82.2.3 2005/05/11 18:02:52 tron Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -317,6 +317,7 @@
 ./var/chroot/ntpd/var		type=dir  mode=0755
 ./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
+./var/chroot/pflogd		type=dir  mode=0755
 ./var/chroot/pfspamd		type=dir  mode=0755
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/cron			type=dir  mode=0755
