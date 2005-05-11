@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.85 2005/05/11 12:42:31 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.86 2005/05/11 17:56:08 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8440,4 +8440,38 @@ x11/Xserver/hw/dmx/Makefile			1.4
 
 	Need a .WAIT before going into bin.
 	[jmc, ticket #288]
+
+crypto/dist/ipsec-tools/ChangeLog		1.5
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	1.4
+crypto/dist/ipsec-tools/src/racoon/proposal.c	1.2
+
+	Proposal_check fixes:
+	- fix claim behavior in phase 1
+	- also check lifebyte
+	[manu, ticket #284]
+
+crypto/dist/ipsec-tools/ChangeLog		1.6
+crypto/dist/ipsec-tools/src/racoon/cfparse.y	1.2
+crypto/dist/ipsec-tools/src/racoon/cftoken.l	1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.5
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.h	1.2
+crypto/dist/ipsec-tools/src/racoon/isakmp_unity.c 1.2
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.15 via patch
+
+	Add two Cisco extensions for pushing PFS group and save password
+	setting throug ISAKMP mode config.
+	[manu, ticket #285]
+
+crypto/dist/ipsec-tools/ChangeLog		1.7
+distrib/sets/lists/misc/mi			1.118
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/README 1.3 via patch
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/client/racoon.conf 1.2
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/server/phase1-down.sh delete
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/server/racoon.conf 1.2
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/server/racoon.conf-radius 1.2
+lib/libipsec/package_version.h			1.10
+share/examples/racoon/roadwarrior/server/Makefile 1.2
+
+	Update sample config file to higher security settings.
+	[manu, ticket #286]
 
