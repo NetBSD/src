@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.90 2005/05/11 04:15:49 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.91 2005/05/11 05:46:05 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1916,4 +1916,15 @@ sys/dev/ic/esiop.c				1.31
 	Rmove a redundant BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE, and fix
 	another one (POST -> PRE)
 	[bouyer, ticket #1368]
+
+sys/arch/evbarm/stand/gzboot/Makefile.gzboot	1.11
+
+	Fix a build problem compiling gzboot with BUILDID on evbarm.
+	[bsh, ticket #1362]
+
+usr.bin/lastcomm/lastcomm.c			1.17
+
+	Fix problem where lastcomm mangles elapsed time calculation because
+	of incorrect rounding. PR#29819.
+	[christos, ticket #1370]
 
