@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2005/05/11 18:15:40 jmc Exp $
+#	$NetBSD: Makefile,v 1.13 2005/05/11 18:36:10 jmc Exp $
 
 NOMAN= # defined
 
@@ -18,7 +18,7 @@ BINMODE= 444
 SIZE?= size
 OBJCOPY?= objcopy
 
-S= ${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 
 LDFLAGS= -x -N -Ttext 0 -e start
 CFLAGS= -Os -Wall
@@ -32,8 +32,8 @@ CLEANFILES+= machine m68k ${PROG}.sym
 L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a
 
-.NOPATH: machine m68k
 .BEGIN: machine m68k
+.NOPATH: machine m68k
 
 machine::
 	-rm -f $@
@@ -43,7 +43,7 @@ m68k::
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
 
-${PROG}: ${OBJS} machine m68k
+${PROG}: ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
