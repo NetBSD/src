@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.24.12.2 2004/07/09 18:29:11 tron Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.24.12.2.2.1 2005/05/11 17:19:50 riz Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24.12.2 2004/07/09 18:29:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24.12.2.2.1 2005/05/11 17:19:50 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,7 +252,7 @@ kn300_iointr(arg, vec)
 		 * reset the stray interrupt count- elsewise a slow leak
 		 * over time will cause this level to be shutdown.
 		 */
-		alpha_shared_intr_set_maxstrays(kn300_pci_intr, irq, 25);
+		alpha_shared_intr_reset_strays(kn300_pci_intr, irq);
 		return;
 	}
 
