@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2005/02/11 02:12:03 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.26 2005/05/11 17:41:52 jmc Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.25 2005/02/11 02:12:03 chs Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.26 2005/05/11 17:41:52 jmc Exp $");
 #endif
 
 #include <string.h>
@@ -690,8 +690,8 @@ dump_vm_anon(kvm_t *kd, struct vm_anon **alist, int i)
 		else
 			KDEREF(kd, anon);
 
-		printf(" = { an_ref = %d, an_lock = <struct simplelock>, an_nxt/an_page = %p, an_swslot = %d }",
-		       D(anon, anon)->an_ref, D(anon, anon)->u.an_nxt, D(anon, anon)->an_swslot);
+		printf(" = { an_ref = %d, an_lock = <struct simplelock>, an_page = %p, an_swslot = %d }",
+		       D(anon, anon)->an_ref, D(anon, anon)->an_page, D(anon, anon)->an_swslot);
 	}
 
 	printf("\n");

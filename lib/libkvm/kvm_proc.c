@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.58 2004/05/12 17:20:01 toshii Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.59 2005/05/11 17:41:52 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.58 2004/05/12 17:20:01 toshii Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.59 2005/05/11 17:41:52 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -242,7 +242,7 @@ _kvm_ureadm(kd, p, va, cnt)
 	if (KREAD(kd, addr, &anon))
 		return (NULL);
 
-	addr = (u_long)anon.u.an_page;
+	addr = (u_long)anon.an_page;
 	if (addr) {
 		if (KREAD(kd, addr, &pg))
 			return (NULL);
