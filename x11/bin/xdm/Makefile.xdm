@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.9.2.1 2005/05/11 12:29:39 tron Exp $
+#	$NetBSD: Makefile.xdm,v 1.9.2.2 2005/05/11 12:37:40 tron Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -17,8 +17,8 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=	-DUSE_PAM
-LDADD+=		-lpam -lrpcsvc -lutil -lcrypt
-DPADD+=		${LIBPAM} ${LIBRPCSVC} ${LIBUTIL} ${LIBCRYPT}
+LDADD+=		-lpam ${PAM_STATIC_LDADD}
+DPADD+=		${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 .PATH:		${X11SRCDIR.xc}/programs/xdm
