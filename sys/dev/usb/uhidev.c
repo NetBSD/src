@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.25 2005/05/08 06:19:10 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.26 2005/05/11 10:02:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.25 2005/05/08 06:19:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.26 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,17 +116,19 @@ USB_ATTACH(uhidev)
 	void *desc;
 	const void *descptr;
 	usbd_status err;
-	char devinfo[1024];
+	char *devinfop;
 	int help[2];
 	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
+	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
+	usbd_devinfo_free(devinfop);
 
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0

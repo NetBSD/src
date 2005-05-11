@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.71 2005/03/02 11:37:27 mycroft Exp $	*/
+/*	$NetBSD: ugen.c,v 1.72 2005/05/11 10:02:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.71 2005/03/02 11:37:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.72 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,13 +202,14 @@ USB_ATTACH(ugen)
 {
 	USB_ATTACH_START(ugen, sc, uaa);
 	usbd_device_handle udev;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int conf;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
 

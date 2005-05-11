@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.15 2005/03/03 08:10:01 itojun Exp $	*/
+/*	$NetBSD: if_url.c,v 1.16 2005/05/11 10:02:28 augustss Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.15 2005/03/03 08:10:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.16 2005/05/11 10:02:28 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -190,16 +190,17 @@ USB_ATTACH(url)
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	struct ifnet *ifp;
 	struct mii_data *mii;
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, URL_CONFIG_NO, 1);
