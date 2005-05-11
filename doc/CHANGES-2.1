@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.89 2005/05/10 23:58:23 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.90 2005/05/11 04:15:49 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1872,4 +1872,48 @@ lib/libc/citrus/citrus_none.c			1.13
 	characters in mbtowc. Otherwise you are not going to be able
 	to wctomb them. Added regression test.  From kim, many thanks.
 	[christos, ticket #1361]
+
+sys/dev/ic/esiop.c				1.28
+sys/dev/ic/esiopvar.h				1.9
+sys/dev/ic/siop.c				1.73
+sys/dev/ic/siop_common.c			1.34
+sys/dev/microcode/siop/esiop.ss			1.17
+sys/dev/microcode/siop/esioup.out		regen
+
+	Properly compute xs->resid, instead of assuming it'll always be 0 when
+	a command is done.
+	[bouyer, ticket #1364]
+
+sys/dev/ic/esiop.c				1.29
+sys/dev/ic/siop.c				1.74
+sys/dev/ic/siop_common.c			1.35
+sys/dev/ic/siopvar_common.h			1.28
+sys/dev/microcode/siop/esiop.ss			1.18
+sys/dev/microcode/siop/siop.ss			1.18
+
+	when an unexpected disconnect occurs only compute the resid; do the
+	real save data pointers when we get the message (or rather, at
+	disconnect time following the message).
+	Factor out code to do this, and to deal with xs->resid, in
+	siop_common.c.
+	[bouyer, ticket #1365]
+
+sys/dev/ic/esiop.c				1.30
+sys/dev/ic/siop.c				1.75
+sys/dev/ic/siop_common.c			1.36
+sys/dev/ic/siopvar_common.h			1.29
+
+	Add support for the Ignore Wide Residue SCSI message.
+	[bouyer, ticket #1366]
+
+sys/dev/ic/siop.c				1.76
+
+	Add missing return, fix handling of Ignore Wide Residue messages.
+	[bouyer, ticket #1367]
+
+sys/dev/ic/esiop.c				1.31
+
+	Rmove a redundant BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE, and fix
+	another one (POST -> PRE)
+	[bouyer, ticket #1368]
 
