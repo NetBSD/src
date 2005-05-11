@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.552 2005/05/03 00:16:59 lukem Exp $
+# $NetBSD: mi,v 1.553 2005/05/11 10:41:51 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3499,6 +3499,7 @@
 ./var/chroot/ntpd/var				base-ntp-root
 ./var/chroot/ntpd/var/db			base-ntp-root
 ./var/chroot/ntpd/var/run			base-ntp-root
+./var/chroot/pflogd				base-sys-root
 ./var/chroot/pfspamd				base-sys-root
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
