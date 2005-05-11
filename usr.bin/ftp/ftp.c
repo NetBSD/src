@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.129 2005/04/11 05:47:56 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.130 2005/05/11 02:29:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.129 2005/04/11 05:47:56 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.130 2005/05/11 02:29:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,7 @@ hookup(char *host, char *port)
 	char hbuf[MAXHOSTNAMELEN];
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
+	int on = 1;
 
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset((char *)&myctladdr, 0, sizeof (myctladdr));
@@ -270,10 +271,12 @@ hookup(char *host, char *port)
 #ifdef IPTOS_LOWDELAY
 	if (hisctladdr.su_family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
-			       sizeof(int)) < 0)
+		if (setsockopt(s, IPPROTO_IP, IP_TOS,
+				(void *)&tos, sizeof(int)) == -1) {
 			if (debug)
-				warn("setsockopt TOS (ignored)");
+				warn("setsockopt %s (ignored)",
+				    "IPTOS_LOWDELAY");
+		}
 	}
 #endif
 	cin = fdopen(s, "r");
@@ -297,13 +300,11 @@ hookup(char *host, char *port)
 		code = -1;
 		goto bad;
 	}
-	{
-	int on = 1;
 
-	if (setsockopt(s, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on))
-		< 0 && debug) {
-			warn("setsockopt");
-		}
+	if (setsockopt(s, SOL_SOCKET, SO_OOBINLINE,
+			(void *)&on, sizeof(on)) == -1) {
+		if (debug)
+			warn("setsockopt %s (ignored)", "SO_OOBINLINE");
 	}
 
 	return (hostname);
@@ -1292,10 +1293,11 @@ initconn(void)
 			return (1);
 		}
 		if ((options & SO_DEBUG) &&
-		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
-			       sizeof(on)) < 0)
+		    setsockopt(data, SOL_SOCKET, SO_DEBUG,
+				(void *)&on, sizeof(on)) == -1) {
 			if (debug)
-				warn("setsockopt (ignored)");
+				warn("setsockopt %s (ignored)", "SO_DEBUG");
+		}
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
@@ -1529,10 +1531,12 @@ initconn(void)
 #ifdef IPTOS_THROUGHPUT
 		if (data_addr.su_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
-			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-				       sizeof(int)) < 0)
+			if (setsockopt(data, IPPROTO_IP, IP_TOS,
+					(void *)&on, sizeof(int)) == -1) {
 				if (debug)
-					warn("setsockopt TOS (ignored)");
+					warn("setsockopt %s (ignored)",
+				    	    "IPTOS_THROUGHPUT");
+			}
 		}
 #endif
 		return (0);
@@ -1552,9 +1556,9 @@ initconn(void)
 		return (1);
 	}
 	if (!sendport)
-		if (setsockopt(data, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
-				sizeof(on)) < 0) {
-			warn("setsockopt (reuse address)");
+		if (setsockopt(data, SOL_SOCKET, SO_REUSEADDR,
+				(void *)&on, sizeof(on)) == -1) {
+			warn("setsockopt %s", "SO_REUSEADDR");
 			goto bad;
 		}
 	if (bind(data, (struct sockaddr *)&data_addr.si_su,
@@ -1562,11 +1566,12 @@ initconn(void)
 		warn("bind");
 		goto bad;
 	}
-	if (options & SO_DEBUG &&
-	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
-			sizeof(on)) < 0)
+	if ((options & SO_DEBUG) &&
+	    setsockopt(data, SOL_SOCKET, SO_DEBUG,
+			(void *)&on, sizeof(on)) == -1) {
 		if (debug)
-			warn("setsockopt (ignored)");
+			warn("setsockopt %s (ignored)", "SO_DEBUG");
+	}
 	len = sizeof(data_addr.si_su);
 	memset((char *)&data_addr, 0, sizeof (data_addr));
 	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) < 0) {
@@ -1664,10 +1669,11 @@ initconn(void)
 #ifdef IPTOS_THROUGHPUT
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
-		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-			       sizeof(int)) < 0)
+		if (setsockopt(data, IPPROTO_IP, IP_TOS,
+				(void *)&on, sizeof(int)) == -1)
 			if (debug)
-				warn("setsockopt TOS (ignored)");
+				warn("setsockopt %s (ignored)",
+				    "IPTOS_THROUGHPUT");
 	}
 #endif
 	return (0);
@@ -1740,10 +1746,11 @@ dataconn(const char *lmode)
 #ifdef IPTOS_THROUGHPUT
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
-				sizeof(int)) < 0) {
+		if (setsockopt(s, IPPROTO_IP, IP_TOS,
+				(void *)&tos, sizeof(int)) == -1) {
 			if (debug)
-				warn("setsockopt TOS (ignored)");
+				warn("setsockopt %s (ignored)",
+				    "IPTOS_THROUGHPUT");
 		}
 	}
 #endif
