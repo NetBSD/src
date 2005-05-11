@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.11 2004/11/08 13:00:07 augustss Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.12 2005/05/11 10:02:28 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.11 2004/11/08 13:00:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.12 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,15 +255,16 @@ USB_ATTACH(ubsa)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 
@@ -273,8 +274,6 @@ USB_ATTACH(ubsa)
 	 */
 	sc->sc_dtr = -1;
 	sc->sc_rts = -1;
-
-	printf("%s: %s\n", devname, devinfo);
 
 	DPRINTF(("ubsa attach: sc = %p\n", sc));
 

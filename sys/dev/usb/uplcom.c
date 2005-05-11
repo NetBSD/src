@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.41 2004/10/23 14:20:50 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.42 2005/05/11 10:02:28 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.41 2004/10/23 14:20:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.42 2005/05/11 10:02:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,16 +209,16 @@ USB_ATTACH(uplcom)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 

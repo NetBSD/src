@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.117 2004/12/28 23:35:21 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.118 2005/05/11 10:02:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.117 2004/12/28 23:35:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.118 2005/05/11 10:02:28 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -305,12 +305,14 @@ USB_ATTACH(umass)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	const char *sWire, *sCommand;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int i, bno, error;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
@@ -381,8 +383,6 @@ USB_ATTACH(umass)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
-
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	switch (sc->sc_wire) {
 	case UMASS_WPROTO_CBI:
