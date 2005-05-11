@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.91 2005/05/11 05:46:05 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.92 2005/05/11 15:27:38 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1927,4 +1927,16 @@ usr.bin/lastcomm/lastcomm.c			1.17
 	Fix problem where lastcomm mangles elapsed time calculation because
 	of incorrect rounding. PR#29819.
 	[christos, ticket #1370]
+
+sys/kern/vfs_bio.c				1.143
+
+	Fix validation of new values when setting vm.{hi,low}water. PR#29651.
+	[chs, ticket #1380]
+
+etc/etc.i386/Makefile.inc			1.40
+sys/arch/i386/conf/GENERIC.MPACPI		1.1 via patch
+
+	Add new kernel configuration for ACPI based SMP systems which can
+	also be used to utilize Hyper-Threading.
+	[tron, ticket #1398]
 
