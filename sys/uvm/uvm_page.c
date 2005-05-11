@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.102 2005/04/01 11:59:39 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.103 2005/05/11 13:02:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.102 2005/04/01 11:59:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.103 2005/05/11 13:02:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1183,7 +1183,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->uanon = anon;
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
 	if (anon) {
-		anon->u.an_page = pg;
+		anon->an_page = pg;
 		pg->pqflags = PQ_ANON;
 		uvmexp.anonpages++;
 	} else {
@@ -1364,7 +1364,7 @@ uvm_pagefree(pg)
 				pg->pqflags &= ~PQ_ANON;
 				uvmexp.anonpages--;
 			}
-			pg->uanon->u.an_page = NULL;
+			pg->uanon->an_page = NULL;
 			pg->uanon = NULL;
 		}
 		if (pg->flags & PG_WANTED) {
@@ -1387,7 +1387,7 @@ uvm_pagefree(pg)
 	if (pg->uobject != NULL) {
 		uvm_pageremove(pg);
 	} else if (pg->uanon != NULL) {
-		pg->uanon->u.an_page = NULL;
+		pg->uanon->an_page = NULL;
 		uvmexp.anonpages--;
 	}
 

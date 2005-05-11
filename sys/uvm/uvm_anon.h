@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.17 2004/05/05 11:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.18 2005/05/11 13:02:25 yamt Exp $	*/
 
 /*
  *
@@ -50,22 +50,17 @@
 struct vm_anon {
 	int an_ref;			/* reference count [an_lock] */
 	struct simplelock an_lock;	/* lock for an_ref */
-	union {
-		struct vm_anon *an_nxt;	/* if on free list [afreelock] */
-		struct vm_page *an_page;/* if in RAM [an_lock] */
-	} u;
+	struct vm_page *an_page;/* if in RAM [an_lock] */
 	int an_swslot;		/* drum swap slot # (if != 0)
 				   [an_lock.  also, it is ok to read
 				   an_swslot if we hold an_page PG_BUSY] */
 };
 
 /*
- * a pool of vm_anon data structures is allocated and put on a global
- * free list at boot time.  vm_anon's on the free list use "an_nxt" as
- * a pointer to the next item on the free list.  for active vm_anon's
- * the data can be in one of the following state: [1] in a vm_page
- * with no backing store allocated yet, [2] in a vm_page with backing
- * store allocated, or [3] paged out to backing store (no vm_page).
+ * for active vm_anon's the data can be in one of the following state:
+ * [1] in a vm_page with no backing store allocated yet, [2] in a vm_page
+ * with backing store allocated, or [3] paged out to backing store
+ * (no vm_page).
  *
  * for pageout in case [2]: if the page has been modified then we must
  * flush it out to backing store, otherwise we can just dump the
@@ -101,12 +96,10 @@ struct vm_aref {
 struct vm_anon *uvm_analloc(void);
 void uvm_anfree(struct vm_anon *);
 void uvm_anon_init(void);
-int uvm_anon_add(int);
-void uvm_anon_remove(int);
 struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
 void uvm_anon_dropswap(struct vm_anon *);
-boolean_t anon_swap_off(int, int);
 void uvm_anon_release(struct vm_anon *);
+boolean_t uvm_anon_pagein(struct vm_anon *);
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */
