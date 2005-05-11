@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.87.2.2 2005/05/10 12:43:53 tron Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.87.2.3 2005/05/11 17:57:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.87.2.2 2005/05/10 12:43:53 tron Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.87.2.3 2005/05/11 17:57:49 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -506,6 +506,7 @@ makelink(char *from_name, char *to_name)
 		if (realpath(from_name, src) == NULL)
 			err(1, "%s: realpath", from_name);
 		do_symlink(src, to_name);
+			/* XXX: src may point outside of destdir */
 		metadata_log(to_name, "link", NULL, src, NULL);
 		return;
 	}
@@ -546,8 +547,9 @@ makelink(char *from_name, char *to_name)
 
 		(void)strlcat(lnk, ++s, sizeof(lnk));
 
-		do_symlink(lnk, dst);
-		metadata_log(dst, "link", NULL, lnk, NULL);
+		do_symlink(lnk, to_name);
+			/* XXX: lnk may point outside of destdir */
+		metadata_log(to_name, "link", NULL, lnk, NULL);
 		return;
 	}
 
@@ -556,6 +558,7 @@ makelink(char *from_name, char *to_name)
 	 * try the names the user provided
 	 */
 	do_symlink(from_name, to_name);
+		/* XXX: from_name may point outside of destdir */
 	metadata_log(to_name, "link", NULL, from_name, NULL);
 }
 
