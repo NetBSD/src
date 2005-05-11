@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.7 2005/05/01 22:11:27 tron Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.8 2005/05/11 18:06:15 tron Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.7 2005/05/01 22:11:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.8 2005/05/11 18:06:15 tron Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.7 2005/05/01 22:11:27 t
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#include <machine/atomic.h>
 
 #include "opt_xen.h"
 
