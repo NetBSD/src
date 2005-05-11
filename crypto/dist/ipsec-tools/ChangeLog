@@ -1,5 +1,12 @@
 2005-05-10  Emmanuel Dreyfus  <manu@netbsd.org>
 
+	* src/racoon/samples/roadwarrior/client/racoon.conf
+	  src/racoon/samples/roadwarrior/server/{racoon.conf|racoon.conf-radius}
+	  src/racoon/samples/roadwarrior/server/phase1-down.sh: removed file
+	  src/racoon/samples/roadwarrior/README: update config files to 
+	  higher security settings. Remove now useless phase 1 down 
+	  script on server side.
+
 	* src/racoon/ipsec_doi.c: check for lifebyte in proposals
 	* src/racoon/ipsec_doi.c: fix a bug in proposal_check claim for phase 1
 
