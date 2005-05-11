@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.129.2.3 2005/04/28 10:51:38 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.129.2.4 2005/05/11 18:19:11 tron Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.3 2005/04/28 10:51:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.4 2005/05/11 18:19:11 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1772,6 +1772,7 @@ key_spdadd(so, m, mhp)
 #endif
 
 	for (isr = newsp->req; isr; isr = isr->next) {
+#ifndef IPSEC_NAT_T
 		struct sockaddr *sa;
 
 		/*
@@ -1813,6 +1814,7 @@ key_spdadd(so, m, mhp)
 				break;
 			}
 		}
+#endif /* !IPSEC_NAT_T */
 	}
 
 	/*
