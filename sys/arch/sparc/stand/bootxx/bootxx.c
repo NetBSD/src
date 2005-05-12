@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.11 2002/05/15 09:44:54 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.11.16.1 2005/05/12 15:42:10 riz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
+#include <string.h>
 
 int debug;
 int netif_debug;
@@ -85,7 +86,9 @@ main()
 	}
 #endif
 	prom_init();
-	prom_bootdevice = prom_getbootpath();
+	dummy = prom_getbootpath();
+	if (dummy)
+		strcpy(prom_bootdevice, dummy);
 	io.f_flags = F_RAW;
 	if (devopen(&io, 0, &dummy)) {
 		panic("%s: can't open device `%s'", progname,
