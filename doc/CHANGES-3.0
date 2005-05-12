@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.89 2005/05/12 10:19:42 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.90 2005/05/12 16:01:30 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8537,4 +8537,9 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/elfloader.c 1.5
 	While there, make the error message for unsupported relocations
 	slightly more usefull.
 	[martin, ticket #297]
+
+etc/defaults/security.conf			1.15
+
+	Don't check ptyfs for new and gone devices.
+	[christos, ticket #298]
 
