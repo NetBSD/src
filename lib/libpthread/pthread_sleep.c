@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.2.4.1 2005/05/12 02:31:53 riz Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.2.4.1 2005/05/12 02:31:53 riz Exp $");
 
 #include <errno.h>
+#include <limits.h>
 #include <sys/time.h>
 
 #include "pthread.h"
@@ -102,6 +103,13 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	gettimeofday(&now, NULL);
 	TIMEVAL_TO_TIMESPEC(&now, &sleeptime);
 	timespecadd(&sleeptime, rqtp, &sleeptime);
+	/*
+	 * Adding a caller-supplied value to the current time can wrap
+	 * the time_t, which will be rejected by the kernel. Cap the
+	 * value if that happens.
+	 */
+	if (sleeptime.tv_sec < 0)
+		sleeptime.tv_sec = INT_MAX;
 
 	pthread_spinlock(self, &pt_nanosleep_lock);
 	pthread_spinlock(self, &self->pt_statelock);
