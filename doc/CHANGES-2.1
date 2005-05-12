@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.96 2005/05/11 23:25:19 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.97 2005/05/12 02:34:34 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2030,4 +2030,17 @@ bin/sh/expand.c					1.68
 	sparc64 after ', 2005' was added to the date list.
 	PR#28852.
 	[martin, ticket #1418]
+
+lib/libc/net/res_send.c				patch
+
+	Fix warnings which prevent compilation without INET6.
+	From David Brownlee, PR#29970.
+	[christos, ticket #1424]
+
+lib/libpthread/pthread_sleep.c			1.7
+
+	Avoid passing along a timespec with a negative number of seconds if
+	the current time plus the caller-supplied time to sleep wraps the
+	time_t. Instead, sleep until INT_MAX.
+	[nathanw, ticket #1443]
 
