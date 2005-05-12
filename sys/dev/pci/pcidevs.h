@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.710 2005/05/09 06:57:52 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.711 2005/05/12 23:12:05 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.709 2005/05/09 06:55:02 martin Exp
+ *	NetBSD: pcidevs,v 1.710 2005/05/12 23:10:32 cube Exp
  */
 
 /*
@@ -1411,6 +1411,7 @@
 #define	PCI_PRODUCT_DLINK_DFE530TXPLUS	0x1300		/* DFE-530TXPLUS 10/100 Ethernet */
 #define	PCI_PRODUCT_DLINK_DFE690TXD	0x1340		/* DFE-690TXD 10/100 Ethernet */
 #define	PCI_PRODUCT_DLINK_DL4000	0x4000		/* DL-4000 Gigabit Ethernet */
+#define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T Gigabit Ethernet */
 
 /* Distributed Processing Technology products */
@@ -2844,6 +2845,7 @@
 /* US Robotics products */
 #define	PCI_PRODUCT_USR_3C2884A	0x1007		/* 56K Voice Internal PCI Modem (WinModem) */
 #define	PCI_PRODUCT_USR_3CP5609	0x1008		/* 3CP5609 PCI 16550 Modem */
+#define	PCI_PRODUCT_USR2_USR997902	0x0116		/* USR997902 Gigabit Ethernet */
 #define	PCI_PRODUCT_USR2_2415	0x3685		/* Wireless PCI-PCMCIA adapter */
 
 /* V3 Semiconductor products */
