@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.3 2005/05/09 20:10:33 dsl Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.4 2005/05/12 15:48:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.3 2005/05/09 20:10:33 dsl Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.4 2005/05/12 15:48:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -184,12 +184,18 @@ filename_completion_function(const char *text, int state)
 
 		/* support for ``~user'' syntax */
 		free(dirpath);
-		if (dirname && *dirname == '~') {
+
+		if (dirname == NULL && (dirname = strdup("./")) == NULL)
+			return NULL;
+
+		if (*dirname == '~')
 			dirpath = tilde_expand(dirname);
-			if (dirpath == NULL)
-				return NULL;
-		} else
-			dirpath = strdup(dirname ? dirname : "./");
+		else
+			dirpath = strdup(dirname);
+
+		if (dirpath == NULL)
+			return NULL;
+
 		dir = opendir(dirpath);
 		if (!dir)
 			return (NULL);	/* cannot open the directory */
