@@ -1,7 +1,7 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.16 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.17 2005/05/12 06:21:01 augustss Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.16 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.17 2005/05/12 06:21:01 augustss Exp $");
+
+#include "opt_ahc_cardbus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.16 2005/02/27 00:26:59 perry Exp $
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
 
+
+#ifndef	AHC_CARDBUS_DEFAULT_SCSI_ID
+#define	AHC_CARDBUS_DEFAULT_SCSI_ID	0x7
+#endif
 
 #define	AHC_CARDBUS_IOBA	0x10
 #define	AHC_CARDBUS_MMBA	0x14
@@ -233,13 +239,15 @@ ahc_cardbus_attach(parent, self, aux)
 	ahc_outb(ahc, DSPCISTATUS, DFTHRSH_100);
 
 	if (ahc->flags & AHC_USEDEFAULTS) {
+		int our_id;
 		/*
-		 * We can't "use defaults", as we have no way
-		 * of knowing what default settings hould be.
+		 * Assume only one connector and always turn
+		 * on termination.
 		 */
-		printf("%s: CardBus device requires an SEEPROM\n",
-		    ahc_name(ahc));
-		return;
+		our_id = AHC_CARDBUS_DEFAULT_SCSI_ID;
+		sxfrctl1 = STPWEN;
+		ahc_outb(ahc, SCSICONF, our_id | ENSPCHK | RESET_SCSI);
+		ahc->our_id = our_id;
 	}
 
 	printf("%s: aic7860", ahc_name(ahc));
