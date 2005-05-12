@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.27 2005/01/29 22:05:26 jonathan Exp $
+#	$NetBSD: files.cardbus,v 1.28 2005/05/12 06:21:01 augustss Exp $
 #
 # files.cardbus
 #
@@ -75,6 +75,7 @@ file	dev/cardbus/fwohci_cardbus.c	fwohci_cardbus
 #
 attach	ahc at cardbus with ahc_cardbus: ahc_seeprom, smc93cx6
 file	dev/cardbus/ahc_cardbus.c	ahc_cardbus
+defparam opt_ahc_cardbus.h		AHC_CARDBUS_DEFAULT_SCSI_ID
 
 #
 # PCI bridge
