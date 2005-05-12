@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.1.1.2.2.1 2005/05/12 12:04:12 tron Exp $	*/
 
 /* Id: isakmp_var.h,v 1.9 2004/12/29 23:11:11 manubsd Exp */
 
@@ -123,4 +123,10 @@ extern void log_ph1established __P((const struct ph1handle *));
 extern void script_hook __P((struct ph1handle *, int)); 
 extern int script_env_append __P((char ***, int *, char *, char *));
 extern int script_exec __P((int, int, char * const *));
+
+void purge_remote __P((struct ph1handle *));
+void delete_spd __P((struct ph2handle *));
+#ifdef INET6
+u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
+#endif 
 #endif /* _ISAKMP_VAR_H */
