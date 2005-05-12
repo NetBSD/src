@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.76 2005/05/10 18:12:22 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.77 2005/05/12 21:10:49 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.76 2005/05/10 18:12:22 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.77 2005/05/12 21:10:49 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,11 @@ any_ntoa(const struct sockaddr *sa)
 	char *out;
 	int len;
 
+#if __GNUC__ > 2
 	len = sa->sa_len - offsetof(struct sockaddr, sa_data);
+#else
+	len = sa->sa_len;
+#endif
 	in  = sa->sa_data;
 	out = obuf;
 
@@ -1185,22 +1189,15 @@ getaddr(int which, char *s, struct hostent **hpp)
 				*slash = '/';
 				slash = 0;
 			}
-			if (getaddrinfo(s, "0", &hints, &res) != 0) {
-				(void) fprintf(stderr, "%s: bad value\n", s);
-				exit(1);
-			}
+			if (getaddrinfo(s, "0", &hints, &res) != 0)
+				errx(1, "%s: bad value (prefixlen 2)", s);
 		}
 		if (slash)
 			*slash = '/';
-		if (sizeof(su->sin6) != res->ai_addrlen) {
-			(void) fprintf(stderr, "%s: bad value\n", s);
-			exit(1);
-		}
-		if (res->ai_next) {
-			(void) fprintf(stderr,
-			    "%s: resolved to multiple values\n", s);
-			exit(1);
-		}
+		if (sizeof(su->sin6) != res->ai_addrlen)
+			errx(1, "%s: bad value (prefixlen 3)", s);
+		if (res->ai_next)
+			errx(1, "%s: resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 #ifdef __KAME__
@@ -1289,9 +1286,16 @@ badataddr:
 
 	if ((t = strchr(s, '/')) != NULL && which == RTA_DST) {
 		*t = '\0';
-		if ((val = inet_addr(s)) != INADDR_NONE) {
-			inet_makenetandmask(htonl(val), &su->sin);
-			return prefixlen(&t[1]);
+		if (forcenet == 0) {
+			if ((val = inet_addr(s)) != INADDR_NONE) {
+				inet_makenetandmask(htonl(val), &su->sin);
+				return prefixlen(&t[1]);
+			}
+		} else {
+			if ((val = inet_network(s)) != INADDR_NONE) {
+				inet_makenetandmask(val, &su->sin);
+				return prefixlen(&t[1]);
+			}
 		}
 		*t = '/';
 	}
@@ -1319,7 +1323,7 @@ netdone:
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	errx(1, "bad value: %s", s);
+	errx(1, "bad value (getaddr): %s", s);
 }
 
 int
@@ -1339,16 +1343,12 @@ prefixlen(s)
 		break;
 #endif
 	default:
-		(void) fprintf(stderr,
-		    "prefixlen is not supported with af %d\n", af);
-		exit(1);
+		errx(1, "prefixlen is not supported with af %d\n", af);
 	}
 
 	rtm_addrs |= RTA_NETMASK;	
-	if (len < -1 || len > max) {
-		(void) fprintf(stderr, "%s: bad value\n", s);
-		exit(1);
-	}
+	if (len < -1 || len > max)
+		errx(1, "%s: bad value (prefixlen 1)", s);
 	
 	q = len >> 3;
 	r = len & 7;
