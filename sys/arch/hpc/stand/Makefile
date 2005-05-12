@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2005/05/12 11:18:46 uwe Exp $
+#	$NetBSD: Makefile,v 1.19 2005/05/12 15:19:48 uwe Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -15,59 +15,59 @@ UUDECODE_FILES= binary/ARM/hpcboot.exe \
 # "eMbedded Visual C++ 3.0"
 #
 evc3:
-	cd dspgen && ${MAKE} evc3 || exit 1;
+	cd dspgen && ${MAKE} evc3 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
 		${HOST_SH} dspgen/config.sh evc3 $$d;			\
 	done
 	${HOST_SH} dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
-	cd dspgen && ${MAKE} clean;
+	cd dspgen && ${MAKE} clean
 
 #
 # Generate project/work files for
 # "Windows CE Toolkit for Visual C++ 6.0"
 #
 vc6:
-	cd dspgen && ${MAKE} vc6 || exit 1;
+	cd dspgen && ${MAKE} vc6 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
 		${HOST_SH} dspgen/config.sh vc6 $$d;			\
 	done
-	cd dspgen && ${MAKE} clean;
+	cd dspgen && ${MAKE} clean
 	${HOST_SH} dspgen/gen_workspace.sh vc6 hpc_stand.dsw $(PROJECT_DIRS)
 
 #
-# Generate project/work files for 
+# Generate project/work files for
 # "Windows CE Embedded Toolkit for Visual C++ 5.0"
 # (WCE100/101/200 binary for MIPS, SH3)
 #
 vc5:
-	cd dspgen && ${MAKE} vc5 || exit 1;
+	cd dspgen && ${MAKE} vc5 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
 		${HOST_SH} dspgen/config.sh vc5 $$d;			\
 	done
-	cd dspgen && ${MAKE} clean;
+	cd dspgen && ${MAKE} clean
 	${HOST_SH} dspgen/gen_workspace.sh vc5 hpc_stand.dsw $(PROJECT_DIRS)
 
 clean:
 	rm -f hpcboot/opt_spec_platform.h
 # evc3 temporary files
 	rm -f hpc_stand.vcb hpc_stand.vcw hpc_stand.vco
-	find . -name "*.vcp" -print |xargs rm -f
+	find . -name "*.vcp" -print | xargs rm -f
 	rm -f hpcboot/hpcboot.vcl hpcboot/HPCBOOT.VCO hpcboot/HPCBOOT.VCW
 	rm -f hpcboot/HPCBOOT.vcb
 	rm -f hpcboot/res/hpcmenu.aps
 	rm -f libsa/libsa.vcl libz/libz.vcl
 # vc6 temporary files
-	find . -name "*.dsp" -print |xargs rm -f
+	find . -name "*.dsp" -print | xargs rm -f
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
 	rm -f hpcboot/hpcboot.plg
 # compile directory
 	-rm -rf compile/ARMDebug compile/ARMRelease			\
-	compile/SH*Debug compile/SH*Release				\
-	compile/MIPSDebug compile/MIPSRelease
-	find . -name "hpcboot.exe" -print |xargs rm -f
+		compile/SH*Debug compile/SH*Release			\
+		compile/MIPSDebug compile/MIPSRelease
+	find . -name "hpcboot.exe" -print | xargs rm -f
 
 distclean: clean
-	find binary -name "hpcboot*.exe*" -print | xargs rm -f;
+	find binary -name "hpcboot*.exe*" -print | xargs rm -f
 
 # WCE210 or later binary
 install:
