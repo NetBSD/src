@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.88 2005/05/11 18:19:45 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.89 2005/05/12 10:19:42 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8529,4 +8529,12 @@ sys/netkey/key.c				1.133
 
 	Yet another NAT-T fix: don't forbid SP with ports in the policy.
 	[manu, ticket #276]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/elfloader.c 1.5
+
+	Apply patch from Valeriy E. Ushakov to handle R_SPARC_OLO10 relocations
+	and properly extract the type field for sparc64.
+	While there, make the error message for unsupported relocations
+	slightly more usefull.
+	[martin, ticket #297]
 
