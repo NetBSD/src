@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.35 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.36 2005/05/12 18:53:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.35 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.36 2005/05/12 18:53:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ ep_isa_probe(parent, match, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int slot, iobase, irq, i;
-	u_int16_t vendor, model;
+	u_int16_t vendor, model, eeprom_addr_cfg;
 	struct ep_isa_done_probe *er;
 	int bus = parent->dv_unit;
 
@@ -229,8 +229,8 @@ ep_isa_probe(parent, match, aux)
 			continue;
 			}
 
-		iobase = epreadeeprom(iot, ioh, EEPROM_ADDR_CFG);
-		iobase = (iobase & 0x1f) * 0x10 + 0x200;
+		eeprom_addr_cfg = epreadeeprom(iot, ioh, EEPROM_ADDR_CFG);
+		iobase = (eeprom_addr_cfg & 0x1f) * 0x10 + 0x200;
 
 		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
@@ -281,7 +281,7 @@ ep_isa_probe(parent, match, aux)
 			else if ((eepromrev & 0xF) < 1) {
 				/* 3C509B is adapter revision level 1. */
 #if 0
-				printf("ep_isa_probe revision level 0\n");
+				printf("ep_isa_probe: revision level 0\n");
 #endif
 			}
 			else if (eeprom_cap != 0x2083) {
@@ -293,10 +293,11 @@ ep_isa_probe(parent, match, aux)
 			else
 			  /*
 			   * we have a 3c509B with PnP capabilities.
-			   * Test partly documented bit which toggles when
-			   * in  PnP mode.
+			   * Test partly documented bits which toggle when
+			   * in PnP mode.
 			   */
-			if ((eeprom_hi & 8) != 0) {
+			if ((eeprom_hi & 0x8) != 0 || ((eeprom_hi & 0xc) == 0 &&
+			    (eeprom_addr_cfg & 0x80) != 0)) {
 				printf("3COM 3C509B Ethernet card in PnP mode\n");
 				continue;
 			}
