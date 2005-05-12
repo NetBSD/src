@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/05/11 15:00:49 uwe Exp $
+#	$NetBSD: Makefile,v 1.18 2005/05/12 11:18:46 uwe Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -11,7 +11,8 @@ UUDECODE_FILES= binary/ARM/hpcboot.exe \
 		binary/SH4/hpcboot.exe
 
 #
-# generates project/work files for Embeded Visual C++ 3.0
+# Generate project/work files for
+# "eMbedded Visual C++ 3.0"
 #
 evc3:
 	cd dspgen && ${MAKE} evc3 || exit 1;
@@ -20,8 +21,10 @@ evc3:
 	done
 	${HOST_SH} dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
 	cd dspgen && ${MAKE} clean;
+
 #
-# generates project/work files for Visual C++ 6.0 + Windows CE tool kit.
+# Generate project/work files for
+# "Windows CE Toolkit for Visual C++ 6.0"
 #
 vc6:
 	cd dspgen && ${MAKE} vc6 || exit 1;
@@ -32,7 +35,8 @@ vc6:
 	${HOST_SH} dspgen/gen_workspace.sh vc6 hpc_stand.dsw $(PROJECT_DIRS)
 
 #
-# generates project/work files for Visual C++ 5.0 Windows CE Embeded tool kit.
+# Generate project/work files for 
+# "Windows CE Embedded Toolkit for Visual C++ 5.0"
 # (WCE100/101/200 binary for MIPS, SH3)
 #
 vc5:
