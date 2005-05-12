@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.37 2003/08/07 16:43:14 agc Exp $	*/
+/*	$NetBSD: res_send.c,v 1.37.4.1 2005/05/12 02:22:05 riz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -55,7 +55,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.37 2003/08/07 16:43:14 agc Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.37.4.1 2005/05/12 02:22:05 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -216,7 +216,7 @@ get_nsaddr(n)
 	}
 }
 #else
-#define get_nsaddr(n)	((struct sockaddr *)&_res.nsaddr_list[(n)])
+#define get_nsaddr(n)	((struct sockaddr *)(void *)&_res.nsaddr_list[(n)])
 #endif
 
 /* int
