@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.97 2005/05/12 02:34:34 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.98 2005/05/12 15:43:42 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2043,4 +2043,20 @@ lib/libpthread/pthread_sleep.c			1.7
 	the current time plus the caller-supplied time to sleep wraps the
 	time_t. Instead, sleep until INT_MAX.
 	[nathanw, ticket #1443]
+
+sys/dev/pci/if_hme_pci.c			1.15-1.19
+
+	Add Sun QFE support for non-sparc hardware, and some additional
+	cleanup in the driver.  PR#30018.
+	[christos, ticket #1444]
+
+sys/arch/sparc/stand/boot/boot.c		1.20
+sys/arch/sparc/stand/bootxx/bootxx.c		patch
+sys/arch/sparc/stand/common/promdev.c		1.16
+sys/arch/sparc/stand/common/promdev.h		1.10
+
+	Do not rely on strings to which pointers are returned by promlib
+	functions to persist accross further promlib calls.
+	This fixes (at least) bootjs.net.
+	[martin, ticket #1484]
 
