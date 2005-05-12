@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/05/09 17:19:06 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2005/05/12 00:44:12 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -11,6 +11,7 @@ allocsa.c \
 argmatch.c \
 backupfile.c \
 basename.c \
+c-ctype.c \
 c-strcasecmp.c \
 c-strncasecmp.c \
 classpath.c \
