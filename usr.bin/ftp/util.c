@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.121 2005/05/11 02:29:13 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.122 2005/05/13 05:03:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.121 2005/05/11 02:29:13 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.122 2005/05/13 05:03:49 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1029,7 +1029,7 @@ setupsockbufsize(int sock)
 {
 
 	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-	    (void *)&sndbuf_size, sizeof(rcvbuf_size)) == -1)
+	    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
 		warn("unable to set sndbuf size %d", sndbuf_size);
 
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
@@ -1303,7 +1303,7 @@ xconnect(int sock, const struct sockaddr *name, int namelen)
 		if (rv == -1) {			/* poll error */
 			return -1;
 		} else if (pfd[0].revents & (POLLIN|POLLOUT)) {
-			rv = sizeof(error);	/* ok, or pending error */
+			slen = sizeof(error);	/* OK, or pending error */
 			if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
 			    &error, &slen) == -1)
 				return -1;	/* Solaris pending error */
