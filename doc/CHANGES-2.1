@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.101 2005/05/13 18:57:12 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.102 2005/05/13 20:52:10 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2120,4 +2120,22 @@ sbin/wsconsctl/wsconsctl.c			1.11
 	(instead wskbd0 and wsmouse0), this way changes will affect all devices
 	instead of just the first one. PR#28668 (part 2).
 	[augustss, ticket #1490]
+
+lib/libc/iconv/iconv.c				1.5
+
+	Make sure to set errno to EINVAL if _citrus_iconv_open() returns
+	ENOENT.
+	[tshiozak, ticket #1491]
+
+usr.bin/iconv/iconv.c				1.6-1.9
+usr.bin/iconv/Makefile				1.4
+
+	Make an error message more useful in some cases. PR#30051
+	[tshiozak, ticket #1492]
+
+distrib/sets/lists/comp/mi			1.783 via patch
+sys/netinet/Makefile				1.12 via patch
+
+	Install netinet/ipl.h . PR#30095
+	[martti, ticket #1495]
 
