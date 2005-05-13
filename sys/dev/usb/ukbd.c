@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.85.8.1 2005/05/13 18:45:53 riz Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.85.8.1 2005/05/13 18:45:53 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,10 @@ extern const struct wscons_keydesc ukbd_keydesctab[];
 
 const struct wskbd_mapdata ukbd_keymapdata = {
 	ukbd_keydesctab,
-#ifdef UKBD_LAYOUT
+#if defined(UKBD_LAYOUT)
 	UKBD_LAYOUT,
+#elif defined(PCKBD_LAYOUT)
+	PCKBD_LAYOUT,
 #else
 	KB_US,
 #endif
