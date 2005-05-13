@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.25 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.26 2005/05/13 06:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.25 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.26 2005/05/13 06:36:22 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -563,7 +563,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Reading the station address from the EEPROM doesn't seem
-	 * to work, at least on my sample boards.  Instread, since
+	 * to work, at least on my sample boards.  Instead, since
 	 * the reset sequence does AutoInit, read it from the station
 	 * address registers.
 	 */
