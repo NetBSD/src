@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.22 2005/02/05 14:05:23 xtraeme Exp $	*/
+/*	$NetBSD: show.c,v 1.23 2005/05/13 14:58:47 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.22 2005/02/05 14:05:23 xtraeme Exp $");
+__RCSID("$NetBSD: show.c,v 1.23 2005/05/13 14:58:47 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
-static void pr_rthdr(void);
+static void pr_rthdr(int);
 static void p_rtentry(struct rt_msghdr *);
 static void pr_family(int);
 static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int );
@@ -138,19 +138,32 @@ show(int argc, char **argv)
 
 
 /* column widths; each followed by one space */
-#define	WID_DST		17	/* width of destination column */
-#define	WID_GW		18	/* width of gateway column */
+#ifndef INET6
+#define	WID_DST(af)	18	/* width of destination column */
+#define	WID_GW(af)	18	/* width of gateway column */
+#else
+/* width of destination/gateway column */
+#if 1
+/* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#else
+/* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
+#endif
+#endif /* INET6 */
 
 /*
  * Print header for routing table columns.
  */
 static void
-pr_rthdr(void)
+pr_rthdr(int af)
 {
 
 	printf("%-*.*s %-*.*s %-6.6s\n",
-		WID_DST, WID_DST, "Destination",
-		WID_GW, WID_GW, "Gateway",
+		WID_DST(af), WID_DST(af), "Destination",
+		WID_GW(af), WID_GW(af), "Gateway",
 		"Flags");
 }
 
@@ -185,10 +198,10 @@ p_rtentry(struct rt_msghdr *rtm)
 	if (old_af != af) {
 		old_af = af;
 		pr_family(af);
-		pr_rthdr();
+		pr_rthdr(af);
 	}
 	if (rtm->rtm_addrs == RTA_DST)
-		p_sockaddr(sa, NULL, 0, WID_DST + 1 + WID_GW + 1);
+		p_sockaddr(sa, NULL, 0, WID_DST(af) + 1 + WID_GW(af) + 1);
 	else {
 		struct sockaddr *nm;
 
@@ -203,9 +216,9 @@ p_rtentry(struct rt_msghdr *rtm)
 			    (ROUNDUP(nm->sa_len) + (char *)nm);
 		}
 
-		p_sockaddr(sa, nm, rtm->rtm_flags, WID_DST);
+		p_sockaddr(sa, nm, rtm->rtm_flags, WID_DST(af));
 		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
-		p_sockaddr(sa, NULL, 0, WID_GW);
+		p_sockaddr(sa, NULL, 0, WID_GW(af));
 	}
 	p_flags(rtm->rtm_flags & interesting);
 	putchar('\n');
