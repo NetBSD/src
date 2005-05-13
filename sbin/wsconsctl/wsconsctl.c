@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.6.2.1 2004/08/22 13:42:46 tron Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.6.2.1.2.1 2005/05/13 18:50:07 riz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 #include <unistd.h>
 #include "wsconsctl.h"
 
-#define PATH_KEYBOARD		"/dev/wskbd0"
-#define PATH_MOUSE		"/dev/wsmouse0"
+#define PATH_KEYBOARD		"/dev/wskbd"
+#define PATH_MOUSE		"/dev/wsmouse"
 #define PATH_DISPLAY		"/dev/ttyE0"
 
 extern struct field keyboard_field_tab[];
