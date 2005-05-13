@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.662.2.9 2004/08/30 09:24:33 tron Exp $
+#	$NetBSD: files,v 1.662.2.9.2.1 2005/05/13 17:09:34 riz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -904,6 +904,9 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 # use them in an 'attach-with'.
 # UHCI USB controller
 #
+
+defparam USB_MEM_RESERVE
+
 device	uhci: usbus
 file	dev/usb/uhci.c			uhci			needs-flag
 
