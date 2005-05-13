@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.2 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.2.4.1 2005/05/13 15:07:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ struct aac_softc;
  * Quirk listings.
  */
 #define	AAC_QUIRK_PERC2QC	0x0001
+#define AAC_QUIRK_NO4GB		0x0040	/* Can't access mem >2GB */
 
 /*
  * We gather a number of adapter-visible items into a single structure.
