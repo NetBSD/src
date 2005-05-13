@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.102 2005/05/13 20:52:10 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.103 2005/05/13 23:34:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2138,4 +2138,15 @@ sys/netinet/Makefile				1.12 via patch
 
 	Install netinet/ipl.h . PR#30095
 	[martti, ticket #1495]
+
+sys/dev/usb/ehci.c				1.98 via patch
+sys/dev/usb/ehcireg.h				1.21
+
+	Fix the error check on completion of an xfer.  Just because the
+	qTD status field has error bits set doesn't mean there
+	has been an error, unless the HALTED bit is set as well.
+	The old behaviour could result in a transfer being
+	considered failed by the software, but a success by the device.
+	PR#29731.
+	[augustss, ticket #1496]
 
