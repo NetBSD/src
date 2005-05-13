@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.99 2005/05/13 15:13:17 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.100 2005/05/13 18:10:20 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2060,4 +2060,37 @@ sys/arch/sparc/stand/common/promdev.h		1.10
 	functions to persist accross further promlib calls.
 	This fixes (at least) bootjs.net.
 	[martin, ticket #1484]
+
+sys/conf/files					1.703
+sys/dev/pci/usb_pci.c				1.4
+sys/dev/usb/ehci.c				1.90
+sys/dev/usb/ehcivar.h				1.16
+sys/dev/usb/ohci.c				1.153
+sys/dev/usb/ohcivar.h				1.34
+sys/dev/usb/uhci.c				1.183
+sys/dev/usb/uhcivar.h				1.37
+sys/dev/usb/usb_mem.c				1.28
+sys/dev/usb/usb_mem.h				1.21
+
+	Implement an USB memory reserve. Allocate some memory per
+	host controller in the wanted bus_dma space. If an allocation
+	fails during operation (i.e. when hotplugging an umass
+	device), fall back to using the reserve.
+	[bad, ticket #1479]
+
+usr.bin/gzip/gzip.c				1.67
+
+	Count the output file size modulo 2^32 so that the check against
+	the size in the compressed file works for files greater than 4GB.
+	Fixes the fixable part of PR#26907.
+	[wiz, ticket #1447]
+
+sys/dev/vnd.c					1.112-1.114 via patch
+sys/dev/vndvar.h				1.14 via patch
+
+	Make vnd do I/O to the underlying file from thread context. This
+	allows the strategy routine to be called from interrupt context.
+	Now that pool_get() is only called from thread context, change
+	PR_NOWAIT to PR_WAITOK. Fixes PR kern/26272 by Juergen Hannken-Illjes.
+	[bouyer, ticket #1417]
 
