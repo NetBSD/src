@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.77 2005/05/12 21:10:49 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.78 2005/05/13 01:59:47 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.77 2005/05/12 21:10:49 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.78 2005/05/13 01:59:47 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1190,14 +1190,14 @@ getaddr(int which, char *s, struct hostent **hpp)
 				slash = 0;
 			}
 			if (getaddrinfo(s, "0", &hints, &res) != 0)
-				errx(1, "%s: bad value (prefixlen 2)", s);
+				errx(1, "bad value: %s", s);
 		}
 		if (slash)
 			*slash = '/';
 		if (sizeof(su->sin6) != res->ai_addrlen)
-			errx(1, "%s: bad value (prefixlen 3)", s);
+			errx(1, "%s: bad value", s);
 		if (res->ai_next)
-			errx(1, "%s: resolved to multiple values", s);
+			errx(1, "address resolved to multiple values: %s", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 #ifdef __KAME__
@@ -1323,7 +1323,7 @@ netdone:
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	errx(1, "bad value (getaddr): %s", s);
+	errx(1, "bad value: %s", s);
 }
 
 int
@@ -1343,12 +1343,12 @@ prefixlen(s)
 		break;
 #endif
 	default:
-		errx(1, "prefixlen is not supported with af %d\n", af);
+		errx(1, "prefixlen is not supported with af %d", af);
 	}
 
 	rtm_addrs |= RTA_NETMASK;	
 	if (len < -1 || len > max)
-		errx(1, "%s: bad value (prefixlen 1)", s);
+		errx(1, "bad value: %s", s);
 	
 	q = len >> 3;
 	r = len & 7;
