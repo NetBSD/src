@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.11 2005/05/04 14:38:44 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.12 2005/05/13 06:33:32 mhitch Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.11 2005/05/04 14:38:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.12 2005/05/13 06:33:32 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,6 +192,9 @@ ffb_attach(struct ffb_softc *sc)
 	sc->sc_fb.fb_type.fb_cmsize = 0;
 	sc->sc_fb.fb_type.fb_size = maxrow * sc->sc_linebytes;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_CREATOR;
+	sc->sc_fb.fb_type.fb_width = sc->sc_width;
+	sc->sc_fb.fb_type.fb_depth = sc->sc_depth;
+	sc->sc_fb.fb_type.fb_height = sc->sc_height;
 	sc->sc_fb.fb_device = &sc->sc_dv;
 	fb_attach(&sc->sc_fb, sc->sc_console);
 
