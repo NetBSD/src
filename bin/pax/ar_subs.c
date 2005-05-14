@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.40 2005/05/06 16:49:25 jmc Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.41 2005/05/14 18:49:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.40 2005/05/06 16:49:25 jmc Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.41 2005/05/14 18:49:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,13 +126,14 @@ static int
 path_check(ARCHD *arcn, int level)
 {
 	char buf[MAXPATHLEN];
+	char *p;
+
+	if ((p = strrchr(arcn->name, '/')) == NULL)
+		return 0;
+	*p = '\0';
 
 	if (realpath(arcn->name, buf) == NULL) {
 		int error;
-		char *p = strrchr(arcn->name, '/');
-		if (p == NULL)
-			return 0;	/* abort? how can this happen? */
-		*p = '\0';
 		error = path_check(arcn, level + 1);
 		*p = '/';
 		if (error == 0)
@@ -142,10 +143,13 @@ path_check(ARCHD *arcn, int level)
 		return -1;
 	}
 	if (strncmp(buf, cwdpath, cwdpathlen) != 0) {
-		syswarn(1, 0, "Attempt to write file `%s' outside current "
-		    "working directory `%s' ignored", buf, cwdpath);
+		*p = '/';
+		syswarn(1, 0, "Attempt to write file `%s' that resolves into "
+		    "`%s/%s' outside current working directory `%s' ignored",
+		    arcn->name, buf, p + 1, cwdpath);
 		return -1;
 	}
+	*p = '/';
 	return 0;
 }
 
