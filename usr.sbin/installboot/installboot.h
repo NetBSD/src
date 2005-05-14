@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.25 2004/08/15 22:00:12 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.26 2005/05/14 14:46:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,6 +162,8 @@ int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
 int		amiga_setboot(ib_params *);
 int		hp300_setboot(ib_params *);
+int		hp700_setboot(ib_params *);
+int		hp700_clearboot(ib_params *);
 int		i386_setboot(ib_params *);
 int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
