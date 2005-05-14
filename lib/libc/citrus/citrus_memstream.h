@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_memstream.h,v 1.2 2004/12/30 05:01:19 christos Exp $	*/
+/*	$NetBSD: citrus_memstream.h,v 1.3 2005/05/14 17:55:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -61,9 +61,25 @@ _citrus_memory_stream_bind(struct _citrus_memory_stream * __restrict ms,
 }
 
 static __inline void
+_citrus_memory_stream_bind_ptr(struct _citrus_memory_stream * __restrict ms,
+			       void *ptr, size_t sz)
+{
+	struct _citrus_region r;
+
+	_citrus_region_init(&r, ptr, sz);
+	_citrus_memory_stream_bind(ms, &r);
+}
+
+static __inline void
 _citrus_memory_stream_rewind(struct _citrus_memory_stream *ms)
 {
 	ms->ms_pos = 0;
+}
+
+static __inline size_t
+_citrus_memory_stream_tell(struct _citrus_memory_stream *ms)
+{
+	return ms->ms_pos;
 }
 
 static __inline size_t
@@ -87,9 +103,10 @@ _citrus_memory_stream_seek(struct _citrus_memory_stream *ms, size_t pos, int w)
 		ms->ms_pos = pos;
 		break;
 	case SEEK_CUR:
-		pos += ms->ms_pos;
+		pos += (ssize_t)ms->ms_pos;
 		if (pos>=sz)
 			return -1;
+		ms->ms_pos = pos;
 		break;
 	case SEEK_END:
 		if (sz<pos)
@@ -106,6 +123,13 @@ _citrus_memory_stream_getc(struct _citrus_memory_stream *ms)
 	if (_citrus_memory_stream_iseof(ms))
 		return (EOF);
 	return _citrus_region_peek8(&ms->ms_region, ms->ms_pos++);
+}
+
+static __inline void
+_citrus_memory_stream_ungetc(struct _citrus_memory_stream *ms, int ch)
+{
+	if (ch != EOF && ms->ms_pos > 0)
+		ms->ms_pos--;
 }
 
 static __inline int
@@ -170,6 +194,20 @@ _citrus_memory_stream_get32(struct _citrus_memory_stream *ms, uint32_t *rval)
 	ms->ms_pos += 4;
 
 	return 0;
+}
+
+static __inline int
+_citrus_memory_stream_getln_region(struct _citrus_memory_stream *ms,
+				   struct _citrus_region *r)
+{
+	const char *ptr;
+	size_t sz;
+
+	ptr = _citrus_memory_stream_getln(ms, &sz);
+	if (ptr)
+		_citrus_region_init(r, __UNCONST(ptr), sz);
+
+	return ptr == NULL;
 }
 
 #endif
