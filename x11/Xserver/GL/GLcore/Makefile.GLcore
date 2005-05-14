@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.8 2005/03/19 21:41:58 christos Exp $
+#	$NetBSD: Makefile.GLcore,v 1.9 2005/05/14 19:27:56 martin Exp $
 
 LIB=	GLcore
 
@@ -90,7 +90,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/mesa/X
 
-CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
+CPPFLAGS+=	${X11FLAGS.EXTENSION} -DGLXEXT -DGLX_USE_MESA
 
 .if ${MACHINE_CPU} == "sh5"
 COPTS.s_triangle.c= -O0
