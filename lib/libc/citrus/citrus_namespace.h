@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.5 2005/05/14 17:55:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -165,12 +165,16 @@
 #define _memstream_skip_ws	_citrus_memory_stream_skip_ws
 #define _memstream_iseof	_citrus_memory_stream_iseof
 #define _memstream_bind		_citrus_memory_stream_bind
+#define _memstream_bind_ptr	_citrus_memory_stream_bind_ptr
 #define _memstream_seek		_citrus_memory_stream_seek
 #define _memstream_rewind	_citrus_memory_stream_rewind
+#define _memstream_tell		_citrus_memory_stream_tell
 #define _memstream_remainder	_citrus_memory_stream_remainder
 #define _memstream_getc		_citrus_memory_stream_getc
+#define _memstream_ungetc	_citrus_memory_stream_ungetc
 #define _memstream_peek		_citrus_memory_stream_peek
 #define _memstream_getregion	_citrus_memory_stream_getregion
+#define _memstream_getln_region	_citrus_memory_stream_getln_region
 #endif /* _CITRUS_MEMSTREAM_NO_NAMESPACE */
 
 /* citrus_mmap */
@@ -194,6 +198,7 @@
 #define _region_peek8		_citrus_region_peek8
 #define _region_peek16		_citrus_region_peek16
 #define _region_peek32		_citrus_region_peek32
+#define _region_get_subregion	_citrus_region_get_subregion
 #endif /* _CITRUS_REGION_NO_NAMESPACE */
 
 /* citrus_stdenc.h */
