@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.14 2005/05/14 08:00:58 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,7 @@ native-gcc: .native/.configure_done
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			AS=$(AS:Q) \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
