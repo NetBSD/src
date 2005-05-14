@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetstr.c,v 1.2 2004/05/10 16:47:11 drochner Exp $	*/
+/*	$NetBSD: fgetstr.c,v 1.3 2005/05/14 23:51:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetstr.c,v 1.2 2004/05/10 16:47:11 drochner Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.3 2005/05/14 23:51:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: fgetstr.c,v 1.2 2004/05/10 16:47:11 drochner Exp $");
 #include <string.h>
 #include "reentrant.h"
 #include "local.h"
-
-int __slbexpand __P((FILE *, size_t));
 
 /*
  * Expand the line buffer.  Return -1 on error.

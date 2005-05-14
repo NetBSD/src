@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.19 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: local.h,v 1.20 2005/05/14 23:51:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -76,6 +76,11 @@ extern wint_t	__fgetwc_unlock __P((FILE *));
 extern wint_t	__fputwc_unlock __P((wchar_t, FILE *));
 
 extern char	*__fgetstr __P((FILE * __restrict, size_t * __restrict, int));
+extern int	 __slbexpand __P((FILE *, size_t));
+extern int 	 __vfwprintf_unlocked __P((FILE *, const wchar_t *,
+    _BSD_VA_LIST_));
+extern int	 __vfwscanf_unlocked __P((FILE * __restrict,
+    const wchar_t * __restrict, _BSD_VA_LIST_));
 
 /*
  * Return true iff the given FILE cannot be written now.

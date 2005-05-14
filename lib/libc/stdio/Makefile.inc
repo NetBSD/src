@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.28 2004/05/10 17:02:21 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2005/05/14 23:51:02 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -7,17 +7,19 @@
 CPPFLAGS+=-DFLOATING_POINT
 
 SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
-	fgetc.c fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c \
-	flockfile.c fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c \
+	fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c fgetwln.c \
+	fgetws.c fileno.c findfp.c flags.c flockfile.c fopen.c fparseln.c \
+	fprintf.c fpurge.c fputc.c fputs.c fputwc.c fputws.c fread.c \
 	freopen.c fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c \
-	funopen.c fvwrite.c fwalk.c fwrite.c getc.c getchar.c gettemp.c \
-	getw.c makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c \
-	putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c \
-	setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
-	ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
-	vsnprintf.c vsscanf.c wbuf.c wsetup.c fputwc.c fputws.c \
-	fgetwc.c fgetws.c ungetwc.c putwc.c putwchar.c getwc.c getwchar.c \
-	fwide.c fparseln.c fgetstr.c
+	funopen.c fvwrite.c fwalk.c fwide.c fwprintf.c fwrite.c fwscanf.c \
+	getc.c getchar.c gettemp.c getw.c getwc.c getwchar.c makebuf.c \
+	mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c puts.c \
+	putw.c putwc.c putwchar.c refill.c remove.c rewind.c rget.c \
+	scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c \
+	stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
+	vasprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c vprintf.c \
+	vscanf.c vsnprintf.c vsscanf.c vswprintf.c vswscanf.c vwprintf.c \
+	vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
 
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
@@ -26,10 +28,11 @@ SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 # namespace purity wrappers
 SRCS+=	_fileno.c _fseeko.c _ftello.c
 
-MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 flockfile.3 fopen.3 \
-	fputs.3 fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 \
-	putc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3 putwc.3 \
-	getwc.3 ungetwc.3 fwide.3 fparseln.3 fgetws.3 fputws.3
+MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fgetwln.3 fgetws.3 \
+	flockfile.3 fopen.3 fparseln.3 fputs.3 fputws.3 fread.3 fseek.3 \
+	funopen.3 fwide.3 getc.3 getwc.3 mktemp.3 perror.3 printf.3 \
+	putc.3 putwc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 \
+	ungetc.3 ungetwc.3 wprintf.3 wscanf.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
@@ -55,3 +58,7 @@ MLINKS+=setbuf.3 setbuffer.3 setbuf.3 setlinebuf.3 setbuf.3 setvbuf.3
 MLINKS+=tmpnam.3 tempnam.3 tmpnam.3 tmpfile.3
 MLINKS+=putwc.3 fputwc.3 putwc.3 putwchar.3
 MLINKS+=getwc.3 fgetwc.3 getwc.3 getwchar.3
+MLINKS+=wprintf.3 fwprintf.3 wprintf.3 swprintf.3
+MLINKS+=wprintf.3 vwprintf.3 wprintf.3 vfwprintf.3 wprintf.3 vswprintf.3
+MLINKS+=wscanf.3 fwscanf.3 wscanf.3 swscanf.3 wscanf.3 vwscanf.3
+MLINKS+=wscanf.3 vswscanf.3 wscanf.3 vfwscanf.3
