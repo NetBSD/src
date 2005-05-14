@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.783 2005/05/01 14:57:27 martti Exp $
+#	$NetBSD: mi,v 1.784 2005/05/14 23:58:51 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3018,6 +3018,7 @@
 ./usr/share/man/cat3/fgets.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/fgetwc.0			comp-c-catman		.cat
+./usr/share/man/cat3/fgetwln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetws.0			comp-c-catman		.cat
 ./usr/share/man/cat3/field_arg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/field_back.0		comp-c-catman		.cat
@@ -3126,7 +3127,9 @@
 ./usr/share/man/cat3/funopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwide.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwopen.0			comp-c-catman		.cat
+./usr/share/man/cat3/fwprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwrite.0			comp-c-catman		.cat
+./usr/share/man/cat3/fwscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gai_strerror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gamma.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gamma_r.0			comp-c-catman		.cat
@@ -3894,8 +3897,8 @@
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openpam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_borrow_cred.0	comp-c-catman		.cat,pam
-./usr/share/man/cat3/openpam_free_envlist.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_free_data.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_free_envlist.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_get_option.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_log.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_nullconv.0		comp-c-catman		.cat,pam
@@ -4460,6 +4463,8 @@
 ./usr/share/man/cat3/swab.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swapcontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/swapon.0			comp-c-catman		.cat
+./usr/share/man/cat3/swprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/swscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_siglist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sys_signame.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysconf.0			comp-c-catman		.cat
@@ -4598,6 +4603,8 @@
 ./usr/share/man/cat3/verrx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vfwprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vfwscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vlimit.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vline.0			comp-c-catman		.cat
@@ -4606,10 +4613,14 @@
 ./usr/share/man/cat3/vsnprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vswprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vswscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vtimes.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vwarn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
+./usr/share/man/cat3/vwprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vwscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/waddch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/waddchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/waddchstr.0		comp-c-catman		.cat
@@ -4679,9 +4690,11 @@
 ./usr/share/man/cat3/wmove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wnoutrefresh.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wordexp.0			comp-c-catman		.cat
+./usr/share/man/cat3/wprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wrefresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wresize.0			comp-c-catman		.cat
+./usr/share/man/cat3/wscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wscanw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wscrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wsetscrreg.0		comp-c-catman		.cat
@@ -6871,6 +6884,7 @@
 ./usr/share/man/man3/fgets.3			comp-c-man		.man
 ./usr/share/man/man3/fgetstr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/fgetwc.3			comp-c-man		.man
+./usr/share/man/man3/fgetwln.3			comp-c-man		.man
 ./usr/share/man/man3/fgetws.3			comp-c-man		.man
 ./usr/share/man/man3/field_arg.3		comp-c-man		.man
 ./usr/share/man/man3/field_back.3		comp-c-man		.man
@@ -6979,7 +6993,9 @@
 ./usr/share/man/man3/funopen.3			comp-c-man		.man
 ./usr/share/man/man3/fwide.3			comp-c-man		.man
 ./usr/share/man/man3/fwopen.3			comp-c-man		.man
+./usr/share/man/man3/fwprintf.3			comp-c-man		.man
 ./usr/share/man/man3/fwrite.3			comp-c-man		.man
+./usr/share/man/man3/fwscanf.3			comp-c-man		.man
 ./usr/share/man/man3/gai_strerror.3		comp-c-man		.man
 ./usr/share/man/man3/gamma.3			comp-c-man		.man
 ./usr/share/man/man3/gamma_r.3			comp-c-man		.man
@@ -7747,8 +7763,8 @@
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
 ./usr/share/man/man3/openpam.3			comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_borrow_cred.3	comp-c-man		.man,pam
-./usr/share/man/man3/openpam_free_envlist.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_free_data.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_free_envlist.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_get_option.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_log.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_nullconv.3		comp-c-man		.man,pam
@@ -8309,6 +8325,8 @@
 ./usr/share/man/man3/swab.3			comp-c-man		.man
 ./usr/share/man/man3/swapcontext.3		comp-c-man		.man
 ./usr/share/man/man3/swapon.3			comp-c-man		.man
+./usr/share/man/man3/swprintf.3			comp-c-man		.man
+./usr/share/man/man3/swscanf.3			comp-c-man		.man
 ./usr/share/man/man3/sys_siglist.3		comp-c-man		.man
 ./usr/share/man/man3/sys_signame.3		comp-c-man		.man
 ./usr/share/man/man3/sysconf.3			comp-c-man		.man
@@ -8447,6 +8465,8 @@
 ./usr/share/man/man3/verrx.3			comp-c-man		.man
 ./usr/share/man/man3/vfprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vfscanf.3			comp-c-man		.man
+./usr/share/man/man3/vfwprintf.3		comp-c-man		.man
+./usr/share/man/man3/vfwscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vis.3			comp-c-man		.man
 ./usr/share/man/man3/vlimit.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vline.3			comp-c-man		.man
@@ -8455,10 +8475,14 @@
 ./usr/share/man/man3/vsnprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vsprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vsscanf.3			comp-c-man		.man
+./usr/share/man/man3/vswprintf.3		comp-c-man		.man
+./usr/share/man/man3/vswscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog.3			comp-c-man		.man
 ./usr/share/man/man3/vtimes.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vwarn.3			comp-c-man		.man
 ./usr/share/man/man3/vwarnx.3			comp-c-man		.man
+./usr/share/man/man3/vwprintf.3			comp-c-man		.man
+./usr/share/man/man3/vwscanf.3			comp-c-man		.man
 ./usr/share/man/man3/waddch.3			comp-c-man		.man
 ./usr/share/man/man3/waddchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/waddchstr.3		comp-c-man		.man
@@ -8528,9 +8552,11 @@
 ./usr/share/man/man3/wmove.3			comp-c-man		.man
 ./usr/share/man/man3/wnoutrefresh.3		comp-c-man		.man
 ./usr/share/man/man3/wordexp.3			comp-c-man		.man
+./usr/share/man/man3/wprintf.3			comp-c-man		.man
 ./usr/share/man/man3/wprintw.3			comp-c-man		.man
 ./usr/share/man/man3/wrefresh.3			comp-c-man		.man
 ./usr/share/man/man3/wresize.3			comp-c-man		.man
+./usr/share/man/man3/wscanf.3			comp-c-man		.man
 ./usr/share/man/man3/wscanw.3			comp-c-man		.man
 ./usr/share/man/man3/wscrl.3			comp-c-man		.man
 ./usr/share/man/man3/wsetscrreg.3		comp-c-man		.man
