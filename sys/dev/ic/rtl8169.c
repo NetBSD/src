@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.18 2005/05/02 15:34:31 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.19 2005/05/15 07:48:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -749,8 +749,13 @@ re_attach(struct rtk_softc *sc)
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 	ifp->if_start = re_start;
 	ifp->if_stop = re_stop;
+
+	/*
+	 * IFCAP_CSUM_IPv4_Tx seems broken for small packets.
+	 */
+
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    /* IFCAP_CSUM_IPv4_Tx | */ IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
