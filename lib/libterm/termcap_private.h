@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap_private.h,v 1.4 2001/11/02 18:24:20 christos Exp $	*/
+/*	$NetBSD: termcap_private.h,v 1.5 2005/05/15 21:11:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -44,3 +44,5 @@ struct tinfo
 		char *eptr;		/* pointer to the end of buffer */
 	} *tbuf;
 };
+#define TMSPC10SIZE	15
+extern const short __tmspc10[TMSPC10SIZE];
