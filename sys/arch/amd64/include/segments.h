@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.4 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: segments.h,v 1.5 2005/05/15 21:37:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -163,6 +163,16 @@ struct mem_segment_descriptor {
 } __attribute__((packed));
 
 /*
+ * Common part of the above structures. Used to walk descriptor tables.
+ */
+struct common_segment_descriptor {
+	unsigned sdc_lolimit:16;
+	unsigned sdc_lobase:24;
+	unsigned sdc_type:5;
+	unsigned sdc_other:19;
+} __attribute__((packed));
+
+/*
  * Gate descriptors (e.g. indirect descriptors)
  */
 struct gate_descriptor {
@@ -206,6 +216,11 @@ int idt_vec_alloc __P((int, int));
 void idt_vec_set __P((int, void (*)(void)));
 void idt_vec_free __P((int));
 void cpu_init_idt __P((void));
+
+struct lwp;
+int memseg_baseaddr(struct lwp *, uint64_t, char *, int, uint64_t *);
+int valid_user_selector(struct lwp *, uint64_t, char *, int);
+
 
 #endif /* _KERNEL */
 
