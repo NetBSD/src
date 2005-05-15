@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.100 2005/04/07 16:26:35 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.101 2005/05/15 13:09:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@
 #define execvp			_execvp
 #define fdopen			_fdopen
 #define fgetln			_fgetln
+#define fgetwln			_fgetwln
 #define fhstatvfs		_fhstatvfs
 #define flockfile		_flockfile
 #define ftrylockfile		_ftrylockfile
