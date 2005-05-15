@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.23 2005/05/14 23:51:42 christos Exp $	*/
+/*	$NetBSD: wchar.h,v 1.24 2005/05/15 21:10:52 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -183,6 +183,11 @@ int vfwscanf(FILE * __restrict, const wchar_t * __restrict, _BSD_VA_LIST_);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
     _BSD_VA_LIST_);
 int vwscanf(const wchar_t * __restrict, _BSD_VA_LIST_);
+#endif
+#if defined(_NETBSD_SOURCE)
+struct tinfo;
+int t_putws(struct tinfo *, const wchar_t *, int, void (*)(wchar_t, void *),
+    void *);
 #endif
 __END_DECLS
 

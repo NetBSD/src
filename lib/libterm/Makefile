@@ -1,18 +1,18 @@
-#	$NetBSD: Makefile,v 1.28 2002/09/27 21:37:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.29 2005/05/15 21:11:13 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
 LIB=	termcap
 CPPFLAGS+=-I${.CURDIR} -DCM_N -DCM_GT -DCM_B -DCM_D
-SRCS=	termcap.c tgoto.c tputs.c
+SRCS=	termcap.c tgoto.c tputs.c tputws.c
 
 MAN=	termcap.3
 MLINKS=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3 \
 	termcap.3 t_getent.3 termcap.3 t_getflag.3 termcap.3 t_getnum.3 \
 	termcap.3 t_getstr.3 termcap.3 t_goto.3 termcap.3 t_puts.3 \
-	termcap.3 t_freent.3
+	termcap.3 t_freent.3 termcap.3 t_putws.3
 INCS=	termcap.h
 INCSDIR=/usr/include
 
