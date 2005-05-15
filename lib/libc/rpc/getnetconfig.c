@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.12 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.13 2005/05/15 20:54:41 dsl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.12 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.13 2005/05/15 20:54:41 dsl Exp $");
 #endif
 #endif
 
@@ -423,7 +423,7 @@ endnetconfig(handlep)
 
 struct netconfig *
 getnetconfigent(netid)
-	char *netid;
+	const char *netid;
 {
 	FILE *file;			/* NETCONFIG db's file pointer */
 	char *linep;			/* holds current netconfig line */
