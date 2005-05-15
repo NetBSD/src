@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.14 2004/08/30 15:35:20 drochner Exp $
+#	$NetBSD: files.amd64,v 1.15 2005/05/15 21:44:42 fvdl Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -161,6 +161,13 @@ include "compat/netbsd32/files.netbsd32"
 file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
 file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
+
+# Linux compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/amd64/files.linux_amd64"
+file	arch/amd64/amd64/linux_sigcode.S		compat_linux
+file	arch/amd64/amd64/linux_syscall.c		compat_linux
+file	arch/amd64/amd64/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
