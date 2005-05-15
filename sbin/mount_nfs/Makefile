@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2005/01/10 02:58:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2005/05/15 21:18:34 dsl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
+WARNS=3
 .include <bsd.own.mk>
 
 PROG=	mount_nfs
-SRCS=	mount_nfs.c
+SRCS=	mount_nfs.c getnfsargs.c
 MAN=	mount_nfs.8
 
 CPPFLAGS+= -DNFS
