@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.22 2005/05/14 17:58:56 tshiozak Exp $	*/
+/*	$NetBSD: gettext.c,v 1.23 2005/05/15 09:58:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.22 2005/05/14 17:58:56 tshiozak Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.23 2005/05/15 09:58:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -879,6 +879,9 @@ get_indexed_string(const char *str, size_t len, unsigned long idx)
 	return str;
 }
 
+#define	_NGETTEXT_DEFAULT(msgid1, msgid2, n)	\
+	((char *)__UNCONST((n) == 1 ? (msgid1) : (msgid2)))
+
 char *
 dcngettext(domainname, msgid1, msgid2, n, category)
 	const char *domainname;
@@ -967,7 +970,7 @@ found:
 			plural_index = 0;
 		msgid = msgid1;
 	} else
-		msgid = (n == 1) ? msgid1 : msgid2;
+		msgid = _NGETTEXT_DEFAULT(msgid1, msgid2, n);
 
 	if (msgid == NULL)
 		return NULL;
@@ -995,6 +998,8 @@ found:
 		msgid = v;
 	}
 
-fail:
 	return (char *)__UNCONST(msgid);
+
+fail:
+	return _NGETTEXT_DEFAULT(msgid1, msgid2, n);
 }
