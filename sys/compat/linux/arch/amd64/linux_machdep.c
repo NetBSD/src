@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 2005/05/03 16:26:30 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.2 2005/05/15 21:43:08 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1 2005/05/03 16:26:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2005/05/15 21:43:08 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1 2005/05/03 16:26:30 manu Exp $
 #include <machine/pcb.h>
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
+#include <machine/specialreg.h>
+#include <machine/vmparam.h>
 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
@@ -454,41 +456,55 @@ linux_sys_arch_prctl(l, v, retval)
 		syscallarg(int) code;
 		syscallarg(unsigned long) addr;
 	} */ *uap = v;
-	ucontext_t uctx;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
 	int error;
-
-	getucontext(l, &uctx);
+	uint64_t taddr;
 
 	switch(SCARG(uap, code)) {
 	case LINUX_ARCH_SET_GS:
-#ifndef tmp_hack
-		return 0; /* XXX */
-#endif
-		uctx.uc_mcontext.__gregs[_REG_GS] = (u_int64_t)SCARG(uap, addr);
-		if ((error = setucontext(l, &uctx)) != 0)
-			return error;
+		taddr = SCARG(uap, addr);
+		if (taddr >= VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		pcb->pcb_gs = taddr;
+		pcb->pcb_flags |= PCB_GS64;
+		if (l == curlwp)
+			wrmsr(MSR_KERNELGSBASE, taddr);
 		break;
 
 	case LINUX_ARCH_GET_GS:
-		if ((error = copyout(&uctx.uc_mcontext.__gregs[_REG_GS], 
-		    (char *)SCARG(uap, addr), 
-		    sizeof(uctx.uc_mcontext.__gregs[_REG_GS]))) != 0)
+		if (pcb->pcb_flags & PCB_GS64)
+			taddr = pcb->pcb_gs;
+		else {
+			error = memseg_baseaddr(l, tf->tf_fs, NULL, 0, &taddr);
+			if (error != 0)
+				return error;
+		}
+		error = copyout(&taddr, (char *)SCARG(uap, addr), 8);
+		if (error != 0)
 			return error;
 		break;
 
 	case LINUX_ARCH_SET_FS:
-#ifndef tmp_hack
-		return 0; /* XXX */
-#endif
-		uctx.uc_mcontext.__gregs[_REG_FS] = (u_int64_t)SCARG(uap, addr);
-		if ((error = setucontext(l, &uctx)) != 0)
-			return error;
+		taddr = SCARG(uap, addr);
+		if (taddr >= VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		pcb->pcb_fs = taddr;
+		pcb->pcb_flags |= PCB_FS64;
+		if (l == curlwp)
+			wrmsr(MSR_FSBASE, taddr);
 		break;
 
 	case LINUX_ARCH_GET_FS:
-		if ((error = copyout(&uctx.uc_mcontext.__gregs[_REG_FS], 
-		    (char *)SCARG(uap, addr),
-		    sizeof(uctx.uc_mcontext.__gregs[_REG_FS]))) != 0)
+		if (pcb->pcb_flags & PCB_FS64)
+			taddr = pcb->pcb_fs;
+		else {
+			error = memseg_baseaddr(l, tf->tf_fs, NULL, 0, &taddr);
+			if (error != 0)
+				return error;
+		}
+		error = copyout(&taddr, (char *)SCARG(uap, addr), 8);
+		if (error != 0)
 			return error;
 		break;
 
@@ -498,7 +514,6 @@ linux_sys_arch_prctl(l, v, retval)
 		    SCARG(uap, code));
 #endif
 		return EINVAL;
-		break;
 	}
 
 	return 0;
