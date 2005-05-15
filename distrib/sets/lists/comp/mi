@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.784 2005/05/14 23:58:51 christos Exp $
+#	$NetBSD: mi,v 1.785 2005/05/15 21:12:53 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4481,6 +4481,7 @@
 ./usr/share/man/cat3/t_getstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_goto.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_puts.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_putws.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tailq_empty.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_entry.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_first.0		comp-obsolete		obsolete
@@ -8343,6 +8344,7 @@
 ./usr/share/man/man3/t_getstr.3			comp-c-man		.man
 ./usr/share/man/man3/t_goto.3			comp-c-man		.man
 ./usr/share/man/man3/t_puts.3			comp-c-man		.man
+./usr/share/man/man3/t_putws.3			comp-c-man		.man
 ./usr/share/man/man3/tailq_empty.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_entry.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_first.3		comp-obsolete		obsolete
