@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.33 2004/10/10 09:57:31 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.34 2005/05/15 08:01:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.33 2004/10/10 09:57:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.34 2005/05/15 08:01:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -179,9 +179,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
-	u.nanon = uvmexp.nanon;
-	u.nanonneeded = uvmexp.nanonneeded;
-	u.nfreeanon = uvmexp.nfreeanon;
 	u.faults = uvmexp.faults;
 	u.traps = uvmexp.traps;
 	u.intrs = uvmexp.intrs;
