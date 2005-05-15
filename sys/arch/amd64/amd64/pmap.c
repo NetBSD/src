@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2005/04/01 11:59:23 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2005/05/15 21:37:46 fvdl Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2005/04/01 11:59:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2005/05/15 21:37:46 fvdl Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2051,7 +2051,8 @@ pmap_fork(pmap1, pmap2)
 		size_t len;
 
 		len = pmap1->pm_ldt_len;
-		new_ldt = (char *)uvm_km_alloc(kernel_map, len, UVM_KMF_WIRED);
+		new_ldt = (char *)uvm_km_alloc(kernel_map, len, 0,
+		    UVM_KMF_WIRED);
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2128,6 +2129,10 @@ pmap_activate(l)
 		 */
 		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 	}
+	if (pcb->pcb_flags & PCB_GS64)
+		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
+	if (pcb->pcb_flags & PCB_GS64)
+		wrmsr(MSR_FSBASE, pcb->pcb_fs);
 }
 
 /*
