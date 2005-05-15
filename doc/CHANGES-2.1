@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.103 2005/05/13 23:34:04 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.104 2005/05/15 05:33:31 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2149,4 +2149,9 @@ sys/dev/usb/ehcireg.h				1.21
 	considered failed by the software, but a success by the device.
 	PR#29731.
 	[augustss, ticket #1496]
+
+sys/dev/verified_exec.c				1.6
+
+	Use UIO_SYSSPACE for NDINIT. Found by Eike Dehling.
+	[cube, ticket #1505]
 
