@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.131 2005/03/10 16:28:54 wiz Exp $ */
+/* $NetBSD: vmstat.c,v 1.132 2005/05/15 08:01:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.131 2005/03/10 16:28:54 wiz Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.132 2005/05/15 08:01:20 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -750,8 +750,6 @@ dosum(void)
 	(void)printf("%9u swap pages\n", uvmexp.swpages);
 	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
 	(void)printf("%9u swap allocations\n", uvmexp.nswget);
-	(void)printf("%9u anons\n", uvmexp.nanon);
-	(void)printf("%9u free anons\n", uvmexp.nfreeanon);
 
 	(void)printf("%9u total faults taken\n", uvmexp.faults);
 	(void)printf("%9u traps\n", uvmexp.traps);
