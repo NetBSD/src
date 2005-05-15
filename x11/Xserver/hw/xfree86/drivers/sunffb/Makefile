@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/03/26 10:22:27 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2005/05/15 19:32:21 martin Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -13,6 +13,9 @@ SRCS=	ffb_driver.c ffb_accel.c ffb_attr.c ffb_stip.c ffb_bcopy.c \
 	ffb_line.c ffb_glyph.c ffb_frect.c ffb_circle.c ffb_checks.c \
 	ffb_stubs.c ffb_gc.c ffb_gspans.c ffb_sspans.c ffb_zeroarc.c \
 	ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c
+
+SRCS+=	VISmoveImage.s ffb_asm.s
+AFLAGS+= -x assembler-with-cpp -Wa,-Av9a
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
@@ -30,7 +33,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
 		-I${X11SRCDIR.xc}/include/fonts \
                 -I${DESTDIR}${X11INCDIR}/X11 \
                 -I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${XSERVERINCDIR}
+		-I${XSERVERINCDIR} \
+		-DUSE_VIS
 
 
 .if ${X11DRI} != "no"
