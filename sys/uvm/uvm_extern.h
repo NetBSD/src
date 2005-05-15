@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.100 2005/04/01 11:59:38 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.101 2005/05/15 08:01:06 yamt Exp $	*/
 
 /*
  *
@@ -307,9 +307,9 @@ struct uvmexp {
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
-	int nanon;	/* number total of anon's in system */
-	int nanonneeded;/* number of anons currently needed */
-	int nfreeanon;	/* number of free anon's */
+	int unused1;	/* used to be nanon */
+	int unused2;	/* used to be nanonneeded */
+	int unused3;	/* used to be nfreeanon */
 
 	/* stat counters */
 	int faults;		/* page fault count */
@@ -401,9 +401,9 @@ struct uvmexp_sysctl {
 	int64_t	swpginuse;
 	int64_t	swpgonly;
 	int64_t	nswget;
-	int64_t	nanon;
-	int64_t	nanonneeded;
-	int64_t	nfreeanon;
+	int64_t	unused1; /* used to be nanon */
+	int64_t	unused2; /* used to be nanonneeded */
+	int64_t	unused3; /* used to be nfreeanon */
 	int64_t	faults;
 	int64_t	traps;
 	int64_t	intrs;
