@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.38 2005/04/18 06:53:35 dsl Exp $ */
+/* $NetBSD: date.c,v 1.39 2005/05/15 18:39:39 dsl Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.38 2005/04/18 06:53:35 dsl Exp $");
+__RCSID("$NetBSD: date.c,v 1.39 2005/05/15 18:39:39 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,7 @@ setthetime(const char *p)
 				exit(1);
 			}
 		} else {
+			tval = new_time;
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;
 			if (settimeofday(&tv, NULL)) {
