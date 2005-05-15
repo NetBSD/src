@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.12 2005/05/13 06:33:32 mhitch Exp $	*/
+/*	$NetBSD: ffb.c,v 1.13 2005/05/15 16:41:25 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.12 2005/05/13 06:33:32 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.13 2005/05/15 16:41:25 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -264,11 +264,9 @@ ffb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		    (u_int *)data);
 		break;
 	case FBIOGCURSOR:
-		printf("%s: FBIOGCURSOR not implemented\n", sc->sc_dv.dv_xname);
-		return EIO;
 	case FBIOSCURSOR:
-		printf("%s: FBIOSCURSOR not implemented\n", sc->sc_dv.dv_xname);
-		return EIO;
+		/* the console driver is not using the hardware cursor */
+		break;
 	case FBIOGCURPOS:
 		printf("%s: FBIOGCURPOS not implemented\n", sc->sc_dv.dv_xname);
 		return EIO;
