@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2005/02/26 23:10:19 perry Exp $
+	$NetBSD: syscalls.master,v 1.50 2005/05/16 16:02:19 fvdl Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -608,18 +608,27 @@
 379	UNIMPL		readahead
 380	UNIMPL		/* unused */
 381	UNIMPL		tkill
-382	UNIMPL		setxattr
-383	UNIMPL		lsetxattr
-384	UNIMPL		fsetxattr
-385	UNIMPL		getxattr
-386	UNIMPL		lgetxattr
-387	UNIMPL		fgetxattr
-388	UNIMPL		listxattr
-389	UNIMPL		llistxattr
-390	UNIMPL		flistxattr
-391	UNIMPL		removexattr
-392	UNIMPL		lremovexattr
-393	UNIMPL		fremovexattr
+382	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+383	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+384	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+385	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+386	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+387	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+388	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+389	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+390	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+391	STD		{ int linux_sys_removexattr(char *path, char *name); }
+392	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+393	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 394	UNIMPL		futex
 395	UNIMPL		sched_setaffinity
 396	UNIMPL		sched_getaffinity
