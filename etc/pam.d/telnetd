@@ -1,4 +1,4 @@
-# $NetBSD: telnetd,v 1.5 2005/02/27 21:49:14 thorpej Exp $
+# $NetBSD: telnetd,v 1.5.2.1 2005/05/16 21:34:30 riz Exp $
 #
 # PAM configuration for the "telnetd" service
 #
@@ -18,4 +18,4 @@ account		include		login
 session		include		login
 
 # password
-session		include		login
+password	include		login
