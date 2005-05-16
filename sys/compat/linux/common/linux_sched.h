@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.3 2004/09/05 07:22:20 jdolecek Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.4 2005/05/16 21:18:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,5 +80,12 @@ struct linux_timespec {
 	linux_time_t	tv_sec;		/* seconds */
 	long		tv_nsec;	/* nanoseconds */
 };
+
+#define LINUX_CLOCK_REALTIME		0
+#define LINUX_CLOCK_MONOTONIC		1
+#define LINUX_CLOCK_PROCESS_CPUTIME_ID	2
+#define LINUX_CLOCK_THREAD_CPUTIME_ID	3
+#define LINUX_CLOCK_REALTIME_HR		4
+#define LINUX_CLOCK_MONOTONIC_HR	5
 
 #endif /* _LINUX_SCHED_H */
