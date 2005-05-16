@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2005/03/08 15:26:23 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2005/05/16 07:48:07 dogcow Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -30,6 +30,7 @@ SRCS+=	linux_sg.c linux_mtio.c
 
 # architecture or machine dependant files
 .if ${MACHINE} == "i386"
+.PATH:	$S/arch/x86/x86
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
 	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
