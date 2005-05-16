@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2005/05/16 16:02:20 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.19 2005/05/16 21:17:11 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -438,10 +438,15 @@
 259	UNIMPL		timer_gettime
 260	UNIMPL		timer_getoverrun
 261	UNIMPL		timer_delete
-262	UNIMPL		clock_settime
-263	UNIMPL		clock_gettime
-264	UNIMPL		clock_getres
-265	UNIMPL		clock_nanosleep
+262	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+263	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+264	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+265	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 266	UNIMPL		tgkill
 267	UNIMPL		utimes
 268	UNIMPL		mbind

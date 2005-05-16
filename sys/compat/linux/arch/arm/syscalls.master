@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2005/05/16 16:02:20 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.22 2005/05/16 21:17:11 fvdl Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -425,10 +425,15 @@
 259	UNIMPL		timer_gettime
 260	UNIMPL		timer_getoverrun
 261	UNIMPL		timer_delete
-262	UNIMPL		clock_settime
-263	UNIMPL		clock_gettime
-264	UNIMPL		clock_getres
-265	UNIMPL		clock_nanosleep
+262	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+263	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+264	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+265	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 266	STD		{ int linux_sys_statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 267	STD		{ int linux_sys_fstatfs64(int fd, \
