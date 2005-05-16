@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.104 2005/05/15 05:33:31 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.105 2005/05/16 05:23:58 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2154,4 +2154,34 @@ sys/dev/verified_exec.c				1.6
 
 	Use UIO_SYSSPACE for NDINIT. Found by Eike Dehling.
 	[cube, ticket #1505]
+
+sys/arch/mac68k/dev/akbdmap.h			1.7 via patch
+sys/dev/pckbport/wskbdmap_mfii.c		1.8-1.9
+sys/dev/usb/ukbdmap.c				1.14
+
+	Add Portuguese keymap.
+	[abs, ticket #1506]
+
+sys/arch/mips/mips/mipsX_subr.S			1.16
+
+	Change *_TLBUpdate for the MIPS3-style two-entry TLBs to only
+	update existing entries and not create new ones. PR#14801.
+	[chs, ticket #1508]
+
+sys/dev/pci/iavc_pci.c				1.3
+
+	Correct the type in CFATTACH_DECL. PR#30197
+	[martin, ticket #1513]
+
+sys/dev/ic/esiop.c				1.33
+
+	Don't assume all LUNs are probed before scsipi sets the mode,
+	and always check if lun_tagtbl needs to be allocated. Patch
+	from john heasley in kern/29603.
+	[bouyer, ticket #1514]
+
+sys/dev/vnd.c					patch
+
+	Fix a build problem introduced in a previous pullup.
+	[bouyer, ticket #1520]
 
