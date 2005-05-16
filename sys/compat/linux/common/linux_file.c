@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.67 2005/05/03 16:26:28 manu Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.68 2005/05/16 16:02:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.67 2005/05/03 16:26:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.68 2005/05/16 16:02:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,4 +1093,112 @@ linux_sys_pwrite(l, v, retval)
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+int
+linux_sys_setxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_lsetxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_fsetxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_getxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_lgetxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_fgetxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_listxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_llistxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_flistxattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_removexattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_lremovexattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
+}
+
+int
+linux_sys_fremovexattr(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return EOPNOTSUPP;
 }

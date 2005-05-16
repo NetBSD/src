@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2005/02/26 23:10:19 perry Exp $
+	$NetBSD: syscalls.master,v 1.21 2005/05/16 16:02:20 fvdl Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -380,18 +380,27 @@
 223	UNIMPL		/* unused */
 224	UNIMPL		gettid
 225	UNIMPL		readahead
-226	UNIMPL		setxattr
-227	UNIMPL		lsetxattr
-228	UNIMPL		fsetxattr
-229	UNIMPL		getxattr
-230	UNIMPL		lgetxattr
-231	UNIMPL		fgetxattr
-232	UNIMPL		listxattr
-233	UNIMPL		llistxattr
-234	UNIMPL		flistxattr
-235	UNIMPL		removexattr
-236	UNIMPL		lremovexattr
-237	UNIMPL		fremovexattr
+226	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+227	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+228	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+229	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+230	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+231	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+232	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+233	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+234	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+235	STD		{ int linux_sys_removexattr(char *path, char *name); }
+236	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+237	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 238	UNIMPL		tkill
 239	UNIMPL		sendfile64
 240	UNIMPL		futex
