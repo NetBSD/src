@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.106 2005/05/16 16:16:34 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.107 2005/05/16 21:22:26 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2203,4 +2203,21 @@ sys/dev/ata/wd.c				1.300
 
 	Add another broken seagate device to the quick list.
 	[bouyer, ticket #1522]
+
+sys/arch/hpcmips/conf/GENERIC			1.167
+sys/arch/hpcmips/conf/files.hpcmips		1.97
+sys/arch/hpcmips/conf/std.hpcmips.tx39		1.2
+sys/arch/hpcmips/dev/optpoint.c			1.1
+sys/arch/hpcmips/tx/tx39spi.c			1.1
+sys/arch/hpcmips/tx/tx39spivar.h		1.1
+
+	Add OptPoint on Telios HC-AJ2 (and maybe AJ1) support for hpcmips.
+	[hamajima, ticket #1500]
+
+sys/dev/usb/ehci.c				1.102-1.103
+
+	Make sure to honor the USBD_FORCE_SHORT_XFER flag and generate an empty
+	transfer when necessary. Make sure all physical addresses are filled
+	in the qTD even when we have a page offset.
+	[augustss, ticket #1501]
 
