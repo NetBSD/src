@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.106.4.1 2005/05/13 18:07:13 riz Exp $	*/
+/*	$NetBSD: vnd.c,v 1.106.4.2 2005/05/16 05:21:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.106.4.1 2005/05/13 18:07:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.106.4.2 2005/05/16 05:21:56 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -632,7 +632,8 @@ vndthread(void *arg)
 #ifdef DEBUG
 			if (vnddebug & VDB_IO)
 				printf("vndstart(%ld): bp %p vp %p blkno "
-				    "0x%" PRIx64 " flags %x addr %p cnt 0x%x\n",
+				    "0x%" PRIx64 " flags %lx addr %p"
+				    " cnt 0x%lx\n",
 				    (long) (vnd-vnd_softc), &nbp->vb_buf,
 				    nbp->vb_buf.b_vp, nbp->vb_buf.b_blkno,
 				    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
