@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24.2.1.2.1 2005/05/08 17:49:42 snj Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24.2.1.2.2 2005/05/16 15:03:59 riz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24.2.1.2.1 2005/05/08 17:49:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24.2.1.2.2 2005/05/16 15:03:59 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,12 +364,22 @@ fixpci(parent, pc)
 				continue;
 			len = find_node_intr(node, &iaddr.phys_hi, irqs);
 		}
-		if (len > 0) {
-			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-			intr &= ~PCI_INTERRUPT_LINE_MASK;
-			intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
-			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+		if (len <= 0) {
+			/*
+			 * If we still don't have an interrupt, try one
+			 * more time.  This case covers devices behind the
+			 * PCI-PCI bridge in a UMAX S900 or similar (9500?)
+			 * system.  These slots all share the bridge's
+			 * interrupt.
+			 */
+			len = find_node_intr(node, &addr[0].phys_hi, irqs);
+			if (len <= 0)
+				continue;
 		}
+		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		intr &= ~PCI_INTERRUPT_LINE_MASK;
+		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 	}
 }
 
