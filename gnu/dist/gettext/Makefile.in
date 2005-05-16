@@ -581,27 +581,6 @@ uninstall-info: uninstall-info-recursive
 	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
 	uninstall uninstall-am uninstall-info-am
 
-<<<<<<< Makefile.in
-.PHONY: mostlyclean-hdr distclean-hdr clean-hdr maintainer-clean-hdr \
-uninstall-gettextsrcDATA install-gettextsrcDATA install-data-recursive \
-uninstall-data-recursive install-exec-recursive \
-uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
-all-recursive check-recursive installcheck-recursive info-recursive \
-dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
-maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
-distclean-tags clean-tags maintainer-clean-tags distdir info dvi \
-installcheck all-recursive-am all-am install-data-am uninstall-am \
-install-exec install-data install uninstall all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
-
-
-#ABOUT-NLS: $(srcdir)/doc/nls.texi $(srcdir)/doc/matrix.texi
-#	rm -f $(srcdir)/ABOUT-NLS \
-#	  && $(MAKEINFO) --output=$(srcdir)/ABOUT-NLS --no-header \
-#	    -I $(srcdir)/doc --no-validate nls.texi
-=======
->>>>>>> 1.1.1.2
 
 # Additional dependencies for configure, due to the use of autoconf --trace.
 $(srcdir)/configure: $(srcdir)/autoconf-lib-link/configure.ac $(srcdir)/gettext-runtime/configure.ac $(srcdir)/gettext-tools/configure.ac 
