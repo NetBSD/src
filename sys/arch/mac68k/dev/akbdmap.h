@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.4 2003/02/23 18:09:26 manu Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.4.6.1 2005/05/16 04:49:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -349,6 +349,31 @@ static const keysym_t akbd_keydesc_sf[] = {
     KC(47),	KS_minus,	KS_underscore,
     KC(50),	KS_less,	KS_greater,
 };
+ 
+static const keysym_t akbd_keydesc_pt[] = {
+/*  pos         normal          shifted         altgr           shift-altgr */
+    KC(7),	KS_x,		KS_X,		KS_guillemotleft, KS_guillemotright,
+    KC(10),	KS_section,	KS_plusminus,
+    KC(19),	KS_2,		KS_quotedbl,	KS_at,
+    KC(20),	KS_3,		KS_numbersign,	KS_sterling,
+    KC(22),	KS_6,		KS_ampersand,
+    KC(24),	KS_plus,	KS_asterisk,
+    KC(25),     KS_9,		KS_parenright,	KS_bracketright, KS_braceright,
+    KC(26),	KS_7,		KS_slash,
+    KC(27),	KS_apostrophe,	KS_question,
+    KC(28),	KS_8,		KS_parenleft,	KS_bracketleft, KS_braceleft,
+    KC(29),	KS_0,		KS_equal,
+    KC(30),	KS_dead_acute,	KS_dead_grave,
+    KC(33), 	KS_masculine,	KS_ordfeminine,
+    KC(39),	KS_dead_tilde,	KS_dead_circumflex,
+    KC(41),	KS_ccedilla,	KS_Ccedilla,
+    KC(43),	KS_comma,	KS_semicolon,
+    KC(44),	KS_minus,	KS_underscore,
+    KC(47),	KS_period,	KS_colon,
+    KC(50),	KS_less,	KS_greater,
+    KC(58),	KS_Mode_switch,
+    KC(81),	KS_KP_Equal,
+};
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -363,6 +388,7 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_DE,			KB_US,  akbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,  akbd_keydesc_de_nodead),
 	KBD_MAP(KB_UK,			KB_US,  akbd_keydesc_uk),
+	KBD_MAP(KB_PT,                  KB_US,  akbd_keydesc_pt),
 	{0, 0, 0, 0}
 };
 
