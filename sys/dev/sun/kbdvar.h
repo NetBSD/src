@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.15 2005/04/28 15:03:49 martin Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.16 2005/05/16 16:23:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@ struct kbd_softc {
 #if NWSKBD > 0
 	struct device * k_wskbd;/* handle for wskbd, if it is attached */
 	int k_wsenabled;	/* set if we are using wskbd */
+	int k_wsraw;		/* send raw events to wscons */
 	struct callout k_wsbell;/* to shut the bell off */
 #endif
 
