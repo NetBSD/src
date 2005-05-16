@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.21 2005/04/18 21:33:21 bouyer Exp $
+#	$NetBSD: files.xen,v 1.22 2005/05/16 12:05:50 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -213,7 +213,7 @@ include	"compat/linux/files.linux"
 include	"compat/linux/arch/i386/files.linux_i386"
 file	arch/i386/i386/linux_sigcode.S		compat_linux
 file	arch/i386/i386/linux_syscall.c		compat_linux
-file	arch/i386/i386/linux_trap.c		compat_linux
+file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
