@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.21 2005/05/16 14:43:23 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.22 2005/05/16 15:16:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.21 2005/05/16 14:43:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.22 2005/05/16 15:16:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.21 2005/05/16 14:43:23 macallan Exp $");
 #include <dev/rasops/rasops.h>
 
 #include "opt_wsemul.h"
+#include "rasops_glue.h"
 
 #include "tctrl.h"
 #if NTCTRL > 0
