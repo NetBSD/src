@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.93 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.hpcmips,v 1.93.4.1 2005/05/16 21:05:23 riz Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -233,6 +233,7 @@ device txsim { }
 device txcsbusif {[platform = -1]}
 device txcomif {[slot = -1]}
 device txsibif {[slot = -1]}
+device txspiif {[slot = -1]}
 device ucbif { }
 device irif { }
 
@@ -275,6 +276,10 @@ file arch/hpcmips/tx/txioman.c		txioman
 device tx39sib: txsibif
 attach tx39sib at txsim
 file arch/hpcmips/tx/tx39sib.c		tx39sib
+
+device tx39spi: txspiif
+attach tx39spi at txsim
+file arch/hpcmips/tx/tx39spi.c		tx39spi
 
 #	PHILIPS UCB1200 / TOSHIBA TC35413F (modem/audio analog front-end)
 device ucb: ucbif
@@ -442,5 +447,10 @@ file arch/hpcmips/vr/vr4181aiu.c	vr4181aiu	needs-flag
 device flash
 attach flash at vripif with flash_vrip
 file arch/hpcmips/vr/flash_vrip.c	flash_vrip	needs-flag
+
+# OptPoint on Telios HC-AJ2
+device optpoint : wsmousedev
+attach optpoint at txspiif
+file arch/hpcmips/dev/optpoint.c	optpoint
 
 include "arch/hpcmips/conf/majors.hpcmips"
