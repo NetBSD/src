@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.105 2005/05/16 05:23:58 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.106 2005/05/16 16:16:34 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2184,4 +2184,23 @@ sys/dev/vnd.c					patch
 
 	Fix a build problem introduced in a previous pullup.
 	[bouyer, ticket #1520]
+
+sys/arch/macppc/pci/pci_machdep.c		1.27
+
+	Bring in some code to deal with devices in the lower slots of a
+	UMAX S900 and perhaps PowerMac 9500.  These slots sit behind
+	a PCI-PCI bridge, and devices in those slots inherit the PCI-PCI
+	bridge interrupt.  PR#26341.
+	[macallan, ticket #1521]
+
+usr.sbin/pkg_install/lib/ftpio.c		1.66 via patch
+
+	When extracting files from a binary package addition by ftp,
+	preserve the modes of the entries in the binary package. PR#28826
+	[reed, ticket #1515]
+
+sys/dev/ata/wd.c				1.300
+
+	Add another broken seagate device to the quick list.
+	[bouyer, ticket #1522]
 
