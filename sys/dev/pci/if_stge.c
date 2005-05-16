@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.26 2005/05/13 06:36:22 wiz Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.26 2005/05/13 06:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -903,15 +903,15 @@ stge_start(struct ifnet *ifp)
 		csum_flags = 0;
 		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txipsum);
-			csum_flags |= htole64(TFD_IPChecksumEnable);
+			csum_flags |= TFD_IPChecksumEnable;
 		}
 
 		if (m0->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txtcpsum);
-			csum_flags |= htole64(TFD_TCPChecksumEnable);
+			csum_flags |= TFD_TCPChecksumEnable;
 		} else if (m0->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txudpsum);
-			csum_flags |= htole64(TFD_UDPChecksumEnable);
+			csum_flags |= TFD_UDPChecksumEnable;
 		}
 
 		/*
@@ -1507,8 +1507,8 @@ stge_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		sc->sc_txdescs[i].tfd_next =
-		    (uint64_t) STGE_CDTXADDR(sc, STGE_NEXTTX(i));
+		sc->sc_txdescs[i].tfd_next = htole64(
+		    STGE_CDTXADDR(sc, STGE_NEXTTX(i)));
 		sc->sc_txdescs[i].tfd_control = htole64(TFD_TFDDone);
 	}
 	sc->sc_txpending = 0;
