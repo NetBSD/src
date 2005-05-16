@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.90 2005/05/12 16:01:30 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.91 2005/05/16 21:36:53 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8542,4 +8542,15 @@ etc/defaults/security.conf			1.15
 
 	Don't check ptyfs for new and gone devices.
 	[christos, ticket #298]
+
+sys/arch/xen/xen/vfr.c				delete
+
+	Remove obsolete file missed from the bouyer-xen2 merge.
+	Pointed out by YAMAMOTO Takashi.
+	[bouyer, ticket #299]
+
+etc/pam.d/telnetd				1.6
+
+	Correct line for "password".
+	[lukem, ticket #300]
 
