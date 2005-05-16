@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.44 2005/05/09 19:04:50 jmc Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.45 2005/05/16 16:00:31 fvdl Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.44 2005/05/09 19:04:50 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.45 2005/05/16 16:00:31 fvdl Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.44 2005/05/09 19:04:50 jmc Exp $"
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_util.h>
 
 #include <compat/linux/linux_syscallargs.h>
