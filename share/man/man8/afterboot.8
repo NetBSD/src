@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.17 2005/05/17 13:57:04 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.18 2005/05/17 14:04:18 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -559,7 +559,8 @@ To keep any custom message intact, ensure that you leave two blank lines
 at the top, or your message will be overwritten.
 .Ss Sushi
 .Xr sushi 8
-is a tool for configuring the system. It will allow you to set up many
+is a tool for configuring the system.
+It will allow you to set up many
 aspects of the system from interactive menus.
 You can launch it typing:
 .Bd -literal -offset indent
@@ -669,8 +670,8 @@ see
 .Xr kerberos 8
 and
 .Dq info heimdal
-for more information. If you already have a Kerberos
-master, change directory to
+for more information.
+If you already have a Kerberos master, change directory to
 .Pa /etc/kerberosIV
 or
 .Pa /etc/kerberosV
@@ -885,7 +886,8 @@ You can use
 and
 .Xr fstat 1
 to check on running processes, network connections, and opened files,
-respectively. Other tools you may find useful are
+respectively.
+Other tools you may find useful are
 .Xr systat 1
 and
 .Xr top 1 .
