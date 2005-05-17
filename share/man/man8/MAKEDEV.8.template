@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.5 2003/12/21 18:02:06 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.6 2005/05/17 13:59:40 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,5 +131,5 @@ This man page is generated automatically from the same sources
 as
 .Pa /dev/MAKEDEV ,
 in which the device files are not always sorted, which may result
-in an unusual (non-alphabetical) order. Not all devices listed
-in this manpage are supported on all platforms.
+in an unusual (non-alphabetical) order.
+Not all devices listed in this manpage are supported on all platforms.
