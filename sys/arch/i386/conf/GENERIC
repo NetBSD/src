@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.672 2005/05/06 04:42:24 elad Exp $
+# $NetBSD: GENERIC,v 1.673 2005/05/17 17:20:41 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.672 $"
+#ident 		"GENERIC-$Revision: 1.673 $"
 
 maxusers	32		# estimated number of users
 
@@ -269,8 +269,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # don't attach pckbd as the console if no PS/2 keyboard is found
 options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" /* for pckbd driver */
-#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  /* for ukbd driver */
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
