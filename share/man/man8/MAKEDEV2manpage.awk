@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.10 2003/10/30 08:25:19 wiz Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.11 2005/05/17 14:01:41 wiz Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -162,8 +162,6 @@ function read1line() {
 				page = "-----" # force no .Xr
 			else if (target == "sysmon")
 				page = "envsys"
-			else if (target == "veriexec")
-				page = "verifiedexec"
 			else if (target == "ttyZ#")
 				page = "zstty"
 			else if (target == "ttyCZ?")
