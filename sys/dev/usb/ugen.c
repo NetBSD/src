@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.72 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.73 2005/05/17 14:53:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.72 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.73 2005/05/17 14:53:06 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,13 +333,14 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (sc == NULL || sc->sc_dying)
 		return (ENXIO);
 
-	if (sc->sc_is_open[endpt])
-		return (EBUSY);
-
+	/* The control endpoint allows multiple opens. */
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
 		return (0);
 	}
+
+	if (sc->sc_is_open[endpt])
+		return (EBUSY);
 
 	/* Make sure there are pipes for all directions. */
 	for (dir = OUT; dir <= IN; dir++) {
