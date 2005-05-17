@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.175 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.176 2005/05/17 04:14:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -113,6 +113,9 @@ extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
+
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
