@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.194 2005/05/17 13:55:33 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.195 2005/05/17 21:45:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.194 2005/05/17 13:55:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.195 2005/05/17 21:45:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4374,6 +4374,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	struct uvm_object *uobj;
 	struct vm_map_entry *next;
 	struct vm_map_entry *prev;
+	vsize_t size;
 	int merged = 0;
 	boolean_t copying;
 	int newetype;
@@ -4389,6 +4390,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	}
 
 	uobj = entry->object.uvm_obj;
+	size = entry->end - entry->start;
 	copying = (flags & UVM_MERGE_COPYING) != 0;
 	newetype = copying ? (entry->etype & ~UVM_ET_NEEDSCOPY) : entry->etype;
 
@@ -4401,12 +4403,12 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	    UVM_ET_ISCOMPATIBLE(next, newetype,
 	    uobj, entry->flags, entry->protection,
 	    entry->max_protection, entry->inheritance, entry->advice,
-	    entry->wired_count)) {
+	    entry->wired_count) &&
+	    (uobj == NULL || entry->offset + size == next->offset)) {
 		int error;
 
 		if (copying) {
-			error = amap_extend(next,
-			    entry->end - entry->start,
+			error = amap_extend(next, size,
 			    AMAP_EXTEND_NOWAIT|AMAP_EXTEND_BACKWARDS);
 		} else {
 			error = 0;
@@ -4437,12 +4439,12 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	    UVM_ET_ISCOMPATIBLE(prev, newetype,
 	    uobj, entry->flags, entry->protection,
 	    entry->max_protection, entry->inheritance, entry->advice,
-	    entry->wired_count)) {
+	    entry->wired_count) &&
+	    (uobj == NULL || prev->offset + size == entry->offset)) {
 		int error;
 
 		if (copying) {
-			error = amap_extend(prev,
-			    entry->end - entry->start,
+			error = amap_extend(prev, size,
 			    AMAP_EXTEND_NOWAIT|AMAP_EXTEND_FORWARDS);
 		} else {
 			error = 0;
