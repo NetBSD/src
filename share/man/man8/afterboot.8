@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.19 2005/05/17 14:05:46 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.20 2005/05/17 14:08:36 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -604,7 +604,7 @@ and the
 .Pa /etc/rc.d/*
 scripts are invoked at boot time after single user mode has exited,
 and at shutdown.
-The whole process is controlled, by the master script
+The whole process is controlled by the master script
 .Pa /etc/rc .
 This script should not be changed by administrators.
 .Pp
@@ -704,7 +704,9 @@ Please see
 .Pa /usr/share/sendmail/README
 and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
-(run "make" to produce a PostScript version)
+(run
+.Ic make
+there to produce a PostScript version)
 for information on generating your own sendmail configuration files.
 .Pa /etc/mailer.conf
 is configured to use Sendmail binaries by default and
@@ -894,7 +896,7 @@ and
 .Sh COMPILING A KERNEL
 Note:
 The standard
-.Ox
+.Nx
 kernel configuration (GENERIC) is suitable for most purposes.
 .Pp
 First, review the system message buffer in
@@ -952,6 +954,7 @@ and issuing:
 $ cd /usr/src
 $ K=sys/arch/`uname -m`/conf
 $ cp $K/GENERIC $K/SOMEFILE
+$ vi $K/SOMEFILE (adapt to your needs)
 $ ./build.sh tools
 $ ./build.sh kernel=SOMEFILE
 .Ed
