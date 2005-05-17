@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2005/05/16 11:55:24 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2005/05/17 13:47:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2005/05/16 11:55:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2005/05/17 13:47:17 fvdl Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -342,7 +342,7 @@ syscall_fancy(frame) */
 	default:
 	bad:
 #ifdef COMPAT_LINUX
-		frame->tf_rax = LINUX_SCERR_SIGN error;
+		frame->tf_rax = native_to_linux_errno[error];
 #else
 		frame->tf_rax = error;
 #endif
