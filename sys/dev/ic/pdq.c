@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: pdq.c,v 1.38 2005/05/17 04:14:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.37 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.38 2005/05/17 04:14:57 christos Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -182,7 +182,6 @@ pdq_print_fddi_chars(
     pdq_t *pdq,
     const pdq_response_status_chars_get_t *rsp)
 {
-    static const char hexchars[] = "0123456789abcdef";
     pdq_uint32_t phy_type;
     pdq_uint32_t pmd_type;
     pdq_uint32_t smt_version_id;
@@ -203,18 +202,18 @@ pdq_print_fddi_chars(
 
     printf(PDQ_OS_PREFIX "FDDI address %c%c:%c%c:%c%c:%c%c:%c%c:%c%c, FW=%c%c%c%c, HW=%c",
 	   PDQ_OS_PREFIX_ARGS,
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[0] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[0] & 0x0F],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[1] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[1] & 0x0F],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[2] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[2] & 0x0F],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[3] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[3] & 0x0F],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[4] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[4] & 0x0F],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[5] >> 4],
-	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[5] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[0] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[0] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[1] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[1] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[2] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[2] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[3] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[3] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[4] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[4] & 0x0F],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[5] >> 4],
+	   hexdigits[pdq->pdq_hwaddr.lanaddr_bytes[5] & 0x0F],
 	   pdq->pdq_fwrev.fwrev_bytes[0], pdq->pdq_fwrev.fwrev_bytes[1],
 	   pdq->pdq_fwrev.fwrev_bytes[2], pdq->pdq_fwrev.fwrev_bytes[3],
 	   rsp->status_chars_get.module_rev.fwrev_bytes[0]);
