@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.47 2005/05/16 18:28:28 martin Exp $	*/
+/*	$NetBSD: kbd.c,v 1.48 2005/05/17 06:18:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.47 2005/05/16 18:28:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.48 2005/05/17 06:18:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1032,9 +1032,9 @@ wssunkbd_ioctl(v, cmd, data, flag, p)
 			*(int *)data = k->k_leds;
 			return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	case WSKBDIO_SETMODE:
-		k->k_wsraw = *(int *)data == WSKBD_RAW;
-		return (0);
+		case WSKBDIO_SETMODE:
+			k->k_wsraw = *(int *)data == WSKBD_RAW;
+			return (0);
 #endif
 	}
 	return EPASSTHROUGH;
