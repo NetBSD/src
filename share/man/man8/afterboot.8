@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.15 2005/05/14 17:10:16 hubertf Exp $
+.\"	$NetBSD: afterboot.8,v 1.16 2005/05/17 13:51:34 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -379,7 +379,7 @@ is running
 (otherwise there are long waits for resolver timeouts).
 .Ss RPC-based network services
 Several services depend on the RPC portmapper
-.Xr rpcbind 8 
+.Xr rpcbind 8
 - formerly known as
 .Xr portmap 8 -
 being running for proper operation.
@@ -453,7 +453,7 @@ Example:
 .Bd -literal -offset indent
 .Li # Ic cat /etc/fstab
 /dev/sd0a / ffs     rw              1 1
-/dev/sd0b none swap sw 
+/dev/sd0b none swap sw
 /dev/sd0e /usr ffs  rw              1 2
 /dev/sd0f /var ffs  rw              1 3
 /dev/sd0g /tmp ffs  rw              1 4
