@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.46 2005/04/01 11:59:39 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.47 2005/05/17 13:55:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -370,6 +370,9 @@ int		uvm_mapent_reserve(struct vm_map *,
 void		uvm_mapent_unreserve(struct vm_map *,
 		    struct uvm_mapent_reservation *);
 
+int		uvm_mapent_trymerge(struct vm_map *,
+		    struct vm_map_entry *, int);
+#define	UVM_MERGE_COPYING	1
 
 #endif /* _KERNEL */
 

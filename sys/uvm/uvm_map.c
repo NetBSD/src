@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.193 2005/05/17 13:54:19 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.194 2005/05/17 13:55:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.193 2005/05/17 13:54:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.194 2005/05/17 13:55:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -186,6 +186,22 @@ vaddr_t uvm_maxkaddr;
 extern struct vm_map *pager_map; /* XXX */
 #define	VM_MAP_USE_KMAPENT(map) \
 	(((map)->flags & VM_MAP_INTRSAFE) || (map) == kernel_map)
+
+/*
+ * UVM_ET_ISCOMPATIBLE: check some requirements for map entry merging
+ */
+
+#define	UVM_ET_ISCOMPATIBLE(ent, type, uobj, meflags, \
+    prot, maxprot, inh, adv, wire) \
+	((ent)->etype == (type) && \
+	(((ent)->flags ^ (meflags)) & (UVM_MAP_NOMERGE | UVM_MAP_QUANTUM)) \
+	== 0 && \
+	(ent)->object.uvm_obj == (uobj) && \
+	(ent)->protection == (prot) && \
+	(ent)->max_protection == (maxprot) && \
+	(ent)->inheritance == (inh) && \
+	(ent)->advice == (adv) && \
+	(ent)->wired_count == (wire))
 
 /*
  * uvm_map_entry_link: insert entry into a map
@@ -509,10 +525,10 @@ uvm_mapent_free(struct vm_map_entry *me)
 }
 
 /*
- * uvm_mapent_free_merge: free merged map entry
+ * uvm_mapent_free_merged: free merged map entry
  *
  * => keep the entry if needed.
- * => caller shouldn't hold map locked.
+ * => caller shouldn't hold map locked if VM_MAP_USE_KMAPENT(map) is true.
  */
 
 static __inline void
@@ -964,7 +980,6 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	const int amapwaitflag = (flags & UVM_FLAG_NOWAIT) ?
 	    AMAP_EXTEND_NOWAIT : 0;
 	const int advice = UVM_ADVICE(flags);
-	const int meflagmask = UVM_MAP_NOMERGE | UVM_MAP_QUANTUM;
 	const int meflagval = (flags & UVM_FLAG_QUANTUM) ?
 	    UVM_MAP_QUANTUM : 0;
 
@@ -1010,28 +1025,13 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	if (flags & UVM_FLAG_NOMERGE)
 		goto nomerge;
 
-	if (prev_entry->etype == newetype &&
-	    prev_entry->end == start &&
+	if (prev_entry->end == start &&
 	    prev_entry != &map->header &&
-	    prev_entry->object.uvm_obj == uobj) {
-
-		if ((prev_entry->flags & meflagmask) != meflagval)
-			goto forwardmerge;
+	    UVM_ET_ISCOMPATIBLE(prev_entry, newetype, uobj, meflagval,
+	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->offset +
 		    (prev_entry->end - prev_entry->start) != uoffset)
-			goto forwardmerge;
-
-		if (prev_entry->protection != prot ||
-		    prev_entry->max_protection != maxprot)
-			goto forwardmerge;
-
-		if (prev_entry->inheritance != inherit ||
-		    prev_entry->advice != advice)
-			goto forwardmerge;
-
-		/* wiring status must match (new area is unwired) */
-		if (VM_MAPENT_ISWIRED(prev_entry))
 			goto forwardmerge;
 
 		/*
@@ -1076,27 +1076,12 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	}
 
 forwardmerge:
-	if (prev_entry->next->etype == newetype &&
-	    prev_entry->next->start == (start + size) &&
+	if (prev_entry->next->start == (start + size) &&
 	    prev_entry->next != &map->header &&
-	    prev_entry->next->object.uvm_obj == uobj) {
-
-		if ((prev_entry->next->flags & meflagmask) != meflagval)
-			goto nomerge;
+	    UVM_ET_ISCOMPATIBLE(prev_entry->next, newetype, uobj, meflagval,
+	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->next->offset != uoffset + size)
-			goto nomerge;
-
-		if (prev_entry->next->protection != prot ||
-		    prev_entry->next->max_protection != maxprot)
-			goto nomerge;
-
-		if (prev_entry->next->inheritance != inherit ||
-		    prev_entry->next->advice != advice)
-			goto nomerge;
-
-		/* wiring status must match (new area is unwired) */
-		if (VM_MAPENT_ISWIRED(prev_entry->next))
 			goto nomerge;
 
 		/*
@@ -4374,6 +4359,112 @@ uvm_mapent_unreserve(struct vm_map *map, struct uvm_mapent_reservation *umr)
 
 	while (!UMR_EMPTY(umr))
 		uvm_kmapent_free(UMR_GETENTRY(umr));
+}
+
+/*
+ * uvm_mapent_trymerge: try to merge an entry with its neighbors.
+ *
+ * => called with map locked.
+ * => return non zero if successfully merged.
+ */
+
+int
+uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
+{
+	struct uvm_object *uobj;
+	struct vm_map_entry *next;
+	struct vm_map_entry *prev;
+	int merged = 0;
+	boolean_t copying;
+	int newetype;
+
+	if (VM_MAP_USE_KMAPENT(map)) {
+		return 0;
+	}
+	if (entry->aref.ar_amap != NULL) {
+		return 0;
+	}
+	if ((entry->flags & UVM_MAP_NOMERGE) != 0) {
+		return 0;
+	}
+
+	uobj = entry->object.uvm_obj;
+	copying = (flags & UVM_MERGE_COPYING) != 0;
+	newetype = copying ? (entry->etype & ~UVM_ET_NEEDSCOPY) : entry->etype;
+
+	next = entry->next;
+	if (next != &map->header &&
+	    next->start == entry->end &&
+	    ((copying && next->aref.ar_amap != NULL &&
+	    amap_refs(next->aref.ar_amap) == 1) ||
+	    (!copying && next->aref.ar_amap == NULL)) &&
+	    UVM_ET_ISCOMPATIBLE(next, newetype,
+	    uobj, entry->flags, entry->protection,
+	    entry->max_protection, entry->inheritance, entry->advice,
+	    entry->wired_count)) {
+		int error;
+
+		if (copying) {
+			error = amap_extend(next,
+			    entry->end - entry->start,
+			    AMAP_EXTEND_NOWAIT|AMAP_EXTEND_BACKWARDS);
+		} else {
+			error = 0;
+		}
+		if (error == 0) {
+			if (uobj && uobj->pgops->pgo_detach) {
+				uobj->pgops->pgo_detach(uobj);
+			}
+
+			entry->end = next->end;
+			uvm_map_entry_unlink(map, next);
+			if (copying) {
+				entry->aref = next->aref;
+				entry->etype &= ~UVM_ET_NEEDSCOPY;
+			}
+			uvm_tree_sanity(map, "trymerge forwardmerge");
+			uvm_mapent_free_merged(map, next);
+			merged++;
+		}
+	}
+
+	prev = entry->prev;
+	if (prev != &map->header &&
+	    prev->end == entry->start &&
+	    ((copying && !merged && prev->aref.ar_amap != NULL &&
+	    amap_refs(prev->aref.ar_amap) == 1) ||
+	    (!copying && prev->aref.ar_amap == NULL)) &&
+	    UVM_ET_ISCOMPATIBLE(prev, newetype,
+	    uobj, entry->flags, entry->protection,
+	    entry->max_protection, entry->inheritance, entry->advice,
+	    entry->wired_count)) {
+		int error;
+
+		if (copying) {
+			error = amap_extend(prev,
+			    entry->end - entry->start,
+			    AMAP_EXTEND_NOWAIT|AMAP_EXTEND_FORWARDS);
+		} else {
+			error = 0;
+		}
+		if (error == 0) {
+			if (uobj && uobj->pgops->pgo_detach) {
+				uobj->pgops->pgo_detach(uobj);
+			}
+
+			entry->start = prev->start;
+			uvm_map_entry_unlink(map, prev);
+			if (copying) {
+				entry->aref = prev->aref;
+				entry->etype &= ~UVM_ET_NEEDSCOPY;
+			}
+			uvm_tree_sanity(map, "trymerge backmerge");
+			uvm_mapent_free_merged(map, prev);
+			merged++;
+		}
+	}
+
+	return merged;
 }
 
 #if defined(DDB)
