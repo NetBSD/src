@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.192 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.193 2005/05/17 13:54:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.192 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.193 2005/05/17 13:54:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1010,15 +1010,12 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	if (flags & UVM_FLAG_NOMERGE)
 		goto nomerge;
 
-	if (prev_entry->end == start &&
+	if (prev_entry->etype == newetype &&
+	    prev_entry->end == start &&
 	    prev_entry != &map->header &&
 	    prev_entry->object.uvm_obj == uobj) {
 
 		if ((prev_entry->flags & meflagmask) != meflagval)
-			goto forwardmerge;
-
-		if (prev_entry->etype != newetype &&
-		    (prev_entry->etype | UVM_ET_NEEDSCOPY) != newetype)
 			goto forwardmerge;
 
 		if (uobj && prev_entry->offset +
@@ -1079,15 +1076,12 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	}
 
 forwardmerge:
-	if (prev_entry->next->start == (start + size) &&
+	if (prev_entry->next->etype == newetype &&
+	    prev_entry->next->start == (start + size) &&
 	    prev_entry->next != &map->header &&
 	    prev_entry->next->object.uvm_obj == uobj) {
 
 		if ((prev_entry->next->flags & meflagmask) != meflagval)
-			goto nomerge;
-
-		if (prev_entry->next->etype != newetype &&
-		    (prev_entry->next->etype | UVM_ET_NEEDSCOPY) != newetype)
 			goto nomerge;
 
 		if (uobj && prev_entry->next->offset != uoffset + size)
