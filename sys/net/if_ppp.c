@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.99 2005/03/31 21:19:35 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.100 2005/05/17 04:14:58 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.99 2005/03/31 21:19:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.100 2005/05/17 04:14:58 christos Exp $");
 
 #include "ppp.h"
 
@@ -1756,7 +1756,6 @@ pppdumpm(m0)
     char buf[3*MAX_DUMP_BYTES+4];
     char *bp = buf;
     struct mbuf *m;
-    static char digits[] = "0123456789abcdef";
 
     for (m = m0; m; m = m->m_next) {
 	int l = m->m_len;
@@ -1765,8 +1764,8 @@ pppdumpm(m0)
 	while (l--) {
 	    if (bp > buf + sizeof(buf) - 4)
 		goto done;
-	    *bp++ = digits[*rptr >> 4]; /* convert byte to ascii hex */
-	    *bp++ = digits[*rptr++ & 0xf];
+	    *bp++ = hexdigits[*rptr >> 4]; /* convert byte to ascii hex */
+	    *bp++ = hexdigits[*rptr++ & 0xf];
 	}
 
 	if (m->m_next) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.91 2005/02/01 15:29:23 drochner Exp $	*/
+/*	$NetBSD: in6.c,v 1.92 2005/05/17 04:14:58 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.91 2005/02/01 15:29:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.92 2005/05/17 04:14:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2027,7 +2027,6 @@ in6ifa_ifpwithaddr(ifp, addr)
 /*
  * Convert IP6 address to printable (loggable) representation.
  */
-static char digits[] = "0123456789abcdef";
 static int ip6round = 0;
 char *
 ip6_sprintf(addr)
@@ -2067,10 +2066,10 @@ ip6_sprintf(addr)
 			continue;
 		}
 		d = (const u_char *)a;
-		*cp++ = digits[*d >> 4];
-		*cp++ = digits[*d++ & 0xf];
-		*cp++ = digits[*d >> 4];
-		*cp++ = digits[*d & 0xf];
+		*cp++ = hexdigits[*d >> 4];
+		*cp++ = hexdigits[*d++ & 0xf];
+		*cp++ = hexdigits[*d >> 4];
+		*cp++ = hexdigits[*d & 0xf];
 		*cp++ = ':';
 		a++;
 	}

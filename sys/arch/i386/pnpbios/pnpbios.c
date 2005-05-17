@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.46 2005/04/01 11:59:31 yamt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.47 2005/05/17 04:14:57 christos Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.46 2005/04/01 11:59:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.47 2005/05/17 04:14:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,17 +676,16 @@ pnpbios_getapmtable(u_int8_t *tab, size_t *len)
 static void
 pnpbios_id_to_string(u_int32_t pnpid, char *s)
 {
-	static char hex[] = "0123456789ABCDEF";
 	u_int8_t *id;
 	
 	id = (u_int8_t *)&pnpid;
 	*s++ = 'A' + (id[0] >> 2) - 1;
 	*s++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*s++ = 'A' + (id[1] & 0x1f) - 1;
-	*s++ = hex[id[2] >> 4];
-	*s++ = hex[id[2] & 0x0f];
-	*s++ = hex[id[3] >> 4];
-	*s++ = hex[id[3] & 0x0f];
+	*s++ = HEXDIGITS[id[2] >> 4];
+	*s++ = HEXDIGITS[id[2] & 0x0f];
+	*s++ = HEXDIGITS[id[3] >> 4];
+	*s++ = HEXDIGITS[id[3] & 0x0f];
 	*s = '\0';
 }
 

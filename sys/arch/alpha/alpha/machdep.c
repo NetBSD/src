@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.284 2005/04/25 15:02:02 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.285 2005/05/17 04:14:57 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.284 2005/04/25 15:02:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2005/05/17 04:14:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1912,7 +1912,7 @@ dot_conv(x)
 	for (i = 0;; ++i) {
 		if (i && (i & 3) == 0)
 			*--xc = '.';
-		*--xc = "0123456789abcdef"[x & 0xf];
+		*--xc = hexdigits[x & 0xf];
 		x >>= 4;
 		if (x == 0)
 			break;
