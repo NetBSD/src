@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.60 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.61 2005/05/17 13:55:33 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.60 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.61 2005/05/17 13:55:33 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -786,6 +786,10 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 			/* watch out for endva wrap-around! */
 			if (endva >= startva)
 				UVM_MAP_CLIP_END(map, entry, endva, NULL);
+		}
+
+		if (uvm_mapent_trymerge(map, entry, UVM_MERGE_COPYING)) {
+			return;
 		}
 
 		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]",
