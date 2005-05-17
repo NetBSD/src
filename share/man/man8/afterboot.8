@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.16 2005/05/17 13:51:34 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.17 2005/05/17 13:57:04 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -381,8 +381,8 @@ is running
 Several services depend on the RPC portmapper
 .Xr rpcbind 8
 - formerly known as
-.Xr portmap 8 -
-being running for proper operation.
+.Ic portmap
+- being running for proper operation.
 This includes YP (NIS) and NFS exports, among other services.
 To get the RPC portmapper to start automatically on boot,
 you will need to have this line in
@@ -643,7 +643,8 @@ the X Display Manager.
 To do this, set the variable
 .Dq xdm
 to yes in
-.Pa /etc/rc.conf, i.e.:
+.Pa /etc/rc.conf ,
+i.e.:
 .Dq xdm=yes
 .Ss Printers
 Edit
