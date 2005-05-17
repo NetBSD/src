@@ -1,4 +1,4 @@
-.\"	$NetBSD: setmode.3,v 1.15 2003/08/07 16:42:56 agc Exp $
+.\"	$NetBSD: setmode.3,v 1.16 2005/05/17 21:54:06 peter Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,9 +89,12 @@ returns
 The
 .Fn setmode
 function
-may fail and set errno for any of the errors specified for the library
-routine
-.Xr malloc 3 .
+may fail and set
+.Va errno
+for any of the errors specified for the library routines
+.Xr malloc 3
+or
+.Xr strtol 3 .
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr stat 2 ,
