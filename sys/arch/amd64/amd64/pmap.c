@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2005/05/15 21:37:46 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2005/05/17 15:14:47 fvdl Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2005/05/15 21:37:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/05/17 15:14:47 fvdl Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2131,7 +2131,7 @@ pmap_activate(l)
 	}
 	if (pcb->pcb_flags & PCB_GS64)
 		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
-	if (pcb->pcb_flags & PCB_GS64)
+	if (pcb->pcb_flags & PCB_FS64)
 		wrmsr(MSR_FSBASE, pcb->pcb_fs);
 }
 
