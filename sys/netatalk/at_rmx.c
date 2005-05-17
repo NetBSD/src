@@ -1,4 +1,4 @@
-/*	$NetBSD: at_rmx.c,v 1.3 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: at_rmx.c,v 1.4 2005/05/17 04:14:58 christos Exp $	*/
 
 /*
  * Copyright 1994, 1995 Massachusetts Institute of Technology
@@ -34,7 +34,7 @@
 /* This code generates debugging traces to the radix code */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.3 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.4 2005/05/17 04:14:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ prsockaddr(void *v)
 
 		bp += snprintf(bp, sizeof(hexbuf), "(%d)", len);
 		for (cp++; cp < cplim && bp < hexbuf + 252; cp++) {
-			*bp++ = "0123456789abcdef"[*cp / 16];
-			*bp++ = "0123456789abcdef"[*cp % 16];
+			*bp++ = hexdigits[*cp / 16];
+			*bp++ = hexdigits[*cp % 16];
 		}
 	} else {
 		bp += snprintf(bp, sizeof(hexbuf), "null");

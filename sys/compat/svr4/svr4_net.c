@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.39 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.40 2005/05/17 04:14:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.39 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40 2005/05/17 04:14:57 christos Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -252,7 +252,6 @@ svr4_ptm_alloc(p)
 	 */
 	char ptyname[] = "/dev/ptyXX";
 	static const char ttyletters[] = "pqrstuvwxyzPQRST";
-	static const char ttynumbers[] = "0123456789abcdef";
 	caddr_t sg = stackgap_init(p, 0);
 	char *path = stackgap_alloc(p, &sg, sizeof(ptyname));
 	struct sys_open_args oa;
@@ -266,7 +265,7 @@ svr4_ptm_alloc(p)
 
 	while (fd == -1) {
 		ptyname[8] = ttyletters[l];
-		ptyname[9] = ttynumbers[n];
+		ptyname[9] = hexdigits[n];
 
 		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
 			return error;
@@ -279,7 +278,7 @@ svr4_ptm_alloc(p)
 			curlwp->l_dupfd = fd;
 			return EMOVEFD;
 		default:
-			if (ttynumbers[++n] == '\0') {
+			if (hexdigits[++n] == '\0') {
 				if (ttyletters[++l] == '\0')
 					break;
 				n = 0;

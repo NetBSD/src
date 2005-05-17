@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.54 2005/02/26 22:58:57 perry Exp $	*/
+/*	$NetBSD: stand.h,v 1.55 2005/05/17 04:14:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -281,5 +281,7 @@ int	oclose(int);
 ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
+
+extern const char hexdigits[];
 
 #endif /* _LIBSA_STAND_H_ */

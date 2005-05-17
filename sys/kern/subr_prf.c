@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.96 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.97 2005/05/17 04:14:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.96 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.97 2005/05/17 04:14:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -137,6 +137,9 @@ int	dumponpanic = DUMP_ON_PANIC;
 
 void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
+
+const char hexdigits[] = "0123456789abcdef";
+const char HEXDIGITS[] = "0123456789ABCDEF";
 
 
 /*
@@ -1085,7 +1088,7 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
-	char *xdigs;		/* digits for [xX] conversion */
+	const char *xdigs;	/* digits for [xX] conversion */
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
 
@@ -1255,7 +1258,7 @@ reswitch:	switch (ch) {
 			/* NOSTRICT */
 			_uquad = (u_long)va_arg(ap, void *);
 			base = HEX;
-			xdigs = "0123456789abcdef";
+			xdigs = hexdigits;
 			flags |= HEXPREFIX;
 			ch = 'x';
 			goto nosign;
@@ -1288,10 +1291,10 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto nosign;
 		case 'X':
-			xdigs = "0123456789ABCDEF";
+			xdigs = hexdigits;
 			goto hex;
 		case 'x':
-			xdigs = "0123456789abcdef";
+			xdigs = hexdigits;
 hex:			_uquad = UARG();
 			base = HEX;
 			/* leading 0x/X only if non-zero */

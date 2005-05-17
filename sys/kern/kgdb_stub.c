@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.19 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.19 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $");
 
 #include "opt_kgdb.h"
 
@@ -161,7 +161,7 @@ static u_char
 i2digit(n)
 	int n;
 {
-	return ("0123456789abcdef"[n & 0x0f]);
+	return (hexdigits[n & 0x0f]);
 }
 
 /*

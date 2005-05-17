@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.45 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.45 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $");
 
 #include "isadma.h"
 
@@ -508,16 +508,15 @@ isapnp_id_to_vendor(v, id)
 	char   *v;
 	const u_char *id;
 {
-	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
 
 	*p++ = 'A' + (id[0] >> 2) - 1;
 	*p++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*p++ = 'A' + (id[1] & 0x1f) - 1;
-	*p++ = hex[id[2] >> 4];
-	*p++ = hex[id[2] & 0x0f];
-	*p++ = hex[id[3] >> 4];
-	*p++ = hex[id[3] & 0x0f];
+	*p++ = HEXDIGITS[id[2] >> 4];
+	*p++ = HEXDIGITS[id[2] & 0x0f];
+	*p++ = HEXDIGITS[id[3] >> 4];
+	*p++ = HEXDIGITS[id[3] & 0x0f];
 	*p = '\0';
 
 	return v;

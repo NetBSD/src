@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.221 2005/05/17 04:14:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.221 2005/05/17 04:14:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -3020,8 +3020,6 @@ nfsmout:
 }
 #endif
 
-static char hextoasc[] = "0123456789abcdef";
-
 /*
  * Silly rename. To make the NFS filesystem that is stateless look a little
  * more like the "ufs" a remove of an active vnode is translated to a rename
@@ -3056,10 +3054,10 @@ nfs_sillyrename(dvp, vp, cnp)
 	pid = cnp->cn_proc->p_pid;
 	memcpy(sp->s_name, ".nfsAxxxx4.4", 13);
 	sp->s_namlen = 12;
-	sp->s_name[8] = hextoasc[pid & 0xf];
-	sp->s_name[7] = hextoasc[(pid >> 4) & 0xf];
-	sp->s_name[6] = hextoasc[(pid >> 8) & 0xf];
-	sp->s_name[5] = hextoasc[(pid >> 12) & 0xf];
+	sp->s_name[8] = hexdigits[pid & 0xf];
+	sp->s_name[7] = hexdigits[(pid >> 4) & 0xf];
+	sp->s_name[6] = hexdigits[(pid >> 8) & 0xf];
+	sp->s_name[5] = hexdigits[(pid >> 12) & 0xf];
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,

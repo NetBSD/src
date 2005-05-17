@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.30 2004/08/28 22:06:28 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.31 2005/05/17 04:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.30 2004/08/28 22:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.31 2005/05/17 04:14:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3063,7 +3063,7 @@ printu_wb(dis_buffer_t *dbuf, u_int val, int sz, int base)
 
 	p = buf;
 	do {
-		*++p = "0123456789abcdef"[val % base];
+		*++p = hexdigits[val % base];
 	} while (val /= base);
 
 	while ((ch = *p--))
@@ -3098,7 +3098,7 @@ iprintu_wb(dis_buffer_t *dbuf, u_int val, int sz, int base)
 
 	p = buf;
 	do {
-		*++p = "0123456789abcdef"[val % base];
+		*++p = hexdigits[val % base];
 	} while (val /= base);
 
 	while ((ch = *p--))

@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.3 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: sha2.c,v 1.4 2005/05/17 04:14:57 christos Exp $	*/
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.3 2005/02/26 23:04:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.4 2005/05/17 04:14:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -309,13 +309,6 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
 };
-
-/*
- * Constant used by SHA256/384/512_End() functions for converting the
- * digest to a readable hexadecimal character string:
- */
-static const char *sha2_hex_digits = "0123456789abcdef";
-
 
 /*** SHA-256: *********************************************************/
 void SHA256_Init(SHA256_CTX* context) {
@@ -624,8 +617,8 @@ char *SHA256_End(SHA256_CTX* context, char buffer[]) {
 		SHA256_Final(digest, context);
 
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
-			*buffer++ = sha2_hex_digits[*d & 0x0f];
+			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
+			*buffer++ = hexdigits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;
@@ -953,8 +946,8 @@ char *SHA512_End(SHA512_CTX* context, char buffer[]) {
 		SHA512_Final(digest, context);
 
 		for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
-			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
-			*buffer++ = sha2_hex_digits[*d & 0x0f];
+			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
+			*buffer++ = hexdigits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;
@@ -1028,8 +1021,8 @@ char *SHA384_End(SHA384_CTX* context, char buffer[]) {
 		SHA384_Final(digest, context);
 
 		for (i = 0; i < SHA384_DIGEST_LENGTH; i++) {
-			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
-			*buffer++ = sha2_hex_digits[*d & 0x0f];
+			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
+			*buffer++ = hexdigits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.22 2005/04/17 21:11:30 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.23 2005/05/17 04:14:57 christos Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.22 2005/04/17 21:11:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.23 2005/05/17 04:14:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -1237,7 +1237,7 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 
 
 #ifdef XENNET_DEBUG_DUMP
-#define XCHR(x) "0123456789abcdef"[(x) & 0xf]
+#define XCHR(x) hexdigits[(x) & 0xf]
 static void
 xennet_hex_dump(unsigned char *pkt, size_t len, char *type, int id)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.123 2005/05/02 21:20:27 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.124 2005/05/17 04:14:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.123 2005/05/02 21:20:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.124 2005/05/17 04:14:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1092,7 +1092,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 /*
  * Convert Ethernet address to printable (loggable) representation.
  */
-static char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(const u_char *ap)
 {
@@ -1101,8 +1100,8 @@ ether_sprintf(const u_char *ap)
 	int i;
 
 	for (i = 0; i < 6; i++) {
-		*cp++ = digits[*ap >> 4];
-		*cp++ = digits[*ap++ & 0xf];
+		*cp++ = hexdigits[*ap >> 4];
+		*cp++ = hexdigits[*ap++ & 0xf];
 		*cp++ = ':';
 	}
 	*--cp = 0;

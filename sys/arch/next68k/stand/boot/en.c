@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.11 2005/01/19 01:58:21 chs Exp $        */
+/*      $NetBSD: en.c,v 1.12 2005/05/17 04:14:57 christos Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -170,7 +170,7 @@ en_init(struct iodesc *desc, void *machdep_hint)
 
 #if 0
 /* ### remove this when things work! */
-#define XCHR(x) "0123456789abcdef"[(x) & 0xf]
+#define XCHR(x) hexdigits[(x) & 0xf]
 void
 dump_pkt(unsigned char *pkt, size_t len)
 {
