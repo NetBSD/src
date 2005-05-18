@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.26 2005/04/03 22:15:32 peter Exp $ */
+/* $NetBSD: identd.c,v 1.27 2005/05/18 00:31:32 peter Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
@@ -40,7 +39,7 @@
 
 #include "identd.h"
 
-__RCSID("$NetBSD: identd.c,v 1.26 2005/04/03 22:15:32 peter Exp $");
+__RCSID("$NetBSD: identd.c,v 1.27 2005/05/18 00:31:32 peter Exp $");
 
 #define OPSYS_NAME	"UNIX"
 #define IDENT_SERVICE	"auth"
@@ -63,7 +62,6 @@ static int   check_userident(const char *, char *, size_t);
 static void  random_string(char *, size_t);
 static int   change_format(const char *, struct passwd *, char *, size_t);
 static void  timeout_handler(int);
-static void  waitchild(int);
 static void  fatal(const char *);
 static void  die(const char *, ...);
 
@@ -257,7 +255,6 @@ main(int argc, char *argv[])
 		int fd, nfds, rv;
 		struct pollfd *rfds;
 
-		(void)signal(SIGCHLD, waitchild);
 		if (daemon(0, 0) < 0)
 			die("daemon: %s", strerror(errno));
 
@@ -298,6 +295,7 @@ main(int argc, char *argv[])
 						    proxy_addr, timeout);
 						_exit(EXIT_SUCCESS);
 					default:	/* parent */
+						(void)signal(SIGCHLD, SIG_IGN);
 						(void)close(fd);
 					}
 				}
@@ -1003,14 +1001,6 @@ timeout_handler(int s)
 {
 	maybe_syslog(LOG_DEBUG, "SIGALRM triggered, exiting...");
 	exit(EXIT_FAILURE);
-}
-
-/* This is to clean up zombie processes when in daemon mode. */
-static void
-waitchild(int s)
-{
-	while (waitpid(-1, NULL, WNOHANG) > 0)
-		continue;
 }
 
 /* Report error message string through syslog and quit. */
