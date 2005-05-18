@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.4 2005/05/18 04:10:42 snj Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.5 2005/05/18 04:22:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.4 2005/05/18 04:10:42 snj Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.5 2005/05/18 04:22:06 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ hookup(char *host, char *port)
 	if (hisctladdr.su_family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS,
-				(void *)&tos, sizeof(int)) == -1) {
+				(void *)&tos, sizeof(tos)) == -1) {
 			if (debug)
 				warn("setsockopt %s (ignored)",
 				    "IPTOS_LOWDELAY");
@@ -1525,14 +1525,14 @@ initconn(void)
 #endif
 				goto reinit;
 			}
-			warn("connect");
+			warn("connect for data channel");
 			goto bad;
 		}
 #ifdef IPTOS_THROUGHPUT
 		if (data_addr.su_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS,
-					(void *)&on, sizeof(int)) == -1) {
+					(void *)&on, sizeof(on)) == -1) {
 				if (debug)
 					warn("setsockopt %s (ignored)",
 				    	    "IPTOS_THROUGHPUT");
@@ -1670,7 +1670,7 @@ initconn(void)
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS,
-				(void *)&on, sizeof(int)) == -1)
+				(void *)&on, sizeof(on)) == -1)
 			if (debug)
 				warn("setsockopt %s (ignored)",
 				    "IPTOS_THROUGHPUT");
@@ -1747,7 +1747,7 @@ dataconn(const char *lmode)
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS,
-				(void *)&tos, sizeof(int)) == -1) {
+				(void *)&tos, sizeof(tos)) == -1) {
 			if (debug)
 				warn("setsockopt %s (ignored)",
 				    "IPTOS_THROUGHPUT");
