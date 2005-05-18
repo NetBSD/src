@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.194 2005/05/04 01:57:23 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.195 2005/05/18 20:10:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.194 2005/05/04 01:57:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.195 2005/05/18 20:10:25 augustss Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1288,9 +1288,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
+	if (((flags & FREAD) && (sc->sc_open & AUOPEN_READ)) ||
+	    ((flags & FWRITE) && (sc->sc_open & AUOPEN_WRITE)))
 		return EBUSY;
-
+	
 	if (hw->open != NULL) {
 		error = hw->open(sc->hw_hdl, flags);
 		if (error)
