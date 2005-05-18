@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.4 2005/05/12 15:48:40 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.5 2005/05/18 22:34:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.4 2005/05/12 15:48:40 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.5 2005/05/18 22:34:41 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -260,8 +260,10 @@ filename_completion_function(const char *text, int state)
 
 /*
  * returns list of completions for text given
+ * non-static for readline.
  */
-static char **
+char ** completion_matches(const char *, char *(*)(const char *, int));
+char **
 completion_matches(const char *text, char *(*genfunc)(const char *, int))
 {
 	char **match_list = NULL, *retstr, *prevstr;
