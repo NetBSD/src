@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113.2.2 2005/05/11 17:52:19 tron Exp $
+# $NetBSD: mi,v 1.113.2.3 2005/05/18 14:36:40 tron Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -180,12 +180,12 @@
 ./usr/share/doc/html/postfix/local.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/mailq.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.8.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/mysql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/motivation.html	misc-obsolete		obsolete
+./usr/share/doc/html/postfix/mysql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/newaliases.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/nqmgr.8.html	misc-obsolete		obsolete
-./usr/share/doc/html/postfix/outbound.gif	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/oqmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/outbound.gif	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/pcre_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/pgsql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/pickup.8.html	misc-postfix-htmldoc	postfix,doc
@@ -638,6 +638,7 @@
 ./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh	misc-obsolete		obsolete
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	crypto,share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	inet6,share
