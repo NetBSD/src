@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.107 2005/05/16 21:22:26 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.108 2005/05/18 18:30:44 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2220,4 +2220,20 @@ sys/dev/usb/ehci.c				1.102-1.103
 	transfer when necessary. Make sure all physical addresses are filled
 	in the qTD even when we have a page offset.
 	[augustss, ticket #1501]
+
+lib/libpthread_dbg/pthread_dbg.c		1.17-1.22
+lib/libpthread_dbg/pthread_dbg.h		1.4-1.5
+lib/libpthread_dbg/pthread_dbg_int.h		1.4
+lib/libpthread/arch/powerpc/_context_u.S	1.4
+
+	Pull up various libpthread_dbg fixes.
+	[matt, ticket #1526]
+
+sys/net/rtsock.c				1.72 via patch
+
+	Ask the kernel for the IP address of the interface that
+	will be used to communicate with a given host, needed
+	for the Asterisk software PBX to work properly when it
+	has multiple interfaces active.  PR#27286
+	[christos, ticket #961]
 
