@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.2 2005/04/06 21:31:06 tron Exp $
+#	$NetBSD: Makefile,v 1.15.2.3 2005/05/18 14:33:10 tron Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -57,7 +57,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/main \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/shader \
-		${X11FLAGS.THREADS} \
+		${X11FLAGS.THREADS} ${X11FLAGS.EXTENSION} \
 		-DGLXEXT -DGLX_USE_MESA
 
 .if ${MACHINE_ARCH} == "i386"
