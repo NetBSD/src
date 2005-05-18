@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.1.4.1 2005/04/16 12:13:01 tron Exp $
+.\" $NetBSD: sem_open.3,v 1.1.4.2 2005/05/18 18:45:50 riz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nm sem_unlink
 .Nd named semaphore operations
 .Sh LIBRARY
-.Lb libc
+.Lb librt
 .Sh SYNOPSIS
 .In semaphore.h
 .Ft "sem_t *"
@@ -170,7 +170,7 @@ argument is too long.
 The system limit on semaphores has been reached.
 .It Bq Er ENOENT
 .Dv O_CREAT
-is set but the named semaphore does not exist.
+is not set and the named semaphore does not exist.
 .It Bq Er ENOSPC
 There is not enough space to create the semaphore.
 .El
