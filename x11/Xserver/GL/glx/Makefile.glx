@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.5.8.1 2005/04/06 20:52:08 tron Exp $
+#	$NetBSD: Makefile.glx,v 1.5.8.2 2005/05/18 14:32:58 tron Exp $
 
 LIB=		glx
 
@@ -23,7 +23,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${X11SRCDIR.xc}/extras/Mesa/include \
 		-I${X11SRCDIR.xc}/lib/GL/include
 
-CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
+CPPFLAGS+=	${X11FLAGS.EXTENSION} -DGLXEXT -DGLX_USE_MESA
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
