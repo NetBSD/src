@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.3 2005/05/09 17:14:21 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.4 2005/05/18 04:10:40 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.3 2005/05/09 17:14:21 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.4 2005/05/18 04:10:40 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -1028,12 +1028,12 @@ void
 setupsockbufsize(int sock)
 {
 
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size,
-	    sizeof(rcvbuf_size)) < 0)
+	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
+	    (void *)&sndbuf_size, sizeof(rcvbuf_size)) == -1)
 		warn("unable to set sndbuf size %d", sndbuf_size);
 
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size,
-	    sizeof(rcvbuf_size)) < 0)
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
+	    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
 		warn("unable to set rcvbuf size %d", rcvbuf_size);
 }
 
@@ -1253,6 +1253,7 @@ int
 xconnect(int sock, const struct sockaddr *name, int namelen)
 {
 	int		flags, rv, timeout, error;
+	socklen_t	slen;
 	struct timeval	endtime, now, td;
 	struct pollfd	pfd[1];
 
@@ -1304,7 +1305,7 @@ xconnect(int sock, const struct sockaddr *name, int namelen)
 		} else if (pfd[0].revents & (POLLIN|POLLOUT)) {
 			rv = sizeof(error);	/* ok, or pending error */
 			if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
-			    &error, &rv) == -1)
+			    &error, &slen) == -1)
 				return -1;	/* Solaris pending error */
 			if (error != 0) {
 				errno = error;	/* BSD pending error */
