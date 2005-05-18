@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.1 2005/05/07 11:21:30 tron Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.2 2005/05/18 04:00:42 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.1 2005/05/07 11:21:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.2 2005/05/18 04:00:42 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2028,7 +2028,12 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
 		      (unsigned)fs->lfs_offset));
 #endif
-		lfs_updatemeta(sp);
+		if (sp->fip->fi_nblocks == 0) {
+			/* Don't write zero-length finfos */
+			--((SEGSUM *)(sp->segsum))->ss_nfinfo;
+			sp->sum_bytes_left += FINFOSIZE;
+		} else
+			lfs_updatemeta(sp);
 
 		version = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
