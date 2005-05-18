@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.91 2005/05/16 21:36:53 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.92 2005/05/18 04:36:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8553,4 +8553,37 @@ etc/pam.d/telnetd				1.6
 
 	Correct line for "password".
 	[lukem, ticket #300]
+
+sys/ufs/lfs/lfs_vfsops.c			1.178
+
+	Don't let the pager_map deadlock avoidance code in lfs_putpages()
+	write segments containing zero-block FINFO records.  These records
+	cause segments to become uncleanable, which would eventually result
+	in a "no clean segments" panic.
+	[perseant, ticket #311]
+
+usr.bin/ftp/ftp.c				1.130
+usr.bin/ftp/main.c				1.93
+usr.bin/ftp/util.c				1.121
+usr.bin/ftp/version.h				1.48
+
+	Use socklen_t instead of int as the 5th argument to getsockopt().
+	Improve invocation of setsockopt() and associated failure messages.
+	[lukem, ticket #318]
+
+usr.bin/ftp/ftp.c				1.131
+usr.bin/ftp/main.c				1.94
+usr.bin/ftp/util.c				1.122
+usr.bin/ftp/version.h				1.49
+
+	* Correct the "optlen" argument passed to getsockopt(3) and
+	  setsockopt(3) in various places.  Fixes a problem noted by
+	  Allen Briggs.
+	* Improve warning printed when connect(2) for the data channel fails.
+	[lukem, ticket #301]
+
+etc/pam.d/rsh					1.5
+
+	allow rsh if the user's password is null.  from christos.
+	[chs, ticket #302]
 
