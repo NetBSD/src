@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90.2.2 2005/05/11 17:59:47 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.90.2.3 2005/05/18 04:10:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.90.2.2 2005/05/11 17:59:47 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.90.2.3 2005/05/18 04:10:38 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	char *cp, *ep, *anonuser, *anonpass, *upload_path;
 	int dumbterm, s, len, isupload;
+	socklen_t slen;
 
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
@@ -207,12 +208,12 @@ main(int argc, char *argv[])
 	if (s == -1)
 		err(1, "can't create socket");
 	len = sizeof(rcvbuf_size);
-	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size, &len)
-	    < 0)
+	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size,
+	    &slen) == -1)
 		err(1, "unable to get default rcvbuf size");
 	len = sizeof(sndbuf_size);
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size, &len)
-	    < 0)
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size,
+	    &slen) == -1)
 		err(1, "unable to get default sndbuf size");
 	(void)close(s);
 					/* sanity check returned buffer sizes */
