@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.67.2.1 2004/05/28 07:23:33 tron Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.67.2.1.2.1 2005/05/18 18:28:39 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.67.2.1 2004/05/28 07:23:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.67.2.1.2.1 2005/05/18 18:28:39 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -101,7 +101,7 @@ struct walkarg {
 static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *, caddr_t, int));
 static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
     int *));
-static int rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
+static int rt_xaddrs __P((u_char, caddr_t, caddr_t, struct rt_addrinfo *));
 static int sysctl_dumpentry __P((struct radix_node *, void *));
 static int sysctl_iflist __P((int, struct walkarg *, int));
 static int sysctl_rtable __P((SYSCTLFN_PROTO));
@@ -246,7 +246,7 @@ route_output(m, va_alist)
 	rtm->rtm_pid = curproc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
-	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
+	if (rt_xaddrs(rtm->rtm_type, (caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
 		senderr(EINVAL);
 	info.rti_flags = rtm->rtm_flags;
 	if (dst == 0 || (dst->sa_family >= AF_MAX))
@@ -483,7 +483,8 @@ rt_setmetrics(which, in, out)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static int
-rt_xaddrs(cp, cplim, rtinfo)
+rt_xaddrs(rtmtype, cp, cplim, rtinfo)
+	u_char rtmtype;
 	caddr_t cp, cplim;
 	struct rt_addrinfo *rtinfo;
 {
@@ -497,9 +498,14 @@ rt_xaddrs(cp, cplim, rtinfo)
 		ADVANCE(cp, sa);
 	}
 
-	/* Check for extra addresses specified.  */
-	if ((rtinfo->rti_addrs & (~0 << i)) != 0)
-		return (1);
+	/* Check for extra addresses specified, except RTM_GET asking for interface info.  */
+	if (rtmtype == RTM_GET) {
+		if (((rtinfo->rti_addrs & (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0 << i)) != 0)
+			return (1);
+	} else {
+		if ((rtinfo->rti_addrs & (~0 << i)) != 0)
+			return (1);
+	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
 		if (i == RTAX_NETMASK + 1 &&
