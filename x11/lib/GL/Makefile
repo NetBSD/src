@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.2 2005/04/06 20:57:26 tron Exp $
+#	$NetBSD: Makefile,v 1.9.2.3 2005/05/18 14:32:52 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -125,7 +125,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/main \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common \
-		${X11FLAGS.THREADS} -DGLXEXT -DGLX_USE_MESA
+		${X11FLAGS.THREADS} ${X11FLAGS.EXTENSION} -DGLXEXT \
+		-DGLX_USE_MESA
 
 LIBDPLIBS=	Xext	${.CURDIR}/../Xext \
 		X11	${.CURDIR}/../X11/dynamic
