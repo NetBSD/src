@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.108 2005/05/18 18:30:44 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.109 2005/05/18 18:59:46 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2236,4 +2236,16 @@ sys/net/rtsock.c				1.72 via patch
 	for the Asterisk software PBX to work properly when it
 	has multiple interfaces active.  PR#27286
 	[christos, ticket #961]
+
+lib/librt/sem_open.3				1.3-1.4
+
+	Clear up a sentence, and correct the library location
+	of the function.
+	[peter, ticket #1528]
+
+libexec/identd/identd.c				patch
+
+	Save/restore errno in the zombie reaper to fix a race
+	condition. PR#30253
+	[peter, ticket #1529]
 
