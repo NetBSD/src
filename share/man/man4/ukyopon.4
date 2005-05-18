@@ -1,4 +1,4 @@
-.\" $NetBSD: ukyopon.4,v 1.5 2005/05/07 23:53:32 itohy Exp $
+.\" $NetBSD: ukyopon.4,v 1.6 2005/05/18 14:01:23 itohy Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,6 +62,11 @@ Both devices are accessed through the
 .Xr ucom 4
 driver which makes them behave like a
 .Xr tty 4 .
+.Pp
+The manipulation of the internal storage is through external programs,
+for example, the
+.Pa pkgsrc/comms/kyopon
+package.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
@@ -134,7 +139,8 @@ accepts.
 .Xr tty 4 ,
 .Xr ucom 4 ,
 .Xr umodem 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Pa pkgsrc/comms/kyopon
 .Sh HISTORY
 The
 .Nm
