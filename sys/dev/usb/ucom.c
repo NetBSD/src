@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.53 2004/09/13 12:55:49 drochner Exp $	*/
+/*	$NetBSD: ucom.c,v 1.54 2005/05/18 11:26:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.53 2004/09/13 12:55:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.54 2005/05/18 11:26:11 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,7 +793,8 @@ ucom_status_change(struct ucom_softc *sc)
 			    ISSET(sc->sc_msr, UMSR_DCD));
 	} else {
 		sc->sc_lsr = 0;
-		sc->sc_msr = 0;
+		/* Assume DCD is present, if we have no chance to check it. */
+		sc->sc_msr = UMSR_DCD;
 	}
 }
 
@@ -850,7 +851,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	 * explicit request.
 	 */
 	DPRINTF(("ucomparam: l_modem\n"));
-	(void) (*tp->t_linesw->l_modem)(tp, 1 /* XXX carrier */ );
+	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, UMSR_DCD));
 
 #if 0
 XXX what if the hardware is not open
