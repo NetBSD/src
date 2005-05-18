@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.3 2003/02/27 00:54:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.3.4.1 2005/05/18 18:40:24 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -76,6 +76,7 @@ typedef struct td_thread_info_st {
 #define	TD_STATE_BLOCKED	3	/* Blocked in the kernel */
 #define	TD_STATE_SLEEPING	4	/* Blocked on a sync object */
 #define	TD_STATE_ZOMBIE		5
+#define	TD_STATE_SUSPENDED	6	/* Removed from run queues */
 
 #define	TD_TYPE_UNKNOWN	0
 #define	TD_TYPE_USER	1
@@ -181,3 +182,9 @@ int td_tsd_iter(td_proc_t *, int (*)(pthread_key_t, void (*)(void *), void *),
 
 /* Get a TSD value from a thread */
 int td_thr_tsd(td_thread_t *, pthread_key_t, void **);
+
+/* Suspend a thread from running */
+int td_thr_suspend(td_thread_t *);
+
+/* Restore a suspended thread to its previous state */
+int td_thr_resume(td_thread_t *);
