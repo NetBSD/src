@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.94 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.94 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1648,23 +1648,23 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
 		error = NFSERR_BADTYPE;
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		if (nd.ni_vp)
-			vput(nd.ni_vp);
-		goto out;
+		goto abort;
 	}
 	VATTR_NULL(&va);
 	va.va_mode = 0;
 	nfsm_srvsattr(&va);
 	if (vtyp == VCHR || vtyp == VBLK) {
+		dev_t rdev;
+
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		major = fxdr_unsigned(u_int32_t, *tl++);
 		minor = fxdr_unsigned(u_int32_t, *tl);
-		va.va_rdev = makedev(major, minor);
+		rdev = makedev(major, minor);
+		if (major(rdev) != major || minor(rdev) != minor) {
+			error = EINVAL;
+			goto abort;
+		}
+		va.va_rdev = rdev;
 	}
 
 	/*
@@ -1672,12 +1672,14 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	 */
 	if (nd.ni_vp) {
 		error = EEXIST;
+abort:
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		vput(nd.ni_vp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
 		goto out;
 	}
 	va.va_type = vtyp;
