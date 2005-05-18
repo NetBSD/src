@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.195 2005/05/17 21:45:24 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.196 2005/05/18 01:34:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.195 2005/05/17 21:45:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.196 2005/05/18 01:34:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4440,7 +4440,8 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	    uobj, entry->flags, entry->protection,
 	    entry->max_protection, entry->inheritance, entry->advice,
 	    entry->wired_count) &&
-	    (uobj == NULL || prev->offset + size == entry->offset)) {
+	    (uobj == NULL ||
+	    prev->offset + prev->end - prev->start == entry->offset)) {
 		int error;
 
 		if (copying) {
