@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.196 2005/05/18 01:34:53 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.197 2005/05/18 01:36:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.196 2005/05/18 01:34:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.197 2005/05/18 01:36:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4414,8 +4414,10 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 			error = 0;
 		}
 		if (error == 0) {
-			if (uobj && uobj->pgops->pgo_detach) {
-				uobj->pgops->pgo_detach(uobj);
+			if (uobj) {
+				if (uobj->pgops->pgo_detach) {
+					uobj->pgops->pgo_detach(uobj);
+				}
 			}
 
 			entry->end = next->end;
@@ -4451,8 +4453,11 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 			error = 0;
 		}
 		if (error == 0) {
-			if (uobj && uobj->pgops->pgo_detach) {
-				uobj->pgops->pgo_detach(uobj);
+			if (uobj) {
+				if (uobj->pgops->pgo_detach) {
+					uobj->pgops->pgo_detach(uobj);
+				}
+				entry->offset = prev->offset;
 			}
 
 			entry->start = prev->start;
