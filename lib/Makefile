@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.95 2005/02/20 00:52:02 manu Exp $
+#	$NetBSD: Makefile,v 1.96 2005/05/18 22:36:20 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libc .WAIT libarch libbsdmalloc libbz2 libcompat libcrypt \
-	libcurses libedit libevent libform libintl libkvm libl libm libmagic \
+	libcurses libevent libform libintl libkvm libl libm libmagic \
 	libmenu libossaudio libpcap libpci libpmc libposix libpthread \
 	libpthread_dbg libradius libresolv librmt librpcsvc librt libterm \
 	libusbhid libutil libwrap liby libz
@@ -57,16 +57,16 @@ SUBDIR+=	i18n_module
 # Libraries that depend upon any listed previously
 # (and those that depend upon these [and ...])
 #
-SUBDIR+=	.WAIT
-SUBDIR+=	libcdk 
+SUBDIR+=	.WAIT libedit	# depends on libterm
+SUBDIR+=	.WAIT libcdk 	# depends on libedit
 .if (${MKCRYPTO} != "no")
-SUBDIR+=	libssl
+SUBDIR+=	.WAIT libssl
 .endif
 .if (${MKKERBEROS} != "no")
-SUBDIR+=	libkrb5
+SUBDIR+=	.WAIT libkrb5
 .endif
 .if (${MKKERBEROS4} != "no")
-SUBDIR+=	libkrb
+SUBDIR+=	.WAIT libkrb
 .endif
 
 .if (${MKCRYPTO} != "no")
