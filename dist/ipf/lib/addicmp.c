@@ -1,4 +1,4 @@
-/*	$NetBSD: addicmp.c,v 1.6 2005/05/18 00:15:52 christos Exp $	*/
+/*	$NetBSD: addicmp.c,v 1.7 2005/05/18 00:54:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -36,7 +36,7 @@ int     linenum;
 		return -1;
 	if (!fp->fr_proto)	/* to catch lusers */
 		fp->fr_proto = IPPROTO_ICMP;
-	if (ISDIGIT((unsigned char)***cp)) {
+	if (ISDIGIT(***cp)) {
 		if (!ratoi(**cp, &i, 0, 255)) {
 			fprintf(stderr,
 				"%d: Invalid icmp-type (%s) specified\n",
@@ -70,7 +70,7 @@ int     linenum;
 	if (**cp && strcasecmp("code", **cp))
 		return 0;
 	(*cp)++;
-	if (ISDIGIT((unsigned char)***cp)) {
+	if (ISDIGIT(***cp)) {
 		if (!ratoi(**cp, &i, 0, 255)) {
 			fprintf(stderr,
 				"%d: Invalid icmp code (%s) specified\n",
