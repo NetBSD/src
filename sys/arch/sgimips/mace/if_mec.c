@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.4 2005/01/30 19:05:56 thorpej Exp $ */
+/* $NetBSD: if_mec.c,v 1.5 2005/05/18 14:57:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.4 2005/01/30 19:05:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.5 2005/05/18 14:57:36 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -449,7 +449,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_tick_ch);
 
-	/* get ehternet address from ARCBIOS */
+	/* get ethernet address from ARCBIOS */
 	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
 		printf(": unable to get MAC address!\n");
 		goto fail_4;
