@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.4 2002/11/26 18:43:20 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.5 2005/05/19 21:16:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,12 +97,13 @@
 #define LINUX_SA_RESETHAND	0x00000010
 #define LINUX_SA_NOCLDWAIT	0x00000020
 #define LINUX_SA_SIGINFO	0x00000040
+#define LINUX_SA_RESTORER	0x04000000
 
 #define LINUX_SA_NOMASK		LINUX_SA_NODEFER
 #define LINUX_SA_ONESHOT	LINUX_SA_RESETHAND
 #define LINUX_SA_INTERRUPT	0x20000000	/* Ignore this */
 
-#define LINUX_SA_ALLBITS	0x2000007f
+#define LINUX_SA_ALLBITS	0x2400007f
 
 #define LINUX_SIG_BLOCK		1
 #define LINUX_SIG_UNBLOCK	2
