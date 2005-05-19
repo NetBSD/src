@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.8 2005/05/19 09:52:42 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.9 2005/05/19 10:01:03 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.8 2005/05/19 09:48:55 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.9 2005/05/19 10:00:17 tron Exp 
  */
 
 /*
@@ -1589,6 +1589,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET/EZ PHY */
 #define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
+#define	PCI_PRODUCT_INTEL_82801FB_LAN	0x1064		/* 82801FB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_82547GI	0x1075		/* i82547GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI	0x1076		/* i82541GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI_MOBILE	0x1077		/* i82541GI Mobile Gigabit Ethernet */
