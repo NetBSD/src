@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.133 2005/03/11 06:16:16 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.134 2005/05/19 20:16:19 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -268,7 +268,8 @@ struct ctlname {
 #define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
 #define	KERN_BUF		76	/* struct: buffers */
 #define	KERN_FILE2		77	/* struct: file entries */
-#define	KERN_MAXID		78	/* number of valid kern ids */
+#define	KERN_VERIEXEC		78	/* node: verified exec */
+#define	KERN_MAXID		79	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -350,6 +351,7 @@ struct ctlname {
 	{ "drivers", CTLTYPE_STRUCT }, \
 	{ "buf", CTLTYPE_NODE }, \
 	{ "file2", CTLTYPE_STRUCT }, \
+	{ "veriexec", CTLTYPE_NODE }, \
 }
 
 /*
