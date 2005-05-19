@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.7 2005/05/19 09:42:52 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.8 2005/05/19 09:52:42 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.7 2005/05/19 09:42:03 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.8 2005/05/19 09:48:55 tron Exp 
  */
 
 /*
@@ -2380,10 +2380,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5750 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751,
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5751 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5750M 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
@@ -5404,16 +5416,46 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82875P AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_CSA,
+	    0,
+	    "Intel",
+	    "82875P PCI-CSA Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
 	    0,
 	    "Intel",
-	    "82915P Host",
+	    "82915P/G/GL Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_EXP,
 	    0,
 	    "Intel",
-	    "82915P PCI Express Bridge",
+	    "82915P/G/GL PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD,
+	    0,
+	    "Intel",
+	    "82915G/GL Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_HB,
+	    0,
+	    "Intel",
+	    "82925X Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EXP,
+	    0,
+	    "Intel",
+	    "82925X PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
+	    0,
+	    "Intel",
+	    "6300ESB LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
@@ -5432,6 +5474,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801FB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
+	    0,
+	    "Intel",
+	    "82801FB Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FR_SATA,
@@ -5498,6 +5546,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801FB/FR IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
+	    0,
+	    "Intel",
+	    "82915G/GL IGD Companion",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
