@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.34 2005/01/12 03:33:11 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.34.2.1 2005/05/19 16:15:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -105,7 +105,7 @@ int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);
 int		ttyunlock(const char *);
 
-u_short		disklabel_dkcksum(struct disklabel *);
+uint16_t	disklabel_dkcksum(struct disklabel *);
 int		disklabel_scan(struct disklabel *, char *, size_t);
 __END_DECLS
 
