@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.109 2005/05/18 18:59:46 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.110 2005/05/19 10:27:13 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2248,4 +2248,27 @@ libexec/identd/identd.c				patch
 	Save/restore errno in the zombie reaper to fix a race
 	condition. PR#30253
 	[peter, ticket #1529]
+
+sys/dev/pci/pcidevs				1.637,1.658 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/piixide.c				1.16,1.17 via patch
+
+	Add support for the 82801FB/FR (ICH6/6R) SATA and ICH6 IDE controller
+	(82801FB). This fixes PR kern/30026.
+	[riz, ticket #1531]
+
+sys/dev/pci/if_fxp_pci.c			1.41
+sys/dev/pci/pcidevs				1.711
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for the 82801FB (ICH6) 10/100 ethernet appearing
+	on new Intel motherboards. This fixes PR kern/30025.
+	[riz, ticket #1532]
+
+sys/dev/pci/auich.c				1.78
+
+	Add support for the ICH6 AC97 controller.
+	[riz, ticket #1533]
 
