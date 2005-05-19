@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.118 2004/12/26 16:57:09 christos Exp $
+.\"	$NetBSD: sysctl.8,v 1.119 2005/05/19 20:16:19 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -363,6 +363,8 @@ privilege can change the value.
 .It kern.tkstat.rawcc	quad	no
 .It kern.urnd	integer	no
 .It kern.vdisable	integer	no
+.It kern.veriexec.verbose	integer	yes
+.It kern.veriexec.strict	integer	raise only
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
 .It net.bpf.maxbufsize	integer	yes
@@ -784,6 +786,8 @@ definitions for fourth level IPv6 UDP identifiers
 definitions for fourth level IPsec identifiers
 .It Aq Pa netkey/key_var.h
 definitions for third level PF_KEY identifiers
+.It Aq Pa sys/verified_exec.h
+definitions for third level verified exec identifiers
 .El
 .Sh EXAMPLES
 For example, to retrieve the maximum number of processes allowed
