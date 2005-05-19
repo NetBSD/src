@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.37 2005/04/18 10:46:39 mrg Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.38 2005/05/19 20:16:19 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.37 2005/04/18 10:46:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.38 2005/05/19 20:16:19 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.37 2005/04/18 10:46:39 mrg Exp $")
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/verified_exec.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -136,6 +137,9 @@ static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
+#ifdef VERIFIED_EXEC
+static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
+#endif
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
@@ -727,6 +731,34 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
+#ifdef VERIFIED_EXEC
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "veriexec",
+		       SYSCTL_DESCR("Verified Exec"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Verified Exec verbose level"),
+		       NULL, 0, &veriexec_verbose, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_VERBOSE,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "strict",
+		       SYSCTL_DESCR("Verified Exec strict level"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_STRICT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "algorithms",
+		       SYSCTL_DESCR("Verified Exec supported hashing "
+				    "algorithms"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_ALGORITHMS, CTL_EOL);
+#endif /* VERIFIED_EXEC */
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -2353,6 +2385,49 @@ done:
 	free(arg, M_TEMP);
 	return (error);
 }
+
+/*
+ * Sysctl helper routine for Verified Exec.
+ */
+#ifdef VERIFIED_EXEC
+static int
+sysctl_kern_veriexec(SYSCTLFN_ARGS)
+{
+	int newval, error;
+	int *var = NULL, raise_only = 0;
+	struct sysctlnode node;
+
+	node = *rnode;
+
+	switch (rnode->sysctl_num) {
+	case VERIEXEC_STRICT:
+		raise_only = 1;
+		var = &veriexec_strict;
+		break;
+	case VERIEXEC_ALGORITHMS:
+		node.sysctl_data = veriexec_fp_names;
+		node.sysctl_size = strlen(veriexec_fp_names) + 1;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	default:
+		return (EINVAL);
+	}
+
+	if (raise_only && (*var != 0) && (securelevel > 0))
+		return (EPERM);
+
+	newval = *var;
+
+	node.sysctl_data = &newval;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL) {
+		return (error);
+	}
+
+	*var = newval;
+
+	return (error);
+}
+#endif /* VERIFIED_EXEC */
 
 /*
  * sysctl helper routine for hw.usermem and hw.usermem64.  values are
