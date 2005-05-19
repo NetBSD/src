@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.113 2005/05/19 02:55:37 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.114 2005/05/19 03:05:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.113 2005/05/19 02:55:37 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.114 2005/05/19 03:05:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1331,7 +1331,7 @@ ls(int argc, char *argv[])
 
 	if (pagecmd) {
 		char *p;
-		int len;
+		size_t len;
 
 		p = getoptionvalue("pager");
 		if (EMPTYSTRING(p))
@@ -2525,7 +2525,7 @@ newer(int argc, char *argv[])
 void
 lpage(int argc, char *argv[])
 {
-	int len;
+	size_t len;
 	char *p, *pager, *locfile;
 
 	if (argc == 0 || argc > 2 ||
@@ -2558,7 +2558,8 @@ lpage(int argc, char *argv[])
 void
 page(int argc, char *argv[])
 {
-	int ohash, orestart_point, overbose, len;
+	int ohash, orestart_point, overbose;
+	size_t len;
 	char *p, *pager;
 
 	if (argc == 0 || argc > 2 ||
