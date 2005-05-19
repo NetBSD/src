@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.79 2005/05/19 15:05:11 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.80 2005/05/19 15:46:02 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.79 2005/05/19 15:05:11 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.80 2005/05/19 15:46:02 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1327,8 +1327,7 @@ netdone:
 }
 
 int
-prefixlen(s)
-	char *s;
+prefixlen(char *s)
 {
 	int len = atoi(s), q, r;
 	int max;
