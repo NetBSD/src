@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.78 2005/05/13 01:59:47 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.79 2005/05/19 15:05:11 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.78 2005/05/13 01:59:47 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.79 2005/05/19 15:05:11 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1299,9 +1299,9 @@ badataddr:
 		}
 		*t = '/';
 	}
-	if (((val = inet_addr(s)) != INADDR_NONE) &&
+	if (inet_aton(s, &su->sin.sin_addr) &&
 	    (which != RTA_DST || forcenet == 0)) {
-		su->sin.sin_addr.s_addr = val;
+		val = su->sin.sin_addr.s_addr;
 		if (inet_lnaof(su->sin.sin_addr) != INADDR_ANY)
 			return (1);
 		else {
