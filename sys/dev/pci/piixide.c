@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.8.2.1.2.1 2005/05/19 09:52:02 tron Exp $	*/
+/*	$NetBSD: piixide.c,v 1.8.2.1.2.2 2005/05/19 09:56:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -140,6 +140,11 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 6300ESB Serial ATA Controller",
 	  piixsata_chip_map,
 	},
+	{ PCI_PRODUCT_INTEL_82801FB_IDE,
+	  0,
+	  "Intel 82801FB IDE Controller (ICH6)",
+	  piix_chip_map,
+	},
 	{ PCI_PRODUCT_INTEL_82801FB_SATA,
 	  0,
 	  "Intel 82801FB Serial ATA/Raid Controller",
@@ -216,6 +221,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82801DBM_IDE:
 		case PCI_PRODUCT_INTEL_82801EB_IDE:
 		case PCI_PRODUCT_INTEL_6300ESB_IDE:
+		case PCI_PRODUCT_INTEL_82801FB_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		}
 	}
@@ -233,6 +239,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801DBM_IDE:
 	case PCI_PRODUCT_INTEL_82801EB_IDE:
 	case PCI_PRODUCT_INTEL_6300ESB_IDE:
+	case PCI_PRODUCT_INTEL_82801FB_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -266,6 +273,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -326,6 +334,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -487,6 +496,7 @@ piix3_4_setup_channel(struct wdc_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
@@ -497,6 +507,7 @@ piix3_4_setup_channel(struct wdc_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
