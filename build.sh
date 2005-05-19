@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.135 2005/03/26 06:02:13 isaki Exp $
+#	$NetBSD: build.sh,v 1.136 2005/05/19 01:37:30 lukem Exp $
 #
-# Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -139,6 +139,12 @@ initdefaults()
 	# Set source directories
 	#
 	setmakeenv NETBSDSRCDIR "${TOP}"
+
+	# Set various environment variables to known defaults,
+	# to minimize (cross-)build problems observed "in the field".
+	#
+	unsetmakeenv INFODIR
+	setmakeenv LC_ALL C
 }
 
 getarch()
@@ -659,7 +665,6 @@ parseoptions()
 
 	# Set up default make(1) environment.
 	#
-	setmakeenv LC_ALL C
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
@@ -867,7 +872,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.135 2005/03/26 06:02:13 isaki Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.136 2005/05/19 01:37:30 lukem Exp $
 # with these arguments: ${_args}
 #
 EOF
