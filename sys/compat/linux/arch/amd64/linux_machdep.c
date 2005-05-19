@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 2005/05/15 21:43:08 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.3 2005/05/19 21:16:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2005/05/15 21:43:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3 2005/05/19 21:16:29 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -184,7 +184,10 @@ linux_sendsig(ksi, mask)
 	sfp = (struct linux_rt_sigframe *)sp;
 
 	bzero(&sigframe, sizeof(sigframe));
-	sigframe.pretcode = (char *)ps->sa_sigdesc[sig].sd_tramp;
+	if (ps->sa_sigdesc[sig].sd_vers != 0)
+		sigframe.pretcode = (char *)ps->sa_sigdesc[sig].sd_tramp;
+	else
+		sigframe.pretcode = NULL;
 
 	/* 
 	 * The user context 
@@ -272,8 +275,11 @@ linux_sendsig(ksi, mask)
 
 	/* 
 	 * Setup registers 
+	 * XXX for an unknown reason, the stack is shifted of 24 bytes 
+	 * when the signal handler is called. The +24 below is a dirty
+	 * workaround, and the real problem should be fixed.
 	 */
-	buildcontext(l, catcher, sp);
+	buildcontext(l, catcher, sp + 24);
 	tf->tf_rdi = sigframe.info.lsi_signo;
 	tf->tf_rax = 0;
 	tf->tf_rsi = (long)&sfp->info;

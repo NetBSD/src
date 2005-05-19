@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.45 2005/05/16 16:00:31 fvdl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.46 2005/05/19 21:16:29 manu Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.45 2005/05/16 16:00:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.46 2005/05/19 21:16:29 manu Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -219,8 +219,7 @@ linux_to_native_sigflags(lsf)
 }
 
 /*
- * Convert between Linux and BSD sigaction structures. Linux sometimes
- * has one extra field (sa_restorer) which we don't support.
+ * Convert between Linux and BSD sigaction structures.
  */
 void
 linux_old_to_native_sigaction(bsa, lsa)
@@ -230,14 +229,6 @@ linux_old_to_native_sigaction(bsa, lsa)
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
-#ifndef __alpha__
-/*
- * XXX: On the alpha sa_restorer is elsewhere.
- */
-	if (lsa->linux_sa_restorer != NULL)
-		DPRINTF(("linux_old_to_native_sigaction: "
-		    "sa_restorer ignored\n"));
-#endif /* !__alpha__ */
 }
 
 void
@@ -262,10 +253,6 @@ linux_to_native_sigaction(bsa, lsa)
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
-#ifndef __alpha__
-	if (lsa->linux_sa_restorer != 0)
-		DPRINTF(("linux_to_native_sigaction: sa_restorer ignored\n"));
-#endif
 }
 
 void
@@ -304,6 +291,11 @@ linux_sys_rt_sigaction(l, v, retval)
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
+#if defined __amd64__
+	void *tramp = NULL;
+	int vers = 0;
+	struct sigacts *ps = p->p_sigacts;
+#endif
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
@@ -314,6 +306,7 @@ linux_sys_rt_sigaction(l, v, retval)
 			return (error);
 		linux_to_native_sigaction(&nbsa, &nlsa);
 	}
+
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
@@ -323,15 +316,30 @@ linux_sys_rt_sigaction(l, v, retval)
 		sigemptyset(&obsa.sa_mask);
 		obsa.sa_flags = 0;
 	} else {
+#if defined __amd64__
+		if (nlsa.linux_sa_flags & LINUX_SA_RESTORER) {
+			if ((tramp = nlsa.linux_sa_restorer) != NULL)
+				vers = 2; /* XXX arch dependant */
+		}
+#endif
+
 		error = sigaction1(p, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : NULL,
 		    SCARG(uap, osa) ? &obsa : NULL,
-		    NULL, 0);
+		    tramp, vers);
 		if (error)
 			return (error);
 	}
 	if (SCARG(uap, osa)) {
 		native_to_linux_sigaction(&olsa, &obsa);
+
+#if defined __amd64__
+		if (ps->sa_sigdesc[sig].sd_vers != 0) {
+			olsa.linux_sa_restorer = ps->sa_sigdesc[sig].sd_tramp;
+			olsa.linux_sa_flags |= LINUX_SA_RESTORER;
+		}
+#endif
+
 		error = copyout(&olsa, SCARG(uap, osa), sizeof(olsa));
 		if (error)
 			return (error);

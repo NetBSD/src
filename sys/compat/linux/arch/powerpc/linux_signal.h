@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.6 2005/02/26 23:10:19 perry Exp $ */
+/* $NetBSD: linux_signal.h,v 1.7 2005/05/19 21:16:29 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_NOCLDWAIT	0x00000002
 #define LINUX_SA_SIGINFO	0x00000004
+#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
@@ -102,7 +103,7 @@
 #define LINUX_SA_RESETHAND	0x80000000
 #define LINUX_SA_NOMASK		LINUX_SA_NODEFER
 #define LINUX_SA_ONESHOT	LINUX_SA_RESETHAND
-#define LINUX_SA_ALLBITS	0xf8000001 /* XXX from i386, not in ppc. */
+#define LINUX_SA_ALLBITS	0xfc000007
 
 typedef void (*linux_handler_t) __P((int));
 

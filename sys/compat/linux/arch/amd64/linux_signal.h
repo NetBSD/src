@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.h,v 1.1 2005/05/03 16:26:30 manu Exp $ */
+/*	$NetBSD: linux_signal.h,v 1.2 2005/05/19 21:16:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -76,11 +76,12 @@
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_NOCLDWAIT	0x00000002
 #define LINUX_SA_SIGINFO	0x00000004
+#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
-#define LINUX_SA_ALLBITS	0xd8000007
+#define LINUX_SA_ALLBITS	0xdc000007
 
 #define LINUX_SIG_BLOCK		0
 #define LINUX_SIG_UNBLOCK	1
