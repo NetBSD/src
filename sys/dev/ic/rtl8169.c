@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.19 2005/05/15 07:48:49 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.20 2005/05/19 20:11:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -493,7 +493,7 @@ re_diag(struct rtk_softc *sc)
 	    dmamap, 0, dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	dmamap = sc->rtk_ldata.rtk_rx_dmamap[0];
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat,
 	    sc->rtk_ldata.rtk_rx_dmamap[0]);
 
@@ -1153,7 +1153,7 @@ re_rxeof(struct rtk_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat,
 		    sc->rtk_ldata.rtk_rx_dmamap[i],
 		    0, sc->rtk_ldata.rtk_rx_dmamap[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat,
 		    sc->rtk_ldata.rtk_rx_dmamap[i]);
 
@@ -1575,6 +1575,14 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		error = EFBIG;
 		goto fail_unload;
 	}
+
+	/*
+	 * Make sure that the caches are synchronized before we
+	 * ask the chip to start DMA for the packet data.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		BUS_DMASYNC_PREWRITE);
+
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
