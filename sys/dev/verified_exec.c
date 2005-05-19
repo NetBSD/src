@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.7 2005/04/20 13:44:45 blymn Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.7 2005/04/20 13:44:45 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.7 2005/04/20 13:44:45 blymn Exp $\n$NetBSD: verified_exec.c,v 1.7 2005/04/20 13:44:45 blymn Exp $");
+__RCSID("$Id: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $\n$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -222,7 +222,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			/*
 			 * Duplicate entry. Still check the type to
 			 * ensure enforcement of a stricter policy.
-			 * i.e. if orignal entry was direct exec but
+			 * I.e. if original entry was direct exec but
 			 * the new params flag the file as indirect or
 			 * file then update the hash entry to the new
 			 * type to ensure duplicate entries do not
@@ -234,15 +234,15 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			     (params->type == VERIEXEC_FILE))) {
 				hh->type = params->type;
 				printf("Veriexec: veriexecioctl: Duplicate "
-				       "entry for %s, (dev=%ld, inode=%ld) "
-				       "but type mismatched.  "
-				       "Updating type to stricter one\n",
+				       "entry for %s, (dev=%lu, inode=%lu) "
+				       "but type mismatched. "
+				       "Updating type to stricter one.\n",
 				       params->file, va.va_fsid, va.va_fileid);
 			}
 			
 #ifdef VERIFIED_EXEC_DEBUG_VERBOSE
 			printf("Veriexec: veriexecioctl: Duplicate "
-			       "entry for %s. (dev=%ld, inode=%ld) "
+			       "entry for %s. (dev=%lu, inode=%lu) "
 			       "Ignoring.\n", params->file,
 			       va.va_fsid, va.va_fileid);
 #endif
@@ -257,7 +257,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			free(e, M_TEMP);
 			printf("Veriexec: veriexecioctl: Invalid or unknown "
 			       "fingerprint type \"%s\" for file \"%s\" "
-			       "(dev=%ld, inode=%ld)\n", params->fp_type,
+			       "(dev=%lu, inode=%lu)\n", params->fp_type,
 			       params->file, va.va_fsid, va.va_fileid);
 			return(EINVAL);
 		}
@@ -273,8 +273,8 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		if (e->ops->hash_len != params->size) {
 			printf("Veriexec: veriexecioctl: Inconsistent "
 			       "fingerprint size for type \"%s\" for file "
-			       "\"%s\" (dev=%ld, inode=%ld), size was %u "
-			       "was expecting %d\n", params->fp_type,
+			       "\"%s\" (dev=%lu, inode=%lu), size was %u "
+			       "was expecting %lu\n", params->fp_type,
 			       params->file, va.va_fsid, va.va_fileid,
 			       params->size, e->ops->hash_len);
 			free(e, M_TEMP);

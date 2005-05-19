@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.7 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.8 2005/05/19 20:16:19 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.7 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.8 2005/05/19 20:16:19 elad Exp $");
 
 /*
  *
@@ -61,7 +61,7 @@ struct veriexec_sizing_params {
 };
 
 struct veriexec_fp_report {
-	unsigned size;
+	unsigned int size;
 	unsigned char *fingerprints;
 };
 
@@ -69,13 +69,18 @@ struct veriexec_fp_report {
 /*
  * Types of veriexec inodes we can have
  */
-#define VERIEXEC_DIRECT   0  /* Allow direct execution */
-#define VERIEXEC_INDIRECT 1  /* Only allow indirect execution */
-#define VERIEXEC_FILE     2  /* Fingerprint of a plain file */
+#define VERIEXEC_DIRECT		0 /* Allow direct execution */
+#define VERIEXEC_INDIRECT	1 /* Only allow indirect execution */
+#define VERIEXEC_FILE		2 /* Fingerprint of a plain file */
 
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
 #define VERIEXEC_FINGERPRINTS _IOWR('S', 0x3, struct veriexec_fp_report)
+
+/* Verified exec sysctl objects. */
+#define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
+#define	VERIEXEC_STRICT		2 /* Strict mode level. */
+#define	VERIEXEC_ALGORITHMS	3 /* Supported hashing algorithms. */
 
 #ifdef _KERNEL
 void	veriexecattach(struct device *, struct device *, void *);
@@ -85,6 +90,8 @@ int     veriexecioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /* defined in kern_verifiedexec.c */
 extern char *veriexec_fp_names;
+extern int veriexec_verbose;
+extern int veriexec_strict;
 
 /*
  * Operations vector for verified exec, this defines the characteristics
@@ -135,6 +142,14 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 /* Mask to ensure bounded access to elements in the hash table. */
 #define VERIEXEC_HASH_MASK(tbl)    ((tbl)->hash_size - 1)
 
+/* Readable values for veriexec_report(). */
+#define	REPORT_NOVERBOSE	0
+#define	REPORT_VERBOSE		1
+#define	REPORT_NOPANIC		0
+#define	REPORT_PANIC		1
+#define	REPORT_NOALARM		0
+#define	REPORT_ALARM		1
+
 /*
  * Hashing function: Takes an inode number modulus the mask to give back
  * an index into the hash table.
@@ -142,9 +157,6 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 #define VERIEXEC_HASH(tbl, inode)  \
         (hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
 	 & VERIEXEC_HASH_MASK(tbl))
-
-/* Callback for hash traversal. */
-typedef void (*VERIEXEC_CALLBACK)(struct veriexec_hash_entry *, dev_t);
 
 void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
@@ -155,13 +167,13 @@ int veriexec_fp_cmp(struct veriexec_hash_entry *, u_char *);
 struct veriexec_hashtbl *veriexec_tblfind(dev_t);
 struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
 int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
-void veriexec_hashprint(struct veriexec_hash_entry *, dev_t);
-int veriexec_tblwalk(VERIEXEC_CALLBACK *);
 
 int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
 		    const u_char *, int);
 int veriexec_removechk(struct proc *, struct vnode *, const char *);
 void veriexec_init_fp_ops(void);
+void veriexec_report(const u_char *, const u_char *, struct vattr *,
+		     struct proc *, int, int, int);
 
 #endif
 
