@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.46 2005/05/19 21:16:29 manu Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.46 2005/05/19 21:16:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -291,9 +291,9 @@ linux_sys_rt_sigaction(l, v, retval)
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
-#if defined __amd64__
 	void *tramp = NULL;
 	int vers = 0;
+#if defined __amd64__
 	struct sigacts *ps = p->p_sigacts;
 #endif
 
