@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.178 2005/05/04 04:58:22 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.179 2005/05/20 19:03:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.178 2005/05/04 04:58:22 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.179 2005/05/20 19:03:11 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -486,8 +486,12 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		}
 	}
 
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
+	if (error == 0)
+		(void)strncpy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname,
+			      sizeof(fs->lfs_fsmnt));
+	return error;
 
 fail:
 	vrele(devvp);
