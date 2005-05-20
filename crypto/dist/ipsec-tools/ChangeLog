@@ -1,3 +1,10 @@
+2005-05-20  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Larry Baird <lab@gta.com>
+	* src/racoon/{handler.c|ipsec_doi.c|remoteconf.h|remoteconf.c}: When 
+	  altering lifetime, duplicate the proposal instead of modifying 
+	  the configured one.
+
 2005-05-13  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/isakmp.c: For acquire messages, when NAT-T is in use,
