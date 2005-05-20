@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.50 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.51 2005/05/20 16:23:05 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.50 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.51 2005/05/20 16:23:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -602,8 +602,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
