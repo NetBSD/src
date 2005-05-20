@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30 2003/10/10 02:26:54 matt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.31 2005/05/20 12:48:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2003/10/10 02:26:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31 2005/05/20 12:48:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,3 +532,8 @@ linux_fakedev(dev, raw)
 	return dev;
 }
 
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	return 0;
+}

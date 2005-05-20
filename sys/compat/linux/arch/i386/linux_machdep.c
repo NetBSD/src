@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.106 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.107 2005/05/20 12:48:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.106 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.107 2005/05/20 12:48:27 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1165,5 +1165,11 @@ linux_sys_ioperm(l, v, retval)
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
+	return 0;
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
 	return 0;
 }

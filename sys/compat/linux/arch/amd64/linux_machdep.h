@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 2005/05/03 16:26:30 manu Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.2 2005/05/20 12:48:27 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -106,5 +106,9 @@ __BEGIN_DECLS
 void linux_syscall_intern __P((struct proc *));
 __END_DECLS
 #endif /* !_KERNEL */
+
+#define LINUX_VSYSCALL_START	0xffffffffff600000
+#define LINUX_VSYSCALL_SIZE	1024
+#define LINUX_VSYSCALL_MAXNR	3
 
 #endif /* _AMD64_LINUX_MACHDEP_H */

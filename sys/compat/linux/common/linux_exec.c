@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.74 2005/03/26 17:10:43 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.75 2005/05/20 12:48:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.74 2005/03/26 17:10:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.75 2005/05/20 12:48:27 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,8 @@ const struct emul emul_linux = {
 	NULL,
 
 	uvm_default_mapaddr,
+
+	linux_usertrap,
 };
 
 static void
