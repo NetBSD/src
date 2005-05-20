@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.179 2005/05/20 19:03:11 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.180 2005/05/20 19:48:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.179 2005/05/20 19:03:11 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.180 2005/05/20 19:48:25 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1796,6 +1796,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 		{ "vflush_invoked", "Number of time vflush was called" },
 		{ "clean_inlocked", "Number of vnodes skipped for VXLOCK" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
+		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
 	sysctl_createv(clog, 0, NULL, NULL,
