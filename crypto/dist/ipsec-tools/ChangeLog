@@ -1,5 +1,10 @@
 2005-05-20  Emmanuel Dreyfus  <manu@netbsd.org>
 
+	* src/libipsec/pfkey.c src/racoon/ipsec_doi.c: Fix NAT-T + IPcomp
+
+	From hgates <hgates.lists@gmail.com>
+	* src/racoon/proposal.c: fix SPI size test for IPcomp
+
 	From Larry Baird <lab@gta.com>
 	* src/racoon/{handler.c|ipsec_doi.c|remoteconf.h|remoteconf.c}: When 
 	  altering lifetime, duplicate the proposal instead of modifying 
