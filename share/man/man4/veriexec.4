@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.5 2005/04/24 13:16:26 blymn Exp $
+.\" $NetBSD: veriexec.4,v 1.6 2005/05/20 19:52:52 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexec.4,v 1.5 2005/04/24 13:16:26 blymn Exp $
+.\"	$Id: veriexec.4,v 1.6 2005/05/20 19:52:52 elad Exp $
 .\"
 .Dd March 24, 2005
 .Dt VERIEXEC 4
@@ -39,9 +39,8 @@
 The
 .Nm
 pseudo-device is used to interface the kernel's Veriexec data-structures.
-It is used to size the kernel data structures, load the Veriexec
-fingerprints into kernel memory and report the fingerprint methods
-supported by the currently running kernel.
+It is used to size the kernel data structures and load the Veriexec
+fingerprints into kernel memory.
 .Ss Veriexec file operations
 All the following operations are invoked using the
 .Xr ioctl 2
@@ -54,7 +53,7 @@ parameters.
 The following section lists the requests that can be made via
 .Xr ioctl 2 .
 .Ss Veriexec file request descriptions
-.Bl -tag -width VERIEXEC_FINGERPRINTS
+.Bl -tag -width VERIEXEC_TABLESIZE
 .It Dv VERIEXEC_TABLESIZE Fa struct veriexec_sizing_params
 Sizes the in kernel hash tables to accommodate the fingerprint entries.
 This request must be made prior to loading the fingerprints into the
@@ -99,20 +98,6 @@ fingerprint, this is used by the kernel to provide a simple sanity check
 on the fingerprint passed.
 Lastly, the fingerprint is a pointer to an
 array of characters that comprise the fingerprint for the file.
-.It Dv VERIEXEC_FINGERPRINTS Fa struct veriexec_fp_report
-Copies a string that contains the fingerprint methods supported by the
-kernel into the buffer pointed to in the argument structure.
-The argument structure also contains the size of the storage that has
-been allocated by the caller to hold the string.
-If the size of the storage is insufficient to hold the entire string,
-then the string will not be copied into the buffer by the kernel; instead
-the size field will be updated with the amount of storage required to hold
-the fingerprint string.
-After performing this request the caller must check the size field in the
-argument structure.
-If this field differs from what was set prior to the
-request then the caller should reallocate the storage with the updated size
-and perform the request again.
 .El
 .Pp
 Note that the requests
