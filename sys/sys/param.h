@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.215 2005/04/01 12:01:32 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.216 2005/05/20 12:44:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	399000300	/* NetBSD 3.99.3 */
+#define	__NetBSD_Version__	399000400	/* NetBSD 3.99.4 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) >= __NetBSD_Version__)
