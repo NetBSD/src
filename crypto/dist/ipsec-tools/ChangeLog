@@ -1,5 +1,8 @@
 2005-05-20  Emmanuel Dreyfus  <manu@netbsd.org>
 
+	From Mike Robinson <sundialservices@users.sourceforge.net>
+	* src/racoon/isakmp_xauth.c: really delete phase 1 on Xauth failure
+
 	* src/libipsec/pfkey.c src/racoon/ipsec_doi.c: Fix NAT-T + IPcomp
 
 	From hgates <hgates.lists@gmail.com>
