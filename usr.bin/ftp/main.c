@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.95 2005/05/19 03:05:04 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.96 2005/05/20 06:13:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.95 2005/05/19 03:05:04 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.96 2005/05/20 06:13:23 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -670,7 +670,8 @@ cmdscanner(void)
 			HistEvent ev;
 			cursor_pos = NULL;
 
-			buf = el_gets(el, &num);
+			buf = el_gets(el, &ch);
+			num = ch;
 			if (buf == NULL || num == 0) {
 				if (fromatty)
 					putc('\n', ttyout);
