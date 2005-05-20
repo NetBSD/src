@@ -5,6 +5,10 @@
 	  altering lifetime, duplicate the proposal instead of modifying 
 	  the configured one.
 
+2005-05-14  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/libipsec/policy_parse.y: fix parse bug in IPsec policies
+
 2005-05-13  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/isakmp.c: For acquire messages, when NAT-T is in use,
