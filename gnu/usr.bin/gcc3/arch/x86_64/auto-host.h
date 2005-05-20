@@ -557,7 +557,7 @@
 
 /* Define if your assembler supports .subsection and .subsection -1 starts
    emitting at the beginning of your section. */
-/* #undef HAVE_GAS_SUBSECTION_ORDERING */
+#define HAVE_GAS_SUBSECTION_ORDERING 1
 
 /* Define if your assembler supports .weak. */
 #define HAVE_GAS_WEAK 1
@@ -569,7 +569,7 @@
 #define HAVE_AS_LEB128 1
 
 /* Define if your assembler mis-optimizes .eh_frame data. */
-#define USE_AS_TRADITIONAL_FORMAT 1
+/* #undef USE_AS_TRADITIONAL_FORMAT */
 
 /* Define if your assembler supports marking sections with SHF_MERGE flag. */
 #define HAVE_GAS_SHF_MERGE 1
@@ -616,7 +616,7 @@
 
 /* Define if your linker links a mix of read-only
    and read-write sections into a read-write section. */
-/* #undef HAVE_LD_RO_RW_SECTION_MIXING */
+#define HAVE_LD_RO_RW_SECTION_MIXING 1
 
 /* Define if your linker supports --eh-frame-hdr option. */
 #define HAVE_LD_EH_FRAME_HDR 1
