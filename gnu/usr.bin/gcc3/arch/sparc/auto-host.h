@@ -587,10 +587,10 @@
 #define HAVE_AS_RELAX_OPTION 1
 
 /* Define if your assembler and linker support unaligned PC relative relocs. */
-/* #undef HAVE_AS_SPARC_UA_PCREL */
+#define HAVE_AS_SPARC_UA_PCREL 1
 
 /* Define if your assembler and linker support unaligned PC relative relocs against hidden symbols. */
-/* #undef HAVE_AS_SPARC_UA_PCREL_HIDDEN */
+#define HAVE_AS_SPARC_UA_PCREL_HIDDEN 1
 
 /* Define if your assembler supports offsetable %lo(). */
 /* #undef HAVE_AS_OFFSETABLE_LO10 */
