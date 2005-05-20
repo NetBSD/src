@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.4 2005/04/11 23:19:24 perseant Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.5 2005/05/20 18:59:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct ubuf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_READ		0x00100000	/* Read buffer. */
+#define	B_DONTFREE	0x00010000	/* b_data not managed by bufcache */
 
 LIST_HEAD(bufhash_struct, ubuf);
 
