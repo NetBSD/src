@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.2 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.3 2005/05/20 00:57:33 manu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -417,8 +417,12 @@ parse_sockaddr(addrbuf, portbuf)
 	}
 
 	strncpy(addr, addrbuf->buf, addrbuf->len);
-	if (portbuf)
+	addr[addrbuf->len] = '\0';
+
+	if (portbuf) {
 		strncpy(serv, portbuf->buf, portbuf->len);
+		serv[portbuf->len] = '\0';
+	}
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
