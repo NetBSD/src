@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.199 2005/03/30 17:07:51 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.200 2005/05/20 12:44:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -128,6 +128,9 @@ struct emul {
 	int		(*e_fault)(struct proc *, vaddr_t, int, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
+
+	/* Emulation-specific hook for userspace page faults */
+	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 };
 
 /*
