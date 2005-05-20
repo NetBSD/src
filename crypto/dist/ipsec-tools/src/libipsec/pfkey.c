@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.2 2005/04/10 21:20:55 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.3 2005/05/20 01:28:13 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1305,9 +1305,14 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	/* add nat-t packets */
 	if (l_natt_type) {
-		if (satype != SADB_SATYPE_ESP) {
+		switch(satype) {
+		case SADB_SATYPE_ESP:
+		case SADB_X_SATYPE_IPCOMP:
+			break;
+		default:
 			__ipsec_errcode = EIPSEC_NO_ALGS;
 			return -1;
+			break;
 		}
 
 		len += sizeof(struct sadb_x_nat_t_type);
