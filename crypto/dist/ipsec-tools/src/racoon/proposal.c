@@ -1,4 +1,4 @@
-/*	$NetBSD: proposal.c,v 1.2 2005/05/10 09:23:36 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.3 2005/05/20 01:28:13 manu Exp $	*/
 
 /* Id: proposal.c,v 1.13 2004/09/13 14:09:19 ludvigm Exp */
 
@@ -372,8 +372,8 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 			if (pr1->spisize == sizeof(u_int16_t) &&
 			    pr2->spisize == sizeof(u_int32_t)) {
 				spisizematch = 1;
-			} else if (pr1->spisize == sizeof(u_int16_t) &&
-				 pr2->spisize == sizeof(u_int32_t)) {
+			} else if (pr2->spisize == sizeof(u_int16_t) &&
+				 pr1->spisize == sizeof(u_int32_t)) {
 				spisizematch = 1;
 			}
 			if (spisizematch) {
