@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 2005/05/19 21:16:29 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.4 2005/05/20 12:48:27 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3 2005/05/19 21:16:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.4 2005/05/20 12:48:27 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3 2005/05/19 21:16:29 manu Exp $
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_prctl.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
-
 
 void
 linux_setregs(l, epp, stack) 
@@ -79,10 +79,11 @@ linux_setregs(l, epp, stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 
 	l->l_proc->p_flag &= ~P_32;
 
-	printf("stack = 0x%lx, entry = 0x%lx\n", stack, epp->ep_entry);
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
 	tf->tf_rbx = 0;
@@ -101,9 +102,9 @@ linux_setregs(l, epp, stack)
 	tf->tf_r14 = 0;
 	tf->tf_r15 = 0;
 	tf->tf_rip = epp->ep_entry;
-	tf->tf_rflags = PSL_MBO | PSL_I;
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_rflags = PSL_USERSET;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = 0;
 	tf->tf_es = 0;
 	tf->tf_fs = 0;
@@ -130,7 +131,7 @@ linux_sendsig(ksi, mask)
 	linux_sigset_t lmask;
 	char *sp;
 	int error;
-	
+
 	/* Do we need to jump onto the signal stack? */
 	onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -523,4 +524,61 @@ linux_sys_arch_prctl(l, v, retval)
 	}
 
 	return 0;
+}
+
+const int linux_vsyscall_to_syscall[] = {
+	LINUX_SYS_gettimeofday,
+	LINUX_SYS_time,
+	LINUX_SYS_nosys,
+	LINUX_SYS_nosys,
+};
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	struct trapframe *tf = arg;
+	uint64_t retaddr;
+	int vsyscallnr;
+
+	/*
+	 * Check for a vsyscall. %rip must be the fault address,
+	 * and the address must be in the Linux vsyscall area.
+	 * Also, vsyscalls are only done at 1024-byte boundaries.
+	 */
+
+	if (__predict_true(trapaddr < LINUX_VSYSCALL_START))
+		return 0;
+
+	if (trapaddr != tf->tf_rip)
+		return 0;
+
+	if ((tf->tf_rip & (LINUX_VSYSCALL_SIZE - 1)) != 0)
+		return 0;
+
+	vsyscallnr = (tf->tf_rip - LINUX_VSYSCALL_START) / LINUX_VSYSCALL_SIZE;
+
+	if (vsyscallnr > LINUX_VSYSCALL_MAXNR)
+		return 0;
+
+	/*
+	 * Get the return address from the top of the stack,
+	 * and fix up the return address.
+	 * This assumes the faulting instruction was callq *reg,
+	 * which is the only way that vsyscalls are ever entered.
+	 */
+	if (copyin((void *)tf->tf_rsp, &retaddr, sizeof retaddr) != 0)
+		return 0;
+	tf->tf_rip = retaddr;
+	tf->tf_rax = linux_vsyscall_to_syscall[vsyscallnr];
+	tf->tf_rsp += 8;	/* "pop" the return address */
+
+#if 0
+	printf("usertrap: rip %p rsp %p retaddr %p vsys %d sys %d\n",
+	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)retaddr,
+	    vsyscallnr, (int)tf->tf_rax);
+#endif
+
+	(*l->l_proc->p_md.md_syscall)(tf);
+
+	return 1;
 }
