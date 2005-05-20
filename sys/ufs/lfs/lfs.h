@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.86 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.87 2005/05/20 19:48:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1058,6 +1058,7 @@ struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int	vflush_invoked;
 	u_int	clean_inlocked;
 	u_int	clean_vnlocked;
+	u_int   segs_reclaimed;
 };
 #ifdef _KERNEL
 extern struct lfs_stats lfs_stats;
