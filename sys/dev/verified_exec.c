@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.9 2005/05/20 19:52:52 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.9 2005/05/20 19:52:52 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $\n$NetBSD: verified_exec.c,v 1.8 2005/05/19 20:16:19 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.9 2005/05/20 19:52:52 elad Exp $\n$NetBSD: verified_exec.c,v 1.9 2005/05/20 19:52:52 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -154,11 +154,9 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 	u_long hashmask;
 
 	/*
-	 * Don't allow updates in multi-user mode, but we will allow
-	 * queries of supported fingerprints.
-	 *
+	 * Don't allow updates in multi-user mode.
 	 */
-	if ((securelevel >= 1) && (cmd != VERIEXEC_FINGERPRINTS)) {
+	if (securelevel >= 1) {
 		printf("Veriexec: veriexecioctl: Securelevel raised, loading"
 		       "fingerprints is not permitted\n");
 
@@ -293,20 +291,6 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		break;
 		}
 
-	case VERIEXEC_FINGERPRINTS: {
-		struct veriexec_fp_report *params =
-			(struct veriexec_fp_report *) data;
-		
-		if (strlen(veriexec_fp_names) >= params->size) {
-			params->size = strlen(veriexec_fp_names) + 1;
-		} else {
-			strlcpy(params->fingerprints, veriexec_fp_names,
-				params->size);
-		}
-		
-		break;
-		}
-	
 	default:
 		/* Invalid operation. */
 		error = ENODEV;
