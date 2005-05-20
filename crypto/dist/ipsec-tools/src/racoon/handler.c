@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.3 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: handler.c,v 1.4 2005/05/20 00:54:55 manu Exp $	*/
 
 /* Id: handler.c,v 1.13 2004/11/21 19:36:26 manubsd Exp */
 
@@ -284,6 +284,11 @@ delph1(iph1)
 	if (iph1->local) {
 		racoon_free(iph1->local);
 		iph1->local = NULL;
+	}
+
+	if (iph1->approval) {
+		delisakmpsa(iph1->approval);
+		iph1->approval = NULL;
 	}
 
 #ifdef ENABLE_HYBRID

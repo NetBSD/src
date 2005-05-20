@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.4 2005/05/10 09:23:36 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.5 2005/05/20 00:54:55 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.26.2.1 2005/02/17 13:19:18 vanhu Exp */
 
@@ -215,7 +215,10 @@ get_ph1approval(iph1, pair)
 	int prophlen;
 	int i;
 
-	iph1->approval = NULL;
+	if (iph1->approval) {
+		delisakmpsa(iph1->approval);
+		iph1->approval = NULL;
+	}
 
 	for (i = 0; i < MAXPROPPAIRLEN; i++) {
 		if (pair[i] == NULL)
@@ -306,8 +309,10 @@ saok:
 #endif
 
 	newsa = get_sabyproppair(p, iph1);
-	if (newsa == NULL)
+	if (newsa == NULL) {
+		delisakmpsa(iph1->approval);
 		iph1->approval = NULL;
+	}
 
 	return newsa;
 }
@@ -392,8 +397,6 @@ get_ph1approvalx(p, proposal, sap, check_level)
 		    tsap->encklen == s->encklen) {
 			switch(check_level) {
 			case PROP_CHECK_OBEY:
-				s->lifetime = tsap->lifetime;
-				s->lifebyte = tsap->lifebyte;
 				goto found;
 				break;
 
@@ -401,9 +404,6 @@ get_ph1approvalx(p, proposal, sap, check_level)
 				if ((tsap->lifetime > s->lifetime) ||
 				    (tsap->lifebyte > s->lifebyte))
 					continue;
-
-				s->lifetime = tsap->lifetime;
-				s->lifebyte = tsap->lifebyte;
 				goto found;
 				break;
 
@@ -434,6 +434,31 @@ get_ph1approvalx(p, proposal, sap, check_level)
 found:
 	if (tsap->dhgrp != NULL)
 		oakley_dhgrp_free(tsap->dhgrp);
+
+	if ((s = dupisakmpsa(s)) != NULL) {
+		switch(check_level) {
+		case PROP_CHECK_OBEY:
+			s->lifetime = tsap->lifetime;
+			s->lifebyte = tsap->lifebyte;
+			break;
+
+		case PROP_CHECK_STRICT:
+			s->lifetime = tsap->lifetime;
+			s->lifebyte = tsap->lifebyte;
+			break;
+
+		case PROP_CHECK_CLAIM:
+			if (tsap->lifetime < s->lifetime)
+				s->lifetime = tsap->lifetime;
+			if (tsap->lifebyte < s->lifebyte)
+				s->lifebyte = tsap->lifebyte;
+			break;
+
+		default:
+			break;
+		}
+	}
+
 	return s;
 }
 
@@ -4124,24 +4149,10 @@ struct isakmpsa *
 fixup_initiator_sa(match, received)
 	struct isakmpsa *match, *received;
 {
-	struct isakmpsa *newsa;
+	if (received->gssid != NULL)
+		match->gssid = vdup(received->gssid);
 
-	if (received->gssid == NULL)
-		return match;
-
-	newsa = newisakmpsa();
-	memcpy(newsa, match, sizeof *newsa);
-
-	if (match->dhgrp != NULL) {
-		newsa->dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
-		memcpy(newsa->dhgrp, match->dhgrp, sizeof (struct dhgroup));
-	}
-	newsa->next = NULL;
-	newsa->rmconf = NULL;
-
-	newsa->gssid = vdup(received->gssid);
-
-	return newsa;
+	return match;
 }
 #endif
 
