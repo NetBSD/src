@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.7 2003/05/17 14:54:53 itojun Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.8 2005/05/20 18:01:46 kleink Exp $	*/
 /*	$KAME: quip_client.c,v 1.7 2001/12/28 00:50:28 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 
 #include <stdio.h>
