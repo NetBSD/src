@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.1 2005/05/03 16:26:30 manu Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.1 2005/05/03 16:26:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -84,15 +84,11 @@ linux_exec_setup_stack(p, epp)
 		max_stack_size = MAXSSIZ;
 		if (epp->ep_minsaddr > LINUX_USRSTACK32)
 			epp->ep_minsaddr = LINUX_USRSTACK32;
-		else
-			printf("epp->ep_minsaddr = 0x%lx\n", epp->ep_minsaddr);
 	} else {
 		epp->ep_minsaddr = USRSTACK;
 		max_stack_size = MAXSSIZ;
 		if (epp->ep_minsaddr > LINUX_USRSTACK)
 			epp->ep_minsaddr = LINUX_USRSTACK;
-		else
-			printf("epp->ep_minsaddr = 0x%lx\n", epp->ep_minsaddr);
 
 	}
 
