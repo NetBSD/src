@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.14 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15 2005/05/20 12:48:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2005/05/20 12:48:27 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,4 +317,10 @@ linux_machdepioctl(p, v, retval)
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
 	return sys_ioctl(curlwp, &bia, retval);
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	return 0;
 }
