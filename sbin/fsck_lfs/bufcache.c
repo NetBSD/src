@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.6 2005/04/11 23:19:24 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.7 2005/05/20 18:59:36 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -119,8 +119,10 @@ void bufrehash(int max)
 		;
 	newhashmask = newhashmax - 1;
 
-	/* Allocate new empty hash table */
+	/* Allocate new empty hash table, if we can */
 	np = (struct bufhash_struct *)malloc(newhashmax * sizeof(*bufhash));
+		if (np == NULL)
+			return;
 	for (i = 0; i < newhashmax; i++)
 		LIST_INIT(&np[i]);
 
@@ -163,7 +165,8 @@ buf_destroy(struct ubuf * bp)
 	bp->b_flags |= B_NEEDCOMMIT;
 	LIST_REMOVE(bp, b_vnbufs);
 	LIST_REMOVE(bp, b_hash);
-	free(bp->b_data);
+	if (!(bp->b_flags & B_DONTFREE))
+		free(bp->b_data);
 	free(bp);
 	--nbufs;
 }
@@ -275,15 +278,12 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 			break;
 		}
 #ifdef DEBUG
-		else {
-			if (!warned) {
-				warnx("allocating more than %d buffers",
-					maxbufs);
-				++warned;
-			}
-			break;
+		else if (!warned) {
+			warnx("allocating more than %d buffers", maxbufs);
+			++warned;
 		}
 #endif
+		break;
 	}
 	++nbufs;
 	bp = (struct ubuf *) malloc(sizeof(*bp));
@@ -353,7 +353,7 @@ bread(struct uvnode * vp, daddr_t lbn, int size, struct ucred * unused,
 {
 	struct ubuf *bp;
 	daddr_t daddr;
-	int error, count;
+	int error;
 
 	bp = getblk(vp, lbn, size);
 	*bpp = bp;
@@ -371,13 +371,8 @@ bread(struct uvnode * vp, daddr_t lbn, int size, struct ucred * unused,
 	error = VOP_BMAP(vp, lbn, &daddr);
 	bp->b_blkno = daddr;
 	if (daddr >= 0) {
-		count = pread(vp->v_fd, bp->b_data, bp->b_bcount,
-				dbtob((off_t) daddr));
-		if (count == bp->b_bcount) {
-			bp->b_flags |= B_DONE;
-			return 0;
-		}
-		return -1;
+		bp->b_flags |= B_READ;
+		return VOP_STRATEGY(bp);
 	}
 	memset(bp->b_data, 0, bp->b_bcount);
 	return 0;
