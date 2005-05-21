@@ -1,11 +1,11 @@
-/*	$NetBSD: hppa_reloc.c,v 1.20 2004/05/17 13:16:02 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.21 2005/05/21 06:43:39 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Fredette.
+ * by Matt Fredette and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
