@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.10 2005/05/20 20:06:34 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.11 2005/05/21 09:25:21 skrll Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -198,10 +198,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char *newp;
 	int c;
-	size_t size;
-	struct veriexec_fp_report report;
 
 	setprogname(argv[0]);
 
