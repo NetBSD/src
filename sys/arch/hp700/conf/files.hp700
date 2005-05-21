@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.13 2005/01/28 17:38:50 jkunz Exp $
+#	$NetBSD: files.hp700,v 1.14 2005/05/21 08:59:18 chs Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -217,6 +217,11 @@ file	arch/hp700/gsc/com_harmony.c	com_harmony
 #device	myri: ether
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
+
+
+# Memory Disk
+file dev/md_root.c			memory_disk_hooks
+
 
 #
 # Non-device files
