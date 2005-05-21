@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.30 2004/04/23 21:04:25 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.31 2005/05/21 17:18:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.30 2004/04/23 21:04:25 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.31 2005/05/21 17:18:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ setdefaults(void)
 static char **
 charnames[] = {
 	&ER, &KL, &IN, &QU, &XN, &XF, &ET, &BK,
-	&SU, &DS, &RP, &FL, &WE, &LN, 0
+	&SU, &DS, &RP, &FL, &WE, &LN, &ST, &B2, 0
 };
 
 static char *
@@ -157,7 +157,8 @@ charvars[] = {
 	&tmode.c_cc[VQUIT], &tmode.c_cc[VSTART], &tmode.c_cc[VSTOP],
 	&tmode.c_cc[VEOF], &tmode.c_cc[VEOL], &tmode.c_cc[VSUSP],
 	&tmode.c_cc[VDSUSP], &tmode.c_cc[VREPRINT], &tmode.c_cc[VDISCARD],
-	&tmode.c_cc[VWERASE], &tmode.c_cc[VLNEXT], 0
+	&tmode.c_cc[VWERASE], &tmode.c_cc[VLNEXT], &tmode.c_cc[VSTATUS],
+	&tmode.c_cc[VEOL2], 0
 };
 
 void
