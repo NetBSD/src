@@ -1,7 +1,8 @@
-/* $NetBSD: dot_init.h,v 1.1 2004/05/18 19:19:34 skrll Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2005/05/21 06:46:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Nick Hudson
+ * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
