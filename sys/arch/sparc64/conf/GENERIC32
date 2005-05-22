@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.102 2005/05/03 14:48:52 martin Exp $
+# 	$NetBSD: GENERIC32,v 1.103 2005/05/22 20:17:09 martin Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	64
 
@@ -799,8 +799,7 @@ wskbd0 at kbd0
 # sun console as possible
 options 	WSEMUL_SUN		# sun terminal emulation
 options 	WS_DEFAULT_FG=WSCOL_BLACK
-options 	WS_DEFAULT_BG=WSCOL_WHITE
-# options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+options 	WS_DEFAULT_BG=WSCOL_REALWHITE
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
