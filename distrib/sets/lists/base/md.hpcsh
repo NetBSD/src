@@ -1,5 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.6 2004/07/03 12:57:18 uch Exp $
-./sbin/fdisk					base-sysutil-root
+# $NetBSD: md.hpcsh,v 1.7 2005/05/22 03:45:30 lukem Exp $
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/tpctl				base-sysutil-bin

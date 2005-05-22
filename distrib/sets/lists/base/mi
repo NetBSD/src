@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.553 2005/05/11 10:41:51 peter Exp $
+# $NetBSD: mi,v 1.554 2005/05/22 03:45:30 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -121,6 +121,7 @@
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/fastboot					base-sysutil-root
 ./sbin/fasthalt					base-sysutil-root
+./sbin/fdisk					base-sysutil-root
 ./sbin/fsck					base-sysutil-root
 ./sbin/fsck_ext2fs				base-ext2fs-root
 ./sbin/fsck_ffs					base-sysutil-root

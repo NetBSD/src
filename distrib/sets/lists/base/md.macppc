@@ -1,5 +1,4 @@
-# $NetBSD: md.macppc,v 1.22 2004/01/11 10:24:58 lukem Exp $
-./sbin/fdisk					base-sysutil-root
+# $NetBSD: md.macppc,v 1.23 2005/05/22 03:45:30 lukem Exp $
 ./sbin/pdisk					base-sysutil-root
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete

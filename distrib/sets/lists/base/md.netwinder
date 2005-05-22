@@ -1,6 +1,5 @@
-# $NetBSD: md.netwinder,v 1.8 2004/01/25 14:10:09 bjh21 Exp $
+# $NetBSD: md.netwinder,v 1.9 2005/05/22 03:45:30 lukem Exp $
 ./dev/beep					base-obsolete		obsolete
 ./dev/mouse-qms0				base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
 ./dev/qms0					base-obsolete		obsolete
-./sbin/fdisk					base-sysutil-root
