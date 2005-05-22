@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.59 2005/02/26 22:12:34 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.60 2005/05/22 14:00:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.59 2005/02/26 22:12:34 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.60 2005/05/22 14:00:59 chs Exp $");
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ static struct nlist namelist[] = {
 	{ "_eintrcnt" },
 #define	X_ALLEVENTS	5
 	{ "_allevents" },
-	{ "" },
+	{ NULL }
 };
 
 /*
@@ -173,8 +173,8 @@ get_interrupt_events(void)
 
 	if (!NREAD(X_ALLEVENTS, &allevents, sizeof allevents))
 		return;
-	evptr = allevents.tqh_first;
-	for (; evptr != NULL; evptr = evcnt.ev_list.tqe_next) {
+	evptr = TAILQ_FIRST(&allevents);
+	for (; evptr != NULL; evptr = TAILQ_NEXT(&evcnt, ev_list)) {
 		if (!KREAD(evptr, &evcnt, sizeof evcnt))
 			return;
 		if (evcnt.ev_type != EVCNT_TYPE_INTR)
@@ -207,7 +207,9 @@ initvmstat(void)
 	int i;
 
 	if (namelist[0].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
+		if (kvm_nlist(kd, namelist) &&
+		    (namelist[X_NCHSTATS].n_type == 0 ||
+		     namelist[X_ALLEVENTS].n_type == 0)) {
 			nlisterr(namelist);
 			return(0);
 		}
@@ -223,26 +225,28 @@ initvmstat(void)
 	/* Old style interrupt counts - deprecated */
 	nintr = (namelist[X_EINTRCNT].n_value -
 		namelist[X_INTRCNT].n_value) / sizeof (long);
-	intrloc = calloc(nintr, sizeof (long));
-	intrname = calloc(nintr, sizeof (long));
-	intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
-		namelist[X_INTRNAMES].n_value);
-	if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
-		error("Out of memory\n");
-		if (intrnamebuf)
-			free(intrnamebuf);
-		if (intrname)
-			free(intrname);
-		if (intrloc)
-			free(intrloc);
-		nintr = 0;
-		return(0);
-	}
-	NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
-		NVAL(X_INTRNAMES));
-	for (cp = intrnamebuf, i = 0; i < nintr; i++) {
-		intrname[i] = cp;
-		cp += strlen(cp) + 1;
+	if (nintr) {
+		intrloc = calloc(nintr, sizeof (long));
+		intrname = calloc(nintr, sizeof (long));
+		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
+				     namelist[X_INTRNAMES].n_value);
+		if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
+			error("Out of memory\n");
+			if (intrnamebuf)
+				free(intrnamebuf);
+			if (intrname)
+				free(intrname);
+			if (intrloc)
+				free(intrloc);
+			nintr = 0;
+			return(0);
+		}
+		NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
+		      NVAL(X_INTRNAMES));
+		for (cp = intrnamebuf, i = 0; i < nintr; i++) {
+			intrname[i] = cp;
+			cp += strlen(cp) + 1;
+		}
 	}
 
 	/* event counter interrupt counts */
@@ -732,9 +736,11 @@ getinfo(struct Info *stats, enum state st)
 
 	dkreadstats();
 	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
-	NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
+	if (nintr)
+		NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
 	for (i = 0; i < nevcnt; i++)
-		KREAD(ie_head[i].ie_count, &stats->evcnt[i], sizeof stats->evcnt[i]);
+		KREAD(ie_head[i].ie_count, &stats->evcnt[i],
+		      sizeof stats->evcnt[i]);
 	size = sizeof(stats->uvmexp);
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP2;
@@ -755,7 +761,8 @@ static void
 allocinfo(struct Info *stats)
 {
 
-	if ((stats->intrcnt = calloc(nintr, sizeof(long))) == NULL) {
+	if (nintr &&
+	    (stats->intrcnt = calloc(nintr, sizeof(long))) == NULL) {
 		error("calloc failed");
 		die(0);
 	}
