@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.185 2005/03/02 11:37:27 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.185.2.1 2005/05/22 18:44:24 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.185 2005/03/02 11:37:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.185.2.1 2005/05/22 18:44:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ struct uhci_pipe {
 		/* Interrupt pipe */
 		struct {
 			int npoll;
+			int isread;
 			uhci_soft_qh_t **qhs;
 		} intr;
 		/* Bulk pipe */
@@ -2071,6 +2072,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status err;
+	int isread, endpt;
 	int i, s;
 
 	if (sc->sc_dying)
@@ -2084,8 +2086,14 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 		panic("uhci_device_intr_transfer: a request");
 #endif
 
-	err = uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
-				   &xfer->dmabuf, &data, &dataend);
+	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+
+	upipe->u.intr.isread = isread;
+
+	err = uhci_alloc_std_chain(upipe, sc, xfer->length, isread,
+				   xfer->flags, &xfer->dmabuf, &data,
+				   &dataend);
 	if (err)
 		return (err);
 	dataend->td.td_status |= htole32(UHCI_TD_IOC);
