@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2005/01/13 03:25:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2005/05/22 03:45:30 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,7 +14,7 @@ LISTS=		${.CURDIR}/list
 TARGETDIR=	${DESTDIR}/rescue
 PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
 
-.for f in bim edlabel fdisk ldconfig pdisk
+.for f in bim edlabel ldconfig pdisk
 PROG_${f}!=	cd ${NETBSDSRCDIR}/sbin/${f} && ${MAKE} -V PROG
 .if (${PROG_${f}} != "")
 LISTS+=		${.CURDIR}/list.${f}
@@ -64,6 +64,7 @@ CLEANFILES+=	rescue.unstripped
 realall: ${CRUNCHBIN}
 
 install: ${CRUNCHBIN}
+# XXX this MKMSG doesn't line up
 	${_MKMSG} "populate ${TARGETDIR}"
 	${PARSELIST} -v mode=install ${LISTS} | ${MAKE} -f - install
 

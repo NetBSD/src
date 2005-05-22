@@ -1,27 +1,11 @@
-#	$NetBSD: Makefile,v 1.31 2005/01/20 16:39:23 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.32 2005/05/22 03:45:30 lukem Exp $
 
 SUBDIR=	mbr
 
-.if (${MACHINE} == "i386" || \
-     ${MACHINE} == "bebox" || \
-     ${MACHINE} == "cobalt" || \
-     ${MACHINE} == "ofppc" || \
-     ${MACHINE} == "hpcarm" || \
-     ${MACHINE} == "hpcmips" || \
-     ${MACHINE} == "hpcsh" || \
-     ${MACHINE} == "iyonix" || \
-     ${MACHINE} == "arc" || \
-     ${MACHINE} == "prep" || \
-     ${MACHINE} == "playstation2" || \
-     ${MACHINE} == "mvmeppc" || \
-     ${MACHINE} == "netwinder" || \
-     ${MACHINE} == "macppc" || \
-     ${MACHINE} == "amd64")
 PROG=	fdisk 
 SRCS=	fdisk.c
 DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
-.endif
 
 MAN=	fdisk.8
 

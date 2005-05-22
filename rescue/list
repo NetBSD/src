@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2005/04/01 08:35:17 lukem Exp $
+#	$NetBSD: list,v 1.18 2005/05/22 03:45:30 lukem Exp $
 
 SRCDIRS	bin
 
@@ -52,6 +52,7 @@ PROG	dkctl
 PROG	dmesg
 PROG	dump		rdump
 PROG	dump_lfs	rdump_lfs
+PROG	fdisk
 PROG	fsck
 PROG	fsck_ext2fs
 PROG	fsck_ffs
