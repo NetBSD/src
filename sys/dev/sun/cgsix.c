@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.23 2005/05/16 14:29:11 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.24 2005/05/22 03:45:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.23 2005/05/16 14:29:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.24 2005/05/22 03:45:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ static void cg6_ras_copyrows(void *, int, int, int);
 static void cg6_ras_copycols(void *, int, int, int, int);
 static void cg6_ras_erasecols(void *, int, int, int, long int);
 static void cg6_ras_eraserows(void *, int, int, long int);
-#ifdef RASTERCONSOLE
+#if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
 static void cg6_ras_do_cursor(struct rasops_info *);
 #endif
 static void
@@ -589,7 +589,7 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 #endif
 }
 
-#ifdef RASTERCONSOLE
+#if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
 /*
  * Really want something more like fg^bg here, but that would be more
  * or less impossible to migrate to colors.  So we hope there's
@@ -599,14 +599,14 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 static void
 cg6_ras_do_cursor(struct rasops_info *ri)
 {
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct cg6_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->sc;
 	int row, col;
 	
 	row = ri->ri_crow * ri->ri_font->fontheight;
 	col = ri->ri_ccol * ri->ri_font->fontwidth;
-	cg6_invert(sc, ri->ri_yorigin + row,ri->ri_xorigin + 
-	    col, ri->ri_font->fontwidth, ri->ri_font->fontheight);
+	cg6_invert(sc, ri->ri_xorigin + col,ri->ri_yorigin + 
+	    row, ri->ri_font->fontwidth, ri->ri_font->fontheight);
 }
 #endif	/* RASTERCONSOLE */
 
@@ -662,7 +662,9 @@ cg6attach(struct cgsix_softc *sc, char *name, int isconsole)
 			sc->sc_fb.fb_rinfo.ri_ops.copycols = cg6_ras_copycols;
 			sc->sc_fb.fb_rinfo.ri_ops.erasecols = cg6_ras_erasecols;
 			sc->sc_fb.fb_rinfo.ri_ops.eraserows = cg6_ras_eraserows;
+#ifdef CG6_BLIT_CURSOR
 			sc->sc_fb.fb_rinfo.ri_do_cursor = cg6_ras_do_cursor;
+#endif
 			cg6_ras_init(sc);
 		}
 #endif
@@ -672,6 +674,10 @@ cg6attach(struct cgsix_softc *sc, char *name, int isconsole)
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
+
+	printf("\n");
+	printf("%s: framebuffer size: %d MB\n", sc->sc_dev.dv_xname, 
+	    sc->sc_ramsize >> 20);
 
 #if NWSDISPLAY
 	/* setup rasops and so on for wsdisplay */
@@ -700,16 +706,13 @@ cg6attach(struct cgsix_softc *sc, char *name, int isconsole)
 		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
 	}
 
+
 	aa.console = isconsole;
 	aa.scrdata = &cgsix_screenlist;
 	aa.accessops = &cgsix_accessops;
 	aa.accesscookie = sc;
-	printf("\n");
-	printf("%s: framebuffer size: %d MB\n", sc->sc_dev.dv_xname, 
-	    sc->sc_ramsize >> 20);
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 #else
-	printf("\n");
 	bt_initcmap(&sc->sc_cmap, 256);	
 	cg6_loadcmap(sc, 0, 256);
 	
@@ -1676,8 +1679,8 @@ cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 	fbc->fbc_alu = CG6_ALU_FLIP;
 	fbc->fbc_arecty = y;
 	fbc->fbc_arectx = x;
-	fbc->fbc_arecty = y+he - 1;
-	fbc->fbc_arectx = x+wi - 1;
+	fbc->fbc_arecty = y + he - 1;
+	fbc->fbc_arectx = x + wi - 1;
 	CG6_DRAW_WAIT(fbc);
 }
 
