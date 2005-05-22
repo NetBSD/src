@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.7 2005/05/01 18:41:18 chs Exp $
+#	$NetBSD: Makefile.buildboot,v 1.8 2005/05/22 08:22:28 skrll Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -72,9 +72,12 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.prog.mk>
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@([ -h machine ] || ln -s $S/arch/hp700/include machine)
 	@([ -h hppa ] || ln -s $S/arch/hppa/include hppa)
 
 .NOPATH: machine hppa
+.endif
+
 CLEANFILES+=machine hppa
