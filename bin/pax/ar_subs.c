@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.41 2005/05/14 18:49:51 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.42 2005/05/22 17:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.41 2005/05/14 18:49:51 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.42 2005/05/22 17:41:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,9 @@ static int path_check(ARCHD *, int);
 static void wr_archive(ARCHD *, int is_app);
 static int get_arc(void);
 static int next_head(ARCHD *);
+#if !HAVE_NBTOOL_CONFIG_H
 static int fdochroot(int);
+#endif
 extern sigset_t s_mask;
 
 /*
