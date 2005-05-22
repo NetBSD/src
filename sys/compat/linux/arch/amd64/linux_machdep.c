@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 2005/05/22 14:52:12 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.6 2005/05/22 19:31:15 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5 2005/05/22 14:52:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2005/05/22 19:31:15 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -222,6 +222,7 @@ linux_sendsig(ksi, mask)
 	sigframe.uc.luc_mcontext.rdx = tf->tf_rdx;
 	sigframe.uc.luc_mcontext.rcx = tf->tf_rcx;
 	sigframe.uc.luc_mcontext.rsp = tf->tf_rsp;
+	sigframe.uc.luc_mcontext.rip = tf->tf_rip;
 	sigframe.uc.luc_mcontext.eflags = tf->tf_rflags;
 	sigframe.uc.luc_mcontext.cs = tf->tf_cs;
 	sigframe.uc.luc_mcontext.gs = tf->tf_gs;
@@ -276,13 +277,7 @@ linux_sendsig(ksi, mask)
 		return;
 	}	
 
-	/* 
-	 * Setup registers 
-	 * XXX for an unknown reason, the stack is shifted of 24 bytes 
-	 * when the signal handler is called. The +24 below is a dirty
-	 * workaround, and the real problem should be fixed.
-	 */
-	linux_buildcontext(l, catcher, sp + 24);
+	linux_buildcontext(l, catcher, sp);
 	tf->tf_rdi = sigframe.info.lsi_signo;
 	tf->tf_rax = 0;
 	tf->tf_rsi = (long)&sfp->info;
@@ -346,23 +341,23 @@ linux_sys_rt_sigreturn(l, v, retval)
         void *v;
         register_t *retval;
 {  
-	struct linux_sys_rt_sigreturn_args /* {
-		syscallarg(struct linux_ucontext *) ucp;
-	} */ *uap = v;
-	struct linux_ucontext luctx;
+	struct linux_ucontext *luctx;
 	struct trapframe *tf = l->l_md.md_regs;
 	struct linux_sigcontext *lsigctx;
 	struct linux__fpstate fpstate;
+	struct linux_rt_sigframe frame, *fp;
 	ucontext_t uctx;
 	mcontext_t *mctx;
 	struct fxsave64 *fxsave;
 	int error;
 
-	if ((error = copyin(SCARG(uap, ucp), &luctx, sizeof(luctx))) != 0) {
+	fp = (struct linux_rt_sigframe *)(tf->tf_rsp - 8);
+	if ((error = copyin(fp, &frame, sizeof(frame))) != 0) {
 		sigexit(l, SIGILL);
 		return error;
 	}
-	lsigctx = &luctx.luc_mcontext;
+	luctx = &frame.uc;
+	lsigctx = &luctx->luc_mcontext;
 
 	bzero(&uctx, sizeof(uctx));
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
@@ -380,7 +375,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	/*
 	 * Signal set 
 	 */
-	linux_to_native_sigset(&uctx.uc_sigmask, &luctx.luc_sigmask);
+	linux_to_native_sigset(&uctx.uc_sigmask, &luctx->luc_sigmask);
 
 	/*
 	 * CPU state
@@ -440,14 +435,14 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * And the stack
 	 */
 	uctx.uc_stack.ss_flags = 0;
-	if (luctx.luc_stack.ss_flags & LINUX_SS_ONSTACK);
+	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK);
 		uctx.uc_stack.ss_flags = SS_ONSTACK;
 
-	if (luctx.luc_stack.ss_flags & LINUX_SS_DISABLE);
+	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE);
 		uctx.uc_stack.ss_flags = SS_DISABLE;
 
-	uctx.uc_stack.ss_sp = luctx.luc_stack.ss_sp;
-	uctx.uc_stack.ss_size = luctx.luc_stack.ss_size;
+	uctx.uc_stack.ss_sp = luctx->luc_stack.ss_sp;
+	uctx.uc_stack.ss_size = luctx->luc_stack.ss_size;
 
 	/*
 	 * And let setucontext deal with that.
