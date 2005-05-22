@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.55 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.56 2005/05/22 15:54:46 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.55 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.56 2005/05/22 15:54:46 christos Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -851,7 +851,7 @@ mrg_init(void)
 		"	.word   0xa99d		\n"
 		"	movl    %%sp@+,%0"
 			: "=g" (handle));
-		printf("Handle to first DRVR resource is 0x%p\n", handle);
+		printf("Handle to first DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 1),
 		    (long)*Get_Ind_Resource(0x44525652, 1),
@@ -863,7 +863,7 @@ mrg_init(void)
 		"	.word   0xa99d		\n"
 		"	movl    %%sp@+,%0"
 			: "=g" (handle));
-		printf("Handle to second DRVR resource is 0x%p\n", handle);
+		printf("Handle to second DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 2),
 		    (long)*Get_Ind_Resource(0x44525652, 2),

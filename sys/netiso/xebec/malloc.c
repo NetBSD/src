@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.8 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: malloc.c,v 1.9 2005/05/22 15:54:47 christos Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.8 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
 
 #include <stdio.h>
 #include "malloc.h"
@@ -45,7 +45,7 @@ HIWAT(s)
 	char *s;
 {
 	IFDEBUG(M)
-		fprintf(stdout, "HIWAT 0x%p  %s\n", hiwat,s);
+		fprintf(stdout, "HIWAT %p  %s\n", hiwat,s);
 		fflush(stdout);
 	ENDDEBUG
 }
@@ -68,7 +68,7 @@ int x;
 		fflush(stdout);
 	ENDDEBUG
 	IFDEBUG(M)
-		fprintf(stdout, "Malloc 0x%x, %d, hiwat 0x%p\n",
+		fprintf(stdout, "Malloc 0x%x, %d, hiwat %p\n",
 			total,total, hiwat);
 		fflush(stdout);
 	ENDDEBUG
@@ -94,7 +94,7 @@ int x;
 		if ( (hiwat + x) > highend) {
 			c = sbrk(CHUNKSIZE);
 			IFDEBUG(M)
-				fprintf(stdout, "hiwat 0x%p, x 0x%x, highend 0x%p, c 0x%p\n",
+				fprintf(stdout, "hiwat %p, x 0x%x, highend %p, c %p\n",
 						hiwat, x, highend, c);
 				fflush(stdout);
 			ENDDEBUG
@@ -129,11 +129,11 @@ int x;
 		hiwat = (char *)((unsigned)(hiwat + 3) & ~0x3);
 	}
 	IFDEBUG(M)
-		fprintf(stdout, "Malloc = 0x%p, bytesm 0x%x, wasted 0x%x, hiwat 0x%p\n",
+		fprintf(stdout, "Malloc = %p, bytesm 0x%x, wasted 0x%x, hiwat %p\n",
 			returnvalue, bytesmalloced, byteswasted, hiwat);
 	ENDDEBUG
 	IFDEBUG(N)
-		fprintf(stdout, "Malloc returns 0x%p, sbrk(0) 0x%p\n", returnvalue, sbrk(0));
+		fprintf(stdout, "Malloc returns %p, sbrk(0) %p\n", returnvalue, sbrk(0));
 		fflush(stdout);
 	ENDDEBUG
 	return(returnvalue);
