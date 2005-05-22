@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.13 2004/12/15 03:56:20 jmc Exp $        */
+/*      $NetBSD: opms.c,v 1.14 2005/05/22 15:54:46 christos Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.13 2004/12/15 03:56:20 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14 2005/05/22 15:54:46 christos Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -378,7 +378,7 @@ opmsattach(parent, self, aux)
     sc->sc_ih     = isa_intr_establish(ia->ia_ic, irq, IST_LEVEL, 
                                        IPL_TTY, opmsintr, sc);
     KERN_DEBUG(opmsdebug, KERN_DEBUG_INFO,
-               ("opmsattach: IOT 0x%p: IOH 0x%lx\n", sc->sc_iot, sc->sc_ioh));
+               ("opmsattach: IOT %p: IOH 0x%lx\n", sc->sc_iot, sc->sc_ioh));
 
     return;
 } /* End opmsattach */
