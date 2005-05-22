@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.102 2005/03/05 19:48:38 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.103 2005/05/22 19:10:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -279,13 +279,6 @@ pid_t	 vfork(void) __RENAME(__vfork14);
 #ifndef __AUDIT__
 char	*getwd(char *);				/* obsoleted by getcwd() */
 #endif
-
-/* This must be consistent with <sys/select.h>; for compatibility only. */
-#if __STDC__
-struct timeval;				/* select(2) XXX */
-#endif
-int	 select(int, fd_set * __restrict, fd_set * __restrict,
-	     fd_set * __restrict, struct timeval * __restrict);
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 
