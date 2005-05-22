@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.38 2005/05/19 20:16:19 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.39 2005/05/22 22:34:01 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.38 2005/05/19 20:16:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.39 2005/05/22 22:34:01 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.38 2005/05/19 20:16:19 elad Exp $"
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#define	VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
@@ -758,6 +759,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "algorithms"),
 		       sysctl_kern_veriexec, 0, NULL, 0,
 		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_ALGORITHMS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &veriexec_count_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "count",
+		       SYSCTL_DESCR("Number of fingerprints on device(s)"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
 #endif /* VERIFIED_EXEC */
 }
 
