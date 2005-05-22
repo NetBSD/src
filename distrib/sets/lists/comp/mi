@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.785 2005/05/15 21:12:53 christos Exp $
+#	$NetBSD: mi,v 1.786 2005/05/22 12:44:24 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1330,6 +1330,7 @@
 ./usr/include/sys/extattr.h			comp-c-include
 ./usr/include/sys/extent.h			comp-c-include
 ./usr/include/sys/fcntl.h			comp-c-include
+./usr/include/sys/fd_set.h			comp-c-include
 ./usr/include/sys/fdio.h			comp-c-include
 ./usr/include/sys/featuretest.h			comp-c-include
 ./usr/include/sys/file.h			comp-c-include
