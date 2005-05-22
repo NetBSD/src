@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.88 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.89 2005/05/22 15:54:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.88 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.89 2005/05/22 15:54:46 christos Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -745,7 +745,7 @@ bge_alloc_jumbo_mem(sc)
 
 	state = 4;
 	sc->bge_cdata.bge_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("bge_jumbo_buf = 0x%p\n", sc->bge_cdata.bge_jumbo_buf));
+	DPRINTFN(1,("bge_jumbo_buf = %p\n", sc->bge_cdata.bge_jumbo_buf));
 
 	SLIST_INIT(&sc->bge_jfree_listhead);
 	SLIST_INIT(&sc->bge_jinuse_listhead);

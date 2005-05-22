@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.208 2004/12/25 06:35:30 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.209 2005/05/22 15:54:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2004/12/25 06:35:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2005/05/22 15:54:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2679,7 +2679,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
-		printf("pmap_changebit(0x%p, 0x%lx, 0x%lx)\n",
+		printf("pmap_changebit(%p, 0x%lx, 0x%lx)\n",
 		    pg, set, mask);
 #endif
 

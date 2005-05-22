@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.85 2005/03/26 04:37:04 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.86 2005/05/22 15:54:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.85 2005/03/26 04:37:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.86 2005/05/22 15:54:46 christos Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -6726,7 +6726,7 @@ fwohci_itd_writedata(struct fwohci_it_dmabuf *itd, int ndata,
 	p = itd->itd_buf + itd->itd_maxsize * itd->itd_npacket;
 	fd = itd->itd_lastdesc;
 
-	DPRINTF(("fwohci_itd_writedata(%d[%p], %d, 0x%p) invoked:\n",
+	DPRINTF(("fwohci_itd_writedata(%d[%p], %d, %p) invoked:\n",
 	    itd->itd_num, itd, ndata, itdata));
 
 	for (writepkt = 0; writepkt < dspace; ++writepkt) {
