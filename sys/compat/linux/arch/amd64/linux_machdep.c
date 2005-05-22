@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.4 2005/05/20 12:48:27 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5 2005/05/22 14:52:12 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.4 2005/05/20 12:48:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5 2005/05/22 14:52:12 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.4 2005/05/20 12:48:27 fvdl Exp $
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
+
+static void linux_buildcontext(struct lwp *, void *, void *);
 
 void
 linux_setregs(l, epp, stack) 
@@ -280,7 +282,7 @@ linux_sendsig(ksi, mask)
 	 * when the signal handler is called. The +24 below is a dirty
 	 * workaround, and the real problem should be fixed.
 	 */
-	buildcontext(l, catcher, sp + 24);
+	linux_buildcontext(l, catcher, sp + 24);
 	tf->tf_rdi = sigframe.info.lsi_signo;
 	tf->tf_rax = 0;
 	tf->tf_rsi = (long)&sfp->info;
@@ -581,4 +583,17 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 	(*l->l_proc->p_md.md_syscall)(tf);
 
 	return 1;
+}
+
+static void
+linux_buildcontext(struct lwp *l, void *catcher, void *f)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rsp = (u_int64_t)f;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
