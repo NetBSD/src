@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.6.2.3 2005/04/28 10:19:48 tron Exp $	*/
+/*	$NetBSD: vector.S,v 1.6.2.4 2005/05/22 19:21:48 snj Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -836,7 +836,7 @@ fault:
 # So, on entry to the handler we detect whether we interrupted an
 # existing activation in its critical region -- if so, we pop the current
 # activation and restart the handler using the previous one.
-ENTRY(hypervisor_callback)
+NENTRY(hypervisor_callback)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
@@ -897,7 +897,7 @@ critical_region_fixup:
 
 
 # Hypervisor uses this for application faults while it executes.
-ENTRY(failsafe_callback)
+NENTRY(failsafe_callback)
 	pop	%ds
 	pop	%es
 	pop	%fs
@@ -947,7 +947,7 @@ ret_from_exception:
         RESTORE_ALL
 
 
-ENTRY(divide_error)
+NENTRY(divide_error)
 	pushl $0		# no error code
 	pushl $do_divide_error
 do_exception:
@@ -977,76 +977,76 @@ do_exception:
 	addl $8,%esp
 	jmp ret_from_exception
 
-ENTRY(coprocessor_error)
+NENTRY(coprocessor_error)
 	pushl $0
 	pushl $do_coprocessor_error
 	jmp do_exception
 
-ENTRY(simd_coprocessor_error)
+NENTRY(simd_coprocessor_error)
 	pushl $0
 	pushl $do_simd_coprocessor_error
 	jmp do_exception
 
-ENTRY(device_not_available)
+NENTRY(device_not_available)
         iret
 
-ENTRY(debug)
+NENTRY(debug)
 	pushl $0
 	pushl $do_debug
 	jmp do_exception
 
-ENTRY(int3)
+NENTRY(int3)
 	pushl $0
 	pushl $do_int3
 	jmp do_exception
 
-ENTRY(overflow)
+NENTRY(overflow)
 	pushl $0
 	pushl $do_overflow
 	jmp do_exception
 
-ENTRY(bounds)
+NENTRY(bounds)
 	pushl $0
 	pushl $do_bounds
 	jmp do_exception
 
-ENTRY(invalid_op)
+NENTRY(invalid_op)
 	pushl $0
 	pushl $do_invalid_op
 	jmp do_exception
 
-ENTRY(coprocessor_segment_overrun)
+NENTRY(coprocessor_segment_overrun)
 	pushl $0
 	pushl $do_coprocessor_segment_overrun
 	jmp do_exception
 
-ENTRY(double_fault)
+NENTRY(double_fault)
 	pushl $do_double_fault
 	jmp do_exception
 
-ENTRY(invalid_TSS)
+NENTRY(invalid_TSS)
 	pushl $do_invalid_TSS
 	jmp do_exception
 
-ENTRY(segment_not_present)
+NENTRY(segment_not_present)
 	pushl $do_segment_not_present
 	jmp do_exception
 
-ENTRY(stack_segment)
+NENTRY(stack_segment)
 	pushl $do_stack_segment
 	jmp do_exception
 
-ENTRY(general_protection)
+NENTRY(general_protection)
 	pushl $do_general_protection
 	jmp do_exception
 
-ENTRY(alignment_check)
+NENTRY(alignment_check)
 	pushl $do_alignment_check
 	jmp do_exception
 
 # This handler is special, because it gets an extra value on its stack,
 # which is the linear faulting address.
-ENTRY(page_fault)
+NENTRY(page_fault)
 	pushl %ds
 	pushl %eax
 	xorl %eax,%eax
@@ -1074,12 +1074,12 @@ ENTRY(page_fault)
 	addl $12,%esp
 	jmp ret_from_exception
 
-ENTRY(machine_check)
+NENTRY(machine_check)
 	pushl $0
 	pushl $do_machine_check
 	jmp do_exception
 
-ENTRY(spurious_interrupt_bug)
+NENTRY(spurious_interrupt_bug)
 	pushl $0
 	pushl $do_spurious_interrupt_bug
 	jmp do_exception
