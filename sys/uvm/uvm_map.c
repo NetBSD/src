@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.197 2005/05/18 01:36:16 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.198 2005/05/22 21:37:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.197 2005/05/18 01:36:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.198 2005/05/22 21:37:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4291,6 +4291,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	va = (vaddr_t)ukh;
 	KASSERT((va & PAGE_MASK) == 0);
+	vm_map_lock(map);
 	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL, 0);
 	KASSERT(deadentry->flags & UVM_MAP_KERNEL);
 	KASSERT(deadentry->flags & UVM_MAP_KMAPENT);
@@ -4306,6 +4307,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	if (!pmap_extract(pmap, va, &pa))
 		panic("%s: no mapping", __func__);
 	pmap_kremove(va, PAGE_SIZE);
+	vm_map_unlock(map);
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);
 	ukh_free++;
