@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.94 2005/05/19 16:18:21 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.95 2005/05/22 19:43:17 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8637,4 +8637,37 @@ sys/dev/ata/wd.c				1.300
 
 	Add another broken seagate device to the quirk list.
 	[bouyer, ticket #310]
+
+sys/dev/usb/uhci.c				1.187
+share/man/man4/ugen.4				1.19
+
+	Complete the interrupt output transfer support copy from FreeBSD, but
+	remove the incorrect access to the bulk part of the union.
+	[skrll, ticket #313]
+
+sys/arch/xen/i386/vector.S			1.10
+
+	s/ENTRY/NENTRY/ where appropriate.
+	[yamt, ticket #314]
+
+sys/arch/xen/include/hypervisor.h		1.14
+
+	add no_instrument_function attribute to hypervisor_force_callback
+	because it's used from mcount.  kernel profiling now works.
+	[yamt, ticket #315]
+
+sys/kern/kern_fork.c				1.122
+
+	Add P_CLDSIGIGN, P_NOCLDSTOP and P_NOCLDWAIT to the list of flags we
+	want to inherit from the parent process.
+	[cube, ticket #316]
+
+sys/uvm/uvm_glue.c				1.85
+
+	uvm_coredump_walkmap(): Set UVM_COREDUMP_NODUMP on regions whose
+	protection does not include VM_PROT_READ, so that the core dumping
+	doesn't error out with EFAULT when trying to write that region.
+
+	Addresses PR#30143; approach suggested by chs@.
+	[nathanw, ticket #322]
 
