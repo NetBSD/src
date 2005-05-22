@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.19 2004/09/13 17:26:29 drochner Exp $
+#	$NetBSD: majors.sparc,v 1.20 2005/05/22 16:31:07 macallan Exp $
 #
 # Device majors for sparc
 #
@@ -28,7 +28,10 @@ device-major	fb		char 22			fb
 device-major	ccd		char 23	 block 9	ccd
 device-major	filedesc	char 24
 device-major	ipl		char 25			ipfilter
-# sparc64: device-major wd	char 26	 block 12	wd
+
+# for PCMCIA disks, CF-adaptors and such
+device-major	wd		char 26	 block 12	wd
+
 device-major	bwtwo		char 27			bwtwo
 
 device-major	kbd		char 29			kbd
