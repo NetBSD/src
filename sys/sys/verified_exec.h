@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.9 2005/05/20 19:52:52 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.10 2005/05/22 22:34:01 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.9 2005/05/20 19:52:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.10 2005/05/22 22:34:01 elad Exp $");
 
 /*
  *
@@ -74,6 +74,7 @@ struct veriexec_sizing_params {
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
 #define	VERIEXEC_STRICT		2 /* Strict mode level. */
 #define	VERIEXEC_ALGORITHMS	3 /* Supported hashing algorithms. */
+#define	VERIEXEC_COUNT		4 /* # of fingerprinted files on device. */
 
 #ifdef _KERNEL
 void	veriexecattach(struct device *, struct device *, void *);
@@ -85,6 +86,10 @@ int     veriexecioctl(dev_t, u_long, caddr_t, int, struct proc *);
 extern char *veriexec_fp_names;
 extern int veriexec_verbose;
 extern int veriexec_strict;
+/* this one requires sysctl.h to be included before verified_exec.h */
+#ifdef VERIEXEC_NEED_NODE
+extern struct sysctlnode *veriexec_count_node;
+#endif /* VERIEXEC_NEED_NODE */
 
 /*
  * Operations vector for verified exec, this defines the characteristics
@@ -126,6 +131,7 @@ struct veriexec_hashtbl {
         struct veriexec_hashhead *hash_tbl;
         size_t hash_size;       /* Number of slots in the table. */
         dev_t hash_dev;         /* Device ID the hash table refers to. */
+	uint64_t hash_count;	/* # of fingerprinted files in table. */
         LIST_ENTRY(veriexec_hashtbl) hash_list;
 };
 
