@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $";
+    "$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,7 +746,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curyp = 0;
 	*cookiep = dc;
 	hpcfb_allocattr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
-	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
+	DPRINTF(("%s(%d): hpcfb_alloc_screen(): %p\n",
 	    __FILE__, __LINE__, dc));
 
 	return (0);
@@ -757,7 +757,7 @@ hpcfb_free_screen(void *v, void *cookie)
 {
 	struct hpcfb_devconfig *dc = cookie;
 
-	DPRINTF(("%s(%d): hpcfb_free_screen(0x%p)\n",
+	DPRINTF(("%s(%d): hpcfb_free_screen(%p)\n",
 	    __FILE__, __LINE__, cookie));
 #ifdef DIAGNOSTIC
 	if (dc == &hpcfb_console_dc)
@@ -775,7 +775,7 @@ hpcfb_show_screen(void *v, void *cookie, int waitok,
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct hpcfb_devconfig *odc;
 
-	DPRINTF(("%s(%d): hpcfb_show_screen(0x%p)\n",
+	DPRINTF(("%s(%d): hpcfb_show_screen(%p)\n",
 	    __FILE__, __LINE__, dc));
 
 	odc = sc->sc_dc;

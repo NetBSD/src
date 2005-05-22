@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.17 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.18 2005/05/22 15:54:46 christos Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,7 @@
  * */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.17 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.18 2005/05/22 15:54:46 christos Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"
@@ -392,7 +392,7 @@ static int fetch_data (char *addr) {
   int n_min = addr - copyin_buffer.max + 1;
   n = MIN(n_max, MAX(n_min, MIN(FETCH_CHUNK, n_page)));
   COPYIN(u_addr, k_addr, n);
-  DP(2, "fetch_data: addr = 0x%p, from 0x%lx, to 0x%lx, n = %d\n", addr,
+  DP(2, "fetch_data: addr = %p, from 0x%lx, to 0x%lx, n = %d\n", addr,
      (long)u_addr, (long)k_addr, n);
   copyin_buffer.max += n;
   return 1;

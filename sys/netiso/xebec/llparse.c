@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.8 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: llparse.c,v 1.9 2005/05/22 15:54:47 christos Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.8 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -369,7 +369,7 @@ void
 prt_token(t)
 	LLtoken *t;
 {
-	fprintf(stdout, "t at 0x%p\n", t);
+	fprintf(stdout, "t at %p\n", t);
 	fprintf(stdout, "t->llterm=0x%x\n", t->llterm); (void) fflush(stdout);
 	fprintf(stdout, "TOK: %s\n", llstrings[t->llterm]);
 	(void) fflush(stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.42 2005/05/09 23:40:20 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.43 2005/05/22 15:54:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.42 2005/05/09 23:40:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.43 2005/05/22 15:54:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,7 +860,7 @@ lf_print(char *tag, struct lockf *lock)
 	if (lock->lf_flags & F_POSIX)
 		printf("proc %d", ((struct proc *)lock->lf_id)->p_pid);
 	else
-		printf("file 0x%p", (struct file *)lock->lf_id);
+		printf("file %p", (struct file *)lock->lf_id);
 	printf(" %s, start %qx, end %qx",
 		lock->lf_type == F_RDLCK ? "shared" :
 		lock->lf_type == F_WRLCK ? "exclusive" :
@@ -883,7 +883,7 @@ lf_printlist(char *tag, struct lockf *lock)
 		if (lf->lf_flags & F_POSIX)
 			printf("proc %d", ((struct proc *)lf->lf_id)->p_pid);
 		else
-			printf("file 0x%p", (struct file *)lf->lf_id);
+			printf("file %p", (struct file *)lf->lf_id);
 		printf(", %s, start %qx, end %qx",
 			lf->lf_type == F_RDLCK ? "shared" :
 			lf->lf_type == F_WRLCK ? "exclusive" :
@@ -894,7 +894,7 @@ lf_printlist(char *tag, struct lockf *lock)
 				printf("proc %d",
 				    ((struct proc *)blk->lf_id)->p_pid);
 			else
-				printf("file 0x%p", (struct file *)blk->lf_id);
+				printf("file %p", (struct file *)blk->lf_id);
 			printf(", %s, start %qx, end %qx",
 				blk->lf_type == F_RDLCK ? "shared" :
 				blk->lf_type == F_WRLCK ? "exclusive" :

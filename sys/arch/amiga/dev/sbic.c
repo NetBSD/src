@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.53 2003/08/07 16:26:43 agc Exp $ */
+/*	$NetBSD: sbic.c,v 1.54 2005/05/22 15:54:45 christos Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.53 2003/08/07 16:26:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.54 2005/05/22 15:54:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,7 +682,7 @@ sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
 			       xs->xs_periph->periph_target,
 			       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 		else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
-			printf("alloc CHIP target %d bounce pa 0x%p\n",
+			printf("alloc CHIP target %d bounce pa %p\n",
 			       xs->xs_periph->periph_target,
 			       PREP_DMA_MEM(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 		return(1);
@@ -1681,7 +1681,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 					       xs->xs_periph->periph_target,
 					       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 				else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
-					printf("alloc CHIP target %d bounce pa 0x%p\n",
+					printf("alloc CHIP target %d bounce pa %p\n",
 					       xs->xs_periph->periph_target,
 					       PREP_DMA_MEM(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 

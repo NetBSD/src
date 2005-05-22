@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.10 2003/07/30 17:28:19 he Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.11 2005/05/22 15:54:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.10 2003/07/30 17:28:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.11 2005/05/22 15:54:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ footbridge_pci_intr_string(pcv, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
+	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
 		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);

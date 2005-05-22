@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinummemory.c,v 1.1.1.1 2003/10/10 03:08:44 grog Exp $
+ * $Id: vinummemory.c,v 1.2 2005/05/22 15:54:47 christos Exp $
  * $FreeBSD$
  */
 
@@ -185,7 +185,7 @@ FFree(void *mem, char *file, int line)
     }
     splx(s);
     log(LOG_ERR,
-	"Freeing unallocated data at 0x%p from %s, line %d\n",
+	"Freeing unallocated data at %p from %s, line %d\n",
 	mem,
 	file,
 	line);
