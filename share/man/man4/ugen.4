@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.18 2004/10/04 19:12:52 rumble Exp $
+.\" $NetBSD: ugen.4,v 1.18.2.1 2005/05/22 18:44:26 snj Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,10 +93,14 @@ and
 should be used.
 All IO operations on a bulk endpoint are unbuffered.
 .Pp
-The interrupt transfer mode can only be in.
-To perform input from an interrupt endpoint
+The interrupt transfer mode can be in or out depending on the
+endpoint.
+To perform IO on an interrupt endpoint
 .Xr read 2
-should be used.  A moderate amount of buffering is done
+and
+.Xr write 2
+should be used.
+A moderate amount of buffering is done
 by the driver.
 .Pp
 All endpoints handle the following
