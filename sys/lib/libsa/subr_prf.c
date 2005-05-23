@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.11 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.12 2005/05/23 19:05:00 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,6 +47,7 @@ static void kdoprnt(void (*)(int), const char *, va_list);
 
 static char *sbuf, *ebuf;
 
+const char HEXDIGITS[] = "0123456789ABCDEF";
 const char hexdigits[] = "0123456789abcdef";
 
 static void
