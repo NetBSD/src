@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 2005/05/23 14:54:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2005/05/23 14:54:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ microtime(struct timeval *tvp)
 {
 	volatile struct clkreg *clk;
 	int s, u, t, u2, s2;
+	static struct timeval lasttime;
 
 	/*
 	 * Read registers from slowest-changing to fastest-changing,
@@ -375,12 +376,19 @@ microtime(struct timeval *tvp)
 	} while (u != u2 || s != s2);
 
 	u += (clkint - t) * CLK_RESOLUTION;
-	if (u >= 1000000) {		/* normalize */
+	while (u >= 1000000) {		/* normalize */
+		s++;
+		u -= 1000000;
+	}
+	if (s == lasttime.tv_sec &&
+	    u <= lasttime.tv_usec &&
+	    (u = lasttime.tv_usec + 1) >= 1000000) {
 		s++;
 		u -= 1000000;
 	}
 	tvp->tv_sec = s;
 	tvp->tv_usec = u;
+	lasttime = *tvp;
 }
 
 /*
