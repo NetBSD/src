@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.106 2005/04/23 14:05:28 manu Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.107 2005/05/23 17:34:07 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -419,27 +419,27 @@ do {									\
  * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type)						\
-do {									\
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+MBUFLOCK(								\
+	(m) = pool_cache_get(&mbpool_cache,				\
+		(how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;			\
-		    _MOWNERINIT((m), (type)); );			\
+		mbstat.m_mtypes[type]++;				\
+		_MOWNERINIT((m), (type));				\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
 		(m)->m_data = (m)->m_dat;				\
 		(m)->m_flags = 0;					\
 	}								\
-} while (/* CONSTCOND */ 0)
+)
 
 #define	MGETHDR(m, how, type)						\
-do {									\
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+MBUFLOCK(								\
+	(m) = pool_cache_get(&mbpool_cache,				\
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;			\
-		    _MOWNERINIT((m), (type)); );			\
+		mbstat.m_mtypes[type]++;				\
+		_MOWNERINIT((m), (type));				\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -450,7 +450,7 @@ do {									\
 		(m)->m_pkthdr.csum_data = 0;				\
 		SLIST_INIT(&(m)->m_pkthdr.tags);			\
 	}								\
-} while (/* CONSTCOND */ 0)
+)
 
 #if defined(_KERNEL)
 #define	_M_
