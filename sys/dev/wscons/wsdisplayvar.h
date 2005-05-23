@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.31 2005/05/22 20:16:08 martin Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.32 2005/05/23 09:44:57 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -66,7 +66,14 @@ struct wsdisplay_emulops {
 #define WSCOL_MAGENTA	5
 #define WSCOL_CYAN	6
 #define WSCOL_WHITE	7
-#define WSCOL_REALWHITE	(WSCOL_WHITE+8)
+#define WSCOL_LIGHT_GREY	(WSCOL_BLACK+8)
+#define WSCOL_LIGHT_RED		(WSCOL_RED+8)
+#define WSCOL_LIGHT_GREEN	(WSCOL_GREEN+8)
+#define WSCOL_LIGHT_BROWN	(WSCOL_BROWN+8)
+#define WSCOL_LIGHT_BLUE	(WSCOL_BLUE+8)
+#define WSCOL_LIGHT_MAGENTA	(WSCOL_MAGENTA+8)
+#define WSCOL_LIGHT_CYAN	(WSCOL_CYAN+8)
+#define WSCOL_LIGHT_WHITE	(WSCOL_WHITE+8)
 /* flag values: */
 #define WSATTR_REVERSE	1
 #define WSATTR_HILIT	2
