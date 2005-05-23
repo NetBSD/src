@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.95 2005/05/22 19:43:17 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.96 2005/05/23 19:10:48 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8655,12 +8655,6 @@ sys/arch/xen/include/hypervisor.h		1.14
 	add no_instrument_function attribute to hypervisor_force_callback
 	because it's used from mcount.  kernel profiling now works.
 	[yamt, ticket #315]
-
-sys/kern/kern_fork.c				1.122
-
-	Add P_CLDSIGIGN, P_NOCLDSTOP and P_NOCLDWAIT to the list of flags we
-	want to inherit from the parent process.
-	[cube, ticket #316]
 
 sys/uvm/uvm_glue.c				1.85
 
