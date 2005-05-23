@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2005/05/16 16:02:20 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.46 2005/05/23 23:21:49 jmc Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -406,3 +406,35 @@
 233	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
 234	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 235	UNIMPL		futex
+236	UNIMPL		sendfile64
+237	UNIMPL		mincore
+238	UNIMPL		madvise
+239	UNIMPL		fcntl64
+240	UNIMPL		readahead
+241	UNIMPL		io_setup
+242	UNIMPL		io_destroy
+243	UNIMPL		io_getevents
+244	UNIMPL		io_submit
+245	UNIMPL		io_cancel
+246	UNIMPL		fadvise64
+247	UNIMPL		exit_group
+248	UNIMPL		lookup_dcookie
+249	UNIMPL		epoll_create
+250	UNIMPL		epoll_ctl
+251	UNIMPL		epoll_wait
+252	UNIMPL		remap_file_pages
+253	UNIMPL		set_tid_address
+254	UNIMPL		timer_create
+255	UNIMPL		timer_settime
+256	UNIMPL		timer_gettime
+257	UNIMPL		timer_getoverrun
+258	UNIMPL		timer_delete
+259	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+260	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+261	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+262	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
