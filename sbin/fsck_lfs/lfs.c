@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.12 2005/04/23 20:21:03 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.13 2005/05/23 22:17:20 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -424,7 +424,7 @@ lfs_vget(void *vfs, ino_t ino)
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
 	brelse(bp);
-	if (daddr == 0)
+	if (daddr <= 0 || dtosn(fs, daddr) >= fs->lfs_nseg)
 		return NULL;
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 }
