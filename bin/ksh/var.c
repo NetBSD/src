@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.10 2004/10/28 20:15:37 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.11 2005/05/23 08:03:25 rillig Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.10 2004/10/28 20:15:37 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.11 2005/05/23 08:03:25 rillig Exp $");
 #endif
 
 
@@ -451,7 +451,7 @@ getint(vp, nump)
 	base = 10;
 	num = 0;
 	neg = 0;
-	for (c = *s++; c ; c = *s++) {
+	for (c = (unsigned char)*s++; c ; c = (unsigned char)*s++) {
 		if (c == '-') {
 			neg++;
 		} else if (c == '#') {
