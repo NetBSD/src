@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.116 2005/04/05 11:56:09 tron Exp $
+#	$NetBSD: bsd.sys.mk,v 1.117 2005/05/23 21:58:21 riz Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -89,6 +89,7 @@ HOST_SH?=	sh
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
 OBJCOPY?=	objcopy
+OBJDUMP?=	objdump
 STRIP?=		strip
 
 AWK?=		awk
