@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2005/04/19 20:18:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2005/05/23 08:01:17 rillig Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2005/04/19 20:18:20 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2005/05/23 08:01:17 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,7 +318,7 @@ next_addr(void)
 			if (isdigit((unsigned char)*ibufp)) {
 				STRTOL(n, ibufp);
 				addr += (c == '-' || c == '^') ? -n : n;
-			} else if (!isspace(c))
+			} else if (!isspace((unsigned char)c))
 				addr += (c == '-' || c == '^') ? -1 : 1;
 			break;
 		case '0': case '1': case '2':
