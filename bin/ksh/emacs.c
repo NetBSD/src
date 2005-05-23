@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.27 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: emacs.c,v 1.28 2005/05/23 08:03:25 rillig Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.27 2005/02/11 06:21:21 simonb Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.28 2005/05/23 08:03:25 rillig Exp $");
 #endif
 
 
@@ -1908,7 +1908,7 @@ x_e_getc()
 		unget_char = -1;
 	} else {
 		if (macroptr)  {
-			c = *macroptr++;
+			c = (unsigned char) *macroptr++;
 			if (!*macroptr)
 				macroptr = (char *) 0;
 		} else
