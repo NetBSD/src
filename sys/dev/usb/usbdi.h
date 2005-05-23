@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.65 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.66 2005/05/23 16:35:27 soren Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -91,6 +91,8 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #if defined(__FreeBSD__)
 #define USB_CDEV_MAJOR 108
 #endif
+
+#define DEVINFOSIZE 1024
 
 usbd_status usbd_open_pipe(usbd_interface_handle, u_int8_t,
 			   u_int8_t, usbd_pipe_handle *);
