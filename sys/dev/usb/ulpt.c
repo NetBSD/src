@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.67 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.68 2005/05/23 16:35:26 soren Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.67 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.68 2005/05/23 16:35:26 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,8 +324,8 @@ USB_ATTACH(ulpt)
 	req.bRequest = UR_GET_DEVICE_ID;
 	USETW(req.wValue, cd->bConfigurationValue);
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
-	USETW(req.wLength, sizeof devinfo - 1);
-	err = usbd_do_request_flags(dev, &req, devinfo, USBD_SHORT_XFER_OK,
+	USETW(req.wLength, DEVINFOSIZE - 1);
+	err = usbd_do_request_flags(dev, &req, devinfop, USBD_SHORT_XFER_OK,
 		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
@@ -333,13 +333,13 @@ USB_ATTACH(ulpt)
 		printf("%s: empty device id, no printer connected?\n",
 		       USBDEVNAME(sc->sc_dev));
 	} else {
-		/* devinfo now contains an IEEE-1284 device ID */
-		len = ((devinfo[0] & 0xff) << 8) | (devinfo[1] & 0xff);
-		if (len > sizeof devinfo - 3)
-			len = sizeof devinfo - 3;
-		devinfo[len] = 0;
+		/* devinfop now contains an IEEE-1284 device ID */
+		len = ((devinfop[0] & 0xff) << 8) | (devinfop[1] & 0xff);
+		if (len > DEVINFOSIZE - 3)
+			len = DEVINFOSIZE - 3;
+		devinfop[len] = 0;
 		printf("%s: device id <", USBDEVNAME(sc->sc_dev));
-		ieee1284_print_id(devinfo+2);
+		ieee1284_print_id(devinfop+2);
 		printf(">\n");
 	}
 	}
@@ -591,7 +591,7 @@ ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			goto err4;
 		}
 
-		/* If it's not opened for read the set up a reader. */
+		/* If it's not opened for read then set up a reader. */
 		if (!(flags & FREAD)) {
 			DPRINTF(("ulpt_open: start read callout\n"));
 			usb_callout_init(sc->sc_read_callout);
