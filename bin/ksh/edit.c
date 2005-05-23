@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.14 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: edit.c,v 1.15 2005/05/23 08:03:25 rillig Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.14 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: edit.c,v 1.15 2005/05/23 08:03:25 rillig Exp $");
 #endif
 
 
@@ -907,7 +907,8 @@ x_longest_prefix(nwords, words)
 	prefix_len = strlen(words[0]);
 	for (i = 1; i < nwords; i++)
 		for (j = 0, p = words[i]; j < prefix_len; j++)
-			if (FILECHCONV(p[j]) != FILECHCONV(words[0][j])) {
+			if (FILECHCONV((unsigned char)p[j])
+			    != FILECHCONV((unsigned char)words[0][j])) {
 				prefix_len = j;
 				break;
 			}
