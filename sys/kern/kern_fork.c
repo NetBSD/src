@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.121.2.1 2005/05/22 19:33:34 snj Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.121.2.2 2005/05/23 19:09:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.121.2.1 2005/05/22 19:33:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.121.2.2 2005/05/23 19:09:56 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -292,12 +292,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
-	 * Inherit flags we want to keep.  The flags related to SIGCHLD
-	 * handling are important in order to keep a consistent behaviour
-	 * for the child after the fork.
+	 * Inherit SUGID, STOPFORK and STOPEXEC flags.
 	 */
-	p2->p_flag = p1->p_flag & (P_SUGID | P_STOPFORK | P_STOPEXEC |
-	    P_NOCLDSTOP | P_NOCLDWAIT | P_CLDSIGIGN);
+	p2->p_flag = p1->p_flag & (P_SUGID | P_STOPFORK | P_STOPEXEC);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
