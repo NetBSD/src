@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.79 2005/05/07 19:52:17 dsl Exp $
+.\"	$NetBSD: sh.1,v 1.80 2005/05/24 00:03:52 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1075,16 +1075,16 @@ The shell treats each character of the
 as a delimiter and use the delimiters to split the results of parameter
 expansion and command substitution into fields.
 .Pp
-None whitespace characters in
+Non-whitespace characters in
 .Ev IFS
 are treated strictly as parameter terminators.
-So adjacent non whitespace
+So adjacent non-whitespace
 .Ev IFS
 characters will produce empty parameters.
 .Pp
 If
 .Ev IFS
-is unset it is assumed to contain space, tab and newline.
+is unset it is assumed to contain space, tab, and newline.
 .Ss Pathname Expansion (File Name Generation)
 Unless the
 .Fl f
@@ -1406,7 +1406,7 @@ will be unset.
 is a string of recognized option letters (see
 .Xr getopt 3 ) .
 If a letter is followed by a colon, the option is expected to have an
-argument which may or may not be separated from it by white space.
+argument which may or may not be separated from it by whitespace.
 If an option character is not found where expected,
 .Ic getopts
 will set the variable
