@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.38 2005/04/02 04:54:35 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.39 2005/05/24 17:36:29 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -120,14 +120,17 @@ struct passwd {
 __BEGIN_DECLS
 struct passwd	*getpwuid(uid_t);
 struct passwd	*getpwnam(const char *);
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-struct passwd	*getpwent(void);
-void		 setpwent(void);
-void		 endpwent(void);
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 int		 getpwnam_r(const char *, struct passwd *, char *, size_t,
 				struct passwd **);
 int		 getpwuid_r(uid_t, struct passwd *, char *, size_t,
 				struct passwd **);
+#endif
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+struct passwd	*getpwent(void);
+void		 setpwent(void);
+void		 endpwent(void);
 #endif
 #if defined(_NETBSD_SOURCE)
 int		 pw_gensalt(char *, size_t, const char *, const char *);
