@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.3 2005/05/24 12:07:12 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.3 2005/05/24 12:07:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,11 +82,20 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
+#if 1 /* COMPAT_xxx */
+	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
+		break;
+#endif
+	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
+		{
+		extern int initdom_ctrlif_domcontroller_port;
+		*(int *)ap->a_data = initdom_ctrlif_domcontroller_port;
+		}
+		error = 0;
 		break;
 	case IOCTL_PRIVCMD_MMAP:
 	{
