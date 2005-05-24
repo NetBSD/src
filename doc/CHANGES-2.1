@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.112 2005/05/24 19:55:47 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.113 2005/05/24 23:40:39 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2300,4 +2300,18 @@ sys/dev/ata/ata.c				1.69 via patch
 	ATACH_TH_RUN flag is still set. Should fix panic reported by Jukka Salmi
 	on netbsd-users@.
 	[bouyer, ticket #1543]
+
+sys/sys/types.h					1.67 via patch
+
+	Instead of including <string.h> for memset()/memcpy() (or adding their
+	declarations locally), make FD_ZERO()/FD_COPY() use GCC builtins if
+	available, or define them inline otherwise.  PR#5076, PR#30166
+	[kleink, ticket #1546]
+
+include/inttypes.h				1.4
+include/netdb.h					1.51 via patch
+
+	Instead of pulling in all of <wchar.h>, just define wchar_t here.
+	Addresses PR lib/29987.
+	[kleink, ticket #1547]
 
