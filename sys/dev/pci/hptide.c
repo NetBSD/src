@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.17 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: hptide.c,v 1.18 2005/05/24 05:25:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.18 2005/05/24 05:25:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
