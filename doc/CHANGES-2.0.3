@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.15 2005/05/24 19:39:27 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.16 2005/05/24 19:58:31 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -90,4 +90,17 @@ sys/kern/kern_descrip.c				1.132
 	This issue explains random panics I have had on process exit over the
 	past few years.
 	[wrstuden, ticket #1537]
+
+sys/miscfs/kernfs/kernfs.h			1.24
+sys/miscfs/kernfs/kernfs_vnops.c		1.108
+
+	kernfs does not support mmap(), remove code that pretends that it does.
+	[chs, ticket #1540]
+
+sys/dev/ata/ata.c				1.69 via patch
+
+	Close a window where (disks) interrupts could be enabled while the
+	ATACH_TH_RUN flag is still set. Should fix panic reported by Jukka Salmi
+	on netbsd-users@.
+	[bouyer, ticket #1543]
 
