@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 2005/05/24 09:49:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2005/05/24 09:49:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2004/09/04 13:43:11 tsutsui Exp $"
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
@@ -71,10 +71,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
 	bp->b_flags |= B_READ;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
-	if (biowait(bp)) {
+	if (biowait(bp))
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
+	else for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data + DEV_BSIZE - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -93,8 +93,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
 }
 
 /*
- * Check new disk label for sensibility
- * before setting it.
+ * Check new disk label for sensibility before setting it.
  */
 int
 setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
@@ -136,7 +135,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
@@ -151,7 +150,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
 		labelpart = 0;
 	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), DISKMINOR(DISKUNIT(dev), labelpart));
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_READ;
@@ -179,8 +178,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
 }
 
 /*
- * UNTESTED !!
- *
  * Determine the size of the transfer, and make sure it is
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
