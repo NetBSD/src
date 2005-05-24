@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.22 2005/05/23 22:17:20 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.23 2005/05/24 06:51:49 agc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -323,15 +323,15 @@ setup(const char *dev)
 	 */
 	din_table = (ufs_daddr_t *) malloc(maxino * sizeof(*din_table));
 	if (din_table == NULL) {
-		printf("cannot alloc %u bytes for din_table\n",
-		    (unsigned) maxino * sizeof(*din_table));
+		printf("cannot alloc %lu bytes for din_table\n",
+		    (unsigned long) maxino * sizeof(*din_table));
 		goto badsblabel;
 	}
 	memset(din_table, 0, maxino * sizeof(*din_table));
 	seg_table = (SEGUSE *) malloc(fs->lfs_nseg * sizeof(SEGUSE));
 	if (seg_table == NULL) {
-		printf("cannot alloc %u bytes for seg_table\n",
-		    (unsigned) fs->lfs_nseg * sizeof(SEGUSE));
+		printf("cannot alloc %lu bytes for seg_table\n",
+		    (unsigned long) fs->lfs_nseg * sizeof(SEGUSE));
 		goto badsblabel;
 	}
 	memset(seg_table, 0, fs->lfs_nseg * sizeof(SEGUSE));
