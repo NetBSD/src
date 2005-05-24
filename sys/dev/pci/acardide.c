@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.15 2005/05/08 11:26:17 tsutsui Exp $	*/
+/*	$NetBSD: acardide.c,v 1.16 2005/05/24 05:25:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.16 2005/05/24 05:25:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

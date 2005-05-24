@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.24 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: viaide.c,v 1.25 2005/05/24 05:25:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.25 2005/05/24 05:25:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

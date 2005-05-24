@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.14 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: siside.c,v 1.15 2005/05/24 05:25:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.15 2005/05/24 05:25:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

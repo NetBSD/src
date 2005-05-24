@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.10 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: slide.c,v 1.11 2005/05/24 05:25:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.11 2005/05/24 05:25:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
