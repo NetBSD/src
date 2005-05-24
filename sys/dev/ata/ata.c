@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.27.2.1 2004/04/18 02:23:45 jmc Exp $      */
+/*      $NetBSD: ata.c,v 1.27.2.2 2005/05/24 19:54:47 riz Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.27.2.1 2004/04/18 02:23:45 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.27.2.2 2005/05/24 19:54:47 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -129,8 +129,8 @@ atabus_thread(void *arg)
 	/* Configure the devices on the bus. */
 	atabusconfig(sc);
 
+	s = splbio();
 	for (;;) {
-		s = splbio();
 		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
 		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
 		     chp->ch_queue->queue_freeze == 0)) {
@@ -138,10 +138,8 @@ atabus_thread(void *arg)
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
 			chp->ch_flags |= WDCF_TH_RUN;
 		}
-		splx(s);
 		if (chp->ch_flags & WDCF_SHUTDOWN)
 			break;
-		s = splbio();
 		if (chp->ch_flags & WDCF_TH_RESET) {
 			int drive;
 
@@ -162,8 +160,8 @@ atabus_thread(void *arg)
 			(*xfer->c_start)(chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
 			panic("ata_thread: queue_freeze");
-		splx(s);
 	}
+	splx(s);
 	chp->ch_thread = NULL;
 	wakeup((void *)&chp->ch_flags);
 	kthread_exit(0);
