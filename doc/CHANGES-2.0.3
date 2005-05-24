@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.14 2005/05/11 13:44:10 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.15 2005/05/24 19:39:27 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -81,4 +81,13 @@ sys/ufs/ext2fs/ext2fs_bmap.c			1.19
 
 	getblk() can return NULL if we are the pagedaemon. Check for this.
 	[bouyer, ticket #1355]
+
+sys/kern/kern_descrip.c				1.132
+
+	The file being closed is (fdp->fd_lastfile - i), not i. So compare
+	(fdp->fd_lastfile - i) against fd_knlistsize. Otherwise we can
+	call knote_fdclose() on a file descriptor that doesn't have a knote.
+	This issue explains random panics I have had on process exit over the
+	past few years.
+	[wrstuden, ticket #1537]
 
