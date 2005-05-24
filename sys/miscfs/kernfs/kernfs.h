@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.20.2.3 2004/05/23 10:46:05 tron Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.20.2.3.2.1 2005/05/24 19:50:36 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,7 +148,6 @@ typedef enum {
 	KERNFS_FILEOP_CLOSE,
 	KERNFS_FILEOP_GETATTR,
 	KERNFS_FILEOP_IOCTL,
-	KERNFS_FILEOP_MMAP,
 	KERNFS_FILEOP_OPEN,
 	KERNFS_FILEOP_WRITE,
 } kfsfileop;
