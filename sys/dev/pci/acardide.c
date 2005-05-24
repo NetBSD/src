@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.16 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: acardide.c,v 1.17 2005/05/24 18:43:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.16 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.17 2005/05/24 18:43:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,12 @@ static const struct pciide_product_desc pciide_acard_products[] =  {
 	},
 	{ PCI_PRODUCT_ACARD_ATP865,
 	  0,
-	  "Acard ATP865 Ultra100 IDE Controller",
+	  "Acard ATP865 Ultra133 IDE Controller",
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP865A,
 	  0,
-	  "Acard ATP865-A Ultra100 IDE Controller",
+	  "Acard ATP865-A Ultra133 IDE Controller",
 	  acard_chip_map,
 	},
 	{ 0,
