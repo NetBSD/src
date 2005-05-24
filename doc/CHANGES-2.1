@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.111 2005/05/19 14:29:31 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.112 2005/05/24 19:55:47 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2271,4 +2271,33 @@ sys/dev/pci/auich.c				1.78
 
 	Add support for the ICH6 AC97 controller.
 	[riz, ticket #1533]
+
+sys/net/if_gif.c				1.51
+sys/net/if_gre.c				1.57
+
+	Correct the permission check joining/leaving multicast groups.
+	PR#30285.
+	[christos, ticket #1536]
+
+sys/kern/kern_descrip.c				1.132
+
+	The file being closed is (fdp->fd_lastfile - i), not i. So compare
+	(fdp->fd_lastfile - i) against fd_knlistsize. Otherwise we can
+	call knote_fdclose() on a file descriptor that doesn't have a knote.
+	This issue explains random panics I have had on process exit over the
+	past few years.
+	[wrstuden, ticket #1537]
+
+sys/miscfs/kernfs/kernfs.h			1.24
+sys/miscfs/kernfs/kernfs_vnops.c		1.108
+
+	kernfs does not support mmap(), remove code that pretends that it does.
+	[chs, ticket #1540]
+
+sys/dev/ata/ata.c				1.69 via patch
+
+	Close a window where (disks) interrupts could be enabled while the
+	ATACH_TH_RUN flag is still set. Should fix panic reported by Jukka Salmi
+	on netbsd-users@.
+	[bouyer, ticket #1543]
 
