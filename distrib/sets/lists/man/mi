@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.789 2005/05/07 02:23:39 perry Exp $
+# $NetBSD: mi,v 1.790 2005/05/24 08:14:55 agc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -862,6 +862,7 @@
 ./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcsh/psh3tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
@@ -3089,6 +3090,7 @@
 ./usr/share/man/man4/hpcsh/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
+./usr/share/man/man4/hpcsh/psh3tp.4		man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
