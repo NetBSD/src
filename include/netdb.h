@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.34.2.1 2004/09/11 11:52:52 he Exp $	*/
+/*	$NetBSD: netdb.h,v 1.34.2.1.2.1 2005/05/24 23:39:44 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -317,6 +317,8 @@ char		*gai_strerror __P((int));
 void		setservent __P((int));
 
 #if defined(_NETBSD_SOURCE) && defined(_LIBC)
+
+#include <stdio.h>	/* for FILE */
 
 struct protoent_data {
         FILE *fp;
