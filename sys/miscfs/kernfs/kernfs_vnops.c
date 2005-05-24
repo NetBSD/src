@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.98.2.3 2004/05/15 13:35:27 tron Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.98.2.4 2005/05/24 19:50:39 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.98.2.3 2004/05/15 13:35:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.98.2.4 2005/05/24 19:50:39 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -164,7 +164,6 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
     .kf_genop = {kernfs_default_fileop_getattr} },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
-  { .kf_fileop = KERNFS_FILEOP_MMAP },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
   { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
@@ -183,7 +182,6 @@ int	kernfs_write	__P((void *));
 int	kernfs_ioctl	__P((void *));
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
-int	kernfs_mmap	__P((void *));
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
 #define	kernfs_remove	genfs_eopnotsupp
@@ -233,7 +231,6 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
 	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */
 	{ &vop_remove_desc, kernfs_remove },		/* remove */
@@ -1010,22 +1007,6 @@ kernfs_ioctl(v)
 
 	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_IOCTL, v,
 	    EPASSTHROUGH);
-}
-
-int
-kernfs_mmap(v)
-	void *v;
-{
-	struct vop_mmap_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-
-	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_MMAP, v, 0);
 }
 
 static int
