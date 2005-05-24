@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.147 2005/05/19 20:16:19 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.148 2005/05/24 15:47:46 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -879,6 +879,7 @@ Only the superuser can modify these variables.
 .It VERIEXEC\_VERBOSE	integer	yes
 .It VERIEXEC\_STRICT	integer	raise only
 .It VERIEXEC\_ALGORITHMS	string	no
+.It VERIEXEC\_COUNT	node	foobar
 .El
 .Pp
 The variables are as follows:
@@ -904,6 +905,12 @@ strict level 1, plus it will deny access (read, write, exec, and delete)
 to files without a valid fingerprint.
 .It Li VERIEXEC_ALGORITHMS
 Returns a string with the supported algorithms in Verified Exec.
+.It Li VERIEXEC_COUNT
+Variables are added to this node as new hash tables are created to
+contain Verified Exec data for a new device. Each variable in the node
+will have a name in the form of dev_<id> where <id> is the device id. For
+example, the variable for the root device may be dev_0. The value of this
+variable will be the amount of fingerprinted files on the device.
 .El
 .It Li KERN_VERSION
 The system version string.
