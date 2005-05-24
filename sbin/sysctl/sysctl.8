@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.120 2005/05/20 19:52:52 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.121 2005/05/24 15:47:46 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -366,6 +366,7 @@ privilege can change the value.
 .It kern.veriexec.verbose	integer	yes
 .It kern.veriexec.strict	integer	raise only
 .It kern.veriexec.algorithms	string	no
+.It kern.veriexec.count.dev_<id>	quad	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
 .It net.bpf.maxbufsize	integer	yes
