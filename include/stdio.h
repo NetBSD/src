@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.59 2005/05/25 16:01:24 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.60 2005/05/25 19:35:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -314,17 +314,29 @@ __END_DECLS
 #endif
 
 /*
+ * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    ((_XOPEN_SOURCE - 0) >= 500) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
+	    __attribute__((__format__(__printf__, 3, 4)));
+int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
+	    _BSD_VA_LIST_)
+	    __attribute__((__format__(__printf__, 3, 0)));
+#endif
+
+/*
  * Functions defined in XPG4.2.
  */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 getw(FILE *);
 int	 putw(int, FILE *);
-int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
-	    __attribute__((__format__(__printf__, 3, 4)));
-int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__printf__, 3, 0)));
 
 #ifndef __AUDIT__
 char	*tempnam(const char *, const char *);
