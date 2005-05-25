@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.8 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: int_types.h,v 1.9 2005/05/25 20:58:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,6 +33,8 @@
 
 #ifndef	_I386_INT_TYPES_H_
 #define	_I386_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types
