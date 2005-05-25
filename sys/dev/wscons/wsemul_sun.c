@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.19 2004/08/03 11:16:30 he Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.20 2005/05/25 06:46:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.19 2004/08/03 11:16:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.20 2005/05/25 06:46:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,15 +197,14 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type,
 
 	edp->cbcookie = cbcookie;
 
-	/* XXX This assumes that the default attribute is wob. */
-	if ((!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
+	if ((!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
+		(*edp->emulops->allocattr)(edp->emulcookie, 0, 0,
+					   WSATTR_REVERSE,
+					   &edp->bowattr)) &&
+	    (!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
 		(*edp->emulops->allocattr)(edp->emulcookie,
 					   WSCOL_BLACK, WSCOL_WHITE,
 					   WSATTR_WSCOLORS,
-					   &edp->bowattr)) &&
-	    (!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
-		(*edp->emulops->allocattr)(edp->emulcookie, 0, 0,
-					   WSATTR_REVERSE,
 					   &edp->bowattr)))
 		edp->bowattr = edp->defattr;
 
