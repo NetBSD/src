@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.11 2005/05/08 08:57:26 manu Exp $
+.\"	$NetBSD: setkey.8,v 1.12 2005/05/25 10:09:36 wiz Exp $
 .\"
 .\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
 .\"
@@ -94,7 +94,7 @@ A dead SAD entry is one that has expired but remains in the
 system because it is referenced by some SPD entries.
 .It Fl D
 Dump the SAD entries.
-If 
+If
 .Fl P ,
 is also specified, SPD entries are dumped.
 If
@@ -637,20 +637,20 @@ rule would be:
 The rule order is very important.
 .Pp
 When NAT-T is enabled in the kernel, policy matching for ESP over
-UDP packets may be done on endpoint addresses and port 
-(this depends on the system. 
-System that do not perform the port check cannot support 
-multiple endpoints behind the same NAT). 
-When using ESP over UDP, you can specify port numbers in the endpoint 
-addresses to get the correct matching. 
+UDP packets may be done on endpoint addresses and port
+(this depends on the system.
+System that do not perform the port check cannot support
+multiple endpoints behind the same NAT).
+When using ESP over UDP, you can specify port numbers in the endpoint
+addresses to get the correct matching.
 Here is an example:
 .Bd -literal -offset
-spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any -P out ipsec 
+spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any -P out ipsec
     esp/tunnel/192.168.0.1[4500]-192.168.1.2[30000]/require ;
 
 .Ed
-These ports must be left unspecified (which defaults to 0) for 
-anything else than ESP over UDP. 
+These ports must be left unspecified (which defaults to 0) for
+anything other than ESP over UDP.
 They can be displayed in SPD dump using
 .Nm
 .Fl DPp .
