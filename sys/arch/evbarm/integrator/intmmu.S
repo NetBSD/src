@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.7 2005/05/21 11:46:56 rearnsha Exp $ */
+/*	$NetBSD: intmmu.S,v 1.8 2005/05/25 09:20:33 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -56,11 +56,12 @@ ASENTRY_NP(integrator_start)
  * if it has an MMU.  There's no simple test for this, but the following
  * hack should be sufficient for all currently supported CM boards.
  *  1) Check that the architecture is less than v6 (V6 has feature registers)
+ *     (v6 is indictate by '7' in bits 16-19).
  *  2) Check that the product code has a '2' in bits 8-11
  */
 	mrc	p15, 0, r3, c0, c0, 0
 	and	r0, r3, #0x000f0000
-	cmp	r0, #0x00060000
+	cmp	r0, #0x00070000
 	bhs	Lno_v6
 	and	r0, r3, #0x00000f00
 	teq	r0, #0x00000200
