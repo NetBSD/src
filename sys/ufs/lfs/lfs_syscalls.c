@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.106 2005/05/20 19:48:25 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.107 2005/05/25 01:50:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.106 2005/05/20 19:48:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.107 2005/05/25 01:50:01 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -877,6 +877,7 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 int
 lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 {
+	extern int lfs_dostats;
 	struct buf *bp;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -933,7 +934,8 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	(void) LFS_BWRITE_LOG(bp);
 	wakeup(&fs->lfs_avail);
 
-	++lfs_stats.segs_reclaimed;
+	if (lfs_dostats)
+		++lfs_stats.segs_reclaimed;
 
 	return (0);
 }
