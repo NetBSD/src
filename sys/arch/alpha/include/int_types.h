@@ -1,4 +1,4 @@
-/* $NetBSD: int_types.h,v 1.6 2003/08/07 16:26:33 agc Exp $ */
+/* $NetBSD: int_types.h,v 1.7 2005/05/25 20:58:00 kleink Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,6 +33,8 @@
 
 #ifndef	_ALPHA_INT_TYPES_H_
 #define	_ALPHA_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types
