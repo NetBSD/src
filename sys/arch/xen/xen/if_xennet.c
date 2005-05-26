@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.24 2005/05/18 16:11:32 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.25 2005/05/26 13:54:43 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.24 2005/05/18 16:11:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.25 2005/05/26 13:54:43 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -562,6 +562,7 @@ xennet_rx_push_buffer(struct xennet_softc *sc, int id)
 {
 	NETIF_RING_IDX ringidx;
 	int nr_pfns;
+	int s;
 
 	ringidx = sc->sc_rx->req_prod;
 	nr_pfns = 0;
@@ -602,7 +603,9 @@ xennet_rx_push_buffer(struct xennet_softc *sc, int id)
 	 * outstanding in the page update queue -- make sure we flush
 	 * those first!
 	 */
+	s = splvm();
 	xpq_flush_queue();
+	splx(s);
 
 	/* After all PTEs have been zapped we blow away stale TLB entries. */
 	rx_mcl[nr_pfns-1].args[2] = UVMF_FLUSH_TLB;
@@ -843,7 +846,7 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	struct vm_page *pg;
 	int id, nr_pfns;
 	NETIF_RING_IDX ringidx;
-	int s;
+	int snet, svm;
 
 	ringidx = sc->sc_rx->req_prod;
 	if ((ringidx - sc->sc_rx_resp_cons) > (RX_MAX_ENTRIES / 2))
@@ -854,7 +857,7 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	rxpages = uvm_km_alloc(kernel_map, RX_ENTRIES * PAGE_SIZE,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
 
-	s = splnet();
+	snet = splnet();
 	for (va = rxpages; va < rxpages + RX_ENTRIES * PAGE_SIZE;
 	     va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -899,7 +902,7 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	}
 
 	if (nr_pfns == 0) {
-		splx(s);
+		splx(snet);
 		return;
 	}
 
@@ -908,7 +911,9 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	 * outstanding in the page update queue -- make sure we flush
 	 * those first!
 	 */
+	svm = splvm();
 	xpq_flush_queue();
+	splx(svm);
 
 	/* After all PTEs have been zapped we blow away stale TLB entries. */
 	rx_mcl[nr_pfns-1].args[2] = UVMF_FLUSH_TLB;
@@ -931,7 +936,7 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	/* Above is a suitable barrier to ensure backend will see requests. */
 	sc->sc_rx->req_prod = ringidx;
 
-	splx(s);
+	splx(snet);
 
 }
 

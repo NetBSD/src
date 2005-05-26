@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2005/04/16 08:49:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2005/05/26 13:54:43 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2005/04/16 08:49:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2005/05/26 13:54:43 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -852,6 +852,7 @@ __inline static pt_entry_t
 pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 {
 	pt_entry_t opte;
+	int s = splvm();
 
 	XENPRINTK(("pte_atomic_update_ma pte %p mapte %p npte %08x\n",
 		   pte, mapte, npte));
@@ -877,6 +878,7 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 			xpq_queue_pte_update(mapte, npte);
 	}
 	xpq_flush_queue();
+	splx(s);
 
 	return opte;
 }
@@ -1830,6 +1832,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	int s;
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
@@ -1859,8 +1862,10 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pmap_update(pmap_kernel());
 
 	/* pin page type */
+	s = splvm();
 	xpq_queue_pin_table(xpmap_ptom(pdirpa), XPQ_PIN_L2_TABLE);
 	xpq_flush_queue();
+	splx(s);
 
 	return (0);
 }
@@ -1870,6 +1875,7 @@ pmap_pdp_dtor(void *arg, void *object)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	int s;
 
 	/* fetch the physical address of the page directory. */
 	pdirpa = PDE_GET(&pdir[PDSLOT_PTE]) & PG_FRAME;
@@ -1877,8 +1883,10 @@ pmap_pdp_dtor(void *arg, void *object)
 	XENPRINTF(("pmap_pdp_dtor %p %p\n", pdir, (void *)pdirpa));
 
 	/* unpin page type */
+	s = splvm();
 	xpq_queue_unpin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
+	splx(s);
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 }
