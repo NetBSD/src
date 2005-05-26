@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.5 2005/04/16 08:49:29 yamt Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.6 2005/05/26 13:54:43 bouyer Exp $	*/
 
 /*
  *
@@ -83,87 +83,129 @@ paddr_t *xpmap_phys_to_machine_mapping;
 #define	PDE_GET(_pdp)						\
 	(pmap_valid_entry(*(_pdp)) ? xpmap_mtop(*(_pdp)) : *(_pdp))
 #define PDE_SET(_pdp,_mapdp,_npde) do {				\
+	int s = splvm();					\
 	xpq_queue_pde_update((_mapdp), xpmap_ptom((_npde)));	\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PDE_CLEAR(_pdp,_mapdp) do {				\
+	int s = splvm();					\
 	xpq_queue_pde_update((_mapdp), 0);			\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define	PTE_GET(_ptp)						\
 	(pmap_valid_entry(*(_ptp)) ? xpmap_mtop(*(_ptp)) : *(_ptp))
 #define	PTE_GET_MA(_ptp)					\
 	*(_ptp)
 #define PTE_SET(_ptp,_maptp,_npte) do {				\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), xpmap_ptom((_npte)));	\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_SET_MA(_ptp,_maptp,_npte) do {			\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), (_npte));		\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_SET_MA_UNCHECKED(_ptp,_maptp,_npte) do {		\
+	s = splvm();						\
 	xpq_queue_unchecked_pte_update((_maptp), (_npte));	\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_CLEAR(_ptp,_maptp) do {				\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), 0);			\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte) do {		\
+	int s;							\
 	(_opte) = PTE_GET(_ptp);				\
+	s = splvm();						\
 	xpq_queue_pte_update((_maptp), xpmap_ptom((_npte)));	\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_SET_MA(_ptp,_maptp,_npte,_opte) do {		\
+	int s;							\
 	(_opte) = *(_ptp);					\
+	s = splvm();						\
 	xpq_queue_pte_update((_maptp), (_npte));		\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte) do {		\
+	int s;							\
 	(_opte) = PTE_GET(_ptp);				\
+	s = splvm();						\
 	xpq_queue_pte_update((_maptp), 0);			\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_CLEAR_MA(_ptp,_maptp,_opte) do {		\
+	int s;							\
 	(_opte) = *(_ptp);					\
+	s = splvm();						\
 	xpq_queue_pte_update((_maptp), 0);			\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PDE_CLEARBITS(_pdp,_mapdp,_bits) do {			\
+	int s = splvm();					\
 	xpq_queue_pte_update((_mapdp), *(_pdp) & ~((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_CLEARBITS(_ptp,_maptp,_bits) do {			\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), *(_ptp) & ~((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PDE_ATOMIC_CLEARBITS(_pdp,_mapdp,_bits) do {		\
+	int s = splvm();					\
 	xpq_queue_pde_update((_mapdp), *(_pdp) & ~((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits) do {		\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), *(_ptp) & ~((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_SETBITS(_ptp,_maptp,_bits) do {			\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), *(_ptp) | ((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PDE_ATOMIC_SETBITS(_pdp,_mapdp,_bits) do {		\
+	int s = splvm();					\
 	xpq_queue_pde_update((_mapdp), *(_pdp) | ((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits) do {		\
+	int s = splvm();					\
 	xpq_queue_pte_update((_maptp), *(_ptp) | ((_bits) & ~PG_FRAME)); \
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define PDE_COPY(_dpdp,_madpdp,_spdp) do {			\
+	int s = splvm();					\
 	xpq_queue_pde_update((_madpdp), *(_spdp));		\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 #define	PTE_UPDATES_FLUSH() do {				\
+	int s = splvm();					\
 	xpq_flush_queue();					\
+	splx(s);						\
 } while (/*CONSTCOND*/0)
 
 #endif
