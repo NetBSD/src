@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.47 2005/05/18 13:58:10 chs Exp $
+# $NetBSD: HACKS,v 1.48 2005/05/26 18:33:36 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -386,6 +386,14 @@ port	sh5
 		Drop to -O1 for now when building for sh5.
 	kcah
 
+	hack	gcc 3.3.3 nb3 on sh5 - ICE compiling bsd-comp.c
+	cdate	Thu May 25 23:05:20 UTC 2005
+	who	he
+	file	sys/lkm/net/bsdcomp/Makefile : 1.3
+	descr
+		Gcc3 for sh5 gets an ICE compiling this at -O2,
+		"could not split insn".  Drop to -O1 for sh5.
+	kcah
 
 port	sun2
 
