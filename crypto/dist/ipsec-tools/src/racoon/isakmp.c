@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.3.2.3 2005/05/11 12:17:19 tron Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.3.2.4 2005/05/27 23:00:33 riz Exp $	*/
 
-/* Id: isakmp.c,v 1.34.2.2 2005/03/13 17:31:55 vanhu Exp */
+/* $Id: isakmp.c,v 1.1.1.3.2.4 2005/05/27 23:00:33 riz Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1164,7 +1164,6 @@ isakmp_ph2begin_i(iph1, iph2)
 		unbindph12(iph2);
 		/* release ipsecsa handler due to internal error. */
 		remph2(iph2);
-		delph2(iph2);
 		return -1;
 	}
 	return 0;
@@ -2000,8 +1999,23 @@ isakmp_post_acquire(iph2)
 		return 0;
 	}
 
-	/* search isakmp status table by address with masking port */
+	/* 
+	 * Search isakmp status table by address and port 
+	 * If NAT-T is in use, consider null ports as a 
+	 * wildcard and use IKE ports instead.
+	 */
+#ifdef ENABLE_NATT
+	if (!extract_port(iph2->src) && !extract_port(iph2->dst)) {
+		if ((iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL) {
+			set_port(iph2->src, extract_port(iph1->local));
+			set_port(iph2->dst, extract_port(iph1->remote));
+		}
+	} else {
+		iph1 = getph1byaddr(iph2->src, iph2->dst);
+	}
+#else
 	iph1 = getph1byaddr(iph2->src, iph2->dst);
+#endif
 
 	/* no ISAKMP-SA found. */
 	if (iph1 == NULL) {
