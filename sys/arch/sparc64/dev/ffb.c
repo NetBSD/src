@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.13 2005/05/15 16:41:25 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.14 2005/05/27 22:50:43 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.13 2005/05/15 16:41:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.14 2005/05/27 22:50:43 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -164,7 +164,13 @@ ffb_attach(struct ffb_softc *sc)
 		? strtoul(buf, NULL, 10)
 		: 34;
 
+#ifdef USE_FULL_SCREEN
+	rasops_init(&sc->sc_fb.fb_rinfo, sc->sc_height/8, sc->sc_width/8);
+	rasops_reconfig(&sc->sc_fb.fb_rinfo, sc->sc_height / sc->sc_fb.fb_rinfo.ri_font->fontheight,
+		    sc->sc_width / sc->sc_fb.fb_rinfo.ri_font->fontwidth);
+#else
 	rasops_init(&sc->sc_fb.fb_rinfo, maxrow, maxcol);
+#endif
 
 	if ((sc->sc_dv.dv_cfdata->cf_flags & FFB_CFFLAG_NOACCEL) == 0) {
 		sc->sc_fb.fb_rinfo.ri_hw = sc;
@@ -630,6 +636,7 @@ paddr_t
 ffbfb_mmap(dev_t dev, off_t off, int prot)
 {
 	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	uint64_t size;
 	int i, reg;
 	off_t o;
 
@@ -656,27 +663,40 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 		{ 0x07004000, FFB_REG_DFB422A },
 		{ 0x0bc06000, FFB_REG_DAC },
 		{ 0x0bc08000, FFB_REG_PROM },
+		{ 0x0bc18000, 0 }
 	};
 
 	/* special value "FFB_EXP_VOFF" - not backed by any "reg" entry */
 	if (off == 0x0bc18000)
 		return bus_space_mmap(sc->sc_bt, sc->sc_addrs[FFB_REG_PROM],
 		    0x00200000, prot, BUS_SPACE_MAP_LINEAR);
-
+		    
+	/* 
+	 * FFB_VOFF_FBC_KREGS - used by afbinit to upload firmware. We should 
+	 * probably mmap them only on afb boards 
+	 */
+	if ((off >= 0x0bc04000) && (off < 0x0bc06000))
+		return bus_space_mmap(sc->sc_bt, sc->sc_addrs[FFB_REG_PROM], 
+		    0x00610000 + (off - 0x0bc04000), prot, 
+		    BUS_SPACE_MAP_LINEAR);
+		    
 #define NELEMS(arr) (sizeof(arr)/sizeof((arr)[0]))
 
 	/* the map is ordered by voff */
-	for (i = 0; i < NELEMS(map); i++) {
-		if (map[i].voff > off)
-			break;		/* beyound */
+	for (i = 0; i < NELEMS(map)-1; i++) {
 		reg = map[i].reg;
-		if (map[i].voff + sc->sc_sizes[reg] < off)
-			continue;	/* not there yet */
-		if (off > map[i].voff + sc->sc_sizes[reg])
-			break;		/* out of range */
-		o = off - map[i].voff;
-		return bus_space_mmap(sc->sc_bt, sc->sc_addrs[reg], o, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		/* afb has a lot more regs than ffb */
+		if (reg < sc->sc_nreg) {
+			size = min((map[i + 1].voff - map[i].voff), 
+			    sc->sc_sizes[reg]);
+			if ((off >= map[i].voff) && 
+			    (off < (map[i].voff + size))) {
+				o = off - map[i].voff;
+				return bus_space_mmap(sc->sc_bt, 
+				    sc->sc_addrs[reg], o, prot, 
+				    BUS_SPACE_MAP_LINEAR);
+			}
+		}
 	}
 
 	return -1;
