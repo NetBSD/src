@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.97 2005/05/27 22:38:32 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.98 2005/05/27 23:12:04 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8727,4 +8727,48 @@ tools.gcc/Makefile				1.14-1.15
 	Correct the gcc cross over build environment to have
 	the right settings for the assembler.  PR#30251
 	[skrll, ticket #312]
+
+lib/librt/sem_open.3				1.4
+
+	This function is in librt, not libc.
+	[peter, ticket #317]
+
+libexec/identd/identd.c				patch
+
+	Save/restore errno in the zombie reaper to fix a race
+	condition. PR#30253
+	[peter, ticket #319]
+
+crypto/dist/ipsec-tools/ChangeLog		1.8
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.5
+lib/libipsec/package_version.h			1.11
+
+	- Fix a double free.
+	- For acquire messages, when NAT-T is in use, consider null port as a
+  	wildcard and use IKE port.
+	[manu, ticket #325]
+
+sys/arch/xen/xen/if_xennet.c			1.24
+
+	Reorder the receive code to avoid a possible race with the sc_rx->event
+	stuff, and fix a possible infinite loop in case of ressource shortage.
+	[bouyer, ticket #326]
+
+sys/arch/xen/xen/xennetback.c			1.11
+
+	Work around a possible race condition, and kick the
+	transmit queue once per second after an out of resources
+	condition.
+	[bouyer, ticket #327]
+
+sys/dev/ata/ata.c				1.68
+sys/dev/ata/atavar.h				1.68
+
+	Add a ata_queue_idle() function, which freeze a queue and
+	tsleep() until the controller is idle.  Change the powerhook
+	function to call ata_queue_idle() on standby/suspend,
+	and ata_reset_channel() on resume (to wake up the disks and
+	start from a clean state).
+	Fix PR kern/30194 by Lubomir Sedlacik.
+	[bouyer, ticket #328]
 
