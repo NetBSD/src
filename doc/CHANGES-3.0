@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.96 2005/05/23 19:10:48 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.97 2005/05/27 22:38:32 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8664,4 +8664,67 @@ sys/uvm/uvm_glue.c				1.85
 
 	Addresses PR#30143; approach suggested by chs@.
 	[nathanw, ticket #322]
+
+gnu/dist/gcc/gcc/configure			1.5
+gnu/lib/crtstuff3/arch/alpha.mk			1.2
+gnu/lib/crtstuff3/arch/arm.mk			1.2
+gnu/lib/crtstuff3/arch/armeb.mk			1.2
+gnu/lib/crtstuff3/arch/hppa.mk			1.2
+gnu/lib/crtstuff3/arch/i386.mk			1.2
+gnu/lib/crtstuff3/arch/m68000.mk		1.2
+gnu/lib/crtstuff3/arch/m68k.mk			1.2
+gnu/lib/crtstuff3/arch/mipseb.mk		1.2
+gnu/lib/crtstuff3/arch/mipsel.mk		1.2
+gnu/lib/crtstuff3/arch/powerpc.mk		1.2
+gnu/lib/crtstuff3/arch/sh3eb.mk			1.2
+gnu/lib/crtstuff3/arch/sh3el.mk			1.2
+gnu/lib/crtstuff3/arch/sh5el.mk			1.2
+gnu/lib/crtstuff3/arch/sparc.mk			1.2
+gnu/lib/crtstuff3/arch/sparc64.mk		1.2
+gnu/lib/crtstuff3/arch/x86_64.mk		1.2
+gnu/lib/libgcc3/arch/alpha.mk			1.5
+gnu/lib/libgcc3/arch/arm.mk			1.5
+gnu/lib/libgcc3/arch/armeb.mk			1.7
+gnu/lib/libgcc3/arch/hppa.mk			1.6
+gnu/lib/libgcc3/arch/i386.mk			1.5
+gnu/lib/libgcc3/arch/m68000.mk			1.5
+gnu/lib/libgcc3/arch/m68k.mk			1.5
+gnu/lib/libgcc3/arch/mipseb.mk			1.5
+gnu/lib/libgcc3/arch/mipsel.mk			1.5
+gnu/lib/libgcc3/arch/powerpc.mk			1.5
+gnu/lib/libgcc3/arch/sh3eb.mk			1.4
+gnu/lib/libgcc3/arch/sh3el.mk			1.5
+gnu/lib/libgcc3/arch/sh5el.mk			1.5
+gnu/lib/libgcc3/arch/sparc.mk			1.5
+gnu/lib/libgcc3/arch/sparc64.mk			1.5
+gnu/lib/libgcc3/arch/x86_64.mk			1.5
+gnu/lib/libobjc3/defs.mk			1.12
+gnu/usr.bin/gcc3/arch/alpha/auto-host.h		1.3-1.4
+gnu/usr.bin/gcc3/arch/alpha/configargs.h	1.7
+gnu/usr.bin/gcc3/arch/arm/auto-host.h		1.4
+gnu/usr.bin/gcc3/arch/arm/configargs.h		1.7
+gnu/usr.bin/gcc3/arch/armeb/auto-host.h		1.4
+gnu/usr.bin/gcc3/arch/armeb/configargs.h	1.6
+gnu/usr.bin/gcc3/arch/i386/configargs.h		1.9
+gnu/usr.bin/gcc3/arch/m68000/configargs.h	1.7
+gnu/usr.bin/gcc3/arch/m68k/configargs.h		1.7
+gnu/usr.bin/gcc3/arch/mipseb/configargs.h	1.6
+gnu/usr.bin/gcc3/arch/mipsel/configargs.h	1.6
+gnu/usr.bin/gcc3/arch/powerpc/configargs.h	1.6
+gnu/usr.bin/gcc3/arch/sh3eb/configargs.h	1.5
+gnu/usr.bin/gcc3/arch/sh3el/configargs.h	1.7
+gnu/usr.bin/gcc3/arch/sh5el/auto-host.h		1.4-1.5
+gnu/usr.bin/gcc3/arch/sh5el/configargs.h	1.5
+gnu/usr.bin/gcc3/arch/sparc/auto-host.h		1.4-1.5
+gnu/usr.bin/gcc3/arch/sparc/configargs.h	1.8
+gnu/usr.bin/gcc3/arch/sparc64/auto-host.h	1.4-1.5
+gnu/usr.bin/gcc3/arch/sparc64/configargs.h	1.7
+gnu/usr.bin/gcc3/arch/x86_64/auto-host.h	1.3-1.4
+gnu/usr.bin/gcc3/arch/x86_64/configargs.h	1.5
+gnu/usr.bin/gcc3/libiberty/defs.mk		1.14
+tools.gcc/Makefile				1.14-1.15
+
+	Correct the gcc cross over build environment to have
+	the right settings for the assembler.  PR#30251
+	[skrll, ticket #312]
 
