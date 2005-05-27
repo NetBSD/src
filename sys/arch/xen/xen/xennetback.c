@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.2.5 2005/05/01 22:12:52 tron Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.6 2005/05/27 23:05:44 riz Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -207,13 +207,13 @@ static void
 xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 {
 	struct xnetback_instance *xneti;
-	struct ifnet *ifp;
 
 	XENPRINTF(("xnetback msg %d\n", msg->subtype));
 	switch (msg->subtype) {
 	case CMSG_NETIF_BE_CREATE:
 	{
 		netif_be_create_t *req = (netif_be_create_t *)&msg->msg[0];
+		struct ifnet *ifp;
 		if (msg->length != sizeof(netif_be_create_t))
 			goto error;
 		if (xnetif_lookup(req->domid, req->netif_handle) != NULL) {
@@ -363,6 +363,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		xneti->status = DISCONNECTED;
 		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		xneti->xni_if.if_timer = 0;
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
@@ -607,32 +608,37 @@ xennetback_ifstart(struct ifnet *ifp)
 	multicall_entry_t *mclp;
 	netif_rx_request_t *rxreq;
 	netif_rx_response_t *rxresp;
-	NETIF_RING_IDX req_prod = xneti->xni_rxring->req_prod;
-	NETIF_RING_IDX resp_prod = xneti->xni_rxring->resp_prod;
-	int need_event = 0;
+	NETIF_RING_IDX req_prod, resp_prod;
 
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	x86_lfence();
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+		req_prod = xneti->xni_rxring->req_prod;
+		resp_prod = xneti->xni_rxring->resp_prod;
+		x86_lfence();
+
 		mmup = xstart_mmu;
 		mclp = xstart_mcl;
 		for (i = 0; !IFQ_IS_EMPTY(&ifp->if_snd);) {
 			XENPRINTF(("have a packet\n"));
 			IFQ_POLL(&ifp->if_snd, m);
-			if (m == NULL)
+			if (__predict_false(m == NULL))
 				panic("xennetback_ifstart: IFQ_POLL");
-			if (xneti->rxreq_cons == req_prod)
+			if (__predict_false(req_prod == xneti->rxreq_cons)) {
 				/* out of ring space */
-				break;
-			if (i == NB_XMIT_PAGES_BATCH)
-				break; /* we filled the array */
-			if (xennetback_get_xmit_page(&xmit_va, &xmit_pa) != 0) {
-				/* out of memory */
+				XENPRINTF(("xennetback_ifstart: ring full req_prod 0x%x req_cons 0x%x resp_prod 0x%x\n",
+				    req_prod, xneti->rxreq_cons, resp_prod));
+				ifp->if_timer = 1;
 				break;
 			}
+			if (__predict_false(i == NB_XMIT_PAGES_BATCH))
+				break; /* we filled the array */
+			if (__predict_false(
+			    xennetback_get_xmit_page(&xmit_va, &xmit_pa) != 0))
+				break; /* out of memory */
+
 			XENPRINTF(("xennetback_get_xmit_page: got va 0x%x pa 0x%x\n", (u_int)xmit_va, (u_int)xmit_pa));
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			i++; /* this packet will be queued */
@@ -667,46 +673,64 @@ xennetback_ifstart(struct ifnet *ifp)
 			rxresp->addr = xmit_pa;
 			xneti->rxreq_cons++;
 			resp_prod++;
-			if (resp_prod == xneti->xni_rxring->event)
-				need_event = 1;
 
 			/* done with this packet */
 			m_freem(m);
 			ifp->if_opackets++;
 		}
-		if (i == 0) /* nothing got updated */
-			break;
-		/* update the MMU */
-		if (HYPERVISOR_multicall(xstart_mcl, i * 2) != 0) {
-			panic("%s: HYPERVISOR_multicall failed", 
-			    ifp->if_xname);
+		if (i != 0) {
+			/* update the MMU */
+			if (HYPERVISOR_multicall(xstart_mcl, i * 2) != 0) {
+				panic("%s: HYPERVISOR_multicall failed", 
+				    ifp->if_xname);
+			}
+			for (j = 0; j < i; j++) {
+				if (xstart_mcl[j].args[5] != 0)
+					printf("%s: xstart_mcl[%d] failed\n",
+					    ifp->if_xname, j);
+			}
+			x86_lfence();
+			/* update pointer */
+			xneti->xni_rxring->resp_prod += i;
+			x86_lfence();
 		}
-		for (j = 0; j < i; j++) {
-			if (xstart_mcl[j].args[5] != 0)
-				printf("%s: xstart_mcl[%d] failed\n",
-				    ifp->if_xname, j);
-		}
-		x86_lfence();
-		/* update pointer */
-		xneti->xni_rxring->resp_prod += i;
-		x86_lfence();
 		/* check if we need to allocate new xmit pages */
-		if (xmit_pages_alloc < 0)
+		if (xmit_pages_alloc < 0) {
 			xennetback_get_new_xmit_pages();
+			if (xmit_pages_alloc < 0) {
+				/*
+				 * setup the watchdog to try again, because 
+				 * xennetback_ifstart() will never be called
+				 * again if queue is full.
+				 */
+				printf("xennetback_ifstart: no xmit_pages\n");
+				ifp->if_timer = 1;
+			}
+		}
+		if (ifp->if_timer) {
+			/* transmit is out of ressources, stop here */
+			break;
+		}
 	}
-	/* send event, if needed */
-	if (need_event) {
-		x86_lfence();
-		XENPRINTF(("%s receive event\n", xneti->xni_if.if_xname));
-		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
-	}
+	/* send event */
+	x86_lfence();
+	XENPRINTF(("%s receive event\n", xneti->xni_if.if_xname));
+	hypervisor_notify_via_evtchn(xneti->xni_evtchn);
 }
 
 
 static void
 xennetback_ifwatchdog(struct ifnet * ifp)
 {
-	printf("%s: watchdog reset\n", ifp->if_xname);
+	/*
+	 * We can get to the following condition: 
+	 * transmit stalls because the ring is full when the ifq is full too.
+	 * In this case (as, unfortunably, we don't get an interrupt from xen
+	 * on transmit) noting will ever call xennetback_ifstart() again.
+	 * Here we abuse the watchdog to get out of this condition.
+	 */
+	XENPRINTF(("xennetback_ifwatchdog\n"));
+	xennetback_ifstart(ifp);
 }
 
 
@@ -733,9 +757,12 @@ xennetback_ifstop(struct ifnet *ifp, int disable)
 	int s = splnet();
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 	if (xneti->status == CONNECTED) {
-		printf("%s: req_prod 0x%x resp_prod 0x%x req_cons 0x%x event 0x%x\n",
-		    ifp->if_xname, xneti->xni_txring->req_prod, xneti->xni_txring->resp_prod, xneti->xni_txring->req_cons, xneti->xni_txring->event);
+		XENPRINTF(("%s: req_prod 0x%x resp_prod 0x%x req_cons 0x%x "
+		    "event 0x%x\n", ifp->if_xname, xneti->xni_txring->req_prod,
+		    xneti->xni_txring->resp_prod, xneti->xni_txring->req_cons,
+		    xneti->xni_txring->event));
 		xennetback_evthandler(ifp->if_softc); /* flush pending RX requests */
 	}
 	splx(s);
