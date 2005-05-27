@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $      */
+/*      $NetBSD: ata.c,v 1.66.2.1 2005/05/27 23:10:52 riz Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66.2.1 2005/05/27 23:10:52 riz Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -158,6 +158,7 @@ ata_channel_attach(struct ata_channel *chp)
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
+	chp->ch_queue->queue_flags = 0;
 	chp->ch_queue->active_xfer = NULL;
 
 	chp->atabus = config_found(&chp->ch_atac->atac_dev, chp, atabusprint);
@@ -322,11 +323,7 @@ atabus_thread(void *arg)
 	splx(s);
 
 	/* Configure the devices on the bus. */
-	if (sc->sc_sleeping == 1) {
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		sc->sc_sleeping = 0;
-	} else
-		atabusconfig(sc);
+	atabusconfig(sc);
 
 	for (;;) {
 		s = splbio();
@@ -430,7 +427,6 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
 
-	sc->sc_sleeping = 0;
 	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -699,6 +695,22 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 }
 
 /*
+ * freeze the queue and wait for the controller to be idle. Caller has to
+ * unfreeze/restart the queue
+ */
+void
+ata_queue_idle(struct ata_queue *queue)
+{
+	int s = splbio();
+	queue->queue_freeze++;
+	while (queue->active_xfer != NULL) {
+		queue->queue_flags |= QF_IDLE_WAIT;
+		tsleep(&queue->queue_flags, PRIBIO, "qidl", 0);
+	}
+	splx(s);
+}
+
+/*
  * Add a command to the queue and start controller.
  *
  * MUST BE CALLED AT splbio()!
@@ -772,7 +784,11 @@ atastart(struct ata_channel *chp)
 		return; /* channel aleady active */
 	}
 	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
-		return; /* queue froozen */
+		if (chp->ch_queue->queue_flags & QF_IDLE_WAIT) {
+			chp->ch_queue->queue_flags &= ~QF_IDLE_WAIT;
+			wakeup(&chp->ch_queue->queue_flags);
+		}
+		return; /* queue frozen */
 	}
 	/*
 	 * if someone is waiting for the command to be active, wake it up
@@ -1422,17 +1438,17 @@ atabus_powerhook(int why, void *hdl)
 	switch (why) {
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
-		sc->sc_sleeping = 1;
-		s = splbio();
-		chp->ch_flags = ATACH_SHUTDOWN;
-		splx(s);
-		wakeup(&chp->ch_thread);
-		while (chp->ch_thread != NULL)
-			(void) tsleep((void *)&chp->ch_flags, PRIBIO,
-			    "atadown", 0);
+		/* freeze the queue and wait for the controller to be idle */
+		ata_queue_idle(chp->ch_queue);
 		break;
 	case PWR_RESUME:
-		atabus_create_thread(sc);
+		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
+		s = splbio();
+		KASSERT(chp->ch_queue->queue_freeze > 0);
+		/* unfreeze the queue and reset drives (to wake them up) */
+		chp->ch_queue->queue_freeze--;
+		ata_reset_channel(chp, AT_WAIT);
+		splx(s);
 		break;
 	case PWR_SUSPEND:
 	case PWR_STANDBY:

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.67 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: atavar.h,v 1.67.2.1 2005/05/27 23:10:52 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -88,6 +88,8 @@ struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
 	int queue_freeze; /* freeze count for the queue */
 	struct ata_xfer *active_xfer; /* active command */
+	int queue_flags;	/* flags for this queue */
+#define QF_IDLE_WAIT   0x01    /* someone is wants the controller idle */
 };
 
 /* ATA bus instance state information. */
@@ -97,7 +99,6 @@ struct atabus_softc {
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
 	void *sc_powerhook;
-	int sc_sleeping;
 };
 
 /*
@@ -441,6 +442,7 @@ int	ata_downgrade_mode(struct ata_drive_datas *, int);
 void	ata_probe_caps(struct ata_drive_datas *);
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
+void	ata_queue_idle(struct ata_queue *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */
