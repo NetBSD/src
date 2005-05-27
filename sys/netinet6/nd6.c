@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.92 2005/04/03 11:02:27 tron Exp $	*/
+/*	$NetBSD: nd6.c,v 1.93 2005/05/27 22:26:25 seanb Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.92 2005/04/03 11:02:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.93 2005/05/27 22:26:25 seanb Exp $");
 
 #include "opt_ipsec.h"
 
@@ -885,9 +885,9 @@ nd6_free(rt, gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time.tv_sec * hz)
+			if (dr->expire > time.tv_sec)
 				nd6_llinfo_settimer(ln,
-				    dr->expire - time.tv_sec * hz);
+				    (dr->expire - time.tv_sec) * hz);
 			else
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
