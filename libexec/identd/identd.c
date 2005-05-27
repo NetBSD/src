@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $ */
+/* $NetBSD: identd.c,v 1.25.2.1 2005/05/27 22:54:41 riz Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -38,7 +38,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $");
+__RCSID("$NetBSD: identd.c,v 1.25.2.1 2005/05/27 22:54:41 riz Exp $");
 
 #define OPSYS_NAME	"UNIX"
 #define IDENT_SERVICE	"auth"
@@ -741,8 +741,11 @@ timeout_handler(int s)
 static void
 waitchild(int s)
 {
+	int saved_errno = errno;
+
 	while (waitpid(-1, NULL, WNOHANG) > 0)
 		continue;
+	errno = saved_errno;
 }
 
 /* Report error message string through syslog and quit. */
