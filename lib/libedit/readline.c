@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.53 2005/05/07 16:01:25 dsl Exp $	*/
+/*	$NetBSD: readline.c,v 1.54 2005/05/27 11:35:07 agc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.53 2005/05/07 16:01:25 dsl Exp $");
+__RCSID("$NetBSD: readline.c,v 1.54 2005/05/27 11:35:07 agc Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1588,7 +1588,7 @@ rl_callback_read_char()
 }
 
 void 
-rl_callback_handler_install (const char *prompt, VFunction *linefunc)
+rl_callback_handler_install (const char *prompt, VCPFunction *linefunc)
 {
 	if (e == NULL) {
 		rl_initialize();
