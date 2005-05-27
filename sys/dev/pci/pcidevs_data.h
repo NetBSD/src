@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.710 2005/05/18 20:34:28 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.711 2005/05/27 12:48:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.711 2005/05/18 20:33:46 riz Exp
+ *	NetBSD: pcidevs,v 1.712 2005/05/27 12:48:24 augustss Exp
  */
 
 /*
@@ -9244,6 +9244,10 @@ const struct pci_product pci_products[] = {
 	    "Fast Infrared Type DO",
 	},
 	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000NB,
+	    "TM8000 Integrated Northbridge",
+	},
+	{
 	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
 	    "Virtual Northbridge",
 	},
@@ -10200,4 +10204,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1970;
+const int pci_nproducts = 1971;

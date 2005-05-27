@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.712 2005/05/18 20:34:28 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.713 2005/05/27 12:48:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.711 2005/05/18 20:33:46 riz Exp
+ *	NetBSD: pcidevs,v 1.712 2005/05/27 12:48:24 augustss Exp
  */
 
 /*
@@ -2780,6 +2780,7 @@
 #define	PCI_PRODUCT_TOSHIBA2_DONAUOBOE	0x0d01		/* Fast Infrared Type DO */
 
 /* Transmeta products */
+#define	PCI_PRODUCT_TRANSMETA_TM8000NB	0x0061		/* TM8000 Integrated Northbridge */
 #define	PCI_PRODUCT_TRANSMETA_NORTHBRIDGE	0x0295		/* Virtual Northbridge */
 #define	PCI_PRODUCT_TRANSMETA_LONGRUN	0x0395		/* LongRun Northbridge */
 #define	PCI_PRODUCT_TRANSMETA_SDRAM	0x0396		/* SDRAM Controller */
