@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.8 2005/04/28 10:28:53 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.9 2005/05/27 23:03:59 riz Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.8 2005/04/28 10:28:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.9 2005/05/27 23:03:59 riz Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -648,7 +648,7 @@ xen_network_handler(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	netif_rx_response_t *rx;
 	paddr_t pa;
-	NETIF_RING_IDX ringidx;
+	NETIF_RING_IDX ringidx, resp_prod;
 	mmu_update_t *mmu = rx_mmu;
 	multicall_entry_t *mcl = rx_mcl;
 	struct mbuf *m;
@@ -660,8 +660,10 @@ xen_network_handler(void *arg)
 #endif
 
  again:
+	resp_prod = sc->sc_rx->resp_prod;
+	x86_lfence(); /* ensure we see all requests up to resp_prod */
 	for (ringidx = sc->sc_rx_resp_cons;
-	     ringidx != sc->sc_rx->resp_prod;
+	     ringidx != resp_prod;
 	     ringidx++) {
 		rx = &sc->sc_rx->ring[MASK_NETIF_RX_IDX(ringidx)].resp;
 
@@ -764,9 +766,11 @@ xen_network_handler(void *arg)
 	}
 
 	sc->sc_rx_resp_cons = ringidx;
-	sc->sc_rx->event = sc->sc_rx_resp_cons + 1;
+	sc->sc_rx->event = resp_prod + 1;
+	x86_lfence();
+	  /* ensure backend see the new sc_rx->event before we start again */
 
-	if (sc->sc_rx->resp_prod != ringidx)
+	if (sc->sc_rx->resp_prod != resp_prod)
 		goto again;
 
 	return 0;
