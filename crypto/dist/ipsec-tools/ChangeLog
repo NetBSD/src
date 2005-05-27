@@ -1,3 +1,17 @@
+2005-05-13  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/isakmp.c: For acquire messages, when NAT-T is in use,
+	  consider null port as a wildcard and use IKE port
+
+2005-05-13  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Fixed a double ph2handler free in
+	  isakmp_ph2begin_i().
+
+---------------------------------------------
+
+	0.6b2 released
+
 2005-05-10  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/samples/roadwarrior/client/racoon.conf
