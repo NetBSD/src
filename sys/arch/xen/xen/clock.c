@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2005/04/17 14:50:11 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2005/05/27 22:02:25 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/04/17 14:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/05/27 22:02:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ void
 inittodr(time_t base)
 {
 	int s;
+	struct cpu_info *ci = curcpu();
 
 	/*
 	 * if the file system time is more than a year older than the
@@ -116,6 +117,9 @@ inittodr(time_t base)
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
+	/* reset microset, so that the next call to microset() will init */
+	ci->ci_cc.cc_denom = 0;
+
 	if (base != 0 && base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
 	else if (base > time.tv_sec + 5*SECYR) {
@@ -243,35 +247,28 @@ static int
 xen_timer_handler(void *arg, struct intrframe *regs)
 {
 	int64_t delta;
-
-#if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call cc_microset once/sec */
+	static int microset_iter = 0; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 	
-	/*
-	 * If we have a cycle counter, do the microset thing.
-	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
-			microset_iter = hz - 1;
-#if defined(MULTIPROCESSOR)
-			x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-			cc_microset_time = time;
-			cc_microset(ci);
-		}
-	}
-#endif
-
 	get_time_values_from_xen();
 
 	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns() -
 			  processed_system_time);
 	while (delta >= NS_PER_TICK) {
+		if (ci->ci_feature_flags & CPUID_TSC) {
+			if (
+#if defined(MULTIPROCESSOR)
+		 	   CPU_IS_PRIMARY(ci) &&
+#endif
+			    (microset_iter--) == 0) {
+				microset_iter = hz - 1;
+#if defined(MULTIPROCESSOR)
+				x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+				cc_microset_time = time;
+				cc_microset(ci);
+			}
+		}
 		hardclock(regs);
 		delta -= NS_PER_TICK;
 		processed_system_time += NS_PER_TICK;
