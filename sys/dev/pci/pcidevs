@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.711 2005/05/18 20:33:46 riz Exp $
+$NetBSD: pcidevs,v 1.712 2005/05/27 12:48:24 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2773,6 +2773,7 @@ product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
 product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
 
 /* Transmeta products */
+product TRANSMETA TM8000NB	0x0061	TM8000 Integrated Northbridge
 product TRANSMETA NORTHBRIDGE	0x0295	Virtual Northbridge
 product TRANSMETA LONGRUN	0x0395	LongRun Northbridge
 product TRANSMETA SDRAM		0x0396	SDRAM Controller
