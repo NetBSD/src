@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.335 2005/05/27 02:08:05 lukem Exp $
+#	$NetBSD: 3RDPARTY,v 1.336 2005/05/27 08:04:58 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -100,7 +100,6 @@ Current Vers:	1.92
 Maintainer:	n/a
 Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
-tree
 Mailing List:
 Responsible:	itojun
 Notes:
