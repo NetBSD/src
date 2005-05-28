@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4 2005/03/16 23:52:55 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4.2.1 2005/05/28 12:57:24 tron Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.17.2.3 2005/03/16 00:13:38 manubsd Exp */
 
@@ -915,7 +915,7 @@ isakmp_xauth_set(iph1, attr)
 			EVT_PUSH(iph1->local, iph1->remote, 
 			    EVTT_XAUTH_FAILED, NULL);
 
-			iph1->mode_cfg->flags &= ISAKMP_CFG_DELETE_PH1;
+			iph1->mode_cfg->flags |= ISAKMP_CFG_DELETE_PH1;
 		} else {
 			EVT_PUSH(iph1->local, 
 			    iph1->remote, EVTT_XAUTH_SUCCESS, NULL);
