@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.131 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.131.2.1 2005/05/28 12:41:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.131 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.131.2.1 2005/05/28 12:41:08 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1285,7 +1285,7 @@ fdfree(struct proc *p)
 			*fpp = NULL;
 			simple_lock(&fp->f_slock);
 			FILE_USE(fp);
-			if (i < fdp->fd_knlistsize)
+			if ((fdp->fd_lastfile - i) < fdp->fd_knlistsize)
 				knote_fdclose(p, fdp->fd_lastfile - i);
 			(void) closef(fp, p);
 		}
