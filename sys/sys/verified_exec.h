@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.10 2005/05/22 22:34:01 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.11 2005/05/28 15:49:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.10 2005/05/22 22:34:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.11 2005/05/28 15:49:36 elad Exp $");
 
 /*
  *
@@ -157,6 +157,19 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
         (hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
 	 & VERIEXEC_HASH_MASK(tbl))
 
+/* Initialize a fingerprint ops struct. */
+#define	VERIEXEC_OPINIT(ops, fp_type, hashlen, ctx_size, init_fn, \
+	update_fn, final_fn) \
+	do {								    \
+		(void) strlcpy((ops)->type, fp_type, sizeof((ops)->type));  \
+		(ops)->hash_len = (hashlen);				    \
+		(ops)->context_size = (ctx_size);			    \
+		(ops)->init = (VERIEXEC_INIT_FN) (init_fn);		    \
+		(ops)->update = (VERIEXEC_UPDATE_FN) (update_fn);	    \
+		(ops)->final = (VERIEXEC_FINAL_FN) (final_fn);		    \
+	} while (0);
+
+int veriexec_add_fp_ops(struct veriexec_fp_ops *);
 void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
 int veriexec_fp_calc(struct proc *, struct vnode *,
