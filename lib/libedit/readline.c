@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.49.2.1 2005/05/28 14:02:27 tron Exp $	*/
+/*	$NetBSD: readline.c,v 1.49.2.2 2005/05/28 14:03:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.49.2.1 2005/05/28 14:02:27 tron Exp $");
+__RCSID("$NetBSD: readline.c,v 1.49.2.2 2005/05/28 14:03:25 tron Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ FILE *rl_outstream = NULL;
 int rl_point = 0;
 int rl_end = 0;
 char *rl_line_buffer = NULL;
-VFunction *rl_linefunc = NULL;
+VCPFunction *rl_linefunc = NULL;
 int rl_done = 0;
 VFunction *rl_event_hook = NULL;
 
