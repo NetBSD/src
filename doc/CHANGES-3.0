@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.98 2005/05/27 23:12:04 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.99 2005/05/28 05:42:17 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8771,4 +8771,26 @@ sys/dev/ata/atavar.h				1.68
 	start from a clean state).
 	Fix PR kern/30194 by Lubomir Sedlacik.
 	[bouyer, ticket #328]
+
+sys/dev/pci/if_fxp_pci.c			1.41
+sys/dev/pci/pcidevs				1.711
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for the 82801FB (ICH6) 10/100 ethernet appearing
+	on new Intel motherboards.  From Brian Buhrow in PR#30025.
+	[riz, ticket #323]
+
+dist/ntp/ntpd/refclock_palisade.c		1.3
+
+	There was a change from usecs to nsecs between ntpd 4.1.1 and 4.2.0 -
+	take this into account correctly.  From ntp-current via Brian Buhrow
+	in PR#29685.
+	[riz, ticket #332]
+
+share/mk/bsd.README				1.168
+share/mk/bsd.sys.mk				1.117
+
+	Provide a default definition of OBJDUMP - bsd.kmod.mk expects it.
+	[riz, ticket #343]
 
