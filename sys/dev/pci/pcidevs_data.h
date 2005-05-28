@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.6 2005/05/10 12:46:20 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.7 2005/05/28 05:12:17 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.6 2005/05/10 12:45:38 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.7 2005/05/28 05:09:41 snj Exp
  */
 
 /*
@@ -5624,6 +5624,10 @@ const struct pci_product pci_products[] = {
 	    "PRO/100 M Network Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
+	    "82801FB 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
 	    "i82547GI Gigabit Ethernet",
 	},
@@ -10148,4 +10152,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1958;
+const int pci_nproducts = 1959;
