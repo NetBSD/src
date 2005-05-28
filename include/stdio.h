@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.58 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.58.2.1 2005/05/28 13:39:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -221,12 +221,13 @@ int	 fflush(FILE *);
 int	 fgetc(FILE *);
 int	 fgetpos(FILE * __restrict, fpos_t * __restrict);
 char	*fgets(char * __restrict, int, FILE * __restrict);
-FILE	*fopen(const char *, const char *);
+FILE	*fopen(const char * __restrict , const char * __restrict);
 int	 fprintf(FILE * __restrict , const char * __restrict, ...);
 int	 fputc(int, FILE *);
 int	 fputs(const char * __restrict, FILE * __restrict);
 size_t	 fread(void * __restrict, size_t, size_t, FILE * __restrict);
-FILE	*freopen(const char *, const char *, FILE * __restrict);
+FILE	*freopen(const char * __restrict, const char * __restrict,
+	    FILE * __restrict);
 int	 fscanf(FILE * __restrict, const char * __restrict, ...);
 int	 fseek(FILE *, long, int);
 int	 fsetpos(FILE *, const fpos_t *);
