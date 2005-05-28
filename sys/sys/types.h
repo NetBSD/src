@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.66 2005/03/05 19:48:39 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.66.2.1 2005/05/28 13:36:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -329,7 +329,16 @@ typedef	struct fd_set {
     ((p)->fds_bits[(n)/__NFDBITS] &= ~(1 << ((n) % __NFDBITS)))
 #define	FD_ISSET(n, p)	\
     ((p)->fds_bits[(n)/__NFDBITS] & (1 << ((n) % __NFDBITS)))
-#define	FD_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
+#if __GNUC_PREREQ__(2, 95)
+#define	FD_ZERO(p)	(void)__builtin_memset((p), 0, sizeof(*(p)))
+#else
+#define	FD_ZERO(p)	do {						\
+	fd_set *__fds = (p);						\
+	unsigned int __i;						\
+	for (__i = 0; __i < __howmany(FD_SETSIZE, __NFDBITS); __i++)	\
+		__fds->fds_bits[__i] = 0;				\
+	} while (/* CONSTCOND */ 0)
+#endif /* GCC 2.95 */
 
 /*
  * Expose our internals if we are not required to hide them.
@@ -343,7 +352,16 @@ typedef	struct fd_set {
 #define howmany(a, b) __howmany(a, b)
 #endif
 
-#define	FD_COPY(f, t)	(void)memcpy((t), (f), sizeof(*(f)))
+#if __GNUC_PREREQ__(2, 95)
+#define	FD_COPY(f, t)	(void)__builtin_memcpy((t), (f), sizeof(*(f)))
+#else
+#define	FD_COPY(f, t)	do {						\
+	fd_set *__f = (f), *__t = (t);					\
+	unsigned int __i;						\
+	for (__i = 0; __i < __howmany(FD_SETSIZE, __NFDBITS); __i++)	\
+		__t->fds_bits[__i] = __f->fds_bits[__i];		\
+	} while (/* CONSTCOND */ 0)
+#endif /* GCC 2.95 */
 
 #endif
 
