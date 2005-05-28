@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.30 2005/05/20 01:22:48 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.31 2005/05/28 12:57:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.30 2005/05/20 01:22:48 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.31 2005/05/28 12:57:48 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -106,7 +106,8 @@ do {									      \
 	char *e;							      \
 	while (*o++)							      \
 		continue;						      \
-	extra = alloca((size_t)((o - orig) + MAXEXTRAS));		      \
+	extra = malloc((size_t)((o - orig) + MAXEXTRAS));		      \
+	if (!extra) break;						      \
 	for (o = orig, e = extra; (*e++ = *o++) != '\0';)		      \
 		continue;						      \
 	e--;								      \
@@ -223,14 +224,20 @@ svis(dst, c, flag, nextc, extra)
 	int c, flag, nextc;
 	const char *extra;
 {
-	char *nextra;
+	char *nextra = NULL;
+
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(extra != NULL);
 	MAKEEXTRALIST(flag, nextra, extra);
+	if (!nextra) {
+		*dst = '\0';		/* can't create nextra, return "" */
+		return (dst);
+	}
 	if (flag & VIS_HTTPSTYLE)
 		HVIS(dst, c, flag, nextc, nextra);
 	else
 		SVIS(dst, c, flag, nextc, nextra);
+	free(nextra);
 	*dst = '\0';
 	return(dst);
 }
@@ -260,13 +267,17 @@ strsvis(dst, csrc, flag, extra)
 {
 	int c;
 	char *start;
-	char *nextra;
+	char *nextra = NULL;
 	const unsigned char *src = (const unsigned char *)csrc;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(extra != NULL);
 	MAKEEXTRALIST(flag, nextra, extra);
+	if (!nextra) {
+		*dst = '\0';		/* can't create nextra, return "" */
+		return 0;
+	}
 	if (flag & VIS_HTTPSTYLE) {
 		for (start = dst; (c = *src++) != '\0'; /* empty */)
 			HVIS(dst, c, flag, *src, nextra);
@@ -274,6 +285,7 @@ strsvis(dst, csrc, flag, extra)
 		for (start = dst; (c = *src++) != '\0'; /* empty */)
 			SVIS(dst, c, flag, *src, nextra);
 	}
+	free(nextra);
 	*dst = '\0';
 	return (dst - start);
 }
@@ -289,13 +301,17 @@ strsvisx(dst, csrc, len, flag, extra)
 {
 	unsigned char c;
 	char *start;
-	char *nextra;
+	char *nextra = NULL;
 	const unsigned char *src = (const unsigned char *)csrc;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(extra != NULL);
 	MAKEEXTRALIST(flag, nextra, extra);
+	if (! nextra) {
+		*dst = '\0';		/* can't create nextra, return "" */
+		return 0;
+	}
 
 	if (flag & VIS_HTTPSTYLE) {
 		for (start = dst; len > 0; len--) {
@@ -308,6 +324,7 @@ strsvisx(dst, csrc, len, flag, extra)
 			SVIS(dst, c, flag, len ? *src : '\0', nextra);
 		}
 	}
+	free(nextra);
 	*dst = '\0';
 	return (dst - start);
 }
@@ -323,12 +340,16 @@ vis(dst, c, flag, nextc)
 	int c, flag, nextc;
 
 {
-	char *extra;
+	char *extra = NULL;
 	unsigned char uc = (unsigned char)c;
 
 	_DIAGASSERT(dst != NULL);
 
 	MAKEEXTRALIST(flag, extra, "");
+	if (! extra) {
+		*dst = '\0';		/* can't create extra, return "" */
+		return (dst);
+	}
 	if (flag & VIS_HTTPSTYLE)
 		HVIS(dst, uc, flag, nextc, extra);
 	else
@@ -354,10 +375,17 @@ strvis(dst, src, flag)
 	const char *src;
 	int flag;
 {
-	char *extra;
+	char *extra = NULL;
+	int rv;
 
 	MAKEEXTRALIST(flag, extra, "");
-	return (strsvis(dst, src, flag, extra));
+	if (!extra) {
+		*dst = '\0';		/* can't create extra, return "" */
+		return 0;
+	}
+	rv = strsvis(dst, src, flag, extra);
+	free(extra);
+	return (rv);
 }
 
 
@@ -368,9 +396,16 @@ strvisx(dst, src, len, flag)
 	size_t len;
 	int flag;
 {
-	char *extra;
+	char *extra = NULL;
+	int rv;
 
 	MAKEEXTRALIST(flag, extra, "");
-	return (strsvisx(dst, src, len, flag, extra));
+	if (!extra) {
+		*dst = '\0';		/* can't create extra, return "" */
+		return 0;
+	}
+	rv = strsvisx(dst, src, len, flag, extra);
+	free(extra);
+	return (rv);
 }
 #endif
