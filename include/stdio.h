@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.58.2.1 2005/05/28 13:39:25 tron Exp $	*/
+/*	$NetBSD: stdio.h,v 1.58.2.2 2005/05/28 13:46:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,10 +37,9 @@
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
-#include <sys/ansi.h>
-
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <sys/ansi.h>
 
 #include <machine/ansi.h>
 #ifdef	_BSD_SIZE_T_
