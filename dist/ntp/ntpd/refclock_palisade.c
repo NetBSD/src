@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.2.6.1 2005/05/28 05:30:03 snj Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -496,7 +496,7 @@ if (debug > 1) {
 			return 0;
 		}
 
-		pp->nsec = (long) (getdbl((u_char *) &mb(3)) * 1000000);
+		pp->nsec = (long) (getdbl((u_char *) &mb(3)) * 1000000000);
 
 		if ((pp->day = day_of_year(&mb(14))) < 0) 
 			break;
