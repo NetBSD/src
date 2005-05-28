@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.22 2003/08/07 16:43:24 agc Exp $
+.\"	$NetBSD: fopen.3,v 1.22.6.1 2005/05/28 13:39:32 tron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,11 +46,11 @@
 .Sh SYNOPSIS
 .In stdio.h
 .Ft FILE *
-.Fn fopen "const char *path" "const char *mode"
+.Fn fopen "const char * restrict path" "const char * restrict mode"
 .Ft FILE *
 .Fn fdopen "int fildes" "const char *mode"
 .Ft FILE *
-.Fn freopen "const char *path" "const char *mode" "FILE * restrict stream"
+.Fn freopen "const char * restrict path" "const char * restrict mode" "FILE * restrict stream"
 .Sh DESCRIPTION
 The
 .Fn fopen
