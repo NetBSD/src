@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.11.2.6 2005/05/28 12:45:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.11.2.7 2005/05/28 12:47:14 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -150,7 +150,7 @@ ffs_snapshot(mp, vp, ctime)
 	long redo = 0;
 	int32_t *lp;
 	void *space;
-	caddr_t cgbuf;
+	caddr_t sbbuf = NULL;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *copy_fs = NULL, *fs = ump->um_fs;
 	struct proc *p = curproc;
@@ -200,15 +200,14 @@ ffs_snapshot(mp, vp, ctime)
 	ip = VTOI(vp);
 	devvp = ip->i_devvp;
 	/*
-	 * Allocate and copy the last block contents so as to be able
-	 * to set size to that of the filesystem.
+	 * Write an empty list of preallocated blocks to the end of
+	 * the snapshot to set size to at least that of the filesystem.
 	 */
 	numblks = howmany(fs->fs_size, fs->fs_frag);
-	cgbuf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
-	if ((error = readfsblk(vp, cgbuf, numblks - 1)) != 0)
-		goto out;
+	blkno = 1;
+	blkno = ufs_rw64(blkno, ns);
 	error = vn_rdwr(UIO_WRITE, vp,
-	    cgbuf, fs->fs_bsize, lblktosize(fs, (off_t)(numblks - 1)),
+	    (caddr_t)&blkno, sizeof(blkno), lblktosize(fs, (off_t)numblks),
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	if (error)
 		goto out;
@@ -242,16 +241,6 @@ ffs_snapshot(mp, vp, ctime)
 	len = howmany(fs->fs_cssize, fs->fs_bsize);
 	for (loc = 0; loc < len; loc++) {
 		error = VOP_BALLOC(vp, lblktosize(fs, (off_t)(blkno + loc)),
-		    fs->fs_bsize, KERNCRED, 0, &nbp);
-		if (error)
-			goto out;
-		bawrite(nbp);
-	}
-	/*
-	 * Allocate all cylinder group blocks.
-	 */
-	for (cg = 0; cg < fs->fs_ncg; cg++) {
-		error = VOP_BALLOC(vp, lfragtosize(fs, cgtod(fs, cg)),
 		    fs->fs_bsize, KERNCRED, 0, &nbp);
 		if (error)
 			goto out;
@@ -302,13 +291,6 @@ ffs_snapshot(mp, vp, ctime)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	microtime(&starttime);
 	/*
-	 * The last block saved before may have changed so update it now.
-	 */
-	if ((error = readfsblk(vp, cgbuf, numblks - 1)) != 0)
-		goto out1;
-	if ((error = writevnblk(vp, cgbuf, numblks - 1)) != 0)
-		goto out1;
-	/*
 	 * First, copy all the cylinder group maps that have changed.
 	 */
 	for (cg = 0; cg < fs->fs_ncg; cg++) {
@@ -327,14 +309,15 @@ ffs_snapshot(mp, vp, ctime)
 	 * Grab a copy of the superblock and its summary information.
 	 * We delay writing it until the suspension is released below.
 	 */
+	sbbuf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
 	loc = blkoff(fs, fs->fs_sblockloc);
 	if (loc > 0)
-		bzero(&cgbuf[0], loc);
-	copy_fs = (struct fs *)(cgbuf + loc);
+		bzero(&sbbuf[0], loc);
+	copy_fs = (struct fs *)(sbbuf + loc);
 	bcopy(fs, copy_fs, fs->fs_sbsize);
 	size = fs->fs_bsize < SBLOCKSIZE ? fs->fs_bsize : SBLOCKSIZE;
 	if (fs->fs_sbsize < size)
-		bzero(&cgbuf[loc + fs->fs_sbsize], size - fs->fs_sbsize);
+		bzero(&sbbuf[loc + fs->fs_sbsize], size - fs->fs_sbsize);
 	size = blkroundup(fs, fs->fs_cssize);
 	if (fs->fs_contigsumsize > 0)
 		size += fs->fs_ncg * sizeof(int32_t);
@@ -593,8 +576,8 @@ out1:
 	 */
 	for (i = 0; i < snaplistsize; i++)
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
-	error = vn_rdwr(UIO_WRITE, vp,
-	    (caddr_t)snapblklist, snaplistsize*sizeof(ufs2_daddr_t), ip->i_size,
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)snapblklist,
+	    snaplistsize*sizeof(ufs2_daddr_t), lblktosize(fs, (off_t)numblks),
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	for (i = 0; i < snaplistsize; i++)
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
@@ -648,7 +631,7 @@ done:
 			brelse(nbp);
 			fs->fs_snapinum[snaploc] = 0;
 		}
-		bcopy(cgbuf, nbp->b_data, fs->fs_bsize);
+		bcopy(sbbuf, nbp->b_data, fs->fs_bsize);
 		bawrite(nbp);
 	}
 out:
@@ -687,8 +670,8 @@ out:
 		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
 	}
-	if (cgbuf)
-		free(cgbuf, M_UFSMNT);
+	if (sbbuf)
+		free(sbbuf, M_UFSMNT);
 	if (fs->fs_active != 0) {
 		FREE(fs->fs_active, M_DEVBUF);
 		fs->fs_active = 0;
