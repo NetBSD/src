@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2005/05/28 11:55:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2005/05/28 12:02:53 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -37,6 +37,7 @@ INCSDIR=/usr/include
 CLEANFILES+=editline.c
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
 CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp
+CLEANFILES+=test.o test
 CPPFLAGS+=-I. -I${LIBEDITDIR} 
 CPPFLAGS+=-I. -I${.CURDIR}
 CPPFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
