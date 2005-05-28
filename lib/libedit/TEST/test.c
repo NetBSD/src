@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.16 2005/05/18 00:50:24 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.17 2005/05/28 12:03:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.16 2005/05/18 00:50:24 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.17 2005/05/28 12:03:22 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -61,8 +61,6 @@ __RCSID("$NetBSD: test.c,v 1.16 2005/05/18 00:50:24 christos Exp $");
 #include "histedit.h"
 
 static int continuation = 0;
-static EditLine *el = NULL;
-
 volatile sig_atomic_t gotsig = 0;
 
 static	u_char	complete(EditLine *, int);
@@ -97,7 +95,8 @@ complete(EditLine *el, int ch)
 	/*
 	 * Find the last word
 	 */
-	for (ptr = lf->cursor - 1; !isspace(*ptr) && ptr > lf->buffer; ptr--)
+	for (ptr = lf->cursor - 1;
+	    !isspace((unsigned char)*ptr) && ptr > lf->buffer; ptr--)
 		continue;
 	len = lf->cursor - ++ptr;
 
@@ -120,6 +119,7 @@ complete(EditLine *el, int ch)
 int
 main(int argc, char *argv[])
 {
+	EditLine *el = NULL;
 	int num;
 	const char *buf;
 	Tokenizer *tok;
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 		} else if (el_parse(el, ac, av) == -1) {
 			switch (fork()) {
 			case 0:
-				execvp(av[0], (char *const *)av);
+				execvp(av[0], (char *const *)__UNCONST(av));
 				perror(av[0]);
 				_exit(1);
 				/*NOTREACHED*/
