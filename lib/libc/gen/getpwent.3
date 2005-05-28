@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.25.2.1 2005/04/04 18:04:55 tron Exp $
+.\"	$NetBSD: getpwent.3,v 1.25.2.2 2005/05/28 13:42:38 tron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -222,16 +222,27 @@ A Version 7 format password file
 .Xr vipw 8
 .Sh STANDARDS
 The
+.Fn getpwnam
+and
+.Fn getpwuid ,
+functions conform to
+.St -p1003.1-90 .
+The
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+functions conform to
+.St -p1003.1c-95 .
+The
 .Fn endpwent ,
 .Fn getpwent ,
-.Fn getpwnam ,
-.Fn getpwnam_r ,
-.Fn getpwuid ,
-.Fn getpwuid_r ,
 and
 .Fn setpwent
 functions conform to
-.St -p1003.1-90 .
+.St -xpg4.2
+and
+.St -p1003.1-2004
+(XSI extension).
 .Sh HISTORY
 The
 .Nm getpwent ,
