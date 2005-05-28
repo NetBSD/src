@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.20 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: grp.h,v 1.20.2.1 2005/05/28 13:40:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,14 +57,17 @@ struct group {
 __BEGIN_DECLS
 struct group	*getgrgid(gid_t);
 struct group	*getgrnam(const char *);
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-struct group	*getgrent(void);
-void		 setgrent(void);
-void		 endgrent(void);
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 int		 getgrgid_r(gid_t, struct group *, char *, size_t,
 				struct group **);
 int		 getgrnam_r(const char *, struct group *, char *, size_t,
 				struct group **);
+#endif
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+struct group	*getgrent(void);
+void		 setgrent(void);
+void		 endgrent(void);
 #endif
 #if defined(_NETBSD_SOURCE)
 void		 setgrfile(const char *);
