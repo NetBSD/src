@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.17 2004/08/15 07:20:00 mycroft Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.17.10.1 2005/05/28 12:45:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -95,8 +95,7 @@ struct ufsmount {
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	struct	netexport um_export;		/* export information */
 	void	*um_oldfscompat;		/* save 4.2 rotbl */
-	TAILQ_HEAD(, inode) um_snapshots;	/* list of active snapshots */
-	daddr_t	um_snaplistsize;		/* size of block hints list */
+	TAILQ_HEAD(inodelst, inode) um_snapshots; /* list of active snapshots */
 	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
