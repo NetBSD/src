@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.6.2.1 2005/04/21 17:09:19 tron Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.6.2.2 2005/05/28 16:28:07 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.1 2005/04/21 17:09:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.2 2005/05/28 16:28:07 tron Exp $");
 
 #include "opt_xen.h"
 
@@ -94,6 +94,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 {
 	vaddr_t va;
 	pt_entry_t *ptp, *maptp;
+	int s;
 
 	for (va = base; va < base + entries * sizeof(union descriptor);
 	     va += PAGE_SIZE) {
@@ -104,10 +105,12 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 			      entries, ptp, maptp));
 		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
+	s = splvm();
 	PTE_UPDATES_FLUSH();
 
 	xpq_queue_set_ldt(base, entries);
 	xpq_flush_queue();
+	splx(s);
 }
 
 void
@@ -684,12 +687,14 @@ xpq_queue_tlb_flush()
 void
 xpq_flush_cache()
 {
+	int s = splvm();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
 	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
 	xpq_queue[xpq_idx].pa.val = MMUEXT_FLUSH_CACHE;
 	xpq_increment_idx();
 	xpq_flush_queue();
+	splx(s);
 }
 
 
