@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.66.2.1 2005/05/27 23:10:52 riz Exp $      */
+/*      $NetBSD: ata.c,v 1.66.2.2 2005/05/28 13:08:04 tron Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66.2.1 2005/05/27 23:10:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66.2.2 2005/05/28 13:08:04 tron Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -325,8 +325,8 @@ atabus_thread(void *arg)
 	/* Configure the devices on the bus. */
 	atabusconfig(sc);
 
+	s = splbio();
 	for (;;) {
-		s = splbio();
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
@@ -335,7 +335,6 @@ atabus_thread(void *arg)
 			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
-			splx(s);
 			break;
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
@@ -356,8 +355,8 @@ atabus_thread(void *arg)
 			(*xfer->c_start)(xfer->c_chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
 			panic("ata_thread: queue_freeze");
-		splx(s);
 	}
+	splx(s);
 	chp->ch_thread = NULL;
 	wakeup((void *)&chp->ch_flags);
 	kthread_exit(0);
