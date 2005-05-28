@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.100 2005/05/28 13:10:23 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.101 2005/05/28 14:06:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8844,4 +8844,85 @@ sys/dev/ata/ata.c				1.69
 	Close a window where (disks) interrupts could be enabled while the
 	ATACH_TH_RUN flag is still set.
 	[bouyer, ticket #340]
+
+sys/net/if_gif.c				1.51
+sys/net/if_gre.c				1.57
+
+	PR/30285: incorrect permission check joining/leaving multicast groups.
+	[christos, ticket #330]
+
+sys/sys/types.h					patch
+
+	Instead of including <string.h> for memset()/memcpy() (or adding their
+	declarations locally), make FD_ZERO()/FD_COPY() use GCC builtins if
+	available, or define them inline otherwise.
+	This fixes PRs kern/5076 and lib/30166.
+	[kleink, ticket #342]
+
+include/stdio.h					1.59
+lib/libc/stdio/fopen.3				1.23
+
+	Add restrict qualifiers to fopen()/freopen() arguments.
+	[kleink, ticket #344]
+
+include/grp.h					1.22
+include/pwd.h					1.39
+lib/libc/gen/getgrent.3				1.27
+lib/libc/gen/getpwent.3				1.34
+
+	Make namespace protection feature tests for reentrant functions more
+	accurate (and actually less restrictive).
+	Truth, meet standards section.  Standards section, meet truth.
+	[kleink, ticket #345]
+
+include/stdio.h					1.61
+sys/arch/alpha/include/int_types.h		1.7
+sys/arch/amd64/include/int_types.h		1.3
+sys/arch/arm/include/int_types.h		1.6
+sys/arch/hppa/include/int_types.h		1.3
+sys/arch/i386/include/int_types.h		1.9
+sys/arch/mips/include/int_types.h		1.8
+sys/arch/pc532/include/int_types.h		1.7
+sys/arch/pdp10/include/int_types.h		1.2
+sys/arch/powerpc/include/int_types.h		1.8
+sys/arch/sh3/include/int_types.h		1.6
+sys/arch/sh5/include/int_types.h		1.4
+sys/arch/sparc/include/int_types.h		1.8
+sys/arch/vax/include/int_types.h		1.8
+
+	Include <sys/ansi.h> after <sys/cdefs.h>, from PR lib/30072.
+	Include <sys/cdefs.h> for __signed; related to PR lib/30072.
+	[kleink, ticket #346]
+
+sbin/raidctl/raidctl.c				1.37
+
+	Cleanup the meter code a bit -- a bunch of stuff wasn't even being
+	used. Fix a few overflow issues.
+	[oster, ticket #347]
+
+include/stdio.h					1.60
+
+	Belatedly move snprintf() and vnsnprintf() into the XPG4.2/C99 section.
+	[kleink, ticket #348]
+
+sys/arch/xen/include/xenio.h			1.3
+sys/arch/xen/xen/privcmd.c			1.3
+
+	privcmd_ioctl: don't abuse errno for IOCTL_PRIVCMD_INITDOMAIN_EVTCHN.
+	renumber the ioctl and keep the old one for compatibility.
+	This fixes PR port-xen/30027.
+	[yamt, ticket #351]
+
+gnu/dist/gdb/gdb/event-top.c			1.3
+lib/libedit/readline.c				1.54-1.55
+lib/libedit/readline/readline.h			1.14
+
+	Sync the alternative readline interface with reality:
+	+ the rl_callback_handler_install takes a pointer to a void function
+	  which has one char * argument (it's called that way in the readline
+	  emulation source, otherwise there's no way to pass the line buffer
+	  to the function which processes the line when EOL is encountered)
+	+ provide a prototype for that function signature and use it
+	Makes the callback readline interface work now.
+	[agc, ticket #353]
 
