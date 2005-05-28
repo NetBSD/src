@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.81 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.81.2.1 2005/05/28 12:45:49 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.81 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.81.2.1 2005/05/28 12:45:49 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1823,6 +1823,7 @@ ffs_freefile(fs, devvp, ino, mode)
 		fs->fs_cs(fs, cg).cs_ndir--;
 	}
 	fs->fs_fmod = 1;
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 	return (0);
 }
