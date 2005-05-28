@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2005/05/18 22:36:20 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2005/05/28 11:55:30 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -51,43 +51,52 @@ CLEANFILES+=	${AHDR} fcns.h help.h fcns.c help.c
 SUBDIR=	readline
 
 vi.h: vi.c makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c \
 	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 emacs.h: emacs.c makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/emacs.c \
 	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 common.h: common.c makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/common.c \
 	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 fcns.h: ${AHDR} makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -fh ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 fcns.c: ${AHDR} fcns.h help.h makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 help.c: ${ASRC} makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 help.h: ${ASRC} makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -bh ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 editline.c: ${OSRCS} makelist Makefile
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -e ${OSRCS:T} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 test.o:	${LIBEDITDIR}/TEST/test.c
 	
 test:	libedit.a test.o 
+	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
 
 .include <bsd.lib.mk>
