@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.32 2005/05/28 13:06:14 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.33 2005/05/28 13:11:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.32 2005/05/28 13:06:14 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.33 2005/05/28 13:11:14 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -216,13 +216,10 @@ do {									      \
 
 /*
  * svis - visually encode characters, also encoding the characters
- * 	  pointed to by `extra'
+ *	  pointed to by `extra'
  */
 char *
-svis(dst, c, flag, nextc, extra)
-	char *dst;
-	int c, flag, nextc;
-	const char *extra;
+svis(char *dst, int c, int flag, int nextc, const char *extra)
 {
 	char *nextra = NULL;
 
@@ -231,7 +228,7 @@ svis(dst, c, flag, nextc, extra)
 	MAKEEXTRALIST(flag, nextra, extra);
 	if (!nextra) {
 		*dst = '\0';		/* can't create nextra, return "" */
-		return (dst);
+		return dst;
 	}
 	if (flag & VIS_HTTPSTYLE)
 		HVIS(dst, c, flag, nextc, nextra);
@@ -239,7 +236,7 @@ svis(dst, c, flag, nextc, extra)
 		SVIS(dst, c, flag, nextc, nextra);
 	free(nextra);
 	*dst = '\0';
-	return(dst);
+	return dst;
 }
 
 
@@ -259,11 +256,7 @@ svis(dst, c, flag, nextc, extra)
  *	This is useful for encoding a block of data.
  */
 int
-strsvis(dst, csrc, flag, extra)
-	char *dst;
-	const char *csrc;
-	int flag;
-	const char *extra;
+strsvis(char *dst, const char *csrc, int flag, const char *extra)
 {
 	int c;
 	char *start;
@@ -292,12 +285,7 @@ strsvis(dst, csrc, flag, extra)
 
 
 int
-strsvisx(dst, csrc, len, flag, extra)
-	char *dst;
-	const char *csrc;
-	size_t len;
-	int flag;
-	const char *extra;
+strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 {
 	unsigned char c;
 	char *start;
@@ -335,10 +323,7 @@ strsvisx(dst, csrc, len, flag, extra)
  * vis - visually encode characters
  */
 char *
-vis(dst, c, flag, nextc)
-	char *dst;
-	int c, flag, nextc;
-
+vis(char *dst, int c, int flag, int nextc)
 {
 	char *extra = NULL;
 	unsigned char uc = (unsigned char)c;
@@ -348,7 +333,7 @@ vis(dst, c, flag, nextc)
 	MAKEEXTRALIST(flag, extra, "");
 	if (! extra) {
 		*dst = '\0';		/* can't create extra, return "" */
-		return (dst);
+		return dst;
 	}
 	if (flag & VIS_HTTPSTYLE)
 		HVIS(dst, uc, flag, nextc, extra);
@@ -356,7 +341,7 @@ vis(dst, c, flag, nextc)
 		SVIS(dst, uc, flag, nextc, extra);
 	free(extra);
 	*dst = '\0';
-	return (dst);
+	return dst;
 }
 
 
@@ -371,10 +356,7 @@ vis(dst, c, flag, nextc)
  *	This is useful for encoding a block of data.
  */
 int
-strvis(dst, src, flag)
-	char *dst;
-	const char *src;
-	int flag;
+strvis(char *dst, const char *src, int flag)
 {
 	char *extra = NULL;
 	int rv;
@@ -386,16 +368,12 @@ strvis(dst, src, flag)
 	}
 	rv = strsvis(dst, src, flag, extra);
 	free(extra);
-	return (rv);
+	return rv;
 }
 
 
 int
-strvisx(dst, src, len, flag)
-	char *dst;
-	const char *src;
-	size_t len;
-	int flag;
+strvisx(char *dst, const char *src, size_t len, int flag)
 {
 	char *extra = NULL;
 	int rv;
@@ -407,6 +385,6 @@ strvisx(dst, src, len, flag)
 	}
 	rv = strsvisx(dst, src, len, flag, extra);
 	free(extra);
-	return (rv);
+	return rv;
 }
 #endif
