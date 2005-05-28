@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.165 2005/02/22 14:40:01 peter Exp $
+#	$NetBSD: bsd.README,v 1.165.2.1 2005/05/28 05:38:39 snj Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1233,6 +1233,8 @@ OBJC		Objective C compiler.  [${CC}]
 OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
 
 OBJCOPY		Copy and translate object files.  [objcopy]
+
+OBJDUMP		Display information from object files.  [objdump]
 
 RANLIB		Generate index to archive.  [ranlib]
 
