@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.7 2003/08/07 16:29:40 agc Exp $	*/
+/*	$NetBSD: int_types.h,v 1.7.14.1 2005/05/28 13:48:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef	_SPARC_INT_TYPES_H_
 #define	_SPARC_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types
