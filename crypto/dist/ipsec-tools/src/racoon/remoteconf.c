@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.1.1.3.2.1 2005/05/11 12:16:49 tron Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.1.1.3.2.2 2005/05/28 13:04:22 tron Exp $	*/
 
 /* Id: remoteconf.c,v 1.26.2.2 2005/03/16 23:18:43 manubsd Exp */
 
@@ -667,4 +667,32 @@ script_path_add(path)
 	sp[size - 2] = path;
 
 	return (size - 2);
+}
+
+struct isakmpsa *
+dupisakmpsa(sa)
+	struct isakmpsa *sa;
+{
+	struct isakmpsa *res = NULL;
+
+	if (sa == NULL)
+		return NULL;
+
+	res = newisakmpsa();
+	if(res == NULL)
+		return NULL;
+
+	*res = *sa;
+#ifdef HAVE_GSSAPI
+	/* 
+	 * XXX gssid
+	 */
+#endif
+	res->next=NULL;
+
+	if (sa->dhgrp != NULL)
+		oakley_setdhgroup(sa->dh_group, &(res->dhgrp));
+
+	return res;
+
 }
