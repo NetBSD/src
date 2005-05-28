@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.99 2005/05/28 05:42:17 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.100 2005/05/28 13:10:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8793,4 +8793,55 @@ share/mk/bsd.sys.mk				1.117
 
 	Provide a default definition of OBJDUMP - bsd.kmod.mk expects it.
 	[riz, ticket #343]
+
+sys/miscfs/kernfs/kernfs.h			1.24
+sys/miscfs/kernfs/kernfs_vnops.c		1.108
+
+	kernfs does not support mmap(), remove code that pretends that it does.
+	[chs, ticket #329]
+
+sys/kern/kern_descrip.c				1.132
+
+	Fix random panics on process exit.
+	[wrstuden, ticket #331]
+
+distrib/sets/makesrctars			1.19
+
+	Use "find |sort" instead of "find -s" -- the latter isn't POSIX.
+	[lukem, ticket #333]
+
+sys/ufs/ffs/ffs_alloc.c				1.82
+sys/ufs/ffs/ffs_snapshot.c			1.15-1.16
+sys/ufs/ufs/ufsmount.h				1.18
+
+	Various bug fixes for FFS snapshot code.
+	[hannken, ticket #334]
+
+crypto/dist/ipsec-tools/ChangeLog		1.10 via patch
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y 1.3
+
+	Fix parse bug in IPsec policies.
+	[manu, ticket #335]
+
+crypto/dist/ipsec-tools/ChangeLog		1.12 via patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c 1.2
+
+	Really delete phase 1 on Xauth failure.
+	[manu, ticket #336]
+
+crypto/dist/ipsec-tools/ChangeLog		1.9 via patch
+crypto/dist/ipsec-tools/src/racoon/handler.c	1.4
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	1.5
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c	1.3
+crypto/dist/ipsec-tools/src/racoon/remoteconf.h	1.2
+
+	When altering the lifetime, don't modify to configured proposal,
+	duplicate it instead.
+	[manu, ticket #337]
+
+sys/dev/ata/ata.c				1.69
+
+	Close a window where (disks) interrupts could be enabled while the
+	ATACH_TH_RUN flag is still set.
+	[bouyer, ticket #340]
 
