@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.101 2005/05/28 14:06:00 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.102 2005/05/28 16:29:34 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8925,4 +8925,26 @@ lib/libedit/readline/readline.h			1.14
 	+ provide a prototype for that function signature and use it
 	Makes the callback readline interface work now.
 	[agc, ticket #353]
+
+sys/arch/xen/xen/clock.c			1.12
+
+	Reset the microtime state in inittodr(), so that the next clock tick
+	will initialise the microtime state again. It was initialised at the
+	first clock tick before time of day was set. Should fix port-xen/29846.
+	Also, try harder to call microset() once a second; the clock interrupt
+	handler can be called more often than HZ in some case.
+	[bouyer, ticket #354]
+
+sys/arch/xen/i386/pmap.c			1.11 via patch
+sys/arch/xen/i386/xen_machdep.c			1.8
+sys/arch/xen/include/xenfunc.h			1.6
+sys/arch/xen/include/xenpmap.h			1.6
+sys/arch/xen/xen/if_xennet.c			1.25
+
+	Always call the xpq_queue*() functions at splvm(), so that it's safe
+	to call them from interrupt context.
+	xpq_flush_queue() is called from IPL_NET in if_xennet.c, and
+	other xpq_queue* functions may be called from interrupt context via
+	pmap_kenter*(). Should fix port-xen/30153.
+	[bouyer, ticket #355]
 
