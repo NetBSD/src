@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.152 2005/04/18 22:06:28 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.152 2005/04/18 22:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -412,14 +412,14 @@ ip_output(struct mbuf *m0, ...)
 		 * of outgoing interface.
 		 */
 		if (in_nullhost(ip->ip_src)) {
-			struct in_ifaddr *ia;
+			struct in_ifaddr *xia;
 
-			IFP_TO_IA(ifp, ia);
-			if (!ia) {
+			IFP_TO_IA(ifp, xia);
+			if (!xia) {
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
-			ip->ip_src = ia->ia_addr.sin_addr;
+			ip->ip_src = xia->ia_addr.sin_addr;
 		}
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);

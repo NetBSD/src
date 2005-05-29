@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.99 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.100 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.99 2005/05/07 17:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -302,7 +302,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 noname:
 	if (lport == 0) {
 		int	   cnt;
-		u_int16_t  min, max;
+		u_int16_t  mymin, mymax;
 		u_int16_t *lastport;
 
 		if (inp->inp_flags & INP_LOWPORT) {
@@ -310,26 +310,26 @@ noname:
 			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 				return (EACCES);
 #endif
-			min = lowportmin;
-			max = lowportmax;
+			mymin = lowportmin;
+			mymax = lowportmax;
 			lastport = &table->inpt_lastlow;
 		} else {
-			min = anonportmin;
-			max = anonportmax;
+			mymin = anonportmin;
+			mymax = anonportmax;
 			lastport = &table->inpt_lastport;
 		}
-		if (min > max) {	/* sanity check */
+		if (mymin > mymax) {	/* sanity check */
 			u_int16_t swp;
 
-			swp = min;
-			min = max;
-			max = swp;
+			swp = mymin;
+			mymin = mymax;
+			mymax = swp;
 		}
 
 		lport = *lastport - 1;
-		for (cnt = max - min + 1; cnt; cnt--, lport--) {
-			if (lport < min || lport > max)
-				lport = max;
+		for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
+			if (lport < mymin || lport > mymax)
+				lport = mymax;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), 1))
 				goto found;
@@ -409,13 +409,13 @@ in_pcbconnect(void *v, struct mbuf *nam)
 	 * destinations.
 	 */
 	if (in_nullhost(inp->inp_laddr)) {
-		int error;
+		int xerror;
 		ifaddr = in_selectsrc(sin, &inp->inp_route,
-			inp->inp_socket->so_options, inp->inp_moptions, &error);
+		    inp->inp_socket->so_options, inp->inp_moptions, &xerror);
 		if (ifaddr == NULL) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
-			return error;
+			if (xerror == 0)
+				xerror = EADDRNOTAVAIL;
+			return xerror;
 		}
 		INADDR_TO_IA(ifaddr->sin_addr, ia);
 		if (ia == NULL)
