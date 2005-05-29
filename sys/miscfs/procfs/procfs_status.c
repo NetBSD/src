@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.24 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.25 2005/05/29 21:55:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.24 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.25 2005/05/29 21:55:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ procfs_dostatus(curp, l, pfs, uio)
 	struct ucred *cr;
 	struct proc *p = l->l_proc;
 	char *ps;
-	char *sep;
+	const char *sep;
 	int pid, ppid, pgid, sid;
 	u_int i;
 	char psbuf[256+MAXHOSTNAMELEN];		/* XXX - conservative */

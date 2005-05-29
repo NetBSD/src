@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.96 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.97 2005/05/29 21:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.96 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.97 2005/05/29 21:55:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -603,10 +603,10 @@ genfs_getpages(void *v)
 	 */
 
 	for (i = 0; i < npages; i++) {
-		struct vm_page *pg = pgs[ridx + i];
+		struct vm_page *pg1 = pgs[ridx + i];
 
-		if ((pg->flags & PG_FAKE) ||
-		    (write && (pg->flags & PG_RDONLY))) {
+		if ((pg1->flags & PG_FAKE) ||
+		    (write && (pg1->flags & PG_RDONLY))) {
 			break;
 		}
 	}
@@ -625,9 +625,9 @@ genfs_getpages(void *v)
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
-			struct vm_page *pg = pgs[ridx + i];
+			struct vm_page *pg1 = pgs[ridx + i];
 
-			pg->flags &= ~(PG_RDONLY|PG_CLEAN);
+			pg1->flags &= ~(PG_RDONLY|PG_CLEAN);
 		}
 		npages += ridx;
 		goto out;
@@ -908,13 +908,13 @@ raout:
 	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
 	    PAGE_SHIFT <= 16) {
 		off_t rasize;
-		int rapages, err, i, skipped;
+		int rapages, err, j, skipped;
 
 		/* XXXUBC temp limit, from above */
 		rapages = MIN(MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD),
 		    genfs_rapages);
 		rasize = rapages << PAGE_SHIFT;
-		for (i = skipped = 0; i < genfs_racount; i++) {
+		for (j = skipped = 0; j < genfs_racount; j++) {
 
 			if (raoffset >= memeof)
 				break;
@@ -1079,7 +1079,7 @@ genfs_putpages(void *v)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
-	boolean_t wasclean, by_list, needs_clean, yield;
+	boolean_t wasclean, by_list, needs_clean, yld;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
@@ -1177,9 +1177,9 @@ genfs_putpages(void *v)
 		 * wait for it to become unbusy.
 		 */
 
-		yield = (l->l_cpu->ci_schedstate.spc_flags &
+		yld = (l->l_cpu->ci_schedstate.spc_flags &
 		    SPCF_SHOULDYIELD) && !pagedaemon;
-		if (pg->flags & PG_BUSY || yield) {
+		if (pg->flags & PG_BUSY || yld) {
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
 			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
 				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
@@ -1192,7 +1192,7 @@ genfs_putpages(void *v)
 				UVMHIST_LOG(ubchist, "curmp next %p",
 				    TAILQ_NEXT(&curmp, listq), 0,0,0);
 			}
-			if (yield) {
+			if (yld) {
 				simple_unlock(slock);
 				preempt(1);
 				simple_lock(slock);

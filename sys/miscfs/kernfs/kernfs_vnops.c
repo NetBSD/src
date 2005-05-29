@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.108 2005/05/20 13:16:54 chs Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.109 2005/05/29 21:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.108 2005/05/20 13:16:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.109 2005/05/29 21:55:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -90,8 +90,8 @@ const struct kern_target kern_targets[] = {
      { DT_DIR, N("."),         0,            KFSkern,        VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSroot,        VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KFSint,     VREG, READ_MODE  },
-			/* XXX cast away const */
-     { DT_REG, N("copyright"), (void *)copyright,
+			/* XXXUNCONST */
+     { DT_REG, N("copyright"), __UNCONST(copyright),
      					     KFSstring,      VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KFShostname,    VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KFSint,         VREG, READ_MODE  },
@@ -109,8 +109,8 @@ const struct kern_target kern_targets[] = {
      { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, READ_MODE  },
      { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KFStime,        VREG, READ_MODE  },
-			/* XXX cast away const */
-     { DT_REG, N("version"),   (void *)version,
+			/* XXXUNCONST */
+     { DT_REG, N("version"),   __UNCONST(version),
      					     KFSstring,      VREG, READ_MODE  },
 };
 const struct kern_target subdir_targets[] = {
@@ -325,7 +325,7 @@ kernfs_try_fileop(kfstype type, kfsfileop fileop, void *v, int error)
 }
 
 int
-kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *buf,
+kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *bf,
     size_t len, int error)
 {
 	struct kernfs_fileop *kf, skf;
@@ -334,7 +334,7 @@ kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *buf,
 	skf.kf_fileop = KERNFS_XWRITE;
 	if ((kf = SPLAY_FIND(kfsfileoptree, &kfsfileoptree, &skf)))
 		if (kf->kf_xwrite)
-			return kf->kf_xwrite(kfs, buf, len);
+			return kf->kf_xwrite(kfs, bf, len);
 	return error;
 }
 
@@ -528,23 +528,23 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 }
 
 static int
-kernfs_xwrite(kfs, buf, len)
+kernfs_xwrite(kfs, bf, len)
 	const struct kernfs_node *kfs;
-	char *buf;
+	char *bf;
 	size_t len;
 {
 
 	switch (kfs->kfs_type) {
 	case KFShostname:
-		if (buf[len-1] == '\n')
+		if (bf[len-1] == '\n')
 			--len;
-		memcpy(hostname, buf, len);
+		memcpy(hostname, bf, len);
 		hostname[len] = '\0';
 		hostnamelen = (size_t) len;
 		return (0);
 
 	default:
-		return kernfs_try_xwrite(kfs->kfs_type, kfs, buf, len, EIO);
+		return kernfs_try_xwrite(kfs->kfs_type, kfs, bf, len, EIO);
 	}
 }
 
@@ -816,7 +816,7 @@ kernfs_getattr(v)
 	struct kernfs_subdir *ks;
 	struct vattr *vap = ap->a_vap;
 	int error = 0;
-	char strbuf[KSTRING], *buf;
+	char strbuf[KSTRING], *bf;
 	size_t nread, total;
 
 	VATTR_NULL(vap);
@@ -878,8 +878,8 @@ kernfs_getattr(v)
 		vap->va_nlink = 1;
 		total = 0;
 		do {
-			buf = strbuf;
-			error = kernfs_xread(kfs, total, &buf,
+			bf = strbuf;
+			error = kernfs_xread(kfs, total, &bf,
 			    sizeof(strbuf), &nread);
 			total += nread;
 		} while (error == 0 && nread != 0);
@@ -930,7 +930,7 @@ kernfs_read(v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-	char strbuf[KSTRING], *buf;
+	char strbuf[KSTRING], *bf;
 	off_t off;
 	size_t len;
 	int error;
@@ -939,9 +939,9 @@ kernfs_read(v)
 		return (EOPNOTSUPP);
 
 	off = uio->uio_offset;
-	buf = strbuf;
-	if ((error = kernfs_xread(kfs, off, &buf, sizeof(strbuf), &len)) == 0)
-		error = uiomove(buf, len, uio);
+	bf = strbuf;
+	if ((error = kernfs_xread(kfs, off, &bf, sizeof(strbuf), &len)) == 0)
+		error = uiomove(bf, len, uio);
 	return (error);
 }
 
