@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.17 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.18 2005/05/29 21:27:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.17 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.18 2005/05/29 21:27:45 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -666,7 +666,7 @@ clnp_badmtu(
 	struct ifnet   *ifp,	/* outgoing interface */
 	struct rtentry *rt,	/* dst route */
 	int             line,	/* where the dirty deed occurred */
-	char           *file)	/* where the dirty deed occurred */
+	const char     *file)	/* where the dirty deed occurred */
 {
 	printf("sending on route %p with no mtu, line %d of file %s\n",
 	    rt, line, file);
