@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.42 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.43 2005/05/29 21:05:25 christos Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.42 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.43 2005/05/29 21:05:25 christos Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -160,7 +160,7 @@ coda_mount(vfsp, path, data, ndp, p)
     struct cnode *cp;
     dev_t dev;
     struct coda_mntinfo *mi;
-    struct vnode *rootvp;
+    struct vnode *rtvp;
     const struct cdevsw *cdev;
     CodaFid rootfid = INVAL_FID;
     CodaFid ctlfid = CTL_FID;
@@ -240,8 +240,8 @@ coda_mount(vfsp, path, data, ndp, p)
      * to coda_root in case a server is down while venus is starting.
      */
     cp = make_coda_node(&rootfid, vfsp, VDIR);
-    rootvp = CTOV(cp);
-    rootvp->v_flag |= VROOT;
+    rtvp = CTOV(cp);
+    rtvp->v_flag |= VROOT;
 
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
@@ -254,7 +254,7 @@ coda_mount(vfsp, path, data, ndp, p)
 
     /* Add vfs and rootvp to chain of vfs hanging off mntinfo */
     mi->mi_vfsp = vfsp;
-    mi->mi_rootvp = rootvp;
+    mi->mi_rootvp = rtvp;
 
     /* set filesystem block size */
     vfsp->mnt_stat.f_bsize = 8192;	    /* XXX -JJK */
