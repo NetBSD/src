@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.133 2005/05/05 12:08:24 manu Exp $	*/
+/*	$NetBSD: key.c,v 1.134 2005/05/29 21:29:43 christos Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.133 2005/05/05 12:08:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.134 2005/05/29 21:29:43 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -293,12 +293,12 @@ do { \
  */
 #define KEY_SETSECSPIDX(s, d, ps, pd, ulp, idx) \
 do { \
-	bzero((idx), sizeof(struct secpolicyindex));                             \
+	(void)memset((idx), 0, sizeof(struct secpolicyindex));                 \
 	(idx)->prefs = (ps);                                                 \
 	(idx)->prefd = (pd);                                                 \
 	(idx)->ul_proto = (ulp);                                             \
-	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
-	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
+	(void)memcpy(&(idx)->src, (s), ((const struct sockaddr *)(s))->sa_len);\
+	(void)memcpy(&(idx)->dst, (d), ((const struct sockaddr *)(d))->sa_len);\
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -307,12 +307,12 @@ do { \
  */
 #define KEY_SETSECASIDX(p, m, r, s, d, idx) \
 do { \
-	bzero((idx), sizeof(struct secasindex));                             \
+	(void)memset((idx), 0, sizeof(struct secasindex));                     \
 	(idx)->proto = (p);                                                  \
 	(idx)->mode = (m);                                                   \
 	(idx)->reqid = (r);                                                  \
-	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
-	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
+	(void)memcpy(&(idx)->src, (s), ((const struct sockaddr *)(s))->sa_len);\
+	(void)memcpy(&(idx)->dst, (d), ((const struct sockaddr *)(d))->sa_len);\
 } while (/*CONSTCOND*/ 0)
 
 /* key statistics */
@@ -5190,37 +5190,37 @@ key_do_getnewspi(spirange, saidx)
 	struct secasindex *saidx;
 {
 	u_int32_t newspi;
-	u_int32_t min, max;
+	u_int32_t xmin, xmax;
 	int count = key_spi_trycnt;
 
 	/* set spi range to allocate */
 	if (spirange != NULL) {
-		min = spirange->sadb_spirange_min;
-		max = spirange->sadb_spirange_max;
+		xmin = spirange->sadb_spirange_min;
+		xmax = spirange->sadb_spirange_max;
 	} else {
-		min = key_spi_minval;
-		max = key_spi_maxval;
+		xmin = key_spi_minval;
+		xmax = key_spi_maxval;
 	}
 	/* IPCOMP needs 2-byte SPI */
 	if (saidx->proto == IPPROTO_IPCOMP) {
 		u_int32_t t;
-		if (min >= 0x10000)
-			min = 0xffff;
-		if (max >= 0x10000)
-			max = 0xffff;
-		if (min > max) {
-			t = min; min = max; max = t;
+		if (xmin >= 0x10000)
+			xmin = 0xffff;
+		if (xmax >= 0x10000)
+			xmax = 0xffff;
+		if (xmin > xmax) {
+			t = xmin; xmin = xmax; xmax = t;
 		}
 	}
 
-	if (min == max) {
-		if (key_checkspidup(saidx, min) != NULL) {
-			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", min));
+	if (xmin == xmax) {
+		if (key_checkspidup(saidx, xmin) != NULL) {
+			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", xmin));
 			return 0;
 		}
 
 		count--; /* taking one cost. */
-		newspi = min;
+		newspi = xmin;
 
 	} else {
 
@@ -5230,7 +5230,7 @@ key_do_getnewspi(spirange, saidx)
 		/* when requesting to allocate spi ranged */
 		while (count--) {
 			/* generate pseudo-random SPI value ranged. */
-			newspi = min + (key_random() % (max - min + 1));
+			newspi = xmin + (key_random() % (xmax - xmin + 1));
 
 			if (key_checkspidup(saidx, newspi) == NULL)
 				break;
@@ -6186,7 +6186,7 @@ key_getcomb_ah()
 	struct sadb_comb *comb;
 	const struct ah_algorithm *algo;
 	struct mbuf *m;
-	int min;
+	int xmin;
 	int i;
 	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
 
@@ -6204,9 +6204,9 @@ key_getcomb_ah()
 		if (algo->keymax < ipsec_ah_keymin)
 			continue;
 		if (algo->keymin < ipsec_ah_keymin)
-			min = ipsec_ah_keymin;
+			xmin = ipsec_ah_keymin;
 		else
-			min = algo->keymin;
+			xmin = algo->keymin;
 
 		if (!m) {
 #ifdef DIAGNOSTIC
@@ -6228,7 +6228,7 @@ key_getcomb_ah()
 		bzero(comb, sizeof(*comb));
 		key_getcomb_setlifetime(comb);
 		comb->sadb_comb_auth = i;
-		comb->sadb_comb_auth_minbits = min;
+		comb->sadb_comb_auth_minbits = xmin;
 		comb->sadb_comb_auth_maxbits = algo->keymax;
 	}
 
@@ -7884,7 +7884,7 @@ key_validate_ext(ext, len)
 	const struct sadb_ext *ext;
 	int len;
 {
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 	enum { NONE, ADDR } checktype = NONE;
 	int baselen = 0;
 	const int sal = offsetof(struct sockaddr, sa_len) + sizeof(sa->sa_len);
@@ -7911,7 +7911,7 @@ key_validate_ext(ext, len)
 		break;
 	case SADB_EXT_IDENTITY_SRC:
 	case SADB_EXT_IDENTITY_DST:
-		if (((struct sadb_ident *)ext)->sadb_ident_type ==
+		if (((const struct sadb_ident *)ext)->sadb_ident_type ==
 		    SADB_X_IDENTTYPE_ADDR) {
 			baselen = PFKEY_ALIGN8(sizeof(struct sadb_ident));
 			checktype = ADDR;
@@ -7927,7 +7927,7 @@ key_validate_ext(ext, len)
 	case NONE:
 		break;
 	case ADDR:
-		sa = (struct sockaddr *)((caddr_t)ext + baselen);
+		sa = (const struct sockaddr *)((const char *)ext + baselen);
 		if (len < baselen + sal)
 			return EINVAL;
 		if (baselen + PFKEY_ALIGN8(sa->sa_len) != len)
