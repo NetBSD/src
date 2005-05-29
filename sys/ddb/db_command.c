@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.77 2005/04/29 10:40:16 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.78 2005/05/29 21:31:05 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.77 2005/04/29 10:40:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.78 2005/05/29 21:31:05 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -217,7 +217,7 @@ db_skip_to_eol(void)
 
 void
 db_error(s)
-	char *s;
+	const char *s;
 {
 
 	if (s)
