@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.116 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: conf.h,v 1.117 2005/05/29 21:19:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -154,7 +154,7 @@ extern	const char devioc[], devcls[];
  * Line discipline switch table
  */
 struct linesw {
-	char	*l_name;	/* Linesw name */
+	const char *l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
 	int	(*l_open)	(dev_t, struct tty *);

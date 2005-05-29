@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.176 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.177 2005/05/29 21:19:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -390,8 +390,8 @@ typedef struct cnm_state {
 
 void cn_init_magic(cnm_state_t *);
 void cn_destroy_magic(cnm_state_t *);
-int cn_set_magic(char *);
-int cn_get_magic(char *, int);
+int cn_set_magic(const char *);
+int cn_get_magic(char *, size_t);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\

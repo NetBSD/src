@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.135 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: vnode.h,v 1.136 2005/05/29 21:19:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -689,7 +689,7 @@ void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct proc *);
 int	vinvalbuf(struct vnode *, int, struct ucred *,
 	    struct proc *, int, int);
-void	vprint(char *, struct vnode *);
+void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
 void 	vrele(struct vnode *);
