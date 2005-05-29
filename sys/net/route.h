@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.39 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: route.h,v 1.40 2005/05/29 21:22:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -92,8 +92,10 @@ struct rt_metrics {
 #endif
 struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
-#define	rt_key(r)	((struct sockaddr *)((r)->rt_nodes->rn_key))
-#define	rt_mask(r)	((struct sockaddr *)((r)->rt_nodes->rn_mask))
+/*XXXUNCONST*/
+#define	rt_key(r)	((struct sockaddr *)__UNCONST((r)->rt_nodes->rn_key))
+/*XXXUNCONST*/
+#define	rt_mask(r)	((struct sockaddr *)__UNCONST((r)->rt_nodes->rn_mask))
 	struct	sockaddr *rt_gateway;	/* value */
 	int	rt_flags;		/* up/down?, host/net */
 	int	rt_refcnt;		/* # held references */

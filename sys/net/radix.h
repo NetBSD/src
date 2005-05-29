@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.14 2004/04/21 21:03:43 matt Exp $	*/
+/*	$NetBSD: radix.h,v 1.15 2005/05/29 21:22:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -129,11 +129,11 @@ struct radix_node_head {
 
 
 #ifdef _KERNEL
-#define Bcmp(a, b, n) bcmp(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
-#define Bcopy(a, b, n) bcopy(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
-#define Bzero(p, n) bzero((caddr_t)(p), (unsigned)(n));
+#define Bcmp(a, b, n) ((n) == 0 ? 0 : memcmp((a), (b), (n)))
+#define Bcopy(a, b, n) memmove((b), (a), (n))
+#define Bzero(p, n) memset((p), 0, (n));
 #define R_Malloc(p, t, n) (p = (t) malloc((size_t)(n), M_RTABLE, M_NOWAIT))
-#define Free(p) free((caddr_t)p, M_RTABLE);
+#define Free(p) free(p, M_RTABLE);
 #endif /*_KERNEL*/
 
 void	 rn_init(void);

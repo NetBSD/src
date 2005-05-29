@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.51 2005/05/20 16:23:05 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.52 2005/05/29 21:22:52 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.51 2005/05/20 16:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.52 2005/05/29 21:22:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -538,8 +538,8 @@ gif_input(m, af, ifp)
 		eh = mtod(m, struct ether_header *);
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 		if (eh->ether_dhost[0] & 1) {
-			if (bcmp((caddr_t) etherbroadcastaddr,
-			    (caddr_t)eh->ether_dhost, sizeof(etherbroadcastaddr)) == 0)
+			if (memcmp(etherbroadcastaddr,
+			    eh->ether_dhost, sizeof(etherbroadcastaddr)) == 0)
 				m->m_flags |= M_BCAST;
 			else
 				m->m_flags |= M_MCAST;

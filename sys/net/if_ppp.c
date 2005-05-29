@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.100 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.101 2005/05/29 21:22:52 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.100 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101 2005/05/29 21:22:52 christos Exp $");
 
 #include "ppp.h"
 
@@ -521,13 +521,13 @@ pppioctl(sc, cmd, data, flag, p)
     case PPPIOCGRAWIN:
 	{
 	    struct ppp_rawin *rwin = (struct ppp_rawin *)data;
-	    u_char p, q = 0;
+	    u_char c, q = 0;
 
-	    for (p = sc->sc_rawin_start; p < sizeof(sc->sc_rawin.buf);)
-		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+	    for (c = sc->sc_rawin_start; c < sizeof(sc->sc_rawin.buf);)
+		rwin->buf[q++] = sc->sc_rawin.buf[c++];
 
-	    for (p = 0; p < sc->sc_rawin_start;)
-		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+	    for (c = 0; c < sc->sc_rawin_start;)
+		rwin->buf[q++] = sc->sc_rawin.buf[c++];
 
 	    rwin->count = sc->sc_rawin.count;
 	}

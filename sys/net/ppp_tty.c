@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.36 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.37 2005/05/29 21:22:53 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.36 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.37 2005/05/29 21:22:53 christos Exp $");
 
 #include "ppp.h"
 
@@ -1255,11 +1255,11 @@ pppdumpb(b, l)
     u_char *b;
     int l;
 {
-    char buf[3*MAX_DUMP_BYTES+4];
-    char *bp = buf;
+    char bf[3*MAX_DUMP_BYTES+4];
+    char *bp = bf;
 
     while (l--) {
-	if (bp >= buf + sizeof(buf) - 3) {
+	if (bp >= bf + sizeof(bf) - 3) {
 	    *bp++ = '>';
 	    break;
 	}
@@ -1269,7 +1269,7 @@ pppdumpb(b, l)
     }
 
     *bp = 0;
-    printf("%s\n", buf);
+    printf("%s\n", bf);
 }
 
 static void

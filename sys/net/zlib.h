@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.8 2005/02/26 22:45:09 perry Exp $ */
+/* $NetBSD: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.8 2005/02/26 22:45:09 perry Exp $ */
+/* @(#) $Id: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -365,7 +365,7 @@ typedef struct z_stream_s {
     uInt     avail_out; /* remaining free space at next_out */
     uLong    total_out; /* total nb of bytes output so far */
 
-    char     *msg;      /* last error message, NULL if no error */
+    const char *msg;      /* last error message, NULL if no error */
     struct internal_state FAR *state; /* not visible by applications */
 
     alloc_func zalloc;  /* used to allocate the internal state */
