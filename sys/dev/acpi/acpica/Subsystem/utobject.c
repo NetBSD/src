@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.13 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.14 2005/05/29 20:56:02 christos Exp $");
 
 #define __UTOBJECT_C__
 
@@ -170,7 +170,7 @@ AcpiUtGetElementLength (
 
 ACPI_OPERAND_OBJECT  *
 AcpiUtCreateInternalObjectDbg (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
     ACPI_OBJECT_TYPE        Type)
@@ -415,7 +415,7 @@ AcpiUtValidInternalObject (
 
 void *
 AcpiUtAllocateObjectDescDbg (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {

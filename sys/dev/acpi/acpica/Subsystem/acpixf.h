@@ -220,7 +220,7 @@ AcpiGetTable (
 
 ACPI_STATUS
 AcpiGetFirmwareTable (
-    ACPI_STRING             Signature,
+    ACPI_CONST_STRING       Signature,
     UINT32                  Instance,
     UINT32                  Flags,
     ACPI_TABLE_HEADER       **TablePointer);
@@ -254,7 +254,7 @@ AcpiGetName (
 ACPI_STATUS
 AcpiGetHandle (
     ACPI_HANDLE             Parent,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_HANDLE             *RetHandle);
 
 ACPI_STATUS
@@ -281,14 +281,14 @@ AcpiGetData (
 ACPI_STATUS
 AcpiEvaluateObject (
     ACPI_HANDLE             Object,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ParameterObjects,
     ACPI_BUFFER             *ReturnObjectBuffer);
 
 ACPI_STATUS
 AcpiEvaluateObjectTyped (
     ACPI_HANDLE             Object,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ExternalParams,
     ACPI_BUFFER             *ReturnBuffer,
     ACPI_OBJECT_TYPE        ReturnType);
@@ -472,7 +472,7 @@ AcpiGetPossibleResources(
 ACPI_STATUS
 AcpiWalkResources (
     ACPI_HANDLE                     DeviceHandle,
-    char                            *Path,
+    const char                      *Path,
     ACPI_WALK_RESOURCE_CALLBACK     UserFunction,
     void                            *Context);
 

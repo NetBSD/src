@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.10 2004/06/07 17:35:14 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.11 2005/05/29 20:56:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.10 2004/06/07 17:35:14 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.11 2005/05/29 20:56:02 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,13 +92,13 @@ int acpi_indebugger;
  *	Break to the debugger or display a breakpoint message.
  */
 ACPI_STATUS
-AcpiOsSignal(UINT32 Function, void *Info)
+AcpiOsSignal(UINT32 Function, const void *Info)
 {
 
 	switch (Function) {
 	case ACPI_SIGNAL_FATAL:
 	    {
-		ACPI_SIGNAL_FATAL_INFO *info = Info;
+		const ACPI_SIGNAL_FATAL_INFO *info = Info;
 
 		panic("ACPI fatal signal: "
 		    "Type 0x%08x, Code 0x%08x, Argument 0x%08x",

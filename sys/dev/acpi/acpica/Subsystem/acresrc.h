@@ -141,7 +141,7 @@ AcpiRsGetPrsMethodData (
 ACPI_STATUS
 AcpiRsGetMethodData (
     ACPI_HANDLE             Handle,
-    char                    *Path,
+    const char              *Path,
     ACPI_BUFFER             *RetBuffer);
 
 ACPI_STATUS

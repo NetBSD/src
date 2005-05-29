@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.12 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
 
 #define __TBXFROOT_C__
 
@@ -247,7 +247,7 @@ AcpiTbFindTable (
 
 ACPI_STATUS
 AcpiGetFirmwareTable (
-    ACPI_STRING             Signature,
+    ACPI_CONST_STRING       Signature,
     UINT32                  Instance,
     UINT32                  Flags,
     ACPI_TABLE_HEADER       **TablePointer)

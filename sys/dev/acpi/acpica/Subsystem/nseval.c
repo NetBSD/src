@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.12 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
 
 #define __NSEVAL_C__
 
@@ -164,7 +164,7 @@ AcpiNsGetObjectValue (
 
 ACPI_STATUS
 AcpiNsEvaluateRelative (
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_PARAMETER_INFO     *Info)
 {
     ACPI_STATUS             Status;
@@ -274,7 +274,7 @@ Cleanup1:
 
 ACPI_STATUS
 AcpiNsEvaluateByName (
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_PARAMETER_INFO     *Info)
 {
     ACPI_STATUS             Status;

@@ -344,6 +344,7 @@ typedef struct acpi_pointer
 typedef UINT32                          ACPI_STATUS;    /* All ACPI Exceptions */
 typedef UINT32                          ACPI_NAME;      /* 4-byte ACPI name */
 typedef char *                          ACPI_STRING;    /* Null terminated ASCII string */
+typedef const char *                    ACPI_CONST_STRING;    /* Null terminated ASCII string */
 typedef void *                          ACPI_HANDLE;    /* Actually a ptr to an Node */
 
 typedef struct uint64_struct

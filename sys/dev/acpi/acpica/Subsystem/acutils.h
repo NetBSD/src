@@ -161,27 +161,27 @@ AcpiUtGetMutexName (
 
 #endif
 
-char *
+const char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type);
 
-char *
+const char *
 AcpiUtGetNodeName (
     void                    *Object);
 
-char *
+const char *
 AcpiUtGetDescriptorName (
     void                    *Object);
 
-char *
+const char *
 AcpiUtGetObjectTypeName (
     ACPI_OPERAND_OBJECT     *ObjDesc);
 
-char *
+const char *
 AcpiUtGetRegionName (
     UINT8                   SpaceId);
 
-char *
+const char *
 AcpiUtGetEventName (
     UINT32                  EventId);
 
@@ -425,19 +425,19 @@ AcpiUtPtrExit (
 
 void
 AcpiUtReportInfo (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId);
 
 void
 AcpiUtReportError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId);
 
 void
 AcpiUtReportWarning (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId);
 
@@ -499,13 +499,13 @@ AcpiUtOsiImplementation (
 ACPI_STATUS
 AcpiUtEvaluateObject (
     ACPI_NAMESPACE_NODE     *PrefixNode,
-    char                    *Path,
+    const char              *Path,
     UINT32                  ExpectedReturnBtypes,
     ACPI_OPERAND_OBJECT     **ReturnDesc);
 
 ACPI_STATUS
 AcpiUtEvaluateNumericObject (
-    char                    *ObjectName,
+    const char              *ObjectName,
     ACPI_NAMESPACE_NODE     *DeviceNode,
     ACPI_INTEGER            *Address);
 
@@ -540,14 +540,14 @@ AcpiUtExecute_Sxds (
  */
 ACPI_OPERAND_OBJECT  *
 AcpiUtCreateInternalObjectDbg (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
     ACPI_OBJECT_TYPE        Type);
 
 void *
 AcpiUtAllocateObjectDescDbg (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId);
 
@@ -768,14 +768,14 @@ void *
 AcpiUtAllocate (
     ACPI_SIZE               Size,
     UINT32                  Component,
-    char                    *Module,
+    const char              *Module,
     UINT32                  Line);
 
 void *
 AcpiUtCallocate (
     ACPI_SIZE               Size,
     UINT32                  Component,
-    char                    *Module,
+    const char              *Module,
     UINT32                  Line);
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
@@ -783,21 +783,21 @@ void *
 AcpiUtAllocateAndTrack (
     ACPI_SIZE               Size,
     UINT32                  Component,
-    char                    *Module,
+    const char              *Module,
     UINT32                  Line);
 
 void *
 AcpiUtCallocateAndTrack (
     ACPI_SIZE               Size,
     UINT32                  Component,
-    char                    *Module,
+    const char              *Module,
     UINT32                  Line);
 
 void
 AcpiUtFreeAndTrack (
     void                    *Address,
     UINT32                  Component,
-    char                    *Module,
+    const char              *Module,
     UINT32                  Line);
 
 void
@@ -807,7 +807,7 @@ AcpiUtDumpAllocationInfo (
 void
 AcpiUtDumpAllocations (
     UINT32                  Component,
-    char                    *Module);
+    const char              *Module);
 #endif
 
 #endif /* _ACUTILS_H */
