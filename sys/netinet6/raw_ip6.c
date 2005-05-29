@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.71 2005/03/11 06:16:16 atatat Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.71 2005/03/11 06:16:16 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -318,7 +318,7 @@ rip6_ctlinput(cmd, sa, d)
 		 */
 		in6p = NULL;
 		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
-		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
+		    (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
 #if 0
 		if (!in6p) {
 			/*
@@ -356,7 +356,7 @@ rip6_ctlinput(cmd, sa, d)
 	}
 
 	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
-	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 }
 
 /*
