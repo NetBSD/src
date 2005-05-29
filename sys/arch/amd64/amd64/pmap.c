@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2005/05/17 15:14:47 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2005/05/29 15:56:59 chs Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/05/17 15:14:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2005/05/29 15:56:59 chs Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3273,6 +3273,11 @@ enter_now:
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	ptes[pl1_i(va)] = npte;		/* zap! */
 

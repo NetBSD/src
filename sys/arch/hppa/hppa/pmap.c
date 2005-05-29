@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2005/05/07 15:54:46 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2005/05/29 15:56:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2005/05/07 15:54:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2005/05/29 15:56:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1350,6 +1350,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	tlbprot = pmap_prot(pmap, prot) | pmap->pmap_pid;
 	if (wired)
 		tlbprot |= TLB_WIRED;
+	if (flags & VM_PROT_ALL) {
+		tlbprot |= TLB_REF;
+		if (flags & VM_PROT_WRITE)
+			tlbprot |= TLB_DIRTY;
+	}
 
 #ifdef PMAPDEBUG
 	if (!pmap_initialized || (pmapdebug & PDB_ENTER))
