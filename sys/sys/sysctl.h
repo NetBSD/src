@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.134 2005/05/19 20:16:19 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.135 2005/05/29 21:19:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -926,7 +926,7 @@ struct sysctllog;
  * infrastructure is retained for backwards compatibility.
  */
 struct ctldebug {
-	char	*debugname;	/* name of debugging variable */
+	const char *debugname;	/* name of debugging variable */
 	int	*debugvar;	/* pointer to debugging variable */
 };
 #ifdef	DEBUG
@@ -1192,8 +1192,8 @@ struct sysctldesc {
 
 #define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
 #define __sysc_desc_adv(d, l) \
-	(/*LINTED ptr cast*/(struct sysctldesc *) \
-	(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
+	(/*XXXUNCONST ptr cast*/(struct sysctldesc *) \
+	__UNCONST(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) +\
 		__sysc_desc_roundup(l)))
 #define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 

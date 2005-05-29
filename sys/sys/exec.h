@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.106 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: exec.h,v 1.107 2005/05/29 21:19:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -146,7 +146,7 @@ struct execsw {
 		int (*elf_probe_func)(struct proc *,
 			struct exec_package *, void *, char *, vaddr_t *);
 		int (*ecoff_probe_func)(struct proc *, struct exec_package *);
-		int (*mach_probe_func)(char **);
+		int (*mach_probe_func)(const char **);
 	} u;
 	const struct  emul *es_emul;	/* os emulation */
 	int	es_prio;		/* entry priority */
