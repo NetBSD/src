@@ -373,7 +373,7 @@ AcpiOsGetTimer (
 ACPI_STATUS
 AcpiOsSignal (
     UINT32                  Function,
-    void                    *Info);
+    const void              *Info);
 
 /*
  * Debug print routines

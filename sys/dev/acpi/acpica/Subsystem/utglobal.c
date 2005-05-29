@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.12 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -509,7 +509,7 @@ const char        *AcpiGbl_RegionTypes[ACPI_NUM_PREDEFINED_REGIONS] =
 };
 
 
-char *
+const char *
 AcpiUtGetRegionName (
     UINT8                   SpaceId)
 {
@@ -523,7 +523,7 @@ AcpiUtGetRegionName (
         return ("InvalidSpaceId");
     }
 
-    return ((char *) AcpiGbl_RegionTypes[SpaceId]);
+    return (AcpiGbl_RegionTypes[SpaceId]);
 }
 
 
@@ -551,7 +551,7 @@ static const char        *AcpiGbl_EventTypes[ACPI_NUM_FIXED_EVENTS] =
 };
 
 
-char *
+const char *
 AcpiUtGetEventName (
     UINT32                  EventId)
 {
@@ -561,7 +561,7 @@ AcpiUtGetEventName (
         return ("InvalidEventID");
     }
 
-    return ((char *) AcpiGbl_EventTypes[EventId]);
+    return (AcpiGbl_EventTypes[EventId]);
 }
 
 
@@ -625,21 +625,21 @@ static const char           *AcpiGbl_NsTypeNames[] =
 };
 
 
-char *
+const char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type)
 {
 
     if (Type > ACPI_TYPE_INVALID)
     {
-        return ((char *) AcpiGbl_BadType);
+        return (AcpiGbl_BadType);
     }
 
-    return ((char *) AcpiGbl_NsTypeNames[Type]);
+    return (AcpiGbl_NsTypeNames[Type]);
 }
 
 
-char *
+const char *
 AcpiUtGetObjectTypeName (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
@@ -665,7 +665,7 @@ AcpiUtGetObjectTypeName (
  *
  ******************************************************************************/
 
-char *
+const char *
 AcpiUtGetNodeName (
     void                    *Object)
 {
@@ -742,7 +742,7 @@ static const char           *AcpiGbl_DescTypeNames[] =
 };
 
 
-char *
+const char *
 AcpiUtGetDescriptorName (
     void                    *Object)
 {
@@ -754,10 +754,10 @@ AcpiUtGetDescriptorName (
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
     {
-        return ((char *) AcpiGbl_BadType);
+        return (AcpiGbl_BadType);
     }
 
-    return ((char *) AcpiGbl_DescTypeNames[ACPI_GET_DESCRIPTOR_TYPE (Object)]);
+    return (AcpiGbl_DescTypeNames[ACPI_GET_DESCRIPTOR_TYPE (Object)]);
 
 }
 

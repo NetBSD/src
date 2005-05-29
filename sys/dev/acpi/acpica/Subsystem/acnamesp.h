@@ -211,7 +211,7 @@ AcpiNsRootInitialize (
 ACPI_STATUS
 AcpiNsLookup (
     ACPI_GENERIC_STATE      *ScopeInfo,
-    char                    *Name,
+    const char              *Name,
     ACPI_OBJECT_TYPE        Type,
     ACPI_INTERPRETER_MODE   InterpreterMode,
     UINT32                  Flags,
@@ -302,12 +302,12 @@ AcpiNsEvaluateByHandle (
 
 ACPI_STATUS
 AcpiNsEvaluateByName (
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_PARAMETER_INFO     *Info);
 
 ACPI_STATUS
 AcpiNsEvaluateRelative (
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_PARAMETER_INFO     *Info);
 
 
@@ -334,11 +334,11 @@ AcpiNsHandleToPathname (
 BOOLEAN
 AcpiNsPatternMatch (
     ACPI_NAMESPACE_NODE     *ObjNode,
-    char                    *SearchFor);
+    const char              *SearchFor);
 
 ACPI_STATUS
 AcpiNsGetNodeByPath (
-    char                    *ExternalPathname,
+    const char              *ExternalPathname,
     ACPI_NAMESPACE_NODE     *InPrefixNode,
     UINT32                  Flags,
     ACPI_NAMESPACE_NODE     **OutNode);
@@ -428,26 +428,26 @@ AcpiNsLocal (
 
 void
 AcpiNsReportError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
-    char                    *InternalName,
+    const char              *InternalName,
     ACPI_STATUS             LookupStatus);
 
 void
 AcpiNsReportMethodError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
-    char                    *Message,
+    const char              *Message,
     ACPI_NAMESPACE_NODE     *Node,
-    char                    *Path,
+    const char              *Path,
     ACPI_STATUS             LookupStatus);
 
 void
 AcpiNsPrintNodePathname (
     ACPI_NAMESPACE_NODE     *Node,
-    char                    *Msg);
+    const char              *Msg);
 
 ACPI_STATUS
 AcpiNsBuildInternalName (
@@ -459,13 +459,13 @@ AcpiNsGetInternalNameLength (
 
 ACPI_STATUS
 AcpiNsInternalizeName (
-    char                    *DottedName,
+    const char              *DottedName,
     char                    **ConvertedName);
 
 ACPI_STATUS
 AcpiNsExternalizeName (
     UINT32                  InternalNameLength,
-    char                    *InternalName,
+    const char              *InternalName,
     UINT32                  *ConvertedNameLength,
     char                    **ConvertedName);
 

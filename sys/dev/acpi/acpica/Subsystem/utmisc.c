@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __UTMISC_C__
 
@@ -1621,7 +1621,7 @@ AcpiUtGetResourceEndTag (
 
 void
 AcpiUtReportError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {
@@ -1646,7 +1646,7 @@ AcpiUtReportError (
 
 void
 AcpiUtReportWarning (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {
@@ -1671,7 +1671,7 @@ AcpiUtReportWarning (
 
 void
 AcpiUtReportInfo (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {

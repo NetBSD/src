@@ -334,9 +334,9 @@ typedef struct acpi_ns_search_data
  */
 typedef struct acpi_predefined_names
 {
-    char                    *Name;
+    const char              *Name;
     UINT8                   Type;
-    char                    *Val;
+    const char              *Val;
 
 } ACPI_PREDEFINED_NAMES;
 
@@ -351,8 +351,8 @@ typedef struct acpi_predefined_names
 
 typedef struct acpi_namestring_info
 {
-    char                    *ExternalName;
-    char                    *NextExternalChar;
+    const char              *ExternalName;
+    const char              *NextExternalChar;
     char                    *InternalName;
     UINT32                  Length;
     UINT32                  NumSegments;

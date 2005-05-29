@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.1 2004/05/26 17:15:17 kochi Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.2 2005/05/29 20:56:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.1 2004/05/26 17:15:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.2 2005/05/29 20:56:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -298,7 +298,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	ACPI_BUFFER			reslist_buffer;
 	ACPI_OBJECT			*reslist_object;
 	ACPI_STATUS			status;
-	char				*method_name, *reslist_name;
+	const char				*method_name, *reslist_name;
 	int				res_changed;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);

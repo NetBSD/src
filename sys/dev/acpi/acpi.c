@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.69 2005/05/02 14:53:59 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.70 2005/05/29 20:56:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.69 2005/05/02 14:53:59 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.70 2005/05/29 20:56:02 christos Exp $");
 
 #include "opt_acpi.h"
 
@@ -430,7 +430,7 @@ acpi_build_tree(struct acpi_softc *sc)
 
 		state.scope = as;
 
-		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, (char *) scopes[i],
+		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, scopes[i],
 		    &parent);
 		if (ACPI_SUCCESS(rv)) {
 			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
@@ -651,7 +651,7 @@ acpi_print(void *aux, const char *pnp)
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			aprint_normal(" (%s", aa->aa_node->ad_devinfo->HardwareId.Value);
 			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
-				char *uid;
+				const char *uid;
 
 				uid = aa->aa_node->ad_devinfo->UniqueId.Value;
 				if (uid[0] == '\0')
@@ -786,7 +786,7 @@ acpi_fixed_button_pressed(void *context)
  *	Evaluate an integer object.
  */
 ACPI_STATUS
-acpi_eval_integer(ACPI_HANDLE handle, char *path, ACPI_INTEGER *valp)
+acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -811,7 +811,7 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, ACPI_INTEGER *valp)
  *	Evaluate a (Unicode) string object.
  */
 ACPI_STATUS
-acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
+acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -845,7 +845,7 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
  *	Caller must free buf.Pointer by AcpiOsFree().
  */
 ACPI_STATUS
-acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
+acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *bufp)
 {
 	ACPI_STATUS rv;
 

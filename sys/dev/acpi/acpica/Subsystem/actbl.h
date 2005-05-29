@@ -403,8 +403,8 @@ typedef struct smart_battery_table
 
 typedef struct acpi_table_support
 {
-    char                    *Name;
-    char                    *Signature;
+    const char              *Name;
+    const char              *Signature;
     void                    **GlobalPtr;
     UINT8                   SigLength;
     UINT8                   Flags;

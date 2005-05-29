@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __UTEVAL_C__
 
@@ -187,7 +187,7 @@ AcpiUtOsiImplementation (
     for (i = 0; i < ACPI_NUM_OSI_STRINGS; i++)
     {
         if (!ACPI_STRCMP (StringDesc->String.Pointer,
-                            (char *) AcpiGbl_ValidOsiStrings[i]))
+                            AcpiGbl_ValidOsiStrings[i]))
         {
             /* This string is supported */
 
@@ -223,7 +223,7 @@ AcpiUtOsiImplementation (
 ACPI_STATUS
 AcpiUtEvaluateObject (
     ACPI_NAMESPACE_NODE     *PrefixNode,
-    char                    *Path,
+    const char              *Path,
     UINT32                  ExpectedReturnBtypes,
     ACPI_OPERAND_OBJECT     **ReturnDesc)
 {
@@ -354,7 +354,7 @@ AcpiUtEvaluateObject (
 
 ACPI_STATUS
 AcpiUtEvaluateNumericObject (
-    char                    *ObjectName,
+    const char              *ObjectName,
     ACPI_NAMESPACE_NODE     *DeviceNode,
     ACPI_INTEGER            *Address)
 {
@@ -791,7 +791,7 @@ AcpiUtExecute_Sxds (
     {
         Highest[i] = 0xFF;
         Status = AcpiUtEvaluateObject (DeviceNode,
-                    (char *) AcpiGbl_HighestDstateNames[i],
+                    AcpiGbl_HighestDstateNames[i],
                     ACPI_BTYPE_INTEGER, &ObjDesc);
         if (ACPI_FAILURE (Status))
         {
@@ -799,7 +799,7 @@ AcpiUtExecute_Sxds (
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
                     "%s on Device %4.4s, %s\n",
-                    (char *) AcpiGbl_HighestDstateNames[i],
+                    AcpiGbl_HighestDstateNames[i],
                     AcpiUtGetNodeName (DeviceNode),
                     AcpiFormatException (Status)));
 

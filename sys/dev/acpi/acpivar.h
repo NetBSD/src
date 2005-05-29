@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.21 2005/05/02 14:54:00 kochi Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.22 2005/05/29 20:56:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -262,9 +262,9 @@ int		acpi_probe(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, ACPI_INTEGER *);
-ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
-ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
+ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
+ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
+ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
 
 ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
 		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
@@ -272,7 +272,7 @@ ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
 const char*	acpi_name(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, char *,
+ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);

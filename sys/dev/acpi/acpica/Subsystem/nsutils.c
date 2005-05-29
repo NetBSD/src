@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.12 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
 
 #define __NSUTILS_C__
 
@@ -159,10 +159,10 @@ AcpiNsFindParentName (
 
 void
 AcpiNsReportError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
-    char                    *InternalName,
+    const char              *InternalName,
     ACPI_STATUS             LookupStatus)
 {
     ACPI_STATUS             Status;
@@ -177,7 +177,7 @@ AcpiNsReportError (
         /* There is a non-ascii character in the name */
 
         AcpiOsPrintf ("[0x%4.4X] (NON-ASCII)\n",
-            *(ACPI_CAST_PTR (UINT32, InternalName)));
+            *(ACPI_CAST_CONST_PTR (UINT32, InternalName)));
     }
     else
     {
@@ -228,12 +228,12 @@ AcpiNsReportError (
 
 void
 AcpiNsReportMethodError (
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
-    char                    *Message,
+    const char              *Message,
     ACPI_NAMESPACE_NODE     *PrefixNode,
-    char                    *Path,
+    const char              *Path,
     ACPI_STATUS             MethodStatus)
 {
     ACPI_STATUS             Status;
@@ -272,7 +272,7 @@ AcpiNsReportMethodError (
 void
 AcpiNsPrintNodePathname (
     ACPI_NAMESPACE_NODE     *Node,
-    char                    *Message)
+    const char              *Message)
 {
     ACPI_BUFFER             Buffer;
     ACPI_STATUS             Status;
@@ -423,7 +423,7 @@ void
 AcpiNsGetInternalNameLength (
     ACPI_NAMESTRING_INFO    *Info)
 {
-    char                    *NextExternalChar;
+    const char              *NextExternalChar;
     UINT32                  i;
 
 
@@ -502,7 +502,7 @@ AcpiNsBuildInternalName (
 {
     UINT32                  NumSegments = Info->NumSegments;
     char                    *InternalName = Info->InternalName;
-    char                    *ExternalName = Info->NextExternalChar;
+    const char              *ExternalName = Info->NextExternalChar;
     char                    *Result = NULL;
     ACPI_NATIVE_UINT        i;
 
@@ -636,7 +636,7 @@ AcpiNsBuildInternalName (
 
 ACPI_STATUS
 AcpiNsInternalizeName (
-    char                    *ExternalName,
+    const char 	            *ExternalName,
     char                    **ConvertedName)
 {
     char                    *InternalName;
@@ -702,7 +702,7 @@ AcpiNsInternalizeName (
 ACPI_STATUS
 AcpiNsExternalizeName (
     UINT32                  InternalNameLength,
-    char                    *InternalName,
+    const char              *InternalName,
     UINT32                  *ConvertedNameLength,
     char                    **ConvertedName)
 {
@@ -1052,7 +1052,7 @@ AcpiNsOpensScope (
 
 ACPI_STATUS
 AcpiNsGetNodeByPath (
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_NAMESPACE_NODE     *StartNode,
     UINT32                  Flags,
     ACPI_NAMESPACE_NODE     **ReturnNode)

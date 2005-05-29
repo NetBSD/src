@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __RSXFACE_C__
 
@@ -333,7 +333,7 @@ AcpiGetPossibleResources (
 ACPI_STATUS
 AcpiWalkResources (
     ACPI_HANDLE                     DeviceHandle,
-    char                            *Path,
+    const char                      *Path,
     ACPI_WALK_RESOURCE_CALLBACK     UserFunction,
     void                            *Context)
 {

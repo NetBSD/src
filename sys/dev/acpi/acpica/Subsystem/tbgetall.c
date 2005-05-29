@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.6 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.7 2005/05/29 20:56:02 christos Exp $");
 
 #define __TBGETALL_C__
 
@@ -136,7 +136,7 @@ AcpiTbGetPrimaryTable (
 static ACPI_STATUS
 AcpiTbGetSecondaryTable (
     ACPI_POINTER            *Address,
-    ACPI_STRING             Signature,
+    ACPI_CONST_STRING       Signature,
     ACPI_TABLE_DESC         *TableInfo);
 
 
@@ -226,7 +226,7 @@ AcpiTbGetPrimaryTable (
 static ACPI_STATUS
 AcpiTbGetSecondaryTable (
     ACPI_POINTER            *Address,
-    ACPI_STRING             Signature,
+    ACPI_CONST_STRING       Signature,
     ACPI_TABLE_DESC         *TableInfo)
 {
     ACPI_STATUS             Status;

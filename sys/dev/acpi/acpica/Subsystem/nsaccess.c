@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __NSACCESS_C__
 
@@ -221,7 +221,8 @@ AcpiNsRootInitialize (
 
             if (!Val)
             {
-                Val = InitVal->Val;
+		/*XXXUNCONST*/
+                Val = (void *)(intptr_t)InitVal->Val;
             }
 
             /*
@@ -380,7 +381,7 @@ UnlockAndExit:
 ACPI_STATUS
 AcpiNsLookup (
     ACPI_GENERIC_STATE      *ScopeInfo,
-    char                    *Pathname,
+    const char              *Pathname,
     ACPI_OBJECT_TYPE        Type,
     ACPI_INTERPRETER_MODE   InterpreterMode,
     UINT32                  Flags,
@@ -388,7 +389,7 @@ AcpiNsLookup (
     ACPI_NAMESPACE_NODE     **ReturnNode)
 {
     ACPI_STATUS             Status;
-    char                    *Path = Pathname;
+    const char              *Path = Pathname;
     ACPI_NAMESPACE_NODE     *PrefixNode;
     ACPI_NAMESPACE_NODE     *CurrentNode = NULL;
     ACPI_NAMESPACE_NODE     *ThisNode = NULL;

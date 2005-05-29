@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfeval.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfeval.c,v 1.7 2005/05/29 20:56:02 christos Exp $");
 
 #define __NSXFEVAL_C__
 
@@ -154,7 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsxfeval.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
 ACPI_STATUS
 AcpiEvaluateObjectTyped (
     ACPI_HANDLE             Handle,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ExternalParams,
     ACPI_BUFFER             *ReturnBuffer,
     ACPI_OBJECT_TYPE        ReturnType)
@@ -253,7 +253,7 @@ AcpiEvaluateObjectTyped (
 ACPI_STATUS
 AcpiEvaluateObject (
     ACPI_HANDLE             Handle,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ExternalParams,
     ACPI_BUFFER             *ReturnBuffer)
 {
