@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.15 2005/01/08 03:11:03 yamt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.16 2005/05/29 21:52:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.15 2005/01/08 03:11:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16 2005/05/29 21:52:30 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -128,7 +128,7 @@ aarptimer(ignored)
  */
 struct ifaddr *
 at_ifawithnet(sat, ifp)
-	struct sockaddr_at *sat;
+	const struct sockaddr_at *sat;
 	struct ifnet *ifp;
 {
 	struct ifaddr  *ifa;
