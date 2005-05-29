@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.26 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.27 2005/05/29 22:16:00 christos Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.26 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.27 2005/05/29 22:16:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -860,7 +860,7 @@ default_chip_map(sc, pa)
 	struct ata_drive_datas *drvp;
 	u_int8_t idedma_ctl;
 	bus_size_t cmdsize, ctlsize;
-	char *failreason;
+	const char *failreason;
 	struct wdc_regs *wdr;
 
 	if (pciide_chipen(sc, pa) == 0)
