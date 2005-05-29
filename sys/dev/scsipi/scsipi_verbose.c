@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.26 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.27 2005/05/29 22:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.26 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.27 2005/05/29 22:00:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -82,7 +82,7 @@ static const char *sense_keys[16] = {
 static const struct {
 	unsigned char asc;
 	unsigned char ascq;
-	char *description;
+	const char *description;
 } adesc[] = {
 { 0x00, 0x00, "No Additional Sense Information" },
 { 0x00, 0x01, "Filemark Detected" },
