@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.33 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.34 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.33 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.34 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.33 2005/02/26 22:32:20 perry Exp $")
 /*
  * Quota name to error message mapping.
  */
-static char *quotatypes[] = INITQFNAMES;
+static const char *quotatypes[] = INITQFNAMES;
 
 /*
  * Set up the quotas for an inode.

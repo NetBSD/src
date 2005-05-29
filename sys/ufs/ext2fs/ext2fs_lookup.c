@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.32 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.33 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.32 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.33 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -740,7 +740,7 @@ ext2fs_dirbadentry(dp, de, entryoffsetinblock)
 	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
-		char * error_msg = NULL;
+		const char *error_msg = NULL;
 		int reclen = fs2h16(de->e2d_reclen);
 		int namlen = de->e2d_namlen;
 
