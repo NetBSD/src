@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.2 2005/05/29 21:00:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -74,8 +74,8 @@ int ntfs_procfixups __P(( struct ntfsmount *, u_int32_t, caddr_t, size_t ));
 int ntfs_parserun __P(( cn_t *, cn_t *, u_int8_t *, u_long, u_long *));
 int ntfs_runtocn __P(( cn_t *, struct ntfsmount *, u_int8_t *, u_long, cn_t));
 int ntfs_readntvattr_plain __P(( struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *,size_t *, struct uio *));
-int ntfs_readattr_plain __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *,size_t *, struct uio *));
-int ntfs_readattr __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, struct uio *));
+int ntfs_readattr_plain __P(( struct ntfsmount *, struct ntnode *, u_int32_t, const char *, off_t, size_t, void *,size_t *, struct uio *));
+int ntfs_readattr __P(( struct ntfsmount *, struct ntnode *, u_int32_t, const char *, off_t, size_t, void *, struct uio *));
 int ntfs_filesize __P(( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64_t *));
 int ntfs_times __P(( struct ntfsmount *, struct ntnode *, ntfs_times_t *));
 struct timespec	ntfs_nttimetounix __P(( u_int64_t ));
