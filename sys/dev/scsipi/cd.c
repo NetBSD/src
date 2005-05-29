@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.222 2005/04/25 17:52:30 drochner Exp $	*/
+/*	$NetBSD: cd.c,v 1.223 2005/05/29 22:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.222 2005/04/25 17:52:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.223 2005/05/29 22:00:50 christos Exp $");
 
 #include "rnd.h"
 
@@ -210,7 +210,7 @@ cdmatch(struct device *parent, struct cfdata *match, void *aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)cd_patterns, sizeof(cd_patterns) / sizeof(cd_patterns[0]),
+	    cd_patterns, sizeof(cd_patterns) / sizeof(cd_patterns[0]),
 	    sizeof(cd_patterns[0]), &priority);
 
 	return (priority);
@@ -1021,7 +1021,7 @@ static void
 cdminphys(struct buf *bp)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
-	long max;
+	long xmax;
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -1035,10 +1035,10 @@ cdminphys(struct buf *bp)
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
 	if (cd->flags & CDF_ANCIENT) {
-		max = cd->sc_dk.dk_label->d_secsize * 0xff;
+		xmax = cd->sc_dk.dk_label->d_secsize * 0xff;
 
-		if (bp->b_bcount > max)
-			bp->b_bcount = max;
+		if (bp->b_bcount > xmax)
+			bp->b_bcount = xmax;
 	}
 
 	(*cd->sc_periph->periph_channel->chan_adapter->adapt_minphys)(bp);
@@ -1833,47 +1833,47 @@ static int
 dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[20];
+	u_int8_t bf[20];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
+	memset(bf, 0, sizeof(bf));
 
 	switch (a->type) {
 	case DVD_LU_SEND_AGID:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 0 | (0 << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		a->lsa.agid = buf[7] >> 6;
+		a->lsa.agid = bf[7] >> 6;
 		return (0);
 
 	case DVD_LU_SEND_CHALLENGE:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 16;
 		cmd.bytes[9] = 1 | (a->lsc.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		dvd_copy_challenge(a->lsc.chal, &buf[4]);
+		dvd_copy_challenge(a->lsc.chal, &bf[4]);
 		return (0);
 
 	case DVD_LU_SEND_KEY1:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 2 | (a->lsk.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		dvd_copy_key(a->lsk.key, &buf[4]);
+		dvd_copy_key(a->lsk.key, &bf[4]);
 		return (0);
 
 	case DVD_LU_SEND_TITLE_KEY:
@@ -1881,36 +1881,36 @@ dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 		_lto4b(a->lstk.lba, &cmd.bytes[1]);
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 4 | (a->lstk.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		a->lstk.cpm = (buf[4] >> 7) & 1;
-		a->lstk.cp_sec = (buf[4] >> 6) & 1;
-		a->lstk.cgms = (buf[4] >> 4) & 3;
-		dvd_copy_key(a->lstk.title_key, &buf[5]);
+		a->lstk.cpm = (bf[4] >> 7) & 1;
+		a->lstk.cp_sec = (bf[4] >> 6) & 1;
+		a->lstk.cgms = (bf[4] >> 4) & 3;
+		dvd_copy_key(a->lstk.title_key, &bf[5]);
 		return (0);
 
 	case DVD_LU_SEND_ASF:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 5 | (a->lsasf.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		a->lsasf.asf = buf[7] & 1;
+		a->lsasf.asf = bf[7] & 1;
 		return (0);
 
 	case DVD_HOST_SEND_CHALLENGE:
 		cmd.opcode = GPCMD_SEND_KEY;
 		cmd.bytes[8] = 16;
 		cmd.bytes[9] = 1 | (a->hsc.agid << 6);
-		buf[1] = 14;
-		dvd_copy_challenge(&buf[4], a->hsc.chal);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		bf[1] = 14;
+		dvd_copy_challenge(&bf[4], a->hsc.chal);
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1922,9 +1922,9 @@ dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 		cmd.opcode = GPCMD_SEND_KEY;
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 3 | (a->hsk.agid << 6);
-		buf[1] = 10;
-		dvd_copy_key(&buf[4], a->hsk.key);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		bf[1] = 10;
+		dvd_copy_key(&bf[4], a->hsk.key);
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error) {
@@ -1937,7 +1937,7 @@ dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 	case DVD_INVALIDATE_AGID:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 16,
 		    CDRETRIES, 30000, NULL, 0);
 		if (error)
 			return (error);
@@ -1947,25 +1947,25 @@ dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 8 | (0 << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		a->lrpcs.type = (buf[4] >> 6) & 3;
-		a->lrpcs.vra = (buf[4] >> 3) & 7;
-		a->lrpcs.ucca = (buf[4]) & 7;
-		a->lrpcs.region_mask = buf[5];
-		a->lrpcs.rpc_scheme = buf[6];
+		a->lrpcs.type = (bf[4] >> 6) & 3;
+		a->lrpcs.vra = (bf[4] >> 3) & 7;
+		a->lrpcs.ucca = (bf[4]) & 7;
+		a->lrpcs.region_mask = bf[5];
+		a->lrpcs.rpc_scheme = bf[6];
 		return (0);
 
 	case DVD_HOST_SEND_RPC_STATE:
 		cmd.opcode = GPCMD_SEND_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 6 | (0 << 6);
-		buf[1] = 6;
-		buf[4] = a->hrpcs.pdrc;
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		bf[1] = 6;
+		bf[4] = a->hrpcs.pdrc;
+		error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1981,23 +1981,23 @@ static int
 dvd_read_physical(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[4 + 4 * 20], *bufp;
+	u_int8_t bf[4 + 4 * 20], *bufp;
 	int error;
 	struct dvd_layer *layer;
 	int i;
 
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
+	memset(bf, 0, sizeof(bf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(sizeof(bf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->physical.layer_num;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, bf, sizeof(bf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
-	for (i = 0, bufp = &buf[4], layer = &s->physical.layer[0]; i < 4;
+	for (i = 0, bufp = &bf[4], layer = &s->physical.layer[0]; i < 4;
 	     i++, bufp += 20, layer++) {
 		memset(layer, 0, sizeof(*layer));
                 layer->book_version = bufp[0] & 0xf;
@@ -2021,22 +2021,22 @@ static int
 dvd_read_copyright(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[8];
+	u_int8_t bf[8];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
+	memset(bf, 0, sizeof(bf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(sizeof(bf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->copyright.layer_num;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, bf, sizeof(bf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
-	s->copyright.cpst = buf[4];
-	s->copyright.rmi = buf[5];
+	s->copyright.cpst = bf[4];
+	s->copyright.rmi = bf[5];
 	return (0);
 }
 
@@ -2044,11 +2044,11 @@ static int
 dvd_read_disckey(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	u_int8_t *buf;
+	u_int8_t *bf;
 	int error;
 
-	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
-	if (buf == NULL)
+	bf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
+	if (bf == NULL)
 		return EIO;
 	memset(cmd.bytes, 0, 15);
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
@@ -2056,11 +2056,11 @@ dvd_read_disckey(struct cd_softc *cd, dvd_struct *s)
 	_lto2b(4 + 2048, &cmd.bytes[7]);
 
 	cmd.bytes[9] = s->disckey.agid << 6;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
+	error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error == 0)
-		memcpy(s->disckey.value, &buf[4], 2048);
-	free(buf, M_TEMP);
+		memcpy(s->disckey.value, &bf[4], 2048);
+	free(bf, M_TEMP);
 	return error;
 }
 
@@ -2068,23 +2068,23 @@ static int
 dvd_read_bca(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[4 + 188];
+	u_int8_t bf[4 + 188];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
+	memset(bf, 0, sizeof(bf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(sizeof(bf), &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, bf, sizeof(bf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
-	s->bca.len = _2btol(&buf[0]);
+	s->bca.len = _2btol(&bf[0]);
 	if (s->bca.len < 12 || s->bca.len > 188)
 		return (EIO);
-	memcpy(s->bca.value, &buf[4], s->bca.len);
+	memcpy(s->bca.value, &bf[4], s->bca.len);
 	return (0);
 }
 
@@ -2092,27 +2092,27 @@ static int
 dvd_read_manufact(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	u_int8_t *buf;
+	u_int8_t *bf;
 	int error;
 
-	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
-	if (buf == NULL)
+	bf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
+	if (bf == NULL)
 		return (EIO);
 	memset(cmd.bytes, 0, 15);
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
 	_lto2b(4 + 2048, &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
+	error = scsipi_command(cd->sc_periph, &cmd, 12, bf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error == 0) {
-		s->manufact.len = _2btol(&buf[0]);
+		s->manufact.len = _2btol(&bf[0]);
 		if (s->manufact.len >= 0 && s->manufact.len <= 2048)
-			memcpy(s->manufact.value, &buf[4], s->manufact.len);
+			memcpy(s->manufact.value, &bf[4], s->manufact.len);
 		else
 			error = EIO;
 	}
-	free(buf, M_TEMP);
+	free(bf, M_TEMP);
 	return error;
 }
 

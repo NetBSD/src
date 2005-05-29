@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.239 2005/04/25 17:35:26 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.239 2005/04/25 17:35:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -200,7 +200,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
+	    sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
 	    sizeof(sd_patterns[0]), &priority);
 
 	return (priority);
@@ -950,7 +950,7 @@ static void
 sdminphys(struct buf *bp)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
-	long max;
+	long xmax;
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -966,10 +966,10 @@ sdminphys(struct buf *bp)
 	if ((sd->flags & SDF_ANCIENT) &&
 	    ((sd->sc_periph->periph_flags &
 	    (PERIPH_REMOVABLE | PERIPH_MEDIA_LOADED)) != PERIPH_REMOVABLE)) {
-		max = sd->sc_dk.dk_label->d_secsize * 0xff;
+		xmax = sd->sc_dk.dk_label->d_secsize * 0xff;
 
-		if (bp->b_bcount > max)
-			bp->b_bcount = max;
+		if (bp->b_bcount > xmax)
+			bp->b_bcount = xmax;
 	}
 
 	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);

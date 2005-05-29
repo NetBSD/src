@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.129 2005/04/04 11:26:50 yamt Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.130 2005/05/29 22:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.129 2005/04/04 11:26:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.130 2005/05/29 22:00:50 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -989,7 +989,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	default:
 #if    defined(SCSIDEBUG) || defined(DEBUG)
 	{
-		static char *uc = "undecodable sense error";
+		static const char *uc = "undecodable sense error";
 		int i;
 		u_int8_t *cptr = (u_int8_t *) sense;
 		scsipi_printaddr(periph);
