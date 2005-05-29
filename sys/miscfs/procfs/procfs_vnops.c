@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.122 2005/04/02 06:15:09 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.123 2005/05/29 21:55:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.122 2005/04/02 06:15:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.123 2005/05/29 21:55:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,12 +612,12 @@ procfs_getattr(v)
 		break;
 
 	case PFScurproc: {
-		char buf[16];		/* should be enough */
+		char bf[16];		/* should be enough */
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_bytes = vap->va_size =
-		    snprintf(buf, sizeof(buf), "%ld", (long)curproc->p_pid);
+		    snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 		break;
 	}
 
@@ -1325,17 +1325,17 @@ procfs_readlink(v)
 	void *v;
 {
 	struct vop_readlink_args *ap = v;
-	char buf[16];		/* should be enough */
-	char *bp = buf;
+	char bf[16];		/* should be enough */
+	char *bp = bf;
 	char *path = NULL;
 	int len;
 	int error = 0;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
 	if (pfs->pfs_fileno == PROCFS_FILENO(0, PFScurproc, -1))
-		len = snprintf(buf, sizeof(buf), "%ld", (long)curproc->p_pid);
+		len = snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 	else if (pfs->pfs_fileno == PROCFS_FILENO(0, PFSself, -1))
-		len = snprintf(buf, sizeof(buf), "%s", "curproc");
+		len = snprintf(bf, sizeof(bf), "%s", "curproc");
 	else {
 		struct file *fp;
 		struct proc *pown;
@@ -1372,11 +1372,11 @@ procfs_readlink(v)
 			break;
 
 		case DTYPE_MISC:
-			len = snprintf(buf, sizeof(buf), "%s", "[misc]");
+			len = snprintf(bf, sizeof(bf), "%s", "[misc]");
 			break;
 
 		case DTYPE_KQUEUE:
-			len = snprintf(buf, sizeof(buf), "%s", "[kqueue]");
+			len = snprintf(bf, sizeof(bf), "%s", "[kqueue]");
 			break;
 
 		default:

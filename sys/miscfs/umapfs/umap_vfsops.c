@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.52 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.52 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ umapfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	struct vnode *rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
+	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
 	int flags = 0;
 
@@ -267,22 +267,22 @@ umapfs_unmount(mp, mntflags, p)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (rootvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1)
 		return (EBUSY);
-	if ((error = vflush(mp, rootvp, flags)) != 0)
+	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);
 
 #ifdef UMAPFS_DIAGNOSTIC
-	vprint("alias root of lower", rootvp);
+	vprint("alias root of lower", rtvp);
 #endif
 	/*
 	 * Release reference on underlying root vnode
 	 */
-	vrele(rootvp);
+	vrele(rtvp);
 	/*
 	 * And blow it away for future re-use
 	 */
-	vgone(rootvp);
+	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
