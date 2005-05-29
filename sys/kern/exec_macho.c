@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.31 2004/09/04 23:21:26 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.32 2005/05/29 22:24:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.31 2004/09/04 23:21:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.32 2005/05/29 22:24:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -420,7 +420,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 	struct exec_macho_emul_arg *emea;
 	int error = ENOEXEC, i;
 	size_t size;
-	void *buf = &lc;
+	void *bf = &lc;
 	u_int32_t *sc = NULL;
 
 #ifdef DEBUG_MACHO
@@ -505,18 +505,18 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 				DPRINTF(("Bad command size %ld\n", lc.cmdsize));
 				goto bad;
 			}
-			if (buf != &lc)
-				free(buf, M_TEMP);
-			buf = malloc(size = lc.cmdsize, M_TEMP, M_WAITOK);
+			if (bf != &lc)
+				free(bf, M_TEMP);
+			bf = malloc(size = lc.cmdsize, M_TEMP, M_WAITOK);
 		}
 
-		if ((error = exec_read_from(p, vp, offs, buf, lc.cmdsize)) != 0)
+		if ((error = exec_read_from(p, vp, offs, bf, lc.cmdsize)) != 0)
 			goto bad;
 
 		switch (lc.cmd) {
 		case MACHO_LC_SEGMENT:
 			error = exec_macho_load_segment(epp, vp, aoffs,
-			    (struct exec_macho_segment_command *)buf, type);
+			    (struct exec_macho_segment_command *)bf, type);
 
 			switch(error) {
 			case ENOMEM:	/* Just skip, dyld will load it */
@@ -533,7 +533,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 			break;
 		case MACHO_LC_LOAD_DYLINKER:
 			if ((error = exec_macho_load_dylinker(p, epp,
-			    (struct exec_macho_dylinker_command *)buf,
+			    (struct exec_macho_dylinker_command *)bf,
 			    entry, depth)) != 0) {
 				DPRINTF(("load linker failed\n"));
 				goto bad;
@@ -550,7 +550,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 			if (recursive == 0)
 				break;
 			if ((error = exec_macho_load_dylib(p, epp,
-			    (struct exec_macho_dylib_command *)buf,
+			    (struct exec_macho_dylib_command *)bf,
 			    depth)) != 0) {
 				DPRINTF(("load dylib failed\n"));
 				goto bad;
@@ -561,10 +561,10 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 		case MACHO_LC_UNIXTHREAD:
 			if (type == MACHO_MOH_DYLINKER || *entry == 0) {
 				*entry = exec_macho_load_thread(
-				    (struct exec_macho_thread_command *)buf);
+				    (struct exec_macho_thread_command *)bf);
 			} else {
 				(void)exec_macho_load_thread(
-				    (struct exec_macho_thread_command *)buf);
+				    (struct exec_macho_thread_command *)bf);
 			}
 			break;
 
@@ -582,8 +582,8 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 	}
 	error = 0;
 bad:
-	if (buf != &lc)
-		free(buf, M_TEMP);
+	if (bf != &lc)
+		free(bf, M_TEMP);
 	return error;
 }
 
@@ -630,8 +630,7 @@ exec_macho_makecmds(p, epp)
 	if (!epp->ep_esch->u.mach_probe_func)
 		emea->path = "/";
 	else {
-	    if ((error = (*epp->ep_esch->u.mach_probe_func)((char **)
-		&emea->path)) != 0)
+	    if ((error = (*epp->ep_esch->u.mach_probe_func)(&emea->path)) != 0)
 		    goto bad2;
 	}
 

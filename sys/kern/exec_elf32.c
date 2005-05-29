@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.103 2005/03/26 05:12:36 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.104 2005/05/29 22:24:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.103 2005/03/26 05:12:36 fvdl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.104 2005/05/29 22:24:14 christos Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -672,7 +672,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 */
 	if (interp) {
 		struct elf_args *ap;
-		int i = epp->ep_vmcmds.evs_used;
+		int j = epp->ep_vmcmds.evs_used;
 		u_long interp_offset;
 
 		MALLOC(ap, struct elf_args *, sizeof(struct elf_args),
@@ -682,7 +682,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			FREE(ap, M_TEMP);
 			goto bad;
 		}
-		ap->arg_interp = epp->ep_vmcmds.evs_cmds[i].ev_addr;
+		ap->arg_interp = epp->ep_vmcmds.evs_cmds[j].ev_addr;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		ap->arg_phaddr = phdr;
 

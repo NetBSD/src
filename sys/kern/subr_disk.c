@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.68 2005/03/31 11:28:53 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.68 2005/03/31 11:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -354,7 +354,7 @@ disk_resetstat(struct disk *diskp)
 int
 sysctl_hw_disknames(SYSCTLFN_ARGS)
 {
-	char buf[DK_DISKNAMELEN + 1];
+	char bf[DK_DISKNAMELEN + 1];
 	char *where = oldp;
 	struct disk *diskp;
 	size_t needed, left, slen;
@@ -376,21 +376,21 @@ sysctl_hw_disknames(SYSCTLFN_ARGS)
 		if (where == NULL)
 			needed += strlen(diskp->dk_name) + 1;
 		else {
-			memset(buf, 0, sizeof(buf));
+			memset(bf, 0, sizeof(bf));
 			if (first) {
-				strncpy(buf, diskp->dk_name, sizeof(buf));
+				strncpy(bf, diskp->dk_name, sizeof(bf));
 				first = 0;
 			} else {
-				buf[0] = ' ';
-				strncpy(buf + 1, diskp->dk_name,
-				    sizeof(buf) - 1);
+				bf[0] = ' ';
+				strncpy(bf + 1, diskp->dk_name,
+				    sizeof(bf) - 1);
 			}
-			buf[DK_DISKNAMELEN] = '\0';
-			slen = strlen(buf);
+			bf[DK_DISKNAMELEN] = '\0';
+			slen = strlen(bf);
 			if (left < slen + 1)
 				break;
 			/* +1 to copy out the trailing NUL byte */
-			error = copyout(buf, where, slen + 1);
+			error = copyout(bf, where, slen + 1);
 			if (error)
 				break;
 			where += slen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.13 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.14 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.13 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.14 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_userconf.h"
 
@@ -91,7 +91,7 @@ static int getsn(char *, int);
 #define UC_FIND 'f'
 #define UC_SHOW 's'
 
-char *userconf_cmds[] = {
+const char *userconf_cmds[] = {
 	"base",		"b",
 	"change",	"c",
 	"disable",	"d",

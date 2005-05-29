@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.87 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.88 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.87 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.88 2005/05/29 22:24:15 christos Exp $");
 
 #include "fs_union.h"
 
@@ -389,9 +389,9 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 }
 
 int
-vn_readdir(fp, buf, segflg, count, done, p, cookies, ncookies)
+vn_readdir(fp, bf, segflg, count, done, p, cookies, ncookies)
 	struct file *fp;
-	char *buf;
+	char *bf;
 	int segflg, *done, *ncookies;
 	u_int count;
 	struct proc *p;
@@ -405,7 +405,7 @@ vn_readdir(fp, buf, segflg, count, done, p, cookies, ncookies)
 unionread:
 	if (vp->v_type != VDIR)
 		return (EINVAL);
-	aiov.iov_base = buf;
+	aiov.iov_base = bf;
 	aiov.iov_len = count;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -860,14 +860,14 @@ vn_cow_disestablish(struct vnode *vp,
  */
 int
 vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
-    const char *attrname, size_t *buflen, void *buf, struct proc *p)
+    const char *attrname, size_t *buflen, void *bf, struct proc *p)
 {
 	struct uio auio;
 	struct iovec aiov;
 	int error;
 
 	aiov.iov_len = *buflen;
-	aiov.iov_base = buf;
+	aiov.iov_base = bf;
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -897,7 +897,7 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
  */
 int
 vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
-    const char *attrname, size_t buflen, const void *buf, struct proc *p)
+    const char *attrname, size_t buflen, const void *bf, struct proc *p)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -905,7 +905,7 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 	int error;
 
 	aiov.iov_len = buflen;
-	aiov.iov_base = (caddr_t) buf;		/* XXX kills const */
+	aiov.iov_base = __UNCONST(bf);		/* XXXUNCONST kills const */
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;

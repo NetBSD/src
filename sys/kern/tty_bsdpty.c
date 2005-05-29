@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.3 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.3 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.4 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -90,25 +90,25 @@ struct ptm_pty ptm_bsdpty = {
 
 static int
 /*ARGSUSED*/
-pty_makename(struct ptm_pty *ptm, char *buf, size_t bufsiz, dev_t dev, char c)
+pty_makename(struct ptm_pty *ptm, char *bf, size_t bufsiz, dev_t dev, char c)
 {
 	size_t nt;
 	dev_t minor = minor(dev);
 	if (bufsiz < TTY_NAMESIZE)
 		return EINVAL;
-	(void)memcpy(buf, TTY_TEMPLATE, TTY_NAMESIZE);
+	(void)memcpy(bf, TTY_TEMPLATE, TTY_NAMESIZE);
 
-	buf[5] = c;
+	bf[5] = c;
 
 	if (minor < 256) {
 		nt = sizeof(TTY_OLD_SUFFIX) - 1;
-		buf[8] = TTY_LETTERS[minor / nt];
-		buf[9] = TTY_OLD_SUFFIX[minor % nt];
+		bf[8] = TTY_LETTERS[minor / nt];
+		bf[9] = TTY_OLD_SUFFIX[minor % nt];
 	} else {
 		minor -= 256;
 		nt = sizeof(TTY_NEW_SUFFIX) - sizeof(TTY_OLD_SUFFIX);
-		buf[8] = TTY_LETTERS[minor / nt];
-		buf[9] = TTY_NEW_SUFFIX[minor % nt];
+		bf[8] = TTY_LETTERS[minor / nt];
+		bf[9] = TTY_NEW_SUFFIX[minor % nt];
 	}
 	return 0;
 }

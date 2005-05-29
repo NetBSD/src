@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.23 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.24 2005/05/29 22:24:15 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.23 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.24 2005/05/29 22:24:15 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -153,7 +153,7 @@ static int treex = 1;
  * Walk down the tree until a terminal node is found.
  */
 static int
-symbol_traverse(char *key)
+symbol_traverse(const char *key)
 {
 	int16_t nb, rbit = baseidx;
 
@@ -225,7 +225,7 @@ ptree_add(char *key, int val)
 }
 
 static int
-ptree_find(char *key)
+ptree_find(const char *key)
 {
 	int idx;
 
@@ -269,7 +269,7 @@ ptree_gen(char *off, struct symtab *tab)
  * Finds a certain symbol name in a certain symbol table.
  */
 static Elf_Sym *
-findsym(char *name, struct symtab *table)
+findsym(const char *name, struct symtab *table)
 {
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
@@ -497,7 +497,7 @@ ksyms_init(int symsize, void *start, void *end)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
+ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 {
 	struct symtab *st;
 	Elf_Sym *es;
@@ -533,7 +533,7 @@ ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
+ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 {
 	struct symtab *st;
 	Elf_Sym *les, *es = NULL;
@@ -850,8 +850,8 @@ ksyms_delsymtab(const char *mod)
 	free(st->sd_symstart, M_DEVBUF);
 	free(st->sd_strstart, M_DEVBUF);
 	free(st->sd_symnmoff, M_DEVBUF);
-	/* LINTED - const castaway */
-	free((void *)st->sd_name, M_DEVBUF);
+	/* XXXUNCONST LINTED - const castaway */
+	free(__UNCONST(st->sd_name), M_DEVBUF);
 	free(st, M_DEVBUF);
 #if NKSYMS
 	ksyms_sizes_calc();
@@ -878,7 +878,8 @@ ksyms_rensymtab(const char *old, const char *new)
 	if (!newstr)
 		return (ENOMEM);
 	strcpy(newstr, new);
-	free((char *)oldst->sd_name, M_DEVBUF);
+	/*XXXUNCONST*/
+	free(__UNCONST(oldst->sd_name), M_DEVBUF);
 	oldst->sd_name = newstr;
 
 	return (0);
