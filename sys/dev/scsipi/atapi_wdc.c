@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.92 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.93 2005/05/29 22:00:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.92 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.93 2005/05/29 22:00:50 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -424,7 +424,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (sc_xfer->xs_control & XS_CTL_POLL) ? AT_POLL : 0;
-	char *errstring;
+	const char *errstring;
 
 	ATADEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive,

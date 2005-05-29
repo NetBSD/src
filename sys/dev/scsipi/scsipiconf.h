@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.98 2005/05/18 13:58:10 chs Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.99 2005/05/29 22:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -596,9 +596,9 @@ struct scsipi_xfer {
 struct scsipi_inquiry_pattern {
 	u_int8_t type;
 	boolean removable;
-	char *vendor;
-	char *product;
-	char *revision;
+	const char *vendor;
+	const char *product;
+	const char *revision;
 };
 
 /*
@@ -633,8 +633,8 @@ void	scsipi_init(void);
 int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
 	    u_char *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
-caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
-	    int, int, int *);
+const void *scsipi_inqmatch(struct scsipi_inquiry_pattern *, const void *,
+	    size_t, size_t, int *);
 const char *scsipi_dtype(int);
 void	scsipi_strvis(u_char *, int, u_char *, int);
 int	scsipi_execute_xs(struct scsipi_xfer *);
