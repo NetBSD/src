@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.14 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.15 2005/05/29 21:05:25 christos Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.14 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.15 2005/05/29 21:05:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -662,7 +662,7 @@ print_coda_nc(void)
 void
 coda_nc_gather_stats(void)
 {
-    int i, max = 0, sum = 0, temp, zeros = 0, ave, n;
+    int i, xmax = 0, sum = 0, temp, zeros = 0, ave, n;
 
 	for (i = 0; i < coda_nc_hashsize; i++) {
 	  if (coda_nc_hash[i].length) {
@@ -671,8 +671,8 @@ coda_nc_gather_stats(void)
 	    zeros++;
 	  }
 
-	  if (coda_nc_hash[i].length > max)
-	    max = coda_nc_hash[i].length;
+	  if (coda_nc_hash[i].length > xmax)
+	    xmax = coda_nc_hash[i].length;
 	}
 
 	/*
@@ -681,7 +681,7 @@ coda_nc_gather_stats(void)
 	 */
         coda_nc_stat.Sum_bucket_len = sum;
         coda_nc_stat.Num_zero_len = zeros;
-        coda_nc_stat.Max_bucket_len = max;
+        coda_nc_stat.Max_bucket_len = xmax;
 
 	if ((n = coda_nc_hashsize - zeros) > 0)
 	  ave = sum / n;
