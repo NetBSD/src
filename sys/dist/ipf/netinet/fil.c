@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.13 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.14 2005/05/29 21:57:49 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.13 2005/04/03 15:05:30 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.14 2005/05/29 21:57:49 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -239,7 +239,7 @@ static	int		fr_grpmapinit __P((frentry_t *fr));
 static	INLINE void	*fr_resolvelookup __P((u_int, u_int, lookupfunc_t *));
 #endif
 static	void		frsynclist __P((frentry_t *, void *));
-static	ipftuneable_t	*fr_findtunebyname __P((char *));
+static	ipftuneable_t	*fr_findtunebyname __P((const char *));
 static	ipftuneable_t	*fr_findtunebycookie __P((void *, void **));
 
 
@@ -354,18 +354,18 @@ static	INLINE int	frpr_fragment6 __P((fr_info_t *));
 /* for IPv6 and marks the packet with FI_SHORT if so.  See function comment */
 /* for frpr_short() for more details.                                       */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_short6(fin, min)
+static INLINE void frpr_short6(fin, xmin)
 fr_info_t *fin;
-int min;
+int xmin;
 {
 	fr_ip_t *fi = &fin->fin_fi;
 	int off;
 
 	off = fin->fin_off;
 	if (off == 0) {
-		if (fin->fin_plen < fin->fin_hlen + min)
+		if (fin->fin_plen < fin->fin_hlen + xmin)
 			fi->fi_flx |= FI_SHORT;
-	} else if (off < min) {
+	} else if (off < xmin) {
 		fi->fi_flx |= FI_SHORT;
 	}
 }
@@ -850,18 +850,18 @@ int plen;
 /* start within the layer 4 header (hdrmin) or if it is at offset 0, the    */
 /* entire layer 4 header must be present (min).                             */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_short(fin, min)
+static INLINE void frpr_short(fin, xmin)
 fr_info_t *fin;
-int min;
+int xmin;
 {
 	fr_ip_t *fi = &fin->fin_fi;
 	int off;
 
 	off = fin->fin_off;
 	if (off == 0) {
-		if (fin->fin_plen < fin->fin_hlen + min)
+		if (fin->fin_plen < fin->fin_hlen + xmin)
 			fi->fi_flx |= FI_SHORT;
-	} else if (off < min) {
+	} else if (off < xmin) {
 		fi->fi_flx |= FI_SHORT;
 	}
 }
@@ -3342,13 +3342,14 @@ int proto, flags;
 /* slen bytes.                                                              */
 /* ------------------------------------------------------------------------ */
 char *memstr(src, dst, slen, dlen)
-char *src, *dst;
-int slen, dlen;
+const char *src;
+char *dst;
+size_t slen, dlen;
 {
 	char *s = NULL;
 
 	while (dlen >= slen) {
-		if (bcmp(src, dst, slen) == 0) {
+		if (memcmp(src, dst, slen) == 0) {
 			s = dst;
 			break;
 		}
@@ -5764,7 +5765,7 @@ void *cookie, **next;
 /* to the matching structure.                                               */
 /* ------------------------------------------------------------------------ */
 static ipftuneable_t *fr_findtunebyname(name)
-char *name;
+const char *name;
 {
 	ipftuneable_t *ta;
 
