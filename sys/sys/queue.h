@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.40 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: queue.h,v 1.41 2005/05/29 21:14:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -384,20 +384,22 @@ struct {								\
 /*
  * Tail queue definitions.
  */
-#define	TAILQ_HEAD(name, type)						\
+#define	_TAILQ_HEAD(name, type, qual)					\
 struct name {								\
-	struct type *tqh_first;	/* first element */			\
-	struct type **tqh_last;	/* addr of last next element */		\
+	qual type *tqh_first;		/* first element */		\
+	qual type *qual *tqh_last;	/* addr of last next element */	\
 }
+#define TAILQ_HEAD(name, type)	_TAILQ_HEAD(name, struct type,)
 
 #define	TAILQ_HEAD_INITIALIZER(head)					\
 	{ NULL, &(head).tqh_first }
 
-#define	TAILQ_ENTRY(type)						\
+#define	_TAILQ_ENTRY(type, qual)					\
 struct {								\
-	struct type *tqe_next;	/* next element */			\
-	struct type **tqe_prev;	/* address of previous next element */	\
+	qual type *tqe_next;		/* next element */		\
+	qual type *qual *tqe_prev;	/* address of previous next element */\
 }
+#define TAILQ_ENTRY(type)	_TAILQ_ENTRY(struct type,)
 
 /*
  * Tail queue functions.
