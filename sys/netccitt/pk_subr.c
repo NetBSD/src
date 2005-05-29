@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.29 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.30 2005/05/29 21:53:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.29 2005/02/26 22:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.30 2005/05/29 21:53:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -919,7 +919,7 @@ void
 pk_procerror(error, lcp, errstr, diagnostic)
 	int error;
 	struct pklcd *lcp;
-	char *errstr;
+	const char *errstr;
 	int diagnostic;
 {
 
@@ -1167,7 +1167,7 @@ format_ntn(xcp)
 
 /* VARARGS1 */
 void
-pk_message(int lcn, struct x25config * xcp, char * fmt,...)
+pk_message(int lcn, struct x25config *xcp, const char *fmt,...)
 {
 	va_list         ap;
 
