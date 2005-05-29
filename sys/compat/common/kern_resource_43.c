@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.12 2003/11/19 15:48:21 christos Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.13 2005/05/29 22:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.12 2003/11/19 15:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.13 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,7 @@ compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 	struct rlimit lim;
 	int error;
 
-	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
-	    sizeof (struct orlimit));
+	error = copyin(SCARG(uap, rlp), &olim, sizeof(struct orlimit));
 	if (error)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;

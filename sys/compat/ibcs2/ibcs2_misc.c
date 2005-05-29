@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.74 2005/04/19 19:00:25 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.75 2005/05/29 22:08:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.74 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ ibcs2_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
@@ -434,11 +434,11 @@ ibcs2_sys_getdents(l, v, retval)
 		goto out1;
 	}
 	buflen = min(MAXBSIZE, (size_t)SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -455,7 +455,7 @@ again:
 	    &ncookies);
 	if (error)
 		goto out;
-	inp = buf;
+	inp = tbuf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -518,7 +518,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -538,7 +538,7 @@ ibcs2_sys_read(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
@@ -573,11 +573,11 @@ ibcs2_sys_read(l, v, retval)
 		return sys_read(l, uap, retval);
 	}
 	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -594,7 +594,7 @@ again:
 	    &ncookies);
 	if (error)
 		goto out;
-	inp = buf;
+	inp = tbuf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -652,7 +652,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, p);
 	return (error);

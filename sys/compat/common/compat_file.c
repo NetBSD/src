@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.14 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: compat_file.c,v 1.15 2005/05/29 22:08:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.14 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.15 2005/05/29 22:08:16 christos Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -492,7 +492,8 @@ bsd_sys_bind(l, v, retval)
 	if (strlen(name) >= sizeof(sun.sun_path))
 		error = ENAMETOOLONG;
 	(void)strncpy(sun.sun_path, name, sizeof(sun.sun_path));
-	free((void *)name, M_TEMP);
+	/*XXXUNCONST*/
+	free(__UNCONST(name), M_TEMP);
 	if (error)
 		return error;
 
@@ -561,7 +562,8 @@ bsd_sys_connect(l, v, retval)
 		error = ENAMETOOLONG;
 	(void)strncpy(sun.sun_path, name, sizeof(sun.sun_path));
 	if (name != namebuf)
-		free((void *)name, M_TEMP);
+		/*XXXUNCONST*/
+		free(__UNCONST(name), M_TEMP);
 	if (error)
 		return sys_connect(l, uap, retval);
 

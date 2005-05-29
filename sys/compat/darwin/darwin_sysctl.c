@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.34 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.35 2005/05/29 22:08:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.34 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.35 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ pid_t darwin_init_pid = 0;
 int darwin_ioframebuffer_unit = 0;
 int darwin_ioframebuffer_screen = 0;
 int darwin_iohidsystem_mux = 0;
-static char *darwin_sysctl_hw_machine = "Power Macintosh";
+static const char *darwin_sysctl_hw_machine = "Power Macintosh";
 
 static int darwin_sysctl_dokproc(SYSCTLFN_PROTO);
 static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
@@ -254,7 +254,8 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, darwin_sysctl_hw_machine, 0,
+		       /*XXXUNCONST*/
+		       NULL, 0, __UNCONST(darwin_sysctl_hw_machine), 0,
 		       DARWIN_CTL_HW, DARWIN_HW_MACHINE, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,

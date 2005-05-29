@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.14 2003/06/29 22:29:13 fvdl Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.15 2005/05/29 22:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ int emul_find_interp(struct proc *, const char *, char *);
 unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);
 
-void compat_offseterr(struct vnode *, char *msg);
+void compat_offseterr(struct vnode *, const char *);
 
 #define	CHECK_ALT_FL_EXISTS	0
 #define	CHECK_ALT_FL_CREAT	1

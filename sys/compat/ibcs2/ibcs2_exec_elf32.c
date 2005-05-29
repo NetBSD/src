@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.9 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.10 2005/05/29 22:08:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.9 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.10 2005/05/29 22:08:16 christos Exp $");
 
 #define ELFSIZE		32
 
@@ -82,7 +82,7 @@ ibcs2_elf32_signature(p, epp, eh)
 	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
 	size_t i;
 	static const char signature[] = SCO_SIGNATURE;
-	char buf[sizeof(signature) - 1];
+	char tbuf[sizeof(signature) - 1];
 	Elf32_Shdr *sh;
 	int error;
 
@@ -102,11 +102,11 @@ ibcs2_elf32_signature(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		if ((error = exec_read_from(p, epp->ep_vp, s->sh_offset, buf,
+		if ((error = exec_read_from(p, epp->ep_vp, s->sh_offset, tbuf,
 		    sizeof(signature) - 1)) != 0)
 			goto out;
 
-		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
+		if (memcmp(tbuf, signature, sizeof(signature) - 1) == 0)
 			goto out;
 		else
 			break;	/* only one .note section so quit */

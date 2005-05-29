@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.28 2005/05/03 16:26:30 manu Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.29 2005/05/29 22:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.28 2005/05/03 16:26:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.29 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.28 2005/05/03 16:26:30 manu E
 
 /* The sizes of the arguments.  Used for copyin. */
 static const struct {
-	char *name;
+	const char *name;
 	int argsize;
 } linux_socketcall[LINUX_MAX_SOCKETCALL+1] = {
 	{"invalid",	-1},						/* 0 */

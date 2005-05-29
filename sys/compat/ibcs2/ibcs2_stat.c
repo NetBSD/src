@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.30 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.31 2005/05/29 22:08:16 christos Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.30 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,9 @@ bsd_stat2ibcs_stat(st, st4)
 }
 
 static int
-cvt_statfs(sp, buf, len)
+cvt_statfs(sp, tbuf, len)
 	struct statvfs *sp;
-	caddr_t buf;
+	caddr_t tbuf;
 	int len;
 {
 	struct ibcs2_statfs ssfs;
@@ -102,13 +102,13 @@ cvt_statfs(sp, buf, len)
 	ssfs.f_ffree = sp->f_ffree;
 	ssfs.f_fname[0] = 0;
 	ssfs.f_fpack[0] = 0;
-	return copyout((caddr_t)&ssfs, buf, len);
+	return copyout((caddr_t)&ssfs, tbuf, len);
 }
 
 static int
-cvt_statvfs(sp, buf, len)
+cvt_statvfs(sp, tbuf, len)
 	struct statvfs *sp;
-	caddr_t buf;
+	caddr_t tbuf;
 	int len;
 {
 	struct ibcs2_statvfs ssvfs;
@@ -132,7 +132,7 @@ cvt_statvfs(sp, buf, len)
 	ssvfs.f_flag = 0;
 	ssvfs.f_namemax = PATH_MAX;
 	ssvfs.f_fstr[0] = 0;
-	return copyout((caddr_t)&ssvfs, buf, len);
+	return copyout((caddr_t)&ssvfs, tbuf, len);
 }
 
 int
