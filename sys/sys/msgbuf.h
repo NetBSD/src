@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.12 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.13 2005/05/29 21:17:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -48,7 +48,7 @@ extern int	msgbufmapped;		/* is the message buffer mapped */
 extern int	msgbufenabled;		/* is logging to the buffer enabled */
 extern struct	kern_msgbuf *msgbufp;	/* the mapped buffer, itself. */
 
-void	initmsgbuf(caddr_t buf, size_t bufsize);
+void	initmsgbuf(void *, size_t);
 #endif
 
 #endif /* !_SYS_MSGBUF_H_ */
