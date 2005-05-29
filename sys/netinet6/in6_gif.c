@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.39 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.40 2005/05/29 21:43:51 christos Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.39 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.40 2005/05/29 21:43:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -125,7 +125,6 @@ in6_gif_output(ifp, family, m)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct ip6_hdr *ip6;
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
@@ -280,18 +279,18 @@ int in6_gif_input(mp, offp, proto)
 #ifdef INET6
 	case IPPROTO_IPV6:
 	    {
-		struct ip6_hdr *ip6;
+		struct ip6_hdr *ip6x;
 		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
+		if (m->m_len < sizeof(*ip6x)) {
+			m = m_pullup(m, sizeof(*ip6x));
 			if (!m)
 				return IPPROTO_DONE;
 		}
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6x = mtod(m, struct ip6_hdr *);
 		if (gifp->if_flags & IFF_LINK1)
-			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6->ip6_flow);
+			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6x->ip6_flow);
 		else
-			ip6_ecn_egress(ECN_NOCARE, &otos, &ip6->ip6_flow);
+			ip6_ecn_egress(ECN_NOCARE, &otos, &ip6x->ip6_flow);
 		break;
 	    }
 #endif
@@ -401,7 +400,7 @@ in6_gif_attach(sc)
 		return EINVAL;
 	sc->encap_cookie6 = encap_attach(AF_INET6, -1, sc->gif_psrc,
 	    (struct sockaddr *)&mask6, sc->gif_pdst, (struct sockaddr *)&mask6,
-	    (void *)&in6_gif_protosw, sc);
+	    (const void *)&in6_gif_protosw, sc);
 #else
 	sc->encap_cookie6 = encap_attach_func(AF_INET6, -1, gif_encapcheck,
 	    (struct protosw *)&in6_gif_protosw, sc);
