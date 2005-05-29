@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __NSXFNAME_C__
 
@@ -149,7 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
 ACPI_STATUS
 AcpiGetHandle (
     ACPI_HANDLE             Parent,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_HANDLE             *RetHandle)
 {
     ACPI_STATUS             Status;

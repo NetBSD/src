@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __UTINIT_C__
 
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
 
 static void
 AcpiUtFadtRegisterError (
-    char                    *RegisterName,
+    const char              *RegisterName,
     UINT32                  Value,
     ACPI_SIZE               Offset);
 
@@ -155,7 +155,7 @@ static void AcpiUtTerminate (
 
 static void
 AcpiUtFadtRegisterError (
-    char                    *RegisterName,
+    const char              *RegisterName,
     UINT32                  Value,
     ACPI_SIZE               Offset)
 {
