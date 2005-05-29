@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.15 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.16 2005/05/29 21:27:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.15 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.16 2005/05/29 21:27:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -151,7 +151,7 @@ clnp_hexp(const char *src, int len, char *where)
 	int             i;
 
 	for (i = 0; i < len; i++) {
-		int    j = ((u_char *) src)[i];
+		int    j = ((const u_char *) src)[i];
 		*where++ = hexdigits[j >> 4];
 		*where++ = hexdigits[j & 0x0f];
 	}
