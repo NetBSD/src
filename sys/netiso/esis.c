@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.33 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: esis.c,v 1.34 2005/05/29 21:27:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.33 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34 2005/05/29 21:27:45 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -852,7 +852,7 @@ esis_config(void *v)
 					esis_shoutput(ifp,
 			      iso_systype & SNPA_ES ? ESIS_ESH : ESIS_ISH,
 			      esis_holding_time,
-			      (caddr_t) (iso_systype & SNPA_ES ? all_is_snpa :
+			      (iso_systype & SNPA_ES ? all_is_snpa :
 				     all_es_snpa), 6, (struct iso_addr *) 0);
 					break;
 				}
@@ -877,7 +877,7 @@ esis_shoutput(
 	struct ifnet   *ifp,
 	int             type,
 	int             ht,
-	caddr_t         sn_addr,
+	const void 	*sn_addr,
 	int             sn_len,
 	struct iso_addr *isoa)
 {
@@ -906,7 +906,7 @@ esis_shoutput(
 		    type == ESIS_ESH ? "esh" : "ish",
 		    ht, sn_len);
 		for (i = 0; i < sn_len; i++)
-			printf("%x%c", *(sn_addr + i),
+			printf("%x%c", *((const char *)sn_addr + i),
 			    i < (sn_len - 1) ? ':' : ' ');
 		printf("\n");
 	}

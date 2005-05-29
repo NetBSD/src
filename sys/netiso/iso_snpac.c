@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.31 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.32 2005/05/29 21:27:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.31 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.32 2005/05/29 21:27:45 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -250,11 +250,11 @@ iso_setmcasts(struct ifnet *ifp, int req)
 	static const char * const addrlist[] =
 	{all_es_snpa, all_is_snpa, all_l1is_snpa, all_l2is_snpa, 0};
 	struct ifreq ifr;
-	caddr_t *cpp;
+	const char *const *cpp;
 
-	bzero((caddr_t) &ifr, sizeof(ifr));
-	for (cpp = (caddr_t *) addrlist; *cpp; cpp++) {
-		bcopy(*cpp, (caddr_t) ifr.ifr_addr.sa_data, 6);
+	(void)memset(&ifr, 0, sizeof(ifr));
+	for (cpp = addrlist; *cpp; cpp++) {
+		(void)memcpy(ifr.ifr_addr.sa_data, *cpp, 6);
 		if (req == RTM_ADD && (ifp->if_ioctl == 0 ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr) != 0))
 			printf("iso_setmcasts: %s unable to add mcast\n",
@@ -296,7 +296,7 @@ iso_snparesolve(
 	int            *snpa_len)	/* RESULT: length of snpa */
 {
 	struct llinfo_llc *sc;	/* ptr to snpa table entry */
-	caddr_t         found_snpa;
+	const char *found_snpa;
 	int             addrlen;
 
 	/*
@@ -313,7 +313,7 @@ iso_snparesolve(
 		}
 #endif
 		addrlen = dest->siso_nlen - 1;	/* subtract size of AFI */
-		found_snpa = (caddr_t) dest->siso_data + 1;
+		found_snpa = (const char *)dest->siso_data + 1;
 		/*
 		 * If we are an IS, we can't do much with the packet; Check
 		 * if we know about an IS.
@@ -337,10 +337,10 @@ iso_snparesolve(
 		 * where we always transmit the CLNP packet to "all es"
 		 */
 		addrlen = ifp->if_addrlen;
-		found_snpa = (caddr_t) all_es_snpa;
+		found_snpa = (const char *) all_es_snpa;
 	} else
 		return (ENETUNREACH);
-	bcopy(found_snpa, snpa, *snpa_len = addrlen);
+	memcpy(snpa, found_snpa, *snpa_len = addrlen);
 	return (0);
 }
 
@@ -646,9 +646,9 @@ int
 snpac_ownmulti(caddr_t snpa, u_int len)
 {
 	return (((iso_systype & SNPA_ES) &&
-		 (!bcmp(snpa, (caddr_t) all_es_snpa, len))) ||
+		 (!memcmp(snpa, all_es_snpa, len))) ||
 		((iso_systype & SNPA_IS) &&
-		 (!bcmp(snpa, (caddr_t) all_is_snpa, len))));
+		 (!memcmp(snpa, all_is_snpa, len))));
 }
 
 /*
