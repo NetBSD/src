@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.20 2005/02/26 22:25:34 perry Exp $ */
+/* $NetBSD: sched.h,v 1.21 2005/05/29 21:19:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ struct proc;
 struct cpu_info;
 
 void schedclock(struct lwp *);
-void sched_wakeup(const void *);
+void sched_wakeup(__volatile const void *);
 void roundrobin(struct cpu_info *);
 
 /*
