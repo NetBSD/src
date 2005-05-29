@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.4 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.5 2005/05/29 21:57:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
@@ -50,7 +50,7 @@ void ippr_irc_fini()
 }
 
 
-char *ippr_irc_dcctypes[] = {
+const char *ippr_irc_dcctypes[] = {
 	"CHAT ",	/* CHAT chat ipnumber portnumber */
 	"SEND ",	/* SEND filename ipnumber portnumber */
 	"MOVE ",

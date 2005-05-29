@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.3 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.4 2005/05/29 21:57:49 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1044,7 +1044,7 @@ typedef	union	ipftunevalptr	{
 
 typedef	struct	ipftuneable	{
 	ipftunevalptr_t	ipft_una;
-	char		*ipft_name;
+	const char	*ipft_name;
 	u_long		ipft_min;
 	u_long		ipft_max;
 	int		ipft_sz;
@@ -1238,7 +1238,7 @@ extern	ipfmutex_t	ipf_timeoutlock, ipf_stinsert, ipf_natio, ipf_nat_new;
 extern	ipfrwlock_t	ipf_mutex, ipf_global, ip_poolrw, ipf_ipidfrag;
 extern	ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 
-extern	char	*memstr __P((char *, char *, int, int));
+extern	char	*memstr __P((const char *, char *, size_t, size_t));
 extern	int	count4bits __P((u_32_t));
 extern	int	frrequest __P((int, ioctlcmd_t, caddr_t, int, int));
 extern	char	*getifname __P((struct ifnet *));
