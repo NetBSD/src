@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.21 2005/04/23 14:05:28 manu Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.22 2005/05/29 21:43:51 christos Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.21 2005/04/23 14:05:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.22 2005/05/29 21:43:51 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -611,7 +611,6 @@ esp_output(m, nexthdrp, md, isr, af)
     {
 	const struct ah_algorithm *aalgo;
 	u_char authbuf[AH_MAXSUMSIZE];
-	struct mbuf *n;
 	u_char *p;
 	size_t siz;
 #ifdef INET
