@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.148 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.148 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1340,8 +1340,8 @@ nfs_searchdircache(vp, off, do32, hashent)
 	 * Zero is always a valid cookie.
 	 */
 	if (off == 0)
-		/* LINTED const cast away */
-		return (struct nfsdircache *)&dzero;
+		/* XXXUNCONST */
+		return (struct nfsdircache *)__UNCONST(&dzero);
 
 	if (!np->n_dircache)
 		return NULL;
@@ -1412,8 +1412,8 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	 * isn't so bad, as 0 is a special case anyway.
 	 */
 	if (off == 0)
-		/* LINTED const cast away */
-		return (struct nfsdircache *)&dzero;
+		/* XXXUNCONST */
+		return (struct nfsdircache *)__UNCONST(&dzero);
 
 	if (!np->n_dircache)
 		/*
@@ -2018,14 +2018,14 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 {
 	struct uio auio;
 	struct iovec aiov;
-	caddr_t buf, cp;
+	caddr_t tbuf, cp;
 	struct dirent *dp;
 	off_t *cookies = NULL, *cop;
 	int error, eof, nc, len;
 
-	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
+	MALLOC(tbuf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
 
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = NFS_DIRFRAGSIZ;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -2039,7 +2039,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 
 	len = NFS_DIRFRAGSIZ - auio.uio_resid;
 	if (error || len == 0) {
-		FREE(buf, M_TEMP);
+		FREE(tbuf, M_TEMP);
 		if (cookies)
 			free(cookies, M_TEMP);
 		return;
@@ -2049,7 +2049,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	 * Find the first valid entry and look at its offset cookie.
 	 */
 
-	cp = buf;
+	cp = tbuf;
 	for (cop = cookies; len > 0; len -= dp->d_reclen) {
 		dp = (struct dirent *)cp;
 		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
@@ -2064,7 +2064,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 		cp += dp->d_reclen;
 	}
 
-	FREE(buf, M_TEMP);
+	FREE(tbuf, M_TEMP);
 	free(cookies, M_TEMP);
 }
 #endif /* NFS */

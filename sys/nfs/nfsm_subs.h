@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.40 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.41 2005/05/29 20:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -257,7 +257,7 @@
 #define	nfsm_wcc_data(v, f, flags, docheck) \
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		struct timespec ctime, mtime; \
-		struct nfsnode *np = VTONFS(v); \
+		struct nfsnode *nfsp = VTONFS(v); \
 		boolean_t haspreopattr = FALSE; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
@@ -265,26 +265,26 @@
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
 			fxdr_nfsv3time(tl + 2, &mtime); \
 			fxdr_nfsv3time(tl + 4, &ctime); \
-			if (np->n_ctime == ctime.tv_sec) \
+			if (nfsp->n_ctime == ctime.tv_sec) \
 				renewctime = 1; \
 			if ((v)->v_type == VDIR) { \
-				if (timespeccmp(&np->n_nctime, &ctime, ==)) \
+				if (timespeccmp(&nfsp->n_nctime, &ctime, ==)) \
 					renewnctime = 1; \
 			} \
 			if (f) { \
-				ttretf = timespeccmp(&np->n_mtime, &mtime, ==);\
+				ttretf = timespeccmp(&nfsp->n_mtime, &mtime, ==);\
 			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
-		np = VTONFS(v); \
+		nfsp = VTONFS(v); \
 		if (ttattrf) { \
 			if (haspreopattr && \
-			    nfs_check_wccdata(np, &ctime, &mtime, (docheck))) \
+			    nfs_check_wccdata(nfsp, &ctime, &mtime, (docheck))) \
 				renewctime = renewnctime = ttretf = 0; \
 			if (renewctime) \
-				np->n_ctime = np->n_vattr->va_ctime.tv_sec; \
+				nfsp->n_ctime = nfsp->n_vattr->va_ctime.tv_sec; \
 			if (renewnctime) \
-				np->n_nctime = np->n_vattr->va_ctime; \
+				nfsp->n_nctime = nfsp->n_vattr->va_ctime; \
 		} \
 		if (f) { \
 			(f) = ttretf; \

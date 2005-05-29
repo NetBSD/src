@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.113 2005/03/29 09:22:35 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.114 2005/05/29 20:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.113 2005/03/29 09:22:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114 2005/05/29 20:58:13 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2017,7 +2017,7 @@ nfsmout:
 int
 nfs_msg(p, server, msg)
 	struct proc *p;
-	char *server, *msg;
+	const char *server, *msg;
 {
 	tpr_t tpr;
 

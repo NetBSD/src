@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.221 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.222 2005/05/29 20:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.221 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222 2005/05/29 20:58:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1313,7 +1313,7 @@ struct nfs_writerpc_context {
  * called at splvm.
  */
 static void
-nfs_writerpc_extfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+nfs_writerpc_extfree(struct mbuf *m, caddr_t tbuf, size_t size, void *arg)
 {
 	struct nfs_writerpc_context *ctx = arg;
 
@@ -2935,7 +2935,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					newvp = NFSTOV(np);
 				}
 				if (!error) {
-				    const char *cp;
+				    const char *xcp;
 
 				    nfs_loadattrcache(&newvp, &fattr, 0, 0);
 				    if (bigenough) {
@@ -2943,10 +2943,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					   IFTODT(VTTOIF(np->n_vattr->va_type));
 					if (cnp->cn_namelen <= NCHNAMLEN) {
 					    ndp->ni_vp = newvp;
-					    cp = cnp->cn_nameptr +
+					    xcp = cnp->cn_nameptr +
 						cnp->cn_namelen;
 					    cnp->cn_hash =
-					       namei_hash(cnp->cn_nameptr, &cp);
+					       namei_hash(cnp->cn_nameptr, &xcp);
 					    nfs_cache_enter(ndp->ni_dvp,
 						ndp->ni_vp, cnp);
 					}
