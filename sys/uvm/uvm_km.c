@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.81 2005/04/20 14:10:03 simonb Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.82 2005/05/29 21:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.81 2005/04/20 14:10:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.82 2005/05/29 21:06:33 christos Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -258,7 +258,7 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
  * KVM already allocated for text, data, bss, and static data structures).
  *
  * => KVM is defined by VM_MIN_KERNEL_ADDRESS/VM_MAX_KERNEL_ADDRESS.
- *    we assume that [min -> start] has already been allocated and that
+ *    we assume that [vmin -> start] has already been allocated and that
  *    "end" is the end.
  */
 
@@ -318,16 +318,16 @@ uvm_km_init(start, end)
  * is allocated all references to that area of VM must go through it.  this
  * allows the locking of VAs in kernel_map to be broken up into regions.
  *
- * => if `fixed' is true, *min specifies where the region described
+ * => if `fixed' is true, *vmin specifies where the region described
  *      by the submap must start
  * => if submap is non NULL we use that as the submap, otherwise we
  *	alloc a new map
  */
 
 struct vm_map *
-uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
+uvm_km_suballoc(map, vmin, vmax, size, flags, fixed, submap)
 	struct vm_map *map;
-	vaddr_t *min, *max;		/* IN/OUT, OUT */
+	vaddr_t *vmin, *vmax;		/* IN/OUT, OUT */
 	vsize_t size;
 	int flags;
 	boolean_t fixed;
@@ -343,17 +343,17 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	 * first allocate a blank spot in the parent map
 	 */
 
-	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+	if (uvm_map(map, vmin, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, mapflags)) != 0) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
 	}
 
 	/*
-	 * set VM bounds (min is filled in by uvm_map)
+	 * set VM bounds (vmin is filled in by uvm_map)
 	 */
 
-	*max = *min + size;
+	*vmax = *vmin + size;
 
 	/*
 	 * add references to pmap and create or init the submap
@@ -365,14 +365,14 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 		if (submap == NULL)
 			panic("uvm_km_suballoc: unable to create submap");
 	}
-	uvm_map_setup_kernel(submap, *min, *max, flags);
+	uvm_map_setup_kernel(submap, *vmin, *vmax, flags);
 	submap->vmk_map.pmap = vm_map_pmap(map);
 
 	/*
 	 * now let uvm_map_submap plug in it...
 	 */
 
-	if (uvm_map_submap(map, *min, *max, &submap->vmk_map) != 0)
+	if (uvm_map_submap(map, *vmin, *vmax, &submap->vmk_map) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
 	return(&submap->vmk_map);

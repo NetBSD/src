@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.198 2005/05/22 21:37:56 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.199 2005/05/29 21:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.198 2005/05/22 21:37:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.199 2005/05/29 21:06:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2650,10 +2650,10 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 void
 uvm_map_setup_kernel(struct vm_map_kernel *map,
-    vaddr_t min, vaddr_t max, int flags)
+    vaddr_t vmin, vaddr_t vmax, int flags)
 {
 
-	uvm_map_setup(&map->vmk_map, min, max, flags);
+	uvm_map_setup(&map->vmk_map, vmin, vmax, flags);
 
 	LIST_INIT(&map->vmk_kentry_free);
 	map->vmk_merged_entries = NULL;
@@ -3610,13 +3610,13 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(vaddr_t min, vaddr_t max)
+uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
-	uvmspace_init(vm, NULL, min, max);
+	uvmspace_init(vm, NULL, vmin, vmax);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
 }
@@ -3628,12 +3628,12 @@ uvmspace_alloc(vaddr_t min, vaddr_t max)
  * - refcnt set to 1, rest must be init'd by caller
  */
 void
-uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max)
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
-	uvm_map_setup(&vm->vm_map, min, max, VM_MAP_PAGEABLE
+	uvm_map_setup(&vm->vm_map, vmin, vmax, VM_MAP_PAGEABLE
 #ifdef __USING_TOPDOWN_VM
 	    | VM_MAP_TOPDOWN
 #endif
@@ -4210,10 +4210,10 @@ again:
 	ukh->ukh_map = map;
 	ukh->ukh_freelist = NULL;
 	for (i = UVM_KMAPENT_CHUNK - 1; i >= 2; i--) {
-		struct vm_map_entry *entry = &ukh->ukh_entries[i];
+		struct vm_map_entry *xentry = &ukh->ukh_entries[i];
 
-		entry->flags = UVM_MAP_KERNEL;
-		uvm_kmapent_put(ukh, entry);
+		xentry->flags = UVM_MAP_KERNEL;
+		uvm_kmapent_put(ukh, xentry);
 	}
 	KASSERT(ukh->ukh_nused == 2);
 

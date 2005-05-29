@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.64 2004/04/25 16:42:44 simonb Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.65 2005/05/29 21:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.64 2004/04/25 16:42:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.65 2005/05/29 21:06:33 christos Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1336,11 +1336,11 @@ uao_pagein(aobj, startslot, endslot)
 
 	if (UAO_USES_SWHASH(aobj)) {
 		struct uao_swhash_elt *elt;
-		int bucket;
+		int buck;
 
 restart:
-		for (bucket = aobj->u_swhashmask; bucket >= 0; bucket--) {
-			for (elt = LIST_FIRST(&aobj->u_swhash[bucket]);
+		for (buck = aobj->u_swhashmask; buck >= 0; buck--) {
+			for (elt = LIST_FIRST(&aobj->u_swhash[buck]);
 			     elt != NULL;
 			     elt = LIST_NEXT(elt, list)) {
 				int i;
