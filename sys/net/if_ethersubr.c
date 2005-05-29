@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.124 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.125 2005/05/29 21:22:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.124 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.125 2005/05/29 21:22:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -267,8 +267,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
@@ -285,8 +284,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else
 			bcopy((caddr_t)ar_tha(ah),
 				(caddr_t)edst, sizeof(edst));

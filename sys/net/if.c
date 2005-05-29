@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.157 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.158 2005/05/29 21:22:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.157 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.158 2005/05/29 21:22:52 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -925,7 +925,7 @@ ifa_ifwithaddr(addr)
 	struct ifaddr *ifa;
 
 #define	equal(a1, a2) \
-  (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
+  (bcmp((a1), (a2), ((const struct sockaddr *)(a1))->sa_len) == 0)
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -994,7 +994,7 @@ ifa_ifwithnet(addr)
 	char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-		sdl = (struct sockaddr_dl *)addr;
+		sdl = (const struct sockaddr_dl *)addr;
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index] &&
 		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput)
@@ -1003,12 +1003,12 @@ ifa_ifwithnet(addr)
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
 		const struct sockaddr_at *sat, *sat2;
-		sat = (struct sockaddr_at *)addr;
+		sat = (const struct sockaddr_at *)addr;
 		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 		     ifp = TAILQ_NEXT(ifp, if_list)) {
 			if (ifp->if_output == if_nulloutput)
 				continue;
-			ifa = at_ifawithnet((struct sockaddr_at *)addr, ifp);
+			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
 			if (ifa == NULL)
 				continue;
 			sat2 = (struct sockaddr_at *)ifa->ifa_addr;
