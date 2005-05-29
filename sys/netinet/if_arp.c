@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.103 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.104 2005/05/29 21:39:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.103 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.104 2005/05/29 21:39:21 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -186,10 +186,6 @@ lla_snprintf(u_int8_t *adrp, int len)
 #define NUMBUFS 3
 	static char buf[NUMBUFS][16*3];
 	static int bnum = 0;
-	static const char hexdigits[] = {
-	    '0','1','2','3','4','5','6','7',
-	    '8','9','a','b','c','d','e','f'
-	};
 
 	int i;
 	char *p;
@@ -940,8 +936,7 @@ in_arpinput(struct mbuf *m)
 	}
 
 	/* XXX checks for bridge case? */
-	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
-	    ifp->if_addrlen)) {
+	if (!memcmp(ar_sha(ah), ifp->if_broadcastaddr, ifp->if_addrlen)) {
 		arpstat.as_rcvbcastsha++;
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
@@ -1370,14 +1365,14 @@ static void
 db_print_sa(const struct sockaddr *sa)
 {
 	int len;
-	u_char *p;
+	const u_char *p;
 
 	if (sa == 0) {
 		db_printf("[NULL]");
 		return;
 	}
 
-	p = (u_char*)sa;
+	p = (const u_char *)sa;
 	len = sa->sa_len;
 	db_printf("[");
 	while (len > 0) {
