@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.91 2005/05/11 13:02:26 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.92 2005/05/29 21:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.91 2005/05/11 13:02:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.92 2005/05/29 21:06:33 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -185,9 +185,9 @@ POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL);
 POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 
 #define	getvndxfer(vnx)	do {						\
-	int s = splbio();						\
+	int sp = splbio();						\
 	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
-	splx(s);							\
+	splx(sp);							\
 } while (/*CONSTCOND*/ 0)
 
 #define putvndxfer(vnx) {						\
@@ -195,9 +195,9 @@ POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 }
 
 #define	getvndbuf(vbp)	do {						\
-	int s = splbio();						\
+	int sp = splbio();						\
 	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
-	splx(s);							\
+	splx(sp);							\
 } while (/*CONSTCOND*/ 0)
 
 #define putvndbuf(vbp) {						\
@@ -510,7 +510,7 @@ sys_swapctl(l, v, retval)
 		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
 
 		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
-		error = copyout(sep, (void *)SCARG(uap, arg), len);
+		error = copyout(sep, SCARG(uap, arg), len);
 
 		free(sep, M_TEMP);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
