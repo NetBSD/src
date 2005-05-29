@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.190 2005/04/18 21:50:25 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.191 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.190 2005/04/18 21:50:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1421,7 +1421,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 			 * payload.
 			 */
 			if (in6_pcblookup_connect(&tcbtable, &sa6->sin6_addr,
-			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
+			    th.th_dport, (const struct in6_addr *)&sa6_src->sin6_addr,
 			    th.th_sport, 0))
 				valid++;
 
@@ -1442,16 +1442,16 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		}
 
 		nmatch = in6_pcbnotify(&tcbtable, sa, th.th_dport,
-		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
+		    (const struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
 		     inet6ctlerrmap[cmd] == ENETUNREACH ||
 		     inet6ctlerrmap[cmd] == EHOSTDOWN))
-			syn_cache_unreach((struct sockaddr *)sa6_src,
+			syn_cache_unreach((const struct sockaddr *)sa6_src,
 					  sa, &th);
 	} else {
 		(void) in6_pcbnotify(&tcbtable, sa, 0,
-		    (struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
+		    (const struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
 }
 #endif
@@ -1653,7 +1653,7 @@ tcp6_mtudisc_callback(struct in6_addr *faddr)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
 	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
-	    (struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
+	    (const struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
 }
 
 void

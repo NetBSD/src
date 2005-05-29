@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.227 2005/04/26 05:37:45 manu Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.228 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.227 2005/04/26 05:37:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.228 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3176,9 +3176,9 @@ u_int32_t syn_hash1, syn_hash2;
 #ifndef INET6
 #define	SYN_HASHALL(hash, src, dst) \
 do {									\
-	hash = SYN_HASH(&((struct sockaddr_in *)(src))->sin_addr,	\
-		((struct sockaddr_in *)(src))->sin_port,		\
-		((struct sockaddr_in *)(dst))->sin_port);		\
+	hash = SYN_HASH(&((const struct sockaddr_in *)(src))->sin_addr,	\
+		((const struct sockaddr_in *)(src))->sin_port,		\
+		((const struct sockaddr_in *)(dst))->sin_port);		\
 } while (/*CONSTCOND*/ 0)
 #else
 #define SYN_HASH6(sa, sp, dp) \
@@ -3190,14 +3190,14 @@ do {									\
 do {									\
 	switch ((src)->sa_family) {					\
 	case AF_INET:							\
-		hash = SYN_HASH(&((struct sockaddr_in *)(src))->sin_addr, \
-			((struct sockaddr_in *)(src))->sin_port,	\
-			((struct sockaddr_in *)(dst))->sin_port);	\
+		hash = SYN_HASH(&((const struct sockaddr_in *)(src))->sin_addr, \
+			((const struct sockaddr_in *)(src))->sin_port,	\
+			((const struct sockaddr_in *)(dst))->sin_port);	\
 		break;							\
 	case AF_INET6:							\
-		hash = SYN_HASH6(&((struct sockaddr_in6 *)(src))->sin6_addr, \
-			((struct sockaddr_in6 *)(src))->sin6_port,	\
-			((struct sockaddr_in6 *)(dst))->sin6_port);	\
+		hash = SYN_HASH6(&((const struct sockaddr_in6 *)(src))->sin6_addr, \
+			((const struct sockaddr_in6 *)(src))->sin6_port,	\
+			((const struct sockaddr_in6 *)(dst))->sin6_port);	\
 		break;							\
 	default:							\
 		hash = 0;						\
@@ -3437,7 +3437,7 @@ syn_cache_cleanup(struct tcpcb *tp)
  * Find an entry in the syn cache.
  */
 struct syn_cache *
-syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
+syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
     struct syn_cache_head **headp)
 {
 	struct syn_cache *sc;
@@ -3812,7 +3812,7 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 }
 
 void
-syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst,
+syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
     struct tcphdr *th)
 {
 	struct syn_cache *sc;

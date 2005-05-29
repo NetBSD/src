@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.134 2005/05/08 04:52:05 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.135 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.134 2005/05/08 04:52:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.135 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1064,12 +1064,12 @@ send:
 				optlen += 4;
 			}
 			if (tcp_do_sack) {
-				u_int8_t *p = (u_int8_t *)(opt + optlen);
+				u_int8_t *cp = (u_int8_t *)(opt + optlen);
 
-				p[0] = TCPOPT_SACK_PERMITTED;
-				p[1] = 2;
-				p[2] = TCPOPT_NOP;
-				p[3] = TCPOPT_NOP;
+				cp[0] = TCPOPT_SACK_PERMITTED;
+				cp[1] = 2;
+				cp[2] = TCPOPT_NOP;
+				cp[3] = TCPOPT_NOP;
 				optlen += 4;
 			}
 		}
