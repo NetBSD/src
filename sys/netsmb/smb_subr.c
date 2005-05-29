@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.21 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.22 2005/05/29 21:26:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.21 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.22 2005/05/29 21:26:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,11 +298,11 @@ smb_maperror(int eclass, int eno)
 }
 
 static int
-smb_copy_iconv(struct mbchain *mbp, const caddr_t src, caddr_t dst, size_t len)
+smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
 {
 	size_t outlen = len;
 
-	return iconv_conv((struct iconv_drv*)mbp->mb_udata, (const char **)(&src), &len, &dst, &outlen);
+	return iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &len, &dst, &outlen);
 }
 
 int
@@ -314,11 +314,11 @@ smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
 	if (size == 0)
 		return 0;
 	if (dp == NULL) {
-		return mb_put_mem(mbp, (caddr_t)src, size, MB_MSYSTEM);
+		return mb_put_mem(mbp, (const void *)src, size, MB_MSYSTEM);
 	}
 	mbp->mb_copy = smb_copy_iconv;
 	mbp->mb_udata = dp;
-	return mb_put_mem(mbp, (caddr_t)src, size, MB_MCUSTOM);
+	return mb_put_mem(mbp, (const void *)src, size, MB_MCUSTOM);
 }
 
 int
