@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.2 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: int_types.h,v 1.2.6.1 2005/05/29 23:38:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,6 +33,8 @@
 
 #ifndef	_AMD64_INT_TYPES_H_
 #define	_AMD64_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types
