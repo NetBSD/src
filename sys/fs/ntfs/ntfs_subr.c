@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.15 2005/05/22 15:29:33 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.15 2005/05/22 15:29:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1682,9 +1682,10 @@ ntfs_readntvattr_plain(
 				left -= tocopy;
 				off = 0;
 				if (uio) {
+					char vbuf[] = "";
 					size_t remains = tocopy;
 					for(; remains; remains--)
-						uiomove("", 1, uio);
+						uiomove(vbuf, 1, uio);
 				} else
 					bzero(data, tocopy);
 				data = data + tocopy;
@@ -1715,7 +1716,7 @@ ntfs_readattr_plain(
 	struct ntfsmount * ntmp,
 	struct ntnode * ip,
 	u_int32_t attrnum,
-	char *attrname,
+	const char *attrname,
 	off_t roff,
 	size_t rsize,
 	void *rdata,
@@ -1770,7 +1771,7 @@ ntfs_readattr(
 	struct ntfsmount * ntmp,
 	struct ntnode * ip,
 	u_int32_t attrnum,
-	char *attrname,
+	const char *attrname,
 	off_t roff,
 	size_t rsize,
 	void *rdata,
@@ -1830,9 +1831,10 @@ ntfs_readattr(
 					memcpy(data, cup + off, tocopy);
 			} else if (init == 0) {
 				if (uio) {
+					char vbuf[] = "";
 					size_t remains = tocopy;
 					for(; remains; remains--)
-						uiomove("", 1, uio);
+						uiomove(vbuf, 1, uio);
 				}
 				else
 					bzero(data, tocopy);
@@ -1913,10 +1915,10 @@ int
 ntfs_procfixups(
 		struct ntfsmount * ntmp,
 		u_int32_t magic,
-		caddr_t buf,
+		caddr_t xbuf,
 		size_t len)
 {
-	struct fixuphdr *fhp = (struct fixuphdr *) buf;
+	struct fixuphdr *fhp = (struct fixuphdr *) xbuf;
 	int             i;
 	u_int16_t       fixup;
 	u_int16_t      *fxp;
@@ -1937,8 +1939,8 @@ ntfs_procfixups(
 		printf("ntfs_procfixups: invalid offset: %x", fhp->fh_foff);
 		return (EINVAL);
 	}
-	fxp = (u_int16_t *) (buf + fhp->fh_foff);
-	cfxp = (u_int16_t *) (buf + ntmp->ntm_bps - 2);
+	fxp = (u_int16_t *) (xbuf + fhp->fh_foff);
+	cfxp = (u_int16_t *) (xbuf + ntmp->ntm_bps - 2);
 	fixup = *fxp++;
 	for (i = 1; i < fhp->fh_fnum; i++, fxp++) {
 		if (*cfxp != fixup) {
