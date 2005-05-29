@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.13 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.14 2005/05/29 22:07:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ typedef struct {
 	int dne_flags;
 } darwin_nxll_event;
 
-typedef volatile struct {
+typedef struct {
 	int die_type;
 	int die_location_x;
 	int die_location_y;
