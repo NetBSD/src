@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.136 2005/05/19 01:37:30 lukem Exp $
+#	$NetBSD: build.sh,v 1.137 2005/05/29 10:54:40 bouyer Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -216,19 +216,6 @@ getarch()
 		;;
 	amd64)
 		MACHINE_ARCH=x86_64
-		;;
-
-	xen-*)
-		setmakeenv XEN_BUILD "${MACHINE##*-}"
-		setmakeenv KERNARCHDIR "arch/xen"
-		setmakeenv RELEASEMACHINE "xen"
-		setmakeenv RELEASEMACHINEDIR "${MACHINE}"
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE##*-}
-		getarch
-		;;
-
-	xen)			# no default MACHINE_ARCH
 		;;
 
 	alpha|i386|sparc|sparc64|vax)
@@ -872,7 +859,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.136 2005/05/19 01:37:30 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.137 2005/05/29 10:54:40 bouyer Exp $
 # with these arguments: ${_args}
 #
 EOF
