@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.90 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.91 2005/05/29 21:40:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.90 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.91 2005/05/29 21:40:27 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2032,13 +2032,13 @@ vif_encapcheck(const struct mbuf *m, int off, int proto, void *arg)
 	 * at most one tunnel with the remote site).
 	 */
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, off, sizeof(ip), (caddr_t)&ip);
+	/*XXXUNCONST*/
+	m_copydata(__UNCONST(m), off, sizeof(ip), (caddr_t)&ip);
 	if (!IN_MULTICAST(ip.ip_dst.s_addr))
 		return 0;
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	/*XXXUNCONST*/
+	m_copydata(__UNCONST(m), 0, sizeof(ip), (caddr_t)&ip);
 	if (!in_hosteq(ip.ip_src, last_encap_src)) {
 		vifp = (struct vif *)arg;
 		if (vifp->v_flags & VIFF_TUNNEL &&
