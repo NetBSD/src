@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.62 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.63 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.62 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.63 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,7 +651,7 @@ void
 ufs_dirbad(ip, offset, how)
 	struct inode *ip;
 	doff_t offset;
-	char *how;
+	const char *how;
 {
 	struct mount *mp;
 

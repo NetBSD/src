@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.151 2005/05/20 19:09:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.152 2005/05/29 21:25:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.151 2005/05/20 19:09:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1977,8 +1977,6 @@ again:
 	 * aiodoned might not have got around to our buffers yet.
 	 */
 	if (sync) {
-		int s;
-
 		s = splbio();
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
