@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.39 2005/05/22 22:34:01 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.40 2005/05/29 22:24:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.39 2005/05/22 22:34:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.40 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -977,7 +977,8 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
 			       CTLTYPE_STRING, "name", NULL,
-			       NULL, 0, cdp->debugname, 0,
+			       /*XXXUNCONST*/
+			       NULL, 0, __UNCONST(cdp->debugname), 0,
 			       CTL_DEBUG, i, CTL_DEBUG_NAME, CTL_EOL);
 		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
@@ -1151,7 +1152,8 @@ sysctl_setlen(SYSCTLFN_ARGS)
 {
 	int error;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	/*XXXUNCONST*/
+	error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
 	if (error || newp == NULL)
 		return (error);
 
@@ -1534,7 +1536,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	struct shm_sysctl_info *shmsi = NULL;
 #endif
 	size_t infosize, dssize, tsize, buflen;
-	void *buf = NULL;
+	void *bf = NULL;
 	char *start;
 	int32_t nds;
 	int i, error, ret;
@@ -1595,25 +1597,25 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		*sizep = 0;
 		return (ENOMEM);
 	}
-	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
-	memset(buf, 0, min(tsize, buflen));
+	bf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
+	memset(bf, 0, min(tsize, buflen));
 
 	switch (*name) {
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
-		msgsi = (struct msg_sysctl_info *)buf;
+		msgsi = (struct msg_sysctl_info *)bf;
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
-		semsi = (struct sem_sysctl_info *)buf;
+		semsi = (struct sem_sysctl_info *)bf;
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
-		shmsi = (struct shm_sysctl_info *)buf;
+		shmsi = (struct shm_sysctl_info *)bf;
 		shmsi->shminfo = shminfo;
 		break;
 #endif
@@ -1649,12 +1651,12 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		}
 	}
 	*sizep -= buflen;
-	error = copyout(buf, start, *sizep);
+	error = copyout(bf, start, *sizep);
 	/* If copyout succeeded, use return code set earlier. */
 	if (error == 0)
 		error = ret;
-	if (buf)
-		free(buf, M_TEMP);
+	if (bf)
+		free(bf, M_TEMP);
 	return (error);
 }
 
@@ -1674,19 +1676,19 @@ static int
 sysctl_kern_maxptys(SYSCTLFN_ARGS)
 {
 	int pty_maxptys(int, int);		/* defined in kern/tty_pty.c */
-	int error, max;
+	int error, xmax;
 	struct sysctlnode node;
 
 	/* get current value of maxptys */
-	max = pty_maxptys(0, 0);
+	xmax = pty_maxptys(0, 0);
 
 	node = *rnode;
-	node.sysctl_data = &max;
+	node.sysctl_data = &xmax;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
-	if (max != pty_maxptys(max, 1))
+	if (xmax != pty_maxptys(xmax, 1))
 		return (EINVAL);
 
 	return (0);
@@ -1751,7 +1753,8 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	int buflen, needed, error;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	dp = where = oldp;
 	buflen = where != NULL ? *oldlenp : 0;
@@ -1912,7 +1915,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	int error, arg, elem_count;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (namelen != 4)
 		return (EINVAL);
@@ -2054,7 +2058,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	int error;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	dp = oldp;
 	dp2 = where = oldp;
@@ -2229,7 +2234,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	char *tmp;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (newp != NULL || namelen != 2)
 		return (EINVAL);

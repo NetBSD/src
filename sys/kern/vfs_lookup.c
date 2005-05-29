@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.58 2005/05/08 18:44:40 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.59 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.58 2005/05/08 18:44:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.59 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -268,10 +268,10 @@ namei_hash(const char *name, const char **ep)
 	hash = HASH32_STR_INIT;
 	if (*ep != NULL) {
 		for (; name < *ep; name++)
-			hash = hash * 33 + *(uint8_t *)name;
+			hash = hash * 33 + *(const uint8_t *)name;
 	} else {
 		for (; *name != '\0' && *name != '/'; name++)
-			hash = hash * 33 + *(uint8_t *)name;
+			hash = hash * 33 + *(const uint8_t *)name;
 		*ep = name;
 	}
 	return (hash + (hash >> 5));

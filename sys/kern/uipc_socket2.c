@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.67 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.68 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.67 2005/05/07 17:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -748,7 +748,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 		}
 	}
 	m->m_len = asa->sa_len;
-	memcpy(mtod(m, caddr_t), (caddr_t)asa, asa->sa_len);
+	memcpy(mtod(m, caddr_t), asa, asa->sa_len);
 	if (n)
 		n->m_next = m0;		/* concatenate data to control */
 	else
@@ -799,7 +799,7 @@ m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 	KASSERT(salen <= MHLEN);
 #endif
 	m->m_len = salen;
-	memcpy(mtod(m, caddr_t), (caddr_t)asa, salen);
+	memcpy(mtod(m, caddr_t), asa, salen);
 	m->m_next = m0;
 	m->m_pkthdr.len = salen + m0->m_pkthdr.len;
 

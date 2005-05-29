@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.96 2005/02/09 16:15:16 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.97 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.96 2005/02/09 16:15:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.97 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -473,7 +473,7 @@ ktremul(struct proc *p)
 }
 
 void
-ktrkmem(struct proc *p, int type, const void *buf, size_t len)
+ktrkmem(struct proc *p, int type, const void *bf, size_t len)
 {
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
@@ -485,7 +485,7 @@ ktrkmem(struct proc *p, int type, const void *buf, size_t len)
 
 	kth->ktr_len = len;
 	kte->kte_buf = malloc(len, M_KTRACE, M_WAITOK);
-	memcpy(kte->kte_buf, buf, len);
+	memcpy(kte->kte_buf, bf, len);
 
 	ktraddentry(p, kte, KTA_WAITOK);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -685,7 +685,7 @@ ktrmool(struct proc *p, const void *kaddr, size_t size, const void *uaddr)
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
 	struct ktr_mool *kp;
-	struct ktr_mool *buf;
+	struct ktr_mool *bf;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kte = pool_get(&kte_pool, PR_WAITOK);
@@ -695,8 +695,8 @@ ktrmool(struct proc *p, const void *kaddr, size_t size, const void *uaddr)
 	kp = malloc(size + sizeof(*kp), M_KTRACE, M_WAITOK);
 	kp->uaddr = uaddr;
 	kp->size = size;
-	buf = kp + 1; /* Skip uaddr and size */
-	(void)memcpy(buf, kaddr, size);
+	bf = kp + 1; /* Skip uaddr and size */
+	(void)memcpy(bf, kaddr, size);
 
 	kth->ktr_len = size + sizeof(*kp);
 	kte->kte_buf = kp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.43 2005/05/22 15:54:47 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.44 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.43 2005/05/22 15:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.44 2005/05/29 22:24:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
 			struct lwp *wlwp;
-			struct lockf *waitblock;
+			__volatile const struct lockf *waitblock;
 			int i = 0;
 
 			/*
@@ -351,7 +351,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 */
 			wlwp = block->lf_lwp;
 			while (wlwp && (i++ < maxlockdepth)) {
-				waitblock = (struct lockf *)wlwp->l_wchan;
+				waitblock = wlwp->l_wchan;
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)

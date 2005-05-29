@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.219 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.220 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.219 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.220 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3665,7 +3665,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	aiov.iov_base = (caddr_t) data;		/* XXX kills const */
+	aiov.iov_base = __UNCONST(data);	/* XXXUNCONST kills const */
 	aiov.iov_len = nbytes;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
