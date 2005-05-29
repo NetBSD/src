@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.85 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.85 2005/04/23 19:47:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,7 +810,7 @@ extern struct simplelock bqueue_slock;
  * Don't count malloced buffers, since they don't detract from the total.
  */
 void
-lfs_countlocked(int *count, long *bytes, char *msg)
+lfs_countlocked(int *count, long *bytes, const char *msg)
 {
 	struct buf *bp;
 	int n = 0;

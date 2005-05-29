@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.66 2005/03/29 02:41:06 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.67 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.66 2005/03/29 02:41:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67 2005/05/29 21:25:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -259,7 +259,6 @@ mfs_mount(mp, path, data, ndp, p)
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct vnode *vp;
-		struct mfsnode *mfsp;
 
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
