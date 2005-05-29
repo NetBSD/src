@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.47 2005/04/15 20:21:23 drochner Exp $	*/
+/*	$NetBSD: rnd.c,v 1.48 2005/05/29 22:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.47 2005/04/15 20:21:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.48 2005/05/29 22:18:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -355,7 +355,7 @@ rndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 int
 rndread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_int8_t *buf;
+	u_int8_t *bf;
 	u_int32_t entcnt, mode, n, nread;
 	int ret, s;
 
@@ -380,7 +380,7 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 
 	ret = 0;
 
-	buf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
+	bf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
 
 	while (uio->uio_resid > 0) {
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
@@ -425,27 +425,27 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 				goto out;
 		}
 
-		nread = rnd_extract_data(buf, n, mode);
+		nread = rnd_extract_data(bf, n, mode);
 
 		/*
 		 * Copy (possibly partial) data to the user.
 		 * If an error occurs, or this is a partial
 		 * read, bail out.
 		 */
-		ret = uiomove((caddr_t)buf, nread, uio);
+		ret = uiomove((caddr_t)bf, nread, uio);
 		if (ret != 0 || nread != n)
 			goto out;
 	}
 
 out:
-	free(buf, M_TEMP);
+	free(bf, M_TEMP);
 	return (ret);
 }
 
 int
 rndwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_int8_t *buf;
+	u_int8_t *bf;
 	int n, ret, s;
 
 	DPRINTF(RND_DEBUG_WRITE,
@@ -456,12 +456,12 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	ret = 0;
 
-	buf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
+	bf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
 
 	while (uio->uio_resid > 0) {
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
-		ret = uiomove((caddr_t)buf, n, uio);
+		ret = uiomove((caddr_t)bf, n, uio);
 		if (ret != 0)
 			break;
 
@@ -469,13 +469,13 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 		 * Mix in the bytes.
 		 */
 		s = splsoftclock();
-		rndpool_add_data(&rnd_pool, buf, n, 0);
+		rndpool_add_data(&rnd_pool, bf, n, 0);
 		splx(s);
 
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
 	}
 
-	free(buf, M_TEMP);
+	free(bf, M_TEMP);
 	return (ret);
 }
 
