@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.3 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.4 2005/05/29 21:57:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -238,7 +238,7 @@ nat_t *nat;
 pptp_pxy_t *pptp;
 int rev;
 {
-	static char *funcname = "ippr_pptp_nextmessage";
+	static const char *funcname = "ippr_pptp_nextmessage";
 	pptp_side_t *pptps;
 	u_32_t start, end;
 	pptp_hdr_t *hdr;

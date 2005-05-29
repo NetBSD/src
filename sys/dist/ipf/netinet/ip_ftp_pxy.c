@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.7 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.8 2005/05/29 21:57:49 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.7 2005/04/03 15:05:30 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.8 2005/05/29 21:57:49 christos Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -476,7 +476,8 @@ int dlen;
 {
 	u_int a1, a2, a3, a4, data_ip;
 	char newbuf[IPF_FTPBUFSZ];
-	char *s, *brackets[2];
+	char *s;
+	const char *brackets[2];
 	u_short a5, a6;
 	ftpside_t *f;
 

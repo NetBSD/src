@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.13 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.14 2005/05/29 21:57:49 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -660,13 +660,13 @@ struct proc *p;
 dev_t dev;
 int flags;
 {
-	u_int min = GET_MINOR(dev);
+	u_int xmin = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < xmin)
+		xmin = ENXIO;
 	else
-		min = 0;
-	return min;
+		xmin = 0;
+	return xmin;
 }
 
 
@@ -681,13 +681,13 @@ struct proc *p;
 dev_t dev;
 int flags;
 {
-	u_int	min = GET_MINOR(dev);
+	u_int	xmin = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < xmin)
+		xmin = ENXIO;
 	else
-		min = 0;
-	return min;
+		xmin = 0;
+	return xmin;
 }
 
 /*
@@ -1771,13 +1771,13 @@ struct mbuf *m0;
 /* We assume that 'min' is a pointer to a buffer that is part of the chain  */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = xmin;
 	char *ip;
 
 	if (m == NULL)
