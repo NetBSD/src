@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.7 2005/05/04 02:35:22 augustss Exp $ */
+/* $NetBSD: pckbd.c,v 1.8 2005/05/29 22:16:36 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.7 2005/05/04 02:35:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.8 2005/05/29 22:16:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 		cmd[1] = 2;
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
-			u_char cmd[1];
+			u_char cmdb[1];
 #ifdef DEBUG
 			printf("pckbd: error setting scanset 2\n");
 #endif
@@ -220,8 +220,8 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 			 * XXX ignore errors, scanset 2 should be
 			 * default anyway.
 			 */
-			cmd[0] = KBC_RESET;
-			(void)pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
+			cmdb[0] = KBC_RESET;
+			(void)pckbport_poll_cmd(kbctag, kbcslot, cmdb, 1, 1, 0, 1);
 			pckbport_flush(kbctag, kbcslot);
 			res = 0;
 		}
@@ -547,13 +547,13 @@ pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_SETLEDS:
 	{
 		int res;
-		u_char cmd[2];
+		u_char cmdb[2];
 
-		cmd[0] = KBC_MODEIND;
-		cmd[1] = pckbd_led_encode(*(int *)data);
-		sc->sc_ledstate = cmd[1];
+		cmdb[0] = KBC_MODEIND;
+		cmdb[1] = pckbd_led_encode(*(int *)data);
+		sc->sc_ledstate = cmdb[1];
 		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 2, 0, 1, 0);
+					cmdb, 2, 0, 1, 0);
 		return res;
 	}
 	case WSKBDIO_GETLEDS:
