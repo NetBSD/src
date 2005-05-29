@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.16 2005/05/25 11:07:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17 2005/05/29 21:25:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -793,7 +793,7 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip;
 	struct buf *bp;
-	caddr_t buf;
+	caddr_t bf;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -815,20 +815,20 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
 		brelse(bp);
 	}
-	buf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
+	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
 	if (blkno != 0)
-		error = readvnblk(snapvp, buf, lbn);
+		error = readvnblk(snapvp, bf, lbn);
 	else
-		error = readfsblk(snapvp, buf, lbn);
+		error = readfsblk(snapvp, bf, lbn);
 	if (error) {
-		free(buf, M_UFSMNT);
+		free(bf, M_UFSMNT);
 		return error;
 	}
 	/*
 	 * Set a snapshot inode to be a zero length file, regular files
 	 * to be completely unallocated.
 	 */
-	dip = (struct ufs1_dinode *)buf + ino_to_fsbo(fs, cancelip->i_number);
+	dip = (struct ufs1_dinode *)bf + ino_to_fsbo(fs, cancelip->i_number);
 	if (expungetype == BLK_NOCOPY)
 		dip->di_mode = 0;
 	dip->di_size = 0;
@@ -836,8 +836,8 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 	dip->di_flags =
 	    ufs_rw32(ufs_rw32(dip->di_flags, ns) & ~SF_SNAPSHOT, ns);
 	bzero(&dip->di_db[0], (NDADDR + NIADDR) * sizeof(ufs1_daddr_t));
-	error = writevnblk(snapvp, buf, lbn);
-	free(buf, M_UFSMNT);
+	error = writevnblk(snapvp, bf, lbn);
+	free(bf, M_UFSMNT);
 	if (error)
 		return error;
 	/*
@@ -1082,7 +1082,7 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs2_dinode *dip;
 	struct buf *bp;
-	caddr_t buf;
+	caddr_t bf;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -1104,20 +1104,20 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
 		brelse(bp);
 	}
-	buf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
+	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
 	if (blkno != 0)
-		error = readvnblk(snapvp, buf, lbn);
+		error = readvnblk(snapvp, bf, lbn);
 	else
-		error = readfsblk(snapvp, buf, lbn);
+		error = readfsblk(snapvp, bf, lbn);
 	if (error) {
-		free(buf, M_UFSMNT);
+		free(bf, M_UFSMNT);
 		return error;
 	}
 	/*
 	 * Set a snapshot inode to be a zero length file, regular files
 	 * to be completely unallocated.
 	 */
-	dip = (struct ufs2_dinode *)buf + ino_to_fsbo(fs, cancelip->i_number);
+	dip = (struct ufs2_dinode *)bf + ino_to_fsbo(fs, cancelip->i_number);
 	if (expungetype == BLK_NOCOPY)
 		dip->di_mode = 0;
 	dip->di_size = 0;
@@ -1125,8 +1125,8 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 	dip->di_flags =
 	    ufs_rw32(ufs_rw32(dip->di_flags, ns) & ~SF_SNAPSHOT, ns);
 	bzero(&dip->di_db[0], (NDADDR + NIADDR) * sizeof(ufs2_daddr_t));
-	error = writevnblk(snapvp, buf, lbn);
-	free(buf, M_UFSMNT);
+	error = writevnblk(snapvp, bf, lbn);
+	free(bf, M_UFSMNT);
 	if (error)
 		return error;
 	/*
@@ -2187,23 +2187,23 @@ db_assign(struct inode *ip, int loc, ufs2_daddr_t val)
 }
 
 static inline ufs2_daddr_t
-idb_get(struct inode *ip, caddr_t buf, int loc)
+idb_get(struct inode *ip, caddr_t bf, int loc)
 {
 	if (ip->i_ump->um_fstype == UFS1)
-		return ufs_rw32(((ufs1_daddr_t *)(buf))[loc],
+		return ufs_rw32(((ufs1_daddr_t *)(bf))[loc],
 		    UFS_IPNEEDSWAP(ip));
 	else
-		return ufs_rw64(((ufs2_daddr_t *)(buf))[loc],
+		return ufs_rw64(((ufs2_daddr_t *)(bf))[loc],
 		    UFS_IPNEEDSWAP(ip));
 }
 
 static inline void
-idb_assign(struct inode *ip, caddr_t buf, int loc, ufs2_daddr_t val)
+idb_assign(struct inode *ip, caddr_t bf, int loc, ufs2_daddr_t val)
 {
 	if (ip->i_ump->um_fstype == UFS1)
-		((ufs1_daddr_t *)(buf))[loc] =
+		((ufs1_daddr_t *)(bf))[loc] =
 		    ufs_rw32(val, UFS_IPNEEDSWAP(ip));
 	else
-		((ufs2_daddr_t *)(buf))[loc] =
+		((ufs2_daddr_t *)(bf))[loc] =
 		    ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }

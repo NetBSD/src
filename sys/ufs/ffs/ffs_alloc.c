@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.82 2005/05/22 08:35:28 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.83 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.82 2005/05/22 08:35:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.83 2005/05/29 21:25:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -74,7 +74,7 @@ static daddr_t ffs_clusteralloc __P((struct inode *, int, daddr_t, int));
 #endif
 static ino_t ffs_dirpref __P((struct inode *));
 static daddr_t ffs_fragextend __P((struct inode *, int, daddr_t, int, int));
-static void ffs_fserr __P((struct fs *, u_int, char *));
+static void ffs_fserr __P((struct fs *, u_int, const char *));
 static daddr_t ffs_hashalloc __P((struct inode *, int, daddr_t, int,
     daddr_t (*)(struct inode *, int, daddr_t, int)));
 static daddr_t ffs_nodealloccg __P((struct inode *, int, daddr_t, int));
@@ -2052,7 +2052,7 @@ static void
 ffs_fserr(fs, uid, cp)
 	struct fs *fs;
 	u_int uid;
-	char *cp;
+	const char *cp;
 {
 
 	log(LOG_ERR, "uid %d, pid %d, command %s, on %s: %s\n",

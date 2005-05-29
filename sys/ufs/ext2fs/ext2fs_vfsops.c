@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.84 2005/03/29 02:41:06 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.85 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.84 2005/03/29 02:41:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.85 2005/05/29 21:25:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -331,7 +331,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	}
 
 	if (!update) {
-		int flags;
+		int xflags;
 
 		/*
 		 * Disallow multiple mounts of the same device.
@@ -347,16 +347,16 @@ ext2fs_mount(mp, path, data, ndp, p)
 			goto fail;
 		}
 		if (mp->mnt_flag & MNT_RDONLY)
-			flags = FREAD;
+			xflags = FREAD;
 		else
-			flags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, flags, FSCRED, p);
+			xflags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, xflags, FSCRED, p);
 		if (error)
 			goto fail;
 		error = ext2fs_mountfs(devvp, mp, p);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, flags, NOCRED, p);
+			(void)VOP_CLOSE(devvp, xflags, NOCRED, p);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}

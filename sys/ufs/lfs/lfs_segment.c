@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.163 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.164 2005/05/29 21:25:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.163 2005/04/23 19:47:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.164 2005/05/29 21:25:24 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1065,7 +1065,7 @@ int
 lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 {
 	struct lfs *fs;
-	int version;
+	int vers;
 	int j, blksinblk;
 
 	ASSERT_SEGLOCK(sp->fs);
@@ -1085,10 +1085,10 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 			splx(*sptr);
 		lfs_updatemeta(sp);
 
-		version = sp->fip->fi_version;
+		vers = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = version;
+		sp->fip->fi_version = vers;
 		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;

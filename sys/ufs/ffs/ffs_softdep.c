@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.64 2005/05/07 14:24:14 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.65 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.64 2005/05/07 14:24:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.65 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -132,7 +132,7 @@ LIST_HEAD(, buf) pcbphashhead[PCBPHASHSIZE];
 /*
  * Internal function prototypes.
  */
-static	void softdep_error __P((char *, int));
+static	void softdep_error __P((const char *, int));
 static	void drain_output __P((struct vnode *, int));
 static	int getdirtybuf __P((struct buf **, int));
 static	void clear_remove __P((struct proc *));
@@ -261,56 +261,56 @@ static	int  free_lock_interlocked __P((struct lockit *));
 #define FREE_LOCK_INTERLOCKED(lk)	free_lock_interlocked(lk)
 
 static void
-acquire_lock(lk)
-	struct lockit *lk;
+acquire_lock(lkp)
+	struct lockit *lkp;
 {
-	if (lk->lkt_held != -1) {
-		if (lk->lkt_held == CURPROC_PID)
+	if (lkp->lkt_held != -1) {
+		if (lkp->lkt_held == CURPROC_PID)
 			panic("softdep_lock: locking against myself");
 		else
-			panic("softdep_lock: lock held by %d", lk->lkt_held);
+			panic("softdep_lock: lock held by %d", lkp->lkt_held);
 	}
-	lk->lkt_spl = splbio();
-	lk->lkt_held = CURPROC_PID;
+	lkp->lkt_spl = splbio();
+	lkp->lkt_held = CURPROC_PID;
 	lockcnt++;
 }
 
 static void
-free_lock(lk)
-	struct lockit *lk;
+free_lock(lkp)
+	struct lockit *lkp;
 {
 
-	if (lk->lkt_held == -1)
+	if (lkp->lkt_held == -1)
 		panic("softdep_unlock: lock not held");
-	lk->lkt_held = -1;
-	splx(lk->lkt_spl);
+	lkp->lkt_held = -1;
+	splx(lkp->lkt_spl);
 }
 
 static void
-acquire_lock_interlocked(lk, s)
-	struct lockit *lk;
+acquire_lock_interlocked(lkp, s)
+	struct lockit *lkp;
 	int s;
 {
-	if (lk->lkt_held != -1) {
-		if (lk->lkt_held == CURPROC_PID)
+	if (lkp->lkt_held != -1) {
+		if (lkp->lkt_held == CURPROC_PID)
 			panic("softdep_lock_interlocked: locking against self");
 		else
 			panic("softdep_lock_interlocked: lock held by %d",
-			    lk->lkt_held);
+			    lkp->lkt_held);
 	}
-	lk->lkt_spl = s;
-	lk->lkt_held = CURPROC_PID;
+	lkp->lkt_spl = s;
+	lkp->lkt_held = CURPROC_PID;
 	lockcnt++;
 }
 
 static int
-free_lock_interlocked(lk)
-	struct lockit *lk;
+free_lock_interlocked(lkp)
+	struct lockit *lkp;
 {
-	if (lk->lkt_held == -1)
+	if (lkp->lkt_held == -1)
 		panic("softdep_unlock_interlocked: lock not held");
-	lk->lkt_held = -1;
-	return lk->lkt_spl;
+	lkp->lkt_held = -1;
+	return lkp->lkt_spl;
 }
 #endif /* DEBUG */
 
@@ -320,18 +320,18 @@ free_lock_interlocked(lk)
 struct sema {
 	int	value;
 	pid_t	holder;
-	char	*name;
+	const char *name;
 	int	prio;
 	int	timo;
 };
-static	void sema_init __P((struct sema *, char *, int, int));
+static	void sema_init __P((struct sema *, const char *, int, int));
 static	int sema_get __P((struct sema *, struct lockit *));
 static	void sema_release __P((struct sema *));
 
 static void
 sema_init(semap, name, prio, timo)
 	struct sema *semap;
-	char *name;
+	const char *name;
 	int prio, timo;
 {
 
@@ -5767,7 +5767,7 @@ softdep_deallocate_dependencies(bp)
  */
 void
 softdep_error(func, error)
-	char *func;
+	const char *func;
 	int error;
 {
 

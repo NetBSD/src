@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.23 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.24 2005/05/29 21:25:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.23 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.24 2005/05/29 21:25:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ u_long ext2gennumber;
 
 static daddr_t	ext2fs_alloccg __P((struct inode *, int, daddr_t, int));
 static u_long	ext2fs_dirpref __P((struct m_ext2fs *));
-static void	ext2fs_fserr __P((struct m_ext2fs *, u_int, char *));
+static void	ext2fs_fserr __P((struct m_ext2fs *, u_int, const char *));
 static u_long	ext2fs_hashalloc __P((struct inode *, int, long, int,
 				   daddr_t (*)(struct inode *, int, daddr_t,
 						   int)));
@@ -676,7 +676,7 @@ static void
 ext2fs_fserr(fs, uid, cp)
 	struct m_ext2fs *fs;
 	u_int uid;
-	char *cp;
+	const char *cp;
 {
 
 	log(LOG_ERR, "uid %d on %s: %s\n", uid, fs->e2fs_fsmnt, cp);
