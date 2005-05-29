@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.144 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.145 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.144 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.145 2005/05/29 22:24:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1546,7 +1546,8 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	int error, s, elem_count;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (namelen != 4)
 		return (EINVAL);
@@ -1711,7 +1712,7 @@ vfs_bufstats(void)
 	struct buf *bp;
 	struct bqueue *dp;
 	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
-	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
+	static const char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.43 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.44 2005/05/29 22:24:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.43 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.44 2005/05/29 22:24:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,13 +273,13 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
  *	Read from vnode into buffer at offset.
  */
 int
-exec_read_from(struct proc *p, struct vnode *vp, u_long off, void *buf,
+exec_read_from(struct proc *p, struct vnode *vp, u_long off, void *bf,
     size_t size)
 {
 	int error;
 	size_t resid;
 
-	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
+	if ((error = vn_rdwr(UIO_READ, vp, bf, size, off, UIO_SYSSPACE,
 	    0, p->p_ucred, &resid, NULL)) != 0)
 		return error;
 	/*

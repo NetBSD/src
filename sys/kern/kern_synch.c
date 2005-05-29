@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.148 2005/03/02 11:05:34 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.149 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.148 2005/03/02 11:05:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -378,7 +378,7 @@ int safepri;
  * interlock will always be unlocked upon return.
  */
 int
-ltsleep(const void *ident, int priority, const char *wmesg, int timo,
+ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
     __volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
@@ -673,7 +673,7 @@ sched_lock_idle(void)
  */
 
 void
-wakeup(const void *ident)
+wakeup(__volatile const void *ident)
 {
 	int s;
 
@@ -685,7 +685,7 @@ wakeup(const void *ident)
 }
 
 void
-sched_wakeup(const void *ident)
+sched_wakeup(__volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
@@ -719,7 +719,7 @@ sched_wakeup(const void *ident)
  * identifier runnable.
  */
 void
-wakeup_one(const void *ident)
+wakeup_one(__volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
