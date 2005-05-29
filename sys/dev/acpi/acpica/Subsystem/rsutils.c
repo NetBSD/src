@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __RSUTILS_C__
 
@@ -315,7 +315,7 @@ AcpiRsGetPrsMethodData (
 ACPI_STATUS
 AcpiRsGetMethodData (
     ACPI_HANDLE             Handle,
-    char                    *Path,
+    const char              *Path,
     ACPI_BUFFER             *RetBuffer)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;

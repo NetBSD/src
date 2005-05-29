@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
 
 #define __EVRGNINI_C__
 
@@ -545,7 +545,7 @@ AcpiEvInitializeRegion (
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *MethodNode;
-    ACPI_NAME               *RegNamePtr = (ACPI_NAME *) METHOD_NAME__REG;
+    const ACPI_NAME         *RegNamePtr = (const ACPI_NAME *) METHOD_NAME__REG;
     ACPI_OPERAND_OBJECT     *RegionObj2;
 
 

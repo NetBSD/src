@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.14 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.15 2005/05/29 20:56:02 christos Exp $");
 
 #define __HWREGS_C__
 
@@ -221,7 +221,7 @@ AcpiGetSleepTypeData (
 {
     ACPI_STATUS             Status = AE_OK;
     ACPI_PARAMETER_INFO     Info;
-    char                    *SleepStateName;
+    const char              *SleepStateName;
 
 
     ACPI_FUNCTION_TRACE ("AcpiGetSleepTypeData");
@@ -239,7 +239,7 @@ AcpiGetSleepTypeData (
     
     Info.Parameters = NULL;
     Info.ReturnObject = NULL;
-    SleepStateName = (char *) AcpiGbl_SleepStateNames[SleepState];
+    SleepStateName = AcpiGbl_SleepStateNames[SleepState];
 
     Status = AcpiNsEvaluateByName (SleepStateName, &Info);
     if (ACPI_FAILURE (Status))
