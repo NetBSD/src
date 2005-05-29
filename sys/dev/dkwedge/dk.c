@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.6 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: dk.c,v 1.7 2005/05/29 22:13:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.6 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7 2005/05/29 22:13:33 christos Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -827,7 +827,7 @@ dkwedge_discover(struct disk *pdk)
  *	partition discovery.
  */
 int
-dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
+dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *tbuf,
     size_t len)
 {
 	struct buf b;
@@ -840,7 +840,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
 	b.b_bcount = b.b_resid = len;
 	b.b_flags = B_READ;
 	b.b_proc = curproc;
-	b.b_data = buf;
+	b.b_data = tbuf;
 
 	VOP_STRATEGY(vp, &b);
 	return (biowait(&b));
