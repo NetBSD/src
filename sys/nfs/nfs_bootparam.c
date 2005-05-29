@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.24 2004/05/22 22:52:15 jonathan Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.25 2005/05/29 20:58:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.24 2004/05/22 22:52:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.25 2005/05/29 20:58:13 christos Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.24 2004/05/22 22:52:15 jonathan 
 /* bootparam RPC */
 static int bp_whoami __P((struct sockaddr_in *bpsin,
 	struct in_addr *my_ip, struct in_addr *gw_ip, struct proc *p));
-static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
+static int bp_getfile __P((struct sockaddr_in *bpsin, const char *key,
 	struct nfs_dlmount *ndm, struct proc *p));
 
 
@@ -401,7 +401,7 @@ out:
 static int
 bp_getfile(bpsin, key, ndm, p)
 	struct sockaddr_in *bpsin;
-	char *key;
+	const char *key;
 	struct nfs_dlmount *ndm;
 	struct proc *p;
 {
@@ -422,7 +422,8 @@ bp_getfile(bpsin, key, ndm, p)
 		return (ENOMEM);
 
 	/* key name (root or swap) */
-	m->m_next = xdr_string_encode(key, strlen(key));
+	/*XXXUNCONST*/
+	m->m_next = xdr_string_encode(__UNCONST(key), strlen(key));
 	if (m->m_next == NULL)
 		return (ENOMEM);
 

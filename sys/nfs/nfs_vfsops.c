@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.146 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.147 2005/05/29 20:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.146 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.147 2005/05/29 20:58:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -234,7 +234,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	struct nfsv3_fsinfo *fsp;
 	caddr_t cp;
 	int32_t t1, t2;
-	u_int32_t *tl, pref, max;
+	u_int32_t *tl, pref, xmax;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;
 	struct mbuf *mreq, *mrep, *md, *mb;
@@ -253,31 +253,31 @@ nfs_fsinfo(nmp, vp, cred, p)
 		    pref < nmp->nm_wsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_wsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
-		max = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
-		if (max < nmp->nm_wsize && max > 0) {
-			nmp->nm_wsize = max & ~(NFS_FABLKSIZE - 1);
+		xmax = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
+		if (xmax < nmp->nm_wsize && xmax > 0) {
+			nmp->nm_wsize = xmax & ~(NFS_FABLKSIZE - 1);
 			if (nmp->nm_wsize == 0)
-				nmp->nm_wsize = max;
+				nmp->nm_wsize = xmax;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_rtpref);
 		if ((nmp->nm_flag & NFSMNT_RSIZE) == 0 &&
 		    pref < nmp->nm_rsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_rsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
-		max = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
-		if (max < nmp->nm_rsize && max > 0) {
-			nmp->nm_rsize = max & ~(NFS_FABLKSIZE - 1);
+		xmax = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
+		if (xmax < nmp->nm_rsize && xmax > 0) {
+			nmp->nm_rsize = xmax & ~(NFS_FABLKSIZE - 1);
 			if (nmp->nm_rsize == 0)
-				nmp->nm_rsize = max;
+				nmp->nm_rsize = xmax;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_dtpref);
 		if (pref < nmp->nm_readdirsize && pref >= NFS_DIRFRAGSIZ)
 			nmp->nm_readdirsize = (pref + NFS_DIRFRAGSIZ - 1) &
 				~(NFS_DIRFRAGSIZ - 1);
-		if (max < nmp->nm_readdirsize && max > 0) {
-			nmp->nm_readdirsize = max & ~(NFS_DIRFRAGSIZ - 1);
+		if (xmax < nmp->nm_readdirsize && xmax > 0) {
+			nmp->nm_readdirsize = xmax & ~(NFS_DIRFRAGSIZ - 1);
 			if (nmp->nm_readdirsize == 0)
-				nmp->nm_readdirsize = max;
+				nmp->nm_readdirsize = xmax;
 		}
 		/* XXX */
 		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * DEV_BSIZE - 1;
@@ -387,7 +387,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	struct mbuf *m;
 	int error;
 
-	vfs_rootmountalloc(MOUNT_NFS, (char *)mntname, &mp);
+	vfs_rootmountalloc(MOUNT_NFS, mntname, &mp);
 
 	mp->mnt_op = &nfs_vfsops;
 
@@ -976,7 +976,8 @@ sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 	int error;
 
 	nfs_getset_niothreads(0);
-        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	/*XXXUNCONST*/
+        error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
 	if (error || newp == NULL)
 		return (error);
 	nfs_getset_niothreads(1);
