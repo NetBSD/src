@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.23 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.24 2005/05/29 21:00:29 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.23 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24 2005/05/29 21:00:29 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,7 +165,7 @@ update_mp(mp, argp)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 	else if (!(pmp->pm_flags &
 	    (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
-		struct vnode *rootvp;
+		struct vnode *rtvp;
 
 		/*
 		 * Try to divine whether to support Win'95 long filenames
@@ -173,12 +173,12 @@ update_mp(mp, argp)
 		if (FAT32(pmp))
 			pmp->pm_flags |= MSDOSFSMNT_LONGNAME;
 		else {
-			if ((error = msdosfs_root(mp, &rootvp)) != 0)
+			if ((error = msdosfs_root(mp, &rtvp)) != 0)
 				return error;
-			pmp->pm_flags |= findwin95(VTODE(rootvp))
+			pmp->pm_flags |= findwin95(VTODE(rtvp))
 				? MSDOSFSMNT_LONGNAME
 					: MSDOSFSMNT_SHORTNAME;
-			vput(rootvp);
+			vput(rtvp);
 		}
 	}
 
@@ -370,7 +370,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
-		int flags;
+		int xflags;
 
 		/*
 		 * Disallow multiple mounts of the same device.
@@ -386,16 +386,16 @@ msdosfs_mount(mp, path, data, ndp, p)
 			goto fail;
 		}
 		if (mp->mnt_flag & MNT_RDONLY)
-			flags = FREAD;
+			xflags = FREAD;
 		else
-			flags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, flags, FSCRED, p);
+			xflags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, xflags, FSCRED, p);
 		if (error)
 			goto fail;
 		error = msdosfs_mountfs(devvp, mp, p, &args);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void) VOP_CLOSE(devvp, flags, NOCRED, p);
+			(void) VOP_CLOSE(devvp, xflags, NOCRED, p);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.12 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.13 2005/05/29 21:00:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.12 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.13 2005/05/29 21:00:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ union_copyfile(fvp, tvp, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	char *buf;
+	char *tbuf;
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
@@ -648,7 +648,7 @@ union_copyfile(fvp, tvp, cred, p)
 	VOP_LEASE(tvp, p, cred, LEASE_WRITE);
 	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
-	buf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
+	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
 	/* ugly loop follows... */
 	do {
@@ -656,7 +656,7 @@ union_copyfile(fvp, tvp, cred, p)
 
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		iov.iov_base = buf;
+		iov.iov_base = tbuf;
 		iov.iov_len = MAXBSIZE;
 		uio.uio_resid = iov.iov_len;
 		uio.uio_rw = UIO_READ;
@@ -665,7 +665,7 @@ union_copyfile(fvp, tvp, cred, p)
 		if (error == 0) {
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
-			iov.iov_base = buf;
+			iov.iov_base = tbuf;
 			iov.iov_len = MAXBSIZE - uio.uio_resid;
 			uio.uio_offset = offset;
 			uio.uio_rw = UIO_WRITE;
@@ -681,7 +681,7 @@ union_copyfile(fvp, tvp, cred, p)
 
 	} while (error == 0);
 
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 	return (error);
 }
 
