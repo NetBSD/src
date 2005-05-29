@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.7 2005/02/24 08:25:28 martin Exp $	*/
+/*	$NetBSD: est.c,v 1.8 2005/05/29 21:34:23 christos Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.7 2005/02/24 08:25:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8 2005/05/29 21:34:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 void
 est_init(struct cpu_info *ci)
 {
-	const struct est_cpu	*cpu;
+	const struct est_cpu	*ccpu;
 	const struct fqlist	*fql;
 	struct sysctlnode	*node, *estnode, *freqnode;
 	u_int64_t		msr;
@@ -411,16 +411,16 @@ est_init(struct cpu_info *ci)
 	 * Look for a CPU matching cpu_brand_string.
 	 */
 	for (i = 0; est_fqlist == NULL && i < NESTCPUS; i++) {
-		cpu = &est_cpus[i];
-		len = strlen(cpu->brand_prefix);
-		if (strncmp(cpu->brand_prefix, cpu_brand_string, len) != 0)
+		ccpu = &est_cpus[i];
+		len = strlen(ccpu->brand_prefix);
+		if (strncmp(ccpu->brand_prefix, cpu_brand_string, len) != 0)
 			continue;
 		tag = cpu_brand_string + len;
-		for (j = 0; j < cpu->listc; j++) {
-			fql = &cpu->list[j];
+		for (j = 0; j < ccpu->listc; j++) {
+			fql = &ccpu->list[j];
 			len = strlen(fql->brand_tag);
 			if (!strncmp(fql->brand_tag, tag, len) &&
-			    !strcmp(cpu->brand_suffix, tag + len)) {
+			    !strcmp(ccpu->brand_suffix, tag + len)) {
 				est_fqlist = fql;
 				break;
 			}
