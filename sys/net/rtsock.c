@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.75 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.76 2005/05/29 21:22:53 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.75 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.76 2005/05/29 21:22:53 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -244,11 +244,11 @@ route_output(struct mbuf *m, ...)
 		senderr(EINVAL);
 	if (genmask) {
 		struct radix_node *t;
-		t = rn_addmask((caddr_t)genmask, 0, 1);
-		if (t && genmask->sa_len >= ((struct sockaddr *)t->rn_key)->sa_len &&
-		    Bcmp((caddr_t *)genmask + 1, (caddr_t *)t->rn_key + 1,
-		    ((struct sockaddr *)t->rn_key)->sa_len) - 1)
-			genmask = (struct sockaddr *)(t->rn_key);
+		t = rn_addmask(genmask, 0, 1);
+		if (t && genmask->sa_len >= ((const struct sockaddr *)t->rn_key)->sa_len &&
+		    Bcmp((const char *const *)genmask + 1, (const char *const *)t->rn_key + 1,
+		    ((const struct sockaddr *)t->rn_key)->sa_len) - 1)
+			genmask = (const struct sockaddr *)(t->rn_key);
 		else
 			senderr(ENOBUFS);
 	}
@@ -296,20 +296,20 @@ route_output(struct mbuf *m, ...)
 		rt = (struct rtentry *)rn;
 		rt->rt_refcnt++;
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
-			struct radix_node *rn;
+			struct radix_node *rnn;
 			extern struct radix_node_head *mask_rnhead;
 
 			if (Bcmp(dst, rt_key(rt), dst->sa_len) != 0)
 				senderr(ESRCH);
-			if (netmask && (rn = rn_search(netmask,
+			if (netmask && (rnn = rn_search(netmask,
 					    mask_rnhead->rnh_treetop)))
-				netmask = (struct sockaddr *)rn->rn_key;
-			for (rn = rt->rt_nodes; rn; rn = rn->rn_dupedkey)
-				if (netmask == (struct sockaddr *)rn->rn_mask)
+				netmask = (const struct sockaddr *)rnn->rn_key;
+			for (rnn = rt->rt_nodes; rnn; rnn = rnn->rn_dupedkey)
+				if (netmask == (const struct sockaddr *)rnn->rn_mask)
 					break;
-			if (rn == 0)
+			if (rnn == 0)
 				senderr(ETOOMANYREFS);
-			rt = (struct rtentry *)rn;
+			rt = (struct rtentry *)rnn;
 		}
 
 		switch (rtm->rtm_type) {
@@ -478,7 +478,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
+		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
 
@@ -566,7 +566,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, caddr_t data, int datalen)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
-		m_copyback(m, len, dlen, (caddr_t)sa);
+		m_copyback(m, len, dlen, sa);
 		len += dlen;
 	}
 	if (m->m_pkthdr.len != len) {
@@ -1027,7 +1027,8 @@ sysctl_rtable(SYSCTLFN_ARGS)
 	struct	walkarg w;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (new)
 		return (EPERM);
