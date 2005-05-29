@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.119 2004/09/14 17:38:30 drochner Exp $	*/
+/*	$NetBSD: isa.c,v 1.120 2005/05/29 22:12:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.119 2004/09/14 17:38:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.120 2005/05/29 22:12:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 	return (0);
 }
 
-char *
+const char *
 isa_intr_typename(int type)
 {
 
