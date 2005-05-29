@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.562 2005/04/25 15:02:05 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.563 2005/05/29 21:33:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.562 2005/04/25 15:02:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.563 2005/05/29 21:33:01 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -862,7 +862,7 @@ int
 cpu_dump()
 {
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	char buf[dbtob(1)];
+	char bf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
@@ -874,10 +874,10 @@ cpu_dump()
 		return (ENXIO);
 	dump = bdev->d_dump;
 
-	memset(buf, 0, sizeof buf);
-	segp = (kcore_seg_t *)buf;
-	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
-	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
+	memset(bf, 0, sizeof bf);
+	segp = (kcore_seg_t *)bf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&bf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&bf[ ALIGN(sizeof(*segp)) +
 	    ALIGN(sizeof(*cpuhdrp))];
 
 	/*
@@ -900,7 +900,7 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (caddr_t)bf, dbtob(1)));
 }
 
 /*
