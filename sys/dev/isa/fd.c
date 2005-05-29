@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.57 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: fd.c,v 1.58 2005/05/29 22:12:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2005/05/29 22:12:37 christos Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -247,7 +247,7 @@ void fd_motor_off(void *arg);
 void fd_motor_on(void *arg);
 int fdcresult(struct fdc_softc *fdc);
 void fdcstart(struct fdc_softc *fdc);
-void fdcstatus(struct device *dv, int n, char *s);
+void fdcstatus(struct device *dv, int n, const char *s);
 void fdctimeout(void *arg);
 void fdcpseudointr(void *arg);
 void fdcretry(struct fdc_softc *fdc);
@@ -877,7 +877,7 @@ void
 fdcstatus(dv, n, s)
 	struct device *dv;
 	int n;
-	char *s;
+	const char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
