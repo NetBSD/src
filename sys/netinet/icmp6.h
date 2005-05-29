@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.30 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.31 2005/05/29 21:38:37 christos Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -481,23 +481,10 @@ struct icmp6_filter {
 	u_int32_t icmp6_filt[8];
 };
 
-#ifdef _KERNEL
 #define	ICMP6_FILTER_SETPASSALL(filterp) \
-do {								\
-	int i; u_char *p;					\
-	p = (u_char *)filterp;					\
-	for (i = 0; i < sizeof(struct icmp6_filter); i++)	\
-		p[i] = 0xff;					\
-} while (/*CONSTCOND*/ 0)
+	(void)memset(filterp, 0xff, sizeof(struct icmp6_filter))
 #define	ICMP6_FILTER_SETBLOCKALL(filterp) \
-	bzero(filterp, sizeof(struct icmp6_filter))
-#else /* _KERNEL */
-#define	ICMP6_FILTER_SETPASSALL(filterp) \
-	memset(filterp, 0xff, sizeof(struct icmp6_filter))
-#define	ICMP6_FILTER_SETBLOCKALL(filterp) \
-	memset(filterp, 0x00, sizeof(struct icmp6_filter))
-#endif /* _KERNEL */
-
+	(void)memset(filterp, 0x00, sizeof(struct icmp6_filter))
 #define	ICMP6_FILTER_SETPASS(type, filterp) \
 	(((filterp)->icmp6_filt[(type) >> 5]) |= (1 << ((type) & 31)))
 #define	ICMP6_FILTER_SETBLOCK(type, filterp) \
