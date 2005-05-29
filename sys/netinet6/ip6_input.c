@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.77 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.78 2005/05/29 21:43:51 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.77 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78 2005/05/29 21:43:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -150,16 +150,16 @@ static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
 void
 ip6_init()
 {
-	struct ip6protosw *pr;
+	const struct ip6protosw *pr;
 	int i;
 
-	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
+	pr = (const struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
 		panic("ip6_init");
 	for (i = 0; i < IPPROTO_MAX; i++)
 		ip6_protox[i] = pr - inet6sw;
-	for (pr = (struct ip6protosw *)inet6domain.dom_protosw;
-	    pr < (struct ip6protosw *)inet6domain.dom_protoswNPROTOSW; pr++)
+	for (pr = (const struct ip6protosw *)inet6domain.dom_protosw;
+	    pr < (const struct ip6protosw *)inet6domain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
@@ -1059,14 +1059,14 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		 * just after the IPv6 header, which fact is assured through
 		 * the IPv6 input processing.
 		 */
-		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-		if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
+		struct ip6_hdr *xip6 = mtod(m, struct ip6_hdr *);
+		if (xip6->ip6_nxt == IPPROTO_HOPOPTS) {
 			struct ip6_hbh *hbh;
 			int hbhlen;
 			struct mbuf *ext;
 
 			ext = ip6_pullexthdr(m, sizeof(struct ip6_hdr),
-			    ip6->ip6_nxt);
+			    xip6->ip6_nxt);
 			if (ext == NULL) {
 				ip6stat.ip6s_tooshort++;
 				return;
@@ -1095,8 +1095,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 	/* IPV6_DSTOPTS and IPV6_RTHDR socket options */
 	if (in6p->in6p_flags & (IN6P_DSTOPTS | IN6P_RTHDR)) {
-		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-		int nxt = ip6->ip6_nxt, off = sizeof(struct ip6_hdr);
+		struct ip6_hdr *xip6 = mtod(m, struct ip6_hdr *);
+		int nxt = xip6->ip6_nxt, off = sizeof(struct ip6_hdr);
 
 		/*
 		 * Search for destination options headers or routing
@@ -1580,7 +1580,7 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "kame_version",
 		       SYSCTL_DESCR("KAME Version"),
-		       NULL, 0, __KAME_VERSION, 0,
+		       NULL, 0, __UNCONST(__KAME_VERSION), 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_KAME_VERSION, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

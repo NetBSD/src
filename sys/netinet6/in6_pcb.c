@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.66 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.67 2005/05/29 21:43:51 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.66 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67 2005/05/29 21:43:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -577,7 +577,8 @@ in6_setpeeraddr(in6p, nam)
 int
 in6_pcbnotify(table, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	struct inpcbtable *table;
-	struct sockaddr *dst, *src;
+	struct sockaddr *dst;
+	const struct sockaddr *src;
 	u_int fport_arg, lport_arg;
 	int cmd;
 	void *cmdarg;
@@ -600,7 +601,7 @@ in6_pcbnotify(table, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	/*
 	 * note that src can be NULL when we get notify by local fragmentation.
 	 */
-	sa6_src = (src == NULL) ? sa6_any : *(struct sockaddr_in6 *)src;
+	sa6_src = (src == NULL) ? sa6_any : *(const struct sockaddr_in6 *)src;
 	flowinfo = sa6_src.sin6_flowinfo;
 
 	/*
@@ -958,7 +959,8 @@ in6_pcbrtentry(in6p)
 struct in6pcb *
 in6_pcblookup_connect(table, faddr6, fport_arg, laddr6, lport_arg, faith)
 	struct inpcbtable *table;
-	struct in6_addr *faddr6, *laddr6;
+	struct in6_addr *faddr6;
+	const struct in6_addr *laddr6;
 	u_int fport_arg, lport_arg;
 	int faith;
 {
