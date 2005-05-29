@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.68 2005/05/16 16:02:20 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.69 2005/05/29 22:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.68 2005/05/16 16:02:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69 2005/05/29 22:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ linux_sys_fcntl(l, v, retval)
 		retval[0] = bsd_to_linux_ioflags(retval[0]);
 		return 0;
 	case LINUX_F_SETFL: {
-		struct file	*fp = NULL;
+		struct file	*fp1 = NULL;
 
 		val = linux_to_bsd_ioflags((unsigned long)SCARG(uap, arg));
 		/*
@@ -356,19 +356,19 @@ linux_sys_fcntl(l, v, retval)
 		 * so that F_GETFL would report the ASYNC i/o is on.
 		 */
 		if (val & O_ASYNC) {
-			if (((fp = fd_getfile(p->p_fd, fd)) == NULL))
+			if (((fp1 = fd_getfile(p->p_fd, fd)) == NULL))
 			    return (EBADF);
 
-			FILE_USE(fp);
+			FILE_USE(fp1);
 
-			if (((fp->f_type == DTYPE_SOCKET) && fp->f_data
-			      && ((struct socket *)fp->f_data)->so_state & SS_ISAPIPE)
-			    || (fp->f_type == DTYPE_PIPE))
+			if (((fp1->f_type == DTYPE_SOCKET) && fp1->f_data
+			      && ((struct socket *)fp1->f_data)->so_state & SS_ISAPIPE)
+			    || (fp1->f_type == DTYPE_PIPE))
 				val &= ~O_ASYNC;
 			else {
 				/* not a pipe, do not modify anything */
-				FILE_UNUSE(fp, p);
-				fp = NULL;
+				FILE_UNUSE(fp1, p);
+				fp1 = NULL;
 			}
 		}
 
@@ -379,10 +379,10 @@ linux_sys_fcntl(l, v, retval)
 		error = sys_fcntl(l, &fca, retval);
 
 		/* Now set the FASYNC flag for pipes */
-		if (fp) {
+		if (fp1) {
 			if (!error)
-				fp->f_flag |= FASYNC;
-			FILE_UNUSE(fp, p);
+				fp1->f_flag |= FASYNC;
+			FILE_UNUSE(fp1, p);
 		}
 
 		return (error);
