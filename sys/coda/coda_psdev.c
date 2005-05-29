@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.27 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.28 2005/05/29 21:05:25 christos Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.27 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.28 2005/05/29 21:05:25 christos Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -325,7 +325,7 @@ vc_nb_write(dev, uiop, flag)
     struct coda_out_hdr *out;
     u_long seq;
     u_long opcode;
-    int buf[2];
+    int tbuf[2];
     int error = 0;
 
     ENTRY;
@@ -337,14 +337,14 @@ vc_nb_write(dev, uiop, flag)
 
     /* Peek at the opcode, unique without transfering the data. */
     uiop->uio_rw = UIO_WRITE;
-    error = uiomove((caddr_t)buf, sizeof(int) * 2, uiop);
+    error = uiomove((caddr_t)tbuf, sizeof(int) * 2, uiop);
     if (error) {
 	myprintf(("vcwrite: error (%d) on uiomove\n", error));
 	return(EINVAL);
     }
 
-    opcode = buf[0];
-    seq = buf[1];
+    opcode = tbuf[0];
+    seq = tbuf[1];
 
     if (codadebug)
 	myprintf(("vcwrite got a call for %ld.%ld\n", opcode, seq));
@@ -394,7 +394,7 @@ vc_nb_write(dev, uiop, flag)
 	return(EINVAL);
     }
 
-    buf[0] = uiop->uio_resid; 	/* Save this value. */
+    tbuf[0] = uiop->uio_resid; 	/* Save this value. */
     uiop->uio_rw = UIO_WRITE;
     error = uiomove((caddr_t) &out->result, vmp->vm_outSize - (sizeof(int) * 2), uiop);
     if (error) {
@@ -407,7 +407,7 @@ vc_nb_write(dev, uiop, flag)
     /* XXX - aren't these two already correct? -bnoble */
     out->opcode = opcode;
     out->unique = seq;
-    vmp->vm_outSize	= buf[0];	/* Amount of data transferred? */
+    vmp->vm_outSize	= tbuf[0];	/* Amount of data transferred? */
     vmp->vm_flags |= VM_WRITE;
     wakeup(&vmp->vm_sleep);
 
