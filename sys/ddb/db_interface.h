@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.13 2005/04/29 10:40:16 yamt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.14 2005/05/29 21:31:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ db_addr_t	db_disasm(db_addr_t, boolean_t);
 
 /* arch/<arch>/<arch>/db_trace.c */
 /* arch/vax/vax/db_machdep.c */
-void		db_stack_trace_print(db_expr_t, int, db_expr_t, char *,
+void		db_stack_trace_print(db_expr_t, int, db_expr_t, const char *,
 		    void (*)(const char *, ...));
 
 /* ddb/db_xxx.c */
