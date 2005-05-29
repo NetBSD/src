@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.69 2005/05/20 14:39:04 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.69 2005/05/20 14:39:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -358,7 +358,7 @@ atabus_thread(void *arg)
 	}
 	splx(s);
 	chp->ch_thread = NULL;
-	wakeup((void *)&chp->ch_flags);
+	wakeup(&chp->ch_flags);
 	kthread_exit(0);
 }
 
@@ -509,7 +509,7 @@ atabus_detach(struct device *self, int flags)
 	splx(s);
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
-		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
+		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
 	/* power hook */
 	if (sc->sc_powerhook)
@@ -1083,7 +1083,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
 	int i, printed, s;
-	char *sep = "";
+	const char *sep = "";
 	int cf_flags;
 
 	if (ata_get_params(drvp, AT_WAIT, &params) != CMD_OK) {

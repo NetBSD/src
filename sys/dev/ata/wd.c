@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.300 2005/05/16 15:36:57 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.301 2005/05/29 22:11:28 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.300 2005/05/16 15:36:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.301 2005/05/29 22:11:28 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -283,7 +283,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	struct wd_softc *wd = (void *)self;
 	struct ata_device *adev= aux;
 	int i, blank;
-	char buf[41], pbuf[9], c, *p, *q;
+	char tbuf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
@@ -307,7 +307,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	for (blank = 0, p = wd->sc_params.atap_model, q = buf, i = 0;
+	for (blank = 0, p = wd->sc_params.atap_model, q = tbuf, i = 0;
 	    i < sizeof(wd->sc_params.atap_model); i++) {
 		c = *p++;
 		if (c == '\0')
@@ -323,9 +323,9 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	}
 	*q++ = '\0';
 
-	aprint_normal(": <%s>\n", buf);
+	aprint_normal(": <%s>\n", tbuf);
 
-	wdq = wd_lookup_quirks(buf);
+	wdq = wd_lookup_quirks(tbuf);
 	if (wdq != NULL)
 		wd->sc_quirks = wdq->wdq_quirks;
 
@@ -1102,7 +1102,7 @@ wdperror(const struct wd_softc *wd)
 	    "uncorrectable data error", "interface CRC error"};
 	const char *const *errstr;
 	int i;
-	char *sep = "";
+	const char *sep = "";
 
 	const char *devname = wd->sc_dev.dv_xname;
 	struct ata_drive_datas *drvp = wd->drvp;
@@ -1366,7 +1366,7 @@ bad:
 		{
 		struct wd_ioctl *wi;
 		atareq_t *atareq = (atareq_t *) addr;
-		int error;
+		int error1;
 
 		wi = wi_get();
 		wi->wi_softc = wd;
@@ -1384,7 +1384,7 @@ bad:
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
 			wi->wi_uio.uio_procp = p;
-			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
+			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
 		} else {
@@ -1396,11 +1396,11 @@ bad:
 			wi->wi_bp.b_dev = 0;
 			wi->wi_bp.b_proc = p;
 			wdioctlstrategy(&wi->wi_bp);
-			error = wi->wi_bp.b_error;
+			error1 = wi->wi_bp.b_error;
 		}
 		*atareq = wi->wi_atareq;
 		wi_free(wi);
-		return(error);
+		return(error1);
 		}
 
 	case DIOCAWEDGE:
