@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.197 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.198 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.197 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.198 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1240,7 +1240,8 @@ exec_init(int init_boot)
 	execsw = new_es;
 	nexecs = es_sz;
 	if (old_es)
-		free((void *)old_es, M_EXEC);
+		/*XXXUNCONST*/
+		free(__UNCONST(old_es), M_EXEC);
 
 	/*
 	 * Figure out the maximum size of an exec header.

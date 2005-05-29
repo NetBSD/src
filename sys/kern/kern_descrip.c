@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.132 2005/05/20 16:13:00 wrstuden Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.133 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.132 2005/05/20 16:13:00 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.133 2005/05/29 22:24:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,14 +433,14 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			break;
 		i = tmp ^ fp->f_flag;
 		if (i & FNONBLOCK) {
-			int fl = tmp & FNONBLOCK;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &fl, p);
+			int flgs = tmp & FNONBLOCK;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &flgs, p);
 			if (error)
 				goto reset_fcntl;
 		}
 		if (i & FASYNC) {
-			int fl = tmp & FASYNC;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &fl, p);
+			int flgs = tmp & FASYNC;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &flgs, p);
 			if (error) {
 				if (i & FNONBLOCK) {
 					tmp = fp->f_flag & FNONBLOCK;
@@ -813,7 +813,7 @@ void
 fdexpand(struct proc *p)
 {
 	struct filedesc	*fdp;
-	int		i, nfiles, oldnfiles;
+	int		i, numfiles, oldnfiles;
 	struct file	**newofile;
 	char		*newofileflags;
 	uint32_t	*newhimap = NULL, *newlomap = NULL;
@@ -824,15 +824,15 @@ restart:
 	oldnfiles = fdp->fd_nfiles;
 
 	if (oldnfiles < NDEXTENT)
-		nfiles = NDEXTENT;
+		numfiles = NDEXTENT;
 	else
-		nfiles = 2 * oldnfiles;
+		numfiles = 2 * oldnfiles;
 
-	newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
-	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
-		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(uint32_t),
+	newofile = malloc(numfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
+	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
+		newhimap = malloc(NDHISLOTS(numfiles) * sizeof(uint32_t),
 		    M_FILEDESC, M_WAITOK);
-		newlomap = malloc(NDLOSLOTS(nfiles) * sizeof(uint32_t),
+		newlomap = malloc(NDLOSLOTS(numfiles) * sizeof(uint32_t),
 		    M_FILEDESC, M_WAITOK);
 	}
 
@@ -847,7 +847,7 @@ restart:
 		goto restart;
 	}
 
-	newofileflags = (char *) &newofile[nfiles];
+	newofileflags = (char *) &newofile[numfiles];
 	/*
 	 * Copy the existing ofile and ofileflags arrays
 	 * and zero the new portion of each array.
@@ -855,23 +855,23 @@ restart:
 	memcpy(newofile, fdp->fd_ofiles,
 	    (i = sizeof(struct file *) * fdp->fd_nfiles));
 	memset((char *)newofile + i, 0,
-	    nfiles * sizeof(struct file *) - i);
+	    numfiles * sizeof(struct file *) - i);
 	memcpy(newofileflags, fdp->fd_ofileflags,
 	    (i = sizeof(char) * fdp->fd_nfiles));
-	memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
+	memset(newofileflags + i, 0, numfiles * sizeof(char) - i);
 	if (oldnfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
 
-	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
+	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
 		memcpy(newhimap, fdp->fd_himap,
 		    (i = NDHISLOTS(oldnfiles) * sizeof(uint32_t)));
 		memset((char *)newhimap + i, 0,
-		    NDHISLOTS(nfiles) * sizeof(uint32_t) - i);
+		    NDHISLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		memcpy(newlomap, fdp->fd_lomap,
 		    (i = NDLOSLOTS(oldnfiles) * sizeof(uint32_t)));
 		memset((char *)newlomap + i, 0,
-		    NDLOSLOTS(nfiles) * sizeof(uint32_t) - i);
+		    NDLOSLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		if (NDHISLOTS(oldnfiles) > NDHISLOTS(NDFILE)) {
 			free(fdp->fd_himap, M_FILEDESC);
@@ -883,7 +883,7 @@ restart:
 
 	fdp->fd_ofiles = newofile;
 	fdp->fd_ofileflags = newofileflags;
-	fdp->fd_nfiles = nfiles;
+	fdp->fd_nfiles = numfiles;
 
 	simple_unlock(&fdp->fd_slock);
 
@@ -1156,7 +1156,7 @@ fdcopy(struct proc *p)
 {
 	struct filedesc	*newfdp, *fdp;
 	struct file	**fpp, **nfpp;
-	int		i, nfiles, lastfile;
+	int		i, numfiles, lastfile;
 
 	fdp = p->p_fd;
 	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
@@ -1164,7 +1164,7 @@ fdcopy(struct proc *p)
 	simple_lock_init(&newfdp->fd_slock);
 
 restart:
-	nfiles = fdp->fd_nfiles;
+	numfiles = fdp->fd_nfiles;
 	lastfile = fdp->fd_lastfile;
 
 	/*
@@ -1181,7 +1181,7 @@ restart:
 		 * for the file descriptors currently in use,
 		 * allowing the table to shrink.
 		 */
-		i = nfiles;
+		i = numfiles;
 		while (i >= 2 * NDEXTENT && i > lastfile * 2)
 			i /= 2;
 		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
@@ -1194,7 +1194,7 @@ restart:
 	}
 
 	simple_lock(&fdp->fd_slock);
-	if (nfiles != fdp->fd_nfiles || lastfile != fdp->fd_lastfile) {
+	if (numfiles != fdp->fd_nfiles || lastfile != fdp->fd_lastfile) {
 		simple_unlock(&fdp->fd_slock);
 		if (i > NDFILE)
 			free(newfdp->fd_ofiles, M_FILEDESC);
@@ -1783,7 +1783,7 @@ restart:
 int
 fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
 {
-	int id = *(int *)data;
+	int id = *(const int *)data;
 	int error;
 
 	switch (cmd) {

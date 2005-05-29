@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.88 2005/03/02 11:05:34 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.89 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.88 2005/03/02 11:05:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.89 2005/05/29 22:24:15 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -275,8 +275,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	struct timeval atv, utv;
 	int error, s, timo;
 
-	error = copyin((caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
-		       sizeof(struct timespec));
+	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
 		return (error);
 
@@ -301,7 +300,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		error = 0;
 
 	if (SCARG(uap, rmtp)) {
-		int error;
+		int error1;
 
 		s = splclock();
 		utv = time;
@@ -312,10 +311,10 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 			timerclear(&utv);
 
 		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+		error1 = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
 			sizeof(rmt));
-		if (error)
-			return (error);
+		if (error1)
+			return (error1);
 	}
 
 	return error;

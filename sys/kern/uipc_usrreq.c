@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.81 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.82 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.81 2005/05/07 17:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.82 2005/05/29 22:24:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(p, control);
-	if (sbappendaddr(&so2->so_rcv, (struct sockaddr *)sun, m,
+	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		m_freem(control);
 		m_freem(m);

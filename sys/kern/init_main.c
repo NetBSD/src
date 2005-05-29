@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.246 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.247 2005/05/29 22:24:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.246 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.247 2005/05/29 22:24:14 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -501,7 +501,7 @@ main(void)
 	 * secondary processors, yet.
 	 */
 	while (config_pending)
-		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+		(void) tsleep(&config_pending, PWAIT, "cfpend", 0);
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -605,7 +605,7 @@ main(void)
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
 	start_init_exec = 1;
-	wakeup((void *)&start_init_exec);
+	wakeup(&start_init_exec);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -676,7 +676,7 @@ start_init(void *arg)
 	 * Wait for main() to tell us that it's safe to exec.
 	 */
 	while (start_init_exec == 0)
-		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
+		(void) tsleep(&start_init_exec, PWAIT, "initexec", 0);
 
 	/*
 	 * This is not the right way to do this.  We really should
@@ -766,7 +766,7 @@ start_init(void *arg)
 #endif
 		arg0 = STACK_ALLOC(ucp, i);
 		ucp = STACK_MAX(arg0, i);
-		(void)copyout((caddr_t)path, arg0, i);
+		(void)copyout(path, arg0, i);
 
 		/*
 		 * Move out the arg pointers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.180 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.180 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -619,7 +619,7 @@ sysctl_query(SYSCTLFN_ARGS)
 	 * if the request specifies a version, check it
 	 */
 	if (qnode.sysctl_ver != 0) {
-		enode = (struct sysctlnode *)rnode; /* discard const */
+		enode = __UNCONST(rnode); /* XXXUNCONST discard const */
 		if (qnode.sysctl_ver != enode->sysctl_ver &&
 		    qnode.sysctl_ver != sysctl_rootof(enode)->sysctl_ver)
 			return (EINVAL);
@@ -920,7 +920,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 				return (EINVAL);
 			}
 			else {
-				char v[PAGE_SIZE], *e;
+				char vp[PAGE_SIZE], *e;
 				size_t s;
 
 				/*
@@ -929,7 +929,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 				 */
 				e = nnode.sysctl_data;
 				do {
-					error = copyinstr(e, &v[0], sizeof(v),
+					error = copyinstr(e, &vp[0], sizeof(vp),
 							  &s);
 					if (error) {
 						if (error != ENAMETOOLONG)
@@ -1318,7 +1318,8 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	}
 	if (node->sysctl_flags & CTLFLAG_OWNDESC) {
 		if (node->sysctl_desc != NULL)
-			FREE(node->sysctl_desc, M_SYSCTLDATA);
+			/*XXXUNCONST*/
+			FREE(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
 		node->sysctl_desc = NULL;
 	}
 
@@ -1603,7 +1604,7 @@ int
 sysctl_describe(SYSCTLFN_ARGS)
 {
 	struct sysctldesc *d;
-	char buf[1024];
+	char bf[1024];
 	size_t sz, left, tot;
 	int i, error, v = -1;
 	struct sysctlnode *node;
@@ -1623,7 +1624,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 	 * get ready...
 	 */
 	error = 0;
-	d = (void*)&buf[0];
+	d = (void*)bf;
 	tot = 0;
 	node = rnode->sysctl_child;
 	left = *oldlenp;
@@ -1727,7 +1728,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if ((node->sysctl_flags & CTLFLAG_OWNDESC) &&
 			    node->sysctl_desc != NULL)
-				free((void*)node->sysctl_desc, M_SYSCTLDATA);
+				/*XXXUNCONST*/
+				free(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
 			node->sysctl_desc = dnode.sysctl_desc;
 			node->sysctl_flags |=
 				(dnode.sysctl_flags & CTLFLAG_OWNDESC);
@@ -1760,15 +1762,15 @@ sysctl_describe(SYSCTLFN_ARGS)
 		/*
 		 * is this description "valid"?
 		 */
-		memset(&buf[0], 0, sizeof(buf));
+		memset(bf, 0, sizeof(bf));
 		if (node[i].sysctl_desc == NULL)
 			sz = 1;
 		else if (copystr(node[i].sysctl_desc, &d->descr_str[0],
-				 sizeof(buf) - sizeof(*d), &sz) != 0) {
+				 sizeof(bf) - sizeof(*d), &sz) != 0) {
 			/*
 			 * erase possible partial description
 			 */
-			memset(&buf[0], 0, sizeof(buf));
+			memset(bf, 0, sizeof(bf));
 			sz = 1;
 		}
 
@@ -1784,7 +1786,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 			if (error)
 				return (error);
 			left -= sz;
-			oldp = (void*)__sysc_desc_adv(oldp, d->descr_len);
+			oldp = (void *)__sysc_desc_adv(oldp, d->descr_len);
 		}
 		tot += sz;
 
@@ -2346,7 +2348,8 @@ sysctl_free(struct sysctlnode *rnode)
 				if (SYSCTL_FLAGS(node->sysctl_flags) &
 				    CTLFLAG_OWNDESC) {
 					if (node->sysctl_desc != NULL) {
-						FREE(node->sysctl_desc,
+						/*XXXUNCONST*/
+						FREE(__UNCONST(node->sysctl_desc),
 						     M_SYSCTLDATA);
 						node->sysctl_desc = NULL;
 					}
@@ -2574,7 +2577,8 @@ sysctl_notavail(SYSCTLFN_ARGS)
 {
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	return (EOPNOTSUPP);
 }

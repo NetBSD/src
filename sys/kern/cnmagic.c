@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.5 2003/08/22 02:01:32 junyoung Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.6 2005/05/29 22:24:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.5 2003/08/22 02:01:32 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.6 2005/05/29 22:24:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ cn_destroy_magic(cnm_state_t *cnm)
  * machine table.
  */
 int
-cn_set_magic(char *magic)
+cn_set_magic(const char *magic)
 {
 	unsigned int i, c, n;
 	unsigned short m[CNS_LEN];
@@ -124,9 +124,9 @@ cn_set_magic(char *magic)
  * a magic string.
  */
 int
-cn_get_magic(char *magic, int maglen)
+cn_get_magic(char *magic, size_t maglen)
 {
-	unsigned int i, c;
+	size_t i, c;
 
 	for (i = 0; i < CNS_LEN;) {
 		c = cn_magic[i];

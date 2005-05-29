@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.147 2005/05/08 18:44:39 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.148 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.147 2005/05/08 18:44:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -202,8 +202,6 @@ exit1(struct lwp *l, int rv)
 
 	p->p_flag |= P_WEXIT;
 	if (p->p_flag & P_STOPEXIT) {
-		int s;
-
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
 		p->p_stat = SSTOP;
@@ -275,7 +273,6 @@ exit1(struct lwp *l, int rv)
 		struct tty *tp;
 
 		if (sp->s_ttyvp) {
-			int s;
 			/*
 			 * Controlling process.
 			 * Signal foreground pgrp,

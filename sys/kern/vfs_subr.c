@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.244 2005/04/20 13:44:46 blymn Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.245 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.244 2005/04/20 13:44:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.245 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -363,8 +363,8 @@ vfs_unbusy(mp)
  */
 int
 vfs_rootmountalloc(fstypename, devname, mpp)
-	char *fstypename;
-	char *devname;
+	const char *fstypename;
+	const char *devname;
 	struct mount **mpp;
 {
 	struct vfsops *vfsp = NULL;
@@ -1946,10 +1946,10 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
  */
 void
 vprint(label, vp)
-	char *label;
+	const char *label;
 	struct vnode *vp;
 {
-	char buf[96];
+	char bf[96];
 
 	if (label != NULL)
 		printf("%s: ", label);
@@ -1957,9 +1957,9 @@ vprint(label, vp)
 	    "refcount %ld,", ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
-	if (buf[0] != '\0')
-		printf(" flags (%s)", &buf[1]);
+	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
+	if (bf[0] != '\0')
+		printf(" flags (%s)", &bf[1]);
 	if (vp->v_data == NULL) {
 		printf("\n");
 	} else {
@@ -2043,7 +2043,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 static int
 sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 {
-	char buf[MFSNAMELEN];
+	char bf[MFSNAMELEN];
 	char *where = oldp;
 	struct vfsops *v;
 	size_t needed, left, slen;
@@ -2063,20 +2063,20 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 		if (where == NULL)
 			needed += strlen(v->vfs_name) + 1;
 		else {
-			memset(buf, 0, sizeof(buf));
+			memset(bf, 0, sizeof(bf));
 			if (first) {
-				strncpy(buf, v->vfs_name, sizeof(buf));
+				strncpy(bf, v->vfs_name, sizeof(bf));
 				first = 0;
 			} else {
-				buf[0] = ' ';
-				strncpy(buf + 1, v->vfs_name, sizeof(buf) - 1);
+				bf[0] = ' ';
+				strncpy(bf + 1, v->vfs_name, sizeof(bf) - 1);
 			}
-			buf[sizeof(buf)-1] = '\0';
-			slen = strlen(buf);
+			bf[sizeof(bf)-1] = '\0';
+			slen = strlen(bf);
 			if (left < slen + 1)
 				break;
 			/* +1 to copy out the trailing NUL byte */
-			error = copyout(buf, where, slen + 1);
+			error = copyout(bf, where, slen + 1);
 			if (error)
 				break;
 			where += slen;
@@ -3121,13 +3121,13 @@ vfs_buf_print(bp, full, pr)
 	int full;
 	void (*pr)(const char *, ...);
 {
-	char buf[1024];
+	char bf[1024];
 
 	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" dev 0x%x\n",
 		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
 
-	bitmask_snprintf(bp->b_flags, buf_flagbits, buf, sizeof(buf));
-	(*pr)("  error %d flags 0x%s\n", bp->b_error, buf);
+	bitmask_snprintf(bp->b_flags, buf_flagbits, bf, sizeof(bf));
+	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
@@ -3143,11 +3143,11 @@ vfs_vnode_print(vp, full, pr)
 	int full;
 	void (*pr)(const char *, ...);
 {
-	char buf[256];
+	char bf[256];
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
-	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
-	(*pr)("\nVNODE flags %s\n", buf);
+	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
+	(*pr)("\nVNODE flags %s\n", bf);
 	(*pr)("mp %p numoutput %d size 0x%llx\n",
 	      vp->v_mount, vp->v_numoutput, vp->v_size);
 

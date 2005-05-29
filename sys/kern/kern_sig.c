@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.205 2005/04/09 16:07:52 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.206 2005/05/29 22:24:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.205 2005/04/09 16:07:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.206 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1657,7 +1657,7 @@ issignal(struct lwp *l)
  * on the run queue.
  */
 void
-proc_stop(struct proc *p, int wakeup)
+proc_stop(struct proc *p, int dowakeup)
 {
 	struct lwp *l;
 	struct proc *parent;
@@ -1751,7 +1751,7 @@ proc_stop(struct proc *p, int wakeup)
  out:
 	/* XXX unlock process LWP state */
 
-	if (wakeup)
+	if (dowakeup)
 		sched_wakeup((caddr_t)p->p_pptr);
 }
 

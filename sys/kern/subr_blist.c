@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.6 2005/04/07 12:12:51 yamt Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.7 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.6 2005/04/07 12:12:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.7 2005/05/29 22:24:15 christos Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -687,11 +687,11 @@ static void blst_copy(
 		if (v == (blist_bitmap_t)-1) {
 			blist_free(dest, blk, count);
 		} else if (v != 0) {
-			int i;
+			int j;
 
-			for (i = 0; i < BLIST_BMAP_RADIX && i < count; ++i) {
-				if (v & (1 << i))
-					blist_free(dest, blk + i, 1);
+			for (j = 0; j < BLIST_BMAP_RADIX && j < count; ++j) {
+				if (v & (1 << j))
+					blist_free(dest, blk + j, 1);
 			}
 		}
 		return;

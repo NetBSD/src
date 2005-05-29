@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.93 2005/02/26 21:34:55 perry Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.94 2005/05/29 22:24:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.93 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.94 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1401,7 +1401,7 @@ config_pending_decr(void)
 #endif
 	config_pending--;
 	if (config_pending == 0)
-		wakeup((void *)&config_pending);
+		wakeup(&config_pending);
 }
 
 /*

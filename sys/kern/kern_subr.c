@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.115 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.116 2005/05/29 22:24:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.115 2005/01/24 21:25:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.116 2005/05/29 22:24:15 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -319,7 +319,7 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	iov.iov_base = (void *) kaddr;	/* XXX cast away const */
+	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
@@ -1281,7 +1281,7 @@ humanize_number(buf, len, bytes, suffix, divisor)
        	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
 	const char *prefixes;
 	int		r;
-	u_int64_t	max;
+	u_int64_t	umax;
 	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
@@ -1302,10 +1302,10 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	} else
 		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
-	max = 1;
+	umax = 1;
 	for (i = 0; i < len - suffixlen - 3; i++)
-		max *= 10;
-	for (i = 0; bytes >= max && prefixes[i + 1]; i++)
+		umax *= 10;
+	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
 		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
