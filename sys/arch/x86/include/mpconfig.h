@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.7 2005/04/16 07:45:59 yamt Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.8 2005/05/29 21:37:02 christos Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -37,7 +37,7 @@ struct mpbios_int;
 
 struct mp_bus
 {
-	char *mb_name;		/* XXX bus name */
+	const char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */
 	void (*mb_intr_print)(int);
 	void (*mb_intr_cfg)(const struct mpbios_int *, u_int32_t *);

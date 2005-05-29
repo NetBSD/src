@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.32 2004/12/21 11:33:04 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.33 2005/05/29 21:37:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.32 2004/12/21 11:33:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33 2005/05/29 21:37:03 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -804,7 +804,7 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 	char buf[256];
 	int pin;
 	struct ioapic_softc *sc;
-	char *busname;
+	const char *busname;
 
 	sc = mpi->ioapic;
 	pin = mpi->ioapic_pin;
