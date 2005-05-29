@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.73.2.1.2.1 2005/01/30 13:20:27 he Exp $	*/
+/*	$NetBSD: options.c,v 1.73.2.1.2.2 2005/05/29 23:18:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.73.2.1.2.1 2005/01/30 13:20:27 he Exp $");
+__RCSID("$NetBSD: options.c,v 1.73.2.1.2.2 2005/05/29 23:18:53 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1345,6 +1345,7 @@ struct option cpio_longopts[] = {
 	{ "version",		no_argument,		0,
 						OPT_VERSION },
 #endif
+	{ 0,			0,			0,	0 },
 };
 
 /*
