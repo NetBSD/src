@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.90 2004/09/04 23:30:07 manu Exp $	*/
+/*	$NetBSD: malloc.h,v 1.91 2005/05/29 21:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -160,7 +160,7 @@ extern struct simplelock malloc_slock;
 #else /* do not collect statistics */
 #define	MALLOC(space, cast, size, type, flags)				\
 do {									\
-	register struct kmembuckets *__kbp = &bucket[BUCKETINDX((size))]; \
+	register struct kmembuckets *__kbp = &kbucket[BUCKETINDX((size))]; \
 	long __s = splvm();						\
 	simple_lock(&malloc_slock);					\
 	if (__kbp->kb_next == NULL) {					\
@@ -186,7 +186,7 @@ do {									\
 		free((caddr_t)(addr), (type));				\
 	} else {							\
 		simple_lock(&malloc_slock);				\
-		__kbp = &bucket[__kup->ku_indx];			\
+		__kbp = &kbucket[__kup->ku_indx];			\
 		if (__kbp->kb_next == NULL)				\
 			__kbp->kb_next = (caddr_t)(addr);		\
 		else							\
@@ -201,7 +201,7 @@ do {									\
 
 extern struct kmemusage		*kmemusage;
 extern char			*kmembase;
-extern struct kmembuckets	bucket[];
+extern struct kmembuckets	kbucket[];
 
 #ifdef MALLOCLOG
 void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
