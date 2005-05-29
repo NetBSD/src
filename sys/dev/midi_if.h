@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.15 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.16 2005/05/29 22:18:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _SYS_DEV_MIDI_IF_H_
 
 struct midi_info {
-	char	*name;		/* Name of MIDI hardware */
+	const char *name;		/* Name of MIDI hardware */
 	int	props;
 };
 #define MIDI_PROP_OUT_INTR  1

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.3 2003/09/06 23:28:30 christos Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.4 2005/05/29 22:18:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.3 2003/09/06 23:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.4 2005/05/29 22:18:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -76,7 +76,7 @@ do {									\
 	splx((s));							\
 } while (/*CONSTCOND*/0)
 
-static __volatile int sysmon_task_queue_cleanup_sem;
+static int sysmon_task_queue_cleanup_sem;
 
 static struct proc *sysmon_task_queue_proc;
 
@@ -124,7 +124,7 @@ sysmon_task_queue_fini(void)
 	wakeup(&sysmon_task_queue);
 
 	while (sysmon_task_queue_cleanup_sem != 0) {
-		(void) ltsleep((void *) &sysmon_task_queue_cleanup_sem,
+		(void)ltsleep(&sysmon_task_queue_cleanup_sem,
 		    PVM, "stfini", 0, &sysmon_task_queue_slock);
 	}
 
@@ -175,7 +175,7 @@ sysmon_task_queue_thread(void *arg)
 			if (sysmon_task_queue_cleanup_sem != 0) {
 				/* Time to die. */
 				sysmon_task_queue_cleanup_sem = 0;
-				wakeup((void *) &sysmon_task_queue_cleanup_sem);
+				wakeup(&sysmon_task_queue_cleanup_sem);
 				SYSMON_TASK_QUEUE_UNLOCK(s);
 				kthread_exit(0);
 			}
