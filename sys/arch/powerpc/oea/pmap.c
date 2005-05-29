@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2005/02/22 21:06:56 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2005/05/29 15:57:53 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2005/02/22 21:06:56 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2005/05/29 15:57:53 chs Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1884,7 +1884,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (flags & VM_PROT_WRITE)
 		pte_lo |= PTE_CHG;
-	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
+	if (flags & VM_PROT_ALL)
 		pte_lo |= PTE_REF;
 
 	/*
