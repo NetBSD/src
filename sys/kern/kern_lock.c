@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.86 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.87 2005/05/29 21:16:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.86 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.87 2005/05/29 21:16:14 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -262,8 +262,8 @@ acquire(__volatile struct lock **lkpp, int *s, int extflags,
 			}
 			/* XXX Cast away volatile. */
 			error = ltsleep(drain ?
-			    (void *)&lkp->lk_flags :
-			    (void *)lkp, lkp->lk_prio,
+			    (volatile const void *)&lkp->lk_flags :
+			    (volatile const void *)lkp, lkp->lk_prio,
 			    lkp->lk_wmesg, lkp->lk_timo, &lkp->lk_interlock);
 			if (!drain) {
 				lkp->lk_waitcount--;
@@ -280,7 +280,7 @@ acquire(__volatile struct lock **lkpp, int *s, int extflags,
 				simple_lock(&lkp->lk_newlock->lk_interlock);
 				simple_unlock(&lkp->lk_interlock);
 				if (lkp->lk_waitcount == 0)
-					wakeup((void *)&lkp->lk_newlock);
+					wakeup(&lkp->lk_newlock);
 				*lkpp = lkp = lkp->lk_newlock;
 			}
 		}
@@ -308,8 +308,7 @@ do {									\
 do {									\
 	if (((lkp)->lk_flags & (LK_SPIN | LK_WAIT_NONZERO)) ==		\
 	    LK_WAIT_NONZERO) {						\
-		/* XXX Cast away volatile. */				\
-		wakeup((void *)(lkp));					\
+		wakeup((lkp));						\
 	}								\
 } while (/*CONSTCOND*/0)
 
@@ -328,32 +327,28 @@ struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
 #define	SPINLOCK_LIST_UNLOCK()	/* nothing */
 #endif /* MULTIPROCESSOR */ /* } */
 
-TAILQ_HEAD(, lock) spinlock_list =
+_TAILQ_HEAD(, struct lock, __volatile) spinlock_list =
     TAILQ_HEAD_INITIALIZER(spinlock_list);
 
 #define	HAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = spllock();					\
+		int sp = spllock();					\
 		SPINLOCK_LIST_LOCK();					\
-		/* XXX Cast away volatile. */				\
-		TAILQ_INSERT_TAIL(&spinlock_list, (struct lock *)(lkp),	\
-		    lk_list);						\
+		TAILQ_INSERT_TAIL(&spinlock_list, (lkp), lk_list);	\
 		SPINLOCK_LIST_UNLOCK();					\
-		splx(s);						\
+		splx(sp);						\
 	}								\
 } while (/*CONSTCOND*/0)
 
 #define	DONTHAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = spllock();					\
+		int sp = spllock();					\
 		SPINLOCK_LIST_LOCK();					\
-		/* XXX Cast away volatile. */				\
-		TAILQ_REMOVE(&spinlock_list, (struct lock *)(lkp),	\
-		    lk_list);						\
+		TAILQ_REMOVE(&spinlock_list, (lkp), lk_list);		\
 		SPINLOCK_LIST_UNLOCK();					\
-		splx(s);						\
+		splx(sp);						\
 	}								\
 } while (/*CONSTCOND*/0)
 #else
@@ -900,7 +895,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
 	      LK_SHARE_NONZERO | LK_WAIT_NONZERO)) == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
-		wakeup((void *)&lkp->lk_flags);
+		wakeup(&lkp->lk_flags);
 	}
 	/*
 	 * Note that this panic will be a recursive panic, since
@@ -1048,7 +1043,7 @@ lockmgr_printinfo(__volatile struct lock *lkp)
 }
 
 #if defined(LOCKDEBUG) /* { */
-TAILQ_HEAD(, simplelock) simplelock_list =
+_TAILQ_HEAD(, struct simplelock, __volatile) simplelock_list =
     TAILQ_HEAD_INITIALIZER(simplelock_list);
 
 #if defined(MULTIPROCESSOR) /* { */
@@ -1100,7 +1095,7 @@ do {									\
  * they are being called.
  */
 void
-simple_lock_init(struct simplelock *alp)
+simple_lock_init(__volatile struct simplelock *alp)
 {
 
 #if defined(MULTIPROCESSOR) /* { */
@@ -1158,8 +1153,7 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 	alp->lock_holder = cpu_id;
 
 	SLOCK_LIST_LOCK();
-	/* XXX Cast away volatile */
-	TAILQ_INSERT_TAIL(&simplelock_list, (struct simplelock *)alp, list);
+	TAILQ_INSERT_TAIL(&simplelock_list, alp, list);
 	SLOCK_LIST_UNLOCK();
 
 	SLOCK_COUNT(1);
@@ -1233,8 +1227,7 @@ _simple_lock_try(__volatile struct simplelock *alp, const char *id, int l)
 	alp->lock_holder = cpu_id;
 
 	SLOCK_LIST_LOCK();
-	/* XXX Cast away volatile. */
-	TAILQ_INSERT_TAIL(&simplelock_list, (struct simplelock *)alp, list);
+	TAILQ_INSERT_TAIL(&simplelock_list, alp, list);
 	SLOCK_LIST_UNLOCK();
 
 	SLOCK_COUNT(1);
@@ -1290,7 +1283,7 @@ _simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
 void
 simple_lock_dump(void)
 {
-	struct simplelock *alp;
+	__volatile struct simplelock *alp;
 	int s;
 
 	s = spllock();
@@ -1307,13 +1300,14 @@ simple_lock_dump(void)
 void
 simple_lock_freecheck(void *start, void *end)
 {
-	struct simplelock *alp;
+	__volatile struct simplelock *alp;
 	int s;
 
 	s = spllock();
 	SLOCK_LIST_LOCK();
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
-		if ((void *)alp >= start && (void *)alp < end) {
+		if ((__volatile void *)alp >= start &&
+		    (__volatile void *)alp < end) {
 			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
 			    alp, alp->lock_holder, alp->lock_file,
 			    alp->lock_line);
@@ -1338,7 +1332,7 @@ simple_lock_switchcheck(void)
 void
 simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 {
-	struct simplelock *alp;
+	__volatile struct simplelock *alp;
 	cpuid_t cpu_id = cpu_number();
 	int s;
 
