@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.7 2003/08/07 16:29:18 agc Exp $	*/
+/*	$NetBSD: int_types.h,v 1.7.6.1 2005/05/29 23:38:23 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,8 @@
 
 #ifndef	_POWERPC_INT_TYPES_H_
 #define	_POWERPC_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types
