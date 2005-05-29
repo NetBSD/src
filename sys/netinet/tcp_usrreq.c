@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.103 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.104 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.103 2005/05/07 17:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.104 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1190,14 +1190,14 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 {
 #ifdef INET
 	struct sockaddr_in *in;
-	struct inpcb *inp;
+	const struct inpcb *inp;
 #endif
 #ifdef INET6
 	struct sockaddr_in6 *in6;
-	struct in6pcb *in6p;
+	const struct in6pcb *in6p;
 #endif
-	const struct inpcbtable *pcbtbl = rnode->sysctl_data;
-	struct inpcb_hdr *inph;
+	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
+	const struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -1222,7 +1222,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	elem_size = out_size = sizeof(pcb);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (name - oname != 4)
 		return (EINVAL);
@@ -1233,10 +1233,10 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
-		inp = (struct inpcb *)inph;
+		inp = (const struct inpcb *)inph;
 #endif
 #ifdef INET6
-		in6p = (struct in6pcb *)inph;
+		in6p = (const struct in6pcb *)inph;
 #endif
 
 		if (inph->inph_af != pf)

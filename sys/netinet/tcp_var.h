@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.125 2005/04/05 01:07:17 kurahone Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.126 2005/05/29 21:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -862,14 +862,14 @@ int	 tcp_sack_numblks(const struct tcpcb *);
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
 		struct mbuf *, u_char *, int, struct tcp_opt_info *);
-void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
+void	 syn_cache_unreach(const struct sockaddr *, const struct sockaddr *,
 	   struct tcphdr *);
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int,
 		struct socket *so, struct mbuf *);
 void	 syn_cache_init(void);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
-struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
+struct syn_cache *syn_cache_lookup(const struct sockaddr *, const struct sockaddr *,
 		struct syn_cache_head **);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *);

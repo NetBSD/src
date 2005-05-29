@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.41 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.42 2005/05/29 21:41:23 christos Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.41 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.42 2005/05/29 21:41:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -266,18 +266,18 @@ in_gif_input(struct mbuf *m, ...)
 #ifdef INET
 	case IPPROTO_IPV4:
 	    {
-		struct ip *ip;
+		struct ip *xip;
 		af = AF_INET;
-		if (m->m_len < sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*ip));
+		if (m->m_len < sizeof(*xip)) {
+			m = m_pullup(m, sizeof(*xip));
 			if (!m)
 				return;
 		}
-		ip = mtod(m, struct ip *);
+		xip = mtod(m, struct ip *);
 		if (gifp->if_flags & IFF_LINK1)
-			ip_ecn_egress(ECN_ALLOWED, &otos, &ip->ip_tos);
+			ip_ecn_egress(ECN_ALLOWED, &otos, &xip->ip_tos);
 		else
-			ip_ecn_egress(ECN_NOCARE, &otos, &ip->ip_tos);
+			ip_ecn_egress(ECN_NOCARE, &otos, &xip->ip_tos);
 		break;
 	    }
 #endif
@@ -417,7 +417,7 @@ in_gif_attach(struct gif_softc *sc)
 		return EINVAL;
 	sc->encap_cookie4 = encap_attach(AF_INET, -1, sc->gif_psrc,
 	    (struct sockaddr *)&mask4, sc->gif_pdst, (struct sockaddr *)&mask4,
-	    (struct protosw *)&in_gif_protosw, sc);
+	    (const struct protosw *)&in_gif_protosw, sc);
 #else
 	sc->encap_cookie4 = encap_attach_func(AF_INET, -1, gif_encapcheck,
 	    &in_gif_protosw, sc);
