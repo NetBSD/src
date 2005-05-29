@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.22 2002/02/15 07:33:50 simonb Exp $	*/
+/*	$NetBSD: db_command.h,v 1.23 2005/05/29 21:31:05 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@ struct db_command;
 
 void	db_skip_to_eol(void);
 void	db_command_loop(void);
-void	db_error(char *);
+void	db_error(const char *);
 
 extern db_addr_t db_dot;	/* current location */
 extern db_addr_t db_last_addr;	/* last explicit address typed */
