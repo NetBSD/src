@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.9 2004/08/23 17:24:23 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.9 2004/08/23 17:24:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -246,7 +246,7 @@ ioapic_add(struct ioapic_softc *sc)
 }
 
 void
-ioapic_print_redir (struct ioapic_softc *sc, char *why, int pin)
+ioapic_print_redir (struct ioapic_softc *sc, const char *why, int pin)
 {
 	u_int32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
 	u_int32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));

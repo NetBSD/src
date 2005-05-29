@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -778,7 +778,7 @@ struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
-static char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
+static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
 /*
