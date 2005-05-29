@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.90 2005/05/02 15:34:31 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.91 2005/05/29 22:10:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.90 2005/05/02 15:34:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91 2005/05/29 22:10:28 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1837,7 +1837,7 @@ fxp_init(struct ifnet *ifp)
 	cb_ias->cb_command = htole16(FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL);
 	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
 	cb_ias->link_addr = 0xffffffff;
-	memcpy((void *)cb_ias->macaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	memcpy(cb_ias->macaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -2201,7 +2201,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 			ifp->if_flags |= IFF_ALLMULTI;
 			return;
 		}
-		memcpy((void *)&mcsp->mc_addr[nmcasts][0], enm->enm_addrlo,
+		memcpy(&mcsp->mc_addr[nmcasts][0], enm->enm_addrlo,
 		    ETHER_ADDR_LEN);
 		nmcasts++;
 		ETHER_NEXT_MULTI(step, enm);
@@ -2318,14 +2318,14 @@ fxp_load_ucode(struct fxp_softc *sc)
 	cbp->cb_status = 0;
 	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE | FXP_CB_COMMAND_EL);
 	cbp->link_addr = 0xffffffff;		/* (no) next command */
-	memcpy((void *) cbp->ucode, uc->ucode, uc->length);
+	memcpy(cbp->ucode, uc->ucode, uc->length);
 
 	if (uc->int_delay_offset)
-		*(uint16_t *) &cbp->ucode[uc->int_delay_offset] =
+		*(volatile uint16_t *) &cbp->ucode[uc->int_delay_offset] =
 		    htole16(fxp_int_delay + (fxp_int_delay / 2));
 
 	if (uc->bundle_max_offset)
-		*(uint16_t *) &cbp->ucode[uc->bundle_max_offset] =
+		*(volatile uint16_t *) &cbp->ucode[uc->bundle_max_offset] =
 		    htole16(fxp_bundle_max);
 
 	FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
