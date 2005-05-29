@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.9 2005/02/27 00:27:52 perry Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.10 2005/05/29 21:56:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.9 2005/02/27 00:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.10 2005/05/29 21:56:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
 void	*wsemul_dumb_attach(int console, const struct wsscreen_descr *,
 				 void *, int, int, void *, long);
 void	wsemul_dumb_output(void *cookie, const u_char *data, u_int count, int);
-int	wsemul_dumb_translate(void *cookie, keysym_t, char **);
+int	wsemul_dumb_translate(void *cookie, keysym_t, const char **);
 void	wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
@@ -198,7 +198,7 @@ wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
 }
 
 int
-wsemul_dumb_translate(void *cookie, keysym_t in, char **out)
+wsemul_dumb_translate(void *cookie, keysym_t in, const char **out)
 {
 	return (0);
 }

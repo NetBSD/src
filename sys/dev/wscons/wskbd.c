@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.81 2005/05/08 17:16:34 he Exp $ */
+/* $NetBSD: wskbd.c,v 1.82 2005/05/29 21:56:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.81 2005/05/08 17:16:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.82 2005/05/29 21:56:35 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -702,7 +702,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void
-wskbd_rawinput(struct device *dev, u_char *buf, int len)
+wskbd_rawinput(struct device *dev, u_char *tbuf, int len)
 {
 #if NWSDISPLAY > 0
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
@@ -710,7 +710,7 @@ wskbd_rawinput(struct device *dev, u_char *buf, int len)
 
 	if (sc->sc_base.me_dispdv != NULL)
 		for (i = 0; i < len; i++)
-			wsdisplay_kbdinput(sc->sc_base.me_dispdv, buf[i]);
+			wsdisplay_kbdinput(sc->sc_base.me_dispdv, tbuf[i]);
 	/* this is KS_GROUP_Ascii */
 #endif
 }
@@ -981,7 +981,7 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	struct wskbd_map_data *umdp;
 	struct wskbd_mapdata md;
 	kbd_t enc;
-	void *buf;
+	void *tbuf;
 	int len, error;
 
 	switch (cmd) {
@@ -1112,18 +1112,18 @@ getkeyrepeat:
 			return (EINVAL);
 
 		len = umdp->maplen*sizeof(struct wscons_keymap);
-		buf = malloc(len, M_TEMP, M_WAITOK);
-		error = copyin(umdp->map, buf, len);
+		tbuf = malloc(len, M_TEMP, M_WAITOK);
+		error = copyin(umdp->map, tbuf, len);
 		if (error == 0) {
 			wskbd_init_keymap(umdp->maplen,
 					  &sc->sc_map, &sc->sc_maplen);
-			memcpy(sc->sc_map, buf, len);
+			memcpy(sc->sc_map, tbuf, len);
 			/* drop the variant bits handled by the map */
 			sc->sc_layout = KB_USER |
 			      (KB_VARIANT(sc->sc_layout) & KB_HANDLEDBYWSKBD);
 			wskbd_update_layout(sc->id, sc->sc_layout);
 		}
-		free(buf, M_TEMP);
+		free(tbuf, M_TEMP);
 		return(error);
 
 	case WSKBDIO_GETMAP:

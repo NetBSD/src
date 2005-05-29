@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.83 2005/05/29 21:56:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.83 2005/05/29 21:56:35 christos Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -1223,7 +1223,7 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 {
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
-	void *buf;
+	void *tbuf;
 	u_int fontsz;
 #if defined(COMPAT_14) && NWSKBD > 0
 	struct wsmux_device wsmuxdata;
@@ -1274,16 +1274,16 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		if (fontsz > WSDISPLAY_MAXFONTSZ)
 			return (EINVAL);
 
-		buf = malloc(fontsz, M_DEVBUF, M_WAITOK);
-		error = copyin(d->data, buf, fontsz);
+		tbuf = malloc(fontsz, M_DEVBUF, M_WAITOK);
+		error = copyin(d->data, tbuf, fontsz);
 		if (error) {
-			free(buf, M_DEVBUF);
+			free(tbuf, M_DEVBUF);
 			return (error);
 		}
-		d->data = buf;
+		d->data = tbuf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
-		free(buf, M_DEVBUF);
+		free(tbuf, M_DEVBUF);
 #undef d
 		return (error);
 
@@ -1398,7 +1398,7 @@ wsdisplaystart(struct tty *tp)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 	int s, n;
-	u_char *buf;
+	u_char *tbuf;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
@@ -1429,22 +1429,22 @@ wsdisplaystart(struct tty *tp)
 	 */
 
 	n = ndqb(&tp->t_outq, 0);
-	buf = tp->t_outq.c_cf;
+	tbuf = tp->t_outq.c_cf;
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-						  buf, n, 0);
+						  tbuf, n, 0);
 	}
 	ndflush(&tp->t_outq, n);
 
 	if ((n = ndqb(&tp->t_outq, 0)) > 0) {
-		buf = tp->t_outq.c_cf;
+		tbuf = tp->t_outq.c_cf;
 
 		if (!(scr->scr_flags & SCR_GRAPHICS)) {
 			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 			(*scr->scr_dconf->wsemul->output)
-			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
+			    (scr->scr_dconf->wsemulcookie, tbuf, n, 0);
 		}
 		ndflush(&tp->t_outq, n);
 	}
@@ -1535,7 +1535,7 @@ wsdisplay_kbdinput(struct device *dev, keysym_t ks)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
-	char *dp;
+	const char *dp;
 	int count;
 	struct tty *tp;
 
