@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.200 2005/05/20 12:44:11 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.201 2005/05/29 21:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -443,10 +443,10 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(const void *, int, const char *, int,
+int	ltsleep(__volatile const void *, int, const char *, int,
 	    __volatile struct simplelock *);
-void	wakeup(const void *);
-void	wakeup_one(const void *);
+void	wakeup(__volatile const void *);
+void	wakeup_one(__volatile const void *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
