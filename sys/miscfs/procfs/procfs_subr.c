@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.63 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.64 2005/05/29 21:55:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.63 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64 2005/05/29 21:55:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ procfs_rw(v)
 }
 
 /*
- * Get a string from userland into (buf).  Strip a trailing
+ * Get a string from userland into (bf).  Strip a trailing
  * nl character (to allow easy access from the shell).
  * The buffer should be *buflenp + 1 chars long.  vfs_getuserstr
  * will automatically add a nul char at the end.
@@ -389,9 +389,9 @@ procfs_rw(v)
  * EFAULT:    user i/o buffer is not addressable
  */
 int
-vfs_getuserstr(uio, buf, buflenp)
+vfs_getuserstr(uio, bf, buflenp)
 	struct uio *uio;
-	char *buf;
+	char *bf;
 	int *buflenp;
 {
 	int xlen;
@@ -407,31 +407,31 @@ vfs_getuserstr(uio, buf, buflenp)
 		return (EMSGSIZE);
 	xlen = uio->uio_resid;
 
-	if ((error = uiomove(buf, xlen, uio)) != 0)
+	if ((error = uiomove(bf, xlen, uio)) != 0)
 		return (error);
 
 	/* allow multiple writes without seeks */
 	uio->uio_offset = 0;
 
 	/* cleanup string and remove trailing newline */
-	buf[xlen] = '\0';
-	xlen = strlen(buf);
-	if (xlen > 0 && buf[xlen-1] == '\n')
-		buf[--xlen] = '\0';
+	bf[xlen] = '\0';
+	xlen = strlen(bf);
+	if (xlen > 0 && bf[xlen-1] == '\n')
+		bf[--xlen] = '\0';
 	*buflenp = xlen;
 
 	return (0);
 }
 
 const vfs_namemap_t *
-vfs_findname(nm, buf, buflen)
+vfs_findname(nm, bf, buflen)
 	const vfs_namemap_t *nm;
-	const char *buf;
+	const char *bf;
 	int buflen;
 {
 
 	for (; nm->nm_name; nm++)
-		if (memcmp(buf, nm->nm_name, buflen+1) == 0)
+		if (memcmp(bf, nm->nm_name, buflen+1) == 0)
 			return (nm);
 
 	return (0);

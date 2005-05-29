@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.83 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.84 2005/05/29 21:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.83 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84 2005/05/29 21:55:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,11 +287,11 @@ fdesc_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct proc *p = cnp->cn_proc;
 	const char *pname = cnp->cn_nameptr;
-	int nfiles = p->p_fd->fd_nfiles;
+	int numfiles = p->p_fd->fd_nfiles;
 	unsigned fd = 0;
 	int error;
 	struct vnode *fvp;
-	char *ln;
+	const char *ln;
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
@@ -355,7 +355,8 @@ fdesc_lookup(v)
 			error = fdesc_allocvp(Flink, fd, dvp->v_mount, &fvp);
 			if (error)
 				goto bad;
-			VTOFDESC(fvp)->fd_link = ln;
+			/* XXXUNCONST */
+			VTOFDESC(fvp)->fd_link = __UNCONST(ln);
 			*vpp = fvp;
 			fvp->v_type = VLNK;
 			goto good;
@@ -386,7 +387,7 @@ fdesc_lookup(v)
 		fd = 0;
 		while (*pname >= '0' && *pname <= '9') {
 			fd = 10 * fd + *pname++ - '0';
-			if (fd >= nfiles)
+			if (fd >= numfiles)
 				break;
 		}
 
@@ -395,7 +396,7 @@ fdesc_lookup(v)
 			goto bad;
 		}
 
-		if (fd >= nfiles || p->p_fd->fd_ofiles[fd] == NULL ||
+		if (fd >= numfiles || p->p_fd->fd_ofiles[fd] == NULL ||
 		    FILE_IS_USABLE(p->p_fd->fd_ofiles[fd]) == 0) {
 			error = EBADF;
 			goto bad;
@@ -661,7 +662,7 @@ struct fdesc_target {
 	ino_t ft_fileno;
 	u_char ft_type;
 	u_char ft_namlen;
-	char *ft_name;
+	const char *ft_name;
 } fdesc_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
