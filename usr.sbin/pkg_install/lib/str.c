@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.50 2004/12/29 11:35:04 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.51 2005/05/29 19:16:18 minskim Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.50 2004/12/29 11:35:04 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.51 2005/05/29 19:16:18 minskim Exp $");
 #endif
 #endif
 
@@ -473,7 +473,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, void *data
 		 * each is a different pattern class (e.g. dewey and
 		 * character class (.t[bg]z)) */
 		if (pmatch(tmp_pattern, tmp_file)
-		    && pmatch(pat_sfx, file_sfx)) {
+		    && (pat_sfx[0] == '\0' || pmatch(pat_sfx, file_sfx))) {
 			if (match) {
 				match(dp->d_name, data);
 				/* return value ignored for now */
