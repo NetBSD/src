@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.14.2.1 2004/06/22 07:54:31 tron Exp $
+# $NetBSD: Makefile.boot,v 1.14.2.1.2.1 2005/05/30 00:18:18 riz Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -65,6 +65,7 @@ CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
+CPPFLAGS+= -DEPIA_HACK
 
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
