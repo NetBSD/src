@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.65 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.66 2005/05/30 22:13:22 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.65 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.66 2005/05/30 22:13:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1973,7 +1973,7 @@ softdep_setup_freeblocks(ip, length, flags)
 	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
-	int i, error, delay;
+	int i, error, delayx;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -2064,12 +2064,12 @@ softdep_setup_freeblocks(ip, length, flags)
 	/*
 	 * Add the freeblks structure to the list of operations that
 	 * must await the zero'ed inode being written to disk. If we
-	 * still have a bitmap dependency (delay == 0), then the inode
+	 * still have a bitmap dependency (delayx == 0), then the inode
 	 * has never been written to disk, so we can process the
 	 * freeblks below once we have deleted the dependencies.
 	 */
-	delay = (inodedep->id_state & DEPCOMPLETE);
-	if (delay)
+	delayx = (inodedep->id_state & DEPCOMPLETE);
+	if (delayx)
 		WORKLIST_INSERT(&inodedep->id_bufwait, &freeblks->fb_list);
 	/*
 	 * Because the file length has been truncated to zero, any
@@ -2088,7 +2088,7 @@ softdep_setup_freeblocks(ip, length, flags)
 	softdep_collect_pagecache(ip);
 	merge_inode_lists(inodedep);
 	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != 0)
-		free_allocdirect(&inodedep->id_inoupdt, adp, delay);
+		free_allocdirect(&inodedep->id_inoupdt, adp, delayx);
 	FREE_LOCK(&lk);
 	bdwrite(bp);
 	/*
@@ -2113,11 +2113,11 @@ softdep_setup_freeblocks(ip, length, flags)
 		(void) free_inodedep(inodedep);
 	FREE_LOCK(&lk);
 	/*
-	 * If the inode has never been written to disk (delay == 0),
+	 * If the inode has never been written to disk (delayx == 0),
 	 * then we can process the freeblks now that we have deleted
 	 * the dependencies.
 	 */
-	if (!delay)
+	if (!delayx)
 		handle_workitem_freeblocks(freeblks);
 }
 
@@ -2247,10 +2247,10 @@ deallocate_dependencies(bp, inodedep)
  * This routine must be called with splbio interrupts blocked.
  */
 static void
-free_allocdirect(adphead, adp, delay)
+free_allocdirect(adphead, adp, delayx)
 	struct allocdirectlst *adphead;
 	struct allocdirect *adp;
-	int delay;
+	int delayx;
 {
 	struct newdirblk *newdirblk;
 	struct worklist *wk;
@@ -2265,7 +2265,7 @@ free_allocdirect(adphead, adp, delay)
 	if ((adp->ad_state & COMPLETE) == 0)
 		WORKLIST_REMOVE(&adp->ad_list);
 	if (adp->ad_freefrag != NULL) {
-		if (delay)
+		if (delayx)
 			WORKLIST_INSERT(&adp->ad_inodedep->id_bufwait,
 			    &adp->ad_freefrag->ff_list);
 		else
@@ -2276,7 +2276,7 @@ free_allocdirect(adphead, adp, delay)
 		WORKLIST_REMOVE(&newdirblk->db_list);
 		if (LIST_FIRST(&adp->ad_newdirblk) != NULL)
 			panic("free_allocdirect: extra newdirblk");
-		if (delay)
+		if (delayx)
 			WORKLIST_INSERT(&adp->ad_inodedep->id_bufwait,
 			    &newdirblk->db_list);
 		else
@@ -4054,7 +4054,7 @@ handle_allocdirect_partdone(adp)
 	struct allocdirect *listadp;
 	struct inodedep *inodedep;
 	long bsize;
-	int delay;
+	int delayx;
 
 	if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
@@ -4108,12 +4108,12 @@ handle_allocdirect_partdone(adp)
 	 * never been written to disk, hence the on-disk inode cannot
 	 * reference the old fragment so we can free it without delay.
 	 */
-	delay = (inodedep->id_state & DEPCOMPLETE);
+	delayx = (inodedep->id_state & DEPCOMPLETE);
 	for (; adp; adp = listadp) {
 		listadp = TAILQ_NEXT(adp, ad_next);
 		if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 			return;
-		free_allocdirect(&inodedep->id_inoupdt, adp, delay);
+		free_allocdirect(&inodedep->id_inoupdt, adp, delayx);
 	}
 }
 
