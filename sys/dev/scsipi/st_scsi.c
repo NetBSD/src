@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.21 2005/02/27 00:27:48 perry Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.22 2005/05/30 04:25:32 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.21 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.22 2005/05/30 04:25:32 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -100,7 +100,7 @@ st_scsibus_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)st_scsibus_patterns,
+	    st_scsibus_patterns,
 	    sizeof(st_scsibus_patterns)/sizeof(st_scsibus_patterns[0]),
 	    sizeof(st_scsibus_patterns[0]), &priority);
 	return (priority);
