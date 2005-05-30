@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.107 2005/05/02 15:32:18 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.108 2005/05/30 04:21:39 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.107 2005/05/02 15:32:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108 2005/05/30 04:21:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1148,8 +1148,8 @@ usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
 {
 	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
 
-        iter->cur = (uByte *)cd;
-        iter->end = (uByte *)cd + UGETW(cd->wTotalLength);
+        iter->cur = (const uByte *)cd;
+        iter->end = (const uByte *)cd + UGETW(cd->wTotalLength);
 }
 
 const usb_descriptor_t *
@@ -1162,7 +1162,7 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 			printf("usb_desc_iter_next: bad descriptor\n");
 		return NULL;
 	}
-	desc = (usb_descriptor_t *)iter->cur;
+	desc = (const usb_descriptor_t *)iter->cur;
 	if (desc->bLength == 0) {
 		printf("usb_desc_iter_next: descriptor length = 0\n");
 		return NULL;

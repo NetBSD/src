@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.16 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: if_url.c,v 1.17 2005/05/30 04:21:39 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.16 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.17 2005/05/30 04:21:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -167,7 +167,7 @@ static const struct url_type {
 	/* OQO model 01 */
 	{{ USB_VENDOR_OQO, USB_PRODUCT_OQO_ETHER01}, 0},
 };
-#define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
+#define url_lookup(v, p) ((const struct url_type *)usb_lookup(url_devs, v, p))
 
 
 /* Probe */

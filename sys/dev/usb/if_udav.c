@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.6 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.7 2005/05/30 04:21:39 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.6 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.7 2005/05/30 04:21:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -162,7 +162,7 @@ static const struct udav_type {
 	{{ 0x0a46, 0x9601 }, 0},
 #endif
 };
-#define udav_lookup(v, p) ((struct udav_type *)usb_lookup(udav_devs, v, p))
+#define udav_lookup(v, p) ((const struct udav_type *)usb_lookup(udav_devs, v, p))
 
 
 /* Probe */
