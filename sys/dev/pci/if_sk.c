@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.14 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.15 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1339,7 +1339,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	int s;
 	u_int32_t command;
-	char *revstr;
+	const char *revstr;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
 
@@ -1353,10 +1353,10 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	if (command == 0x01) {
 		command = pci_conf_read(pc, pa->pa_tag, SK_PCI_PWRMGMTCTRL);
 		if (command & SK_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			u_int32_t		xiobase, membase, irq;
 
 			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOIO);
+			xiobase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOIO);
 			membase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOMEM);
 			irq = pci_conf_read(pc, pa->pa_tag, SK_PCI_INTLINE);
 
@@ -1369,7 +1369,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			    SK_PCI_PWRMGMTCTRL, command);
 
 			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOIO, iobase);
+			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOIO, xiobase);
 			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOMEM, membase);
 			pci_conf_write(pc, pa->pa_tag, SK_PCI_INTLINE, irq);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.19 2005/04/16 13:46:20 bouyer Exp $	*/
+/*	$NetBSD: trm.c,v 1.20 2005/05/30 04:35:23 christos Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.19 2005/04/16 13:46:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.20 2005/05/30 04:35:23 christos Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -2447,7 +2447,7 @@ trm_eeprom_write_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	uint8_t *buf = (uint8_t *)eeprom;
+	uint8_t *sbuf = (uint8_t *)eeprom;
 	uint8_t addr;
 
 	/* Enable SEEPROM */
@@ -2461,8 +2461,8 @@ trm_eeprom_write_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 	bus_space_write_1(iot, ioh, TRM_GEN_NVRAM, 0);
 	trm_eeprom_wait();
 
-	for (addr = 0; addr < 128; addr++, buf++)
-		trm_eeprom_set_data(sc, addr, *buf);
+	for (addr = 0; addr < 128; addr++, sbuf++)
+		trm_eeprom_set_data(sc, addr, *sbuf);
 
 	/*
 	 * Write disable
@@ -2539,7 +2539,7 @@ trm_eeprom_read_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	uint8_t *buf = (uint8_t *)eeprom;
+	uint8_t *sbuf = (uint8_t *)eeprom;
 	uint8_t addr;
 
 	/*
@@ -2549,7 +2549,7 @@ trm_eeprom_read_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 	    bus_space_read_1(iot, ioh, TRM_GEN_CONTROL) | EN_EEPROM);
 
 	for (addr = 0; addr < 128; addr++)
-		*buf++ = trm_eeprom_get_data(sc, addr);
+		*sbuf++ = trm_eeprom_get_data(sc, addr);
 
 	/*
 	 * Disable SEEPROM

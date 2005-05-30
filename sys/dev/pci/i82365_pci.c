@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.19 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.20 2005/05/30 04:35:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.19 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.20 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ pcic_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_space_handle_t memh;
-	char *model;
+	const char *model;
 
 	aprint_naive(": PCMCIA controller\n");
 

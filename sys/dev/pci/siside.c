@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.15 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: siside.c,v 1.16 2005/05/30 04:35:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.15 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.16 2005/05/30 04:35:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static struct sis_hostbr_type {
 	u_int16_t id;
 	u_int8_t rev;
 	u_int8_t udma_mode;
-	char *name;
+	const char *name;
 	u_int8_t type;
 #define SIS_TYPE_NOUDMA	0
 #define SIS_TYPE_66	1

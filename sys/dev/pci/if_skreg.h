@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.3 2004/09/26 14:23:58 skd Exp $ */
+/* $NetBSD: if_skreg.h,v 1.4 2005/05/30 04:35:22 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1290,7 +1290,7 @@ struct vpd_key {
 struct sk_type {
 	u_int16_t		sk_vid;
 	u_int16_t		sk_did;
-	char			*sk_name;
+	const char		*sk_name;
 };
 
 /* RX queue descriptor data structure */
