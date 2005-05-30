@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.25 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isp_inline.h,v 1.26 2005/05/30 04:43:47 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -172,44 +172,44 @@ static INLINE void isp_print_qentry (struct ispsoftc *, char *, int, void *);
 static INLINE void
 isp_print_qentry(struct ispsoftc *isp, char *msg, int idx, void *arg)
 {
-	char buf[TBA];
+	char tbuf[TBA];
 	int amt, i, j;
 	u_int8_t *ptr = arg;
 
 	isp_prt(isp, ISP_LOGALL, "%s index %d=>", msg, idx);
-	for (buf[0] = 0, amt = i = 0; i < 4; i++) {
-		buf[0] = 0;
-		SNPRINTF(buf, TBA, "  ");
+	for (tbuf[0] = 0, amt = i = 0; i < 4; i++) {
+		tbuf[0] = 0;
+		SNPRINTF(tbuf, TBA, "  ");
 		for (j = 0; j < (QENTRY_LEN >> 2); j++) {
-			SNPRINTF(buf, TBA, "%s %02x", buf, ptr[amt++] & 0xff);
+			SNPRINTF(tbuf, TBA, "%s %02x", tbuf, ptr[amt++] & 0xff);
 		}
-		isp_prt(isp, ISP_LOGALL, buf);
+		isp_prt(isp, ISP_LOGALL, tbuf);
 	}
 }
 
-static INLINE void isp_print_bytes(struct ispsoftc *, char *, int, void *);
+static INLINE void isp_print_bytes(struct ispsoftc *, const char *, int, void *);
 
 static INLINE void
-isp_print_bytes(struct ispsoftc *isp, char *msg, int amt, void *arg)
+isp_print_bytes(struct ispsoftc *isp, const char *msg, int amt, void *arg)
 {
-	char buf[128];
+	char tbuf[128];
 	u_int8_t *ptr = arg;
 	int off;
 
 	if (msg)
 		isp_prt(isp, ISP_LOGALL, "%s:", msg);
 	off = 0;
-	buf[0] = 0;
+	tbuf[0] = 0;
 	while (off < amt) {
 		int j, to;
 		to = off;
 		for (j = 0; j < 16; j++) {
-			SNPRINTF(buf, 128, "%s %02x", buf, ptr[off++] & 0xff);
+			SNPRINTF(tbuf, 128, "%s %02x", tbuf, ptr[off++] & 0xff);
 			if (off == amt)
 				break;
 		}
-		isp_prt(isp, ISP_LOGALL, "0x%08x:%s", to, buf);
-		buf[0] = 0;
+		isp_prt(isp, ISP_LOGALL, "0x%08x:%s", to, tbuf);
+		tbuf[0] = 0;
 	}
 }
 

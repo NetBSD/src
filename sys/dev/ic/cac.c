@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.29 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cac.c,v 1.30 2005/05/30 04:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.29 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30 2005/05/30 04:43:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,15 +208,15 @@ cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
-	u_int8_t buf[512];
+	u_int8_t tbuf[512];
 	int i;
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup(&cac_cd, i)) == NULL)
 			continue;
-		memset(buf, 0, sizeof(buf));
-		buf[0] = 1;
-		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0,
+		memset(tbuf, 0, sizeof(tbuf));
+		tbuf[0] = 1;
+		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, tbuf, sizeof(tbuf), 0, 0,
 		    CAC_CCB_DATA_OUT, NULL);
 	}
 }
