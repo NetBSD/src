@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.98 2005/05/30 04:15:17 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.99 2005/05/30 23:04:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.98 2005/05/30 04:15:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99 2005/05/30 23:04:53 chs Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -113,7 +113,7 @@ int	nkmempages = NKMEMPAGES;
 #include "opt_malloclog.h"
 #include "opt_malloc_debug.h"
 
-struct kmembuckets kbucket[MINBUCKET + 16];
+struct kmembuckets kmembuckets[MINBUCKET + 16];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 
@@ -279,7 +279,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		return ((void *) va);
 #endif
 	indx = BUCKETINDX(size);
-	kbp = &kbucket[indx];
+	kbp = &kmembuckets[indx];
 	s = splvm();
 	simple_lock(&malloc_slock);
 #ifdef KMEMSTATS
@@ -318,7 +318,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			 * wait, if there is no map space available, because
 			 * it can't fix that problem.  Neither can we,
 			 * right now.  (We should release pages which
-			 * are completely free and which are in kbuckets
+			 * are completely free and which are in kmembuckets
 			 * with too many free elements.)
 			 */
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
@@ -348,7 +348,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		/*
 		 * Just in case we blocked while allocating memory,
 		 * and someone else also allocated memory for this
-		 * kbucket, don't assume the list is still empty.
+		 * kmembucket, don't assume the list is still empty.
 		 */
 		savedlist = kbp->kb_next;
 		kbp->kb_next = cp = va + (npg << PAGE_SHIFT) - allocsize;
@@ -498,7 +498,7 @@ free(void *addr, struct malloc_type *ksp)
 
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
-	kbp = &kbucket[kup->ku_indx];
+	kbp = &kmembuckets[kup->ku_indx];
 	s = splvm();
 	simple_lock(&malloc_slock);
 #ifdef MALLOCLOG
@@ -857,10 +857,11 @@ kmeminit(void)
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)
-			kbucket[indx].kb_elmpercl = 1;
+			kmembuckets[indx].kb_elmpercl = 1;
 		else
-			kbucket[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
-		kbucket[indx].kb_highwat = 5 * kbucket[indx].kb_elmpercl;
+			kmembuckets[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
+		kmembuckets[indx].kb_highwat =
+			5 * kmembuckets[indx].kb_elmpercl;
 	}
 #endif
 
@@ -921,7 +922,7 @@ freelist_sanitycheck(void) {
 	int rv = 0;
 
 	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
-		kbp = &kbucket[i];
+		kbp = &kmembuckets[i];
 		freep = (struct freelist *)kbp->kb_next;
 		j = 0;
 		while(freep) {
