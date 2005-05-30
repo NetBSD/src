@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2005/05/01 18:59:27 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2005/05/30 17:15:29 chs Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -98,7 +98,9 @@ struct hppa_cpu_info {
 	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
 	int (*hptinit)(vaddr_t, vsize_t);
 };
+#ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
+#endif
 #endif
 
 /*
