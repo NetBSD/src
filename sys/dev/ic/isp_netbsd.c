@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.65 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.66 2005/05/30 04:43:47 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.65 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.66 2005/05/30 04:43:47 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -946,10 +946,10 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
-		int tgt = *((int *) arg);
-		struct lportdb *lp = &fcp->portdb[tgt];
+		int tgt1 = *((int *) arg);
+		struct lportdb *lp = &fcp->portdb[tgt1];
 
-		isp_prt(isp, ISP_LOGINFO, fmt, tgt, lp->loopid, lp->portid,
+		isp_prt(isp, ISP_LOGINFO, fmt, tgt1, lp->loopid, lp->portid,
 		    roles[lp->roles & 0x3],
 		    (lp->valid)? "Arrived" : "Departed",
 		    (u_int32_t) (lp->port_wwn >> 32),
@@ -996,7 +996,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		fcparam *fcp = isp->isp_param;
 		struct lportdb *lp = NULL;
 		struct lportdb *clp = (struct lportdb *) arg;
-		char *pt;
+		const char *pt;
 
 		switch (clp->port_type) {
 		case 1:
