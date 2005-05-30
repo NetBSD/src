@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.80 2005/05/02 15:34:31 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.81 2005/05/30 04:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.80 2005/05/02 15:34:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.81 2005/05/30 04:43:46 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1115,7 +1115,7 @@ ex_start(ifp)
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
-		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
+		    ((const char *)(intptr_t)dpd - (const char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1128,7 +1128,7 @@ ex_start(ifp)
 		 */
 		if (sc->tx_head != NULL) {
 			prevdpd = sc->tx_tail->tx_dpd;
-			offset = ((caddr_t)prevdpd - (caddr_t)sc->sc_dpd);
+			offset = ((const char *)(intptr_t)prevdpd - (const char *)sc->sc_dpd);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);

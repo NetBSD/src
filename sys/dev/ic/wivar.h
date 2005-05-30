@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.54 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: wivar.h,v 1.55 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -201,7 +201,7 @@ struct wi_node {
 
 struct wi_card_ident {
 	u_int16_t	card_id;
-	char		*card_name;
+	const char	*card_name;
 	u_int8_t	firm_type;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.18 2005/03/23 20:23:08 yamt Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.19 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -53,7 +53,7 @@ struct rtk_type {
 struct rtk_hwrev {
 	uint32_t		rtk_rev;
 	int			rtk_type;
-	char			*rtk_desc;
+	const char		*rtk_desc;
 };
 
 struct rtk_mii_frame {

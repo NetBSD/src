@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.17 2005/05/30 04:43:46 christos Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.17 2005/05/30 04:43:46 christos Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -192,9 +192,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 * commands.
 		 */
 		LIST_FOREACH(list_scb, &ahc->pending_scbs, pending_links) {
-			struct scsipi_xfer *xs = list_scb->xs;
-
-			if (!(xs->xs_control & XS_CTL_POLL)) {
+			if (!(list_scb->xs->xs_control & XS_CTL_POLL)) {
 				callout_reset(&list_scb->xs->xs_callout,
 				    (list_scb->xs->timeout > 1000000) ?
 				    (list_scb->xs->timeout / 1000) * hz :
@@ -285,7 +283,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
         	struct hardware_scb *hscb;
 		u_int target_id;
 		u_int our_id;
-		u_long s;
+		u_long ss;
 
 		xs = arg;
 		periph = xs->xs_periph;
@@ -298,14 +296,14 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		/*
 		 * get an scb to use.
 		 */
-		ahc_lock(ahc, &s);
+		ahc_lock(ahc, &ss);
 		if ((scb = ahc_get_scb(ahc)) == NULL) {
 			xs->error = XS_RESOURCE_SHORTAGE;
-			ahc_unlock(ahc, &s);
+			ahc_unlock(ahc, &ss);
 			scsipi_done(xs);
 			return;
 		}
-		ahc_unlock(ahc, &s);
+		ahc_unlock(ahc, &ss);
 
 		hscb = scb->hscb;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.18 2005/03/12 10:35:29 darcy Exp $	*/
+/*	$NetBSD: aac.c,v 1.19 2005/05/30 04:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.18 2005/03/12 10:35:29 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.19 2005/05/30 04:43:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ aac_describe_code(const struct aac_code_lookup *table, u_int32_t code)
 /*
  * bitmask_snprintf(9) format string for the adapter options.
  */
-static char *optfmt = 
+static const char *optfmt = 
     "\20\1SNAPSHOT\2CLUSTERS\3WCACHE\4DATA64\5HOSTTIME\6RAID50"
     "\7WINDOW4GB"
     "\10SCSIUPGD\11SOFTERR\12NORECOND\13SGMAP64\14ALARM\15NONDASD";
@@ -357,13 +357,13 @@ static void
 aac_describe_controller(struct aac_softc *sc)
 {
 	u_int8_t fmtbuf[256];
-	u_int8_t buf[AAC_FIB_DATASIZE];
+	u_int8_t tbuf[AAC_FIB_DATASIZE];
 	u_int16_t bufsize;
 	struct aac_adapter_info *info;
 	u_int8_t arg;
 
 	arg = 0;
-	if (aac_sync_fib(sc, RequestAdapterInfo, 0, &arg, sizeof(arg), &buf,
+	if (aac_sync_fib(sc, RequestAdapterInfo, 0, &arg, sizeof(arg), &tbuf,
 	    &bufsize)) {
 		aprint_error("%s: RequestAdapterInfo failed\n",
 		    sc->sc_dv.dv_xname);
@@ -375,7 +375,7 @@ aac_describe_controller(struct aac_softc *sc)
 		    sc->sc_dv.dv_xname, bufsize, sizeof(*info));
 		return;
 	}
-	info = (struct aac_adapter_info *)&buf[0];
+	info = (struct aac_adapter_info *)&tbuf[0];
 
 	aprint_normal("%s: %s at %dMHz, %dMB mem (%dMB cache), %s\n",
 	    sc->sc_dv.dv_xname,
@@ -1325,7 +1325,7 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;
 	struct aac_sg_table *sg;
-	char buf[512];
+	char tbuf[512];
 	int i;
 
 	printf("%s: FIB @ %p\n", caller, fib);
@@ -1352,10 +1352,10 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 	    "\23BIOSFIB"
 	    "\24FAST_RESPONSE"
 	    "\25APIFIB\n",
-	    buf,
-	    sizeof(buf));
+	    tbuf,
+	    sizeof(tbuf));
 
-	printf("  XferState       %s\n", buf);
+	printf("  XferState       %s\n", tbuf);
 	printf("  Command         %d\n", le16toh(fib->Header.Command));
 	printf("  StructType      %d\n", fib->Header.StructType);
 	printf("  Flags           0x%x\n", fib->Header.Flags);
