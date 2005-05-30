@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.113 2005/05/24 23:40:39 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.114 2005/05/30 00:20:21 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2314,4 +2314,41 @@ include/netdb.h					1.51 via patch
 	Instead of pulling in all of <wchar.h>, just define wchar_t here.
 	Addresses PR lib/29987.
 	[kleink, ticket #1547]
+
+bin/pax/options.c				1.83
+
+	Properly terminate the cpio_longopts struct so an unknown
+	option doesn't run off the end and core dump. PR#29290, PR#29972.
+	[kleink, ticket #1554]
+
+include/stdio.h					1.61
+sys/arch/alpha/include/int_types.h		1.7
+sys/arch/amd64/include/int_types.h		1.3
+sys/arch/arm/include/int_types.h		1.6
+sys/arch/hppa/include/int_types.h		1.3
+sys/arch/i386/include/int_types.h		1.9
+sys/arch/mips/include/int_types.h		1.8
+sys/arch/pc532/include/int_types.h		1.7
+sys/arch/pdp10/include/int_types.h		1.2
+sys/arch/powerpc/include/int_types.h		1.8
+sys/arch/sh3/include/int_types.h		1.6
+sys/arch/sh5/include/int_types.h		1.4
+sys/arch/sparc/include/int_types.h		1.8
+sys/arch/vax/include/int_types.h		1.8
+
+	Include <sys/ansi.h> after <sys/cdefs.h> in stdio.h, and
+	include <sys/cdefs.h> for __signed.  PR#30072.
+	[kleink, ticket #1555]
+
+include/stdio.h					1.60 via patch
+
+	Belatedly move snprintf() and vnsnprintf() into the XPG4.2/C99 section.
+	[kleink, ticket #1556]
+
+sys/arch/i386/stand/boot/Makefile.boot		1.21
+sys/arch/i386/stand/lib/realprot.S		1.4
+
+	Workaround for issues seen on VIA C3-based systems. This workaround
+	is non-intrusive and should not affect any other CPUs.  PR#26007.
+	[gavan, ticket #1870]
 
