@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.133 2005/05/22 14:00:59 chs Exp $ */
+/* $NetBSD: vmstat.c,v 1.134 2005/05/30 23:04:53 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.133 2005/05/22 14:00:59 chs Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.134 2005/05/30 23:04:53 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ struct nlist namelist[] =
 #define	X_KMEMSTAT	4
 	{ "_kmemstatistics" },
 #define	X_KMEMBUCKETS	5
-	{ "_bucket" },
+	{ "_kmembuckets" },
 #define	X_ALLEVENTS	6
 	{ "_allevents" },
 #define	X_POOLHEAD	7
