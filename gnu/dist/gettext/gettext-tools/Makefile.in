@@ -348,7 +348,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = 1.5 gnu no-dependencies
 ACLOCAL_AMFLAGS = -I m4 -I ../gettext-runtime/m4 -I ../autoconf-lib-link/m4 -I ../m4
-SUBDIRS = doc intl lib libgrep libuniname src po projects misc man m4 tests examples
+SUBDIRS = doc intl lib libgrep libuniname src po projects misc m4 tests examples
 # vms_jackets.h is a header that comes with Compaq's "porting library".
 # KEEP_CRTL_SETLOCALE tells it to not override the native locale support.
 EXTRA_DIST = misc/DISCLAIM Makefile.vms config.h_vms README.woe32 \

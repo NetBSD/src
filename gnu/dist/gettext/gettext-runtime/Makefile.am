@@ -22,7 +22,7 @@ ACLOCAL_AMFLAGS = -I m4 -I ../gettext-tools/m4 -I ../autoconf-lib-link/m4 -I ../
 
 MAKEINFO = env LANG= LC_MESSAGES= LC_ALL= LANGUAGE= @MAKEINFO@
 
-SUBDIRS =      doc intl intl-java intl-csharp lib @SUBDIR_libasprintf@ src po man m4
+SUBDIRS =      doc intl intl-java intl-csharp lib @SUBDIR_libasprintf@ src po m4
 DIST_SUBDIRS = doc intl intl-java intl-csharp lib libasprintf          src po man m4
 
 EXTRA_DIST = BUGS
