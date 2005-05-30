@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.33 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.34 2005/05/30 04:16:56 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.33 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.34 2005/05/30 04:16:56 christos Exp $");
 #endif
 
 /*
@@ -1082,7 +1082,8 @@ sysctl_ieee80211_node(SYSCTLFN_ARGS)
 	int error, s, nelt;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		/*XXXUNCONST*/
+		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
 
 	if (namelen != IEEE80211_SYSCTL_NODENAMELEN)
 		return (EINVAL);
