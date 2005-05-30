@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.125 2005/05/23 16:35:26 soren Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.126 2005/05/30 04:20:46 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.125 2005/05/23 16:35:26 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.126 2005/05/30 04:20:46 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -110,12 +110,12 @@ typedef u_int16_t usb_product_id_t;
  */
 struct usb_vendor {
 	usb_vendor_id_t		vendor;
-	char			*vendorname;
+	const char		*vendorname;
 };
 struct usb_product {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	char			*productname;
+	const char		*productname;
 };
 
 #include <dev/usb/usbdevs_data.h>
@@ -193,20 +193,22 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-static void
-usbd_trim_spaces(char *p)
+static char *
+usbd_trim_spaces(char *b, size_t s, const char *p)
 {
 	char *q, *e;
 
 	if (p == NULL)
-		return;
-	q = e = p;
+		return NULL;
+	(void)strlcpy(b, p, s);
+	q = e = b;
 	while (*q == ' ')	/* skip leading spaces */
 		q++;
-	while ((*p = *q++))	/* copy string */
-		if (*p++ != ' ') /* remember last non-space */
-			e = p;
+	while ((*b = *q++))	/* copy string */
+		if (*b++ != ' ') /* remember last non-space */
+			e = b;
 	*e = 0;			/* kill trailing spaces */
+	return b;
 }
 
 Static void
@@ -214,7 +216,8 @@ usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
 		char p[USB_MAX_ENCODED_STRING_LEN], int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char *vendor = NULL, *product = NULL;
+	const char *vendor = NULL, *product = NULL;
+	char vdbuf[64], pdbuf[64];
 #ifdef USBVERBOSE
 	int n;
 #endif
@@ -229,12 +232,12 @@ usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
 			vendor = NULL;
 		else
 			vendor = v;
-		usbd_trim_spaces(vendor);
+		vendor = usbd_trim_spaces(vdbuf, sizeof(vdbuf), vendor);
 		if (usbd_get_string(dev, udd->iProduct, p))
 			product = NULL;
 		else
 			product = p;
-		usbd_trim_spaces(product);
+		product = usbd_trim_spaces(pdbuf, sizeof(pdbuf), product);
 		if (vendor && !*vendor)
 			vendor = NULL;
 		if (product && !*product)
