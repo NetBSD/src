@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.38 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.39 2005/05/30 04:16:10 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.38 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.39 2005/05/30 04:16:10 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -222,9 +222,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			    ifp->if_xname, ether_sprintf(wh->i_addr2));
 
 		while (!IF_IS_EMPTY(&ni->ni_savedq)) {
-			struct mbuf *m;
-			IF_DEQUEUE(&ni->ni_savedq, m);
-			IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+			struct mbuf *mm1;
+			IF_DEQUEUE(&ni->ni_savedq, mm1);
+			IF_ENQUEUE(&ic->ic_pwrsaveq, mm1);
 			(*ifp->if_start)(ifp);
 		}
 	}
