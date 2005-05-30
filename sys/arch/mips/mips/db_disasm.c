@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2003/08/07 16:28:30 agc Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2005/05/30 02:26:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2003/08/07 16:28:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2005/05/30 02:26:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ print_addr(db_addr_t loc)
 {
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
+	const char *symname;
 
 	diff = INT_MAX;
 	symname = NULL;
