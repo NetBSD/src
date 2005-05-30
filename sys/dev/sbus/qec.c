@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.32 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: qec.c,v 1.33 2005/05/30 22:17:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.32 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.33 2005/05/30 22:17:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,11 @@ qecattach(parent, self, aux)
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		struct sbus_attach_args sa;
+		struct sbus_attach_args sax;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, &sa);
-		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
-		sbus_destroy_attach_args(&sa);
+				       sbt, sc->sc_dmatag, node, &sax);
+		(void)config_found(&sc->sc_dev, (void *)&sax, qecprint);
+		sbus_destroy_attach_args(&sax);
 	}
 }
 
