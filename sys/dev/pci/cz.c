@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.30 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: cz.c,v 1.31 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.30 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.31 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,15 +500,15 @@ cz_reset_board(struct cz_softc *cz)
 int
 cz_load_firmware(struct cz_softc *cz)
 {
-	struct zfirm_header *zfh;
-	struct zfirm_config *zfc;
-	struct zfirm_block *zfb, *zblocks;
+	const struct zfirm_header *zfh;
+	const struct zfirm_config *zfc;
+	const struct zfirm_block *zfb, *zblocks;
 	const u_int8_t *cp;
 	const char *board;
 	u_int32_t fid;
 	int i, j, nconfigs, nblocks, nbytes;
 
-	zfh = (struct zfirm_header *) cycladesz_firmware;
+	zfh = (const struct zfirm_header *) cycladesz_firmware;
 
 	/* Find the config header. */
 	if (le32toh(zfh->zfh_configoff) & (sizeof(u_int32_t) - 1)) {
@@ -516,7 +516,7 @@ cz_load_firmware(struct cz_softc *cz)
 		    cz->cz_dev.dv_xname, le32toh(zfh->zfh_configoff));
 		return (EIO);
 	}
-	zfc = (struct zfirm_config *)(cycladesz_firmware +
+	zfc = (const struct zfirm_config *)(cycladesz_firmware +
 	    le32toh(zfh->zfh_configoff));
 	nconfigs = le32toh(zfh->zfh_nconfig);
 
@@ -533,7 +533,7 @@ cz_load_firmware(struct cz_softc *cz)
 	}
 
 	nblocks = le32toh(zfc->zfc_nblocks);
-	zblocks = (struct zfirm_block *)(cycladesz_firmware +
+	zblocks = (const struct zfirm_block *)(cycladesz_firmware +
 	    le32toh(zfh->zfh_blockoff));
 
 	/*
