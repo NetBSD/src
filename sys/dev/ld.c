@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.36 2005/03/31 11:28:53 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.37 2005/05/30 04:44:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.36 2005/03/31 11:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37 2005/05/30 04:44:52 christos Exp $");
 
 #include "rnd.h"
 
@@ -101,7 +101,7 @@ static void	*ld_sdh;
 void
 ldattach(struct ld_softc *sc)
 {
-	char buf[9];
+	char tbuf[9];
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
@@ -140,10 +140,10 @@ ldattach(struct ld_softc *sc)
 			sc->sc_ncylinders = (int)ncyl;
 	}
 
-	format_bytes(buf, sizeof(buf), sc->sc_secperunit *
+	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
 	aprint_normal("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
-	    sc->sc_dv.dv_xname, buf, sc->sc_ncylinders, sc->sc_nheads,
+	    sc->sc_dv.dv_xname, tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
 #if NRND > 0
@@ -162,12 +162,12 @@ ldattach(struct ld_softc *sc)
 }
 
 int
-ldadjqparam(struct ld_softc *sc, int max)
+ldadjqparam(struct ld_softc *sc, int xmax)
 {
 	int s;
 
 	s = splbio();
-	sc->sc_maxqueuecnt = max;
+	sc->sc_maxqueuecnt = xmax;
 	splx(s);
 
 	return (0);
