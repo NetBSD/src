@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4 2005/05/30 16:02:09 chs Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.3 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2005/05/30 16:02:09 chs Exp $");
 
 #define DDB_DEBUG
 
@@ -205,12 +205,12 @@ db_valid_breakpoint(db_addr_t addr)
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
-    char *modif, void (*pr)(const char *, ...))
+    const char *modif, void (*pr)(const char *, ...))
 {
 	register_t fp, pc, rp, nargs, *argp;
 	db_sym_t sym;
 	db_expr_t off;
-	char *name;
+	const char *name;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
 
 	if (count < 0)
