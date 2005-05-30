@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.103 2005/05/05 20:54:34 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.104 2005/05/30 04:21:39 christos Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.103 2005/05/05 20:54:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104 2005/05/30 04:21:39 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -186,7 +186,7 @@ Static void		ehci_device_isoc_done(usbd_xfer_handle);
 Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
 Static void		ehci_noop(usbd_pipe_handle pipe);
 
-Static int		ehci_str(usb_string_descriptor_t *, int, char *);
+Static int		ehci_str(usb_string_descriptor_t *, int, const char *);
 Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
 Static void		ehci_pcd_able(ehci_softc_t *, int);
 Static void		ehci_pcd_enable(void *);
@@ -322,7 +322,7 @@ static uint8_t revbits[EHCI_MAX_POLLRATE] = {
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
-	u_int32_t version, sparams, cparams, hcr;
+	u_int32_t vers, sparams, cparams, hcr;
 	u_int i;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
@@ -335,9 +335,9 @@ ehci_init(ehci_softc_t *sc)
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
-	version = EREAD2(sc, EHCI_HCIVERSION);
+	vers = EREAD2(sc, EHCI_HCIVERSION);
 	aprint_normal("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
-	       version >> 8, version & 0xff);
+	       vers >> 8, vers & 0xff);
 
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	DPRINTF(("ehci_init: sparams=0x%x\n", sparams));
@@ -1629,7 +1629,7 @@ Static usb_hub_descriptor_t ehci_hubd = {
 };
 
 Static int
-ehci_str(usb_string_descriptor_t *p, int l, char *s)
+ehci_str(usb_string_descriptor_t *p, int l, const char *s)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.7 2005/05/30 04:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.7 2005/05/30 04:21:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ umidi_search_quirk(int vendor, int product, int ifaceno)
 	return NULL;
 }
 
-static char *quirk_name[] = {
+static const char *quirk_name[] = {
 	"NULL",
 	"Fixed Endpoint",
 	"Yamaha Specific",

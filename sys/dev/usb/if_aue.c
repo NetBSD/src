@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.90 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.91 2005/05/30 04:21:39 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.90 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.91 2005/05/30 04:21:39 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -230,7 +230,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2206USB},	  PII },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
 };
-#define aue_lookup(v, p) ((struct aue_type *)usb_lookup(aue_devs, v, p))
+#define aue_lookup(v, p) ((const struct aue_type *)usb_lookup(aue_devs, v, p))
 
 USB_DECLARE_DRIVER(aue);
 

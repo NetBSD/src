@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.8 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.9 2005/05/30 04:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.8 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.9 2005/05/30 04:21:39 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -167,7 +167,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 };
-#define axe_lookup(v, p) ((struct axe_type *)usb_lookup(axe_devs, v, p))
+#define axe_lookup(v, p) ((const struct axe_type *)usb_lookup(axe_devs, v, p))
 
 USB_DECLARE_DRIVER(axe);
 
