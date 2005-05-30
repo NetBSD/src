@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.25 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: amr.c,v 1.26 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.25 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.26 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,7 +568,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	struct amr_enquiry3 *aex;
 	const char *prodstr;
 	u_int i, sig, ishp;
-	char buf[64];
+	char sbuf[64];
 
 	/*
 	 * Try to get 40LD product info, which tells us what the card is
@@ -632,9 +632,9 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			i++;
 		}
 		if (i == sizeof(amr_typestr) / sizeof(amr_typestr[0])) {
-			snprintf(buf, sizeof(buf),
+			snprintf(sbuf, sizeof(sbuf),
 			    "unknown ENQUIRY2 sig (0x%08x)", sig);
-			prodstr = buf;
+			prodstr = sbuf;
 		} else
 			prodstr = amr_typestr[i].at_str;
 	} else {
@@ -653,9 +653,9 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			prodstr = "Series 434";
 			break;
 		default:
-			snprintf(buf, sizeof(buf), "unknown PCI dev (0x%04x)",
+			snprintf(sbuf, sizeof(sbuf), "unknown PCI dev (0x%04x)",
 			    PCI_PRODUCT(pa->pa_id));
-			prodstr = buf;
+			prodstr = sbuf;
 			break;
 		}
 	}
@@ -940,7 +940,7 @@ amr_drive_state(int state, int *happy)
  */
 void *
 amr_enquire(struct amr_softc *amr, u_int8_t cmd, u_int8_t cmdsub,
-	    u_int8_t cmdqual, void *buf)
+	    u_int8_t cmdqual, void *sbuf)
 {
 	struct amr_ccb *ac;
 	u_int8_t *mb;
@@ -955,14 +955,14 @@ amr_enquire(struct amr_softc *amr, u_int8_t cmd, u_int8_t cmdsub,
 	mb[2] = cmdsub;
 	mb[3] = cmdqual;
 
-	rv = amr_ccb_map(amr, ac, buf, AMR_ENQUIRY_BUFSIZE, 0);
+	rv = amr_ccb_map(amr, ac, sbuf, AMR_ENQUIRY_BUFSIZE, 0);
 	if (rv == 0) {
 		rv = amr_ccb_poll(amr, ac, 2000);
 		amr_ccb_unmap(amr, ac);
 	}
 	amr_ccb_free(amr, ac);
 
-	return (rv ? NULL : buf);
+	return (rv ? NULL : sbuf);
 }
 
 /*

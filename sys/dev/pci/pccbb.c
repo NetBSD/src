@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.118 2005/03/23 20:53:19 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.119 2005/05/30 04:35:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.118 2005/03/23 20:53:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.119 2005/05/30 04:35:22 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -100,16 +100,16 @@ struct cfdriver cbb_cd = {
 #define DELAY_MS(time, param)						\
     do {								\
 	if (cold == 0) {						\
-	    int tick = (hz*(time))/1000;				\
+	    int xtick = (hz*(time))/1000;				\
 									\
-	    if (tick <= 1) {						\
-		tick = 2;						\
+	    if (xtick <= 1) {						\
+		xtick = 2;						\
 	    }								\
-	    tsleep((void *)(param), PWAIT, "pccbb", tick);		\
+	    tsleep((void *)(param), PWAIT, "pccbb", xtick);		\
 	} else {							\
 	    delay((time)*1000);						\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 int pcicbbmatch(struct device *, struct cfdata *, void *);
 void pccbbattach(struct device *, struct device *, void *);

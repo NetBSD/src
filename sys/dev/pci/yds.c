@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.27 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: yds.c,v 1.28 2005/05/30 04:35:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.27 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.28 2005/05/30 04:35:23 christos Exp $");
 
 #include "mpu.h"
 
@@ -1012,7 +1012,7 @@ yds_intr(void *p)
 		YWRITE4(sc, YDS_MODE, YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV2);
 
 		if (sc->sc_play.intr) {
-			u_int dma, cpu, blk, len;
+			u_int dma, ccpu, blk, len;
 
 			/* Sync play slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
@@ -1023,17 +1023,17 @@ yds_intr(void *p)
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
 			dma = le32toh(sc->pbankp[nbank]->pgstart) * sc->sc_play.factor;
-			cpu = sc->sc_play.offset;
+			ccpu = sc->sc_play.offset;
 			blk = sc->sc_play.blksize;
 			len = sc->sc_play.length;
 
-			if (((dma > cpu) && (dma - cpu > blk * 2)) ||
-			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
+			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
+			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
 				/* We can fill the next block */
 				/* Sync ring buffer for previous write */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_play.dma->map,
-						cpu, blk,
+						ccpu, blk,
 						BUS_DMASYNC_POSTWRITE);
 				sc->sc_play.intr(sc->sc_play.intr_arg);
 				sc->sc_play.offset += blk;
@@ -1047,12 +1047,12 @@ yds_intr(void *p)
 				/* Sync ring buffer for next write */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_play.dma->map,
-						cpu, blk,
+						ccpu, blk,
 						BUS_DMASYNC_PREWRITE);
 			}
 		}
 		if (sc->sc_rec.intr) {
-			u_int dma, cpu, blk, len;
+			u_int dma, ccpu, blk, len;
 
 			/* Sync rec slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
@@ -1063,17 +1063,17 @@ yds_intr(void *p)
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
 			dma = le32toh(sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr);
-			cpu = sc->sc_rec.offset;
+			ccpu = sc->sc_rec.offset;
 			blk = sc->sc_rec.blksize;
 			len = sc->sc_rec.length;
 
-			if (((dma > cpu) && (dma - cpu > blk * 2)) ||
-			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
+			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
+			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
 				/* We can drain the current block */
 				/* Sync ring buffer first */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						cpu, blk,
+						ccpu, blk,
 						BUS_DMASYNC_POSTREAD);
 				sc->sc_rec.intr(sc->sc_rec.intr_arg);
 				sc->sc_rec.offset += blk;
@@ -1087,7 +1087,7 @@ yds_intr(void *p)
 				/* Sync ring buffer for next read */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						cpu, blk,
+						ccpu, blk,
 						BUS_DMASYNC_PREREAD);
 			}
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.5 2005/01/26 12:59:06 fvdl Exp $ */
+/* $NetBSD: auixp.c,v 1.6 2005/05/30 04:35:22 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.5 2005/01/26 12:59:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.6 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -179,7 +179,7 @@ void	auixp_reset_aclink(struct auixp_softc *);
 int	auixp_attach_codec(void *, struct ac97_codec_if *);
 int	auixp_read_codec(void *, uint8_t, uint16_t *);
 int	auixp_write_codec(void *, uint8_t, uint16_t);
-int	auixp_wait_for_codecs(struct auixp_softc *, char *);
+int	auixp_wait_for_codecs(struct auixp_softc *, const char *);
 int	auixp_reset_codec(void *);
 enum ac97_host_flags	auixp_flags_codec(void *);
 
@@ -1498,7 +1498,7 @@ auixp_flags_codec(void *aux)
 
 
 int
-auixp_wait_for_codecs(struct auixp_softc *sc, char *func)
+auixp_wait_for_codecs(struct auixp_softc *sc, const char *func)
 {
 	bus_space_tag_t      iot;
 	bus_space_handle_t   ioh;

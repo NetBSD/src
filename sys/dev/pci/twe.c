@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: twe.c,v 1.66 2005/05/30 04:35:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.66 2005/05/30 04:35:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1218,7 +1218,7 @@ done:
  */
 static int
 twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
-	      void *buf)
+	      void *sbuf)
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1248,7 +1248,7 @@ twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	tp->tp_table_id = htole16(table_id);
 	tp->tp_param_id = param_id;
 	tp->tp_param_size = size;
-	memcpy(tp->tp_data, buf, size);
+	memcpy(tp->tp_data, sbuf, size);
 
 	/* Map the transfer. */
 	if ((rv = twe_ccb_map(sc, ccb)) != 0) {

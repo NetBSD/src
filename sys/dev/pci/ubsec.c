@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.5 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.6 2005/05/30 04:35:23 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -586,14 +586,14 @@ ubsec_intr(void *arg)
 	}
 
 	if (sc->sc_needwakeup) {		/* XXX check high watermark */
-		int wakeup = sc->sc_needwakeup & (CRYPTO_SYMQ|CRYPTO_ASYMQ);
+		int wkeup = sc->sc_needwakeup & (CRYPTO_SYMQ|CRYPTO_ASYMQ);
 #ifdef UBSEC_DEBUG
 		if (ubsec_debug)
 			printf("%s: wakeup crypto (%x)\n", sc->sc_dv.dv_xname,
 				sc->sc_needwakeup);
 #endif /* UBSEC_DEBUG */
-		sc->sc_needwakeup &= ~wakeup;
-		crypto_unblock(sc->sc_cid, wakeup);
+		sc->sc_needwakeup &= ~wkeup;
+		crypto_unblock(sc->sc_cid, wkeup);
 	}
 	return (1);
 }

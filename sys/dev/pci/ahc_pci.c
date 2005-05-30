@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.49 2005/02/27 00:27:32 perry Exp $
+ * $Id: ahc_pci.c,v 1.50 2005/05/30 04:35:22 christos Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.49 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.50 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1013,10 +1013,10 @@ ahc_pci_attach(parent, self, aux)
 	 * of the external precision resistor.
 	 */
 	if ((ahc->features & AHC_ULTRA) != 0) {
-		uint32_t devconfig;
+		uint32_t dvconfig;
 
-		devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
-		if ((devconfig & REXTVALID) == 0)
+		dvconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
+		if ((dvconfig & REXTVALID) == 0)
 			ahc->features &= ~AHC_ULTRA;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.10 2005/01/19 06:00:22 dyoung Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.11 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.10 2005/01/19 06:00:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.11 2005/05/30 04:35:22 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1055,7 +1055,7 @@ ipw_read_table2(struct ipw_softc *sc, u_int32_t off, void *buf, u_int32_t *len)
 static int
 ipw_tx_init(struct ipw_softc *sc)
 {
-	char *errmsg;
+	const char *errmsg;
 	struct ipw_bd *bd;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_hdr *shdr;
@@ -1239,7 +1239,7 @@ ipw_tx_stop(struct ipw_softc *sc)
 static int
 ipw_rx_init(struct ipw_softc *sc)
 {
-	char *errmsg;
+	const char *errmsg;
 	struct ipw_bd *bd;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_buf *sbuf;
