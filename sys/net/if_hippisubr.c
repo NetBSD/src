@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.19 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.20 2005/05/30 04:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.19 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.20 2005/05/30 04:17:59 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -262,9 +262,8 @@ hippi_input(ifp, m)
 
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (hh->hi_le.le_dest_addr[0] & 1) {
-		if (bcmp((caddr_t)etherbroadcastaddr,
-			 (caddr_t)hh->hi_le.le_dest_addr,
-			 sizeof(etherbroadcastaddr)) == 0)
+		if (memcmp(etherbroadcastaddr, hh->hi_le.le_dest_addr,
+		    sizeof(etherbroadcastaddr)) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
