@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.21 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.22 2005/05/30 04:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.21 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.22 2005/05/30 04:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ ai_copyout (sc, src, offset, size)
 	}
 
 	dribble = size % 2;
-	bus_space_write_region_2(sc->bt, sc->bh, offset, (u_int16_t *)bptr,
-				 size >> 1);
+	bus_space_write_region_2(sc->bt, sc->bh, offset,
+	    (const u_int16_t *)bptr, size >> 1);
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;

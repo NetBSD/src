@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.67 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: ess.c,v 1.68 2005/05/30 04:32:38 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.67 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.68 2005/05/30 04:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ void	ess_clear_mreg_bits(struct ess_softc *, u_char, u_char);
 void	ess_set_mreg_bits(struct ess_softc *, u_char, u_char);
 void	ess_read_multi_mix_reg(struct ess_softc *, u_char, u_int8_t *, bus_size_t);
 
-static char *essmodel[] = {
+static const char *essmodel[] = {
 	"unsupported",
 
 	"688",
