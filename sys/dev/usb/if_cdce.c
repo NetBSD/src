@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.6 2005/05/11 10:02:28 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.7 2005/05/30 04:21:39 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.6 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.7 2005/05/30 04:21:39 christos Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -184,7 +184,7 @@ USB_ATTACH(cdce)
 	if (sc->cdce_flags & CDCE_NO_UNION)
 		sc->cdce_data_iface = sc->cdce_ctl_iface;
 	else {
-		ud = (usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
+		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
 		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
 			printf("%s: no union descriptor\n",
@@ -248,7 +248,7 @@ USB_ATTACH(cdce)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	ue = (usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
+	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
             UDESC_INTERFACE, UDESCSUB_CDC_ENF);
 	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str)) {
 		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
@@ -256,11 +256,11 @@ USB_ATTACH(cdce)
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
 		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
 	} else {
-		int i;
+		int j;
 
 		memset(eaddr, 0, ETHER_ADDR_LEN);
-		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
-			int c = eaddr_str[i];
+		for (j = 0; j < ETHER_ADDR_LEN * 2; j++) {
+			int c = eaddr_str[j];
 
 			if ('0' <= c && c <= '9')
 				c -= '0';
@@ -269,7 +269,7 @@ USB_ATTACH(cdce)
 			c &= 0xf;
 			if (c%2 == 0)
 				c <<= 4;
-			eaddr[i / 2] |= c;
+			eaddr[j / 2] |= c;
 		}
 	}
 

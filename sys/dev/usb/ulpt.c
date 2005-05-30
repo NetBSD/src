@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.68 2005/05/23 16:35:26 soren Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.68 2005/05/23 16:35:26 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ USB_ATTACH(ulpt)
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
-	usb_interface_descriptor_t *id;
+	const usb_interface_descriptor_t *id;
 	usbd_status err;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
@@ -241,7 +241,7 @@ USB_ATTACH(ulpt)
 	/* Loop through descriptors looking for a bidir mode. */
 	usb_desc_iter_init(dev, &iter);
 	for (altno = 0;;) {
-		id = (usb_interface_descriptor_t *)usb_desc_iter_next(&iter);
+		id = (const usb_interface_descriptor_t *)usb_desc_iter_next(&iter);
 		if (!id)
 			break;
 		if (id->bDescriptorType == UDESC_INTERFACE &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.4 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.5 2005/05/30 04:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.4 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.5 2005/05/30 04:21:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 
 	*cm = *acm = 0;
 
-	cmd = (usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
+	cmd = (const usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
 							  UDESC_CS_INTERFACE,
 							  UDESCSUB_CDC_CM, id);
 	if (cmd == NULL) {
@@ -384,7 +384,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 		*cm = cmd->bmCapabilities;
 	}
 
-	cad = (usb_cdc_acm_descriptor_t *)usb_find_desc_if(dev,
+	cad = (const usb_cdc_acm_descriptor_t *)usb_find_desc_if(dev,
 							   UDESC_CS_INTERFACE,
 							   UDESCSUB_CDC_ACM,
 							   id);
@@ -394,7 +394,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 		*acm = cad->bmCapabilities;
 	}
 
-	cud = (usb_cdc_union_descriptor_t *)usb_find_desc_if(dev,
+	cud = (const usb_cdc_union_descriptor_t *)usb_find_desc_if(dev,
 							     UDESC_CS_INTERFACE,
 							     UDESCSUB_CDC_UNION,
 							     id);
