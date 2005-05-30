@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.1 2005/05/30 15:51:36 thorpej Exp $
+#	$NetBSD: genassym.sh,v 1.2 2005/05/30 23:27:29 thorpej Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -34,14 +34,15 @@ progname=${0}
 awk=${AWK:-awk}
 
 ccode=0		# generate temporary C file, compile it, execute result
+fcode=0		# generate Forth code
 
 usage()
 {
 
-	echo "usage: ${progname} [-c] -- compiler command" >&2
+	echo "usage: ${progname} [-c | -f] -- compiler command" >&2
 }
 
-args=`getopt ck $*`
+args=`getopt cf $*`
 if [ $? != 0 ]; then
 	usage;
 	exit 1;
@@ -52,6 +53,9 @@ for i; do
 	case "$i" in
 	-c)
 		ccode=1
+		shift;;
+	-f)
+		fcode=1
 		shift;;
 	--)
 		shift; break;;
@@ -88,6 +92,10 @@ BEGIN {
 	type = "long";
 	asmtype = "n";
 	asmprint = "";
+}
+
+{
+	doing_member = 0;
 }
 
 $0 ~ /^[ \t]*#.*/ || $0 ~ /^[ \t]*$/ {
@@ -132,6 +140,7 @@ $0 ~ /^endif/ {
 		$0 = "define " $2 " offsetof(struct " structname ", " $3 ")";
 	else
 		$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
+	doing_member = 1;
 	# fall through
 }
 
@@ -153,7 +162,12 @@ $0 ~ /^endif/ {
 	gsub("^define[ \t]+[A-Za-z_][A-Za-z_0-9]*[ \t]+", "", value)
 	if (ccode)
 		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
-	else
+	else if (fcode) {
+		if (doing_member)
+			printf("__asm(\"XYZZY : %s d\# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
+		else
+			printf("__asm(\"XYZZY d# %%%s0 constant %s\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
+	} else
 		printf("__asm(\"XYZZY %s %%%s0\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 	next;
 }
@@ -181,11 +195,16 @@ END {
 		printf("return(0); }\n");
 	}
 }
-' ccode=$ccode > ${genassym_temp}/assym.c || exit 1
+' ccode=$ccode fcode=$fcode > ${genassym_temp}/assym.c || exit 1
 
 if [ $ccode = 1 ] ; then
 	"$@" ${genassym_temp}/assym.c -o ${genassym_temp}/genassym && \
 	    ${genassym_temp}/genassym
+elif [ $fcode = 1 ]; then
+	# Kill all of the "#" and "$" modifiers; locore.s already
+	# prepends the correct "constant" modifier.
+	"$@" -S ${genassym_temp}/assym.c -o - | sed -e 's/\$//g' | \
+	    sed -n 's/.*XYZZY//gp'
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
