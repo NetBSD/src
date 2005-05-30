@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.21 2005/05/30 09:36:50 martin Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.22 2005/05/30 22:16:27 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.21 2005/05/30 09:36:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.22 2005/05/30 22:16:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
 }
 
-static char *sun_fkeys[] = {
+static const char *sun_fkeys[] = {
 	"\033[224z",	/* F1 */
 	"\033[225z",
 	"\033[226z",
