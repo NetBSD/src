@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.32 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.33 2005/05/30 04:36:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -132,7 +132,7 @@ typedef struct cardbus_functions {
  * struct cbslot_attach_args is the attach argument for cardbus card.
  */
 struct cbslot_attach_args {
-	char *cba_busname;
+	const char *cba_busname;
 	bus_space_tag_t cba_iot;	/* cardbus i/o space tag */
 	bus_space_tag_t cba_memt;	/* cardbus mem space tag */
 	bus_dma_tag_t cba_dmat;		/* DMA tag */
