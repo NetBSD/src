@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.105 2005/05/30 00:25:07 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.106 2005/05/30 21:40:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8960,4 +8960,21 @@ sys/arch/i386/stand/lib/realprot.S		1.4
 	Workaround for issues seen on VIA C3-based systems. This workaround
 	is non-intrusive and should not affect any other CPUs. PR#26007.
 	[gavan, ticket #356]
+
+lib/libc/string/wcschr.c			1.3
+
+	It is really pointless to come up with new implementations of the wide
+	string functions instead of using the narrow string ones. Make this
+	look like strchr, so that wcschr(L"foo", L'\0') does not return NULL
+	as it should.
+	[christos, ticket #357]
+
+xfree/xc/programs/Xserver/hw/xfree86/common/xf86Configure.c 1.7
+xfree/xc/programs/Xserver/hw/xfree86/common/xf86Events.c 1.6
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.3
+
+	- Make X -configure use the modular keyboard driver by default.
+	- Add scancodes for Sun-specific keys to the Sun keymap.
+	- Fix the legacy driver to ignore bogus scancodes.
+	[macallan, ticket #358]
 
