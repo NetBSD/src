@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.38 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.39 2005/05/30 04:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.38 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.39 2005/05/30 04:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ CFATTACH_DECL(le_bicc, sizeof(struct le_softc),
     le_dummyprobe, le_bicc_attach, NULL, NULL);
 
 struct le_isa_params {
-	char *name;
+	const char *name;
 	int iosize, rap, rdp;
 	int macstart, macstride;
 } ne2100_params = {
