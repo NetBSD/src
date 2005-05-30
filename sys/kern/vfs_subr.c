@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.245 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.246 2005/05/30 22:15:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.245 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.246 2005/05/30 22:15:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1020,7 +1020,7 @@ reassignbuf(bp, newvp)
 	struct vnode *newvp;
 {
 	struct buflists *listheadp;
-	int delay;
+	int delayx;
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -1044,21 +1044,21 @@ reassignbuf(bp, newvp)
 		if ((newvp->v_flag & VONWORKLST) == 0) {
 			switch (newvp->v_type) {
 			case VDIR:
-				delay = dirdelay;
+				delayx = dirdelay;
 				break;
 			case VBLK:
 				if (newvp->v_specmountpoint != NULL) {
-					delay = metadelay;
+					delayx = metadelay;
 					break;
 				}
 				/* fall through */
 			default:
-				delay = filedelay;
+				delayx = filedelay;
 				break;
 			}
 			if (!newvp->v_mount ||
 			    (newvp->v_mount->mnt_flag & MNT_ASYNC) == 0)
-				vn_syncer_add_to_worklist(newvp, delay);
+				vn_syncer_add_to_worklist(newvp, delayx);
 		}
 	}
 	bufinsvn(bp, listheadp);
