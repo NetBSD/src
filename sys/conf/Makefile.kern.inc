@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.60 2005/05/23 22:01:11 dbj Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.61 2005/05/30 15:54:30 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -210,10 +210,10 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 .if !target(assym.h)
-assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
+assym.h: ${GENASSYM} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${HOST_SH} $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -299,7 +299,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${HOST_SH} $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
+	    ${TOOL_GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
