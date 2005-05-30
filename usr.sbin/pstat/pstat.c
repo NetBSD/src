@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.88 2004/12/18 08:43:35 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.89 2005/05/30 07:24:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.88 2004/12/18 08:43:35 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.89 2005/05/30 07:24:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -821,7 +821,8 @@ ttyprt(tp)
 	char state[sizeof(ttystates) / sizeof(ttystates[0]) + 1];
 	char dev[2 + 3 + 1 + 5 + 1]; /* 12bit major + 20bit minor */
 	struct linesw t_linesw;
-	char *name, buffer;
+	const char *name;
+	char buffer;
 	pid_t pgid;
 	int n, ovflw;
 
