@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.47 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.47 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.47 2005/02/27 00:27:00 perry Exp $");
 
 #define POLL(ms, cond)				\
 do {						\
-	int i;					\
-	for (i = (ms) * 10; i; i--) {		\
+	int xi;					\
+	for (xi = (ms) * 10; xi; xi--) {	\
 		if (cond)			\
 			break;			\
 		DELAY(100);			\
