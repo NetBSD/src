@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.26 2005/05/02 16:02:43 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.27 2005/05/30 22:18:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.26 2005/05/02 16:02:43 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.27 2005/05/30 22:18:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ static int mach64_chip_id, mach64_chip_rev;
 static struct videomode default_mode;
 static struct mach64screen mach64_console_screen;
 
-static char *mach64_memtype_names[] = {
+static const char *mach64_memtype_names[] = {
 	"(N/A)", "DRAM", "EDO DRAM", "EDO DRAM", "SDRAM", "SGRAM", "WRAM",
 	"(unknown type)"
 };
