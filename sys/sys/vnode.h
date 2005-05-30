@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.136 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.137 2005/05/30 22:12:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -727,12 +727,12 @@ int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
 void	vntblinit(void);
 
 /* misc stuff */
-void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
-void	vn_syncer_remove_from_worklist(struct vnode *vp);
+void	vn_syncer_add_to_worklist(struct vnode *, int);
+void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
 
 /* from vfs_syscalls.c - abused by compat code */
-int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
+int	getvnode(struct filedesc *, int, struct file **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
