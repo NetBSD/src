@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.34 2005/05/30 04:30:18 christos Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.35 2005/05/30 06:41:55 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.34 2005/05/30 04:30:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.35 2005/05/30 06:41:55 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -3626,7 +3626,7 @@ start_capture(bktr_ptr_t bktr, unsigned type)
 
 	fp = &format_params[bktr->format_params];
 
-	/*  If requested, clear out capture sbuf first  */
+	/*  If requested, clear out capture buf first  */
 	if (bktr->clr_on_start && (bktr->video.addr == 0)) {
 		bzero((caddr_t)bktr->bigbuf,
 		      (size_t)bktr->rows * bktr->cols * bktr->frames *
