@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.17 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.18 2005/05/30 04:30:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.17 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.18 2005/05/30 04:30:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,8 +326,8 @@ elmc_mca_copyout (sc, src, offset, size)
 	}
 
 	dribble = size % 2;
-	bus_space_write_region_2(sc->bt, sc->bh, offset, (u_int16_t *)bptr,
-				 size >> 1);
+	bus_space_write_region_2(sc->bt, sc->bh, offset,
+	    (const u_int16_t *)bptr, size >> 1);
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;
