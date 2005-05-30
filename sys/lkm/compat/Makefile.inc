@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2003/10/26 07:25:38 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2005/05/30 18:35:54 thorpej Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -26,8 +26,8 @@ GENASSYM_DIR?= $S/arch/${MACHINE_CPU}/${MACHINE_CPU}
 GENASSYM_DIR?=
 .endif
 
-assym.h: ${S}/kern/genassym.sh ${GENASSYM_DIR}/genassym.cf
-	${HOST_SH} $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+assym.h: ${GENASSYM_DIR}/genassym.cf
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${GENASSYM_DIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
