@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.11 2005/05/21 09:25:21 skrll Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.12 2005/05/30 18:02:31 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -136,7 +136,7 @@ void
 phase2_load(void)
 {
 	if (ioctl(gfd, VERIEXEC_LOAD, &params) == -1)
-		err(1, "Cannot load params from `%s'", params.file);
+		warn("Cannot load params from `%s'", params.file);
 	free(params.fingerprint);
 }
 
