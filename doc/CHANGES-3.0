@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.103 2005/05/28 18:39:42 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.104 2005/05/30 00:24:15 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8953,3 +8953,10 @@ sys/dev/usb/uplcom.c				patch
 	Backport of NetBSD-current's uplcom(4) which among other things adds
 	support for the new Prolific 2303 "HX" revision.
 	[soren, ticket #352]
+sys/arch/i386/stand/boot/Makefile.boot		1.21
+sys/arch/i386/stand/lib/realprot.S		1.4
+
+	Workaround for issues seen on VIA C3-based systems. This workaround
+	is non-intrusive and should not affect any other CPUs. PR#26007.
+	[gavan, ticket #356]
+
