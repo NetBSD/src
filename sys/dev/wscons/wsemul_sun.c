@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.20 2005/05/25 06:46:07 martin Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.21 2005/05/30 09:36:50 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.20 2005/05/25 06:46:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.21 2005/05/30 09:36:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ void	*wsemul_sun_attach(int console, const struct wsscreen_descr *,
 				void *, int, int, void *, long);
 void	wsemul_sun_output(void *cookie, const u_char *data, u_int count,
 			       int);
-int	wsemul_sun_translate(void *cookie, keysym_t, char **);
+int	wsemul_sun_translate(void *cookie, keysym_t, const char **);
 void	wsemul_sun_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
 
@@ -539,7 +539,7 @@ static char *sun_fkeys[] = {
 };
 
 int
-wsemul_sun_translate(void *cookie, keysym_t in, char **out)
+wsemul_sun_translate(void *cookie, keysym_t in, const char **out)
 {
 	static char c;
 
