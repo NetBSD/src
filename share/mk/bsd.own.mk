@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.438 2005/02/28 02:28:09 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.439 2005/05/30 15:52:16 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -220,6 +220,7 @@ TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
