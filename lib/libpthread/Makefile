@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2005/02/03 17:30:33 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2005/05/30 16:02:56 thorpej Exp $
 #
 
 WARNS=	2
@@ -31,10 +31,9 @@ CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -DPTHREAD_MLOCK_KLUDGE
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
 
-assym.h: genassym.sh ${ARCHDIR}/genassym.cf \
-		pthread.h pthread_int.h pthread_md.h
+assym.h: ${ARCHDIR}/genassym.cf pthread.h pthread_int.h pthread_md.h
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
