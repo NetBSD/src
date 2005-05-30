@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.17 2005/05/30 04:37:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17 2005/05/30 04:37:57 christos Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -134,7 +134,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
 	int rv, evreg, enable;
-	char *typestr, *fixedstr;
+	const char *typestr, *fixedstr;
 	u_int cachesz;
 	u_int32_t timeoutbase, rwvtimeoutbase, rwvtimeout;
 	struct {
