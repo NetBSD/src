@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.74 2005/05/11 13:13:11 scw Exp $ */
+/*      $NetBSD: ac97.c,v 1.75 2005/05/30 04:43:46 christos Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.74 2005/05/11 13:13:11 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.75 2005/05/30 04:43:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1228,8 +1228,8 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		struct sysctlnode *node;
 		struct sysctlnode *node_line1;
 		struct sysctlnode *node_line2;
-		uint16_t rate = 8000;
-		uint16_t val, reg;
+		uint16_t xrate = 8000;
+		uint16_t xval, reg;
 		int err;
 
 		ac97_read(as, AC97_REG_EXT_MODEM_ID, &as->ext_mid);
@@ -1267,20 +1267,20 @@ setup_modem:
 		ac97_write(as, AC97_REG_EXT_MODEM_ID, 1);
 
 		/* program rates */
-		val = 0xff00 & ~AC97_EXT_MODEM_CTRL_PRA;
+		xval = 0xff00 & ~AC97_EXT_MODEM_CTRL_PRA;
 		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
-			ac97_write(as, AC97_REG_LINE1_RATE, rate);
-			val &= ~(AC97_EXT_MODEM_CTRL_PRC |
+			ac97_write(as, AC97_REG_LINE1_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRC |
 			       AC97_EXT_MODEM_CTRL_PRD);
 		}
 		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
-			ac97_write(as, AC97_REG_LINE2_RATE, rate);
-			val &= ~(AC97_EXT_MODEM_CTRL_PRE |
+			ac97_write(as, AC97_REG_LINE2_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRE |
 			       AC97_EXT_MODEM_CTRL_PRF);
 		}
 		if (as->ext_mid & AC97_EXT_MODEM_HANDSET) {
-			ac97_write(as, AC97_REG_HANDSET_RATE, rate);
-			val &= ~(AC97_EXT_MODEM_CTRL_PRG |
+			ac97_write(as, AC97_REG_HANDSET_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRG |
 			       AC97_EXT_MODEM_CTRL_PRH);
 		}
 
@@ -1352,7 +1352,7 @@ sysctl_err:
 	/* disable mutes */
 	for (i = 0; i < 11; i++) {
 		static struct {
-			char *class, *device;
+			const char *class, *device;
 		} d[11] = {
 			{ AudioCoutputs, AudioNmaster},
 			{ AudioCoutputs, AudioNheadphone},

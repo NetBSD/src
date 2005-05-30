@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.4 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.5 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -141,7 +141,7 @@ int	tcic_ns2wscnt(int);
 int	tcic_check_reserved_bits(bus_space_tag_t, bus_space_handle_t);
 int	tcic_chipid(bus_space_tag_t, bus_space_handle_t);
 int	tcic_chipid_known(int);
-char	*tcic_chipid_to_string(int);
+const char *tcic_chipid_to_string(int);
 int	tcic_validirqs(int);
 
 void	tcic_attach(struct tcic_softc *);

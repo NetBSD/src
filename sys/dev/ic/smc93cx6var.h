@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6var.h,v 1.6 2003/05/02 19:12:19 dyoung Exp $	*/
+/*	$NetBSD: smc93cx6var.h,v 1.7 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -107,5 +107,5 @@ struct seeprom_descriptor {
 	    : bus_space_read_1((sd)->sd_tag, (sd)->sd_bsh, \
 	          (sd)->sd_dataout_offset))
 
-int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
-		 bus_size_t start_addr, bus_size_t count);
+int read_seeprom(struct seeprom_descriptor *, u_int16_t *,
+    bus_size_t, bus_size_t);

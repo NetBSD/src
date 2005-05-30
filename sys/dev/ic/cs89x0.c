@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.16 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.17 2005/05/30 04:43:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.16 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.17 2005/05/30 04:43:46 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -455,13 +455,13 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 		}
 	} else {
 #if 1
-		int i;
+		int j;
 		uint v;
 
-		for (i = 0; i < 6; i += 2) {
-			v = CS_READ_PACKET_PAGE(sc, PKTPG_IND_ADDR + i);
-			sc->sc_enaddr[i + 0] = v;
-			sc->sc_enaddr[i + 1] = v >> 8;
+		for (j = 0; j < 6; j += 2) {
+			v = CS_READ_PACKET_PAGE(sc, PKTPG_IND_ADDR + j);
+			sc->sc_enaddr[j + 0] = v;
+			sc->sc_enaddr[j + 1] = v >> 8;
 		}
 #else
 		printf("%s: no Ethernet address!\n", sc->sc_dev.dv_xname);

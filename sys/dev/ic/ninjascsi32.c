@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.3 2005/05/30 04:43:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.3 2005/05/30 04:43:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.2 2004/08/26 18:38:19 thorpej Exp 
 
 static void	njsc32_scsipi_request(struct scsipi_channel *,
 		    scsipi_adapter_req_t, void *);
-static void	njsc32_scsipi_minphys(struct buf *buf);
+static void	njsc32_scsipi_minphys(struct buf *);
 static int	njsc32_scsipi_ioctl(struct scsipi_channel *, u_long, caddr_t,
 		    int, struct proc *);
 

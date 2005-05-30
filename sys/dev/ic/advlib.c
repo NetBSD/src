@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.20 2005/02/27 00:27:00 perry Exp $        */
+/*      $NetBSD: advlib.c,v 1.21 2005/05/30 04:43:46 christos Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.20 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.21 2005/05/30 04:43:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.20 2005/02/27 00:27:00 perry Exp $");
 
 /* Initialization routines */
 static u_int32_t AscLoadMicroCode(bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, u_int16_t);
+				    u_int16_t, const u_int16_t *, u_int16_t);
 static void AscInitLram(ASC_SOFTC *);
 static void AscInitQLinkVar(ASC_SOFTC *);
 static int AscResetChipAndScsiBus(bus_space_tag_t, bus_space_handle_t);
@@ -124,7 +124,7 @@ static void AscWriteLramDWord(bus_space_tag_t, bus_space_handle_t,
 static void AscMemWordSetLram(bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t, int);
 static void AscMemWordCopyToLram(bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, int);
+					u_int16_t, const u_int16_t *, int);
 static void AscMemWordCopyFromLram(bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t *, int);
 static void AscMemDWordCopyToLram(bus_space_tag_t, bus_space_handle_t,
@@ -218,7 +218,7 @@ static int AscTagQueuingSafe(ASC_SCSI_INQUIRY *);
 static void AscAsyncFix(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
 
 /* Miscellaneous routines */
-static int AscCompareString(u_char *, u_char *, int);
+static int AscCompareString(const u_char *, const u_char *, int);
 
 /* Device oriented routines */
 static int DvcEnterCritical(void);
@@ -583,7 +583,7 @@ AscInitDriver(ASC_SOFTC *sc)
 	AscDisableInterrupt(iot, ioh);
 
 	AscInitLram(sc);
-	chksum = AscLoadMicroCode(iot, ioh, 0, (u_int16_t *) asc_mcode,
+	chksum = AscLoadMicroCode(iot, ioh, 0, (const u_int16_t *) asc_mcode,
 				  asc_mcode_size);
 	if (chksum != asc_mcode_chksum)
 		return (2);
@@ -1050,7 +1050,7 @@ AscMemWordSetLram(bus_space_tag_t iot, bus_space_handle_t ioh,
 
 static void
 AscMemWordCopyToLram(bus_space_tag_t iot, bus_space_handle_t ioh,
-	u_int16_t s_addr, u_int16_t *s_buffer, int words)
+	u_int16_t s_addr, const u_int16_t *s_buffer, int words)
 {
 	int             i;
 
@@ -1173,7 +1173,7 @@ AscInitMicroCodeVar(ASC_SOFTC *sc)
 
 static u_int32_t
 AscLoadMicroCode(bus_space_tag_t iot, bus_space_handle_t ioh,
-	u_int16_t s_addr, u_int16_t *mcode_buf, u_int16_t mcode_size)
+	u_int16_t s_addr, const u_int16_t *mcode_buf, u_int16_t mcode_size)
 {
 	u_int32_t       chksum;
 	u_int16_t       mcode_word_size;
@@ -2156,12 +2156,12 @@ AscHandleExtMsgIn(ASC_SOFTC *sc, u_int16_t halt_q_addr, u_int8_t q_cntl,
 		   ext_msg.msg_len == MS_WDTR_LEN) {
 		ext_msg.wdtr_width = 0;
 		AscMemWordCopyToLram(iot, ioh, ASCV_MSGOUT_BEG,
-			     (u_int16_t *) & ext_msg, sizeof(EXT_MSG) >> 1);
+			     (const u_int16_t *) & ext_msg, sizeof(EXT_MSG) >> 1);
 		q_cntl |= ASC_QC_MSG_OUT;
 	} else {
 		ext_msg.msg_type = M1_MSG_REJECT;
 		AscMemWordCopyToLram(iot, ioh, ASCV_MSGOUT_BEG,
-			     (u_int16_t *) & ext_msg, sizeof(EXT_MSG) >> 1);
+			     (const u_int16_t *) & ext_msg, sizeof(EXT_MSG) >> 1);
 		q_cntl |= ASC_QC_MSG_OUT;
 	}
 
@@ -2187,12 +2187,12 @@ AscMsgOutSDTR(ASC_SOFTC *sc, u_int8_t sdtr_period, u_int8_t sdtr_offset)
 	if ((sdtr_period_index = AscGetSynPeriodIndex(sc, sdtr_period)) <=
 	    sc->max_sdtr_index) {
 		AscMemWordCopyToLram(iot, ioh, ASCV_MSGOUT_BEG,
-			    (u_int16_t *) & sdtr_buf, sizeof(EXT_MSG) >> 1);
+			    (const u_int16_t *) & sdtr_buf, sizeof(EXT_MSG) >> 1);
 		return ((sdtr_period_index << 4) | sdtr_offset);
 	} else {
 		sdtr_buf.req_ack_offset = 0;
 		AscMemWordCopyToLram(iot, ioh, ASCV_MSGOUT_BEG,
-			    (u_int16_t *) & sdtr_buf, sizeof(EXT_MSG) >> 1);
+			    (const u_int16_t *) & sdtr_buf, sizeof(EXT_MSG) >> 1);
 		return (0);
 	}
 }
@@ -2507,7 +2507,7 @@ AscPutReadySgListQueue(ASC_SOFTC *sc, ASC_SCSI_Q *scsiq, u_int8_t q_no)
 				 * Tell the board how many entries are in the S/G list
 				 */
 				AscMemWordCopyToLram(iot, ioh, q_addr + ASC_SCSIQ_SGHD_CPY_BEG,
-							(u_int16_t *) & scsi_sg_q,
+							(const u_int16_t *) & scsi_sg_q,
 							sizeof(ASC_SG_LIST_Q) >> 1);
 				/*
 				 * Tell the board the addresses of the S/G list segments
@@ -2554,7 +2554,7 @@ AscPutReadyQueue(ASC_SOFTC *sc, ASC_SCSI_Q *scsiq, u_int8_t q_no)
 	}
 	scsiq->q1.status = ASC_QS_FREE;
 	AscMemWordCopyToLram(iot, ioh, q_addr + ASC_SCSIQ_CDB_BEG,
-		       (u_int16_t *) scsiq->cdbptr, scsiq->q2.cdb_len >> 1);
+		       (const u_int16_t *) scsiq->cdbptr, scsiq->q2.cdb_len >> 1);
 
 	AscPutSCSIQ(iot, ioh, q_addr + ASC_SCSIQ_CPY_BEG, scsiq);
 
@@ -3135,7 +3135,7 @@ AscAsyncFix(ASC_SOFTC *sc, u_int8_t tid_no, ASC_SCSI_INQUIRY *inq)
 
 
 static int
-AscCompareString(u_char *str1, u_char *str2, int len)
+AscCompareString(const u_char *str1, const u_char *str2, int len)
 {
 	int             i;
 	int             diff;

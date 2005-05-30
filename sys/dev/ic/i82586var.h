@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.19 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.20 2005/05/30 04:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,7 +264,8 @@ struct ie_softc {
 /* Exported functions */
 int 	i82586_intr(void *);
 int 	i82586_proberam(struct ie_softc *);
-void 	i82586_attach(struct ie_softc *, char *, u_int8_t *, int*, int, int);
+void 	i82586_attach(struct ie_softc *, const char *, u_int8_t *, int*, int,
+    int);
 
 /* Shortcut macros to optional (driver uses default if unspecified) callbacks */
 #define IE_BUS_BARRIER(sc, offset, length, flags)			  \

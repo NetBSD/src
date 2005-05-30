@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.89 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: i82365.c,v 1.90 2005/05/30 04:43:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.89 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.90 2005/05/30 04:43:46 christos Exp $");
 
 #define	PCICDEBUG
 
@@ -205,7 +205,7 @@ pcic_vendor(h)
 	return (vendor);
 }
 
-char *
+const char *
 pcic_vendor_to_string(vendor)
 	int vendor;
 {
@@ -1249,7 +1249,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	bus_addr_t ioaddr = pcihp->addr + offset;
 	int i, win;
 #ifdef PCICDEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 

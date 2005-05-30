@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.48 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.49 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.48 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.49 2005/05/30 04:43:47 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1446,7 +1446,7 @@ eshintr(arg)
 
 	int okay = 0;
 	int blah = 0;
-	char buf[100];
+	char sbuf[100];
 	char t[100];
 
 
@@ -1466,8 +1466,8 @@ eshintr(arg)
 	if (sc->sc_version == 2) {
 		int i;
 
-		buf[0] = '\0';
-		strlcat(buf, "rc:  ", sizeof(buf));
+		sbuf[0] = '\0';
+		strlcat(sbuf, "rc:  ", sizeof(sbuf));
 		rc_send_consumer = (rc_offsets >> 8) & 0xff;
 		rc_snap_ring_consumer = (rc_offsets >> 16) & 0xff;
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
@@ -1478,7 +1478,7 @@ eshintr(arg)
 			NTOHL(rc_offsets);
 			*((u_int32_t *) &fp_ring_consumer[i]) = rc_offsets;
 			snprintf(t, sizeof(t), "%.8x|", rc_offsets);
-			strlcat(buf, t, sizeof(buf));
+			strlcat(sbuf, t, sizeof(sbuf));
 		}
 	}
 	start_consumer = sc->sc_event_consumer;
@@ -1502,7 +1502,7 @@ eshintr(arg)
 			       sc->sc_dev.dv_xname, event->re_code,
 			       event->re_ring, event->re_index);
 			if (okay == 0)
-				printf("%s\n", buf);
+				printf("%s\n", sbuf);
 			okay = 1;
 		}
 #endif
@@ -1864,7 +1864,7 @@ eshintr(arg)
 		if (blah != 0 && okay == 0) {
 			okay = 1;
 #ifdef ESH_PRINTF
-			printf("%s\n", buf);
+			printf("%s\n", sbuf);
 #endif
 		}
 		rc_offsets = (sc->sc_snap_recv.ec_consumer << 16) |
@@ -1884,35 +1884,35 @@ eshintr(arg)
 		int i;
 		u_int32_t u;
 
-		buf[0] = '\0';
-		strlcat(buf, "drv: ", sizeof(buf));
+		sbuf[0] = '\0';
+		strlcat(sbuf, "drv: ", sizeof(sbuf));
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
 			/* XXX:  should do this right! */
 			u = *((u_int32_t *) &fp_ring_consumer[i]);
 			snprintf(t, sizeof(t), "%.8x|", u);
-			strlcat(buf, t, sizeof(buf));
+			strlcat(sbuf, t, sizeof(sbuf));
 			NTOHL(u);
 			bus_space_write_4(iot, ioh,
 					  RR_DRIVER_RECV_CONS + i, u);
 		}
 #ifdef ESH_PRINTF
 		if (okay == 1)
-			printf("%s\n", buf);
+			printf("%s\n", sbuf);
 #endif
 
-		buf[0] = '\0';
-		strlcat(buf, "rcn: ", sizeof(buf));
+		sbuf[0] = '\0';
+		strlcat(sbuf, "rcn: ", sizeof(sbuf));
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
 			u = bus_space_read_4(iot, ioh,
 					     RR_RUNCODE_RECV_CONS + i);
 			/* XXX:  should do this right! */
 			NTOHL(u);
 			snprintf(t, sizeof(t), "%.8x|", u);
-			strlcat(buf, t, sizeof(buf));
+			strlcat(sbuf, t, sizeof(sbuf));
 		}
 #ifdef ESH_PRINTF
 		if (okay == 1)
-			printf("%s\n", buf);
+			printf("%s\n", sbuf);
 #endif
 	}
 
@@ -2972,7 +2972,7 @@ eshioctl(ifp, cmd, data)
 	s = splnet();
 
 	while (sc->sc_flags & ESH_FL_EEPROM_BUSY) {
-		error = tsleep((void *)&sc->sc_flags, PCATCH | PRIBIO,
+		error = tsleep(&sc->sc_flags, PCATCH | PRIBIO,
 		    "esheeprom", 0);
 		if (error != 0)
 			goto ioctl_done;
@@ -3246,7 +3246,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 				 */
 
 				if (i % 40 == 0) {
-					tsleep((void *)&sc->sc_flags,
+					tsleep(&sc->sc_flags,
 					       PRIBIO, "eshweeprom", 1);
 				}
 
@@ -3257,7 +3257,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, misc_local_ctl);
 		if (cmd == EIOCSEEPROM) {
 			sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
-			wakeup((void *)&sc->sc_flags);
+			wakeup(&sc->sc_flags);
 			printf("%s:  done writing EEPROM\n",
 			       sc->sc_dev.dv_xname);
 		}
@@ -3433,8 +3433,8 @@ eshstop(sc)
 
 	/* Be sure to wake up any other processes waiting on driver action. */
 
-	wakeup((void *) sc);		/* Wait on initialization */
-	wakeup((void *) &sc->sc_flags);	/* Wait on EEPROM write */
+	wakeup(sc);		/* Wait on initialization */
+	wakeup(&sc->sc_flags);	/* Wait on EEPROM write */
 
 	/*
 	 * XXX:  I have to come up with a way to avoid handling interrupts

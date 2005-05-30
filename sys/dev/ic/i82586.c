@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.51 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: i82586.c,v 1.52 2005/05/30 04:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.51 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52 2005/05/30 04:43:46 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -243,7 +243,7 @@ static char* padbuf = NULL;
 void
 i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	struct ie_softc *sc;
-	char *name;
+	const char *name;
 	u_int8_t *etheraddr;
         int *media, nmedia, defmedia;
 {

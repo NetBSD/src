@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.19 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.19 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $");
 
 #undef	TCICDEBUG
 
@@ -264,7 +264,7 @@ tcic_chipid_known(id)
 	return 0;
 }
 
-char *
+const char *
 tcic_chipid_to_string(id)
 	int id;
 {
