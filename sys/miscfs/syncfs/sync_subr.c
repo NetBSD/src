@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.17 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.18 2005/05/30 22:13:50 christos Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.17 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18 2005/05/30 22:13:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,9 +113,9 @@ vn_initialize_syncerd()
  * Add an item to the syncer work queue.
  */
 void
-vn_syncer_add_to_worklist(vp, delay)
+vn_syncer_add_to_worklist(vp, delayx)
 	struct vnode *vp;
-	int delay;
+	int delayx;
 {
 	int s, slot;
 
@@ -125,9 +125,9 @@ vn_syncer_add_to_worklist(vp, delay)
 		LIST_REMOVE(vp, v_synclist);
 	}
 
-	if (delay > syncer_maxdelay - 2)
-		delay = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delay) % syncer_last;
+	if (delayx > syncer_maxdelay - 2)
+		delayx = syncer_maxdelay - 2;
+	slot = (syncer_delayno + delayx) % syncer_last;
 
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	vp->v_flag |= VONWORKLST;
