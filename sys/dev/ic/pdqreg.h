@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.16 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.17 2005/05/30 04:41:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -464,7 +464,7 @@ struct _pdq_t {
     pdq_lanaddr_t pdq_hwaddr;
     pdq_fwrev_t pdq_fwrev;
     pdq_descriptor_block_t *pdq_dbp;
-    volatile pdq_consumer_block_t *pdq_cbp;
+    pdq_consumer_block_t *pdq_cbp;
     pdq_uint32_t pdq_intrmask;
     pdq_uint32_t pdq_flags;
 #define	PDQ_PROMISC	0x0001
