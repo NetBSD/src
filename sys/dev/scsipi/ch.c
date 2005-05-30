@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.70 2005/04/25 17:52:30 drochner Exp $	*/
+/*	$NetBSD: ch.c,v 1.71 2005/05/30 04:25:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.70 2005/04/25 17:52:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.71 2005/05/30 04:25:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1236,13 +1236,12 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 static void
 ch_get_quirks(struct ch_softc *sc, struct scsipi_inquiry_pattern *inqbuf)
 {
-	struct chquirk *match;
+	const struct chquirk *match;
 	int priority;
 
 	sc->sc_settledelay = 0;
 
-	match = (struct chquirk *)scsipi_inqmatch(inqbuf,
-	    (caddr_t)chquirks,
+	match = scsipi_inqmatch(inqbuf, chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);
 	if (priority != 0)

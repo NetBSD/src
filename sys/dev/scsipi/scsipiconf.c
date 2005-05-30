@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.32 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.33 2005/05/30 04:25:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.32 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.33 2005/05/30 04:25:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ scsipi_dtype(int type)
 }
 
 void
-scsipi_strvis(u_char *dst, int dlen, u_char *src, int slen)
+scsipi_strvis(u_char *dst, int dlen, const u_char *src, int slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */

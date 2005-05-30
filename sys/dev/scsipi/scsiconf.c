@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.229 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.230 2005/05/30 04:25:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.229 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.230 2005/05/30 04:25:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,7 +735,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	struct scsipi_inquiry_data inqbuf;
-	struct scsi_quirk_inquiry_pattern *finger;
+	const struct scsi_quirk_inquiry_pattern *finger;
 	int checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
@@ -876,8 +876,8 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	sa.scsipi_info.scsi_version = inqbuf.version;
 	sa.sa_inqptr = &inqbuf;
 
-	finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
-	    &sa.sa_inqbuf, (caddr_t)scsi_quirk_patterns,
+	finger = scsipi_inqmatch(
+	    &sa.sa_inqbuf, scsi_quirk_patterns,
 	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 
