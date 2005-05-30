@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.8 2005/01/17 12:24:37 augustss Exp $	*/
+/*	$NetBSD: auacer.c,v 1.9 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.8 2005/01/17 12:24:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.9 2005/05/30 04:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,12 +377,12 @@ auacer_ready_codec(struct auacer_softc *sc, int mask)
 static int
 auacer_sema_codec(struct auacer_softc *sc)
 {
-	int time;
+	int ttime;
 
-	time = 100;
-	while (time-- && (READ4(sc, ALI_CAS) & ALI_CAS_SEM_BUSY))
+	ttime = 100;
+	while (ttime-- && (READ4(sc, ALI_CAS) & ALI_CAS_SEM_BUSY))
 		delay(1);
-	if (!time)
+	if (!ttime)
 		aprint_normal("auacer_sema_codec: timeout\n");
 	return auacer_ready_codec(sc, ALI_CSPSR_CODEC_READY);
 }

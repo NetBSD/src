@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.69 2005/04/20 21:33:39 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.70 2005/05/30 04:35:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.69 2005/04/20 21:33:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.70 2005/05/30 04:35:22 christos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -617,7 +617,7 @@ static int tl_init(ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
-	char *errstring;
+	const char *errstring;
 	char *nullbuf;
 
 	s = splnet();
