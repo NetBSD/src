@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.31 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.32 2005/05/30 21:15:28 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.31 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.32 2005/05/30 21:15:28 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2917,7 +2917,7 @@ print_disp(dis_buffer_t *dbuf, int disp, int sz, int rel)
 {
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
+	const char *symname;
 	u_long nv;
 		
 	prints(dbuf, disp, sz);
@@ -2948,7 +2948,7 @@ print_addr(dis_buffer_t *dbuf, u_long addr)
 {
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
+	const char *symname;
 				
 	diff = INT_MAX;
 	symname = NULL;
