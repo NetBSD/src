@@ -20,7 +20,7 @@
 AUTOMAKE_OPTIONS = 1.5 gnu no-dependencies
 ACLOCAL_AMFLAGS = -I m4 -I ../gettext-runtime/m4 -I ../autoconf-lib-link/m4 -I ../m4
 
-SUBDIRS = doc intl lib libgrep libuniname src po projects misc man m4 tests examples
+SUBDIRS = doc intl lib libgrep libuniname src po projects misc m4 tests examples
 
 EXTRA_DIST = misc/DISCLAIM
 
