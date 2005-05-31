@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2005/02/12 09:38:28 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2005/02/12 09:38:28 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -114,9 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2005/02/12 09:38:28 nakayama Exp $");
 #ifdef DEBUG
 /* What trap level are we running? */
 #define tl() ({ \
-	int l; \
-	__asm __volatile("rdpr %%tl, %0" : "=r" (l) :); \
-	l; \
+	int _l; \
+	__asm __volatile("rdpr %%tl, %0" : "=r" (_l) :); \
+	_l; \
 })
 #endif
 
