@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.6 2005/05/31 23:21:03 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.6 2005/05/31 23:21:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -280,7 +280,7 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		      (caddr_t)&j6x0tp_default_calib, 0, 0);
+		      (caddr_t)__UNCONST(&j6x0tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
 	callout_init(&sc->sc_touch_ch);
