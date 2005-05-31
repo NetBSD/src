@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.6 2005/05/26 13:54:43 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.7 2005/05/31 11:58:54 yamt Exp $	*/
 
 /*
  *
@@ -92,7 +92,7 @@ rcr0(void)
 
 #define lcr3(_v) _lcr3((_v), __FILE__, __LINE__)
 static __inline void
-_lcr3(u_int val, char *file, int line)
+_lcr3(u_int val, const char *file, int line)
 {
 	int s = splvm();
 /* 	__PRINTK(("lcr3 %08x at %s:%d\n", val, file, line)); */
