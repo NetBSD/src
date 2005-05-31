@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.13 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.14 2005/05/31 23:04:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.13 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.14 2005/05/31 23:04:10 uwe Exp $");
 
 #define BTNMGRDEBUG
 
@@ -83,7 +83,7 @@ struct btnmgr_softc {
 
 int btnmgrmatch(struct device *, struct cfdata *, void *);
 void btnmgrattach(struct device *, struct device *, void *);
-char *btnmgr_name(long);
+const char *btnmgr_name(long);
 static int btnmgr_hook(void *, int, long, void *);
 
 /*
@@ -120,7 +120,7 @@ const struct wskbd_accessops btnmgr_wskbd_accessops = {
 static const struct {
 	int  kevent;
 	int  keycode;
-	char *name;
+	const char *name;
 } button_config[] = {
 	/* id					kevent keycode name	*/
 	[CONFIG_HOOK_BUTTONEVENT_POWER] =	{ 0,   0, "Power"	},
@@ -243,7 +243,7 @@ btnmgr_hook(void *ctx, int type, long id, void *msg)
 	return (0);
 }
 
-char*
+const char *
 btnmgr_name(long id)
 {
 	if (id < n_button_config)
