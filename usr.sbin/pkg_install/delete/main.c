@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.30 2004/01/14 01:50:06 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.30.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2004/01/14 01:50:06 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.30.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -34,10 +34,11 @@ __RCSID("$NetBSD: main.c,v 1.30 2004/01/14 01:50:06 grant Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "DFK:ORVdfhnp:rv";
+static char Options[] = "DdFfhK:NnOp:RrVv";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
+Boolean NoDeleteFiles = FALSE;
 Boolean NoDeInstall = FALSE;
 Boolean CleanDirs = FALSE;
 Boolean File2Pkg = FALSE;
@@ -49,7 +50,7 @@ lpkg_head_t pkgs;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pkg_delete [-vVDdnFfOrR] [-p prefix] pkg-name ...\n");
+	fprintf(stderr, "usage: pkg_delete [-DdFfNnORrVv] [-K pkg_dbdir] [-p prefix] pkg-name ...\n");
 	exit(1);
 }
 
@@ -84,6 +85,11 @@ main(int argc, char **argv)
 
 		case 'K':
 			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
+		case 'N':
+			NoDeleteFiles = TRUE;
+			NoDeInstall = TRUE;
 			break;
 
 		case 'n':
@@ -176,14 +182,16 @@ main(int argc, char **argv)
 		warnx("missing package name(s)");
 		usage();
 	}
+#ifndef __INTERIX
 	if (!Fake && getuid() != 0) {
 		warnx("not running as root - trying to delete anyways");
 	}
+#endif
 	if (OnlyDeleteFromPkgDB) {
 		/* Only delete the given packages' files from pkgdb, do not
 		 * touch the pkg itself. Used by "make reinstall" in
 		 * bsd.pkg.mk */
-		char	cachename[FILENAME_MAX];
+		char	cachename[MaxPathSize];
 
 		if (!pkgdb_open(ReadWrite)) {
 			err(EXIT_FAILURE, "cannot open %s", _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)));

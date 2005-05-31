@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.27 2003/09/02 07:34:59 jlam Exp $	*/
+/*	$NetBSD: show.c,v 1.27.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.27 2003/09/02 07:34:59 jlam Exp $");
+__RCSID("$NetBSD: show.c,v 1.27.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -99,7 +99,7 @@ static const show_t showv[] = {
 };
 
 void
-show_file(char *title, char *fname)
+show_file(char *pkg, char *title, char *fname)
 {
 	FILE   *fp;
 	char    line[1024];
@@ -109,7 +109,7 @@ show_file(char *title, char *fname)
 		printf("%s%s", InfoPrefix, title);
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
-		printf("ERROR: show_file: Can't open '%s' for reading!\n", fname);
+		printf("ERROR: show_file: package \"%s\": can't open '%s' for reading\n", pkg, fname);
 	} else {
 		int append_nl = 0;
 		while ((n = fread(line, 1, sizeof(line), fp)) != 0) {
@@ -124,7 +124,49 @@ show_file(char *title, char *fname)
 }
 
 void
-show_index(char *title, char *fname)
+show_var(const char *fname, const char *variable)
+{
+	FILE   *fp;
+	char   *line;
+	size_t  len;
+	size_t  varlen;
+
+	fp = fopen(fname, "r");
+	if (!fp) {
+		warnx("show_var: can't open '%s' for reading", fname);
+		return;
+	}
+
+	varlen = strlen(variable);
+	if (varlen > 0) {
+		while ((line = fgetln(fp, &len)) != (char *) NULL) {
+			/*
+			 * We expect lines to look like one of the following
+			 * forms:
+			 *      VAR=value
+			 *      VAR= value
+			 * We print out the value of VAR, or nothing if it
+			 * doesn't exist.
+			 */
+			if (line[len - 1] == '\n')
+				line[len - 1] = '\0';
+			if (strncmp(variable, line, varlen) == 0) {
+				line += varlen;
+				if (*line != '=')
+					continue;
+				++line;
+				if (*line == ' ')
+					++line;
+				(void) printf("%s\n", line);
+			}
+		}
+	}
+	(void) fclose(fp);
+	return;
+}
+
+void
+show_index(char *pkg, char *title, char *fname)
 {
 	FILE   *fp;
 	char   *line;
@@ -133,10 +175,10 @@ show_index(char *title, char *fname)
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
-		maxline -= MAXNAMESIZE;
+		maxline -= MAX(MAXNAMESIZE, strlen(title));
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
-		warnx("show_file: can't open '%s' for reading", fname);
+		warnx("show_index: package \"%s\": can't open '%s' for reading", pkg, fname);
 		return;
 	}
 	if ((line = fgetln(fp, &linelen))) {

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.94 2004/01/14 23:32:36 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.94.4.1 2005/05/31 22:05:40 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.94 2004/01/14 23:32:36 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.94.4.1 2005/05/31 22:05:40 tron Exp $");
 #endif
 #endif
 
@@ -35,17 +35,80 @@ __RCSID("$NetBSD: perform.c,v 1.94 2004/01/14 23:32:36 jlam Exp $");
 #include "add.h"
 #include "verify.h"
 
+#include <inttypes.h>
 #include <signal.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/utsname.h>
 
-static int read_buildinfo(char **);
-
-static char LogDir[FILENAME_MAX];
+static char LogDir[MaxPathSize];
 static int zapLogDir;		/* Should we delete LogDir? */
 
 static package_t Plist;
 static char *Home;
+
+/* used in build information */
+enum {
+	Good,
+	Missing,
+	Warning,
+	Fatal
+};
+
+/* Read package build information */
+static int
+read_buildinfo(char **buildinfo)
+{
+	char   *key;
+	char   *line;
+	size_t	len;
+	FILE   *fp;
+
+	if ((fp = fopen(BUILD_INFO_FNAME, "r")) == NULL) {
+		warnx("unable to open %s file.", BUILD_INFO_FNAME);
+		return 0;
+	}
+
+	while ((line = fgetln(fp, &len)) != NULL) {
+		if (line[len - 1] == '\n')
+			line[len - 1] = '\0';
+
+		if ((key = strsep(&line, "=")) == NULL)
+			continue;
+
+		/*
+		 * pkgsrc used to create the BUILDINFO file using
+		 * "key= value", so skip the space if it's there.
+		 */
+		if (line == NULL)
+			continue;
+		if (line[0] == ' ')
+			line += sizeof(char);
+
+		/*
+		 * we only care about opsys, arch, version, and
+		 * dependency recommendations
+		 */
+		if (line[0] != '\0') {
+			if (strcmp(key, "OPSYS") == 0)
+			    buildinfo[BI_OPSYS] = strdup(line);
+			else if (strcmp(key, "OS_VERSION") == 0)
+			    buildinfo[BI_OS_VERSION] = strdup(line);
+			else if (strcmp(key, "MACHINE_ARCH") == 0)
+			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
+			else if (strcmp(key, "IGNORE_RECOMMENDED") == 0)
+			    buildinfo[BI_IGNORE_RECOMMENDED] = strdup(line);
+		}
+	}
+	(void) fclose(fp);
+	if (buildinfo[BI_OPSYS] == NULL ||
+	    buildinfo[BI_OS_VERSION] == NULL ||
+	    buildinfo[BI_MACHINE_ARCH] == NULL) {
+		warnx("couldn't extract build information from package.");
+		return 0;
+	}
+	return 1;
+}
 
 static int
 sanity_check(const char *pkg)
@@ -67,7 +130,7 @@ sanity_check(const char *pkg)
 
 /* install a pre-requisite package. Returns 1 if it installed it */
 static int
-installprereq(const char *name, int *errc)
+installprereq(const char *name, int *errc, int doupdate)
 {
 	int ret;
 	ret = 0;
@@ -78,6 +141,8 @@ installprereq(const char *name, int *errc)
 
 	if (fexec_skipempty(BINDIR "/pkg_add", "-K", _pkgdb_getPKGDB_DIR(),
 			    "-s", get_verification(),
+	            doupdate ? "-u" : "",
+	            Fake ? "-n" : "",
 			    NoView ? "-L" : "",
 			    View ? "-w" : "", View ? View : "",
 			    Viewbase ? "-W" : "", Viewbase ? Viewbase : "",
@@ -100,16 +165,16 @@ installprereq(const char *name, int *errc)
  * Returns 0 if everything is ok, >0 else
  */
 static int
-pkg_do(const char *pkg)
+pkg_do(const char *pkg, lpkg_head_t *pkgs)
 {
-	char    playpen[FILENAME_MAX];
-	char    replace_from[FILENAME_MAX];
-	char    replace_via[FILENAME_MAX];
-	char    replace_to[FILENAME_MAX];
+	char    playpen[MaxPathSize];
+	char    replace_from[MaxPathSize];
+	char    replace_via[MaxPathSize];
+	char    replace_to[MaxPathSize];
 	char   *buildinfo[BI_ENUM_COUNT];
 	int	replacing = 0;
 	char   *where_to;
-	char   dbdir[FILENAME_MAX];
+	char   dbdir[MaxPathSize];
 	const char *exact, *extra1;
 	FILE   *cfile;
 	int     errc, err_prescan;
@@ -118,18 +183,22 @@ pkg_do(const char *pkg)
 	struct utsname host_uname;
 	int     inPlace;
 	int	rc;
+	uint64_t needed;
 	Boolean	is_depoted_pkg = FALSE;
 
 	errc = 0;
 	zapLogDir = 0;
 	LogDir[0] = '\0';
 	strlcpy(playpen, FirstPen, sizeof(playpen));
+	memset(buildinfo, '\0', sizeof(buildinfo));
 	inPlace = 0;
+
+	umask(DEF_UMASK);
 
 	/* Are we coming in for a second pass, everything already extracted?
 	 * (Slave mode) */
 	if (!pkg) {
-		fgets(playpen, FILENAME_MAX, stdin);
+		fgets(playpen, MaxPathSize, stdin);
 		playpen[strlen(playpen) - 1] = '\0';	/* remove newline! */
 		if (chdir(playpen) == FAIL) {
 			warnx("add in SLAVE mode can't chdir to %s", playpen);
@@ -235,11 +304,12 @@ pkg_do(const char *pkg)
 			 * compress an average of 75%, so multiply by 4 for good measure.
 			 */
 
-			if (!inPlace && min_free(playpen) < sb.st_size * 4) {
-				warnx("projected size of %ld bytes exceeds available free space\n"
+			needed = 4 * (uint64_t) sb.st_size;
+			if (!inPlace && min_free(playpen) < needed) {
+				warnx("projected size of %" PRIu64 " bytes exceeds available free space\n"
 				    "in %s. Please set your PKG_TMPDIR variable to point\n"
 				    "to a location with more free space and try again.",
-					(long) (sb.st_size * 4), playpen);
+					needed, playpen);
 				goto bomb;
 			}
 
@@ -266,10 +336,13 @@ pkg_do(const char *pkg)
 		}
 	}
 
-	/* Check OS, version and architecture */
-	if (read_buildinfo(buildinfo) != 0 && !Force) {
-		warnx("aborting.");
-		goto bomb;
+	/* Read the OS, version and architecture from BUILD_INFO file */
+	if (!read_buildinfo(buildinfo)) {
+		warn("can't read build information from %s", BUILD_INFO_FNAME);
+		if (!Force) {
+			warnx("aborting.");
+			goto bomb;
+		}
 	}
 
 	if (uname(&host_uname) < 0) {
@@ -279,32 +352,69 @@ pkg_do(const char *pkg)
 			goto bomb;
 		}
 	} else {
-		int	osbad = 0;
+		int	status = Good;
 
-		/* If either the OS or arch are different, bomb */
-		if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0 ||
-		strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) != 0)
-			osbad = 2;
-
-		/* If OS and arch are the same, warn if version differs */
-		if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) == 0 &&
-		    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) == 0) {
-			if (strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0)
-				osbad = 1;
-		} else
-			osbad = 2;
-
-		if (osbad) {
-			warnx("Package `%s' OS mismatch:", pkg);
-			warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
-			    buildinfo[BI_OPSYS],
-			    buildinfo[BI_MACHINE_ARCH],
-			    buildinfo[BI_OS_VERSION],
-			    OPSYS_NAME,
-			    MACHINE_ARCH,
-			    host_uname.release);
+		/* check that we have read some values from buildinfo */
+		if (buildinfo[BI_OPSYS] == NULL) {
+			warnx("Missing operating system value from build information");
+			status = Missing;
 		}
-		if (!Force && (osbad >= 2)) {
+		if (buildinfo[BI_MACHINE_ARCH] == NULL) {
+			warnx("Missing machine architecture value from build information");
+			status = Missing;
+		}
+		if (buildinfo[BI_OS_VERSION] == NULL) {
+			warnx("Missing operating system version value from build information");
+			status = Missing;
+		}
+
+		if (status == Good) {
+			/* If either the OS or arch are different, bomb */
+			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0 ||
+			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) != 0) {
+				status = Fatal;
+			}
+
+			/* If OS and arch are the same, warn if version differs */
+			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) == 0 &&
+			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) == 0) {
+				if (strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0) {
+					status = Warning;
+				}
+			} else {
+				status = Fatal;
+			}
+
+			if (status != Good) {
+				warnx("Warning: package `%s' was built for a different version of the OS:", pkg);
+				warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
+				    buildinfo[BI_OPSYS],
+				    buildinfo[BI_MACHINE_ARCH],
+				    buildinfo[BI_OS_VERSION],
+				    OPSYS_NAME,
+				    MACHINE_ARCH,
+				    host_uname.release);
+			}
+		}
+
+		if (!Force && status == Fatal) {
+			warnx("aborting.");
+			goto bomb;
+		}
+	}
+
+	/* Check if IGNORE_RECOMMENDED was set when this package was built. */
+
+	if (buildinfo[BI_IGNORE_RECOMMENDED] != NULL &&
+	    strcasecmp(buildinfo[BI_IGNORE_RECOMMENDED], "NO") != 0) {
+		warnx("Package `%s' has", pkg);
+		warnx("IGNORE_RECOMMENDED set: This package was built with");
+		warnx("dependency recommendations ignored.  It may have been");
+		warnx("built against a set of installed packages that is");
+		warnx("different from the recommended set of pre-requisites.");
+		warnx("As a consequence, this package may not work on this");
+		warnx("or other systems with a different set of packages.");
+		if (!Force && !getenv("PKG_IGNORE_RECOMMENDED")) {
 			    warnx("aborting.");
 			    goto bomb;
 		}
@@ -319,7 +429,6 @@ pkg_do(const char *pkg)
 		add_plist_top(&Plist, PLIST_CWD, Prefix);
 	}
 
-	setenv(PKG_PREFIX_VNAME, (p = find_plist(&Plist, PLIST_CWD)) ? p->name : ".", 1);
 	/* Protect against old packages with bogus @name fields */
 	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
@@ -339,9 +448,14 @@ pkg_do(const char *pkg)
 		(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	}
 
+	/* Set environment variables expected by the +INSTALL script. */
+	setenv(PKG_PREFIX_VNAME, (p = find_plist(&Plist, PLIST_CWD)) ? p->name : ".", 1);
+	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, pkgdb_refcount_dir(), 1);
+		
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
-		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
+		if (fexec("mkdir", "-p", dbdir, NULL)) {
 			errx(EXIT_FAILURE,
 			    "Database-dir %s cannot be generated, aborting.",
 			    dbdir);
@@ -359,8 +473,8 @@ pkg_do(const char *pkg)
 		char   *s;
 
 		if ((s = strrchr(PkgName, '-')) != NULL) {
-			char    buf[FILENAME_MAX];
-			char    installed[FILENAME_MAX];
+			char    buf[MaxPathSize];
+			char    installed[MaxPathSize];
 
 			/*
 			 * See if the pkg is already installed. If so, we might
@@ -369,7 +483,8 @@ pkg_do(const char *pkg)
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-				if (Replace) {
+				if (Replace && !Fake) {
+					/* XXX Should list the steps in Fake mode */
 					snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
 					snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
@@ -386,7 +501,7 @@ pkg_do(const char *pkg)
 						 * (from +REQUIRED_BY) that require this pkg
 						 */
 						FILE *rb;                     /* +REQUIRED_BY file */
-						char pkg2chk[FILENAME_MAX];
+						char pkg2chk[MaxPathSize];
 
 						rb = fopen(replace_from, "r");
 						if (! rb) {
@@ -401,7 +516,7 @@ pkg_do(const char *pkg)
 							package_t depPlist;
 							FILE *depf;
 							plist_t *depp;
-							char depC[FILENAME_MAX];
+							char depC[MaxPathSize];
 							
 							s = strrchr(pkg2chk, '\n');
 							if (s)
@@ -425,8 +540,8 @@ pkg_do(const char *pkg)
 							fclose(depf);
 							
 							for (depp = depPlist.head; depp; depp = depp->next) {
-								char base_new[FILENAME_MAX];
-								char base_exist[FILENAME_MAX];
+								char base_new[MaxPathSize];
+								char base_exist[MaxPathSize];
 								char *s2;
 								
 								if (depp->type != PLIST_PKGDEP)
@@ -437,7 +552,7 @@ pkg_do(const char *pkg)
 								 *  one at all. 
 								 */
 								strlcpy(base_new, PkgName, sizeof(base_new));
-								s2 = strpbrk(base_new, "<>[]?*{");
+								s2 = strpbrk(base_new, "<>[]?*{"); /* } */
 								if (s2)
 									*s2 = '\0';
 								else {
@@ -446,7 +561,7 @@ pkg_do(const char *pkg)
 										*s2 = '\0';
 								}
 								strlcpy(base_exist, depp->name, sizeof(base_exist));
-								s2 = strpbrk(base_exist, "<>[]?*{");
+								s2 = strpbrk(base_exist, "<>[]?*{"); /* } */
 								if (s2)
 									*s2 = '\0';
 								else {
@@ -506,7 +621,7 @@ ignore_replace_depends_check:
 
 	/* See if there are conflicting packages installed */
 	for (p = Plist.head; p; p = p->next) {
-		char    installed[FILENAME_MAX];
+		char    installed[MaxPathSize];
 
 		if (p->type != PLIST_PKGCFL)
 			continue;
@@ -524,7 +639,7 @@ ignore_replace_depends_check:
 	 */
 	err_prescan=0;
 	for (p = Plist.head; p; p = p->next) {
-		char installed[FILENAME_MAX];
+		char installed[MaxPathSize];
 		
 		if (p->type != PLIST_PKGDEP)
 			continue;
@@ -557,26 +672,40 @@ ignore_replace_depends_check:
 			}
 			
 			if (skip >= 0) {
-				char    buf[FILENAME_MAX];
+				char    buf[MaxPathSize];
 		
 				(void) snprintf(buf, sizeof(buf),
 				    skip ? "%.*s[0-9]*" : "%.*s-[0-9]*",
 				    (int)(s - p->name) + skip, p->name);
-				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-					warnx("pkg `%s' required, but `%s' found installed.",
-					      p->name, installed);
+				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0)
+				{
+					int done = 0;
 
-					if (replacing) {
-						printf("HF: replace note -- could 'pkg_delete %s', and let the normal\n"
-						       "dependency handling reinstall the replaced package, assuming one IS\n"
-						       "available. But then I'd expect proper binary pkgs being available for\n"
-						       "the replace case.\n", installed);
+					if (Replace > 1)
+					{
+						int errc0 = 0;
+						char tmp[MaxPathSize];
+
+						warnx("Attempting to update `%s' using binary package\n", p->name);
+						/* Yes, append .tgz after the version so the */
+						/* pattern can match a filename. */
+						snprintf(tmp, sizeof(tmp), "%s.tgz", p->name);
+						done = installprereq(tmp, &errc0, 1);
+					}
+					else if (Replace)
+					{
+						warnx("To perform necessary upgrades on required packages specify -u twice.\n");
 					}
 
-					if (Force) {
-						warnx("Proceeding anyway.");
-					} else {
-						err_prescan++;
+					if (!done)
+					{
+						warnx("pkg `%s' required, but `%s' found installed.",
+							  p->name, installed);
+						if (Force) {
+							warnx("Proceeding anyway.");
+						} else {
+							err_prescan++;
+						}
 					}
 				}
 			}
@@ -591,7 +720,7 @@ ignore_replace_depends_check:
 
 	/* Now check the packing list for dependencies */
 	for (exact = NULL, p = Plist.head; p; p = p->next) {
-		char    installed[FILENAME_MAX];
+		char    installed[MaxPathSize];
 
 		if (p->type == PLIST_BLDDEP) {
 			exact = p->name;
@@ -618,10 +747,10 @@ ignore_replace_depends_check:
 
 				if (exact != NULL) {
 					/* first try the exact name, from the @blddep */
-					done = installprereq(exact, &errc0);
+					done = installprereq(exact, &errc0, 0);
 				}
 				if (!done) {
-					done = installprereq(p->name, &errc0);
+					done = installprereq(p->name, &errc0, 0);
 				}
 				if (!done && !Force) {
 					errc += errc0;
@@ -702,11 +831,12 @@ ignore_replace_depends_check:
 
 	/* Time to record the deed? */
 	if (!NoRecord && !Fake) {
-		char    contents[FILENAME_MAX];
+		char    contents[MaxPathSize];
 
-		umask(022);
+#ifndef __INTERIX
 		if (getuid() != 0)
 			warnx("not running as root - trying to record install anyway");
+#endif
 		if (!PkgName) {
 			warnx("no package name! can't record package, sorry");
 			errc = 1;
@@ -725,16 +855,11 @@ ignore_replace_depends_check:
 		}
 		/* Make sure pkg_info can read the entry */
 		(void) fexec(CHMOD_CMD, "a+rx", LogDir, NULL);
-		if (fexists(INSTALL_FNAME))
-			move_file(".", INSTALL_FNAME, LogDir);
-		if (fexists(DEINSTALL_FNAME))
-			move_file(".", DEINSTALL_FNAME, LogDir);
-		if (fexists(REQUIRE_FNAME))
-			move_file(".", REQUIRE_FNAME, LogDir);
-		if (fexists(SIZE_PKG_FNAME))
-			move_file(".", SIZE_PKG_FNAME, LogDir);
-		if (fexists(SIZE_ALL_FNAME))
-			move_file(".", SIZE_ALL_FNAME, LogDir);
+
+		/* Move all of the +-files into place */
+		move_files(".", "+*", LogDir);
+
+		/* Generate the +CONTENTS file in-place from the Plist */
 		(void) snprintf(contents, sizeof(contents), "%s/%s", LogDir, CONTENTS_FNAME);
 		cfile = fopen(contents, "w");
 		if (!cfile) {
@@ -744,20 +869,6 @@ ignore_replace_depends_check:
 		}
 		write_plist(&Plist, cfile, NULL);
 		fclose(cfile);
-		move_file(".", DESC_FNAME, LogDir);
-		move_file(".", COMMENT_FNAME, LogDir);
-		if (fexists(BUILD_VERSION_FNAME))
-			move_file(".", BUILD_VERSION_FNAME, LogDir);
-		if (fexists(BUILD_INFO_FNAME))
-			move_file(".", BUILD_INFO_FNAME, LogDir);
-		if (fexists(DISPLAY_FNAME))
-			move_file(".", DISPLAY_FNAME, LogDir);
-		if (fexists(PRESERVE_FNAME))
-			move_file(".", PRESERVE_FNAME, LogDir);
-		if (fexists(VIEWS_FNAME)) {
-			is_depoted_pkg = TRUE;
-			move_file(".", VIEWS_FNAME, LogDir);
-		}
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
@@ -842,7 +953,7 @@ bomb:
 fail:
 	/* Nuke the whole (installed) show, XXX but don't clean directories */
 	if (!Fake)
-		delete_package(FALSE, FALSE, &Plist);
+		delete_package(FALSE, FALSE, &Plist, FALSE);
 
 success:
 	/* delete the packing list contents */
@@ -901,11 +1012,11 @@ pkg_perform(lpkg_head_t *pkgs)
 	signal(SIGHUP, cleanup);
 
 	if (AddMode == SLAVE)
-		err_cnt = pkg_do(NULL);
+		err_cnt = pkg_do(NULL, NULL);
 	else {
 		while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
 			path_prepend_from_pkgname(lpp->lp_name);
-			err_cnt += pkg_do(lpp->lp_name);
+			err_cnt += pkg_do(lpp->lp_name, pkgs);
 			path_prepend_clear();
 			TAILQ_REMOVE(pkgs, lpp, lp_link);
 			free_lpkg(lpp);
@@ -917,52 +1028,3 @@ pkg_perform(lpkg_head_t *pkgs)
 	return err_cnt;
 }
 
-/* Read package build information */
-static int
-read_buildinfo(char **buildinfo)
-{
-	char   *key;
-	char   *line;
-	size_t	len;
-	FILE   *fp;
-
-	fp = fopen(BUILD_INFO_FNAME, "r");
-	if (!fp) {
-		warnx("unable to open %s file.", BUILD_INFO_FNAME);
-		return 1;
-	}
-
-	while ((line = fgetln(fp, &len)) != NULL) {
-		if (line[len - 1] == '\n')
-			line[len - 1] = '\0';
-
-		if ((key = strsep(&line, "=")) == NULL)
-			continue;
-
-		/*
-		 * pkgsrc used to create the BUILDINFO file using
-		 * "key= value", so skip the space if it's there.
-		 */
-		if (line == NULL)
-			continue;
-		if (line[0] == ' ')
-			line += sizeof(char);
-
-		/* we only care about opsys, arch and version */
-		if (line[0] != '\0') {
-			if (strcmp(key, "OPSYS") == 0)
-			    buildinfo[BI_OPSYS] = strdup(line);
-			else if (strcmp(key, "OS_VERSION") == 0)
-			    buildinfo[BI_OS_VERSION] = strdup(line);
-			else if (strcmp(key, "MACHINE_ARCH") == 0)
-			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
-		}
-	}
-	if (buildinfo[BI_OPSYS] == NULL ||
-	    buildinfo[BI_OS_VERSION] == NULL ||
-	    buildinfo[BI_MACHINE_ARCH] == NULL) {
-		warnx("couldn't extract build information from package.");
-		return 1;
-	}
-	return 0;
-}

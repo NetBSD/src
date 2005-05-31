@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.32 2004/01/29 01:56:17 reed Exp $
+.\" $NetBSD: pkg_delete.1,v 1.32.4.1 2005/05/31 22:05:41 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd September 2, 2003
+.Dd February 4, 2005
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdFfnORrVv
+.Op Fl DdFfNnORrVv
 .Bk -words
 .Op Fl K Ar pkg_dbdir
 .Ek
@@ -45,7 +45,9 @@ command.
 Since the
 .Nm
 command may execute scripts or programs provided by a package file,
-your system may be susceptible to ``Trojan horses'' or other subtle
+your system may be susceptible to
+.Dq Trojan horses
+or other subtle
 attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
@@ -54,8 +56,15 @@ For extra protection, examine all the package control files in the
 package record directory
 .Pa ( /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
-attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
-and inspect the +CONTENTS file for
+attention to any
+.Pa +INSTALL ,
+.Pa +DEINSTALL ,
+.Pa +REQUIRE ,
+or
+.Pa +MTREE_DIRS
+files, and inspect the
+.Pa +CONTENTS
+file for
 .Cm @cwd ,
 .Cm @mode
 (check for setuid),
@@ -111,6 +120,10 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl N
+Remove the package's registration and its entries from the package database,
+but leave the files installed.
+Don't run any deinstall scripts or @unexec lines either.
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
@@ -189,7 +202,7 @@ file (see
 then this is executed first as
 .Bd -filled -offset indent -compact
 .Cm require
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar DEINSTALL
 .Ed
 (where
@@ -215,19 +228,19 @@ The
 script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar VIEW-DEINSTALL
 .Ed
 before removing the package from a view, and as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar DEINSTALL
 .Ed
 before deleting all files and as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar POST-DEINSTALL
 .Ed
 after deleting them.
@@ -252,6 +265,31 @@ option when running
 .Nm
 or
 .Xr pkg_add 1 .
+The scripts are also called with the
+.Ev PKG_METADATA_DIR
+environment variable set to the location of the
+.Pa +*
+meta-data files, and with the
+.Ev PKG_REFCOUNT_DBDIR
+environment variable set to the location of the package reference counts
+database directory.
+.Sh ENVIRONMENT
+.Bl -tag -width PKG_DBDIR
+.It Ev PKG_DBDIR
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+is the location of the package database directory.
+The default package database directory is
+.Pa /var/db/pkg .
+.It Ev PKG_REFCOUNT_DBDIR
+Location of the package reference counts database directory.
+The default location is the path to the package database directory with
+.Dq .refcount
+appended to the path, e.g.
+.Pa /var/db/pkg.refcount .
+.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,

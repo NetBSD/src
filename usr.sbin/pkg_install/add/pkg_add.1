@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.48 2003/12/20 00:47:19 grant Exp $
+.\" $NetBSD: pkg_add.1,v 1.48.4.1 2005/05/31 22:05:40 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd December 20, 2003
+.Dd May 7, 2005
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -62,7 +62,9 @@ depends on or requires from both local disk and via FTP or HTTP.
 Since the
 .Nm
 command may execute scripts or programs contained within a package file,
-your system may be susceptible to ``Trojan horses'' or other subtle
+your system may be susceptible to
+.Dq Trojan horses
+or other subtle
 attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
@@ -74,8 +76,15 @@ option), or, failing that, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.
-Pay particular attention to any +INSTALL, +DEINSTALL, +REQUIRE
-or +MTREE_DIRS files, and inspect the +CONTENTS file for
+Pay particular attention to any
+.Pa +INSTALL ,
+.Pa +DEINSTALL ,
+.Pa +REQUIRE ,
+or
+.Pa +MTREE_DIRS
+files, and inspect the
+.Pa +CONTENTS
+file for
 .Cm @cwd ,
 .Cm @mode
 (check for setuid),
@@ -221,14 +230,17 @@ Use
 .Ar template
 as the input to
 .Xr mktemp 3
-when creating a ``staging area.''
+when creating a
+.Dq staging area .
 By default, this is the string
 .Pa /var/tmp/instmp.XXXXXX ,
 but it may be necessary to override it in the situation where
 space in your
 .Pa /var/tmp
 directory is limited.
-Be sure to leave some number of `X' characters for
+Be sure to leave some number of
+.Sq X
+characters for
 .Xr mktemp 3
 to fill in with a unique ID.
 .Pp
@@ -240,6 +252,8 @@ file installation; often this is
 .It Fl u
 If the package that's being installed is already installed, either
 in the same or a different version, an update is performed.
+If this is specified twice, then any dependant packages that are
+too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
@@ -272,12 +286,14 @@ environment variable.
 One or more
 .Ar pkg-name
 arguments may be specified, each being either a file containing the
-package (these usually ending with the ``.tgz'' suffix) or a
+package (these usually ending with the
+.Dq .tgz
+suffix) or a
 URL pointing at a file available on an ftp or web site.
 Thus you may extract files directly from their anonymous ftp or WWW
 locations (e.g.,
 .Nm
-ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/shells/bash-2.04.tgz
+ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/shells/bash-3.0nb1.tgz
 or
 .Nm
 http://www.example.org/packages/screen-4.0.tbz).
@@ -301,7 +317,8 @@ passive mode
 ftp.
 .Sh TECHNICAL DETAILS
 .Nm
-extracts each package's "packing list"
+extracts each package's
+.Dq packing list
 into a special staging directory in /var/tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
@@ -317,7 +334,8 @@ option is not given.
 If the
 .Fl u
 option is given, it's assumed the package should be replaced by the
-new version instead.  Before doing so, all packages that depend on the
+new version instead.
+Before doing so, all packages that depend on the
 pkg being upgraded are checked if they also work with the new version.
 If that test is successful, replacing is prepared by moving an existing
 .Pa +REQUIRED_BY
@@ -345,6 +363,14 @@ If any of these required packages are not currently installed,
 an attempt is made to find and install it;
 if the missing package cannot be found or installed,
 the installation is terminated.
+If the
+.Fl u
+option was specified twice, any required packages that are installed,
+but which have a version number that is considered to be too old,
+are also updated.
+The dependant packages are found according to the normal
+.Ev PKG_PATH
+rules.
 .It
 A search is made for any
 .Cm @option
@@ -369,6 +395,18 @@ that of the host, installation is aborted.
 This behavior is overridable with the
 .Fl f
 flag.
+.It
+The package build information from
+.Pa +BUILD_INFO
+is then checked for
+.Ev IGNORE_RECOMMENDED .
+If the package was built with dependency recommendations ignored,
+installation will be aborted.
+This behavior is overridable with the
+.Fl f
+flag and the
+.Ev PKG_IGNORE_RECOMMENDED
+environment variable.
 .It
 If the package contains a
 .Ar require
@@ -484,6 +522,14 @@ is installed, even if the user might change it with the
 .Fl p
 flag to
 .Cm pkg_add .
+The scripts are also called with the
+.Ev PKG_METADATA_DIR
+environment variable set to the location of the
+.Pa +*
+meta-data files, and with the
+.Ev PKG_REFCOUNT_DBDIR
+environment variable set to the location of the package reference counts
+database directory.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
 .It Ev LOCALBASE
@@ -513,6 +559,12 @@ Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
 FTP URLs may not end with a slash.
+.It Ev PKG_REFCOUNT_DBDIR
+Location of the package reference counts database directory.
+The default location is the path to the package database directory with
+.Dq .refcount
+appended to the path, e.g.
+.Pa /var/db/pkg.refcount .
 .It Ev PKG_TMPDIR
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
@@ -529,7 +581,7 @@ will try to install binary packages listed in dependencies list.
 .Pp
 You can specify a compiled binary package explicitly on the command line.
 .Bd -literal
-# pkg_add /usr/pkgsrc/packages/All/tcsh-6.10.00.tgz
+# pkg_add /usr/pkgsrc/packages/All/tcsh-6.14.00.tgz
 .Ed
 .Pp
 If you omit the version number,
@@ -543,16 +595,41 @@ emits more messages to terminal.
 # pkg_add -v /usr/pkgsrc/packages/All/unzip
 .Ed
 .Pp
-You can grab a compiled binary package from remote location, by specifying
+You can grab a compiled binary package from remote location by specifying
 a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
-# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
+# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/firefox-1.0.3.tgz
 
-# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All
-# pkg_add -v mozilla
+# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All
+# pkg_add -v firefox
 .Ed
+.Pp
+Over time, as problems are found in packages, they will be moved
+from the
+.Pa All
+subdirectory into the
+.Pa vulnerable
+subdirectory.
+If you want to accept vulnerable packages by default
+(and know what you are doing),
+you can add the
+.Pa vulnerable
+directory to your
+.Ev PKG_PATH
+like this:
+.Bd -literal
+# export PKG_PATH="ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All;ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/vulnerable"
+.Ed
+.Pp
+(The quotes are needed because semicolon
+.Pq Sq \&;
+is a shell meta-character.)
+If you do this, consider installing and using the
+.Pa security/audit-packages
+package and running it after every
+.Nm .
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
@@ -589,6 +666,6 @@ invocations due to exec argument-space limitations--this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
 .Pp
-Pkg upgrading needs a lot more work to be really universal.
+Package upgrading needs a lot more work to be really universal.
 .Pp
 Sure to be others.

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.51 2004/01/29 17:41:49 reed Exp $	*/
+/*	$NetBSD: perform.c,v 1.51.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.51 2004/01/29 17:41:49 reed Exp $");
+__RCSID("$NetBSD: perform.c,v 1.51.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -75,9 +75,9 @@ static int require_delete(char *, int);
 static void require_print(void);
 static int undepend(const char *, void *);
 
-static char LogDir[FILENAME_MAX];
-static char linebuf[FILENAME_MAX];
-static char pkgdir[FILENAME_MAX];
+static char LogDir[MaxPathSize];
+static char linebuf[MaxPathSize];
+static char pkgdir[MaxPathSize];
 
 static package_t Plist;
 
@@ -111,8 +111,8 @@ static int
 undepend(const char *deppkgname, void *vp)
 {
 	char   *pkg2delname = vp;
-	char    fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-	char    fbuf[FILENAME_MAX];
+	char    fname[MaxPathSize], ftmp[MaxPathSize];
+	char    fbuf[MaxPathSize];
 	FILE   *fp, *fpwr;
 	int     s;
 
@@ -157,7 +157,7 @@ undepend(const char *deppkgname, void *vp)
 		return 0;
 	}
 	if (rename(ftmp, fname) == -1)
-		warnx("error renaming `%s' to `%s'", ftmp, fname);
+		warn("error renaming `%s' to `%s'", ftmp, fname);
 	remove(ftmp);		/* just in case */
 
 	return 0;
@@ -170,9 +170,9 @@ undepend(const char *deppkgname, void *vp)
 static int
 unview(const char *pkgname)
 {
-	char  fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-	char  fbuf[FILENAME_MAX];
-	char  dbdir[FILENAME_MAX];
+	char  fname[MaxPathSize], ftmp[MaxPathSize];
+	char  fbuf[MaxPathSize];
+	char  dbdir[MaxPathSize];
 	FILE *fp, *fpwr;
 	int  s;
 	int  cc;
@@ -272,7 +272,7 @@ require_delete(char *home, int tryall)
 	lpp = TAILQ_FIRST(&lpdelq);
 	for (; lpp; lpp = TAILQ_NEXT(lpp, lp_link)) {
 		int rm_installed;                /* delete expanded pkg, not @pkgdep value */
-		char installed[FILENAME_MAX];
+		char installed[MaxPathSize];
 		
 		/* go to the db dir */
 		if (chdir(pkgdir) == FAIL) {
@@ -317,6 +317,7 @@ require_delete(char *home, int tryall)
 					     Verbose ? "-v" : "",
 					     (Force > 1) ? "-f -f" : (Force == 1) ? "-f" : "",
 					     NoDeInstall ? "-D" : "",
+					     NoDeleteFiles ? "-N" : "",
 					     CleanDirs ? "-d" : "",
 					     Fake ? "-n" : "",
 					     rm_installed ? installed : lpp->lp_name, NULL);
@@ -483,7 +484,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		/* prepare for recursion */
 		chdir(_pkgdb_getPKGDB_DIR());
 		if (ispkgpattern(lpp->lp_name)) {
-			char installed[FILENAME_MAX];
+			char installed[MaxPathSize];
 			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
 				warnx("cannot remove dependency for pkg-pattern %s", lpp->lp_name);
 				fail = 1;
@@ -596,8 +597,8 @@ pkg_do(char *pkg)
 	plist_t	       *p;
 	FILE	       *cfile;
 	FILE	       *fp;
-	char    	home[FILENAME_MAX];
-	char    	view[FILENAME_MAX];
+	char    	home[MaxPathSize];
+	char    	view[MaxPathSize];
 	int		cc;
 	Boolean		is_depoted_pkg = FALSE;
 
@@ -610,13 +611,13 @@ pkg_do(char *pkg)
 	if (!fexists(LogDir) || !(isdir(LogDir) || islinktodir(LogDir))) {
 		/* Check if the given package name matches something
 		 * with 'pkg-[0-9]*' */
-		char	        try[FILENAME_MAX];
+		char	        try[MaxPathSize];
 		lpkg_head_t     trypkgs;
 		lpkg_t	       *lpp;
 		int		qlen = 0;
 
 		TAILQ_INIT(&trypkgs);
-		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+		snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
 		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
 			add_to_list_fn, &trypkgs) == 0) {
 			warnx("package '%s' not installed", pkg);
@@ -646,7 +647,8 @@ pkg_do(char *pkg)
 
 		return 0;
 	}
-	if (!getcwd(home, FILENAME_MAX)) {
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, pkgdb_refcount_dir(), 1);
+	if (!getcwd(home, MaxPathSize)) {
 		cleanup(0);
 		errx(2, "unable to get current working directory!");
 	}
@@ -661,9 +663,10 @@ pkg_do(char *pkg)
 	}
 	if (fexists(PRESERVE_FNAME)) {
 		printf("Package `%s' is marked as not for deletion\n", pkg);
-		if (Force <= 1) {
+		if (Force <= (NoDeleteFiles ? 0 : 1)) {
 			return 1;
 		}
+		printf("Deleting anyway\n");
 	}
 	if (!isemptyfile(REQUIRED_BY_FNAME)) {
 		/* This package is required by others. Either nuke
@@ -726,6 +729,7 @@ pkg_do(char *pkg)
 		return 1;
 	}
 	setenv(PKG_PREFIX_VNAME, p->name, 1);
+	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
 	if (fexists(REQUIRE_FNAME)) {
 		if (Verbose)
 			printf("Executing 'require' script.\n");
@@ -768,7 +772,7 @@ pkg_do(char *pkg)
 	}
 	if (!Fake) {
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
-		if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
+		if (delete_package(FALSE, CleanDirs, &Plist, NoDeleteFiles) == FAIL)
 			warnx(
 		"couldn't entirely delete package `%s'\n"
 		"(perhaps the packing list is incorrectly specified?)", pkg);
@@ -831,7 +835,7 @@ pkg_do(char *pkg)
 		if (is_depoted_pkg) {
 			(void) remove_files(LogDir, "+*");
 			if (isemptydir(LogDir))
-				(void) fexec(RMDIR_CMD, LogDir, NULL);
+				(void)rmdir(LogDir);
 			else
 				warnx("%s is not empty", LogDir);
 			return 0;
