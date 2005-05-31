@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.30 2005/04/19 19:00:25 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.31 2005/05/31 00:42:37 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.30 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.31 2005/05/31 00:42:37 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -447,7 +447,7 @@ sunos32_sys_execve(l, v, retval)
 	SUNOS32TOP_UAP(argp, char *);
 	SUNOS32TOP_UAP(envp, char *);
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return netbsd32_execve2(l, &ua, retval);
 }
@@ -703,7 +703,7 @@ sunos32_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* Sun-format */
 	int resid, sunos_reclen;/* Sun-format */
@@ -732,11 +732,11 @@ sunos32_sys_getdents(l, v, retval)
 	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	sbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = sbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -754,7 +754,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = buf;
+	inp = sbuf;
 	outp = (caddr_t)(u_long)SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -817,7 +817,7 @@ eof:
 out:
 	VOP_UNLOCK(vp, 0);
 	free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(sbuf, M_TEMP);
  out1:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -1240,9 +1240,9 @@ sunos32_sys_vhangup(l, v, retval)
 }
 
 static int
-sunstatfs(sp, buf)
+sunstatfs(sp, sbuf)
 	struct statvfs *sp;
-	caddr_t buf;
+	caddr_t sbuf;
 {
 	struct sunos_statfs ssfs;
 
@@ -1255,7 +1255,7 @@ sunstatfs(sp, buf)
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
 	ssfs.f_fsid = sp->f_fsidx;
-	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
+	return copyout((caddr_t)&ssfs, sbuf, sizeof ssfs);
 }
 
 int
@@ -1273,11 +1273,14 @@ sunos32_sys_statfs(l, v, retval)
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
+	struct sys_statvfs1_args ua;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(p, 0);
+	SUNOS32TOP_UAP(path, const char);
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, (caddr_t)(u_long)SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(&ua, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -1344,9 +1347,14 @@ sunos32_sys_mknod(l, v, retval)
 		syscallarg(int) dev;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+	struct sys_mknod_args ua;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(p, 0);
+	SUNOS32TOP_UAP(path, const char);
+	SUNOS32TO64_UAP(mode);
+	SUNOS32TO64_UAP(dev);
+	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(&ua, path));
 
 	/* netbsd32_mkfifo/mknod to not do alt checking */
 	if (S_ISFIFO(SCARG(uap, mode)))
