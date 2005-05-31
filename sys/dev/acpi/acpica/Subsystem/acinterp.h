@@ -517,10 +517,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    char                    *Ident,
+    const char              *Ident,
     UINT32                  NumLevels,
-    char                    *Note,
-    char                    *ModuleName,
+    const char              *Note,
+    const char              *ModuleName,
     UINT32                  LineNumber);
 
 void

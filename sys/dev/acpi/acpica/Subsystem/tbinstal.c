@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
 
 #define __TBINSTAL_C__
 
@@ -184,7 +184,7 @@ AcpiTbMatchSignature (
 
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                 "Table [%4.4s] is an ACPI table consumed by the core subsystem\n",
-                (char *) AcpiGbl_TableData[i].Signature));
+                AcpiGbl_TableData[i].Signature));
 
             return_ACPI_STATUS (AE_OK);
         }

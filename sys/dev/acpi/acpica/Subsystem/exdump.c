@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
 
 #define __EXDUMP_C__
 
@@ -137,22 +137,22 @@ __KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
 
 static void
 AcpiExOutString (
-    char                    *Title,
-    char                    *Value);
+    const char              *Title,
+    const char              *Value);
 
 static void
 AcpiExOutPointer (
-    char                    *Title,
-    void                    *Value);
+    const char              *Title,
+    const void              *Value);
 
 static void
 AcpiExOutInteger (
-    char                    *Title,
+    const char              *Title,
     UINT32                  Value);
 
 static void
 AcpiExOutAddress (
-    char                    *Title,
+    const char              *Title,
     ACPI_PHYSICAL_ADDRESS   Value);
 
 
@@ -527,10 +527,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    char                    *Ident,
+    const char              *Ident,
     UINT32                  NumLevels,
-    char                    *Note,
-    char                    *ModuleName,
+    const char              *Note,
+    const char              *ModuleName,
     UINT32                  LineNumber)
 {
     ACPI_NATIVE_UINT        i;
@@ -587,23 +587,23 @@ AcpiExDumpOperands (
 
 static void
 AcpiExOutString (
-    char                    *Title,
-    char                    *Value)
+    const char              *Title,
+    const char              *Value)
 {
     AcpiOsPrintf ("%20s : %s\n", Title, Value);
 }
 
 static void
 AcpiExOutPointer (
-    char                    *Title,
-    void                    *Value)
+    const char              *Title,
+    const void              *Value)
 {
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
 }
 
 static void
 AcpiExOutInteger (
-    char                    *Title,
+    const char              *Title,
     UINT32                  Value)
 {
     AcpiOsPrintf ("%20s : %X\n", Title, Value);
@@ -611,7 +611,7 @@ AcpiExOutInteger (
 
 static void
 AcpiExOutAddress (
-    char                    *Title,
+    const char              *Title,
     ACPI_PHYSICAL_ADDRESS   Value)
 {
 

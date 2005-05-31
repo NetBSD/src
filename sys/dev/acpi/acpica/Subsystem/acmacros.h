@@ -556,7 +556,7 @@
  */
 #ifdef ACPI_DEBUG_OUTPUT
 
-#define ACPI_MODULE_NAME(name)               static char ACPI_UNUSED_VAR *_THIS_MODULE = name;
+#define ACPI_MODULE_NAME(name)               static const char ACPI_UNUSED_VAR *_THIS_MODULE = name;
 
 /*
  * Function entry tracing.
@@ -571,11 +571,11 @@
 #define ACPI_FUNCTION_TRACE(a)              ACPI_FUNCTION_NAME(a) \
                                                 AcpiUtTrace(__LINE__,&_DebugInfo)
 #define ACPI_FUNCTION_TRACE_PTR(a,b)        ACPI_FUNCTION_NAME(a) \
-                                                AcpiUtTracePtr(__LINE__,&_DebugInfo,(void *)b)
+                                                AcpiUtTracePtr(__LINE__,&_DebugInfo, b)
 #define ACPI_FUNCTION_TRACE_U32(a,b)        ACPI_FUNCTION_NAME(a) \
                                                 AcpiUtTraceU32(__LINE__,&_DebugInfo,(UINT32)b)
 #define ACPI_FUNCTION_TRACE_STR(a,b)        ACPI_FUNCTION_NAME(a) \
-                                                AcpiUtTraceStr(__LINE__,&_DebugInfo,(char *)b)
+                                                AcpiUtTraceStr(__LINE__,&_DebugInfo, b)
 
 #define ACPI_FUNCTION_ENTRY()               AcpiUtTrackStackPtr()
 

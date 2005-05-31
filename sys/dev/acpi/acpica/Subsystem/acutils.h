@@ -155,7 +155,7 @@ AcpiUtInitGlobals (
 
 #if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-char *
+const char *
 AcpiUtGetMutexName (
     UINT32                  MutexId);
 
@@ -386,7 +386,7 @@ void
 AcpiUtTracePtr (
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    void                    *Pointer);
+    const void              *Pointer);
 
 void
 AcpiUtTraceU32 (
@@ -398,7 +398,7 @@ void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *String);
+    const char              *String);
 
 void
 AcpiUtExit (
@@ -453,7 +453,7 @@ AcpiUtDebugPrint (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *Format,
+    const char              *Format,
     ...) ACPI_PRINTF_LIKE_FUNC;
 
 void ACPI_INTERNAL_VAR_XFACE
@@ -461,7 +461,7 @@ AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *Format,
+    const char              *Format,
     ...) ACPI_PRINTF_LIKE_FUNC;
 
 
@@ -732,7 +732,7 @@ void
 AcpiUtDisplayInitPathname (
     UINT8                   Type,
     ACPI_NAMESPACE_NODE     *ObjHandle,
-    char                    *Path);
+    const char              *Path);
 
 #endif
 

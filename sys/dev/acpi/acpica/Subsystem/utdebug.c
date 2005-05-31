@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
 
 #define __UTDEBUG_C__
 
@@ -128,8 +128,8 @@ __KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.11 2005/05/02 14:52:10 kochi Exp $");
 #ifdef ACPI_DEBUG_OUTPUT
 
 static UINT32   AcpiGbl_PrevThreadId = 0xFFFFFFFF;
-static char     *AcpiGbl_FnEntryStr = "----Entry";
-static char     *AcpiGbl_FnExitStr  = "----Exit-";
+static const char *AcpiGbl_FnEntryStr = "----Entry";
+static const char *AcpiGbl_FnExitStr  = "----Exit-";
 
 
 /*******************************************************************************
@@ -213,7 +213,7 @@ AcpiUtDebugPrint (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *Format,
+    const char              *Format,
     ...)
 {
     UINT32                  ThreadId;
@@ -290,7 +290,7 @@ AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *Format,
+    const char              *Format,
     ...)
 {
     va_list                 args;
@@ -360,7 +360,7 @@ void
 AcpiUtTracePtr (
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    void                    *Pointer)
+    const void              *Pointer)
 {
     AcpiGbl_NestingLevel++;
     AcpiUtTrackStackPtr ();
@@ -392,7 +392,7 @@ void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    char                    *String)
+    const char              *String)
 {
 
     AcpiGbl_NestingLevel++;

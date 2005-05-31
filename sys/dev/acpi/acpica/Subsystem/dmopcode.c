@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.6 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.7 2005/05/31 21:08:38 drochner Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -349,8 +349,7 @@ AcpiDmMatchKeyword (
     }
     else
     {
-        AcpiOsPrintf ("%s", (char *)
-            AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]);
+        AcpiOsPrintf ("%s", AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]);
     }
 }
 

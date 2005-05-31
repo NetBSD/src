@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.13 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.14 2005/05/31 21:08:38 drochner Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -780,7 +780,7 @@ AcpiUtGetDescriptorName (
  *
  ******************************************************************************/
 
-char *
+const char *
 AcpiUtGetMutexName (
     UINT32                  MutexId)
 {

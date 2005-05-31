@@ -168,7 +168,7 @@ typedef UINT32                          ACPI_MUTEX_HANDLE;
 
 /* Names for the mutexes used in the subsystem */
 
-static char                 *AcpiGbl_MutexNames[] =
+static const char           *AcpiGbl_MutexNames[] =
 {
     "ACPI_MTX_Execute",
     "ACPI_MTX_Interpreter",
@@ -691,7 +691,7 @@ ACPI_STATUS (*ACPI_EXECUTE_OP) (
 typedef struct acpi_opcode_info
 {
 #if defined(ACPI_DISASSEMBLER) || defined(ACPI_DEBUG_OUTPUT)
-    char                        *Name;          /* Opcode name (disassembler/debug only) */
+    const char                  *Name;          /* Opcode name (disassembler/debug only) */
 #endif
     UINT32                      ParseArgs;      /* Grammar/Parse time arguments */
     UINT32                      RuntimeArgs;    /* Interpret time arguments */
@@ -1029,8 +1029,8 @@ typedef struct acpi_integrity_info
 typedef struct acpi_debug_print_info
 {
     UINT32                  ComponentId;
-    char                    *ProcName;
-    char                    *ModuleName;
+    const char              *ProcName;
+    const char              *ModuleName;
 
 } ACPI_DEBUG_PRINT_INFO;
 
@@ -1094,7 +1094,7 @@ typedef struct acpi_memory_list
     UINT32                      CurrentTotalSize;
     UINT32                      CacheRequests;
     UINT32                      CacheHits;
-    char                        *ListName;
+    const char                  *ListName;
 #endif
 
 } ACPI_MEMORY_LIST;

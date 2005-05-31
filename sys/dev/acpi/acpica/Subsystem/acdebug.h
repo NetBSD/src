@@ -122,7 +122,7 @@
 
 typedef struct CommandInfo
 {
-    char                    *Name;          /* Command Name */
+    const char              *Name;          /* Command Name */
     UINT8                   MinArgs;        /* Minimum arguments required */
 
 } COMMAND_INFO;
@@ -130,7 +130,7 @@ typedef struct CommandInfo
 
 typedef struct ArgumentInfo
 {
-    char                    *Name;          /* Argument Name */
+    const char              *Name;          /* Argument Name */
 
 } ARGUMENT_INFO;
 
@@ -216,7 +216,7 @@ AcpiDbSetMethodData (
 
 ACPI_STATUS
 AcpiDbDisplayObjects (
-    char                    *ObjTypeArg,
+    const char              *ObjTypeArg,
     char                    *DisplayCountArg);
 
 ACPI_STATUS
@@ -325,7 +325,7 @@ AcpiDbCreateExecutionThreads (
  */
 ACPI_OBJECT_TYPE
 AcpiDbMatchArgument (
-    char                    *UserArgument,
+    const char              *UserArgument,
     ARGUMENT_INFO           *Arguments);
 
 void

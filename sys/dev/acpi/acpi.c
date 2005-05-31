@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.70 2005/05/29 20:56:02 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.71 2005/05/31 21:08:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.70 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.71 2005/05/31 21:08:37 drochner Exp $");
 
 #include "opt_acpi.h"
 
@@ -825,7 +825,7 @@ acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
 	if (ACPI_SUCCESS(rv)) {
 		ACPI_OBJECT *param = buf.Pointer;
-		char *ptr = param->String.Pointer;
+		const char *ptr = param->String.Pointer;
 		size_t len = param->String.Length;
 		if ((*stringp = AcpiOsAllocate(len)) == NULL)
 			rv = AE_NO_MEMORY;

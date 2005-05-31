@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.12 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.13 2005/05/31 21:08:38 drochner Exp $");
 
 #define __UTMISC_C__
 
@@ -367,7 +367,7 @@ void
 AcpiUtDisplayInitPathname (
     UINT8                   Type,
     ACPI_NAMESPACE_NODE     *ObjHandle,
-    char                    *Path)
+    const char              *Path)
 {
     ACPI_STATUS             Status;
     ACPI_BUFFER             Buffer;

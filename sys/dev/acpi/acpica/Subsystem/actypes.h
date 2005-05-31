@@ -771,7 +771,7 @@ typedef union acpi_object
     {
         ACPI_OBJECT_TYPE            Type;
         UINT32                      Length;     /* # of bytes in string, excluding trailing null */
-        char                        *Pointer;   /* points to the string value */
+        const char                  *Pointer;   /* points to the string value */
     } String;
 
     struct
