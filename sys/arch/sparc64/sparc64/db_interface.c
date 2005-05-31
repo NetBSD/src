@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.77 2004/05/20 00:52:58 petrov Exp $ */
+/*	$NetBSD: db_interface.c,v 1.78 2005/05/31 00:53:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2004/05/20 00:52:58 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78 2005/05/31 00:53:02 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -281,8 +281,8 @@ kdb_trap(type, tf)
 {
 	int s, tl;
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];
-	extern int savetstate(struct trapstate *ts);
-	extern void restoretstate(int tl, struct trapstate *ts);
+	extern int savetstate(struct trapstate *);
+	extern void restoretstate(int, struct trapstate *);
 	extern int trap_trace_dis;
 	extern int doing_shutdown;
 

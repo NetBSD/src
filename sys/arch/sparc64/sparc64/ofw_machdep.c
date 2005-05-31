@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.26 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.27 2005/05/31 00:53:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.26 2005/02/11 06:21:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.27 2005/05/31 00:53:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -614,12 +614,12 @@ int ofmapintrdebug = 0;
  * Recursively hunt for a property.
  */
 int
-OF_searchprop(int node, char *prop, void *buf, int buflen)
+OF_searchprop(int node, const char *prop, void *sbuf, int buflen)
 {
 	int len;
 
 	for( ; node; node = OF_parent(node)) {
-		len = OF_getprop(node, prop, buf, buflen);
+		len = OF_getprop(node, prop, sbuf, buflen);
 		if (len >= 0)
 			return (len);
 	}

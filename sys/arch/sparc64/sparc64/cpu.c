@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 2005/04/01 11:59:35 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.40 2005/05/31 00:53:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2005/05/31 00:53:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ cpu_attach(parent, dev, aux)
 	struct mainbus_attach_args *ma = aux;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
-	char *sep;
+	const char *sep;
 	register int i, l;
 	uint64_t ver;
 	int bigcache, cachesize;
