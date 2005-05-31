@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.16 2004/06/04 04:45:50 thorpej Exp $
+#	$NetBSD: Makefile.news68k,v 1.17 2005/05/31 04:03:10 christos Exp $
 #
 # Makefile for NetBSD
 #
@@ -29,7 +29,7 @@ NEED_OWN_INSTALL_TARGET?=no
 S=		../../../..
 .endif
 NEWS68K=	$S/arch/news68k
-GENASSYM=	${NEWS68K}/news68k/genassym.cf
+GENASSYM_CONF=	${NEWS68K}/news68k/genassym.cf
 
 ##
 ## (2) compile settings
