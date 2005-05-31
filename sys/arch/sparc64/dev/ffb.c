@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.17 2005/05/31 14:36:17 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.18 2005/05/31 17:33:02 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.17 2005/05/31 14:36:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.18 2005/05/31 17:33:02 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,7 +154,10 @@ ffb_attach(struct ffb_softc *sc)
 	char buf[6+1];
 
 	printf(":");
-
+	
+	sc->putchar = NULL;
+	sc->copycols = NULL;
+	
 	if (sc->sc_type == FFB_CREATOR) {
 		btype = prom_getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
@@ -195,7 +198,6 @@ ffb_attach(struct ffb_softc *sc)
 
 	sc->sc_accel = ((sc->sc_dv.dv_cfdata->cf_flags & FFB_CFFLAG_NOACCEL) == 
 	    0);
-	sc->putchar = NULL;
 		
 	wsfont_init();
 
@@ -988,7 +990,6 @@ ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
 	/* enable acceleration */
 	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = ffb_ras_copyrows;
-	ri->ri_ops.copycols = ffb_ras_copycols;
 	ri->ri_ops.eraserows = ffb_ras_eraserows;
 	ri->ri_ops.erasecols = ffb_ras_erasecols;
 	ri->ri_ops.cursor = ffb_cursor;
@@ -997,6 +998,8 @@ ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
 		sc->putchar = ri->ri_ops.putchar;
 		sc->copycols = ri->ri_ops.copycols;
 	ri->ri_ops.putchar = ffb_putchar;
+	ri->ri_ops.copycols = ffb_ras_copycols;
+	
 	
 	if (existing) {
 		scr->active = 1;
