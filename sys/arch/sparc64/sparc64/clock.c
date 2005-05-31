@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.71 2004/08/01 08:02:55 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.72 2005/05/31 00:51:57 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.71 2004/08/01 08:02:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.72 2005/05/31 00:51:57 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -473,10 +473,10 @@ timerattach(parent, self, aux)
 
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
-	level10.ih_clr = (void*)&timerreg_4u.t_clrintr[0];
+	level10.ih_clr = &timerreg_4u.t_clrintr[0];
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
-	level14.ih_clr = (void*)&timerreg_4u.t_clrintr[1];
+	level14.ih_clr = &timerreg_4u.t_clrintr[1];
 
 	intr_establish(14, &level14);
 	printf(" irq vectors %lx and %lx", 
@@ -856,6 +856,7 @@ void
 inittodr(base)
 	time_t base;
 {
+	struct timeval tv;
 	int badbase = 0, waszero = base == 0;
 
 	if (base < 5 * SECYR) {
@@ -870,9 +871,8 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_handle &&
-		(todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-		time.tv_sec == 0)) {
+	if (todr_handle && 
+	    (todr_gettime(todr_handle, &tv) != 0 || tv.tv_sec == 0)) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -884,7 +884,9 @@ inittodr(base)
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = time.tv_sec - base;
+		int deltat;
+		time = tv;
+		deltat = time.tv_sec - base;
 
 		cc_microset_time = time;
 		cc_microset(curcpu());
@@ -914,7 +916,7 @@ inittodr(base)
 void
 resettodr()
 {
-
+	struct timeval tv;
 	if (time.tv_sec == 0)
 		return;
 
@@ -924,9 +926,10 @@ resettodr()
 #endif
 	cc_microset(curcpu());
 	sparc_clock_time_is_ok = 1;
-	if (todr_handle == 0 ||
-		todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_handle == 0 || todr_settime(todr_handle, &tv) != 0)
 		printf("Cannot set time in time-of-day clock\n");
+	else
+		time = tv;
 }
 
 /*
