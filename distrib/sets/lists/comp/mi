@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.786 2005/05/22 12:44:24 kleink Exp $
+#	$NetBSD: mi,v 1.787 2005/05/31 03:50:14 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1770,6 +1770,7 @@
 ./usr/libexec/lint2				comp-c-bin
 ./usr/sbin/config				comp-sysutil-sbin
 ./usr/sbin/config.new				comp-obsolete		obsolete
+./usr/sbin/genassym				comp-sysutil-sbin
 ./usr/sbin/gspa					comp-util-sbin
 ./usr/sbin/gspahextoc				comp-obsolete		obsolete
 ./usr/sbin/kgmon				comp-debug-sbin
