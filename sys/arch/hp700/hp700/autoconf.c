@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2005/01/28 17:38:50 jkunz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2005/05/31 16:13:31 chs Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2005/01/28 17:38:50 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2005/05/31 16:13:31 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -157,7 +157,7 @@ cpu_configure(void)
 	}
 
 	splhigh();
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* in spl*() we trust */
