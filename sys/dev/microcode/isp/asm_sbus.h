@@ -1,4 +1,4 @@
-/* $NetBSD: asm_sbus.h,v 1.18 2005/02/27 00:27:24 perry Exp $ */
+/* $NetBSD: asm_sbus.h,v 1.19 2005/05/31 00:49:12 christos Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 Qlogic, Inc.
  * All rights reserved.
@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define	ISP_1000_RISC_CODE	(u_int16_t *) isp_1000_risc_code
+#define	ISP_1000_RISC_CODE	isp_1000_risc_code
 
 #if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)
 #ifndef	ISP_TARGET_MODE
