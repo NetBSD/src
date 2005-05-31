@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2003/11/10 08:51:52 wiz Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.14 2005/05/31 00:40:17 chs Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2005/05/31 00:40:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,7 +126,7 @@ int get_operands __P((inst_buffer * ib));
 int get_operand __P((inst_buffer * ib, int size));
 
 void add_char	__P((inst_buffer * ib, int c));
-void add_str	__P((inst_buffer * ib, char *s));
+void add_str	__P((inst_buffer * ib, const char *s));
 void add_int	__P((inst_buffer * ib, int i));
 void add_xint	__P((inst_buffer * ib, int i));
 void add_sym	__P((inst_buffer * ib, int i));
@@ -150,7 +150,7 @@ db_disasm(loc, altfmt)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
 	inst_buffer	ib;
 
@@ -483,7 +483,7 @@ add_char(ib, c)
 void
 add_str(ib, s)
 	inst_buffer    *ib;
-	char	       *s;
+	const char	*s;
 {
 	while ((*ib->curp++ = *s++));
 	*--ib->curp = '\0';
@@ -519,9 +519,9 @@ add_sym(ib, loc)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
-	if (! loc)
+	if (!loc)
 		return;
 
 	diff = INT_MAX;
@@ -545,7 +545,7 @@ add_off(ib, loc)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
 	if (!loc)
 		return;

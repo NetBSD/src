@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.14 2004/01/22 18:59:00 nathanw Exp $ */
+/* $NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2004/01/22 18:59:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
 
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
-    char *modif, void (*pr)(const char *, ...))
+    const char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t callpc, frame, symval;
 	struct prologue_info pi;
@@ -195,14 +195,15 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	db_sym_t sym;
 	int i;
 	u_long tfps;
-	char *symname;
+	const char *symname;
 	struct pcb *pcbp;
-	char c, *cp = modif;
+	const char *cp = modif;
 	struct trapframe *tf;
 	boolean_t ra_from_tf;
 	u_long last_ipl = ~0L;
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
+	char c;
 	boolean_t trace_thread = FALSE;
 
 	while ((c = *cp++) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2005/04/20 01:56:17 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16 2005/05/31 00:40:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/04/20 01:56:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2005/05/31 00:40:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ const struct db_variable * const db_eregs =
 
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
-    char *modif, void (*print)(const char *, ...))
+    const char *modif, void (*print)(const char *, ...))
 {
 	db_addr_t callpc, frame, lastframe;
 	uint32_t vbr;
@@ -106,7 +106,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			if ((tf->tf_ssr & PSL_MD) == 0)
 				break;
 		} else {
-			char *name;
+			const char *name;
 			db_expr_t offset;
 			db_sym_t sym;
 

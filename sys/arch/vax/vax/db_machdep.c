@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.37 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.38 2005/05/31 00:40:17 chs Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.37 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.38 2005/05/31 00:40:17 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -317,7 +317,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 	VAX_CALLFRAME *tmp_frame;
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char		*symname;
+	const char	*symname;
 	extern int	sret, etext;
 
 	(*pr)("Stack traceback : \n");
@@ -416,7 +416,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;		/* Address parameter */
 	boolean_t	have_addr;	/* True if addr is valid */
 	db_expr_t	count;		/* Optional count */
-	char		*modif;		/* pointer to flag modifier 't' */
+	const char	*modif;		/* pointer to flag modifier 't' */
 	void		(*pr) __P((const char *, ...)); /* Print function */
 {
 	extern vaddr_t	proc0paddr;
@@ -424,8 +424,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	struct proc	*p = l->l_proc;
 	struct user	*uarea;
 	int		trace_proc;
-	pid_t	curpid;
-	char	*s;
+	pid_t		curpid;
+	const char	*s;
  
 	/* Check to see if we're tracing a process */
 	trace_proc = 0;
