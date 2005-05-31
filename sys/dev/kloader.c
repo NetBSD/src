@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.2 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.2 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -547,7 +547,7 @@ kloader_copy(vaddr_t dst, const void *src, size_t sz)
 
 		tag->sz += freesz;
 		sz -= freesz;
-		src = (char *)src + freesz;
+		src = (const char *)src + freesz;
 		dst += freesz;
 	}
 }
