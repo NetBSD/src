@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.46 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: POWERMAC,v 1.47 2005/05/31 22:09:08 tron Exp $
 #
 # POWERMAC config file
 #
@@ -99,8 +99,7 @@ wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
-scsibus* at esp?
-scsibus* at mesh?
+scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 
 pseudo-device	loop			# network loopback
