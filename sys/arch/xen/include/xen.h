@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.13 2005/05/31 04:34:53 yamt Exp $	*/
+/*	$NetBSD: xen.h,v 1.14 2005/05/31 12:42:58 yamt Exp $	*/
 
 /*
  *
@@ -61,7 +61,7 @@ void	xenevt_notify(void);
 
 void	idle_block(void);
 
-#ifdef XENDEBUG
+#if defined(XENDEBUG) || 1 /* XXX */
 void printk(const char *, ...);
 void vprintk(const char *, _BSD_VA_LIST_);
 #endif
