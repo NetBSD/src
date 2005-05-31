@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.137 2005/03/12 14:39:12 dsl Exp $
+#	$NetBSD: Makefile.i386,v 1.138 2005/05/31 04:03:10 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 I386=		$S/arch/i386
-GENASSYM=	${I386}/i386/genassym.cf
+GENASSYM_CONF=	${I386}/i386/genassym.cf
 
 ##
 ## (2) compile settings

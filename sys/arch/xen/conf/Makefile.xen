@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.5 2004/06/21 18:20:09 jmc Exp $
+#	$NetBSD: Makefile.xen,v 1.6 2005/05/31 04:03:11 christos Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -28,7 +28,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 XEN=		$S/arch/xen
-GENASSYM=	${XEN}/${XEN_BUILD}/genassym.cf
+GENASSYM_CONF=	${XEN}/${XEN_BUILD}/genassym.cf
 
 ##
 ## (2) compile settings
