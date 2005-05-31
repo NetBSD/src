@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2005/05/30 15:51:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2005/05/31 03:53:59 christos Exp $
 
 .include <bsd.own.mk>
 
+.PATH.sh:	${.CURDIR}/../../usr.sbin/genassym
+
 COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
 .-include	"${COMPATOBJ}/defs.mk"
+
 
 TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 
