@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.2 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.3 2005/05/31 02:37:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -780,12 +780,12 @@ ufsdirhash_dirtrunc(struct inode *ip, doff_t offset)
  * a directory block matches its actual contents. Panics if a mismatch
  * is detected.
  *
- * On entry, `buf' should point to the start of an in-core
+ * On entry, `sbuf' should point to the start of an in-core
  * DIRBLKSIZ-sized directory block, and `offset' should contain the
  * offset from the start of the directory of that block.
  */
 void
-ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
+ufsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 {
 	struct dirhash *dh;
 	struct direct *dp;
@@ -810,7 +810,7 @@ ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
 
 	nfree = 0;
 	for (i = 0; i < dirblksiz; i += dp->d_reclen) {
-		dp = (struct direct *)(buf + i);
+		dp = (struct direct *)(sbuf + i);
 		if (dp->d_reclen == 0 || i + dp->d_reclen > dirblksiz)
 			panic("ufsdirhash_checkblock: bad dir");
 
