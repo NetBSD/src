@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.21 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.22 2005/05/31 22:23:53 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -147,7 +147,6 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 #cypide* at pci? dev ? function ?	# Cypress IDE controllers
 #hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #optiide* at pci? dev ? function ?	# Opti IDE controllers
-#piixide* at pci? dev ? function ?	# Intel IDE controllers
 #pdcide* at pci? dev ? function ?	# Promise IDE controllers
 #pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 #satalink* at pci? dev ? function ?	# SiI SATALink controllers
