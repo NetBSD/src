@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.6 2003/07/31 07:50:05 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.7 2005/05/31 00:45:03 chs Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,13 +68,6 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
-GLOBAL(intrnames)
-GLOBAL(eintrnames)
-GLOBAL(intrcnt)
-GLOBAL(eintrcnt)
-	.long	0			/* vmstat needs these.  XXX */
-
 /*
  * File-scope for locore.S
  */

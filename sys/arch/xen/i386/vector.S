@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10 2005/05/11 13:52:32 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.11 2005/05/31 00:45:05 chs Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -289,19 +289,6 @@ _C_LABEL(xenev_stubs):
 	.long _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
 	.long _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
 	.long _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
-
-/*
- * Symbols that vmstat -i wants, even though they're not used.
- */
-.globl	_C_LABEL(intrnames)
-_C_LABEL(intrnames):
-.globl	_C_LABEL(eintrnames)
-_C_LABEL(eintrnames):
-
-.globl	_C_LABEL(intrcnt)
-_C_LABEL(intrcnt):
-.globl	_C_LABEL(eintrcnt)
-_C_LABEL(eintrcnt):
 
 /*
  * Soft interrupt handlers

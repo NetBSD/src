@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.106 2004/07/17 12:21:20 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.107 2005/05/31 00:45:02 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.106 2004/07/17 12:21:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.107 2005/05/31 00:45:02 chs Exp $");
 
 #include "assym.h"
 
@@ -1549,21 +1549,6 @@ XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
 	ldiq	v0, -1
 	RET
 	END(fswberr)
-
-/**************************************************************************/
-
-/*
- * Some bogus data, to keep vmstat happy, for now.
- */
-
-	.section .rodata
-EXPORT(intrnames)
-	.quad	0
-EXPORT(eintrnames)
-EXPORT(intrcnt)
-	.quad	0
-EXPORT(eintrcnt)
-	.text
 
 /**************************************************************************/
 
