@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.28 2005/05/31 21:16:06 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.29 2005/05/31 21:17:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.28 2005/05/31 21:16:06 christos Exp $");
+	"$NetBSD: machfb.c,v 1.29 2005/05/31 21:17:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,9 +649,9 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX shouldn't that happen /before/ we call rasops_init()? */
 	wsfont_init();
 
+	mach64_init_screen(sc, &mach64_console_screen,
+	    &mach64_defaultscreen, 1, &defattr, setmode);
 	if (console) {
-		mach64_init_screen(sc, &mach64_console_screen,
-		    &mach64_defaultscreen, 1, &defattr, setmode);
 		wsdisplay_cnattach(&mach64_defaultscreen, 
 		    &mach64_console_screen.ri, 0, 0, defattr);
 	}
