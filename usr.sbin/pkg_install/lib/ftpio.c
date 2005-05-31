@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.62.4.2 2005/05/17 23:53:44 riz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.62.4.3 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.62.4.2 2005/05/17 23:53:44 riz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.62.4.3 2005/05/31 22:05:41 tron Exp $");
 #endif
 
 /*-
@@ -238,7 +238,7 @@ expect(int fd, const char *str, int *ftprc)
 				fflush(stdout);
 #endif /* EXPECT_DEBUG */
 
-				if (ftprc && isdigit(buf[match.rm_so+1])) 
+				if (ftprc && isdigit((unsigned char)buf[match.rm_so+1])) 
 					*ftprc = atoi(buf+match.rm_so+1);
 
 				done=1;
@@ -569,7 +569,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 {
 	char *pattern;
 	char *bestmatch;
-	char base[FILENAME_MAX];
+	char base[MaxPathSize];
 
 	pattern=strrchr(wildcardurl, '/');
 	if (pattern == NULL){
@@ -598,7 +598,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	if (bestmatch == NULL)
 		return -1;
 
-	snprintf(expandedurl, FILENAME_MAX, "%s%s", base, bestmatch);
+	snprintf(expandedurl, MaxPathSize, "%s%s", base, bestmatch);
 	if (Verbose)
 		printf("best match: '%s'\n", expandedurl);
 
@@ -609,9 +609,9 @@ expandURL(char *expandedurl, const char *wildcardurl)
 static char *
 ftp_expand_URL(const char *base, char *pattern)
 {
-	char *s, buf[FILENAME_MAX];
-	char tmpname[FILENAME_MAX];
-	char best[FILENAME_MAX];
+	char *s, buf[MaxPathSize];
+	char tmpname[MaxPathSize];
+	char best[MaxPathSize];
 	int rc, tfd;
 
 	rc = ftp_start(base);
@@ -665,7 +665,7 @@ ftp_expand_URL(const char *base, char *pattern)
 	if (access(tmpname, R_OK)==0) {
 		int matches;
 		FILE *f;
-		char filename[FILENAME_MAX];
+		char filename[MaxPathSize];
 
 		f=fopen(tmpname, "r");
 		if (f == NULL) {
@@ -683,8 +683,8 @@ ftp_expand_URL(const char *base, char *pattern)
 			 * suffix here
 			 */
 
-			char s_filename[FILENAME_MAX];
-			char s_pattern[FILENAME_MAX];
+			char s_filename[MaxPathSize];
+			char s_pattern[MaxPathSize];
 	    
 			filename[strlen(filename)-1] = '\0';
 
@@ -716,9 +716,9 @@ ftp_expand_URL(const char *base, char *pattern)
 static char *
 http_expand_URL(const char *base, char *pattern)
 {
-	char    best[FILENAME_MAX];
+	char    best[MaxPathSize];
 	char    line[BUFSIZ];
-	char    filename[FILENAME_MAX];
+	char    filename[MaxPathSize];
 	FILE   *fp;
 	int	pipefds[2];
 	int     state;
@@ -755,7 +755,7 @@ http_expand_URL(const char *base, char *pattern)
 	if ((fp=fdopen(pipefds[0], "r")) == NULL)
 		warn("can't fdopen pipe end");
 	else {
-		char s_pattern[FILENAME_MAX];
+		char s_pattern[MaxPathSize];
 		int len, offset;
 
 		/* strip of .t[bg]z for comparison */
@@ -769,7 +769,7 @@ http_expand_URL(const char *base, char *pattern)
 			len = offset = 0;
 			while ((len=http_extract_fn(line+offset, filename,
 						      sizeof(filename))) > 0) {
-				char s_filename[FILENAME_MAX];
+				char s_filename[MaxPathSize];
 
 				offset += len;
 				strip_txz(s_filename, NULL, filename);
@@ -811,7 +811,7 @@ static int
 http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 {
 	/* partial copied hrefs from previous calls are saved here */
-	static char tempbuf[FILENAME_MAX];
+	static char tempbuf[MaxPathSize];
 	/* fill state of tempbuf */
 	static int tempbuffill = 0;
 	/* parsing state information */
@@ -894,14 +894,14 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == 'a' || p == 'A')
 				state = ST_LTA;
-			else if (!isspace(p))
+			else if (!isspace((unsigned char)p))
 				state = ST_TAG;
 			break;
 		case ST_LTA:
 			/* in tag -- "<a" already found */
 			if (p == '>')
 				state = ST_NONE;
-			else if (isspace(p))
+			else if (isspace((unsigned char)p))
 				state = ST_TAGA;
 			else
 				state = ST_TAG;
@@ -917,14 +917,14 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == 'h' || p == 'H')
 				state = ST_H;
-			else if (!isspace(p))
+			else if (!isspace((unsigned char)p))
 				state = ST_TAGAX;
 			break;
 		case ST_TAGAX:
 			/* in unknown keyword in a-tag */
 			if (p == '>')
 				state = ST_NONE;
-			else if (isspace(p))
+			else if (isspace((unsigned char)p))
 				state = ST_TAGA;
 			break;
 		case ST_H:
@@ -933,7 +933,7 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == 'r' || p == 'R')
 				state = ST_R;
-			else if (isspace(p))
+			else if (isspace((unsigned char)p))
 				state = ST_TAGA;
 			else
 				state = ST_TAGAX;
@@ -944,7 +944,7 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == 'e' || p == 'E')
 				state = ST_E;
-			else if (isspace(p))
+			else if (isspace((unsigned char)p))
 				state = ST_TAGA;
 			else
 				state = ST_TAGAX;
@@ -955,7 +955,7 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == 'f' || p == 'F')
 				state = ST_F;
-			else if (isspace(p))
+			else if (isspace((unsigned char)p))
 				state = ST_TAGA;
 			else
 				state = ST_TAGAX;
@@ -966,7 +966,7 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 				state = ST_NONE;
 			else if (p == '=')
 				state = ST_HREF;
-			else if (!isspace(p))
+			else if (!isspace((unsigned char)p))
 				state = ST_TAGAX;
 			break;
 		case ST_HREF:
@@ -975,7 +975,7 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 			if (p == '>')
 				state = ST_NONE;
 			/* skip spaces before URL */
-			else if (!isspace(p))
+			else if (!isspace((unsigned char)p))
 				state = ST_TAGA;
 			break;
 			/* no default case by purpose */
@@ -1128,12 +1128,12 @@ unpackURL(const char *url, const char *dir)
 {
 	char *pkg;
 	int rc;
-	char base[FILENAME_MAX];
-	char pkg_path[FILENAME_MAX];
+	char base[MaxPathSize];
+	char pkg_path[MaxPathSize];
 
 	{
 		/* Verify if the URL is really ok */
-		char expnd[FILENAME_MAX];
+		char expnd[MaxPathSize];
 
 		rc=expandURL(expnd, url);
 		if (rc == -1) {
@@ -1178,12 +1178,29 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		char cmd[1024];
+		const char *decompress_cmd = NULL;
+		const char *suf;
 
 		if (Verbose)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
+		suf = suffix_of(pkg);
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
+			decompress_cmd = BZIP2_CMD;
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
+			decompress_cmd = GZIP_CMD;
+		else if (!strcmp(suf, "tar"))
+			; /* do nothing */
+		else
+			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
+
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | " TAR_CMD " -%sxp -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s; " TAR_CMD " %s %s -%sxp -f - | tee /dev/stderr )\"\n",
+		    pkg, dir,
+		    decompress_cmd != NULL ? "--use-compress-program" : "",
+		    decompress_cmd != NULL ? decompress_cmd : "",
+		    Verbose? "vv" : "");
+
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
@@ -1225,7 +1242,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while(argv[0] != NULL) {
-		char newurl[FILENAME_MAX];
+		char newurl[MaxPathSize];
 	    
 		printf("Expand %s:\n", argv[0]);
 		rc = expandURL(newurl, argv[0]);
@@ -1236,7 +1253,7 @@ main(int argc, char *argv[])
 
 		/* test out connection caching */
 		if (1) {
-			char *s, buf[FILENAME_MAX];
+			char *s, buf[MaxPathSize];
 		    
 			if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
 				(void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);

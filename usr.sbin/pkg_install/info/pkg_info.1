@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.37 2004/01/06 16:22:06 wiz Exp $
+.\" $NetBSD: pkg_info.1,v 1.37.4.1 2005/05/31 22:05:41 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd January 6, 2004
+.Dd February 10, 2005
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -40,6 +40,11 @@
 .Bk -words
 .Op Fl a Ar flags
 .Ek
+.Nm
+.Bk -words
+.Op Fl Q Ar variable
+.Ek
+.Ar pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -91,9 +96,9 @@ stdout unless turned off using the
 .Fl q
 option.
 .Ar pkg-name
-can contain wildcards, see the
+can contain wildcards (see the
 .Sx PACKAGE WILDCARDS
-section below.
+section below).
 .It Fl F
 Interpret any pkg-name given as filename, and translate it to a
 package name using the Package Database.
@@ -122,6 +127,8 @@ Show the de-install script (if any) for each package.
 Show the files within each package.
 This is different from just viewing the packing list, since full pathnames
 for everything are generated.
+Files that were created dynamically during installation of the package
+are not listed.
 .It Fl l Ar str
 Prefix each information category header (see
 .Fl q )
@@ -140,11 +147,19 @@ Show which packages each package was built with (exact dependencies), if any.
 Show which packages each package needs (depends upon), if any.
 .It Fl p
 Show the installation prefix for each package.
+.It Fl Q
+Show the definition of
+.Ar variable
+from the build information for each package.
+An empty string is returned if no such variable definition is found for
+the package(s).
 .It Fl q
-Be ``quiet'' in emitting report headers and such, just dump the
+Be
+.Dq quiet
+in emitting report headers and such, just dump the
 raw info (basically, assume a non-human reading).
 .It Fl R
-Show which packages are required by each package.
+For each package, show the packages that require it.
 .It Fl r
 Show the requirements script (if any) for each package.
 .It Fl S
@@ -183,7 +198,7 @@ Package wildcards use
 .Xr fnmatch 3 .
 In addition,
 .Xr csh 1
-style {,} alternates have also been implemented.
+style {,} alternates have been implemented.
 Package version numbers can also be matched in a relational manner
 using the
 .Pa \*[Ge] , \*[Le] , \*[Gt] ,
@@ -197,33 +212,47 @@ will match versions 1.3 and later of the
 package.
 The collating sequence of the various package version numbers is
 unusual, but strives to be consistent.
-The magic string ``alpha'' equates to
+The magic string
+.Dq alpha
+equates to
 .Pa alpha version
 and sorts before a beta version.
-The magic string ``beta'' equates to
+The magic string
+.Dq beta
+equates to
 .Pa beta version
 and sorts before a release candidate.
-The magic string ``rc'' equates to
+The magic string
+.Dq rc
+equates to
 .Pa release candidate
 and sorts before a release.
+The magic string
+.Dq pre ,
+short for
+.Dq pre-release ,
+is a synonym for
+.Dq rc .
 For example,
 .Pa name-1.3rc3
 will sort before
 .Pa name-1.3
 and after
-.Pa name-1.2.9
+.Pa name-1.2.9 .
 Similarly
 .Pa name-1.3alpha2
 will sort before
 .Pa name-1.3beta1
 and they both sort before
-.Pa name-1.3rc1
+.Pa name-1.3rc1 .
 In addition, alphabetic characters sort in the same place as
 their numeric counterparts, so that
 .Pa name-1.2e
 has the same sorting value as
 .Pa name-1.2.5
-The magic string ``pl'' equates to a
+The magic string
+.Dq pl
+equates to a
 .Pa patch level
 and has the same value as a dot in the dewey-decimal ordering schemes.
 .Sh ENVIRONMENT
@@ -250,7 +279,9 @@ whereas searching in the current directory uses
 literally.
 .It Ev PKG_TMPDIR , Ev TMPDIR
 These are tried in turn (if set) as candidate directories in which
-to create a ``staging area'' for any files extracted by
+to create a
+.Dq staging area
+for any files extracted by
 .Nm
 from package files.
 If neither

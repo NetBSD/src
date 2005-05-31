@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.43.4.1 2005/05/31 22:05:40 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.43.4.1 2005/05/31 22:05:40 tron Exp $");
 #endif
 
 /*
@@ -49,10 +49,12 @@ __RCSID("$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $");
 
 #define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
 
-static const char Options[] = "K:SVbd:s:";
+static const char Options[] = "K:SVbd:qs:";
 
 int     filecnt;
 int     pkgcnt;
+
+static int	quiet;
 
 static int checkpattern_fn(const char *, void *);
 
@@ -60,7 +62,7 @@ static int checkpattern_fn(const char *, void *);
 static void 
 usage(const char *prog)
 {
-	(void) fprintf(stderr, "usage: %s [-b] [-d lsdir] [-V] [-s sfx] command args ...\n"
+	(void) fprintf(stderr, "usage: %s [-bqSV] [-d lsdir] [-K pkg_dbdir] [-s sfx] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
@@ -88,8 +90,8 @@ check1pkg(const char *pkgdir)
 	plist_t *p;
 	package_t Plist;
 	char   *PkgName, *dirp = NULL, *md5file;
-	char    file[FILENAME_MAX];
-	char    dir[FILENAME_MAX];
+	char    file[MaxPathSize];
+	char    dir[MaxPathSize];
 
 	f = fopen(CONTENTS_FNAME, "r");
 	if (f == NULL)
@@ -127,12 +129,12 @@ check1pkg(const char *pkgdir)
 							free(md5file);
 						}
 					} else if (strncmp(p->next->name, SYMLINK_HEADER, SymlinkHeaderLen) == 0) {
-						char	buf[FILENAME_MAX + SymlinkHeaderLen];
+						char	buf[MaxPathSize + SymlinkHeaderLen];
 						int	cc;
 
 						(void) strlcpy(buf, SYMLINK_HEADER, sizeof(buf));
 						if ((cc = readlink(file, &buf[SymlinkHeaderLen],
-							  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							  sizeof(buf) - SymlinkHeaderLen - 1)) < 0) {
 							warnx("can't readlink `%s'", file);
 						} else {
 							buf[SymlinkHeaderLen + cc] = 0x0;
@@ -197,10 +199,10 @@ add1pkg(const char *pkgdir)
 	FILE	       *f;
 	plist_t	       *p;
 	package_t	Plist;
-	char 		contents[FILENAME_MAX];
+	char 		contents[MaxPathSize];
 	char	       *PkgDBDir, *PkgName, *dirp;
-	char 		file[FILENAME_MAX];
-	char		dir[FILENAME_MAX];
+	char 		file[MaxPathSize];
+	char		dir[MaxPathSize];
 	int		cnt = 0;
 
 	if (!pkgdb_open(ReadWrite))
@@ -292,7 +294,7 @@ rebuild(void)
 	DIR	       *dp;
 	struct dirent  *de;
 	char	       *PkgDBDir;
-	char		cachename[FILENAME_MAX];
+	char		cachename[MaxPathSize];
 
 	pkgcnt = 0;
 	filecnt = 0;
@@ -321,7 +323,9 @@ rebuild(void)
 #ifdef PKGDB_DEBUG
 		printf("%s\n", de->d_name);
 #else
-		printf(".");
+		if (!quiet) {
+			printf(".");
+		}
 #endif
 
 		filecnt += add1pkg(de->d_name);
@@ -363,7 +367,9 @@ checkall(void)
 		chdir(de->d_name);
 
 		check1pkg(de->d_name);
-		printf(".");
+		if (!quiet) {
+			printf(".");
+		}
 
 		chdir("..");
 	}
@@ -387,7 +393,9 @@ checkpattern_fn(const char *pkg, void *vp)
 		err(EXIT_FAILURE, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), pkg);
 
 	check1pkg(pkg);
-	printf(".");
+	if (!quiet) {
+		printf(".");
+	}
 
 	chdir("..");
 
@@ -415,8 +423,8 @@ main(int argc, char *argv[])
 	const char	*prog;
 	Boolean		 use_default_sfx = TRUE;
 	Boolean 	 show_basename_only = FALSE;
-	char		 lsdir[FILENAME_MAX];
-	char		 sfx[FILENAME_MAX];
+	char		 lsdir[MaxPathSize];
+	char		 sfx[MaxPathSize];
 	char		*lsdirp = NULL;
 	int		 ch;
 
@@ -449,6 +457,10 @@ main(int argc, char *argv[])
 			lsdirp = lsdir;
 			break;
 
+		case 'q':
+			quiet = 1;
+			break;
+
 		case 's':
 			(void) strlcpy(sfx, optarg, sizeof(sfx));
 			use_default_sfx = FALSE;
@@ -475,12 +487,12 @@ main(int argc, char *argv[])
 		
 		argv++;		/* "pmatch" */
 
-		pattern = argv[0];
-		pkg = argv[1];
-
-		if (pattern == NULL || pkg == NULL) {
+		if (argv[0] == NULL || argv[1] == NULL) {
 			usage(prog);
 		}
+
+		pattern = argv[0];
+		pkg = argv[1];
 
 		if (pmatch(pattern, pkg)){
 			return 0;
@@ -517,7 +529,7 @@ main(int argc, char *argv[])
 					rc = chdir(*argv);
 					if (rc == -1) {
 						/* found nothing - try 'pkg-[0-9]*' */
-						char try[FILENAME_MAX];
+						char try[MaxPathSize];
 					
 						snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
 						if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
@@ -530,7 +542,9 @@ main(int argc, char *argv[])
 						}
 					} else {
 						check1pkg(*argv);
-						printf(".");
+						if (!quiet) {
+							printf(".");
+						}
 
 						chdir("..");
 					}
@@ -546,7 +560,9 @@ main(int argc, char *argv[])
 		} else {
 			checkall();
 		}
-		printf("Done.\n");
+		if (!quiet) {
+			printf("Done.\n");
+		}
 
 	} else if (strcasecmp(argv[0], "lsall") == 0) {
 		int saved_wd;
@@ -562,8 +578,8 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char cwd[MAXPATHLEN];
-			char base[FILENAME_MAX];
+			char cwd[MaxPathSize];
+			char base[MaxPathSize];
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
@@ -604,8 +620,8 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char cwd[MAXPATHLEN];
-			char base[FILENAME_MAX];
+			char cwd[MaxPathSize];
+			char base[MaxPathSize];
 			char *p;
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);

@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.30 2004/01/15 09:33:39 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.30.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.30 2004/01/15 09:33:39 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.30.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -40,8 +40,8 @@ __RCSID("$NetBSD: pl.c,v 1.30 2004/01/15 09:33:39 agc Exp $");
 static void
 CheckSymlink(char *name, char *prefix, size_t prefixcc)
 {
-	char    newtgt[MAXPATHLEN];
-	char    oldtgt[MAXPATHLEN];
+	char    newtgt[MaxPathSize];
+	char    oldtgt[MaxPathSize];
 	char   *slash;
 	int     slashc;
 	int     cc;
@@ -114,8 +114,8 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	plist_t *tmp;
 	plist_t *p;
 	char    buf[ChecksumHeaderLen + LegibleChecksumLen];
-	char    target[FILENAME_MAX + SymlinkHeaderLen];
-	char    name[FILENAME_MAX];
+	char    target[MaxPathSize + SymlinkHeaderLen];
+	char    name[MaxPathSize];
 	char   *cwd = home;
 	char   *srcdir = NULL;
 	int     dirc;
@@ -149,7 +149,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * starts, it's ok to do this somewhere here
 			 */
 			if (update_pkgdb) {
-				char   *s, t[FILENAME_MAX];
+				char   *s, t[MaxPathSize];
 
 				(void) snprintf(t, sizeof(t), "%s%s%s",
 					cwd,
@@ -198,7 +198,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 				(void) strlcpy(target, SYMLINK_HEADER,
 				    sizeof(target));
 				if ((cc = readlink(name, &target[SymlinkHeaderLen],
-					  sizeof(target) - SymlinkHeaderLen)) < 0) {
+					  sizeof(target) - SymlinkHeaderLen - 1)) < 0) {
 					warnx("can't readlink `%s'", name);
 					continue;
 				}

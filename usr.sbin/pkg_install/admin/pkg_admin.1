@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.30 2004/02/13 17:56:18 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.30.4.1 2005/05/31 22:05:40 tron Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2004
+.Dd August 13, 2004
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nd perform various administrative tasks to the pkg system
 .Sh SYNOPSIS
 .Nm
-.Op Fl bSV
+.Op Fl bqSV
 .Nb -words
 .Op Fl d Ar lsdir
 .Bk -words
@@ -74,6 +74,14 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl q
+Perform checks in a quiet manner.
+In normal operation,
+.Nm
+prints a
+.Sq \&.
+to standard output to indicate progress.
+This option suppresses this progress indicator.
 .It Fl S
 Set the shell glob pattern for package suffixes when matching package
 names for
@@ -96,14 +104,17 @@ The following commands are supported:
 .Bl -tag -width indent
 .It Cm add Ar pkg ...
 For each listed package, write the absolute pathnames of the files listed in
-its +CONTENTS file together with the package they belong to into the package
-database.
+its
+.Pa +CONTENTS
+file together with the package they belong to into the package database.
 This should be used only by
 .Xr pkg_view 1 .
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against the checksum
-which was recorded in the +CONTENTS files at package installation time.
+which was recorded in the
+.Pa +CONTENTS
+files at package installation time.
 Symbolic links also have their integrity checked against the recorded
 value at package installation time.
 If no additional argument is given, the files of all installed packages
@@ -111,7 +122,9 @@ are checked, else only the named packages will be checked (wildcards can
 be used here, see
 .Xr pkg_info 1 ) .
 .Pp
-The packages' +CONTENTS files will be parsed and the
+The packages'
+.Pa +CONTENTS
+files will be parsed and the
 checksum will be checked for every file found.
 A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.

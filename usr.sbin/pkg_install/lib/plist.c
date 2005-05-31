@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.42 2004/01/15 09:33:39 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.42.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.42 2004/01/15 09:33:39 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.42.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -231,7 +231,7 @@ int
 plist_cmd(char *s, char **arg)
 {
 	const cmd_t *cmdp;
-	char    cmd[FILENAME_MAX + 20];	/* 20 == fudge for max cmd len */
+	char    cmd[MaxPathSize + 20];	/* 20 == fudge for max cmd len */
 	char   *cp;
 	char   *sp;
 
@@ -258,12 +258,12 @@ plist_cmd(char *s, char **arg)
 void
 read_plist(package_t *pkg, FILE * fp)
 {
-	char    pline[FILENAME_MAX];
+	char    pline[MaxPathSize];
 	char   *cp;
 	int     cmd;
 	int     len;
 
-	while (fgets(pline, FILENAME_MAX, fp) != (char *) NULL) {
+	while (fgets(pline, MaxPathSize, fp) != (char *) NULL) {
 		for (len = strlen(pline); len &&
 		    isspace((unsigned char) pline[len - 1]);) {
 			pline[--len] = '\0';
@@ -323,13 +323,13 @@ write_plist(package_t *pkg, FILE * fp, char *realprefix)
  * run it too in cases of failure.
  */
 int
-delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
+delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDeleteFiles)
 {
 	plist_t *p;
 	char   *Where = ".", *last_file = "";
 	int     fail = SUCCESS;
 	Boolean preserve;
-	char    tmp[FILENAME_MAX], *name = NULL;
+	char    tmp[MaxPathSize], *name = NULL;
 
 	if (!pkgdb_open(ReadWrite)) {
 		err(EXIT_FAILURE, "cannot open pkgdb");
@@ -353,9 +353,10 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 			break;
 
 		case PLIST_UNEXEC:
+			if (NoDeleteFiles)
+				break;
 			format_cmd(tmp, sizeof(tmp), p->name, Where, last_file);
-			if (Verbose)
-				printf("Execute `%s'\n", tmp);
+			printf("Executing `%s'\n", tmp);
 			if (!Fake && system(tmp)) {
 				warnx("unexec command for `%s' failed", tmp);
 				fail = FAIL;
@@ -369,6 +370,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				warnx("attempting to delete directory `%s' as a file\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
 			} else {
+				int     restored = 0;	/* restored from preserve? */
+
 				if (p->next && p->next->type == PLIST_COMMENT) {
 					if (strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 						char   *cp, buf[LegibleChecksumLen];
@@ -385,38 +388,48 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 							}
 						}
 					} else if (strncmp(p->next->name, SYMLINK_HEADER, SymlinkHeaderLen) == 0) {
-						char	buf[FILENAME_MAX + SymlinkHeaderLen];
+						char	buf[MaxPathSize + SymlinkHeaderLen];
 						int	cc;
 
 						(void) strlcpy(buf, SYMLINK_HEADER,
 						    sizeof(buf));
 						if ((cc = readlink(tmp, &buf[SymlinkHeaderLen],
-							  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							  sizeof(buf) - SymlinkHeaderLen - 1)) < 0) {
 							warnx("can't readlink `%s'", tmp);
 							continue;
 						}
 						buf[SymlinkHeaderLen + cc] = 0x0;
 						if (strcmp(buf, p->next->name) != 0) {
-							printf("symlink %s is not same as recorded value, %s: %s\n",
-							    buf, Force ? "deleting anyway" : "not deleting", tmp);
-							if (!Force) {
-								fail = FAIL;
-								continue;
+							if ((cc = readlink(&buf[SymlinkHeaderLen], &buf[SymlinkHeaderLen],
+								  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+								printf("symlink %s is not same as recorded value, %s: %s\n",
+								    buf, Force ? "deleting anyway" : "not deleting", tmp);
+								if (!Force) {
+									fail = FAIL;
+									continue;
+								}
+							}
+							buf[SymlinkHeaderLen + cc] = 0x0;
+							if (strcmp(buf, p->next->name) != 0) {
+								printf("symlink %s is not same as recorded value, %s: %s\n",
+								    buf, Force ? "deleting anyway" : "not deleting", tmp);
+								if (!Force) {
+									fail = FAIL;
+									continue;
+								}
 							}
 						}
 					}
 				}
-				if (Verbose)
+				if (Verbose && !NoDeleteFiles)
 					printf("Delete file %s\n", tmp);
-				if (!Fake) {
-					int     restored = 0;	/* restored from preserve? */
-
+				if (!Fake && !NoDeleteFiles) {
 					if (delete_hierarchy(tmp, ign_err, nukedirs))
 						fail = FAIL;
 					if (preserve && name) {
-						char    tmp2[FILENAME_MAX];
+						char    tmp2[MaxPathSize];
 
-						if (make_preserve_name(tmp2, FILENAME_MAX, name, tmp)) {
+						if (make_preserve_name(tmp2, MaxPathSize, name, tmp)) {
 							if (fexists(tmp2)) {
 								if (rename(tmp2, tmp))
 									warn("preserve: unable to restore %s as %s",
@@ -426,7 +439,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 							}
 						}
 					}
+				}
 
+				if (!Fake) {
 					if (!restored) {
 #ifdef PKGDB_DEBUG
 						printf("pkgdb_remove(\"%s\")\n", tmp);	/* HF */
@@ -447,6 +462,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 			break;
 
 		case PLIST_DIR_RM:
+			if (NoDeleteFiles)
+				break;
+
 			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
 			if (fexists(tmp)) {
 			    if (!isdir(tmp)) {
