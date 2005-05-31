@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.39 2003/07/15 03:36:14 lukem Exp $ */
+/*	$NetBSD: if_ie.c,v 1.39.2.1 2005/05/31 21:52:34 riz Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.39 2003/07/15 03:36:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.39.2.1 2005/05/31 21:52:34 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -704,14 +704,11 @@ check_eh(sc, eh, to_bpf)
 	struct ether_header *eh;
 	int *to_bpf;
 {
+#if NBPFILTER > 0
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_if;
-
-#if NBPFILTER > 0
 	*to_bpf = (ifp->if_bpf != 0);
-#else
-	*to_bpf = 0;
 #endif
 
 	/*
@@ -987,7 +984,7 @@ ie_readframe(sc, num)
 #if NBPFILTER > 0
 		m = ieget(sc, &bpf_gets_it);
 #else
-		m = ieget(sc, 0);
+		m = ieget(sc, NULL);
 #endif
 		ie_drop_packet_buffer(sc);
 	}
