@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.117 2005/05/23 21:58:21 riz Exp $
+#	$NetBSD: bsd.sys.mk,v 1.118 2005/05/31 03:45:42 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -105,6 +105,7 @@ TOOL_CTAGS?=		ctags
 TOOL_DB?=		db
 TOOL_EQN?=		eqn
 TOOL_FGEN?=		fgen
+TOOL_GENASSYM?=		genassym
 TOOL_GENCAT?=		gencat
 TOOL_GROFF?=		groff
 TOOL_HEXDUMP?=		hexdump
