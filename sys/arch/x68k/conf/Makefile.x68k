@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.58 2004/06/04 04:45:51 thorpej Exp $
+#	$NetBSD: Makefile.x68k,v 1.59 2005/05/31 04:03:11 christos Exp $
 #
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 X68K=		$S/arch/x68k
-GENASSYM=	${X68K}/x68k/genassym.cf
+GENASSYM_CONF=	${X68K}/x68k/genassym.cf
 
 ##
 ## (2) compile settings
