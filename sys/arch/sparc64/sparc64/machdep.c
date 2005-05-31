@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2005/04/25 15:02:07 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.181 2005/05/31 00:53:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2005/05/31 00:53:02 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -385,7 +385,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	u_int chosen;
 	char bootargs[256];
-	char *cp;
+	const char *cp;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return (ENOENT);
@@ -414,7 +414,8 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	if (cp == NULL || cp[0] == '\0')
 		return (ENOENT);
 
-	node.sysctl_data = cp;
+	/*XXXUNCONST*/
+	node.sysctl_data = __UNCONST(cp);
 	node.sysctl_size = strlen(cp) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -1022,16 +1023,16 @@ _bus_dmamap_destroy(t, map)
  * bypass DVMA.
  */
 int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
+_bus_dmamap_load(t, map, sbuf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	void *buf;
+	void *sbuf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
 	bus_size_t sgsize;
-	vaddr_t vaddr = (vaddr_t)buf;
+	vaddr_t vaddr = (vaddr_t)sbuf;
 	long incr;
 	int i;
 
