@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.82 2005/05/31 01:43:36 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.83 2005/05/31 01:48:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.82 2005/05/31 01:43:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.83 2005/05/31 01:48:22 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -636,7 +636,7 @@ ex_init(ifp)
 	GO_WINDOW(2);
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		bus_space_write_1(iot, ioh, ELINK_W2_ADDR_0 + i,
-		    ((const char *)CLLADDR(ifp->if_sadl))[i]);
+		    LLADDR(ifp->if_sadl)[i]);
 		bus_space_write_1(iot, ioh, ELINK_W2_RECVMASK_0 + i, 0);
 	}
 
