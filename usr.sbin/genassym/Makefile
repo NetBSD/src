@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2005/05/31 03:48:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2005/05/31 11:35:54 christos Exp $
 
-NOMAN=		yes
+MAN=		genassym.8
 SCRIPTS=	genassym.sh
 
 .include <bsd.prog.mk>
