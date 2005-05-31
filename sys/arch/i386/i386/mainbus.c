@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.54 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.55 2005/05/31 21:47:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.54 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.55 2005/05/31 21:47:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,6 @@ union mainbus_attach_args {
 	struct isabus_attach_args mba_iba;
 #if NMCA > 0
 	struct mcabus_attach_args mba_mba;
-#endif
-#if NAPM > 0
-	struct apm_attach_args mba_aaa;
 #endif
 #if NPNPBIOS > 0
 	struct pnpbios_attach_args mba_paa;
@@ -340,10 +337,8 @@ mainbus_attach(parent, self, aux)
 #if NACPI > 0
 	if (acpi_active == 0)
 #endif
-	if (apm_busprobe()) {
-		mba.mba_aaa.aaa_busname = "apm";
-		config_found_ia(self, "apmbus", &mba.mba_aaa, mainbus_print);
-	}
+	if (apm_busprobe())
+		config_found_ia(self, "apmbus", 0, apmbus_print);
 #endif
 }
 

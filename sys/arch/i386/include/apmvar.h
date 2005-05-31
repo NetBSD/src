@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.20 2005/05/31 17:51:49 christos Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.21 2005/05/31 21:47:22 drochner Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,10 +65,6 @@ struct apm_connect_info {
 	u_int apm_detail;
 };
 
-struct apm_attach_args {
-	const char *aaa_busname;
-};
-
 #ifdef _KERNEL
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
@@ -79,6 +75,7 @@ void apm_cpu_idle(void);
 void apminit(void);
 int apm_set_powstate(u_int devid, u_int powstate);
 int apm_busprobe(void);
+int apmbus_print(void *, const char *);
 #endif /* _KERNEL */
 #endif /* _LOCORE */
 #endif /* __i386_apm_h__ */
