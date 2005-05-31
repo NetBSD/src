@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.72 2005/05/31 00:51:57 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.73 2005/05/31 17:34:35 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.72 2005/05/31 00:51:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.73 2005/05/31 17:34:35 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -920,6 +920,7 @@ resettodr()
 	if (time.tv_sec == 0)
 		return;
 
+	tv = time;
 	cc_microset_time = time;
 #ifdef MULTIPROCESSOR
 	/* XXX broadcast IPI_MICROSET code here */
