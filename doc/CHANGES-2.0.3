@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.16 2005/05/24 19:58:31 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.17 2005/05/31 21:55:33 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -103,4 +103,10 @@ sys/dev/ata/ata.c				1.69 via patch
 	ATACH_TH_RUN flag is still set. Should fix panic reported by Jukka Salmi
 	on netbsd-users@.
 	[bouyer, ticket #1543]
+
+sys/arch/sun3/dev/if_ie.c			1.42
+
+	Avoid NULL pointer dereference in case of #if NBPFILTER == 0.
+	Closes PR port-sun3/21699.
+	[tsutsui, ticket #1874]
 
