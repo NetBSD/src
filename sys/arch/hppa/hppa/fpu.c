@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2005/05/01 19:18:12 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 2005/05/31 16:11:58 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2005/05/01 19:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2005/05/31 16:11:58 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ void
 hppa_fpu_bootstrap(u_int ccr_enable)
 {
 	u_int32_t junk[2];
-	u_int32_t version[2];
+	u_int32_t vers[2];
 	extern u_int hppa_fpu_nop0;
 	extern u_int hppa_fpu_nop1;
 
@@ -188,7 +188,7 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 			"	ldo	%1, %%r22	\n"
 			"	copr,0,0		\n"
 			"	fstds	%%fr0, 0(%%r22)	\n"
-			: "=m" (junk), "=m" (version) : : "r22");
+			: "=m" (junk), "=m" (vers) : : "r22");
 
 		/*
 		 * Now mark that no process has the FPU,
@@ -209,9 +209,9 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 		 * proc0, we dispatch the copr,0,0 opcode 
 		 * into the emulator directly.  
 		 */
-		decode_0c(OPCODE_COPR_0_0, 0, 0, version);
+		decode_0c(OPCODE_COPR_0_0, 0, 0, vers);
 #endif /* FPEMUL */
-	fpu_version = version[0];
+	fpu_version = vers[0];
 }
 
 /*
