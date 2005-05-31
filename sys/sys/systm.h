@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.177 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.178 2005/05/31 16:10:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -397,9 +397,9 @@ int cn_get_magic(char *, size_t);
 #define cn_check_magic(d, k, s)						\
 	do {								\
 		if (cn_isconsole(d)) {					\
-			int v = (s).cnm_magic[(s).cnm_state];		\
-			if ((k) == CNS_MAGIC_VAL(v)) {			\
-				(s).cnm_state = CNS_MAGIC_NEXT(v);	\
+			int _v = (s).cnm_magic[(s).cnm_state];		\
+			if ((k) == CNS_MAGIC_VAL(_v)) {			\
+				(s).cnm_state = CNS_MAGIC_NEXT(_v);	\
 				if ((s).cnm_state == CNS_TERM) {	\
 					cn_trap();			\
 					(s).cnm_state = 0;		\
