@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.80 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: buf.h,v 1.81 2005/05/31 02:57:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -252,9 +252,6 @@ do {									\
 
 extern	struct bio_ops bioops;
 extern	u_int nbuf;		/* The number of buffer headers */
-extern	struct buf *buf;	/* The buffer headers. */
-extern	char *buffers;		/* The buffer contents. */
-extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
 
 /*
  * Pool of I/O buffers.  Access to this pool must be protected with
