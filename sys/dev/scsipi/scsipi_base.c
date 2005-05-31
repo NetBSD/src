@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.130 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.131 2005/05/31 02:56:54 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.130 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.131 2005/05/31 02:56:54 xtraeme Exp $");
 
 #include "opt_scsi.h"
 
@@ -766,7 +766,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	int error;
 #ifndef	SCSIVERBOSE
 	u_int32_t info;
-	static char *error_mes[] = {
+	static const char *error_mes[] = {
 		"soft error (corrected)",
 		"not ready", "medium error",
 		"non-media hardware failure", "illegal request",
