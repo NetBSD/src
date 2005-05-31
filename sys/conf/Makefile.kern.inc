@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.62 2005/05/31 02:25:39 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.63 2005/05/31 04:03:46 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -30,6 +30,8 @@ OBJDUMP?=	objdump
 CSCOPE?=	cscope
 MKID?=		mkid
 UUDECODE?=	${TOOL_UUDECODE:Uuudecode}
+HEXDUMP?=	${TOOL_HEXDUMP:Uhexdump}
+GENASSYM?=	${TOOL_GENASSYM:Ugenassym}
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 _MKMSG?=		@\#
@@ -212,10 +214,10 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 .if !target(assym.h)
-assym.h: ${GENASSYM} ${GENASSYM_EXTRAS}
+assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
-	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
+	    ${GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -300,8 +302,8 @@ MKDEP_CFLAGS?=	${CFLAGS}
 	${MKDEP} -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
 	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
-	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${TOOL_GENASSYM} -- ${MKDEP} -f assym.dep -- \
+	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
+	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
