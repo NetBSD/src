@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.13 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.14 2005/05/31 21:08:38 drochner Exp $");
 
 #define __NSDUMP_C__
 
@@ -161,7 +161,7 @@ AcpiNsDumpOneDevice (
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname)
+    const char              *Pathname)
 {
     ACPI_FUNCTION_NAME ("NsPrintPathname");
 
@@ -210,7 +210,7 @@ AcpiNsPrintPathname (
 void
 AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
-    char                    *Msg,
+    const char              *Msg,
     UINT32                  Level,
     UINT32                  Component)
 {
