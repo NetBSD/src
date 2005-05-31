@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.6 2004/07/09 10:31:14 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.7 2005/05/31 00:45:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -223,20 +223,3 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	/* NOTREACHED */
 END(kloader_playstation2_boot)
 #endif /* KLOADER */
-
-/*
- * Unused. but for vmstat(8)
- */
-	.data
-	.align 6	/* align cache line size (64B) */	
-	
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-

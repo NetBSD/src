@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.7 2004/02/13 11:36:20 wiz Exp $   */
+/*	$NetBSD: intvec.S,v 1.8 2005/05/31 00:45:05 chs Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -516,13 +516,3 @@ noemulate:
 	addl2	$48,%sp			# adjust stack for
 #endif
 	.word	0xffff			# "reserved instruction fault"
-
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-	.long	0
-_C_LABEL(eintrnames):
-
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrcnt):
-	.long	0
-_C_LABEL(eintrcnt):

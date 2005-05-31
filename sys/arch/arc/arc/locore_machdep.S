@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.11 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.12 2005/05/31 00:45:02 chs Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -385,17 +385,3 @@ LEAF(mips3_TLBWriteIndexedVPS)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips3_TLBWriteIndexedVPS)
-
-
-/*
- * Symbols that vmstat -i wants, even though they're not used.
- */
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
