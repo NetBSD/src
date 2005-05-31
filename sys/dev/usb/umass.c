@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.118 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.119 2005/05/31 19:26:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.118 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.119 2005/05/31 19:26:22 drochner Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -170,7 +170,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.118 2005/05/11 10:02:28 augustss Exp $")
 #ifdef UMASS_DEBUG
 int umassdebug = 0;
 
-char *states[TSTATE_STATES+1] = {
+const char *states[TSTATE_STATES+1] = {
 	/* should be kept in sync with the list at transfer_state */
 	"Idle",
 	"BBB CBW",
