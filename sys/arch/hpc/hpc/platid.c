@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.6 2005/05/31 22:28:49 uwe Exp $	*/
+/*	$NetBSD: platid.c,v 1.7 2005/05/31 22:36:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(_WIN32)	/* XXX: hpcboot.exe */
-__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.6 2005/05/31 22:28:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.7 2005/05/31 22:36:12 uwe Exp $");
 #endif
 
 #include <sys/types.h>
@@ -120,13 +120,14 @@ platid_match_sub(platid_t *pid, platid_mask_t *mask, int unknown_is_match)
 tchar*
 platid_name(platid_t *pid)
 {
+	static tchar unknown[] = TEXT("UNKNOWN"); /* XXX */
 	struct platid_name *match;
 
 	match = platid_search(pid,
 	    platid_name_table, platid_name_table_size,
 	    sizeof(struct platid_name));
 
-	return ((match != NULL) ? match->name : TEXT("UNKNOWN"));
+	return ((match != NULL) ? match->name : unknown);
 }
 
 struct platid_data *
