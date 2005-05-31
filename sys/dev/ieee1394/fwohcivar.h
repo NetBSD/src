@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.22 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.23 2005/05/31 00:46:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -250,15 +250,14 @@ struct fwohci_it_ctx {
 
 #if 1
 	volatile struct fwohci_it_dmabuf *itc_buf_start;
-	struct fwohci_it_dmabuf *itc_buf_end;
-	struct fwohci_it_dmabuf *itc_buf_linkend;
-#endif
-	volatile int16_t itc_buf_cnt;	/* # buffers which contain data */
-#if 0
+	volatile struct fwohci_it_dmabuf *itc_buf_end;
+	volatile struct fwohci_it_dmabuf *itc_buf_linkend;
+#else
 	int16_t itc_bufidx_start;
 	int16_t itc_bufidx_end;
 	int16_t itc_bufidx_linkend;
 #endif
+	volatile int16_t itc_buf_cnt;	/* # buffers which contain data */
 
 	/* data for descriptor */
 	bus_dma_segment_t itc_dseg;
