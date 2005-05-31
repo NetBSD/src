@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.18 2003/09/08 22:19:25 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.18.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.18 2003/09/08 22:19:25 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.18.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 
 /*
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: pkgdb.c,v 1.18 2003/09/08 22:19:25 jlam Exp $");
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "lib.h"
 
@@ -58,7 +59,7 @@ __RCSID("$NetBSD: pkgdb.c,v 1.18 2003/09/08 22:19:25 jlam Exp $");
 
 static DB   *pkgdbp;
 static char *pkgdb_dir = NULL;
-static char  pkgdb_cache[FILENAME_MAX];
+static char  pkgdb_cache[MaxPathSize];
 
 /*
  *  Open the pkg-database
@@ -70,7 +71,7 @@ int
 pkgdb_open(int mode)
 {
 	BTREEINFO info;
-	char	cachename[FILENAME_MAX];
+	char	cachename[MaxPathSize];
 
 	/* try our btree format first */
 	info.flags = 0;
@@ -119,7 +120,7 @@ pkgdb_store(const char *key, const char *val)
 	vald.data = (void *) val;
 	vald.size = strlen(val) + 1;
 
-	if (keyd.size > FILENAME_MAX || vald.size > FILENAME_MAX)
+	if (keyd.size > MaxPathSize || vald.size > MaxPathSize)
 		return -1;
 
 	return (*pkgdbp->put) (pkgdbp, &keyd, &vald, R_NOOVERWRITE);
@@ -191,7 +192,7 @@ pkgdb_remove(const char *key)
 
 	keyd.data = (char *) key;
 	keyd.size = strlen(key) + 1;
-	if (keyd.size > FILENAME_MAX)
+	if (keyd.size > MaxPathSize)
 		return -1;
 
 	return (*pkgdbp->del) (pkgdbp, &keyd, 0);
@@ -211,7 +212,7 @@ pkgdb_remove_pkg(const char *pkg)
 	int	type;
 	int	ret;
 	int	cc;
-	char	cachename[FILENAME_MAX];
+	char	cachename[MaxPathSize];
 
 	if (pkgdbp == NULL) {
 		return 0;
@@ -237,6 +238,22 @@ pkgdb_remove_pkg(const char *pkg)
 		}
 	}
 	return ret;
+}
+
+/*
+ *  Return the location of the package reference counts database directory.
+ */
+char *
+pkgdb_refcount_dir(void)
+{
+	static char buf[MaxPathSize];
+	char *tmp;
+
+	if ((tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME)))
+		strlcpy(buf, tmp, sizeof(buf));
+	else
+		snprintf(buf, sizeof(buf), "%s.refcount", _pkgdb_getPKGDB_DIR());
+	return buf;
 }
 
 /*

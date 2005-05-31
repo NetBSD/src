@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.4.2.1 2004/04/19 03:43:13 jmc Exp $ */
+/* $NetBSD: verify.c,v 1.4.2.1.2.1 2005/05/31 22:05:40 tron Exp $ */
 
 /*
  * Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.4.2.1 2004/04/19 03:43:13 jmc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.4.2.1.2.1 2005/05/31 22:05:40 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ do_verify(const char *pkgname, const char *cmd1, const char *cmd2, const char *c
 	struct stat	st;
 	const char    *const *ep;
 	char		buf[BUFSIZ];
-	char		f[FILENAME_MAX];
+	char		f[MaxPathSize];
 	int		ret;
 	int		i;
 

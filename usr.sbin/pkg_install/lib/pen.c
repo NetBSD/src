@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $	*/
+/*	$NetBSD: pen.c,v 1.31.4.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $");
+__RCSID("$NetBSD: pen.c,v 1.31.4.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -36,8 +36,8 @@ __RCSID("$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $");
 #include <sys/mount.h>
 
 /* For keeping track of where we are */
-static char Current[FILENAME_MAX];
-static char Previous[FILENAME_MAX];
+static char Current[MaxPathSize];
+static char Previous[MaxPathSize];
 static int CurrentSet;		/* rm -fr Current only if it's really set! */
                                 /* CurrentSet is set to 0 before strcpy()s
 				 * to prevent rm'ing of a partial string
@@ -141,7 +141,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	}
 	if (Current[0])
 		strlcpy(Previous, Current, sizeof(Previous));
-	else if (!getcwd(Previous, FILENAME_MAX)) {
+	else if (!getcwd(Previous, MaxPathSize)) {
 		cleanup(0);
 		err(EXIT_FAILURE, "fatal error during execution: getcwd");
 	}
@@ -197,5 +197,5 @@ min_free(char *tmpdir)
 		warn("statfs");
 		return -1;
 	}
-	return (uint64_t) buf.f_bavail * (uint64_t) buf.f_bsize;
+	return (uint64_t)buf.f_bavail * buf.f_bsize;
 }

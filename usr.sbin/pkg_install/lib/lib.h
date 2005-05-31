@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.67 2004/01/15 09:33:39 agc Exp $ */
+/* $NetBSD: lib.h,v 1.67.4.1 2005/05/31 22:05:41 tron Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -56,6 +56,10 @@
 #define OPSYS_NAME "NetBSD"
 #endif
 
+#ifndef DEF_UMASK
+#define DEF_UMASK 022
+#endif
+
 /* Usually "rm", but often "echo" during debugging! */
 #define REMOVE_CMD	"rm"
 
@@ -101,6 +105,15 @@
 # endif
 #endif
 
+/* some operating systems don't have this */
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	1024
+#endif
+
+enum {
+	MaxPathSize = MAXPATHLEN
+};
+
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"
 #define COMMENT_FNAME		"+COMMENT"
@@ -130,7 +143,19 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
-#define	PKG_PATTERN_MAX	FILENAME_MAX	/* max length of pattern, including nul */
+/*
+ * The name of the "metadatadir" environment variable given to scripts.
+ * This variable holds the location of the +-files for this package.
+ */
+#define PKG_METADATA_DIR_VNAME	"PKG_METADATA_DIR"
+
+/*
+ * The name of the environment variable holding the location to the
+ * reference-counts database directory.
+ */
+#define PKG_REFCOUNT_DBDIR_VNAME	"PKG_REFCOUNT_DBDIR"
+
+#define	PKG_PATTERN_MAX	MaxPathSize	/* max length of pattern, including nul */
 #define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
 
 enum {
@@ -168,7 +193,8 @@ typedef enum bi_ent_t {
 	BI_OPSYS,		/*  0 */
 	BI_OS_VERSION,		/*  1 */
 	BI_MACHINE_ARCH,	/*  2 */
-	BI_ENUM_COUNT,		/*  3 */
+	BI_IGNORE_RECOMMENDED,	/*  3 */
+	BI_ENUM_COUNT		/*  4 */
 }	bi_ent_t;
 
 /* Types */
@@ -268,6 +294,7 @@ Boolean make_preserve_name(char *, size_t, char *, char *);
 void    write_file(char *, char *);
 void    copy_file(char *, char *, char *);
 void    move_file(char *, char *, char *);
+void    move_files(const char *, const char *, const char *);
 void    remove_files(const char *, const char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
 int     unpack(const char *, const char *);
@@ -295,7 +322,7 @@ void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(char *, char **);
-int     delete_package(Boolean, Boolean, package_t *);
+int     delete_package(Boolean, Boolean, package_t *, Boolean);
 
 /* Package Database */
 int     pkgdb_open(int);
@@ -305,6 +332,7 @@ char   *pkgdb_retrieve(const char *);
 void	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
+char   *pkgdb_refcount_dir(void);
 char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
 void	_pkgdb_setPKGDB_DIR(const char *);
@@ -321,6 +349,5 @@ int     pkg_perform(lpkg_head_t *);
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
-extern Boolean Replace;
 
 #endif				/* _INST_LIB_LIB_H_ */

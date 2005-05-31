@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.51.2.1 2004/08/11 19:54:26 jmc Exp $	*/
+/*	$NetBSD: perform.c,v 1.51.2.1.2.1 2005/05/31 22:05:41 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.51.2.1 2004/08/11 19:54:26 jmc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.51.2.1.2.1 2005/05/31 22:05:41 tron Exp $");
 #endif
 #endif
 
@@ -46,11 +46,12 @@ static int
 pkg_do(char *pkg)
 {
 	Boolean installed = FALSE, isTMP = FALSE;
-	char    log_dir[FILENAME_MAX];
-	char    fname[FILENAME_MAX];
+	char    log_dir[MaxPathSize];
+	char    fname[MaxPathSize];
 	struct stat sb;
 	char   *cp = NULL;
 	int     code = 0;
+	char flist[sizeof(ALL_FNAMES)] = "\0";
 
 	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(pkg)) != NULL) {
@@ -61,7 +62,7 @@ pkg_do(char *pkg)
 		int     len;
 
 		if (*pkg != '/') {
-			if (!getcwd(fname, FILENAME_MAX)) {
+			if (!getcwd(fname, MaxPathSize)) {
 				cleanup(0);
 				err(EXIT_FAILURE, "fatal error during execution: getcwd");
 			}
@@ -71,10 +72,6 @@ pkg_do(char *pkg)
 			strlcpy(fname, pkg, sizeof(fname));
 		}
 		cp = fname;
-	} else {
-		if ((cp = fileFindByPath(pkg)) != NULL) {
-			strncpy(fname, cp, FILENAME_MAX);
-		}
 	}
 
 	if (cp) {
@@ -100,7 +97,6 @@ pkg_do(char *pkg)
 				 * compress an average of 75%, but we're only unpacking the + files
 				 * needed so be very optimistic.
 				 */
-				char flist[sizeof(ALL_FNAMES)];
 
 				/* Determine which +-files to unpack - not all may be present! */
 				strcat(flist, CONTENTS_FNAME); strcat(flist, " ");
@@ -144,8 +140,8 @@ pkg_do(char *pkg)
 			{
 				/* Check if the given package name matches
 				 * something with 'pkg-[0-9]*' */
-				char    try[FILENAME_MAX];
-				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+				char    try[MaxPathSize];
+				snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
 					add_to_list_fn, &pkgs) > 0) {
 					return 0;	/* we've just appended some names to the pkgs list,
@@ -154,7 +150,7 @@ pkg_do(char *pkg)
 			}
 
 			/* No match */
-			warnx("can't find package `%s' installed or in a file!", pkg);
+			warnx("can't find package `%s'", pkg);
 			return 1;
 		}
 		if (chdir(log_dir) == FAIL) {
@@ -169,10 +165,12 @@ pkg_do(char *pkg)
          * any sense.
          */
 	if (Flags & SHOW_INDEX) {
-		char    tmp[FILENAME_MAX];
+		char    tmp[MaxPathSize];
 
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
-		show_index(tmp, COMMENT_FNAME);
+		show_index(pkg, tmp, COMMENT_FNAME);
+	} else if (Flags & SHOW_BI_VAR) {
+		show_var(BUILD_INFO_FNAME, BuildInfoVariable);
 	} else {
 		FILE   *fp;
 		package_t plist;
@@ -197,7 +195,7 @@ pkg_do(char *pkg)
 			}
 		}
 		if (Flags & SHOW_COMMENT) {
-			show_file("Comment:\n", COMMENT_FNAME);
+			show_file(pkg, "Comment:\n", COMMENT_FNAME);
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
@@ -206,28 +204,28 @@ pkg_do(char *pkg)
 			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
-			show_file("Required by:\n", REQUIRED_BY_FNAME);
+			show_file(pkg, "Required by:\n", REQUIRED_BY_FNAME);
 		}
 		if (Flags & SHOW_DESC) {
-			show_file("Description:\n", DESC_FNAME);
+			show_file(pkg, "Description:\n", DESC_FNAME);
 		}
 		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
-			show_file("Install notice:\n", DISPLAY_FNAME);
+			show_file(pkg, "Install notice:\n", DISPLAY_FNAME);
 		}
 		if (Flags & SHOW_PLIST) {
 			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
 		}
 		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
-			show_file("Install script:\n", INSTALL_FNAME);
+			show_file(pkg, "Install script:\n", INSTALL_FNAME);
 		}
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
-			show_file("De-Install script:\n", DEINSTALL_FNAME);
+			show_file(pkg, "De-Install script:\n", DEINSTALL_FNAME);
 		}
 		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
-			show_file("Require script:\n", REQUIRE_FNAME);
+			show_file(pkg, "Require script:\n", REQUIRE_FNAME);
 		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
-			show_file("mtree file:\n", MTREE_FNAME);
+			show_file(pkg, "mtree file:\n", MTREE_FNAME);
 		}
 		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
@@ -236,16 +234,16 @@ pkg_do(char *pkg)
 			show_files("Files:\n", &plist);
 		}
 		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
-			show_file("Build version:\n", BUILD_VERSION_FNAME);
+			show_file(pkg, "Build version:\n", BUILD_VERSION_FNAME);
 		}
 		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
-			show_file("Build information:\n", BUILD_INFO_FNAME);
+			show_file(pkg, "Build information:\n", BUILD_INFO_FNAME);
 		}
 		if ((Flags & SHOW_PKG_SIZE) && fexists(SIZE_PKG_FNAME)) {
-			show_file("Size of this package in bytes: ", SIZE_PKG_FNAME);
+			show_file(pkg, "Size of this package in bytes: ", SIZE_PKG_FNAME);
 		}
 		if ((Flags & SHOW_ALL_SIZE) && fexists(SIZE_ALL_FNAME)) {
-			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
+			show_file(pkg, "Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
 			if (fexists(PRESERVE_FNAME)) {
@@ -269,7 +267,7 @@ static int
 foundpkg(const char *found, void *vp)
 {
 	char *data = vp;
-	char buf[FILENAME_MAX+1];
+	char buf[MaxPathSize+1];
 
 	/* we only want to display this if it really is a directory */
 	snprintf(buf, sizeof(buf), "%s/%s", data, found);
@@ -293,7 +291,7 @@ foundpkg(const char *found, void *vp)
 static int
 CheckForPkg(char *pkgspec, char *dbdir)
 {
-	char    buf[FILENAME_MAX];
+	char    buf[MaxPathSize];
 	int     error;
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
@@ -313,8 +311,8 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	if (error) {
 		/* found nothing - try 'pkg-[0-9]*' */
 		
-		char    try[FILENAME_MAX];
-		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
+		char    try[MaxPathSize];
+		snprintf(try, MaxPathSize, "%s-[0-9]*", pkgspec);
 		if (findmatchingname(dbdir, try, foundpkg, dbdir) > 0) {
 			error = 0;
 		}
@@ -357,7 +355,7 @@ pkg_perform(lpkg_head_t *pkghead)
 			/* Show all packges with description */
 			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
 				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-					char    tmp2[FILENAME_MAX];
+					char    tmp2[MaxPathSize];
 
 					if (strcmp(dp->d_name, ".") == 0 ||
 					    strcmp(dp->d_name, "..") == 0)
