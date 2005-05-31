@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.25 2005/05/31 02:50:59 xtraeme Exp $ */
+/* $NetBSD: cgd.c,v 1.26 2005/05/31 19:20:37 drochner Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.25 2005/05/31 02:50:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.26 2005/05/31 19:20:37 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ int cgddebug = 0;
 #define DPRINTF(x,y)		IFDEBUG(x, printf y)
 #define DPRINTF_FOLLOW(y)	DPRINTF(CGDB_FOLLOW, y)
 
-static void	hexprint(char *, void *, int);
+static void	hexprint(const char *, void *, int);
 
 #else
 #define IFDEBUG(x,y)
@@ -787,7 +787,7 @@ cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
 
 #ifdef DEBUG
 static void
-hexprint(char *start, void *buf, int len)
+hexprint(const char *start, void *buf, int len)
 {
 	char	*c = buf;
 

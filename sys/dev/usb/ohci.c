@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.165 2005/05/28 07:44:37 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.166 2005/05/31 19:21:08 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.165 2005/05/28 07:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.166 2005/05/31 19:21:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1222,7 +1222,7 @@ ohci_rhsc_enable(void *v_sc)
 }
 
 #ifdef OHCI_DEBUG
-char *ohci_cc_strs[] = {
+const char *ohci_cc_strs[] = {
 	"NO_ERROR",
 	"CRC",
 	"BIT_STUFFING",
