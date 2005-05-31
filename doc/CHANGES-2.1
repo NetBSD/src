@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.114 2005/05/30 00:20:21 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.115 2005/05/31 21:00:54 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2351,4 +2351,13 @@ sys/arch/i386/stand/lib/realprot.S		1.4
 	Workaround for issues seen on VIA C3-based systems. This workaround
 	is non-intrusive and should not affect any other CPUs.  PR#26007.
 	[gavan, ticket #1870]
+
+	sys/dev/usb/uplcom.c				patch
+	sys/dev/usb/usbdevs				patch
+	sys/dev/usb/usbdevs.h				regen
+	sys/dev/usb/usbdevs_data.h			regen
+
+	Backport -current uplcom, which among other things adds support
+	for the new Prolific 2303 "HX" revision.
+	[soren, ticket #1557]
 
