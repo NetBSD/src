@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.20 2004/09/13 14:32:38 drochner Exp $	*/
+/*	$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.20 2004/09/13 14:32:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -299,16 +299,16 @@ sab_attach(parent, self, aux)
 	SAB_WRITE(sc, SAB_IPC, SAB_IPC_ICPL);
 
 	for (i = 0; i < SAB_NCHAN; i++) {
-		struct sabtty_attach_args sta;
+		struct sabtty_attach_args stax;
 
-		sta.sbt_portno = i;
+		stax.sbt_portno = i;
 
 		ldesc->len = 1;
 		ldesc->locs[SABCF_CHANNEL] = i;
 
 		sc->sc_child[i] =
 		    (struct sabtty_softc *)config_found_sm_loc(self,
-		     "sab", ldesc, &sta, sab_print, sab_submatch);
+		     "sab", ldesc, &stax, sab_print, sab_submatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
@@ -438,7 +438,7 @@ sabtty_attach(parent, self, aux)
 
 	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		struct termios t;
-		char *acc;
+		const char *acc;
 
 		/* Let residual prom output drain */
 		DELAY(100000);
