@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.46 2004/04/24 15:49:00 kleink Exp $	*/
+/*	$NetBSD: ebus.c,v 1.47 2005/05/31 00:50:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.46 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.47 2005/05/31 00:50:28 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -492,15 +492,16 @@ ebus_bus_mmap(t, paddr, off, prot, flags)
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr = ((bus_addr_t)sc->sc_range[i].child_hi << 32) |
+		bus_addr_t paddr1 =
+		    ((bus_addr_t)sc->sc_range[i].child_hi << 32) |
 		    sc->sc_range[i].child_lo;
 
-		if (offset != paddr)
+		if (offset != paddr1)
 			continue;
 
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
-		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_memtag, paddr, off,
+		    (unsigned long long)paddr1));
+		return (bus_space_mmap(sc->sc_memtag, paddr1, off,
 				       prot, flags));
 	}
 
