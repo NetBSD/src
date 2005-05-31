@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2005/03/08 22:04:22 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.27 2005/05/31 00:40:17 chs Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.26 2005/03/08 22:04:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27 2005/05/31 00:40:17 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -558,7 +558,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 __db_print_symbol(db_expr_t value)
 {
-	char *name;
+	const char *name;
 	db_expr_t offset;
 
 	db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
