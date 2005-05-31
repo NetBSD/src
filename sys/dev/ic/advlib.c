@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.21 2005/05/30 04:43:46 christos Exp $        */
+/*      $NetBSD: advlib.c,v 1.22 2005/05/31 00:46:05 christos Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.21 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.22 2005/05/31 00:46:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -867,7 +867,7 @@ AscSetChipSynRegAtID(bus_space_tag_t iot, bus_space_handle_t ioh,
 {
 	ASC_SCSI_BIT_ID_TYPE org_id;
 	int             i;
-	int             sta = TRUE;
+	int             stax = TRUE;
 
 	AscSetBank(iot, ioh, 1);
 	org_id = ASC_READ_CHIP_DVC_ID(iot, ioh);
@@ -881,14 +881,14 @@ AscSetChipSynRegAtID(bus_space_tag_t iot, bus_space_handle_t ioh,
 		AscSetBank(iot, ioh, 0);
 		ASC_SET_CHIP_SYN(iot, ioh, sdtr_data);
 		if (ASC_GET_CHIP_SYN(iot, ioh) != sdtr_data)
-			sta = FALSE;
+			stax = FALSE;
 	} else
-		sta = FALSE;
+		stax = FALSE;
 
 	AscSetBank(iot, ioh, 1);
 	ASC_WRITE_CHIP_DVC_ID(iot, ioh, org_id);
 	AscSetBank(iot, ioh, 0);
-	return (sta);
+	return (stax);
 }
 
 
