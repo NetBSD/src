@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.73 2005/05/31 17:34:35 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.74 2005/05/31 21:34:21 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.73 2005/05/31 17:34:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74 2005/05/31 21:34:21 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -858,6 +858,7 @@ inittodr(base)
 {
 	struct timeval tv;
 	int badbase = 0, waszero = base == 0;
+	int no_valid_todr = 1;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -871,8 +872,15 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_handle && 
-	    (todr_gettime(todr_handle, &tv) != 0 || tv.tv_sec == 0)) {
+	if (todr_handle) {
+		if (todr_gettime(todr_handle, &tv) == 0) {
+			if (tv.tv_sec != 0) {
+				time = tv;
+				no_valid_todr = 0;
+			}
+		}
+	}
+	if (no_valid_todr) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -885,7 +893,6 @@ inittodr(base)
 			resettodr();
 	} else {
 		int deltat;
-		time = tv;
 		deltat = time.tv_sec - base;
 
 		cc_microset_time = time;
