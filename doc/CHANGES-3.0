@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.106 2005/05/30 21:40:23 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.107 2005/05/31 22:42:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8977,4 +8977,22 @@ xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.3
 	- Add scancodes for Sun-specific keys to the Sun keymap.
 	- Fix the legacy driver to ignore bogus scancodes.
 	[macallan, ticket #358]
+
+sys/arch/sun3/dev/if_ie.c			1.42
+
+	Avoid NULL pointer dereference in case of #if NBPFILTER == 0.
+	Closes PR#21699.
+	[tsutsui, ticket #359]
+
+sys/arch/sun2/conf/files.sun2			1.15
+
+	Don't define zstty as an attribute so that children of zstty
+	(kbd and ms) are attached properly. Tested on tme.
+	[tsutsui, ticket #360]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/VISmoveImage.s 1.4
+
+	keep the code from turning off the FPU - cures excessive traps that made
+	acceleration unusable ( after mhitch figured out what caused the traps )
+	[macallan, ticket #361]
 
