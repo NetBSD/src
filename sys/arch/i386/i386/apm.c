@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.84 2004/08/30 15:05:17 drochner Exp $ */
+/*	$NetBSD: apm.c,v 1.85 2005/05/31 17:51:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.84 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.85 2005/05/31 17:51:49 christos Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -636,7 +636,7 @@ apm_event_handle(sc, regs)
 {
 	int error, retval;
 	struct bioscallregs nregs;
-	char *code;
+	const char *code;
 
 	retval = 1;		/* assume we are going to make progress */
 
