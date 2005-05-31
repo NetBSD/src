@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.19 2004/03/24 15:38:41 wiz Exp $	*/
+/*	$NetBSD: exception.c,v 1.20 2005/05/31 22:01:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.19 2004/03/24 15:38:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.20 2005/05/31 22:01:24 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -420,7 +420,7 @@ do {									\
 	ksiginfo_t ksi;
 	boolean_t usermode;
 	int err, track, ftype;
-	char *panic_msg;
+	const char *panic_msg;
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
