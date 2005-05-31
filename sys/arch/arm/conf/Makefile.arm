@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.23 2005/01/11 08:41:07 simonb Exp $
+#	$NetBSD: Makefile.arm,v 1.24 2005/05/31 04:03:09 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -27,7 +27,7 @@ NEED_OWN_INSTALL_TARGET?=no
 THISARM=	$S/arch/${MACHINE}
 ARM=		$S/arch/arm
 ARM32=		$S/arch/arm32
-GENASSYM=	${ARM}/arm32/genassym.cf
+GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 .-include "$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
 
 ##

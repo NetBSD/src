@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.19 2004/06/04 04:45:51 thorpej Exp $
+#	$NetBSD: Makefile.sh3,v 1.20 2005/05/31 04:03:11 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISSH3=	$S/arch/${MACHINE}
 SH3=		$S/arch/sh3
-GENASSYM=	${SH3}/sh3/genassym.cf
+GENASSYM_CONF=	${SH3}/sh3/genassym.cf
 .-include "${THISSH3}/conf/Makefile.${MACHINE}.inc"
 
 ##
