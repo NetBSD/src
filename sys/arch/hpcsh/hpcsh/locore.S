@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2004/03/21 02:20:21 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2005/05/31 00:45:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,13 +53,3 @@ ALTENTRY(kernel_text)
 	.align	2
 _L.machine_startup:	.long	_C_LABEL(machine_startup)
 _L.bootstrap_stack:	.long	_C_LABEL(start)
-
-	.data
-	.align	2
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):

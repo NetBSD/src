@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.204 2005/02/12 21:32:56 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.205 2005/05/31 00:45:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -11830,20 +11830,6 @@ _C_LABEL(ssym):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
-
-/*
- * Symbols that vmstat -i wants, even though they're not used.
- */
-.globl	_C_LABEL(intrnames)
-_C_LABEL(intrnames):
-.globl	_C_LABEL(eintrnames)
-_C_LABEL(eintrnames):
-
-.globl	_C_LABEL(intrcnt)
-_C_LABEL(intrcnt):
-.globl	_C_LABEL(eintrcnt)
-_C_LABEL(eintrcnt):
-
 
 #if !defined(MULTIPROCESSOR)
 	.comm	_C_LABEL(curlwp), PTRSZ
