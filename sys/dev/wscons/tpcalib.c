@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.3 2005/02/27 00:27:52 perry Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.4 2005/05/31 23:37:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.3 2005/02/27 00:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.4 2005/05/31 23:37:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,15 +99,15 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 			tpcalib_reset(sc);
 		} else
 			if (mra_Y_AX1_BX2_C(&d->samples[0].x, s,
-			    &d->samples[0].rawx, s,
-			    &d->samples[0].rawy, s,
-			    d->samplelen, SCALE,
-			    &sc->sc_ax, &sc->sc_bx, &sc->sc_cx) ||
+				    &d->samples[0].rawx, s,
+				    &d->samples[0].rawy, s,
+				    d->samplelen, SCALE,
+				    &sc->sc_ax, &sc->sc_bx, &sc->sc_cx) ||
 			    mra_Y_AX1_BX2_C(&d->samples[0].y, s,
-				&d->samples[0].rawx, s,
-				&d->samples[0].rawy, s,
-				d->samplelen, SCALE,
-				&sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
+				    &d->samples[0].rawx, s,
+				    &d->samples[0].rawy, s,
+				    d->samplelen, SCALE,
+				    &sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
 				printf("tpcalib: MRA error");
 				tpcalib_reset(sc);
 
