@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.1 2005/05/23 17:44:25 kiyohara Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.2 2005/05/31 23:22:14 uwe Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -183,8 +183,8 @@ psh3tp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
-	tpcalib_ioctl(&sc->sc_tpcalib,
-	    WSMOUSEIO_SCALIBCOORDS, (caddr_t)&psh3tp_default_calib, 0, 0);
+	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+		      (caddr_t)__UNCONST(&psh3tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
 	callout_init(&sc->sc_touch_ch);
