@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.168 2005/05/23 21:58:21 riz Exp $
+#	$NetBSD: bsd.README,v 1.169 2005/05/31 02:25:36 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1294,6 +1294,8 @@ TOOL_DB			Manipulate db(3) databases.  [db]
 TOOL_EQN		Format equations for groff.  [eqn]
 
 TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
+
+TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
 
 TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
 
