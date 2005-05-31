@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.13 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.14 2005/05/31 17:51:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.13 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.14 2005/05/31 17:51:49 christos Exp $");
 
 #include "opt_pcibios.h"
 
@@ -84,7 +84,7 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	const struct {
 		bus_addr_t start;
 		bus_size_t size;
-		char *name;
+		const char *name;
 	} system_reserve [] = {
 		{ 0xfec00000, 0x100000, "I/O APIC" },
 		{ 0xfee00000, 0x100000, "Local APIC" },
