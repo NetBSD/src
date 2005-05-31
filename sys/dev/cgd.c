@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.24 2005/03/31 16:46:13 explorer Exp $ */
+/* $NetBSD: cgd.c,v 1.25 2005/05/31 02:50:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.24 2005/03/31 16:46:13 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.25 2005/05/31 02:50:59 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,12 +166,12 @@ getcgd_softc(dev_t dev)
 static void
 cgdsoftc_init(struct cgd_softc *cs, int num)
 {
-	char	buf[DK_XNAME_SIZE];
+	char	sbuf[DK_XNAME_SIZE];
 
 	memset(cs, 0x0, sizeof(*cs));
-	snprintf(buf, DK_XNAME_SIZE, "cgd%d", num);
+	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
 	simple_lock_init(&cs->sc_slock);
-	dk_sc_init(&cs->sc_dksc, cs, buf);
+	dk_sc_init(&cs->sc_dksc, cs, sbuf);
 }
 
 void
@@ -692,7 +692,7 @@ bail:
  */
 
 static void
-blkno2blkno_buf(char *buf, daddr_t blkno)
+blkno2blkno_buf(char *sbuf, daddr_t blkno)
 {
 	int	i;
 
@@ -712,7 +712,7 @@ blkno2blkno_buf(char *buf, daddr_t blkno)
 	 * greater than or equal to sizeof(daddr_t).
 	 */
 	for (i=0; i < sizeof(daddr_t); i++) {
-		*buf++ = blkno & 0xff;
+		*sbuf++ = blkno & 0xff;
 		blkno >>= 8;
 	}
 }
