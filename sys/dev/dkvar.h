@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.4 2004/03/27 23:23:06 elric Exp $ */
+/* $NetBSD: dkvar.h,v 1.5 2005/05/31 02:50:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct dk_softc {
  */
 struct dk_intf {
 	int	  di_dtype;			/* disk type */
-	char	 *di_dkname;			/* disk type name */
+	const char *di_dkname;			/* disk type name */
 	int	(*di_open)(dev_t, int, int, struct proc *);
 	int	(*di_close)(dev_t, int, int, struct proc *);
 	void	(*di_strategy)(struct buf *);
