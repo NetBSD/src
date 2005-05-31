@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.13 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.14 2005/05/31 21:08:38 drochner Exp $");
 
 #include "acpi.h"
 #include "acdispat.h"
@@ -1016,7 +1016,7 @@ AcpiDbWalkForSpecificObjects (
 
 ACPI_STATUS
 AcpiDbDisplayObjects (
-    char                    *ObjTypeArg,
+    const char              *ObjTypeArg,
     char                    *DisplayCountArg)
 {
     ACPI_OBJECT_TYPE        Type;

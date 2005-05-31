@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -160,7 +160,7 @@ AcpiDbDumpBuffer (
 
 ACPI_OBJECT_TYPE
 AcpiDbMatchArgument (
-    char                    *UserArgument,
+    const char              *UserArgument,
     ARGUMENT_INFO           *Arguments)
 {
     UINT32                  i;
