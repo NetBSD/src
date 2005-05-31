@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.21 2005/05/19 20:16:19 elad Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.22 2005/05/31 00:41:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.21 2005/05/19 20:16:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.22 2005/05/31 00:41:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -187,7 +187,7 @@ netbsd32_execve2(l, uap, retval)
 	}
 
 	/* Now get argv & environment */
-	if (!(cpp = (netbsd32_charp *)SCARG(uap, argp))) {
+	if (!(cpp = (const netbsd32_charp *)SCARG(uap, argp))) {
 		error = EINVAL;
 		goto bad;
 	}
@@ -214,7 +214,7 @@ netbsd32_execve2(l, uap, retval)
 
 	envc = 0;
 	/* environment need not be there */
-	if ((cpp = (netbsd32_charp *)SCARG(uap, envp)) != NULL ) {
+	if ((cpp = (const netbsd32_charp *)SCARG(uap, envp)) != NULL ) {
 		while (1) {
 			len = argp + ARG_MAX - dp;
 			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
