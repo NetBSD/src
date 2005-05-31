@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 2003/10/12 19:48:52 pk Exp $ */
+/*	$NetBSD: fpu.c,v 1.24 2005/05/31 00:57:40 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2003/10/12 19:48:52 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2005/05/31 00:57:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -65,7 +65,7 @@ int fpe_debug = 0;
 void
 fpu_dumpfpn(struct fpn *fp)
 {
-	static char *class[] = {
+	static const char *class[] = {
 		"SNAN", "QNAN", "ZERO", "NUM", "INF"
 	};
 
