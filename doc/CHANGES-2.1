@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.115 2005/05/31 21:00:54 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.116 2005/05/31 21:33:46 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2360,4 +2360,24 @@ sys/arch/i386/stand/lib/realprot.S		1.4
 	Backport -current uplcom, which among other things adds support
 	for the new Prolific 2303 "HX" revision.
 	[soren, ticket #1557]
+
+lib/libc/string/wcschr.c			1.3
+
+	It is really pointless to come up with new implementations of the wide
+	string functions instead of using the narrow string ones. Make this
+	look like strchr, so that wcschr(L"foo", L'\0') does not return NULL
+	as it should.
+	[christos, ticket #1872]
+
+sys/arch/sun3/dev/if_ie.c			1.42
+
+	Avoid NULL pointer dereference in case of #if NBPFILTER == 0.
+	Closes PR port-sun3/21699.
+	[tsutsui, ticket #1874]
+
+sys/arch/sun2/conf/files.sun2			1.15
+
+	Don't define zstty as an attribute so that children of zstty (kbd
+	and ms) are attached properly. Tested on tme.
+	[tsutsui, ticket #1875]
 
