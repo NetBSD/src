@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.13 2005/05/30 04:45:07 christos Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.14 2005/05/31 00:48:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.13 2005/05/30 04:45:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.14 2005/05/31 00:48:57 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -258,7 +258,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
 	} while (/*CONSTCOND*/ 0)
-# define READ_S16BE(P)		*(int16_t*)(P)
+# define READ_S16BE(P)		*(const int16_t*)(P)
 # define WRITE_S16BE(P, V)	*(int16_t*)(P) = V
 # define READ_S32LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | ((P)[2]<<16) | (((int8_t)((P)[3]))<<24))
 # define WRITE_S32LE(P, V)	\
@@ -269,7 +269,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		(P)[2] = vvv >> 16; \
 		(P)[3] = vvv >> 24; \
 	} while (/*CONSTCOND*/ 0)
-# define READ_S32BE(P)		*(int32_t*)(P)
+# define READ_S32BE(P)		*(const int32_t*)(P)
 # define WRITE_S32BE(P, V)	*(int32_t*)(P) = V
 #endif /* !LITTLE_ENDIAN */
 #define READ_S24LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | (((int8_t)((P)[2]))<<16))
