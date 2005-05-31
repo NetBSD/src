@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.5 2005/05/31 11:57:13 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.6 2005/05/31 13:53:15 yamt Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.5 2005/05/31 11:57:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2005/05/31 13:53:15 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -766,15 +766,15 @@ void
 cpu_probe_features(struct cpu_info *ci)
 {
 	const struct cpu_cpuid_nameclass *cpup = NULL;
-	int i, max, family;
+	int i, xmax, family;
 
 	cpu_probe_base_features(ci);
 
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
-	for (i = 0; i < max; i++) {
+	xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
 			cpup = &i386_cpuid_cpus[i];
@@ -1054,7 +1054,7 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *brand = "";
-	int class = CPUCLASS_386, vendor, i, max;
+	int class = CPUCLASS_386, vendor, i, xmax;
 	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
@@ -1076,14 +1076,14 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
-		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
 
-		for (i = 0; i < max; i++) {
+		for (i = 0; i < xmax; i++) {
 			if (!strncmp((char *)ci->ci_vendor,
 			    i386_cpuid_cpus[i].cpu_id, 12)) {
 				cpup = &i386_cpuid_cpus[i];
