@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.55 2005/05/31 21:47:22 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.56 2005/05/31 22:39:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.55 2005/05/31 21:47:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.56 2005/05/31 22:39:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,9 +270,8 @@ mainbus_attach(parent, self, aux)
 	if (acpi_active == 0)
 #endif
 	if (pnpbios_probe()) {
-		mba.mba_paa.paa_busname = "pnpbios";
 		mba.mba_paa.paa_ic = &x86_isa_chipset;
-		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, mainbus_print);
+		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, pnpbiosbusprint);
 	}
 #endif
 
