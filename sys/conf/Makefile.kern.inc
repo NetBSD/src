@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.63 2005/05/31 04:03:46 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.64 2005/05/31 14:59:31 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -73,8 +73,6 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
-CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
-CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPUFLAGS} -ffreestanding
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
@@ -404,6 +402,9 @@ EXTRA_CLEAN+= .gdbinit
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 .endif
+
+CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
+CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 
 ##
 ## the end
