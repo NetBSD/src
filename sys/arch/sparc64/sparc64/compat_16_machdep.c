@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2004/05/20 11:36:43 martin Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.5 2005/05/31 00:52:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2004/05/20 11:36:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2005/05/31 00:52:24 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,7 +92,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	void *addr; 
+	const void *addr; 
 	struct rwindow *newsp;
 #ifdef NOT_DEBUG
 	struct rwindow tmpwin;
@@ -206,11 +206,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case 0:		/* legacy on-stack sigtramp */
-		addr = (void *)p->p_sigctx.ps_sigcode;
+		addr = p->p_sigctx.ps_sigcode;
 		break;
 
 	case 1:
-		addr = (void *)ps->sa_sigdesc[sig].sd_tramp;
+		addr = ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
