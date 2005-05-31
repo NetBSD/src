@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.97 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.98 2005/05/31 00:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.97 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.98 2005/05/31 00:45:52 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -327,7 +327,7 @@ zstty_attach(parent, self, aux)
 	struct tty *tp;
 	int channel, s, tty_unit;
 	dev_t dev;
-	char *i, *o;
+	const char *i, *o;
 	int dtr_on;
 	int resetbit;
 
@@ -1721,7 +1721,7 @@ zstty_rxsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char rr1;
