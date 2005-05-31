@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.21 2004/03/21 15:08:24 pk Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.22 2005/05/31 00:50:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.21 2004/03/21 15:08:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.22 2005/05/31 00:50:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ void	com_ebus_attach __P((struct device *, struct device *, void *));
 CFATTACH_DECL(com_ebus, sizeof(struct com_softc),
     com_ebus_match, com_ebus_attach, NULL, NULL);
 
-static char *com_names[] = {
+static const char *com_names[] = {
 	"su",
 	"su_pnp",
 	NULL

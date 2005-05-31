@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.14 2005/05/27 22:50:43 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.15 2005/05/31 00:50:28 christos Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.14 2005/05/27 22:50:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.15 2005/05/31 00:50:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ void
 ffb_attach(struct ffb_softc *sc)
 {
 	struct wsemuldisplaydev_attach_args waa;
-	char *model;
+	const char *model;
 	int btype;
 	int maxrow, maxcol;
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
