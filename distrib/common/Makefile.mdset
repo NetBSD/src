@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.26 2004/06/06 21:44:52 dsl Exp $
+#	$NetBSD: Makefile.mdset,v 1.27 2005/05/31 16:23:37 lukem Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -25,6 +25,10 @@
 # Optional variables:
 #	MDSET_RELEASEDIR		Where to install release kernels.
 #
+#	MDSET_NOGZIP			If defined, don't gzip any kernels.
+#
+#	MDSET_NOGZIP.${FILENAME}	If defined, don't gzip ${FILENAME}
+#
 #	MDSET_NOSTRIP			If defined, don't strip any kernels.
 #
 #	MDSET_NOSTRIP.${FILENAME}	If defined, don't strip ${FILENAME}
@@ -33,6 +37,10 @@
 #
 #	MDSET_NOSYMBOLS.${FILENAME}	If defined, don't generate
 #					${FILENAME}.symbols.gz
+#
+#	MDSET_POST			For each kernel,
+#					execute this after ${NM} / ${STRIP}.
+#					Kernel is available as "${.TARGET}"
 #
 #	MDSET_POST.${FILENAME}		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
@@ -74,10 +82,7 @@ _KERNEL.${_K}.${_F}:=	netbsd-${_K}
 _KERNEL.${_K}.${_F}:=	${_F}
 .endif
 
-KERNELS+=	${_KERNEL.${_K}.${_F}}.gz
-
 .for _S _C in ${MDSET_SUFFIXES.${_FILENAME}}		# {
-KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
 CLEANFILES+=	${_KERNEL.${_K}.${_F}}.${_S}
 
 ${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
@@ -88,10 +93,16 @@ ${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
 	false
 .endif
 
+.if defined(MDSET_NOGZIP.${_FILENAME}) && defined(MDSET_NOGZIP)
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}
+.else							# {
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
+
 ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
+.endif							# }
 
 .endfor							# }
 
@@ -99,9 +110,12 @@ ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 KERNELSYMS+=	${_KERNEL.${_K}.${_F}}.symbols.gz
 .endif
 
-.if defined(MDSET_POST.${_FILENAME})
-_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
+.if defined(MDSET_POST.${_FILENAME}) || defined(MDSET_POST)
+_POST.${_KERNEL.${_K}.${_F}}:= ${${MDSET_POST.${_FILENAME}}:U${MDSET_POST}}
 .endif
+
+
+CLEANFILES+=	${_KERNEL.${_K}.${_F}}
 
 ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
@@ -115,16 +129,20 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${STRIP} -R .comment -R .ident ${.TARGET}.tmp
 .endif
 	@mv ${.TARGET}.tmp ${.TARGET}
-.if defined(MDSET_POST.${_FILENAME})
+.if defined(MDSET_POST.${_FILENAME}) || defined(MDSET_POST)
 	${_POST.${.TARGET}}
 .endif
+
+.if defined(MDSET_NOGZIP.${_FILENAME}) || defined(MDSET_NOGZIP)
+KERNELS+=	${_KERNEL.${_K}.${_F}}
+.else							# {
+KERNELS+=	${_KERNEL.${_K}.${_F}}.gz
 
 ${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
-
-CLEANFILES+=	${_KERNEL.${_K}.${_F}} 
+.endif							# }
 
 .endfor							# }
 
