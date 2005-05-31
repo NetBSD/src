@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.116 2005/05/31 21:33:46 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.117 2005/05/31 22:07:32 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2380,4 +2380,50 @@ sys/arch/sun2/conf/files.sun2			1.15
 	Don't define zstty as an attribute so that children of zstty (kbd
 	and ms) are attached properly. Tested on tme.
 	[tsutsui, ticket #1875]
+
+share/mk/bsd.README				1.168
+share/mk/bsd.sys.mk				1.117
+
+	Provide a default definition of OBJDUMP - bsd.kmod.mk expects it.
+	[riz, ticket #1545]
+
+usr.sbin/pkg_install/README			1.11-1.13
+usr.sbin/pkg_install/add/add.h			1.7
+usr.sbin/pkg_install/add/extract.c		1.33-1.34
+usr.sbin/pkg_install/add/main.c			1.33-1.34
+usr.sbin/pkg_install/add/perform.c		1.95-1.109
+usr.sbin/pkg_install/add/pkg_add.1		1.49-1.59
+usr.sbin/pkg_install/add/verify.c		1.6
+usr.sbin/pkg_install/admin/main.c		1.44-1.48
+usr.sbin/pkg_install/admin/pkg_admin.1		1.31-1.35
+usr.sbin/pkg_install/create/main.c		1.27
+usr.sbin/pkg_install/create/perform.c		1.39-1.40
+usr.sbin/pkg_install/create/pkg_create.1	1.40
+usr.sbin/pkg_install/create/pl.c		1.31-1.32
+usr.sbin/pkg_install/delete/delete.h		1.8
+usr.sbin/pkg_install/delete/main.c		1.31-1.34
+usr.sbin/pkg_install/delete/perform.c		1.52-1.56
+usr.sbin/pkg_install/delete/pkg_delete.1	1.33-1.39
+usr.sbin/pkg_install/info/info.h		1.15-1.20
+usr.sbin/pkg_install/info/main.c		1.40-1.45
+usr.sbin/pkg_install/info/perform.c		1.52,1.54-1.62
+usr.sbin/pkg_install/info/pkg_info.1		1.38-1.48
+usr.sbin/pkg_install/info/show.c		1.28-1.31
+usr.sbin/pkg_install/lib/file.c			1.72-1.73
+usr.sbin/pkg_install/lib/ftpio.c		1.63-1.65
+usr.sbin/pkg_install/lib/lib.h			1.68-1.74
+usr.sbin/pkg_install/lib/path.c			1.7
+usr.sbin/pkg_install/lib/pen.c			1.33-1.34
+usr.sbin/pkg_install/lib/pkgdb.c		1.19-1.21
+usr.sbin/pkg_install/lib/plist.c		1.43-1.47
+usr.sbin/pkg_install/lib/str.c			1.47-1.50
+usr.sbin/pkg_install/lib/version.h		1.45-1.65
+usr.sbin/pkg_install/view/linkfarm.sh		1.4-1.5
+usr.sbin/pkg_install/view/pkg_view.1		1.10-1.12
+usr.sbin/pkg_install/view/pkg_view.sh		1.5
+
+	Update "pkg_install" to version 20050318 required to use the current
+	package sources.
+	[riz, ticket #1548]
+
 
