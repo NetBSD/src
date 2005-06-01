@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.86 2005/05/31 21:47:22 drochner Exp $ */
+/*	$NetBSD: apm.c,v 1.87 2005/06/01 16:49:14 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.86 2005/05/31 21:47:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.87 2005/06/01 16:49:14 drochner Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1103,15 +1103,6 @@ apmmatch(parent, match, aux)
 	 * users to patch kernels to disable APM support.
 	 */
 	return (apm_enabled);
-}
-
-int
-apmbus_print(void *aux, const char *pnp)
-{
-
-	if (pnp)
-		aprint_normal("apm at %s", pnp);
-	return (UNCONF);
 }
 
 #define	DPRINTF_BIOSRETURN(regs, bits)					\
