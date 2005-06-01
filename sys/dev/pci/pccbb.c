@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.120 2005/06/01 08:39:32 sekiya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.121 2005/06/01 09:10:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.120 2005/06/01 08:39:32 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.121 2005/06/01 09:10:57 sekiya Exp $");
 
 /*
 #define CBB_DEBUG
@@ -530,7 +530,7 @@ pccbbattach(parent, self, aux)
 
 #if defined CBB_DEBUG
 	{
-		static char *intrname[5] = { "NON", "A", "B", "C", "D" };
+		static const char *intrname[] = { "NON", "A", "B", "C", "D" };
 		printf("%s: intrpin %s, intrtag %d\n", sc->sc_dev.dv_xname,
 		    intrname[pa->pa_intrpin], pa->pa_intrline);
 	}
@@ -2198,7 +2198,7 @@ pccbb_pcmcia_io_map(pch, width, offset, size, pcihp, windowp)
 	bus_addr_t ioaddr = pcihp->addr + offset;
 	int i, win;
 #if defined CBB_DEBUG
-	static char *width_names[] = { "dynamic", "io8", "io16" };
+	static const char *width_names[] = { "dynamic", "io8", "io16" };
 #endif
 
 	/* Sanity check I/O handle. */
