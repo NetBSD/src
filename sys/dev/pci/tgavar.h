@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.14 2005/02/27 00:27:34 perry Exp $ */
+/* $NetBSD: tgavar.h,v 1.15 2005/06/01 18:18:52 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,7 +40,7 @@ struct fbcursor;
 struct fbcurpos;
 
 struct tga_conf {
-	char	    *tgac_name;		/* name for this board type */
+	const char	    *tgac_name;		/* name for this board type */
 
 	struct ramdac_funcs *(*ramdac_funcs)(void);
 
