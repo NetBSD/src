@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.107 2005/05/23 17:34:07 dbj Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.108 2005/06/01 18:03:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -338,9 +338,9 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
  */
 #define	MBUFLOCK(code)							\
 do {									\
-	int ms = splvm();						\
+	int _ms = splvm();						\
 	{ code }							\
-	splx(ms);							\
+	splx(_ms);							\
 } while (/* CONSTCOND */ 0)
 
 #ifdef MBUFTRACE
