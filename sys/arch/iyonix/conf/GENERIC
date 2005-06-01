@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8.4.1 2005/04/17 11:41:28 tron Exp $
+#	$NetBSD: GENERIC,v 1.8.4.2 2005/06/01 17:19:26 riz Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -192,7 +192,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
