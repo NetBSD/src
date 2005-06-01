@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.12 2003/09/09 03:56:39 itojun Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.13 2005/06/01 04:38:40 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.12 2003/09/09 03:56:39 itojun Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.13 2005/06/01 04:38:40 lukem Exp $");
 #endif
 #endif
 
@@ -290,7 +290,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	int fds_found;
 
 #ifdef PORTMAP
-	size_t outlen_pmap;
+	size_t outlen_pmap = 0;
 	u_long port;		/* Remote port number */
 	int pmap_flag = 0;	/* UDP exists ? */
 	char *outbuf_pmap = NULL;
