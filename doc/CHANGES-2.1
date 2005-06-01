@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.119 2005/06/01 14:53:32 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.120 2005/06/01 15:52:47 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2438,4 +2438,9 @@ sys/sys/cdefs.h					1.52-1.58
 
 	Add __UNCONST and __used.
 	[christos, ticket #1967]
+
+lib/libc/stdio/vfprintf.c			1.47
+
+	Remove __UNCONST definition; it is now in <sys/cdefs.h>.
+	[christos, ticket #1968]
 
