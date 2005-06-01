@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.160 2005/05/29 05:56:56 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.161 2005/06/01 12:10:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.160 2005/05/29 05:56:56 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.161 2005/06/01 12:10:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -711,8 +711,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "invalid", sizeof(hbuf));
 
-			if (verbose && res != res0)
+			if (verbose && res0->ai_next) {
 				fprintf(ttyout, "Trying %s...\n", hbuf);
+			}
 
 			((struct sockaddr_in *)res->ai_addr)->sin_port =
 			    htons(portnum);
