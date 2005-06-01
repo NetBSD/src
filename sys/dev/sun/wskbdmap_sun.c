@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.7 2005/05/01 23:57:03 macallan Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.8 2005/06/01 14:05:25 martin Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.7 2005/05/01 23:57:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.8 2005/06/01 14:05:25 martin Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -98,6 +98,7 @@ static const keysym_t wssun_keydesctab_us [] = {
     KC(0x2d),				KS_KP_Equal,
     KC(0x2e),				KS_KP_Divide,
     KC(0x2f),				KS_KP_Multiply,
+    /* KC(0x30),			KS_Power, */
     KC(0x31),				KS_Front,
     KC(0x32),				KS_KP_Delete,	KS_KP_Decimal,
     KC(0x33),				KS_Copy,
@@ -205,6 +206,42 @@ const keysym_t wssun_keydesctab_sv_nodead[] = {
     KC(0x41),		KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
+const keysym_t wssun_keydesctab_de[] = {
+    KC(0x0d),		KS_Mode_switch,	/* Alt Graph (Alt R code) */
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(0x20),		KS_3,		KS_paragraph,	KS_threesuperior,
+    KC(0x21),		KS_4,		KS_dollar,
+    KC(0x22),		KS_5,		KS_percent,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
+    KC(0x28),		KS_ssharp,	KS_question,	KS_backslash,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,
+    KC(0x2a),		KS_dead_circumflex, KS_dead_abovering,
+    KC(0x36),		KS_q,		KS_Q,		KS_at,
+    KC(0x3b),		KS_z,
+    KC(0x40),		KS_udiaeresis,
+    /* KC(0x43) - Compose - could be used for mode switch too */
+    KC(0x41),		KS_plus,	KS_asterisk,	KS_dead_tilde,
+    KC(0x56),		KS_odiaeresis,
+    KC(0x57),		KS_adiaeresis,
+    KC(0x58),		KS_numbersign,	KS_apostrophe,	KS_acute,
+    KC(0x64),		KS_y,
+    KC(0x6a),		KS_m,		KS_M,		KS_mu,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x7c),		KS_less,	KS_greater,	KS_bar,
+};
+
+const keysym_t wssun_keydesctab_de_nodead[] = {
+    KC(0x29),		KS_apostrophe,	KS_grave,
+    KC(0x2a),		KS_asciicircum,	KS_degree,
+    KC(0x41),		KS_plus,	KS_asterisk,	KS_asciitilde,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 /* KBD_NULLMAP generates a entry for machine native variant.
@@ -215,5 +252,7 @@ const struct wscons_keydesc wssun_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	wssun_keydesctab_us),
 	KBD_MAP(KB_SV,			KB_US,	wssun_keydesctab_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	wssun_keydesctab_sv_nodead),
+	KBD_MAP(KB_DE,			KB_US,	wssun_keydesctab_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	wssun_keydesctab_de_nodead),
 	{ 0, 0, 0, 0 }
 };
