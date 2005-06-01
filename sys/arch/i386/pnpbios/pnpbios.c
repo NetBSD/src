@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.48 2005/05/31 22:39:08 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.49 2005/06/01 16:49:14 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.48 2005/05/31 22:39:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.49 2005/06/01 16:49:14 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ static int	pnpbios_match(struct device *,
 			    struct cfdata *, void *);
 static void	pnpbios_attach(struct device *,
 			    struct device *, void *);
-int		pnpbiosbusprint(void *, const char *);
 static void	pnpbios_printres(struct pnpresources *);
 static int	pnpbios_print(void *aux, const char *);
 static void	pnpbios_id_to_string(u_int32_t, char *);
@@ -256,15 +255,6 @@ pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	return (pnpbios_enabled);
-}
-
-int
-pnpbiosbusprint(void *aux, const char *pnp)
-{
-
-	if (pnp)
-		aprint_normal("pnpbios at %s",pnp);
-	return (UNCONF);
 }
 
 static caddr_t

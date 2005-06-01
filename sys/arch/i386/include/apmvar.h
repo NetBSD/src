@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.21 2005/05/31 21:47:22 drochner Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.22 2005/06/01 16:49:14 drochner Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,7 +75,6 @@ void apm_cpu_idle(void);
 void apminit(void);
 int apm_set_powstate(u_int devid, u_int powstate);
 int apm_busprobe(void);
-int apmbus_print(void *, const char *);
 #endif /* _KERNEL */
 #endif /* _LOCORE */
 #endif /* __i386_apm_h__ */
