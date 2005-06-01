@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/09 18:41:54 $
- * $Revision: 1.3 $
+ * $Author: lukem $
+ * $Date: 2005/06/01 11:51:11 $
+ * $Revision: 1.4 $
  */
 
 /*
@@ -182,6 +182,8 @@ void setCDKSwindowContents (CDKSWINDOW *swindow, char **info, int lines)
 {
    /* Declare local variables. */
    int widestItem, x;
+
+   widestItem = 0;
 
    /* First lets clean all the lines in the window. */
    cleanCDKSwindow(swindow);
