@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.18 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.19 2005/06/01 05:41:48 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.18 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.19 2005/06/01 05:41:48 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -700,6 +700,7 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	 * AF_LOCAL addresses are expected to be absolute
 	 * pathnames, anything else will be AF_INET or AF_INET6.
 	 */
+	port = 0;
 	if (*addrstr != '/') {
 		p = strrchr(addrstr, '.');
 		if (p == NULL)
