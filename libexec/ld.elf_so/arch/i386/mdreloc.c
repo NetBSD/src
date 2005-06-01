@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.19 2003/07/24 10:12:28 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.20 2005/06/01 14:15:13 lukem Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,7 +49,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 #ifdef COMBRELOC
 	unsigned long lastsym = -1;
 #endif
-	Elf_Addr target;
+	Elf_Addr target = 0;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
