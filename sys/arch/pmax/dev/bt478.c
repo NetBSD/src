@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.19 2003/08/07 16:29:06 agc Exp $	*/
+/*	$NetBSD: bt478.c,v 1.20 2005/06/01 18:21:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt478.c,v 1.19 2003/08/07 16:29:06 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt478.c,v 1.20 2005/06/01 18:21:43 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,14 +252,14 @@ bt478LoadColorMap(fi, bits, index, count)
 	int index, count;
 {
 	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
-	u_char *cmap_bits;
+	const u_char *cmap_bits;
 	u_char *cmap;
 	int i;
 
 	if (index < 0 || count < 1 || index + count > 256)
 		return EINVAL;
 
-	cmap_bits = (u_char *)bits;
+	cmap_bits = bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
 	for (i = 0; i < count; i++) {
