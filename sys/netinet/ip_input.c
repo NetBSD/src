@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.215 2005/04/29 10:39:09 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.216 2005/06/01 09:45:15 blymn Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.215 2005/04/29 10:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.216 2005/06/01 09:45:15 blymn Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2137,7 +2137,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 {
 	int s;
 
-	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	s = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
 	if (s)
 		return (s);
 
