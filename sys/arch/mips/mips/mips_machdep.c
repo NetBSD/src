@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.178 2005/06/01 16:53:07 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178 2005/06/01 16:53:07 drochner Exp $");
 
 #include "opt_cputype.h"
 
@@ -233,7 +233,7 @@ struct pridtab {
 	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
 	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
 	int	cpu_flags;
-	char	*cpu_name;
+	const char	*cpu_name;
 };
 
 /*
@@ -962,7 +962,7 @@ cpu_identify(void)
 		"write-through",
 	};
 	static const char * const label = "cpu0";	/* XXX */
-	char *cpuname, *fpuname;
+	const char *cpuname, *fpuname;
 	int i;
 
 	cpuname = mycpu->cpu_name;

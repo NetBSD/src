@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.195 2005/05/30 02:26:17 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.195 2005/05/30 02:26:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -960,7 +960,7 @@ finish:
 #else
 #define Name(_fn) { _fn, "_fn"}
 #endif
-static struct { void *addr; char *name;} names[] = {
+static struct { void *addr; const char *name;} names[] = {
 	Name(stacktrace),
 	Name(stacktrace_subr),
 	Name(main),
