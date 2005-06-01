@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.4 2005/05/31 23:37:47 uwe Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.5 2005/06/01 00:02:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.4 2005/05/31 23:37:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.5 2005/06/01 00:02:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,9 @@ int	tpcalib_debug = 0;
 #endif
 
 /* mra is defined in mra.c */
-extern int mra_Y_AX1_BX2_C(int *, int, int *, int, int *, int, int, int, int *,
-    int *, int *);
+extern int mra_Y_AX1_BX2_C(const int *, int,
+			   const int *, int, const int *, int, int, int,
+			   int *, int *, int *);
 
 #define SCALE	(1024*256)
 
@@ -88,13 +89,13 @@ int
 tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct wsmouse_calibcoords *d;
+	const struct wsmouse_calibcoords *d;
 	int s;
 
 	switch (cmd) {
 	case WSMOUSEIO_SCALIBCOORDS:
 		s = sizeof(struct wsmouse_calibcoord);
-		d = (struct wsmouse_calibcoords *)data;
+		d = (const struct wsmouse_calibcoords *)data;
 		if (d->samplelen == WSMOUSE_CALIBCOORDS_RESET) {
 			tpcalib_reset(sc);
 		} else
@@ -129,8 +130,7 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case WSMOUSEIO_GCALIBCOORDS:
-		d = (struct wsmouse_calibcoords *)data;
-		*d = sc->sc_saved;
+		*(struct wsmouse_calibcoords *)data = sc->sc_saved;
 		break;
 
 	default:
