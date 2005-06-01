@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.147 2005/05/01 10:12:11 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.148 2005/06/01 17:43:23 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1743,4 +1743,13 @@ sys/compat/linux/common/linux_file.c		1.62 via patch
 	arg massage, i.e. sys_p{read|write} as appropriate; up to now, the
 	functions called sys_{read|write}() by mistake.
 	[bad, ticket #5762]
+
+sys/dev/pci/aac_pci.c				1.13
+sys/dev/pci/pcidevs				1.702
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add missing PCI id for Adaptec ASR-2410SA, and use this PCI
+	id symbol instead of hardcoding the number.
+	[tron, ticket #5721]
 
