@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.14 2005/04/24 13:31:01 kleink Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.15 2005/06/01 12:07:00 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: hostfile.c,v 1.33 2005/03/01 10:40:26 djm Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.14 2005/04/24 13:31:01 kleink Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.15 2005/06/01 12:07:00 lukem Exp $");
 
 #include <resolv.h>
 #include <openssl/hmac.h>
@@ -317,7 +317,7 @@ add_host_to_hostfile(const char *filename, const char *host, const Key *key,
 {
 	FILE *f;
 	int success = 0;
-	char *hashed_host;
+	char *hashed_host = NULL;
 
 	if (key == NULL)
 		return 1;	/* XXX ? */
