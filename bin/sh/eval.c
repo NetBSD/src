@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.81 2005/03/02 20:57:31 dsl Exp $	*/
+/*	$NetBSD: eval.c,v 1.82 2005/06/01 15:38:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.81 2005/03/02 20:57:31 dsl Exp $");
+__RCSID("$NetBSD: eval.c,v 1.82 2005/06/01 15:38:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -686,7 +686,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 	volatile int e;
 	char *lastarg;
 	const char *path = pathval();
-	int temp_path;
+	volatile int temp_path;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void) &argv;
