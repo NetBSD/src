@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.78 2005/05/29 21:31:05 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.79 2005/06/01 12:25:27 drochner Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.78 2005/05/29 21:31:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.79 2005/06/01 12:25:27 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -98,27 +98,27 @@ db_addr_t	db_next;
  */
 static boolean_t db_ed_style = TRUE;
 
-static void	db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_buf_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_cmd_list(const struct db_command *);
 static int	db_cmd_search(const char *, const struct db_command *,
 		    const struct db_command **);
 static void	db_command(const struct db_command **,
 		    const struct db_command *);
-static void	db_event_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_fncall(db_expr_t, int, db_expr_t, char *);
-static void	db_malloc_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_namecache_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_object_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_page_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_pool_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_reboot_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_sifting_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_sync_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_event_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_fncall(db_expr_t, int, db_expr_t, const char *);
+static void	db_malloc_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_map_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_namecache_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_object_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_page_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_pool_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_reboot_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_sifting_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_sync_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, const char *);
 
 /*
  * 'show' commands
@@ -489,7 +489,7 @@ db_command(const struct db_command **last_cmdp,
 
 /*ARGSUSED*/
 static void
-db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -504,7 +504,7 @@ db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 #ifdef MALLOC_DEBUG
@@ -519,7 +519,7 @@ db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -532,7 +532,7 @@ db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -544,7 +544,7 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -556,7 +556,7 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_event_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_event_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -568,7 +568,7 @@ db_event_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -579,7 +579,7 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -591,7 +591,7 @@ db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 static void
-db_pool_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_pool_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	pool_printit((struct pool *)(intptr_t) addr, modif, db_printf);
@@ -600,7 +600,7 @@ db_pool_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 /*ARGSUSED*/
 static void
 db_namecache_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
-    char *modif)
+    const char *modif)
 {
 
 	namecache_print((struct vnode *)(intptr_t) addr, db_printf);
@@ -608,7 +608,7 @@ db_namecache_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 
 /*ARGSUSED*/
 static void
-db_uvmexp_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_uvmexp_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	uvmexp_print(db_printf);
@@ -620,7 +620,7 @@ db_uvmexp_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  */
 /*ARGSUSED*/
 static void
-db_fncall(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_fncall(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	db_expr_t	fn_addr;
 #define	MAXARGS		11
@@ -674,7 +674,7 @@ db_fncall(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_reboot_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_reboot_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	db_expr_t bootflags;
 
@@ -695,7 +695,7 @@ db_reboot_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_sifting_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_sifting_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	int	mode, t;
 
@@ -725,9 +725,9 @@ db_sifting_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
-	register char *cp = modif;
+	register const char *cp = modif;
 	register char c;
 	void (*pr)(const char *, ...);
 
@@ -743,7 +743,7 @@ db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_sync_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_sync_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	/*

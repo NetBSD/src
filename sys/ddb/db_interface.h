@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.14 2005/05/29 21:31:05 christos Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.15 2005/06/01 12:25:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -48,21 +48,21 @@ void		db_stack_trace_print(db_expr_t, int, db_expr_t, const char *,
 		    void (*)(const char *, ...));
 
 /* ddb/db_xxx.c */
-void		db_kgdb_cmd(db_expr_t, int, db_expr_t, char *);
+void		db_kgdb_cmd(db_expr_t, int, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
-void		db_kill_proc(db_expr_t, int, db_expr_t, char *);
-void		db_show_all_procs(db_expr_t, int, db_expr_t, char *);
-void		db_show_sched_qs(db_expr_t, int, db_expr_t, char *);
+void		db_kill_proc(db_expr_t, int, db_expr_t, const char *);
+void		db_show_all_procs(db_expr_t, int, db_expr_t, const char *);
+void		db_show_sched_qs(db_expr_t, int, db_expr_t, const char *);
 
 /* kern/kern_clock.c */
-void		db_show_callout(db_expr_t, int, db_expr_t, char *);
+void		db_show_callout(db_expr_t, int, db_expr_t, const char *);
 
 /* kern/subr_log.c */
-void		db_dmesg(db_expr_t, int, db_expr_t, char *);
+void		db_dmesg(db_expr_t, int, db_expr_t, const char *);
 
 /* netinet/if_arp.c */
-void		db_show_arptab(db_expr_t, int, db_expr_t, char *);
+void		db_show_arptab(db_expr_t, int, db_expr_t, const char *);
 
 /*
  * This is used in several places to determine which printf format
