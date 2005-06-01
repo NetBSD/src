@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211 2005/06/01 18:34:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2005/06/01 18:34:12 drochner Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -201,7 +201,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	u_int bim;
 	char *bip;
 {
-	char *cp, *bootinfo_msg;
+	char *cp;
+	const char *bootinfo_msg;
 	u_long first, last;
 	int i;
 	caddr_t kernend;
