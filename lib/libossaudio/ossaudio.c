@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.19 2004/11/18 14:02:42 kent Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.20 2005/06/01 11:22:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.19 2004/11/18 14:02:42 kent Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.20 2005/06/01 11:22:18 lukem Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -95,6 +95,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	u_int u;
 	int idat, idata;
 	int retval;
+
+	idat = 0;
 
 	switch (com) {
 	case SNDCTL_DSP_RESET:
@@ -458,7 +460,8 @@ struct audiodevinfo {
 	char names[NETBSD_MAXDEVS][MAX_AUDIO_DEV_LEN];
 	int enum2opaque[NETBSD_MAXDEVS];
         u_long devmask, recmask, stereomask;
-	u_long caps, source;
+	u_long caps;
+	int source;
 };
 
 static int
@@ -642,6 +645,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	int retval;
 	int l, r, n, error, e;
 
+	idat = 0;
 	di = getdevinfo(fd);
 	if (di == 0)
 		return -1;
