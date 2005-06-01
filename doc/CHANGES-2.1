@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.117 2005/05/31 22:07:32 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.118 2005/06/01 12:21:51 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2426,4 +2426,11 @@ usr.sbin/pkg_install/view/pkg_view.sh		1.5
 	package sources.
 	[riz, ticket #1548]
 
+
+dist/ntp/ntpd/refclock_palisade.c		1.3
+
+	There was a change from usecs to nsecs between ntpd 4.1.1 and 4.2.0 -
+	take this into account correctly. From ntp-current via Brian Buhrow
+	in PR bin/29685.
+	[riz, ticket #1538]
 
