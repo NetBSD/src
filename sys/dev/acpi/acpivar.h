@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.22 2005/05/29 20:56:02 christos Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.23 2005/06/01 16:44:38 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,7 +55,6 @@
  *	This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
-	const char *aa_busname;		/* XXX should be common */
 	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset */
