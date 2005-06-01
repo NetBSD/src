@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.209 2005/05/22 15:54:45 christos Exp $ */
+/* $NetBSD: pmap.c,v 1.210 2005/06/01 16:09:45 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2005/05/22 15:54:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2005/06/01 16:09:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,7 +930,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/* Nothing to do; it's already zero'd */
 
 	/*
-	 * Intialize the pmap pools and list.
+	 * Initialize the pmap pools and list.
 	 */
 	pmap_ncpuids = ncpuids;
 	pool_init(&pmap_pmap_pool,
@@ -2643,7 +2643,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	}
 
 	/*
-	 * If the mapping wasn't enterd on the PV list, we're all done.
+	 * If the mapping wasn't entered on the PV list, we're all done.
 	 */
 	if (onpv == FALSE)
 		return (needisync);
@@ -2684,7 +2684,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 #endif
 
 	/*
-	 * Loop over all current mappings setting/clearing as appropos.
+	 * Loop over all current mappings setting/clearing as apropos.
 	 */
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		va = pv->pv_va;
@@ -3359,7 +3359,7 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
 /*
  * pmap_l1pt_alloc:
  *
- *	Page alloctor for L1 PT pages.
+ *	Page alloctaor for L1 PT pages.
  */
 void *
 pmap_l1pt_alloc(struct pool *pp, int flags)
@@ -3673,7 +3673,7 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 			/*
 			 * The generation number has wrapped.  We could
 			 * handle this scenario by traversing all of
-			 * the pmaps, and invaldating the generation
+			 * the pmaps, and invalidating the generation
 			 * number on those which are not currently
 			 * in use by this processor.
 			 *
