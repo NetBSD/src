@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.2 2005/06/01 13:34:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -98,9 +98,6 @@ struct lacp_port {
 };
 
 #define	LACPPORT_NTT		1	/* need to transmit */
-
-typedef void (*lacp_timer_func_t)(struct lacp_port *);
-const lacp_timer_func_t lacp_timer_funcs[LACP_NTIMER];
 
 #define	LACP_SOFTC(sc) \
 	(&IEEE8023AD_SOFTC(sc)->isc_lacpsc)
