@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.30 2005/02/26 23:10:22 perry Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.31 2005/06/01 15:28:56 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.30 2005/02/26 23:10:22 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31 2005/06/01 15:28:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];
-	char * fstype;
+	const char *fstype;
 	struct sys_mount_args nuap;
 	char *native_fstype;
 
@@ -413,7 +413,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		 * and if so, set MNT_UPDATE so we can mount / read-write.
 		 */
 		fsname[0] = 0;
-		if ((error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
+		if ((error = copyinstr(SCARG(&nuap, path), fsname,
 				      sizeof fsname, NULL)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
