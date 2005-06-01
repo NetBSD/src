@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.149 2005/04/25 15:02:07 lukem Exp $	 */
+/* $NetBSD: machdep.c,v 1.150 2005/06/01 13:01:36 scw Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2005/06/01 13:01:36 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -490,7 +490,7 @@ process_read_regs(l, regs)
 int
 process_write_regs(l, regs)
 	struct lwp    *l;
-	struct reg     *regs;
+	const struct reg     *regs;
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
 

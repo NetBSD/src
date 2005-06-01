@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.51 2004/01/28 10:48:55 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.52 2005/06/01 13:01:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.51 2004/01/28 10:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.52 2005/06/01 13:01:35 scw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -295,7 +295,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
@@ -350,7 +350,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 	union savefpu *frame = process_fpframe(l);
 

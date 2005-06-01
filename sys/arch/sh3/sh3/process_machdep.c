@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 2005/06/01 13:01:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 2003/08/07 16:29:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2005/06/01 13:01:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
