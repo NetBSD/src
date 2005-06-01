@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.23 2005/05/15 09:58:06 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.24 2005/06/01 11:08:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.23 2005/05/15 09:58:06 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.24 2005/06/01 11:08:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -899,7 +899,7 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	static char *ocname = NULL;
 	static char *odomainname = NULL;
 	struct domainbinding *db;
-	unsigned long plural_index;
+	unsigned long plural_index = 0;
 	size_t len;
 
 	if (!domainname)
