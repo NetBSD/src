@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.31 2004/10/22 05:39:56 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.32 2005/06/01 14:14:55 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.31 2004/10/22 05:39:56 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.32 2005/06/01 14:14:55 lukem Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -67,7 +67,7 @@ _rtld_map_object(char *path, int fd, const struct stat *sb)
 	Elf_Phdr	*segs[2];
 	int		 nsegs;
 	caddr_t		 mapbase = MAP_FAILED;
-	size_t		 mapsize;
+	size_t		 mapsize = 0;
 	int		 mapflags;
 	Elf_Off		 base_offset;
 #ifdef MAP_ALIGNED
