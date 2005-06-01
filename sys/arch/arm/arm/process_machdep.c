@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2004/08/21 11:52:25 rearnsha Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2005/06/01 13:01:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2004/08/21 11:52:25 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2005/06/01 13:01:35 scw Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -196,7 +196,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
@@ -228,7 +228,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l,  struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_setcontext(p, regs);

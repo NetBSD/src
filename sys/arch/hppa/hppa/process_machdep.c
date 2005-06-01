@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2005/05/01 19:18:39 chs Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:35 scw Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.5 2005/05/01 19:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	bcopy(&regs[1], &l->l_md.md_regs->tf_r1,
 	    sizeof(*regs) - sizeof(*regs));
@@ -71,7 +71,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
 	hppa_fpu_flush(l);
 	bcopy(fpregs, l->l_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));

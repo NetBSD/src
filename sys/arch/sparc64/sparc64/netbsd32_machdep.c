@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.45 2005/03/26 05:12:35 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.46 2005/06/01 13:01:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.45 2005/03/26 05:12:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.46 2005/06/01 13:01:36 scw Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -541,9 +541,9 @@ netbsd32_process_read_regs(p, regs)
 int
 netbsd32_process_write_regs(p, regs)
 	struct proc *p;
-	struct reg *regs;
+	const struct reg *regs;
 {
-	struct reg32* regp = (struct reg32*)regs;
+	const struct reg32* regp = (const struct reg32*)regs;
 	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
@@ -585,11 +585,11 @@ struct fpreg	*regs;
 int
 netbsd32_process_write_fpregs(p, regs)
 struct proc	*p;
-struct fpreg	*regs;
+const struct fpreg	*regs;
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
-	struct fpreg32		*regp = (struct fpreg32 *)regs;
+	const struct fpreg32	*regp = (const struct fpreg32 *)regs;
 	int i;
 
 	/* NOTE: struct fpreg == struct fpstate */

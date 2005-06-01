@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.7 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.8 2005/06/01 13:01:35 scw Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.7 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.8 2005/06/01 13:01:35 scw Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -268,9 +268,9 @@ void arm_fpe_getcontext(p, fpregs)
 
 void arm_fpe_setcontext(p, fpregs)
 	struct proc *p;
-	struct fpreg *fpregs;
+	const struct fpreg *fpregs;
 {
-	arm_fpe_core_loadcontext(FP_CONTEXT(p), (fp_context_frame_t *)fpregs);
+	arm_fpe_core_loadcontext(FP_CONTEXT(p), (const fp_context_frame_t *)fpregs);
 }
 
 /* End of armfpe_init.c */

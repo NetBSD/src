@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19 2005/06/01 13:01:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2005/06/01 13:01:36 scw Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -226,11 +226,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			return (EINVAL);
 
 		/* Restore register context. */
-		process_write_regs(l, (struct reg *)(void *)mcp);
+		process_write_regs(l, (const struct reg *)(const void *)mcp);
 	}
 
 	if (flags & _UC_FPU) {
-		process_write_fpregs(l, (struct fpreg *)(void *)&mcp->__fpregs);
+		process_write_fpregs(l,
+		    (const struct fpreg *)(const void *)&mcp->__fpregs);
 		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
 	} else {
 		/* Always restore FPSCR */

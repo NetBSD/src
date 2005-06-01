@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2005/06/01 13:01:36 scw Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -171,7 +171,7 @@ process_sstep(struct lwp *p, int sstep)
 }
 
 int
-process_write_regs(struct lwp *p, struct reg *regs)
+process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	panic("process_write_regs");
 }
