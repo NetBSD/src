@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.13 2005/02/27 00:27:48 perry Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.14 2005/06/01 17:05:16 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.13 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.14 2005/06/01 17:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -105,11 +105,11 @@ rcons_init_ops(rc)
 void
 rcons_puts(rc, str, n)
 	struct rconsole *rc;
-	unsigned char *str;
+	const unsigned char *str;
  	int n;
 {
 	int c, i, j;
-	unsigned char *cp;
+	const unsigned char *cp;
 
 	/* Jump scroll */
 	/* XXX maybe this should be an option? */
@@ -535,7 +535,7 @@ rcons_setcolor(rc, fg, bg)
 void
 rcons_text(rc, str, n)
 	struct rconsole *rc;
-	unsigned char *str;
+	const unsigned char *str;
 	int n;
 {
 	u_int uc;
