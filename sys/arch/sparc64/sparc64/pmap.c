@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2005/05/31 00:53:02 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.163 2005/06/01 21:05:36 jdc Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2005/06/01 21:05:36 jdc Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3383,13 +3383,13 @@ pmap_free_page(paddr_t pa)
 
 #ifdef DDB
 
-void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_pv __P((db_expr_t, int, db_expr_t, const char *));
 void
 db_dump_pv(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	struct vm_page *pg;
 	struct pv_entry *pv;
