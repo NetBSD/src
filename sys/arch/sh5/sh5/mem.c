@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2003/08/07 16:29:32 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2005/06/01 13:05:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.8 2003/08/07 16:29:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2005/06/01 13:05:29 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,7 +119,7 @@ mmrw(dev, uio, flags)
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			error = tsleep(&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
 				return (error);
@@ -187,7 +187,7 @@ mmrw(dev, uio, flags)
 	}
 	if (minor(dev) == DEV_MEM) {
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup(&physlock);
 		physlock = 0;
 	}
 	return (error);
