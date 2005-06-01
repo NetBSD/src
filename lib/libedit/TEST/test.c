@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.17 2005/05/28 12:03:22 lukem Exp $	*/
+/*	$NetBSD: test.c,v 1.18 2005/06/01 11:37:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.17 2005/05/28 12:03:22 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.18 2005/06/01 11:37:52 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: test.c,v 1.17 2005/05/28 12:03:22 lukem Exp $");
 static int continuation = 0;
 volatile sig_atomic_t gotsig = 0;
 
-static	u_char	complete(EditLine *, int);
+static	unsigned char	complete(EditLine *, int);
 	int	main(int, char **);
 static	char   *prompt(EditLine *);
 static	void	sig(int);
