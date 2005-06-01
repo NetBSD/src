@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.2 2005/06/01 11:25:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.1 2005/03/18 11:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.2 2005/06/01 11:25:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.1 2005/03/18 11:11:50 ya
 int lacpdebug = 0;
 #endif /* defined(LACP_DEBUG) */
 
-char *
+const char *
 lacp_format_mac(const uint8_t *mac, char *buf, size_t buflen)
 {
 
@@ -62,7 +62,7 @@ lacp_format_mac(const uint8_t *mac, char *buf, size_t buflen)
 	return buf;
 }
 
-char *
+const char *
 lacp_format_systemid(const struct lacp_systemid *sysid,
     char *buf, size_t buflen)
 {
@@ -75,7 +75,7 @@ lacp_format_systemid(const struct lacp_systemid *sysid,
 	return buf;
 }
 
-char *
+const char *
 lacp_format_portid(const struct lacp_portid *portid, char *buf, size_t buflen)
 {
 
@@ -86,7 +86,7 @@ lacp_format_portid(const struct lacp_portid *portid, char *buf, size_t buflen)
 	return buf;
 }
 
-char *
+const char *
 lacp_format_partner(const struct lacp_peerinfo *peer, char *buf, size_t buflen)
 {
 	char sysid[LACP_SYSTEMIDSTR_MAX+1];
@@ -100,7 +100,7 @@ lacp_format_partner(const struct lacp_peerinfo *peer, char *buf, size_t buflen)
 	return buf;
 }
 
-char *
+const char *
 lacp_format_lagid(const struct lacp_peerinfo *a,
     const struct lacp_peerinfo *b, char *buf, size_t buflen)
 {
@@ -129,7 +129,7 @@ lacp_format_lagid(const struct lacp_peerinfo *a,
 	return buf;
 }
 
-char *
+const char *
 lacp_format_lagid_aggregator(const struct lacp_aggregator *la,
     char *buf, size_t buflen)
 {
@@ -141,7 +141,7 @@ lacp_format_lagid_aggregator(const struct lacp_aggregator *la,
 	return lacp_format_lagid(&la->la_actor, &la->la_partner, buf, buflen);
 }
 
-char *
+const char *
 lacp_format_state(uint8_t state, char *buf, size_t buflen)
 {
 	static const char lacp_state_bits[] = LACP_STATE_BITS;
