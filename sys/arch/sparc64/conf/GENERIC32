@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.105 2005/05/31 22:23:53 tron Exp $
+# 	$NetBSD: GENERIC32,v 1.106 2005/06/01 12:58:13 macallan Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 maxusers	64
 
@@ -778,15 +778,16 @@ audio*		at audiobus?
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
-wsdisplay*	at cgsix?
 
 ## Sun FFB
 ffb*		at mainbus0
-wsdisplay*	at ffb?
 
 # On board vga on U5/U10 etc.
 machfb*		at pci?
-wsdisplay*	at machfb?
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 # wsmouse for sun ms
 wsmouse*        at ms0
