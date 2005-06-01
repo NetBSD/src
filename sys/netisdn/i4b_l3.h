@@ -27,7 +27,7 @@
  *	i4b_l3.h - layer 3 header file
  *	------------------------------
  *
- *	$Id: i4b_l3.h,v 1.5 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_l3.h,v 1.6 2005/06/01 18:07:04 drochner Exp $
  *
  * $FreeBSD$
  *
@@ -57,7 +57,7 @@ extern void i4b_l3_tx_status ( call_desc_t *cd, u_char q850cause );
 extern int i4b_get_dl_stat( call_desc_t *cd );
 extern void i4b_print_frame ( int len, u_char *buf );
 extern void next_l3state ( call_desc_t *cd, int event );
-extern char *print_l3state ( call_desc_t *cd );
+extern const char *print_l3state ( call_desc_t *cd );
 extern unsigned char setup_cr ( call_desc_t *cd, unsigned char cr );
 extern void T303_start ( call_desc_t *cd );
 extern void T303_stop ( call_desc_t *cd );
