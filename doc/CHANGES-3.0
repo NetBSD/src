@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.109 2005/06/01 14:56:47 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.110 2005/06/01 17:26:28 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9006,4 +9006,45 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c 1.2
 
 	Hide the mouse cursor on exit.
 	[macallan, ticket #365]
+
+sys/arch/algor/conf/P4032			1.31
+sys/arch/algor/conf/P5064			1.37
+sys/arch/algor/conf/P6032			1.31
+sys/arch/alpha/conf/ALPHA			1.205
+sys/arch/alpha/conf/BASIL			1.35
+sys/arch/alpha/conf/FRAU-FARBISSINA		1.40
+sys/arch/alpha/conf/GENERIC			1.264
+sys/arch/alpha/conf/INSTALL			1.86
+sys/arch/arc/conf/GENERIC			1.114
+sys/arch/arc/conf/MIMORI			1.35
+sys/arch/arc/conf/PCCONS			1.43
+sys/arch/arc/conf/RAMDISK			1.57
+sys/arch/atari/conf/MILAN-PCIIDE		1.38
+sys/arch/atari/conf/MILAN.in			1.18
+sys/arch/cats/conf/GENERIC			1.80
+sys/arch/cats/conf/INSTALL			1.48
+sys/arch/cobalt/conf/GENERIC			1.72
+sys/arch/cobalt/conf/INSTALL			1.6
+sys/arch/evbmips/conf/MALTA			1.29
+sys/arch/evbppc/conf/EV64260			1.22
+sys/arch/evbppc/conf/OPENBLOCKS266		1.18
+sys/arch/evbppc/conf/WALNUT			1.20
+sys/arch/hp700/conf/GENERIC			1.45
+sys/arch/iyonix/conf/GENERIC			1.10
+sys/arch/macppc/conf/GENERIC			1.197
+sys/arch/macppc/conf/INSTALL			1.89
+sys/arch/sandpoint/conf/GENERIC.sandpoint	1.22
+sys/arch/sparc64/conf/GENERIC32			1.105
+sys/arch/sparc64/conf/POWEROFSEVEN.inc		1.33
+sys/arch/sparc64/conf/SPLODE			1.34
+
+	Remove attachment for the piixide(4) driver from all non-x86 kernel
+	configurations because Intel IDE disk controllers only exist as part
+	of Intel chipsets for x86 systems.
+	[tron, ticket #362]
+
+sys/arch/i386/conf/DELPHI			delete
+
+	Remove unused kernel configuration.
+	[tron, ticket #363]
 
