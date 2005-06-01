@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.9 2001/08/24 15:33:17 mhitch Exp $ */
+/* $NetBSD: machdep.h,v 1.10 2005/06/01 18:32:08 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -40,6 +40,6 @@ void	 prom_findcons __P((int *, int *, int *));
 void	 prom_halt __P((int, char *)) __attribute__((__noreturn__));
 void	 prom_haltbutton __P((void));
 int	 prom_scsiid __P((int));
-char	*prom_getenv __P((char *));
+char	*prom_getenv __P((const char *));
 int	 prom_systype __P((void));
 int	 prom_getbitmap __P((struct memmap *));
