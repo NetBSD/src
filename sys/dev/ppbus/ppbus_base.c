@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.9 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.10 2005/06/01 18:41:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.9 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.10 2005/06/01 18:41:51 drochner Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.9 2005/02/27 00:27:44 perry Exp $")
 
 #ifndef DONTPROBE_1284
 /* Utility functions */
-static char * search_token(char *, int, char *);
+static char * search_token(char *, int, const char *);
 #endif
 
 /* Perform general ppbus I/O request */
@@ -120,14 +120,14 @@ ppbus_write_ivar(struct device * dev, int index, unsigned int * val)
 
 /* Polls the bus for a max of 10-milliseconds */
 int
-ppbus_poll_bus(struct device * dev, int max, char mask, char status,
+ppbus_poll_bus(struct device * dev, int maxp, char mask, char status,
 	int how)
 {
 	int i, j, error;
 	char r;
 
 	/* try at least up to 10ms */
-	for (j = 0; j < ((how & PPBUS_POLL) ? max : 1); j++) {
+	for (j = 0; j < ((how & PPBUS_POLL) ? maxp : 1); j++) {
 		for (i = 0; i < 10000; i++) {
 			r = ppbus_rstr(dev);
 			DELAY(1);
@@ -137,7 +137,7 @@ ppbus_poll_bus(struct device * dev, int max, char mask, char status,
 	}
 
 	if (!(how & PPBUS_POLL)) {
-	   for (i = 0; max == PPBUS_FOREVER || i < max-1; i++) {
+	   for (i = 0; maxp == PPBUS_FOREVER || i < maxp-1; i++) {
 		if ((ppbus_rstr(dev) & mask) == status)
 			return (0);
 
@@ -467,7 +467,7 @@ end:
 
 #ifndef DONTPROBE_1284
 
-static char *pnp_tokens[] = {
+static const char *pnp_tokens[] = {
 	"PRINTER", "MODEM", "NET", "HDC", "PCMCIA", "MEDIA",
 	"FDC", "PORTS", "SCANNER", "DIGICAM", "", NULL };
 
@@ -485,9 +485,9 @@ static char *pnp_classes[] = {
  * XXX should use strxxx() calls
  */
 static char *
-search_token(char *str, int slen, char *token)
+search_token(char *str, int slen, const char *token)
 {
-	char *p;
+	const char *p;
 	int tlen, i, j;
 
 #define UNKNOWN_LENGTH  -1

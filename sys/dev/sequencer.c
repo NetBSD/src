@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.28 2005/05/29 22:18:25 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29 2005/06/01 18:41:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.28 2005/05/29 22:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29 2005/06/01 18:41:51 drochner Exp $");
 
 #include "sequencer.h"
 
@@ -1068,7 +1068,7 @@ seq_to_new(ev, uio)
 	struct uio *uio;
 {
 	int cmd, chan, note, parm;
-	u_int32_t delay;
+	u_int32_t tmp_delay;
 	int error;
 
 	cmd = SEQ_CMD(ev);
@@ -1103,10 +1103,10 @@ seq_to_new(ev, uio)
 		SEQ_EPARM(ev) = parm;
 		break;
 	case SEQOLD_WAIT:
-		delay = *(u_int32_t *)ev->arr >> 8;
+		tmp_delay = *(u_int32_t *)ev->arr >> 8;
 		SEQ_CMD(ev) = SEQ_TIMING;
 		SEQ_TCMD(ev) = TMR_WAIT_REL;
-		*(u_int32_t *)&ev->arr[4] = delay;
+		*(u_int32_t *)&ev->arr[4] = tmp_delay;
 		break;
 	case SEQOLD_SYNCTIMER:
 		SEQ_CMD(ev) = SEQ_TIMING;
