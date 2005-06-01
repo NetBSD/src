@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.62 2003/12/18 00:56:05 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.63 2005/06/01 15:41:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.62 2003/12/18 00:56:05 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.63 2005/06/01 15:41:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,6 +618,7 @@ waitcmd(int argc, char **argv)
 		}
 	}
 
+	retval = 127;		/* XXXGCC: -Wuninitialized */
 	for (; *argptr; argptr++) {
 		job = getjob(*argptr, 1);
 		if (!job) {

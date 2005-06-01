@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.70 2005/03/19 16:38:27 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.71 2005/06/01 15:41:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.70 2005/03/19 16:38:27 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.71 2005/06/01 15:41:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ argstr(char *p, int flag)
 	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
-	const char *ifs;
+	const char *ifs = NULL;
 	int ifs_split = EXP_IFS_SPLIT;
 
 	if (flag & EXP_IFS_SPLIT)
