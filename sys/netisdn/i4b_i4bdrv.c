@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.26 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.27 2005/06/01 18:07:04 drochner Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.26 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.27 2005/06/01 18:07:04 drochner Exp $");
 
 #include "isdn.h"
 
@@ -543,7 +543,6 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_CTRL_INFO_REQ:
 		{
 			msg_ctrl_info_req_t *mcir;
-			struct isdn_l3_driver *d;
 			int isdnif;
 
 			mcir = (msg_ctrl_info_req_t *)data;
