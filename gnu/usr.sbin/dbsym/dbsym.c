@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.7 2003/10/27 00:12:41 lukem Exp $ */
+/* $NetBSD: dbsym.c,v 1.8 2005/06/01 15:12:18 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
-__RCSID("$NetBSD: dbsym.c,v 1.7 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.8 2005/06/01 15:12:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -340,8 +340,8 @@ int
 load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 {
 	elf_ehdr ehdr;
-	Elf32_External_Shdr *s32hdr;
-	Elf64_External_Shdr *s64hdr;
+	Elf32_External_Shdr *s32hdr = NULL;
+	Elf64_External_Shdr *s64hdr = NULL;
 	void *shdr;
 	u_int32_t osymtabsize, sh_offset;
 	int elftype, e_shnum, i, sh_size;
