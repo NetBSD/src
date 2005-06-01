@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.20 2005/02/27 00:27:50 perry Exp $ */
+/* $NetBSD: tcvar.h,v 1.21 2005/06/01 16:17:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -80,7 +80,7 @@ struct tc_softc {
  * Arguments used to attach TURBOchannel busses.
  */
 struct tcbus_attach_args {
-	char		*tba_busname;		/* XXX should be common */
+	const char		*tba_busname;	/* XXX should be common */
 	bus_space_tag_t tba_memt;
 
 	/* Bus information */
@@ -129,7 +129,7 @@ struct tc_slotdesc {
  * machine-dependent code to the TURBOchannel bus driver.
  */
 struct tc_builtin {
-	char		*tcb_modname;
+	const char	*tcb_modname;
 	u_int		tcb_slot;
 	tc_offset_t	tcb_offset;
 	void		*tcb_cookie;

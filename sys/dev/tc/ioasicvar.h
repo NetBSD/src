@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.17 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.18 2005/06/01 16:17:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 #define _DEV_TC_IOASICVAR_H_
 
 struct ioasic_dev {
-	char		*iad_modname;
+	const char	*iad_modname;
 	tc_offset_t	iad_offset;
 	void		*iad_cookie;
 	u_int32_t	iad_intrbits;
