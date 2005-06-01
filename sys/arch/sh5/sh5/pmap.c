@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2005/06/01 13:05:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2005/06/01 13:05:29 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -514,7 +514,7 @@ pmap_kernel_ipt_set_ptel(kpte_t *kpte, ptel_t ptel)
 static __inline tlbcookie_t
 pmap_kernel_ipt_get_tlbcookie(kpte_t *kpte)
 {
-	u_int16_t *kpp = (u_int16_t *)&kpte->tlbcookie;
+	volatile u_int16_t *kpp = (volatile u_int16_t *)&kpte->tlbcookie;
 
 	return ((tlbcookie_t)*kpp);
 }
@@ -522,7 +522,7 @@ pmap_kernel_ipt_get_tlbcookie(kpte_t *kpte)
 static __inline void
 pmap_kernel_ipt_set_tlbcookie(kpte_t *kpte, tlbcookie_t tlbcookie)
 {
-	u_int16_t *kpp = (u_int16_t *)&kpte->tlbcookie;
+	volatile u_int16_t *kpp = (volatile u_int16_t *)&kpte->tlbcookie;
 
 	*kpp = (u_int16_t)tlbcookie;
 }
