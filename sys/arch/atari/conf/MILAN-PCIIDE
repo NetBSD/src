@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.37 2005/02/25 13:52:21 simonb Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.37.2.1 2005/06/01 17:19:42 riz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -174,7 +174,6 @@ cmdide* at pci? dev ? function ? # CMD tech IDE controllers
 cypide* at pci? dev ? function ? # Cypress IDE controllers
 hptide* at pci? dev ? function ? # Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ? # Opti IDE controllers
-piixide* at pci? dev ? function ? # Intel IDE controllers
 pdcide* at pci? dev ? function ? # Promise IDE controllers
 pdcsata* at pci? dev ? function ? # Promise SATA150 controllers
 satalink* at pci? dev ? function ? # SiI SATALink controllers
