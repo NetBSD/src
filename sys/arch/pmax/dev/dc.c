@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.78 2004/04/25 06:23:41 matt Exp $	*/
+/*	$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.78 2004/04/25 06:23:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $");
 
 /*
  * devDC7085.c --
@@ -307,7 +307,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	/* init pseudo DMA structures */
 	pdp = &sc->dc_pdma[0];
 	for (line = 0; line < 4; line++) {
-		pdp->p_addr = (void *)dcaddr;
+		pdp->p_addr = addr;
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
@@ -806,7 +806,7 @@ dcrint(sc)
 	int overrun = 0;
 	struct tty **dc_tty;
 #if NRASTERCONSOLE > 0
-	char *cp;
+	const char *cp;
 	int cl;
 #endif
 
