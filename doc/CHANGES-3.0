@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.107 2005/05/31 22:42:01 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.108 2005/06/01 12:25:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8992,7 +8992,13 @@ sys/arch/sun2/conf/files.sun2			1.15
 
 xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/VISmoveImage.s 1.4
 
-	keep the code from turning off the FPU - cures excessive traps that made
-	acceleration unusable ( after mhitch figured out what caused the traps )
+	Keep the code from turning off the FPU - cures excessive traps that
+	made acceleration unusable.
 	[macallan, ticket #361]
+
+sys/dev/pci/satalink.c				1.25
+
+	The read/read multiple cacheline problem may also appear on the 3114
+	controller, so apply the cacheline fix to it as well.
+	[ragge, ticket #364]
 
