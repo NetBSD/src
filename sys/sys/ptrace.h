@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.33 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.34 2005/06/01 13:01:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -105,10 +105,10 @@ int	process_read_regs(struct lwp *, struct reg *);
 int	process_set_pc(struct lwp *, caddr_t);
 int	process_sstep(struct lwp *, int);
 #ifdef PT_SETFPREGS
-int	process_write_fpregs(struct lwp *, struct fpreg *);
+int	process_write_fpregs(struct lwp *, const struct fpreg *);
 #endif
 #ifdef PT_SETREGS
-int	process_write_regs(struct lwp *, struct reg *);
+int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP
