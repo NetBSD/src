@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.10 2005/02/26 23:10:21 perry Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.11 2005/06/01 15:34:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.10 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.11 2005/06/01 15:34:15 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ printf("sendmsg space\n");
 	bsd_msghdr.msg_iov = stackgap_alloc(p, &sg,
 	    bsd_msghdr.msg_iovlen * sizeof (struct iovec));
 
-	if ((error = copyout(&bsd_msghdr, (caddr_t)SCARG(&a, msg),
+	if ((error = copyout(&bsd_msghdr, __UNCONST(SCARG(&a, msg)),
 	    sizeof bsd_msghdr)) != 0)
 		return (error);
 

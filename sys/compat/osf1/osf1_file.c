@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.18 2005/02/26 23:10:21 perry Exp $ */
+/* $NetBSD: osf1_file.c,v 1.19 2005/06/01 15:34:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.18 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.19 2005/06/01 15:34:15 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -411,7 +411,7 @@ osf1_sys_utimes(l, v, retval)
 		SCARG(&a, tptr) = stackgap_alloc(p, &sg, sizeof tv);
 
 		/* get the OSF/1 timeval argument */
-		error = copyin((caddr_t)SCARG(uap, tptr),
+		error = copyin(SCARG(uap, tptr),
 		    (caddr_t)&otv, sizeof otv);
 		if (error == 0) {
 
@@ -421,7 +421,7 @@ osf1_sys_utimes(l, v, retval)
 			tv.tv_usec = otv.tv_usec;
 
 			error = copyout((caddr_t)&tv,
-			    (caddr_t)SCARG(&a, tptr), sizeof tv);
+			    __UNCONST(SCARG(&a, tptr)), sizeof tv);
 		}
 	}
 
