@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.31 2004/04/20 19:44:51 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.32 2005/06/01 15:21:52 lukem Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.31 2004/04/20 19:44:51 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.32 2005/06/01 15:21:52 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -181,6 +181,8 @@ expr:	item { $$ = $1; }
 		int64_t l, r;
 		int res;
 
+		res = 0;
+
 		/*
 		 * Slight hack to avoid differences in the compare code
 		 * between string and numeric compare.
@@ -273,6 +275,8 @@ perform_arith_op(const char *left, const char *op, const char *right)
 {
 	int64_t res, sign, l, r;
 	u_int64_t temp;
+
+	res = 0;
 
 	if (!is_integer(left)) {
 		yyerror("non-integer argument '%s'", left);
