@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.15 2003/10/21 00:07:17 fvdl Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.16 2005/06/01 05:43:43 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.15 2003/10/21 00:07:17 fvdl Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.16 2005/06/01 05:43:43 lukem Exp $");
 #endif
 #endif
 
@@ -326,6 +326,7 @@ getclnthandle(host, nconf, targaddr)
 /* VARIABLES PROTECTED BY rpcbaddr_cache_lock:  ad_cache */
 
 	/* Get the address of the rpcbind.  Check cache first */
+	client = NULL;
 	addr_to_delete.len = 0;
 	rwlock_rdlock(&rpcbaddr_cache_lock);
 	ad_cache = check_cache(host, nconf->nc_netid);
