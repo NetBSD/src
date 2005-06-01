@@ -71,6 +71,7 @@ prompt(const char *msg)
 	char *retval;
 	char ch;
 
+	saved_alarm = 0;
 	sigemptyset(&sigs);
 	sigaddset(&sigs, SIGINT);
 	sigaddset(&sigs, SIGTSTP);
