@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.17 2005/04/01 13:00:57 yamt Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.18 2005/06/01 16:36:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.17 2005/04/01 13:00:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.18 2005/06/01 16:36:42 drochner Exp $");
 
 #include "opt_largepages.h"
 
@@ -102,7 +102,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * pages writable temporarily.
  */
 static void
-db_write_text(vaddr_t addr, size_t size, char *data)
+db_write_text(vaddr_t addr, size_t size, const char *data)
 {
 	pt_entry_t *pte, oldpte, tmppte;
 	vaddr_t pgva;
@@ -206,7 +206,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	extern char etext;
 	char *dst;
@@ -222,12 +222,12 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	dst = (char *)addr;
 
 	if (size == 4) {
-		*((int *)dst) = *((int *)data);
+		*((int *)dst) = *((const int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short *)dst) = *((short *)data);
+		*((short *)dst) = *((const short *)data);
 		return;
 	}
 
