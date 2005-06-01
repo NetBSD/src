@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.22 2005/05/29 03:55:37 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.23 2005/06/01 11:37:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.22 2005/05/29 03:55:37 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.23 2005/06/01 11:37:52 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: tty.c,v 1.22 2005/05/29 03:55:37 christos Exp $");
 
 typedef struct ttymodes_t {
 	const char *m_name;
-	u_int m_value;
+	unsigned int m_value;
 	int m_type;
 }          ttymodes_t;
 
