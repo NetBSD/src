@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.14 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: rcons.h,v 1.15 2005/06/01 17:05:16 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,12 +103,12 @@ void rcons_ttyinit(struct tty *);
 
 /* rcons_subr.c */
 void rcons_init_ops(struct rconsole *rc);
-void rcons_puts(struct rconsole *, unsigned char *, int);
+void rcons_puts(struct rconsole *, const unsigned char *, int);
 void rcons_pctrl(struct rconsole *, int);
 void rcons_esc(struct rconsole *, int);
 void rcons_doesc(struct rconsole *, int);
 void rcons_sgresc(struct rconsole *, int);
-void rcons_text(struct rconsole *, unsigned char *, int);
+void rcons_text(struct rconsole *, const unsigned char *, int);
 void rcons_cursor(struct rconsole *);
 void rcons_invert(struct rconsole *, int);
 void rcons_clear2eop(struct rconsole *);
