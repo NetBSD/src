@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.32 2005/02/25 19:16:45 martin Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.32.2.1 2005/06/01 17:19:36 riz Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -299,7 +299,6 @@ cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
