@@ -1,4 +1,4 @@
-#	$NetBSD: files.pf,v 1.1 2004/06/22 14:04:04 itojun Exp $
+#	$NetBSD: files.pf,v 1.2 2005/06/01 14:15:46 yamt Exp $
 
 defpseudo pf:		ifnet
 defpseudo pflog:	ifnet
@@ -14,3 +14,7 @@ file	dist/pf/net/if_pflog.c		pflog		needs-flag
 #file	dist/pf/net/if_pfsync.c		pfsync		needs-flag
 
 makeoptions	pf	CPPFLAGS+="-I$S/dist/pf"
+
+makeoptions	pf	"CWARNFLAGS.pf.c"+="-Wno-shadow"
+makeoptions	pf	"CWARNFLAGS.pf_norm.c"+="-Wno-shadow"
+makeoptions	pf	"CWARNFLAGS.pf_ioctl.c"+="-Wno-shadow"
