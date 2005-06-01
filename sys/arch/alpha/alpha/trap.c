@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.96 2004/08/28 17:53:00 jdolecek Exp $ */
+/* $NetBSD: trap.c,v 1.97 2005/06/01 16:09:01 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2004/08/28 17:53:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2005/06/01 16:09:01 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				ksi.ksi_trap =  a0;	/* exception summary */
 				break;
 			}
-			/* FALLTHROUTH */
+			/* FALLTHROUGH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
 			KSI_INIT_TRAP(&ksi);
@@ -729,7 +729,7 @@ static const int reg_to_framereg[32] = {
 #define	unaligned_load(storage, ptrf, mod)				\
 	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\
 		break;							\
-	signal = 0;							\
+	signo = 0;							\
 	if ((regptr = ptrf(l, reg)) != NULL)				\
 		*regptr = mod (storage);
 
@@ -740,7 +740,7 @@ static const int reg_to_framereg[32] = {
 		(storage) = 0;						\
 	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) != 0)	\
 		break;							\
-	signal = 0;
+	signo = 0;
 
 #define	unaligned_load_integer(storage)					\
 	unaligned_load(storage, irp, )
@@ -906,7 +906,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 		NOFIX_ST("stl_c", 4),	NOFIX_ST("stq_c", 8),
 	};
 	const struct unaligned_fixup_data *selected_tab;
-	int doprint, dofix, dosigbus, signal;
+	int doprint, dofix, dosigbus, signo;
 	unsigned long *regptr, longdata;
 	int intdata;		/* signed to get extension when storing */
 	u_int16_t worddata;	/* unsigned to _avoid_ extension */
@@ -966,7 +966,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	 * will be botched.  If everything works out OK,
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
-	signal = SIGSEGV;
+	signo = SIGSEGV;
 	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
 		case 0x0c:			/* ldwu */
@@ -1042,14 +1042,14 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	 * Force SIGBUS if requested.
 	 */
 	if (dosigbus)
-		signal = SIGBUS;
+		signo = SIGBUS;
 
 	/*
 	 * Write back USP.
 	 */
 	alpha_pal_wrusp(l->l_md.md_tf->tf_regs[FRAME_SP]);
 
-	return (signal);
+	return (signo);
 }
 
 /*
