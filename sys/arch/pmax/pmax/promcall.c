@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.9 2003/08/07 16:29:14 agc Exp $	*/
+/*	$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.9 2003/08/07 16:29:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
  */
 char *
 prom_getenv(name)
-	char *name;
+	const char *name;
 {
 	return (*callv->_getenv)(name);
 }
