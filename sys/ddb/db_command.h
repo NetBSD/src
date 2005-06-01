@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.23 2005/05/29 21:31:05 christos Exp $	*/
+/*	$NetBSD: db_command.h,v 1.24 2005/06/01 12:25:27 drochner Exp $	*/
 
 /*
  * Mach Operating System
@@ -51,7 +51,7 @@ extern db_addr_t db_next;	/* next address to be examined
 struct db_command {
 	const char	*name;		/* command name */
 	/* function to call */
-	void		(*fcn)(db_expr_t, int, db_expr_t, char *);
+	void		(*fcn)(db_expr_t, int, db_expr_t, const char *);
 	int		flag;		/* extra info: */
 #define	CS_OWN		0x1		/* non-standard syntax */
 #define	CS_MORE		0x2		/* standard syntax, but may have other

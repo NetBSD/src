@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.30 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.31 2005/06/01 12:25:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.30 2005/02/26 23:04:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.31 2005/06/01 12:25:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.30 2005/02/26 23:04:17 perry Exp $");
 #endif
 
 void
-db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	struct proc *p;
 	db_expr_t pid, sig;
@@ -102,7 +102,7 @@ db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 #ifdef KGDB
 void
-db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	kgdb_active++;
 	kgdb_trap(db_trap_type, DDB_REGS);
@@ -111,20 +111,21 @@ db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 #endif
 
 void
-db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	int i;
 
-	char *mode;
+	const char *mode;
 	struct proc *p, *pp, *cp;
 	struct lwp *l, *cl;
 	struct timeval tv[2];
 	const struct proclist_desc *pd;
 
 	if (modif[0] == 0)
-		modif[0] = 'n';			/* default == normal mode */
+		mode = "n";			/* default == normal mode */
+	else
+		mode = strchr("mawln", modif[0]);
 
-	mode = strchr("mawln", modif[0]);
 	if (mode == NULL || *mode == 'm') {
 		db_printf("usage: show all procs [/a] [/n] [/w]\n");
 		db_printf("\t/a == show process address info\n");
@@ -227,7 +228,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 }
 
 void
-db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+db_dmesg(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	struct kern_msgbuf *mbp;
 	db_expr_t print;
@@ -280,7 +281,7 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 #endif
 
 void
-db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	struct prochd *ph;
 	struct lwp *l;
