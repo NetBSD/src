@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2004/06/30 03:26:26 jmc Exp $
+# $NetBSD: Makefile,v 1.15 2005/06/01 17:17:34 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -21,6 +21,7 @@ UNIT_TESTS:= ${.PARSEDIR}
 SUBFILES= \
 	cond1 \
 	modmatch \
+	modorder \
 	modts \
 	modword \
 	posix \
@@ -39,7 +40,7 @@ clean:
 
 .include <bsd.obj.mk>
 
-TEST_MAKE?= ${MAKE}
+TEST_MAKE?= ${.MAKE}
 
 # The driver.
 # We always pretend .MAKE was called 'make' 
