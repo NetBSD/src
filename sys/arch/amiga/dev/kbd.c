@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.46 2003/09/21 19:16:48 jdolecek Exp $ */
+/*	$NetBSD: kbd.c,v 1.47 2005/06/01 18:50:34 jandberg Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.46 2003/09/21 19:16:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.47 2005/06/01 18:50:34 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.46 2003/09/21 19:16:48 jdolecek Exp $");
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdreg.h>
 #include <amiga/dev/kbdmap.h>
+#include <amiga/dev/kbdvar.h>
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
 
@@ -140,6 +141,7 @@ struct kbd_softc {
 	u_char k_mf2;
 #endif
 
+	int k_console;		/* true if used as console keyboard */
 #if NWSKBD>0
 	struct device *k_wskbddev; /* pointer to wskbd for sending strokes */
 	int k_pollingmode;         /* polling mode on? whatever it isss... */
@@ -203,11 +205,7 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 		 * Try to attach the wskbd.
 		 */
 		struct wskbddev_attach_args waa;
-
-		/* Maybe should be done before this?... */
-		wskbd_cnattach(&kbd_consops, NULL, &kbd_mapdata);
-
-		waa.console = 1;
+		waa.console = kbd_softc.k_console;
 		waa.keymap = &kbd_mapdata;
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
@@ -217,6 +215,18 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 	}
 	kbdenable();
 #endif /* WSKBD */
+}
+
+/*
+ * This is called when somebody wants to use kbd as the console keyboard.
+ */
+void
+kbd_cnattach(void)
+{
+#if NWSKBD>0
+	wskbd_cnattach(&kbd_consops, NULL, &kbd_mapdata);
+	kbd_softc.k_console = 1;
+#endif
 }
 
 /* definitions for amiga keyboard encoding. */
