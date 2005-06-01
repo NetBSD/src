@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.18 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.19 2005/06/01 16:13:04 drochner Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2005/06/01 16:13:04 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -246,7 +246,7 @@ void
 db_write_bytes(addr, size, data)
 	vaddr_t		addr;
 	register size_t	size;
-	register char	*data;
+	register const char *data;
 {
 	register char	*dst;
 
