@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.32 2004/10/22 05:39:56 skrll Exp $	 */
+/*	$NetBSD: paths.c,v 1.33 2005/06/01 14:57:22 lukem Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.32 2004/10/22 05:39:56 skrll Exp $");
+__RCSID("$NetBSD: paths.c,v 1.33 2005/06/01 14:57:22 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -406,6 +406,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 
 	ep = name + strlen(name);
 	do {
+		i = -1;
 		while (*name == '/' || *name == '.')
 			name++;
 		if (name >= ep)
@@ -442,7 +443,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 			}
 	} while (name < ep && miblen <= CTL_MAXNAME);
 
-	if (name < ep)
+	if (name < ep || i == -1)
 		goto bad;
 	r = SYSCTL_TYPE(result[i].sysctl_flags);
 
