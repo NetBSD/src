@@ -1,10 +1,15 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.29 2005/05/14 23:51:02 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2005/06/01 11:06:01 lukem Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
 CPPFLAGS+=-DFLOATING_POINT
+
+COPTS.vfprintf.c+=	-Wno-uninitialized	# see rev 1.46 for why
+
+COPTS.vfwprintf.c+=	-Wno-uninitialized	# XXX: various to be fixed
+COPTS.vfwscanf.c+=	-Wno-uninitialized	# XXX: various to be fixed
 
 SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c fgetwln.c \
