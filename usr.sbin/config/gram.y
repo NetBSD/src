@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.51 2004/06/05 03:21:53 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.52 2005/06/01 12:32:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	defoptdeps
 %type	<str>	optfile_opt
 %type	<list>	subarches_opt subarches
-%type	<str>	filename stringvalue locname
+%type	<str>	filename stringvalue locname mkvarname
 %type	<val>	device_major_block device_major_char
 
 %%
@@ -479,16 +479,20 @@ mkopt_list:
 	mkopt_list ',' mkoption |
 	mkoption;
 
+mkvarname:
+	QSTRING				{ $$ = $1; } |
+	WORD				{ $$ = $1; };
+
 mkoption:
-	WORD '=' value			{ addmkoption($1, $3); } |
-	WORD PLUSEQ value		{ appendmkoption($1, $3); };
+	mkvarname '=' value		{ addmkoption($1, $3); } |
+	mkvarname PLUSEQ value		{ appendmkoption($1, $3); };
 
 condmkopt_list:
 	condmkopt_list ',' condmkoption |
 	condmkoption;
 
 condmkoption:
-	WORD WORD PLUSEQ value		{ appendcondmkoption($1, $2, $4); };
+	WORD mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); };
 
 no_mkopt_list:
 	no_mkopt_list ',' no_mkoption |
