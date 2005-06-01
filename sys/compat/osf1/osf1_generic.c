@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.6 2005/02/26 23:10:21 perry Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.7 2005/06/01 15:34:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.6 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.7 2005/06/01 15:34:15 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ osf1_sys_readv(l, v, retval)
 	SCARG(&a, iovp) = stackgap_alloc(p, &sg, nsize);
 	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
 
-	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
+	if ((error = copyout(nio, __UNCONST(SCARG(&a, iovp)), nsize)))
 		goto punt;
 	error = sys_readv(l, &a, retval);
 
@@ -208,7 +208,7 @@ osf1_sys_writev(l, v, retval)
 	SCARG(&a, iovp) = stackgap_alloc(p, &sg, nsize);
 	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
 
-	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
+	if ((error = copyout(nio, __UNCONST(SCARG(&a, iovp)), nsize)))
 		goto punt;
 	error = sys_writev(l, &a, retval);
 
