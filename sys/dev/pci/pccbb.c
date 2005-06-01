@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.119 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.120 2005/06/01 08:39:32 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.119 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.120 2005/06/01 08:39:32 sekiya Exp $");
 
 /*
 #define CBB_DEBUG
@@ -617,7 +617,7 @@ pccbb_pci_callback(self)
 		}
 		sc->sc_base_memt = sc->sc_memt;
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%lx\n",
 		    sc->sc_dev.dv_xname, (unsigned long)sockbase,
 		    (unsigned long)pci_conf_read(pc, sc->sc_tag,
 		    PCI_SOCKBASE)));
@@ -632,7 +632,7 @@ pccbb_pci_callback(self)
 			return;
 		}
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%lx\n",
 		    sc->sc_dev.dv_xname, (unsigned long)sock_base,
 		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
