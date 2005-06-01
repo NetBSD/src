@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.27 2005/05/18 00:31:32 peter Exp $ */
+/* $NetBSD: identd.c,v 1.28 2005/06/01 15:51:23 lukem Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -39,7 +39,7 @@
 
 #include "identd.h"
 
-__RCSID("$NetBSD: identd.c,v 1.27 2005/05/18 00:31:32 peter Exp $");
+__RCSID("$NetBSD: identd.c,v 1.28 2005/06/01 15:51:23 lukem Exp $");
 
 #define OPSYS_NAME	"UNIX"
 #define IDENT_SERVICE	"auth"
@@ -99,6 +99,7 @@ main(int argc, char *argv[])
 	gid_t gid;
 	uid_t uid;
 
+	socks = NULL;
 	IPv4or6 = AF_UNSPEC;
 	osname = OPSYS_NAME;
 	portno = IDENT_SERVICE;
