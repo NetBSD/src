@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.33 2005/02/25 19:16:45 martin Exp $
+# 	$NetBSD: SPLODE,v 1.33.2.1 2005/06/01 17:19:37 riz Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.33.2.1 $"
 
 maxusers	256
 
@@ -290,7 +290,6 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 #cypide* at pci? dev ? function ?	# Cypress IDE controllers
 #hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #optiide* at pci? dev ? function ?	# Opti IDE controllers
-#piixide* at pci? dev ? function ?	# Intel IDE controllers
 #pdcide* at pci? dev ? function ?	# Promise IDE controllers
 #pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 #satalink* at pci? dev ? function ?	# SiI SATALink controllers
