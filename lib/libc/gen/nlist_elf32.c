@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.26 2004/12/28 00:08:08 thorpej Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.27 2005/06/01 05:24:54 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -129,7 +129,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
-		BADUNMAP;
+		BAD;
 	}
 
 	if (S_ISCHR(st.st_mode)) {
