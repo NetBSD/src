@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhc.c,v 1.3 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: kexdhc.c,v 1.4 2005/06/01 12:07:00 lukem Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: kexdhc.c,v 1.2 2004/06/13 12:53:24 djm Exp $");
-__RCSID("$NetBSD: kexdhc.c,v 1.3 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: kexdhc.c,v 1.4 2005/06/01 12:07:00 lukem Exp $");
 
 #include "xmalloc.h"
 #include "key.h"
@@ -39,7 +39,7 @@ void
 kexdh_client(Kex *kex)
 {
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
-	DH *dh;
+	DH *dh = NULL;
 	Key *server_host_key;
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
