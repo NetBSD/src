@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.26 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.27 2005/06/01 05:54:07 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_simple.c,v 1.26 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.27 2005/06/01 05:54:07 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -141,6 +141,9 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 
 		madenow = FALSE;
 		svcxprt = NULL;
+		recvsz = 0;
+		xdrbuf = NULL;
+		netid = NULL;
 		for (pl = proglst; pl; pl = pl->p_nxt)
 			if (strcmp(pl->p_netid, nconf->nc_netid) == 0) {
 				svcxprt = pl->p_transp;
