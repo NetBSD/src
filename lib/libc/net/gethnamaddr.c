@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.64 2004/11/23 03:42:13 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.65 2005/06/01 04:39:36 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.64 2004/11/23 03:42:13 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.65 2005/06/01 04:39:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1271,6 +1271,7 @@ nextline:
 	*cp++ = '\0';
 
 	/* p has should have an address */
+	addrok = 0;
 	switch (af) {
 	case AF_INET:
 		addrok = inet_aton(p, &host_addrs[naddrs]);
