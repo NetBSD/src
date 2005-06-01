@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.34 2005/02/25 13:46:48 simonb Exp $
+# $NetBSD: GENERIC.in,v 1.35 2005/06/01 18:55:08 jandberg Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -599,8 +599,10 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 ', `m4_dnl
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
 ')m4_dnl
 
 pseudo-device	vnd		4	# vnode pseudo-disks
