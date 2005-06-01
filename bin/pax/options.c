@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.87 2005/05/15 02:04:30 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.88 2005/06/01 15:25:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.87 2005/05/15 02:04:30 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.88 2005/06/01 15:25:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1148,8 +1148,10 @@ tar_options(int argc, char **argv)
 						break;
 					file = *argv++;
 					dir = chdname;
-				} else
+				} else {
 					file = NULL;
+					dir = NULL;
+				}
 				if (file != NULL) {
 					FILE *fp;
 					char *str;
@@ -1231,8 +1233,10 @@ tar_options(int argc, char **argv)
 					break;
 				file = *argv++;
 				dir = NULL;
-			} else
+			} else {
 				file = NULL;
+				dir = NULL;
+			}
 			if (file != NULL) {
 				FILE *fp;
 				char *str;
