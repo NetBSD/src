@@ -1,4 +1,4 @@
-# $Id: varcmd,v 1.1 2003/07/31 00:46:15 sjg Exp $
+# $Id: varcmd,v 1.2 2005/06/01 17:17:34 sjg Exp $
 #
 # Test behaviour of recursive make and vars set on command line.
 
@@ -15,13 +15,13 @@ show:
 	@echo "${TAG} FU=<v>${FU}</v> FOO=<v>${FOO}</v> VAR=<v>${VAR}</v>"
 
 one:	show
-	@${MAKE} -f ${MAKEFILE} FU=bar FOO=goo two
+	@${.MAKE} -f ${MAKEFILE} FU=bar FOO=goo two
 
 two:	show
-	@${MAKE} -f ${MAKEFILE} three
+	@${.MAKE} -f ${MAKEFILE} three
 
 three:	show
-	@${MAKE} -f ${MAKEFILE} four
+	@${.MAKE} -f ${MAKEFILE} four
 
 
 .ifmake four
@@ -30,4 +30,4 @@ VAR=Internal
 .endif
 
 four:	show
-	@${MAKE} -f ${MAKEFILE} show
+	@${.MAKE} -f ${MAKEFILE} show

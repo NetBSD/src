@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.107 2005/05/08 00:38:47 christos Exp $
+.\"	$NetBSD: make.1,v 1.108 2005/06/01 17:17:34 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 7, 2005
+.Dd June 1, 2005
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -663,7 +663,35 @@ This is identical to
 but selects all words which do not match
 .Ar pattern .
 .It Cm \&:O
-Order every word in variable alphabetically.
+Order every word in variable alphabetically. To sort words in
+reverse order use
+.Ql Cm \&:O:[-1..1]
+combination of modifiers.
+.It Cm \&:Ox
+Randomize words in variable. The results will be different each
+time you are referring to the modified variable; use the assignment
+with expansion
+.Pq Ql Cm \&:=
+to prevent such behaviour. For example,
+.Bd -literal -offset indent
+LIST=			uno due tre quattro
+RANDOM_LIST=		${LIST:Ox}
+STATIC_RANDOM_LIST:=	${LIST:Ox}
+
+all:
+	@echo "${RANDOM_LIST}"
+	@echo "${RANDOM_LIST}"
+	@echo "${STATIC_RANDOM_LIST}"
+	@echo "${STATIC_RANDOM_LIST}"
+
+.Ed
+may produce the output similar to:
+.Bd -literal -offset indent
+quattro due tre uno
+tre due quattro uno
+due uno quattro tre
+due uno quattro tre
+.Ed
 .It Cm \&:Q
 Quotes every shell meta-character in the variable, so that it can be passed
 safely through recursive invocations of

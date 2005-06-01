@@ -31,6 +31,20 @@ LIB=d X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBD.A"
 LIB=e X_LIBS:M${LIB${LIB:tu}} is "/tmp/libe.a"
 LIB=e X_LIBS:M*/lib${LIB}.a is "/tmp/libe.a"
 LIB=e X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBE.A"
+LIST      = one two three four five six seven eigth nine ten
+LIST:O    = eigth five four nine one seven six ten three two
+# Note that 1 in every 10! trials two independently generated
+# randomized orderings will be the same.  The test framework doesn't
+# support checking probabilistic output, so we accept that the test
+# will incorrectly fail with probability 2.8E-7.
+LIST:Ox   = Ok
+LIST:O:Ox = Ok
+LISTX     = Ok
+LISTSX    = Ok
+make: Bad modifier `:OX' for LIST
+BADMOD 1  = }
+make: Bad modifier `:OxXX' for LIST
+BADMOD 2  = XX}
 LIST="one two three four five six"
 LIST:ts,="one,two,three,four,five,six"
 LIST:ts/:tu="ONE/TWO/THREE/FOUR/FIVE/SIX"
