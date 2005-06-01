@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.398 2005/03/15 17:52:18 xtraeme Exp $
+$NetBSD: usbdevs,v 1.399 2005/06/01 09:15:41 sekiya Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -358,6 +358,7 @@ vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec	Neodio
 vendor VODAFONE		0x0af0	Vodafone
+vendor ASUSTEK		0x0b05	ASUSTeK Computer
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
 vendor TEKRAM		0x0b3b	Tekram Technology
@@ -401,8 +402,10 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
+vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
+vendor RALINK		0x1485	Ralink Technology
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
@@ -581,6 +584,9 @@ product ASANTE EA		0x1427	Ethernet Adapter
 
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
+
+/* ASUSTeK computer products */
+product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
@@ -769,6 +775,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DWL122		0x3700	Wireless DWL122
+product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
 product DLINK DSB650TX		0x4002	10/100 ethernet adapter
@@ -1160,6 +1167,8 @@ product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
 product LINKSYS2 WUSB11		0x2219	WUSB11
 product LINKSYS3 WUSB11V28	0x2233	WUSB11-V28
+product CISCOLINKSYS WUSB54G	0x000d	WUSB54G Wireless-G USB Network Adapter
+product CISCOLINKSYS WUSB54GP	0x0011	WUSB54GP Wireless-G USB Network Adapter
 
 /* Logitec products */
 product LOGITEC LDR_H443SU2	0x0033	DVD Multi-plus unit LDR-H443SU2
@@ -1228,6 +1237,8 @@ product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
+product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
+product MELCO KG54AI		0x006d	WLI-U2-KG54-AI WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1524,6 +1535,9 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 /* Rainbow Technologies products */
 product	RAINBOW IKEY2000	0x1200	i-Key 2000
 
+/* Ralink Technology products */
+product RALINK RT2570		0x1706	RT2570
+
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
 
@@ -1655,6 +1669,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
+product SMC RT2570		0xee13	RT2570
 product SMC2 2020HUB            0x2020  USB Hub
 product SMC3 2662WUSB		0xa002	2662W-AR Wireless Adapter
 
