@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.56 2005/05/31 22:39:08 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.56 2005/05/31 22:39:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,6 @@ union mainbus_attach_args {
 	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
-#endif
-#if NVESABIOS > 0
-	struct vesabios_attach_args mba_vba;
 #endif
 };
 
@@ -227,10 +224,8 @@ mainbus_attach(parent, self, aux)
 	}
 
 #if NVESABIOS > 0
-	if (vbeprobe()) {
-		mba.mba_vba.vaa_busname = "vesabios";
-		config_found_ia(self, "vesabiosbus", &mba.mba_vba, mainbus_print);
-	}
+	if (vbeprobe())
+		config_found_ia(self, "vesabiosbus", 0, 0);
 #endif
 
 #if NISADMA > 0 && (NACPI > 0 || NPNPBIOS > 0)
@@ -243,7 +238,6 @@ mainbus_attach(parent, self, aux)
 
 #if NACPI > 0
 	if (acpi_present) {
-		mba.mba_acpi.aa_busname = "acpi";
 		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
 		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
 		mba.mba_acpi.aa_pc = NULL;
@@ -252,7 +246,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		config_found_ia(self, "acpibus", &mba.mba_acpi, mainbus_print);
+		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
 			/*
@@ -271,7 +265,7 @@ mainbus_attach(parent, self, aux)
 #endif
 	if (pnpbios_probe()) {
 		mba.mba_paa.paa_ic = &x86_isa_chipset;
-		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, pnpbiosbusprint);
+		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, 0);
 	}
 #endif
 
@@ -337,7 +331,7 @@ mainbus_attach(parent, self, aux)
 	if (acpi_active == 0)
 #endif
 	if (apm_busprobe())
-		config_found_ia(self, "apmbus", 0, apmbus_print);
+		config_found_ia(self, "apmbus", 0, 0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.7 2005/05/31 22:39:08 drochner Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.8 2005/06/01 16:49:14 drochner Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -84,7 +84,6 @@ struct pnpbiosdev_attach_args {
 	char *primid;
 };
 
-int pnpbiosbusprint(void *aux, const char *pnp);
 int pnpbios_io_map(pnpbios_tag_t, struct pnpresources *, int,
 			bus_space_tag_t *, bus_space_handle_t *);
 void pnpbios_io_unmap(pnpbios_tag_t, struct pnpresources *, int,
