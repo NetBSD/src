@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.2 2002/03/10 19:56:39 lukem Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.3 2005/06/02 17:45:59 he Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.2 2002/03/10 19:56:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.3 2005/06/02 17:45:59 he Exp $");
 
 #include <sys/systm.h>
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.2 2002/03/10 19:56:39 lukem Exp $")
 int
 get_bootconf_option(opts, opt, type, result)
 	char *opts;
-	char *opt;
+	const char *opt;
 	int type;
 	void *result;
 {

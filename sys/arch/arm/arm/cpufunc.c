@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.69 2005/05/10 12:59:22 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.70 2005/06/02 17:45:59 he Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.69 2005/05/10 12:59:22 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.70 2005/06/02 17:45:59 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1550,7 +1550,7 @@ late_abort_fixup(arg)
 #define BIC	2
 
 struct cpu_option {
-	char	*co_name;
+	const char *co_name;
 	int	co_falseop;
 	int	co_trueop;
 	int	co_value;
