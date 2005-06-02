@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.1 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.2 2005/06/02 01:16:06 lukem Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,6 +74,7 @@ main(int argc, char **argv)
 	struct statvfs vfs;
 
 	/* Initialize and parse arguments */
+	verbose = 0;
 	newsize = 0;
 	while ((ch = getopt(argc, argv, "s:v")) != -1) {
 		switch(ch) {
