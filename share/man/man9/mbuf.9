@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.35 2005/03/18 11:02:40 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.36 2005/06/02 11:38:28 bad Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,7 +330,7 @@ back into the mbuf chain
 .Fa m0 ,
 starting
 .Fa off
-bytes from the beginning, extending the mbuf chain if necessary.
+bytes from the beginning of the chain, extending the mbuf chain if necessary.
 .Fn m_copyback
 can only fail when extending the chain.
 The caller should check for this kind of failure
