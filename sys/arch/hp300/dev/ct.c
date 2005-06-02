@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.41 2005/03/14 12:50:33 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.41 2005/03/14 12:50:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ static void	ctcommand(dev_t, int, int);
 static const struct ctinfo {
 	short	hwid;
 	short	punit;
-	char	*desc;
+	const char *desc;
 } ctinfo[] = {
 	{ CT7946ID,	1,	"7946A"	},
 	{ CT7912PID,	1,	"7912P"	},
