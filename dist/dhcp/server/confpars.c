@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.5 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.6 2005/06/02 05:45:59 lukem Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -87,6 +87,7 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	unsigned tflen, ulen;
 	trace_type_t *ttype;
 
+	file = -1;
 	if (leasep)
 		ttype = trace_readleases_type;
 	else
