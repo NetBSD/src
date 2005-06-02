@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.11 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.12 2005/06/02 13:17:45 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.11 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.12 2005/06/02 13:17:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.11 2005/03/29 04:06:20 thorpej Exp $"
 #define	DEC_6600_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xef)
 #define	DEC_6600_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
-static char *irqtype = "6600 irq";
+static const char *irqtype = "6600 irq";
 static struct tsp_config *sioprimary;
 
 void dec_6600_intr_disestablish __P((void *, void *));

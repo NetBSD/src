@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.5 2005/01/21 15:50:42 drochner Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.6 2005/06/02 13:17:45 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2005/01/21 15:50:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2005/06/02 13:17:45 drochner Exp $");
 
 
 #ifdef DEBUG
@@ -198,7 +198,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef COMPAT_16
 	case 1:
 		buildcontext(l,(void *)catcher,
-			     (void *)ps->sa_sigdesc[sig].sd_tramp,
+			     (const void *)ps->sa_sigdesc[sig].sd_tramp,
 			     (void *)fp);
 		break;
 #endif
