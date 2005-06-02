@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.8 2005/02/19 15:37:34 tsutsui Exp $	*/
+/*	$NetBSD: aica.c,v 1.9 2005/06/02 18:06:10 he Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.8 2005/02/19 15:37:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9 2005/06/02 18:06:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ struct aica_softc {
 };
 
 const struct {
-	char	*name;
+	const char *name;
 	int	encoding;
 	int	precision;
 } aica_encodings[] = {
