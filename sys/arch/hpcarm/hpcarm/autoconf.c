@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:39 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2005/06/02 20:29:09 uwe Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2005/06/02 20:29:09 uwe Exp $");
 
 #include "opt_md.h"
 
@@ -61,7 +61,7 @@ void dumpconf __P((void));
 void isa_intr_init __P((void));
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
+static void get_device __P((const char *name));
 static void set_root_device __P((void));
 #endif
 
@@ -70,10 +70,11 @@ static void set_root_device __P((void));
 
 static void
 get_device(name)
-	char *name;
+	const char *name;
 {
 	int unit, part;
-	char devname[16], buf[32], *cp;
+	char devname[16], buf[32];
+	const char *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
