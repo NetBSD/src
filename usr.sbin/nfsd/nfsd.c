@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.44 2003/12/06 03:01:16 jonathan Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.45 2005/06/02 06:54:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.44 2003/12/06 03:01:16 jonathan Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.45 2005/06/02 06:54:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,9 @@ main(argc, argv)
 	nfsdcnt = DEFNFSDCNT;
 	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
 	tpipflag = udpflag = ip6flag = 0;
-	maxsock = tcpsock = 0;
+	nconf_udp = nconf_tcp = nconf_udp6 = nconf_tcp6 = NULL;
+	maxsock = 0;
+	tcpsock = tcp6sock = -1;
 #ifdef ISO
 #define	GETOPT	"6cn:rtu"
 #define	USAGE	"[-crtu] [-n num_servers]"
