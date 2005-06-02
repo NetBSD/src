@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.25 2005/05/18 16:11:11 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.26 2005/06/02 04:43:45 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.137 2005/03/04 08:48:06 djm Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.25 2005/05/18 16:11:11 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.26 2005/06/02 04:43:45 lukem Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -758,6 +758,7 @@ parse_int:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
+		value = 0;	/* To avoid compiler warning... */
 		if (arg[0] == '^' && arg[2] == 0 &&
 		    (u_char) arg[1] >= 64 && (u_char) arg[1] < 128)
 			value = (u_char) arg[1] & 31;
@@ -778,6 +779,7 @@ parse_int:
 	case oAddressFamily:
 		arg = strdelim(&s);
 		intptr = &options->address_family;
+		value = 0;	/* To avoid compiler warning... */
 		if (strcasecmp(arg, "inet") == 0)
 			value = AF_INET;
 		else if (strcasecmp(arg, "inet6") == 0)
