@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.44 2004/08/08 09:46:16 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.45 2005/06/02 00:48:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.44 2004/08/08 09:46:16 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.45 2005/06/02 00:48:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -815,6 +815,7 @@ doslave(int cmd, int slave_number)
 	int nread, nextslave, size, wrote, eot_count, werror;
 	sigset_t nsigset, osigset;
 
+	wrote = 0;
 	/*
 	 * Need our own seek pointer.
 	 */
