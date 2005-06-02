@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.14 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: mcbus.c,v 1.15 2005/06/02 13:17:45 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.14 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.15 2005/06/02 13:17:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static void	mcbusattach __P((struct device *, struct device *, void *));
 static int	mcbusprint __P((void *, const char *));
 static int	mcbussbm __P((struct device *, struct cfdata *,
 			      const locdesc_t *, void *));
-static char	*mcbus_node_type_str __P((u_int8_t));
+static const char *mcbus_node_type_str __P((u_int8_t));
 
 typedef struct {
 	struct device	mcbus_dev;
@@ -239,7 +239,7 @@ mcbusattach(parent, self, aux)
 	mcpcia_config_cleanup();
 }
 
-static char *
+static const char *
 mcbus_node_type_str(type)
 	u_int8_t type;
 {
