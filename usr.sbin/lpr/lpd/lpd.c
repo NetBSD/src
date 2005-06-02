@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.50 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: lpd.c,v 1.51 2005/06/02 05:57:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.50 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.51 2005/06/02 05:57:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,6 +319,7 @@ main(int argc, char **argv)
 				syslog(LOG_WARNING, "poll: %m");
 			continue;
 		}
+		s = -1;
                 for (i = 0; i < nfds; i++) 
 			if (socks[i].revents & POLLIN) {
 				fromlen = sizeof(from);
