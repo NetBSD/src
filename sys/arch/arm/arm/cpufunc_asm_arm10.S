@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.2 2004/08/23 20:53:56 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm10.S,v 1.3 2005/06/02 14:40:05 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2002 ARM Limited
@@ -80,6 +80,7 @@ ENTRY_NP(arm10_icache_sync_range)
 	sub	r3, ip, #1
 	and	r2, r0, r3
 	add	r1, r1, r2
+	sub	r1, r1, #1
 	bic	r0, r0, r3
 .Larm10_sync_next:
 	mcr	p15, 0, r0, c7, c5, 1	/* Invalidate I cache SE with VA */
@@ -127,6 +128,7 @@ ENTRY(arm10_dcache_wb_range)
 	sub	r3, ip, #1
 	and	r2, r0, r3
 	add	r1, r1, r2
+	sub	r1, r1, #1
 	bic	r0, r0, r3
 .Larm10_wb_next:
 	mcr	p15, 0, r0, c7, c10, 1	/* Clean D cache SE with VA */
@@ -144,6 +146,7 @@ ENTRY(arm10_dcache_wbinv_range)
 	sub	r3, ip, #1
 	and	r2, r0, r3
 	add	r1, r1, r2
+	sub	r1, r1, #1
 	bic	r0, r0, r3
 .Larm10_wbinv_next:
 	mcr	p15, 0, r0, c7, c14, 1	/* Purge D cache SE with VA */
@@ -165,6 +168,7 @@ ENTRY(arm10_dcache_inv_range)
 	sub	r3, ip, #1
 	and	r2, r0, r3
 	add	r1, r1, r2
+	sub	r1, r1, #1
 	bic	r0, r0, r3
 .Larm10_inv_next:
 	mcr	p15, 0, r0, c7, c6, 1	/* Invalidate D cache SE with VA */
@@ -182,6 +186,7 @@ ENTRY(arm10_idcache_wbinv_range)
 	sub	r3, ip, #1
 	and	r2, r0, r3
 	add	r1, r1, r2
+	sub	r1, r1, #1
 	bic	r0, r0, r3
 .Larm10_id_wbinv_next:
 	mcr	p15, 0, r0, c7, c5, 1	/* Invalidate I cache SE with VA */
