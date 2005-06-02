@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.c,v 1.7 2005/01/12 17:38:40 peter Exp $       */
+/*      $NetBSD: handlers.c,v 1.8 2005/06/02 09:41:12 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ handle_exec(char *path)
 	char *exec, *p;
 	size_t len;
 
+	i = 0;
 	f = fopen(path, "r");
 	for (lcnt = 1; (exec = fgetln(f, &len)) != NULL; ++lcnt) {
 		if (len == 1) /* skip blank */
@@ -117,6 +118,7 @@ handle_func(char *path)
 	char *exec, *p, *arg;
 	size_t len;
 
+	p = arg = NULL;
 	f = fopen(path, "r");
 	for (lcnt = 1; (exec = fgetln(f, &len)) != NULL; ++lcnt) {
 		if (len == 1) /* skip blank */
