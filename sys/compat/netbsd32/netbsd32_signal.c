@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.8 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.9 2005/06/02 10:27:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.8 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.9 2005/06/02 10:27:43 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 }
 
 void
-netbsd32_si32_to_si(siginfo_t *si, siginfo32_t *si32)
+netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 {
 	memset(si, 0, sizeof (*si));
 	si->si_signo = si32->si_signo;
@@ -259,7 +259,7 @@ netbsd32_si32_to_si(siginfo_t *si, siginfo32_t *si32)
 }
 
 void
-netbsd32_si_to_si32(siginfo32_t *si32, siginfo_t *si)
+netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 {
 	memset(si32, 0, sizeof (*si32));
 	si32->si_signo = si->si_signo;
