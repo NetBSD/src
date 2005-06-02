@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.12 2005/03/06 03:39:49 christos Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.13 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_refresh.c	10.44 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.12 2005/03/06 03:39:49 christos Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.13 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,6 +190,7 @@ vs_paint(sp, flags)
 	gp = sp->gp;
 	vip = VIP(sp);
 	didpaint = leftright_warp = 0;
+	ch = 0;		/* XXXGCC -Wuninitialized */
 
 	/*
 	 * 5: Reformat the lines.
@@ -798,6 +799,7 @@ vs_modeline(sp)
 		return;
 
 	gp = sp->gp;
+	t = NULL;	/* XXXGCC -Wuninitialized */
 
 	/*
 	 * We put down the file name, the ruler, the mode and the dirty flag.

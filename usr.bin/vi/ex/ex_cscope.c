@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.9 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.10 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_cscope.c	10.13 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_cscope.c,v 1.9 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_cscope.c,v 1.10 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,6 +698,9 @@ parse(sp, csc, tqp, matchesp)
 		}
 		*p = '\0';
 
+		slno = 0;	/* XXXGCC -Wuninitialized */
+		name = NULL;	/* XXXGCC -Wuninitialized */
+		nlen = 0;	/* XXXGCC -Wuninitialized */
 		/*
 		 * The cscope output is in the following format:
 		 *

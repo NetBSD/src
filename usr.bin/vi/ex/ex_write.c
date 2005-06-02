@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_write.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_write.c,v 1.11 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_write.c	10.30 (Berkeley) 7/12/96";
 #else
-__RCSID("$NetBSD: ex_write.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_write.c,v 1.11 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ exwr(sp, cmdp, cmd)
 	int flags;
 	char *name, *p;
 
+	p = NULL;	/* XXXGCC -Wuninitialized */
 	NEEDFILE(sp, cmdp);
 
 	/* All write commands can have an associated '!'. */
