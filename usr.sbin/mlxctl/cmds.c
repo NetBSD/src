@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.7 2003/07/13 12:30:17 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.8 2005/06/02 05:59:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.7 2003/07/13 12:30:17 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.8 2005/06/02 05:59:32 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -194,6 +194,8 @@ cmd_cstatus(char **argv)
 	static char buf[80];
 	const char *model;
 	int i, channel, target;
+
+	model = NULL;	/* XXXGCC -Wuninitialized */
 
 	for (i = 0; i < sizeof(mlx_ctlr_names) / sizeof(mlx_ctlr_names[0]); i++)
 		if (ci.ci_hardware_id == mlx_ctlr_names[i].hwid) {
