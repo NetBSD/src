@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.13 2005/05/23 22:17:20 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.14 2005/06/02 01:02:21 lukem Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -648,6 +648,7 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 	 * different.
 	 */
 
+	osb = NULL;
 	if (debug)
 		printf("sb0 %lld, sb1 %lld\n", (long long) sb0->lfs_serial,
 		    (long long) sb1->lfs_serial);
