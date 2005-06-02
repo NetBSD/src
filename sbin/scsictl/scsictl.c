@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.27 2005/02/21 00:29:08 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.28 2005/06/02 00:13:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.27 2005/02/21 00:29:08 thorpej Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.28 2005/06/02 00:13:10 lukem Exp $");
 #endif
 
 
@@ -253,6 +253,8 @@ device_defects(int argc, char *argv[])
 		errx(1, "unable to allocate defect list");
 	memset(data, 0, dlen);
 	memset(&cmd, 0, sizeof(cmd));
+	defects = 0;
+	pfunc = NULL;
 
 	/* determine which defect list(s) to read. */
 	for (i = 0; i < argc; i++) {
@@ -883,6 +885,8 @@ device_setcache(int argc, char *argv[])
 	if (argc > 2 || argc == 0)
 		usage();
 
+	flags = 0;
+	byte2 = 0;
 	if (strcmp(argv[0], "none") == 0)
 		flags = CACHING_RCD;
 	else if (strcmp(argv[0], "r") == 0)
