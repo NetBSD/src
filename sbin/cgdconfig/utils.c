@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.7 2005/03/30 17:17:51 elric Exp $ */
+/* $NetBSD: utils.c,v 1.8 2005/06/02 01:31:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.7 2005/03/30 17:17:51 elric Exp $");
+__RCSID("$NetBSD: utils.c,v 1.8 2005/06/02 01:31:30 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -473,11 +473,8 @@ bits_cget(const char *fn, int len)
 	FILE	*f;
 
 	f = fopen(fn, "r");
-	if (!f) {
-		free(bits->text);
-		free(bits);
+	if (!f)
 		return NULL;
-	}
 
 	bits = bits_fget(f, len);
 	fclose(f);
