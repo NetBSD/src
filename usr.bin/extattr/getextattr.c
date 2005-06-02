@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.1 2005/01/02 17:55:48 thorpej Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.2 2005/06/02 01:43:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -120,6 +120,8 @@ main(int argc, char *argv[])
 	int	flag_string = 0;
 	int	flag_hex = 0;
 
+	options = NULL;
+	minargc = 0;
 	visbuflen = buflen = 0;
 	visbuf = buf = NULL;
 
