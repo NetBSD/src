@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.120 2005/06/01 15:52:47 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.121 2005/06/02 19:58:38 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2443,4 +2443,14 @@ lib/libc/stdio/vfprintf.c			1.47
 
 	Remove __UNCONST definition; it is now in <sys/cdefs.h>.
 	[christos, ticket #1968]
+
+sys/arch/i386/conf/LAMB				1.49
+
+	Make this build again (add atabus).
+	[is, ticket #1972]
+
+sys/ufs/ffs/ffs_bswap.c				1.30
+
+	Fix copy/paste/don't update bug (fix from PR 22232 by Robert Elz).
+	[is, ticket #1973]
 
