@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.52 2005/05/29 21:22:52 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.53 2005/06/02 10:54:58 tron Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.52 2005/05/29 21:22:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.53 2005/06/02 10:54:58 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -263,8 +263,7 @@ gif_encapcheck(m, off, proto, arg)
 	if (m->m_pkthdr.len < sizeof(ip))
 		return 0;
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
 
 	switch (ip.ip_v) {
 #ifdef INET
