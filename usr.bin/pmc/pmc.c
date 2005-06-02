@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.11 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.12 2005/06/02 02:14:58 lukem Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.11 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.12 2005/06/02 02:14:58 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -384,13 +384,15 @@ int
 main(int argc, char **argv)
 {
 	int c, status, ret0, ret1, errn0, errn1;
-	char *event;
+	char *event = NULL;
 	const struct pmc_name2val_cpus *pncp;
 	const struct pmc_name2val *pnp;
 	struct i386_pmc_info_args pi;
 	struct i386_pmc_startstop_args pss0, pss1;
 	struct i386_pmc_read_args pr0, pr1;
 	pid_t pid;
+
+	errn0 = errn1 = 0;
 
 	if (i386_pmc_info(&pi) < 0)
 		errx(2, "PMC support is not compiled into the kernel");
@@ -421,16 +423,16 @@ main(int argc, char **argv)
 			pnp = find_pmc_name(pncp, event);
 			break;
 		case 'h':
-			if (argc == 2) {
-				list_pmc_names(pncp);
-				exit(0);
-			}
+			if (argc != 2)
+				usage();
+			list_pmc_names(pncp);
+			exit(0);
 		default:
 			usage();
 		}
 	}
 
-	if (pnp == NULL || argc <= optind)
+	if (pnp == NULL || argc <= optind || event == NULL)
 		usage();
 
 	memset(&pss0, 0, sizeof pss0);
