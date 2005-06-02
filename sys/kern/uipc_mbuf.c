@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.97 2005/06/02 15:19:28 tron Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.98 2005/06/02 15:48:11 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.98 2005/06/02 15:48:11 explorer Exp $");
 
 #include "opt_mbuftrace.h"
 
