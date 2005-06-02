@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.c,v 1.5 2002/02/21 07:38:20 itojun Exp $	*/
+/*	$NetBSD: lockf.c,v 1.6 2005/06/02 11:18:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ static void
 trylocks(int id)
 {
 	int i, ret, fd;
-	const char *which;
+	const char *which = NULL;
 	
 	srand48(getpid());
 

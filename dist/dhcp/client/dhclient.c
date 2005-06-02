@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.13 2004/05/06 09:07:54 itojun Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.14 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3035,6 +3035,8 @@ isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 	int ignorep;
 	int result;
 	isc_result_t rcode;
+
+	rcode = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
 
 	/* If we didn't send an FQDN option, we certainly aren't going to
 	   be doing an update. */

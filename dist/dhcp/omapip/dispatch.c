@@ -224,6 +224,8 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	omapi_waiter_object_t *waiter;
 	omapi_object_t *tmp = (omapi_object_t *)0;
 
+	status = ISC_R_FAILURE;		/* XXXGCC -Wuninitialized */
+
 	if (!wo || wo -> type != omapi_type_waiter)
 		waiter = (omapi_waiter_object_t *)0;
 	else
