@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.28 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: stic.c,v 1.29 2005/06/02 13:11:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.28 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.29 2005/06/02 13:11:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.28 2005/02/27 00:27:49 perry Exp $");
 #define bt_reg	2
 #define bt_cmap 3
 
-#define REG(base, index)	*((u_int32_t *)(base) + (index))
+#define REG(base, index)	*((volatile u_int32_t *)(base) + (index))
 #define SELECT(vdac, regno) do {		\
 	REG(vdac, bt_lo) = DUPBYTE0(regno);	\
 	REG(vdac, bt_hi) = DUPBYTE1(regno);	\
