@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.37 2005/05/01 22:37:34 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.38 2005/06/02 00:06:14 lukem Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.37 2005/05/01 22:37:34 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.38 2005/06/02 00:06:14 lukem Exp $");
 #endif
 
 
@@ -120,6 +120,7 @@ main(int argc,char *argv[])
 	do_recon = 0;
 	do_rewrite = 0;
 	is_clean = 0;
+	serial_number = 0;
 	force = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
@@ -891,6 +892,8 @@ do_meter(int fd, u_long option)
 	do_ioctl(fd, option, &pInfoPtr, "");
 	start_value = progressInfo.completed;
 	current_time = start_time;
+	simple_eta = 0;
+	last_eta = 0;
 	
 	tbit_value = 0;
 	while(progressInfo.completed < progressInfo.total) {

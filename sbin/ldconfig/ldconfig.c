@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.39 2005/02/05 14:33:50 xtraeme Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.40 2005/06/02 00:03:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.39 2005/02/05 14:33:50 xtraeme Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.40 2005/06/02 00:03:38 lukem Exp $");
 #endif
 
 
@@ -511,7 +511,7 @@ readhints(void)
 {
 	int			fd;
 	void			*addr = (void *) -1;
-	size_t			msize;
+	size_t			msize = 0;
 	struct hints_header	*hdr;
 	struct hints_bucket	*blist;
 	char			*strtab;

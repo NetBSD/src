@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.25 2005/01/20 16:02:32 xtraeme Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.26 2005/06/02 00:01:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.25 2005/01/20 16:02:32 xtraeme Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.26 2005/06/02 00:01:47 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -139,8 +139,8 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 	int inopb = INOPB(fs);
 	int size;
 	caddr_t buf;
-	struct ufs1_dinode *dp1;
-	struct ufs2_dinode *dp2;
+	struct ufs1_dinode *dp1 = NULL;
+	struct ufs2_dinode *dp2 = NULL;
 	int i;
 
 	size = is_ufs2 ? inopb * sizeof (struct ufs2_dinode) :
