@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.46 2005/03/11 13:28:25 tron Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.47 2005/06/02 10:54:58 tron Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.46 2005/03/11 13:28:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.47 2005/06/02 10:54:58 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -271,8 +271,7 @@ stf_encapcheck(m, off, proto, arg)
 	if (proto != IPPROTO_IPV6)
 		return 0;
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
 
 	if (ip.ip_v != 4)
 		return 0;
