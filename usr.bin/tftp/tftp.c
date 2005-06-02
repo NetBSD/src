@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.20 2004/10/10 22:15:34 he Exp $	*/
+/*	$NetBSD: tftp.c,v 1.21 2005/06/02 03:11:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.20 2004/10/10 22:15:34 he Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.21 2005/06/02 03:11:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -541,7 +541,7 @@ tpacket(s, tp, n)
 {
 	static char *opcodes[] =
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR", "OACK" };
-	char *cp, *file, *endp, *opt, *spc;
+	char *cp, *file, *endp, *opt = NULL, *spc;
 	u_short op = ntohs(tp->th_opcode);
 	int i, o;
 
