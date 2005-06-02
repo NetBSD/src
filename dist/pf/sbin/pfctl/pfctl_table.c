@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_table.c,v 1.4 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$NetBSD: pfctl_table.c,v 1.5 2005/06/02 09:58:55 lukem Exp $	*/
 /*	$OpenBSD: pfctl_table.c,v 1.61 2004/06/12 22:22:44 cedric Exp $ */
 
 /*
@@ -481,7 +481,7 @@ warn_namespace_collision(const char *filter)
 {
 	struct pfr_buffer b;
 	struct pfr_table *t;
-	const char *name = NULL, *lastcoll;
+	const char *name = NULL, *lastcoll = NULL;
 	int coll = 0;
 
 	bzero(&b, sizeof(b));
