@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.17 2005/06/02 03:51:14 lukem Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.18 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,7 +19,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_tag.c,v 1.17 2005/06/02 03:51:14 lukem Exp $");
+__RCSID("$NetBSD: ex_tag.c,v 1.18 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,6 +454,8 @@ ex_tag_pop(sp, cmdp)
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (1);
 	}
+
+	dtqp = NULL;	/* XXXGCC -Wuninitialized */
 
 	/* Find the last TAG structure that we're going to DISCARD! */
 	switch (cmdp->argc) {
@@ -1279,6 +1281,10 @@ ctag_sfile(sp, tfp, tqp, tname, slow_search)
 		t = p + 1;
 		p = front;
 		front = t;
+
+		nlen = 0;	/* XXXGCC -Wuninitialized */
+		cname = NULL;	/* XXXGCC -Wuninitialized */
+		name = NULL;	/* XXXGCC -Wuninitialized */
 
 		/* Break the line into tokens. */
 		for (i = 0; i < 2 && (t = strsep(&p, "\t ")) != NULL; ++i)

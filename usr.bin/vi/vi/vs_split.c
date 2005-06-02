@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: vs_split.c,v 1.5 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_split.c	10.31 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: vs_split.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $");
+__RCSID("$NetBSD: vs_split.c,v 1.5 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,6 +209,8 @@ vs_discard(sp, spp)
 {
 	SCR *nsp;
 	dir_t dir;
+
+	dir = NOTSET;	/* XXXGCC -Wuninitialized */
 
 	/*
 	 * Save the old screen's cursor information.

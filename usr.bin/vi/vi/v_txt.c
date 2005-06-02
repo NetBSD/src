@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.12 2004/11/23 14:35:45 aymeric Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.13 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.12 2004/11/23 14:35:45 aymeric Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.13 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,6 +292,7 @@ v_txt(sp, vp, tm, lp, len, prompt, ai_line, rcount, flags)
 
 	gp = sp->gp;
 	vip = VIP(sp);
+	evp = NULL;	/* XXXGCC -Wuninitialized */
 
 	/*
 	 * Set the input flag, so tabs get displayed correctly

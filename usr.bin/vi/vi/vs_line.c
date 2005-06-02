@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.7 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: vs_line.c,v 1.8 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_line.c	10.19 (Berkeley) 9/26/96";
 #else
-__RCSID("$NetBSD: vs_line.c,v 1.7 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: vs_line.c,v 1.8 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,9 @@ vs_line(sp, smp, yp, xp)
 	int ch, dne, is_cached, is_partial, is_tab;
 	int list_tab, list_dollar, empty_scrline;
 	char *p, *cbp, *ecbp, cbuf[128];
+
+	chlen = 0;	/* XXXGCC -Wuninitialized */
+	ch = 0;		/* XXXGCC -Wuninitialized */
 
 #if defined(DEBUG) && 0
 	TRACE(sp, "vs_line: row %u: line: %u coff: %u soff: %u\n",

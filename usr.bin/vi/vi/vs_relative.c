@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.5 2005/03/06 03:39:07 christos Exp $	*/
+/*	$NetBSD: vs_relative.c,v 1.6 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_relative.c	10.11 (Berkeley) 5/13/96";
 #else
-__RCSID("$NetBSD: vs_relative.c,v 1.5 2005/03/06 03:39:07 christos Exp $");
+__RCSID("$NetBSD: vs_relative.c,v 1.6 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,8 @@ vs_columns(sp, lp, lno, cnop, diffp)
 	 * Initialize the screen offset.
 	 */
 	scno = 0;
+
+	last = 0;	/* XXXGCC -Wuninitialized */
 
 	/* Leading number if O_NUMBER option set. */
 	if (O_ISSET(sp, O_NUMBER))
@@ -252,6 +254,8 @@ vs_colpos(sp, lno, cno)
 	size_t chlen, curoff, len, llen, off, scno;
 	int ch, leftright, listset;
 	char *lp, *p;
+
+	ch = 0;		/* XXXGCC -Wuninitialized */
 
 	/* Need the line to go any further. */
 	(void)db_get(sp, lno, 0, &lp, &llen);
