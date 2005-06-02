@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.3 2005/06/02 09:09:43 lukem Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
@@ -573,7 +573,7 @@ bsd_decompress(state, in, out)
     u_int incode, oldcode, finchar;
     u_char *p, *rptr, *wptr;
     int ilen;
-    int dlen, codelen, extra;
+    int codelen, extra;
 
     rptr = in->buf;
     if (*rptr == 0)
@@ -633,8 +633,8 @@ bsd_decompress(state, in, out)
 	    if (db->debug) {
 		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
 		       db->unit, incode, oldcode);
-		printf("max_ent=0x%x dlen=%d seqno=%d\n",
-		       max_ent, dlen, db->seqno);
+		printf("max_ent=0x%x seqno=%d\n",
+		       max_ent, db->seqno);
 	    }
 	    return DECOMP_FATALERROR;	/* probably a bug */
 	}
