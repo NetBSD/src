@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.14 2005/02/12 12:53:22 aymeric Exp $	*/
+/*	$NetBSD: ex.c,v 1.15 2005/06/02 05:06:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex.c	10.57 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: ex.c,v 1.14 2005/02/12 12:53:22 aymeric Exp $");
+__RCSID("$NetBSD: ex.c,v 1.15 2005/06/02 05:06:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,7 @@ ex_cmd(sp)
 
 	gp = sp->gp;
 	exp = EXP(sp);
+	ch = 0;		/* XXXGCC -Wuninitialized */
 
 	/*
 	 * We always start running the command on the top of the stack.
