@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.65 2005/06/01 00:11:32 uwe Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.66 2005/06/02 05:11:55 sjg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -295,11 +295,24 @@ dependall: depend all
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
+# We have to assume that we'll eventually run out of command line.
+# We already hit that on non-NetBSD hosts.
+_SFILES=${MD_SFILES} ${SFILES}
+_CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
+_XargsMKDEP=${MKDEP:M*=*} xargs -t ${MKDEP:N*=*}
+
+# This dance is necessary to avoid long command lines.
+${SRCS:S,^,list-,}:
+	@echo ${.TARGET:S,^list-,,}
+
+_sfiles: ${_SFILES:S,^,list-,}
+_cfiles: ${_CFILES:S,^,list-,}
+
 .depend: ${SRCS} assym.h config_time.h
 	${_MKTARGET_CREATE}
-	${MKDEP} -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
-	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
-	    ${CFILES}
+	@> $@
+	@${.MAKE} -f ${MAKEFILE} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
+	@${.MAKE} -f ${MAKEFILE} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
