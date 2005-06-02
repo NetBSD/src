@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2002/03/24 18:28:12 uch Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2005/06/02 18:06:10 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,5 +34,5 @@
  */
 
 struct mainbus_attach_args {
-	char *ma_name;
+	const char *ma_name;
 };
