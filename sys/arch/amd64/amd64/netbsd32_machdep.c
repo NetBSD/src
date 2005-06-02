@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.13 2005/06/01 13:04:32 blymn Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.14 2005/06/02 10:29:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.13 2005/06/01 13:04:32 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.14 2005/06/02 10:29:04 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -301,8 +301,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_signum = sig;
 	frame.sf_sip = (uint32_t)(uintptr_t)&fp->sf_si;
 	frame.sf_ucp = (uint32_t)(uintptr_t)&fp->sf_uc;
-	netbsd32_si_to_si32((siginfo32_t *)&frame.sf_si,
-                            (siginfo_t *)__UNCONST(&ksi->ksi_info));
+	netbsd32_si_to_si32(&frame.sf_si, (const siginfo_t *)&ksi->ksi_info);
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = 0;
