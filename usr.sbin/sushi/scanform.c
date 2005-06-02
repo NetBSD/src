@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.43 2005/01/12 17:38:40 peter Exp $       */
+/*      $NetBSD: scanform.c,v 1.44 2005/06/02 09:41:12 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ scan_formindex(struct cqForm *cqf, char *row)
 	char *t = row;
 	char *x;
 	char desc[80];
-	int type;
+	int type = 0;
 	int req = 0;
 
 	while (*++t && !isspace((unsigned char)*t))
@@ -863,6 +863,8 @@ process_form(FORM *form, char *path)
 	if (strcmp("pre", form_userptr(form)) == 0)
 		return (process_preform(form, path));
 
+	t = NULL;
+	i = 0;
 	curs_set(0);
 	*msg = catgets(catalog, 3, 17, "Are you sure? (Y/n)");
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, 1, TRUE, FALSE);
@@ -1207,7 +1209,7 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 static char *
 gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *qo, *po, *test, *comm, *n;
+	char *p, *q, *po, *test, *comm, *n;
 	FILE *file;
 	char buf[PATH_MAX+30];
 	size_t len;
@@ -1218,8 +1220,6 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	if (ftp->data == NULL)
 		bailout(catgets(catalog, 1, 22,
 		    "Null filename in escript argument"));
-	else
-		qo = q = strdup(ftp->data);
 
 	l = strlen(q) + 2;
 	comm = malloc(sizeof(char) * l);
@@ -1257,7 +1257,6 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		}
 	}
 
-	free(qo);
 	if (po != NULL)
 		free(po);
 
