@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2005/06/02 09:47:21 he Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2005/06/02 14:35:08 he Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2005/06/02 09:47:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2005/06/02 14:35:08 he Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -3092,7 +3092,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		    pmap_pteg_table, size);
 #endif
 
-	memset((void *)pmap_pteg_table, 0, pmap_pteg_cnt * sizeof(struct pteg));
+	memset(__UNVOLATILE(pmap_pteg_table), 0,
+		pmap_pteg_cnt * sizeof(struct pteg));
 	pmap_pteg_mask = pmap_pteg_cnt - 1;
 
 	/*
