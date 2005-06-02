@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.22 2004/05/28 17:52:07 tsarna Exp $ */
+/* $NetBSD: j720ssp.c,v 1.23 2005/06/02 21:38:17 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.22 2004/05/28 17:52:07 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.23 2005/06/02 21:38:17 uwe Exp $");
 
 #include "apm.h"
 
@@ -302,7 +302,7 @@ j720sspattach(parent, self, aux)
 			  { 988, 927,   0, 239 },
 			  {  88, 940, 639, 239 } } };
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		    (caddr_t)&j720_default_calib, 0, 0);
+		    __UNCONST(&j720_default_calib), 0, 0);
 	}
 
 	j720tp_disable(sc);
