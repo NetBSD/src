@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.22 2005/05/03 16:26:29 manu Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.23 2005/06/02 13:03:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ void native_to_linux_old_extra_sigset __P((linux_old_sigset_t *,
 
 /* XXXmanu (const linux_sigset_t *)(void *) temporary hack to get it building */
 #define linux_old_to_native_sigset(x,y) \
-    linux_to_native_sigset(x, (const linux_sigset_t *)(void *)y)
+    linux_to_native_sigset(x, (const linux_sigset_t *)(const void *)y)
 #define native_to_linux_old_sigset(x,y) \
     native_to_linux_sigset((linux_sigset_t *)(void *)x, y)
 #endif

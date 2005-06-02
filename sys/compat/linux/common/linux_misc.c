@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.138 2005/05/29 22:08:16 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.139 2005/06/02 13:03:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.138 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.139 2005/06/02 13:03:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1498,7 +1498,7 @@ linux_sys_swapon(l, v, retval)
 	} */ *uap = v;
 
 	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	SCARG(&ua, arg) = (void *)__UNCONST(SCARG(uap, name));
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(l, &ua, retval));
 }
