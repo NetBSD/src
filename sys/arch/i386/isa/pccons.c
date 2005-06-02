@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.170 2005/02/03 21:08:58 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.171 2005/06/02 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.170 2005/02/03 21:08:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.171 2005/06/02 08:03:50 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -270,7 +270,7 @@ static unsigned int addr_6845 = MONO_BASE;
 char *sget(void);
 #endif
 char *strans(u_char);
-void sput(u_char *, int);
+void sput(const u_char *, int);
 #ifdef XSERVER
 void pc_xmode_on(void);
 void pc_xmode_off(void);
@@ -396,7 +396,7 @@ kbc_put8042cmd(u_char val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(u_char val, u_char polling)
+kbd_cmd(u_char val, u_char poll)
 {
 	u_int retries = 3;
 	register u_int i;
@@ -406,7 +406,7 @@ kbd_cmd(u_char val, u_char polling)
 			return (0);
 		ack = nak = 0;
 		outb(IO_KBD + KBOUTP, val);
-		if (polling)
+		if (poll)
 			for (i = 100000; i; i--) {
 				if (inb(IO_KBD + KBSTATP) & KBS_DIB) {
 					register u_char c;
@@ -1218,19 +1218,20 @@ pcparam(struct tty *tp, struct termios *t)
 void
 pcinit(void)
 {
-	u_short volatile *cp;
+	u_short volatile *cptest;
+	u_short *cp;
 	u_short was;
 	unsigned cursorat;
 
-	cp = ISA_HOLE_VADDR(CGA_BUF);
-	was = *cp;
-	*cp = (u_short) 0xA55A;
-	if (*cp != 0xA55A) {
-		cp = ISA_HOLE_VADDR(MONO_BUF);
+	cptest = cp = ISA_HOLE_VADDR(CGA_BUF);
+	was = *cptest;
+	*cptest = (u_short) 0xA55A;
+	if (*cptest != 0xA55A) {
+		cptest = cp = ISA_HOLE_VADDR(MONO_BUF);
 		addr_6845 = MONO_BASE;
 		vs.color = 0;
 	} else {
-		*cp = was;
+		*cptest = was;
 		addr_6845 = CGA_BASE;
 		vs.color = 1;
 	}
@@ -1265,7 +1266,7 @@ pcinit(void)
 }
 
 #define	wrtchar(c, at) do {\
-	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
+	char *cpx = (char *)crtat; *cpx++ = (c); *cpx = (at); crtat++; vs.col++; \
 } while (0)
 
 /* translate ANSI color codes to standard pc ones */
@@ -1305,7 +1306,7 @@ static u_char iso2ibm437[] =
  * `pc3' termcap emulation.
  */
 void
-sput(u_char *cp, int n)
+sput(const u_char *cp, int n)
 {
 	u_char c, scroll = 0;
 
