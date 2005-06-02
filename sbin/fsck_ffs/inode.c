@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.53 2005/04/30 20:29:56 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.54 2005/06/02 00:38:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.53 2005/04/30 20:29:56 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.54 2005/06/02 00:38:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,7 +688,7 @@ allocino(ino_t request, int type)
 	time_t t;
 	struct cg *cgp = cgrp;
 	int cg;
-	struct inostat *info;
+	struct inostat *info = NULL;
 
 	if (request == 0)
 		request = ROOTINO;

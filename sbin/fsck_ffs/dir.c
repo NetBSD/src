@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.43 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: dir.c,v 1.44 2005/06/02 00:38:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.43 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: dir.c,v 1.44 2005/06/02 00:38:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -678,8 +678,8 @@ expanddir(union dinode *dp, char *name)
 #else
 	char firstblk[APPLEUFS_DIRBLKSIZ];
 #endif
-	struct ufs1_dinode *dp1;
-	struct ufs2_dinode *dp2;
+	struct ufs1_dinode *dp1 = NULL;
+	struct ufs2_dinode *dp2 = NULL;
 
 	if (is_ufs2)
 		dp2 = &dp->dp2;

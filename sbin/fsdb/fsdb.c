@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.31 2005/02/05 14:26:05 xtraeme Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.32 2005/06/02 00:47:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.31 2005/02/05 14:26:05 xtraeme Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.32 2005/06/02 00:47:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -499,8 +499,8 @@ static int wantedblksize;
 CMDFUNCSTART(findblk)
 {
 	ino_t   inum, inosused;
-	uint32_t *wantedblk32;
-	uint64_t *wantedblk64;
+	uint32_t *wantedblk32 = NULL;
+	uint64_t *wantedblk64 = NULL;
 	struct cg *cgp = cgrp;
 	int i, c;
 

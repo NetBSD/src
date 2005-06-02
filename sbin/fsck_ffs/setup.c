@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.75 2005/01/19 17:33:59 xtraeme Exp $	*/
+/*	$NetBSD: setup.c,v 1.76 2005/06/02 00:38:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.75 2005/01/19 17:33:59 xtraeme Exp $");
+__RCSID("$NetBSD: setup.c,v 1.76 2005/06/02 00:38:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ setup(const char *dev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
-	struct disklabel *lp;
+	struct disklabel *lp = NULL;
 	off_t sizepb;
 	struct stat statb;
 	struct fs proto;
@@ -640,7 +640,7 @@ static off_t sblock_try[] = SBLOCKSEARCH;
 static int
 readsb(int listerr)
 {
-	daddr_t super;
+	daddr_t super = 0;
 	struct fs *fs;
 	int i;
 
