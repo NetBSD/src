@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.75 2005/01/09 00:07:27 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.76 2005/06/02 09:42:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.75 2005/01/09 00:07:27 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.76 2005/06/02 09:42:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1176,6 +1176,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		if (l > MAXLINE)
 			l = MAXLINE;
 		if (finet) {
+			lsent = -1;
 			for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
 				for (j = 0; j < *finet; j++) {
 #if 0 
