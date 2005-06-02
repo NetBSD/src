@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.3 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: amiga.c,v 1.4 2005/06/02 05:10:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.3 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.4 2005/06/02 05:10:22 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -91,6 +91,7 @@ amiga_setboot(ib_params *params)
 
 	u_int32_t block[128*16];
 
+	retval = 0;
 	if (fstat(params->s1fd, &bootstrapsb) == -1) {
 		warn("Examining `%s'", params->stage1);
 		goto done;
