@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.31 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.32 2005/06/02 04:52:25 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.139 2005/03/01 10:09:52 djm Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.31 2005/04/23 16:53:28 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.32 2005/06/02 04:52:25 lukem Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -562,6 +562,7 @@ parse_time:
 		if (options->listen_addrs != NULL)
 			fatal("%s line %d: address family must be specified before "
 			    "ListenAddress.", filename, linenum);
+		value = 0;	/* silence compiler */
 		if (strcasecmp(arg, "inet") == 0)
 			value = AF_INET;
 		else if (strcasecmp(arg, "inet6") == 0)
