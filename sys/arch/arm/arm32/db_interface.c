@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.36 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37 2005/06/02 19:33:04 uwe Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2005/06/02 19:33:04 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -224,7 +224,7 @@ db_read_bytes(addr, size, data)
 }
 
 static void
-db_write_text(vaddr_t addr, size_t size, char *data)
+db_write_text(vaddr_t addr, size_t size, const char *data)
 {        
 	struct pmap *pmap = pmap_kernel();
 	pd_entry_t *pde, oldpde, tmppde;
@@ -313,7 +313,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	extern char kernel_text[];
 	extern char etext[];
@@ -333,10 +333,10 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	}
 
 	if (size == 4 && (addr & 3) == 0 && ((uintptr_t)data & 3) == 0)
-		*((int*)dst) = *((int*)data);
+		*((int*)dst) = *((const int *)data);
 	else
 	if (size == 2 && (addr & 1) == 0 && ((uintptr_t)data & 1) == 0)
-		*((short*)dst) = *((short*)data);
+		*((short*)dst) = *((const short *)data);
 	else {
 		loop = size;
 		while (loop-- > 0) {
