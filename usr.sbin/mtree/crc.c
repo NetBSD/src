@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.7 2005/02/06 04:52:53 perry Exp $	*/
+/*	$NetBSD: crc.c,v 1.8 2005/06/02 06:04:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.7 2005/02/06 04:52:53 perry Exp $");
+__RCSID("$NetBSD: crc.c,v 1.8 2005/06/02 06:04:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ crc(int fd, u_int32_t *cval, u_int32_t *clen)
 
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 
-	thecrc = len = 0;
+	thecrc = len = crctot = 0;
 	if (sflag)
 		crctot = ~crc_total;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
