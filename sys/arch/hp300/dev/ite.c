@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.66 2005/02/19 16:31:49 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2005/02/19 16:31:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $");
 
 #include "hil.h"
 
@@ -565,7 +565,8 @@ itefilter(char stat, char c)
 {
 	static int capsmode = 0;
 	static int metamode = 0;
-	char code, *str;
+	char code;
+	const char *str;
 	struct tty *kbd_tty;
 
 	if (ite_cn.tty == NULL)
