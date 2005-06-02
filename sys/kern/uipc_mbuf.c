@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.96 2005/06/02 12:58:16 tron Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.97 2005/06/02 15:19:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -668,7 +668,7 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(const struct mbuf *m, int off, int len, void *vp)
+m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
 	unsigned	count;
 	caddr_t		cp = vp;
