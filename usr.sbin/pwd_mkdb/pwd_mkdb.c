@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.29 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.30 2005/06/02 09:18:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.29 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.30 2005/06/02 09:18:14 lukem Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -159,6 +159,9 @@ main(int argc, char *argv[])
 	username = NULL;
 	hasyp = 0;
 	secureonly = 0;
+	found = 0;
+	newuser = 0;
+	dp = NULL;
 
 	while ((ch = getopt(argc, argv, "BLd:psu:v")) != -1)
 		switch (ch) {
@@ -283,7 +286,6 @@ main(int argc, char *argv[])
 	if (username != NULL) {
 		uid_dbflg = 0;
 		dbflg = 0;
-		found = 0;
 
 		/*
 		 * Determine if this is a new entry.
