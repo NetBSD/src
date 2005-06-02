@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.26 2004/02/16 21:57:04 itojun Exp $	*/
+/*	$NetBSD: forward.c,v 1.27 2005/06/02 03:07:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.26 2004/02/16 21:57:04 itojun Exp $");
+__RCSID("$NetBSD: forward.c,v 1.27 2005/06/02 03:07:00 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -281,11 +281,11 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 {
 	off_t file_size;
 	off_t file_remaining;
-	char *p;
-	char *start;
+	char *p = NULL;
+	char *start = NULL;
 	off_t mmap_size;
 	off_t mmap_offset;
-	off_t mmap_remaining;
+	off_t mmap_remaining = 0;
 
 #define MMAP_MAXSIZE  (10 * 1024 * 1024)
 
