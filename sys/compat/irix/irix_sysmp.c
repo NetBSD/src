@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.12 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.13 2005/06/02 20:14:55 martin Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.12 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13 2005/06/02 20:14:55 martin Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -184,6 +184,7 @@ irix_sysmp_saget(cmd, buf, len)
 	char *buf;
 	size_t len;
 {
+	extern u_int bufpages;
 	void *kbuf;
 	int error = 0;
 
