@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.36 2004/08/26 20:26:08 wiz Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.37 2005/06/02 09:47:37 lukem Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.36 2004/08/26 20:26:08 wiz Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.37 2005/06/02 09:47:37 lukem Exp $");
 #endif
 
 struct wi_table {
@@ -829,6 +829,7 @@ int main(argc, argv)
 		/*
 		 * Lookup generic options and remember operand if found.
 		 */
+		wt = NULL;	/* XXXGCC -Wuninitialized */
 		for (table = wi_tables; *table != NULL; table++)
 			if ((wt = wi_optlookup(*table, ch)) != NULL) {
 				SET_OPERAND(wt->wi_optval, wt->wi_desc);

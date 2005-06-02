@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.8 2004/01/20 22:11:02 matt Exp $ */
+/* $NetBSD: selection.c,v 1.9 2005/06/02 09:49:31 lukem Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.8 2004/01/20 22:11:02 matt Exp $");
+__RCSID("$NetBSD: selection.c,v 1.9 2005/06/02 09:49:31 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -477,6 +477,8 @@ selarea_copy_text(void)
 {
 	char *ptr, *str;
 	size_t l, r;
+
+	ptr = NULL;	/* XXXGCC -Wuninitialized */
 
 	if (Selarea.sa_y1 == Selarea.sa_y2) {
 		/* Selection is one row */
