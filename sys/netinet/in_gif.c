@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.43 2005/06/02 10:54:58 tron Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.44 2005/06/02 15:21:35 tron Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.43 2005/06/02 10:54:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.44 2005/06/02 15:21:35 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -386,7 +386,7 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
  * matched the physical addr family.  see gif_encapcheck().
  */
 int
-gif_encapcheck4(const struct mbuf *m, int off, int proto, void *arg)
+gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;

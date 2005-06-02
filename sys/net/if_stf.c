@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.47 2005/06/02 10:54:58 tron Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.48 2005/06/02 15:21:35 tron Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.47 2005/06/02 10:54:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48 2005/06/02 15:21:35 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -165,7 +165,7 @@ const struct protosw in_stf_protosw =
 };
 
 void stfattach __P((int));
-static int stf_encapcheck __P((const struct mbuf *, int, int, void *));
+static int stf_encapcheck __P((struct mbuf *, int, int, void *));
 static struct in6_ifaddr *stf_getsrcifa6 __P((struct ifnet *));
 static int stf_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
@@ -247,7 +247,7 @@ stf_clone_destroy(ifp)
 
 static int
 stf_encapcheck(m, off, proto, arg)
-	const struct mbuf *m;
+	struct mbuf *m;
 	int off;
 	int proto;
 	void *arg;
