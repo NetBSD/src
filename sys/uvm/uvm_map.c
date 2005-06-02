@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.199 2005/05/29 21:06:33 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.200 2005/06/02 17:01:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.199 2005/05/29 21:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.200 2005/06/02 17:01:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -435,7 +435,7 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 
 	return (0);
  error:
-#ifdef	DDB
+#if defined(DDB) && __GNUC__ < 4
 	/* handy breakpoint location for error case */
 	__asm(".globl treesanity_label\ntreesanity_label:");
 #endif
