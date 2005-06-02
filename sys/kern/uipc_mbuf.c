@@ -1,4 +1,4 @@
-/*	uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.96 2005/06/02 12:58:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
