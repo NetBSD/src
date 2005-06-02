@@ -714,6 +714,8 @@ static isc_result_t make_dst_key (DST_KEY **dst_key, omapi_object_t *a) {
 	char *name_str = NULL;
 	isc_result_t status = ISC_R_SUCCESS;
 
+	algorithm_id = 0;	/* XXXGCC -Wuninitialized */
+
 	if (status == ISC_R_SUCCESS)
 		status = omapi_get_value_str
 			(a, (omapi_object_t *)0, "name", &name);

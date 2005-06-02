@@ -660,6 +660,7 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 	      case OMAPI_OP_UPDATE:
 		if (m && m -> object) {
 			omapi_object_reference (&object, m -> object, MDL);
+			status = 0;	/* XXXGCC -Wuninitialized */
 		} else {
 			status = omapi_handle_lookup (&object, message -> h);
 			if (status != ISC_R_SUCCESS) {

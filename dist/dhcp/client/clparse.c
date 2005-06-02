@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.8 2004/04/02 22:53:15 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.9 2005/06/02 11:10:00 lukem Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -639,7 +639,7 @@ void parse_option_list (cfile, list)
 	int ix, i;
 	int token;
 	const char *val;
-	pair p = (pair)0, q, r;
+	pair p = (pair)0, q = (pair)0, r;
 
 	ix = 0;
 	do {
@@ -770,6 +770,8 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 	struct interface_info *i;
 	struct interface_info *ip = (struct interface_info *)0;
 	isc_result_t status;
+
+	status = ISC_R_FAILURE;		/* XXXGCC -Wuninitialized */
 
 	/* Find the interface (if any) that matches the name. */
 	for (i = interfaces; i; i = i -> next) {
