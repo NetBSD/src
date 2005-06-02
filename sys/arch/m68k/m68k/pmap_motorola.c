@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.15 2005/06/02 14:56:58 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.16 2005/06/02 16:47:42 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.15 2005/06/02 14:56:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.16 2005/06/02 16:47:42 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -2253,7 +2253,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
-			struct pv_entry *pv;
+			struct pv_entry *ptppv;
 #endif
 			paddr_t ptppa;
 
@@ -2261,15 +2261,16 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #ifdef DIAGNOSTIC
 			if (PAGE_IS_MANAGED(ptppa) == 0)
 				panic("pmap_remove_mapping: unmanaged PT page");
-			pv = pa_to_pvh(ptppa);
-			if (pv->pv_ptste == NULL)
+			ptppv = pa_to_pvh(ptppa);
+			if (ptppv->pv_ptste == NULL)
 				panic("pmap_remove_mapping: ptste == NULL");
-			if (pv->pv_pmap != pmap_kernel() ||
-			    pv->pv_va != ptpva ||
-			    pv->pv_next != NULL)
+			if (ptppv->pv_pmap != pmap_kernel() ||
+			    ptppv->pv_va != ptpva ||
+			    ptppv->pv_next != NULL)
 				panic("pmap_remove_mapping: "
 				    "bad PT page pmap %p, va 0x%lx, next %p",
-				    pv->pv_pmap, pv->pv_va, pv->pv_next);
+				    ptppv->pv_pmap, ptppv->pv_va,
+				    ptppv->pv_next);
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
