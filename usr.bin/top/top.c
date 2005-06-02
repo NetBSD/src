@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.20 2004/07/23 13:31:50 wiz Exp $	*/
+/*	$NetBSD: top.c,v 1.21 2005/06/02 03:19:57 lukem Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.20 2004/07/23 13:31:50 wiz Exp $");
+__RCSID("$NetBSD: top.c,v 1.21 2005/06/02 03:19:57 lukem Exp $");
 #endif
 
 #include "os.h"
@@ -133,8 +133,8 @@ char *argv[];
     char *env_top;
     char **preset_argv;
     int  preset_argc = 0;
-    char **av;
-    int  ac;
+    char **av = NULL;
+    int  ac = 0;
     char dostates = No;
     char do_unames = Yes;
     char interactive = Maybe;
