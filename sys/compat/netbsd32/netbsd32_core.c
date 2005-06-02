@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.10 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.11 2005/06/02 17:01:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.10 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.11 2005/06/02 17:01:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
 	struct coreseg32 cseg;
 	int flag, error;
 
-	if (us->flags & UVM_COREDUMP_NODUMP)
+	if (us->start == us->realend)
 		return (0);
 
 	if (us->flags & UVM_COREDUMP_STACK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.101 2005/05/15 08:01:06 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.102 2005/06/02 17:01:44 matt Exp $	*/
 
 /*
  *
@@ -511,13 +511,13 @@ extern struct pool *uvm_aiobuf_pool;
 struct uvm_coredump_state {
 	void *cookie;		/* opaque for the caller */
 	vaddr_t start;		/* start of region */
-	vaddr_t end;		/* end of region */
+	vaddr_t realend;	/* real end of region */
+	vaddr_t end;		/* virtual end of region */
 	vm_prot_t prot;		/* protection of region */
 	int flags;		/* flags; see below */
 };
 
 #define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
-#define	UVM_COREDUMP_NODUMP	0x02	/* don't actually dump this region */
 
 /*
  * the various kernel maps, owned by MD code

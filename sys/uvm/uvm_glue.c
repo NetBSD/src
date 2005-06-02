@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.85 2005/05/06 19:34:47 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.86 2005/06/02 17:01:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.85 2005/05/06 19:34:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.86 2005/06/02 17:01:44 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -731,7 +731,12 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 			break;
 
 		state.cookie = cookie;
-		state.start = entry->start;
+		if (state.end > entry->start) {
+			state.start = state.end;
+		} else {
+			state.start = entry->start;
+		}
+		state.realend = entry->end;
 		state.end = entry->end;
 		state.prot = entry->protection;
 		state.flags = 0;
@@ -755,22 +760,58 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		KASSERT(state.end <= VM_MAXUSER_ADDRESS);
 		if (entry->object.uvm_obj == NULL &&
 		    entry->aref.ar_amap == NULL) {
-			state.flags |= UVM_COREDUMP_NODUMP;
-		}
-		if ((entry->protection & VM_PROT_WRITE) == 0 &&
+			state.realend = state.start;
+		} else if ((entry->protection & VM_PROT_WRITE) == 0 &&
 		    entry->aref.ar_amap == NULL) {
-			state.flags |= UVM_COREDUMP_NODUMP;
-		}
-		if (entry->object.uvm_obj != NULL &&
+			state.realend = state.start;
+		} else if (entry->object.uvm_obj != NULL &&
 		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
-			state.flags |= UVM_COREDUMP_NODUMP;
+			state.realend = state.start;
+		} else if ((entry->protection & VM_PROT_READ) == 0) {
+			state.realend = state.start;
+		} else {
+			if (state.start >= (vaddr_t)vm->vm_maxsaddr)
+				state.flags |= UVM_COREDUMP_STACK;
+
+			/*
+			 * If this an anonymous entry, only dump instantiated
+			 * pages.
+			 */
+			if (entry->object.uvm_obj == NULL) {
+				vaddr_t end;
+
+				amap_lock(entry->aref.ar_amap);
+				for (end = state.start;
+				     end < state.end; end += PAGE_SIZE) {
+					struct vm_anon *anon;
+					anon = amap_lookup(&entry->aref,
+					    end - entry->start);
+					/*
+					 * If we have already encountered an
+					 * uninstantiated page, stop at the
+					 * first instantied page.
+					 */
+					if (anon != NULL &&
+					    state.realend != state.end) {
+						state.end = end;
+						break;
+					}
+
+					/*
+					 * If this page is the first
+					 * uninstantiated page, mark this as
+					 * the real ending point.  Continue to
+					 * counting uninstantiated pages.
+					 */
+					if (anon == NULL &&
+					    state.realend == state.end) {
+						state.realend = end;
+					}
+				}
+				amap_unlock(entry->aref.ar_amap);
+			}
 		}
-		if ((entry->protection & VM_PROT_READ) == 0) {
-			state.flags |= UVM_COREDUMP_NODUMP;
-		}
-		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
-			state.flags |= UVM_COREDUMP_STACK;
-		}
+		
 
 		vm_map_unlock_read(map);
 		error = (*func)(p, vp, cred, &state);
