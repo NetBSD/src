@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.49 2005/06/02 10:25:22 he Exp $
+# $NetBSD: HACKS,v 1.50 2005/06/02 14:38:05 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -473,20 +473,4 @@ port	hppa
 		structures, but it only shows up when booting from disk.
 		For now, we'll add some padding to scsipi_xfer so that
 		the corrupted memory is not otherwise used.
-	kcah
-
-port	powerpc
-
-	hack	add -Wno-cast-qual to pmap.c
-	cdate	Thu Jun  2 12:18:53 CEST 2005
-	who	he
-	file	sys/arch/powerpc/conf/Makefile.powerpc : 1.34
-	file	sys/arch/powerpc/conf/files.powerpc : 1.59
-	descr
-		sys/arch/powerpc/oea/pmap.c cannot be compiled with
-		-Wcast-qual because "volatile struct pteg *pmap_pteg_table"
-		is being passed to memset(), and the only obvious
-		alternative to adding -Wno-cast-qual I could see would
-		be to open-code memset(), which I think would be worse
-		than this fix.
 	kcah
