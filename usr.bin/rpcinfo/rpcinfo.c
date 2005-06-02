@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.21 2004/11/01 21:42:41 dsl Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.22 2005/06/02 02:46:16 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -494,7 +494,7 @@ pmapdump(argc, argv)
 	struct rpcent *rpc;
 	enum clnt_stat clnt_st;
 	struct rpc_err err;
-	char *host;
+	char *host = NULL;
 
 	if (argc > 1) {
 		usage();
@@ -533,10 +533,15 @@ pmapdump(argc, argv)
 		if ((clnt_st == RPC_PROGVERSMISMATCH) ||
 		    (clnt_st == RPC_PROGUNAVAIL)) {
 			CLNT_GETERR(client, &err);
-			if (err.re_vers.low > PMAPVERS)
-				fprintf(stderr,
-		"%s does not support portmapper.  Try rpcinfo %s instead\n",
-					host, host);
+			if (err.re_vers.low > PMAPVERS) {
+				if (host)
+					fprintf(stderr,
+	"%s does not support portmapper.  Try 'rpcinfo %s' instead\n",
+					    host, host);
+				else
+					fprintf(stderr,
+	"local host does not support portmapper.  Try 'rpcinfo' instead\n");
+			}
 			exit(1);
 		}
 		clnt_perror(client, "rpcinfo: can't contact portmapper");
@@ -716,7 +721,7 @@ rpcbdump(dumptype, netid, argc, argv)
 	char *host;
 	struct netidlist *nl;
 	struct verslist *vl;
-	struct rpcbdump_short *rs, *rs_tail;
+	struct rpcbdump_short *rs, *rs_tail = NULL;
 	char buf[256];
 	enum clnt_stat clnt_st;
 	struct rpc_err err;
@@ -773,7 +778,7 @@ rpcbdump(dumptype, netid, argc, argv)
 		    if (err.re_vers.high == PMAPVERS) {
 			int high, low;
 			struct pmaplist *pmaphead = NULL;
-			rpcblist_ptr list, prev;
+			rpcblist_ptr list, prev = NULL;
 
 			vers = PMAPVERS;
 			clnt_control(client, CLSET_VERS, (char *)&vers);
