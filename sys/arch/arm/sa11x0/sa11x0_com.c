@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.19 2003/08/07 16:26:54 agc Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.20 2005/06/02 21:33:08 uwe Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.19 2003/08/07 16:26:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.20 2005/06/02 21:33:08 uwe Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1232,7 +1232,7 @@ sacom_rxsoft(sc, tp)
 	struct sacom_softc *sc;
 	struct tty *tp;
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char sr1;
