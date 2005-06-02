@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: convert.c,v 1.3 2002/06/10 00:30:36 itojun Exp $ Copyright (c) 1996-1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: convert.c,v 1.4 2005/06/02 05:30:12 lukem Exp $ Copyright (c) 1996-1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -149,6 +149,8 @@ int converted_length (buf, base, width)
 		number = getUShort (buf);
 	else if (width == 4)
 		number = getULong (buf);
+	else
+		return 0;
 
 	do {
 		column = newcolumn;
@@ -183,6 +185,8 @@ int binary_to_ascii (outbuf, inbuf, base, width)
 		number = getUShort (inbuf);
 	else if (width == 4)
 		number = getULong (inbuf);
+	else
+		return 0;
 
 	for (i = power - 1 ; i >= 0; i--) {
 		outbuf [i] = h2a [number % base];
