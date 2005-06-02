@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.14 2004/08/28 17:45:24 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.15 2005/06/02 16:25:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
 struct	rdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */
 	short	ri_maxunum;		/* maximum allowed unit number */
-	char	*ri_desc;		/* drive type description */
+	const char *ri_desc;		/* drive type description */
 	int	ri_nbpt;		/* DEV_BSIZE blocks per track */
 	int	ri_ntpc;		/* tracks per cylinder */
 	int	ri_ncyl;		/* cylinders per unit */

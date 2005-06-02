@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.28 2005/02/19 16:31:49 tsutsui Exp $	*/
+/*	$NetBSD: mt.c,v 1.29 2005/06/02 16:25:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.28 2005/02/19 16:31:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.29 2005/06/02 16:25:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.28 2005/02/19 16:31:49 tsutsui Exp $");
 
 static const struct mtinfo {
 	u_short	hwid;
-	char	*desc;
+	const char *desc;
 } mtinfo[] = {
 	{ MT7978ID,	"7978"	},
 	{ MT7979AID,	"7979A"	},
