@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_optimize.c,v 1.3 2004/12/19 10:27:46 yamt Exp $	*/
+/*	$NetBSD: pfctl_optimize.c,v 1.4 2005/06/02 09:58:55 lukem Exp $	*/
 /*	$OpenBSD: pfctl_optimize.c,v 1.2.2.1 2004/12/17 02:51:35 brad Exp $ */
 
 /*
@@ -246,7 +246,7 @@ pfctl_optimize_rules(struct pfctl *pf)
 	struct superblocks superblocks;
 	struct superblock *block;
 	struct pf_opt_rule *por;
-	int nr;
+	int nr = 0;
 
 	DEBUG("optimizing ruleset");
 	memset(&table_buffer, 0, sizeof(table_buffer));
@@ -596,7 +596,7 @@ reorder_rules(struct pfctl *pf, struct superblock *block, int depth)
 	struct superblock *newblock;
 	struct pf_skip_step *skiplist;
 	struct pf_opt_rule *por;
-	int i, largest, largest_list, rule_count = 0;
+	int i, largest, largest_list = -1, rule_count = 0;
 	TAILQ_HEAD( , pf_opt_rule) head;
 
 	/*
