@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.134 2005/05/30 23:04:53 chs Exp $ */
+/* $NetBSD: vmstat.c,v 1.135 2005/06/02 04:34:57 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.134 2005/05/30 23:04:53 chs Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.135 2005/06/02 04:34:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1410,10 +1410,13 @@ dohashstat(int verbose, int todo, const char *hashname)
 		    hashnl[curhash->hashtbl].n_name);
 		used = 0;
 		items = maxchain = 0;
-		if (curhash->type == HASH_LIST)
+		if (curhash->type == HASH_LIST) {
 			hashtbl_list = hashbuf;
-		else
+			hashtbl_tailq = NULL;
+		} else {
+			hashtbl_list = NULL;
 			hashtbl_tailq = hashbuf;
+		}
 		for (i = 0; i < hashsize; i++) {
 			if (curhash->type == HASH_LIST)
 				nextaddr = LIST_FIRST(&hashtbl_list[i]);

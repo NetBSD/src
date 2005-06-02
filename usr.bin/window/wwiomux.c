@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.11 2004/12/10 16:27:29 aymeric Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.12 2005/06/02 04:37:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwiomux.c,v 1.11 2004/12/10 16:27:29 aymeric Exp $");
+__RCSID("$NetBSD: wwiomux.c,v 1.12 2005/06/02 04:37:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,8 @@ wwiomux(void)
 	char noblock = 0;
 	static struct pollfd *pfd = NULL;
 	static size_t maxfds = 0;
+
+	c = 0; 	/* XXXGCC -Wuninitialized */
 
 	for (;;) {
 		if (wwinterrupt()) {

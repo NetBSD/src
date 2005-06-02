@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.36 2005/02/09 21:24:48 dsl Exp $ */
+/* $NetBSD: xlint.c,v 1.37 2005/06/02 04:38:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.36 2005/02/09 21:24:48 dsl Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.37 2005/06/02 04:38:46 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -530,6 +530,8 @@ main(int argc, char *argv[])
 
 		if (arg[0] == '-') {
 			char ***list;
+
+			list = NULL;	/* XXXGCC -Wuninitialized */
 
 			/* option */
 			switch (arg[1]) {
