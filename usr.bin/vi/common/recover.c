@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.10 2005/06/02 04:03:03 lukem Exp $	*/
+/*	$NetBSD: recover.c,v 1.11 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: recover.c,v 1.10 2005/06/02 04:03:03 lukem Exp $");
+__RCSID("$NetBSD: recover.c,v 1.11 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -620,6 +620,7 @@ rcv_read(sp, frp)
 		return (1);
 	}
 
+	locked = 0;	/* XXXGCC -Wuninitialized */
 	name = frp->name;
 	sv_fd = -1;
 	rec_mtime = 0;

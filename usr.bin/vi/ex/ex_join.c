@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_join.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_join.c,v 1.11 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_join.c	10.10 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_join.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_join.c,v 1.11 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,8 @@ ex_join(sp, cmdp)
 	if (cmdp->addr1.lno == cmdp->addr2.lno)
 		++cmdp->addr2.lno;
 
+	echar = '\0';		/* XXXGCC -Wuninitialized */
+	tbp = NULL;		/* XXXGCC -Wuninitialized */
 	clen = tlen = 0;
         for (first = 1,
 	    from = cmdp->addr1.lno, to = cmdp->addr2.lno; from <= to; ++from) {

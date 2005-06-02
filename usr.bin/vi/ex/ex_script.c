@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_script.c,v 1.11 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,7 +19,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.10 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.11 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,6 +316,7 @@ sscr_exec(sp, lno)
 	int isempty, matchprompt, nw, rval;
 	char *bp, *p;
 
+	bp = NULL;	/* XXXGCC -Wuninitialized */
 	/* If there's a prompt on the last line, append the command. */
 	if (db_last(sp, &last_lno))
 		return (1);
@@ -439,6 +440,7 @@ sscr_insert(sp)
 	int nr, rval;
 	char *bp;
 
+	len = 0;	/* XXXGCC -Wuninitialized */
 	/* Find out where the end of the file is. */
 	if (db_last(sp, &lno))
 		return (1);
