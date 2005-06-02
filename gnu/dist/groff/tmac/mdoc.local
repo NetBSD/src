@@ -2,3 +2,4 @@
 .\" Put any local modifications to doc.tmac here.
 .ds doc-operating-system-NetBSD-2.0.1 2.0.1
 .ds doc-operating-system-NetBSD-2.0.2 2.0.2
+.ds doc-operating-system-NetBSD-4.0 4.0
