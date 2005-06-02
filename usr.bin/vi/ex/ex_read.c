@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.12 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_read.c,v 1.13 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_read.c	10.38 (Berkeley) 8/12/96";
 #else
-__RCSID("$NetBSD: ex_read.c,v 1.12 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_read.c,v 1.13 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,9 @@ ex_read(sp, cmdp)
 	char *p;
 
 	gp = sp->gp;
+	arg = NULL;	/* XXXGCC -Wuninitialized */
+	arglen = 0;	/* XXXGCC -Wuninitialized */
+	name = NULL;	/* XXXGCC -Wuninitialized */
 
 	/*
 	 * 0 args: read the current pathname.

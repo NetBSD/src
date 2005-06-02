@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: cut.c,v 1.7 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)cut.c	10.10 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: cut.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: cut.c,v 1.7 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ cut(sp, namep, fm, tm, flags)
 	 *
 	 * Otherwise, put it in the unnamed buffer.
 	 */
+	name = 0;	/* XXXGCC -Wuninitialized */
 	append = copy_one = copy_def = 0;
 	if (namep != NULL) {
 		name = *namep;

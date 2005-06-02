@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.11 2004/11/05 19:50:12 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.12 2005/06/02 04:25:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.11 2004/11/05 19:50:12 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.12 2005/06/02 04:25:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,6 +322,7 @@ opts_init(sp, oargs)
 	a.len = b.len = 0;
 	argv[0] = &a;
 	argv[1] = &b;
+	optindx = 0;	/* XXXGCC -Wuninitialized */
 
 	/* Set numeric and string default values. */
 #define	OI(indx, str) {							\
