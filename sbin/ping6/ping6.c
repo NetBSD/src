@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.62 2005/02/09 14:09:46 xtraeme Exp $	*/
+/*	$NetBSD: ping6.c,v 1.63 2005/06/02 01:35:57 lukem Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.62 2005/02/09 14:09:46 xtraeme Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.63 2005/06/02 01:35:57 lukem Exp $");
 #endif
 #endif
 
@@ -1978,7 +1978,7 @@ pr_nodeaddr(struct icmp6_nodeinfo *ni, /* ni->qtype must be NODEADDR */
 	if (nilen % (sizeof(u_int32_t) + sizeof(struct in6_addr)) == 0)
 		withttl = 1;
 	while (nilen > 0) {
-		u_int32_t ttl;
+		u_int32_t ttl = 0;
 
 		if (withttl) {
 			/* XXX: alignment? */

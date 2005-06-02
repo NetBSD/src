@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.36 2004/12/07 16:47:32 jwise Exp $	*/
+/*	$NetBSD: calendar.c,v 1.37 2005/06/02 01:39:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.36 2004/12/07 16:47:32 jwise Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.37 2005/06/02 01:39:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -183,7 +183,7 @@ main(argc, argv)
 static void
 cal(void)
 {
-	int printing;
+	int printing = 0;
 	FILE *fp;
 	char *line;
 
