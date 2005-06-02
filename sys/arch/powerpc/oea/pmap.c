@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2005/05/29 15:57:53 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2005/06/02 09:47:21 he Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2005/05/29 15:57:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2005/06/02 09:47:21 he Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1690,7 +1690,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 }
 
 void
-pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t free)
+pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t do_free)
 {
 	volatile struct pte *pt;
 	int ptegidx;
@@ -1761,7 +1761,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t free)
 	 */
 	LIST_REMOVE(pvo, pvo_vlink);
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-	if (free) {
+	if (do_free) {
 		pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
 			 &pmap_upvo_pool, pvo);
 	}
