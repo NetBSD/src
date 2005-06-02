@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.9 2005/06/02 19:33:04 uwe Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2005/06/02 19:33:04 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,7 +48,7 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char     *modif;
 {
 	int s;
 	
@@ -65,7 +65,7 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char     *modif;
 {
 	struct trapframe *frame;
 
