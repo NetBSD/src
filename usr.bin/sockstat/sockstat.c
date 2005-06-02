@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.6 2005/04/09 02:10:27 atatat Exp $ */
+/*	$NetBSD: sockstat.c,v 1.7 2005/06/02 03:00:19 lukem Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.6 2005/04/09 02:10:27 atatat Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.7 2005/06/02 03:00:19 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -604,7 +604,7 @@ void
 print_addr(int l, int t, int f, struct sockaddr *sa)
 {
 	char sabuf[256], pbuf[32];
-	int r;
+	int r = 0;
 
 	if (!(f & INP_ANONPORT))
 		f = 0;
