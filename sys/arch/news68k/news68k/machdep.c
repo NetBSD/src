@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2005/06/02 15:26:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2005/06/02 15:26:35 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -806,11 +806,12 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
  *  System dependent initilization
  */
 
-static volatile u_char *dip_switch, *int_status;
+static volatile uint8_t *dip_switch, *int_status;
 
-volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
-volatile u_char *ctrl_led, *sccport0a;
-uint32_t lance_mem_phys;
+const uint8_t *idrom_addr;
+volatile uint8_t *ctrl_ast, *ctrl_int2;
+volatile uint8_t *ctrl_led;
+uint32_t sccport0a, lance_mem_phys;
 
 #ifdef news1700
 static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
@@ -870,22 +871,23 @@ news1700_init(void)
 {
 	struct oidrom idrom;
 	const char *t;
-	u_char *p, *q;
+	const uint8_t *p;
+	uint8_t *q;
 	u_int i;
 
-	dip_switch	= (u_char *)IIOV(0xe1c00100);
-	int_status	= (u_char *)IIOV(0xe1c00200);
+	dip_switch	= (uint8_t *)IIOV(0xe1c00100);
+	int_status	= (uint8_t *)IIOV(0xe1c00200);
 
-	idrom_addr	= (u_char *)IIOV(0xe1c00000);
-	ctrl_ast	= (u_char *)IIOV(0xe1280000);
-	ctrl_int2	= (u_char *)IIOV(0xe1180000);
+	idrom_addr	= (uint8_t *)IIOV(0xe1c00000);
+	ctrl_ast	= (uint8_t *)IIOV(0xe1280000);
+	ctrl_int2	= (uint8_t *)IIOV(0xe1180000);
+	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
 
-	sccport0a	= (u_char *)IIOV(0xe0d40002);
-	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	sccport0a	= IIOV(0xe0d40002);
 	lance_mem_phys	= 0xe0e00000;
 
-	p = (u_char *)idrom_addr;
-	q = (u_char *)&idrom;
+	p = idrom_addr;
+	q = (uint8_t *)&idrom;
 
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
@@ -902,9 +904,9 @@ news1700_init(void)
 	strcat(cpu_model, t);
 	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];
 
-	ctrl_parity	= (u_char *)IIOV(0xe1080000);
-	ctrl_parity_clr	= (u_char *)IIOV(0xe1a00000);
-	parity_vector	= (u_char *)IIOV(0xe1c00200);
+	ctrl_parity	= (uint8_t *)IIOV(0xe1080000);
+	ctrl_parity_clr	= (uint8_t *)IIOV(0xe1a00000);
+	parity_vector	= (uint8_t *)IIOV(0xe1c00200);
 
 	parityenable();
 
@@ -961,22 +963,23 @@ static void
 news1200_init(void)
 {
 	struct idrom idrom;
-	u_char *p, *q;
+	const uint8_t *p;
+	uint8_t *q;
 	int i;
 
-	dip_switch	= (u_char *)IIOV(0xe1680000);
-	int_status	= (u_char *)IIOV(0xe1200000);
+	dip_switch	= (uint8_t *)IIOV(0xe1680000);
+	int_status	= (uint8_t *)IIOV(0xe1200000);
 
-	idrom_addr	= (u_char *)IIOV(0xe1400000);
-	ctrl_ast	= (u_char *)IIOV(0xe1100000);
-	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
+	idrom_addr	= (uint8_t *)IIOV(0xe1400000);
+	ctrl_ast	= (uint8_t *)IIOV(0xe1100000);
+	ctrl_int2	= (uint8_t *)IIOV(0xe10c0000);
+	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
 
-	sccport0a	= (u_char *)IIOV(0xe1780002);
-	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	sccport0a	= IIOV(0xe1780002);
 	lance_mem_phys	= 0xe1a00000;
 
-	p = (u_char *)idrom_addr;
-	q = (u_char *)&idrom;
+	p = idrom_addr;
+	q = (uint8_t *)&idrom;
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
 
