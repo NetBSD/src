@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.94 2005/04/27 20:32:41 perseant Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.95 2005/06/02 06:01:09 lukem Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.94 2005/04/27 20:32:41 perseant Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.95 2005/06/02 06:01:09 lukem Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2043,8 +2043,11 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		ai = grp->gr_ptr.gt_addrinfo;
 		addrp = ai->ai_addr;
 		addrlen = ai->ai_addrlen;
-	} else
+	} else {
 		addrp = NULL;
+		ai = NULL;	/* XXXGCC -Wuninitialized */
+		addrlen = 0;	/* XXXGCC -Wuninitialized */
+	}
 	done = FALSE;
 	while (!done) {
 		switch (grp->gr_type) {
@@ -2182,6 +2185,9 @@ get_net(cp, net, maskflg)
 		p = strchr(cp, '/');
 		*p = '\0';
 		prefp = p + 1;
+	} else {
+		p = NULL;	/* XXXGCC -Wuninitialized */
+		prefp = NULL;	/* XXXGCC -Wuninitialized */
 	}
 
 	if ((np = getnetbyname(cp)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.33 2004/12/20 20:51:42 jmc Exp $	*/
+/*	$NetBSD: ffs.c,v 1.34 2005/06/02 05:58:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.33 2004/12/20 20:51:42 jmc Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.34 2005/06/02 05:58:24 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -864,6 +864,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	isfile = S_ISREG(DIP(din, mode));
 	fbuf = NULL;
 	ffd = -1;
+	p = NULL;
 
 	in.i_fs = (struct fs *)fsopts->superblock;
 
