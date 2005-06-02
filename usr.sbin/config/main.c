@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.97 2004/11/05 18:07:27 mason Exp $	*/
+/*	$NetBSD: main.c,v 1.98 2005/06/02 05:12:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1336,6 +1336,7 @@ logconfig_include(FILE *cf, const char *filename)
 	if (!cfg)
 		return;
 
+	missingeol = 0;
 	if (fstat(fileno(cf), &st) == -1)
 		return;
 	if (cfgtime < st.st_mtime)
