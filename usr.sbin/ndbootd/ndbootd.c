@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.8 2003/08/17 22:34:17 itojun Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.9 2005/06/02 11:27:44 lukem Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.8 2003/08/17 22:34:17 itojun Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.9 2005/06/02 11:27:44 lukem Exp $");
 #endif
 
 /* includes: */
@@ -206,9 +206,6 @@ _ndbootd_find_interface(const char *ifr_name_user)
 {
 	struct ifreq ifr;
 #ifdef HAVE_AF_LINK
-	struct ifaddrs *link_ifas[20];	/* FIXME - magic constant. */
-	size_t link_ifas_count;
-	size_t link_ifas_i;
 	struct sockaddr_dl *sadl;
 #endif				/* HAVE_AF_LINK */
 	struct ndbootd_interface *interface;
@@ -218,24 +215,10 @@ _ndbootd_find_interface(const char *ifr_name_user)
 	if (getifaddrs(&ifap) != 0) {
 		return (NULL);
 	}
-#ifdef HAVE_AF_LINK
-	/* start our list of link address ifas: */
-	link_ifas_count = 0;
-#endif				/* HAVE_AF_LINK */
 
 	/* walk the interface list: */
 	ifa_user = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-#ifdef HAVE_AF_LINK
-		/* if this is a hardware address, save it: */
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			if (link_ifas_count < (sizeof(link_ifas) / sizeof(link_ifas[0]))) {
-				link_ifas[link_ifas_count++] = ifa;
-			}
-			continue;
-		}
-#endif				/* HAVE_AF_LINK */
-
 		/* ignore this interface if it doesn't do IP: */
 		if (ifa->ifa_addr->sa_family != AF_INET) {
 			continue;
@@ -258,12 +241,10 @@ _ndbootd_find_interface(const char *ifr_name_user)
 		}
 	}
 
-	if (ifa == NULL)
-		errno = ENOENT;
-
 	/* if we don't have an interface to return: */
-	if (ifa_user == NULL) {
+	if (ifa == NULL || ifa_user == NULL) {
 		freeifaddrs(ifap);
+		errno = ENOENT;
 		return (NULL);
 	}
 	/* start the interface description: */
@@ -274,15 +255,18 @@ _ndbootd_find_interface(const char *ifr_name_user)
 	/* we must be able to find an AF_LINK ifreq that gives us the
 	 * interface's Ethernet address. */
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (!strcmp(link_ifas[link_ifas_i]->ifa_name,
-		    ifa_user->ifa_name)) {
-			ifa = link_ifas[link_ifas_i];
+		if (ifa->ifa_addr->sa_family != AF_LINK) {
+			continue;
+		}
+		/* if this is the hardware address we want */
+		if (!strcmp(ifa->ifa_name, ifa_user->ifa_name)) {
 			break;
 		}
 	}
 	if (ifa == NULL) {
 		freeifaddrs(ifap);
 		free(interface);
+		errno = ENOENT;
 		return (NULL);
 	}
 	/* copy out the Ethernet address: */
