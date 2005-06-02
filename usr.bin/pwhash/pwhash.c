@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.12 2005/01/12 05:45:23 christos Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.13 2005/06/02 02:19:51 lukem Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.12 2005/01/12 05:45:23 christos Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.13 2005/06/02 02:19:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ main(int argc, char **argv)
 	int opt;
 	int operation = -1;
 	int prompt = 0;
-	const char *extra;	/* Store salt or number of rounds */
+	const char *extra = NULL;	/* Store salt or number of rounds */
 
 	setprogname(argv[0]);
 
