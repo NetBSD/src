@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.18 2005/02/17 17:09:48 xtraeme Exp $	*/
+/*	$NetBSD: edit.c,v 1.19 2005/06/02 01:42:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.18 2005/02/17 17:09:48 xtraeme Exp $");
+__RCSID("$NetBSD: edit.c,v 1.19 2005/06/02 01:42:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ verify(char *tempname, struct passwd *pw)
 	ENTRY *ep;
 	char *p;
 	struct stat sb;
-	FILE *fp;
+	FILE *fp = NULL;
 	int len, fd;
 	static char buf[LINE_MAX];
 
