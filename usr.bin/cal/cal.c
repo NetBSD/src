@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.18 2003/08/07 11:13:13 agc Exp $	*/
+/*	$NetBSD: cal.c,v 1.19 2005/06/02 01:38:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.18 2003/08/07 11:13:13 agc Exp $");
+__RCSID("$NetBSD: cal.c,v 1.19 2005/06/02 01:38:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ monthrange(int month, int year, int before, int after, int yearly)
 		printf("\n");
 
 		for (row = 0; row < 6; row++) {
-			char *p;
+			char *p = NULL;
 
 			memset(lineout, ' ', sizeof(lineout));
 			for (i = 0; i < skip; i++) {
