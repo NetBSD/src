@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.2 2004/08/21 11:22:33 rearnsha Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.3 2005/06/02 08:18:20 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -248,10 +248,10 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 .Lmemcpy_bad1:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemcpy_bad1_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -309,10 +309,10 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 .Lmemcpy_bad2:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemcpy_bad2_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -370,10 +370,10 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 .Lmemcpy_bad3:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemcpy_bad3_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
 	subs	r2, r2, #0x04
