@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2003/08/07 16:29:22 agc Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.7 2005/06/02 14:11:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2003/08/07 16:29:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7 2005/06/02 14:11:19 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -280,13 +280,13 @@ isa_intr_disestablish(ic, arg)
 	void *arg;
 {
 	struct intrhand *ih = arg;
-	int irq = ih->ih_irq, cpl;
+	int irq = ih->ih_irq, s;
 	struct intrhand **p, *q;
 
 	if (irq < 0 || irq > 15)
 		panic("intr_disestablish: bogus irq");
 
-	cpl = splhigh();
+	s = splhigh();
 	for (p = &isa_intrhand[irq]; (q = *p) != NULL && q != ih;
 	    p = &q->ih_next)
 		;
@@ -301,7 +301,7 @@ isa_intr_disestablish(ic, arg)
 	if (isa_intrhand[irq] == NULL) {
 		isa_intrtype[irq] = IST_NONE;
 	}
-	splx(cpl);
+	splx(s);
 }
 
 #define SUPERIO_CONF_IDX		0x15C
