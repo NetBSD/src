@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.19 2005/02/06 05:00:46 perry Exp $	*/
+/*	$NetBSD: trpt.c,v 1.20 2005/06/02 09:44:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.19 2005/02/06 05:00:46 perry Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.20 2005/06/02 09:44:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,6 +383,8 @@ tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
 	struct ip6_hdr *ip6 = NULL;
 #endif
 	char hbuf[MAXHOSTNAMELEN];
+
+	len = 0;	/* XXXGCC -Wuninitialized */
 
 	switch (family) {
 	case AF_INET:
