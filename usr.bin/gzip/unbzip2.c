@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.6 2004/09/05 21:32:30 dsl Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.7 2005/06/02 01:51:58 lukem Exp $	*/
 
 /* This file is #included by gzip.c */
 
@@ -6,7 +6,7 @@ static off_t
 unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
 	int		ret, end_of_file;
-	size_t		n;
+	size_t		n = 0;
 	off_t		bytes_out = 0;
 	bz_stream	bzs;
 	static char	*inbuf, *outbuf;
