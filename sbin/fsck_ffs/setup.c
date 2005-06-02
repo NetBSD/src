@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.76 2005/06/02 00:38:41 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.77 2005/06/02 01:23:19 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.76 2005/06/02 00:38:41 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.77 2005/06/02 01:23:19 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ setup(const char *dev)
 			dirty(&asblk);
 		}
 	}
-	if (sblock->fs_old_inodefmt >= FS_44INODEFMT) {
+	if (is_ufs2 || sblock->fs_old_inodefmt >= FS_44INODEFMT) {
 		if (sblock->fs_maxfilesize != maxfilesize) {
 			pwarn("INCORRECT MAXFILESIZE=%lld IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_maxfilesize);
