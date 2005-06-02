@@ -668,24 +668,24 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(struct mbuf *m, int off, int len, void *vp)
+m_copydata(const struct mbuf *m, int off, int len, void *vp)
 {
-	unsigned count;
-	char *cp = vp;
+	unsigned	count;
+	caddr_t		*cp = vp;
 
 	if (off < 0 || len < 0)
 		panic("m_copydata: off %d, len %d", off, len);
 	while (off > 0) {
-		if (m == 0)
-			panic("m_copydata: m == 0, off %d", off);
+		if (m == NULL)
+			panic("m_copydata: m == NULL, off %d", off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
 		m = m->m_next;
 	}
 	while (len > 0) {
-		if (m == 0)
-			panic("m_copydata: m == 0, len %d", len);
+		if (m == NULL)
+			panic("m_copydata: m == NULL, len %d", len);
 		count = min(m->m_len - off, len);
 		memcpy(cp, mtod(m, caddr_t) + off, count);
 		len -= count;
