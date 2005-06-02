@@ -671,7 +671,7 @@ void
 m_copydata(const struct mbuf *m, int off, int len, void *vp)
 {
 	unsigned	count;
-	caddr_t		*cp = vp;
+	caddr_t		cp = vp;
 
 	if (off < 0 || len < 0)
 		panic("m_copydata: off %d, len %d", off, len);
