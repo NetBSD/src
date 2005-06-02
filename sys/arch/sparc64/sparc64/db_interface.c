@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.79 2005/06/01 21:05:36 jdc Exp $ */
+/*	$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79 2005/06/01 21:05:36 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -248,8 +248,6 @@ void db_pload_cmd __P((db_expr_t, int, db_expr_t, const char *));
 void db_pmap_cmd __P((db_expr_t, int, db_expr_t, const char *));
 void db_lock __P((db_expr_t, int, db_expr_t, const char *));
 void db_traptrace __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watch __P((db_expr_t, int, db_expr_t, const char *));
 void db_pm_extract __P((db_expr_t, int, db_expr_t, const char *));
 void db_cpus_cmd __P((db_expr_t, int, db_expr_t, const char *));
