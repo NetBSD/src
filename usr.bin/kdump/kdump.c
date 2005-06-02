@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.79 2004/08/23 20:49:28 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.80 2005/06/02 01:53:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.79 2004/08/23 20:49:28 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.80 2005/06/02 01:53:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,7 +642,7 @@ hexdump_buf(vdp, datalen, word_sz)
 	const unsigned char *dp = vdp;
 	const unsigned char *datalim = dp + datalen;
 	const unsigned char *line_end;
-	int off, l, c;
+	int off, l = 0, c;
 	char *cp, *bp;
 	int divmask = word_sz - 1;	/* block size in bytes */
 	int gdelim = 3;			/* gap between blocks */

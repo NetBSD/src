@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.21 2004/10/30 17:43:02 dsl Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.22 2005/06/02 01:53:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.21 2004/10/30 17:43:02 dsl Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.22 2005/06/02 01:53:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ static void
 posixtypes(type_string)
 	char const *type_string;
 {
-	int nbytes;
+	int nbytes = 0;
 	char *fmt, type, *tmp;
 	struct odformat const *odf;
 
