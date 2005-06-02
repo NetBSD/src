@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.15 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: rdate.c,v 1.16 2005/06/02 09:20:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.15 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.16 2005/06/02 09:20:37 lukem Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -79,7 +79,8 @@ main(int argc, char *argv[])
 	int		slidetime = 0;
 	int		adjustment;
 	time_t          tim;
-	char           *hname, *emsg;
+	char           *hname;
+	const char     *emsg = NULL;
 	struct addrinfo	hints, *res, *res0;
 	int             c;
 	int		error;
