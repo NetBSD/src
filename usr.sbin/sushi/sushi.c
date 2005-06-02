@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.24 2005/01/12 17:53:45 peter Exp $       */
+/*      $NetBSD: sushi.c,v 1.25 2005/06/02 09:41:12 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -178,9 +178,9 @@ parse_config(void)
 	char **n;
 
 	searchpaths = NULL;
+	i = 0;
 
 	if ((conf = fopen("/etc/sushi.conf", "r")) != NULL) {
-		i = 0;
 		while ((p = fgetln(conf, &len)) != NULL) {
 			if (len == 1 || p[len - 1] == '#' || p[len - 1] != '\n')
 				continue;
