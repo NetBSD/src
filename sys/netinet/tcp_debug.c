@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.21 2005/02/03 23:25:22 perry Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.22 2005/06/02 04:40:46 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.21 2005/02/03 23:25:22 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.22 2005/06/02 04:40:46 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -188,7 +188,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 		flags = th->th_flags;
 		if (flags) {
 #ifndef lint
-			char *cp = "<";
+			const char *cp = "<";
 #define pf(f) { if (th->th_flags&__CONCAT(TH_,f)) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
