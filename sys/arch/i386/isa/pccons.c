@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.171 2005/06/02 08:03:50 martin Exp $	*/
+/*	$NetBSD: pccons.c,v 1.172 2005/06/02 13:04:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.171 2005/06/02 08:03:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.172 2005/06/02 13:04:05 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -396,7 +396,7 @@ kbc_put8042cmd(u_char val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(u_char val, u_char poll)
+kbd_cmd(u_char val, u_char dopoll)
 {
 	u_int retries = 3;
 	register u_int i;
@@ -406,7 +406,7 @@ kbd_cmd(u_char val, u_char poll)
 			return (0);
 		ack = nak = 0;
 		outb(IO_KBD + KBOUTP, val);
-		if (poll)
+		if (dopoll)
 			for (i = 100000; i; i--) {
 				if (inb(IO_KBD + KBSTATP) & KBS_DIB) {
 					register u_char c;
@@ -1265,23 +1265,28 @@ pcinit(void)
 	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
 
-#define	wrtchar(c, at) do {\
-	char *cpx = (char *)crtat; *cpx++ = (c); *cpx = (at); crtat++; vs.col++; \
-} while (0)
+#define	wrtchar(c, at) \
+    do { \
+	    char *_cp = (char *)crtat; \
+	    *_cp++ = (c); \
+	    *_cp = (at); \
+	    crtat++; \
+	    vs.col++; \
+    } while (/*CONSTCOND*/0)
 
 /* translate ANSI color codes to standard pc ones */
-static char fgansitopc[] = {
+static const char fgansitopc[] = {
 	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
 	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY
 };
 
-static char bgansitopc[] = {
+static const char bgansitopc[] = {
 	BG_BLACK, BG_RED, BG_GREEN, BG_BROWN, BG_BLUE,
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
 };
 
 #ifdef DISPLAY_ISO8859
-static u_char iso2ibm437[] =
+static const u_char iso2ibm437[] =
 {
            0,     0,     0,     0,     0,     0,     0,     0,
            0,     0,     0,     0,     0,     0,     0,     0,
