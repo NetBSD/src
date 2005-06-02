@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.3 2003/08/07 16:26:51 agc Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.4 2005/06/02 17:45:59 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.3 2003/08/07 16:26:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.4 2005/06/02 17:45:59 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
-	char **msgp;
+	const char **msgp;
 	int *cylp, *netbsd_label_offp;
 {
 	struct filecore_bootblock *bb;
