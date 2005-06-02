@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.27.4.1 2005/06/02 19:57:12 riz Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.27.4.1 2005/06/02 19:57:12 riz Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -151,8 +151,8 @@ ffs_dinode2_swap(struct ufs2_dinode *o, struct ufs2_dinode *n)
 	n->di_mtimensec = bswap32(o->di_mtimensec);
 	n->di_ctime = bswap64(o->di_ctime);
 	n->di_ctimensec = bswap32(o->di_ctimensec);
-	n->di_birthtime = bswap64(o->di_ctime);
-	n->di_birthnsec = bswap32(o->di_ctimensec);
+	n->di_birthtime = bswap64(o->di_birthtime);
+	n->di_birthnsec = bswap32(o->di_birthnsec);
 	n->di_gen = bswap32(o->di_gen);
 	n->di_kernflags = bswap32(o->di_kernflags);
 	n->di_flags = bswap32(o->di_flags);
