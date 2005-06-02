@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.33 2005/05/31 04:03:11 christos Exp $
+#	$NetBSD: Makefile.powerpc,v 1.34 2005/06/02 10:22:20 he Exp $
 #
 # Makefile for NetBSD
 #
@@ -44,6 +44,8 @@ CFLAGS+=	-mno-strict-align
 .endif
 CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
 AFLAGS+=	${AOPTS}
+
+CC_NO_CAST_QUAL= CFLAGS="${CFLAGS} -Wno-cast-qual" ${NORMAL_C}
 
 ##
 ## (3) libkern and compat
