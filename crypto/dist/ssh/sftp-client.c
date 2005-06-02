@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.23 2005/04/23 16:53:29 christos Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.24 2005/06/02 04:59:17 lukem Exp $	*/
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sftp-client.c,v 1.52 2004/11/25 22:22:14 markus Exp $");
-__RCSID("$NetBSD: sftp-client.c,v 1.23 2005/04/23 16:53:29 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.24 2005/06/02 04:59:17 lukem Exp $");
 
 #include <sys/queue.h>
 
@@ -759,6 +759,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	TAILQ_HEAD(reqhead, request) requests;
 	struct request *req;
 
+	status = -1;
 	TAILQ_INIT(&requests);
 
 	a = do_stat(conn, remote_path, 0);
