@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.6 2005/06/02 05:45:59 lukem Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.7 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1810,6 +1810,8 @@ int parse_class_declaration (cp, cfile, group, type)
 	int new = 1;
 	isc_result_t status;
 
+	status = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
+
 	token = next_token (&val, (unsigned *)0, cfile);
 	if (token != STRING) {
 		parse_warn (cfile, "Expecting class name");
@@ -2519,6 +2521,10 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	binding_state_t new_state;
 	unsigned buflen = 0;
 	struct class *class;
+
+	seenbit = 0;	/* XXXGCC -Wuninitialized */
+	newbinding = 0;	/* XXXGCC -Wuninitialized */
+	new_state = 0;	/* XXXGCC -Wuninitialized */
 
 	lease = (struct lease *)0;
 	status = lease_allocate (&lease, MDL);

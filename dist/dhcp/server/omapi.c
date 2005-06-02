@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.5 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.6 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2055,6 +2055,9 @@ isc_result_t binding_scope_get_value (omapi_value_t **value,
 	omapi_typed_data_t *td;
 	isc_result_t status;
 	char *nname;
+
+	status = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
+
 	nname = dmalloc (name -> len + 1, MDL);
 	if (!nname)
 		return ISC_R_NOMEMORY;

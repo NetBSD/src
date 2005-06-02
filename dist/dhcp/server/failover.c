@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.7 2002/06/11 15:22:59 wiz Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.8 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3424,6 +3424,10 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 	char tbuf [256];
 #endif
 
+	size = 0;	/* XXXGCC -Wuninitialized */
+	ilen = 0;	/* XXXGCC -Wuninitialized */
+	txt = NULL;	/* XXXGCC -Wuninitialized */
+
 	/* Note that the failover_option structure is used differently on
 	   input than on output - on input, count is an element count, and
 	   on output it's the number of bytes total in the option, including
@@ -4945,6 +4949,8 @@ normal_binding_state_transition_check (struct lease *lease,
 {
 	binding_state_t new_state;
 
+	new_state = 0;	/* XXXGCC -Wuninitialized */
+
 	/* If there is no transition, it's no problem. */
 	if (binding_state == lease -> binding_state)
 		return binding_state;
@@ -5107,6 +5113,8 @@ conflict_binding_state_transition_check (struct lease *lease,
 					 u_int32_t tsfp)
 {
 	binding_state_t new_state;
+
+	new_state = 0;	/* XXXGCC -Wuninitialized */
 
 	/* If there is no transition, it's no problem. */
 	if (binding_state == lease -> binding_state)

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.5 2003/02/18 17:08:43 drochner Exp $ Copyright (c) 1997-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.6 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1997-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -647,7 +647,7 @@ int find_interface_by_agent_option (packet, out, buf, len)
 {
 	int i = 0;
 	u_int8_t *circuit_id = 0;
-	unsigned circuit_id_len;
+	unsigned circuit_id_len = 0;
 	struct interface_info *ip;
 
 	while (i < len) {

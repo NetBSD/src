@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.3 2004/10/29 21:19:32 dsl Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.4 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -315,6 +315,9 @@ static enum dhcp_token read_string (cfile)
 	int value;
 	int hex;
 
+	value = 0;	/* XXXGCC -Wuninitialized */
+	hex = 0;	/* XXXGCC -Wuninitialized */
+					
 	for (i = 0; i < sizeof cfile -> tokbuf; i++) {
 	      again:
 		c = get_char (cfile);

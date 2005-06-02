@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.4 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.5 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -658,6 +658,8 @@ void write_statements (file, statements, indent)
 
 	if (!statements)
 		return;
+
+	col = 0;	/* XXXGCC -Wuninitialized */
 
 	for (r = statements; r; r = r -> next) {
 		switch (r -> op) {

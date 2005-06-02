@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.4 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.5 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -656,6 +656,8 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 	char *tname;
 	struct data_string name, data;
 	int r0, r1, r2;
+
+	tname = NULL;	/* XXXGCC -Wuninitialized */
 
 	if (!result || *result) {
 		log_error ("evaluate_dns_expression called with non-null %s",
@@ -1279,6 +1281,8 @@ int evaluate_data_expression (result, packet, lease, client_state,
 	int status;
 	struct binding *binding;
 	struct binding_value *bv;
+
+	status = 0;	/* XXXGCC -Wuninitialized */
 
 	switch (expr -> op) {
 		/* Extract N bytes starting at byte M of a data string. */
