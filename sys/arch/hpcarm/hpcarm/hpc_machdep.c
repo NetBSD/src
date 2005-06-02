@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.72 2004/12/12 20:42:54 abs Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.73 2005/06/02 21:26:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.72 2004/12/12 20:42:54 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.73 2005/06/02 21:26:00 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -689,16 +689,17 @@ initarm(argc, argv, bi)
 	/* Load memory into UVM. */
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
-		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
-		paddr_t end = start + (bootconfig.dram[loop].pages * PAGE_SIZE);
+		paddr_t dblk_start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t dblk_end = dblk_start
+			+ (bootconfig.dram[loop].pages * PAGE_SIZE);
 
-		if (start < physical_freestart)
-			start = physical_freestart;
-		if (end > physical_freeend)
-			end = physical_freeend;
+		if (dblk_start < physical_freestart)
+			dblk_start = physical_freestart;
+		if (dblk_end > physical_freeend)
+			dblk_end = physical_freeend;
 
-		uvm_page_physload(atop(start), atop(end),
-		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+		uvm_page_physload(atop(dblk_start), atop(dblk_end),
+		    atop(dblk_start), atop(dblk_end), VM_FREELIST_DEFAULT);
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
