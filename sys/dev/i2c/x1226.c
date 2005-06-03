@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.4 2004/02/13 20:12:00 shige Exp $	*/
+/*	$NetBSD: x1226.c,v 1.5 2005/06/03 12:18:46 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4 2004/02/13 20:12:00 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.5 2005/06/03 12:18:46 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* Write each RTC register in reverse order */
 	for (i = (X1226_REG_RTC_SIZE - 1) ; i >= 0; i--) {
-		int addr = i + X1226_REG_RTC_BASE;
+		addr = i + X1226_REG_RTC_BASE;
 		cmdbuf[0] = ((addr >> 8) & 0xff);
 		cmdbuf[1] = (addr & 0xff);
 		if (iic_exec(sc->sc_tag,
