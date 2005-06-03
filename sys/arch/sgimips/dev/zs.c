@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2004/09/29 04:06:51 sekiya Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2005/06/03 18:55:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2004/09/29 04:06:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2005/06/03 18:55:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct zs_chanstate *cs;
 	struct zs_channel *ch;
 	int    zs_unit, channel, err, s;
-	char  *promconsdev;
+	const char  *promconsdev;
 
 	promconsdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 
@@ -728,7 +728,7 @@ void
 zscninit(struct consdev *cn)
 {
 	extern const struct cdevsw zstty_cdevsw;
-	char* consdev;
+	const char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
 		panic("zscninit without valid ARCS ConsoleOut setting!");
