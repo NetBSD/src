@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.8 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.9 2005/06/03 13:48:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.8 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.9 2005/06/03 13:48:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,10 +165,10 @@ void
 kb_hb_cnattach(void)
 {
 	volatile int *dipsw = (void *)DIP_SWITCH;
-	volatile struct kbreg *reg = (void *)KEYB_DATA;
 
 	if (*dipsw & 7)
-		wskbd_cnattach(&kb_hb_consops, (void *)reg, &kb_hb_keymapdata);
+		wskbd_cnattach(&kb_hb_consops, (void *)KEYB_DATA,
+		    &kb_hb_keymapdata);
 }
 
 void
