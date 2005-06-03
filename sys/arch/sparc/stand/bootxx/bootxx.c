@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.12 2005/04/28 12:47:45 martin Exp $ */
+/*	$NetBSD: bootxx.c,v 1.13 2005/06/03 07:11:20 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,8 @@ void	loadboot __P((struct open_file *, caddr_t));
 int
 main()
 {
-	char	*dummy;
+	char	*dummy1;
+	const char	*dummy;
 	void (*entry)__P((void *)) = (void (*)__P((void *)))PROM_LOADADDR;
 	void	*arg;
 
@@ -90,7 +91,7 @@ main()
 	if (dummy && *dummy != '\0')
 		strcpy(prom_bootdevice, dummy);
 	io.f_flags = F_RAW;
-	if (devopen(&io, 0, &dummy)) {
+	if (devopen(&io, 0, &dummy1)) {
 		panic("%s: can't open device `%s'", progname,
 			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}
