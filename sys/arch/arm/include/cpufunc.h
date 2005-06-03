@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.32 2005/06/02 19:32:03 uwe Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.33 2005/06/03 15:55:56 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -340,25 +340,44 @@ void	arm10_setttb		__P((u_int));
 void	arm10_tlb_flushID_SE	__P((u_int));
 void	arm10_tlb_flushI_SE	__P((u_int));
 
-void	arm10_icache_sync_all	__P((void));
-void	arm10_icache_sync_range	__P((vaddr_t, vsize_t));
-
-void	arm10_dcache_wbinv_all	__P((void));
-void	arm10_dcache_wbinv_range __P((vaddr_t, vsize_t));
-void	arm10_dcache_inv_range	__P((vaddr_t, vsize_t));
-void	arm10_dcache_wb_range	__P((vaddr_t, vsize_t));
-
-void	arm10_idcache_wbinv_all	__P((void));
-void	arm10_idcache_wbinv_range __P((vaddr_t, vsize_t));
-
 void	arm10_context_switch	__P((void));
 
 void	arm10_setup		__P((char *));
+#endif
 
-extern unsigned arm10_dcache_sets_max;
-extern unsigned arm10_dcache_sets_inc;
-extern unsigned arm10_dcache_index_max;
-extern unsigned arm10_dcache_index_inc;
+#ifdef CPU_ARM11
+void	arm11_setttb		__P((u_int));
+
+void	arm11_tlb_flushID_SE	__P((u_int));
+void	arm11_tlb_flushI_SE	__P((u_int));
+
+void	arm11_context_switch	__P((void));
+
+void	arm11_setup		__P((char *string));
+void	arm11_tlb_flushID	__P((void));
+void	arm11_tlb_flushI	__P((void));
+void	arm11_tlb_flushD	__P((void));
+void	arm11_tlb_flushD_SE	__P((u_int va));
+
+void	arm11_drain_writebuf	__P((void));
+#endif
+
+#if defined (CPU_ARM10) || defined (CPU_ARM11)
+void	armv5_icache_sync_all	__P((void));
+void	armv5_icache_sync_range	__P((vaddr_t, vsize_t));
+
+void	armv5_dcache_wbinv_all	__P((void));
+void	armv5_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	armv5_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	armv5_dcache_wb_range	__P((vaddr_t, vsize_t));
+
+void	armv5_idcache_wbinv_all	__P((void));
+void	armv5_idcache_wbinv_range __P((vaddr_t, vsize_t));
+
+extern unsigned armv5_dcache_sets_max;
+extern unsigned armv5_dcache_sets_inc;
+extern unsigned armv5_dcache_index_max;
+extern unsigned armv5_dcache_index_inc;
 #endif
 
 #if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \

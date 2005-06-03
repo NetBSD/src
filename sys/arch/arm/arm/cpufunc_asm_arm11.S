@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.4 2005/06/03 15:55:55 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.1 2005/06/03 15:55:55 rearnsha Exp $	*/
 
 /*
- * Copyright (c) 2002 ARM Limited
+ * Copyright (c) 2002, 2005 ARM Limited
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * ARM10 assembly functions for CPU / MMU / TLB specific operations
+ * ARM11 assembly functions for CPU / MMU / TLB specific operations
+ *
+ * XXX We make no attempt at present to take advantage of the v6 memroy
+ * architecture or physically tagged cache.
  */
  
 #include <machine/cpu.h>
@@ -40,7 +43,7 @@
  * We need to clean and flush the cache as it uses virtual
  * addresses that are about to change.
  */
-ENTRY(arm10_setttb)
+ENTRY(arm11_setttb)
 	stmfd	sp!, {r0, lr}
 	bl	_C_LABEL(armv5_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
@@ -48,18 +51,21 @@ ENTRY(arm10_setttb)
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 
 /*
  * TLB functions
  */
-ENTRY(arm10_tlb_flushID_SE)
+ENTRY(arm11_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 
-ENTRY(arm10_tlb_flushI_SE)
+ENTRY(arm11_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 	
 
@@ -72,7 +78,7 @@ ENTRY(arm10_tlb_flushI_SE)
  * NOTE: Special calling convention
  *	r1, r4-r13 must be preserved
  */
-ENTRY(arm10_context_switch)
+ENTRY(arm11_context_switch)
 	/*
 	 * We can assume that the caches will only contain kernel addresses
 	 * at this point.  So no need to flush them again.
@@ -86,3 +92,33 @@ ENTRY(arm10_context_switch)
 	nop
 	nop
 	RET
+
+/*
+ * TLB functions
+ */
+ENTRY(arm11_tlb_flushID)
+	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mov	pc, lr
+
+ENTRY(arm11_tlb_flushI)
+	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mov	pc, lr
+
+ENTRY(arm11_tlb_flushD)
+	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mov	pc, lr
+
+ENTRY(arm11_tlb_flushD_SE)
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mov	pc, lr
+
+/*
+ * Other functions
+ */
+ENTRY(arm11_drain_writebuf)
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mov	pc, lr
