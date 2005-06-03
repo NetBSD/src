@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 2005/06/03 12:30:53 tsutsui Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2005/06/03 12:30:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct dkbad *bdp;
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int dospartoff, cyl, i, *ip;
 	int use_openbsd_part = 0;
 
