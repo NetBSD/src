@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.3 2005/02/18 22:39:31 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.4 2005/06/03 07:03:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
 
 
 /* Supported chip variants */
-extern char *i82596_typenames[];
+extern const char *i82596_typenames[];
 enum i82596_types { I82596_UNKNOWN, I82596_DX, I82596_CA };
 
 
