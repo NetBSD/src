@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.16 2005/06/02 16:47:42 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.17 2005/06/03 08:55:33 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.16 2005/06/02 16:47:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.17 2005/06/03 08:55:33 scw Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -318,7 +318,7 @@ void	pmap_release __P((pmap_t));
 
 #ifdef DEBUG
 void pmap_pvdump	__P((paddr_t));
-void pmap_check_wiring	__P((char *, vaddr_t));
+void pmap_check_wiring	__P((const char *, vaddr_t));
 #endif
 
 /* pmap_remove_mapping flags */
@@ -2987,7 +2987,7 @@ pmap_pvdump(pa)
  */
 void
 pmap_check_wiring(str, va)
-	char *str;
+	const char *str;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
