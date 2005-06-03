@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.20 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21 2005/06/03 15:04:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2005/01/22 15:36:10 chs Exp $");
 
 static int fpu_probe(void);
 
-static char *fpu_descr[] = {
+static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	"emulator", 		/* 0 */
 #else
@@ -71,7 +71,7 @@ static char *fpu_descr[] = {
 void 
 initfpu(void)
 {
-	char *descr;
+	const char *descr;
 	int maxtype = sizeof(fpu_descr) / sizeof(fpu_descr[0]) - 1;
 
 	/* Set the FPU bit in the "system enable register" */

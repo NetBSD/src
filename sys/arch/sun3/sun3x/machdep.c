@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2005/06/03 15:04:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,7 +159,7 @@ union sun3sir sun3sir;
 int	safepri = PSL_LOWIPL;
 
 u_char cpu_machine_id = 0;
-char *cpu_string = NULL;
+const char *cpu_string = NULL;
 int cpu_has_vme = 0;
 int has_iocache = 0;
 

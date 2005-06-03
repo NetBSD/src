@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.84 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: locore2.c,v 1.85 2005/06/03 15:04:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.84 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.85 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,7 +92,7 @@ int mmutype = MMU_SUN;
  */
 
 u_char cpu_machine_id = 0;
-char *cpu_string = NULL;
+const char *cpu_string = NULL;
 int cpu_has_vme = 0;
 
 /*

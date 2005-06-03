@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.14 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.15 2005/06/03 15:04:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.14 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ sunmon_halt(void)
  * Caller must pass a string that is in our data segment.
  */
 void 
-sunmon_reboot(char *bs)
+sunmon_reboot(const char *bs)
 {
 
 	(void) splhigh();

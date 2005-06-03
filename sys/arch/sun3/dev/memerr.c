@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.17 2005/01/22 15:36:10 chs Exp $ */
+/*	$NetBSD: memerr.c,v 1.18 2005/06/03 15:04:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.17 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.18 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ struct memerr_softc {
 	struct device sc_dev;
 	struct memerr *sc_reg;
 	enum memerr_type sc_type;
-	char *sc_typename;	/* "Parity" or "ECC" */
-	char *sc_csrbits;	/* how to print csr bits */
+	const char *sc_typename;	/* "Parity" or "ECC" */
+	const char *sc_csrbits;		/* how to print csr bits */
 	/* XXX: counters? */
 };
 

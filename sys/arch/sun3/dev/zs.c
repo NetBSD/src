@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.73 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.74 2005/06/03 15:04:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.73 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74 2005/06/03 15:04:21 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -780,7 +780,7 @@ static struct {
 	{ 0, 1 },	/* ttyd */
 };
 
-static char *prom_inSrc_name[] = {
+static const char *prom_inSrc_name[] = {
 	"keyboard/display",
 	"ttya", "ttyb",
 	"ttyc", "ttyd" };
