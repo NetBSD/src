@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.31 2005/05/10 12:57:18 rearnsha Exp $	*/
+/*	$NetBSD: armreg.h,v 1.32 2005/06/03 10:51:14 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -142,6 +142,8 @@
 #define CPU_ID_ARCH_V5		0x00030000
 #define CPU_ID_ARCH_V5T		0x00040000
 #define CPU_ID_ARCH_V5TE	0x00050000
+#define CPU_ID_ARCH_V5TEJ	0x00060000
+#define CPU_ID_ARCH_V6		0x00070000
 #define CPU_ID_VARIANT_MASK	0x00f00000
 
 /* Next three nybbles are part number */
@@ -190,6 +192,8 @@
 #define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
 #define CPU_ID_ARM1026EJS	0x4106a260
+#define CPU_ID_ARM1136JS	0x4107b360
+#define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
