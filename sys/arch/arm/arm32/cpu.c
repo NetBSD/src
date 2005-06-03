@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57 2005/05/10 13:02:55 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.58 2005/06/03 15:55:55 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2005/05/10 13:02:55 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2005/06/03 15:55:55 rearnsha Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -172,7 +172,8 @@ enum cpu_class {
 	CPU_CLASS_ARM10E,
 	CPU_CLASS_ARM10EJ,
 	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE
+	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM11J
 };
 
 static const char * const generic_steppings[16] = {
@@ -360,6 +361,11 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
 
+	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
+	  generic_steppings },
+	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
+	  generic_steppings },
+
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
 
@@ -383,6 +389,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM10EJ",	"CPU_ARM10" },		/* CPU_CLASS_ARM10EJ */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
+	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
 };
 
 /*
@@ -458,6 +465,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARM10EJ:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
+	case CPU_CLASS_ARM11J:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			aprint_normal(" DC disabled");
 		else
@@ -542,6 +550,9 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
+#endif
+#ifdef CPU_ARM11
+	case CPU_CLASS_ARM11J:
 #endif
 		break;
 	default:

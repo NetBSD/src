@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.9 2004/08/21 11:08:20 rearnsha Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.10 2005/06/03 15:55:56 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -58,6 +58,7 @@
 			 defined(CPU_ARM7TDMI) +			\
 			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
 			 defined(CPU_ARM10) +				\
+			 defined(CPU_ARM11) +				\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_IXP12X0) +				\
@@ -103,12 +104,19 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5)
+#if defined(CPU_ARM11)
+#define ARM_ARCH_6	1
+#else
+#define ARM_ARCH_6	0
+#endif
+
+#define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + \
+			 ARM_ARCH_5 + ARM_ARCH_6)
 #if ARM_NARCH == 0
 #error ARM_NARCH is 0
 #endif
 
-#if ARM_ARCH_5
+#if ARM_ARCH_5 || ARM_ARCH_6
 /*
  * We could support Thumb code on v4T, but the lack of clean interworking
  * makes that hard.
@@ -140,7 +148,8 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10))
+     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10) ||	\
+     defined(CPU_ARM11))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
