@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.58 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.58 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,9 +747,9 @@ nubus_get_smem_addr_rangelist(bus_space_tag_t bst, bus_space_handle_t bsh,
 	return 1;
 }
 
-static char	*huh = "???";
+static const char *huh = "???";
 
-char *
+const char *
 nubus_get_vendor(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
     int rsrc)
 {
@@ -779,7 +779,7 @@ nubus_get_vendor(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
 	return str_ret;
 }
 
-char *
+const char *
 nubus_get_card_name(bus_space_tag_t bst, bus_space_handle_t bsh,
     nubus_slot *fmt)
 {
