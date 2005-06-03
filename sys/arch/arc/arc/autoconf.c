@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2005/06/03 12:29:43 tsutsui Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2005/06/03 12:29:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2005/01/22 07:35:33 tsutsui Exp $"
 #include <dev/scsipi/scsiconf.h>
 
 struct bootdev_data {
-	char	*dev_type;
+	const char *dev_type;
 	int	bus;
 	int	unit;
 	int	partition;
@@ -132,7 +132,7 @@ cpu_configure(void)
 	softintr_init();
 
 	(void)splhigh();	/* To be really sure.. */
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
@@ -154,8 +154,8 @@ cpu_rootconf(void)
 }
 
 struct devmap {
-	char *attachment;
-	char *dev;
+	const char *attachment;
+	const char *dev;
 };
 
 /*
