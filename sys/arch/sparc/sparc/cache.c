@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.91 2005/02/06 20:22:15 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.92 2005/06/03 22:15:48 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.91 2005/02/06 20:22:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.92 2005/06/03 22:15:48 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -247,7 +247,7 @@ hypersparc_cache_enable()
 	 * Enable instruction cache and, on single-processor machines,
 	 * disable `Unimplemented Flush Traps'.
 	 */
-	v = HYPERSPARC_ICCR_ICE | (ncpu <= 1 ? HYPERSPARC_ICCR_FTD : 0);
+	v = HYPERSPARC_ICCR_ICE | (ncpus <= 1 ? HYPERSPARC_ICCR_FTD : 0);
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 }
 
