@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.107 2005/06/01 17:17:34 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.108 2005/06/03 16:15:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.107 2005/06/01 17:17:34 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.108 2005/06/03 16:15:46 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.107 2005/06/01 17:17:34 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.108 2005/06/03 16:15:46 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -225,6 +225,7 @@ MainParseArgs(int argc, char **argv)
 	getopt_def = OPTFLAGS;
 rearg:	
 	inOption = FALSE;
+	optscan = NULL;
 	while(argc > 1) {
 		char *getopt_spec;
 		if(!inOption)
@@ -262,6 +263,8 @@ rearg:
 				argvalue = argv[2];
 				arginc = 2;
 			}
+		} else {
+			argvalue = NULL; 
 		}
 		switch(c) {
 		case '\0':
