@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.7 2004/03/21 21:02:01 dsl Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.8 2005/06/03 03:34:44 snj Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1554,7 +1554,7 @@ shrink(void)
 	newsb->fs_cssize = fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
 	csum_fixup();
-	/* Evict data from any cgs being wholly eliminiated */
+	/* Evict data from any cgs being wholly eliminated */
 	for (i = newsb->fs_ncg; i < oldsb->fs_ncg; i++) {
 		int base;
 		int dlow;
