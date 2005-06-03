@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.57 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: if_se.c,v 1.58 2005/06/03 13:44:11 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.57 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58 2005/06/03 13:44:11 jdc Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -300,7 +300,7 @@ sematch(parent, match, aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)se_patterns, sizeof(se_patterns) / sizeof(se_patterns[0]),
+	    se_patterns, sizeof(se_patterns) / sizeof(se_patterns[0]),
 	    sizeof(se_patterns[0]), &priority);
 	return (priority);
 }
