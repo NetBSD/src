@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.48 2005/05/31 22:23:52 tron Exp $
+#	$NetBSD: INSTALL,v 1.49 2005/06/03 23:28:40 chris Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -121,7 +121,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
-options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
