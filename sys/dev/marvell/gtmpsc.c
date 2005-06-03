@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.10 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.11 2005/06/03 11:22:08 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.10 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.11 2005/06/03 11:22:08 scw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -274,26 +274,26 @@ gtmpsc_cache_invalidate(void *p)
 
 
 #define SDMA_IMASK_ENABLE(sc, bit)  do { \
-	unsigned int    r; \
+	unsigned int    __r; \
 	GT_WRITE(sc, SDMA_ICAUSE, ~(bit)); \
 	if (gt_reva_gtmpsc_bug) \
-		r = sdma_imask; \
+		__r = sdma_imask; \
 	else \
-		r = GT_READ(sc, SDMA_IMASK); \
-	r |= (bit); \
-	sdma_imask = r; \
-	GT_WRITE(sc, SDMA_IMASK, r); \
+		__r = GT_READ(sc, SDMA_IMASK); \
+	__r |= (bit); \
+	sdma_imask = __r; \
+	GT_WRITE(sc, SDMA_IMASK, __r); \
 } while (/*CONSTCOND*/ 0)
 
 #define SDMA_IMASK_DISABLE(sc, bit)  do { \
-	unsigned int    r; \
+	unsigned int    __r; \
 	if (gt_reva_gtmpsc_bug) \
-		r = sdma_imask; \
+		__r = sdma_imask; \
 	else \
-		r = GT_READ(sc, SDMA_IMASK); \
-	r &= ~(bit); \
-	sdma_imask = r; \
-	GT_WRITE(sc, SDMA_IMASK, r); \
+		__r = GT_READ(sc, SDMA_IMASK); \
+	__r &= ~(bit); \
+	sdma_imask = __r; \
+	GT_WRITE(sc, SDMA_IMASK, __r); \
 } while (/*CONSTCOND*/ 0)
 
 static volatile inline unsigned int
