@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.5 2005/05/18 14:57:36 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.6 2005/06/03 18:55:12 martin Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.5 2005/05/18 14:57:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.6 2005/06/03 18:55:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -380,7 +380,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t command;
-	char *macaddr;
+	const char *macaddr;
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	int i, err, rseg;
