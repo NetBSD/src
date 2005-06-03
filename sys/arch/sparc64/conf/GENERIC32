@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.98.2.2 2005/06/01 17:19:25 riz Exp $
+# 	$NetBSD: GENERIC32,v 1.98.2.3 2005/06/03 15:41:47 riz Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98.2.2 $"
+#ident 		"GENERIC-$Revision: 1.98.2.3 $"
 
 maxusers	64
 
@@ -707,6 +707,23 @@ wsdisplay*	at ffb?
 # On board vga on U5/U10 etc.
 machfb*		at pci?
 wsdisplay*	at machfb?
+
+# wsmouse for sun ms
+wsmouse*        at ms0
+
+# wskbd for sun kbd
+wskbd0 at kbd0
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_SUN		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_WHITE
+# options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_GALLANT12x22		# PROM font look-alike
 
 #### Other device configuration
 
