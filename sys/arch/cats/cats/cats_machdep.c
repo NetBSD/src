@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.52 2004/12/12 20:42:53 abs Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.53 2005/06/03 23:19:48 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.52 2004/12/12 20:42:53 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.53 2005/06/03 23:19:48 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -177,7 +177,7 @@ void consinit		__P((void));
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
 
-static void process_kernel_args	__P((char *));
+static void process_kernel_args	__P((const char *));
 extern void configure		__P((void));
 
 /* A load of console goo. */
@@ -353,10 +353,10 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(bootargs)
-	void *bootargs;
+initarm(arm_bootargs)
+	void *arm_bootargs;
 {
-	struct ebsaboot *bootinfo = bootargs;
+	struct ebsaboot *bootinfo = arm_bootargs;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
@@ -399,6 +399,23 @@ initarm(bootargs)
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
 		panic("Incompatible magic number passed in boot args");
 
+#ifdef VERBOSE_INIT_ARM
+	/* output the incoming bootinfo */
+	printf("bootinfo @ %p\n", arm_bootargs);
+	printf("bt_magic    = 0x%08x\n", ebsabootinfo.bt_magic);
+	printf("bt_vargp    = 0x%08x\n", ebsabootinfo.bt_vargp);
+	printf("bt_pargp    = 0x%08x\n", ebsabootinfo.bt_pargp);
+	printf("bt_args @ %p, contents = \"%s\"\n", ebsabootinfo.bt_args, ebsabootinfo.bt_args);
+	printf("bt_l1       = %p\n", ebsabootinfo.bt_l1);
+
+	printf("bt_memstart = 0x%08x\n", ebsabootinfo.bt_memstart);
+	printf("bt_memend   = 0x%08x\n", ebsabootinfo.bt_memend);
+	printf("bt_memavail = 0x%08x\n", ebsabootinfo.bt_memavail);
+	printf("bt_fclk     = 0x%08x\n", ebsabootinfo.bt_fclk);
+	printf("bt_pciclk   = 0x%08x\n", ebsabootinfo.bt_pciclk);
+	printf("bt_vers     = 0x%08x\n", ebsabootinfo.bt_vers);
+	printf("bt_features = 0x%08x\n", ebsabootinfo.bt_features);
+#endif
 /*	{
 	int loop;
 	for (loop = 0; loop < 8; ++loop) {
@@ -435,7 +452,7 @@ initarm(bootargs)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	process_kernel_args((char *)ebsabootinfo.bt_args);
+	process_kernel_args(ebsabootinfo.bt_args);
 
 	printf("initarm: Configuring system ...\n");
 
@@ -912,14 +929,14 @@ initarm(bootargs)
 }
 
 static void
-process_kernel_args(args)
-	char *args;
+process_kernel_args(loader_args)
+	const char *loader_args;
 {
-
+	char *args;
 	boothowto = 0;
 
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING);
+	strncpy(bootargs, loader_args, MAX_BOOT_STRING);
 
 	args = bootargs;
 	boot_file = bootargs;
@@ -950,7 +967,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	char *console = CONSDEVNAME;
+	const char *console = CONSDEVNAME;
 
 	if (consinit_called != 0)
 		return;
