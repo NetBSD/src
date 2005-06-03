@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.98.2.4 2005/06/03 15:43:23 riz Exp $
+# 	$NetBSD: GENERIC32,v 1.98.2.5 2005/06/03 15:47:59 riz Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98.2.4 $"
+#ident 		"GENERIC-$Revision: 1.98.2.5 $"
 
 maxusers	64
 
@@ -820,6 +820,8 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 pseudo-device	rnd
 
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
