@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.20 2003/08/07 16:28:42 agc Exp $	*/
+/*      $NetBSD: clock.c,v 1.21 2005/06/03 08:51:08 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2003/08/07 16:28:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2005/06/03 08:51:08 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -195,6 +195,7 @@ inittodr(base)
         time_t base;
 {
         int badbase = 0, waszero = (base == 0);
+	struct timeval the_time;
 
 	if (todr_handle == NULL)
 		panic("todr not configured");
@@ -211,18 +212,19 @@ inittodr(base)
                 badbase = 1;
         }
 
-        if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-            time.tv_sec == 0) {
+        if (todr_gettime(todr_handle, &the_time) != 0 ||
+            the_time.tv_sec == 0) {
                 printf("WARNING: bad date in battery clock");
                 /*
                  * Believe the time in the file system for lack of
                  * anything better, resetting the clock.
                  */
                 time.tv_sec = base;
+		time.tv_usec = 0;
                 if (!badbase)
                         resettodr();
         } else {
-                int deltat = time.tv_sec - base;
+                int deltat = the_time.tv_sec - base;
 
                 if (deltat < 0)
                         deltat = -deltat;
@@ -230,6 +232,8 @@ inittodr(base)
                         return;
                 printf("WARNING: clock %s %d days",
                     time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+
+		time = the_time;
         }
         printf(" -- CHECK AND RESET THE DATE!\n");
 }
@@ -244,10 +248,12 @@ inittodr(base)
 void
 resettodr()
 {
+	struct timeval the_time;
 
         if (!time.tv_sec)
                 return;
 
-        if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	the_time = time;
+        if (todr_settime(todr_handle, &the_time) != 0)
                 printf("resettodr: failed to set time\n");
 }
