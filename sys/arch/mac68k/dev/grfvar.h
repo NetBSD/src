@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.26 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.27 2005/06/03 23:04:16 rjs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,7 +112,7 @@ struct grf_softc {
  * Attach grf and ite semantics to Mac video hardware.
  */
 struct grfbus_attach_args {
-	char		*ga_name;	/* name of semantics to attach */
+	const char	*ga_name;	/* name of semantics to attach */
 	bus_space_tag_t	ga_tag;		/* forwarded ... */
 	bus_space_handle_t ga_handle;
 	struct grfmode	*ga_grfmode;
