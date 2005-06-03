@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.16 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.17 2005/06/03 13:47:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.16 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.17 2005/06/03 13:47:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.16 2005/05/22 15:54:46 christos Exp 
 #define	splscsi splsc
 
 #if defined(__mips__) && defined(CPU_SINGLE)
-#define nops(x)		{ int i; for (i = 0; i < (x); i++) ; }
+#define nops(x)		{ int __i; for (__i = 0; __i < (x); __i++) ; }
 #define	DMAC_WAIT0	;
 #else
 #define	DMAC_WAIT0	DMAC_WAIT
@@ -168,9 +168,9 @@ extern paddr_t kvtophys(vaddr_t);
 
 #if defined(__mips__) && defined(CPU_SINGLE)
 #define dma_reset(x) {						\
-	int s = splscsi();					\
+	int __s = splscsi();					\
 	dmac_gsel = (x); dmac_cctl = DM_RST; dmac_cctl = 0;	\
-	splx(s);						\
+	splx(__s);						\
 }
 #endif
 
