@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.26 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.27 2005/06/03 18:52:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.26 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27 2005/06/03 18:52:52 martin Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -435,32 +435,32 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SADDR) {
 		int error;
-		vaddr_t min, max;
+		vaddr_t minp, maxp;
 		vsize_t len;
 		struct irix_shared_regions_rec *isrr;
 
 		/*
 		 * First, unmap the whole address space
 		 */
-		min = vm_map_min(&p2->p_vmspace->vm_map);
-		max = vm_map_max(&p2->p_vmspace->vm_map);
-		uvm_unmap(&p2->p_vmspace->vm_map, min, max);
+		minp = vm_map_min(&p2->p_vmspace->vm_map);
+		maxp = vm_map_max(&p2->p_vmspace->vm_map);
+		uvm_unmap(&p2->p_vmspace->vm_map, minp, maxp);
 
 		/*
 		 * Now, copy the mapping from the parent for shared regions
 		 */
 		parent_ied = (struct irix_emuldata *)parent->p_emuldata;
 		LIST_FOREACH(isrr, &parent_ied->ied_shared_regions, isrr_list) {
-			min = isrr->isrr_start;
+			minp = isrr->isrr_start;
 			len = isrr->isrr_len;
-			max = min + len;
+			maxp = minp + len;
 			/* If this is a private region, skip */
 			if (isrr->isrr_shared == IRIX_ISRR_PRIVATE)
 				continue;
 
 			/* Copy the new mapping from the parent */
 			error = uvm_map_extract(&parent->p_vmspace->vm_map,
-			    min, len, &p2->p_vmspace->vm_map, &min, 0);
+			    minp, len, &p2->p_vmspace->vm_map, &minp, 0);
 			if (error != 0) {
 #ifdef DEBUG_IRIX
 				printf("irix_sproc_child(): error %d\n", error);
@@ -739,8 +739,8 @@ irix_vm_sync(p)
 	struct irix_emuldata *iedp;
 	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
 	struct irix_shared_regions_rec *isrr;
-	vaddr_t min;
-	vaddr_t max;
+	vaddr_t minp;
+	vaddr_t maxp;
 	vsize_t len;
 	int error;
 
@@ -763,16 +763,16 @@ irix_vm_sync(p)
 			 */
 
 			/* The region is shared */
-			min = isrr->isrr_start;
+			minp = isrr->isrr_start;
 			len = isrr->isrr_len;
-			max = min + len;
+			maxp = minp + len;
 
 			/* Drop the region */
-			uvm_unmap(&pp->p_vmspace->vm_map, min, max);
+			uvm_unmap(&pp->p_vmspace->vm_map, minp, maxp);
 
 			/* Clone it from the parent */
 			error = uvm_map_extract(&p->p_vmspace->vm_map,
-			    min, len, &pp->p_vmspace->vm_map, &min, 0);
+			    minp, len, &pp->p_vmspace->vm_map, &minp, 0);
 
 			if (error)
 				break;
