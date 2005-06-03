@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.24 2005/06/02 15:21:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.25 2005/06/03 21:40:56 martin Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -645,7 +645,7 @@ fail:
 
 const struct encaptab *
 encap_attach_func(int af, int proto,
-    int (*func)(struct mbuf *, int, int, void *),
+    int (*func)(const struct mbuf *, int, int, void *),
     const struct protosw *psw, void *arg)
 {
 	struct encaptab *ep;
