@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.8 2002/07/22 21:48:37 hannken Exp $ */
+/*	$NetBSD: mbavar.h,v 1.9 2005/06/03 12:55:44 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -80,7 +80,7 @@ enum	xfer_action {
 struct	mba_attach_args {
 	int	ma_unit;
         int	ma_type;
-	char	*ma_name;
+	const char	*ma_name;
 	enum	mb_devices ma_devtyp;
 	bus_space_tag_t ma_iot;
 	bus_space_handle_t ma_ioh;
@@ -115,7 +115,7 @@ struct	mba_softc {
 
 struct  mbaunit {
 	int     nr;
-	char    *name;
+	const char    *name;
 	enum	mb_devices devtyp;
 };
 
