@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.93 2003/07/15 00:05:02 lukem Exp $ */
+/*	$NetBSD: clock.c,v 1.94 2005/06/03 22:17:18 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.93 2003/07/15 00:05:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.94 2005/06/03 22:17:18 martin Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -224,7 +224,8 @@ void
 inittodr(base)
 	time_t base;
 {
-	int badbase = 0, waszero = base == 0;
+	struct timeval tv;
+	int tv_valid = 0, badbase = 0, waszero = base == 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -238,8 +239,11 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	if (todr_gettime(todr_handle, &tv) == 0 && tv.tv_sec != 0) {
+		tv_valid = 1;
+		time = tv;
+	}
+	if (!tv_valid) {
 
 		printf("WARNING: bad date in battery clock");
 		/*
@@ -273,12 +277,14 @@ inittodr(base)
 void
 resettodr()
 {
+	struct timeval tv;
 
 	if (time.tv_sec == 0)
 		return;
 
 	sparc_clock_time_is_ok = 1;
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	tv = time;
+	if (todr_settime(todr_handle, &tv) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.32 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.33 2005/06/03 22:17:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.32 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.33 2005/06/03 22:17:18 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -644,9 +644,10 @@ prom_get_device_args(prop, args, sz)
 	char *args;
 	unsigned int sz;
 {
-	char *cp, buffer[128];
+	const char *cp;
+	char buffer[128];
 
-	cp = prom_getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
+	cp = prom_getpropstringA(findroot(), prop, buffer, sizeof buffer);
 
 	/*
 	 * Extract device-specific arguments from a PROM device path (if any)
