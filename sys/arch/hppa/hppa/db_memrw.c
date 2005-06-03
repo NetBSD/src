@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 2005/06/03 15:21:35 chs Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2005/06/03 15:21:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 }
 
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;
 	extern int etext;
