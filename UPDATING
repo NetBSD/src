@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.139 2005/05/31 18:42:44 christos Exp $
+$NetBSD: UPDATING,v 1.140 2005/06/03 11:02:59 yamt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,6 +20,10 @@ Recent changes:
 	genassym.sh(8) was moved to genassym(8). You need to either build
 	tools first or install the version of genassym from /usr/sbin before
 	you can build a kernel again.
+
+20050520:
+	Because a kernfs bug which xentools relies on was fixed,
+	xentools up to xentools20-2.0.3nb4 won't work with new kernel.
 
 20050417:
 	postinstall(8) was moved from /etc to /usr/sbin and made part
