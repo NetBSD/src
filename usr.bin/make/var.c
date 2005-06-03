@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.93 2005/06/01 17:17:34 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.93 2005/06/01 17:17:34 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.93 2005/06/01 17:17:34 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2298,7 +2298,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			cp = ++tstr;
 			break;
 		    }
-			/* '{' */
+			/* XXX: appease vi sm: '{' */
 		    delim = '}';
 		    pattern.flags = 0;
 
@@ -2897,6 +2897,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 						     &pattern.rightLen,
 						     NULL)) == NULL)
 			goto cleanup;
+			/* XXX: appease vi sm: ')' '}' */
 
 		    termc = *--cp;
 		    delim = '\0';
