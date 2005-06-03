@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.19 2004/09/06 07:24:06 sekiya Exp $	*/
+/*	$NetBSD: crime.c,v 1.20 2005/06/03 18:55:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.19 2004/09/06 07:24:06 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.20 2005/06/03 18:55:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -219,10 +219,10 @@ crime_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		if (crime_ipending & CRIME_INT_MEMERR) {
 			u_int64_t address =
 				bus_space_read_8(crm_iot, crm_ioh, CRIME_MEM_ERROR_ADDR);
-			u_int64_t status =
+			u_int64_t status1 =
 				bus_space_read_8(crm_iot, crm_ioh, CRIME_MEM_ERROR_STAT);
 			printf("crime: memory error address %llx"
-				" status %llx\n", address << 2, status);
+				" status %llx\n", address << 2, status1);
 			crime_bus_reset();
 		}
 
