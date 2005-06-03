@@ -1,4 +1,4 @@
-.\"	$NetBSD: script.7,v 1.1 2005/05/07 02:20:34 perry Exp $
+.\"	$NetBSD: script.7,v 1.2 2005/06/03 20:49:12 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ was invoked to execute the script file.
 By convention, it is expected that an interpreter will open the script
 file passed as an argument and process the commands within it.
 Typical interpreters treat
-.Dq #
+.Sq #
 as a comment character, and thus will ignore the initial line of the script
 because it begins
 .Dq #! ,
@@ -237,11 +237,11 @@ being executed, receiving the following arguments in
 .Ss Portability Note: Multiple arguments
 The behavior of multiple arguments on the
 .Dq #!
-line is highly non-portable between different systems. In general,
-only one argument can be assumed to work consistently.
+line is highly non-portable between different systems.
+In general, only one argument can be assumed to work consistently.
 .Pp
-Consider the following variation on the previous example. Suppose that
-an executable binary exists in
+Consider the following variation on the previous example.
+Suppose that an executable binary exists in
 .Pa /bin/interp
 and that the file
 .Pa /tmp/script
@@ -370,6 +370,8 @@ Turning on
 is therefore very dangerous, and should not be done lightly if at all.
 .Sh SEE ALSO
 .Xr awk 1 ,
+.Xr csh 1 ,
+.Xr ksh 1 ,
 .Xr sh 1 ,
 .Xr chmod 2 ,
 .Xr execve 2 ,
