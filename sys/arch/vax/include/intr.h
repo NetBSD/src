@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.15 2004/07/01 22:58:12 kleink Exp $	*/
+/* 	$NetBSD: intr.h,v 1.16 2005/06/03 11:44:39 ragge Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -72,11 +72,11 @@
 #ifndef __lint__
 #define splx(reg)						\
 ({								\
-	register int val;					\
+	register int __val;					\
 	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
-				: "=&g" (val)			\
+				: "=&g" (__val)			\
 				: "g" (reg));			\
-	val;							\
+	__val;							\
 })
 
 #define _splset(reg)						\
@@ -88,14 +88,14 @@
 
 #define _splraise(reg)						\
 ({								\
-	register int val;					\
+	register int __val;					\
 	__asm __volatile ("mfpr $0x12,%0"			\
-				: "=&g" (val)			\
+				: "=&g" (__val)			\
 				: );				\
-	if ((reg) > val) {					\
+	if ((reg) > __val) {					\
 		_splset(reg);					\
 	}							\
-	val;							\
+	__val;							\
 })
 
 #define _setsirr(reg)						\
@@ -116,6 +116,7 @@ do {								\
 #define	splipi()	_splraise(IPL_IPI)		/* IPL14 */
 #define splbio()	_splraise(IPL_BIO)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
+#define splaudio()	_splraise(IPL_AUDIO)		/* IPL15 */
 #define splnet()	_splraise(IPL_NET)		/* IPL16 */
 #define splvm()		_splraise(IPL_VM)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
