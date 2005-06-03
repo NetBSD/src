@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.15 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.16 2005/06/03 22:06:25 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.15 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.16 2005/06/03 22:06:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ bwtwoattach_sbus(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int isconsole, node;
-	char *name;
+	const char *name;
 
 	node = sa->sa_node;
 
