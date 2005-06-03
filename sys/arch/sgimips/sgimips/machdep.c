@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2005/06/03 19:02:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2005/06/03 19:02:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,10 +133,7 @@ int arcsmem;		/* Memory used by the ARCS firmware */
 int ncpus;
 
 /* CPU interrupt masks */
-u_int32_t biomask;
-u_int32_t netmask;
-u_int32_t ttymask;
-u_int32_t clockmask;
+u_int32_t splmasks[IPL_CLOCK+1];
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -225,7 +222,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	caddr_t v;
 	vsize_t size;
 	struct arcbios_mem *mem;
-	char *cpufreq;
+	const char *cpufreq;
 	struct btinfo_symtab *bi_syms;
 	caddr_t ssym;
 	vaddr_t kernend;
@@ -416,10 +413,10 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		biomask = 0x0b00;
-		netmask = 0x0b00;
-		ttymask = 0x1b00;
-		clockmask = 0x7f00;
+		splmasks[IPL_BIO] = 0x0b00;
+		splmasks[IPL_NET] = 0x0b00;
+		splmasks[IPL_TTY] = 0x1b00;
+		splmasks[IPL_CLOCK] = 0x7f00;
 		platform.intr3 = mips1_clock_intr;
 		platform.clkread = mips1_clkread;
 		break;
@@ -430,34 +427,34 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
 
-		biomask = 0x0700;
-		netmask = 0x0700;
-		ttymask = 0x0f00;
-		clockmask = 0xbf00;
+		splmasks[IPL_BIO] = 0x0700;
+		splmasks[IPL_NET] = 0x0700;
+		splmasks[IPL_TTY] = 0x0f00;
+		splmasks[IPL_CLOCK] = 0xbf00;
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP22:
-		biomask = 0x0700;
-		netmask = 0x0700;
-		ttymask = 0x0f00;
-		clockmask = 0xbf00;
+		splmasks[IPL_BIO] = 0x0700;
+		splmasks[IPL_NET] = 0x0700;
+		splmasks[IPL_TTY] = 0x0f00;
+		splmasks[IPL_CLOCK] = 0xbf00;
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP30:
-		biomask = 0x0700;
-		netmask = 0x0700;
-		ttymask = 0x0700;
-		clockmask = 0x8700;
+		splmasks[IPL_BIO] = 0x0700;
+		splmasks[IPL_NET] = 0x0700;
+		splmasks[IPL_TTY] = 0x0700;
+		splmasks[IPL_CLOCK] = 0x8700;
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP32:
-		biomask = 0x0700;
-		netmask = 0x0700;
-		ttymask = 0x0700;
-		clockmask = 0x8700;
+		splmasks[IPL_BIO] = 0x0700;
+		splmasks[IPL_NET] = 0x0700;
+		splmasks[IPL_TTY] = 0x0700;
+		splmasks[IPL_CLOCK] = 0x8700;
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
