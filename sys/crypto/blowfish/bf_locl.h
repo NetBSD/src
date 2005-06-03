@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.2 2000/08/31 06:46:21 itojun Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.3 2005/06/03 11:31:57 martin Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */
@@ -205,10 +205,10 @@
 
 #define BF_ENC(LL,R,S,P) \
 	LL^=P; \
-	LL^= (((*(BF_LONG *)((unsigned char *)&(S[  0])+((R>>BF_0)&BF_M))+ \
-		*(BF_LONG *)((unsigned char *)&(S[256])+((R>>BF_1)&BF_M)))^ \
-		*(BF_LONG *)((unsigned char *)&(S[512])+((R>>BF_2)&BF_M)))+ \
-		*(BF_LONG *)((unsigned char *)&(S[768])+((R<<BF_3)&BF_M)));
+	LL^= (((*(const BF_LONG *)((const unsigned char *)&(S[  0])+((R>>BF_0)&BF_M))+ \
+		*(const BF_LONG *)((const unsigned char *)&(S[256])+((R>>BF_1)&BF_M)))^ \
+		*(const BF_LONG *)((const unsigned char *)&(S[512])+((R>>BF_2)&BF_M)))+ \
+		*(const BF_LONG *)((const unsigned char *)&(S[768])+((R<<BF_3)&BF_M)));
 #else
 
 /* This will always work, even on 64 bit machines and strangly enough,
