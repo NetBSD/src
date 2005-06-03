@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2005/01/23 19:10:23 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 2005/06/03 18:19:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2005/01/23 19:10:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2005/06/03 18:19:11 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -230,17 +230,17 @@ restore_ofmap(ofmap, len)
 	for (i = 0; i < n; i++) {
 		paddr_t pa = ofmap[i].pa;
 		vaddr_t va = ofmap[i].va;
-		int len = ofmap[i].len;
+		size_t length = ofmap[i].len;
 
 		if (va < 0xf0000000)			/* XXX */
 			continue;
 
-		while (len > 0) {
+		while (length > 0) {
 			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
 			    VM_PROT_ALL|PMAP_WIRED);
 			pa += PAGE_SIZE;
 			va += PAGE_SIZE;
-			len -= PAGE_SIZE;
+			length -= PAGE_SIZE;
 		}
 	}
 	pmap_update(&ofw_pmap);
