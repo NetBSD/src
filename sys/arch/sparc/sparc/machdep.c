@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2005/04/25 15:02:07 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.256 2005/06/03 22:15:48 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2005/06/03 22:15:48 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -420,7 +420,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct btinfo_kernelfile *bi_file;
-	char *cp;
+	const char *cp;
 
 
 	switch (node.sysctl_num) {
@@ -445,7 +445,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	if (cp == NULL || cp[0] == '\0')
 		return (ENOENT);
 
-	node.sysctl_data = cp;
+	node.sysctl_data = __UNCONST(cp);
 	node.sysctl_size = strlen(cp) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -1080,7 +1080,7 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	/* Disable interrupts. But still allow IPI on MP systems */
-	if (ncpu > 1)
+	if (ncpus > 1)
 		(void)splsched();
 	else
 		(void)splhigh();
@@ -1469,7 +1469,7 @@ wcopy(vb1, vb2, l)
 {
 	const u_char *b1e, *b1 = vb1;
 	u_char *b2 = vb2;
-	u_short *sp;
+	const u_short *sp;
 	int bstore = 0;
 
 	if (l == 0)
@@ -1482,13 +1482,13 @@ wcopy(vb1, vb2, l)
 	}
 
 	/* middle, */
-	sp = (u_short *)b1;
+	sp = (const u_short *)b1;
 	b1e = b1 + l;
 	if (l & 1)
 		b1e--;
 	bstore = (u_long)b2 & 1;
 
-	while (sp < (u_short *)b1e) {
+	while (sp < (const u_short *)b1e) {
 		if (bstore) {
 			b2[1] = *sp & 0xff;
 			b2[0] = *sp >> 8;
