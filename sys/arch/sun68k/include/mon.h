@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: mon.h,v 1.3 2005/06/03 22:02:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ struct sunromvec {
 	 * Reboot interface routine -- resets and reboots system.  No return.
 	 */
 
-	int	(*reBoot)(char *);	/* e.g. reBoot("xy()vmunix") */
+	int	(*reBoot)(const char *);	/* e.g. reBoot("xy()vmunix") */
 
 	/*
 	 * Line input and parsing
@@ -184,7 +184,7 @@ struct sunromvec {
 	 * Print formatted output to current output sink
 	 */
 
-	int	(*printf)(char *, ...);	/* Like kernel printf */
+	int	(*printf)(const char *, ...);	/* Like kernel printf */
 	int	(*printHex)(int, int);	/* Format N digits in hex */
 
 	/*
