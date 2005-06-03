@@ -1,4 +1,4 @@
-/*	$NetBSD: oftodclock.c,v 1.3 2003/07/15 03:36:02 lukem Exp $	*/
+/*	$NetBSD: oftodclock.c,v 1.4 2005/06/03 13:02:35 scw Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oftodclock.c,v 1.3 2003/07/15 03:36:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oftodclock.c,v 1.4 2005/06/03 13:02:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ resettodr(void)
 {
 	time_t n;
 	int diff, i, j;
-	int sec, min, hr, dom, mon, yr;
+	int sec, minute, hr, dom, mon, yr;
 
 	/* old version of the firmware? */
 	if (ofrtc_ihandle == 0) return;
@@ -266,7 +266,7 @@ resettodr(void)
 	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
 	sec = n % 60;
 	n /= 60;
-	min = n % 60;
+	minute = n % 60;
 	hr  = n / 60;
 
 	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
@@ -285,6 +285,6 @@ resettodr(void)
 	dom = ++n;
 
 	if (OF_call_method("set-time", ofrtc_ihandle, 6, 0,
-	     sec, min, hr, dom, mon, yr))
+	     sec, minute, hr, dom, mon, yr))
 		printf("OFW RTC: set-time failed\n");
 }

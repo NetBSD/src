@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/06/03 13:03:35 scw Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/06/03 13:03:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ void
 delay(n)
 	unsigned n;
 {
-	int tick, otick;
+	int ticks, otick;
 	int nticks;
 
 	if (n < 100) {
@@ -494,12 +494,12 @@ delay(n)
 	}
 
 	while (nticks > 0) {
-		tick = gettick();
-		if (tick > otick)
-			nticks -= TIMER0_ROLLOVER - (tick - otick);
+		ticks = gettick();
+		if (ticks > otick)
+			nticks -= TIMER0_ROLLOVER - (ticks - otick);
 		else
-			nticks -= otick - tick;
-		otick = tick;
+			nticks -= otick - ticks;
+		otick = ticks;
 	}
 
 }
