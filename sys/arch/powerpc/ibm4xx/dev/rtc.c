@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1 2003/10/06 18:15:08 shige Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2 2005/06/03 12:13:43 scw Exp $	*/
 /*	Original:	src/sys/arch/acorn26/ioc/rtc.c	*/
 /*	Original Tag:	rtc.c,v 1.7 2003/09/30 00:35:30 thorpej Exp	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2003/10/06 18:15:08 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2 2005/06/03 12:13:43 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,12 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval todrtime;
 
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	todrtime = time;
+	if (todr_handle != NULL && todr_settime(todr_handle, &todrtime) != 0)
 		printf("resettodr: failed to set time\n");
 }
