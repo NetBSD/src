@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.94 2005/06/03 05:56:25 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2272,6 +2272,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    VarPattern	pattern;
 		    int	how;
 
+		    v_ctxt = ctxt;
+		    sv_name = NULL;
 		    ++tstr;
 		    if (v->flags & VAR_JUNK) {
 			/*
@@ -2280,12 +2282,9 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 */
 			sv_name = v->name;
 			v->name = strdup(v->name);
-			v_ctxt = ctxt;
 		    } else if (ctxt != VAR_GLOBAL) {
 			if (VarFind(v->name, ctxt, 0) == (Var *)NIL)
 			    v_ctxt = VAR_GLOBAL;
-			else
-			    v_ctxt = ctxt;
 		    }
 			
 		    switch ((how = *tstr)) {
@@ -2676,7 +2675,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 				/*
 				 * Found ":ts<unrecognised><unrecognised>".
 				 */
-				break;	/* not us */
+				goto bad_modifier;
 			    }
 
 			    termc = *cp;
@@ -2717,14 +2716,14 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			} else {
 			    /*
 			     * Found ":t<unrecognised><unrecognised>".
-			     * Should this be an error?
 			     */
+			    goto bad_modifier;
 			}
 		    } else {
 			/*
 			 * Found ":t<endc>" or ":t:".
-			 * Should this be an error?
 			 */
+			goto bad_modifier;
 		    }
 		    break;
 		}
@@ -2996,7 +2995,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 		case 'T':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarModify(ctxt, &parsestate, nstr, VarTail,
@@ -3005,7 +3004,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 		case 'H':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarModify(ctxt, &parsestate, nstr, VarHead,
@@ -3014,7 +3013,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 		case 'E':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarModify(ctxt, &parsestate, nstr, VarSuffix,
@@ -3023,7 +3022,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 		case 'R':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarModify(ctxt, &parsestate, nstr, VarRoot,
@@ -3032,7 +3031,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 		case 'O':
 		{
 		    char otype;
@@ -3051,7 +3050,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    }
 		    newStr = VarOrder(nstr, otype);
 		    break;
-		}   /*FALLTHRU*/
+		}
 		case 'u':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarUniq(nstr);
@@ -3059,7 +3058,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 #ifdef SUNSHCMD
 		case 's':
 		    if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
@@ -3071,7 +3070,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			termc = *cp;
 			break;
 		    }
-		    /*FALLTHRU*/
+		    goto default_case;
 #endif
                 default:
 		default_case: 
