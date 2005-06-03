@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.13 2005/06/01 18:29:16 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.14 2005/06/03 13:21:35 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -109,13 +109,16 @@ phase1_preload(void)
 
 	while (!CIRCLEQ_EMPTY(&params_list)) {
 		struct veriexec_up *vup;
+		extern int errno;
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
-		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1)
-			err(1, "Error in phase 1: Can't "
-			    "set hash table size for device %d",
-			    vup->vu_param.dev);
+		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1) {
+			if (errno != EEXIST)
+				err(1, "Error in phase 1: Can't "
+				    "set hash table size for device %d",
+				    vup->vu_param.dev);
+		}
 
 		if (verbose) {
 			printf(" => Hash table sizing successful for device "

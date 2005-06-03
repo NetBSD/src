@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.10 2005/05/22 22:34:01 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.11 2005/06/03 13:21:35 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.10 2005/05/22 22:34:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.11 2005/06/03 13:21:35 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.10 2005/05/22 22:34:01 elad Exp $\n$NetBSD: verified_exec.c,v 1.10 2005/05/22 22:34:01 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.11 2005/06/03 13:21:35 elad Exp $\n$NetBSD: verified_exec.c,v 1.11 2005/06/03 13:21:35 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -170,6 +170,10 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		struct veriexec_sizing_params *params =
 			(struct veriexec_sizing_params *) data;
 		u_char node_name[16];
+
+		/* Check for existing table for device. */
+		if (veriexec_tblfind(params->dev) != NULL)
+			return (EEXIST);
 
 		/* Allocate and initialize a Veriexec hash table. */
 		tbl = malloc(sizeof(struct veriexec_hashtbl), M_TEMP,
