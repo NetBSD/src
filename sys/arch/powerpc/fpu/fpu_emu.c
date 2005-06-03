@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.12 2004/09/15 07:04:21 scw Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.13 2005/06/03 11:55:34 scw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.12 2004/09/15 07:04:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.13 2005/06/03 11:55:34 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -157,7 +157,7 @@ extern vaddr_t opc_disasm(vaddr_t loc, int opcode);
 void
 fpu_dumpfpn(struct fpn *fp)
 {
-	static char *class[] = {
+	static const char *class[] = {
 		"SNAN", "QNAN", "ZERO", "NUM", "INF"
 	};
 
