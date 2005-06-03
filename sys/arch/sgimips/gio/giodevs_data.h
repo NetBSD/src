@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs_data.h,v 1.2 2005/04/17 04:07:11 rumble Exp $	*/
+/*	$NetBSD: giodevs_data.h,v 1.3 2005/06/03 19:04:10 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
 
 struct gio_knowndev {
 	int productid;
-	char *product;
+	const char *product;
 };
 
 struct gio_knowndev gio_knowndevs[] = {
