@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.77 2005/02/27 00:27:52 perry Exp $ */
+/* $NetBSD: wskbd.c,v 1.77.2.1 2005/06/03 15:49:32 riz Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.77 2005/02/27 00:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.77.2.1 2005/06/03 15:49:32 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1291,6 +1291,17 @@ wskbd_cngetc(dev_t dev)
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,
 				 &type, &data);
+			if (type == WSCONS_EVENT_ASCII) {
+				/*
+				 * We assume that when the driver falls back
+				 * to deliver pure ASCII it is in a state that
+				 * it can not track press/release events
+				 * reliable - so we clear all previously
+				 * accuulated modifier state.
+				 */
+				wskbd_console_data.t_modifiers = 0;
+				return(data);
+			}
 			num = wskbd_translate(&wskbd_console_data, type, data);
 			pos = 0;
 		}
