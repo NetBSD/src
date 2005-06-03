@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.12 2005/06/03 12:30:53 tsutsui Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.12 2005/06/03 12:30:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp 
 
 #define WSDISPLAY_TYPE_JAZZVGA	WSDISPLAY_TYPE_PCIVGA	/* XXX not really */
 
-int	vga_jazzio_init_tag(char*, bus_space_tag_t *, bus_space_tag_t *);
+int	vga_jazzio_init_tag(const char *, bus_space_tag_t *, bus_space_tag_t *);
 paddr_t	vga_jazzio_mmap(void *, off_t, int);
 int	vga_jazzio_match(struct device *, struct cfdata *, void *);
 void	vga_jazzio_attach(struct device *, struct device *, void *);
@@ -72,7 +72,8 @@ const struct vga_funcs vga_jazzio_funcs = {
 };
 
 int
-vga_jazzio_init_tag(char *name, bus_space_tag_t *iotp, bus_space_tag_t *memtp)
+vga_jazzio_init_tag(const char *name, bus_space_tag_t *iotp,
+    bus_space_tag_t *memtp)
 {
 	static int initialized = 0;
 	static struct arc_bus_space vga_io, vga_mem;

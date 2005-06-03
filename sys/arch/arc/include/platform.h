@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.6 2005/06/03 12:08:50 tsutsui Exp $	*/
+/*	$NetBSD: platform.h,v 1.7 2005/06/03 12:30:53 tsutsui Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*
@@ -42,7 +42,7 @@ struct platform {
 	const char	*vendor;	/* Vendor Name */
 	int		clock;		/* CPU clock [MHz] */
 
-	char	**mainbusdevs;
+	const char	**mainbusdevs;
 
 	/*
 	 * Platform Specific Function Hooks
@@ -98,7 +98,7 @@ void c_nec_jazz_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *),
     int);
 void c_nec_jazz_init(void);
 
-extern char *c_nec_pci_mainbusdevs[];
+extern const char *c_nec_pci_mainbusdevs[];
 void c_nec_pci_init(void);
 void c_nec_pci_cons_init(void);
 
