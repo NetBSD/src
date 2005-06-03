@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.54 2005/06/03 23:28:40 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.55 2005/06/03 23:42:50 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.54 2005/06/03 23:28:40 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.55 2005/06/03 23:42:50 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -167,13 +167,13 @@ struct user *proc0paddr;
 
 /* Prototypes */
 
-void consinit		__P((void));
+void consinit(void);
 
-int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
-int fcomcndetach __P((void));
+int fcomcnattach(u_int iobase, int rate, tcflag_t cflag);
+int fcomcndetach(void);
 
-static void process_kernel_args	__P((const char *));
-extern void configure		__P((void));
+static void process_kernel_args(const char *);
+extern void configure(void);
 
 /* A load of console goo. */
 #include "vga.h"
@@ -225,9 +225,7 @@ int comcnmode = CONMODE;
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
@@ -348,8 +346,7 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(arm_bootargs)
-	void *arm_bootargs;
+initarm(void *arm_bootargs)
 {
 	struct ebsaboot *bootinfo = arm_bootargs;
 	int loop;
@@ -924,8 +921,7 @@ initarm(arm_bootargs)
 }
 
 static void
-process_kernel_args(loader_args)
-	const char *loader_args;
+process_kernel_args(const char *loader_args)
 {
 	char *args;
 	boothowto = 0;
@@ -956,7 +952,7 @@ process_kernel_args(loader_args)
 
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;
-void footbridge_pci_bs_tag_init __P((void));
+void footbridge_pci_bs_tag_init(void);
 
 void
 consinit(void)
@@ -1003,4 +999,4 @@ consinit(void)
 		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 }
 
-/* End of ebsa285_machdep.c */
+/* End of cats_machdep.c */
