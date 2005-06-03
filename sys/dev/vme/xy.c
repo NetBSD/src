@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.58 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.58 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -152,7 +152,7 @@ extern int pil_to_vme[];	/* from obio.c */
 /* internals */
 struct xy_iopb *xyc_chain(struct xyc_softc *, struct xy_iorq *);
 int	xyc_cmd(struct xyc_softc *, int, int, int, int, int, char *, int);
-char   *xyc_e2str(int);
+const char *xyc_e2str(int);
 int	xyc_entoact(int);
 int	xyc_error(struct xyc_softc *, struct xy_iorq *,
 		   struct xy_iopb *, int);
@@ -2289,7 +2289,7 @@ done:
 /*
  * xyc_e2str: convert error code number into an error string
  */
-char *
+const char *
 xyc_e2str(no)
 	int     no;
 {
