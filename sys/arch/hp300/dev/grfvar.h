@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.18 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.19 2005/06/03 11:38:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -103,7 +103,7 @@ struct	grf_data {
 struct	grfsw {
 	int	gd_hwid;	/* id returned by hardware */
 	int	gd_swid;	/* id to be returned by software */
-	char	*gd_desc;	/* description printed at config time */
+	const char *gd_desc;	/* description printed at config time */
 				/* boot time init routine */
 	int	(*gd_init)(struct grf_data *, int, caddr_t);
 				/* misc function routine */
