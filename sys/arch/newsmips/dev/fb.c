@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.19 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.20 2005/06/03 13:44:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.19 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.20 2005/06/03 13:44:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ struct wsscreen_list fb_screenlist = {
 #define NWB253_CTLREG ((u_short *)0xb8ff0000)
 #define NWB253_CRTREG ((u_short *)0xb8fe0000)
 
-static char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" };	/* XXX ? */
+static const char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" }; /* XXX ? */
 
 int
 fb_match(struct device *parent, struct cfdata *match, void *aux)

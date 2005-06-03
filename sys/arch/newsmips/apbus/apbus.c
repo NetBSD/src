@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.18 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.19 2005/06/03 13:44:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.18 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.19 2005/06/03 13:44:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ apbus_intr_dispatch(int level, int stat)
  */
 void *
 apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
-    void *arg, char *name, int ctlno)
+    void *arg, const char *name, int ctlno)
 {
 	struct newsmips_intr *ip;
 	struct newsmips_intrhand *ih, *curih;
