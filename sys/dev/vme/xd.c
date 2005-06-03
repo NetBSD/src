@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.56 2005/02/04 02:10:49 perry Exp $	*/
+/*	$NetBSD: xd.c,v 1.57 2005/06/03 22:01:01 tsutsui Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.56 2005/02/04 02:10:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.57 2005/06/03 22:01:01 tsutsui Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -213,7 +213,7 @@ extern int pil_to_vme[];	/* from obio.c */
 
 /* internals */
 int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
-char   *xdc_e2str(int);
+const char *xdc_e2str(int);
 int	xdc_error(struct xdc_softc *, struct xd_iorq *,
 		   struct xd_iopb *, int, int);
 int	xdc_ioctlcmd(struct xd_softc *, dev_t dev, struct xd_iocmd *);
@@ -2298,27 +2298,28 @@ xdc_tick(arg)
 	struct xdc_softc *xdcsc = arg;
 	int     lcv, s, reset = 0;
 #ifdef XDC_DIAG
-	int     wait, run, free, done, whd = 0;
+	int     nwait, nrun, nfree, ndone, whd = 0;
 	u_char  fqc[XDC_MAXIOPB], wqc[XDC_MAXIOPB], mark[XDC_MAXIOPB];
 	s = splbio();
-	wait = xdcsc->nwait;
-	run = xdcsc->nrun;
-	free = xdcsc->nfree;
-	done = xdcsc->ndone;
+	nwait = xdcsc->nwait;
+	nrun = xdcsc->nrun;
+	nfree = xdcsc->nfree;
+	ndone = xdcsc->ndone;
 	bcopy(xdcsc->waitq, wqc, sizeof(wqc));
 	bcopy(xdcsc->freereq, fqc, sizeof(fqc));
 	splx(s);
-	if (wait + run + free + done != XDC_MAXIOPB) {
+	if (nwait + nrun + nfree + ndone != XDC_MAXIOPB) {
 		printf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",
-		    xdcsc->sc_dev.dv_xname, wait, free, run, done, XDC_MAXIOPB);
+		    xdcsc->sc_dev.dv_xname, nwait, nfree, nrun, ndone,
+		    XDC_MAXIOPB);
 		bzero(mark, sizeof(mark));
 		printf("FREE: ");
-		for (lcv = free; lcv > 0; lcv--) {
+		for (lcv = nfree; lcv > 0; lcv--) {
 			printf("%d ", fqc[lcv - 1]);
 			mark[fqc[lcv - 1]] = 1;
 		}
 		printf("\nWAIT: ");
-		lcv = wait;
+		lcv = nwait;
 		while (lcv > 0) {
 			printf("%d ", wqc[whd]);
 			mark[wqc[whd]] = 1;
@@ -2336,9 +2337,9 @@ xdc_tick(arg)
 				xdcsc->reqs[lcv].ttl, xdcsc->reqs[lcv].buf);
 		}
 	} else
-		if (done > XDC_MAXIOPB - XDC_SUBWAITLIM)
+		if (ndone > XDC_MAXIOPB - XDC_SUBWAITLIM)
 			printf("%s: diag: lots of done jobs (%d)\n",
-				xdcsc->sc_dev.dv_xname, done);
+				xdcsc->sc_dev.dv_xname, ndone);
 
 #endif
 #ifdef XDC_DEBUG
@@ -2525,7 +2526,7 @@ done:
 /*
  * xdc_e2str: convert error code number into an error string
  */
-char *
+const char *
 xdc_e2str(no)
 	int     no;
 {
