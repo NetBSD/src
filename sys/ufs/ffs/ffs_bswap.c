@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.30 2005/06/02 10:08:36 is Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.31 2005/06/03 01:14:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.30 2005/06/02 10:08:36 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.31 2005/06/03 01:14:07 dbj Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -239,9 +239,6 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 		n->cg_initediblk = bswap32(o->cg_initediblk);
 		n->cg_time = bswap64(o->cg_time);
 
-		if (fs->fs_magic == FS_UFS2_MAGIC)
-			return;
-
 		if (n->cg_magic == CG_MAGIC) {
 			btotoff = n->cg_old_btotoff;
 			boff = n->cg_old_boff;
@@ -251,6 +248,15 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 			boff = bswap32(n->cg_old_boff);
 			clustersumoff = bswap32(n->cg_clustersumoff);
 		}
+
+		n32 = (u_int32_t *)((u_int8_t *)n + clustersumoff);
+		o32 = (u_int32_t *)((u_int8_t *)o + clustersumoff);
+		for (i = 1; i < fs->fs_contigsumsize + 1; i++)
+			n32[i] = bswap32(o32[i]);
+
+		if (fs->fs_magic == FS_UFS2_MAGIC)
+			return;
+
 		n32 = (u_int32_t *)((u_int8_t *)n + btotoff);
 		o32 = (u_int32_t *)((u_int8_t *)o + btotoff);
 		n16 = (u_int16_t *)((u_int8_t *)n + boff);
@@ -261,10 +267,5 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 
 		for (i = 0; i < fs->fs_old_cpg * fs->fs_old_nrpos; i++)
 			n16[i] = bswap16(o16[i]);
-
-		n32 = (u_int32_t *)((u_int8_t *)n + clustersumoff);
-		o32 = (u_int32_t *)((u_int8_t *)o + clustersumoff);
-		for (i = 1; i < fs->fs_contigsumsize + 1; i++)
-			n32[i] = bswap32(o32[i]);
 	}
 }
