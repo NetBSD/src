@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.8 2005/05/25 09:20:33 rearnsha Exp $ */
+/*	$NetBSD: intmmu.S,v 1.9 2005/06/03 15:56:49 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -54,17 +54,13 @@ ASENTRY_NP(integrator_start)
 /*
  * Now read CP15 and check what sort of core we have.  We need to know
  * if it has an MMU.  There's no simple test for this, but the following
- * hack should be sufficient for all currently supported CM boards.
- *  1) Check that the architecture is less than v6 (V6 has feature registers)
- *     (v6 is indictate by '7' in bits 16-19).
- *  2) Check that the product code has a '2' in bits 8-11
+ * hack should be sufficient for all currently supported CM boards:
+ *  - Check that the product code has a '2' or '3' in bits 8-11
  */
 	mrc	p15, 0, r3, c0, c0, 0
-	and	r0, r3, #0x000f0000
-	cmp	r0, #0x00070000
-	bhs	Lno_v6
 	and	r0, r3, #0x00000f00
-	teq	r0, #0x00000200
+	teq	r0, #0x00000200		/* ARM 920, 1020, 1026, etc */
+	teqne	r0, #0x00000300		/* ARM 1136 */
 	bne	Lno_mmu
 
 /*
@@ -134,6 +130,10 @@ Lperiph:
 
 	/* Flush the old TLBs (just in case) */
 	mcr	p15, 0, r1, c8, c7, 0
+	/* And the caches */
+	mov	r0, #0
+	mcr	p15, 0, r1, c7, c6, 0
+
 #ifdef VERBOSE_INIT_ARM
 	mov	r2, #'B'
 	strb	r2, [r6]
@@ -196,16 +196,11 @@ Lwait:
 Lno_cp15:
 	adr	r0, Lcp15msg
 	b	Lmsg
-Lno_v6:
-	adr	r0, Lv6msg
-	b	Lmsg
 Lno_mmu:
 	adr	r0, Lmmumsg
 	b	Lmsg
 
 Lcp15msg:
 	.ascii "Core has no cp15\r\n\0"
-Lv6msg:
-	.ascii "Architecture v6 not yet supported\r\n\0"
 Lmmumsg:
 	.ascii "Core has no MMU\r\n\0"
