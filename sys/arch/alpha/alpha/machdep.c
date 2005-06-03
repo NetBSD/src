@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.285 2005/05/17 04:14:57 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.286 2005/06/03 15:06:40 jdc Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.286 2005/06/03 15:06:40 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1979,7 +1979,7 @@ cpu_setmcontext(l, mcp, flags)
 		    (gr[_REG_PS] & ALPHA_PSL_USERCLR) != 0)
 			return (EINVAL);
 
-		regtoframe((struct reg *)gr, l->l_md.md_tf);
+		regtoframe((const struct reg *)gr, l->l_md.md_tf);
 		if (l == curlwp)
 			alpha_pal_wrusp(gr[_REG_SP]);
 		else
