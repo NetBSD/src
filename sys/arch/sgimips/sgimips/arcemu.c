@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.10 2005/04/18 15:46:18 tsutsui Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.11 2005/06/03 18:58:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.10 2005/04/18 15:46:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.11 2005/06/03 18:58:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,6 @@ static struct consdev arcemu_ip12_cn = {
  * Emulate various ARCBIOS functions on pre-ARCS sgimips
  * machines (<= IP17).
  */
-
 static struct arcbios_fv arcemu_v = {
 	.Load =				ARCEMU_UNIMPL,
 	.Invoke =			ARCEMU_UNIMPL,
@@ -283,8 +282,8 @@ arcemu_ip12_GetChild(void *node)
 	return (NULL);
 }
 
-static char *
-arcemu_ip12_GetEnvironmentVariable(char *var)
+static const char *
+arcemu_ip12_GetEnvironmentVariable(const char *var)
 {
 
 	/* 'd'ebug (serial), 'g'raphics, 'G'raphics w/ logo */

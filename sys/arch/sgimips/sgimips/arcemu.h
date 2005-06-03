@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.4 2005/04/07 23:36:48 rumble Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.5 2005/06/03 18:58:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -50,7 +50,7 @@ static int	arcemu_identify(void);
 static void	arcemu_ip12_init(void);
 static void *	arcemu_ip12_GetPeer(void *);
 static void *	arcemu_ip12_GetChild(void *);
-static char *	arcemu_ip12_GetEnvironmentVariable(char *); 
+static const char *	arcemu_ip12_GetEnvironmentVariable(const char *); 
 static void *	arcemu_ip12_GetMemoryDescriptor(void *mem);
 
 static void	arcemu_ip12_eeprom_read(void);
