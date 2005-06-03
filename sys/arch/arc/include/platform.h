@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.5 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: platform.h,v 1.6 2005/06/03 12:08:50 tsutsui Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*
@@ -83,7 +83,7 @@ extern struct platform platform_sni_rm200pci;
 void c_isa_init(void);
 void c_isa_cons_init(void);
 
-extern char *c_jazz_eisa_mainbusdevs[];
+extern const char *c_jazz_eisa_mainbusdevs[];
 void c_jazz_eisa_init(void);
 void c_jazz_eisa_cons_init(void);
 
