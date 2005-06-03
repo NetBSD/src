@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.111 2005/06/02 20:45:41 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.112 2005/06/03 15:51:30 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9058,4 +9058,33 @@ dist/file/src/apprentice.c			1.8
 	PR/29682: /usr/bin/file does not seem to understand some fields
 	of an ELF binary.
 	[christos, ticket #386]
+
+sys/dev/rasops/rasops.c				1.47-1.48
+
+	Make rasops_allocattr_color() respect WS_DEFAULT_FG and
+	WS_DEFAULT_BG instead of using white on black.
+	[martin, ticket #366]
+
+sys/arch/sparc64/conf/GENERIC32			1.100
+
+	Use wscons/wskbd/wsmouse/wsdisplay by default.
+	[martin, ticket #367]
+
+sys/arch/sparc64/conf/GENERIC32			1.101
+
+	Add all missing USB stuff (from i386 GENERIC).
+	[martin, ticket #368]
+
+sys/arch/sparc64/conf/GENERIC32			1.102
+
+	Add wsmux and wsfont pseudo devices.
+	[martin, ticket #369]
+
+sys/dev/wscons/wsconsio.h			1.74
+sys/dev/wscons/wskbd.c				1.78
+
+	Make it possible for a console driver to deliver raw ASCII characters
+	to wskbd. This is for special cases only, and may even be considered a
+	hack, but it is cheap and very local.
+	[martin, ticket #370]
 
