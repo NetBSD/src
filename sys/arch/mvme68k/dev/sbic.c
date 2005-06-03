@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.25 2003/11/01 20:04:57 scw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.26 2005/06/03 08:49:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.25 2003/11/01 20:04:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.26 2005/06/03 08:49:03 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -140,7 +140,7 @@ int     sbictoscsiperiod    __P((struct sbic_softc *, int));
 int     sbicpoll            __P((struct sbic_softc *));
 int     sbicnextstate       __P((struct sbic_softc *, u_char, u_char));
 int     sbicmsgin           __P((struct sbic_softc *));
-int     sbicabort           __P((struct sbic_softc *, char *));
+int     sbicabort           __P((struct sbic_softc *, const char *));
 void    sbicxfdone          __P((struct sbic_softc *));
 void    sbicerror           __P((struct sbic_softc *,u_char));
 void    sbicreset           __P((struct sbic_softc *));
@@ -754,7 +754,7 @@ sbicwait(regs, until, timeo, line)
 int
 sbicabort(dev, where)
     struct sbic_softc   *dev;
-    char                *where;
+    const char          *where;
 {
     sbic_regmap_p   regs = dev->sc_sbicp;
     u_char          csr,
