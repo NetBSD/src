@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2003/07/15 01:37:35 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2005/06/03 11:17:42 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2003/07/15 01:37:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/06/03 11:17:42 scw Exp $");
 
 #include "opt_ppcparam.h"
 
@@ -221,7 +221,7 @@ decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
 	u_quad_t tb;
-	long tick;
+	long decrtick;
 	int nticks;
 	int oipl;
 #ifdef DEBUG
@@ -250,16 +250,16 @@ decr_intr(struct clockframe *frame)
 	 * we arrange for earlier interrupt next time.
 	 */
 	tb = mftb();
-	__asm __volatile ("mfdec %0" : "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	__asm __volatile ("mtdec %0" :: "r"(tick));
+	__asm __volatile ("mfdec %0" : "=r"(decrtick));
+	for (nticks = 0; decrtick < 0; nticks++)
+		decrtick += ticks_per_intr;
+	__asm __volatile ("mtdec %0" :: "r"(decrtick));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	ci->ci_lasttb = tb + (tick - ticks_per_intr);
+	ci->ci_lasttb = tb + (decrtick - ticks_per_intr);
 
 	uvmexp.intrs++;
 	curcpu()->ci_ev_clock.ev_count++;
