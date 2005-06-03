@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.16 2005/06/02 17:01:43 matt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.17 2005/06/03 13:30:10 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.16 2005/06/02 17:01:43 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.17 2005/06/03 13:30:10 he Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -226,7 +226,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct vnode *vp, struct ucred *cred)
 #endif
 
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t) psections[i].p_vaddr, psections[i].p_filesz,
+		    (caddr_t)((intptr_t) psections[i].p_vaddr),
+		    psections[i].p_filesz,
 		    psections[i].p_offset, UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
