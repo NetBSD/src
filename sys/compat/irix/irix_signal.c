@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.32 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.33 2005/06/03 18:53:50 martin Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.32 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33 2005/06/03 18:53:50 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -927,7 +927,7 @@ irix_sys_sigprocmask(l, v, retval)
 {
 	struct irix_sys_sigprocmask_args /* {
 		syscallarg(int) how;
-		syscallarg(irix_sigset_t *) set;
+		syscallarg(const irix_sigset_t *) set;
 		syscallarg(irix_sigset_t *) oset;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -938,7 +938,7 @@ irix_sys_sigprocmask(l, v, retval)
 	caddr_t sg;
 
 	SCARG(&cup, how) = SCARG(uap, how);
-	SCARG(&cup, set) = (svr4_sigset_t *)SCARG(uap, set);
+	SCARG(&cup, set) = (const svr4_sigset_t *)SCARG(uap, set);
 	SCARG(&cup, oset) = (svr4_sigset_t *)SCARG(uap, oset);
 
 	if (SCARG(uap, how) == IRIX_SIG_SETMASK32) {
@@ -952,7 +952,7 @@ irix_sys_sigprocmask(l, v, retval)
 		/* preserve the higher 32 bits */
 		niss.bits[3] = oiss.bits[3];
 
-		if ((error = copyout(&niss, (void *)SCARG(&cup, set),
+		if ((error = copyout(&niss, SCARG(&cup, oset),
 		    sizeof(niss))) != 0)
 			return error;
 
