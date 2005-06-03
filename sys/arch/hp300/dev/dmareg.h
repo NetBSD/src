@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.13 2003/08/07 16:27:28 agc Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.14 2005/06/03 11:51:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -72,6 +72,8 @@ struct	dmareg {
 
 /* addresses */
 #define	DMA_BASE	IIOV(0x500000)
+
+#define	DMA_ID2		offsetof(struct dmareg, dma_id[2])
 
 /* command bits */
 #define	DMA_ENAB	0x0001
