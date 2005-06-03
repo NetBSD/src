@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2004/06/29 12:01:11 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/06/03 10:57:17 scw Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/06/29 12:01:11 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/06/03 10:57:17 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,7 +62,7 @@ decr_intr(frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long decrtick;
 	int nticks;
 	extern long intrcnt[];
 
@@ -76,16 +76,16 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(decrtick));
+	for (nticks = 0; decrtick < 0; nticks++)
+		decrtick += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(decrtick));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + decrtick - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 
@@ -196,6 +196,7 @@ inittodr(base)
         time_t base;
 {
         int badbase = 0, waszero = (base == 0);
+	struct timeval the_time;
 
 	if (clock_handle == NULL)
 		panic("todr not configured");
@@ -212,25 +213,28 @@ inittodr(base)
                 badbase = 1;
         }
 
-        if (todr_gettime(clock_handle, (struct timeval *)&time) != 0 ||
-            time.tv_sec == 0) {
+        if (todr_gettime(clock_handle, &the_time) != 0 ||
+            the_time.tv_sec == 0) {
                 printf("WARNING: bad date in battery clock");
                 /*
                  * Believe the time in the file system for lack of
                  * anything better, resetting the clock.
                  */
                 time.tv_sec = base;
+                time.tv_usec = 0;
                 if (!badbase)
                         resettodr();
         } else {
-                int deltat = time.tv_sec - base;
+                int deltat = the_time.tv_sec - base;
 
                 if (deltat < 0)
                         deltat = -deltat;
                 if (waszero || deltat < 2 * SECDAY)
                         return;
                 printf("WARNING: clock %s %d days",
-                    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+                    (the_time.tv_sec < base) ? "lost" : "gained",
+                    deltat / SECDAY);
+		time = the_time;
         }
         printf(" -- CHECK AND RESET THE DATE!\n");
 }
@@ -245,10 +249,13 @@ inittodr(base)
 void
 resettodr()
 {
+	struct timeval the_time;
 
         if (!time.tv_sec)
                 return;
 
-        if (todr_settime(clock_handle, (struct timeval *)&time) != 0)
+	the_time = time;
+
+        if (todr_settime(clock_handle, &the_time) != 0)
                 printf("resettodr: failed to set time\n");
 }
