@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 2005/01/22 11:08:18 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 2005/06/03 12:31:38 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20 2005/01/22 11:08:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.21 2005/06/03 12:31:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,16 +215,16 @@ struct dkdriver fddkdriver = { fdstrategy };
 #if 0
 const struct fd_type *fd_nvtotype(char *, int, int);
 #endif
-void fd_set_motor(struct fdc_softc *fdc, int reset);
-void fd_motor_off(void *arg);
-void fd_motor_on(void *arg);
-int fdcresult(struct fdc_softc *fdc);
-void fdcstart(struct fdc_softc *fdc);
-void fdcstatus(struct device *dv, int n, char *s);
-void fdctimeout(void *arg);
-void fdcpseudointr(void *arg);
-void fdcretry(struct fdc_softc *fdc);
-void fdfinish(struct fd_softc *fd, struct buf *bp);
+void fd_set_motor(struct fdc_softc *, int);
+void fd_motor_off(void *);
+void fd_motor_on(void *);
+int fdcresult(struct fdc_softc *);
+void fdcstart(struct fdc_softc *);
+void fdcstatus(struct device *, int, const char *);
+void fdctimeout(void *);
+void fdcpseudointr(void *);
+void fdcretry(struct fdc_softc *);
+void fdfinish(struct fd_softc *, struct buf *);
 __inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 void fd_mountroot_hook(struct device *);
 
@@ -682,7 +682,7 @@ fdcstart(struct fdc_softc *fdc)
 }
 
 void
-fdcstatus(struct device *dv, int n, char *s)
+fdcstatus(struct device *dv, int n, const char *s)
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
