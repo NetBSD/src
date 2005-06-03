@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.8 2005/04/18 15:38:01 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.9 2005/06/03 18:58:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -444,12 +444,12 @@ struct arcbios_fv {
 			    char *,		/* path */
 			    u_long);		/* operation */
 
-	char		*(*GetEnvironmentVariable)(
-			    char *);		/* variable */
+	const char	*(*GetEnvironmentVariable)(
+			    const char *);	/* variable */
 
 	long		(*SetEnvironmentVariable)(
-			    char *,		/* variable */
-			    char *);		/* contents */
+			    const char *,	/* variable */
+			    const char *);	/* contents */
 
 	long		(*GetFileInformation)(
 			    u_long,		/* file ID */
