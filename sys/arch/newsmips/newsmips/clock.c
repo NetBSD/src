@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.11 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.12 2005/06/03 13:45:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/06/03 13:45:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,6 +102,7 @@ setstatclockrate(int newhz)
 void
 inittodr(time_t base)
 {
+	struct timeval tv;
 	int badbase, waszero;
 
 	badbase = 0;
@@ -120,8 +121,8 @@ inittodr(time_t base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	if (todr_gettime(todr_handle, &tv) != 0 ||
+	    tv.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -131,7 +132,10 @@ inittodr(time_t base)
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = time.tv_sec - base;
+		int deltat;
+
+		time = tv;
+		deltat = time.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
@@ -152,10 +156,12 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval tv;
 
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	tv = time;
+	if (todr_settime(todr_handle, &tv) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }
