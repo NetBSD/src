@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10 2005/06/03 12:11:17 tsutsui Exp $	*/
 /*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
@@ -67,7 +67,7 @@ struct abus {
 	    (*(ca)->ca_bus->ab_matchname)((ca), (name))
 
 struct confargs {
-	char	*ca_name;		/* Device name. */
+	const char *ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot. */
 	int	ca_offset;		/* Offset into slot. */
 	struct	abus *ca_bus;		/* bus device resides on. */
