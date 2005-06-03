@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.1 2005/01/31 18:17:35 jkunz Exp $ */
+/* $NetBSD: power.c,v 1.2 2005/06/03 15:21:35 chs Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.1 2005/01/31 18:17:35 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.2 2005/06/03 15:21:35 chs Exp $");
 
 
 /*
@@ -95,8 +95,8 @@ static bus_space_tag_t pwr_sw_reg_bst;
 static bus_space_handle_t pwr_sw_reg_bsh;
 int pwr_sw_state;
 static int pwr_sw_control;
-static char *pwr_sw_state_str[] = {"off", "on"};
-static char *pwr_sw_control_str[] = {"disabled", "enabled", "locked"};
+static const char *pwr_sw_state_str[] = {"off", "on"};
+static const char *pwr_sw_control_str[] = {"disabled", "enabled", "locked"};
 static int pwr_sw_poll_interval; 
 static int pwr_sw_count;
 static struct sysmon_pswitch *pwr_sw_sysmon;
@@ -287,7 +287,7 @@ pwr_sw_sysctl_state(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = pwr_sw_state_str[pwr_sw_state];
+	node.sysctl_data = __UNCONST(pwr_sw_state_str[pwr_sw_state]);
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
