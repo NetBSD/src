@@ -1,4 +1,4 @@
-.\" $NetBSD: wprintf.3,v 1.1 2005/05/14 23:51:02 christos Exp $
+.\" $NetBSD: wprintf.3,v 1.2 2005/06/03 20:32:20 wiz Exp $
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -593,9 +593,6 @@ In no case does a non-existent or small field width cause truncation of
 a numeric field; if the result of a conversion is wider than the field
 width, the
 field is expanded to contain the conversion result.
-.Sh SECURITY CONSIDERATIONS
-Refer to
-.Xr printf 3 .
 .Sh SEE ALSO
 .Xr btowc 3 ,
 .Xr fputws 3 ,
@@ -606,6 +603,9 @@ Refer to
 .Xr wscanf 3
 .Sh STANDARDS
 Subject to the caveats noted in the
+.Sh SECURITY CONSIDERATIONS
+Refer to
+.Xr printf 3 .
 .Sx BUGS
 section
 of
