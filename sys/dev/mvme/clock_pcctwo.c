@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.7 2005/04/14 12:36:38 scw Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.8 2005/06/03 08:42:54 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.7 2005/04/14 12:36:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.8 2005/06/03 08:42:54 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -138,10 +138,10 @@ clock_pcctwo_attach(parent, self, aux)
 }
 
 void
-clock_pcctwo_initclocks(arg, proftick, stattick)
+clock_pcctwo_initclocks(arg, prof_us, stat_us)
 	void *arg;
-	int proftick;
-	int stattick;
+	int prof_us;
+	int stat_us;
 {
 	struct clock_pcctwo_softc *sc;
 
@@ -150,7 +150,7 @@ clock_pcctwo_initclocks(arg, proftick, stattick)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER1_COUNTER, 0);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER1_COMPARE,
-	    PCCTWO_US2LIM(proftick));
+	    PCCTWO_US2LIM(prof_us));
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL,
 	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC | PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR, sc->sc_clock_lvl);
@@ -158,7 +158,7 @@ clock_pcctwo_initclocks(arg, proftick, stattick)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COUNTER, 0);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COMPARE,
-	    PCCTWO_US2LIM(stattick));
+	    PCCTWO_US2LIM(stat_us));
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL,
 	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC | PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, sc->sc_clock_lvl);
