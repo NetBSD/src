@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.88 2004/04/14 22:06:33 dbj Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.89 2005/06/03 01:10:50 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.88 2004/04/14 22:06:33 dbj Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.89 2005/06/03 01:10:50 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1239,7 +1239,7 @@ iput(union dinode *ip, ino_t ino)
 		if (needswap) {
 			ffs_dinode2_swap(&ip->dp2, dp2);
 			for (i=0; i<NDADDR + NIADDR; i++)
-			    dp2->di_db[i] = bswap32(ip->dp2.di_db[i]);
+			    dp2->di_db[i] = bswap64(ip->dp2.di_db[i]);
 		} else
 			*dp2 = ip->dp2;
 		dp2->di_gen = arc4random() & INT32_MAX;
