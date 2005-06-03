@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.28 2004/11/07 04:08:37 david Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.29 2005/06/03 23:05:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.28 2004/11/07 04:08:37 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.29 2005/06/03 23:05:46 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -123,8 +123,7 @@ hpux_termio(fd, com, data, l)
 	struct hpux_termios htios;
 	int line, error;
 	int newi = 0;
-	int (*ioctlrout) __P((struct file *fp, u_long com,
-	    void *data, struct proc *p));
+	int (*ioctlrout)(struct file *, u_long, void *, struct proc *);
 
         if ((fp = fd_getfile(fdp, fd)) == NULL)
                 return EBADF;
