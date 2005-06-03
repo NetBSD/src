@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.114 2005/06/03 11:15:44 rjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2005/06/03 11:15:44 rjs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,7 +125,7 @@ extern struct emul emul_sunos;
 
 int	astpending;
 
-char	*trap_type[] = {
+const char	*trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",
