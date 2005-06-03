@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.10 2005/01/22 07:56:28 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.11 2005/06/03 12:08:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.10 2005/01/22 07:56:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.11 2005/06/03 12:08:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.10 2005/01/22 07:56:28 tsutsui Exp
 #include <dev/ic/comvar.h>
 #endif
 
-char *c_jazz_eisa_mainbusdevs[] = {
+const char *c_jazz_eisa_mainbusdevs[] = {
 	"jazzio",
 	"jazzisabr",
 	NULL,
