@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.53 2005/06/03 23:19:48 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.54 2005/06/03 23:28:40 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.53 2005/06/03 23:19:48 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.54 2005/06/03 23:28:40 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -133,11 +133,6 @@ vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
-
-/*int debug_flags;*/
-#ifndef PMAP_STATIC_L1S
-int max_processes = 64;			/* Default number */
-#endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
