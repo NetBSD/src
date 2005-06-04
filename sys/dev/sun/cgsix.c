@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.24 2005/05/22 03:45:08 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.25 2005/06/04 04:41:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.24 2005/05/22 03:45:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.25 2005/06/04 04:41:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,7 +613,7 @@ cg6_ras_do_cursor(struct rasops_info *ri)
 #endif	/* (NWSDISPLAY > 0) || defined(RASTERCONSOLE) */
 
 void
-cg6attach(struct cgsix_softc *sc, char *name, int isconsole)
+cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 {
 	struct fbdevice *fb = &sc->sc_fb;
 #if NWSDISPLAY > 0

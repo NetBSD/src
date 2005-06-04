@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.5 2005/05/16 14:29:11 macallan Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.6 2005/06/04 04:41:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,4 +109,4 @@ extern int cgsix_use_rasterconsole;
 #define cgsix_use_rasterconsole 0
 #endif
 
-void	cg6attach(struct cgsix_softc *, char *, int);
+void	cg6attach(struct cgsix_softc *, const char *, int);

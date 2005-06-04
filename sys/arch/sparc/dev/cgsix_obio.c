@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.15 2005/06/04 04:39:34 tsutsui Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.16 2005/06/04 04:41:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.15 2005/06/04 04:39:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.16 2005/06/04 04:41:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ cgsixattach(parent, self, aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int constype, isconsole;
-	char *name;
+	const char *name;
 
 	oba = &uoba->uoba_oba4;
 

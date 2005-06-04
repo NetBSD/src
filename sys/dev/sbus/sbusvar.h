@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.22 2005/02/27 00:27:48 perry Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.23 2005/06/04 04:40:57 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct sbus_attach_args {
 };
 
 /* sbus_attach_internal() is also used from obio.c */
-void	sbus_attach_common(struct sbus_softc *, char *, int,
+void	sbus_attach_common(struct sbus_softc *, const char *, int,
 				const char * const *);
 int	sbus_print(void *, const char *);
 
