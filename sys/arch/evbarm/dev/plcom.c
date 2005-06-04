@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.9 2003/08/07 16:27:20 agc Exp $	*/
+/*	$NetBSD: plcom.c,v 1.10 2005/06/04 13:38:08 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.9 2003/08/07 16:27:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10 2005/06/04 13:38:08 rearnsha Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1815,7 +1815,7 @@ plcomintr(void *arg)
 					bus_space_write_1(iot, ioh, plcom_ecr,
 					    0);
 				if (ISSET(rsr, RSR_BE)) {
-					int cn_trapped = 0;
+					cn_trapped = 0;
 					cn_check_magic(sc->sc_tty->t_dev,
 					    CNC_BREAK, plcom_cnm_state);
 					if (cn_trapped)
@@ -1830,6 +1830,7 @@ plcomintr(void *arg)
 				}
 
 				put[1] = rsr;
+				cn_trapped = 0;
 				cn_check_magic(sc->sc_tty->t_dev,
 					       put[0], plcom_cnm_state);
 				if (cn_trapped) {
