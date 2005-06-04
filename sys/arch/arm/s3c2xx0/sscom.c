@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.11 2003/08/07 16:26:54 agc Exp $ */
+/*	$NetBSD: sscom.c,v 1.12 2005/06/04 21:22:12 he Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.11 2003/08/07 16:26:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12 2005/06/04 21:22:12 he Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -330,13 +330,13 @@ sscomspeed(long speed, long frequency)
 #undef	divrnd
 }
 
-void sscomstatus (struct sscom_softc *, char *);
+void sscomstatus (struct sscom_softc *, const char *);
 
 #ifdef SSCOM_DEBUG
 int	sscom_debug = 0;
 
 void
-sscomstatus(struct sscom_softc *sc, char *str)
+sscomstatus(struct sscom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 	int umstat = bus_space_read_1(sc->sc_iot, sc->sc_iot, SSCOM_UMSTAT);
@@ -1593,10 +1593,10 @@ sscomrxintr(void *arg)
 				put[0] = sscom_getc(iot, ioh);
 
 				if (ISSET(uerstat, UERSTAT_BREAK)) {
-					int cn_trapped = 0;
+					int con_trapped = 0;
 					cn_check_magic(sc->sc_tty->t_dev,
 					    CNC_BREAK, sscom_cnm_state);
-					if (cn_trapped)
+					if (con_trapped)
 						continue;
 #if defined(KGDB)
 					if (ISSET(sc->sc_hwflags,
