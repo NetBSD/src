@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.113 2005/06/04 15:55:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.114 2005/06/04 20:51:59 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9094,4 +9094,9 @@ sys/dev/wscons/wsdisplayvar.h			1.31
 	specific defined as grey (which can't be fixed w/o breaking user
 	config files). Fixes PR kern/30064.
 	[martin, ticket #371]
+
+lib/libc/string/wcschr.c			1.4
+
+	Only advance 'p' once each time around the loop....
+	[dsl, ticket #422]
 
