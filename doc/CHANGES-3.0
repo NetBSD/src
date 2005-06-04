@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.112 2005/06/03 15:51:30 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.113 2005/06/04 15:55:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9087,4 +9087,11 @@ sys/dev/wscons/wskbd.c				1.78
 	to wskbd. This is for special cases only, and may even be considered a
 	hack, but it is cheap and very local.
 	[martin, ticket #370]
+
+sys/dev/wscons/wsdisplayvar.h			1.31
+
+	Define a real white color - since WSCOL_WHITE is ANSI-emulation
+	specific defined as grey (which can't be fixed w/o breaking user
+	config files). Fixes PR kern/30064.
+	[martin, ticket #371]
 
