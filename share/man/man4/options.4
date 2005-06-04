@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.274 2005/05/04 02:39:19 augustss Exp $
+.\"	$NetBSD: options.4,v 1.275 2005/06/04 06:52:35 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 4, 2005
+.Dd Jun 4, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -990,9 +990,10 @@ for details.
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
 .El
-.Ss Miscellaneous Options
+.Ss Buffer queue strategy options
 .Bl -ohang
-.It Cd options NEW_BUFQ_STRATEGY
+Following options enable alternative buffer queue strategies.
+.It Cd options BUFQ_READPRIO
 Enable experimental buffer queue strategy for disk I/O.
 In the default strategy, outstanding disk requests are ordered by
 sector number and sent to the disk, regardless of whether the
@@ -1026,6 +1027,15 @@ Such systems are likely to see the most benefit from this option.
 Finally, the performance interaction of this option with ffs soft
 dependencies can be subtle, as that mechanism can drastically alter
 the workload for filesystem metadata writes.
+.It Cd options BUFQ_PRIOCSCAN
+Enable another experimental buffer queue strategy for disk I/O,
+Per-priority Cyclical scan.
+.It Cd options NEW_BUFQ_STRATEGY
+Synonym of
+.Em BUFQ_READPRIO .
+.El
+.Ss Miscellaneous Options
+.Bl -ohang
 .It Cd options LKM
 Enable loadable kernel modules.
 See
