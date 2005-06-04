@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.16 2004/12/29 21:33:42 bjh21 Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.16 2004/12/29 21:33:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.16 2004/12/29 21:33:42 bjh21 Exp $");
 #include <dev/ic/mk48txxreg.h>
 #include <dev/ic/mk48txxvar.h>
 
-int mk48txx_gettime(todr_chip_handle_t, struct timeval *);
-int mk48txx_settime(todr_chip_handle_t, struct timeval *);
+int mk48txx_gettime(todr_chip_handle_t, volatile struct timeval *);
+int mk48txx_settime(todr_chip_handle_t, volatile struct timeval *);
 int mk48txx_getcal(todr_chip_handle_t, int *);
 int mk48txx_setcal(todr_chip_handle_t, int);
 u_int8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
@@ -113,7 +113,7 @@ mk48txx_attach(sc)
 int
 mk48txx_gettime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;
@@ -170,7 +170,7 @@ mk48txx_gettime(handle, tv)
 int
 mk48txx_settime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;

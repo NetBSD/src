@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.6 2005/02/26 12:00:52 simonb Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.7 2005/06/04 20:14:24 he Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.6 2005/02/26 12:00:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.7 2005/06/04 20:14:24 he Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -322,7 +322,7 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
@@ -368,7 +368,7 @@ resettodr(void)
 		return;
 
 	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
 

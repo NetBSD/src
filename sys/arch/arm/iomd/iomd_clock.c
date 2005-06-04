@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.14 2005/06/04 00:47:18 chris Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.15 2005/06/04 20:14:24 he Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -175,7 +175,7 @@ statclockhandler(cookie)
 
 
 /*
- * void setstatclockrate(int hz)
+ * void setstatclockrate(int newhz)
  *
  * Set the stat clock rate. The stat clock uses timer1
  */
@@ -387,7 +387,6 @@ inittodr(time_t base)
 {
 	time_t deltat;
 	int badbase;
-	struct timeval thetime;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -398,8 +397,8 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &thetime) != 0 ||
-	    thetime.tv_sec == 0) {
+	    todr_gettime(todr_handle, &time) != 0 ||
+	    time.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -418,16 +417,14 @@ inittodr(time_t base)
 		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
-		deltat = thetime.tv_sec - base;
+		deltat = time.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;		/* all is well */
 		printf("WARNING: clock %s %ld days\n",
-		    thetime.tv_sec < base ? "lost" : "gained",
+		    time.tv_sec < base ? "lost" : "gained",
 		    (long)deltat / SECDAY);
-
-		time = thetime;
 	}
  bad:
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
@@ -441,15 +438,12 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
-	struct timeval thetime;
 
 	if (time.tv_sec == 0)
 		return;
 
-	thetime = time;
-
 	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &thetime) != 0)
+	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
 

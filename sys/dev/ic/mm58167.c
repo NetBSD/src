@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.5 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.6 2005/06/04 20:14:25 he Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.5 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.6 2005/06/04 20:14:25 he Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.5 2005/02/27 00:27:02 perry Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 
-int mm58167_gettime(todr_chip_handle_t, struct timeval *);
-int mm58167_settime(todr_chip_handle_t, struct timeval *);
+int mm58167_gettime(todr_chip_handle_t, volatile struct timeval *);
+int mm58167_settime(todr_chip_handle_t, volatile struct timeval *);
 int mm58167_getcal(todr_chip_handle_t, int *);
 int mm58167_setcal(todr_chip_handle_t, int);
 
@@ -91,7 +91,7 @@ mm58167_attach(sc)
 int
 mm58167_gettime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct mm58167_softc *sc = handle->cookie;
 	struct clock_ymdhms dt_hardware;
@@ -236,7 +236,7 @@ mm58167_gettime(handle, tv)
 int
 mm58167_settime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct mm58167_softc *sc = handle->cookie;
 	struct clock_ymdhms dt_hardware;

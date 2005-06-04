@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.9 2003/10/25 15:05:00 simonb Exp $ */
+/* $NetBSD: rtc.c,v 1.10 2005/06/04 20:14:24 he Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9 2003/10/25 15:05:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.10 2005/06/04 20:14:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -385,7 +385,7 @@ rtc_resettodr(void *cookie)
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(&sc->sc_ct, (struct timeval *)&time) != 0)
+	if (todr_settime(&sc->sc_ct, &time) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: max6900.c,v 1.2 2005/06/04 20:14:25 he Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,8 +76,8 @@ const struct cdevsw maxrtc_cdevsw = {
 
 static int maxrtc_clock_read(struct maxrtc_softc *, struct clock_ymdhms *);
 static int maxrtc_clock_write(struct maxrtc_softc *, struct clock_ymdhms *);
-static int maxrtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int maxrtc_settime(struct todr_chip_handle *, struct timeval *);
+static int maxrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int maxrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int maxrtc_getcal(struct todr_chip_handle *, int *);
 static int maxrtc_setcal(struct todr_chip_handle *, int);
 
@@ -250,7 +250,7 @@ maxrtc_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-maxrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+maxrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct maxrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -265,7 +265,7 @@ maxrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 }
 
 static int
-maxrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+maxrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct maxrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
