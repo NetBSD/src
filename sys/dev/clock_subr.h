@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.11 2005/02/04 02:10:35 perry Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.12 2005/06/04 20:14:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,8 +85,10 @@ struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
 	void	*bus_cookie;	/* Bus specific data */
 
-	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
-	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
+	int	(*todr_gettime)(struct todr_chip_handle *,
+				volatile struct timeval *);
+	int	(*todr_settime)(struct todr_chip_handle *,
+				volatile struct timeval *);
 	int	(*todr_getcal)(struct todr_chip_handle *, int *);
 	int	(*todr_setcal)(struct todr_chip_handle *, int);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);
