@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.13 2005/02/26 12:00:52 simonb Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.14 2005/06/04 00:47:18 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -181,14 +181,13 @@ statclockhandler(cookie)
  */
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int newhz)
 {
 	int count;
     
-	count = TIMER_FREQUENCY / hz;
+	count = TIMER_FREQUENCY / newhz;
 
-	printf("Setting statclock to %dHz (%d ticks)\n", hz, count);
+	printf("Setting statclock to %dHz (%d ticks)\n", newhz, count);
 
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T1LOW, (count >> 0) & 0xff);
@@ -388,6 +387,7 @@ inittodr(time_t base)
 {
 	time_t deltat;
 	int badbase;
+	struct timeval thetime;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -398,8 +398,8 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	    todr_gettime(todr_handle, &thetime) != 0 ||
+	    thetime.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -418,14 +418,16 @@ inittodr(time_t base)
 		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
-		deltat = time.tv_sec - base;
+		deltat = thetime.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;		/* all is well */
 		printf("WARNING: clock %s %ld days\n",
-		    time.tv_sec < base ? "lost" : "gained",
+		    thetime.tv_sec < base ? "lost" : "gained",
 		    (long)deltat / SECDAY);
+
+		time = thetime;
 	}
  bad:
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
@@ -439,12 +441,15 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval thetime;
 
 	if (time.tv_sec == 0)
 		return;
 
+	thetime = time;
+
 	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	    todr_settime(todr_handle, &thetime) != 0)
 		printf("resettodr: failed to set time\n");
 }
 
