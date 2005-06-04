@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.14 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.15 2005/06/04 04:37:21 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.14 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.15 2005/06/04 04:37:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ cgthreeattach_sbus(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	int node = sa->sa_node;
 	int isconsole;
-	char *name;
+	const char *name;
 	bus_space_handle_t bh;
 
 	/* Remember cookies for cgthree_mmap() */
