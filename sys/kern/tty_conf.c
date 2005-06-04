@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.45 2005/04/10 14:28:11 itohy Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.46 2005/06/04 22:45:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.45 2005/04/10 14:28:11 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.46 2005/06/04 22:45:12 uwe Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -242,7 +242,7 @@ ttyldisc_add(disc, no)
  */
 struct linesw *
 ttyldisc_remove(name)
-	char *name;
+	const char *name;
 {
 	struct linesw *disc;
 	int i;
@@ -272,7 +272,7 @@ ttyldisc_remove(name)
  */
 struct linesw *
 ttyldisc_lookup(name)
-	char *name;
+	const char *name;
 {
 	int i;
 
