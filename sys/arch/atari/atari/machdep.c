@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2005/04/25 15:02:03 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/04/25 15:02:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2005/06/04 14:42:36 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -332,7 +332,7 @@ char cpu_model[120];
 static void
 identifycpu()
 {
-       char	*mach, *mmu, *fpu, *cpu;
+       const char *mach, *mmu, *fpu, *cpu;
 
 	switch (machineid & ATARI_ANYMACH) {
 		case ATARI_TT:

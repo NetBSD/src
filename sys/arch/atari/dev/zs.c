@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 2004/03/25 10:17:19 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.43 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42 2004/03/25 10:17:19 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.43 2005/06/04 14:42:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ static struct zs_chanstate *zslist;
 static void	zsstart __P((struct tty *));
 
 /* Routines purely local to this driver. */
-static void	zsoverrun __P((int, long *, char *));
+static void	zsoverrun __P((int, long *, const char *));
 static int	zsparam __P((struct tty *, struct termios *));
 static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
 static int	zs_modem __P((struct zs_chanstate *, int, int));
@@ -725,7 +725,7 @@ static void
 zsoverrun(unit, ptime, what)
 int	unit;
 long	*ptime;
-char	*what;
+const char *what;
 {
 
 	if(*ptime != time.tv_sec) {

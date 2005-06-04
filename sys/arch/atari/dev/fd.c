@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.49 2004/10/28 07:07:36 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.50 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2004/10/28 07:07:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2005/06/04 14:42:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static short	nopens   = 0;		/* Number of opens executed	*/
 static short	fd_state = FLP_IDLE;	/* Current driver state		*/
 static int	lock_stat= 0;		/* DMA locking status		*/
 static short	fd_cmd   = 0;		/* command being executed	*/
-static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
+static const char *fd_error= NULL;	/* error from fd_xfer_ok()	*/
 
 /*
  * Private per device data

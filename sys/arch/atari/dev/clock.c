@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 2003/08/07 16:26:58 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2003/08/07 16:26:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2005/06/04 14:42:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -336,7 +336,7 @@ void
 delay(n)
 int	n;
 {
-	int	tick, otick;
+	int	ticks, otick;
 
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
@@ -362,11 +362,11 @@ int	n;
 	}
 
 	while(n > 0) {
-		tick = MFP->mf_tbdr;
-		if(tick > otick)
-			n -= TIMB_LIMIT - (tick - otick);
-		else n -= otick - tick;
-		otick = tick;
+		ticks = MFP->mf_tbdr;
+		if(ticks > otick)
+			n -= TIMB_LIMIT - (ticks - otick);
+		else n -= otick - ticks;
+		otick = ticks;
 	}
 }
 
