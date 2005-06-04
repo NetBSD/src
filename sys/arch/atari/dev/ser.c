@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.24 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: ser.c,v 1.25 2005/06/04 14:31:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.24 2005/02/11 06:21:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.25 2005/06/04 14:31:15 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -229,7 +229,6 @@ void	serdiag __P((void *));
 int	serhwiflow __P((struct tty *, int));
 void	serinit __P((int));
 void	serinitcons __P((int));
-int	baud;
 int	sermintr __P((void *));
 int	sertrintr __P((void *));
 int	serparam __P((struct tty *, struct termios *));
