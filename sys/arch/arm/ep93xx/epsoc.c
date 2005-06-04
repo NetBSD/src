@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.1 2004/12/22 19:12:21 joff Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.2 2005/06/04 22:37:51 he Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.1 2004/12/22 19:12:21 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.2 2005/06/04 22:37:51 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ epsoc_attach(struct device *parent, struct device *self, void *aux)
 	struct epsoc_softc	*sc;
 	u_int64_t		fclk, pclk, hclk;
 	u_int32_t		id, clkset1;
-	char			*rev;
+	const char		*rev;
 
 
 	sc = (struct epsoc_softc*) self;
