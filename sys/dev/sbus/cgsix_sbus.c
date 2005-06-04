@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.16 2005/05/16 14:29:11 macallan Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.17 2005/06/04 04:41:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.16 2005/05/16 14:29:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.17 2005/06/04 04:41:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ cgsixattach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node, isconsole;
-	char *name;
+	const char *name;
 	bus_space_handle_t bh;
 
 	/* Remember cookies for cgsix_mmap() */
