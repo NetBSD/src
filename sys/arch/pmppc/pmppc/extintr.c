@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10 2003/08/07 16:29:17 agc Exp $	*/
+/*	$NetBSD: extintr.c,v 1.11 2005/06/04 20:33:57 he Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10 2003/08/07 16:29:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.11 2005/06/04 20:33:57 he Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -157,7 +157,7 @@ struct intrhand *intrhand[ICU_LEN];
 void intr_calculatemasks(void);
 int fakeintr(void *);
 void ext_intr(void);
-char *intr_typename(int);
+const char *intr_typename(int);
 
 int
 fakeintr(void *arg)
@@ -228,7 +228,7 @@ ext_intr()
 #endif
 }
 
-char *
+const char *
 intr_typename(type)
 {
 	switch (type) {
