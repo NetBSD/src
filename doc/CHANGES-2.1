@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.121 2005/06/02 19:58:38 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.122 2005/06/04 20:44:33 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2453,4 +2453,9 @@ sys/ufs/ffs/ffs_bswap.c				1.30
 
 	Fix copy/paste/don't update bug (fix from PR 22232 by Robert Elz).
 	[is, ticket #1973]
+
+lib/libc/string/wcschr.c			1.4
+
+	Only advance 'p' once each time around the loop....
+	[dsl, ticket #1977]
 
