@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.16 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.17 2005/06/04 20:19:47 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.16 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.17 2005/06/04 20:19:47 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ cpu_initclocks(void)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 
 	/*
