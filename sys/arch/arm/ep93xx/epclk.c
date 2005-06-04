@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.5 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: epclk.c,v 1.6 2005/06/04 22:37:51 he Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.5 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.6 2005/06/04 22:37:51 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,7 +183,7 @@ epclk_intr(void *arg)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 
 	/* use hardclock */
