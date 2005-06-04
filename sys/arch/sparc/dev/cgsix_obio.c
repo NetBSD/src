@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.14 2003/07/15 00:04:53 lukem Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.15 2005/06/04 04:39:34 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.14 2003/07/15 00:04:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.15 2005/06/04 04:39:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ cgsixattach(parent, self, aux)
 	sc->sc_fbc = (struct cg6_fbc *)bh;
 
 
-	if (fb_pfour_id((void *)sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
+	if (fb_pfour_id(sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
 		fb->fb_flags |= FB_PFOUR;
 		name = "cgsix/p4";
 	} else
