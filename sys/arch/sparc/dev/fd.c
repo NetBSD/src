@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.116 2004/10/28 07:07:38 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.117 2005/06/04 04:34:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.116 2004/10/28 07:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.117 2005/06/04 04:34:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -253,7 +253,7 @@ struct fd_type {
 	int	rate;		/* transfer speed code */
 	int	fillbyte;	/* format fill byte */
 	int	interleave;	/* interleave factor (formatting) */
-	char	*name;
+	const char *name;
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
@@ -330,23 +330,23 @@ int fdprint __P((void *, const char *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 struct	fd_type *fd_nvtotype __P((char *, int, int));
-void	fd_set_motor __P((struct fdc_softc *fdc));
-void	fd_motor_off __P((void *arg));
-void	fd_motor_on __P((void *arg));
-int	fdcresult __P((struct fdc_softc *fdc));
-int	fdc_wrfifo __P((struct fdc_softc *fdc, u_char x));
-void	fdcstart __P((struct fdc_softc *fdc));
-void	fdcstatus __P((struct fdc_softc *fdc, char *s));
-void	fdc_reset __P((struct fdc_softc *fdc));
-int	fdc_diskchange __P((struct fdc_softc *fdc));
-void	fdctimeout __P((void *arg));
-void	fdcpseudointr __P((void *arg));
+void	fd_set_motor __P((struct fdc_softc *));
+void	fd_motor_off __P((void *));
+void	fd_motor_on __P((void *));
+int	fdcresult __P((struct fdc_softc *));
+int	fdc_wrfifo __P((struct fdc_softc *, u_char));
+void	fdcstart __P((struct fdc_softc *));
+void	fdcstatus __P((struct fdc_softc *, const char *));
+void	fdc_reset __P((struct fdc_softc *));
+int	fdc_diskchange __P((struct fdc_softc *));
+void	fdctimeout __P((void *));
+void	fdcpseudointr __P((void *));
 int	fdc_c_hwintr __P((void *));
 void	fdchwintr __P((void));
 void	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
-void	fdcretry __P((struct fdc_softc *fdc));
-void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
+void	fdcretry __P((struct fdc_softc *));
+void	fdfinish __P((struct fd_softc *, struct buf *));
 int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 void	fd_do_eject __P((struct fd_softc *));
 void	fd_mountroot_hook __P((struct device *));
@@ -1235,7 +1235,7 @@ fdcstart(fdc)
 void
 fdcstatus(fdc, s)
 	struct fdc_softc *fdc;
-	char *s;
+	const char *s;
 {
 	struct fd_softc *fd = fdc->sc_drives.tqh_first;
 	int n;
