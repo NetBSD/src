@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 2005/06/03 15:01:44 tsutsui Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.28 2005/06/03 15:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -577,7 +577,8 @@ __db_print_symbol(db_expr_t value)
  * Stack overflow check
  */
 void
-db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+		  const char *modif)
 {
 	struct lwp *l;
 	struct user *u;
