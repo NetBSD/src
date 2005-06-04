@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.9 2003/07/15 01:19:55 lukem Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.10 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.9 2003/07/15 01:19:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.10 2005/06/04 14:42:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -86,7 +86,7 @@ check_for_vga(iot, memt)
 	int			class, got_ioh, got_memh, rv;
 	volatile u_char		*regs;
 	u_char			*fb;
-	char			*nbd = "NetBSD/Atari";
+	const char		*nbd = "NetBSD/Atari";
 
 	found    = 0;
 	tag      = 0;
