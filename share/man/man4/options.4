@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.275 2005/06/04 06:52:35 yamt Exp $
+.\"	$NetBSD: options.4,v 1.276 2005/06/04 09:33:51 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd Jun 4, 2005
+.Dd June 4, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -991,8 +991,8 @@ Increase lookup performance by maintaining in-core hash tables
 for large directories.
 .El
 .Ss Buffer queue strategy options
+The following options enable alternative buffer queue strategies.
 .Bl -ohang
-Following options enable alternative buffer queue strategies.
 .It Cd options BUFQ_READPRIO
 Enable experimental buffer queue strategy for disk I/O.
 In the default strategy, outstanding disk requests are ordered by
@@ -1029,7 +1029,7 @@ dependencies can be subtle, as that mechanism can drastically alter
 the workload for filesystem metadata writes.
 .It Cd options BUFQ_PRIOCSCAN
 Enable another experimental buffer queue strategy for disk I/O,
-Per-priority Cyclical scan.
+Per-priority cyclical scan.
 .It Cd options NEW_BUFQ_STRATEGY
 Synonym of
 .Em BUFQ_READPRIO .
