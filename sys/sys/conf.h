@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.117 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.118 2005/06/04 22:45:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -174,8 +174,8 @@ extern struct linesw **linesw;
 extern int nlinesw;
 extern void ttyldisc_init(void);
 int ttyldisc_add(struct linesw *, int);
-struct linesw *ttyldisc_remove(char *);
-struct linesw *ttyldisc_lookup(char *);
+struct linesw *ttyldisc_remove(const char *);
+struct linesw *ttyldisc_lookup(const char *);
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
