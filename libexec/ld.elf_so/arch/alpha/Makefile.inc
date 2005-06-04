@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2004/02/21 15:56:03 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2005/06/04 16:17:17 lukem Exp $
 
 SRCS+=		rtld_start.S alpha_reloc.c
 
@@ -8,4 +8,4 @@ CPPFLAGS+=	-fpic -mno-fp-regs
 CPPFLAGS+=	-DELFSIZE=64
 #CPPFLAGS+=	-DRTLD_DEBUG_ALPHA
 
-LDFLAGS+=	-e _rtld_start
+LDFLAGS+=	-Wl,-e,_rtld_start
