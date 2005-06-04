@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.283 2005/05/02 04:38:31 macallan Exp $
+.\"	$NetBSD: main,v 1.284 2005/06/04 23:24:40 heinz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -903,7 +903,7 @@ exists.
 .Pp
 .
 Refer to
-.Lk http://www.NetBSD.org/Sites/net.html .
+.Lk http://www.NetBSD.org/mirrors/ .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
