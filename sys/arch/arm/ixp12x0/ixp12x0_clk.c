@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.8 2003/07/13 09:25:50 igy Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.9 2005/06/04 21:19:23 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.8 2003/07/13 09:25:50 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.9 2005/06/04 21:19:23 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -213,7 +213,7 @@ ixpclk_intr(void *arg)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 
 	/* use hardclock */
@@ -321,7 +321,7 @@ void
 delay(unsigned int usecs)
 {
 	u_int32_t	count;
-	u_int32_t	tick;
+	u_int32_t	ticks;
 	u_int32_t	otick;
 	u_int32_t	delta;
 	int		j;
@@ -353,16 +353,16 @@ delay(unsigned int usecs)
 		for(j = 100; j > 0; j--)
 			;
 
-		tick = gettick();
-		delta = otick < tick
-			? ixpclk_sc->sc_clock_count + otick - tick
-			: otick - tick;
+		ticks = gettick();
+		delta = otick < ticks
+			? ixpclk_sc->sc_clock_count + otick - ticks
+			: otick - ticks;
 
 		if (delta > count)
 			break;
 
 		count -= delta;
-		otick = tick;
+		otick = ticks;
 	}
 }
 
