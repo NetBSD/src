@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.300 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.301 2005/06/04 04:35:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2005/06/04 04:35:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2044,7 +2044,7 @@ mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
 	else {
 		/* Map kernel address into all contexts */
 		int ctx = getcontext4();
-		int i = ncontext - 1;
+		i = ncontext - 1;
 		do {
 			setcontext4(i);
 			setsegmap(va, pmeg);
