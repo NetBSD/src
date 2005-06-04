@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.103 2005/05/11 13:02:26 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.104 2005/06/04 13:48:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.103 2005/05/11 13:02:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.104 2005/06/04 13:48:35 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1503,7 +1503,7 @@ uvm_page_unbusy(pgs, npgs)
 void
 uvm_page_own(pg, tag)
 	struct vm_page *pg;
-	char *tag;
+	const char *tag;
 {
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
 
