@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.22 2005/05/16 15:16:43 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.23 2005/06/04 04:36:04 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.22 2005/05/16 15:16:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23 2005/06/04 04:36:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,14 +613,14 @@ static void
 p9100_init_engine(struct p9100_softc *sc)
 {
 	/* reset clipping rectangles */
-	uint32_t max = ((sc->sc_width & 0x3fff) << 16) | 
+	uint32_t rmax = ((sc->sc_width & 0x3fff) << 16) | 
 	    (sc->sc_height & 0x3fff);
 	
 	p9100_ctl_write_4(sc, WINDOW_OFFSET, 0);
 	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
-	p9100_ctl_write_4(sc, WINDOW_MAX, max);
+	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
 	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, max);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
 	p9100_ctl_write_4(sc, DRAW_MODE, 0);
 	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);	
 	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);	
