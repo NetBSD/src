@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.1.1.4 2005/03/16 23:53:12 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.2 2005/06/04 22:09:27 manu Exp $	*/
 
 /* Id: privsep.c,v 1.6.2.4 2005/03/16 23:18:43 manubsd Exp */
 
@@ -556,7 +556,7 @@ privsep_init(void)
 				break;
 
 			memcpy(&port, bufs[0], sizeof(port));
-			raddr = (struct sockaddr *)&bufs[1];
+			raddr = (struct sockaddr *)bufs[1];
 			
 			bufs[2][combuf->bufs.buflen[2] - 1] = '\0';
 			bufs[3][combuf->bufs.buflen[3] - 1] = '\0';
