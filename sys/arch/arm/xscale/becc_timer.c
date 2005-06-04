@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.7 2005/06/04 14:00:18 rearnsha Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.8 2005/06/04 20:14:24 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.7 2005/06/04 14:00:18 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.8 2005/06/04 20:14:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,6 @@ todr_attach(todr_chip_handle_t todr)
 void
 inittodr(time_t base)
 {
-	struct timeval tv;
 	time_t deltat;
 	int badbase;
 
@@ -304,7 +303,7 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &tv) != 0 || tv.tv_sec == 0) {
+	    todr_gettime(todr_handle, &time) != 0 || time.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -316,8 +315,6 @@ inittodr(time_t base)
 			resettodr();
 		}
 		goto bad;
-	} else {
-		time = tv;
 	}
 
 	if (!badbase) {
@@ -346,15 +343,13 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
-	struct timeval tv;
 
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_handle != NULL && todr_settime(todr_handle, &tv) != 0)
+	if (todr_handle != NULL &&
+	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
-	else
-		time = tv;
 }
 
 /*
