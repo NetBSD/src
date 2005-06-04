@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.61 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.62 2005/06/04 14:42:36 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.61 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62 2005/06/04 14:42:36 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -622,12 +622,13 @@ set_machtype()
 
 #else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if(badbaddr((caddr_t)&MFP2->mf_gpip, sizeof(char))) {
+	if(badbaddr((caddr_t)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if(!badbaddr((caddr_t)&MFP->mf_gpip, sizeof(char))) {
+		if(!badbaddr((caddr_t)__UNVOLATILE(&MFP->mf_gpip),
+		     sizeof(char))) {
 			machineid |= ATARI_FALCON;
 			return;
 		}

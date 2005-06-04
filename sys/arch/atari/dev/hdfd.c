@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.44 2004/10/28 07:07:36 yamt Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.45 2005/06/04 14:42:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.44 2004/10/28 07:07:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.45 2005/06/04 14:42:36 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -228,7 +228,7 @@ struct fd_type {
 	int	rate;		/* transfer speed code */
 	u_char	fillbyte;	/* format fill byte */
 	u_char	interleave;	/* interleave factor (formatting) */
-	char	*name;
+	const char *name;
 };
 
 /*
@@ -307,7 +307,7 @@ int	fdcresult __P((struct fdc_softc *fdc));
 int	out_fdc __P((u_char x));
 void	fdc_ctrl_intr __P((struct clockframe));
 void	fdcstart __P((struct fdc_softc *fdc));
-void	fdcstatus __P((struct device *dv, int n, char *s));
+void	fdcstatus __P((struct device *dv, int n, const char *s));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 int	fdcintr __P((void *));
@@ -366,7 +366,8 @@ fdcprobe(parent, cfp, aux)
 
  out:
 	if (fdc_matched == 0) {
-		bus_space_unmap(mb_tag, (caddr_t)fdio_addr, FD_IOSIZE);
+		bus_space_unmap(mb_tag, (caddr_t)__UNVOLATILE(fdio_addr),
+		    FD_IOSIZE);
 		mb_free_bus_space_tag(mb_tag);
 	}
 
@@ -893,7 +894,7 @@ void
 fdcstatus(dv, n, s)
 	struct device *dv;
 	int n;
-	char *s;
+	const char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
