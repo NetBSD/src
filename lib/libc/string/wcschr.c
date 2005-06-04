@@ -1,4 +1,4 @@
-/*	$NetBSD: wcschr.c,v 1.3 2005/05/30 06:00:01 christos Exp $	*/
+/*	$NetBSD: wcschr.c,v 1.4 2005/06/04 20:09:56 dsl Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcschr.c,v 1.3 2005/05/30 06:00:01 christos Exp $");
+__RCSID("$NetBSD: wcschr.c,v 1.4 2005/06/04 20:09:56 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -48,7 +48,6 @@ wcschr(const wchar_t *p, wchar_t c)
 		}
 		if (!*p)
 			return NULL;
-		p++;
 	}
 	/*NOTREACHED*/
 }
