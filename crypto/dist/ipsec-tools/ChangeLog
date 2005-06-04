@@ -1,3 +1,7 @@
+2005-06-06  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/isakmp_quick.c: endianness bug fix
+
 2005-05-31  Aidas Kasparas  <a.kasparas@gmc.lt>
 
 	* src/racoon/ipsec_doi.c: Inserted missing 0th element of
