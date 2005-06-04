@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.4 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.5 2005/06/04 21:55:05 manu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.13.2.1 2005/03/02 20:00:03 vanhu Exp */
 
@@ -1518,7 +1518,7 @@ quick_r3send(iph2, msg0)
 	n = (struct isakmp_pl_n *)notify->v;
 	n->h.np = ISAKMP_NPTYPE_NONE;
 	n->h.len = htons(tlen);
-	n->doi = htons(IPSEC_DOI);
+	n->doi = htonl(IPSEC_DOI);
 	n->proto_id = iph2->approval->head->proto_id;
 	n->spi_size = sizeof(iph2->approval->head->spisize);
 	n->type = htons(ISAKMP_NTYPE_CONNECTED);
