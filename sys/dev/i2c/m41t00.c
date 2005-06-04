@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.3 2004/09/30 18:57:39 briggs Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.4 2005/06/04 20:14:25 he Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -79,8 +79,8 @@ const struct cdevsw m41t00_cdevsw = {
 
 static int m41t00_clock_read(struct m41t00_softc *, struct clock_ymdhms *);
 static int m41t00_clock_write(struct m41t00_softc *, struct clock_ymdhms *);
-static int m41t00_gettime(struct todr_chip_handle *, struct timeval *);
-static int m41t00_settime(struct todr_chip_handle *, struct timeval *);
+static int m41t00_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int m41t00_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int m41t00_getcal(struct todr_chip_handle *, int *);
 static int m41t00_setcal(struct todr_chip_handle *, int);
 
@@ -228,7 +228,7 @@ m41t00_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-m41t00_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+m41t00_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct m41t00_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -243,7 +243,7 @@ m41t00_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 }
 
 static int
-m41t00_settime(struct todr_chip_handle *ch, struct timeval *tv)
+m41t00_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct m41t00_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

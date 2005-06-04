@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.5 2004/09/25 09:46:17 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.6 2005/06/04 20:14:25 he Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.5 2004/09/25 09:46:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.6 2005/06/04 20:14:25 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.5 2004/09/25 09:46:17 tsutsui Exp $")
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/mc146818var.h>
 
-int mc146818_gettime(todr_chip_handle_t, struct timeval *);
-int mc146818_settime(todr_chip_handle_t, struct timeval *);
+int mc146818_gettime(todr_chip_handle_t, volatile struct timeval *);
+int mc146818_settime(todr_chip_handle_t, volatile struct timeval *);
 int mc146818_getcal(todr_chip_handle_t, int *);
 int mc146818_setcal(todr_chip_handle_t, int);
 
@@ -78,7 +78,7 @@ mc146818_attach(struct mc146818_softc *sc)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_gettime(todr_chip_handle_t handle, struct timeval *tv)
+mc146818_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct mc146818_softc *sc;
 	struct clock_ymdhms dt;
@@ -142,7 +142,7 @@ mc146818_gettime(todr_chip_handle_t handle, struct timeval *tv)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_settime(todr_chip_handle_t handle, struct timeval *tv)
+mc146818_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct mc146818_softc *sc;
 	struct clock_ymdhms dt;
