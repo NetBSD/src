@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.7 2005/06/04 20:14:24 he Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.8 2005/06/04 22:05:40 he Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.7 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.8 2005/06/04 22:05:40 he Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -199,7 +199,7 @@ cpu_initclocks(void)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 
 	/*
