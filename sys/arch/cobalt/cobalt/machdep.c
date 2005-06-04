@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2005/04/25 15:02:03 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2005/06/04 06:07:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2005/04/25 15:02:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/06/04 06:07:01 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,11 +135,10 @@ mach_init(memsize, bim, bip)
 	caddr_t kernend, v;
 	u_long first, last;
 	extern char edata[], end[];
-	char *bi_msg;
+	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
 	caddr_t ssym = 0;
-	caddr_t esym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
