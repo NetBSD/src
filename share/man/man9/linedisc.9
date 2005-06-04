@@ -1,4 +1,4 @@
-.\" $NetBSD: linedisc.9,v 1.9 2003/04/16 13:35:30 wiz Exp $
+.\" $NetBSD: linedisc.9,v 1.10 2005/06/04 22:49:32 uwe Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -45,9 +45,9 @@
 .Ft int
 .Fn ttyldisc_add "struct linesw *disc" "int no"
 .Ft struct linesw *
-.Fn ttyldisc_remove "char *name"
+.Fn ttyldisc_remove "const char *name"
 .Ft struct linesw *
-.Fn ttyldisc_lookup "char *name"
+.Fn ttyldisc_lookup "const char *name"
 .Sh DESCRIPTION
 The
 .Nx
