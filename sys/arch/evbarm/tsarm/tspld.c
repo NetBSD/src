@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.5 2005/02/24 03:52:22 joff Exp $	*/
+/*	$NetBSD: tspld.c,v 1.6 2005/06/04 22:40:03 he Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.5 2005/02/24 03:52:22 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.6 2005/06/04 22:40:03 he Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -72,8 +72,8 @@ struct tspld_softc {
 	bus_space_handle_t	sc_wdogfeed_ioh;	
 	bus_space_handle_t	sc_wdogctrl_ioh;	
 	struct sysmon_wdog	sc_wdog;
-	unsigned char *		sc_com2mode;
-	unsigned char *		sc_model;
+	unsigned const char *	sc_com2mode;
+	unsigned const char *	sc_model;
 	unsigned char		sc_pldrev[4];
 	uint32_t		sc_rs485;
 	uint32_t		sc_adc;
@@ -133,7 +133,7 @@ tspldattach(parent, self, aux)
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
         			0, CTLTYPE_STRING, "boardmodel",
         			SYSCTL_DESCR("Technologic Systems board model"),
-        			NULL, 0, sc->sc_model, 0,
+        			NULL, 0, __UNCONST(sc->sc_model), 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
                 printf("%s: could not create sysctl\n", 
@@ -216,7 +216,7 @@ tspldattach(parent, self, aux)
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
         			0, CTLTYPE_STRING, "com2_mode",
         			SYSCTL_DESCR("line driver type for COM2"),
-        			NULL, 0, sc->sc_com2mode, 0,
+        			NULL, 0, __UNCONST(sc->sc_com2mode), 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
                 printf("%s: could not create sysctl\n", 
