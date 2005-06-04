@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.2 2002/03/11 16:01:57 pk Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.3 2005/06/04 04:37:21 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,4 +51,4 @@ struct cgthree_softc {
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
-void	cgthreeattach(struct cgthree_softc *, char *, int);
+void	cgthreeattach(struct cgthree_softc *, const char *, int);
