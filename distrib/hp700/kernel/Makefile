@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/05/18 14:04:26 chs Exp $
+#	$NetBSD: Makefile,v 1.2 2005/06/05 18:56:51 chs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,7 +13,7 @@ MDSET_RELEASEDIR=	binary/kernel
 
 LIF=	netinstall.lif
 
-MDSET_POST.- = \
+MDSET_POST = \
 	${MKBOOT} ${DESTDIR}/usr/mdec/boot ${.TARGET} ${LIF}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
