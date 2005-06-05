@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.21 2005/05/21 06:43:39 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.22 2005/06/05 19:08:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ void
 _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rela	*relafirst, *rela, *relalim;
-	Elf_Addr        relasz = 0;
+	Elf_Addr        relasz;
 	Elf_Addr	where;
 	Elf_Addr	*pltgot;
 	const Elf_Rela	*plabel_relocs[HPPA_PLABEL_PRE];
@@ -121,11 +121,13 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	unsigned long	symnum;
 	hppa_plabel	*plabel;
 
-	/* 
-	 * Process the DYNAMIC section, looking for the non-PLT
-	 * relocations.
+	/*
+	 * Process the DYNAMIC section, looking for the non-PLT relocations.
 	 */ 
 	relafirst = NULL;
+	relasz = 0;
+	symtab = NULL;
+	pltgot = NULL;
 	for (; dynp->d_tag != DT_NULL; ++dynp) {
 		switch (dynp->d_tag) {
 

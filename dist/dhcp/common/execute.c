@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.5 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.6 2005/06/05 19:08:28 chs Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -352,6 +352,7 @@ int execute_statements (result, packet, lease, client_state,
 			log_debug ("exec: let %s", r -> data.let.name);
 #endif
 			ns = (struct binding_scope *)0;
+			binding = (struct binding *)0;
 			binding_scope_allocate (&ns, MDL);
 			e = r;
 

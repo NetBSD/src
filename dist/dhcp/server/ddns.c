@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.4 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 2000-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.5 2005/06/05 19:08:28 chs Exp $ Copyright (c) 2000-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -478,7 +478,8 @@ int ddns_updates (struct packet *packet,
 					    packet -> options,
 					    state -> options,
 					    &lease -> scope, oc, MDL);
-	
+	else
+		s1 = 0;
 	if (oc && s1) {
 		/* Buffer length:
 		   XXX.XXX.XXX.XXX.<ddns-rev-domain-name>\0 */
