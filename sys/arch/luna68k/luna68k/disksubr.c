@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.17 2003/12/10 12:06:25 agc Exp $ */
+/* $NetBSD: disksubr.c,v 1.18 2005/06/05 09:08:48 he Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2003/12/10 12:06:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2005/06/05 09:08:48 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2003/12/10 12:06:25 agc Exp $");
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-static char *disklabel_om_to_bsd __P((char *, struct disklabel *));
+static const char *disklabel_om_to_bsd __P((char *, struct disklabel *));
 static int disklabel_bsd_to_om __P((struct disklabel *, char *));
 
 /*
@@ -401,7 +401,7 @@ sun_fstypes[8] = {
  *
  * The BSD label is cleared out before this is called.
  */
-static char *
+static const char *
 disklabel_om_to_bsd(cp, lp)
 	char *cp;
 	struct disklabel *lp;
