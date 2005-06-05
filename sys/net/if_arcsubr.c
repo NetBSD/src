@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.48 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.49 2005/06/05 22:31:40 he Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.48 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.49 2005/06/05 22:31:40 he Exp $");
 
 #include "opt_inet.h"
 
@@ -371,7 +371,7 @@ arc_defrag(ifp, m)
 	struct arccom *ac;
 	struct ac_frag *af;
 	struct mbuf *m1;
-	char *s;
+	const char *s;
 	int newflen;
 	u_char src, dst, typ;
 
