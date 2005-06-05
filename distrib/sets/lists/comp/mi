@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.788 2005/05/31 11:38:31 christos Exp $
+#	$NetBSD: mi,v 1.789 2005/06/05 18:19:53 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -8,6 +8,7 @@
 ./usr/bin/c++filt				comp-cxx-bin		bfd
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
+./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
 ./usr/bin/cvs					comp-cvs-bin		cvs
@@ -24,6 +25,7 @@
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
 ./usr/bin/gdb					comp-debug-bin		gdb
+./usr/bin/genassym				comp-util-bin
 ./usr/bin/genclass				comp-obsolete		obsolete
 ./usr/bin/gettext				comp-c-bin
 ./usr/bin/gettextize				comp-obsolete		obsolete
@@ -1768,9 +1770,9 @@
 ./usr/libexec/f771				comp-fortran-bin	gcccmds
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
-./usr/sbin/config				comp-sysutil-sbin
+./usr/sbin/config				comp-obsolete		obsolete
 ./usr/sbin/config.new				comp-obsolete		obsolete
-./usr/sbin/genassym				comp-sysutil-sbin
+./usr/sbin/genassym				comp-obsolete		obsolete
 ./usr/sbin/gspa					comp-util-sbin
 ./usr/sbin/gspahextoc				comp-obsolete		obsolete
 ./usr/sbin/kgmon				comp-debug-sbin
@@ -1924,6 +1926,7 @@
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cccp.0			comp-util-catman	.cat
+./usr/share/man/cat1/config.0			comp-util-catman	.cat
 ./usr/share/man/cat1/crunchgen.0		comp-c-catman		.cat
 ./usr/share/man/cat1/crunchide.0		comp-c-catman		.cat
 ./usr/share/man/cat1/cvs.0			comp-cvs-catman		cvs,.cat
@@ -1942,6 +1945,7 @@
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat1/gprof.0			comp-debug-catman	bfd,.cat
+./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
 ./usr/share/man/cat1/ld.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/lex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
@@ -4776,10 +4780,10 @@
 ./usr/share/man/cat5/ranlib.0			comp-util-catman	.cat
 ./usr/share/man/cat5/statvfs.0			comp-util-catman	.cat
 ./usr/share/man/cat7/operator.0			comp-c-catman		.cat
-./usr/share/man/cat8/config.0			comp-sysutil-catman	.cat
+./usr/share/man/cat8/config.0			comp-obsolete		obsolete
 ./usr/share/man/cat8/config.new.0		comp-obsolete		obsolete
 ./usr/share/man/cat8/cvsbug.0			comp-cvs-catman		cvs,.cat
-./usr/share/man/cat8/genassym.0			comp-sysutil-catman	.cat
+./usr/share/man/cat8/genassym.0			comp-obsolete		obsolete
 ./usr/share/man/cat8/kgmon.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat9/CALLOUT_INITIALIZER.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/CALLOUT_INITIALIZER_SETFUNC.0	comp-sys-catman		.cat
@@ -5796,6 +5800,7 @@
 ./usr/share/man/man1/c89.1			comp-c-man		.man
 ./usr/share/man/man1/cc.1			comp-c-man		.man
 ./usr/share/man/man1/cccp.1			comp-util-man		.man
+./usr/share/man/man1/config.1			comp-util-man		.man
 ./usr/share/man/man1/crunchgen.1		comp-c-man		.man
 ./usr/share/man/man1/crunchide.1		comp-c-man		.man
 ./usr/share/man/man1/cvs.1			comp-cvs-man		cvs,.man
@@ -5813,6 +5818,7 @@
 ./usr/share/man/man1/gcov.1			comp-debug-man		.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man
+./usr/sahre/man/man1/genassym.1			comp-util-man		.man
 ./usr/share/man/man1/ld.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
@@ -8640,9 +8646,9 @@
 ./usr/share/man/man5/ranlib.5			comp-util-man		.man
 ./usr/share/man/man5/statvfs.5			comp-util-man		.man
 ./usr/share/man/man7/operator.7			comp-c-man		.man
-./usr/share/man/man8/config.8			comp-sysutil-man	.man
+./usr/share/man/man8/config.8			comp-obsolete		obsolete
 ./usr/share/man/man8/cvsbug.8			comp-cvs-man		cvs,.man
-./usr/share/man/man8/genassym.8			comp-sysutil-man	.man
+./usr/share/man/man8/genassym.8			comp-obsolete		obsolete
 ./usr/share/man/man8/kgmon.8			comp-sysutil-man	.man
 ./usr/share/man/man9/CALLOUT_INITIALIZER.9	comp-sys-man		.man
 ./usr/share/man/man9/CALLOUT_INITIALIZER_SETFUNC.9	comp-sys-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.19 2004/06/04 23:44:35 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

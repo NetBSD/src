@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.74 2005/03/29 02:42:09 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

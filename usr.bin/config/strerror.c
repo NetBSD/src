@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.4 2003/07/13 12:36:49 itojun Exp $	*/
+/*	$NetBSD: strerror.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * strerror() - for those systems that don't have it yet.

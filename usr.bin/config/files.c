@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.24 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: files.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

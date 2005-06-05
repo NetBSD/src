@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.52 2005/06/01 12:32:57 yamt Exp $	*/
+/*	$NetBSD: gram.y,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
