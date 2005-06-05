@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 2005/04/25 15:02:05 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.41 2005/06/05 09:08:48 he Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2005/04/25 15:02:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2005/06/05 09:08:48 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -336,7 +336,7 @@ void
 identifycpu()
 {
 	extern int cputype;
-	char *cpu;
+	const char *cpu;
 
 	bzero(cpu_model, sizeof(cpu_model));
 	switch (cputype) {
@@ -737,7 +737,7 @@ badaddr(addr, nbytes)
 	return (0);
 }
 
-void luna68k_abort __P((char *));
+void luna68k_abort __P((const char *));
 
 static int innmihand;	/* simple mutex */
 
@@ -766,7 +766,7 @@ nmihand(frame)
  */
 void
 luna68k_abort(cp)
-	char *cp;
+	const char *cp;
 {
 #ifdef DDB
 	printf("%s\n", cp);
