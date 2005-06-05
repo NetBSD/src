@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.44 2004/10/29 20:40:33 dsl Exp $	*/
+/*	$NetBSD: sem.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

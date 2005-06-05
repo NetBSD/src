@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: util.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
