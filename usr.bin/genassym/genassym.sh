@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.1 2005/05/31 03:48:43 christos Exp $
+#	$NetBSD: genassym.sh,v 1.1 2005/06/05 18:19:54 thorpej Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.

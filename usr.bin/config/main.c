@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.98 2005/06/02 05:12:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

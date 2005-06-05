@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.5 2002/09/22 06:22:50 dbj Exp $
+#	$NetBSD: Makefile.boot,v 1.1 2005/06/05 18:19:53 thorpej Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 #
 # a very simple makefile...

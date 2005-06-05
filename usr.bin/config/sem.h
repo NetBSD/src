@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.18 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: sem.h,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
