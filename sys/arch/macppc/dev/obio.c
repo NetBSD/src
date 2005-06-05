@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.21 2005/01/08 03:24:58 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.22 2005/06/05 20:02:01 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.21 2005/01/08 03:24:58 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.22 2005/06/05 20:02:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ obio_attach(parent, self, aux)
 	}
 }
 
-static char *skiplist[] = {
+static const char *skiplist[] = {
 	"interrupt-controller",
 	"gpio",
 	"escc-legacy",
