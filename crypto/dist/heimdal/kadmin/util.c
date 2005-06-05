@@ -35,7 +35,7 @@
 #include <parse_units.h>
 
 __RCSID("$Heimdal: util.c,v 1.39 2003/04/14 11:55:27 lha Exp $"
-        "$NetBSD: util.c,v 1.1.1.7 2003/05/15 20:28:45 lha Exp $");
+        "$NetBSD: util.c,v 1.2 2005/06/05 19:08:28 chs Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -502,6 +502,8 @@ foreach_principal(const char *exp,
     is_expr = is_expression(exp);
     if(is_expr)
 	ret = kadm5_get_principals(kadm_handle, exp, &princs, &num_princs);
+    else
+	ret = KADM5_FAILURE;
     if(!is_expr || ret == KADM5_AUTH_LIST) {
 	/* we might be able to perform the requested opreration even
            if we're not allowed to list principals */
