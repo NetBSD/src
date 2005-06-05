@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.88 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.89 2005/06/05 23:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.88 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.89 2005/06/05 23:47:48 thorpej Exp $");
 
 #include "fs_union.h"
 
@@ -92,9 +92,7 @@ const struct fileops vnops = {
  * Check permissions, and call the VOP_OPEN or VOP_CREATE routine.
  */
 int
-vn_open(ndp, fmode, cmode)
-	struct nameidata *ndp;
-	int fmode, cmode;
+vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
 	struct vnode *vp;
 	struct mount *mp;
@@ -262,8 +260,7 @@ bad:
  * Prototype text segments cannot be written.
  */
 int
-vn_writechk(vp)
-	struct vnode *vp;
+vn_writechk(struct vnode *vp)
 {
 
 	/*
@@ -279,8 +276,7 @@ vn_writechk(vp)
  * Mark a vnode as having executable mappings.
  */
 void
-vn_markexec(vp)
-	struct vnode *vp;
+vn_markexec(struct vnode *vp)
 {
 	if ((vp->v_flag & VEXECMAP) == 0) {
 		uvmexp.filepages -= vp->v_uobj.uo_npages;
@@ -294,8 +290,7 @@ vn_markexec(vp)
  * Fail if the vnode is currently writable.
  */
 int
-vn_marktext(vp)
-	struct vnode *vp;
+vn_marktext(struct vnode *vp)
 {
 
 	if (vp->v_writecount != 0) {
@@ -313,11 +308,7 @@ vn_marktext(vp)
  * Note: takes an unlocked vnode, while VOP_CLOSE takes a locked node.
  */
 int
-vn_close(vp, flags, cred, p)
-	struct vnode *vp;
-	int flags;
-	struct ucred *cred;
-	struct proc *p;
+vn_close(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 {
 	int error;
 
@@ -333,17 +324,9 @@ vn_close(vp, flags, cred, p)
  * Package up an I/O request on a vnode into a uio and do it.
  */
 int
-vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
-	enum uio_rw rw;
-	struct vnode *vp;
-	caddr_t base;
-	int len;
-	off_t offset;
-	enum uio_seg segflg;
-	int ioflg;
-	struct ucred *cred;
-	size_t *aresid;
-	struct proc *p;
+vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
+    enum uio_seg segflg, int ioflg, struct ucred *cred, size_t *aresid,
+    struct proc *p)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -389,13 +372,8 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 }
 
 int
-vn_readdir(fp, bf, segflg, count, done, p, cookies, ncookies)
-	struct file *fp;
-	char *bf;
-	int segflg, *done, *ncookies;
-	u_int count;
-	struct proc *p;
-	off_t **cookies;
+vn_readdir(struct file *fp, char *bf, int segflg, u_int count, int *done,
+    struct proc *p, off_t **cookies, int *ncookies)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	struct iovec aiov;
@@ -452,12 +430,8 @@ unionread:
  * File table vnode read routine.
  */
 static int
-vn_read(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag = 0;
@@ -483,12 +457,8 @@ vn_read(fp, offset, uio, cred, flags)
  * File table vnode write routine.
  */
 static int
-vn_write(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+vn_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	struct mount *mp;
@@ -529,10 +499,7 @@ vn_write(fp, offset, uio, cred, flags)
  * File table vnode stat routine.
  */
 static int
-vn_statfile(fp, sb, p)
-	struct file *fp;
-	struct stat *sb;
-	struct proc *p;
+vn_statfile(struct file *fp, struct stat *sb, struct proc *p)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 
@@ -540,10 +507,7 @@ vn_statfile(fp, sb, p)
 }
 
 int
-vn_stat(vp, sb, p)
-	struct vnode *vp;
-	struct stat *sb;
-	struct proc *p;
+vn_stat(struct vnode *vp, struct stat *sb, struct proc *p)
 {
 	struct vattr va;
 	int error;
@@ -604,11 +568,7 @@ vn_stat(vp, sb, p)
  * File table vnode fcntl routine.
  */
 static int
-vn_fcntl(fp, com, data, p)
-	struct file *fp;
-	u_int com;
-	void *data;
-	struct proc *p;
+vn_fcntl(struct file *fp, u_int com, void *data, struct proc *p)
 {
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
@@ -623,11 +583,7 @@ vn_fcntl(fp, com, data, p)
  * File table vnode ioctl routine.
  */
 static int
-vn_ioctl(fp, com, data, p)
-	struct file *fp;
-	u_long com;
-	void *data;
-	struct proc *p;
+vn_ioctl(struct file *fp, u_long com, void *data, struct proc *p)
 {
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	struct vattr vattr;
@@ -695,10 +651,7 @@ vn_ioctl(fp, com, data, p)
  * File table vnode poll routine.
  */
 static int
-vn_poll(fp, events, p)
-	struct file *fp;
-	int events;
-	struct proc *p;
+vn_poll(struct file *fp, int events, struct proc *p)
 {
 
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
@@ -708,9 +661,7 @@ vn_poll(fp, events, p)
  * File table vnode kqfilter routine.
  */
 int
-vn_kqfilter(fp, kn)
-	struct file *fp;
-	struct knote *kn;
+vn_kqfilter(struct file *fp, struct knote *kn)
 {
 
 	return (VOP_KQFILTER((struct vnode *)fp->f_data, kn));
@@ -721,9 +672,7 @@ vn_kqfilter(fp, kn)
  * acquire requested lock.
  */
 int
-vn_lock(vp, flags)
-	struct vnode *vp;
-	int flags;
+vn_lock(struct vnode *vp, int flags)
 {
 	int error;
 
@@ -759,9 +708,7 @@ vn_lock(vp, flags)
  * File table vnode close routine.
  */
 static int
-vn_closefile(fp, p)
-	struct file *fp;
-	struct proc *p;
+vn_closefile(struct file *fp, struct proc *p)
 {
 
 	return (vn_close(((struct vnode *)fp->f_data), fp->f_flag,
@@ -772,8 +719,7 @@ vn_closefile(fp, p)
  * Enable LK_CANRECURSE on lock. Return prior status.
  */
 u_int
-vn_setrecurse(vp)
-	struct vnode *vp;
+vn_setrecurse(struct vnode *vp)
 {
 	struct lock *lkp = &vp->v_lock;
 	u_int retval = lkp->lk_flags & LK_CANRECURSE;
@@ -786,9 +732,7 @@ vn_setrecurse(vp)
  * Called when done with locksetrecurse.
  */
 void
-vn_restorerecurse(vp, flags)
-	struct vnode *vp;
-	u_int flags;
+vn_restorerecurse(struct vnode *vp, u_int flags)
 {
 	struct lock *lkp = &vp->v_lock;
 

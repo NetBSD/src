@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.220 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.221 2005/06/05 23:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.220 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.221 2005/06/05 23:47:48 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -123,10 +123,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
 
 /* ARGSUSED */
 int
-sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mount_args /* {
 		syscallarg(const char *) type;
@@ -402,8 +399,7 @@ sys_mount(l, v, retval)
  * mounted. If so, replace them with the new mount point.
  */
 void
-checkdirs(olddp)
-	struct vnode *olddp;
+checkdirs(struct vnode *olddp)
 {
 	struct cwdinfo *cwdi;
 	struct vnode *newdp;
@@ -446,10 +442,7 @@ checkdirs(olddp)
  */
 /* ARGSUSED */
 int
-sys_unmount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unmount_args /* {
 		syscallarg(const char *) path;
@@ -514,10 +507,7 @@ sys_unmount(l, v, retval)
  * marked busy by the caller.
  */
 int
-dounmount(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+dounmount(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *coveredvp;
 	int error;
@@ -620,10 +610,7 @@ struct ctldebug debug0 = { "syncprt", &syncprt };
 
 /* ARGSUSED */
 int
-sys_sync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sync(struct lwp *l, void *v, register_t *retval)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
@@ -662,10 +649,7 @@ sys_sync(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_quotactl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_quotactl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_quotactl_args /* {
 		syscallarg(const char *) path;
@@ -764,10 +748,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_statvfs1(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_statvfs1(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_statvfs1_args /* {
 		syscallarg(const char *) path;
@@ -795,10 +776,7 @@ sys_statvfs1(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fstatvfs1(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fstatvfs1(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fstatvfs1_args /* {
 		syscallarg(int) fd;
@@ -828,10 +806,7 @@ sys_fstatvfs1(l, v, retval)
  * Get statistics on all filesystems.
  */
 int
-sys_getvfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getvfsstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getvfsstat_args /* {
 		syscallarg(struct statvfs *) buf;
@@ -901,10 +876,7 @@ sys_getvfsstat(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fchdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fchdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchdir_args /* {
 		syscallarg(int) fd;
@@ -962,14 +934,11 @@ sys_fchdir(l, v, retval)
 }
 
 /*
- * Change this process's notion of the root directory to a given file descriptor.
+ * Change this process's notion of the root directory to a given file
+ * descriptor.
  */
-
 int
-sys_fchroot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fchroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchroot_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -1018,17 +987,12 @@ sys_fchroot(l, v, retval)
 	return (error);
 }
 
-
-
 /*
  * Change current working directory (``.'').
  */
 /* ARGSUSED */
 int
-sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_chdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chdir_args /* {
 		syscallarg(const char *) path;
@@ -1052,10 +1016,7 @@ sys_chdir(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_chroot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_chroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chroot_args /* {
 		syscallarg(const char *) path;
@@ -1099,9 +1060,7 @@ sys_chroot(l, v, retval)
  * Common routine for chroot and chdir.
  */
 static int
-change_dir(ndp, p)
-	struct nameidata *ndp;
-	struct proc *p;
+change_dir(struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *vp;
 	int error;
@@ -1126,10 +1085,7 @@ change_dir(ndp, p)
  * and call the device open routine if any.
  */
 int
-sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_open_args /* {
 		syscallarg(const char *) path;
@@ -1211,10 +1167,7 @@ sys_open(l, v, retval)
  * Get file handle system call
  */
 int
-sys_getfh(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getfh(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getfh_args /* {
 		syscallarg(char *) fname;
@@ -1255,10 +1208,7 @@ sys_getfh(l, v, retval)
  * and call the device open routine if any.
  */
 int
-sys_fhopen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fhopen(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fhopen_args /* {
 		syscallarg(const fhandle_t *) fhp;
@@ -1393,10 +1343,7 @@ bad:
 
 /* ARGSUSED */
 int
-sys_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fhstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fhstat_args /* {
 		syscallarg(const fhandle_t *) fhp;
@@ -1432,12 +1379,9 @@ sys_fhstat(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_fhstatvfs1(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_fhstatvfs1_args /*
+	struct sys_fhstatvfs1_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
@@ -1477,10 +1421,7 @@ sys_fhstatvfs1(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mknod_args /* {
 		syscallarg(const char *) path;
@@ -1573,10 +1514,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_mkfifo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkfifo_args /* {
 		syscallarg(const char *) path;
@@ -1630,10 +1568,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_link(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_link(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_link_args /* {
 		syscallarg(const char *) path;
@@ -1680,10 +1615,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_symlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_symlink_args /* {
 		syscallarg(const char *) path;
@@ -1742,10 +1674,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_undelete(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_undelete(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_undelete_args /* {
 		syscallarg(const char *) path;
@@ -1796,10 +1725,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unlink_args /* {
 		syscallarg(const char *) path;
@@ -1870,10 +1796,7 @@ out:
  * Reposition read/write file offset.
  */
 int
-sys_lseek(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lseek(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lseek_args /* {
 		syscallarg(int) fd;
@@ -1931,10 +1854,7 @@ sys_lseek(l, v, retval)
  * Positional read system call.
  */
 int
-sys_pread(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pread(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_pread_args /* {
 		syscallarg(int) fd;
@@ -1987,10 +1907,7 @@ sys_pread(l, v, retval)
  * Positional scatter read system call.
  */
 int
-sys_preadv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_preadv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_preadv_args /* {
 		syscallarg(int) fd;
@@ -2043,10 +1960,7 @@ sys_preadv(l, v, retval)
  * Positional write system call.
  */
 int
-sys_pwrite(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pwrite(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_pwrite_args /* {
 		syscallarg(int) fd;
@@ -2099,10 +2013,7 @@ sys_pwrite(l, v, retval)
  * Positional gather write system call.
  */
 int
-sys_pwritev(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pwritev(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_pwritev_args /* {
 		syscallarg(int) fd;
@@ -2155,10 +2066,7 @@ sys_pwritev(l, v, retval)
  * Check access permissions.
  */
 int
-sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_access_args /* {
 		syscallarg(const char *) path;
@@ -2206,10 +2114,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys___stat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___stat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___stat13_args /* {
 		syscallarg(const char *) path;
@@ -2237,10 +2142,7 @@ sys___stat13(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys___lstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___lstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___lstat13_args /* {
 		syscallarg(const char *) path;
@@ -2268,10 +2170,7 @@ sys___lstat13(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_pathconf_args /* {
 		syscallarg(const char *) path;
@@ -2295,10 +2194,7 @@ sys_pathconf(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_readlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_readlink_args /* {
 		syscallarg(const char *) path;
@@ -2342,10 +2238,7 @@ sys_readlink(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_chflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_chflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chflags_args /* {
 		syscallarg(const char *) path;
@@ -2370,10 +2263,7 @@ sys_chflags(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fchflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchflags_args /* {
 		syscallarg(int) fd;
@@ -2399,10 +2289,7 @@ sys_fchflags(l, v, retval)
  * not follow links.
  */
 int
-sys_lchflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchflags_args /* {
 		syscallarg(const char *) path;
@@ -2426,10 +2313,7 @@ sys_lchflags(l, v, retval)
  * Common routine to change flags of a file.
  */
 int
-change_flags(vp, flags, p)
-	struct vnode *vp;
-	u_long flags;
-	struct proc *p;
+change_flags(struct vnode *vp, u_long flags, struct proc *p)
 {
 	struct mount *mp;
 	struct vattr vattr;
@@ -2464,10 +2348,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_chmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chmod_args /* {
 		syscallarg(const char *) path;
@@ -2492,10 +2373,7 @@ sys_chmod(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fchmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchmod_args /* {
 		syscallarg(int) fd;
@@ -2519,10 +2397,7 @@ sys_fchmod(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_lchmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchmod_args /* {
 		syscallarg(const char *) path;
@@ -2546,10 +2421,7 @@ sys_lchmod(l, v, retval)
  * Common routine to set mode given a vnode.
  */
 static int
-change_mode(vp, mode, p)
-	struct vnode *vp;
-	int mode;
-	struct proc *p;
+change_mode(struct vnode *vp, int mode, struct proc *p)
 {
 	struct mount *mp;
 	struct vattr vattr;
@@ -2572,10 +2444,7 @@ change_mode(vp, mode, p)
  */
 /* ARGSUSED */
 int
-sys_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chown_args /* {
 		syscallarg(const char *) path;
@@ -2602,10 +2471,7 @@ sys_chown(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys___posix_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___posix_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chown_args /* {
 		syscallarg(const char *) path;
@@ -2631,10 +2497,7 @@ sys___posix_chown(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchown_args /* {
 		syscallarg(int) fd;
@@ -2660,10 +2523,7 @@ sys_fchown(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys___posix_fchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___posix_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchown_args /* {
 		syscallarg(int) fd;
@@ -2689,10 +2549,7 @@ sys___posix_fchown(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchown_args /* {
 		syscallarg(const char *) path;
@@ -2719,10 +2576,7 @@ sys_lchown(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys___posix_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___posix_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchown_args /* {
 		syscallarg(const char *) path;
@@ -2747,12 +2601,8 @@ sys___posix_lchown(l, v, retval)
  * Common routine to set ownership given a vnode.
  */
 static int
-change_owner(vp, uid, gid, p, posix_semantics)
-	struct vnode *vp;
-	uid_t uid;
-	gid_t gid;
-	struct proc *p;
-	int posix_semantics;
+change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct proc *p,
+    int posix_semantics)
 {
 	struct mount *mp;
 	struct vattr vattr;
@@ -2811,10 +2661,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_utimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_utimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_utimes_args /* {
 		syscallarg(const char *) path;
@@ -2839,10 +2686,7 @@ sys_utimes(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_futimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_futimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_futimes_args /* {
 		syscallarg(int) fd;
@@ -2867,10 +2711,7 @@ sys_futimes(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_lutimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lutimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lutimes_args /* {
 		syscallarg(const char *) path;
@@ -2894,10 +2735,7 @@ sys_lutimes(l, v, retval)
  * Common routine to set access and modification times given a vnode.
  */
 static int
-change_utimes(vp, tptr, p)
-	struct vnode *vp;
-	const struct timeval *tptr;
-	struct proc *p;
+change_utimes(struct vnode *vp, const struct timeval *tptr, struct proc *p)
 {
 	struct timeval tv[2];
 	struct mount *mp;
@@ -2934,10 +2772,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_truncate_args /* {
 		syscallarg(const char *) path;
@@ -2979,10 +2814,7 @@ sys_truncate(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_ftruncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ftruncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ftruncate_args /* {
 		syscallarg(int) fd;
@@ -3029,10 +2861,7 @@ sys_ftruncate(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fsync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fsync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fsync_args /* {
 		syscallarg(int) fd;
@@ -3071,10 +2900,7 @@ sys_fsync(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fsync_range(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fsync_range_args /* {
 		syscallarg(int) fd;
@@ -3143,10 +2969,7 @@ sys_fsync_range(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fdatasync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fdatasync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fdatasync_args /* {
 		syscallarg(int) fd;
@@ -3176,10 +2999,7 @@ sys_fdatasync(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rename_args /* {
 		syscallarg(const char *) from;
@@ -3195,10 +3015,7 @@ sys_rename(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys___posix_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___posix_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___posix_rename_args /* {
 		syscallarg(const char *) from;
@@ -3220,10 +3037,7 @@ sys___posix_rename(l, v, retval)
  * (retain == 1)	always retained (POSIX).
  */
 static int
-rename_files(from, to, p, retain)
-	const char *from, *to;
-	struct proc *p;
-	int retain;
+rename_files(const char *from, const char *to, struct proc *p, int retain)
 {
 	struct mount *mp = NULL;
 	struct vnode *tvp, *fvp, *tdvp;
@@ -3320,10 +3134,7 @@ out1:
  */
 /* ARGSUSED */
 int
-sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mkdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkdir_args /* {
 		syscallarg(const char *) path;
@@ -3379,10 +3190,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_rmdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rmdir_args /* {
 		syscallarg(const char *) path;
@@ -3449,10 +3257,7 @@ out:
  * Read a block of directory entries in a file system independent format.
  */
 int
-sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getdents_args /* {
 		syscallarg(int) fd;
@@ -3490,10 +3295,7 @@ sys_getdents(l, v, retval)
  * Set the mode mask for creation of filesystem nodes.
  */
 int
-sys_umask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_umask(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_umask_args /* {
 		syscallarg(mode_t) newmask;
@@ -3513,10 +3315,7 @@ sys_umask(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_revoke(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_revoke(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_revoke_args /* {
 		syscallarg(const char *) path;
@@ -3551,10 +3350,7 @@ out:
  * Convert a user file descriptor to a kernel file entry.
  */
 int
-getvnode(fdp, fd, fpp)
-	struct filedesc *fdp;
-	int fd;
-	struct file **fpp;
+getvnode(struct filedesc *fdp, int fd, struct file **fpp)
 {
 	struct vnode *vp;
 	struct file *fp;
