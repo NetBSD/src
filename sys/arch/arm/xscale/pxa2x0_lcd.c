@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.9 2005/06/05 15:39:17 he Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.9 2005/06/05 15:39:17 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *descr,
 
 	if (fontname) {
 		wsfont_init();
-		cookie = wsfont_find((char *)fontname, 0, 0, 0, 
+		cookie = wsfont_find(fontname, 0, 0, 0, 
 		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
 		if (cookie < 0 ||
 		    wsfont_lock(cookie, &rinfo.ri_font))
@@ -527,7 +527,8 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 {
 	struct pxa2x0_lcd_softc *sc = v;
 	struct pxa2x0_lcd_screen *scr;
-	struct pxa2x0_wsscreen_descr *type = (struct pxa2x0_wsscreen_descr *)_type;
+	const struct pxa2x0_wsscreen_descr *type =
+		(const struct pxa2x0_wsscreen_descr *)_type;
 
 	scr = pxa2x0_lcd_new_screen(sc, type->depth);
 	if (scr == NULL)
