@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2004/08/28 13:33:31 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2005/06/05 15:02:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2004/08/28 13:33:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/06/05 15:02:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ mainbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct mainbus_attach_args ma;
 
 	/*
 	 * XXX Check for Qube/RaQ 1 vs. 2.
@@ -69,7 +69,7 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	config_search(mainbus_search, self, ma);
+	config_search(mainbus_search, self, &ma);
 }
 
 static int
