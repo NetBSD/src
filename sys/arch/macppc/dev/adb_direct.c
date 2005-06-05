@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.31 2005/06/05 18:49:49 nathanw Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.32 2005/06/05 20:03:55 nathanw Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.31 2005/06/05 18:49:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.32 2005/06/05 20:03:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -166,8 +166,8 @@ struct ADBDevEntry {
 struct adbCmdHoldEntry {
 	u_char	outBuf[ADB_MAX_MSG_LENGTH];	/* our message */
 	u_char	*saveBuf;	/* buffer to know where to save result */
-	u_char	*compRout;	/* completion routine pointer */
-	u_char	*data;		/* completion routine data pointer */
+	adbComp	*compRout;	/* completion routine pointer */
+	int	*data;		/* completion routine data pointer */
 };
 
 /*
@@ -179,8 +179,8 @@ struct adbCommand {
 	u_char	header[ADB_MAX_HDR_LENGTH];	/* not used yet */
 	u_char	data[ADB_MAX_MSG_LENGTH];	/* packet data only */
 	u_char	*saveBuf;	/* where to save result */
-	u_char	*compRout;	/* completion routine pointer */
-	u_char	*compData;	/* completion routine data pointer */
+	adbComp *compRout;	/* completion routine pointer */
+	volatile int *compData;	/* completion routine data pointer */
 	u_int	cmd;		/* the original command for this data */
 	u_int	unsol;		/* 1 if packet was unsolicited */
 	u_int	ack_only;	/* 1 for no special processing */
@@ -196,8 +196,8 @@ int	adbWriteDelay = 0;	/* working on (or waiting to do) a write */
 
 int	adbWaitingCmd = 0;	/* ADB command we are waiting for */
 u_char	*adbBuffer = (long)0;	/* pointer to user data area */
-void	*adbCompRout = (long)0;	/* pointer to the completion routine */
-void	*adbCompData = (long)0;	/* pointer to the completion routine data */
+adbComp *adbCompRout = NULL;	/* pointer to the completion routine */
+volatile int *adbCompData = NULL;	/* pointer to the completion routine data */
 int	adbStarting = 1;	/* doing ADBReInit so do polling differently */
 
 u_char	adbInputBuffer[ADB_MAX_MSG_LENGTH];	/* data input buffer */
@@ -229,7 +229,7 @@ extern int adb_polling;			/* Are we polling? */
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
-int	pm_adb_op __P((u_char *, void *, void *, int));
+int	pm_adb_op __P((u_char *, void *, volatile void *, int));
 void	pm_init_adb_device __P((void));
 
 /*
@@ -239,19 +239,19 @@ void	pm_init_adb_device __P((void));
 void	print_single __P((u_char *));
 #endif
 void	adb_soft_intr __P((void));
-int	send_adb_cuda __P((u_char *, u_char *, void *, void *, int));
+int	send_adb_cuda __P((u_char *, u_char *, adbComp *, volatile void *, int));
 void	adb_intr_cuda_test __P((void));
 void	adb_cuda_tickle __P((void));
 void	adb_pass_up __P((struct adbCommand *));
-void	adb_op_comprout __P((caddr_t, caddr_t, int));
+void	adb_op_comprout __P((caddr_t, volatile int *, int));
 void	adb_reinit __P((void));
 int	count_adbs __P((void));
 int	get_ind_adb_info __P((ADBDataBlock *, int));
 int	get_adb_info __P((ADBDataBlock *, int));
 int	set_adb_info __P((ADBSetInfoBlock *, int));
 void	adb_setup_hw_type __P((void));
-int	adb_op __P((Ptr, Ptr, Ptr, short));
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+int	adb_op (Ptr, adbComp *, volatile void *, short);
+int	adb_op_sync __P((Ptr, adbComp *, Ptr, short));
 void	adb_hw_setup __P((void));
 int	adb_cmd_result __P((u_char *));
 int	adb_cmd_extra __P((u_char *));
@@ -513,8 +513,8 @@ switch_start:
 				/* reset "waiting" vars, just in case */
 				adbWaitingCmd = 0;
 				adbBuffer = (long)0;
-				adbCompRout = (long)0;
-				adbCompData = (long)0;
+				adbCompRout = NULL;
+				adbCompData = NULL;
 			}
 
 			adbWriteDelay = 0;	/* done writing */
@@ -560,8 +560,8 @@ switch_start:
 
 
 int
-send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
-	command)
+send_adb_cuda(u_char * in, u_char * buffer, adbComp *compRout,
+    volatile void *data, int command)
 {
 	int s, len;
 
@@ -764,9 +764,9 @@ adb_pass_up(struct adbCommand *in)
 		adbInbound[adbInTail].compData = (void *)block.dbDataAreaAddr;
 		adbInbound[adbInTail].saveBuf = (void *)adbInbound[adbInTail].data;
 	} else {
-		adbInbound[adbInTail].compRout = (void *)in->compRout;
-		adbInbound[adbInTail].compData = (void *)in->compData;
-		adbInbound[adbInTail].saveBuf = (void *)in->saveBuf;
+		adbInbound[adbInTail].compRout = in->compRout;
+		adbInbound[adbInTail].compData = in->compData;
+		adbInbound[adbInTail].saveBuf = in->saveBuf;
 	}
 
 #ifdef ADB_DEBUG
@@ -812,8 +812,8 @@ adb_soft_intr(void)
 	int s;
 	int cmd = 0;
 	u_char *buffer = 0;
-	u_char *comprout = 0;
-	u_char *compdata = 0;
+	adbComp *comprout = NULL;
+	volatile int *compdata = 0;
 
 #if 0
 	s = splhigh();
@@ -866,12 +866,8 @@ adb_soft_intr(void)
 		splx(s);
 
 		/* call default completion routine if it's valid */
-		if (comprout) {
-			void (*f)(caddr_t, caddr_t, int) =
-			    (void (*)(caddr_t, caddr_t, int))comprout;
-
-			(*f)(buffer, compdata, cmd);
-		}
+		if (comprout)
+			(*comprout)(buffer, compdata, cmd);
 	}
 	return;
 }
@@ -891,14 +887,14 @@ adb_soft_intr(void)
  *		: -1 = could not complete
  */
 int
-adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
+adb_op(Ptr buffer, adbComp *compRout, volatile void *data, short command)
 {
 	int result;
 
 	switch (adbHardware) {
 	case ADB_HW_PMU:
-		result = pm_adb_op((u_char *)buffer, (void *)compRout,
-		    (void *)data, (int)command);
+		result = pm_adb_op((u_char *)buffer, compRout,
+		    data, (int)command);
 
 		if (result == 0)
 			return 0;
@@ -908,7 +904,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 
 	case ADB_HW_CUDA:
 		result = send_adb_cuda((u_char *)0, (u_char *)buffer,
-		    (void *)compRout, (void *)data, (int)command);
+		    compRout, data, (int)command);
 		if (result == 0)
 			return 0;
 		else
@@ -1019,7 +1015,7 @@ adb_reinit(void)
 	delay(1000);
 
 	/* send an ADB reset first */
-	result = adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	result = adb_op_sync((Ptr)0, NULL, (Ptr)0, (short)0x00);
 	delay(200000);
 
 #ifdef ADB_DEBUG
@@ -1049,7 +1045,7 @@ adb_reinit(void)
 	for (i = 1; i < 16; i++) {
 		send_string[0] = 0;
 		command = ADBTALK(i, 3);
-		result = adb_op_sync((Ptr)send_string, (Ptr)0,
+		result = adb_op_sync((Ptr)send_string, NULL,
 		    (Ptr)0, (short)command);
 
 #ifdef ADB_DEBUG
@@ -1108,7 +1104,7 @@ adb_reinit(void)
 
 			/* send TALK R3 to address */
 			command = ADBTALK(device, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			adb_op_sync((Ptr)send_string, NULL,
 			    (Ptr)0, (short)command);
 
 			/* move device to higher address */
@@ -1116,13 +1112,13 @@ adb_reinit(void)
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			adb_op_sync((Ptr)send_string, NULL,
 			    (Ptr)0, (short)command);
 			delay(500);
 
 			/* send TALK R3 - anything at new address? */
 			command = ADBTALK(saveptr, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			adb_op_sync((Ptr)send_string, NULL,
 			    (Ptr)0, (short)command);
 			delay(500);
 
@@ -1136,7 +1132,7 @@ adb_reinit(void)
 
 			/* send TALK R3 - anything at old address? */
 			command = ADBTALK(device, 3);
-			result = adb_op_sync((Ptr)send_string, (Ptr)0,
+			result = adb_op_sync((Ptr)send_string, NULL,
 			    (Ptr)0, (short)command);
 			if (send_string[0] != 0) {
 				/* check for valid device handler */
@@ -1201,7 +1197,7 @@ adb_reinit(void)
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
-				adb_op_sync((Ptr)send_string, (Ptr)0,
+				adb_op_sync((Ptr)send_string, NULL,
 				    (Ptr)0, (short)command);
 				delay(1000);
 			}
@@ -1316,14 +1312,14 @@ adb_cmd_extra(u_char *in)
  * anyway.
  */
 int
-adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
+adb_op_sync(Ptr buffer, adbComp *compRout, Ptr data, short command)
 {
 	int tmout;
 	int result;
 	volatile int flag = 0;
 
-	result = adb_op(buffer, (void *)adb_op_comprout,
-	    (void *)&flag, command);	/* send command */
+	result = adb_op(buffer, adb_op_comprout,
+	    &flag, command);	/* send command */
 	if (result == 0) {		/* send ok? */
 		/*
 		 * Total time to wait is calculated as follows:
@@ -1359,12 +1355,10 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * This function is used by the adb_op_sync routine so it knows when the
  * function is done.
  */
-void 
-adb_op_comprout(buffer, compdata, cmd)
-	caddr_t buffer, compdata;
-	int cmd;
+void
+adb_op_comprout(caddr_t buffer, volatile int *compdata, int cmd)
 {
-	short *p = (short *)compdata;
+	volatile int *p = compdata;
 
 	*p = 1;
 }
@@ -1483,7 +1477,7 @@ adb_read_date_time(unsigned long *time)
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x03;	/* read date/time */
 		result = send_adb_cuda((u_char *)output, (u_char *)output,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    adb_op_comprout, &flag, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -1519,7 +1513,7 @@ adb_set_date_time(unsigned long time)
 		output[5] = (u_char)(time >> 8);
 		output[6] = (u_char)(time);
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    adb_op_comprout, &flag, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -1605,7 +1599,7 @@ SetADBInfo(ADBSetInfoBlock * info, int adbAddr)
 }
 
 int 
-ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
+ADBOp(Ptr buffer, adbComp *compRout, Ptr data, short commandNum)
 {
 	return (adb_op(buffer, compRout, data, commandNum));
 }
@@ -1630,8 +1624,8 @@ adb_cuda_autopoll()
 	output[1] = 0x01;	/* to pram/rtc device */
 	output[2] = 0x01;	/* cuda autopoll */
 	output[3] = 0x01;
-	result = send_adb_cuda(output, output, adb_op_comprout, (void *)&flag,
-			       0);
+	result = send_adb_cuda(output, output, adb_op_comprout,
+	    &flag, 0);
 	if (result != 0)	/* exit if not sent */
 		return;
 
