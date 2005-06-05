@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.6 2004/06/11 19:54:02 mellon Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.7 2005/06/05 19:08:28 chs Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2153,6 +2153,8 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 					    packet -> options,
 					    (struct option_state *)0,
 					    &global_scope, oc, MDL);
+	else
+		s1 = 0;
 	if (oc && s1 &&
 	    lease -> client_hostname &&
 	    strlen (lease -> client_hostname) == d1.len &&

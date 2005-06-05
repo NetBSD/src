@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.16 2004/02/16 21:57:04 itojun Exp $	*/
+/*	$NetBSD: reverse.c,v 1.17 2005/06/05 19:08:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.16 2004/02/16 21:57:04 itojun Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.17 2005/06/05 19:08:28 chs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -194,6 +194,7 @@ r_buf(FILE *fp)
 		}
 
 		/* Fill the block with input data. */
+		ch = 0;
 		for (p = tl->l, len = 0;
 		    len < BSZ && (ch = getc(fp)) != EOF; ++len)
 			*p++ = ch;
