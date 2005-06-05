@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2005/05/18 14:04:26 chs Exp $
+#	$NetBSD: list,v 1.2 2005/06/05 18:54:06 chs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -64,6 +64,7 @@ SPECIAL	umount		srcdir	distrib/utils/x_umount
 LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
 
 COPY	${DESTDIR}/usr/mdec/xxboot	usr/mdec/xxboot
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
