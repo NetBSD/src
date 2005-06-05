@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2004/07/18 22:38:07 chs Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2005/06/05 19:01:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -115,4 +115,4 @@ L$sigcode_bounce:
 	.call
 	ble	4(%sr7, %r1)
 	ldi	SYS_exit, %t1
-EXIT(__sigtramp_sigcontext_1)
+EXIT(__sigtramp_siginfo_2)
