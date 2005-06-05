@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.6 2003/08/01 00:30:21 bsh Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.7 2005/06/05 13:53:23 he Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.6 2003/08/01 00:30:21 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.7 2005/06/05 13:53:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,7 @@ resettodr(void)
 }
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int newhz)
 {
 }
 
