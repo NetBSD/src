@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.18 2005/06/05 11:34:12 he Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.19 2005/06/05 14:17:51 he Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.18 2005/06/05 11:34:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.19 2005/06/05 14:17:51 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -142,7 +142,8 @@ next68k_bootargs(unsigned char **args)
 	Elf_Ehdr *ehdr;
 	Elf_Shdr *shp;
 	vaddr_t minsym, maxsym;
-	char *reloc_end, *reloc_elfmag;
+	char *reloc_end;
+	const char *reloc_elfmag;
 #endif
 
 	RELOC(rom_return_sp,u_char *) = args[0];
