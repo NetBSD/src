@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.69 2005/06/04 22:14:00 he Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.70 2005/06/05 01:15:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.69 2005/06/04 22:14:00 he Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.70 2005/06/05 01:15:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -195,7 +195,7 @@ _pw_opendb(DB **db)
 {
 	static int	warned;
 
-	const char	*dbfile = NULL; /* XXX -Wuninitialized in gcc */
+	const char	*dbfile = NULL;
 
 	_DIAGASSERT(db != NULL);
 	if (*db != NULL)					/* open *db */
