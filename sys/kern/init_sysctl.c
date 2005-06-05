@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.40 2005/05/29 22:24:15 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.41 2005/06/05 09:04:49 jdc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.40 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.41 2005/06/05 09:04:49 jdc Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -106,10 +106,10 @@ sysctl_ncpus(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	int ncpus = 0;
+	int _ncpus = 0;
 	for (CPU_INFO_FOREACH(cii, ci))
-		ncpus++;
-	return (ncpus);
+		_ncpus++;
+	return (_ncpus);
 }
 #endif /* MULTIPROCESSOR */
 
