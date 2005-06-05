@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.13 2005/02/10 16:07:38 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.14 2005/06/05 09:32:32 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2005/02/10 16:07:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.14 2005/06/05 09:32:32 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ static void	rtcattach(struct device *, struct device *, void *aux);
 CFATTACH_DECL(rtc, sizeof (struct rtc_softc),
     rtcmatch, rtcattach, NULL, NULL);
 
-static int	rtc_gettime(todr_chip_handle_t, struct timeval *);
-static int	rtc_settime(todr_chip_handle_t, struct timeval *);
+static int	rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int	rtc_settime(todr_chip_handle_t, volatile struct timeval *);
 static int	rtc_getcal(todr_chip_handle_t, int *);
 static int	rtc_setcal(todr_chip_handle_t, int);
 static uint8_t	rtc_readreg(struct rtc_softc *, int);
@@ -156,7 +156,7 @@ rtcattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+rtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
 	int i, read_okay, year;
@@ -200,7 +200,7 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 }
 
 static int
-rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
 	int i, year;
