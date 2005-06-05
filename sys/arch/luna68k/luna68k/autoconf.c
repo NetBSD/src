@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 2004/10/23 17:07:39 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.5 2005/06/05 09:08:48 he Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2004/10/23 17:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2005/06/05 09:08:48 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2004/10/23 17:07:39 thorpej Exp $")
 
 #include <luna68k/luna68k/isr.h>
 
-static struct device *find_dev_byname __P((char *));
+static struct device *find_dev_byname __P((const char *));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -75,7 +75,8 @@ cpu_rootconf()
 {
 #if 1 /* XXX to be reworked with helps of 2nd stage loaders XXX */
 	int i;
-	char *devname, *cp;
+	const char *devname;
+	char *cp;
 	extern char bootarg[64];
 
 	cp = bootarg;
@@ -100,7 +101,7 @@ cpu_rootconf()
 
 static struct device *
 find_dev_byname(name)
-	char *name;
+	const char *name;
 {
 	struct device *dv;
 
