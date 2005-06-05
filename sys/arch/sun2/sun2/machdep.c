@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2005/06/05 12:36:24 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2005/06/05 12:36:24 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -235,6 +235,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2005/04/25 15:02:07 lukem Exp $");
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+/* Defined in vfs_bio.c */
+extern u_int bufpages;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
