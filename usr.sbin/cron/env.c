@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.13 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: env.c,v 1.14 2005/06/05 19:08:28 chs Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.13 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: env.c,v 1.14 2005/06/05 19:08:28 chs Exp $");
 #endif
 #endif
 
@@ -127,6 +127,9 @@ load_env(char *envstr, FILE *f)
 
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
+	name = NULL;
+	name_end = NULL;
+	s = NULL;
 	equal = strchr(envstr, '=');
 	if (equal) {
 		/*
