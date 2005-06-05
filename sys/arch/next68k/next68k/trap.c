@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 2005/06/05 11:35:09 he Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2005/06/05 11:35:09 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -145,7 +145,7 @@ static inline void userret(struct lwp *, struct frame *, u_quad_t, u_int, int);
 
 int	astpending;
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",
@@ -754,11 +754,11 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+const char *f7sz[] = { "longword", "byte", "word", "line" };
+const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
-char wberrstr[] =
+const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 

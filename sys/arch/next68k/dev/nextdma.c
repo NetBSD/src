@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.37 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.38 2005/06/05 11:35:09 he Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.37 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.38 2005/06/05 11:35:09 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ static int nnextdma_channels = (sizeof(nextdma_channel)/sizeof(nextdma_channel[0
 static int attached = 0;
 
 struct nextdma_softc *
-nextdma_findchannel(char *name)
+nextdma_findchannel(const char *name)
 {
 	struct device *dev = TAILQ_FIRST(&alldevs);
 
