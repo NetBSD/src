@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.59 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.60 2005/06/05 23:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.59 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.60 2005/06/05 23:47:48 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -89,8 +89,7 @@ MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
  *	}
  */
 int
-namei(ndp)
-	struct nameidata *ndp;
+namei(struct nameidata *ndp)
 {
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
 	char *cp;			/* pointer into pathname argument */
@@ -316,8 +315,7 @@ namei_hash(const char *name, const char **ep)
  *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
-lookup(ndp)
-	struct nameidata *ndp;
+lookup(struct nameidata *ndp)
 {
 	const char *cp;			/* pointer into pathname argument */
 	struct vnode *dp = 0;		/* the directory we are searching */
@@ -672,9 +670,7 @@ bad:
  * Reacquire a path name component.
  */
 int
-relookup(dvp, vpp, cnp)
-	struct vnode *dvp, **vpp;
-	struct componentname *cnp;
+relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
 	struct vnode *dp = 0;		/* the directory we are searching */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
