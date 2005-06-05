@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2002/12/08 20:19:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2005/06/05 18:19:53 thorpej Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}config
-HOST_SRCDIR=	usr.sbin/config
+HOST_SRCDIR=	usr.bin/config
 
 HOST_CPPFLAGS+=	-DMAKE_BOOTSTRAP
 
