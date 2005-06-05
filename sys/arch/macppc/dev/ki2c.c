@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.2 2005/06/05 20:16:35 nathanw Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -363,5 +363,5 @@ ki2c_write(sc, addr, subaddr, data, len)
 	const void *data;
 {
 	sc->sc_flags = 0;
-	return ki2c_start(sc, addr, subaddr, (void *)data, len);
+	return ki2c_start(sc, addr, subaddr, __UNCONST(data), len);
 }
