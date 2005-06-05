@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2005/06/05 17:56:31 he Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/06/05 17:56:31 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -174,7 +174,7 @@ decr_intr(frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long ticks;
 	int nticks;
 	extern long intrcnt[];
 
@@ -193,16 +193,16 @@ decr_intr(frame)
 	} else {
 		asm volatile ("mftb %0" : "=r"(tb));
 	}
-	asm ("mfdec %0" : "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mfdec %0" : "=r"(ticks));
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(ticks));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + ticks - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 
