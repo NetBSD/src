@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.61 2005/06/05 21:22:20 jdc Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.62 2005/06/06 19:56:46 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.61 2005/06/05 21:22:20 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.62 2005/06/06 19:56:46 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	struct sadata *sa = l->l_proc->p_sa;
 #ifdef MULTIPROCESSOR
 	struct sadata_vp *vp = l->l_savp;
-	int _ncpus, s;
+	int ncpus, s;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 #endif
@@ -565,11 +565,11 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	 */
 #ifdef MULTIPROCESSOR
 	if (SCARG(uap, concurrency) > sa->sa_maxconcurrency) {
-		_ncpus = 0;
+		ncpus = 0;
 		for (CPU_INFO_FOREACH(cii, ci))
-			_ncpus++;
+			ncpus++;
 		*retval += sa_increaseconcurrency(l,
-		    min(SCARG(uap, concurrency), _ncpus));
+		    min(SCARG(uap, concurrency), ncpus));
 	}
 #endif
 
