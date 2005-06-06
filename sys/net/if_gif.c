@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.53 2005/06/02 10:54:58 tron Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.54 2005/06/06 06:06:50 martin Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.53 2005/06/02 10:54:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.54 2005/06/06 06:06:50 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -218,7 +218,7 @@ gif_start(ifp)
 #ifdef GIF_ENCAPCHECK
 int
 gif_encapcheck(m, off, proto, arg)
-	const struct mbuf *m;
+	struct mbuf *m;
 	int off;
 	int proto;
 	void *arg;
