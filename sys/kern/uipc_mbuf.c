@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.99 2005/06/06 04:50:28 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100 2005/06/06 06:06:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.99 2005/06/06 04:50:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100 2005/06/06 06:06:50 martin Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -668,7 +668,7 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(const struct mbuf *m, int off, int len, void *vp)
+m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
 	unsigned	count;
 	caddr_t		cp = vp;
