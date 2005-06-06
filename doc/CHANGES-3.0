@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.114 2005/06/04 20:51:59 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.115 2005/06/06 12:28:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9099,4 +9099,19 @@ lib/libc/string/wcschr.c			1.4
 
 	Only advance 'p' once each time around the loop....
 	[dsl, ticket #422]
+
+sys/arch/amd64/amd64/pmap.c			1.19
+sys/arch/amiga/amiga/pmap.c			1.113
+sys/arch/atari/atari/pmap.c			1.90
+sys/arch/hppa/hppa/pmap.c			1.16
+sys/arch/pc532/pc532/pmap.c			1.77
+sys/arch/sparc/sparc/pmap.c			1.299
+sys/arch/sun2/sun2/pmap.c			1.27
+sys/arch/sun3/sun3/pmap.c			1.147
+sys/arch/sun3/sun3x/pmap.c			1.87
+sys/arch/xen/i386/pmap.c			1.12
+
+	In pmap_enter(), preset the mod/ref bits based on the flags argument.
+	This fixes PR kern/25640.
+	[chs, ticket #424]
 
