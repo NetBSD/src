@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
+.\"     $NetBSD: vnsubr.9,v 1.22 2005/06/06 02:04:03 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,7 +246,7 @@ appropriate error code is returned.
 .It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.
 The vnode is specified by the argument
-.Fa vp
+.Fa vp ,
 and
 .Fa sb
 is the buffer to return the stat information.
@@ -256,7 +256,7 @@ is the calling process.
 .Fn vn_stat
 basically calls the vnode operation
 .Xr VOP_GETATTR 9
-and transfer the contents of a vattr structure into a struct stat.
+and transfers the contents of a vattr structure into a struct stat.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vn_writechk "vp"
