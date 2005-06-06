@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8.2.2 2005/05/28 16:27:46 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8.2.3 2005/06/06 12:16:10 tron Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.2.2 2005/05/28 16:27:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.2.3 2005/06/06 12:16:10 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3670,6 +3670,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -3932,6 +3937,11 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -4161,6 +4171,11 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
