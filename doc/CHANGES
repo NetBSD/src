@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.473 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.474 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -39,3 +39,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	acpi(4): Import ACPI-CA 20050408 [kochi 20050502]
 	psh3tp(4): Support touch-panel for PERSONA SH3 machines.
 		   [kiyohara 20050523]
+	evbarm: Add support for the Arcom Viper.  [pooka 20050606]
