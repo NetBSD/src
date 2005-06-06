@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.24 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.25 2005/06/06 12:08:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.24 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.25 2005/06/06 12:08:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,16 +458,18 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 		p = mode == AUMODE_PLAY ? play : rec;
 
 		if (p == play) {
-			DPRINTFN(5, ("play: sample=%ld precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
+			DPRINTFN(5,
+			    ("play: sample=%u precision=%u channels=%u\n",
+			    p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1  && p->channels != 2)) {
 				return EINVAL;
 			}
 		} else {
-			DPRINTFN(5, ("rec: sample=%ld precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
+			DPRINTFN(5,
+			    ("rec: sample=%u precision=%u channels=%u\n",
+			    p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1 && p->channels != 2)) {
