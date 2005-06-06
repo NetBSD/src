@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.789 2005/06/05 18:19:53 thorpej Exp $
+#	$NetBSD: mi,v 1.790 2005/06/06 05:20:05 martin Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5818,7 +5818,7 @@
 ./usr/share/man/man1/gcov.1			comp-debug-man		.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man
-./usr/sahre/man/man1/genassym.1			comp-util-man		.man
+./usr/share/man/man1/genassym.1			comp-util-man		.man
 ./usr/share/man/man1/ld.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
