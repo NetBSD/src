@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.228 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.229 2005/06/06 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.228 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.229 2005/06/06 12:10:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -922,6 +922,7 @@ tcp_input(struct mbuf *m, ...)
 	va_list ap;
 	int af;		/* af on the wire */
 	struct mbuf *tcp_saveti = NULL;
+	uint32_t ts_rtt;
 
 	MCLAIM(m, &tcp_rx_mowner);
 	va_start(ap, m);
@@ -1539,9 +1540,11 @@ after_listen:
 		 * RTT calculation.  Since ts_ecr is unsigned, we can test both
 		 * at the same time.
 		 */
-		opti.ts_ecr = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
-		if (opti.ts_ecr > TCP_PAWS_IDLE)
-			opti.ts_ecr = 0;
+		ts_rtt = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
+		if (ts_rtt > TCP_PAWS_IDLE)
+			ts_rtt = 0;
+	} else {
+		ts_rtt = 0;
 	}
 
 	/*
@@ -1586,8 +1589,8 @@ after_listen:
 				 * this is a pure ack for outstanding data.
 				 */
 				++tcpstat.tcps_predack;
-				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp, opti.ts_ecr);
+				if (ts_rtt)
+					tcp_xmit_timer(tp, ts_rtt);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -2225,8 +2228,8 @@ after_listen:
 		 * timer backoff (cf., Phil Karn's retransmit alg.).
 		 * Recompute the initial retransmit timer.
 		 */
-		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, opti.ts_ecr);
+		if (ts_rtt)
+			tcp_xmit_timer(tp, ts_rtt);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
