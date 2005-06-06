@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.91 2005/05/29 21:40:27 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.92 2005/06/06 02:47:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.91 2005/05/29 21:40:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.92 2005/06/06 02:47:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -192,7 +192,7 @@ extern int rsvp_on;
 
 /* vif attachment using sys/netinet/ip_encap.c */
 static void vif_input(struct mbuf *, ...);
-static int vif_encapcheck(const struct mbuf *, int, int, void *);
+static int vif_encapcheck(struct mbuf *, int, int, void *);
 
 static const struct protosw vif_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
@@ -2014,7 +2014,7 @@ vif_input(struct mbuf *m, ...)
  * Check if the packet should be grabbed by us.
  */
 static int
-vif_encapcheck(const struct mbuf *m, int off, int proto, void *arg)
+vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct vif *vifp;
 	struct ip ip;
@@ -2032,13 +2032,11 @@ vif_encapcheck(const struct mbuf *m, int off, int proto, void *arg)
 	 * at most one tunnel with the remote site).
 	 */
 
-	/*XXXUNCONST*/
-	m_copydata(__UNCONST(m), off, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, off, sizeof(ip), (caddr_t)&ip);
 	if (!IN_MULTICAST(ip.ip_dst.s_addr))
 		return 0;
 
-	/*XXXUNCONST*/
-	m_copydata(__UNCONST(m), 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
 	if (!in_hosteq(ip.ip_src, last_encap_src)) {
 		vifp = (struct vif *)arg;
 		if (vifp->v_flags & VIFF_TUNNEL &&
