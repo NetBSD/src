@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.42 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.43 2005/06/06 12:09:19 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.42 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.43 2005/06/06 12:09:19 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -249,11 +249,7 @@ udv_attach(arg, accessprot, off, size)
 		 * and return.
 		 */
 
-		simple_lock_init(&udv->u_obj.vmobjlock);
-		udv->u_obj.pgops = &uvm_deviceops;
-		TAILQ_INIT(&udv->u_obj.memq);
-		udv->u_obj.uo_npages = 0;
-		udv->u_obj.uo_refs = 1;
+		UVM_OBJ_INIT(&udv->u_obj, &uvm_deviceops, 1);
 		udv->u_flags = 0;
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
