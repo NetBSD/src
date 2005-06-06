@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.37 2005/02/26 22:31:44 perry Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.38 2005/06/06 12:09:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.37 2005/02/26 22:31:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.38 2005/06/06 12:09:19 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -149,11 +149,7 @@ ubc_init(void)
 	 * map in ubc_object.
 	 */
 
-	simple_lock_init(&ubc_object.uobj.vmobjlock);
-	ubc_object.uobj.pgops = &ubc_pager;
-	TAILQ_INIT(&ubc_object.uobj.memq);
-	ubc_object.uobj.uo_npages = 0;
-	ubc_object.uobj.uo_refs = UVM_OBJ_KERN;
+	UVM_OBJ_INIT(&ubc_object.uobj, &ubc_pager, UVM_OBJ_KERN);
 
 	ubc_object.umap = malloc(ubc_nwins * sizeof(struct ubc_map),
 				 M_TEMP, M_NOWAIT);

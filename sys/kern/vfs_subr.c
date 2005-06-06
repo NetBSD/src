@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.247 2005/06/05 23:47:48 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.248 2005/06/06 12:09:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.247 2005/06/05 23:47:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.248 2005/06/06 12:09:19 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -558,13 +558,9 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		numvnodes++;
 		simple_unlock(&vnode_free_list_slock);
 		memset(vp, 0, sizeof(*vp));
-		simple_lock_init(&vp->v_interlock);
-		uobj = &vp->v_uobj;
-		uobj->pgops = &uvm_vnodeops;
-		TAILQ_INIT(&uobj->memq);
+		UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
 		/*
 		 * done by memset() above.
-		 *	uobj->uo_npages = 0;
 		 *	LIST_INIT(&vp->v_nclist);
 		 *	LIST_INIT(&vp->v_dnclist);
 		 */
@@ -588,6 +584,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 			*vpp = 0;
 			return (ENFILE);
 		}
+		vp->v_usecount = 1;
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
 #ifdef VERIFIED_EXEC
@@ -603,7 +600,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	insmntque(vp, mp);
 	*vpp = vp;
-	vp->v_usecount = 1;
 	vp->v_data = 0;
 	simple_lock_init(&vp->v_interlock);
 
