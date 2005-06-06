@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25.6.1 2005/06/06 12:17:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25.6.1 2005/06/06 12:17:03 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1968,6 +1968,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	new_pte |= PG_VALID;
 	if (prot & VM_PROT_WRITE)
 		new_pte |= PG_WRITE;
+	if (flags & VM_PROT_ALL) {
+		new_pte |= PG_REF;
+		if (flags & VM_PROT_WRITE) {
+			new_pte |= PG_MOD;
+		}
+	}
 
 	/* ...and finally the page-frame number. */
 	new_pte |= PA_PGNUM(pa);
