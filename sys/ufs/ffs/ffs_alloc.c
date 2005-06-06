@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.83 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.84 2005/06/06 17:10:25 dbj Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.83 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.84 2005/06/06 17:10:25 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -173,8 +173,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 		cg = ino_to_cg(fs, ip->i_number);
 	else
 		cg = dtog(fs, bpref);
-	bno = ffs_hashalloc(ip, cg, (long)bpref, size,
-	    			     ffs_alloccg);
+	bno = ffs_hashalloc(ip, cg, bpref, size, ffs_alloccg);
 	if (bno > 0) {
 		DIP_ADD(ip, blocks, btodb(size));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
