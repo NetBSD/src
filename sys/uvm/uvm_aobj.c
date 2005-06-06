@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.65 2005/05/29 21:06:33 christos Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.66 2005/06/06 12:09:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.65 2005/05/29 21:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.66 2005/06/06 12:09:19 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -488,6 +488,7 @@ uao_create(size, flags)
 	static int kobj_alloced = 0;
 	int pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
+	int refs;
 
 	/*
 	 * malloc a new aobj unless we are asked for the kernel object
@@ -498,17 +499,18 @@ uao_create(size, flags)
 		aobj = &kernel_object_store;
 		aobj->u_pages = pages;
 		aobj->u_flags = UAO_FLAG_NOSWAP;
-		aobj->u_obj.uo_refs = UVM_OBJ_KERN;
+		refs = UVM_OBJ_KERN;
 		kobj_alloced = UAO_FLAG_KERNOBJ;
 	} else if (flags & UAO_FLAG_KERNSWAP) {
 		KASSERT(kobj_alloced == UAO_FLAG_KERNOBJ);
 		aobj = &kernel_object_store;
 		kobj_alloced = UAO_FLAG_KERNSWAP;
+		refs = 0xdeadbeaf; /* XXX: gcc */
 	} else {
 		aobj = pool_get(&uvm_aobj_pool, PR_WAITOK);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;
-		aobj->u_obj.uo_refs = 1;
+		refs = 1;
 	}
 
 	/*
@@ -546,10 +548,7 @@ uao_create(size, flags)
  	 * init aobj fields
  	 */
 
-	simple_lock_init(&aobj->u_obj.vmobjlock);
-	aobj->u_obj.pgops = &aobj_pager;
-	TAILQ_INIT(&aobj->u_obj.memq);
-	aobj->u_obj.uo_npages = 0;
+	UVM_OBJ_INIT(&aobj->u_obj, &aobj_pager, refs);
 
 	/*
  	 * now that aobj is ready, add it to the global list
