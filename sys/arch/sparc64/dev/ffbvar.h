@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.3 2004/07/19 01:04:35 heas Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.3.10.1 2005/06/07 17:27:09 tron Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 
 struct ffb_softc {
 	struct device sc_dv;
+	struct fbdevice sc_fb;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_pixel_h;
 	bus_space_handle_t sc_dac_h;
@@ -53,7 +54,6 @@ struct ffb_softc {
 	int sc_type;
 	u_int sc_dacrev;
 	u_int sc_mode;
-	struct rasops_info sc_rasops;
 	int32_t sc_fifo_cache, sc_fg_cache;
 };
 
