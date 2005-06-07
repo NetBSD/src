@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2005/06/07 09:25:00 he Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2005/06/07 09:25:00 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,6 +322,8 @@ macro()
 	int t, l;
 	ndptr p;
 	int  nlpar;
+
+	l = 0;		/* XXXGCC -Wuninitialized [sun2] */
 
 	cycle {
 		t = gpbc();
