@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.28 2004/01/21 22:50:56 kleink Exp $	*/
+/*	$NetBSD: systrace.c,v 1.29 2005/06/07 09:00:18 he Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -163,6 +163,8 @@ trans_cb(int fd, pid_t pid, int policynr,
 	pid_t ppid;
 	int dolog = 0;
 
+	ipid = NULL;	/* XXXGCC -Wuninitialized [dreamcast] */
+
 	action = ICPOLICY_PERMIT;
 
 	if (policynr == -1)
@@ -268,6 +270,8 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	short action = ICPOLICY_PERMIT;
 	short future;
 	int len, off, dolog = 0;
+
+	ipid = NULL;	/* XXXGCC -Wuninitialized [dreamcast] */
 
 	if (policynr == -1)
 		goto out;
