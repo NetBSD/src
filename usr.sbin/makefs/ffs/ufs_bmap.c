@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.14 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.15 2005/06/07 13:54:55 he Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ufs_bmap.c,v 1.14 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: ufs_bmap.c,v 1.15 2005/06/07 13:54:55 he Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -80,6 +80,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 	int i, numlevels, off;
 	u_long lognindir;
 
+	metalbn = 0;		/* XXXGCC -Wuninitialized [sparc64] */
 	lognindir = ffs(NINDIR(ip->i_fs)) - 1;
 	if (nump)
 		*nump = 0;
