@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.5.10.1 2005/06/07 17:26:29 tron Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.5.10.2 2005/06/07 17:27:32 tron Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.5.10.1 2005/06/07 17:26:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.5.10.2 2005/06/07 17:27:32 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,9 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.5.10.1 2005/06/07 17:26:29 tron Ex
 #include <machine/openfirm.h>
 
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
-#include <dev/rasops/rasops.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 
 #include <sparc64/dev/ffbreg.h>
 #include <sparc64/dev/ffbvar.h>
