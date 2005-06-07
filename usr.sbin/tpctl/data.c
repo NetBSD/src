@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.2 2002/12/15 09:13:21 takemura Exp $	*/
+/*	$NetBSD: data.c,v 1.3 2005/06/07 14:01:49 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -41,7 +41,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.2 2002/12/15 09:13:21 takemura Exp $");
+__RCSID("$NetBSD: data.c,v 1.3 2005/06/07 14:01:49 he Exp $");
 #endif /* not lint */
 
 static void *
@@ -258,6 +258,8 @@ write_data(char *filename, struct tpctl_data *data)
 	FILE *fp;
 	struct tpctl_data_elem *elem;
 	char *p, tmpfile[MAXPATHLEN + 1];
+
+	fd = 0;		/* XXXGCC -Wuninitialized [hpcarm] */
 
 	if (filename == NULL) {
 		fp = stdout;
