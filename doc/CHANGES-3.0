@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.115 2005/06/06 12:28:18 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.116 2005/06/07 18:10:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9114,4 +9114,39 @@ sys/arch/xen/i386/pmap.c			1.12
 	In pmap_enter(), preset the mod/ref bits based on the flags argument.
 	This fixes PR kern/25640.
 	[chs, ticket #424]
+
+sys/arch/sparc64/conf/GENERIC32			1.103
+
+	Use the new WSCOL_REALWHITE as default background color.
+	[martin, ticket #372]
+
+sys/arch/sparc64/conf/GENERIC32			1.104
+sys/dev/wscons/wsdisplayvar.h			1.32
+
+	Rename REALWHITE to SNOWWHITE.
+	While there, add LIGHT versions of the other predefined colours as
+	well.
+	[martin, ticket #373]
+
+sys/dev/wscons/wsemul_sun.c			1.20
+
+	If the driver supports reverse, try that first - even on color
+	displays. This removes a XXX and makes us independent of the users
+	default colors.
+	[martin, ticket #374]
+
+sys/arch/sparc64/conf/GENERIC32			1.106
+
+	Changed wsdisplay* attachment so the console display will always be
+	wsdisplay0.
+	[martin, ticket #375]
+
+sys/arch/sparc64/dev/ffb.c			1.9-1.18
+sys/arch/sparc64/dev/ffb_mainbus.c		1.6-1.7
+sys/arch/sparc64/dev/ffbvar.h			1.4-1.5
+sys/dev/sun/fbio.h				1.5
+
+	Turn NetBSD-sparc64's ffb driver into a full grown frame buffer,
+	including virtual consoles and X support.
+	[martin, ticket #376]
 
