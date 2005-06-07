@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.91 2004/11/16 04:58:14 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.92 2005/06/07 08:53:13 he Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.91 2004/11/16 04:58:14 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.92 2005/06/07 08:53:13 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1151,6 +1151,9 @@ printval(bp, v, mode)
 	char *fcp, *cp;
 	int64_t val;
 	u_int64_t uval;
+
+	val = 0;	/* XXXGCC -Wuninitialized [hpcarm] */
+	uval = 0;	/* XXXGCC -Wuninitialized [hpcarm] */
 
 	/*
 	 * Note that the "INF127" check is nonsensical for types
