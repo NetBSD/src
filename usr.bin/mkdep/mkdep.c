@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.23 2004/07/13 12:00:30 wiz Exp $ */
+/* $NetBSD: mkdep.c,v 1.24 2005/06/07 09:33:37 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.23 2004/07/13 12:00:30 wiz Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.24 2005/06/07 09:33:37 he Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -173,6 +173,9 @@ main(int argc, char **argv)
 	const char *fname;
 	const char *suffixes = NULL, *s;
 	suff_list_t *suff_list = NULL, *sl;
+
+	suf = NULL;		/* XXXGCC -Wuninitialized [sun2] */
+	sl = NULL;		/* XXXGCC -Wuninitialized [sun2] */
 
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
