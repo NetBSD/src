@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$NetBSD: qop.c,v 1.6 2005/06/07 13:39:37 he Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -217,7 +217,7 @@ int
 qcmd_delete_class(const char *ifname, const char *clname)
 {
 	struct ifinfo		*ifinfo;
-	struct classinfo	*clinfo;
+	struct classinfo	*clinfo = NULL;
 	int error = 0;
 
 	if ((ifinfo = ifname2ifinfo(ifname)) == NULL)
@@ -240,7 +240,7 @@ qcmd_add_filter(const char *ifname, const char *clname, const char *flname,
 		 const struct flow_filter *fltr)
 {
 	struct ifinfo		*ifinfo;
-	struct classinfo	*clinfo;
+	struct classinfo	*clinfo = NULL;
 	int error = 0;
 
 	if ((ifinfo = ifname2ifinfo(ifname)) == NULL)
@@ -276,8 +276,8 @@ int
 qcmd_delete_filter(const char *ifname, const char *clname, const char *flname)
 {
 	struct ifinfo		*ifinfo;
-	struct classinfo	*clinfo;
-	struct fltrinfo		*fltrinfo;
+	struct classinfo	*clinfo = NULL;
+	struct fltrinfo		*fltrinfo = NULL;
 	int error = 0;
 	
 	if ((ifinfo = ifname2ifinfo(ifname)) == NULL)
