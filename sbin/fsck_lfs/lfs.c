@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.14 2005/06/02 01:02:21 lukem Exp $ */
+/* $NetBSD: lfs.c,v 1.15 2005/06/07 09:08:07 he Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -239,6 +239,8 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 	int lbc;
 	int i, numlevels, off;
 	int lognindir, indir;
+
+	metalbn = 0;	/* XXXGCC -Wuninitialized [dreamcast] */
 
 	if (nump)
 		*nump = 0;
