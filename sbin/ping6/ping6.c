@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.63 2005/06/02 01:35:57 lukem Exp $	*/
+/*	$NetBSD: ping6.c,v 1.64 2005/06/07 09:10:33 he Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.63 2005/06/02 01:35:57 lukem Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.64 2005/06/07 09:10:33 he Exp $");
 #endif
 #endif
 
@@ -1361,6 +1361,8 @@ dnsdecode(const u_char **sp, const u_char *ep, const u_char *base, char *buf,
 	char cresult[MAXDNAME + 1];
 	const u_char *comp;
 	int l;
+
+	i = 0;		/* XXXGCC -Wuninitialized [sun2] */
 
 	cp = *sp;
 	*buf = '\0';
