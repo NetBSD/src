@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.15 2003/07/15 02:29:33 lukem Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.16 2005/06/07 12:19:46 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.15 2003/07/15 02:29:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.16 2005/06/07 12:19:46 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.15 2003/07/15 02:29:33 lukem Exp $");
 
 /* TX39 CS mapping. (nonconfigurationable) */
 const struct csmap {
-	char	*cs_name;
+	const char *cs_name;
 	paddr_t	cs_addr;
 	psize_t	cs_size;
 } __csmap[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.23 2005/04/01 11:59:29 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.24 2005/06/07 12:19:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23 2005/04/01 11:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2005/06/07 12:19:46 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ hpcmips_alloc_bus_space_tag()
 void
 hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
     struct bus_space_tag_hpcmips *basetag,
-    char *name, u_int32_t base, u_int32_t size)
+    const char *name, u_int32_t base, u_int32_t size)
 {
 	u_int32_t pa, endpa;
 	vaddr_t va;
