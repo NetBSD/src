@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2005/06/02 09:32:57 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2005/06/07 22:21:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -122,7 +122,9 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	struct sockaddr *clnt = caller->buf;
 	char *ret = NULL;
 
+#ifdef INET6
 	servsin6 = ifsin6 = newsin6 = NULL;	/* XXXGCC -Wuninitialized */
+#endif
 	servsin = newsin = NULL;		/* XXXGCC -Wuninitialized */
 
 #ifdef ND_DEBUG
