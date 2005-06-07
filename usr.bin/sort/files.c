@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.23 2004/02/15 11:52:12 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.24 2005/06/07 09:51:34 he Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.23 2004/02/15 11:52:12 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.24 2005/06/07 09:51:34 he Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -171,6 +171,8 @@ makeline(flno, top, filelist, nfiles, recbuf, bufend, dummy2)
 	static int filenum = 0, overflow = 0;
 	static FILE *fp = 0;
 	int c;
+
+	c = 0;		/* XXXGCC -Wuninitialized [pmppc] */
 
 	pos = (char *) recbuf->data;
 	if (overflow) {
