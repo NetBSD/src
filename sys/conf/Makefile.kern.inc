@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.66 2005/06/02 05:11:55 sjg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.67 2005/06/07 18:11:34 sjg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -300,6 +300,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 _SFILES=${MD_SFILES} ${SFILES}
 _CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
 _XargsMKDEP=${MKDEP:M*=*} xargs -t ${MKDEP:N*=*}
+_SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
 
 # This dance is necessary to avoid long command lines.
 ${SRCS:S,^,list-,}:
@@ -311,8 +312,8 @@ _cfiles: ${_CFILES:S,^,list-,}
 .depend: ${SRCS} assym.h config_time.h
 	${_MKTARGET_CREATE}
 	@> $@
-	@${.MAKE} -f ${MAKEFILE} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
-	@${.MAKE} -f ${MAKEFILE} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
+	@${_SubMake} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
+	@${_SubMake} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
