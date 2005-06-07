@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.6 2005/04/13 00:19:44 mrg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.7 2005/06/07 11:33:55 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.6 2005/04/13 00:19:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.7 2005/06/07 11:33:55 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -156,7 +156,7 @@ iwi_match(struct device *parent, struct cfdata *match, void *aux)
 		return 0;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2200BG ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1)
 		return 1;
 
 	return 0;
