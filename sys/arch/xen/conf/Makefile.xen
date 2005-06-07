@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.6 2005/05/31 04:03:11 christos Exp $
+#	$NetBSD: Makefile.xen,v 1.7 2005/06/07 18:11:34 sjg Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -59,6 +59,7 @@ spl.o: ${XEN}/${XEN_BUILD}/spl.S assym.h
 vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
 
+.ifndef noBEGIN
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 .for A in ${XEN_MACHINE_ARCHS}
@@ -68,6 +69,7 @@ vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	-rm -rf xen-ma
 	mkdir xen-ma
 	ln -s ../${XEN_BUILD} xen-ma/machine
+.endif
 .endif
 
 ##
