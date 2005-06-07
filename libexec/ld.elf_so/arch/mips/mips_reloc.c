@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.46 2004/12/15 10:26:29 skrll Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.47 2005/06/07 09:20:19 he Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -82,9 +82,9 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	const Elf_Rel *rel = 0, *rellim;
 	Elf_Addr relsz = 0;
 	Elf_Addr *where;
-	const Elf_Sym *symtab, *sym;
-	Elf_Addr *got;
-	Elf_Word local_gotno, symtabno, gotsym;
+	const Elf_Sym *symtab = NULL, *sym;
+	Elf_Addr *got = NULL;
+	Elf_Word local_gotno = 0, symtabno = 0, gotsym = 0;
 	int i;
 
 	for (; dynp->d_tag != DT_NULL; dynp++) {
