@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.8.10.8 2005/06/07 18:03:55 tron Exp $	*/
+/*	$NetBSD: ffb.c,v 1.8.10.9 2005/06/07 18:04:39 tron Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8.10.8 2005/06/07 18:03:55 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8.10.9 2005/06/07 18:04:39 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -615,6 +615,7 @@ ffb_ras_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	memmove(&scr->chars[to], &scr->chars[from], ncols * sizeof(uint16_t));
 
 	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		ffb_ras_wait(sc);
 		sc->copycols(cookie, row, srccol, dstcol, ncols);
 	}
 }
@@ -810,6 +811,7 @@ ffb_restore_screen(struct ffb_screen *scr,
 	long *attrptr = scr->attrs;
 	
 	ffb_clearscreen(scr->sc);
+	ffb_ras_wait(scr->sc);
 	for (i = 0; i < scr->ri.ri_rows; i++) {
 		for (j = 0; j < scr->ri.ri_cols; j++) {
 			scr->sc->putchar(scr, i, j, charptr[offset], 
@@ -839,6 +841,7 @@ ffb_cursor(void *cookie, int on, int row, int col)
 			/* remove cursor */
 			coffset = scr->cursorcol + 
 			    (scr->cursorrow * ri->ri_cols);
+			ffb_ras_wait(sc);
 			sc->putchar(cookie, scr->cursorrow, scr->cursorcol, 
 			    scr->chars[coffset], scr->attrs[coffset]);
 			scr->cursordrawn = 0;
@@ -858,6 +861,7 @@ ffb_cursor(void *cookie, int on, int row, int col)
 #else
 			revattr = attr ^ 0xffff0000;
 #endif
+			ffb_ras_wait(sc);
 			sc->putchar(cookie, scr->cursorrow, scr->cursorcol, 
 			    scr->chars[coffset], revattr);
 			scr->cursordrawn = 1;
