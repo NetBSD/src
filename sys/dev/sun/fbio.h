@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.4 2003/08/07 16:31:24 agc Exp $ */
+/*	$NetBSD: fbio.h,v 1.4.14.1 2005/06/07 17:27:26 tron Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -67,8 +67,9 @@
 #define FBTYPE_SUNLEO           19      /* zx graphics accelerator */
 #define FBTYPE_MDICOLOR         20      /* cgfourteen framebuffer */
 #define	FBTYPE_P9100		21	/* tadpole 3gx p9100 controller */
+#define FBTYPE_CREATOR		22	/* ffb creator or elite */
 
-#define	FBTYPE_LASTPLUSONE	22	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	23	/* max number of fbs (change as add) */
 
 /*
  * XXX These really shouldn't be here, but this is what the pmax
