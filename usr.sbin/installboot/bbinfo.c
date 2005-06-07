@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.10 2005/06/05 19:08:28 chs Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.11 2005/06/07 13:49:31 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.10 2005/06/05 19:08:28 chs Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.11 2005/06/07 13:49:31 he Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -139,6 +139,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	assert(bbparams != NULL);
 	assert((strlen(bbparams->magic) + 1) == 32);
 
+	bbinfop = NULL;		/* XXXGCC -Wuninitialized [sparc64] */
 	retval = 0;
 	blocks = NULL;
 	if ((bb = malloc(bbparams->maxsize)) == NULL) {
