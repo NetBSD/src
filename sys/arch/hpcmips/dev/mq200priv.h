@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200priv.h,v 1.2 2003/12/27 05:47:54 takemura Exp $	*/
+/*	$NetBSD: mq200priv.h,v 1.3 2005/06/07 12:19:46 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -62,7 +62,7 @@ struct mq200_md_param {
 
 extern struct mq200_crt_param mq200_crt_params[];
 extern int mq200_crt_nparams;
-extern char *mq200_clknames[];
+extern const char *mq200_clknames[];
 
 int mq200_pllparam(int reqout, u_int32_t *res);
 void mq200_set_pll(struct mq200_softc *, int, int);
