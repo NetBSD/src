@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.9 2005/06/02 14:41:26 he Exp $ */
+/* $NetBSD: i82596.c,v 1.10 2005/06/07 06:27:17 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.9 2005/06/02 14:41:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10 2005/06/07 06:27:17 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.9 2005/06/02 14:41:26 he Exp $");
 
 
 /* Supported chip variants */
-const char *i82596_typenames[] = { "unknowen", "DX/SX", "CA" };
+const char *i82596_typenames[] = { "unknown", "DX/SX", "CA" };
 
 
 
