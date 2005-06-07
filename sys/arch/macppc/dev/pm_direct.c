@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.27 2005/06/05 20:03:55 nathanw Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.27 2005/06/05 20:03:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -171,7 +171,7 @@ signed char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr __P((char *, int, int, char *));
+void	pm_printerr __P((const char *, int, int, const char *));
 #endif
 
 int	pm_wait_busy __P((int));
@@ -227,10 +227,10 @@ extern int	zshard __P((int));		/* from zs.c */
  */
 void
 pm_printerr(ttl, rval, num, data)
-	char *ttl;
+	const char *ttl;
 	int rval;
 	int num;
-	char *data;
+	const char *data;
 {
 	int i;
 
