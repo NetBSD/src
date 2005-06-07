@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.3.10.1 2005/06/07 17:27:09 tron Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.3.10.2 2005/06/07 18:03:48 tron Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -54,7 +54,33 @@ struct ffb_softc {
 	int sc_type;
 	u_int sc_dacrev;
 	u_int sc_mode;
+	int sc_accel;
 	int32_t sc_fifo_cache, sc_fg_cache;
+
+	/* virtual console stuff */
+	void (*putchar)(void *c, int row, int col, u_int uc, long attr);
+	void (*copycols)(void *c, int row, int srccol, int dstcol, int ncols);
+	void (*switchcb)(void *, int, int);
+	void *switchcbarg;
+	struct callout switch_callout;
+	LIST_HEAD(, ffb_screen) screens;
+	struct ffb_screen *active, *wanted;
+	const struct wsscreen_descr *currenttype;
+};
+
+struct ffb_screen {
+	struct rasops_info ri;
+	LIST_ENTRY(ffb_screen) next;
+	struct ffb_softc *sc;
+	const struct wsscreen_descr *type;
+	int active;
+	u_int16_t *chars;
+	long *attrs;
+
+	int cursoron;
+	int cursorcol;
+	int cursorrow;
+	int cursordrawn;
 };
 
 #define	DAC_WRITE(sc,r,v) \
