@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.15 2004/04/24 15:49:00 kleink Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.16 2005/06/07 12:19:46 he Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.15 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.16 2005/06/07 12:19:46 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static struct vrc4173bcu_platdep {
 };
 
 struct vrc4173bcu_unit {
-	char	*vu_name;
+	const char	*vu_name;
 	int	vu_intr[2];
 	int	vu_clkmask;
 	bus_addr_t	vu_lreg;
