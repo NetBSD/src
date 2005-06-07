@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.16 2005/06/01 05:43:43 lukem Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.17 2005/06/07 09:13:43 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.16 2005/06/01 05:43:43 lukem Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.17 2005/06/07 09:13:43 he Exp $");
 #endif
 #endif
 
@@ -1107,6 +1107,8 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	struct r_rpcb_rmtcallargs a;
 	struct r_rpcb_rmtcallres r;
 	rpcvers_t rpcb_vers;
+
+	stat = RPC_FAILED;	/* XXXGCC -Wuninitialized [dreamcast] */
 
 	client = getclnthandle(host, nconf, NULL);
 	if (client == NULL) {
