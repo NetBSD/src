@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.12 2004/04/05 07:19:08 aymeric Exp $	*/
+/*	$NetBSD: exf.c,v 1.13 2005/06/07 13:26:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: exf.c,v 1.12 2004/04/05 07:19:08 aymeric Exp $");
+__RCSID("$NetBSD: exf.c,v 1.13 2005/06/07 13:26:26 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,6 +467,8 @@ file_spath(sp, frp, sbp, existsp)
 	size_t len;
 	int found;
 	char *name, *p, *t, path[MAXPATHLEN];
+
+	len = 0;	/* XXXGCC -Wuninitialized [dreamcast] */
 
 	/*
 	 * If the name is NULL or an explicit reference (i.e., the first
