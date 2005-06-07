@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.554 2005/05/22 03:45:30 lukem Exp $
+# $NetBSD: mi,v 1.555 2005/06/07 14:27:42 is Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -480,6 +480,8 @@
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
+# needed by modload for now
+./usr/bin/ld					comp-util-bin		bfd
 # This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
 ./usr/bin/leave					base-util-bin
