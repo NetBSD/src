@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.8.10.1 2005/06/07 17:25:19 tron Exp $	*/
+/*	$NetBSD: ffb.c,v 1.8.10.2 2005/06/07 17:25:55 tron Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8.10.1 2005/06/07 17:25:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8.10.2 2005/06/07 17:25:55 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,12 +201,7 @@ ffb_attach(struct ffb_softc *sc)
 }
 
 int
-ffb_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+ffb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct ffb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -261,12 +256,8 @@ ffb_ioctl(v, cmd, data, flags, p)
 }
 
 int
-ffb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+ffb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct ffb_softc *sc = v;
 
@@ -316,9 +307,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 }
 
 void
-ffb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+ffb_free_screen(void *v, void *cookie)
 {
 	struct ffb_softc *sc = v;
 
@@ -326,21 +315,14 @@ ffb_free_screen(v, cookie)
 }
 
 int
-ffb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+ffb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
 }
 
 paddr_t
-ffb_mmap(vsc, off, prot)
-	void *vsc;
-	off_t off;
-	int prot;
+ffb_mmap(void *vsc, off_t off, int prot)
 {
 	struct ffb_softc *sc = vsc;
 	int i;
@@ -375,9 +357,7 @@ ffb_mmap(vsc, off, prot)
 }
 
 void
-ffb_ras_fifo_wait(sc, n)
-	struct ffb_softc *sc;
-	int n;
+ffb_ras_fifo_wait(struct ffb_softc *sc, int n)
 {
 	int32_t cache = sc->sc_fifo_cache;
 
@@ -391,8 +371,7 @@ ffb_ras_fifo_wait(sc, n)
 }
 
 void
-ffb_ras_wait(sc)
-	struct ffb_softc *sc;
+ffb_ras_wait(struct ffb_softc *sc)
 {
 	u_int32_t ucsr, r;
 
@@ -407,8 +386,7 @@ ffb_ras_wait(sc)
 }
 
 void
-ffb_ras_init(sc)
-	struct ffb_softc *sc;
+ffb_ras_init(struct ffb_softc *sc)
 {
 	ffb_ras_fifo_wait(sc, 7);
 	FBC_WRITE(sc, FFB_FBC_PPC,
@@ -427,10 +405,7 @@ ffb_ras_init(sc)
 }
 
 void
-ffb_ras_eraserows(cookie, row, n, attr)
-	void *cookie;
-	int row, n;
-	long int attr;
+ffb_ras_eraserows(void *cookie, int row, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ffb_softc *sc = ri->ri_hw;
@@ -463,10 +438,7 @@ ffb_ras_eraserows(cookie, row, n, attr)
 }
 
 void
-ffb_ras_erasecols(cookie, row, col, n, attr)
-	void *cookie;
-	int row, col, n;
-	long int attr;
+ffb_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ffb_softc *sc = ri->ri_hw;
@@ -496,8 +468,7 @@ ffb_ras_erasecols(cookie, row, col, n, attr)
 }
 
 void
-ffb_ras_fill(sc)
-	struct ffb_softc *sc;
+ffb_ras_fill(struct ffb_softc *sc)
 {
 	ffb_ras_fifo_wait(sc, 2);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
@@ -506,9 +477,7 @@ ffb_ras_fill(sc)
 }
 
 void
-ffb_ras_copyrows(cookie, src, dst, n)
-	void *cookie;
-	int src, dst, n;
+ffb_ras_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct ffb_softc *sc = ri->ri_hw;
@@ -546,9 +515,7 @@ ffb_ras_copyrows(cookie, src, dst, n)
 }
 
 void
-ffb_ras_setfg(sc, fg)
-	struct ffb_softc *sc;
-	int32_t fg;
+ffb_ras_setfg(struct ffb_softc *sc, int32_t fg)
 {
 	ffb_ras_fifo_wait(sc, 1);
 	if (fg == sc->sc_fg_cache)
