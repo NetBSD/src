@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.5 2003/07/15 02:29:27 lukem Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.6 2005/06/07 12:02:04 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.5 2003/07/15 02:29:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.6 2005/06/07 12:02:04 he Exp $");
 
 #include "debug_hpc.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.5 2003/07/15 02:29:27 lukem Exp $")
 static const char onoff[2] = "_x";
 
 void
-__dbg_bit_print(u_int32_t a, int len, int start, int end, char *title,
+__dbg_bit_print(u_int32_t a, int len, int start, int end, const char *title,
     int flags)
 {
 	u_int32_t j, j1;
