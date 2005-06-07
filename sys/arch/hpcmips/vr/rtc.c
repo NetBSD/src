@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.20 2003/07/15 02:29:34 lukem Exp $	*/
+/*	$NetBSD: rtc.c,v 1.21 2005/06/07 12:02:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2005/06/07 12:02:46 he Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -330,7 +330,7 @@ cvt_timehl_ymdhms(
 	u_int32_t timel, /* 1/32768 sec */
 	struct clock_ymdhms *dt)
 {
-	u_int32_t year, month, date, hour, min, sec, sec2;
+	u_int32_t year, month, date, hour, mins, sec, sec2;
 
 	timeh -= EPOCHOFF;
 
@@ -373,19 +373,19 @@ cvt_timehl_ymdhms(
 	timeh -= hour*sec2;
 
 	sec2 = SEC2MIN;
-	min = timeh/sec2;
-	timeh -= min*sec2;
+	mins = timeh/sec2;
+	timeh -= mins*sec2;
 
 	sec = timeh*2 + timel/ETIME_L_HZ;	
 
-	DPRINTF(("cvt_timehl_ymdhms: hour %d min %d sec %d\n", hour, min, sec));
+	DPRINTF(("cvt_timehl_ymdhms: hour %d min %d sec %d\n", hour, mins, sec));
 
 	if (dt) {
 		dt->dt_year	= year - YBASE; /* base 1900 */
 		dt->dt_mon	= month;
 		dt->dt_day	= date;
 		dt->dt_hour	= hour;
-		dt->dt_min	= min;
+		dt->dt_min	= mins;
 		dt->dt_sec	= sec;
 	}
 }
