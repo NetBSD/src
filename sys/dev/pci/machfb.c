@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.23.2.3 2005/06/08 11:47:20 tron Exp $	*/
+/*	$NetBSD: machfb.c,v 1.23.2.4 2005/06/08 11:48:11 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.23.2.3 2005/06/08 11:47:20 tron Exp $");
+	"$NetBSD: machfb.c,v 1.23.2.4 2005/06/08 11:48:11 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ int	mach64_get_memsize(struct mach64_softc *);
 int	mach64_get_max_ramdac(struct mach64_softc *);
 void	mach64_get_mode(struct mach64_softc *, struct videomode *);
 int	mach64_calc_crtcregs(struct mach64_softc *, struct mach64_crtcregs *,
-	    struct videomode *);
+    struct videomode *);
 void	mach64_set_crtcregs(struct mach64_softc *, struct mach64_crtcregs *);
 int	mach64_modeswitch(struct mach64_softc *, struct videomode *);
 void	mach64_set_dsp(struct mach64_softc *);
@@ -248,11 +248,11 @@ void	mach64_adjust_frame(struct mach64_softc *, int, int);
 void	mach64_init_lut(struct mach64_softc *);
 void	mach64_switch_screen(struct mach64_softc *);
 void	mach64_init_screen(struct mach64_softc *, struct mach64screen *,
-	    const struct wsscreen_descr *, int, long *, int);
+    const struct wsscreen_descr *, int, long *, int);
 void	mach64_restore_screen(struct mach64screen *,
-	    const struct wsscreen_descr *, u_int *);
+    const struct wsscreen_descr *, u_int *);
 int 	mach64_set_screentype(struct mach64_softc *,
-	    const struct wsscreen_descr *);
+    const struct wsscreen_descr *);
 int	mach64_is_console(struct pci_attach_args *);
 
 void	mach64_cursor(void *, int, int, int);
@@ -373,10 +373,10 @@ struct wsscreen_list mach64_screenlist = {
 int	mach64_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	mach64_mmap(void *, off_t, int);
 int	mach64_alloc_screen(void *, const struct wsscreen_descr *, void **,
-		    int *, int *, long *);
+    int *, int *, long *);
 void	mach64_free_screen(void *, void *);
 int	mach64_show_screen(void *, void *, int, void (*)(void *, int, int),
-		    void *);
+    void *);
 int	mach64_load_font(void *, void *, struct wsdisplay_font *);
 
 struct wsdisplay_accessops mach64_accessops = {
@@ -443,7 +443,7 @@ static inline void
 wait_for_fifo(struct mach64_softc *sc, u_int8_t v)
 {
 	while ((regr(sc, FIFO_STAT) & 0xffff) > (0x8000 >> v))
-		;
+		continue;
 }
 
 static inline void
@@ -451,7 +451,7 @@ wait_for_idle(struct mach64_softc *sc)
 {
 	wait_for_fifo(sc, 16);
 	while ((regr(sc, GUI_STAT) & 1) != 0)
-		;
+		continue;
 }
 
 int
@@ -571,12 +571,11 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		mach64_get_mode(sc, &default_mode);
 		setmode = 0;
 	} else {
-		memcpy(&default_mode, &mach64_modes[4], sizeof(struct 
-		    videomode));
+		memcpy(&default_mode, &mach64_modes[4], sizeof(default_mode));
 		setmode = 1;
 	}
 #else
-	memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode));
+	memcpy(&default_mode, &mach64_modes[0], sizeof(default_mode));
 	setmode = 1;
 #endif
 
@@ -640,7 +639,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_allocattr(&mach64_console_screen.ri, WS_DEFAULT_FG, 
 	    WS_DEFAULT_BG, 0, &defattr);
 
-	sc->sc_bg=WS_DEFAULT_BG;
+	sc->sc_bg = WS_DEFAULT_BG;
 
 	/* really necessary? */
 	mach64_defaultscreen.capabilities = mach64_console_screen.ri.ri_caps;
@@ -683,8 +682,8 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 	scr->cursorcol = 0;
 	scr->cursorrow = 0;
 
-	cnt=type->nrows * type->ncols;
-	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(u_int)),
+	cnt = type->nrows * type->ncols;
+	scr->attrs = malloc(cnt * (sizeof(long) + sizeof(u_int)),
 	    M_DEVBUF, M_WAITOK);
 	scr->chars = (u_int *)&scr->attrs[cnt];
 	
@@ -1147,7 +1146,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 void
 mach64_init_lut(struct mach64_softc *sc)
 {
-	int i,idx;
+	int i, idx;
 
 	idx = 0;
 	for (i = 0; i < 256; i++) {
@@ -1169,8 +1168,7 @@ mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g,
 	 * register to see when it's ready - but we better avoid writing it
 	 * unnecessarily 
 	 */
-	if (index != sc->sc_dacw)
-	{
+	if (index != sc->sc_dacw) {
 		regwb(sc, DAC_MASK, 0xff);
 		regwb(sc, DAC_WINDEX, index);
 	}
@@ -1288,9 +1286,9 @@ mach64_is_console(struct pci_attach_args *pa)
 void
 mach64_cursor(void *cookie, int on, int row, int col)
 {
-	struct rasops_info *ri=cookie;
-	struct mach64screen *scr=ri->ri_hw;
-	struct mach64_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct mach64screen *scr = ri->ri_hw;
+	struct mach64_softc *sc = scr->sc;
 	int x, y, wi,he;
 	
 	wi = ri->ri_font->fontwidth;
@@ -1333,10 +1331,10 @@ mach64_mapchar(void *cookie, int uni, u_int *index)
 void
 mach64_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
-	struct rasops_info *ri=cookie;
-	struct mach64screen *scr=ri->ri_hw;
-	struct mach64_softc *sc=scr->sc;
-	int offset=ri->ri_cols*row+col;
+	struct rasops_info *ri = cookie;
+	struct mach64screen *scr = ri->ri_hw;
+	struct mach64_softc *sc = scr->sc;
+	int offset = ri->ri_cols * row + col;
 	
 	scr->attrs[offset] = attr;
 	scr->chars[offset] = c;
@@ -1347,7 +1345,9 @@ mach64_putchar(void *cookie, int row, int col, u_int c, long attr)
 		wi = ri->ri_font->fontwidth;
 		he = ri->ri_font->fontheight;
 
-		/*scr->putchar(cookie,row,col,c,attr);*/
+#ifdef notdef
+		scr->putchar(cookie,row,col,c,attr);
+#endif
 		if (!CHAR_IN_FONT(c, ri->ri_font))
 			return;
 		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
@@ -1723,14 +1723,16 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct mach64_softc *sc = v;
 	struct mach64screen *scr;
 	struct rasops_info *ri;
-	int cnt=type->nrows * type->ncols;
+	int cnt = type->nrows * type->ncols;
 
 	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK | M_ZERO);
 	mach64_init_screen(sc, scr, type, 0, defattrp, sc->active == NULL);
 	ri = &scr->ri;
 
 	ri->ri_hw = scr;
-	/*ri->ri_bits=(void *)sc->sc_aperbase;*/
+#ifdef notdef
+	ri->ri_bits = (void *)sc->sc_aperbase;
+#endif
 	rasops_init(ri, mach64_console_screen.ri.ri_height / 8,
 	    mach64_console_screen.ri.ri_width / 8);
 
@@ -1746,7 +1748,7 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	scr->ri.ri_ops.putchar = mach64_putchar;
 	scr->ri.ri_ops.cursor = mach64_cursor;
 
-	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(u_int)),
+	scr->attrs = malloc(cnt * (sizeof(long) + sizeof(u_int)),
 	    M_DEVBUF, M_WAITOK);
 	scr->chars = (u_int *)&scr->attrs[cnt];
 	mach64_eraserows(ri, 0, ri->ri_rows, *defattrp);
@@ -1826,7 +1828,8 @@ mach64_switch_screen(struct mach64_softc *sc)
 		if (!oldscr->active)
 			panic("mach64_switch_screen: not active");
 		if (oldscr->type != sc->currenttype)
-			panic("mach64_switch_screen: bad type");
+			panic("mach64_switch_screen: bad type %p != %p",
+			    oldscr->type, sc->currenttype);
 	}
 #endif
 	if (scr == oldscr)
@@ -1834,8 +1837,10 @@ mach64_switch_screen(struct mach64_softc *sc)
 
 #ifdef DIAGNOSTIC
 /* XXX: this one bites us at reboot */
-/*	if (scr->active)
-		panic("mach64_switch_screen: active");*/
+#ifdef notdef
+	if (scr->active)
+		panic("mach64_switch_screen: active");
+#endif
 #endif
 
 	if (oldscr)
@@ -1872,7 +1877,6 @@ mach64_restore_screen(struct mach64screen *scr,
     const struct wsscreen_descr *type, u_int *mem)
 {
 	int i, j, offset = 0;
-	/*struct rasops_info *ri=&scr->ri;*/
 	u_int *charptr = scr->chars;
 	long *attrptr = scr->attrs;
 	
@@ -1891,7 +1895,9 @@ mach64_restore_screen(struct mach64screen *scr,
 void
 set_address(struct rasops_info *ri, bus_addr_t fb)
 {
-	/*printf(" %d %d %d\n",ri->ri_xorigin,ri->ri_yorigin,ri->ri_stride);*/
+#ifdef notdef
+	printf(" %d %d %d\n", ri->ri_xorigin, ri->ri_yorigin, ri->ri_stride);
+#endif
 	ri->ri_bits = (void *)((u_long)fb + ri->ri_stride * ri->ri_yorigin + 
 	    ri->ri_xorigin);
 }
@@ -1947,4 +1953,3 @@ mach64_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	return 0;
 }
 #endif
-
