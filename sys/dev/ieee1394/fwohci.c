@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.87 2005/05/31 00:46:46 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.88 2005/06/08 18:33:15 fair Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.87 2005/05/31 00:46:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.88 2005/06/08 18:33:15 fair Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -6035,10 +6035,11 @@ fwohci_it_intr(struct fwohci_softc *sc, struct fwohci_it_ctx *itc)
 	    itc->itc_buf_start->itd_num, itc->itc_buf_end->itd_num,
 	    itc->itc_buf_cnt);
 	{
-		u_int32_t reg
+		u_int32_t cntlstatus
 		    = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
-		printf("\t\tIsoCounter 0x%08x, %d %d %d\n", reg,
-		    (reg >> 25) & 0xfe, (reg >> 12) & 0x1fff, reg & 0xfff);
+		printf("\t\tIsoCounter 0x%08x, %d %d %d\n", cntlstatus,
+		    (cntlstatus >> 25) & 0xfe, (cntlstatus >> 12) & 0x1fff,
+		    cntlstatus & 0xfff);
 	}
 #endif /* FW_DEBUG */
 	/* end print out debug info */
