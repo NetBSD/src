@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84.4.1 2005/06/08 11:34:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84.4.1 2005/06/08 11:34:17 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1937,6 +1937,16 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 	if (!(prot & VM_PROT_WRITE))
 		c_pte->attr.raw |= MMU_SHORT_PTE_WP;
+
+	/*
+	 * Mark the PTE as used and/or modified as specified by the flags arg.
+	 */
+	if (flags & VM_PROT_ALL) {
+		c_pte->attr.raw |= MMU_SHORT_PTE_USED;
+		if (flags & VM_PROT_WRITE) {
+			c_pte->attr.raw |= MMU_SHORT_PTE_M;
+		}
+	}
 
 	/*
 	 * If the mapping should be cache inhibited (indicated by the flag
