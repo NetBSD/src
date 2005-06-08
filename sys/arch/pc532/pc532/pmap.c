@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2003/07/15 02:54:35 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.6.1 2005/06/08 11:35:09 tron Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2003/07/15 02:54:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.6.1 2005/06/08 11:35:09 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2673,6 +2673,11 @@ enter_now:
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	ptes[ns532_btop(va)] = npte;		/* zap! */
 
