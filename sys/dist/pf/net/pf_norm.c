@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.7 2004/12/04 14:26:01 peter Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.8 2005/06/08 11:50:46 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.96 2004/07/17 00:17:27 frantzen Exp $ */
 
 /*
@@ -524,6 +524,9 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		for (m2 = m; m2; m2 = m2->m_next)
 			plen += m2->m_len;
 		m->m_pkthdr.len = plen;
+#if defined(__NetBSD__)
+		m->m_pkthdr.csum_flags = 0;
+#endif /* defined(__NetBSD__) */
 	}
 
 	DPFPRINTF(("complete: %p(%d)\n", m, ntohs(ip->ip_len)));
