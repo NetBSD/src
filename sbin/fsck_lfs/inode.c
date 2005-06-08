@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.26 2005/03/25 20:16:37 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.27 2005/06/08 19:09:55 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -322,6 +322,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		brelse(bp);
 	return (KEEPON);
 }
+
 /*
  * Check that a block in a legal block number.
  * Return 0 if in range, 1 if out of range.
@@ -343,6 +344,7 @@ chkrange(daddr_t blk, int cnt)
 	}
 	return (0);
 }
+
 /*
  * Routines to maintain information about directory inodes.
  * This is built during the first pass and used during the
@@ -564,6 +566,7 @@ blkerror(ino_t ino, char *type, daddr_t blk)
 		/* NOTREACHED */
 	}
 }
+
 /*
  * allocate an unused inode
  */
@@ -596,7 +599,9 @@ allocino(ino_t request, int type)
 	default:
 		return (0);
 	}
-	vp = vget(fs, ino);
+        vp = lfs_valloc(fs, ino);
+	if (vp == NULL)
+		return (0);
 	dp = (VTOI(vp)->i_din.ffs1_din);
 	bp = getblk(vp, 0, fs->lfs_fsize);
 	VOP_BWRITE(bp);
@@ -611,6 +616,7 @@ allocino(ino_t request, int type)
 	typemap[ino] = IFTODT(type);
 	return (ino);
 }
+
 /*
  * deallocate an inode
  */

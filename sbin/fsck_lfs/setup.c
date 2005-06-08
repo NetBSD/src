@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.23 2005/05/24 06:51:49 agc Exp $ */
+/* $NetBSD: setup.c,v 1.24 2005/06/08 19:09:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -149,6 +149,8 @@ reset_maxino(ino_t len)
 	memset(statemap + maxino, 0, (len - maxino) * sizeof(char));
 	memset(typemap + maxino, 0, (len - maxino) * sizeof(char));
 	memset(lncntp + maxino, 0, (len - maxino) * sizeof(int16_t));
+
+	maxino = len;
 
 	return;
 }

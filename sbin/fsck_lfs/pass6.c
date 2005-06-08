@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.7 2005/04/23 20:21:03 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.8 2005/06/08 19:09:55 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
-int extend_ifile(void);
 
 extern ufs_daddr_t badblk;
 extern SEGUSE *seg_table;
@@ -90,7 +89,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	struct inode *ip;
 	daddr_t daddr, ooff;
 	int num, error;
-	int i, bb, osize, obb;
+	int i, bb, osize = 0, obb = 0;
 	u_int32_t oldsn, sn;
 
 	ip = VTOI(vp);
@@ -166,7 +165,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 		setbmap(daddr + i);
 
 	/* Check bfree accounting as well */
-	if (daddr < 0) {
+	if (daddr <= 0) {
 		fs->lfs_bfree -= btofsb(fs, size);
 	} else if (size != osize) {
 		fs->lfs_bfree -= (bb - obb);
@@ -291,60 +290,6 @@ pass6check(struct inodesc * idesc)
 }
 
 /*
- * Add a new block to the Ifile, to accommodate future file creations.
- */
-int
-extend_ifile(void)
-{
-	struct uvnode *vp;
-	struct inode *ip;
-	IFILE *ifp;
-	IFILE_V1 *ifp_v1;
-	struct ubuf *bp, *cbp;
-	daddr_t i, blkno, max;
-	ino_t oldlast;
-	CLEANERINFO *cip;
-
-	vp = fs->lfs_ivnode;
-	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_ffs1_size);
-
-	bp = getblk(vp, blkno, fs->lfs_bsize);	/* XXX VOP_BALLOC() */
-	ip->i_ffs1_size += fs->lfs_bsize;
-	
-	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
-		fs->lfs_ifpb;
-	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
-	LFS_PUT_HEADFREE(fs, cip, cbp, i);
-	max = i + fs->lfs_ifpb;
-	reset_maxino(max);
-	fs->lfs_bfree -= btofsb(fs, fs->lfs_bsize);
-
-	if (fs->lfs_version == 1) {
-		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
-			ifp_v1->if_version = 1;
-			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
-			ifp_v1->if_nextfree = ++i;
-		}
-		ifp_v1--;
-		ifp_v1->if_nextfree = oldlast;
-	} else {
-		for (ifp = (IFILE *)bp->b_data; i < max; ++ifp) {
-			ifp->if_version = 1;
-			ifp->if_daddr = LFS_UNUSED_DADDR;
-			ifp->if_nextfree = ++i;
-		}
-		ifp--;
-		ifp->if_nextfree = oldlast;
-	}
-	LFS_PUT_TAILFREE(fs, cip, cbp, max - 1);
-
-	LFS_BWRITE_LOG(bp);
-
-	return 0;
-}
-
-/*
  * Give a previously allocated inode a new address; do segment
  * accounting if necessary.
  *
@@ -389,8 +334,12 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	SEGUSE *sup;
 	struct ubuf *bp;
 
-	while (thisino >= maxino)
-		extend_ifile();
+	while (thisino >= maxino) {
+		extend_ifile(fs);
+		reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
+			       fs->lfs_bsize) - fs->lfs_segtabsz -
+			      fs->lfs_cleansz) * fs->lfs_ifpb);
+	}
 
 	LFS_IENTRY(ifp, fs, thisino, bp);
 	nextfree = ifp->if_nextfree;
@@ -402,7 +351,10 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 		fs->lfs_freehd = nextfree;
 		sbdirty();
 		if (nextfree == 0) {
-			extend_ifile();
+			extend_ifile(fs);
+			reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
+				       fs->lfs_bsize) - fs->lfs_segtabsz -
+				      fs->lfs_cleansz) * fs->lfs_ifpb);
 		}
 	} else {
 		/* Search the free list for this inode */

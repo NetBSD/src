@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.20 2005/04/11 23:19:24 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.21 2005/06/08 19:09:55 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 #include "fsutil.h"
 
 extern int fake_cleanseg;
-int extend_ifile(void);
 
 /*
  * Pass 0.  Check the LFS partial segments for valid checksums, correcting
@@ -269,8 +268,13 @@ pass0(void)
 
 	if (fs->lfs_freehd == 0) {
 		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");
-		if (preen || reply("FIX"))
-			extend_ifile();
+		if (preen || reply("FIX")) {
+			extend_ifile(fs);
+			reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
+				       fs->lfs_bsize) -
+				      fs->lfs_segtabsz - fs->lfs_cleansz) *
+				     fs->lfs_ifpb);
+		}
 	}
 
 	/*
