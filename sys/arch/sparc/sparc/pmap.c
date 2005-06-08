@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.276.2.3 2004/04/29 04:19:27 jmc Exp $ */
+/*	$NetBSD: pmap.c,v 1.276.2.3.2.1 2005/06/08 11:35:00 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276.2.3 2004/04/29 04:19:27 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276.2.3.2.1 2005/06/08 11:35:00 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -5608,9 +5608,9 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 #endif
 
 	pg = PHYS_TO_VM_PAGE(pa);
-
 	pteproto = PG_V | PMAP_T2PTE_4(pa);
 	pa &= ~PMAP_TNC_4;
+
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -5619,9 +5619,14 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	pteproto |= atop(pa) & PG_PFNUM;
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
-
 	if ((flags & PMAP_WIRED) != 0)
 		pteproto |= PG_WIRED;
+	if (flags & VM_PROT_ALL) {
+		pteproto |= PG_U;
+		if (flags & VM_PROT_WRITE) {
+			pteproto |= PG_M;
+		}
+	}
 
 	write_user_windows();
 	ctx = getcontext4();
@@ -6248,6 +6253,12 @@ pmap_enter4m(pm, va, pa, prot, flags)
 
 	/* Make sure we get a pte with appropriate perms! */
 	pteproto |= pte_prot4m(pm, prot);
+	if (flags & VM_PROT_ALL) {
+		pteproto |= SRMMU_PG_R;
+		if (flags & VM_PROT_WRITE) {
+			pteproto |= SRMMU_PG_M;
+		}
+	}
 
 	if (pm == pmap_kernel())
 		error = pmap_enk4m(pm, va, prot, flags, pg, pteproto | PPROT_S);
