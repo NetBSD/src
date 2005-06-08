@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.25 2005/05/25 13:39:46 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.26 2005/06/08 00:19:18 fair Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -199,7 +199,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 #ifdef COMBRELOC
 	unsigned long lastsym = -1;
 #endif
-	Elf_Addr target;
+	Elf_Addr target = -1;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
