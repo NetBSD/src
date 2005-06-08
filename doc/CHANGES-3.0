@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.116 2005/06/07 18:10:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.117 2005/06/08 12:01:14 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9149,4 +9149,30 @@ sys/dev/sun/fbio.h				1.5
 	Turn NetBSD-sparc64's ffb driver into a full grown frame buffer,
 	including virtual consoles and X support.
 	[martin, ticket #376]
+
+sys/dev/pci/machfb.c				1.24-1.29
+
+	Speedup and cleanup for machffb.
+	[martin, ticket #377]
+
+sys/dev/sbus/cgsix_sbus.c			1.16
+sys/dev/sun/cgsix.c				1.23
+sys/dev/sun/cgsixreg.h				1.6
+sys/dev/sun/cgsixvar.h				1.5
+
+	Added support for virtual consoles, colour and some code to determine
+	the usable amount of VRAM for XFree86
+	[martin, ticket #378]
+
+sys/dev/sbus/files.sbus				1.21
+sys/dev/sbus/p9100.c				1.21-1.22
+sys/dev/sbus/p9100reg.h				1.1
+
+	Added:
+	- wscons support
+	- acceleration
+	- virtual consoles
+	- colour
+	- made cg3 emulation optional for native XFree driver
+	[martin, ticket #379]
 
