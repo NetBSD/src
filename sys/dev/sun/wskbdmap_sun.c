@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.8 2005/06/01 14:05:25 martin Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.9 2005/06/08 09:11:09 martin Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.8 2005/06/01 14:05:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.9 2005/06/08 09:11:09 martin Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -98,7 +98,7 @@ static const keysym_t wssun_keydesctab_us [] = {
     KC(0x2d),				KS_KP_Equal,
     KC(0x2e),				KS_KP_Divide,
     KC(0x2f),				KS_KP_Multiply,
-    /* KC(0x30),			KS_Power, */
+    KC(0x30),				KS_Power,
     KC(0x31),				KS_Front,
     KC(0x32),				KS_KP_Delete,	KS_KP_Decimal,
     KC(0x33),				KS_Copy,
