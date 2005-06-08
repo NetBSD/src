@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.122 2005/06/04 20:44:33 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.123 2005/06/08 11:40:02 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2458,4 +2458,24 @@ lib/libc/string/wcschr.c			1.4
 
 	Only advance 'p' once each time around the loop....
 	[dsl, ticket #1977]
+
+sys/arch/i386/i386/pmap.c			1.181
+
+	Preload the referenced and modified bits when entering a page due to
+	a fault.
+	[chs, ticket #1979]
+
+sys/arch/amd64/amd64/pmap.c			1.19
+sys/arch/amiga/amiga/pmap.c			1.113
+sys/arch/atari/atari/pmap.c			1.90
+sys/arch/hppa/hppa/pmap.c			1.16
+sys/arch/pc532/pc532/pmap.c			1.77
+sys/arch/sparc/sparc/pmap.c			1.299
+sys/arch/sun2/sun2/pmap.c			1.27
+sys/arch/sun3/sun3/pmap.c			1.147
+sys/arch/sun3/sun3x/pmap.c			1.87
+
+	In pmap_enter(), preset the mod/ref bits based on the flags argument.
+	This fixes PR kern/25640.
+	[chs, ticket #1980]
 
