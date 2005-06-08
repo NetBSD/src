@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.2.1 2004/10/01 02:37:08 jmc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108.2.2 2005/06/08 11:32:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108.2.1 2004/10/01 02:37:08 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108.2.2 2005/06/08 11:32:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1340,6 +1340,12 @@ validate:
 	    (kernel_copyback || pmap != pmap_kernel()))
 		npte |= PG_CCB;		/* cache copyback */
 #endif
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
+
 	/*
 	 * Remember if this was a wiring-only change.
 	 * If so, we need not flush the TLB and caches.
