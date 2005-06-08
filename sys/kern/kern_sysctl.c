@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.180 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.181 2005/06/08 07:25:12 scw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.180 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.181 2005/06/08 07:25:12 scw Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -920,27 +920,35 @@ sysctl_create(SYSCTLFN_RWARGS)
 				return (EINVAL);
 			}
 			else {
-				char vp[PAGE_SIZE], *e;
+				char *vp, *e;
 				size_t s;
 
 				/*
 				 * we want a rough idea of what the
 				 * size is now
 				 */
+				vp = malloc(PAGE_SIZE, M_SYSCTLDATA,
+					     M_WAITOK|M_CANFAIL);
+				if (vp == NULL)
+					return (ENOMEM);
 				e = nnode.sysctl_data;
 				do {
-					error = copyinstr(e, &vp[0], sizeof(vp),
-							  &s);
+					error = copyinstr(e, vp, PAGE_SIZE, &s);
 					if (error) {
-						if (error != ENAMETOOLONG)
+						if (error != ENAMETOOLONG) {
+							free(vp, M_SYSCTLDATA);
 							return (error);
+						}
 						e += PAGE_SIZE;
 						if ((e - 32 * PAGE_SIZE) >
-						    (char*)nnode.sysctl_data)
+						    (char*)nnode.sysctl_data) {
+							free(vp, M_SYSCTLDATA);
 							return (ERANGE);
+						}
 					}
 				} while (error != 0);
 				sz = s + (e - (char*)nnode.sysctl_data);
+				free(vp, M_SYSCTLDATA);
 			}
 		}
 		break;
