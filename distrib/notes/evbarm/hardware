@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 2003/01/25 23:17:21 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.8 2005/06/08 05:33:46 pooka Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,8 @@ Intel IXM1200
 Samsung SMDK2800
 .It
 ADI Engineering, Inc. BRH ("Big Red Head")
+.It
+Arcom Viper
 .bullet)
 .
 .Ss2 Supported devices (ARM, Ltd. Integrator)
@@ -188,5 +190,19 @@ On-board TI 16752 DUART
 Intel i82557, i82558, i82559, i82550
 .It
 Intel i82544, i82546 Gigabit Ethernet
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (Arcom Viper)
+Current this is an exhaustive list, since expansion ports such as
+PC/104 and USB are not yet supported.
+.(bullet -offset indent
+.Te 2 "Serial ports"
+.(bullet -compact
+On-chip PXA255 UARTs
+.bullet)
+.Te 2 "Ethernet adapters"
+.(bullet -compact
+On-board SMC91C111
 .bullet)
 .bullet)
