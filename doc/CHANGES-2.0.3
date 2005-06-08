@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.17 2005/05/31 21:55:33 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.18 2005/06/08 11:39:48 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -109,4 +109,24 @@ sys/arch/sun3/dev/if_ie.c			1.42
 	Avoid NULL pointer dereference in case of #if NBPFILTER == 0.
 	Closes PR port-sun3/21699.
 	[tsutsui, ticket #1874]
+
+sys/arch/i386/i386/pmap.c			1.181
+
+	Preload the referenced and modified bits when entering a page due to
+	a fault.
+	[chs, ticket #1979]
+
+sys/arch/amd64/amd64/pmap.c			1.19
+sys/arch/amiga/amiga/pmap.c			1.113
+sys/arch/atari/atari/pmap.c			1.90
+sys/arch/hppa/hppa/pmap.c			1.16
+sys/arch/pc532/pc532/pmap.c			1.77
+sys/arch/sparc/sparc/pmap.c			1.299
+sys/arch/sun2/sun2/pmap.c			1.27
+sys/arch/sun3/sun3/pmap.c			1.147
+sys/arch/sun3/sun3x/pmap.c			1.87
+
+	In pmap_enter(), preset the mod/ref bits based on the flags argument.
+	This fixes PR kern/25640.
+	[chs, ticket #1980]
 
