@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.20.2.1 2005/06/08 11:57:20 tron Exp $ */
+/*	$NetBSD: p9100.c,v 1.20.2.2 2005/06/08 11:58:59 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.20.2.1 2005/06/08 11:57:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.20.2.2 2005/06/08 11:58:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.20.2.1 2005/06/08 11:57:20 tron Exp $");
 #include <dev/rasops/rasops.h>
 
 #include "opt_wsemul.h"
+#include "rasops_glue.h"
 
 #include "tctrl.h"
 #if NTCTRL > 0
