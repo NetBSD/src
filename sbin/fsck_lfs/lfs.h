@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.h,v 1.5 2005/04/01 23:45:59 he Exp $ */
+/* $NetBSD: lfs.h,v 1.6 2005/06/08 19:09:55 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,3 +89,5 @@ ufs_daddr_t try_verify(struct lfs *, struct uvnode *, ufs_daddr_t, int);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
 void call_panic(const char *, ...);
 void my_vpanic(int, const char *, va_list);
+int extend_ifile(struct lfs *);
+struct uvnode *lfs_valloc(struct lfs *, ino_t);
