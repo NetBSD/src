@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.5.2.1 2005/06/09 07:07:26 snj Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.5.2.2 2005/06/09 07:08:43 snj Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.5.2.1 2005/06/09 07:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.5.2.2 2005/06/09 07:08:43 snj Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -66,9 +66,9 @@ static const keysym_t wssun_keydesctab_us [] = {
     KC(0x11), KS_Cmd_Screen7,				KS_f8,
     KC(0x12), KS_Cmd_Screen8,				KS_f9,
 #ifdef SPARCBOOK_CMD
-    KC(0x13), KS_Cmd,		KS_Alt_L,
+    KC(0x13), KS_Cmd,			KS_Alt_L,
 #else
-    KC(0x13), 				KS_Alt_L,
+    KC(0x13),				KS_Alt_L,
 #endif
     KC(0x14),				KS_Up,
     KC(0x15),				KS_Pause,
