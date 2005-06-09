@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.2 2005/06/09 07:05:21 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.3 2005/06/09 07:10:11 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.2 2005/06/09 07:05:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.3 2005/06/09 07:10:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,10 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.2 2005/06/09 07:05:21 snj Exp $");
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
+
+#if NWSKBD > 0
+#include "opt_wsdisplay_compat.h"
+#endif
 
 #include "locators.h"
 
@@ -949,10 +953,16 @@ static void
 kbd_input_wskbd(struct kbd_softc *k, int code)
 {
 	int type, key;
+	u_char buf;
 
-	type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-	key = KEY_CODE(code);
-	wskbd_input(k->k_wskbd, type, key);
+	if (k->k_wsraw) {
+		buf = code;
+		wskbd_rawinput(k->k_wskbd, &buf, 1);
+	} else {
+		type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+		key = KEY_CODE(code);
+		wskbd_input(k->k_wskbd, type, key);
+	}
 }
 
 int
@@ -1011,7 +1021,9 @@ wssunkbd_ioctl(v, cmd, data, flag, p)
 	
 	switch (cmd) {
 		case WSKBDIO_GTYPE:
-			*(int *)data = WSKBD_TYPE_SUN5;
+			/* we can't tell  4 from  5 or 6 */
+			*(int *)data = k->k_state.kbd_id < KB_SUN4 ?
+			    WSKBD_TYPE_SUN : WSKBD_TYPE_SUN5;
 			return (0);
 		case WSKBDIO_SETLEDS:
 			wssunkbd_set_leds(v, *(int *)data);
@@ -1019,11 +1031,9 @@ wssunkbd_ioctl(v, cmd, data, flag, p)
 		case WSKBDIO_GETLEDS:
 			*(int *)data = k->k_leds;
 			return (0);
-#ifdef WSDISPLAY_COMPAT_RAWKBD___
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
-		DPRINTF(("wssunkbd_ioctl: set raw = %d\n", *(int *)data));
-		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+		k->k_wsraw = *(int *)data == WSKBD_RAW;
 		return (0);
 #endif
 	}
