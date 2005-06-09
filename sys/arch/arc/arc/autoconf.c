@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2005/06/03 12:29:43 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2005/06/09 16:02:19 he Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2005/06/03 12:29:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2005/06/09 16:02:19 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ struct bootdev_data {
 	int	partition;
 };
 
-int getpno(char **, int *);
+int getpno(const char **, int *);
 
 /*
  * The following several variables are related to
@@ -164,7 +164,7 @@ struct devmap {
  * (beware for empty scsi id's...)
  */
 void
-makebootdev(char *cp)
+makebootdev(const char *cp)
 {
 	int ok, junk;
 	static struct devmap devmap[] = {
@@ -218,10 +218,10 @@ makebootdev(char *cp)
 }
 
 int
-getpno(char **cp, int *np)
+getpno(const char **cp, int *np)
 {
 	int val = 0;
-	char *s = *cp;
+	const char *s = *cp;
 	int got = 0;
 
 	*np = 0;

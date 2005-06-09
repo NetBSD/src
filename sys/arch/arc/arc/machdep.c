@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2005/06/09 16:02:19 he Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2005/06/03 12:30:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/06/09 16:02:19 he Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -205,7 +205,7 @@ int mem_cluster_cnt;
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init(int, char **argv, char **);
 
-char *firmware_getenv(const char *env);
+const char *firmware_getenv(const char *env);
 void arc_sysreset(bus_addr_t, bus_size_t);
 
 /*
@@ -236,7 +236,7 @@ extern struct user *proc0paddr;
 void
 mach_init(int argc, char *argv[], char *envv[])
 {
-	char *cp;
+	const char *cp;
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
@@ -476,7 +476,7 @@ mips_machdep_cache_config(void)
 /*
  * Return a pointer to the given environment variable.
  */
-char *
+const char *
 firmware_getenv(const char *envname)
 {
 	char **env;
