@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2005/06/03 12:11:17 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11 2005/06/09 16:02:19 he Exp $	*/
 /*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
@@ -73,7 +73,7 @@ struct confargs {
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
-void	makebootdev(char *cp);
+void	makebootdev(const char *cp);
 
 /* serial console related variables */
 extern int com_freq;
