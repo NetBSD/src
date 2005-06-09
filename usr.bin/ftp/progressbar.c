@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.c,v 1.9 2005/05/20 07:26:01 he Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.10 2005/06/09 16:38:29 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.9 2005/05/20 07:26:01 he Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.10 2005/06/09 16:38:29 lukem Exp $");
 #endif /* not lint */
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: cmdtab.c,v 1.44 2005/04/11 01:49:31 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.45 2005/06/09 16:38:29 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.44 2005/04/11 01:49:31 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.45 2005/06/09 16:38:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
