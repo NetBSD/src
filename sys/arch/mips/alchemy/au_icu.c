@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.9 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.10 2005/06/09 21:42:33 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.9 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.10 2005/06/09 21:42:33 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -231,7 +231,7 @@ au_intr_establish(int irq, int req, int level, int type,
 {
 	struct evbmips_intrhand *ih;
 	uint32_t icu_base;
-	int cpu_intr, s;
+	int cpu_int, s;
 
 	if (irq >= NIRQS)
 		panic("au_intr_establish: bogus IRQ %d", irq);
@@ -253,8 +253,8 @@ au_intr_establish(int irq, int req, int level, int type,
 	 * XXX do we want a separate list (really, should only be one item, not
 	 *     a list anyway) per irq, not per CPU interrupt?
 	 */
-	cpu_intr = (irq < 32 ? 0 : 2);
-	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_intr].cintr_list, ih, ih_q);
+	cpu_int = (irq < 32 ? 0 : 2);
+	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_int].cintr_list, ih, ih_q);
 
 	/*
 	 * Now enable it.
@@ -286,7 +286,7 @@ au_intr_establish(int irq, int req, int level, int type,
 		}
 
 		/* XXX handle GPIO interrupts - not done at all yet */
-		if (cpu_intr & 0x1)
+		if (cpu_int & 0x1)
 			REGVAL(icu_base + IC_ASSIGN_REQUEST_CLEAR) = irq;
 		else
 			REGVAL(icu_base + IC_ASSIGN_REQUEST_SET) = irq;
