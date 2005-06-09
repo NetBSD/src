@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.5 2005/06/09 07:15:19 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.6 2005/06/09 08:07:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.5 2005/06/09 07:15:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.6 2005/06/09 08:07:19 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -954,8 +954,11 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 	if (k->k_wsraw) {
 		u_char buf;
 
-		buf = code;
-		wskbd_rawinput(k->k_wskbd, &buf, 1);
+		/* do not bother userland with keyboard idle events */
+		if (code != 0x7f) {
+			buf = code;
+			wskbd_rawinput(k->k_wskbd, &buf, 1);
+		}
 		return;
 	}
 #endif
