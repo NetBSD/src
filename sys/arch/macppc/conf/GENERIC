@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194.4.3 2005/06/09 18:03:22 snj Exp $
+# $NetBSD: GENERIC,v 1.194.4.4 2005/06/09 18:14:11 snj Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194.4.3 $"
+#ident 		"GENERIC-$Revision: 1.194.4.4 $"
 
 maxusers	32
 
@@ -357,18 +357,7 @@ wsmouse* at ams?
 #ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at ahc?
-scsibus* at bha?
-scsibus* at iha?
-scsibus* at isp?
-scsibus* at esp?
-scsibus* at mesh?
-scsibus* at pcscp?
-scsibus* at siop?
-scsibus* at esiop?
-scsibus* at trm?
+scsibus* at scsi?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
