@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194.4.2 2005/06/01 17:19:48 riz Exp $
+# $NetBSD: GENERIC,v 1.194.4.3 2005/06/09 18:03:22 snj Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194.4.2 $"
+#ident 		"GENERIC-$Revision: 1.194.4.3 $"
 
 maxusers	32
 
@@ -489,8 +489,8 @@ midi*	at eap?			# 137[01] MIDI port
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
 # options 	RF_INCLUDE_RAID5_RS=1
