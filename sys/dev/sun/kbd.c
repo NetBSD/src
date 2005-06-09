@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.1 2005/06/09 06:59:33 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.2 2005/06/09 07:05:21 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.1 2005/06/09 06:59:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.2 2005/06/09 07:05:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,7 @@ kbdopen(dev, flags, mode, p)
 	if (k == NULL)
 		return (ENXIO);
 
+#if NWSKBD > 0
 	/*
 	 * NB: wscons support: while we can track if wskbd has called
 	 * enable(), we can't tell if that's for console input or for
@@ -191,6 +192,7 @@ kbdopen(dev, flags, mode, p)
 	 */
 	if (!k->k_wsenabled)
 		wssunkbd_enable(k, 1);
+#endif
 
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
