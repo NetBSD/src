@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.8 2005/06/09 21:41:52 he Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/06/09 21:41:52 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ cpu_configure(void)
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 	(void)spl0();
 }
