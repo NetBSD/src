@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.117 2005/06/08 12:01:14 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.118 2005/06/09 08:15:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9175,4 +9175,46 @@ sys/dev/sbus/p9100reg.h				1.1
 	- colour
 	- made cg3 emulation optional for native XFree driver
 	[martin, ticket #379]
+
+sys/dev/sun/kbd.c				1.44-1.48
+sys/dev/sun/kbd_zs.c				1.19
+sys/dev/sun/kbdsun.c				1.7
+sys/dev/sun/wskbdmap_sun.c			1.6-1.8
+sys/dev/sun/kbdvar.h				1.15-1.17
+
+	wskbd support for sun keyboards
+	[martin, ticket #380]
+
+x11/Xserver/hw/xfree86/Makefile			1.14
+x11/Xserver/hw/xfree86/xf8_32wid/Makefile	1.1
+
+	Build the xf8_32wid module on sparc64.
+	[martin, ticket #381]
+
+distrib/sets/lists/xserver/md.sparc64		1.11
+
+	Add the xf8_32wid module.
+	[martin, ticket #382]
+
+x11/Xserver/Xserver/Xsun/Makefile		1.8
+
+	Do not create a X symlink for Xsun on sparc64 - this overwrites the
+	symlink we already created for XFree86.
+	[martin, ticket #383]
+
+etc/etc.sparc64/ttys				1.8
+
+	Add wscons virtual consoles
+	[martin, ticket #384]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.4
+
+	Support international sun keyboards with a dedicated "less" key.
+	[martin, ticket #428]
+
+sys/dev/sun/kbd.c				1.49-1.50
+
+	Do not bother to post "keyboard idle" events to userland when we are
+	in wskbd raw input mode.
+	[martin, ticket #430]
 
