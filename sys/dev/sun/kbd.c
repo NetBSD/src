@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.3 2005/06/09 07:10:11 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.4 2005/06/09 07:13:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.3 2005/06/09 07:10:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.4 2005/06/09 07:13:03 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,10 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.3 2005/06/09 07:10:11 snj Exp $");
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
-
-#if NWSKBD > 0
-#include "opt_wsdisplay_compat.h"
-#endif
 
 #include "locators.h"
 
@@ -953,16 +949,20 @@ static void
 kbd_input_wskbd(struct kbd_softc *k, int code)
 {
 	int type, key;
-	u_char buf;
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (k->k_wsraw) {
+		u_char buf;
+
 		buf = code;
 		wskbd_rawinput(k->k_wskbd, &buf, 1);
-	} else {
-		type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-		key = KEY_CODE(code);
-		wskbd_input(k->k_wskbd, type, key);
+		return;
 	}
+#endif
+
+	type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+	key = KEY_CODE(code);
+	wskbd_input(k->k_wskbd, type, key);
 }
 
 int
