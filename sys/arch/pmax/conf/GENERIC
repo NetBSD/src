@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC,v 1.128 2005/06/09 14:43:31 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.127 $"
+#ident		"GENERIC-$Revision: 1.128 $"
 
 maxusers	64
 
@@ -71,7 +71,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices

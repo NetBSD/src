@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.14 2005/03/11 06:51:48 matt Exp $
+#	$NetBSD: EB7500ATX,v 1.15 2005/06/09 14:43:29 tsutsui Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.14 $"
+#ident		"EB7500ATX-$Revision: 1.15 $"
 
 # estimated number of users
 maxusers	32
@@ -149,7 +149,8 @@ options		SYMTAB_SPACE=250000
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 

@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.12 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: EXPLORA451,v 1.13 2005/06/09 14:43:30 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -44,7 +44,8 @@ options 	USERCONF	# userconf(4) support
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks

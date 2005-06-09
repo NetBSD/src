@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.47 2005/02/25 13:46:48 simonb Exp $
+#	$NetBSD: GENERIC.in,v 1.48 2005/06/09 14:43:30 tsutsui Exp $
 #
 # Generic atari
 #
@@ -28,7 +28,8 @@ options 	INSECURE	# disable kernel security levels
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #
 # (Co)processors this kernel should support

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.86 2005/02/25 13:46:50 simonb Exp $
+# $NetBSD: GENERIC,v 1.87 2005/06/09 14:43:31 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86 $"
+#ident 		"GENERIC-$Revision: 1.87 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -48,7 +48,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 options 	DEBUG		# kernel debugging code
 options 	DIAGNOSTIC	# extra kernel sanity checking

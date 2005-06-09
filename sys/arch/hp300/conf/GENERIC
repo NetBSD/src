@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2005/02/18 21:05:51 dsl Exp $
+# $NetBSD: GENERIC,v 1.114 2005/06/09 14:43:30 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	32		# estimated number of users
 
@@ -64,7 +64,8 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Debugging options
 options 	DIAGNOSTIC	# Extra kernel sanity checks

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.6 2005/05/31 22:23:52 tron Exp $
+# $NetBSD: INSTALL,v 1.7 2005/06/09 14:43:30 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 makeoptions     COPTS="-Os"
 
@@ -36,7 +36,8 @@ options 	USERCONF	# userconf(4) support
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Debugging options
 #options 	DIAGNOSTIC	# extra kernel sanity checking

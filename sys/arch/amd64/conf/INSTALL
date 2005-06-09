@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.31 2005/04/15 17:27:21 itohy Exp $
+# $NetBSD: INSTALL,v 1.32 2005/06/09 14:43:29 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.31 $"
+#ident 		"INSTALL-$Revision: 1.32 $"
 
 maxusers	32		# estimated number of users
 
@@ -53,7 +53,8 @@ options 	USERCONF	# userconf(4) support
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

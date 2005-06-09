@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.29 2005/02/18 21:05:53 dsl Exp $
+# 	$NetBSD: LIBERO,v 1.30 2005/06/09 14:43:30 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -29,7 +29,8 @@ options 	LKM			# loadable kernel modules
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger
