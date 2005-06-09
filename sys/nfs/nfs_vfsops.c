@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.147 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.148 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.147 2005/05/29 20:58:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148 2005/06/09 02:19:59 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -976,8 +976,7 @@ sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 	int error;
 
 	nfs_getset_niothreads(0);
-	/*XXXUNCONST*/
-        error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
+        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (error || newp == NULL)
 		return (error);
 	nfs_getset_niothreads(1);

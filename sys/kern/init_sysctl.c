@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.42 2005/06/06 19:56:46 jdc Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.43 2005/06/09 02:19:59 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.42 2005/06/06 19:56:46 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.43 2005/06/09 02:19:59 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1152,8 +1152,7 @@ sysctl_setlen(SYSCTLFN_ARGS)
 {
 	int error;
 
-	/*XXXUNCONST*/
-	error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (error || newp == NULL)
 		return (error);
 
@@ -1753,8 +1752,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	int buflen, needed, error;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	dp = where = oldp;
 	buflen = where != NULL ? *oldlenp : 0;
@@ -1915,8 +1913,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	int error, arg, elem_count;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (namelen != 4)
 		return (EINVAL);
@@ -2058,8 +2055,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	int error;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	dp = oldp;
 	dp2 = where = oldp;
@@ -2234,8 +2230,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	char *tmp;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (newp != NULL || namelen != 2)
 		return (EINVAL);
