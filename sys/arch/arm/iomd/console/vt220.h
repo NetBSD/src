@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.h,v 1.1 2001/10/05 22:27:45 reinoud Exp $ */
+/* $NetBSD: vt220.h,v 1.2 2005/06/09 09:23:39 he Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -100,7 +100,7 @@ struct vt220_info {
 	int xcur, ycur,	sc_xcur, sc_ycur;
 	int sc_flag;
 
-	char *report_chars;
+	const char *report_chars;
 	int report_count;
 	int cursor_on;
 
