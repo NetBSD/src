@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.8 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: prom.h,v 1.9 2005/06/09 13:47:28 he Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ struct mips_prom {
 	void	(*prom_setjmp)		__P((void));
 	void	(*prom_longjmp)		__P((void));
 	void	(*prom_bevutlb)		__P((void));
-	char *	(*prom_getenv)		__P((char *name));
+	char *	(*prom_getenv)		__P((const char *name));
 	int	(*prom_setenv)		__P((char *name, char *val));
 	int	(*prom_atob)		__P((char *s));
 	int	(*prom_strcmp)		__P((char *s1, char *s2));
