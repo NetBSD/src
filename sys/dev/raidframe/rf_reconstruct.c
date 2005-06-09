@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.87 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.87.2.1 2005/06/09 16:51:09 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.87 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.87.2.1 2005/06/09 16:51:09 tron Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -601,6 +601,8 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	 * the right slot */
 	raidPtr->reconControl = tmp_reconctrl;
 	mapPtr = raidPtr->reconControl->reconMap;
+	raidPtr->reconControl->numRUsTotal = mapPtr->totalRUs;
+	raidPtr->reconControl->numRUsComplete =	0;
 	raidPtr->status = rf_rs_reconstructing;
 	raidPtr->Disks[col].status = rf_ds_reconstructing;
 	raidPtr->Disks[col].spareCol = scol;
