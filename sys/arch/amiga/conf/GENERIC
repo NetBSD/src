@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.215 2005/06/01 19:16:37 jandberg Exp $
+# $NetBSD: GENERIC,v 1.216 2005/06/09 14:50:11 tsutsui Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.35 2005/06/01 18:55:08 jandberg Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.36 2005/06/09 14:43:30 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 
 maxusers	8
@@ -183,7 +183,8 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #
 # Misc. debugging options
