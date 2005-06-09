@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.6 2005/02/21 03:46:38 heas Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.6.2.1 2005/06/09 07:02:27 snj Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.6 2005/02/21 03:46:38 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.6.2.1 2005/06/09 07:02:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,11 @@ kbd_sun_open(kbd)
 	kbd_sun_drain_tx(k);
 
 	/* the wakeup for this is in kbd_sun_was_reset(). */
-	for (ntries = 200; ntries; ntries--) {
+	for (ntries = 30; ntries; ntries--) {
 		error = tsleep((caddr_t)&ks->kbd_id, PZERO | PCATCH, devopn,
-				hz);
+				hz/10);
 		if (ks->kbd_id)
 			break;
-		DELAY(10000);
 	}
 
 	if (error == EWOULDBLOCK || ks->kbd_id == 0) { /* no response */
@@ -348,14 +347,16 @@ static int
 kbd_sun_drain_tx(k)
 	struct kbd_sun_softc *k;
 {
-	int error = 0;
+	int error = 0, bail = 0;
 
-	while (k->k_txflags & K_TXBUSY && !error) {
+	while ((k->k_txflags & K_TXBUSY) && (!error) && (bail<1000)) {
 		k->k_txflags |= K_TXWANT;
 		error = tsleep((caddr_t)&k->k_txflags,
-			       PZERO | PCATCH, "kbdout", 0);
+			       PZERO | PCATCH, "kbdout", 1);
+		bail++;
 	}
-
+	if (bail==1000)
+		error=EIO;
 	return (error);
 }
 
