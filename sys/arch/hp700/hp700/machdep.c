@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2005/05/11 02:59:49 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/05/11 02:59:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -523,16 +523,16 @@ hptsize=256;	/* XXX one page for now */
 	printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
 #endif
 	if (error) {
-		printf("WARNING: no HPT support, fine!\n");
-		mtctl(0, CR_HPTMASK);
-		hptsize = 0;
+		hptsize = PAGE_SIZE;
+		printf("WARNING: PDC_TLB_INFO failed: %d, using HPT size %d\n",
+		       error, hptsize);
 	} else {
 		if (hptsize > pdc_hwtlb.max_size)
 			hptsize = pdc_hwtlb.max_size;
 		else if (hptsize < pdc_hwtlb.min_size)
 			hptsize = pdc_hwtlb.min_size;
-		mtctl(hptsize - 1, CR_HPTMASK);
 	}
+	mtctl(hptsize - 1, CR_HPTMASK);
 
 	/*
 	 * XXX fredette - much of this TLB trap handler setup should
