@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.135 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.136 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -950,7 +950,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	const int *oname, struct lwp *l, struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
-	oname, l, (struct sysctlnode *)node
+	oname, l, __UNCONST(node) /*XXXUNCONST*/
 
 #ifdef _LKM
 

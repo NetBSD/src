@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.145 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.145 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146 2005/06/09 02:19:59 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1546,8 +1546,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	int error, s, elem_count;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (namelen != 4)
 		return (EINVAL);

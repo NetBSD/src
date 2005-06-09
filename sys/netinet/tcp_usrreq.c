@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.104 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.105 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.104 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.105 2005/06/09 02:19:59 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1222,7 +1222,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	elem_size = out_size = sizeof(pcb);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (name - oname != 4)
 		return (EINVAL);

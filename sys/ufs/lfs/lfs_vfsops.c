@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.181 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.182 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.181 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.182 2005/06/09 02:19:59 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1738,8 +1738,7 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 	extern int lfs_dostats;
 	int error;
 
-	/*XXXUNCONST*/
-	error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (error || newp == NULL)
 		return (error);
 

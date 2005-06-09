@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.51 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.52 2005/06/09 02:19:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.51 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.52 2005/06/09 02:19:59 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -249,8 +249,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	int error, elem_count, pf, type, pf2;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		/*XXXUNCONST*/
-		return (sysctl_query(SYSCTLFN_CALL(__UNCONST(rnode))));
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (namelen != 4)
 		return (EINVAL);
