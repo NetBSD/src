@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.8 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: monster.c,v 1.9 2005/06/09 09:36:19 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.8 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: monster.c,v 1.9 2005/06/09 09:36:19 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -628,6 +628,8 @@ wanderer()
 	object *monster;
 	short row, col, i;
 	boolean found = 0;
+
+	monster = NULL;		/* XXXGCC -Wuninitialized [pmppc] */
 
 	for (i = 0; ((i < 15) && (!found)); i++) {
 		monster = gr_monster((object *) 0, 0);
