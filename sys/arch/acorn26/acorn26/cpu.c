@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2004/08/07 12:07:08 rearnsha Exp $ */
+/* $NetBSD: cpu.c,v 1.15 2005/06/09 08:05:31 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2004/08/07 12:07:08 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2005/06/09 08:05:31 he Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -295,12 +295,12 @@ int cpu_delay_factor = 1;
 static void
 cpu_delay_calibrate(struct device *self)
 {
-	struct timeval start, end, diff;
+	struct timeval startt, end, diff;
 
-	microtime(&start);
+	microtime(&startt);
 	cpu_delayloop(10000);
 	microtime(&end);
-	timersub(&end, &start, &diff);
+	timersub(&end, &startt, &diff);
 	cpu_delay_factor = 10000 / diff.tv_usec + 1;
 	printf("%s: 10000 loops in %ld microseconds, delay factor = %d\n",
 	       self->dv_xname, diff.tv_usec, cpu_delay_factor);
