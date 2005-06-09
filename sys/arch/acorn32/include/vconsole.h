@@ -1,4 +1,4 @@
-/*	$NetBSD: vconsole.h,v 1.2 2004/05/08 21:04:07 jmc Exp $	*/
+/*	$NetBSD: vconsole.h,v 1.3 2005/06/09 09:26:06 he Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -152,7 +152,7 @@ struct terminal_emulator {
 	char *name;
 	/* Terminal emulation routines */
 	int (*term_init)	__P((struct vconsole *vc));
-        int (*putstring)	__P((char *string, int length, struct vconsole *vc));
+        int (*putstring)	__P((const char *string, int length, struct vconsole *vc));
         int (*swapin)		__P((struct vconsole *vc));
 	int (*swapout)		__P((struct vconsole *vc));
 	int (*sleep)		__P((struct vconsole *vc));
