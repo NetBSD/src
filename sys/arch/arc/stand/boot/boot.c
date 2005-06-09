@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2005/04/23 17:35:53 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2005/06/09 16:02:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,8 +136,8 @@ static char *firmware_getenv(char *);
 int
 main(int argc, char **argv)
 {
-	char           *kernel = NULL;
-	char           *bootpath = NULL;
+	const char     *kernel = NULL;
+	const char     *bootpath = NULL;
 	char            bootfile[PATH_MAX];
 	void            (*entry)(int, char *[], int, void *);
 	u_long          marks[MARK_MAX];
