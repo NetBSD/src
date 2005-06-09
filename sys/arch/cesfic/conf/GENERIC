@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2005/02/25 13:46:49 simonb Exp $
+# $NetBSD: GENERIC,v 1.30 2005/06/09 14:43:30 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -36,7 +36,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
