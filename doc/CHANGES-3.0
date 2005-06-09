@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.118 2005/06/09 08:15:36 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.119 2005/06/09 16:52:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9217,4 +9217,13 @@ sys/dev/sun/kbd.c				1.49-1.50
 	Do not bother to post "keyboard idle" events to userland when we are
 	in wskbd raw input mode.
 	[martin, ticket #430]
+
+sys/dev/raidframe/rf_reconstruct.c		1.88
+sys/dev/raidframe/rf_reconstruct.h		1.21
+
+	- Initialize numRUsTotal before we indicate that we are doing a
+	  reconstruct.
+	- Make numRUsComplete and numRUsTotal 64-bit quantities like
+	  everything else that records this information.
+	[oster, ticket #435]
 
