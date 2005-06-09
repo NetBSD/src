@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.11 2003/07/15 00:24:43 lukem Exp $	*/
+/*	$NetBSD: console.c,v 1.12 2005/06/09 09:24:45 he Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.11 2003/07/15 00:24:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2005/06/09 09:24:45 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -670,7 +670,7 @@ physconioctl(dev, cmd, data, flag, p)
 
 	case CONSOLE_BLANKTIME:
 		{
-		int time = (*(int *)data);
+		int blanktime = (*(int *)data);
 		struct vidc_mode *vm = &((struct vidc_info *)vc->r_data)->mode;
 
 		/*
@@ -680,18 +680,18 @@ physconioctl(dev, cmd, data, flag, p)
 		 */
 
 		if (vm->frame_rate)
-			time *= vm->frame_rate;
+			blanktime *= vm->frame_rate;
 		else
-			time *= 70;
+			blanktime *= 70;
 
-		if (time == 0) {
+		if (blanktime == 0) {
 			if (vc == vconsole_current)
 				vconsole_current->BLANK(vconsole_current, BLANK_OFF);
 		} else {
 			if (vc == vconsole_current)
-				vconsole_blankinit = time;
-			vc->blanktime = time;
-			if (time < 0)
+				vconsole_blankinit = blanktime;
+			vc->blanktime = blanktime;
+			if (blanktime < 0)
 				vconsole_current->BLANK(vconsole_current, BLANK_NONE);
 		}
 		return 0;
@@ -828,7 +828,7 @@ int
 physconkbd(key)
 	int key;
 {
-	char *string;
+	const char *string;
 	register struct tty *tp;
 	int s;
 
