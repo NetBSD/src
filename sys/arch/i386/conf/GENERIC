@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.673 2005/05/17 17:20:41 hubertf Exp $
+# $NetBSD: GENERIC,v 1.674 2005/06/09 14:43:30 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.673 $"
+#ident 		"GENERIC-$Revision: 1.674 $"
 
 maxusers	32		# estimated number of users
 
@@ -102,7 +102,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Likely stable but not yet the default.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

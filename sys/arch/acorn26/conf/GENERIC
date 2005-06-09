@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: GENERIC,v 1.29 2005/06/09 14:43:29 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -140,7 +140,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Disable kernel security.
 #options 	INSECURE
