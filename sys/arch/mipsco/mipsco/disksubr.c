@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2003/08/07 16:28:36 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2005/06/09 13:49:15 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/08/07 16:28:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2005/06/09 13:49:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/08/07 16:28:36 agc Exp $");
 
 #define	b_cylin	b_resid
 
-static char *disklabel_mips_to_bsd __P((struct mips_volheader *,
+static const char *disklabel_mips_to_bsd __P((struct mips_volheader *,
 					  struct disklabel *));
 static int disklabel_bsd_to_mips __P((struct disklabel *,
 					struct mips_volheader *));
@@ -333,7 +333,7 @@ struct partitionmap partition_map[] = {
  *
  * Returns NULL on success, otherwise an error string
  */
-static char *
+static const char *
 disklabel_mips_to_bsd(vh, lp)
 	struct mips_volheader *vh;
 	struct disklabel *lp;
