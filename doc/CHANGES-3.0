@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.119 2005/06/09 16:52:23 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.120 2005/06/09 18:32:25 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9226,4 +9226,34 @@ sys/dev/raidframe/rf_reconstruct.h		1.21
 	- Make numRUsComplete and numRUsTotal 64-bit quantities like
 	  everything else that records this information.
 	[oster, ticket #435]
+
+sys/kern/uipc_mbuf.c				1.96, 1.98
+
+	Restore the RCS Id in the "sys/kern/uipc_mbuf.c"
+	[tron, ticket #387]
+
+sys/arch/macppc/conf/GENERIC			1.198
+
+	RAIDframe works fine under NetBSD-macppc according to Ian Spray's
+	testing.  Enable raid(4) by default therefore.
+	[tron, ticket #426]
+
+sys/arch/macppc/conf/GENERIC			1.196
+sys/arch/macppc/conf/INSTALL			1.88
+sys/arch/macppc/conf/POWERMAC			1.47
+
+	Remove unnecessary per-driver scsibus attachments and use
+	"scsibus* at scsi?" instead.
+	[tron, ticket #427]
+
+xsrc/xfree/xc/programs/Xserver/cfb/cfbtile32.c	1.2
+
+	fixed a bug that causes memory thrashing
+	[macallan, ticket #425]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/input/keyboard/kbd.c 1.2
+
+	Fix some odd behaviour related to Sun keyboards sending some
+	sort of keepalive code.
+	[macallan, ticket #429]
 
