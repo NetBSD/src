@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.c,v 1.1.1.2.2.4 2005/05/28 13:04:40 tron Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.1.1.2.2.5 2005/06/10 09:21:36 tron Exp $	*/
 
-/* Id: ipsec_doi.c,v 1.26.2.1 2005/02/17 13:19:18 vanhu Exp */
+/* Id: ipsec_doi.c,v 1.38 2005/05/31 16:07:55 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -4157,14 +4157,15 @@ fixup_initiator_sa(match, received)
 #endif
 
 static int rm_idtype2doi[] = {
-	IPSECDOI_ID_FQDN,
-	IPSECDOI_ID_USER_FQDN,
-	IPSECDOI_ID_KEY_ID,
-	255,	/* it's type of "address"
+	255,				/* IDTYPE_UNDEFINED, 0	*/
+	IPSECDOI_ID_FQDN,		/* IDTYPE_FQDN, 1 */
+	IPSECDOI_ID_USER_FQDN,		/* IDTYPE_USERFQDN, 2 */
+	IPSECDOI_ID_KEY_ID,		/* IDTYPE_KEYID, 3 */ 
+	255,	/* 			   IDTYPE_ADDRESS, 4
 		 * it expands into 4 types by another function. */
-	IPSECDOI_ID_DER_ASN1_DN,
+	IPSECDOI_ID_DER_ASN1_DN,	/* IDTYPE_ASN1DN, 5 */
 #ifdef ENABLE_HYBRID
-	255,	/* It's type LOGIN */
+	255,				/* IDTYPE_LOGIN, 6 */
 #endif
 };
 
