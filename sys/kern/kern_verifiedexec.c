@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.8 2005/06/10 15:24:18 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.9 2005/06/10 15:24:46 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.8 2005/06/10 15:24:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.9 2005/06/10 15:24:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -64,8 +64,6 @@ struct sysctlnode *veriexec_count_node = NULL;
 
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
-
-#define	VERIEXEC_BUFSIZE	PAGE_SIZE
 
 /*
  * Add fingerprint names to the global list.
@@ -221,7 +219,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
-	buf = (u_char *) malloc(VERIEXEC_BUFSIZE, M_TEMP, M_WAITOK);
+	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	(vhe->ops->init)(ctx); /* init the fingerprint context */
 
@@ -229,9 +227,9 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 	 * The vnode is locked. sys_execve() does it for us; We have our
 	 * own locking in vn_open().
 	 */
-	for (offset = 0; offset < size; offset += VERIEXEC_BUFSIZE) {
-		len = ((size - offset) < VERIEXEC_BUFSIZE) ? (size - offset)
-			: VERIEXEC_BUFSIZE;
+	for (offset = 0; offset < size; offset += PAGE_SIZE) {
+		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
+			: PAGE_SIZE;
 
 		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
 				UIO_SYSSPACE,
