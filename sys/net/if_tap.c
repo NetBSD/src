@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.6 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.6.2.1 2005/06/10 15:52:56 tron Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.6 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.6.2.1 2005/06/10 15:52:56 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -919,6 +919,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
+	int s;
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -959,7 +960,9 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
+	s =splnet();
 	(*ifp->if_input)(ifp, m);
+	splx(s);
 
 	return (0);
 }
