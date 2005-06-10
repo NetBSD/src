@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.2 2001/02/25 14:33:19 jdc Exp $	*/
+/*	$NetBSD: write.c,v 1.3 2005/06/10 22:08:39 he Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ ahdi_writelabel (ptable, diskname, flags)
         /* All partitions in root sector (including first XGM) */
 	j = 0;
 	firstxgm = 0;
+	xgmsec = 0;
 	for (i = 0; i < ptable->nparts; i++) {
 		if (ptable->parts[i].root == 0) {
 #ifdef DEBUG
