@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.15 2005/05/11 18:03:05 tron Exp $
+# $NetBSD: mi,v 1.532.2.16 2005/06/10 14:48:12 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1317,6 +1317,7 @@
 ./usr/share/examples/veriexecctl		base-sysutil-examples
 ./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples	share
 ./usr/share/examples/veriexecctl/gen_sha1	base-sysutil-examples	share
+./usr/share/examples/veriexecctl/gen_rmd160	base-sysutil-examples	share
 ./usr/share/examples/verifiedexec_load		base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
