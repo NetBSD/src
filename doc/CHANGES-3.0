@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.122 2005/06/10 15:40:16 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.123 2005/06/10 15:45:24 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9323,4 +9323,9 @@ sys/sys/vnode.h					1.135
 	Synchronized Verified Exec support with NetBSD-current for enhanced
 	stability and flexibility.
 	[elad, ticket #389]
+
+sbin/veriexecctl/veriexecctl.c			1.15
+
+	Fix compilation problem.
+	[elad, ticket #390]
 
