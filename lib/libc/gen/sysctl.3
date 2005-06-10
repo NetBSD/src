@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.142 2004/12/27 13:35:47 christos Exp $
+.\"	$NetBSD: sysctl.3,v 1.142.2.1 2005/06/10 15:10:31 tron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -454,6 +454,7 @@ information.
 .It KERN\_SYSVSEM	integer	no
 .It KERN\_SYSVSHM	integer	no
 .It KERN\_TKSTAT	node	not applicable
+.It KERN\_VERIEXEC	node	not applicable
 .It KERN\_VERSION	string	no
 .It KERN\_VNODE	struct vnode	no
 .El
@@ -865,6 +866,43 @@ The total number of output characters.
 The number of canonical input characters.
 .It Li KERN_TKSTAT_RAWCC
 The number of raw input characters.
+.El
+.It Li KERN_VERIEXEC
+Tunings for Verified Exec. Third level names for the veriexec
+variables are detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value or only raise it.
+Only the superuser can modify these variables.
+.Bl -column "VERIEXECXALGORITHMSXXX" "struct integerXXX" -offset indent
+.It Sy Third level name	Type	Changeable
+.It VERIEXEC\_VERBOSE	integer	yes
+.It VERIEXEC\_STRICT	integer	raise only
+.It VERIEXEC\_ALGORITHMS	string	no
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li VERIEXEC_VERBOSE
+Controls the verbosity level of Verified Exec. If 0, only the minimal
+indication required will be given about what's happening - fingerprint
+mismatches, removal of entries from the tables, modification of a
+fingerprinted file.
+If 1, more messages will be printed (ie., when a file with a valid
+fingerprint is accessed).
+.It Li VERIEXEC_STRICT
+Controls the strict level of Verified Exec. The strict level defines how
+Verified Exec will treat various situations.
+In strict level 0, the system is in learning mode and will only warn about
+fingerprint mismatches, aswell as allow removal of fingerprinted files.
+In strict level 1, the system is in normal mode. It will enforce indirect
+execution if needed, prevent access to files with a fingerprint mismatch,
+and prevent removal of fingerprinted files. It will also prevent execution
+of files with no fingerprint.
+In strict level 2, the system is in critical mode. It has all effects of
+strict level 1, plus it will deny access (read, write, exec, and delete)
+to files without a valid fingerprint.
+.It Li VERIEXEC_ALGORITHMS
+Returns a string with the supported algorithms in Verified Exec.
 .El
 .It Li KERN_VERSION
 The system version string.
