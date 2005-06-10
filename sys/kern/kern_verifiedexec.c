@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.6 2005/06/10 15:10:03 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.7 2005/06/10 15:16:04 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.6 2005/06/10 15:10:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.7 2005/06/10 15:16:04 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.6 2005/06/10 15:10:03 tr
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
+#define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 #if defined(__FreeBSD__)
 # include <sys/systm.h>
@@ -57,6 +59,8 @@ int veriexec_strict = 0;
 
 char *veriexec_fp_names;
 unsigned int veriexec_name_max;
+
+struct sysctlnode *veriexec_count_node = NULL;
 
 /* prototypes */
 static void
@@ -323,6 +327,8 @@ veriexec_hashadd(struct veriexec_hashtbl *tbl, struct veriexec_hash_entry *e)
 
 	LIST_INSERT_HEAD(vhh, e, entries);
 
+	tbl->hash_count++;
+
 	return (0);
 }
 
@@ -542,6 +548,7 @@ veriexec_rm:
 	LIST_REMOVE(vhe, entries);
 	free(vhe->fp, M_TEMP);
 	free(vhe, M_TEMP);
+	tbl->hash_count--;
 
 	return (error);
 }
