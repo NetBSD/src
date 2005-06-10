@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.30 2004/02/15 11:54:17 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.31 2005/06/10 16:07:45 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.30 2004/02/15 11:54:17 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.31 2005/06/10 16:07:45 jmc Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	}				
 	for (;;) {
 		memset(sizes, 0, sizeof(sizes));
-		c = ntfiles = 0;
+		c = nelem = ntfiles = 0; /* XXXGCC -Wuninitialized m68k */
 		if (binno == weights[REC_D] &&
 		    !(SINGL_FLD && ftbl[0].flags & F)) {	/* pop */
 			rd_append(weights[REC_D], top,
@@ -164,6 +164,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			ftbl = tfield;
 			weights = ftbl[0].weights;
 		}
+		keypos = keylist;	     /* XXXGCC -Wuninitialized m68k */
+		crec = (RECHEADER *) buffer; /* XXXGCC -Wuninitialized m68k */
 		while (c != EOF) {
 			keypos = keylist;
 			nelem = 0;
