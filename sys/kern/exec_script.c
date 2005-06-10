@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.38 2004/11/04 23:55:28 matt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.38.10.1 2005/06/10 15:10:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38 2004/11/04 23:55:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.1 2005/06/10 15:10:24 tron Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38 2004/11/04 23:55:28 matt Exp $"
 
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
+
+#include <sys/verified_exec.h>
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.
@@ -249,7 +251,7 @@ check_shell:
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
 #ifdef VERIFIED_EXEC
-	if ((error = check_exec(p, epp, 0)) == 0) {
+	if ((error = check_exec(p, epp, VERIEXEC_INDIRECT)) == 0) {
 #else
 	if ((error = check_exec(p, epp)) == 0) {
 #endif
