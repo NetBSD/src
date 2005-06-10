@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.2 2005/05/07 11:51:39 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.3 2005/06/10 15:21:53 tron Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1170,7 +1170,7 @@ dmoverio)
 	;;
 
 veriexec)
-	mkdev veriexec c %verifiedexec_chr% 0 644
+	mkdev veriexec c %veriexec_chr% 0 644
 	;;
 
 ttyv*)
