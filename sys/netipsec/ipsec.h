@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.10 2004/05/07 00:55:14 jonathan Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.11 2005/06/10 13:22:42 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -302,7 +302,7 @@ extern size_t ipsec4_hdrsiz_tcp __P((struct tcpcb *));
 #endif
 
 union sockaddr_union;
-extern char * ipsec_address(union sockaddr_union* sa);
+extern const char *ipsec_address(union sockaddr_union* sa);
 extern const char *ipsec_logsastr __P((struct secasvar *));
 
 extern void ipsec_dumpmbuf __P((struct mbuf *));
