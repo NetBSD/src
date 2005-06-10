@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.1 2005/06/10 14:47:36 tron Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.2 2005/06/10 14:51:51 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -197,7 +197,7 @@ eol		:	EOL
  * by "out".  Returns the number of bytes converted or -1 if the conversion
  * fails.
  */
-int convert(char *fp, u_char *out) {
+int convert(u_char *fp, u_char *out) {
         int i, value, error, count;
 
 	count = strlen(fp);
