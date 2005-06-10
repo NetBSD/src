@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.3 2005/06/10 14:53:16 tron Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.4 2005/06/10 15:14:05 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -64,7 +64,7 @@ static int convert(u_char *, u_char *);
 statement	:	/* empty */
 		|	statement path type fingerprint flags eol {
 	struct stat sb;
-	struct vexec_up *p;
+	struct veriexec_up *p;
 
 	if (phase == 2) {
 		phase2_load();
@@ -154,10 +154,6 @@ flag_spec	:	STRING {
 			params.type = VERIEXEC_DIRECT;
 		else if (strcasecmp($1, "indirect") == 0)
 			params.type = VERIEXEC_INDIRECT;
-#ifdef notdef
-		else if (strcasecmp($1, "shell") == 0)
-			params.vxp_type = VEXEC_SHELL;
-#endif
 		else if (strcasecmp($1, "file") == 0)
 			params.type = VERIEXEC_FILE;
 		else {
