@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.3 2005/06/10 15:12:11 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.4 2005/06/10 15:15:57 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.3 2005/06/10 15:12:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.4 2005/06/10 15:15:57 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.3 2005/06/10 15:12:11 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.3 2005/06/10 15:12:11 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.4 2005/06/10 15:15:57 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.4 2005/06/10 15:15:57 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -59,6 +59,8 @@ __RCSID("$Id: verified_exec.c,v 1.5.2.3 2005/06/10 15:12:11 tron Exp $\n$NetBSD:
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>
+#include <sys/sysctl.h>
+#define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 
 /* count of number of times device is open (we really only allow one open) */
@@ -167,6 +169,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 	case VERIEXEC_TABLESIZE: {
 		struct veriexec_sizing_params *params =
 			(struct veriexec_sizing_params *) data;
+		u_char node_name[16];
 
 		/* Allocate and initialize a Veriexec hash table. */
 		tbl = malloc(sizeof(struct veriexec_hashtbl), M_TEMP,
@@ -175,8 +178,17 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		tbl->hash_dev = params->dev;
 		tbl->hash_tbl = hashinit(params->hash_size, HASH_LIST, M_TEMP,
 					 M_WAITOK, &hashmask);
+		tbl->hash_count = 0;
 
 		LIST_INSERT_HEAD(&veriexec_tables, tbl, hash_list);
+
+		snprintf(node_name, sizeof(node_name), "dev_%u",
+			 tbl->hash_dev);
+
+		sysctl_createv(NULL, 0, &veriexec_count_node, NULL,
+			       CTLFLAG_READONLY, CTLTYPE_QUAD, node_name,
+			       NULL, NULL, 0, &tbl->hash_count, 0,
+			       tbl->hash_dev, CTL_EOL);
 
 		break;
 		}
