@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.2.2.1 2005/06/10 14:47:23 tron Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.2.2.2 2005/06/10 14:53:09 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -55,35 +55,16 @@ STRING		[0-9a-zA-Z]+
 
 	/* path */
 \/[^ \t]+	{
-			yylval.string = strdup(yytext);
-			return (PATH);
+			if ((yylval.string = strdup(yytext)) == NULL)
+				err(1, "Cannot allocate string");
+			return PATH;
 		}
 
 	/* string (fingerprint, type, options) */
 {STRING} 	{
-			yylval.string = strdup(yytext);
-			if (!(yylval.string)) {
-				(void) fprintf(stderr, "WARNING: Out"
-				    " of memory during run-time! "
-				    "Attempting recover...\n");
-
-				/*
-				 * Sleep a little bit and let the
-				 * machine calm down. ;)
-				 */
-				usleep(60000);
-
-				yylval.string = strdup(yytext);
-				if (!(yylval.string)) {
-					(void) fprintf(stderr, "ERROR:"
-					    " No memory. Aborting.\n");
-					exit(1);
-				}
-
-				(void) fprintf(stderr, "Recovered.\n");
-			}
-
-			return (STRING);
+			if ((yylval.string = strdup(yytext)) == NULL)
+				err(1, "Cannot allocate string");
+			return STRING;
 		}
 
 
@@ -96,17 +77,22 @@ STRING		[0-9a-zA-Z]+
 	/* eol on a line with data. need a call to ioctl, return eol */
 \n		{
 			line++;
-			return (EOL);
+			return EOL;
 		}
 
 .		{ yyerror("Invalid character"); }
 
 %%
 
-int yywrap(void) {
-	return (1);
+int
+yywrap(void)
+{
+	return 1;
 }
 
-void yyerror(const char *string) {
-	fprintf(stderr, "%s at \"%s\", line %d\n", string, yytext, line);
+void
+yyerror(const char *string)
+{
+	(void)fprintf(stderr, "%s: %s at \"%s\", line %d\n", getprogname(),
+	    string, yytext, line);
 }
