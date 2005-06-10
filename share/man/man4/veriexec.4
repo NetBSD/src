@@ -1,0 +1,142 @@
+.\" $NetBSD: veriexec.4,v 1.6.2.2 2005/06/10 15:00:30 tron Exp $
+.\"
+.\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
+.\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$Id: veriexec.4,v 1.6.2.2 2005/06/10 15:00:30 tron Exp $
+.\"
+.Dd March 24, 2005
+.Dt VERIEXEC 4
+.Sh NAME
+.Nm veriexec
+.Nd Veriexec pseudo-device
+.Sh SYNOPSIS
+.Cd pseudo-device veriexec
+.Sh DESCRIPTION
+The
+.Nm
+pseudo-device is used to interface the kernel's Veriexec data-structures.
+It is used to size the kernel data structures, load the veriexec
+fingerprints into kernel memory and report the fingerprint methods
+supported by the currently running kernel.
+.Pp
+.Ss Veriexec file operations
+All the following operations are invoked using the
+.Xr ioctl 2
+system call.
+Refer to that man page for the description of
+.Em request
+and
+.Em argp
+parameters.
+The following section lists the requests that can be made via
+.Xr ioctl 2 .
+.Pp
+.Ss Veriexec file request descriptions
+.Pp
+.Bl -tag -width VERIEXEC_FINGERPRINTS
+.It Dv VERIEXEC_TABLESIZE Fa struct veriexec_sizing_params
+Sizes the in kernel hash tables to accommodate the fingerprint entries.
+This request must be made prior to loading the fingerprints into the
+kernel.
+The argument structure contains the device the hash table relates to
+and the number of fingerprint entries that will be loaded into the
+kernel for the device.
+.It Dv VERIEXEC_LOAD Fa struct veriexec_params
+Inserts a fingerprint into the in kernel tables, these tables must have
+been previously sized using the
+.Dv VERIEXEC_TABLESIZE
+request.
+The argument structure defined in
+.Pa /usr/include/sys/verified_exec.h :
+.Bd -literal
+struct veriexec_params  {
+        unsigned char type;
+        unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
+        char file[MAXPATHLEN];
+        unsigned int size;
+        unsigned char *fingerprint;
+};
+.Ed
+.Pp
+Where type contains the type of access allowed which may be one of:
+.Bl -tag -width VERIEXEC_INDIRECT
+.It Dv VERIEXEC_DIRECT
+Allow execution of the file if fingerprint matches.
+.It Dv VERIEXEC_INDIRECT
+Allow execution of the file as a script interpreter only, direct command
+line invocation is disallowed.
+.It Dv VERIEXEC_FILE
+The file is a plain file, not an executable.
+.El
+.Pp
+Followed by fp_type which is the fingerprint type.
+This is a case insensitive character string that must match one of
+the fingerprint types supported by the running kernel.
+Next the path to the file the fingerprint applies to.
+The field size is the number of bytes contained in the
+fingerprint, this is used by the kernel to provide a simple sanity check
+on the fingerprint passed.
+Lastly, the fingerprint is a pointer to an
+array of characters that comprise the fingerprint for the file.
+.It Dv VERIEXEC_FINGERPRINTS Fa struct veriexec_fp_report
+Copies a string that contains the fingerprint methods supported by the
+kernel into the buffer pointed to in the argument structure.
+The argument structure also contains the size of the storage that has
+been allocated by the caller to hold the string.
+If the size of the storage is insufficient to hold the entire string
+then the string will not be copied into the buffer by the kernel, instead
+the size field will be updated with the amount of storage required to hold
+the fingerprint string.
+After performing this request the caller must check the size field in the
+argument structure, if this field differs from what was set prior to the
+request then the caller should reallocate the storage with the updated size
+and perform the request again.
+.El
+.Pp
+Note that the requests
+.Dv VERIEXEC_TABLESIZE
+and
+.Dv VERIEXEC_LOAD
+are not permitted once the kernel security level has been raised past 0
+by setting
+.Dv kern.securelevel
+using
+.Xr sysctl 8 .
+.Sh SEE ALSO
+.Xr veriexecctl 8
+.Xr sysctl 8
+.Sh NOTES
+The size field in the 
+.Dv VERIEXEC_LOAD
+structure is only used to validate the size of the fingerprint being
+passed is the expected size for that fingerprint hash type, it is not used
+for any other purpose.
+A malicious person could deliberately mismatch the size of the fingerprint
+array and, possibly, cause a kernel page fault panic when the kernel
+reads the input fingerprint array memory.
+Due to this, it is recommended only the root user be allowed to access to
+this device.
