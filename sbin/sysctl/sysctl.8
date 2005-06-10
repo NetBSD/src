@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.118.2.3 2005/06/10 15:17:56 tron Exp $
+.\"	$NetBSD: sysctl.8,v 1.118.2.4 2005/06/10 15:19:33 tron Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 21, 2004
+.Dd May 24, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -366,7 +366,7 @@ privilege can change the value.
 .It kern.veriexec.verbose	integer	yes
 .It kern.veriexec.strict	integer	raise only
 .It kern.veriexec.algorithms	string	no
-.It kern.veriexec.count.dev_<id>	quad	no
+.It kern.veriexec.count.dev_\*[Lt]id\*[Gt]	quad	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
 .It net.bpf.maxbufsize	integer	yes
