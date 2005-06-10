@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.16 2005/05/08 18:44:40 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.16 2005/05/08 18:44:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -2078,7 +2078,7 @@ inet_ntoa4(struct in_addr ina)
 }
 
 /* Return a printable string for the address. */
-char *
+const char *
 ipsec_address(union sockaddr_union* sa)
 {
 	switch (sa->sa.sa_family) {

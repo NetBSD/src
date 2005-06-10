@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.24 2005/05/08 18:44:40 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.25 2005/06/10 13:22:42 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.24 2005/05/08 18:44:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25 2005/06/10 13:22:42 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4802,37 +4802,37 @@ key_do_getnewspi(spirange, saidx)
 	struct secasindex *saidx;
 {
 	u_int32_t newspi;
-	u_int32_t min, max;
+	u_int32_t spmin, spmax;
 	int count = key_spi_trycnt;
 
 	/* set spi range to allocate */
 	if (spirange != NULL) {
-		min = spirange->sadb_spirange_min;
-		max = spirange->sadb_spirange_max;
+		spmin = spirange->sadb_spirange_min;
+		spmax = spirange->sadb_spirange_max;
 	} else {
-		min = key_spi_minval;
-		max = key_spi_maxval;
+		spmin = key_spi_minval;
+		spmax = key_spi_maxval;
 	}
 	/* IPCOMP needs 2-byte SPI */
 	if (saidx->proto == IPPROTO_IPCOMP) {
 		u_int32_t t;
-		if (min >= 0x10000)
-			min = 0xffff;
-		if (max >= 0x10000)
-			max = 0xffff;
-		if (min > max) {
-			t = min; min = max; max = t;
+		if (spmin >= 0x10000)
+			spmin = 0xffff;
+		if (spmax >= 0x10000)
+			spmax = 0xffff;
+		if (spmin > spmax) {
+			t = spmin; spmin = spmax; spmax = t;
 		}
 	}
 
-	if (min == max) {
-		if (key_checkspidup(saidx, min) != NULL) {
-			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", min));
+	if (spmin == spmax) {
+		if (key_checkspidup(saidx, spmin) != NULL) {
+			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", spmin));
 			return 0;
 		}
 
 		count--; /* taking one cost. */
-		newspi = min;
+		newspi = spmin;
 
 	} else {
 
@@ -4842,7 +4842,7 @@ key_do_getnewspi(spirange, saidx)
 		/* when requesting to allocate spi ranged */
 		while (count--) {
 			/* generate pseudo-random SPI value ranged. */
-			newspi = min + (key_random() % (max - min + 1));
+			newspi = spmin + (key_random() % (spmax - spmin + 1));
 
 			if (key_checkspidup(saidx, newspi) == NULL)
 				break;
@@ -5671,19 +5671,19 @@ static void
 key_getsizes_ah(
 	const struct auth_hash *ah,
 	int alg,
-	u_int16_t* min,
-	u_int16_t* max)
+	u_int16_t* ksmin,
+	u_int16_t* ksmax)
 {
-	*min = *max = ah->keysize;
+	*ksmin = *ksmax = ah->keysize;
 	if (ah->keysize == 0) {
 		/*
 		 * Transform takes arbitrary key size but algorithm
 		 * key size is restricted.  Enforce this here.
 		 */
 		switch (alg) {
-		case SADB_X_AALG_MD5:	*min = *max = 16; break;
-		case SADB_X_AALG_SHA:	*min = *max = 20; break;
-		case SADB_X_AALG_NULL:	*min = 1; *max = 256; break;
+		case SADB_X_AALG_MD5:	*ksmin = *ksmax = 16; break;
+		case SADB_X_AALG_SHA:	*ksmin = *ksmax = 20; break;
+		case SADB_X_AALG_NULL:	*ksmin = 1; *ksmax = 256; break;
 		default:
 			DPRINTF(("key_getsizes_ah: unknown AH algorithm %u\n",
 				alg));
