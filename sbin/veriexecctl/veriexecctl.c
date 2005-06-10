@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.5.6.3 2005/06/10 14:53:22 tron Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5.6.4 2005/06/10 15:12:11 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -190,8 +190,8 @@ fingerprint_load(char *ifile)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>] "
-	     "[fingerprints]", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>] ", 
+	    getprogname());
 	exit(1);
 }
 
@@ -221,37 +221,13 @@ main(int argc, char **argv)
 	if ((gfd = open(VERIEXEC_DEVICE, O_RDWR, 0)) == -1)
 		err(1, "Cannot open `%s'", VERIEXEC_DEVICE);
 
-	  /*
-	   * Handle the different commands we can do.
-	   */
+	/*
+	 * Handle the different commands we can do.
+	 */
 	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
 		line = 0;
 		filename = argv[1];
 		fingerprint_load(argv[1]);
-	} else if (argc == 1 && strcasecmp(argv[0], "fingerprints") == 0) {
-		size = report.size = 100;
-		if ((report.fingerprints = malloc(report.size)) == NULL)
-			err(1, "malloc fingeprints");
-		
-		if (ioctl(gfd, VERIEXEC_FINGERPRINTS, &report) == -1)
-			err(1, "fingerprints ioctl");
-
-		if (size != report.size) {
-			if (verbose)
-				(void)printf("fingerprints: buffer too small, "
-				    "reallocating to %d bytes.\n",
-				    report.size);
-			
-			/* fingerprint store was not large enough
-			   make more room and try again. */
-			if ((newp = realloc(report.fingerprints, report.size))
-			    == NULL)
-				err(1, "realloc fingeprints");
-			if (ioctl(gfd, VERIEXEC_FINGERPRINTS,
-			    &report) == -1)
-				err(1, "fingerprints ioctl");
-		}
-		printf("Supported fingerprints: %s\n", report.fingerprints);
 	} else
 		usage();
 
