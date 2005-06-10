@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.32 2005/06/02 10:27:43 drochner Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.33 2005/06/10 05:10:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -579,7 +579,7 @@ void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 #define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
-int	coredump_netbsd32(struct lwp *, struct vnode *, struct ucred *);
+int	coredump_netbsd32(struct lwp *, void *);
 
 /*
  * random other stuff
