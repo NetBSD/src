@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.4 2005/06/10 15:14:05 tron Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.5 2005/06/10 15:20:55 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -84,7 +84,7 @@ statement	:	/* empty */
 		goto phase_2_end;
 	}
 
-	if ((p = dev_lookup(sb.st_dev)) == NULL) {
+	if ((p = dev_lookup(sb.st_dev)) != NULL) {
 	    (p->vu_param.hash_size)++;
 	    goto phase_2_end;
 	}
