@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.217.2.1 2005/04/13 21:31:09 tron Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.217.2.2 2005/06/10 14:49:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.1 2005/04/13 21:31:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.2 2005/06/10 14:49:10 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -63,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.1 2005/04/13 21:31:09 tron 
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
 #endif
 
 #include <miscfs/genfs/genfs.h>
@@ -1827,6 +1830,22 @@ restart:
 		error = EBUSY;
 		goto out;
 	}
+
+	  /*
+	   * Remove the fingerprint from the list if there was one.
+	   */
+#ifdef VERIFIED_EXEC
+	if ((error = veriexec_removechk(p, vp, nd.ni_dirp)) != 0) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vput(vp);
+		goto out;
+	}
+#endif
+	
 	if (vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
