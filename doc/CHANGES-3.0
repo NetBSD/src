@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.120 2005/06/09 18:32:25 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.121 2005/06/10 09:26:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9256,4 +9256,22 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/input/keyboard/kbd.c 1.2
 	Fix some odd behaviour related to Sun keyboards sending some
 	sort of keepalive code.
 	[macallan, ticket #429]
+
+crypto/dist/ipsec-tools/ChangeLog		1.13
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	1.7
+
+	Missing 0th element in rm_idtype2doi array.
+	[manu, ticket #432]
+
+crypto/dist/ipsec-tools/ChangeLog		1.14
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c 1.5
+
+	Endianness bug fix.
+	[manu, ticket #433]
+
+crypto/dist/ipsec-tools/ChangeLog		1.15
+crypto/dist/ipsec-tools/src/racoon/privsep.c	1.2
+
+	Fix Xauth login with PAM authentication.
+	[manu, ticket #434]
 
