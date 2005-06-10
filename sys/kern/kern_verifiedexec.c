@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.5 2005/06/10 15:04:29 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.6 2005/06/10 15:10:03 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.5 2005/06/10 15:04:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.6 2005/06/10 15:10:03 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -52,12 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.5 2005/06/10 15:04:29 tr
 #include "crypto/ripemd160/rmd160.h"
 #include <sys/md5.h>
 
-/*int security_veriexec = 0;*/
-int security_veriexec_verbose = 0;
-int security_veriexec_strict = 0;
+int veriexec_verbose = 0;
+int veriexec_strict = 0;
 
 char *veriexec_fp_names;
-int veriexec_name_max;
+unsigned int veriexec_name_max;
 
 /* prototypes */
 static void
@@ -110,7 +109,7 @@ struct veriexec_fp_ops veriexec_default_ops[] = {
 #endif
 };
 
-static unsigned default_ops_count =
+static unsigned int default_ops_count =
         sizeof(veriexec_default_ops) / sizeof(struct veriexec_fp_ops);
 
 #define	VERIEXEC_BUFSIZE	PAGE_SIZE
@@ -122,15 +121,15 @@ static void
 veriexec_add_fp_name(char *name)
 {
 	char *newp;
-	unsigned new_max;
+	unsigned int new_max;
 
 	if ((strlen(veriexec_fp_names) + VERIEXEC_TYPE_MAXLEN + 1) >=
 	    veriexec_name_max) {
 		new_max = veriexec_name_max + 4 * (VERIEXEC_TYPE_MAXLEN + 1);
 		if ((newp = realloc(veriexec_fp_names, new_max,
 				    M_TEMP, M_WAITOK)) == NULL) {
-			printf("veriexec: cannot grow storage to add new "
-			      "fingerprint name to name list.  Not adding\n");
+			printf("Veriexec: Cannot grow storage to add new "
+			      "fingerprint name to name list.  Not adding.\n");
 			return;
 		}
 
@@ -249,7 +248,7 @@ veriexec_fp_cmp(struct veriexec_hash_entry *vhe, u_char *digest)
 #ifdef VERIFIED_EXEC_DEBUG
 	int i;
 
-	if (security_veriexec_verbose > 1) {
+	if (veriexec_verbose > 1) {
 		printf("comparing hashes...\n");
 		printf("vhe->fp: ");
 		for (i = 0; i < vhe->ops->hash_len; i++) {
@@ -381,67 +380,66 @@ out:
         switch (vp->fp_status) {
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
-		panic("veriexec: Not-evaluated status post-evaluation. "
-		      "Inconsistency detected. Report a bug.");
+		veriexec_report("veriexec_verify: Not-evaluated status "
+		    "post evaluation; inconsistency detected.", name, va,
+		    NULL, REPORT_NOVERBOSE, REPORT_NOALARM, REPORT_PANIC);
 
 	case FINGERPRINT_VALID:
 		/* Valid fingerprint. */
-		if ((securelevel >= 1) && security_veriexec_verbose)
-			printf("veriexec: veriexec_verify: Fingerprint "
-			       "matches. (file=%s, dev=%ld, inode=%lu)\n",
-			       name, va->va_fsid, va->va_fileid);
+		veriexec_report("veriexec_verify: Match.", name, va, NULL,
+		    REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
+
 		break;
 
 	case FINGERPRINT_INDIRECT:
 		/* Fingerprint is okay; Make sure it's indirect execution. */
-		if (flag == VERIEXEC_DIRECT) {
-			printf("veriexec: Attempt to execute %s "
-			       "(dev=%ld, inode=%lu) directly by uid=%u "
-			       "(pid=%u, ppid=%u, gppid=%u)\n", name,
-			       va->va_fsid, va->va_fileid,
-			       p->p_ucred->cr_uid, p->p_pid, 
-			       p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
+		veriexec_report("veriexec_verify: Match. [indirect]",
+		    name, va, NULL, REPORT_VERBOSE, REPORT_NOALARM,
+		    REPORT_NOPANIC);
 
-			error = EPERM;
+		if (flag == VERIEXEC_DIRECT) {
+			veriexec_report("veriexec_verify: Direct "
+			    "execution.", name, va, NULL,
+			    REPORT_NOVERBOSE, REPORT_ALARM,
+			    REPORT_NOPANIC);
+
+			if (veriexec_strict > 0)
+				error = EPERM;
 		}
 
-		if ((securelevel >= 1) && security_veriexec_verbose)
-			printf("veriexec: veriexec_verify: Fingerprint "
-			       "matches on indirect. (file=%s, dev=%ld, "
-			       "inode=%lu)\n",
-			       name, va->va_fsid, va->va_fileid);
 		break;
 
 	case FINGERPRINT_NOMATCH:
 		/* Fingerprint mismatch. Deny execution. */
-		printf("veriexec: Fingerprint mismatch for %s "
-		       "(dev=%ld, inode=%lu). Execution "
-		       "attempt by uid=%u, pid=%u.\n", name,
-		       va->va_fsid, va->va_fileid, 
-		       p->p_ucred->cr_uid, p->p_pid);
+		veriexec_report("veriexec_verify: Mismatch.", name, va,
+		    NULL, REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
 
-		if (securelevel >= 2)
+		if (veriexec_strict > 0)
 			error = EPERM;
+
 		break;
 
 	case FINGERPRINT_NOENTRY:
 		/* No entry in the list. */
-		if (securelevel >= 1) {
-			if (security_veriexec_verbose)
-				printf("veriexec: veriexec_verify: No "
-				       "fingerprint for %s (dev=%ld, "
-				       "inode=%lu)\n", name, va->va_fsid,
-				       va->va_fileid);
+		veriexec_report("veriexec_verify: No entry.", name, va,
+		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
-			  /*
-			   * We only really want to reject file opens on
-			   * non-fingerprinted files when we are doing
-			   * strict checking.
-			   */
-			if (((securelevel >= 2) && (flag != VERIEXEC_FILE))
-			    || security_veriexec_strict)
-				error = EPERM;
+		/* We don't care about these in learning mode. */
+		if (veriexec_strict < 1) {
+			break;
 		}
+
+		/*
+		 * Deny access to files with no entry if
+		 *   - File is being executed, and we're in strict
+		 *     level 1; or
+		 *   - File is being accessed, and we're in strict
+		 *     level 2.
+		 */
+		if ((veriexec_strict > 1) ||
+		    ((veriexec_strict == 1) &&
+		    ((flag == VERIEXEC_FILE) || (flag == VERIEXEC_INDIRECT))))
+			error = EPERM;
 
 		break;
 
@@ -450,9 +448,9 @@ out:
 		 * Should never happen.
 		 * XXX: Print vnode/process?
 		 */
-		panic("veriexec: Invalid status post-evaluation in "
-		      "veriexec_verify(). Report a bug. (vnode=%p, pid=%u)",
-		      vp, p->p_pid);
+		veriexec_report("veriexec_verify: Invalid stats "
+		    "post evaluation.", name, va, NULL, REPORT_NOVERBOSE,
+		    REPORT_NOALARM, REPORT_PANIC);
         }
 
 	return (error);
@@ -475,32 +473,30 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	if (error)
 		return (error);
 
-	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
-	
+	/*
+	 * Evaluate fingerprint to eliminate FINGERPRINT_NOTEVAL.
+	 * The flag here should have no affect on the return value.
+	 */
+	error = veriexec_verify(p, vp, &va, pathbuf, VERIEXEC_FILE);
+	if (error) {
+		return (error);
+	}
+
 	switch (vp->fp_status) {
 	case FINGERPRINT_VALID:
 	case FINGERPRINT_INDIRECT:
 	case FINGERPRINT_NOMATCH:
-		if ((securelevel >= 2) || security_veriexec_strict) {
-			printf("veriexec: Denying unlink request for %s "
-			       "from uid=%u: File in fingerprint tables. "
-			       "(pid=%u, dev=%ld, inode=%lu)\n", pathbuf,
-			       p->p_ucred->cr_uid, p->p_pid,
-			       va.va_fsid, va.va_fileid);
+		if (veriexec_strict > 0) {
+			veriexec_report("veriexec_removechk: Denying "
+			    "unlink.", pathbuf, &va, p, REPORT_NOVERBOSE,
+			    REPORT_ALARM, REPORT_NOPANIC);
 
 			error = EPERM;
 		} else {
-			if (security_veriexec_verbose) {
-				printf("veriexec: veriexec_removechk: Removing"
-				       " entry from Veriexec table. (file=%s, "
-				       "dev=%ld, inode=%lu)\n", pathbuf,
-				       va.va_fsid, va.va_fileid);
-			}
-
-			if (vhe == NULL) {
-				panic("veriexec: tables inconsistent, vnode "
-				      "has status but no fp entry found");
-			}
+			veriexec_report("veriexec_removechk: Removing "
+			    "entry.", pathbuf, &va, NULL,
+			    REPORT_NOVERBOSE, REPORT_NOALARM,
+			    REPORT_NOPANIC);
 			
 			goto veriexec_rm;
 		}
@@ -508,46 +504,39 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		break;
 
 	case FINGERPRINT_NOENTRY:
-		return(error);
-		break;
-
-	case FINGERPRINT_NOTEVAL:
-		/*
-		 * Could be we don't have an entry for this, but we can't
-		 * risk an unevaluated file or vnode cache flush.
-		 */
-		if (vhe == NULL) {
-			break;
-		}
-
-		if (securelevel >= 2) {
-			printf("veriexec: Denying unlink request for %s from"
-			       " uid=%u: File in fingerprint tables. (pid=%u, "
-			       "dev=%ld, inode=%lu)\n", pathbuf,
-			       p->p_ucred->cr_uid, p->p_pid,
-			       va.va_fsid, va.va_fileid);
+		if (veriexec_strict > 1) {
+			veriexec_report("veriexec_removechk: Denying "
+			    "unlink. [strict]", pathbuf, &va, p,
+			    REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
 
 			error = EPERM;
-		} else {
-			goto veriexec_rm;
 		}
 
 		break;
 
 	default:
-		panic("veriexec: inconsistency in verified exec state"
-		      "data");
-		break;
-		
+		veriexec_report("veriexec_removechk: Invalid status post "
+		    "evaluation; inconsistency detected.", pathbuf, &va,
+		    NULL, REPORT_NOVERBOSE, REPORT_NOALARM, REPORT_PANIC);
 	}
 
 	return (error);
 
 veriexec_rm:
+	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
+	if (vhe == NULL) {
+		veriexec_report("veriexec_removechk: Inconsistency "
+		    "detected: Trying to remove entry without having one.",
+		    pathbuf, &va, NULL, REPORT_NOVERBOSE, REPORT_NOALARM,
+		    REPORT_PANIC);
+	}
+
 	tbl = veriexec_tblfind(va.va_fsid);
 	if (tbl == NULL) {
-		panic("veriexec: Inconsistency: Could not get table for file"
-		      " in lists. Report a bug.");
+		veriexec_report("veriexec_removechk: Inconsistency "
+		    "detected: Could not get table for file in lists.",
+		    pathbuf, &va, NULL, REPORT_NOVERBOSE, REPORT_NOALARM,
+		    REPORT_PANIC);
 	}
 
 	LIST_REMOVE(vhe, entries);
@@ -555,4 +544,42 @@ veriexec_rm:
 	free(vhe, M_TEMP);
 
 	return (error);
+}
+
+/*
+ * Routine for maintaining mostly consistent message formats in Verified
+ * Exec.
+ *
+ * 'verbose_only' - if 1, the message will be printed only if veriexec is
+ * in verbose mode.
+ * 'alarm' - if 1, the message is considered an alarm and will be printed
+ * at all times along with pid and user credentials.
+ * 'die' - if 1, the system will call panic() instead of printf().
+ */
+void
+veriexec_report(const u_char *msg, const u_char *filename,
+		struct vattr *va, struct proc *p, int verbose_only,
+		int alarm, int die)
+{
+	void (*f)(const char *, ...);
+
+	if (msg == NULL || filename == NULL || va == NULL)
+		return;
+
+	if (die)
+		f = panic;
+	else
+		f = (void (*)(const char *, ...)) printf;
+
+	if (!verbose_only || veriexec_verbose) {
+		if (!alarm || p == NULL)
+			f("veriexec: %s [%s, %d:%u%s", msg, filename,
+			    va->va_fsid, va->va_fileid,
+			    die ? "]" : "]\n");
+		else
+			f("veriexec: %s [%s, %d:%u, pid=%u, uid=%u, "
+			    "gid=%u%s", msg, filename, va->va_fsid,
+			    va->va_fileid, p->p_pid, p->p_cred->p_ruid,
+			    p->p_cred->p_rgid, die ? "]" : "]\n");
+	}
 }
