@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.55 2005/05/27 14:01:46 agc Exp $	*/
+/*	$NetBSD: readline.c,v 1.56 2005/06/10 20:21:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.55 2005/05/27 14:01:46 agc Exp $");
+__RCSID("$NetBSD: readline.c,v 1.56 2005/06/10 20:21:00 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1408,6 +1408,16 @@ rl_display_match_list(char **matches, int len, int max)
 	fn_display_match_list(e, matches, len, max);
 }
 
+static const char *
+/*ARGSUSED*/
+_rl_completion_append_character_function(const char *dummy
+    __attribute__((__unused__)))
+{
+	static char buf[2];
+	buf[1] = rl_completion_append_character;
+	return buf;
+}
+
 
 /*
  * complete word at current point
@@ -1432,7 +1442,7 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	    (CPFunction *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    rl_basic_word_break_characters, rl_special_prefixes,
-	    rl_completion_append_character, rl_completion_query_items,
+	    _rl_completion_append_character_function, rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
 	    &rl_point, &rl_end);
 }
