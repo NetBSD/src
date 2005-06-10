@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.5 2005/05/18 22:34:41 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.6 2005/06/10 20:21:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.5 2005/05/18 22:34:41 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.6 2005/06/10 20:21:00 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ static char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@', '$',
  * it's callers's responsibility to free() returned string
  */
 char *
-tilde_expand(char *txt)
+tilde_expand(const char *txt)
 {
 	struct passwd pwres, *pass;
 	char *temp;
@@ -226,27 +226,17 @@ filename_completion_function(const char *text, int state)
 	}
 
 	if (entry) {		/* match found */
-		struct stat stbuf;
-		const char *isdir = "";
 
 #if defined(__SVR4) || defined(__linux__)
 		len = strlen(entry->d_name);
 #else
 		len = entry->d_namlen;
 #endif
-		temp = malloc(strlen(dirpath) + len + 1);
-		if (temp == NULL)
-			return NULL;
-		(void)sprintf(temp, "%s%s", dirpath, entry->d_name); /* safe */
 
-		/* test, if it's directory */
-		if (stat(temp, &stbuf) == 0 && S_ISDIR(stbuf.st_mode))
-			isdir = "/";
-		free(temp);
-		temp = malloc(strlen(dirname) + len + 1 + 1);
+		temp = malloc(strlen(dirname) + len + 1);
 		if (temp == NULL)
 			return NULL;
-		(void)sprintf(temp, "%s%s%s", dirname, entry->d_name, isdir);
+		(void)sprintf(temp, "%s%s", dirname, entry->d_name);
 	} else {
 		(void)closedir(dir);
 		dir = NULL;
@@ -257,7 +247,22 @@ filename_completion_function(const char *text, int state)
 }
 
 
+static const char *
+append_char_function(const char *name)
+{
+	struct stat stbuf;
+	char *expname = *name == '~' ? tilde_expand(name) : NULL;
+	const char *rs = "";
 
+	if (stat(expname ? expname : name, &stbuf) == -1)
+		goto out;
+	if (S_ISDIR(stbuf.st_mode))
+		rs = "/";
+out:
+	if (expname)
+		free(expname);
+	return rs;
+}
 /*
  * returns list of completions for text given
  * non-static for readline.
@@ -385,7 +390,7 @@ fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
 	const char *word_break, const char *special_prefixes,
-	char append_character, int query_items,
+	const char *(*app_func)(const char *), int query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
 	const LineInfo *li;
@@ -403,6 +408,8 @@ fn_complete(EditLine *el,
 
 	if (!complet_func)
 		complet_func = filename_completion_function;
+	if (!app_func)
+		app_func = append_char_function;
 
 	/* We now look backwards for the start of a filename/variable word */
 	li = el_line(el);
@@ -459,15 +466,7 @@ fn_complete(EditLine *el,
 			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
-			size_t alen = strlen(matches[0]);
-			if ((complet_func != filename_completion_function
-			      || (alen > 0 && (matches[0])[alen - 1] != '/'))
-			    && append_character) {
-				char buf[2];
-				buf[0] = append_character;
-				buf[1] = '\0';
-				el_insertstr(el, buf);
-			}
+			el_insertstr(el, (*append_char_function)(matches[0])); 
 		} else if (what_to_do == '!') {
     display_matches:
 			/*
@@ -535,6 +534,6 @@ unsigned char
 _el_fn_complete(EditLine *el, int ch __attribute__((__unused__)))
 {
 	return (unsigned char)fn_complete(el, NULL, NULL,
-	    break_chars, NULL, ' ', 100,
+	    break_chars, NULL, NULL, 100,
 	    NULL, NULL, NULL, NULL);
 }
