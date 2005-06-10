@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.121 2005/06/10 09:26:10 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.122 2005/06/10 15:40:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9274,4 +9274,53 @@ crypto/dist/ipsec-tools/src/racoon/privsep.c	1.2
 
 	Fix Xauth login with PAM authentication.
 	[manu, ticket #434]
+
+distrib/sets/lists/base/mi			1.548
+distrib/sets/lists/man/mi			1.780,1.784
+etc/MAKEDEV.tmpl				1.44
+etc/rc.d/veriexec				1.4
+lib/libc/gen/sysctl.3				1.147-1.148, 1.149 via patch
+sbin/sysctl/sysctl.8				1.119-1.122
+sbin/veriexecctl/Makefile			1.5-1.8
+sbin/veriexecctl/veriexec.4			delete
+sbin/veriexecctl/veriexecctl.8			1.8-1.12
+sbin/veriexecctl/veriexecctl.c			1.6-1.14
+sbin/veriexecctl/veriexecctl.h			1.1-1.4
+sbin/veriexecctl/veriexecctl_conf.l		1.3-1.5
+sbin/veriexecctl/veriexecctl_parse.y		1.5-1.9
+share/examples/veriexecctl/Makefile		1.2
+share/examples/veriexecctl/gen_md5		1.2
+share/examples/veriexecctl/gen_rmd160		1.1
+share/examples/veriexecctl/gen_sha1		1.2
+share/man/man4/Makefile				1.356
+share/man/man4/veriexec.4			1.4-1.6
+share/man/man4/verifiedexec.4			delete
+sys/arch/i386/conf/GENERIC			1.667, 1.672
+sys/arch/i386/conf/GENERIC_VERIEXEC		1.2
+sys/arch/i386/conf/majors.i386			1.25-1.26
+sys/arch/sparc/conf/majors.sparc		1.21
+sys/arch/sparc64/conf/majors.sparc64		1.21
+sys/compat/netbsd32/netbsd32_execve.c		1.21
+sys/conf/files					1.717
+sys/conf/majors					1.14
+sys/crypto/ripemd160/rmd160.h			1.2
+sys/dev/verified_exec.c				1.6-1.11
+sys/kern/exec_script.c				1.39
+sys/kern/init_main.c				1.245
+sys/kern/init_sysctl.c				1.38-1.39
+sys/kern/kern_exec.c				1.197
+sys/kern/kern_verifiedexec.c			1.10-1.19
+sys/kern/vfs_subr.c				1.244
+sys/kern/vfs_syscalls.c				1.219
+sys/kern/vfs_vnops.c				1.87
+sys/sys/md4.h					1.5
+sys/sys/md5.h					1.6
+sys/sys/sha1.h					1.6
+sys/sys/sysctl.h				1.134
+sys/sys/verified_exec.h				1.7-1.12
+sys/sys/vnode.h					1.135
+
+	Synchronized Verified Exec support with NetBSD-current for enhanced
+	stability and flexibility.
+	[elad, ticket #389]
 
