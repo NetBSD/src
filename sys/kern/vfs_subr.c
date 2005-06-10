@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.243 2005/03/02 11:05:34 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.243.2.1 2005/06/10 14:48:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.243 2005/03/02 11:05:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.243.2.1 2005/06/10 14:48:37 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -605,7 +605,7 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
 #ifdef VERIFIED_EXEC
-		vp->fp_status = FINGERPRINT_INVALID;
+		vp->fp_status = FINGERPRINT_NOTEVAL;
 #endif
 	}
 	vp->v_type = VNON;
