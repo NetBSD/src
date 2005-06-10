@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.3 2005/06/10 15:00:14 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.4 2005/06/10 15:04:06 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.3 2005/06/10 15:00:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.4 2005/06/10 15:04:06 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -550,7 +550,6 @@ veriexec_rm:
 		      " in lists. Report a bug.");
 	}
 
-	tbl->hash_size--;
 	LIST_REMOVE(vhe, entries);
 	free(vhe->fp, M_TEMP);
 	free(vhe, M_TEMP);
