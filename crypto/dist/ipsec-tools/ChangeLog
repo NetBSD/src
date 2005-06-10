@@ -2,6 +2,9 @@
 
 	* src/racoon/isakmp_quick.c: endianness bug fix
 
+	From Frederic Senault  <fred@lacave.net>
+	* src/racoon/privsep.c: fix Xauth login with PAM authentication
+
 2005-05-31  Aidas Kasparas  <a.kasparas@gmc.lt>
 
 	* src/racoon/ipsec_doi.c: Inserted missing 0th element of
