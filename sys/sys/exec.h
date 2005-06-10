@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.108 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.109 2005/06/10 11:36:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,12 +131,13 @@ struct ps_strings {
  * in creating the new process's vmspace.
  */
 
+#include <sys/uio.h>
+
 struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
 struct ucred;
-enum uio_seg;
 
 typedef int (*exec_makecmds_fcn)(struct proc *, struct exec_package *);
 
