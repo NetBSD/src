@@ -1,25 +1,18 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.1 2005/06/10 14:47:17 tron Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
- * All rights reserved.
+ * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Brett Lymn and Jason R Fink
+ * by Brett Lymn and Elad Efrat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -37,330 +30,534 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.1 2005/06/10 14:47:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/namei.h>
 #include <sys/exec.h>
-#include <sys/md5.h>
-#include <sys/sha1.h>
+#include <sys/proc.h>
+#include <sys/syslog.h>
 #include <sys/verified_exec.h>
+#if defined(__FreeBSD__)
+# include <sys/systm.h>
+# include <sys/imgact.h>
+# include <crypto/sha1.h>
+#else
+# include <sys/sha1.h>
+#endif
+#include "crypto/sha2/sha2.h"
+#include "crypto/ripemd160/rmd160.h"
+#include <sys/md5.h>
 
-/* Set the buffer to a single page for md5 and sha1 */
-#define BUF_SIZE PAGE_SIZE
+/*int security_veriexec = 0;*/
+int security_veriexec_verbose = 0;
+int security_veriexec_strict = 0;
 
-extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
+char *veriexec_fp_names;
+int veriexec_name_max;
 
-static int
-md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		struct proc *p, u_quad_t file_size, char *fingerprint);
+/* prototypes */
+static void
+veriexec_add_fp_name(char *name);
 
-static int
-sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		struct proc *p, u_quad_t file_size, char *fingerprint);
+/* Veriexecs table of hash types and their associated information. */
+LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
+
+struct veriexec_fp_ops veriexec_default_ops[] = {
+#ifdef VERIFIED_EXEC_FP_RMD160
+	{ "RMD160", RMD160_DIGEST_LENGTH, sizeof(RMD160_CTX),
+	  (VERIEXEC_INIT_FN) RMD160Init,
+	  (VERIEXEC_UPDATE_FN) RMD160Update,
+	  (VERIEXEC_FINAL_FN) RMD160Final, {NULL, NULL}},
+#endif
+
+#ifdef VERIFIED_EXEC_FP_SHA256
+	{ "SHA256", SHA256_DIGEST_LENGTH, sizeof(SHA256_CTX),
+	  (VERIEXEC_INIT_FN) SHA256_Init,
+	  (VERIEXEC_UPDATE_FN) SHA256_Update,
+	  (VERIEXEC_FINAL_FN) SHA256_Final, {NULL, NULL}},
+#endif
+	
+#ifdef VERIFIED_EXEC_FP_SHA384
+	{ "SHA384", SHA384_DIGEST_LENGTH, sizeof(SHA384_CTX),
+	  (VERIEXEC_INIT_FN) SHA384_Init,
+	  (VERIEXEC_UPDATE_FN) SHA384_Update,
+	  (VERIEXEC_FINAL_FN) SHA384_Final, {NULL, NULL}},
+#endif
+	
+#ifdef VERIFIED_EXEC_FP_SHA512
+	{ "SHA512", SHA512_DIGEST_LENGTH, sizeof(SHA512_CTX),
+	  (VERIEXEC_INIT_FN) SHA512_Init,
+	  (VERIEXEC_UPDATE_FN) SHA512_Update,
+	  (VERIEXEC_FINAL_FN) SHA512_Final, {NULL, NULL}},
+#endif
+	
+#ifdef VERIFIED_EXEC_FP_SHA1
+	{ "SHA1", SHA1_DIGEST_LENGTH, sizeof(SHA1_CTX),
+	  (VERIEXEC_INIT_FN) SHA1Init,
+	  (VERIEXEC_UPDATE_FN) SHA1Update, (VERIEXEC_FINAL_FN) SHA1Final,
+	  {NULL, NULL}},
+#endif
+	
+#ifdef VERIFIED_EXEC_FP_MD5
+	{ "MD5", MD5_DIGEST_LENGTH, sizeof(MD5_CTX),
+	  (VERIEXEC_INIT_FN) MD5Init,
+	  (VERIEXEC_UPDATE_FN) MD5Update, (VERIEXEC_FINAL_FN) MD5Final,
+	  {NULL, NULL}},
+#endif
+};
+
+static unsigned default_ops_count =
+        sizeof(veriexec_default_ops) / sizeof(struct veriexec_fp_ops);
+
+#define	VERIEXEC_BUFSIZE	PAGE_SIZE
+
+/*
+ * Add fingerprint names to the global list.
+ */
+static void
+veriexec_add_fp_name(char *name)
+{
+	char *newp;
+	unsigned new_max;
+
+	if ((strlen(veriexec_fp_names) + VERIEXEC_TYPE_MAXLEN + 1) >=
+	    veriexec_name_max) {
+		new_max = veriexec_name_max + 4 * (VERIEXEC_TYPE_MAXLEN + 1);
+		if ((newp = realloc(veriexec_fp_names, new_max,
+				    M_TEMP, M_WAITOK)) == NULL) {
+			printf("veriexec: cannot grow storage to add new "
+			      "fingerprint name to name list.  Not adding\n");
+			return;
+		}
+
+		veriexec_fp_names = newp;
+		veriexec_name_max = new_max;
+	}
+
+	strlcat(veriexec_fp_names, name, veriexec_name_max);
+	strlcat(veriexec_fp_names, " ", veriexec_name_max);
+}
+
+/*
+ * Initialise the internal "default" fingerprint ops vector list.
+ */
+void
+veriexec_init_fp_ops(void)
+{
+	unsigned int i;
+
+	veriexec_name_max = default_ops_count * (VERIEXEC_TYPE_MAXLEN + 1) + 1;
+	veriexec_fp_names = malloc(veriexec_name_max, M_TEMP, M_WAITOK);
+	veriexec_fp_names[0] = '\0';
+	
+	LIST_INIT(&veriexec_ops_list);
+
+	for (i = 0; i < default_ops_count; i++) {
+		LIST_INSERT_HEAD(&veriexec_ops_list, &veriexec_default_ops[i],
+				 entries);
+		veriexec_add_fp_name(veriexec_default_ops[i].type);
+	}
+}
+
+struct veriexec_fp_ops *
+veriexec_find_ops(u_char *name)
+{
+	struct veriexec_fp_ops *ops;
+
+	name[VERIEXEC_TYPE_MAXLEN] = '\0';
+	
+	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
+		if ((strlen(name) == strlen(ops->type)) &&
+		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
+		     == 0))
+			return (ops);
+	}
+
+	return (NULL);
+}
 
 
 /*
- * md5_fingerprint:
- *   Evaluate the md5 fingerprint of the given file.
- *
+ * Calculate fingerprint. Information on hash length and routines used is
+ * extracted from veriexec_hash_list according to the hash type.
  */
-static int
-md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		struct proc *p, u_quad_t file_size, char *fingerprint)
+int
+veriexec_fp_calc(struct proc *p, struct vnode *vp,
+		 struct veriexec_hash_entry *vhe, uint64_t size, u_char *fp)
 {
-        u_quad_t        j;
-        MD5_CTX         md5context;
-	char            *filebuf;
-	size_t          resid;
-	int             count, error;
+	void *ctx = NULL;
+	u_char *buf = NULL;
+	off_t offset, len;
+	size_t resid;
+	int error = 0;
 
-	filebuf = malloc(BUF_SIZE, M_TEMP, M_WAITOK);
-	MD5Init(&md5context);
+	/* XXX: This should not happen. Print more details? */
+	if (vhe->ops == NULL) {
+		panic("Veriexec: Operations vector NULL\n");
+	}
 
-	for (j = 0; j < file_size; j+= BUF_SIZE) {
-		if ((j + BUF_SIZE) > file_size) {
-			count = file_size - j;
-		} else
-			count = BUF_SIZE;
+	bzero(fp, vhe->ops->hash_len);
 
-		error = vn_rdwr(UIO_READ, vp, filebuf, count, j,
-                                UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
 
+	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
+	buf = (u_char *) malloc(VERIEXEC_BUFSIZE, M_TEMP, M_WAITOK);
+
+	(vhe->ops->init)(ctx); /* init the fingerprint context */
+
+	/*
+	 * The vnode is locked. sys_execve() does it for us; We have our
+	 * own locking in vn_open().
+	 */
+	for (offset = 0; offset < size; offset += VERIEXEC_BUFSIZE) {
+		len = ((size - offset) < VERIEXEC_BUFSIZE) ? (size - offset)
+			: VERIEXEC_BUFSIZE;
+
+		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
+				UIO_SYSSPACE,
+#ifdef __FreeBSD__
+				IO_NODELOCKED,
+#else
+				0,
+#endif
+				p->p_ucred, &resid, NULL);
+
+		if (error)
+			goto bad;
+
+		  /* calculate fingerprint for each chunk */
+		(vhe->ops->update)(ctx, buf, (unsigned int) len);
+	}
+
+	  /* finalise the fingerprint calculation */
+	(vhe->ops->final)(fp, ctx);
+
+bad:
+	free(ctx, M_TEMP);
+	free(buf, M_TEMP);
+
+	return (error);
+}
+	
+/* Compare two fingerprints of the same type. */
+int
+veriexec_fp_cmp(struct veriexec_hash_entry *vhe, u_char *digest)
+{
+#ifdef VERIFIED_EXEC_DEBUG
+	int i;
+
+	if (security_veriexec_verbose > 1) {
+		printf("comparing hashes...\n");
+		printf("vhe->fp: ");
+		for (i = 0; i < vhe->ops->hash_len; i++) {
+			printf("%x", vhe->fp[i]);
+		}
+		printf("\ndigest: ");
+		for (i = 0; i < vhe->ops->hash_len; i++) {
+			printf("%x", digest[i]);
+		}
+		printf("\n");
+	}
+#endif
+
+	return (memcmp(vhe->fp, digest, vhe->ops->hash_len));
+}
+
+/* Get the hash table for the specified device. */
+struct veriexec_hashtbl *
+veriexec_tblfind(dev_t device) {
+	struct veriexec_hashtbl *tbl;
+
+	LIST_FOREACH(tbl, &veriexec_tables, hash_list) {
+		if (tbl->hash_dev == device)
+			return (tbl);
+	}
+
+	return (NULL);
+}
+
+/* Perform a lookup on a hash table. */
+struct veriexec_hash_entry *
+veriexec_lookup(dev_t device, ino_t inode)
+{
+	struct veriexec_hashtbl *tbl;
+	struct veriexec_hashhead *tble;
+	struct veriexec_hash_entry *e;
+	size_t indx;
+
+	tbl = veriexec_tblfind(device);
+	if (tbl == NULL)
+		return (NULL);
+
+	indx = VERIEXEC_HASH(tbl, inode);
+	tble = &(tbl->hash_tbl[indx & VERIEXEC_HASH_MASK(tbl)]);
+
+	LIST_FOREACH(e, tble, entries) {
+		if ((e != NULL) && (e->inode == inode))
+			return (e);
+	}
+
+	return (NULL);
+}
+
+/*
+ * Add an entry to a hash table. If a collision is found, handle it.
+ * The passed entry is allocated in kernel memory.
+ */
+int
+veriexec_hashadd(struct veriexec_hashtbl *tbl, struct veriexec_hash_entry *e)
+{
+	struct veriexec_hashhead *vhh;
+	size_t indx;
+
+	if (tbl == NULL)
+		return (EFAULT);
+
+	indx = VERIEXEC_HASH(tbl, e->inode);
+	vhh = &(tbl->hash_tbl[indx]);
+
+	if (vhh == NULL)
+		panic("Veriexec: veriexec_hashadd: vhh is NULL.");
+
+	LIST_INSERT_HEAD(vhh, e, entries);
+
+	return (0);
+}
+
+/*
+ * Verify the fingerprint of the given file. If we're called directly from
+ * sys_execve(), 'flag' will be VERIEXEC_DIRECT. If we're called from
+ * exec_script(), 'flag' will be VERIEXEC_INDIRECT.  If we are called from
+ * vn_open(), 'flag' will be VERIEXEC_FILE.
+ */
+int
+veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
+		const u_char *name, int flag)
+{
+	struct veriexec_hash_entry *vhe;
+        u_char *digest;
+        int error = 0;
+
+	/* Evaluate fingerprint if needed and set the status on the vp. */
+	if (vp->fp_status == FINGERPRINT_NOTEVAL) {
+		vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
+		if (vhe == NULL) {
+			vp->fp_status = FINGERPRINT_NOENTRY;
+			goto out;
+		}
+ 
+		veriexec_dprintf(("Veriexec: veriexec_verify: Got entry for "
+				  "%s. (dev=%d, inode=%u)\n", name,
+				  va->va_fsid, va->va_fileid));
+
+		/* Calculate fingerprint for the inode. */
+		digest = (u_char *) malloc(vhe->ops->hash_len, M_TEMP,
+					   M_WAITOK);
+		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
+		
 		if (error) {
-			free(filebuf, M_TEMP);
-			return error;
+			veriexec_dprintf(("Veriexec: veriexec_verify: "
+					  "Calculation error.\n"));
+			free(digest, M_TEMP);
+			return (error);
 		}
 
-		MD5Update(&md5context, filebuf, (unsigned int) count);
-
-	}
-
-	MD5Final(fingerprint, &md5context);
-	free(filebuf, M_TEMP);
-	return 0;
-}
-
-static int
-sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		 struct proc *p, u_quad_t file_size, char *fingerprint)
-{
-        u_quad_t        j;
-        SHA1_CTX        sha1context;
-	char            *filebuf;
-	size_t          resid;
-	int             count, error;
-
-	filebuf = malloc(BUF_SIZE, M_TEMP, M_WAITOK);
-	SHA1Init(&sha1context);
-
-	for (j = 0; j < file_size; j+= BUF_SIZE) {
-		if ((j + BUF_SIZE) > file_size) {
-			count = file_size - j;
-		} else
-			count = BUF_SIZE;
-
-		error = vn_rdwr(UIO_READ, vp, filebuf, count, j,
-				UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
-
-		if (error) {
-			free(filebuf, M_TEMP);
-			return error;
-		}
-
-		SHA1Update(&sha1context, filebuf, (unsigned int) count);
-
-	}
-
-	SHA1Final(fingerprint, &sha1context);
-	free(filebuf, M_TEMP);
-	return 0;
-}
-
-/*
- * evaluate_fingerprint:
- *   Check the fingerprint type for the given file and evaluate the
- * fingerprint for that file.  It is assumed that fingerprint has sufficient
- * storage to hold the resulting fingerprint string.
- *
- */
-int
-evaluate_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		     struct proc *p, u_quad_t file_size, char *fingerprint)
-{
-	int error;
-
-	switch (ip->fp_type) {
-	case FINGERPRINT_TYPE_MD5:
-		error = md5_fingerprint(vp, ip, p, file_size, fingerprint);
-		break;
-
-	case FINGERPRINT_TYPE_SHA1:
-		error = sha1_fingerprint(vp, ip, p, file_size, fingerprint);
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-
-	return error;
-}
-
-/*
- * fingerprintcmp:
- *    Compare the two given fingerprints to see if they are the same
- * Differing fingerprint methods may have differing lengths which
- * is handled by this routine.  This function follows the convention
- * of other cmp functions and returns 0 if the fingerprints match and
- * 1 if they don't.
- */
-int
-fingerprintcmp(struct veriexec_inode_list *ip, unsigned char *digest)
-{
-	switch(ip->fp_type) {
-	case FINGERPRINT_TYPE_MD5:
-		return memcmp(ip->fingerprint, digest, MD5_FINGERPRINTLEN);
-		break;
-
-	case FINGERPRINT_TYPE_SHA1:
-		return memcmp(ip->fingerprint, digest, SHA1_FINGERPRINTLEN);
-		break;
-
-	default:
-		  /* unknown fingerprint type, just fail it after whining */
-		printf("fingerprintcmp: unknown fingerprint type\n");
-		return 1;
-		break;
-	}
-}
-
-
-/*
- * get_veriexec_inode:
- *   Search the given verified exec fingerprint list for the given
- * fileid.  If it exists then return a pointer to the list entry,
- * otherwise return NULL.  If found_dev is non-NULL set this to true
- * iff the given device has a fingerprint list.
- *
- */
-struct veriexec_inode_list *
-get_veriexec_inode(struct veriexec_devhead *head, long fsid, long fileid,
-		char *found_dev)
-{
-	struct 	veriexec_dev_list 	 *lp;
-        struct 	veriexec_inode_list *ip;
-
-	ip = NULL;
-	if (found_dev != NULL)
-		*found_dev = 0;
-
-#ifdef VERIFIED_EXEC_DEBUG
-	printf("searching for file %lu on device %lu\n", fileid, fsid);
-#endif
-
-	for (lp = LIST_FIRST(head); lp != NULL; lp = LIST_NEXT(lp, entries))
-		if (lp->id == fsid)
-			break;
-
-	if (lp != NULL) {
-#ifdef VERIFIED_EXEC_DEBUG
-		printf("found matching dev number %lu\n", lp->id);
-#endif
-		if (found_dev != NULL)
-			*found_dev = 1;
-
-		for (ip = LIST_FIRST(&(lp->inode_head)); ip != NULL;
-		     ip = LIST_NEXT(ip, entries))
-			if (ip->inode == fileid)
-				break;
-	}
-
-	return ip;
-}
-
-/*
- * check veriexec:
- *   check a file signature and return a status to check_exec.
- */
-int
-check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
-		int direct_exec)
-{
-        int             error;
-        char            digest[MAXFINGERPRINTLEN], found_dev;
-        struct 	veriexec_inode_list *ip;
-
-	error = 0;
-	found_dev = 0;
-        if (vp->fp_status == FINGERPRINT_INVALID) {
-
-#ifdef VERIFIED_EXEC_DEBUG
-		printf("looking for loaded signature\n");
-#endif
-		ip = get_veriexec_inode(&veriexec_dev_head, epp->ep_vap->va_fsid,
-				     epp->ep_vap->va_fileid, &found_dev);
-
-		if (found_dev == 0) {
-#ifdef VERIFIED_EXEC_DEBUG
-			printf("No device entry found\n");
-#endif
-			vp->fp_status = FINGERPRINT_NODEV;
-		}
-
-		if (ip != NULL) {
-#ifdef VERIFIED_EXEC_DEBUG
-			printf("found matching inode number %lu\n", ip->inode);
-#endif
-			error = evaluate_fingerprint(vp, ip, p,
-						     epp->ep_vap->va_size,
-					     	     digest);
-			if (error)
-				return error;
-
-			if (fingerprintcmp(ip, digest) == 0) {
-				if (ip->type == VERIEXEC_DIRECT) {
-#ifdef VERIFIED_EXEC_DEBUG
-					printf("Evaluated fingerprint matches\n");
-#endif
-					vp->fp_status =	FINGERPRINT_VALID;
-				} else {
-#ifdef VERIFIED_EXEC_DEBUG
-					printf("Evaluated indirect fingerprint matches\n");
-#endif
-					vp->fp_status =	FINGERPRINT_INDIRECT;
-				}
+		if (veriexec_fp_cmp(vhe, digest) == 0) {
+			if (vhe->type == VERIEXEC_INDIRECT) {
+				vp->fp_status = FINGERPRINT_INDIRECT;
 			} else {
-#ifdef VERIFIED_EXEC_DEBUG
-				printf("Evaluated fingerprint match failed\n");
-#endif
-				vp->fp_status = FINGERPRINT_NOMATCH;
+				vp->fp_status = FINGERPRINT_VALID;
 			}
 		} else {
-#ifdef VERIFIED_EXEC_DEBUG
-			printf("No fingerprint entry found\n");
-#endif
-			vp->fp_status = FINGERPRINT_NOENTRY;
+			vp->fp_status = FINGERPRINT_NOMATCH;
 		}
+		free(digest, M_TEMP);
 	}
 
+out:
         switch (vp->fp_status) {
-          case FINGERPRINT_INVALID: /* should not happen */
-                  printf("Got unexpected FINGERPRINT_INVALID!!!\n");
-                  error = EPERM;
-                  break;
-          case FINGERPRINT_VALID: /* is ok - report so if debug is on */
-#ifdef VERIFIED_EXEC_DEBUG
-                  printf("Fingerprint matches\n");
-#endif
-                  break;
+	case FINGERPRINT_NOTEVAL:
+		/* Should not happen. */
+		panic("Veriexec: Not-evaluated status post-evaluation. "
+		      "Inconsistency detected. Report a bug.");
 
-          case FINGERPRINT_INDIRECT: /* fingerprint ok but need to check
-                                        for direct execution */
-                  if (direct_exec == 1) {
-                          printf("Attempt to execute %s (dev %lu, inode %lu) "
-				 "directly by pid %u (ppid %u, gppid %u)\n",
-                                 epp->ep_name, epp->ep_vap->va_fsid,
-                                 epp->ep_vap->va_fileid, p->p_pid,
-                                 p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
-                          if (securelevel > 1)
-                                  error = EPERM;
-                  }
-                  break;
+	case FINGERPRINT_VALID:
+		/* Valid fingerprint. */
+		if ((securelevel >= 1) && security_veriexec_verbose)
+			printf("Veriexec: veriexec_verify: Fingerprint "
+			       "matches. (file=%s, dev=%ld, inode=%lu)\n",
+			       name, va->va_fsid, va->va_fileid);
+		break;
 
-          case FINGERPRINT_NOMATCH: /* does not match - whine about it */
-                  printf("Fingerprint for %s (dev %lu, inode %lu) does not "
-			 "match loaded value\n",
-                         epp->ep_name, epp->ep_vap->va_fsid,
-                         epp->ep_vap->va_fileid);
-                  if (securelevel > 1)
-                          error = EPERM;
-                  break;
+	case FINGERPRINT_INDIRECT:
+		/* Fingerprint is okay; Make sure it's indirect execution. */
+		if (flag == VERIEXEC_DIRECT) {
+			printf("Veriexec: Attempt to execute %s "
+			       "(dev=%ld, inode=%lu) directly by uid=%u "
+			       "(pid=%u, ppid=%u, gppid=%u)\n", name,
+			       va->va_fsid, va->va_fileid,
+			       p->p_ucred->cr_uid, p->p_pid, 
+			       p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
 
-          case FINGERPRINT_NOENTRY: /* no entry in the list, complain */
-                  printf("No fingerprint for %s (dev %lu, inode %lu)\n",
-                         epp->ep_name, epp->ep_vap->va_fsid,
-                         epp->ep_vap->va_fileid);
-                  if (securelevel > 1)
-                          error = EPERM;
-                  break;
+			error = EPERM;
+		}
 
-          case FINGERPRINT_NODEV: /* no signatures for the device, complain */
-#ifdef VERIFIED_EXEC_DEBUG
-                  printf("No signatures for device %lu\n",
-                         epp->ep_vap->va_fsid);
-#endif
-                  if (securelevel > 1)
-			  error = EPERM;
-                  break;
+		if ((securelevel >= 1) && security_veriexec_verbose)
+			printf("Veriexec: veriexec_verify: Fingerprint "
+			       "matches on indirect. (file=%s, dev=%ld, "
+			       "inode=%lu)\n",
+			       name, va->va_fsid, va->va_fileid);
+		break;
 
-          default: /* this should never happen. */
-                  printf("Invalid fp_status field for vnode %p\n", vp);
-                  error = EPERM;
+	case FINGERPRINT_NOMATCH:
+		/* Fingerprint mismatch. Deny execution. */
+		printf("Veriexec: Fingerprint mismatch for %s "
+		       "(dev=%ld, inode=%lu). Execution "
+		       "attempt by uid=%u, pid=%u.\n", name,
+		       va->va_fsid, va->va_fileid, 
+		       p->p_ucred->cr_uid, p->p_pid);
+
+		if (securelevel >= 2)
+			error = EPERM;
+		break;
+
+	case FINGERPRINT_NOENTRY:
+		/* No entry in the list. */
+		if (securelevel >= 1) {
+			if (security_veriexec_verbose)
+				printf("Veriexec: veriexec_verify: No "
+				       "fingerprint for %s (dev=%ld, "
+				       "inode=%lu)\n", name, va->va_fsid,
+				       va->va_fileid);
+
+			  /*
+			   * We only really want to reject file opens on
+			   * non-fingerprinted files when we are doing
+			   * strict checking.
+			   */
+			if (((securelevel >= 2) && (flag != VERIEXEC_FILE))
+			    || security_veriexec_strict)
+				error = EPERM;
+		}
+
+		break;
+
+	default:
+		/*
+		 * Should never happen.
+		 * XXX: Print vnode/process?
+		 */
+		panic("Veriexec: Invalid status post-evaluation in "
+		      "veriexec_verify(). Report a bug. (vnode=%p, pid=%u)",
+		      vp, p->p_pid);
         }
 
-	return error;
+	return (error);
+}
 
+/*
+ * Veriexec remove policy code. If we have an entry for the file in our
+ * tables, we disallow removing if the securelevel is high or we're in
+ * strict mode.
+ */
+int
+veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
+{
+	struct veriexec_hashtbl *tbl;
+	struct veriexec_hash_entry *vhe = NULL;
+	struct vattr va;
+	int error;
+
+	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
+	if (error)
+		return (error);
+
+	switch (vp->fp_status) {
+	case FINGERPRINT_VALID:
+	case FINGERPRINT_INDIRECT:
+	case FINGERPRINT_NOMATCH:
+		if (securelevel >= 2) {
+			printf("Veriexec: Denying unlink request for %s "
+			       "from uid=%u: File in fingerprint tables. "
+			       "(pid=%u, dev=%ld, inode=%lu)\n", pathbuf,
+			       p->p_ucred->cr_uid, p->p_pid,
+			       va.va_fsid, va.va_fileid);
+
+			error = EPERM;
+		} else {
+#ifdef DIAGNOSTIC
+			/* XXX: Print more details? */
+			vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
+			if (vhe == NULL) {
+				panic("Veriexec: Inconsistency! "
+				      "File has post-evaluation status, "
+				      "but not in lists. Report a bug.");
+			}
+#endif /* DIAGNOSTIC */
+
+			if (security_veriexec_verbose) {
+				printf("Veriexec: veriexec_removechk: Removing"
+				       " entry from Veriexec table. (file=%s, "
+				       "dev=%ld, inode=%lu)\n", pathbuf,
+				       va.va_fsid, va.va_fileid);
+			}
+
+			goto veriexec_rm;
+		}
+
+		break;
+
+	case FINGERPRINT_NOENTRY:
+		return(error);
+		break;
+
+	case FINGERPRINT_NOTEVAL:
+		/*
+		 * Could be we don't have an entry for this, but we can't
+		 * risk an unevaluated file or vnode cache flush.
+		 */
+		vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
+		if (vhe == NULL) {
+			break;
+		}
+
+		if (securelevel >= 2) {
+			printf("Veriexec: Denying unlink request for %s from"
+			       " uid=%u: File in fingerprint tables. (pid=%u, "
+			       "dev=%ld, inode=%lu)\n", pathbuf,
+			       p->p_ucred->cr_uid, p->p_pid,
+			       va.va_fsid, va.va_fileid);
+
+			error = EPERM;
+		} else {
+			goto veriexec_rm;
+		}
+
+		break;
+
+	default:
+		panic("Veriexec: inconsistency in verified exec state"
+		      "data");
+		break;
+		
+	}
+
+	return (error);
+
+veriexec_rm:
+	tbl = veriexec_tblfind(va.va_fsid);
+	if (tbl == NULL) {
+		panic("Veriexec: Inconsistency: Could not get table for file"
+		      " in lists. Report a bug.");
+	}
+
+	tbl->hash_size--;
+	LIST_REMOVE(vhe, entries);
+	free(vhe->fp, M_TEMP);
+	free(vhe, M_TEMP);
+
+	return (error);
 }
