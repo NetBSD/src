@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.102 2005/06/02 17:01:44 matt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.103 2005/06/10 05:10:13 matt Exp $	*/
 
 /*
  *
@@ -574,9 +574,8 @@ void			uvm_proc_fork(struct proc *, struct proc *, boolean_t);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
 int			uvm_coredump_walkmap(struct proc *,
-			    struct vnode *, struct ucred *,
-			    int (*)(struct proc *, struct vnode *,
-				    struct ucred *,
+			    void *,
+			    int (*)(struct proc *, void *,
 				    struct uvm_coredump_state *), void *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
