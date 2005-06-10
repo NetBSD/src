@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.206 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.207 2005/06/10 05:10:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.206 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207 2005/06/10 05:10:13 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2051,6 +2051,30 @@ sigexit(struct lwp *l, int signum)
 	/* NOTREACHED */
 }
 
+struct coredump_iostate {
+	struct proc *io_proc;
+	struct vnode *io_vp;
+	struct ucred *io_cred;
+	off_t io_offset;
+};
+
+int
+coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
+{
+	struct coredump_iostate *io = cookie;
+	int error;
+
+	error = vn_rdwr(UIO_WRITE, io->io_vp, __UNCONST(data), len,
+	    io->io_offset, segflg,
+	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL,
+	    segflg == UIO_USERSPACE ? io->io_proc : NULL);
+	if (error)
+		return (error);
+
+	io->io_offset += len;
+	return (0);
+}
+
 /*
  * Dump core, into a file named "progname.core" or "core" (depending on the
  * value of shortcorename), unless the process was setuid/setgid.
@@ -2065,6 +2089,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct nameidata	nd;
 	struct vattr		vattr;
 	struct mount		*mp;
+	struct coredump_iostate	io;
 	int			error, error1;
 	char			name[MAXPATHLEN];
 
@@ -2131,8 +2156,13 @@ restart:
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
 
+	io.io_proc = p;
+	io.io_vp = vp;
+	io.io_cred = cred;
+	io.io_offset = 0;
+
 	/* Now dump the actual core file. */
-	error = (*p->p_execsw->es_coredump)(l, vp, cred);
+	error = (*p->p_execsw->es_coredump)(l, &io);
  out:
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
