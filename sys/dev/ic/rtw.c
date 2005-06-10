@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.45 2005/03/02 05:20:43 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.46 2005/06/10 02:35:34 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.45 2005/03/02 05:20:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.46 2005/06/10 02:35:34 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -198,27 +198,29 @@ rtw_sysctl_verify(SYSCTLFN_ARGS, int lower, int upper)
 static int
 rtw_sysctl_verify_rfprog(SYSCTLFN_ARGS)
 {
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0,
+	return rtw_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)), 0,
 	    MASK_AND_RSHIFT(RTW_CONFIG4_RFTYPE_MASK, RTW_CONFIG4_RFTYPE_MASK));
 }
 
 static int
 rtw_sysctl_verify_rfio(SYSCTLFN_ARGS)
 {
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 1);
+	return rtw_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)), 0, 1);
 }
 
 #ifdef RTW_DEBUG
 static int
 rtw_sysctl_verify_debug(SYSCTLFN_ARGS)
 {
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, RTW_DEBUG_MAX);
+	return rtw_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)),
+	    0, RTW_DEBUG_MAX);
 }
 
 static int
 rtw_sysctl_verify_rxbufs_limit(SYSCTLFN_ARGS)
 {
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, RTW_RXQLEN);
+	return rtw_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)),
+	    0, RTW_RXQLEN);
 }
 
 static void
@@ -703,16 +705,17 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 	int i;
 	const char *rfname, *paname;
 	char scratch[sizeof("unknown 0xXX")];
-	uint16_t version;
+	uint16_t srom_version;
 	uint8_t mac[IEEE80211_ADDR_LEN];
 
 	*flags &= ~(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV);
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
 
-	version = RTW_SR_GET16(sr, RTW_SR_VERSION);
-	printf("%s: SROM version %d.%d", dvname, version >> 8, version & 0xff);
+	srom_version = RTW_SR_GET16(sr, RTW_SR_VERSION);
+	printf("%s: SROM version %d.%d", dvname,
+	    srom_version >> 8, srom_version & 0xff);
 
-	if (version <= 0x0101) {
+	if (srom_version <= 0x0101) {
 		printf(" is not understood, limping along with defaults\n");
 		rtw_srom_defaults(sr, flags, cs_threshold, rfchipid, rcr);
 		return 0;
@@ -3810,7 +3813,7 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
  * revisions A and B.
  */
 static uint8_t
-rtw_check_phydelay(struct rtw_regs *regs, uint32_t rcr0)
+rtw_check_phydelay(struct rtw_regs *regs, uint32_t old_rcr)
 {
 #define REVAB (RTW_RCR_MXDMA_UNLIMITED | RTW_RCR_AICV)
 #define REVC (REVAB | RTW_RCR_RXFTH_WHOLE)
@@ -3825,7 +3828,7 @@ rtw_check_phydelay(struct rtw_regs *regs, uint32_t rcr0)
 	if ((RTW_READ(regs, RTW_RCR) & REVC) == REVC)
 		phydelay |= RTW_PHYDELAY_REVC_MAGIC;
 
-	RTW_WRITE(regs, RTW_RCR, rcr0);	/* restore RCR */
+	RTW_WRITE(regs, RTW_RCR, old_rcr);	/* restore RCR */
 	RTW_SYNC(regs, RTW_RCR, RTW_RCR);
 
 	return phydelay;
