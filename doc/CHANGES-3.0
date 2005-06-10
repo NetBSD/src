@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.123 2005/06/10 15:45:24 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.124 2005/06/10 15:54:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9328,4 +9328,11 @@ sbin/veriexecctl/veriexecctl.c			1.15
 
 	Fix compilation problem.
 	[elad, ticket #390]
+
+sys/net/if_tap.c				1.9
+
+	Call (ifp->if_input) at splnet(). ifp->if_input points to ether_input()
+	which doesn't raise the IPL itself in all cases. This fixes
+	PR kern/29546.
+	[bouyer, ticket #438]
 
