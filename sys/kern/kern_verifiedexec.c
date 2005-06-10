@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.9 2005/06/10 15:24:46 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.10 2005/06/10 15:25:14 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.9 2005/06/10 15:24:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.10 2005/06/10 15:25:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -259,26 +259,26 @@ bad:
 	
 /* Compare two fingerprints of the same type. */
 int
-veriexec_fp_cmp(struct veriexec_hash_entry *vhe, u_char *digest)
+veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
 {
 #ifdef VERIFIED_EXEC_DEBUG
 	int i;
 
 	if (veriexec_verbose > 1) {
 		printf("comparing hashes...\n");
-		printf("vhe->fp: ");
-		for (i = 0; i < vhe->ops->hash_len; i++) {
-			printf("%x", vhe->fp[i]);
+		printf("fp1: ");
+		for (i = 0; i < ops->hash_len; i++) {
+			printf("%x", fp1[i]);
 		}
-		printf("\ndigest: ");
-		for (i = 0; i < vhe->ops->hash_len; i++) {
-			printf("%x", digest[i]);
+		printf("\nfp2: ");
+		for (i = 0; i < ops->hash_len; i++) {
+			printf("%x", fp2[i]);
 		}
 		printf("\n");
 	}
 #endif
 
-	return (memcmp(vhe->fp, digest, vhe->ops->hash_len));
+	return (memcmp(fp1, fp2, ops->hash_len));
 }
 
 /* Get the hash table for the specified device. */
@@ -382,7 +382,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 			return (error);
 		}
 
-		if (veriexec_fp_cmp(vhe, digest) == 0) {
+		if (veriexec_fp_cmp(vhe->ops, vhe->fp, digest) == 0) {
 			if (vhe->type == VERIEXEC_INDIRECT) {
 				vp->fp_status = FINGERPRINT_INDIRECT;
 			} else {
