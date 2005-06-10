@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.5.6.7 2005/06/10 15:25:29 tron Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5.6.8 2005/06/10 15:25:43 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -190,7 +190,7 @@ fingerprint_load(char *ifile)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>] ", 
+	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>]\n", 
 	    getprogname());
 	exit(1);
 }
