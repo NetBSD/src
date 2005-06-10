@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.6.2.4 2005/06/10 15:24:11 tron Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.6.2.5 2005/06/10 15:25:08 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.4 2005/06/10 15:24:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.5 2005/06/10 15:25:08 tron Exp $");
 
 /*
  *
@@ -174,7 +174,7 @@ void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
 int veriexec_fp_calc(struct proc *, struct vnode *,
 		     struct veriexec_hash_entry *, uint64_t, u_char *);
-int veriexec_fp_cmp(struct veriexec_hash_entry *, u_char *);
+int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
 
 struct veriexec_hashtbl *veriexec_tblfind(dev_t);
 struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
