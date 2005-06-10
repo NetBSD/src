@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.19 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.19.2.1 2005/06/10 15:10:38 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.19 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.19.2.1 2005/06/10 15:10:38 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.19 2005/02/26 23:10:21 perry E
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <sys/verified_exec.h>
 
 /* this is provided by kern/kern_exec.c */
 extern u_int exec_maxhdrsz;
@@ -147,7 +149,11 @@ netbsd32_execve2(l, uap, retval)
 #endif
 
 	/* see if we can run it. */
+#ifdef VERIFIED_EXEC
+	if ((error = check_exec(p, &pack, VERIEXEC_DIRECT)) != 0)
+#else
 	if ((error = check_exec(p, &pack)) != 0)
+#endif
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
