@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.2 2005/06/10 14:51:51 tron Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.3 2005/06/10 14:53:16 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -46,6 +46,7 @@
 #include "veriexecctl.h"
 
 struct veriexec_params params;
+static int convert(u_char *, u_char *);
 
 %}
 
@@ -62,128 +63,110 @@ struct veriexec_params params;
 
 statement	:	/* empty */
 		|	statement path type fingerprint flags eol {
-				struct stat sb;
+	struct stat sb;
+	struct vexec_up *p;
 
-				if (phase == 2) {
-					phase2_load();
-					goto phase_2_end;
-				}
+	if (phase == 2) {
+		phase2_load();
+		goto phase_2_end;
+	}
 
-				if (stat(params.file, &sb) == 0) {
-					struct vexec_up *p;
+	if (stat(params.file, &sb) == -1) {
+		warnx("Line %lu: Can't stat `%s'",
+		    (unsigned long)line, params.file);
+		goto phase_2_end;
+	}
 
-					/* Only regular files */
-					if (!S_ISREG(sb.st_mode)) {
-						(void) fprintf(stderr,
-							       "Line %u: "
-						    "%s is not a regular file.\n",
-							       line,
-							       params.file);
-					}
+	/* Only regular files */
+	if (!S_ISREG(sb.st_mode)) {
+		warnx("Line %lu: %s is not a regular file",
+		    (unsigned long)line, params.file);
+		goto phase_2_end;
+	}
 
-					if ((p = dev_lookup(sb.st_dev)) != NULL) {
-						(p->vu_param.hash_size)++;
-					} else {
-						if (verbose) {
-							struct statvfs sf;
+	if ((p = dev_lookup(sb.st_dev)) == NULL) {
+	    (p->vu_param.hash_size)++;
+	    goto phase_2_end;
+	}
 
-							statvfs(params.file,
-							       &sf);
+	if (verbose) {
+		struct statvfs sf;
+		if (statvfs(params.file, &sf) == -1)
+			err(1, "Cannot statvfs `%s'", params.file);
 
-							(void) printf(
-							    " => Adding device"
-							    " ID %d. (%s)\n",
-							    sb.st_dev,
-							    sf.f_mntonname);
-						}
-
-						dev_add(sb.st_dev);
-					}
-				} else {
-					(void) fprintf(stderr,
-						       "Line %u: Can't stat"
-						       " %s.\n",
-					    line, params.file);
-				}
-
+		(void)printf( " => Adding device ID %d. (%s)\n",
+		    sb.st_dev, sf.f_mntonname);
+	}
+	dev_add(sb.st_dev);
 phase_2_end:
-				bzero(&params, sizeof(params));
-			}
+	(void)memset(&params, 0, sizeof(params));
+}
 		|	statement eol
 		|	statement error eol {
-				yyerrok;
-			}
+	yyerrok;
+}
 		;
 
 path		:	PATH {
-				strlcpy(params.file, $1, MAXPATHLEN);
-			}
+	(void)strlcpy(params.file, $1, MAXPATHLEN);
+}
 		;
 
 type		:	STRING {
-				if (phase != 1) {
-					if (strlen($1) >=
-					    sizeof(params.fp_type)) {
-						yyerror("Fingerprint type too "								"long");
-						YYERROR;
-					}
-				
-					strlcpy(params.fp_type, $1,
-						sizeof(params.fp_type));
-				}
-			}
+	if (phase != 1) {
+		if (strlen($1) >= sizeof(params.fp_type)) {
+			yyerror("Fingerprint type too long");
+			YYERROR;
+		}
+	
+		(void)strlcpy(params.fp_type, $1, sizeof(params.fp_type));
+	}
+}
 		;
 
 
 fingerprint	:	STRING {
-				if (phase != 1) {
-					params.fingerprint = (char *)
-						malloc(strlen($1) / 2);
-					if (params.fingerprint == NULL) {
-						fprintf(stderr, "Fingerprint"
-							"mem alloc failed, "
-							"cannot continue.\n");
-						exit(1);
-					}
+	if (phase != 1) {
+		params.fingerprint = malloc(strlen($1) / 2);
+		if (params.fingerprint == NULL)
+			err(1, "Fingerprint mem alloc failed");
 					
-					if ((params.size =
-					       convert($1, params.fingerprint))
-					     == -1) {
-						free(params.fingerprint);
-						yyerror("Bad fingerprint");
-						YYERROR;
-					}
-				}
+		if ((params.size = convert($1, params.fingerprint)) == -1) {
+			free(params.fingerprint);
+			yyerror("Bad fingerprint");
+			YYERROR;
+		}
+	}
 				
-			}
-		;
+}
+	    ;
 
 flags		:	/* empty */ {
-				if (phase == 2)
-					params.type = VERIEXEC_DIRECT;
-			}
+	if (phase == 2)
+		params.type = VERIEXEC_DIRECT;
+}
 		|	flags flag_spec
 		;
 
 flag_spec	:	STRING {
-				if (phase != 1) {
-					if (strcasecmp($1, "direct") == 0) {
-						params.type = VERIEXEC_DIRECT;
-					} else if (strcasecmp($1, "indirect")
-						   == 0) {
-						params.type = VERIEXEC_INDIRECT;
-/*					} else if (strcasecmp($1, "shell") == 0) {
-						params.vxp_type = VEXEC_SHELL;*/
-					} else if (strcasecmp($1, "file")
-						   == 0) {
-						params.type = VERIEXEC_FILE;
-					} else {
-						yyerror("Bad option");
-						YYERROR;
-					}
-				}
+	if (phase != 1) {
+		if (strcasecmp($1, "direct") == 0)
+			params.type = VERIEXEC_DIRECT;
+		else if (strcasecmp($1, "indirect") == 0)
+			params.type = VERIEXEC_INDIRECT;
+#ifdef notdef
+		else if (strcasecmp($1, "shell") == 0)
+			params.vxp_type = VEXEC_SHELL;
+#endif
+		else if (strcasecmp($1, "file") == 0)
+			params.type = VERIEXEC_FILE;
+		else {
+			yyerror("Bad option");
+			YYERROR;
+		}
+	}
 
-			}
+}
 		;
 
 eol		:	EOL
@@ -197,44 +180,38 @@ eol		:	EOL
  * by "out".  Returns the number of bytes converted or -1 if the conversion
  * fails.
  */
-int convert(u_char *fp, u_char *out) {
-        int i, value, error, count;
+static int
+convert(u_char *fp, u_char *out)
+{
+	size_t i, count;
+	u_char value;
 
 	count = strlen(fp);
 
-	  /*
-	   * if there are not an even number of hex digits then there is
-	   * not an integral number of bytes in the fingerprint.
-	   */
+	/*
+	 * if there are not an even number of hex digits then there is
+	 * not an integral number of bytes in the fingerprint.
+	 */
 	if ((count % 2) != 0)
 		return -1;
 	
 	count /= 2;
-	error = count;
+
+#define cvt(cv) \
+	if (isdigit(cv)) \
+		value += (cv) - '0'; \
+	else if (isxdigit(cv)) \
+		value += 10 + tolower(cv) - 'a'; \
+	else \
+		return -1
 
 	for (i = 0; i < count; i++) {
-		if ((fp[2*i] >= '0') && (fp[2*i] <= '9')) {
-			value = 16 * (fp[2*i] - '0');
-		} else if ((tolower(fp[2*i]) >= 'a')
-			   && (tolower(fp[2*i]) <= 'f')) {
-			value = 16 * (10 + tolower(fp[2*i]) - 'a');
-		} else {
-			error = -1;
-			break;
-		}
-
-		if ((fp[2*i + 1] >= '0') && (fp[2*i + 1] <= '9')) {
-			value += fp[2*i + 1] - '0';
-		} else if ((tolower(fp[2*i + 1]) >= 'a')
-			   && (tolower(fp[2*i + 1]) <= 'f')) {
-			value += tolower(fp[2*i + 1]) - 'a' + 10;
-		} else {
-			error = -1;
-			break;
-		}
-
+		value = 0;
+		cvt(fp[2 * i]);
+		value <<= 4;
+		cvt(fp[2 * i + 1]);
 		out[i] = value;
 	}
 
-	return (error);
+	return count;
 }
