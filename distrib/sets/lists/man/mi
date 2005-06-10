@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.10 2005/06/10 14:48:05 tron Exp $
+# $NetBSD: mi,v 1.768.2.11 2005/06/10 15:03:48 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1354,7 +1354,7 @@
 ./usr/share/man/cat4/vax/vp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/vv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/veriexec.0			man-sys-catman		.cat
-./usr/share/man/cat4/verifiedexec.0		man-sys-catman		.cat
+./usr/share/man/cat4/verifiedexec.0		man-obsolete		.cat
 ./usr/share/man/cat4/vga.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viaenv.0			man-sys-catman		.cat
@@ -3563,7 +3563,7 @@
 ./usr/share/man/man4/vax/vp.4			man-sys-man		.man
 ./usr/share/man/man4/vax/vv.4			man-sys-man		.man
 ./usr/share/man/man4/veriexec.4			man-sys-man		.man
-./usr/share/man/man4/verifiedexec.4		man-sys-man		.man
+./usr/share/man/man4/verifiedexec.4		man-obsolete		.man
 ./usr/share/man/man4/vga.4			man-sys-man		.man
 ./usr/share/man/man4/vge.4			man-sys-man		.man
 ./usr/share/man/man4/viaenv.4			man-sys-man		.man
