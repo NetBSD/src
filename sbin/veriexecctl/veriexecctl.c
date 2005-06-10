@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.5.6.4 2005/06/10 15:12:11 tron Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5.6.5 2005/06/10 15:13:52 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -49,7 +49,7 @@
 
 extern struct veriexec_params params; /* in veriexecctl_parse.y */
 extern char *filename; /* in veriexecctl_conf.l */
-int gfd, verbose = 0, no_mem = 0, phase;
+int gfd, verbose = 0, phase;
 size_t line;
 
 /*
@@ -72,10 +72,10 @@ openlock(const char *path)
 	return fdopen(lfd, "r");
 }
 
-struct vexec_up *
+struct veriexec_up *
 dev_lookup(dev_t d)
 {
-	struct vexec_up *p;
+	struct veriexec_up *p;
 
 	CIRCLEQ_FOREACH(p, &params_list, vu_list)
 		if (p->vu_param.dev == d)
@@ -84,10 +84,10 @@ dev_lookup(dev_t d)
 	return NULL;
 }
 
-struct vexec_up *
+struct veriexec_up *
 dev_add(dev_t d)
 {
-	struct vexec_up *up;
+	struct veriexec_up *up;
 
 	if ((up = calloc((size_t)1, sizeof(*up))) == NULL)
 		err(1, "No memory");
@@ -108,7 +108,7 @@ phase1_preload(void)
 		printf("Phase 1: Calculating hash table sizes:\n");
 
 	while (!CIRCLEQ_EMPTY(&params_list)) {
-		struct vexec_up *vup;
+		struct veriexec_up *vup;
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
