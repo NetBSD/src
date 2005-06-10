@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.64 2005/05/07 17:02:47 martin Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.65 2005/06/10 14:08:06 itohy Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.64 2005/05/07 17:02:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.65 2005/06/10 14:08:06 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,6 +497,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 	int buflen, ebuflen;
 {
 	const u_int8_t *p, *ep, *q, *eq;
+	char *endp;
 	u_int32_t addr, id, eid;
 	int i, len, elen, nblk, pdrlen;
 
@@ -508,8 +509,10 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 	while (p < ep && *p++ != ' ');	/* FILE: */
 	while (p < ep && *p++ != ' ');	/* filename */
 	while (p < ep && *p++ != ' ');	/* type of the firmware */
-	nblk = strtoul(p, (void *)&p, 10);
-	pdrlen = strtoul(p + 1, (void *)&p, 10);
+	nblk = strtoul(p, &endp, 10);
+	p = (void *)endp;
+	pdrlen = strtoul(p + 1, &endp, 10);
+	p = (void *)endp;
 	while (p < ep && *p++ != 0x1a);	/* skip rest of header */
 
 	/*
