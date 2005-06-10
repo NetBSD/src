@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.21 2004/03/13 07:05:54 jmc Exp $	*/
+/*	$NetBSD: extintr.c,v 1.22 2005/06/10 16:41:38 jmc Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.21 2004/03/13 07:05:54 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.22 2005/06/10 16:41:38 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -217,14 +217,14 @@ out:
 }
 
 void
-bebox_intr_mask(imen)
-	int imen;
+bebox_intr_mask(in)
+	int in;
 {
 	int i;
 	int mask = 0;
 
 	for (i = 0; i < BEBOX_INTR_SIZE; i++)
-		if (!(imen & (1 << (i + BEBOX_ISA_INTR))))
+		if (!(in & (1 << (i + BEBOX_ISA_INTR))))
 			mask |= bebox_intr_map[i];
 
 	*(unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) = BEBOX_INTR_MASK;

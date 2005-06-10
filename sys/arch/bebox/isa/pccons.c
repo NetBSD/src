@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.33 2004/03/13 17:31:33 bjh21 Exp $	*/
+/*	$NetBSD: pccons.c,v 1.34 2005/06/10 16:41:48 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.33 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.34 2005/06/10 16:41:48 jmc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -274,7 +274,7 @@ static unsigned int addr_6845 = MONO_BASE;
 char *sget __P((void));
 #endif
 char *strans __P((u_char));
-void sput __P((u_char *, int));
+void sput __P((const u_char *, int));
 #ifdef XSERVER
 void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
@@ -401,9 +401,9 @@ kbc_put8042cmd(val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(val, polling)
+kbd_cmd(val, do_polling)
 	u_char val;
-	u_char polling;
+	u_char do_polling;
 {
 	u_int retries = 3;
 	register u_int i;
@@ -413,7 +413,7 @@ kbd_cmd(val, polling)
 			return (0);
 		ack = nak = 0;
 		isa_outb(IO_KBD + KBOUTP, val);
-		if (polling)
+		if (do_polling)
 			for (i = 100000; i; i--) {
 				if (isa_inb(IO_KBD + KBSTATP) & KBS_DIB) {
 					register u_char c;
@@ -1302,8 +1302,8 @@ pcinit()
 	cursor_shape = 0x0012;
 #endif
 
-	Crtat = (u_short *)cp;
-	crtat = (u_short *)(cp + cursorat);
+	Crtat = __UNVOLATILE(cp);
+	crtat = (u_short*)(__UNVOLATILE(cp)) + cursorat;
 
 	vs.ncol = COL;
 	vs.nrow = ROW;
@@ -1319,7 +1319,8 @@ pcinit()
 }
 
 #define	wrtchar(c, at) do {\
-	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
+	char *_cp = (char *)crtat; *_cp++ = (c); *_cp = (at); crtat++; \
+	vs.col++; \
 } while (0)
 
 /* translate ANSI color codes to standard pc ones */
@@ -1360,7 +1361,7 @@ static u_char iso2ibm437[] =
  */
 void
 sput(cp, n)
-	u_char *cp;
+	const u_char *cp;
 	int n;
 {
 	u_char c, scroll = 0;
