@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.5 2005/06/05 19:08:28 chs Exp $ Copyright (c) 2000-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.6 2005/06/10 23:48:24 he Exp $ Copyright (c) 2000-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -241,6 +241,8 @@ int ddns_updates (struct packet *packet,
 	int server_updates_a = 1;
 	struct buffer *bp = (struct buffer *)0;
 	int ignorep = 0;
+
+	s1 = 0;		/* XXXGCC -Wuninitialized [arm / sparc64] */
 
 	if (ddns_update_style != 2)
 		return 0;
