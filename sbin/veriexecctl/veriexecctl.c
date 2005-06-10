@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.5.6.9 2005/06/10 15:30:07 tron Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5.6.10 2005/06/10 15:43:25 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -109,7 +109,6 @@ phase1_preload(void)
 
 	while (!CIRCLEQ_EMPTY(&params_list)) {
 		struct veriexec_up *vup;
-		extern int errno;
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
