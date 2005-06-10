@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2005/04/01 11:59:33 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.64 2005/06/10 05:10:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2005/04/01 11:59:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2005/06/10 05:10:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,20 +261,20 @@ struct md_core {
 };
 
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+		chdr->c_cpusize = sizeof(md_core);
+		chdr->c_nseg++;
+		return 0;
+	}
 
 	/* Save integer registers. */
 	error = process_read_regs(l, &md_core.intreg);
@@ -290,20 +290,13 @@ cpu_coredump(l, vp, cred, chdr)
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, NULL);
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 #if 0

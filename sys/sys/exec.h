@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.107 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.108 2005/06/10 05:10:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,6 +136,7 @@ struct proc;
 struct exec_package;
 struct vnode;
 struct ucred;
+enum uio_seg;
 
 typedef int (*exec_makecmds_fcn)(struct proc *, struct exec_package *);
 
@@ -157,7 +158,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs)(struct lwp *, struct exec_package *, u_long);
 					/* Dump core */
-	int	(*es_coredump)(struct lwp *, struct vnode *, struct ucred *);
+	int	(*es_coredump)(struct lwp *, void *);
 	int	(*es_setup_stack)(struct proc *, struct exec_package *);
 };
 
@@ -254,6 +255,15 @@ int	exec_init		(int);
 int	exec_read_from		(struct proc *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct proc *, struct exec_package *);
+
+int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+/*
+ * Machine dependent functions
+ */
+struct core;
+struct core32;
+int	cpu_coredump(struct lwp *, void *, struct core *);
+int	cpu_coredump32(struct lwp *, void *, struct core32 *);
 
 
 #ifdef LKM

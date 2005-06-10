@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.46 2005/06/01 13:01:36 scw Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.47 2005/06/10 05:10:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.46 2005/06/01 13:01:36 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.47 2005/06/10 05:10:12 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -610,20 +610,20 @@ const struct fpreg	*regs;
  * 32-bit version of cpu_coredump.
  */
 int
-cpu_coredump32(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core32 *chdr;
+cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 {
 	int i, error;
 	struct md_coredump32 md_core;
 	struct coreseg32 cseg;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+		chdr->c_cpusize = sizeof(md_core);
+		chdr->c_nseg++;
+		return 0;
+	}
 
 	/* Fake a v8 trapframe */
 	md_core.md_tf.tf_psr = TSTATECCR_TO_PSR(l->l_md.md_tf->tf_tstate);
@@ -657,19 +657,14 @@ cpu_coredump32(l, vp, cred, chdr)
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
+
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 void netbsd32_cpu_getmcontext(struct lwp *, mcontext_t  *, unsigned int *);

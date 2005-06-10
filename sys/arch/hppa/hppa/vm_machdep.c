@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2005/05/01 15:23:18 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2005/06/10 05:10:12 matt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2005/05/01 15:23:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.17 2005/06/10 05:10:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,18 +60,21 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2005/05/01 15:23:18 chs Exp $");
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
-    struct core *core)
+cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
 {
 	struct md_coredump md_core;
 	struct coreseg cseg;
 	off_t off;
 	int error;
 
-	CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
-	core->c_hdrsize = ALIGN(sizeof(*core));
-	core->c_seghdrsize = ALIGN(sizeof(cseg));
-	core->c_cpusize = sizeof(md_core);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
+		core->c_hdrsize = ALIGN(sizeof(*core));
+		core->c_seghdrsize = ALIGN(sizeof(cseg));
+		core->c_cpusize = sizeof(md_core);
+		core->c_nseg++;
+		return 0;
+	}
 
 	process_read_regs(l, &md_core.md_reg);
 
@@ -79,20 +82,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_addr = 0;
 	cseg.c_size = core->c_cpusize;
 
-#define	write(vp, addr, n) vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
-			     UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, NULL)
-	
-	off = core->c_hdrsize;
-	if ((error = write(vp, &cseg, core->c_seghdrsize)))
-		return error;
-	off += core->c_seghdrsize;
-	if ((error = write(vp, &md_core, sizeof md_core)))
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    core->c_seghdrsize);
+	if (error)
 		return error;
 
-#undef write
-	core->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 void
