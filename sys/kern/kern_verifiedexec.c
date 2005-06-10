@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.7 2005/06/10 15:16:04 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.8 2005/06/10 15:24:18 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.7 2005/06/10 15:16:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.8 2005/06/10 15:24:18 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -57,64 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.7 2005/06/10 15:16:04 tr
 int veriexec_verbose = 0;
 int veriexec_strict = 0;
 
-char *veriexec_fp_names;
-unsigned int veriexec_name_max;
+char *veriexec_fp_names = NULL;
+unsigned int veriexec_name_max = 0;
 
 struct sysctlnode *veriexec_count_node = NULL;
 
-/* prototypes */
-static void
-veriexec_add_fp_name(char *name);
-
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
-
-struct veriexec_fp_ops veriexec_default_ops[] = {
-#ifdef VERIFIED_EXEC_FP_RMD160
-	{ "RMD160", RMD160_DIGEST_LENGTH, sizeof(RMD160_CTX),
-	  (VERIEXEC_INIT_FN) RMD160Init,
-	  (VERIEXEC_UPDATE_FN) RMD160Update,
-	  (VERIEXEC_FINAL_FN) RMD160Final, {NULL, NULL}},
-#endif
-
-#ifdef VERIFIED_EXEC_FP_SHA256
-	{ "SHA256", SHA256_DIGEST_LENGTH, sizeof(SHA256_CTX),
-	  (VERIEXEC_INIT_FN) SHA256_Init,
-	  (VERIEXEC_UPDATE_FN) SHA256_Update,
-	  (VERIEXEC_FINAL_FN) SHA256_Final, {NULL, NULL}},
-#endif
-	
-#ifdef VERIFIED_EXEC_FP_SHA384
-	{ "SHA384", SHA384_DIGEST_LENGTH, sizeof(SHA384_CTX),
-	  (VERIEXEC_INIT_FN) SHA384_Init,
-	  (VERIEXEC_UPDATE_FN) SHA384_Update,
-	  (VERIEXEC_FINAL_FN) SHA384_Final, {NULL, NULL}},
-#endif
-	
-#ifdef VERIFIED_EXEC_FP_SHA512
-	{ "SHA512", SHA512_DIGEST_LENGTH, sizeof(SHA512_CTX),
-	  (VERIEXEC_INIT_FN) SHA512_Init,
-	  (VERIEXEC_UPDATE_FN) SHA512_Update,
-	  (VERIEXEC_FINAL_FN) SHA512_Final, {NULL, NULL}},
-#endif
-	
-#ifdef VERIFIED_EXEC_FP_SHA1
-	{ "SHA1", SHA1_DIGEST_LENGTH, sizeof(SHA1_CTX),
-	  (VERIEXEC_INIT_FN) SHA1Init,
-	  (VERIEXEC_UPDATE_FN) SHA1Update, (VERIEXEC_FINAL_FN) SHA1Final,
-	  {NULL, NULL}},
-#endif
-	
-#ifdef VERIFIED_EXEC_FP_MD5
-	{ "MD5", MD5_DIGEST_LENGTH, sizeof(MD5_CTX),
-	  (VERIEXEC_INIT_FN) MD5Init,
-	  (VERIEXEC_UPDATE_FN) MD5Update, (VERIEXEC_FINAL_FN) MD5Final,
-	  {NULL, NULL}},
-#endif
-};
-
-static unsigned int default_ops_count =
-        sizeof(veriexec_default_ops) / sizeof(struct veriexec_fp_ops);
 
 #define	VERIEXEC_BUFSIZE	PAGE_SIZE
 
@@ -127,16 +76,19 @@ veriexec_add_fp_name(char *name)
 	char *newp;
 	unsigned int new_max;
 
+	if (name == NULL)
+		return;
+
+	if (veriexec_fp_names == NULL) {
+		veriexec_name_max = (VERIEXEC_TYPE_MAXLEN + 1) * 6;
+		veriexec_fp_names = malloc(veriexec_name_max, M_TEMP, M_WAITOK);
+		memset(veriexec_fp_names, 0, veriexec_name_max);
+	}
+
 	if ((strlen(veriexec_fp_names) + VERIEXEC_TYPE_MAXLEN + 1) >=
 	    veriexec_name_max) {
 		new_max = veriexec_name_max + 4 * (VERIEXEC_TYPE_MAXLEN + 1);
-		if ((newp = realloc(veriexec_fp_names, new_max,
-				    M_TEMP, M_WAITOK)) == NULL) {
-			printf("Veriexec: Cannot grow storage to add new "
-			      "fingerprint name to name list.  Not adding.\n");
-			return;
-		}
-
+		newp = realloc(veriexec_fp_names, new_max, M_TEMP, M_WAITOK);
 		veriexec_fp_names = newp;
 		veriexec_name_max = new_max;
 	}
@@ -146,24 +98,87 @@ veriexec_add_fp_name(char *name)
 }
 
 /*
+ * Add ops to the fignerprint ops vector list.
+ */
+int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
+{
+	if (ops == NULL)
+		return (EFAULT);
+
+	if ((ops->init == NULL) ||
+	    (ops->update == NULL) ||
+	    (ops->final == NULL))
+		return (EFAULT);
+
+	ops->type[sizeof(ops->type) - 1] = '\0';
+
+#ifdef DIAGNOSTIC
+	if (veriexec_find_ops(ops->type) != NULL)
+		return (EEXIST);
+#endif /* DIAGNOSTIC */
+
+	LIST_INSERT_HEAD(&veriexec_ops_list, ops, entries);
+	veriexec_add_fp_name(ops->type);
+
+	return (0);
+}
+
+/*
  * Initialise the internal "default" fingerprint ops vector list.
  */
 void
 veriexec_init_fp_ops(void)
 {
-	unsigned int i;
+	struct veriexec_fp_ops *ops = NULL;
 
-	veriexec_name_max = default_ops_count * (VERIEXEC_TYPE_MAXLEN + 1) + 1;
-	veriexec_fp_names = malloc(veriexec_name_max, M_TEMP, M_WAITOK);
-	veriexec_fp_names[0] = '\0';
-	
 	LIST_INIT(&veriexec_ops_list);
 
-	for (i = 0; i < default_ops_count; i++) {
-		LIST_INSERT_HEAD(&veriexec_ops_list, &veriexec_default_ops[i],
-				 entries);
-		veriexec_add_fp_name(veriexec_default_ops[i].type);
-	}
+#ifdef VERIFIED_EXEC_FP_RMD160
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "RMD160", RMD160_DIGEST_LENGTH,
+			sizeof(RMD160_CTX), RMD160Init, RMD160Update,
+			RMD160Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_RMD160 */
+
+#ifdef VERIFIED_EXEC_FP_SHA256
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "SHA256", SHA256_DIGEST_LENGTH,
+			sizeof(SHA256_CTX), SHA256_Init, SHA256_Update,
+			SHA256_Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_SHA256 */
+
+#ifdef VERIFIED_EXEC_FP_SHA384
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "SHA384", SHA384_DIGEST_LENGTH,
+			sizeof(SHA384_CTX), SHA384_Init, SHA384_Update,
+			SHA384_Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_SHA384 */
+
+#ifdef VERIFIED_EXEC_FP_SHA512
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "SHA512", SHA512_DIGEST_LENGTH,
+			sizeof(SHA512_CTX), SHA512_Init, SHA512_Update,
+			SHA512_Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_SHA512 */
+
+#ifdef VERIFIED_EXEC_FP_SHA1
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "SHA1", SHA1_DIGEST_LENGTH,
+			sizeof(SHA1_CTX), SHA1Init, SHA1Update,
+			SHA1Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_SHA1 */
+
+#ifdef VERIFIED_EXEC_FP_MD5
+	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
+	VERIEXEC_OPINIT(ops, "MD5", MD5_DIGEST_LENGTH, sizeof(MD5_CTX),
+			MD5Init, MD5Update, MD5Final);
+	(void) veriexec_add_fp_ops(ops);
+#endif /* VERIFIED_EXEC_FP_MD5 */
 }
 
 struct veriexec_fp_ops *
@@ -182,7 +197,6 @@ veriexec_find_ops(u_char *name)
 
 	return (NULL);
 }
-
 
 /*
  * Calculate fingerprint. Information on hash length and routines used is
