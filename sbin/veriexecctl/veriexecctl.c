@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.5.6.2 2005/06/10 14:51:57 tron Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5.6.3 2005/06/10 14:53:22 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -47,31 +47,29 @@
 
 #define	VERIEXEC_DEVICE	"/dev/veriexec"
 
-#define	usage(code)	errx(code, "Usage: %s [-v] [load <signature_file>] " \
-			     "[fingerprints]", \
-			    getprogname())
-
 extern struct veriexec_params params; /* in veriexecctl_parse.y */
 extern char *filename; /* in veriexecctl_conf.l */
 int gfd, verbose = 0, no_mem = 0, phase;
-unsigned line;
+size_t line;
 
 /*
  * Prototypes
  */
-int fingerprint_load(char*);
+static FILE *openlock(const char *);
+static void phase1_preload(void);
+static int fingerprint_load(char*);
+static void usage(void) __attribute__((__noreturn__));
 
 
-FILE *
+static FILE *
 openlock(const char *path)
 {
 	int lfd;
 
-	lfd = open(path, O_RDONLY|O_EXLOCK, 0);
-	if (lfd < 0)
-		return (NULL);
+	if ((lfd = open(path, O_RDONLY|O_EXLOCK, 0)) == -1)
+		return NULL;
 
-	return (fdopen(lfd, "r"));
+	return fdopen(lfd, "r");
 }
 
 struct vexec_up *
@@ -79,12 +77,11 @@ dev_lookup(dev_t d)
 {
 	struct vexec_up *p;
 
-	CIRCLEQ_FOREACH(p, &params_list, vu_list) {
+	CIRCLEQ_FOREACH(p, &params_list, vu_list)
 		if (p->vu_param.dev == d)
 			return (p);
-	}
 
-	return (NULL);
+	return NULL;
 }
 
 struct vexec_up *
@@ -92,8 +89,7 @@ dev_add(dev_t d)
 {
 	struct vexec_up *up;
 
-	up = calloc(1, sizeof(*up));
-	if (up == NULL)
+	if ((up = calloc((size_t)1, sizeof(*up))) == NULL)
 		err(1, "No memory");
 
 	up->vu_param.dev = d;
@@ -101,11 +97,11 @@ dev_add(dev_t d)
 
 	CIRCLEQ_INSERT_TAIL(&params_list, up, vu_list);
 
-	return (up);
+	return up;
 }
 
 /* Load all devices, get rid of the list. */
-int
+static void
 phase1_preload(void)
 {
 	if (verbose)
@@ -116,13 +112,10 @@ phase1_preload(void)
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
-		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) < 0) {
-			(void) fprintf(stderr, "Error in phase 1: Can't "
-			    "set hash table size for device %d: %s.\n",
-			    vup->vu_param.dev, strerror(errno));
-
-			return (-1);
-		}
+		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1)
+			err(1, "Error in phase 1: Can't "
+			    "set hash table size for device %d",
+			    vup->vu_param.dev);
 
 		if (verbose) {
 			printf(" => Hash table sizing successful for device "
@@ -133,8 +126,6 @@ phase1_preload(void)
 		CIRCLEQ_REMOVE(&params_list, vup, vu_list);
 		free(vup);
 	}
-
-	return (0);
 }
 
 /*
@@ -144,24 +135,21 @@ phase1_preload(void)
 void
 phase2_load(void)
 {
-	if (ioctl(gfd, VERIEXEC_LOAD, &params) < 0) {
-		(void) fprintf(stderr, "%s: %s\n", params.file,
-			       strerror(errno));
-	}
+	if (ioctl(gfd, VERIEXEC_LOAD, &params) == -1)
+		err(1, "Cannot load params from `%s'", params.file);
 	free(params.fingerprint);
 }
 
 /*
  * Fingerprint load handling.
  */
-int
+static int
 fingerprint_load(char *ifile)
 {
 	CIRCLEQ_INIT(&params_list);
 
-	if ((yyin = openlock(ifile)) == NULL) {
-		err(1, "Failed to open %s", ifile);
-	}
+	if ((yyin = openlock(ifile)) == NULL)
+		err(1, "Cannot open `%s'", ifile);
 
 	/*
 	 * Phase 1: Scan all config files, creating the list of devices
@@ -171,14 +159,13 @@ fingerprint_load(char *ifile)
 	phase = 1;
 
 	if (verbose) {
-		(void) fprintf(stderr, "Phase 1: Building hash table information:\n");
-		(void) fprintf(stderr, "=> Parsing \"%s\"\n", ifile);
+		(void)printf("Phase 1: Building hash table information:\n");
+		(void)printf("=> Parsing \"%s\"\n", ifile);
 	}
 
 	yyparse();
 
-	if (phase1_preload() < 0)
-		exit(1);
+	phase1_preload();
 
 	/*
 	 * Phase 2: After we have a circular queue containing all the
@@ -189,16 +176,23 @@ fingerprint_load(char *ifile)
 	rewind(yyin);
 	phase = 2;
 	if (verbose) {
-		(void) fprintf(stderr, "Phase 2: Loading per-file "
-			       "fingerprints.\n");
-		(void) fprintf(stderr, "=> Parsing \"%s\"\n", ifile);
+		(void)printf("Phase 2: Loading per-file fingerprints.\n");
+		(void)printf("=> Parsing \"%s\"\n", ifile);
 	}
 
 	yyparse();
 
-	(void) fclose(yyin);
+	(void)fclose(yyin);
 	
-	return(0);
+	return 0;
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>] "
+	     "[fingerprints]", getprogname());
+	exit(1);
 }
 
 int
@@ -206,82 +200,61 @@ main(int argc, char **argv)
 {
 	char *newp;
 	int c;
-	unsigned size;
+	size_t size;
 	struct veriexec_fp_report report;
 
-	if ((argc < 2) || (argc > 4)) {
-		usage(1);
-	}
+	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "v")) != -1) {
+	while ((c = getopt(argc, argv, "v")) != -1)
 		switch (c) {
 		case 'v':
 			verbose = 1;
 			break;
 
 		default:
-			usage(1);
+			usage();
 		}
-	}
 
 	argc -= optind;
 	argv += optind;
 
-	gfd = open(VERIEXEC_DEVICE, O_RDWR, 0);
-	if (gfd == -1) {
-		err(1, "Failed to open pseudo-device");
-	}
+	if ((gfd = open(VERIEXEC_DEVICE, O_RDWR, 0)) == -1)
+		err(1, "Cannot open `%s'", VERIEXEC_DEVICE);
 
 	  /*
 	   * Handle the different commands we can do.
 	   */
-	if (strcasecmp(argv[0], "load") == 0) {
+	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
 		line = 0;
 		filename = argv[1];
 		fingerprint_load(argv[1]);
-	} else if (strcasecmp(argv[0], "fingerprints") == 0) {
+	} else if (argc == 1 && strcasecmp(argv[0], "fingerprints") == 0) {
 		size = report.size = 100;
-		if ((report.fingerprints = malloc(report.size)) == NULL) {
-			fprintf(stderr, "fingerprints: malloc failed.\n");
-			exit(1);
-		}
+		if ((report.fingerprints = malloc(report.size)) == NULL)
+			err(1, "malloc fingeprints");
 		
-		if (ioctl(gfd, VERIEXEC_FINGERPRINTS, &report) == 0) {
-			if (size != report.size) {
-				if (verbose)
-					fprintf(stderr, "fingerprints: "
-						"buffer insufficient, "
-						"reallocating to %d bytes.\n",
-						report.size);
-				
-				/* fingerprint store was not large enough
-				   make more room and try again. */
-				if ((newp = realloc(report.fingerprints,
-						    report.size)) == NULL) {
-					fprintf(stderr, "fingerprints: "
-						"realloc failed\n");
-					exit(1);
-				}
-				if (ioctl(gfd, VERIEXEC_FINGERPRINTS,
-					  &report) < 0) {
-					fprintf(stderr,
-						"fingerprints ioctl: %s\n",
-						strerror(errno));
-					exit(1);
-				}
-			}
-		} else {
-			(void) fprintf(stderr,
-				       "fingerprints ioctl: %s\n",
-				       strerror(errno));
-			exit(1);
+		if (ioctl(gfd, VERIEXEC_FINGERPRINTS, &report) == -1)
+			err(1, "fingerprints ioctl");
+
+		if (size != report.size) {
+			if (verbose)
+				(void)printf("fingerprints: buffer too small, "
+				    "reallocating to %d bytes.\n",
+				    report.size);
+			
+			/* fingerprint store was not large enough
+			   make more room and try again. */
+			if ((newp = realloc(report.fingerprints, report.size))
+			    == NULL)
+				err(1, "realloc fingeprints");
+			if (ioctl(gfd, VERIEXEC_FINGERPRINTS,
+			    &report) == -1)
+				err(1, "fingerprints ioctl");
 		}
-
 		printf("Supported fingerprints: %s\n", report.fingerprints);
-	} else {
-		usage(1);
-	}
+	} else
+		usage();
 
-	(void) close(gfd);
-	return (0);
+	(void)close(gfd);
+	return 0;
 }
