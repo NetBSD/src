@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.244 2005/01/23 19:02:02 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.244.6.1 2005/06/10 14:48:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.244 2005/01/23 19:02:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.244.6.1 2005/06/10 14:48:43 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -147,6 +147,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.244 2005/01/23 19:02:02 chs Exp $");
 #endif
 #ifdef LKM
 #include <sys/lkm.h>
+#endif
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
 #endif
 
 #include <sys/syscall.h>
@@ -424,6 +427,15 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
+
+#ifdef VERIFIED_EXEC
+	  /*
+	   * Initialise the fingerprint operations vectors before
+	   * fingerprints can be loaded.
+	   */
+	veriexec_init_fp_ops();
+#endif
+	
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
