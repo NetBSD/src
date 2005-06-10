@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.4.2.2 2005/06/10 14:50:26 tron Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.4.2.3 2005/06/10 14:51:44 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -39,7 +39,7 @@ struct vexec_up {
         CIRCLEQ_ENTRY(vexec_up) vu_list;
 };
 
-extern int fd, no_mem, phase, verbose;
+extern int gfd, no_mem, phase, verbose;
 extern unsigned line;
 extern char *infile;
 extern FILE *yyin;
@@ -53,6 +53,6 @@ struct vexec_up *dev_lookup(dev_t);
 struct vexec_up *dev_add(dev_t);
 int phase1_preload(void);
 void phase2_load(void);
-int convert(char *, u_char *);
+int convert(u_char *, u_char *);
 
 #endif /* _VEXECCTL_H_ */
