@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.125 2005/05/29 21:22:52 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.126 2005/06/10 11:11:38 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.125 2005/05/29 21:22:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126 2005/06/10 11:11:38 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -653,7 +653,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct ethercom *ec = (struct ethercom *) ifp;
 	struct ifqueue *inq;
 	u_int16_t etype;
-	int s;
 	struct ether_header *eh;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
@@ -822,13 +821,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			inq = &ppoediscinq;
 		else
 			inq = &ppoeinq;
-		s = splnet();
 		if (IF_QFULL(inq)) {
 			IF_DROP(inq);
 			m_freem(m);
 		} else
 			IF_ENQUEUE(inq, m);
-		splx(s);
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		if (!callout_pending(&pppoe_softintr))
 			callout_reset(&pppoe_softintr, 1, pppoe_softintr_handler, NULL);
@@ -1078,13 +1075,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* ISO || LLC || NETATALK*/
 	}
 
-	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
 	} else
 		IF_ENQUEUE(inq, m);
-	splx(s);
 }
 
 /*
