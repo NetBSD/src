@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.6.2.1 2005/06/10 15:10:10 tron Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.6.2.2 2005/06/10 15:12:11 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.1 2005/06/10 15:10:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.2 2005/06/10 15:12:11 tron Exp $");
 
 /*
  *
@@ -60,12 +60,6 @@ struct veriexec_sizing_params {
 	size_t hash_size;
 };
 
-struct veriexec_fp_report {
-	unsigned int size;
-	unsigned char *fingerprints;
-};
-
-	
 /*
  * Types of veriexec inodes we can have
  */
@@ -75,7 +69,6 @@ struct veriexec_fp_report {
 
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
-#define VERIEXEC_FINGERPRINTS _IOWR('S', 0x3, struct veriexec_fp_report)
 
 /* Verified exec sysctl objects. */
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
