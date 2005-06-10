@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 2005/06/10 22:34:05 he Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.17 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18 2005/06/10 22:34:05 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
 {
 	struct md_coredump md_core;
 	struct coreseg cseg;
-	off_t off;
 	int error;
 
 	if (iocookie == NULL) {
