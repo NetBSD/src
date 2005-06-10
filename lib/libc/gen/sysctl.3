@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.142.2.2 2005/06/10 15:18:04 tron Exp $
+.\"	$NetBSD: sysctl.3,v 1.142.2.3 2005/06/10 15:19:14 tron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 15, 2004
+.Dd May 24, 2005
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -868,8 +868,8 @@ The number of canonical input characters.
 The number of raw input characters.
 .El
 .It Li KERN_VERIEXEC
-Tunings for Verified Exec. Third level names for the veriexec
-variables are detailed below.
+Tunings for Verified Exec.
+Third level names for the veriexec variables are detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value or only raise it.
 Only the superuser can modify these variables.
@@ -884,31 +884,41 @@ Only the superuser can modify these variables.
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Li VERIEXEC_VERBOSE
-Controls the verbosity level of Verified Exec. If 0, only the minimal
+Controls the verbosity level of Verified Exec.
+If 0, only the minimal
 indication required will be given about what's happening - fingerprint
 mismatches, removal of entries from the tables, modification of a
 fingerprinted file.
 If 1, more messages will be printed (ie., when a file with a valid
 fingerprint is accessed).
 .It Li VERIEXEC_STRICT
-Controls the strict level of Verified Exec. The strict level defines how
+Controls the strict level of Verified Exec.
+The strict level defines how
 Verified Exec will treat various situations.
 In strict level 0, the system is in learning mode and will only warn about
 fingerprint mismatches, aswell as allow removal of fingerprinted files.
-In strict level 1, the system is in normal mode. It will enforce indirect
+In strict level 1, the system is in normal mode.
+It will enforce indirect
 execution if needed, prevent access to files with a fingerprint mismatch,
-and prevent removal of fingerprinted files. It will also prevent execution
-of files with no fingerprint.
-In strict level 2, the system is in critical mode. It has all effects of
+and prevent removal of fingerprinted files.
+It will also prevent execution of files with no fingerprint.
+In strict level 2, the system is in critical mode.
+It has all effects of
 strict level 1, plus it will deny access (read, write, exec, and delete)
 to files without a valid fingerprint.
 .It Li VERIEXEC_ALGORITHMS
 Returns a string with the supported algorithms in Verified Exec.
 .It Li VERIEXEC_COUNT
 Variables are added to this node as new hash tables are created to
-contain Verified Exec data for a new device. Each variable in the node
-will have a name in the form of dev_<id> where <id> is the device id. For
-example, the variable for the root device may be dev_0. The value of this
+contain Verified Exec data for a new device.
+Each variable in the node
+will have a name in the form of 
+.No dev_ Ns Aq id
+where
+.Aq id
+is the device id.
+For example, the variable for the root device may be dev_0.
+The value of this
 variable will be the amount of fingerprinted files on the device.
 .El
 .It Li KERN_VERSION
