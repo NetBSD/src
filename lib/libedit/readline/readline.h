@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.15 2005/06/10 20:18:11 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.16 2005/06/11 18:18:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ char	       **history_tokenize(const char *);
 const char	*get_history_event(const char *, int *, int);
 char		*history_arg_extract(int, int, const char *);
 
-char		*tilde_expand(const char *);
+char		*tilde_expand(char *);
 char		*filename_completion_function(const char *, int);
 char		*username_completion_function(const char *, int);
 int		 rl_complete(int, int);
