@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.18 2005/06/08 11:39:48 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.19 2005/06/11 12:33:28 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -129,4 +129,9 @@ sys/arch/sun3/sun3x/pmap.c			1.87
 	In pmap_enter(), preset the mod/ref bits based on the flags argument.
 	This fixes PR kern/25640.
 	[chs, ticket #1980]
+
+sys/dev/verified_exec.c				1.6
+
+	Use UIO_SYSSPACE for NDINIT. Found by Eike Dehling.
+	[kleink, ticket #1988]
 
