@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.48 2005/02/07 01:23:02 wiz Exp $
+.\" $NetBSD: doc2html,v 1.49 2005/06/11 23:46:57 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,6 +175,9 @@ TODO:
 .ds close-mode
 .ds open-mode
 .ds doc-anchor
+.\" default EOL after .An
+.\" can be changed with .An -nosplit
+.ds an-eol <br>
 .ds Nm-save
 .ds T " x
 .ds tN <font\ size="-1">
@@ -776,7 +779,12 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 AT&T UNIX\\$*
 ..
 .de An
+.	if '\\$1'-nosplit' \{\
+.		ds an-eol
+.		shift
+.	\}
 .	recurse \\$@
+.	as doc-pcresult \\*[an-eol]
 .	pc-fin
 ..
 .de Lk
