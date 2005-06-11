@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.2 2005/05/07 11:28:16 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.3 2005/06/11 12:20:33 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -903,7 +903,7 @@ exists.
 .Pp
 .
 Refer to
-.Lk http://www.NetBSD.org/Sites/net.html .
+.Lk http://www.NetBSD.org/mirrors/ .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
