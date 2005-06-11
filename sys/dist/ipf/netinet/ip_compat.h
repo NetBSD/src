@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.6 2005/06/11 11:25:28 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.7 2005/06/11 12:12:59 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1377,12 +1377,6 @@ extern void eMrwlock_downgrade __P((eMrwlock_t *, char *, int));
 
 #endif
 
-#if defined(USE_SPL) && defined(_KERNEL)
-# define	SPL_INT(x)	int x
-#else
-# define	SPL_INT(x)
-#endif
-
 #define	MAX_IPV4HDR	((0xf << 2) + sizeof(struct icmp) + sizeof(ip_t) + 8)
 
 #ifndef	IP_OFFMASK
@@ -1567,6 +1561,12 @@ extern	char	*fr_getifname __P((struct ifnet *, char *));
 #ifndef	ATOMIC_INC
 # define	ATOMIC_INC(x)		(x)++
 # define	ATOMIC_DEC(x)		(x)--
+#endif
+
+#if defined(USE_SPL) && defined(_KERNEL)
+# define	SPL_INT(x)	int x
+#else
+# define	SPL_INT(x)
 #endif
 
 /*
