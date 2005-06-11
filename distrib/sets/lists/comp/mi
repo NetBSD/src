@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770.2.2 2005/05/01 18:45:46 tron Exp $
+#	$NetBSD: mi,v 1.770.2.3 2005/06/11 12:21:50 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -28,7 +28,6 @@
 ./usr/bin/gettext				comp-c-bin
 ./usr/bin/gettextize				comp-obsolete		obsolete
 ./usr/bin/gprof					comp-debug-bin		bfd
-./usr/bin/ld					comp-util-bin		bfd
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lorder				comp-util-bin
