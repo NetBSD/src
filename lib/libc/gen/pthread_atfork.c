@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.3 2004/10/21 06:46:36 lukem Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.3.2.1 2005/06/11 12:15:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.3 2004/10/21 06:46:36 lukem Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.3.2.1 2005/06/11 12:15:25 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -81,6 +81,8 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
     void (*child)(void))
 {
 	struct atfork_callback *newprepare, *newparent, *newchild;
+
+	newprepare = newparent = newchild = NULL;
 
 	if (prepare != NULL) {
 		newprepare = malloc(sizeof(struct atfork_callback));
