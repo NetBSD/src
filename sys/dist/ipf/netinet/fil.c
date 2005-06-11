@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.15 2005/06/11 11:25:28 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.16 2005/06/11 12:31:40 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15 2005/06/11 11:25:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.16 2005/06/11 12:31:40 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -5950,6 +5950,7 @@ void *data;
 				tu.ipft_vshort = *ta->ipft_pshort;
 			else if (ta->ipft_sz == sizeof(u_char))
 				tu.ipft_vchar = *ta->ipft_pchar;
+			tu.ipft_cookie = ta;
 			tu.ipft_sz = ta->ipft_sz;
 			tu.ipft_min = ta->ipft_min;
 			tu.ipft_max = ta->ipft_max;
