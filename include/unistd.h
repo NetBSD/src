@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.103 2005/05/22 19:10:15 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.104 2005/06/11 22:54:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ int	 setruid(uid_t);
 void	 setusershell(void);
 void	 strmode(mode_t, char *);
 __aconst char *strsignal(int);
-int	 swapctl(int, const void *, int);
+int	 swapctl(int, void *, int);
 int	 swapon(const char *);			/* obsoleted by swapctl() */
 int	 syscall(int, ...);
 quad_t	 __syscall(quad_t, ...);
