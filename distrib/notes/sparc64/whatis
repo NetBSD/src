@@ -1,33 +1,25 @@
-.\"	$NetBSD: whatis,v 1.14 2004/06/12 06:01:42 mbw Exp $
+.\"	$NetBSD: whatis,v 1.14.2.1 2005/06/11 12:23:18 tron Exp $
 .
 .Nx \*V
-is the third major release for the \*M!
-.Pp
-Some (but not all!) notable \*M-specific improvements include:
+features several \*M-specific bug fixes that greatly improve
+the stability. Besides this, the most visible changes in this
+new release are
 .(bullet
-Support for a number of new models
+Full grown framebuffer support for the most popular graphics hardware
+found on supported machines
+.Pp
+These are cgsix, ffb/afb, and ATI based "vga" chipsets.
 .It
-Support for a native serial driver on non-SBUS machines
-.Pq Em sab
+Switched to wscons console framework
+.Pp
+This makes USB keyboards/mice fully usable. The above mentioned framebuffer
+drivers also support virtual consoles with wscons - use L1/Stop-F1..Fn to
+switch the console screen to another console-
 .It
-Support for the SBUS PCMCIA adapter
-.Pq Em nell
-has been completed.
-.It
-Support for SBUS based audio
-.Pq Em audiocs
-.It
-New generic cycle counter based microtime implementation greatly improves
-microtime(9) for \*M
-.It
-Get rid of all \*M-specific hacks, since the new GNU C/C++ compiler
-now included with 
-.Nx
-no longer has these problems
-.It
-The
-.Xr ofwboot.net 8
-and
-.Xr ofwboot
-programs have been merged
+Switched to XFree86 based X servers
+.Pp
+This means full grown X support for all framebuffers mentioned above, including
+acceleration.
 .bullet)
+Compatibility to the old console framework is still available, as well as
+the old Xsun X server.
