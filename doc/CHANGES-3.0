@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.126 2005/06/11 08:57:12 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.127 2005/06/11 11:19:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9341,4 +9341,12 @@ sys/kern/kern_exec.c				1.199
 	Use the defined VERIEXEC_DIRECT instead of the (incorrect) 0 magic
 	number.
 	[elad, ticket #443]
+
+sys/dev/audio.c					1.196
+
+Make sure buffer sizes are initialized correctly even when the pause state
+is explicitly set.
+Without this, the machine would crash for some audio hardware that needs
+to divide by the block size (e.g., cs4281.c/cs4280.c).
+[is, ticket #445]
 
