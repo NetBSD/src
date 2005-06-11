@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.8 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.9 2005/06/11 18:42:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ modify_single(expr)
 	const char *expr;
 {
 	int i, l, n;
-	char *class, *node;
+	char *class = NULL, *node = NULL;
 	const char *value;
 	char valuestr[MAXVALUELEN];
 
