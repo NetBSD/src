@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7 2005/06/11 20:06:46 matt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2005/06/11 20:06:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static struct execsw exec_svr4_32_elf =
 	  SVR4_32_AUX_ARGSIZ,
 	  svr4_32_copyargs,
 	  NULL,
-	  coredump_netbsd,
+	  coredump_elf32,
 	  exec_setup_stack };
 
 /*
