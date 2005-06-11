@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.4.2.1 2005/06/11 12:31:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.4.2.1 2005/06/11 12:31:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 			   * along with it's fingerprint in a list for
 			   * exec to use later.
 			   */
-                        NDINIT(&nid, LOOKUP, FOLLOW, UIO_USERSPACE,
+                        NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
                                params->file, p);
 			if ((error = vn_open(&nid, FREAD, 0)) != 0) {
 				return(error);
