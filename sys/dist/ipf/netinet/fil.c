@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.14 2005/05/29 21:57:49 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.15 2005/06/11 11:25:28 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.14 2005/05/29 21:57:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15 2005/06/11 11:25:28 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -2200,6 +2200,7 @@ int out;
 #ifdef USE_INET6
 	ip6_t *ip6;
 #endif
+	SPL_INT(s);
 
 	/*
 	 * The first part of fr_check() deals with making sure that what goes
@@ -2279,6 +2280,8 @@ int out;
 	fin->fin_dp = (char *)ip + hlen;
 
 	fin->fin_ipoff = (char *)ip - MTOD(m, char *);
+
+	SPL_NET(s);
 
 #ifdef	USE_INET6
 	if (v == 6) {
@@ -2508,7 +2511,9 @@ finished:
 #endif
 	}
 
+	SPL_X(s);
 	RWLOCK_EXIT(&ipf_global);
+
 #ifdef _KERNEL
 # if OpenBSD >= 200311    
 	if (FR_ISPASS(pass) && (v == 4)) {

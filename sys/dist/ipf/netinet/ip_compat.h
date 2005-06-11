@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.5 2005/04/03 15:05:30 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.6 2005/06/11 11:25:28 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1375,6 +1375,12 @@ extern void eMrwlock_read_enter __P((eMrwlock_t *, char *, int));
 extern void eMrwlock_write_enter __P((eMrwlock_t *, char *, int));
 extern void eMrwlock_downgrade __P((eMrwlock_t *, char *, int));
 
+#endif
+
+#if defined(USE_SPL) && defined(_KERNEL)
+# define	SPL_INT(x)	int x
+#else
+# define	SPL_INT(x)
 #endif
 
 #define	MAX_IPV4HDR	((0xf << 2) + sizeof(struct icmp) + sizeof(ip_t) + 8)
