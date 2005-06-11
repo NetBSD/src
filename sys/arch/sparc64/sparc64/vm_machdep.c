@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.59 2005/06/10 05:10:12 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ cpu_lwp_free(l, proc)
  * (should this be defined elsewhere?  machdep.c?)
  */
 int
-cpu_coredump(struct lwp *l.  void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	int error;
 	struct md_coredump md_core;
