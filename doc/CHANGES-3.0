@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.127 2005/06/11 11:19:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.128 2005/06/11 12:28:39 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9344,9 +9344,76 @@ sys/kern/kern_exec.c				1.199
 
 sys/dev/audio.c					1.196
 
-Make sure buffer sizes are initialized correctly even when the pause state
-is explicitly set.
-Without this, the machine would crash for some audio hardware that needs
-to divide by the block size (e.g., cs4281.c/cs4280.c).
-[is, ticket #445]
+	Make sure buffer sizes are initialized correctly even when the pause
+	state is explicitly set.
+	Without this, the machine would crash for some audio hardware that
+	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
+	[is, ticket #445]
+
+sbin/mount_nfs/mount_nfs.c			patch
+
+	Use ai_nfs instead of the uninitialized ai when determining the
+	NFSMNT_KERB reverse IP address, and ensure ecode is set as well.
+	(Fix derived from getnfsargs.c 1.2)
+	[lukem, ticket #391]
+
+lib/libc/net/getnetnamadr.c			1.32
+
+	Move the test for "more strict reverse lookup handling" to the correct
+	location so that an uninitialized `in' won't be used if
+	net_i == BYADDR.
+	[lukem, ticket #392]
+
+lib/libc/gen/nlist_elf32.c			1.27
+
+        Exit via the correct cleanup path; we can't munmap until the mmap
+	has been performed.
+	[lukem, ticket #393]
+
+lib/libc/gen/pthread_atfork.c			1.4
+
+	Ensure that we don't try to free random memory when another malloc
+	fails, by initializing newprepare, newparent, and newchild to NULL.
+	[lukem, ticket #394]
+
+lib/libc/db/recno/rec_open.c			1.14
+
+	Ensure dbp is initialized to NULL before trying to use it in an error
+	codepath.
+	[lukem, ticket #395]
+
+distrib/notes/alpha/install			1.29
+distrib/notes/common/main			1.284
+
+	Updated URL for list of NetBSD mirrors.
+	[heinz, ticket #423]
+
+distrib/sets/lists/base/gcc.shl			1.5
+distrib/sets/lists/base/mi			1.555
+distrib/sets/lists/comp/gcc.shl			1.12
+distrib/sets/lists/comp/mi			1.791
+
+	Move ld and libbfd (needed by modload) to base, so that a base-only
+	system can load kernel modules.
+	[is, ticket #431]
+
+distrib/notes/sparc64/whatis			1.15
+
+	First cut at 2.0 -> 3.0 port specific changes.
+	[martin, ticket #436]
+
+usr.sbin/pkg_install/add/pkg_add.1		1.58
+
+	Document the vulnerable subdir.
+	[wiz, ticket #440]
+
+usr.sbin/pkg_install/add/pkg_add.1		1.59
+
+	Fix formatting.
+	[wiz, ticket #441]
+
+usr.sbin/pkg_install/delete/perform.c		1.55
+
+	Instead of exec(2)ing rmdir(1), just use rmdir(2).
+	[wiz, ticket #442]
 
