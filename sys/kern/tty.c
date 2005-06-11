@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.172 2005/05/08 18:44:39 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.173 2005/06/11 22:42:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.172 2005/05/08 18:44:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173 2005/06/11 22:42:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1976,7 +1976,6 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	 */
 	while (uio->uio_resid > 0 || cc > 0) {
 		if (ISSET(tp->t_lflag, FLUSHO)) {
-			TTY_UNLOCK(tp);
 			uio->uio_resid = 0;
 			return (0);
 		}
