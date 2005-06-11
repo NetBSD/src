@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.6 2005/06/10 20:21:00 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.7 2005/06/11 18:18:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.6 2005/06/10 20:21:00 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.7 2005/06/11 18:18:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ static char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@', '$',
  * it's callers's responsibility to free() returned string
  */
 char *
-tilde_expand(const char *txt)
+fn_tilde_expand(const char *txt)
 {
 	struct passwd pwres, *pass;
 	char *temp;
@@ -136,7 +136,7 @@ tilde_expand(const char *txt)
  * it's caller's responsibility to free returned string
  */
 char *
-filename_completion_function(const char *text, int state)
+fn_filename_completion_function(const char *text, int state)
 {
 	static DIR *dir = NULL;
 	static char *filename = NULL, *dirname = NULL, *dirpath = NULL;
@@ -189,7 +189,7 @@ filename_completion_function(const char *text, int state)
 			return NULL;
 
 		if (*dirname == '~')
-			dirpath = tilde_expand(dirname);
+			dirpath = fn_tilde_expand(dirname);
 		else
 			dirpath = strdup(dirname);
 
@@ -251,7 +251,7 @@ static const char *
 append_char_function(const char *name)
 {
 	struct stat stbuf;
-	char *expname = *name == '~' ? tilde_expand(name) : NULL;
+	char *expname = *name == '~' ? fn_tilde_expand(name) : NULL;
 	const char *rs = "";
 
 	if (stat(expname ? expname : name, &stbuf) == -1)
@@ -407,7 +407,7 @@ fn_complete(EditLine *el,
 		*completion_type = what_to_do;
 
 	if (!complet_func)
-		complet_func = filename_completion_function;
+		complet_func = fn_filename_completion_function;
 	if (!app_func)
 		app_func = append_char_function;
 

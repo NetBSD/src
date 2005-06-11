@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.56 2005/06/10 20:21:00 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.57 2005/06/11 18:18:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.56 2005/06/10 20:21:00 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.57 2005/06/11 18:18:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1350,6 +1350,18 @@ history_search_pos(const char *str,
 
 /********************************/
 /* completion functions */
+
+char *
+tilde_expand(char *name)
+{
+	return fn_tilde_expand(name);
+}
+
+char *
+filename_completion_function(const char *name, int state)
+{
+	return fn_filename_completion_function(name, state);
+}
 
 /*
  * a completion generator for usernames; returns _first_ username
