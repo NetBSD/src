@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.124 2005/06/10 15:54:57 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.125 2005/06/11 08:50:40 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9276,7 +9276,7 @@ crypto/dist/ipsec-tools/src/racoon/privsep.c	1.2
 	[manu, ticket #434]
 
 distrib/sets/lists/base/mi			1.548
-distrib/sets/lists/man/mi			1.780,1.784
+distrib/sets/lists/man/mi			1.780,1.784-1.785
 etc/MAKEDEV.tmpl				1.44
 etc/rc.d/veriexec				1.4
 lib/libc/gen/sysctl.3				1.147-1.148, 1.149 via patch
