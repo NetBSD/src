@@ -1,4 +1,6 @@
-# $NetBSD: gcc.shl,v 1.4 2004/08/13 01:02:24 lukem Exp $
+# $NetBSD: gcc.shl,v 1.4.2.1 2005/06/11 12:21:41 tron Exp $
+./usr/lib/libbfd.so.7				base-sys-shlib		bfd
+./usr/lib/libbfd.so.7.0				base-sys-shlib		bfd
 ./usr/lib/libg2c.so				base-sys-shlib
 ./usr/lib/libg2c.so.2				base-sys-shlib
 ./usr/lib/libg2c.so.2.0				base-sys-shlib
