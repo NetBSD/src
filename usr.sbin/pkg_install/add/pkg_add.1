@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.57 2005/02/26 14:09:57 grant Exp $
+.\" $NetBSD: pkg_add.1,v 1.57.2.1 2005/06/11 12:24:13 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd February 4, 2005
+.Dd May 7, 2005
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -582,7 +582,7 @@ will try to install binary packages listed in dependencies list.
 .Pp
 You can specify a compiled binary package explicitly on the command line.
 .Bd -literal
-# pkg_add /usr/pkgsrc/packages/All/tcsh-6.10.00.tgz
+# pkg_add /usr/pkgsrc/packages/All/tcsh-6.14.00.tgz
 .Ed
 .Pp
 If you omit the version number,
@@ -596,16 +596,41 @@ emits more messages to terminal.
 # pkg_add -v /usr/pkgsrc/packages/All/unzip
 .Ed
 .Pp
-You can grab a compiled binary package from remote location, by specifying
+You can grab a compiled binary package from remote location by specifying
 a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
-# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/mozilla-1.7.3nb2.tgz
+# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/firefox-1.0.3.tgz
 
 # export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All
-# pkg_add -v mozilla
+# pkg_add -v firefox
 .Ed
+.Pp
+Over time, as problems are found in packages, they will be moved
+from the
+.Pa All
+subdirectory into the
+.Pa vulnerable
+subdirectory.
+If you want to accept vulnerable packages by default
+(and know what you are doing),
+you can add the
+.Pa vulnerable
+directory to your
+.Ev PKG_PATH
+like this:
+.Bd -literal
+# export PKG_PATH="ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All;ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/vulnerable"
+.Ed
+.Pp
+(The quotes are needed because semicolon
+.Pq Sq \&;
+is a shell meta-character.)
+If you do this, consider installing and using the
+.Pa security/audit-packages
+package and running it after every
+.Nm .
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
@@ -642,6 +667,6 @@ invocations due to exec argument-space limitations--this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
 .Pp
-Pkg upgrading needs a lot more work to be really universal.
+Package upgrading needs a lot more work to be really universal.
 .Pp
 Sure to be others.
