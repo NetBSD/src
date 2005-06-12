@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.93 2004/10/23 17:07:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.94 2005/06/12 16:31:42 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2004/10/23 17:07:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2005/06/12 16:31:42 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ simple_devprint(auxp, pnp)
 
 int
 matchname(fp, sp)
-	char *fp, *sp;
+	const char *fp, *sp;
 {
 	int len;
 
