@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.90 2005/06/12 19:06:43 dyoung Exp $ */
+/*	$NetBSD: fdisk.c,v 1.91 2005/06/12 19:14:10 dyoung Exp $ */
 
 /*
  * Mach Operating System
@@ -32,23 +32,32 @@
  *	Created.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.90 2005/06/12 19:06:43 dyoung Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.91 2005/06/12 19:14:10 dyoung Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/disklabel.h>
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/sysctl.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <ctype.h>
-#include <disktab.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -59,12 +68,21 @@ __RCSID("$NetBSD: fdisk.c,v 1.90 2005/06/12 19:06:43 dyoung Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "../../include/disktab.h"
+#include "../../include/util.h"
+#else
+#include <disktab.h>
 #include <util.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
 
 #if defined(__i386__) || defined(__x86_64__)
+#if !HAVE_NBTOOL_CONFIG_H
 #include <machine/cpu.h>
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 #define BOOTSEL
 
 #define	DEFAULT_BOOTCODE	"mbr"
@@ -141,7 +159,7 @@ daddr_t dos_disksectors;
 int partition = -1;
 
 int fd = -1, wfd = -1, *rfd = &fd;
-char *disk_file;
+char *disk_file = NULL;
 char *disk_type = NULL;
 
 int a_flag;		/* set active partition */
@@ -161,7 +179,7 @@ struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 int bootsize;		/* actual size of bootcode */
 int boot_installed;	/* 1 if we've copied code into the mbr */
 
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 struct disklist *dl;
 #endif
 
@@ -208,14 +226,31 @@ daddr_t	get_default_boot(void);
 void	set_default_boot(daddr_t);
 #endif
 
+#if !HAVE_NBTOOL_CONFIG_H
+static void
+initvar_disk(const char **diskp)
+{
+	int mib[2];
+	size_t len;
+	char *root_device;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ROOT_DEVICE;
+	if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1 ||
+	    (root_device = malloc(len)) == NULL ||
+	    sysctl(mib, 2, root_device, &len, NULL, 0) == -1)
+		return;
+
+	*diskp = root_device;
+}
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 int
 main(int argc, char *argv[])
 {
 	struct stat sb;
-	int ch, mib[2];
+	int ch;
 	size_t len;
-	char *root_device;
 	char *cp;
 	int n;
 #ifdef BOOTSEL
@@ -225,12 +260,9 @@ main(int argc, char *argv[])
 
 	int csysid, cstart, csize;	/* For the b_flag. */
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ROOT_DEVICE;
-	if (sysctl(mib, 2, NULL, &len, NULL, 0) != -1 &&
-	    (root_device = malloc(len)) != NULL &&
-	    sysctl(mib, 2, root_device, &len, NULL, 0) != -1)
-		disk = root_device;
+#if !HAVE_NBTOOL_CONFIG_H
+	initvar_disk(&disk);
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	v_flag = 0;
@@ -340,6 +372,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+#if HAVE_NBTOOL_CONFIG_H
+	if (disk_file == NULL && argc > 0)
+		disk_file = argv[0];
+	else if (disk_file == NULL)
+		usage();
+#endif /* HAVE_NBTOOL_CONFIG_H */
+
 	if (disk_type != NULL && getdiskbyname(disk_type) == NULL)
 		errx(EXIT_FAILURE, "bad disktype");
 
@@ -371,7 +410,7 @@ main(int argc, char *argv[])
 		/* must have been a blank disk */
 		init_sector0(1);
 
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	get_geometry();
 #else
 	intuit_translated_geometry();
@@ -455,7 +494,12 @@ usage(void)
 		"%*s[-0123 | -E num "
 		"[-s id/start/size[/bootmenu]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
-		"%*s[-c bootcode] [-r|-w file] [device]\n"
+		"%*s[-c bootcode] "
+#if !HAVE_NBTOOL_CONFIG_H
+		"[-r|-w file] [device]\n"
+#else
+		"[-r|-w] file\n"
+#endif /* HAVE_NBTOOL_CONFIG_H */
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
 		"\t-i initialise MBR code\n"
@@ -876,6 +920,7 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 	diskname[len] = 0;
 }
 
+#if !HAVE_NBTOOL_CONFIG_H
 void
 get_geometry(void)
 {
@@ -923,7 +968,8 @@ get_geometry(void)
 	/* Allright, allright, make a stupid guess.. */
 	intuit_translated_geometry();
 }
-#endif
+#endif /* HAVE_NBTOOL_CONFIG_H */
+#endif /* defined(__i386__) || defined(__x86_64__) */
 
 #ifdef BOOTSEL
 daddr_t
@@ -1133,11 +1179,13 @@ configure_bootsel(daddr_t default_ptn)
 	daddr_t *off;
 	int num_bios_disks;
 
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	if (dl != NULL) {
 		num_bios_disks = dl->dl_nbiosdisks;
 		if (num_bios_disks > 8)
 			num_bios_disks = 8;
 	} else
+#endif
 		num_bios_disks = 8;
 
 	printf("\nBoot selector configuration:\n");
@@ -1234,7 +1282,7 @@ intuit_translated_geometry(void)
 	    dos_sectors > MAXSECTOR) {
 		h1 = MAXHEAD - 1;
 		c1 = MAXCYL - 1;
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 		if (dl != NULL) {
 			/* BIOS may use 256 heads or 1024 cylinders */
 			for (i = 0; i < dl->dl_nbiosdisks; i++) {
@@ -1994,7 +2042,7 @@ get_params_to_use(void)
 	if (!yesno("Do you want to change our idea of what BIOS thinks?"))
 		return;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	if (dl != NULL) {
 		for (i = 0; i < dl->dl_nbiosdisks; i++) {
 			if (i == 0)
@@ -2048,6 +2096,13 @@ open_disk(int update)
 {
 	static char namebuf[MAXPATHLEN + 1];
 
+#if HAVE_NBTOOL_CONFIG_H
+	strlcpy(namebuf, disk_file, sizeof(namebuf));
+	if ((fd = open(disk_file, update ? O_RDWR : O_RDONLY, 0)) == -1) {
+		warn("%s", disk_file);
+		return -1;
+	}
+#else
 	fd = opendisk(disk, update && disk_file == NULL ? O_RDWR : O_RDONLY,
 	    namebuf, sizeof(namebuf), 0);
 	if (fd < 0) {
@@ -2057,6 +2112,7 @@ open_disk(int update)
 			warn("%s", namebuf);
 		return (-1);
 	}
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	disk = namebuf;
 	if (get_params() == -1) {
 		close(fd);
@@ -2138,6 +2194,12 @@ get_params(void)
 		disklabel.d_ncylinders = dos_cylinders;
 		disklabel.d_ntracks = dos_heads;
 		disklabel.d_nsectors = dos_sectors;
+#if HAVE_NBTOOL_CONFIG_H
+	} else {
+		warnx("no disklabel specified");
+		return -1;
+	}
+#else
 	} else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
 		warn("DIOCGDEFLABEL");
 		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
@@ -2145,6 +2207,7 @@ get_params(void)
 			return (-1);
 		}
 	}
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	disksectors = disklabel.d_secperunit;
 	cylinders = disklabel.d_ncylinders;
 	heads = disklabel.d_ntracks;
@@ -2290,8 +2353,10 @@ write_mbr(void)
 	 * sector 0. (e.g. empty disk)
 	 */
 	flag = 1;
+#if !HAVE_NBTOOL_CONFIG_H
 	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	if (write_disk(0, &mboot) == -1) {
 		warn("Can't write fdisk partition table");
 		goto protect_label;
@@ -2311,9 +2376,11 @@ write_mbr(void)
 	}
 	rval = 0;
     protect_label:
+#if !HAVE_NBTOOL_CONFIG_H
 	flag = 0;
 	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	return rval;
 }
 
