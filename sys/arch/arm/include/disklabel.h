@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2005/06/12 19:46:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -51,9 +51,15 @@
 #define MAXPARTITIONS	8		/* number of partitions */
 #define RAW_PART	2		/* raw partition: XX?c */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#include <nbinclude/sys/disklabel_acorn.h>
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/dkbad.h>
 #include <sys/disklabel_acorn.h>
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 struct cpu_disklabel {
 	struct mbr_partition mbrparts[MBR_PART_COUNT];

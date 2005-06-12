@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.7 2005/02/04 22:03:53 fvdl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.8 2005/06/12 19:46:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -111,7 +111,11 @@ struct btinfo_memmap {
 	struct bi_memmap_entry entry[1]; /* var len */
 };
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 /*
  * Structure describing disk info as seen by the BIOS.
