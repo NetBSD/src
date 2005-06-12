@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.32 2005/06/12 19:46:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.32 2005/06/12 19:46:15 dyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,9 +46,16 @@ __RCSID("$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $");
 #include <sys/param.h>
 #define DKTYPENAMES
 #define FSTYPENAMES
-#include <sys/disklabel.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "../../sys/sys/disklabel.h"
+#include "../../include/disktab.h"
+#else
+#include <sys/disklabel.h>
+#include <disktab.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <assert.h>
 #include <ctype.h>
@@ -54,8 +65,6 @@ __RCSID("$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <disktab.h>
 
 #ifdef __weak_alias
 __weak_alias(getdiskbyname,_getdiskbyname)

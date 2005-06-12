@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2004/07/28 09:17:31 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2005/06/12 19:46:15 dyoung Exp $	*/
 
 /*	$OpenBSD: disklabel.h,v 1.5 2000/07/05 22:37:22 mickey Exp $	*/
 
@@ -41,9 +41,17 @@
 #define	MAXPARTITIONS		16		/* number of partitions */
 #define	RAW_PART		2		/* raw partition: xx?c */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#else
 #include <sys/dkbad.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct hp700_lifvol lifvol;
 	struct hp700_lifdir lifdir[HP700_LIF_NUMDIR];

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.90 2005/01/07 18:29:15 matt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.91 2005/06/12 19:46:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -48,7 +48,11 @@
  * label can describe and the number of the "whole disk" (raw)
  * paritition are machine dependent.
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/machine/disklabel.h>
+#else
 #include <machine/disklabel.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 /*
  * The absolute maximum number of disk partitions allowed.
@@ -80,10 +84,12 @@
  * Translate between device numbers and major/disk unit/disk partition.
  */
 #ifndef __HAVE_OLD_DISKLABEL
+#if !HAVE_NBTOOL_CONFIG_H
 #define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define	DISKMINOR(unit, part) \
     (((unit) * MAXPARTITIONS) + (part))
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 #endif
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), DISKMINOR((unit), (part))))
@@ -194,7 +200,7 @@ struct disklabel {
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
 
-#ifdef __HAVE_OLD_DISKLABEL
+#if defined(__HAVE_OLD_DISKLABEL) && !HAVE_NBTOOL_CONFIG_H
 /*
  * Same as above, but with OLDMAXPARTITIONS partitions. For use in
  * the old DIOC* ioctl calls.
