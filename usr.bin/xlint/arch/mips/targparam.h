@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.3 2003/05/29 18:12:15 christos Exp $	*/
+/*	$NetBSD: targparam.h,v 1.4 2005/06/12 16:56:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -43,7 +43,7 @@
  * kept in sync with the compiler!
  */     
 
-#ifdef _LP64
+#ifdef _LP64_X
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
 #define	INTPTR_IS_LONG		1
