@@ -1,4 +1,4 @@
-/*	$NetBSD: swapon.c,v 1.7 1999/03/18 04:48:03 mrg Exp $	*/
+/*	$NetBSD: swapon.c,v 1.8 2005/06/12 02:57:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -37,5 +37,5 @@ swapon(name)
 	const char *name;
 {
 
-	return (swapctl(SWAP_ON, name, 0));
+	return (swapctl(SWAP_ON, __UNCONST(name), 0));
 }
