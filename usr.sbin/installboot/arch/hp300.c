@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.5 2005/06/12 20:21:20 dyoung Exp $ */
+/* $NetBSD: hp300.c,v 1.6 2005/06/12 21:38:12 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,15 +42,13 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.5 2005/06/12 20:21:20 dyoung Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.6 2005/06/12 21:38:12 dyoung Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
-#undef __HAVE_OLD_DISKLABEL	/* host's <machine/types.h> may define this */  
-#include "../../sys/arch/hp300/include/disklabel.h"                            
-#include "../../sys/sys/disklabel.h"                                           
+#include <nbinclude/sys/disklabel.h>
 #else                                                                          
 #include <sys/disklabel.h>
 #endif
@@ -80,7 +78,7 @@ hp300_setboot(ib_params *params)
 	struct hp300_lifdir *lifdir;
 	int		offset;
 	int		i;
-	unsigned int	secsize;
+	unsigned int	secsize = HP300_SECTSIZE;
 	uint64_t	boot_size, boot_offset;
 	char		label_buf[DEV_BSIZE];
 	struct disklabel *label = (void *)label_buf;
