@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.8 2002/04/25 09:20:28 aymeric Exp $	*/
+/*	$NetBSD: device.h,v 1.9 2005/06/12 16:31:42 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -40,7 +40,7 @@
 void config_console(void);
 int amiga_config_found(struct cfdata *, struct device *, void *, cfprint_t );
 int simple_devprint(void *, const char *);
-int matchname(char *, char *);
+int matchname(const char *, const char *);
 /*
  * false when initing for the console.
  */
