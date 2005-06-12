@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.128 2005/06/11 12:28:39 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.129 2005/06/12 15:52:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9416,4 +9416,10 @@ usr.sbin/pkg_install/delete/perform.c		1.55
 
 	Instead of exec(2)ing rmdir(1), just use rmdir(2).
 	[wiz, ticket #442]
+
+usr.sbin/pkg_install/info/pkg_info.1		1.48
+
+	For -L, mention that files that were dynamicallt created upon
+	installation (@exec, ...) are not listed.
+	[hubertf, ticket #446]
 
