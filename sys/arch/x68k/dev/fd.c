@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.64 2005/06/12 23:43:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2005/06/12 23:43:49 he Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -196,7 +196,7 @@ struct fd_type {
 	int	size;		/* size of disk in sectors */
 	int	step;		/* steps per cylinder */
 	int	rate;		/* transfer speed code */
-	char	*name;
+	const char *name;
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
@@ -289,7 +289,7 @@ void fd_motor_on(void *);
 int fdcresult(struct fdc_softc *);
 int out_fdc(bus_space_tag_t, bus_space_handle_t, u_char);
 void fdcstart(struct fdc_softc *);
-void fdcstatus(struct device *, int, char *);
+void fdcstatus(struct device *, int, const char *);
 void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
@@ -942,7 +942,7 @@ fdcstart(struct fdc_softc *fdc)
 }
 
 void
-fdcstatus(struct device *dv, int n, char *s)
+fdcstatus(struct device *dv, int n, const char *s)
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
