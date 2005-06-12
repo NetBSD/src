@@ -1,4 +1,4 @@
-/*	$NetBSD: md2c.c,v 1.4 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: md2c.c,v 1.5 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: md2c.c,v 1.5 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 

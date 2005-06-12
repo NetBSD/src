@@ -1,4 +1,4 @@
-/*	$NetBSD: _catopen.c,v 1.4 1997/11/04 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: _catopen.c,v 1.5 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _catopen.c,v 1.5 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef __indr_reference
 __indr_reference(_catopen,catopen)
