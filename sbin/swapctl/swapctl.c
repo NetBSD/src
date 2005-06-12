@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.28 2005/02/09 05:51:38 xtraeme Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.29 2005/06/12 16:24:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.28 2005/02/09 05:51:38 xtraeme Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.29 2005/06/12 16:24:20 christos Exp $");
 #endif
 
 
@@ -124,10 +124,10 @@ char	*tflag;		/* swap device type (blk or noblk) */
 
 int	pri;		/* uses 0 as default pri */
 
-static	void change_priority(const char *);
-static	int  add_swap(const char *, int);
-static	int  delete_swap(const char *);
-static	void set_dumpdev(const char *);
+static	void change_priority(char *);
+static	int  add_swap(char *, int);
+static	int  delete_swap(char *);
+static	void set_dumpdev(char *);
 static	void get_dumpdev(void);
 static	void do_fstab(int);
 static	void usage(void);
@@ -362,7 +362,7 @@ swapon_command(int argc, char **argv)
  * change_priority:  change the priority of a swap device.
  */
 static void
-change_priority(const char *path)
+change_priority(char *path)
 {
 
 	if (swapctl(SWAP_CTL, path, pri) < 0)
@@ -373,7 +373,7 @@ change_priority(const char *path)
  * add_swap:  add the pathname to the list of swap devices.
  */
 static int
-add_swap(const char *path, int priority)
+add_swap(char *path, int priority)
 {
 	struct stat sb;
 
@@ -397,7 +397,7 @@ oops:
  * delete_swap:  remove the pathname to the list of swap devices.
  */
 static int
-delete_swap(const char *path)
+delete_swap(char *path)
 {
 
 	if (swapctl(SWAP_OFF, path, pri) < 0) {
@@ -408,7 +408,7 @@ delete_swap(const char *path)
 }
 
 static void
-set_dumpdev(const char *path)
+set_dumpdev(char *path)
 {
 
 	if (swapctl(SWAP_DUMPDEV, path, 0) == -1)
