@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.19 2005/06/11 12:33:28 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.20 2005/06/12 21:29:37 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -134,4 +134,12 @@ sys/dev/verified_exec.c				1.6
 
 	Use UIO_SYSSPACE for NDINIT. Found by Eike Dehling.
 	[kleink, ticket #1988]
+
+sys/dev/audio.c					1.196
+
+	Make sure buffer sizes are initialized correctly even when the pause
+	state is explicitly set.
+	Without this, the machine would crash for some audio hardware that
+	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
+	[is, ticket #1990]
 
