@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.5 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.6 2005/06/12 23:42:54 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct dmac_softc {
 #define DMAC_MAXSEGSZ	0xff00
 #define DMAC_BOUNDARY	0
 
-struct dmac_channel_stat *dmac_alloc_channel(struct device *, int, char *,
+struct dmac_channel_stat *dmac_alloc_channel(struct device *, int, const char *,
 	int, dmac_intr_handler_t, void *, int, dmac_intr_handler_t, void *);
 		/* ch, name, normalv, normal, errorv, error */
 int dmac_free_channel(struct device *, int, void *);
