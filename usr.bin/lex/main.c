@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.15 2003/07/14 11:36:49 itojun Exp $ */
+/* $NetBSD: main.c,v 1.16 2005/06/12 20:04:22 christos Exp $ */
 
 
 #include "flexdef.h"
@@ -949,7 +949,7 @@ _( "Variable trailing context rules entail a large performance penalty\n" ) );
 
 	if ( ! do_yywrap )
 		{
-		outn( "\n#define yywrap() 1" );
+		outn( "\n#define yywrap() (/*CONSTCOND*/1)" );
 		outn( "#define YY_SKIP_YYWRAP" );
 		}
 
