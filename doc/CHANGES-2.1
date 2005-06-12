@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.123 2005/06/08 11:40:02 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.124 2005/06/12 21:29:42 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2478,4 +2478,12 @@ sys/arch/sun3/sun3x/pmap.c			1.87
 	In pmap_enter(), preset the mod/ref bits based on the flags argument.
 	This fixes PR kern/25640.
 	[chs, ticket #1980]
+
+sys/dev/audio.c					1.196
+
+	Make sure buffer sizes are initialized correctly even when the pause
+	state is explicitly set.
+	Without this, the machine would crash for some audio hardware that
+	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
+	[is, ticket #1990]
 
