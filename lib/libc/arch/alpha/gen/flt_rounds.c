@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.6 2003/07/27 05:04:18 mrg Exp $ */
+/* $NetBSD: flt_rounds.c,v 1.7 2005/06/12 05:21:25 lukem Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -33,6 +33,11 @@
  * 
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: flt_rounds.c,v 1.7 2005/06/12 05:21:25 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/float.h>

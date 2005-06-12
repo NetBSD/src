@@ -1,4 +1,4 @@
-/*	$NetBSD: __res_close.c,v 1.1 2004/05/20 18:00:55 christos Exp $	*/
+/*	$NetBSD: __res_close.c,v 1.2 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: __res_close.c,v 1.2 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef __indr_reference
 __indr_reference(__res_close,res_close)

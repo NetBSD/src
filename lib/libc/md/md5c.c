@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.19 2003/11/14 16:43:57 keihan Exp $	*/
+/*	$NetBSD: md5c.c,v 1.20 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -35,6 +35,10 @@
 #include <sys/md5.h>
 #define _DIAGASSERT(x)	(void)0
 #else
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: md5c.c,v 1.20 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>

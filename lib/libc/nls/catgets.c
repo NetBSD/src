@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.15 1999/08/17 04:00:51 mycroft Exp $	*/
+/*	$NetBSD: catgets.c,v 1.16 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: catgets.c,v 1.16 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 

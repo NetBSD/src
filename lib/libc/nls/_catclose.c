@@ -1,4 +1,4 @@
-/*	$NetBSD: _catclose.c,v 1.4 1997/11/04 23:52:46 thorpej Exp $	*/
+/*	$NetBSD: _catclose.c,v 1.5 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _catclose.c,v 1.5 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef __indr_reference
 __indr_reference(_catclose,catclose)

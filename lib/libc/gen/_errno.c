@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.11 2003/05/28 19:57:22 christos Exp $	*/
+/*	$NetBSD: _errno.c,v 1.12 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _errno.c,v 1.12 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
 #include <errno.h>

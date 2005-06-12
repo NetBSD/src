@@ -1,4 +1,4 @@
-/*	$NetBSD: swapon.c,v 1.8 2005/06/12 02:57:58 christos Exp $	*/
+/*	$NetBSD: swapon.c,v 1.9 2005/06/12 05:21:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,6 +27,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: swapon.c,v 1.9 2005/06/12 05:21:28 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/swap.h>

@@ -1,9 +1,14 @@
-/*	$NetBSD: _def_time.c,v 1.7 2003/07/26 19:24:46 salo Exp $	*/
+/*	$NetBSD: _def_time.c,v 1.8 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _def_time.c,v 1.8 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
 #include <locale.h>

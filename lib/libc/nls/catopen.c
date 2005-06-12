@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.21 2004/07/21 20:27:46 tshiozak Exp $	*/
+/*	$NetBSD: catopen.c,v 1.22 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: catopen.c,v 1.22 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.4 2005/02/09 19:32:36 kleink Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.5 2005/06/12 05:21:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,6 +31,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.5 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #ifdef _REENTRANT

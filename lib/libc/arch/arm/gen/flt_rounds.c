@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.1 2000/12/29 20:13:48 bjh21 Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.2 2005/06/12 05:21:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -30,6 +30,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: flt_rounds.c,v 1.2 2005/06/12 05:21:25 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <ieeefp.h>

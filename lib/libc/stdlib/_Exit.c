@@ -1,9 +1,14 @@
-/*	$NetBSD: _Exit.c,v 1.1 2003/03/01 15:59:03 bjh21 Exp $	*/
+/*	$NetBSD: _Exit.c,v 1.2 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Ben Harris, 2002
  * This file is in the Public Domain
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _Exit.c,v 1.2 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <unistd.h>

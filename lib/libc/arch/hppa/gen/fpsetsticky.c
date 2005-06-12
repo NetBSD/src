@@ -1,10 +1,15 @@
-/*	$NetBSD: fpsetsticky.c,v 1.1 2004/07/24 19:09:29 chs Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.2 2005/06/12 05:21:25 lukem Exp $	*/
 
 /*	$OpenBSD: fpsetsticky.c,v 1.4 2004/01/05 06:06:16 otto Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fpsetsticky.c,v 1.2 2005/06/12 05:21:25 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <ieeefp.h>

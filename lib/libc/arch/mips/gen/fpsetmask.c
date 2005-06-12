@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:45 thorpej Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.4 2005/06/12 05:21:26 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fpsetmask.c,v 1.4 2005/06/12 05:21:26 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 

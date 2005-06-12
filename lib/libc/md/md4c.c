@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.12 2003/12/04 23:39:18 keihan Exp $	*/
+/*	$NetBSD: md4c.c,v 1.13 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -27,6 +27,11 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: md4c.c,v 1.13 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 

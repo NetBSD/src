@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.5 2003/07/16 19:42:11 cb Exp $ */
+/*	$NetBSD: adjtime.c,v 1.6 2005/06/12 05:21:28 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: adjtime.c,v 1.6 2005/06/12 05:21:28 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <errno.h>

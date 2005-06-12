@@ -1,9 +1,14 @@
-/*	$NetBSD: flt_rounds.c,v 1.4 2003/11/01 14:26:29 nakayama Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.5 2005/06/12 05:21:26 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
  * Public domain.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: flt_rounds.c,v 1.5 2005/06/12 05:21:26 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/float.h>

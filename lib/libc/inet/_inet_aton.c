@@ -1,4 +1,4 @@
-/*	$NetBSD: _inet_aton.c,v 1.1 2004/05/20 23:13:02 christos Exp $	*/
+/*	$NetBSD: _inet_aton.c,v 1.2 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Written by Klaus Klein, September 14, 1999.
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _inet_aton.c,v 1.2 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef __indr_reference
 __indr_reference(_inet_aton,inet_aton)

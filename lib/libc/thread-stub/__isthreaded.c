@@ -1,4 +1,4 @@
-/*	$NetBSD: __isthreaded.c,v 1.1 1999/12/03 06:37:34 explorer Exp $	*/
+/*	$NetBSD: __isthreaded.c,v 1.2 2005/06/12 05:21:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -28,5 +28,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: __isthreaded.c,v 1.2 2005/06/12 05:21:28 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 int __isthreaded = 0;

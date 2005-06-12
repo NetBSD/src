@@ -1,4 +1,4 @@
-/*	$NetBSD: mrand48.c,v 1.6 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: mrand48.c,v 1.7 2005/06/12 05:21:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -12,6 +12,11 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: mrand48.c,v 1.7 2005/06/12 05:21:28 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "rand48.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: ungetwc.c,v 1.2 2003/01/18 11:29:59 thorpej Exp $ */
+/* $NetBSD: ungetwc.c,v 1.3 2005/06/12 05:21:27 lukem Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -27,6 +27,11 @@
  *
  * $Citrus$
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: ungetwc.c,v 1.3 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
