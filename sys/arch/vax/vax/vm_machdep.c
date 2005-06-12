@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2005/06/10 05:10:13 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2005/06/10 05:10:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -247,7 +247,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	md_core.md_tf = *l->l_addr->u_pcb.framep;
+	md_core.md_tf = *(struct trapframe *)l->l_addr->u_pcb.framep; /*XXX*/
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
