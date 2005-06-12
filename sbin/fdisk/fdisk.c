@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.89 2005/04/07 20:23:13 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.90 2005/06/12 19:06:43 dyoung Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.89 2005/04/07 20:23:13 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.90 2005/06/12 19:06:43 dyoung Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -93,7 +93,7 @@ const char *disk = _PATH_DEFDISK;
 
 struct disklabel disklabel;		/* disk parameters */
 
-uint cylinders, sectors, heads;
+unsigned int cylinders, sectors, heads;
 daddr_t disksectors;
 #define cylindersectors (heads * sectors)
 
@@ -122,9 +122,9 @@ char *boot_path = 0;			/* name of file we actually opened */
 #define OPTIONS			"0123FSafiluvs:b:c:E:r:w:"
 #endif
 
-uint dos_cylinders;
-uint dos_heads;
-uint dos_sectors;
+unsigned int dos_cylinders;
+unsigned int dos_heads;
+unsigned int dos_sectors;
 daddr_t dos_disksectors;
 #define dos_cylindersectors (dos_heads * dos_sectors)
 #define dos_totalsectors (dos_heads * dos_sectors * dos_cylinders)
@@ -132,7 +132,7 @@ daddr_t dos_disksectors;
 #define DOSSECT(s,c)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 #define DOSCYL(c)	((c) & 0xff)
 #define SEC_IN_1M (1024 * 1024 / 512)
-#define SEC_TO_MB(sec) ((uint)(((sec) + SEC_IN_1M / 2) / SEC_IN_1M))
+#define SEC_TO_MB(sec) ((unsigned int)(((sec) + SEC_IN_1M / 2) / SEC_IN_1M))
 #define SEC_TO_CYL(sec) (((sec) + dos_cylindersectors/2) / dos_cylindersectors)
 
 #define MAXCYL		1024	/* Usual limit is 1023 */
@@ -200,7 +200,7 @@ void	string(const char *, int, char *);
 int	ptn_id(const char *, int *);
 int	type_match(const void *, const void *);
 const char *get_type(int);
-int	get_mapping(int, uint *, uint *, uint *, unsigned long *);
+int	get_mapping(int, unsigned int *, unsigned int *, unsigned int *, unsigned long *);
 #ifdef BOOTSEL
 daddr_t	configure_bootsel(daddr_t);
 void	install_bootsel(int);
@@ -586,7 +586,7 @@ print_part(struct mbr_sector *boot, int part, daddr_t offset)
 static void
 pr_cyls(daddr_t sector)
 {
-	ulong cyl, head, sect;
+	unsigned long cyl, head, sect;
 	cyl = sector / dos_cylindersectors;
 	sect = sector - cyl * dos_cylindersectors;
 	head = sect / dos_sectors;
@@ -929,7 +929,7 @@ get_geometry(void)
 daddr_t
 get_default_boot(void)
 {
-	uint id;
+	unsigned int id;
 	int p;
 
 	if (le16toh(mboot.mbr_bootsel_magic) != MBR_BS_MAGIC)
@@ -1219,8 +1219,8 @@ void
 intuit_translated_geometry(void)
 {
 	int xcylinders = -1, xheads = -1, xsectors = -1, i, j;
-	uint c1, h1, s1, c2, h2, s2;
-	ulong a1, a2;
+	unsigned int c1, h1, s1, c2, h2, s2;
+	unsigned long a1, a2;
 	uint64_t num, denom;
 
 	/*
@@ -1316,7 +1316,7 @@ intuit_translated_geometry(void)
  * Note: for simplicity, the returned sector is 0-based.
  */
 int
-get_mapping(int i, uint *cylinder, uint *head, uint *sector,
+get_mapping(int i, unsigned int *cylinder, unsigned int *head, unsigned int *sector,
     unsigned long *absolute)
 {
 	struct mbr_partition *part = &mboot.mbr_parts[i / 2];
@@ -1419,7 +1419,7 @@ static const char *
 check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 {
 	int p;
-	uint p_s, p_e;
+	unsigned int p_s, p_e;
 
 	if (sysid != 0) {
 		if (start < dos_sectors)
@@ -1538,7 +1538,7 @@ static const char *
 check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 {
 	int p;
-	uint p_s, p_e;
+	unsigned int p_s, p_e;
 
 	if (sysid == 0)
 		return 0;
@@ -2175,8 +2175,8 @@ get_params(void)
 static int
 validate_bootsel(struct mbr_bootsel *mbs)
 {
-	uint key = mbs->mbrbs_defkey;
-	uint tmo;
+	unsigned int key = mbs->mbrbs_defkey;
+	unsigned int tmo;
 	int i;
 
 	if (v_flag)
@@ -2252,8 +2252,8 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		warnx("%s bootsel information corrupt - ignoring", tabletype);
 		return 0;
 	}
-	memmove((u_int8_t *)boot + MBR_BS_OFFSET,
-		(u_int8_t *)boot + MBR_BS_OFFSET + 4,
+	memmove((uint8_t *)boot + MBR_BS_OFFSET,
+		(uint8_t *)boot + MBR_BS_OFFSET + 4,
 		sizeof(struct mbr_bootsel));
 	if ( ! (boot->mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)) {
 			/* old style default key */
@@ -2411,7 +2411,7 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 int
 ptn_id(const char *prompt, int *extended)
 {
-	uint acc = 0;
+	unsigned int acc = 0;
 	char *cp;
 
 	for (;; printf("%s is not a valid partition number.\n", lbuf)) {
