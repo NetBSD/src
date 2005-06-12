@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.2 2005/06/12 05:45:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.2 2005/06/12 05:45:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -376,7 +376,7 @@ __mbsconv(char *mbsarg, int prec)
 		 * number of characters to print.
 		 */
 		p = mbsarg;
-		insize = nchars = 0;
+		insize = nchars = nconv = 0;
 		mbs = initial;
 		while (nchars != (size_t)prec) {
 			nconv = mbrlen(p, MB_CUR_MAX, &mbs);
@@ -403,6 +403,7 @@ __mbsconv(char *mbsarg, int prec)
 	wcp = convbuf;
 	p = mbsarg;
 	mbs = initial;
+	nconv = 0;
 	while (insize != 0) {
 		nconv = mbrtowc(wcp, p, insize, &mbs);
 		if (nconv == 0 || nconv == (size_t)-1 || nconv == (size_t)-2)
@@ -697,6 +698,12 @@ __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 		prec = -1;
 		sign = '\0';
 		ox[1] = '\0';
+		expchar = '\0';
+		lead = 0;
+		nseps = nrepeats = 0;
+		ulval = 0;
+		ujval = 0;
+		xdigs = NULL;
 
 rflag:		ch = *fmt++;
 reswitch:	switch (ch) {
