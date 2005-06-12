@@ -1,4 +1,4 @@
-/*	$NetBSD: _sys_errlist.c,v 1.7 1998/12/06 07:12:18 jonathan Exp $	*/
+/*	$NetBSD: _sys_errlist.c,v 1.8 2005/06/12 05:34:34 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin, December 12, 1994
@@ -6,6 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _sys_errlist.c,v 1.8 2005/06/12 05:34:34 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 __warn_references(sys_errlist,
     "warning: reference to compatibility sys_errlist[]; include <errno.h> for correct reference")
