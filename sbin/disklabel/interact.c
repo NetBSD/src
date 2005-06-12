@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.24 2005/04/07 21:27:44 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.25 2005/06/12 19:18:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,21 +29,31 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.24 2005/04/07 21:27:44 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.25 2005/06/12 19:18:34 dyoung Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
 #define FSTYPENAMES
 #define DKTYPENAMES
-#include <sys/disklabel.h>
 
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#define	getmaxpartitions()	MAXPARTITIONS
+#include <nbinclude/sys/disklabel.h>
+#else
 #include <util.h>
+#include <sys/disklabel.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include "extern.h"
 

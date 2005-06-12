@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.135 2004/11/12 01:00:40 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.1 2005/06/12 19:18:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -32,6 +32,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
@@ -43,22 +47,16 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.135 2004/11/12 01:00:40 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.1 2005/06/12 19:18:34 dyoung Exp $");
 #endif
 #endif	/* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #define DKTYPENAMES
 #define FSTYPENAMES
-#include <sys/disklabel.h>
-#include <sys/bootblock.h>
-
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -69,9 +67,22 @@ __RCSID("$NetBSD: disklabel.c,v 1.135 2004/11/12 01:00:40 hubertf Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <util.h>
 
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/disklabel.h>
+#include <nbinclude/sys/bootblock.h>
+#include "../../include/util.h"
+#include "../../include/disktab.h"
+#else
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/bootblock.h>
+#include <util.h>
 #include <disktab.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include "pathnames.h"
 #include "extern.h"
@@ -175,6 +186,14 @@ static int		 getulong(const char *, char, char **,
 #define GETNUM16(a, v)	getulong(a, '\0', NULL, v, UINT16_MAX)
 #define GETNUM8(a, v)	getulong(a, '\0', NULL, v, UINT8_MAX)
 
+#if HAVE_NBTOOL_CONFIG_H
+#define GETLABELOFFSET()	LABELOFFSET
+#define GETLABELSECTOR()	LABELSECTOR
+#else /* HAVE_NBTOOL_CONFIG_H */
+#define GETLABELOFFSET()	getlabeloffset()
+#define GETLABELSECTOR()	getlabelsector()
+#endif
+
 int
 main(int argc, char *argv[])
 {
@@ -207,16 +226,17 @@ main(int argc, char *argv[])
 		case 'I':
 			++Iflag;
 			break;
+		case 'R':
+			if (op != UNSPEC)
+				usage();
+			op = RESTORE;
+			break;
+#if !HAVE_NBTOOL_CONFIG_H
 		case 'N':
 			if (op != UNSPEC)
 				usage();
 			writable = 0;
 			op = SETWRITABLE;
-			break;
-		case 'R':
-			if (op != UNSPEC)
-				usage();
-			op = RESTORE;
 			break;
 		case 'W':
 			if (op != UNSPEC)
@@ -224,6 +244,7 @@ main(int argc, char *argv[])
 			writable = 1;
 			op = SETWRITABLE;
 			break;
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 		case 'e':
 			if (op != UNSPEC)
 				usage();
@@ -282,7 +303,12 @@ main(int argc, char *argv[])
 		usage();
 
 	dkname = argv[0];
+#if HAVE_NBTOOL_CONFIG_H
+	f = open(dkname, op == READ ? O_RDONLY : O_RDWR, 0);
+	strlcpy(np, dkname, MAXPATHLEN);
+#else
 	f = opendisk(dkname, op == READ ? O_RDONLY : O_RDWR, np, MAXPATHLEN, 0);
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	specname = np;
 	np += strlen(specname) + 1;
 	if (f < 0)
@@ -363,10 +389,12 @@ main(int argc, char *argv[])
 			error = 1;
 		break;
 
+#if !HAVE_NBTOOL_CONFIG_H
 	case SETWRITABLE:
 		if (ioctl(f, DIOCWLABEL, (char *)&writable) < 0)
 			err(4, "ioctl DIOCWLABEL");
 		break;
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 
 	case WRITE:
 		if (argc < 2 || argc > 3)
@@ -524,11 +552,13 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * may prevent us from changing the current (in-core)
 		 * label.
 		 */
-		if (ioctl(f, DIOCSDINFO, lp) < 0 &&
+#if !HAVE_NBTOOL_CONFIG_H
+		if (!Fflag && ioctl(f, DIOCSDINFO, lp) < 0 &&
 		    errno != ENODEV && errno != ENOTTY) {
 			l_perror("ioctl DIOCSDINFO");
 			return (1);
 		}
+#endif /* HAVE_NBTOOL_CONFIG_H */
 		if (lseek(f, sectoffset, SEEK_SET) < 0) {
 			perror("lseek");
 			return (1);
@@ -538,8 +568,10 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * disable after writing.
 		 */
 		writable = 1;
+#if !HAVE_NBTOOL_CONFIG_H
 		if (!Fflag && ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #ifdef __alpha__
 		/*
@@ -570,6 +602,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 #endif	/* NUMBOOT > 0 */
 
 		writable = 0;
+#if !HAVE_NBTOOL_CONFIG_H
 		if (!Fflag && ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
 		/* 
@@ -580,11 +613,16 @@ writelabel(int f, char *boot, struct disklabel *lp)
 			l_perror("ioctl DIOCWDINFO");
 			return (1);
 		}
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 	} else {
+#if !HAVE_NBTOOL_CONFIG_H
 		if (ioctl(f, DIOCWDINFO, lp) < 0) {
 			l_perror("ioctl DIOCWDINFO");
 			return (1);
 		}
+#else
+		errx(1, "use -F, -r, or -I");
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	}
 
 #ifdef __vax__
@@ -646,7 +684,7 @@ readmbr(int f)
 	struct mbr_partition *dp;
 	struct mbr_sector mbr;
 	int part;
-	uint ext_base, next_ext, this_ext;
+	u_int ext_base, next_ext, this_ext;
 	static struct mbr_partition netbsd_part;
 
 	/*
@@ -920,6 +958,9 @@ readlabel(int f)
 		}
 		if (msg != NULL && !Iflag)
 			errx(1, "%s", msg);
+#if HAVE_NBTOOL_CONFIG_H
+		goto err;
+#else
 		/*
 		 * There was no label on the disk. Get the fictious one
 		 * as a basis for initialisation.
@@ -927,13 +968,20 @@ readlabel(int f)
 		lp = makebootarea(bootarea, &lab, f);
 		if (ioctl(f, DIOCGDINFO, lp) < 0 &&
 		    ioctl(f, DIOCGDEFLABEL, lp) < 0)
-			errx(1, "could not get initial label");
+			goto err;
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	} else {
+#ifdef HAVE_NBTOOL_CONFIG_H
+		goto err;
+#else
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)
 			err(4, "ioctl DIOCGDINFO");
+#endif /* HAVE_NBTOOL_CONFIG_H */
 	}
 	return (lp);
+err:
+	errx(1, "could not get initial label");
 }
 
 /*
@@ -955,9 +1003,9 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 # endif
 #endif	/* NUMBOOT > 0 */
 
-	if ((lsec = getlabelsector()) < 0)
+	if ((lsec = GETLABELSECTOR()) < 0)
 		err(4, "getlabelsector()");
-	if ((loff = getlabeloffset()) < 0)
+	if ((loff = GETLABELOFFSET()) < 0)
 		err(4, "getlabeloffset()");
 
 	/* XXX */

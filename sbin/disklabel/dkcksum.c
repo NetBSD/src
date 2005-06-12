@@ -1,4 +1,4 @@
-/*	$NetBSD: dkcksum.c,v 1.10 2003/08/07 10:04:13 agc Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.11 2005/06/12 19:18:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -29,17 +29,25 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dkcksum.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dkcksum.c,v 1.10 2003/08/07 10:04:13 agc Exp $");
+__RCSID("$NetBSD: dkcksum.c,v 1.11 2005/06/12 19:18:34 dyoung Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/disklabel.h>
+#else
 #include <sys/disklabel.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 #include "dkcksum.h"
 
 u_short
