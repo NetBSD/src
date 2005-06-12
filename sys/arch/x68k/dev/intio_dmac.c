@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.21 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.22 2005/06/12 23:42:54 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.21 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.22 2005/06/12 23:42:54 he Exp $");
 
 #include "opt_m680x0.h"
 
@@ -162,7 +162,7 @@ dmac_init_channels(struct dmac_softc *sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(struct device *self, int ch, char *name, int normalv,
+dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
     dmac_intr_handler_t normal, void *normalarg, int errorv,
     dmac_intr_handler_t error, void *errorarg)
 {
