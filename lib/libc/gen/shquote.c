@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.6 2005/02/09 21:35:46 kleink Exp $ */
+/* $NetBSD: shquote.c,v 1.7 2005/06/12 05:21:27 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -33,6 +33,11 @@
  * 
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: shquote.c,v 1.7 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * Define SHQUOTE_USE_MULTIBYTE if you want shquote() to handle multibyte

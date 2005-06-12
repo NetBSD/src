@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.12 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: sha1.c,v 1.13 2005/06/12 05:21:27 lukem Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -23,6 +23,10 @@
 #include <sys/systm.h>
 #define _DIAGASSERT(x)	(void)0
 #else
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: sha1.c,v 1.13 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>

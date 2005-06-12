@@ -1,8 +1,13 @@
-/*	$NetBSD: infinityf_ieee754.c,v 1.1 2003/10/25 22:31:20 kleink Exp $	*/
+/*	$NetBSD: infinityf_ieee754.c,v 1.2 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * IEEE-compatible infinityf.c -- public domain.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: infinityf_ieee754.c,v 1.2 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <math.h>
 #include <machine/endian.h>
