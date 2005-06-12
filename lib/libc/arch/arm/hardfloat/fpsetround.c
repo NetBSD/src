@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.4 2002/03/19 13:42:23 bjh21 Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.5 2005/06/12 05:21:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -32,6 +32,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fpsetround.c,v 1.5 2005/06/12 05:21:25 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.2 2002/01/13 21:45:41 thorpej Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.3 2005/06/12 05:21:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -32,6 +32,9 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fpgetround.c,v 1.3 2005/06/12 05:21:25 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 

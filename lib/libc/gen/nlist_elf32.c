@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.27 2005/06/01 05:24:54 lukem Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.28 2005/06/12 05:21:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -33,6 +33,11 @@
  * 
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: nlist_elf32.c,v 1.28 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE

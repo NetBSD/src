@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: _strtoumax.c,v 1.2 2005/06/12 05:21:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -28,7 +28,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _strtoumax.c,v 1.2 2005/06/12 05:21:28 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef __indr_reference
 __indr_reference(_strtoumax, strtoumax)

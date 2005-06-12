@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.7 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.8 2005/06/12 05:21:27 lukem Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -24,6 +24,11 @@
  *
  * RC4 is a registered trademark of RSA Laboratories.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: arc4random.c,v 1.8 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <fcntl.h>

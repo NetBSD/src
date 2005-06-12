@@ -1,4 +1,4 @@
-/*	$NetBSD: _rand48.c,v 1.6 1999/09/20 04:39:35 lukem Exp $	*/
+/*	$NetBSD: _rand48.c,v 1.7 2005/06/12 05:21:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -12,6 +12,11 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _rand48.c,v 1.7 2005/06/12 05:21:27 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 
