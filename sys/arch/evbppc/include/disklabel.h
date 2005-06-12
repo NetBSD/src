@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2003/11/19 13:58:11 scw Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2005/06/12 19:46:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,13 +40,21 @@
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 /* Pull in MBR partition definitions. */
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 #else
 #define	LABELSECTOR	0		/* sector containing label */
 #define	LABELOFFSET	64		/* offset of label in sector */
 #endif /* EVBPPC_HAS_MBR */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#else
 #include <sys/dkbad.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 struct cpu_disklabel {
 #ifdef EVBPPC_HAS_MBR

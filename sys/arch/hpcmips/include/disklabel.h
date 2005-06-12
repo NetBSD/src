@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2005/06/12 19:46:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -53,10 +53,18 @@
      ((part) / OLDMAXPARTITIONS) * (__HPCMIPS_MAXDISKS * OLDMAXPARTITIONS))
 
 /* Pull in MBR partition definitions. */
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #ifndef __ASSEMBLER__
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#else
 #include <sys/dkbad.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct mbr_partition dosparts[MBR_PART_COUNT];
 	struct dkbad bad;
