@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.26 2005/05/07 16:01:25 dsl Exp $	*/
+/*	$NetBSD: histedit.h,v 1.27 2005/06/12 06:58:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,6 +45,10 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * ==== Editing ====
@@ -211,5 +215,9 @@ int		 tok_line(Tokenizer *, const LineInfo *,
 		    int *, const char ***, int *, int *);
 int		 tok_str(Tokenizer *, const char *,
 		    int *, const char ***);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _HISTEDIT_H_ */
