@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.13 2003/04/16 12:45:10 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.14 2005/06/13 11:13:17 junyoung Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -6,30 +6,30 @@
  * Mach Operating System
  * Copyright (c) 1992, 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 /*
-  Copyright 1988, 1989, 1990, 1991, 1992 
+  Copyright 1988, 1989, 1990, 1991, 1992
    by Intel Corporation, Santa Clara, California.
 
                 All Rights Reserved
@@ -59,7 +59,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
 #	Call with	%ah = 0x0
 #			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:		
+#	Return:
 #			%al = 0x0 on success; err code on failure
 */
 ENTRY(biosdiskreset)
@@ -100,7 +100,7 @@ ENTRY(biosdiskreset)
 #			%dh = head
 #			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
 #			%es:%bx = segment:offset of buffer
-#	Return:		
+#	Return:
 #			%al = 0x0 on success; err code on failure
 #
 # biosread( dev, cyl, head, sect, count, buff_addr );
@@ -142,7 +142,7 @@ ENTRY(biosread)
 	movb	$0x2, %ah	# subfunction
 	int	$0x13
 	setc	%al		# error code is in %ah
-	
+
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
@@ -265,7 +265,7 @@ ENTRY(int13_extension)
 #			%ds:%si = parameter block (data buffer address
 #				must be a real mode physical address).
 #			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:		
+#	Return:
 #			%al = 0x0 on success; err code on failure
 */
 ENTRY(biosextread)
