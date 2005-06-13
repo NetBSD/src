@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2005/06/13 00:34:08 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.27 2005/06/13 00:34:08 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ zs_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (zsaddr != (void*) zs_physaddr[i])
 		return 0;
-	if (badaddr((caddr_t)INTIO_ADDR(zsaddr)))
+	if (badaddr(INTIO_ADDR(zsaddr)))
 		return 0;
 
 	return (1);
@@ -215,9 +215,9 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 		cs->cs_brg_clk = PCLK / 16;
 
 		if (channel == 0)
-			zc = (void*) INTIO_ADDR(&zsc->zsc_addr->zs_chan_a);
+			zc = (volatile void*) INTIO_ADDR(&zsc->zsc_addr->zs_chan_a);
 		else
-			zc = (void*) INTIO_ADDR(&zsc->zsc_addr->zs_chan_b);
+			zc = (volatile void*) INTIO_ADDR(&zsc->zsc_addr->zs_chan_b);
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -604,7 +604,7 @@ zs_putc(int c)
 void 
 zscninit(struct consdev *cn)
 {
-	volatile struct zschan *cnchan = (void*) INTIO_ADDR(ZSCN_PHYSADDR);
+	volatile struct zschan *cnchan = (volatile void*) INTIO_ADDR(ZSCN_PHYSADDR);
 	int s;
 
 	memset(&zscn_cs, 0, sizeof (struct zs_chanstate));

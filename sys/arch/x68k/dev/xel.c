@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.8 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: xel.c,v 1.9 2005/06/13 00:34:08 he Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.8 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.9 2005/06/13 00:34:08 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,11 +123,11 @@ static int
 xel_probe(paddr_t addr)
 {
 	u_int32_t b1, b2;
-	u_int16_t *start = (void*) INTIO_ADDR(addr);
+	volatile u_int16_t *start = (volatile void*) INTIO_ADDR(addr);
 	label_t	faultbuf;
-	volatile u_int32_t *sram = (void*) INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
+	volatile u_int32_t *sram = (volatile void*) INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
 
-	if (badaddr((caddr_t)start))
+	if (badaddr(start))
 		return 0;
 
 	nofault = (int *) &faultbuf;

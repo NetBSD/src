@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.11 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: neptune.c,v 1.12 2005/06/13 00:34:08 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.11 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.12 2005/06/13 00:34:08 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ neptune_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 */
 	*bshp = (bus_space_handle_t) ((u_int)start + ((u_int)bpa - 0x200) * 2);
 
-	if (badaddr((caddr_t)*bshp)) {
+	if (badaddr((void*)*bshp)) {
 		return 1;
 	}
 

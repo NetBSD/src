@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 2005/06/13 00:34:08 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2005/06/13 00:34:08 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,8 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2005/04/25 15:02:07 lukem Exp $");
 void initcpu(void);
 void identifycpu(void);
 void doboot(void) __attribute__((__noreturn__));
-int badaddr(caddr_t);
-int badbaddr(caddr_t);
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -370,7 +368,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Info for CTL_HW
  */
 char	cpu_model[96];		/* max 85 chars */
-static char *fpu_descr[] = {
+static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	", emulator FPU", 	/* 0 */
 #else
@@ -386,7 +384,7 @@ void
 identifycpu(void)
 {
         /* there's alot of XXX in here... */
-	char *cpu_type, *mach, *mmu, *fpu;
+	const char *cpu_type, *mach, *mmu, *fpu;
 	char clock[16];
 
 	/*
@@ -871,7 +869,7 @@ straytrap(int pc, u_short evec)
 int	*nofault;
 
 int
-badaddr(caddr_t addr)
+badaddr(volatile void* addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -887,7 +885,7 @@ badaddr(caddr_t addr)
 }
 
 int
-badbaddr(caddr_t addr)
+badbaddr(volatile void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -1174,7 +1172,7 @@ static void
 setmemrange(void)
 {
 	int i;
-	psize_t s, min, max;
+	psize_t s, minimum, maximum;
 	struct memlist *mlist = memlist;
 	u_long h;
 	int basemax = ctob(physmem);
@@ -1206,8 +1204,8 @@ setmemrange(void)
 
 	/* discover extended memory */
 	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
-		min = mlist[i].min;
-		max = mlist[i].max;
+		minimum = mlist[i].min;
+		maximum = mlist[i].max;
 		/*
 		 * Normally, x68k hardware is NOT 32bit-clean.
 		 * But some type of extended memory is in 32bit address space.
@@ -1217,7 +1215,7 @@ setmemrange(void)
 			continue;
 		h = 0;
 		/* range check */
-		for (s = min; s <= max; s += 0x00100000) {
+		for (s = minimum; s <= maximum; s += 0x00100000) {
 			if (!mem_exists(mlist[i].base + s - 4, basemax))
 				break;
 			h = (u_long)(mlist[i].base + s);
