@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.78 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.79 2005/06/13 16:37:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.78 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.79 2005/06/13 16:37:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -909,8 +909,12 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (!tlp_isv_srom_enaddr(sc, enaddr)) {
 #ifdef __sparc__
-			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
-			    !sc->sc_srom[22]) {
+			if ((sc->sc_srom[20] == 0 &&
+			     sc->sc_srom[21] == 0 &&
+			     sc->sc_srom[22] == 0) ||
+			    (sc->sc_srom[20] == 0xff &&
+			     sc->sc_srom[21] == 0xff &&
+			     sc->sc_srom[22] == 0xff)) {
 				prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
 			} else
 #endif
