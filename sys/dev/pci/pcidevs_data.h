@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.714 2005/06/13 07:32:38 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.715 2005/06/13 07:43:53 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.714 2005/06/07 11:31:44 skrll Exp
+ *	NetBSD: pcidevs,v 1.715 2005/06/13 07:31:50 nonaka Exp
  */
 
 /*
@@ -5272,6 +5272,14 @@ const struct pci_product pci_products[] = {
 	    "MSVCC01/02/03/04 Video Capture Cards",
 	},
 	{
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751,
+	    "SH7751 PCI Controller",
+	},
+	{
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751R,
+	    "SH7751R PCI Controller",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
 	    "MCA Bridge",
 	},
@@ -10312,4 +10320,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1998;
+const int pci_nproducts = 2000;
