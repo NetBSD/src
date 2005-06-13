@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.9 2005/06/13 11:33:02 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.10 2005/06/13 11:34:11 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -74,8 +74,8 @@ struct biosdisk_ext13info {
 	/* v3.0 extensions */
 	uint16_t	devpath_sig;	/* 0xbedd if path info present */
 #define EXT13_DEVPATH_SIGNATURE	0xbedd
-	uint8_t	devpath_len;	/* length from devpath_sig */
-	uint8_t	fill21[3];
+	uint8_t		devpath_len;	/* length from devpath_sig */
+	uint8_t		fill21[3];
 	char		host_bus[4];	/* Probably "ISA" or "PCI" */
 	char		iface_type[8];	/* "ATA", "ATAPI", "SCSI" etc */
 	union {

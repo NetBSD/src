@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.18 2005/01/27 18:20:45 mycroft Exp $	*/
+/*	$NetBSD: libi386.h,v 1.19 2005/06/13 11:37:41 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -32,12 +32,12 @@ typedef unsigned long physaddr_t;
 void vpbcopy(const void *, void *, size_t);
 void pvbcopy(const void *, void *, size_t);
 void pbzero(void *, size_t);
-physaddr_t vtophys(void*);
+physaddr_t vtophys(void *);
 
 ssize_t pread(int, void *, size_t);
-void startprog(physaddr_t, int, unsigned long*, physaddr_t);
+void startprog(physaddr_t, int, unsigned long *, physaddr_t);
 
-int exec_netbsd(const char*, physaddr_t, int);
+int exec_netbsd(const char *, physaddr_t, int);
 
 void delay(int);
 int getbasemem(void);
@@ -78,9 +78,9 @@ physaddr_t xmsalloc(int);
 #endif
 
 /* parseutils.c */
-char *gettrailer(char*);
-int parseopts(const char*, int*);
-int parseboot(char*, char**, int*);
+char *gettrailer(char *);
+int parseopts(const char *, int *);
+int parseboot(char *, char **, int *);
 
 /* menuutils.c */
 struct bootblk_command {
@@ -88,7 +88,7 @@ struct bootblk_command {
 	void (*c_fn)(char *);
 };
 void bootmenu(void);
-void docommand(char*);
+void docommand(char *);
 
 /* getsecs.c */
 time_t getsecs(void);
