@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.5 2005/04/21 13:37:44 blymn Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.6 2005/06/13 15:18:44 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -78,6 +78,10 @@ STRING		[0-9a-zA-Z]+
 \n		{
 			line++;
 			return EOL;
+		}
+
+","		{
+			return TOKEN_COMMA;
 		}
 
 .		{ yyerror("Invalid character"); }
