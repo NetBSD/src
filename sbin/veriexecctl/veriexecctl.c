@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.15 2005/06/03 16:12:07 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.16 2005/06/13 15:18:44 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -49,6 +49,7 @@
 
 extern struct veriexec_params params; /* in veriexecctl_parse.y */
 extern char *filename; /* in veriexecctl_conf.l */
+extern int yynerrs;
 int gfd, verbose = 0, phase;
 size_t line;
 
@@ -59,7 +60,6 @@ static FILE *openlock(const char *);
 static void phase1_preload(void);
 static int fingerprint_load(char*);
 static void usage(void) __attribute__((__noreturn__));
-
 
 static FILE *
 openlock(const char *path)
@@ -149,6 +149,7 @@ static int
 fingerprint_load(char *ifile)
 {
 	CIRCLEQ_INIT(&params_list);
+	memset(&params, 0, sizeof(params));
 
 	if ((yyin = openlock(ifile)) == NULL)
 		err(1, "Cannot open `%s'", ifile);
@@ -165,7 +166,10 @@ fingerprint_load(char *ifile)
 		(void)printf("=> Parsing \"%s\"\n", ifile);
 	}
 
+	line = 1;
 	yyparse();
+	if (yynerrs)
+		return -1;
 
 	phase1_preload();
 
@@ -182,6 +186,7 @@ fingerprint_load(char *ifile)
 		(void)printf("=> Parsing \"%s\"\n", ifile);
 	}
 
+	line = 1;
 	yyparse();
 
 	(void)fclose(yyin);
@@ -224,7 +229,6 @@ main(int argc, char **argv)
 	 * Handle the different commands we can do.
 	 */
 	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
-		line = 0;
 		filename = argv[1];
 		fingerprint_load(argv[1]);
 	} else
