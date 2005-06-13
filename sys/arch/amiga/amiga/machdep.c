@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.191 2005/04/25 15:02:02 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2005/04/25 15:02:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ extern  int   freebufspace;
 extern	u_int lowram;
 
 /* used in init_main.c */
-char	*cpu_type = "m68k";
+const char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
@@ -403,7 +403,7 @@ void
 identifycpu()
 {
         /* there's alot of XXX in here... */
-	char *mach, *mmu, *fpu;
+	const char *mach, *mmu, *fpu;
 
 #ifdef M68060
 	char cpubuf[16];
