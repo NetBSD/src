@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.21 2004/10/23 17:20:04 thorpej Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.22 2005/06/13 11:23:28 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -95,20 +95,15 @@ static struct btinfo_bootwedge bi_wedge;
 
 int boot_biossector;	/* disk sector partition might have started in */
 
-int 
-biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
-	void           *devdata;
-	int             flag;
-	daddr_t         dblk;
-	size_t          size;
-	void           *buf;
-	size_t         *rsize;
+int
+biosdiskstrategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		 void *buf, size_t *rsize)
 {
 	struct biosdisk *d;
-	int             blks, frag;
+	int blks, frag;
 
 	if (flag != F_READ)
-		return (EROFS);
+		return EROFS;
 
 	d = (struct biosdisk *) devdata;
 
@@ -118,21 +113,23 @@ biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
 	if (blks && readsects(&d->ll, dblk, blks, buf, 0)) {
 		if (rsize)
 			*rsize = 0;
-		return (EIO);
+		return EIO;
 	}
+
 	/* do we really need this? */
 	frag = size % BIOSDISK_SECSIZE;
 	if (frag) {
 		if (readsects(&d->ll, dblk + blks, 1, d->buf, 0)) {
 			if (rsize)
 				*rsize = blks * BIOSDISK_SECSIZE;
-			return (EIO);
+			return EIO;
 		}
 		memcpy(buf + blks * BIOSDISK_SECSIZE, d->buf, frag);
 	}
+
 	if (rsize)
 		*rsize = size;
-	return (0);
+	return 0;
 }
 
 static struct biosdisk *
@@ -140,12 +137,12 @@ alloc_biosdisk(int dev)
 {
 	struct biosdisk *d;
 
-	d = (struct biosdisk *)alloc(sizeof *d);
-	if (!d)
+	d = alloc(sizeof *d);
+	if (d == NULL)
 		return NULL;
 	memset(d, 0, sizeof *d);
 
-	d->ll.dev = dev;;
+	d->ll.dev = dev;
 	if (set_geometry(&d->ll, NULL)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
@@ -318,10 +315,10 @@ biosdiskfindptn(int biosdev, u_int sector)
 
 	free(d, sizeof *d);
 	return partition;
-}
 #endif /* NO_DISKLABEL */
+}
 
-int 
+int
 biosdiskopen(struct open_file *f, ...)
 /* file, biosdev, partition */
 {
@@ -408,13 +405,12 @@ out:
         va_end(ap);
 	if (error)
 		free(d, sizeof(struct biosdisk));
-	return (error);
+	return error;
 }
 
 #ifndef LIBSA_NO_FS_CLOSE
-int 
-biosdiskclose(f)
-	struct open_file *f;
+int
+biosdiskclose(struct open_file *f)
 {
 	struct biosdisk *d = f->f_devdata;
 
@@ -423,15 +419,12 @@ biosdiskclose(f)
 
 	free(d, sizeof(struct biosdisk));
 	f->f_devdata = NULL;
-	return (0);
+	return 0;
 }
 #endif
 
-int 
-biosdiskioctl(f, cmd, arg)
-	struct open_file *f;
-	u_long          cmd;
-	void           *arg;
+int
+biosdiskioctl(struct open_file *f, u_long cmd, void *arg)
 {
 	return EIO;
 }
