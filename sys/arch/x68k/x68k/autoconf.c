@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 2005/06/13 00:18:11 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2005/01/18 07:12:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2005/06/13 00:18:11 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -73,7 +73,7 @@ cpu_configure(void)
 {
 	x68k_realconfig = 1;
 
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Turn on interrupts */
@@ -142,11 +142,11 @@ config_console(void)
 	/*
 	 * we need mainbus' cfdata.
 	 */
-	cf = config_rootsearch(NULL, "mainbus", "mainbus");
+	cf = config_rootsearch(NULL, "mainbus", NULL);
 	if (cf == NULL)
 		panic("no mainbus");
-	x68k_config_found(cf, NULL, "intio", NULL);
-	x68k_config_found(cf, NULL, "grfbus", NULL);
+	x68k_config_found(cf, NULL, __UNCONST("intio"), NULL);
+	x68k_config_found(cf, NULL, __UNCONST("grfbus"), NULL);
 }
 
 dev_t	bootdev = 0;
@@ -322,10 +322,10 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 
 	printf("\n");
 
-	config_found(dp, "intio"  , NULL);
-	config_found(dp, "grfbus" , NULL);
-	config_found(dp, "par"    , NULL);
-	config_found(dp, "com"    , NULL);
-	config_found(dp, "com"    , NULL);
-	config_found(dp, "*"      , NULL);
+	config_found(dp, __UNCONST("intio")  , NULL);
+	config_found(dp, __UNCONST("grfbus") , NULL);
+	config_found(dp, __UNCONST("par")    , NULL);
+	config_found(dp, __UNCONST("com")    , NULL);
+	config_found(dp, __UNCONST("com")    , NULL);
+	config_found(dp, __UNCONST("*")      , NULL);
 }
