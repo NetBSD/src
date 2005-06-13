@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.45 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.46 2005/06/13 15:27:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.45 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.46 2005/06/13 15:27:41 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -164,6 +164,9 @@ const struct tulip_cardbus_product {
 	  TULIP_CHIP_AN985 },
 
 	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,
+	  TULIP_CHIP_AN985 },
+
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200,
 	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,
