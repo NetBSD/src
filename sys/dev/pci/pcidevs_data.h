@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.715 2005/06/13 07:43:53 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.716 2005/06/13 15:28:04 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.715 2005/06/13 07:31:50 nonaka Exp
+ *	NetBSD: pcidevs,v 1.717 2005/06/13 15:27:42 tron Exp
  */
 
 /*
@@ -6792,6 +6792,10 @@ const struct pci_product pci_products[] = {
 	    "EG1064 v2 Instant Gigabit Network Adapter",
 	},
 	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200,
+	    "PCMPC200",
+	},
+	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
 	    "82C168/82C169 (PNIC) 10/100 Ethernet",
 	},
@@ -10320,4 +10324,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2000;
+const int pci_nproducts = 2001;
