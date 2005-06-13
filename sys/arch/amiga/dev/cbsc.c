@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.18 2004/02/13 11:36:10 wiz Exp $ */
+/*	$NetBSD: cbsc.c,v 1.19 2005/06/13 21:34:16 jmc Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.18 2004/02/13 11:36:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.19 2005/06/13 21:34:16 jmc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,7 @@ cbscmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (zap->prodid == 11 && iszthreepa(zap->pa))
 		return(0);		/* Fastlane Z3! */
 	regs = &((volatile u_char *)zap->va)[0xf400];
-	if (badaddr((caddr_t)regs))
+	if (badaddr((caddr_t)__UNVOLATILE(regs)))
 		return(0);
 	regs[NCR_CFG1 * 4] = 0;
 	regs[NCR_CFG1 * 4] = NCRCFG1_PARENB | 7;
