@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.19 2004/08/23 09:45:53 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.20 2005/06/13 11:27:40 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -61,7 +61,7 @@ static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
 #define BIOSDISK_RETRIES 5
 #endif
 
-int 
+int
 set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 {
 	int diskinfo;
@@ -83,14 +83,14 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	}
 
 	/*
-	 * If the drive is 2.88 floppy drive, check that we can actually
-	 * read sector >= 18. If not, assume 1.44 floppy disk.
+	 * If the drive is 2.88MB floppy drive, check that we can actually
+	 * read sector >= 18. If not, assume 1.44MB floppy disk.
 	 */
 	if (d->dev == 0 && SPT(diskinfo) == 36) {
 		if (biosread(d->dev, 0, 0, 18, 1, buf)) {
 			d->sec = 18;
 			d->chs_sectors /= 2;
-		}			
+		}
 	}
 
 	/*
@@ -184,21 +184,21 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
  * read-ahead.
  */
 
-int 
+int
 readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 {
 #ifdef BOOTXX
 #define cold 1		/* collapse out references to diskbufp */
 #endif
 	while (num) {
-		int             nsec;
+		int nsec;
 
 		/* check for usable data in read-ahead buffer */
 		if (cold || diskbuf_user != &ra_dev || d->dev != ra_dev
 		    || dblk < ra_first || dblk >= ra_end) {
 
 			/* no, read from disk */
-			char           *trbuf;
+			char *trbuf;
 			int maxsecs;
 			int retries = BIOSDISK_RETRIES;
 
@@ -220,7 +220,7 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 #endif
 				if (--retries >= 0)
 					continue;
-				return (-1);	/* XXX cannot output here if
+				return -1;	/* XXX cannot output here if
 						 * (cold) */
 			}
 			if (!cold) {
@@ -246,5 +246,5 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 		dblk += nsec;
 	}
 
-	return (0);
+	return 0;
 }
