@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.716 2005/06/13 07:43:34 nonaka Exp $
+$NetBSD: pcidevs,v 1.717 2005/06/13 15:27:42 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1993,6 +1993,8 @@ product LINEARSYS DVB_RX	0x7630	DVB Receiver
 /* Linksys products */
 product LINKSYS EG1032		0x1032	EG1032 v2 Instant Gigabit Network Adapter
 product LINKSYS EG1064		0x1064	EG1064 v2 Instant Gigabit Network Adapter
+product	LINKSYS	PCMPC200	0xab08	PCMPC200
+
 /* Lite-On products */
 product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
 product LITEON 82C115	0xc115	82C115 (PNIC II) 10/100 Ethernet
