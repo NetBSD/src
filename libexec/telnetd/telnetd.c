@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.46 2005/02/06 05:58:21 perry Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.46.2.1 2005/06/13 22:07:52 tron Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.46 2005/02/06 05:58:21 perry Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.46.2.1 2005/06/13 22:07:52 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -913,6 +913,7 @@ telnet(int f, int p)
 	} else {
 		IM = DEFAULT_IM;
 		HE = 0;
+		IF = NULL;
 	}
 	edithost(HE, host_name);
 	ptyibuf2ptr = ptyibuf2;
