@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.54 2005/05/22 15:54:45 christos Exp $ */
+/*	$NetBSD: sbic.c,v 1.55 2005/06/13 21:34:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.54 2005/05/22 15:54:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.55 2005/06/13 21:34:17 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ int  sbicpoll(struct sbic_softc *);
 int  sbicnextstate(struct sbic_softc *, u_char, u_char);
 int  sbicmsgin(struct sbic_softc *);
 int  sbicxfin(sbic_regmap_t regs, int, void *);
-int  sbicabort(struct sbic_softc *, sbic_regmap_t, char *);
+int  sbicabort(struct sbic_softc *, sbic_regmap_t, const char *);
 void sbicxfdone(struct sbic_softc *, sbic_regmap_t, int);
 void sbicerror(struct sbic_softc *, sbic_regmap_t, u_char);
 void sbicstart(struct sbic_softc *);
@@ -722,7 +722,7 @@ sbicwait(sbic_regmap_t regs, char until, int timeo, int line)
 }
 
 int
-sbicabort(struct sbic_softc *dev, sbic_regmap_t regs, char *where)
+sbicabort(struct sbic_softc *dev, sbic_regmap_t regs, const char *where)
 {
 	u_char csr, asr;
 
@@ -1403,7 +1403,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 			if (sbicxfstart(regs, clen, CMD_PHASE, sbic_cmd_wait))
 				if (sbicxfout(regs, clen,
 					      cbuf, CMD_PHASE))
-					i = sbicabort(dev, regs,"icmd sending cmd");
+					i = sbicabort(dev, regs, "icmd sending cmd");
 #if 0
 			GET_SBIC_csr(regs, csr); /* Lets us reload tcount */
 			WAIT_CIP(regs);
