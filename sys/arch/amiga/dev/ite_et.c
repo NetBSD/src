@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.8 2004/12/30 10:07:51 is Exp $ */
+/*	$NetBSD: ite_et.c,v 1.9 2005/06/13 21:34:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.8 2004/12/30 10:07:51 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.9 2005/06/13 21:34:17 jmc Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -259,14 +259,14 @@ static void etbcopy(const void *src, void *dst, size_t len)
 
 	if (src > dst)
 		for (i=len; i>0; i--) {
-			*((char *)dst)++ = *((char *)src)++;
+			*((char *)dst)++ = *((const char *)src)++;
 		}
 	else {
-		((char *)src) += len;
+		((const char *)src) += len;
 		((char *)dst) += len;
 
 		for (i=len; i>0; i--){
-			*--((char *)dst) = *--((char *)src);
+			*--((char *)dst) = *--((const char *)src);
 		}
 	}
 }

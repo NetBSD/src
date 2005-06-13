@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.24 2004/08/23 19:26:25 jandberg Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.25 2005/06/13 21:34:17 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.24 2004/08/23 19:26:25 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.25 2005/06/13 21:34:17 jmc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 
 	if (is_a4000()) {
 		sc->cmd_iot.base = (u_long)ztwomap(0xdd2020 + 2);
-		sc->sc_intreg = (u_char *)ztwomap(0xdd2020 + 0x1000);
+		sc->sc_intreg = (volatile u_char *)ztwomap(0xdd2020 + 0x1000);
 		sc->sc_a1200 = 0;
 	} else {
 		sc->cmd_iot.base = (u_long) ztwomap(0xda0000 + 2);

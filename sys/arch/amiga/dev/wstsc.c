@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.30 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: wstsc.c,v 1.31 2005/06/13 21:34:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.30 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.31 2005/06/13 21:34:17 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,8 @@ int
 wstsc_dma_xfer_in2(struct sci_softc *dev, int len, register u_short *buf,
                    int phase)
 {
-	volatile register u_short *sci_dma = (u_short *)(dev->sci_idata + 0x10);
+	volatile register u_short *sci_dma = 
+	    (volatile u_short *)(dev->sci_idata + 0x10);
 	volatile register u_char *sci_csr = dev->sci_csr + 0x10;
 #ifdef DEBUG
 	u_char *obp = (u_char *) buf;
@@ -423,7 +424,8 @@ int
 wstsc_dma_xfer_out2(struct sci_softc *dev, int len, register u_short *buf,
                     int phase)
 {
-	volatile register u_short *sci_dma = (ushort *)(dev->sci_data + 0x10);
+	volatile register u_short *sci_dma = 
+	    (volatile ushort *)(dev->sci_data + 0x10);
 	volatile register u_char *sci_bus_csr = dev->sci_bus_csr;
 #ifdef DEBUG
 	u_char *obp = (u_char *) buf;

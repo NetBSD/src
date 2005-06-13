@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.15 2003/08/07 16:26:39 agc Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.16 2005/06/13 21:34:16 jmc Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.15 2003/08/07 16:26:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.16 2005/06/13 21:34:16 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 	    )
 		return (0);
 
-	a2kclockaddr = (void *)ztwomap(0xdc0000);
+	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 	if (a2kugettod(0) == 0)
 		return (0);
 
@@ -138,7 +138,7 @@ void
 a2kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	printf("\n");
-	a2kclockaddr = (void *)ztwomap(0xdc0000);
+	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 
 	ugettod = a2kugettod;
 	usettod = a2kusettod;
