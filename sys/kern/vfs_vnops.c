@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.86.2.1 2005/06/10 14:48:21 tron Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.86.2.2 2005/06/13 22:09:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.1 2005/06/10 14:48:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.2 2005/06/13 22:09:09 tron Exp $");
 
 #include "fs_union.h"
 
@@ -212,14 +212,17 @@ restart:
 			   */
 			if ((vp->fp_status == FINGERPRINT_VALID) ||
 			    (vp->fp_status == FINGERPRINT_INDIRECT)) {
-				printf(
-		      "writing to fingerprinted file for dev %lu, file %lu\n",
-		      va.va_fsid, va.va_fileid);
-				if (securelevel >= 2) {
+				veriexec_report("Write access request.",
+						ndp->ni_dirp, &va, p,
+						REPORT_NOVERBOSE,
+						REPORT_ALARM,
+						REPORT_NOPANIC);
+
+				if (veriexec_strict > 0) {
 					error = EPERM;
 					goto bad;
 				} else {
-					vp->fp_status =	FINGERPRINT_NOMATCH;
+					vp->fp_status = FINGERPRINT_NOTEVAL;
 				}
 			}
 #endif
