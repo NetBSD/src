@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46.2.1 2005/03/19 18:00:47 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.46.2.2 2005/06/13 22:05:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.46.2.1 2005/03/19 18:00:47 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.46.2.2 2005/06/13 22:05:04 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,6 +296,7 @@ main(int argc, char *argv[])
 	for (;;) {
 		int off;
 
+		rval = 0;
 		gettable(tname, tabent);
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
