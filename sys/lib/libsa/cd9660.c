@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.17 2005/06/13 12:03:01 junyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.18 2005/06/13 12:06:36 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -143,7 +143,7 @@ cd9660_open(const char *path, struct open_file *f)
 	int rc;
 
 	/* First find the volume descriptor */
-	buf_size = ISO_DEFAULT_BLOCK_SIZE
+	buf_size = ISO_DEFAULT_BLOCK_SIZE;
 	buf = alloc(buf_size);
 	vd = buf;
 	for (bno = 16;; bno++) {
