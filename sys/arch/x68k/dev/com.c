@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.34 2005/01/18 07:28:46 chs Exp $	*/
+/*	$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.34 2005/01/18 07:28:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,7 @@ static int
 comprobe1(int iobase)
 {
 
-	if (badbaddr((caddr_t)pio(iobase, com_lcr)))
+	if (badbaddr((void*)pio(iobase, com_lcr)))
 		return 0;
 	/* force access to id reg */
 	outb(pio(iobase , com_lcr), 0);
