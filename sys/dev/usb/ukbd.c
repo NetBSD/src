@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.88 2005/05/03 18:37:46 jonathan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.89 2005/06/13 16:41:44 cube Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.88 2005/05/03 18:37:46 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.89 2005/06/13 16:41:44 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.88 2005/05/03 18:37:46 jonathan Exp $");
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+#include "opt_ukbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_ddb.h"
 
