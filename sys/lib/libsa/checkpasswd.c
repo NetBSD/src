@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.5 2003/04/15 22:26:42 dsl Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.6 2005/06/13 12:11:07 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -120,7 +120,7 @@ check_password(const char *password)
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, passwd, strlen(passwd));
 		MD5Final(pwdigest, &md5ctx);
-		if (bcmp(pwdigest, password, 16) == 0)
+		if (memcmp(pwdigest, password, 16) == 0)
 			return (1);
 	}
 

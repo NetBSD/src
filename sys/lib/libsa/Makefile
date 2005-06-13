@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2004/05/19 23:37:41 abs Exp $
+#	$NetBSD: Makefile,v 1.56 2005/06/13 12:11:07 junyoung Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -17,7 +17,7 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 .PATH.c: ${SADIR}
 
 # stand routines
-SRCS+=	alloc.c bcmp.c bcopy.c bzero.c errno.c exit.c exec.c files.c \
+SRCS+=	alloc.c bcopy.c bzero.c errno.c exit.c exec.c files.c \
 	getfile.c gets.c globals.c memcmp.c memcpy.c memmove.c memset.c \
 	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c subr_prf.c \
 	twiddle.c vsprintf.c checkpasswd.c
