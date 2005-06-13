@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.54 2004/02/13 11:36:10 wiz Exp $ */
+/*	$NetBSD: zbus.c,v 1.55 2005/06/13 21:34:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.54 2004/02/13 11:36:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.55 2005/06/13 21:34:17 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.54 2004/02/13 11:36:10 wiz Exp $");
 #include <amiga/dev/zbusvar.h>
 
 struct aconfdata {
-	char *name;
+	const char *name;
 	int manid;
 	int prodid;
 };
@@ -224,13 +224,13 @@ void zbusattach(struct device *, struct device *, void *);
 int zbusprint(void *, const char *);
 int zbusmatch(struct device *, struct cfdata *, void *);
 caddr_t zbusmap(caddr_t, u_int);
-static char *aconflookup(int, int);
+static const char *aconflookup(int, int);
 
 /*
  * given a manufacturer id and product id, find the name
  * that describes this board.
  */
-static char *
+static const char *
 aconflookup(int mid, int pid)
 {
 	struct aconfdata *adp, *eadp;
@@ -308,8 +308,9 @@ zbusattach(struct device *pdp, struct device *dp, void *auxp)
 		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
 			za.va = pcp->vaddr;
 		else {
-			za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa)
-			    : zbusmap(za.pa, za.size));
+			za.va = (void *) (isztwopa(za.pa) ? 
+			    __UNVOLATILE(ztwomap(za.pa)) :
+			    zbusmap(za.pa, za.size));
 /*                     		??????? */
 			/*
 			 * save value if early console init

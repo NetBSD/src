@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2004/10/28 07:07:35 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.64 2005/06/13 21:34:16 jmc Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2004/10/28 07:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2005/06/13 21:34:16 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,8 @@ struct fdtype {
 	u_int nreadw;		/* number of words (short) read per track */
 	u_int nwritew;		/* number of words (short) written per track */
 	u_int gap;		/* track gap size in long words */
-	u_int precomp[2];	/* 1st and 2nd precomp values */
-	char *desc;		/* description of drive type (useq) */
+	const u_int precomp[2];	/* 1st and 2nd precomp values */
+	const char *desc;	/* description of drive type (useq) */
 };
 
 /*
