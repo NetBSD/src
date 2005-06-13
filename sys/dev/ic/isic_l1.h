@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.18 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isic_l1.h,v 1.19 2005/06/13 20:32:58 jmc Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -351,7 +351,7 @@ extern int isic_isac_init(struct isic_softc *);
 extern void isic_isac_irq(struct isic_softc *, int);
 extern void isic_isac_l1_cmd(struct isic_softc *, int);
 extern void isic_next_state(struct isic_softc *, int);
-extern char * isic_printstate(struct isic_softc *);
+extern const char * isic_printstate(struct isic_softc *);
 extern int isic_probe_avma1(struct isic_attach_args *);
 extern int isic_probe_s016(struct isic_attach_args *);
 extern int isic_probe_s0163(struct isic_attach_args *);
