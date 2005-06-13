@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.129 2005/06/12 15:52:18 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.130 2005/06/13 22:12:27 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9422,4 +9422,38 @@ usr.sbin/pkg_install/info/pkg_info.1		1.48
 	For -L, mention that files that were dynamicallt created upon
 	installation (@exec, ...) are not listed.
 	[hubertf, ticket #446]
+
+dist/cdk/swindow.c				1.4
+
+	Ensure widestItem is initialized in setCDKSwindowContents() before use.
+	[lukem, ticket #396]
+
+bin/sh/eval.c					1.82
+
+	Mark temp_path volatile so that it won't get clobbered after longjmp.
+	[lukem, ticket #397]
+
+libexec/getty/main.c				1.48
+
+	Ensure rval is initialized before we try to check it; it won't be set
+	if AL or NN are in use.
+	[lukem, ticket #398]
+
+libexec/rmail/rmail.c				1.21
+
+	Shouldn't use += on a variable that we haven't initialized yet ...
+	[lukem, ticket #399]
+
+libexec/telnetd/telnetd.c			1.47
+
+	Ensure IF is initialized before trying to use it.
+	[lukem, ticket #400]
+
+sys/kern/vfs_vnops.c				1.90
+
+	Work according to veriexec strict level, not securelevel. Also, use the
+	veriexec_report() routine when possible; and when opening a file for
+	writing, only invalidate the fingerprint - not always the data will be
+	changed.
+	[elad, ticket #447]
 
