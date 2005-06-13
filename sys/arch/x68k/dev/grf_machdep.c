@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.21 2005/01/18 07:27:20 chs Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.22 2005/06/13 00:07:39 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.21 2005/01/18 07:27:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.22 2005/06/13 00:07:39 he Exp $");
 
 #include "locators.h"
 
@@ -253,9 +253,9 @@ grfinit(void *dp, int cfaddr)
 	caddr_t addr;
 
 	if (cfaddr == 0)
-		addr = (caddr_t)IODEVbase->tvram;
+		addr = (caddr_t)__UNVOLATILE(IODEVbase->tvram);
 	else
-		addr = (caddr_t)IODEVbase->gvram;
+		addr = (caddr_t)__UNVOLATILE(IODEVbase->gvram);
 
 	gsw = &grfsw[cfaddr];
 	if (gsw < &grfsw[ngrfsw] && (*gsw->gd_init)(gp, addr)) {
