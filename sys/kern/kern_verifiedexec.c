@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.19 2005/05/29 16:07:10 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.20 2005/06/13 20:17:54 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.19 2005/05/29 16:07:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.20 2005/06/13 20:17:54 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -215,8 +215,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		panic("veriexec: Operations vector is NULL");
 	}
 
-	bzero(fp, vhe->ops->hash_len);
-
+	memset(fp, 0, vhe->ops->hash_len);
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
@@ -243,11 +242,11 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		if (error)
 			goto bad;
 
-		  /* calculate fingerprint for each chunk */
+		/* calculate fingerprint for each chunk */
 		(vhe->ops->update)(ctx, buf, (unsigned int) len);
 	}
 
-	  /* finalise the fingerprint calculation */
+	/* finalise the fingerprint calculation */
 	(vhe->ops->final)(fp, ctx);
 
 bad:
@@ -354,26 +353,25 @@ int
 veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		const u_char *name, int flag)
 {
-	struct veriexec_hash_entry *vhe;
         u_char *digest;
         int error = 0;
 
 	/* Evaluate fingerprint if needed and set the status on the vp. */
-	if (vp->fp_status == FINGERPRINT_NOTEVAL) {
-		vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
-		if (vhe == NULL) {
+	if ((vp->vhe == NULL) || (vp->fp_status == FINGERPRINT_NOTEVAL)) {
+		vp->vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
+		if (vp->vhe == NULL) {
 			vp->fp_status = FINGERPRINT_NOENTRY;
 			goto out;
 		}
- 
+
 		veriexec_dprintf(("veriexec: veriexec_verify: Got entry for "
 				  "%s. (dev=%d, inode=%u)\n", name,
 				  va->va_fsid, va->va_fileid));
 
-		/* Calculate fingerprint for the inode. */
-		digest = (u_char *) malloc(vhe->ops->hash_len, M_TEMP,
+		digest = (u_char *) malloc(vp->vhe->ops->hash_len, M_TEMP,
 					   M_WAITOK);
-		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
+		error = veriexec_fp_calc(p, vp, vp->vhe, va->va_size, 
+digest);
 		
 		if (error) {
 			veriexec_dprintf(("veriexec: veriexec_verify: "
@@ -382,8 +380,8 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 			return (error);
 		}
 
-		if (veriexec_fp_cmp(vhe->ops, vhe->fp, digest) == 0) {
-			if (vhe->type == VERIEXEC_INDIRECT) {
+		if (veriexec_fp_cmp(vp->vhe->ops, vp->vhe->fp, digest) == 0) {
+			if (vp->vhe->type == VERIEXEC_INDIRECT) {
 				vp->fp_status = FINGERPRINT_INDIRECT;
 			} else {
 				vp->fp_status = FINGERPRINT_VALID;
@@ -392,6 +390,22 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 			vp->fp_status = FINGERPRINT_NOMATCH;
 		}
 		free(digest, M_TEMP);
+	}
+
+	switch (flag) {
+	case VERIEXEC_DIRECT:
+	case VERIEXEC_INDIRECT:
+		break;
+	case VERIEXEC_FILE:
+		if (vp->vhe->type != VERIEXEC_FILE) {
+			veriexec_report("Execution of 'FILE' entry.",
+					name, va, p, REPORT_NOVERBOSE,
+					REPORT_ALARM, REPORT_NOPANIC);
+
+			if (veriexec_strict > 1)
+				return (EPERM);
+		}
+		break;
 	}
 
 out:
@@ -443,7 +457,7 @@ out:
 		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
 		/* We don't care about these in learning mode. */
-		if (veriexec_strict < 1) {
+		if (veriexec_strict == 0) {
 			break;
 		}
 
@@ -561,6 +575,8 @@ veriexec_rm:
 	free(vhe->fp, M_TEMP);
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
+	vp->fp_status = FINGERPRINT_NOENTRY;
+	vp->vhe = NULL;
 
 	return (error);
 }
