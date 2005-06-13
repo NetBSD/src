@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.715 2005/06/13 07:31:50 nonaka Exp $
+$NetBSD: pcidevs,v 1.716 2005/06/13 07:43:34 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1569,6 +1569,8 @@ product HINT HB4	0x0022	HB4 PCI-PCI Bridge
 
 /* Hitachi products */
 product HITACHI SWC	0x0101	MSVCC01/02/03/04 Video Capture Cards
+product HITACHI SH7751	0x3505	SH7751 PCI Controller
+product HITACHI SH7751R	0x350e	SH7751R PCI Controller
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
