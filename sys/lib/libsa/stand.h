@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.56 2005/05/23 19:05:00 jmc Exp $	*/
+/*	$NetBSD: stand.h,v 1.57 2005/06/13 12:11:07 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -83,6 +83,7 @@
 #define vprintf		libsa_vprintf
 #define vsprintf	libsa_vsprintf
 #endif
+#define bcmp(s1, s2, l)	memcmp(s1, s2, l)
 #ifdef LIBSA_USE_MEMSET
 #define	bzero(s, l)	memset(s, 0, l)
 #endif

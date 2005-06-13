@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.26 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: bootp.c,v 1.27 2005/06/13 12:11:07 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -337,12 +337,12 @@ bootprecv(d, pkt, len, tleft)
 #endif
 
 	/* Suck out vendor info */
-	if (bcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0) {
+	if (memcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0) {
 		if (vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend)) != 0)
 			goto bad;
 	}
 #ifdef BOOTP_VEND_CMU
-	else if (bcmp(vm_cmu, bp->bp_vend, sizeof(vm_cmu)) == 0)
+	else if (memcmp(vm_cmu, bp->bp_vend, sizeof(vm_cmu)) == 0)
 		vend_cmu(bp->bp_vend);
 #endif
 	else
