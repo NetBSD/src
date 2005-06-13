@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.8 2004/02/13 10:05:49 wiz Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.9 2005/06/13 00:34:08 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.8 2004/02/13 10:05:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.9 2005/06/13 00:34:08 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -119,7 +119,7 @@ ne_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	/* Check whether the board is inserted or not */
-	if (badaddr((caddr_t)INTIO_ADDR(ia->ia_addr)))
+	if (badaddr(INTIO_ADDR(ia->ia_addr)))
 		return 0;
 
 	/* Map I/O space */
