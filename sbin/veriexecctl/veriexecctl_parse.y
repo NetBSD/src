@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.9 2005/05/27 15:46:23 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.10 2005/06/13 15:18:44 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -48,6 +48,9 @@
 struct veriexec_params params;
 static int convert(u_char *, u_char *);
 
+int have_type = 0;
+
+#define	FIELD_TYPE	1
 %}
 
 %union {
@@ -57,7 +60,7 @@ static int convert(u_char *, u_char *);
 
 %token <string> PATH
 %token <string> STRING
-%token EOL
+%token EOL TOKEN_COMMA
 
 %%
 
@@ -100,6 +103,7 @@ statement	:	/* empty */
 	dev_add(sb.st_dev);
 phase_2_end:
 	(void)memset(&params, 0, sizeof(params));
+	have_type = 0;
 }
 		|	statement eol
 		|	statement error eol {
@@ -113,7 +117,7 @@ path		:	PATH {
 		;
 
 type		:	STRING {
-	if (phase != 1) {
+	if (phase == 2) {
 		if (strlen($1) >= sizeof(params.fp_type)) {
 			yyerror("Fingerprint type too long");
 			YYERROR;
@@ -126,7 +130,7 @@ type		:	STRING {
 
 
 fingerprint	:	STRING {
-	if (phase != 1) {
+	if (phase == 2) {
 		params.fingerprint = malloc(strlen($1) / 2);
 		if (params.fingerprint == NULL)
 			err(1, "Fingerprint mem alloc failed");
@@ -145,20 +149,47 @@ flags		:	/* empty */ {
 	if (phase == 2)
 		params.type = VERIEXEC_DIRECT;
 }
-		|	flags flag_spec
+		|	flags_spec
+		;
+
+flags_spec	:	flag_spec
+		|	flags_spec TOKEN_COMMA flag_spec
 		;
 
 flag_spec	:	STRING {
-	if (phase != 1) {
-		if (strcasecmp($1, "direct") == 0)
-			params.type = VERIEXEC_DIRECT;
-		else if (strcasecmp($1, "indirect") == 0)
-			params.type = VERIEXEC_INDIRECT;
-		else if (strcasecmp($1, "file") == 0)
-			params.type = VERIEXEC_FILE;
-		else {
-			yyerror("Bad option");
+	if (phase == 2) {
+		int field;
+		int value;
+
+		/*
+		 * XXXEE: It might be a good idea to change this into
+		 * XXXEE: something less hard-coded. Perhaps loop on
+		 * XXXEE: tuples of (name, field, value)?
+		 */
+		if (strcasecmp($1, "direct") == 0) {
+			field = FIELD_TYPE;
+			value = VERIEXEC_DIRECT;
+		} else if (strcasecmp($1, "indirect") == 0) {
+			field = FIELD_TYPE;
+			value = VERIEXEC_INDIRECT;
+		} else if (strcasecmp($1, "file") == 0) {
+			field = FIELD_TYPE;
+			value = VERIEXEC_FILE;
+		} else {
+			yyerror("Bad flag");
 			YYERROR;
+		}
+
+		switch (field) {
+		case FIELD_TYPE:
+			if (have_type) {
+				yyerror("Mulitple type definitions");
+				YYERROR;
+			}
+
+			params.type = value;
+			have_type = 1;
+			break;
 		}
 	}
 
