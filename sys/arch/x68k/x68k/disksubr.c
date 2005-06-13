@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2005/06/13 00:12:21 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2005/01/18 07:12:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2005/06/13 00:12:21 he Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,7 +68,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int i, labelsz;
 
 	if (osdep)
@@ -313,7 +313,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, labelsz, i;
-	char *np;
+	const char *np;
 
 	if (osdep)
 		dp = osdep->dosparts;
