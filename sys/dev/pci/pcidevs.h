@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.716 2005/06/13 07:32:38 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.717 2005/06/13 07:43:52 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.714 2005/06/07 11:31:44 skrll Exp
+ *	NetBSD: pcidevs,v 1.715 2005/06/13 07:31:50 nonaka Exp
  */
 
 /*
@@ -1576,6 +1576,8 @@
 
 /* Hitachi products */
 #define	PCI_PRODUCT_HITACHI_SWC	0x0101		/* MSVCC01/02/03/04 Video Capture Cards */
+#define	PCI_PRODUCT_HITACHI_SH7751	0x3505		/* SH7751 PCI Controller */
+#define	PCI_PRODUCT_HITACHI_SH7751R	0x350e		/* SH7751R PCI Controller */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
