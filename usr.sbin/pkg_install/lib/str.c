@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.50.2.3 2005/06/14 20:32:36 tron Exp $	*/
+/*	$NetBSD: str.c,v 1.50.2.4 2005/06/14 20:33:43 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.50.2.3 2005/06/14 20:32:36 tron Exp $");
+__RCSID("$NetBSD: str.c,v 1.50.2.4 2005/06/14 20:33:43 tron Exp $");
 #endif
 #endif
 
@@ -94,10 +94,10 @@ get_dash_string(char **s)
  * Lowercase a whole string
  */
 void
-str_lowercase(char *s)
+str_lowercase(unsigned char *s)
 {
 	for (; *s; s++) {
-		*s = tolower((unsigned char)*s);
+		*s = tolower(*s);
 	}
 }
 
