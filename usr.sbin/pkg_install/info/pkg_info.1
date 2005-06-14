@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.47.2.1 2005/06/12 15:50:52 tron Exp $
+.\" $NetBSD: pkg_info.1,v 1.47.2.2 2005/06/14 20:31:03 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd February 10, 2005
+.Dd May 30, 2005
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -210,6 +210,15 @@ For example,
 will match versions 1.3 and later of the
 .Pa name
 package.
+Additionally, ranges can be defined by giving a lower bound with
+\*[Gt] or \*[Ge] and an upper bound with \*[Lt] or \*[Le].
+The lower bound has to come first.
+For example,
+.Pa pkg_info -e 'name\*[Ge]1.3\*[Lt]2.0'
+will match versions 1.3 (inclusive) to 2.0 (exclusive)
+of package
+.Pa name .
+.Pp
 The collating sequence of the various package version numbers is
 unusual, but strives to be consistent.
 The magic string
