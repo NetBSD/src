@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.285 2005/06/11 16:06:03 rpaulo Exp $
+.\"	$NetBSD: main,v 1.286 2005/06/14 12:15:18 gdt Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1699,6 +1699,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.org
+.It Ta Greg Troxel Ta Mt gdt@NetBSD.org
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.org
 .It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.org
 .It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.org
