@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.3 2005/01/20 15:56:30 xtraeme Exp $ */
+/* $NetBSD: drvctl.c,v 1.3.2.1 2005/06/14 20:39:52 tron Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -60,6 +60,7 @@ main(int argc, char **argv)
 	struct devrescanargs raa;
 	int *locs, i;
 
+	mode = 0;
 	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c) {
 		case 'd':
@@ -78,7 +79,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc < 1 || mode == 0)
 		usage();
 
 	fd = open(DRVCTLDEV, O_RDWR, 0);
