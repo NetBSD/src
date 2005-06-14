@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.33 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: stat.2,v 1.34 2005/06/14 12:10:02 peter Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,21 +91,36 @@ struct stat {
     uid_t     st_uid;     /* user-id of owner */
     gid_t     st_gid;     /* group-id of owner */
     dev_t     st_rdev;    /* device type, for device special file */
+#if defined(_NETBSD_SOURCE)
     struct timespec st_atimespec;  /* time of last access */
     struct timespec st_mtimespec;  /* time of last data modification */
     struct timespec st_ctimespec;  /* time of last file status change */
+#else
+    time_t    st_atime;            /* time of last access */
+    long      st_atimensec;        /* nsec of last access */
+    time_t    st_mtime;            /* time of last data modification */
+    long      st_mtimensec;        /* nsec of last data modification */
+    time_t    st_ctime;            /* time of last file status change */
+    long      st_ctimensec;        /* nsec of last file status change */
+#endif
     off_t     st_size;    /* file size, in bytes */
-    int64_t   st_blocks;  /* blocks allocated for file */
-    u_int32_t st_blksize; /* optimal file sys I/O ops blocksize */
+    blkcnt_t  st_blocks;  /* blocks allocated for file */
+    blksize_t st_blksize; /* optimal file sys I/O ops blocksize */
     u_int32_t st_flags;   /* user defined flags for file */
     u_int32_t st_gen;     /* file generation number */
+#if defined(_NETBSD_SOURCE)
+    struct timespec st_birthtimespec;	/* time of inode creation */
+#else
+    time_t    st_birthtime;             /* time of inode creation */
+    long      st_birthtimensec;         /* nsec of inode creation */
+#endif
 };
 .Ed
 .Pp
 The time-related fields of
 .Fa struct stat
 are as follows:
-.Bl -tag -width XXXst_mtime
+.Bl -tag -width XXXst_birthtime
 .It st_atime
 Time when file data was last accessed.
 Changed by the
@@ -136,7 +151,25 @@ Changed by the
 and
 .Xr write 2
 system calls.
+.It st_birthtime
+Time when the inode was created.
 .El
+.Pp
+If
+.Dv _NETBSD_SOURCE
+is defined, the time-related fields are defined as:
+.Bd -literal
+#if defined(_NETBSD_SOURCE)
+#define st_atime                st_atimespec.tv_sec
+#define st_atimensec            st_atimespec.tv_nsec
+#define st_mtime                st_mtimespec.tv_sec
+#define st_mtimensec            st_mtimespec.tv_nsec
+#define st_ctime                st_ctimespec.tv_sec
+#define st_ctimensec            st_ctimespec.tv_nsec
+#define st_birthtime            st_birthtimespec.tv_sec
+#define st_birthtimensec        st_birthtimespec.tv_nsec
+#endif
+.Ed
 .Pp
 The size-related fields of the
 .Fa struct stat
