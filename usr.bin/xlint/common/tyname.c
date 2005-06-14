@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.1 2005/04/07 16:28:40 christos Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.2 2005/06/14 03:40:31 skd Exp $");
 #endif
 
 #include <ctype.h>
@@ -76,6 +76,7 @@ basictyname(tspec_t t)
 	case FLOAT:	return "float";
 	case DOUBLE:	return "double";
 	case LDOUBLE:	return "long double";
+	case VOID:	return "void";
 	case PTR:	return "pointer";
 	case ENUM:	return "enum";
 	case STRUCT:	return "struct";
@@ -117,6 +118,7 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	case FLOAT:
 	case DOUBLE:
 	case LDOUBLE:
+	case VOID:
 	case FUNC:
 		(void)snprintf(buf, bufsiz, "%s", s);
 		break;
