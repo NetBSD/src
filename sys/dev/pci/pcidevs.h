@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.718 2005/06/13 15:28:04 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.719 2005/06/14 14:45:15 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.717 2005/06/13 15:27:42 tron Exp
+ *	NetBSD: pcidevs,v 1.718 2005/06/14 14:44:26 bouyer Exp
  */
 
 /*
@@ -2644,6 +2644,7 @@
 #define	PCI_PRODUCT_SIS_962	0x0962		/* 962 Host Bridge */
 #define	PCI_PRODUCT_SIS_963	0x0963		/* 963 Host Bridge */
 #define	PCI_PRODUCT_SIS_964	0x0964		/* 964 Host Bridge */
+#define	PCI_PRODUCT_SIS_965	0x0965		/* 965 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
