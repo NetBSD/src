@@ -1,4 +1,4 @@
-/* $NetBSD: pf.c,v 1.1 2005/04/03 22:15:32 peter Exp $ */
+/* $NetBSD: pf.c,v 1.2 2005/06/14 12:18:24 peter Exp $ */
 
 /*
  * pf.c - NAT lookup code for pf.
@@ -6,6 +6,9 @@
  * This software is in the public domain.
  * Written by Peter Postma <peter@NetBSD.org>
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pf.c,v 1.2 2005/06/14 12:18:24 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
