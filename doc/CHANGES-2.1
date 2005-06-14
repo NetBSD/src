@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.125 2005/06/12 21:30:58 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.126 2005/06/14 21:18:21 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2486,4 +2486,17 @@ sys/dev/audio.c					1.196 via patch
 	Without this, the machine would crash for some audio hardware that
 	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
 	[is, ticket #1990]
+
+usr.sbin/pkg_install/info/pkg_info.1		1.49
+usr.sbin/pkg_install/lib/str.c			1.51
+usr.sbin/pkg_install/lib/version.h		1.66-1.67
+usr.sbin/pkg_install/lib/str.c			1.52
+
+	If a pattern does not have any suffix, assume that it matches both
+	".tbz" and ".tgz".  This allows to install binary package dependencies
+	that are not exact matches, but satisfy requirements.
+	Add ranges support to the pkg_* tools. See mail on tech-pkg or
+	pkg_info(1) for details.
+	Bump PACKAGE_TOOLS_VERSION to 20050530.
+	[wiz, ticket #1989]
 
