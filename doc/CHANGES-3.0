@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.131 2005/06/14 14:54:42 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.132 2005/06/14 20:45:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9466,4 +9466,50 @@ usr.sbin/pkg_install/add/perform.c		1.108-1.109
 	required disk space is negative due to overflowing in the
 	calculation.
 	[dm, ticket #444]
+
+sbin/drvctl/drvctl.c				1.4
+
+	Fix an uninitialized variable issue.
+	[lukem, ticket #401]
+
+sbin/scsictl/scsictl.c				1.28
+
+	Ensure that "setcache <mode>" doesn't use random data for "byte2"
+	("setcache <mode> save" DTRT).
+	[lukem, ticket #402]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.5
+
+	Added some missing keysyms to the ADB keymap.
+	[macallan, ticket #449]
+
+usr.sbin/pkg_install/lib/str.c			1.51
+usr.sbin/pkg_install/lib/version.h		1.66
+
+	If a pattern does not have any suffix, assume that it matches both
+	".tbz" and ".tgz".  This allows to install binary package dependencies
+	that are not exact matches, but satisfy requirements.
+	Bump version to 20050529.
+	[wiz, ticket #452]
+
+usr.sbin/pkg_install/delete/perform.c		1.56
+
+	Output the error string when renaming a dependency file fails. This has
+	happened to me when I had a misnamed directory in the pkgdb directory.
+	[wiz, ticket #453]
+
+usr.sbin/pkg_install/info/pkg_info.1		1.49
+usr.sbin/pkg_install/lib/str.c			1.52
+usr.sbin/pkg_install/lib/version.h		1.67
+
+	Add ranges support to the pkg_* tools. See mail on tech-pkg or
+	pkg_info(1) for details.
+	Bump PACKAGE_TOOLS_VERSION to 20050530.
+	[wiz, ticket #454]
+
+usr.sbin/pkg_install/lib/plist.c		1.48-1.49
+usr.sbin/pkg_install/lib/str.c			1.53-1.54
+
+	Bug fixes and code cleanup.
+	[wiz, ticket #455]
 
