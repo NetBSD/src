@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.132 2005/06/14 20:45:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.133 2005/06/14 21:45:02 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9512,4 +9512,15 @@ usr.sbin/pkg_install/lib/str.c			1.53-1.54
 
 	Bug fixes and code cleanup.
 	[wiz, ticket #455]
+
+sbin/resize_lfs/resize_lfs.c			1.2
+
+	Ensure verbose is initialized before using it.
+	[lukem, ticket #403]
+
+sbin/cgdconfig/utils.c				1.8
+
+	Avoid dereferencing/free()ing invalid pointers if the random device
+	cannot be opened.
+	[lukem, ticket #404]
 
