@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.50.2.2 2005/06/14 20:31:16 tron Exp $	*/
+/*	$NetBSD: str.c,v 1.50.2.3 2005/06/14 20:32:36 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.50.2.2 2005/06/14 20:31:16 tron Exp $");
+__RCSID("$NetBSD: str.c,v 1.50.2.3 2005/06/14 20:32:36 tron Exp $");
 #endif
 #endif
 
@@ -366,7 +366,11 @@ dewey_match(const char *pattern, const char *pkg)
 
 	/* compare names */
 	if ((version=strrchr(pkg, '-')) == NULL) {
+#if 0
+		/* too noisy, warns about "pkgdb.byfile.db" on
+		 * every invocation */
 		warnx("Invalid package name `%s'", pkg);
+#endif
 		return 0;
 	}
 	if ((sep = strpbrk(pattern, "<>")) == NULL)
