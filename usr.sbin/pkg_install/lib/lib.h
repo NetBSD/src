@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.74 2005/02/04 09:03:03 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.74.2.1 2005/06/14 20:33:49 tron Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -260,7 +260,7 @@ int	fcexec(const char *, const char *, ...);
 
 /* String */
 char   *get_dash_string(char **);
-void    str_lowercase(char *);
+void    str_lowercase(unsigned char *);
 const char *basename_of(const char *);
 const char *dirname_of(const char *);
 const char *suffix_of(const char *);
