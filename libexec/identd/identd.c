@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.28 2005/06/01 15:51:23 lukem Exp $ */
+/* $NetBSD: identd.c,v 1.29 2005/06/14 12:17:13 peter Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -7,10 +7,12 @@
  * Written by Peter Postma <peter@NetBSD.org>
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: identd.c,v 1.29 2005/06/14 12:17:13 peter Exp $");
+
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
 
 #include <netinet/in.h>
@@ -39,11 +41,9 @@
 
 #include "identd.h"
 
-__RCSID("$NetBSD: identd.c,v 1.28 2005/06/01 15:51:23 lukem Exp $");
-
-#define OPSYS_NAME	"UNIX"
-#define IDENT_SERVICE	"auth"
-#define TIMEOUT		30	/* seconds */
+#define	OPSYS_NAME	"UNIX"
+#define	IDENT_SERVICE	"auth"
+#define	TIMEOUT		30	/* seconds */
 
 static int   idhandle(int, const char *, const char *, const char *,
 		const char *, struct sockaddr *, int);
@@ -65,7 +65,7 @@ static void  timeout_handler(int);
 static void  fatal(const char *);
 static void  die(const char *, ...);
 
-static int   bflag, eflag, fflag, Fflag, iflag, Iflag;
+static int   bflag, eflag, fflag, iflag, Iflag;
 static int   lflag, Lflag, nflag, Nflag, rflag;
 
 /* NAT lookup function pointer. */
@@ -109,11 +109,11 @@ main(int argc, char *argv[])
 	filter = proxy = NULL;
 	address = charset = fmt = NULL;
 	uid = gid = 0;
-	bflag = eflag = fflag = Fflag = iflag = Iflag = 0;
+	bflag = eflag = fflag = iflag = Iflag = 0;
 	lflag = Lflag = nflag = Nflag = rflag = 0;
 
 	/* Started from a tty? then run as daemon. */
-	if (isatty(0))
+	if (isatty(STDIN_FILENO))
 		bflag = 1;
 
 	/* Parse command line arguments. */
@@ -139,7 +139,6 @@ main(int argc, char *argv[])
 			eflag = 1;
 			break;
 		case 'F':
-			Fflag = 1;
 			fmt = optarg;
 			break;
 		case 'f':
@@ -309,6 +308,10 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+/*
+ * Handle a request on the ident port.  Returns 0 on success or 1 on
+ * failure.  The return values are currently ignored.
+ */
 static int
 idhandle(int fd, const char *charset, const char *fmt, const char *osname,
     const char *user, struct sockaddr *proxy, int timeout)
@@ -317,10 +320,11 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	char userbuf[LOGIN_NAME_MAX];	/* actual user name (or numeric uid) */
 	char idbuf[LOGIN_NAME_MAX];	/* name to be used in response */
 	char buf[BUFSIZ], *p;
-	int n, lport, fport;
 	struct passwd *pw;
+	int lport, fport;
 	socklen_t len;
 	uid_t uid;
+	ssize_t n;
 
 	lport = fport = 0;
 
@@ -493,7 +497,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	 * Change the output format?  Note that 512 is the maximum
 	 * size of the result according to RFC 1413.
 	 */
-	if (Fflag && change_format(fmt, pw, buf, 512))
+	if (fmt && change_format(fmt, pw, buf, 512 + 1))
 		idparse(fd, lport, fport, charset, osname, buf);
 	else
 		idparse(fd, lport, fport, charset, osname, idbuf);
@@ -551,8 +555,9 @@ static int *
 socketsetup(const char *address, const char *port, int af)
 {
 	struct addrinfo hints, *res, *res0;
-	int error, maxs, *s, *socks, y = 1;
+	int error, maxs, *s, *socks;
 	const char *cause = NULL;
+	socklen_t y = 1;
 
 	(void)memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_PASSIVE;
@@ -769,7 +774,8 @@ static int
 forward(int fd, struct sockaddr *nat_addr, int nat_lport, int fport, int lport)
 {
 	char buf[BUFSIZ], reply[BUFSIZ], *p;
-	int sock, n;
+	ssize_t n;
+	int sock;
 
 	/* Connect to the NAT host. */
 	sock = socket(nat_addr->sa_family, SOCK_STREAM, 0);
@@ -855,7 +861,8 @@ check_userident(const char *homedir, char *username, size_t len)
 {
 	struct stat sb;
 	char *path, *p;
-	int fd, n;
+	ssize_t n;
+	int fd;
 
 	if (len == 0 || homedir == NULL)
 		return 0;
@@ -906,12 +913,12 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 	struct group *gr;
 	const char *cp;
 	char **gmp;
-	int bp;
+	size_t bp;
 
 	if (len == 0 || ((gr = getgrgid(pw->pw_gid)) == NULL))
 		return 0;
 
-	for (bp = 0, cp = format; *cp != '\0' && bp < 490; cp++) {
+	for (bp = 0, cp = format; *cp != '\0' && bp < len - 1; cp++) {
 		if (*cp != '%') {
 			dest[bp++] = *cp;
 			continue;
@@ -920,24 +927,21 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 			break;
 		switch (*cp) {
 		case 'u':
-			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
-			    pw->pw_name);
+			(void)snprintf(&dest[bp], len - bp, "%s", pw->pw_name);
 			break;
 		case 'U':
 			(void)snprintf(&dest[bp], len - bp, "%d", pw->pw_uid);
 			break;
 		case 'g':
-			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
-			    gr->gr_name);
+			(void)snprintf(&dest[bp], len - bp, "%s", gr->gr_name);
 			break;
 		case 'G':
 			(void)snprintf(&dest[bp], len - bp, "%d", gr->gr_gid);
 			break;
 		case 'l':
-			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
-			    gr->gr_name);
+			(void)snprintf(&dest[bp], len - bp, "%s", gr->gr_name);
 			bp += strlen(&dest[bp]);
-			if (bp >= 490)
+			if (bp >= len)
 				break;
 			setgrent();
 			while ((gr = getgrent()) != NULL) {
@@ -946,13 +950,13 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 				for (gmp = gr->gr_mem; *gmp && **gmp; gmp++) {
 					if (strcmp(*gmp, pw->pw_name) == 0) {
 						(void)snprintf(&dest[bp],
-						    len - bp, ",%.*s",
-						    490 - bp, gr->gr_name);
+						    len - bp, ",%s",
+						    gr->gr_name);
 						bp += strlen(&dest[bp]);
 						break;
 					}
 				}
-				if (bp >= 490)
+				if (bp >= len)
 					break;
 			}
 			endgrent();
@@ -960,7 +964,7 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 		case 'L':
 			(void)snprintf(&dest[bp], len - bp, "%u", gr->gr_gid);
 			bp += strlen(&dest[bp]);
-			if (bp >= 490)
+			if (bp >= len)
 				break;
 			setgrent();
 			while ((gr = getgrent()) != NULL) {
@@ -975,7 +979,7 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 						break;
 					}
 				}
-				if (bp >= 490)
+				if (bp >= len)
 					break;
 			}
 			endgrent();
@@ -987,10 +991,6 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 		}
 		bp += strlen(&dest[bp]);
 	}
-	if (bp >= 490) {
-		(void)snprintf(&dest[490], len - 490, "...");
-		bp = 493;
-	}
 	dest[bp] = '\0';
 
 	return 1;
@@ -998,9 +998,9 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 
 /* Just exit when we caught SIGALRM. */
 static void
-timeout_handler(int s)
+timeout_handler(int __unused s)
 {
-	maybe_syslog(LOG_DEBUG, "SIGALRM triggered, exiting...");
+	maybe_syslog(LOG_INFO, "Timeout for request, closing connection...");
 	exit(EXIT_FAILURE);
 }
 
