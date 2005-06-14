@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.50.2.1 2005/06/14 20:23:48 tron Exp $	*/
+/*	$NetBSD: str.c,v 1.50.2.2 2005/06/14 20:31:16 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.50.2.1 2005/06/14 20:23:48 tron Exp $");
+__RCSID("$NetBSD: str.c,v 1.50.2.2 2005/06/14 20:31:16 tron Exp $");
 #endif
 #endif
 
@@ -163,7 +163,7 @@ static const test_t	modifiers[] = {
 
 /* locate the test in the tests array */
 static int
-mktest(int *op, char *test)
+mktest(int *op, const char *test)
 {
 	const test_t *tp;
 
@@ -188,12 +188,12 @@ mktest(int *op, char *test)
  * 'nb' encodes as 'netbsd version', which is used after all other tests
  */
 static int
-mkcomponent(arr_t *ap, char *num)
+mkcomponent(arr_t *ap, const char *num)
 {
 	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
 	const test_t	       *modp;
 	int64_t                 n;
-	char                   *cp;
+	const char             *cp;
 
 	if (*num == 0) {
 		return 0;
@@ -232,7 +232,7 @@ mkcomponent(arr_t *ap, char *num)
 
 /* make a version number string into an array of comparable 64bit ints */
 static int
-mkversion(arr_t *ap, char *num)
+mkversion(arr_t *ap, const char *num)
 {
 	(void) memset(ap, 0, sizeof(arr_t));
 	while (*num) {
@@ -286,7 +286,7 @@ vtest(arr_t *lhs, int tst, arr_t *rhs)
  * Compare two dewey decimal numbers
  */
 static int
-deweycmp(char *lhs, int op, char *rhs)
+deweycmp(const char *lhs, int op, const char *rhs)
 {
 	arr_t	right;
 	arr_t	left;
@@ -359,31 +359,59 @@ alternate_match(const char *pattern, const char *pkg)
 static int
 dewey_match(const char *pattern, const char *pkg)
 {
-	char   *cp;
-	char   *sep;
-	char   *ver;
-	char    name[MaxPathSize];
-	int	op;
-	int     n;
+	const char *version;
+	const char *sep, *sep2;
+	int op, op2;
+	int n;
 
-	if ((sep = strpbrk(pattern, "<>")) == NULL) {
-		errx(EXIT_FAILURE, "dewey_match(): '<' or '>' expected in `%s'", pattern);
+	/* compare names */
+	if ((version=strrchr(pkg, '-')) == NULL) {
+		warnx("Invalid package name `%s'", pkg);
+		return 0;
 	}
-	(void) snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);
+	if ((sep = strpbrk(pattern, "<>")) == NULL)
+		errx(EXIT_FAILURE, "dewey_match: '<' or '>' expected in `%s'", pattern);
+	/* compare name lengths */
+	if ((sep-pattern != version-pkg) ||
+	    strncmp(pkg, pattern, (size_t)(version-pkg)) != 0)
+		return 0;
+	version++;
+	
+	/* extract comparison operator */
         if ((n = mktest(&op, sep)) < 0) {
                 warnx("Bad comparison `%s'", sep);
 		return 0;
         }
-	ver = sep + n;
-	n = (int) (sep - pattern);
-	if ((cp = strrchr(pkg, '-')) != (char *) NULL) {
-		if (strncmp(pkg, name, (size_t) (cp - pkg)) == 0 &&
-		    n == (int)(cp - pkg)) {
-			if (deweycmp(cp + 1, op, ver)) {
-				return 1;
+	/* skip operator */
+	sep += n;
+
+	/* if greater than, look for less than */
+	sep2 = NULL;
+	if (op == GT || op == GE) {
+		if ((sep2 = strchr(sep, '<')) != NULL) {
+			if ((n = mktest(&op2, sep2)) < 0) {
+				warnx("Bad comparison `%s'", sep2);
+				return 0;
 			}
+			/* compare upper limit */
+			if (!deweycmp(version, op2, sep2+n))
+				return 0;
 		}
 	}
+
+	/* compare only pattern / lower limit */
+	if (sep2) {
+		char ver[PKG_PATTERN_MAX];
+
+		strlcpy(ver, sep, MIN(sizeof(ver), sep2-sep+1));
+		if (deweycmp(version, op, ver))
+			return 1;
+	}
+	else {
+		if (deweycmp(version, op, sep))
+			return 1;
+	}
+
 	return 0;
 }
 
