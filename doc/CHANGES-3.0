@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.130 2005/06/13 22:12:27 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.131 2005/06/14 14:54:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9456,4 +9456,14 @@ sys/kern/vfs_vnops.c				1.90
 	writing, only invalidate the fingerprint - not always the data will be
 	changed.
 	[elad, ticket #447]
+
+usr.sbin/pkg_install/add/perform.c		1.108-1.109
+
+	Fix a minor bug in the estimation of required disk space.  In
+	particular make sure we use a data type which is big enough.
+	This fixes a problem where pkg_add-ing of a binary package
+	which is between 512 Mb and 1 Gb fails because the estimated
+	required disk space is negative due to overflowing in the
+	calculation.
+	[dm, ticket #444]
 
