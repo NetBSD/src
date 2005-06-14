@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.47.2.1 2005/06/14 20:33:36 tron Exp $	*/
+/*	$NetBSD: plist.c,v 1.47.2.2 2005/06/14 20:35:43 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.47.2.1 2005/06/14 20:33:36 tron Exp $");
+__RCSID("$NetBSD: plist.c,v 1.47.2.2 2005/06/14 20:35:43 tron Exp $");
 #endif
 #endif
 
@@ -228,19 +228,19 @@ free_plist(package_t *pkg)
  * optionally its argument(s)
  */
 int
-plist_cmd(char *s, char **arg)
+plist_cmd(unsigned char *s, char **arg)
 {
 	const cmd_t *cmdp;
 	/* 20 == fudge for max cmd len */
 	unsigned char cmd[MaxPathSize + 20];
-	char   *cp;
-	char   *sp;
+	unsigned char *cp;
+	unsigned char *sp;
 
 	(void) strlcpy(cmd, s, sizeof(cmd));
 	str_lowercase(cmd);
 	for (cp = cmd, sp = s; *cp; cp++, sp++) {
-		if (isspace((unsigned char) *cp)) {
-			for (*cp = '\0'; isspace((unsigned char) *sp); sp++) {
+		if (isspace(*cp)) {
+			for (*cp = '\0'; isspace(*sp); sp++) {
 			}
 			break;
 		}
