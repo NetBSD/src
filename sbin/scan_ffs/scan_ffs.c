@@ -1,4 +1,4 @@
-/*	$NetBSD: scan_ffs.c,v 1.1 2005/06/15 18:06:19 xtraeme Exp $	*/
+/*	$NetBSD: scan_ffs.c,v 1.2 2005/06/15 18:42:23 kleink Exp $	*/
 /*	$OpenBSD: scan_ffs.c,v 1.11 2004/02/16 19:13:03 deraadt Exp$	*/
 
 /*
@@ -39,7 +39,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.1 2005/06/15 18:06:19 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.2 2005/06/15 18:42:23 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -220,7 +220,7 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int fflags)
 			}
 		}
 	}
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 
@@ -229,7 +229,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: %s [-lv] [-s start] [-e end] device", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 
