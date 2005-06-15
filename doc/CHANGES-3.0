@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.133 2005/06/14 21:45:02 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.134 2005/06/15 06:12:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9523,4 +9523,97 @@ sbin/cgdconfig/utils.c				1.8
 	Avoid dereferencing/free()ing invalid pointers if the random device
 	cannot be opened.
 	[lukem, ticket #404]
+
+usr.bin/chpass/chpass.c				1.30
+
+	Ensure yflag is initialized before trying to use it.
+	[lukem, ticket #405]
+
+usr.bin/pmc/pmc.c				1.12
+
+	Improve argument error checking.
+	[lukem, ticket #406]
+
+usr.bin/rpcinfo/rpcinfo.c			1.22
+
+	Cleanup use of 'host' when running 'rpcinfo -p'.
+	[lukem, ticket #407]
+
+usr.bin/vi/ex/ex_tag.c				1.17
+
+	Don't attempt to dereference an uninitialized pointer when an error
+	occurs in gtags parsing.
+	[lukem, ticket #408]
+
+usr.bin/vi/common/recover.c			1.10
+
+	Don't attempt to dereference an uninitialized 'ep' pointer if we can't
+	make a temporary file to mail to the user.
+	[lukem, ticket #409]
+
+crypto/dist/ssh/scp.c				1.27
+
+	Don't attempt to close a random file descriptor upon error.
+	[lukem, ticket #410]
+
+usr.sbin/installboot/arch/amiga.c		1.4
+
+	Don't try to use an uninitialized variable.
+	[lukem, ticket #411]
+
+usr.sbin/config/main.c				1.98
+
+	Don't try to use an uninitialized variable.
+	[lukem, ticket #412]
+
+dist/dhcp/omapip/connection.c			1.4
+
+	Ensure name_str is initialized because we try to free it later.
+	[lukem, ticket #413]
+
+dist/dhcp/server/confpars.c			1.6
+
+	Don't attempt to close a random file descriptor.
+	[lukem, ticket #414]
+
+usr.sbin/isdn/isdnd/support.c			1.14
+
+	Don't attempt to use an uninitialized variable in a debug message.
+	[lukem, ticket #415]
+
+usr.sbin/lpr/lpd/lpd.c				1.51
+
+	Ensure s is initialized before testing.
+	(None of the sockets may be ready so it might not be setup).
+	[lukem, ticket #416]
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.21
+
+	Test the correct pointer 'rfl' rather than an uninitialized 'fl' when
+	determining whether the lock was a LOCK_V4 or not.
+	[lukem, ticket #417]
+
+dist/dhcp/omapip/dispatch.c			1.3
+
+	omapi_io_destroy(): ensure last is initialized before use, similar to
+	the method used in omapi_unregister_io_object().
+	[lukem, ticket #418]
+
+usr.sbin/ndbootd/ndbootd.c			1.9
+
+	Rewrite method used to determine the ethernet address of the desired
+	interface to not use uninitalized variables.
+	[lukem, ticket #419]
+
+dist/ntp/ntpd/ntp_io.c				1.12
+
+	Don't attempt to use an uninitialized variable when there's
+	no interfaces.
+	[lukem, ticket #420]
+
+usr.bin/gzip/gzip.c				1.72
+usr.bin/gzip/unbzip2.c				1.7
+
+	Fix numerous uninitalized variables.
+	[lukem, ticket #421]
 
