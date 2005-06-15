@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.2 2005/06/12 05:45:38 lukem Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.3 2005/06/15 09:31:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.2 2005/06/12 05:45:38 lukem Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.3 2005/06/15 09:31:27 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -655,6 +655,7 @@ __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 	grouping = NULL;
 #ifndef NO_FLOATING_POINT
 	decimal_point = localeconv()->decimal_point;
+	expsize = 0;		/* XXXGCC -Wuninitialized [sh3,m68000] */
 #endif
 	convbuf = NULL;
 	/* sorry, fwprintf(read_only_file, L"") returns WEOF, not 0 */
