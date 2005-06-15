@@ -1,3 +1,9 @@
+2005-06-07  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Larry Baird <lab@gta.com>
+	* src/racoon/isakmp.c: consume NAT keepalive data  already seen
+	  with MSG_PEEK 
+
 2005-06-06  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/isakmp_quick.c: endianness bug fix
