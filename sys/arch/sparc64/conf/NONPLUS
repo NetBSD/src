@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.48 2005/02/25 19:16:45 martin Exp $
+# 	$NetBSD: NONPLUS,v 1.49 2005/06/15 12:57:44 tron Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -395,9 +395,6 @@ cgsix*		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 #cgfourteen0	at obio0			# sun4m
-
-## Sun FFB not supported
-#ffb*		at upa?
 
 #### Other device configuration
 

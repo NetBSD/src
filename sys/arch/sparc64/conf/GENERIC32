@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.107 2005/06/09 14:43:31 tsutsui Exp $
+# 	$NetBSD: GENERIC32,v 1.108 2005/06/15 12:57:44 tron Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.108 $"
 
 maxusers	64
 
@@ -216,7 +216,6 @@ cpu0	at mainbus0
 #### Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# Ultra 1
-#upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at ppb?
