@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.248 2005/06/06 12:09:19 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.249 2005/06/15 16:59:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.248 2005/06/06 12:09:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.249 2005/06/15 16:59:27 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -589,6 +589,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		vp->v_socket = NULL;
 #ifdef VERIFIED_EXEC
 		vp->fp_status = FINGERPRINT_NOTEVAL;
+		vp->vhe = NULL;
 #endif
 	}
 	vp->v_type = VNON;
