@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.6 2005/06/15 08:03:07 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.7 2005/06/15 19:07:36 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -119,9 +119,9 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 	*file = default_filename;
 
 	if (fname == NULL)
-		return(0);
+		return 0;
 
-	if((col = strchr(fname, ':'))) {	/* device given */
+	if ((col = strchr(fname, ':'))) {	/* device given */
 		static char savedevname[MAXDEVNAME+1];
 		int devlen;
 		u_int u = 0, p = 0;
