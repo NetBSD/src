@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.9 2005/05/31 12:44:29 yamt Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.10 2005/06/15 22:08:08 bouyer Exp $	*/
 
 /*
  *
@@ -33,13 +33,14 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.9 2005/05/31 12:44:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10 2005/06/15 22:08:08 bouyer Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm.h>
 
@@ -125,7 +126,6 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 	char _cmd_line[128], *cmd_line, *opt, *s;
 	int b, i, ipidx = 0;
 	uint32_t xi_ip[5];
-
 
 	cmd_line = strncpy(_cmd_line, xen_start_info.cmd_line, 128);
 	cmd_line[127] = '\0';
@@ -216,6 +216,27 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 				    sizeof(xcp->xcp_console));
 			break;
 
+		case XEN_PARSE_BOOTFLAGS:
+			if (*opt == '-') {
+				opt++;
+				while(*opt != '\0') {
+					switch(*opt) {
+					case 'a':
+						boothowto |= RB_ASKNAME;
+						break;
+#ifdef notyet /* XXX cause early panic, before console is setup */
+					case 'd':
+						boothowto |= RB_KDB;
+						break;
+#endif
+					case 's':
+						boothowto |= RB_SINGLE;
+						break;
+					}
+					opt++;
+				}
+			}
+			break;
 		}
 
 		if (cmd_line)
