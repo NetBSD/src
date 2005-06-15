@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.54 2004/05/28 20:46:52 snj Exp $
+.\"	$NetBSD: disklabel.8,v 1.55 2005/06/15 20:31:47 dsl Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 28, 2004
+.Dd June 15, 2005
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -68,10 +68,7 @@
 .Fl B
 .Op Fl F
 .Op Fl f Ar disktab
-.Oo
-.Fl b Ar boot1
-.Op Fl s Ar boot2
-.Oc
+.Op Fl b Ar boot1
 .Ar disk
 .Oo Ar disktype Oc
 .Nm
@@ -79,10 +76,7 @@
 .Fl B
 .Op Fl F
 .Op Fl f Ar disktab
-.Oo
-.Fl b Ar boot1
-.Op Fl s Ar boot2
-.Oc
+.Op Fl b Ar boot1
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm
@@ -90,10 +84,7 @@
 .Fl B
 .Op Fl F
 .Op Fl f Ar disktab
-.Oo
-.Fl b Ar boot1
-.Op Fl s Ar boot2
-.Oc
+.Op Fl b Ar boot1
 .Ar disk Ar protofile
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
@@ -250,8 +241,6 @@ The final three forms of
 .Nm
 are used to install bootstrap code on machines where the bootstrap is part
 of the label.
-The bootstrap code is composed of one or two boot programs depending on
-the machine.
 The
 .Fl B
 option is used (on some platforms only, see above) to denote that
@@ -261,43 +250,26 @@ The
 flag is implied by
 .Fl B
 and never needs to be specified.
-The name of the boot program(s) to be installed can be selected in a
+The name of the boot program to be installed can be selected in a
 variety of ways.
-First, the names can be specified explicitly via the
+First, the name can be specified explicitly via the
 .Fl b
-and
-.Fl s
-flags.
-On machines with only a single level of boot program,
-.Fl b
-is the name of that program.
-For machines with a two-level bootstrap,
-.Fl b
-indicates the primary boot program and
-.Fl s
-the secondary boot program.
-If the names are not explicitly given, standard boot programs will be used.
+flag.
+If the name is not explicitly given, the standard boot program will be used.
 The boot programs are located in
 .Pa /usr/mdec .
-The names of the programs are taken from the
+The name of the program is taken from the
 .Dq b0
-and
-.Dq b1
-parameters of the
+parameter of the
 .Xr disktab 5
 entry for the disk if
 .Ar disktype
-was given and its disktab entry exists and includes those parameters.
-Otherwise, boot program names are derived from the name of the disk.
-These names are of the form
-.Pa basename Ns boot
-for the primary (or only) bootstrap, and
-.Pf boot Pa basename
-for the secondary bootstrap;
+was given and its disktab entry exists and includes that parameter.
+Otherwise, boot the program name is derived from the name of the disk.
+This name is of the form
+.Pa basename Ns boot ;
 for example,
 .Pa /usr/mdec/sdboot
-and
-.Pa /usr/mdec/bootsd
 if the disk device is
 .Em sd0 .
 .Pp
