@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.14 2005/05/31 12:42:58 yamt Exp $	*/
+/*	$NetBSD: xen.h,v 1.15 2005/06/15 22:08:08 bouyer Exp $	*/
 
 /*
  *
@@ -45,6 +45,7 @@ union xen_cmdline_parseinfo {
 #define	XEN_PARSE_BOOTDEV	0
 #define	XEN_PARSE_NETINFO	1
 #define	XEN_PARSE_CONSOLE	2
+#define	XEN_PARSE_BOOTFLAGS	3
 
 void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 

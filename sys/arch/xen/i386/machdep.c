@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1490,6 +1490,7 @@ init386(paddr_t first_avail)
 	x86_bus_space_init();
 #endif /* defined(XEN) && defined(DOM0OPS) */
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
