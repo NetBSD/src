@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.555 2005/06/07 14:27:42 is Exp $
+# $NetBSD: mi,v 1.556 2005/06/15 18:06:19 xtraeme Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -191,6 +191,7 @@
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	use_inet6
 ./sbin/savecore					base-sysutil-root
+./sbin/scan_ffs					base-sysutil-root
 ./sbin/scsictl					base-sysutil-root
 ./sbin/setkey					base-netutil-root
 ./sbin/shutdown					base-sysutil-root
