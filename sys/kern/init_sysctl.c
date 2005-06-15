@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.43 2005/06/09 02:19:59 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.44 2005/06/15 16:58:31 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.43 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.44 2005/06/15 16:58:31 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2420,9 +2420,6 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	if (raise_only && (*var != 0) && (securelevel > 0))
-		return (EPERM);
-
 	newval = *var;
 
 	node.sysctl_data = &newval;
@@ -2430,6 +2427,9 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 	if (error || newp == NULL) {
 		return (error);
 	}
+
+	if (raise_only && (newval < *var))
+		return (EPERM);
 
 	*var = newval;
 
