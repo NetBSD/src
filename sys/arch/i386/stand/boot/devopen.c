@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2004/03/24 16:54:18 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.3 2005/06/15 19:01:19 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -41,22 +41,19 @@
 #include <biosmca.h>
 #endif
 
-static __inline int dev2bios __P((char *, unsigned int, int *));
+static int dev2bios(char *, u_int, int *);
 
-static __inline int
-dev2bios(devname, unit, biosdev)
-	char           *devname;
-	unsigned int    unit;
-	int            *biosdev;
+static int
+dev2bios(char *devname, u_int unit, int *biosdev)
 {
 	if (strcmp(devname, "hd") == 0)
 		*biosdev = 0x80 + unit;
 	else if (strcmp(devname, "fd") == 0)
 		*biosdev = 0x00 + unit;
 	else
-		return (ENXIO);
+		return ENXIO;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -81,29 +78,24 @@ struct btinfo_bootpath bibp;
  * Open the BIOS disk device
  */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char     *fname;
-	char          **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
-	char           *fsname, *devname;
-	unsigned int    unit, partition;
-	int             biosdev;
-	int             error;
-	struct devsw   *dp;
+	char *fsname, *devname;
+	u_int unit, partition;
+	int biosdev;
+	int error;
 
 	if ((error = parsebootfile(fname, &fsname, &devname,
 				   &unit, &partition, (const char **) file))
 	    || (error = dev2bios(devname, unit, &biosdev)))
-		return (error);
+		return error;
 
-	dp = &devsw[0];		/* must be biosdisk */
-	f->f_dev = dp;
+	f->f_dev = &devsw[0];		/* must be biosdisk */
 
 #ifdef _STANDALONE
 	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
 	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
 #endif
 
-	return (biosdiskopen(f, biosdev, partition));
+	return biosdiskopen(f, biosdev, partition);
 }
