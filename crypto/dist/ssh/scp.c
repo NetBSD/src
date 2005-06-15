@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.25 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.25.2.1 2005/06/15 05:30:51 snj Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +73,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: scp.c,v 1.117 2004/08/11 21:44:32 avsm Exp $");
-__RCSID("$NetBSD: scp.c,v 1.25 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.25.2.1 2005/06/15 05:30:51 snj Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -503,6 +503,7 @@ source(int argc, char **argv)
 	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
+		fd = -1;
 		name = argv[indx];
 		statbytes = 0;
 		len = strlen(name);
