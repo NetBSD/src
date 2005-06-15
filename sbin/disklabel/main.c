@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2005/06/12 19:18:34 dyoung Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2005/06/15 20:19:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.1 2005/06/12 19:18:34 dyoung Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2005/06/15 20:19:03 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -124,9 +124,6 @@ static int	bootsize;    /* size of remaining boot program */
 static char	*xxboot;     /* primary boot */
 static char	*bootxx;     /* secondary boot */
 static char	boot0[MAXPATHLEN];
-#if NUMBOOT > 1
-static char	boot1[MAXPATHLEN];
-#endif	/* NUMBOOT > 1 */
 #endif	/* NUMBOOT > 0 */
 
 static enum	{
@@ -211,11 +208,6 @@ main(int argc, char *argv[])
 		case 'b':
 			xxboot = optarg;
 			break;
-#if NUMBOOT > 1
-		case 's':
-			bootxx = optarg;
-			break;
-#endif	/* NUMBOOT > 1 */
 #endif	/* NUMBOOT > 0 */
 		case 'C':
 			++Cflag;
@@ -465,17 +457,6 @@ makelabel(const char *type, const char *name, struct disklabel *lp)
 			(void)strlcpy(boot0, lp->d_boot0, sizeof(boot0));
 		xxboot = boot0;
 	}
-
-#if NUMBOOT > 1
-	if (!bootxx && lp->d_boot1) {
-		if (*lp->d_boot1 != '/')
-			(void)snprintf(boot1, sizeof(boot1), "%s/%s",
-			    _PATH_BOOTDIR, lp->d_boot1);
-		else
-			(void)strlcpy(boot1, lp->d_boot1, sizeof(boot1));
-		bootxx = boot1;
-	}
-#endif	/* NUMBOOT > 1 */
 #endif	/* NUMBOOT > 0 */
 
 	/* d_packname is union d_boot[01], so zero */
@@ -998,9 +979,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 #if NUMBOOT > 0
 	int		 b;
 	char		*dkbasename;
-# if NUMBOOT <= 1
 	struct stat	 sb;
-# endif
 #endif	/* NUMBOOT > 0 */
 
 	if ((lsec = GETLABELSECTOR()) < 0)
@@ -1085,18 +1064,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 				      _PATH_BOOTDIR, dkbasename);
 			np += strlen(xxboot) + 1;
 		}
-#if NUMBOOT > 1
-		if (!bootxx) {
-			(void)sprintf(np, "%s/boot%s",
-				      _PATH_BOOTDIR, dkbasename);
-			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
-				dkbasename++;
-			bootxx = np;
-			(void)sprintf(bootxx, "%s/boot%s",
-				      _PATH_BOOTDIR, dkbasename);
-			np += strlen(bootxx) + 1;
-		}
-#endif	/* NUMBOOT > 1 */
 	}
 
 #ifdef DEBUG
@@ -1118,17 +1085,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	b = open(xxboot, O_RDONLY);
 	if (b < 0)
 		err(4, "%s", xxboot);
-#if NUMBOOT > 1
-	if (read(b, boot, (int)dp->d_secsize) < 0)
-		err(4, "%s", xxboot);
-	(void)close(b);
-	b = open(bootxx, O_RDONLY);
-	if (b < 0)
-		err(4, "%s", bootxx);
-	if (read(b, &boot[dp->d_secsize],
-		 (int)(dp->d_bbsize-dp->d_secsize)) < 0)
-		err(4, "%s", bootxx);
-#else	/* NUMBOOT <= 1 */
 	if (read(b, boot, (int)dp->d_bbsize) < 0)
 		err(4, "%s", xxboot);
 	(void)fstat(b, &sb);
@@ -1144,7 +1100,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 			err(4, "%s", xxboot);
 		}
 	}
-#endif	/* NUMBOOT <= 1 */
 	(void)close(b);
 #endif	/* NUMBOOT > 0 */
 
@@ -1938,21 +1893,12 @@ usage(void)
 #endif
 	},
 #if NUMBOOT > 0
-# if NUMBOOT > 1
-	{ "-B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk [ type ]",
-	    "(to install boot program with existing label)" },
-	{ "-w -B [-F] [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
-	    "(to write label and boot program)" },
-	{ "-R -B [-F] [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
-	    "(to restore label and boot program)" },
-# else
 	{ "-B [-F] [-f disktab] [ -b bootprog ] disk [ type ]",
 	    "(to install boot program with existing on-disk label)" },
 	{ "-w -B [-F] [-f disktab] [ -b bootprog ] disk type [ packid ]",
 	    "(to write label and install boot program)" },
 	{ "-R -B [-F] [-f disktab] [ -b bootprog ] disk protofile [ type ]",
 	    "(to restore label and install boot program)" },
-# endif
 #endif
 	{ "[-NW] disk",
 	    "(to write disable/enable label)" },
