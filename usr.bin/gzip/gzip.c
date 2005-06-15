@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.71 2005/02/22 21:45:44 yamt Exp $	*/
+/*	$NetBSD: gzip.c,v 1.71.2.1 2005/06/15 06:06:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.71 2005/02/22 21:45:44 yamt Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.71.2.1 2005/06/15 06:06:03 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -664,8 +664,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 {
 	z_stream z;
 	char *outbufp, *inbufp;
-	off_t out_tot, in_tot;
-	uint32_t out_sub_tot;
+	off_t out_tot = -1, in_tot = 0;
+	uint32_t out_sub_tot = 0;
 	enum {
 		GZSTATE_MAGIC0,
 		GZSTATE_MAGIC1,
@@ -685,8 +685,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		GZSTATE_LEN,
 	} state = GZSTATE_MAGIC0;
 	int flags = 0, skip_count = 0;
-	int error, done_reading = 0;
-	uLong crc;
+	int error = Z_STREAM_ERROR, done_reading = 0;
+	uLong crc = 0;
 	ssize_t wr;
 	int needmore = 0;
 
@@ -1827,9 +1827,9 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 	static int first = 1;
 #ifndef SMALL
 	static off_t in_tot, out_tot;
-	uint32_t crc;
+	uint32_t crc = 0;
 #endif
-	off_t in;
+	off_t in = 0;
 	int rv;
 
 	if (first) {
