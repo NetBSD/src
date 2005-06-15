@@ -1,4 +1,4 @@
-/*	$NetBSD: scan_ffs.c,v 1.2 2005/06/15 18:42:23 kleink Exp $	*/
+/*	$NetBSD: scan_ffs.c,v 1.3 2005/06/15 20:03:03 christos Exp $	*/
 /*	$OpenBSD: scan_ffs.c,v 1.11 2004/02/16 19:13:03 deraadt Exp$	*/
 
 /*
@@ -39,7 +39,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.2 2005/06/15 18:42:23 kleink Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.3 2005/06/15 20:03:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,6 @@ static int	ufsscan(int, daddr_t, daddr_t, int);
 
 static char	lastmount[MAXMNTLEN];
 static char	device[MAXPATHLEN];
-static const	char *fstype = NULL;
 
 static int 	eflag = 0;
 static int	flags = 0;
@@ -78,6 +77,12 @@ static daddr_t	blk, lastblk;
 
 static struct fs *sb;
 
+static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2" };
+
+#define FSTYPE_NONE	0
+#define FSTYPE_FFSV1	1
+#define FSTYPE_FFSV2	2
+
 static int
 checkfstype(void)
 {
@@ -85,14 +90,12 @@ checkfstype(void)
 		case FS_UFS1_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
 			sb->fs_size = sb->fs_old_size;
-			fstype = "FFSv1";
-			return 1;
+			return FSTYPE_FFSV1;
 		case FS_UFS2_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
-			fstype = "FFSv2";
-			return 2;
+			return FSTYPE_FFSV2;
 		default:
-			return -1;
+			return FSTYPE_NONE;
 	}
 }
 
@@ -100,43 +103,60 @@ static void
 printpart(int flag, int ffsize, int n)
 {
 	
-	int fsrv = checkfstype();
+	int fstype = checkfstype();
 
-	if (flag == VERBOSE) {
-		(void)printf("block: %" PRIu64" "
-			"id %x,%x size %" PRIu64"\n",
-			blk + (n / 512), sb->fs_id[0],
-			sb->fs_id[1], sb->fs_size);
-	} else if (flag == LABELS) {
-		(void)printf("X:  %9" PRIu64 "",
-			(uint64_t)((off_t)sb->fs_size * sb->fs_fsize / 512));
-		if (fsrv == 1)	/* FFSv1 */
-			(void)printf(" %9" PRIu64 "",
-				blk + (n / 512)-(2 * SBLOCKSIZE / 512));
-		else if (fsrv == 2)	/* FFSv2 */
-			(void)printf(" %9" PRIu64 "",
-				blk + (n / 512)-(ffsize * SBLOCKSIZE / 512 + 128));
+	switch (flag) {
+	case VERBOSE:
+		(void)printf("block: %" PRIu64 "id %x,%x size %" PRIu64 "\n",
+		    blk + (n / 512), sb->fs_id[0], sb->fs_id[1], sb->fs_size);
+		break;
+	case LABELS:
+		(void)printf("X:  %9" PRIu64,
+		    (uint64_t)((off_t)sb->fs_size * sb->fs_fsize / 512));
+		switch (fstype) {
+		case FSTYPE_FFSV1:
+			(void)printf(" %9" PRIu64,
+			    blk + (n / 512) - (2 * SBLOCKSIZE / 512));
+			break;
+		case FSTYPE_FFSV2:
+			(void)printf(" %9" PRIu64,
+			    blk + (n / 512) - 
+			    (ffsize * SBLOCKSIZE / 512 + 128));
+			break;
+		default:
+			break;
+		}
 		(void)printf(" 4.2BSD %6d %5d%4d # %s [%s]\n",
 			sb->fs_fsize, sb->fs_bsize,
-			sb->fs_old_cpg, lastmount, fstype);
-	} else {
-		printf("%s ", fstype);
-		if (fsrv == 1)	/* FFSv1 */
-			(void)printf("at %" PRIu64 "",
-				blk + (n / 512) - (2 * SBLOCKSIZE / 512));
-		else if (fsrv == 2)	/* FFSv2 */
-			(void)printf("at %" PRIu64 "",
-				blk + (n / 512) - (ffsize * SBLOCKSIZE / 512 + 128));
+			sb->fs_old_cpg, lastmount, fstypes[fstype]);
+		break;
+	default:
+		printf("%s ", fstypes[fstype]);
+		switch (fstype) {
+		case FSTYPE_FFSV1:
+			(void)printf("at %" PRIu64,
+			    blk + (n / 512) - (2 * SBLOCKSIZE / 512));
+			break;
+		case FSTYPE_FFSV2:
+			(void)printf("at %" PRIu64,
+			    blk + (n / 512) -
+			    (ffsize * SBLOCKSIZE / 512 + 128));
+			break;
+		default:
+			break;
+		}
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
-			(uint64_t)((off_t)sb->fs_size * sb->fs_fsize / 512),
-			lastmount);
+		    (uint64_t)((off_t)sb->fs_size * sb->fs_fsize / 512),
+		    lastmount);
+		break;
 	}
 }
 
 static void
 ufsmagic(int n)
 {
-	int fsrv = checkfstype();
+	int fstype = checkfstype();
+	size_t i;
 
 	/* 
 	 * FIXME:
@@ -146,40 +166,29 @@ ufsmagic(int n)
 	 */
 	if (flags & VERBOSE)
 		printpart(VERBOSE, NADA, n);
-	if (fsrv == 1) {	/* FFSv1 */
+	switch (fstype) {
+	case FSTYPE_FFSV1:
 		if (((blk + (n / 512)) - lastblk) == (SBLOCKSIZE / 512)) {
 			if (flags & LABELS)
 				printpart(LABELS, NADA, n);
 			else
 				printpart(NADA, NADA, n);
 		}
-	} else if (fsrv == 2) {	/* FFSv2 */
-	/*
-	 * That checks for FFSv2 partitions with fragsize/blocksize:
-	 * 512/4096, 1024/8192, 2048/16384, 4096/32768 and 8192/65536.
-	 * Really enough for now.
-	 */
-		if (((blk + (n / 512)) - lastblk) == (SBLOCKSIZE / 512)) {
-			if (flags & LABELS)
-				printpart(LABELS, 1, n);
-			else
-				printpart(NADA, 1, n);
-		} else if (((blk + (n / 512)) - lastblk) == (2 * SBLOCKSIZE / 512)) {
-			if (flags & LABELS)
-				printpart(LABELS, 2, n);
-			else
-				printpart(NADA, 2, n);
-		} else if (((blk + (n / 512)) - lastblk) == (4 * SBLOCKSIZE / 512)) {
-			if (flags & LABELS)
-				printpart(LABELS, 4, n);
-			else
-				printpart(NADA, 4, n);
-		} else if (((blk + (n / 512)) - lastblk) == (8 * SBLOCKSIZE / 512)) {
-			if (flags & LABELS)
-				printpart(LABELS, 8, n);
-			else
-				printpart(NADA, 8, n);
-		}
+		break;
+	case FSTYPE_FFSV2:
+		/*
+		 * That checks for FFSv2 partitions with fragsize/blocksize:
+		 * 512/4096, 1024/8192, 2048/16384, 4096/32768 and 8192/65536.
+		 * Really enough for now.
+		 */
+		for (i = 1; i < 16; i <<= 1)
+			if (((blk + (n / 512)) - lastblk) ==
+			    (i * SBLOCKSIZE / 512)) {
+				if (flags & LABELS)
+					printpart(LABELS, i, n);
+				else
+					printpart(NADA, i, n);
+			}
 	}
 }
 
@@ -188,36 +197,33 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int fflags)
 {
 
 	u_int8_t buf[SBLOCKSIZE * SBCOUNT];
-	int n, fsrv;
+	int n, fstype;
 
 	lastblk = -1;
-	memset(lastmount, 0, MAXMNTLEN);
+	(void)memset(lastmount, 0, MAXMNTLEN);
 
 	if (fflags & LABELS)
-		(void)printf("#        size    offset fstype [fsize bsize cpg]\n");
+		(void)printf(
+		    "#        size    offset fstype [fsize bsize cpg]\n");
 
 	for (blk = beg; blk <= ((end < 0) ? blk: end);
 		blk += (SBCOUNT * SBLOCKSIZE / 512)) {
-		memset(buf, 0, sizeof(buf));
+		(void)memset(buf, 0, sizeof(buf));
 
-		if (lseek(fd, (off_t)blk * 512, SEEK_SET) < 0)
+		if (lseek(fd, (off_t)blk * 512, SEEK_SET) == (off_t)-1)
 			err(1, "lseek");
-			/* NOTREACHED */
 
-		if (read(fd, buf, sizeof(buf)) < 0)
+		if (read(fd, buf, sizeof(buf)) == -1)
 			err(1, "read");
-			/* NOTREACHED */
 
 		for (n = 0; n < (SBLOCKSIZE * SBCOUNT); n += 512) {
-			sb = (struct fs*)(&buf[n]);
-			fsrv = checkfstype();
-
-			if (fsrv >= 1) { /* found! */
-				ufsmagic(n);
-				/* Update last potential FS SBs seen */
-				lastblk = blk + (n / 512);
-				memcpy(lastmount, sb->fs_fsmnt, MAXMNTLEN);
-			}
+			sb = (struct fs *)(void *)&buf[n];
+			if ((fstype = checkfstype()) == FSTYPE_NONE)
+				continue;
+			ufsmagic(n);
+			/* Update last potential FS SBs seen */
+			lastblk = blk + (n / 512);
+			(void)memcpy(lastmount, sb->fs_fsmnt, MAXMNTLEN);
 		}
 	}
 	return EXIT_SUCCESS;
@@ -228,7 +234,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: %s [-lv] [-s start] [-e end] device", getprogname());
+		"Usage: %s [-lv] [-s start] [-e end] device", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -260,7 +266,8 @@ main(int argc, char **argv)
 		default:
 			usage();
 			/* NOTREACHED */
-	}
+		}
+
 	argc -= optind;
 	argv += optind;
 
@@ -269,20 +276,22 @@ main(int argc, char **argv)
 
 	fd = opendisk(argv[0], O_RDONLY, device, sizeof(device), 0);
 
-	if (fd < 0)
-		err(1, "%s", device);
+	if (fd == -1)
+		err(1, "Cannot open `%s'", device);
 		/* NOTREACHED */
 
-	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
-		warn("couldn't retrieve disklabel.\n");
-	else {
+	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
+		warn("Couldn't retrieve disklabel");
+		(void)memset(&dl, 0, sizeof(dl));
+		dl.d_secperunit = 0x7fffffff;
+	} else {
 		(void)printf("Disk: %s\n", dl.d_typename);
 		(void)printf("Total sectors on disk: %" PRIu32 "\n\n",
-			dl.d_secperunit);
+		    dl.d_secperunit);
 	}
 	
 	if (!eflag)
 		end = dl.d_secperunit; /* default to max sectors */
 
-	return (ufsscan(fd, beg, end, flags));
+	return ufsscan(fd, beg, end, flags);
 }
