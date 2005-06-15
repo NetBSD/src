@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.20 2003/10/05 17:48:50 bouyer Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.20.6.1 2005/06/15 05:52:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -656,13 +656,13 @@ do_unlock(rfl)
 			error = nlm4_stale_fh;
 		else
 			error = nlm4_failed;
-		if ((fl->flags & LOCK_V4) == 0)
+		if ((rfl->flags & LOCK_V4) == 0)
 			error = nlm_denied;
 		syslog(LOG_NOTICE,
 		    "close failed (from %s): %s",
 		    rfl->client_name, strerror(errno));
 	} else {
-		error = (fl->flags & LOCK_V4) ?
+		error = (rfl->flags & LOCK_V4) ?
 		    nlm4_granted : nlm_granted;
 	}
 	LIST_REMOVE(rfl, lcklst);
