@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.9 2005/01/19 01:20:24 mycroft Exp $	*/
+/*	$NetBSD: recover.c,v 1.9.2.1 2005/06/15 05:27:39 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: recover.c,v 1.9 2005/01/19 01:20:24 mycroft Exp $");
+__RCSID("$NetBSD: recover.c,v 1.9.2.1 2005/06/15 05:27:39 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,6 +360,7 @@ rcv_mailfile(sp, issync, cp_path)
 	char host[MAXHOSTNAMELEN];
 
 	gp = sp->gp;
+	ep = sp->ep;
 	if ((pw = getpwuid(uid = getuid())) == NULL) {
 		msgq(sp, M_ERR,
 		    "062|Information on user id %u not found", uid);
@@ -381,7 +382,6 @@ rcv_mailfile(sp, issync, cp_path)
 	 * be recovered.  There's an obvious window between the mkstemp call
 	 * and the lock, but it's pretty small.
 	 */
-	ep = sp->ep;
 	if (file_lock(sp, NULL, NULL, fd, 1) != LOCK_SUCCESS)
 		msgq(sp, M_SYSERR, "063|Unable to lock recovery file");
 	if (!issync) {
