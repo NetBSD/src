@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.21 2005/04/01 11:59:30 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.22 2005/06/15 01:52:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2005/04/01 11:59:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2005/06/15 01:52:39 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -553,7 +553,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("CPU failed to start\n");
+		printf("%s: failed to start\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
