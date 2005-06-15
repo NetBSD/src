@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.5 2005/05/13 14:09:44 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.6 2005/06/15 07:29:20 manu Exp $	*/
 
-/* $Id: isakmp.c,v 1.5 2005/05/13 14:09:44 manu Exp $ */
+/* $Id: isakmp.c,v 1.6 2005/06/15 07:29:20 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -214,8 +214,16 @@ isakmp_handler(so_isakmp)
 	}
 
 	/* keep-alive packet - ignore */
-	if (len == 1 && (x.buf[0]&0xff) == 0xff)
+	if (len == 1 && (x.buf[0]&0xff) == 0xff) {
+		/* Pull the keep-alive packet */
+		if ((len = recvfrom(so_isakmp, (char *)x.buf, 1,
+		    0, (struct sockaddr *)&remote, &remote_len)) != 1) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "failed to receive keep alive packet: %s\n",
+			    strerror (errno));
+		}
 		goto end;
+	}
 
 #ifdef ENABLE_NATT
 	/* we don't know about portchange yet, 
