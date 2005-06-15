@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.7 2005/06/12 00:02:18 reinoud Exp $ */
+/* $NetBSD: auixp.c,v 1.8 2005/06/15 15:16:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.7 2005/06/12 00:02:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.8 2005/06/15 15:16:23 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1657,58 +1657,69 @@ auixp_reset_aclink(struct auixp_softc *sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	printf("%s: resetting aclink\n", sc->sc_dev.dv_xname);
-
-	/* powerdown reset */
+	/* if power is down, power it up */
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	if (value & ATI_REG_CMD_POWERDOWN) {
-		/* if set explicitly powerdown it */
+		printf("%s: powering up\n", sc->sc_dev.dv_xname);
+
+		/* explicitly enable power */
 		value &= ~ATI_REG_CMD_POWERDOWN;
 		bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
-		/* have to wait aprox. 10 usec for it to initialise */
-		DELAY(10);
+		/* have to wait at least 10 usec for it to initialise */
+		DELAY(20);
 	};
 
-	/* perform a software reset */
+	printf("%s: soft resetting aclink\n", sc->sc_dev.dv_xname);
+
+	/* perform a soft reset */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	value |= ATI_REG_CMD_AC_SOFT_RESET;
 	bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
 	/* need to read the CMD reg and wait aprox. 10 usec to init */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);
-	DELAY(10);
+	DELAY(20);
 
-	/* clear software reset flag */
+	/* clear soft reset flag again */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	value &= ~ATI_REG_CMD_AC_SOFT_RESET;
 	bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
-	/* check if the ac-link is working, and reset device otherwise */
+	/* check if the ac-link is working; reset device otherwise */
 	timeout = 10;
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	while (!(value & ATI_REG_CMD_ACLINK_ACTIVE)) {
-		/* dip ac reset but keep the ac sync */
+		printf("%s: not up; resetting aclink hardware\n",
+				sc->sc_dev.dv_xname);
+
+		/* dip aclink reset but keep the acsync */
 		value &= ~ATI_REG_CMD_AC_RESET;
 		value |=  ATI_REG_CMD_AC_SYNC;
 		bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
-		/* need to read again (clocking in issue?) */
+		/* need to read CMD again and wait again (clocking in issue?) */
 		value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
-		DELAY(10);
+		DELAY(20);
 
-		/* assert ac reset again */
+		/* assert aclink reset again */
 		value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 		value |=  ATI_REG_CMD_AC_RESET;
 		bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
-		if (--timeout) {
-			printf("%s: codec reset timed out\n",
-				sc->sc_dev.dv_xname);
-		};
-
-		/* check if its active again */
+		/* check if its active now */
 		value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
+
+		timeout--;
+		if (timeout == 0) break;
+	};
+
+	if (timeout == 0) {
+		printf("%s: giving up aclink reset\n", sc->sc_dev.dv_xname);
+	};
+	if (timeout != 10) {
+		printf("%s: aclink hardware reset successful\n",
+			sc->sc_dev.dv_xname);
 	};
 
 	/* assert reset and sync for safety */
