@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2005/06/15 20:19:03 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2005/06/15 20:49:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.2 2005/06/15 20:19:03 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2005/06/15 20:49:41 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -122,7 +122,6 @@ static int	installboot; /* non-zero if we should install a boot program */
 static char	*bootbuf;    /* pointer to buffer with remainder of boot prog */
 static int	bootsize;    /* size of remaining boot program */
 static char	*xxboot;     /* primary boot */
-static char	*bootxx;     /* secondary boot */
 static char	boot0[MAXPATHLEN];
 #endif	/* NUMBOOT > 0 */
 
@@ -1044,7 +1043,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	 * We are installing a boot program.  Determine the name(s) and
 	 * read them into the appropriate places in the boot area.
 	 */
-	if (!xxboot || !bootxx) {
+	if (!xxboot) {
 		dkbasename = np;
 		if ((p = strrchr(dkname, '/')) == NULL)
 			p = dkname;
@@ -1068,8 +1067,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 
 #ifdef DEBUG
 	if (debug)
-		warnx("bootstraps: xxboot = %s, bootxx = %s", xxboot,
-		    bootxx ? bootxx : "NONE");
+		warnx("bootstrap: xxboot = %s", xxboot);
 #endif
 
 	/*
@@ -1077,10 +1075,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	 * 1. One-piece bootstrap (hp300/hp800)
 	 *	up to d_bbsize bytes of ``xxboot'' go in bootarea, the rest
 	 *	is remembered and written later following the bootarea.
-	 * 2. Two-piece bootstraps (vax/i386?/mips?)
-	 *	up to d_secsize bytes of ``xxboot'' go in first d_secsize
-	 *	bytes of bootarea, remaining d_bbsize-d_secsize filled
-	 *	from ``bootxx''.
 	 */
 	b = open(xxboot, O_RDONLY);
 	if (b < 0)
