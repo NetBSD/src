@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.33 2005/05/31 22:23:53 tron Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.34 2005/06/15 12:57:44 tron Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -185,7 +185,6 @@ cpu0	at mainbus0
 #### Bus types found on SPARC systems.
 
 #sbus0	at mainbus0				# Ultra 1
-#upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at ppb?
@@ -448,9 +447,6 @@ audio*		at audiocs?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 #cgfourteen0	at obio0			# sun4m
-
-## Sun FFB not supported
-#ffb*		at upa?
 
 #### Other device configuration
 
