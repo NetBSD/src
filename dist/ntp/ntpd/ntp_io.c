@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.11 2004/10/05 03:34:38 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.11.2.1 2005/06/15 06:00:47 snj Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1386,6 +1386,7 @@ sendpkt(
 #endif
 	if (inter == NULL) {
 		errno = EAFNOSUPPORT;
+		slot = -1;
 		goto nointerface;
 	}
 
