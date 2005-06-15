@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2005/06/15 18:06:19 xtraeme Exp $
+# $NetBSD: Makefile,v 1.2 2005/06/15 18:39:46 kleink Exp $
 
 PROG=	scan_ffs
-SRCS=	scan_ffs.c
-
 MAN=	scan_ffs.8
 
 WARNS=	3
