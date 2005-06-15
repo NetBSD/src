@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.16 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.16.2.1 2005/06/15 05:24:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,7 +19,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_tag.c,v 1.16 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_tag.c,v 1.16.2.1 2005/06/15 05:24:06 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1070,10 +1070,8 @@ gtag_slist(sp, tag, ref)
 	char *tag;
 	int ref;
 {
-	TAGF *tfp;
 	TAGQ *tqp;
 	size_t len;
-	int echk;
 	TAG *tp;
 	char *name, *file, *line;
 	char command[BUFSIZ];
@@ -1100,8 +1098,6 @@ gtag_slist(sp, tag, ref)
 				while (fgetc(fp) != '\n')
 					;
 			if (getentry(buf, &name, &file, &line) == 0) {
-				echk = 1;
-				F_SET(tfp, TAGF_ERR);
 				break;
 			}
 			CALLOC_GOTO(sp, tp,
