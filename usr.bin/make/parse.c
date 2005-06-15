@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.100 2005/06/15 22:26:54 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.100 2005/06/15 22:26:54 rpaulo Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.99 2005/05/08 00:38:48 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.100 2005/06/15 22:26:54 rpaulo Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2552,6 +2552,14 @@ test_char:
 			 */
 			do {
 			    c = ParseReadc();
+			    /*
+			     * If we found a backslash not escaped
+			     * itself it means that the comment is
+			     * going to continue in the next line.
+			     */
+			    if (c == '\\' && lastc != c)
+				ParseReadc();
+			    lastc = c;
 			} while ((c != '\n') && (c != EOF));
 			goto line_read;
 		    } else {
