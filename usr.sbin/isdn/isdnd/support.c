@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.13 2004/10/30 08:19:30 dsl Exp $ 
+ *	$Id: support.c,v 1.13.2.1 2005/06/15 05:46:40 snj Exp $ 
  *
  * $FreeBSD$
  *
@@ -52,7 +52,6 @@ struct cfg_entry *
 find_active_entry_by_driver(int drivertype, int driverunit)
 {
 	struct cfg_entry *cep = NULL;
-	int i;
 
 	SIMPLEQ_FOREACH(cep, &cfg_entry_list, cfgq) {
 
@@ -66,7 +65,7 @@ find_active_entry_by_driver(int drivertype, int driverunit)
 		
 		if (isvalidtime(cep) == 0)
 		{
-			DBGL(DL_MSG, (logit(LL_DBG, "find_active_entry_by_driver: entry %d, time not valid!", i)));
+			DBGL(DL_MSG, (logit(LL_DBG, "find_active_entry_by_driver: entry %d, time not valid!", cep->index)));
 			continue;
 		}
 		
