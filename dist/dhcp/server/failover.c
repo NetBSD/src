@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.8 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.9 2005/06/16 22:04:24 jmc Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3423,6 +3423,7 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 #if defined (DEBUG_FAILOVER_MESSAGES)
 	char tbuf [256];
 #endif
+	failover_option_t option, *op;
 
 	size = 0;	/* XXXGCC -Wuninitialized */
 	ilen = 0;	/* XXXGCC -Wuninitialized */
@@ -3432,7 +3433,6 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 	   input than on output - on input, count is an element count, and
 	   on output it's the number of bytes total in the option, including
 	   the option code and option length. */
-	failover_option_t option, *op;
 
 
 	/* Bogus option code? */
