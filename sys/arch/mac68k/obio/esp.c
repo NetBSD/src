@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.39 2005/03/05 17:40:56 chs Exp $	*/
+/*	$NetBSD: esp.c,v 1.40 2005/06/16 22:43:36 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.39 2005/03/05 17:40:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.40 2005/06/16 22:43:36 jmc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,7 +731,7 @@ restart_dmago:
 	len &= ~1;
 
 	statreg = esc->sc_reg + NCR_STAT * 16;
-	pdma = (u_int16_t *) (esc->sc_reg + 0x100);
+	pdma = (volatile u_int16_t *) (esc->sc_reg + 0x100);
 
 	/*
 	 * These loops are unrolled into assembly for two reasons:
@@ -773,8 +773,8 @@ restart_dmago:
 			: "0" (addr), "g" (pdma), "g" (cnt32), "g" (cnt2)
 			: "a2", "a3", "d2");
 		if (esc->sc_pad) {
-			unsigned char	*c;
-			c = (unsigned char *) addr;
+			volatile unsigned char	*c;
+			c = (volatile unsigned char *) addr;
 			/* Wait for DREQ */
 			while (!esp_have_dreq(esc)) {
 				if (*statreg & 0x80) {
@@ -782,7 +782,7 @@ restart_dmago:
 					goto gotintr;
 				}
 			}
-			*(unsigned char *)pdma = *c;
+			*(volatile unsigned char *)pdma = *c;
 		}
 	} else {
 		/* while (cnt32--) { 16 instances of *addr++ = *pdma; } */
@@ -816,8 +816,8 @@ restart_dmago:
 			: "0" (addr), "g" (pdma), "g" (cnt32), "g" (cnt2)
 			: "a2", "a3", "d2");
 		if (esc->sc_pad) {
-			unsigned char	*c;
-			c = (unsigned char *) addr;
+			volatile unsigned char	*c;
+			c = (volatile unsigned char *) addr;
 			/* Wait for DREQ */
 			while (!esp_have_dreq(esc)) {
 				if (*statreg & 0x80) {
@@ -825,7 +825,7 @@ restart_dmago:
 					goto gotintr;
 				}
 			}
-			*c = *(unsigned char *)pdma;
+			*c = *(volatile unsigned char *)pdma;
 		}
 	}
 
