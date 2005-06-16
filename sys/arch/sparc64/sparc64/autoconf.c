@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.102 2005/05/31 00:53:02 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,13 +218,13 @@ get_ncpus()
 
 	node = findroot();
 
-	ncpus = 0;
+	sparc_ncpus = 0;
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "device_type", sbuf, sizeof(sbuf)) <= 0)
 			continue;
 		if (strcmp(sbuf, "cpu") != 0)
 			continue;
-		ncpus++;
+		sparc_ncpus++;
 	}
 }
 
@@ -632,7 +632,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
-	if (ncpus == 0)
+	if (sparc_ncpus == 0)
 		panic("None of the CPUs found");
 
 	/*

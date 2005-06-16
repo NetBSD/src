@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.301 2005/06/04 04:35:27 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.302 2005/06/16 04:17:49 briggs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2005/06/04 04:35:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2282,7 +2282,7 @@ ctx_alloc(pm)
 		 */
 		simple_lock(&pm->pm_lock);
 #if defined(MULTIPROCESSOR)
-		for (i = 0; i < ncpus; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif
@@ -2336,7 +2336,7 @@ ctx_free(pm)
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
 #if defined(MULTIPROCESSOR)
-		for (i = 0; i < ncpus; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif
@@ -3652,11 +3652,11 @@ pmap_bootstrap4m(top)
 
 	/* Allocate kernel region pointer tables */
 	pmap_kernel()->pm_reg_ptps = (int **)(q = p);
-	p += ncpus * sizeof(int **);
+	p += sparc_ncpus * sizeof(int **);
 	bzero((void *)q, (u_int)p - (u_int)q);
 
 	pmap_kernel()->pm_reg_ptps_pa = (int *)(q = p);
-	p += ncpus * sizeof(int *);
+	p += sparc_ncpus * sizeof(int *);
 	bzero((void *)q, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
@@ -4084,8 +4084,6 @@ pmap_alloc_cpu(sc)
 
 	/* Pre-compute this CPU's vpage[] PTEs */
 	for (i = 0; i < 2; i++) {
-		struct regmap *rp;
-		struct segmap *sp;
 		rp = &pmap_kernel()->pm_regmap[VA_VREG(sc->vpage[i])];
 		sp = &rp->rg_segmap[VA_VSEG(sc->vpage[i])];
 		sc->vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(sc->vpage[i])];
@@ -4115,8 +4113,8 @@ pmap_init()
 	 */
 	sz = ALIGN(sizeof(struct pmap)) +
 	     ALIGN(NUREG * sizeof(struct regmap)) +
-	     ncpus * sizeof(int *) +		/* pm_reg_ptps */
-	     ncpus * sizeof(int);		/* pm_reg_ptps_pa */
+	     sparc_ncpus * sizeof(int *) +	/* pm_reg_ptps */
+	     sparc_ncpus * sizeof(int);		/* pm_reg_ptps_pa */
 	pool_init(&pmap_pmap_pool, sz, 0, 0, 0, "pmappl",
 		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
@@ -4199,7 +4197,7 @@ pmap_quiet_check(struct pmap *pm)
 		if (CPU_HAS_SRMMU) {
 			int n;
 #if defined(MULTIPROCESSOR)
-			for (n = 0; n < ncpus; n++)
+			for (n = 0; n < sparc_ncpus; n++)
 #else
 			n = 0;
 #endif
@@ -4281,7 +4279,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	pm->pm_regmap = (void *)addr;
 	addr += ALIGN(NUREG * sizeof(struct regmap));
 	pm->pm_reg_ptps = (int **)addr;
-	addr += ncpus * sizeof(int *);
+	addr += sparc_ncpus * sizeof(int *);
 	pm->pm_reg_ptps_pa = (int *)addr;
 
 	qzero((caddr_t)pm->pm_regmap, NUREG * sizeof(struct regmap));
@@ -4311,7 +4309,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		 * this user context.
 		 */
 #if defined(MULTIPROCESSOR)
-		for (n = 0; n < ncpus; n++)
+		for (n = 0; n < sparc_ncpus; n++)
 #else
 		n = 0;
 #endif
@@ -4363,7 +4361,7 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		int n;
 
 #if defined(MULTIPROCESSOR)
-		for (n = 0; n < ncpus; n++)
+		for (n = 0; n < sparc_ncpus; n++)
 #else
 		n = 0;
 #endif
@@ -4550,7 +4548,7 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 					 PMAP_CPUSET(pm));
 #ifdef MULTIPROCESSOR
 		/* Invalidate level 1 PTP entries on all CPUs */
-		for (; n < ncpus; n++)
+		for (; n < sparc_ncpus; n++)
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
 
@@ -6452,7 +6450,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 
 		/* Replicate segment allocation in each CPU's region table */
 #ifdef MULTIPROCESSOR
-		for (i = 0; i < ncpus; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif
