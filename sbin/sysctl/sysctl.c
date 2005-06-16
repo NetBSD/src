@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.102 2005/04/06 21:13:03 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.103 2005/06/16 14:56:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.102 2005/04/06 21:13:03 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.103 2005/06/16 14:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ static void kern_clockrate(HANDLER_PROTO);
 static void kern_boottime(HANDLER_PROTO);
 static void kern_consdev(HANDLER_PROTO);
 static void kern_cp_time(HANDLER_PROTO);
+static void kern_cp_id(HANDLER_PROTO);
 static void vm_loadavg(HANDLER_PROTO);
 static void proc_limit(HANDLER_PROTO);
 #ifdef CPU_DISKINFO
@@ -188,6 +189,7 @@ static const struct handlespec {
 	{ "/kern/consdev",			kern_consdev },
 	{ "/kern/cp_time(/[0-9]+)?",		kern_cp_time },
 	{ "/kern/sysvipc_info",			printother, NULL, "ipcs" },
+	{ "/kern/cp_id(/[0-9]+)?",		kern_cp_id },
 
 	{ "/vm/vmmeter",			printother, NULL,
 						"vmstat' or 'systat" },
@@ -2188,6 +2190,91 @@ kern_cp_time(HANDLER_ARGS)
 	}
 
 	free(cp_time);
+}
+
+/*ARGSUSED*/
+static void
+kern_cp_id(HANDLER_ARGS)
+{
+	u_int64_t *cp_id;
+	size_t sz, osz;
+	int rc, i, n;
+	char s[sizeof("kern.cp_id.nnnnnn")];
+	const char *tname;
+	struct sysctlnode node = *pnode;
+
+	/*
+	 * three things to do here.
+	 * case 1: print a specific cpu id (namelen == 3)
+	 * case 2: print all cpu ids separately (Aflag set)
+	 * case 3: print all cpu ids on one line
+	 */
+
+	if (namelen == 2) {
+		sz = sizeof(n);
+		rc = sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
+		if (rc != 0)
+			return; /* XXX print an error, eh? */
+		sz = n * sizeof(u_int64_t);
+	}
+	else {
+		n = -1; /* Just print one cpu id. */
+		sz = sizeof(u_int64_t);
+	}
+
+	cp_id = malloc(sz);
+	if (cp_id == NULL) {
+		sysctlerror(1);
+		return;
+	}
+
+	osz = sz;
+	rc = sysctl(name, namelen, cp_id, &osz, NULL, 0);
+	if (rc == -1) {
+		sysctlerror(1);
+		free(cp_id);
+		return;
+	}
+
+	/*
+	 * Check that we got back what we asked for.
+	 */
+	if (osz != sz)
+		errx(1, "%s: !returned size wrong!", sname);
+
+	/* pretend for output purposes */
+	node.sysctl_flags = SYSCTL_FLAGS(pnode->sysctl_flags) |
+		SYSCTL_TYPE(CTLTYPE_QUAD);
+
+	tname = sname;
+	if (namelen == 3)
+		display_number(&node, tname, cp_id,
+			       sizeof(u_int64_t),
+			       DISPLAY_VALUE);
+	else if (Aflag) {
+		for (i = 0; i < n; i++)
+			(void)snprintf(s, sizeof(s), "%s%s%d", sname, sep, i);
+			tname = s;
+			display_number(&node, tname, &cp_id[i],
+				       sizeof(u_int64_t),
+				       DISPLAY_VALUE);
+	}
+	else {
+		if (xflag || rflag)
+			display_struct(pnode, tname, cp_id, sz, DISPLAY_VALUE);
+		else {
+			if (!nflag)
+				printf("%s: ", tname);
+			for (i = 0; i < n; i++) {
+				if (i)
+					printf(", ");
+				printf("%d = %" PRIu64, i, cp_id[i]);
+			}
+			printf("\n");
+		}
+	}
+
+	free(cp_id);
 }
 
 /*ARGSUSED*/
