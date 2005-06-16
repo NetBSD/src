@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.136 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.137 2005/06/16 14:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -269,7 +269,8 @@ struct ctlname {
 #define	KERN_BUF		76	/* struct: buffers */
 #define	KERN_FILE2		77	/* struct: file entries */
 #define	KERN_VERIEXEC		78	/* node: verified exec */
-#define	KERN_MAXID		79	/* number of valid kern ids */
+#define	KERN_CP_ID		79	/* struct: cpu id numbers */
+#define	KERN_MAXID		80	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -352,6 +353,7 @@ struct ctlname {
 	{ "buf", CTLTYPE_NODE }, \
 	{ "file2", CTLTYPE_STRUCT }, \
 	{ "veriexec", CTLTYPE_NODE }, \
+	{ "cp_id", CTLTYPE_STRUCT }, \
 }
 
 /*
