@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.86 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.87 2005/06/16 04:17:49 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.86 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.87 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -144,7 +144,7 @@ getitr()
 #if defined(MULTIPROCESSOR)
 	u_int v;
 
-	if (!CPU_ISSUN4M || ncpus <= 1)
+	if (!CPU_ISSUN4M || sparc_ncpus <= 1)
 		return (0);
 
 	v = *((u_int *)ICR_ITR);
@@ -164,7 +164,7 @@ setitr(u_int mid)
 #if defined(MULTIPROCESSOR)
 	u_int v;
 
-	if (!CPU_ISSUN4M || ncpus <= 1)
+	if (!CPU_ISSUN4M || sparc_ncpus <= 1)
 		return (0);
 
 	v = *((u_int *)ICR_ITR);
@@ -253,7 +253,7 @@ nmi_hard()
 	} else {
 		int n = 100000;
 
-		while (nmi_hard_wait < ncpus) {
+		while (nmi_hard_wait < sparc_ncpus) {
 			DELAY(1);
 			if (n-- > 0)
 				continue;

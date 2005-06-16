@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.209 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.209 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -276,7 +276,7 @@ bootstrap()
 	prom_init();
 
 	/* Find the number of CPUs as early as possible */
-	ncpus = find_cpus();
+	sparc_ncpus = find_cpus();
 
 	/* Attach user structure to proc0 */
 	lwp0.l_addr = proc0paddr;

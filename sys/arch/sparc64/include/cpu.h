@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2004/09/22 11:32:03 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.47 2005/06/16 04:17:50 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,7 +163,7 @@ struct cpu_bootargs {
 
 extern struct cpu_bootargs *cpu_args;
 
-extern int ncpus;
+extern int sparc_ncpus;
 extern struct cpu_info *cpus;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
