@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.222 2005/05/29 22:10:28 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.223 2005/06/16 20:15:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.222 2005/05/29 22:10:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.223 2005/06/16 20:15:04 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -665,8 +665,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
-			if (wdc == NULL ||
-			    (wdc->cap & WDC_CAPABILITY_PREATA) != 0)
+			if ((wdc->cap & WDC_CAPABILITY_PREATA) != 0)
 				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
 		}
 		splx(s);
