@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 2005/05/31 00:53:02 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.41 2005/06/16 04:17:50 briggs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2005/06/16 04:17:50 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2005/05/31 00:53:02 christos Exp $");
 struct cacheinfo cacheinfo;
 
 /* Linked list of all CPUs in system. */
-int ncpus = 0;
+int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
 __volatile cpuset_t cpus_active;/* set of active cpus */

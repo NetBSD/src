@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.62 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.63 2005/06/16 04:17:49 briggs Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -533,7 +533,7 @@ db_cpu_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	
-	if ((addr < 0) || (addr >= ncpus)) {
+	if ((addr < 0) || (addr >= sparc_ncpus)) {
 		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}

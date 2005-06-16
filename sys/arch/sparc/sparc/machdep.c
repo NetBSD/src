@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.256 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.257 2005/06/16 04:17:49 briggs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1080,7 +1080,7 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	/* Disable interrupts. But still allow IPI on MP systems */
-	if (ncpus > 1)
+	if (sparc_ncpus > 1)
 		(void)splsched();
 	else
 		(void)splhigh();

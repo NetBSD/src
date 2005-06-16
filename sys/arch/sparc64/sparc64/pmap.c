@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.163 2005/06/01 21:05:36 jdc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164 2005/06/16 04:17:50 briggs Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2005/06/01 21:05:36 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2005/06/16 04:17:50 briggs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -859,7 +859,7 @@ remap_data:
 	/*
 	 * Allocate a 64MB page for the cpu_info structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * ncpus, 8 * PAGE_SIZE)) == 0 ) {
+	if ((cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE)) == 0 ) {
 		prom_printf("Cannot allocate new cpu_info\n");
 		prom_halt();
 	}
