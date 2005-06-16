@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.126 2005/05/30 04:20:46 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.127 2005/06/16 12:55:25 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.126 2005/05/30 04:20:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.127 2005/06/16 12:55:25 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -196,7 +196,7 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 static char *
 usbd_trim_spaces(char *b, size_t s, const char *p)
 {
-	char *q, *e;
+	char *q, *e, *bp = b;
 
 	if (p == NULL)
 		return NULL;
@@ -207,8 +207,8 @@ usbd_trim_spaces(char *b, size_t s, const char *p)
 	while ((*b = *q++))	/* copy string */
 		if (*b++ != ' ') /* remember last non-space */
 			e = b;
-	*e = 0;			/* kill trailing spaces */
-	return b;
+	*e = '\0';		/* kill trailing spaces */
+	return bp;
 }
 
 Static void
