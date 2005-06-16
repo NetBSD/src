@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.44 2005/06/15 16:58:31 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.45 2005/06/16 14:55:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.44 2005/06/15 16:58:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.45 2005/06/16 14:55:58 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -141,6 +141,7 @@ static int sysctl_kern_file2(SYSCTLFN_PROTO);
 #ifdef VERIFIED_EXEC
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
 #endif
+static int sysctl_kern_cpid(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
@@ -766,6 +767,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
 #endif /* VERIFIED_EXEC */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "cp_id",
+		       SYSCTL_DESCR("Mapping of CPU number to CPU id"),
+		       sysctl_kern_cpid, 0, NULL, 0,
+		       CTL_KERN, KERN_CP_ID, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -2436,6 +2443,101 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 	return (error);
 }
 #endif /* VERIFIED_EXEC */
+
+/*
+ * sysctl helper routine for kern.cp_id node.  maps cpus to their
+ * cpuids.
+ */
+static int
+sysctl_kern_cpid(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+
+#ifndef MULTIPROCESSOR
+	u_int64_t id;
+
+	if (namelen == 1) {
+		if (name[0] != 0)
+			return (ENOENT);
+		/*
+		 * you're allowed to ask for the zero'th processor
+		 */
+		name++;
+		namelen--;
+	}
+	node.sysctl_data = &id;
+	node.sysctl_size = sizeof(id);
+	id = cpu_number();
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+
+#else /* MULTIPROCESSOR */
+	u_int64_t *cp_id = NULL;
+	int error, n = sysctl_ncpus();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	/*
+	 * if you specifically pass a buffer that is the size of a single cpuid
+	 * sum, or if you are probing for the size, you get the "sum"
+	 * of cp_time (and the size thereof) across all processors.
+	 *
+	 * alternately, you can pass an additional mib number and get
+	 * cp_time for that particular processor.
+	 */
+	switch (namelen) {
+	case 0:
+		node.sysctl_size = n * sizeof(u_int64_t);
+		n = -2; /* ALL */
+		break;
+	case 1:
+		if (name[0] < 0 || name[0] >= n)
+			return (ENOENT); /* ENOSUCHPROCESSOR */
+		node.sysctl_size = sizeof(u_int64_t);
+		n = name[0];
+		/*
+		 * adjust these so that sysctl_lookup() will be happy
+		 */
+		name++;
+		namelen--;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	cp_id = malloc(node.sysctl_size, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (cp_id == NULL)
+		return (ENOMEM);
+	node.sysctl_data = cp_id;
+	memset(cp_id, 0, node.sysctl_size);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (n <= 0)
+			cp_id[0] = ci->ci_cpuid;
+		/*
+		 * if a specific processor was requested and we just
+		 * did it, we're done here
+		 */
+		if (n == 0)
+			break;
+		/*
+		 * if doing "all", skip to next cp_id slot for next processor
+		 */
+		if (n == -2)
+			cp_id++;
+		/*
+		 * if we're doing a specific processor, we're one
+		 * processor closer
+		 */
+		if (n > 0)
+			n--;
+	}
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	free(node.sysctl_data, M_TEMP);
+	return (error);
+
+#endif /* MULTIPROCESSOR */
+}
 
 /*
  * sysctl helper routine for hw.usermem and hw.usermem64.  values are
