@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2004/06/30 03:26:26 jmc Exp $
+# $NetBSD: Makefile,v 1.14.2.1 2005/06/16 09:33:49 tron Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -19,6 +19,7 @@ UNIT_TESTS:= ${.PARSEDIR}
 # Simple sub-makefiles - we run them as a black box
 # keep the list sorted.
 SUBFILES= \
+	comment \
 	cond1 \
 	modmatch \
 	modts \
