@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.92 2005/05/08 04:19:12 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -829,8 +829,9 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 			DBPRINTF(commandShell->errCheck, escCmd);
 			shutUp = TRUE;
 		}
-		/* If it's a comment line, treat it like an ignored error */
-		if (escCmd[0] == commandShell->commentChar)
+		/* If it's a comment line or blank, treat as an ignored error */
+		if ((escCmd[0] == commandShell->commentChar) ||
+		    (escCmd[0] == 0))
 			cmdTemplate = commandShell->ignErr;
 		else
 			cmdTemplate = commandShell->errOut;
