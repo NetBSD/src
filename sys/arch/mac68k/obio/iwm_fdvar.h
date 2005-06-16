@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.8 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.9 2005/06/16 22:45:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -88,7 +88,7 @@ struct fdInfo {
 	short	stepRate;		/* in ms (is a software delay) */
 	short	interleave;		/* Sector interleave */
 	short	physFormat;		/* GCR, MFM DD, MFM HD */
-	char	*description;
+	const char	*description;
 };
 typedef struct fdInfo fdInfo_t;
 
