@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.16 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.17 2005/06/16 22:45:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -249,11 +249,11 @@ static void scsi_reset_verbose(struct ncr_softc *, const char *);
 static void run_main(struct ncr_softc *);
 static void scsi_main(struct ncr_softc *);
 static void ncr_ctrl_intr(struct ncr_softc *);
-static void ncr_tprint(SC_REQ *, char *, ...);
-static void ncr_aprint(struct ncr_softc *, char *, ...);
+static void ncr_tprint(SC_REQ *, const char *, ...);
+static void ncr_aprint(struct ncr_softc *, const char *, ...);
 
 static void show_data_sense(struct scsipi_xfer *);
-static void show_request(SC_REQ *, char *);
+static void show_request(SC_REQ *, const char *);
 /* static void show_phase(SC_REQ *, int); */
 static void show_signals(u_char, u_char);
 

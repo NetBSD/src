@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.32 2005/01/16 00:32:03 chs Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.33 2005/06/16 22:45:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.32 2005/01/16 00:32:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.33 2005/06/16 22:45:46 jmc Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -1141,7 +1141,7 @@ fdstart(fd_softc_t *fd)
 {
 	int st;
 
-	static char *stateDesc[] = {
+	static const char *stateDesc[] = {
 		"Init",
 		"Seek",
 		"Read",
@@ -1153,7 +1153,7 @@ fdstart(fd_softc_t *fd)
 		"Exit",
 		"Done"
 	};
-	int (*state[])(fd_softc_t *fd) = {
+	int (*state[])(fd_softc_t *) = {
 		fdstart_Init,
 		fdstart_Seek,
 		fdstart_Read,
@@ -1896,7 +1896,7 @@ seek(fd_softc_t *fd, int style)
 	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
 #endif
 
-	char *stateDesc[] = {
+	const char *stateDesc[] = {
 		"Init",
 		"Seek",
 		"Recalibrate",
@@ -1904,11 +1904,11 @@ seek(fd_softc_t *fd, int style)
 		"Exit"
 	};
 	enum {
-		state_Init = 0,
-		state_Seek,
-		state_Recalibrate,
-		state_Verify,
-		state_Exit
+		seek_state_Init = 0,
+		seek_state_Seek,
+		seek_state_Recalibrate,
+		seek_state_Verify,
+		seek_state_Exit
 	};
 	/* XXX egcs */
 	done = err = ierr = 0;
@@ -1917,14 +1917,14 @@ seek(fd_softc_t *fd, int style)
 
 	loc = &fd->pos;
 
-	state = state_Init;
+	state = seek_state_Init;
 	do {
 		if (TRACE_STEP)
 			printf(" seek state %d [%s].\n",
 			    state, stateDesc[state]);
 		switch (state) {
 
-		case state_Init:
+		case seek_state_Init:
 			if (TRACE_STEP)
 				printf("Current track is %d, new track %d.\n",
 				    loc->oldTrack, loc->track);
@@ -1933,23 +1933,23 @@ seek(fd_softc_t *fd, int style)
 			fd->seekRetries = 0;
 			fd->verifyRetries = 0;
 			state = (style == IWM_SEEK_RECAL)
-			    ? state_Recalibrate : state_Seek;
+			    ? seek_state_Recalibrate : seek_state_Seek;
 			done = 0;
 			break;
 
-		case state_Recalibrate:
+		case seek_state_Recalibrate:
 			ierr = iwmTrack00();
 			if (ierr == 0) {
 				loc->oldTrack = 0;
-				state = state_Seek;
+				state = seek_state_Seek;
 			} else {
 				strncpy(action, "Recalibrate (track 0)",
 				    sizeof(action));
-				state = state_Exit;
+				state = seek_state_Exit;
 			}
 			break;
 
-		case state_Seek:
+		case seek_state_Seek:
 			ierr = 0;
 			steps = loc->track - loc->oldTrack;
 
@@ -1958,34 +1958,34 @@ seek(fd_softc_t *fd, int style)
 			if (ierr == 0) {
 				/* No error or nothing to do */
 				state = (style == IWM_SEEK_VERIFY)
-				    ? state_Verify : state_Exit;
+				    ? seek_state_Verify : seek_state_Exit;
 			} else {
 				if (fd->seekRetries++ < iwm->maxRetries)
-					state = state_Recalibrate;
+					state = seek_state_Recalibrate;
 				else {
 					strncpy(action, "Seek retries",
 					    sizeof(action));
-					state = state_Exit;
+					state = seek_state_Exit;
 				}
 			}
 			break;
 
-		case state_Verify:
+		case seek_state_Verify:
 			ierr = checkTrack(loc, TRACE_STEP);
 			if (ierr == 0 && loc->track == hdr.track)
-				state = state_Exit;
+				state = seek_state_Exit;
 			else {
 				if (fd->verifyRetries++ < iwm->maxRetries)
-					state = state_Recalibrate;
+					state = seek_state_Recalibrate;
 				else {
 					strncpy(action, "Verify retries",
 					    sizeof(action));
-					state = state_Exit;
+					state = seek_state_Exit;
 				}
 			}
 			break;
 
-		case state_Exit:
+		case seek_state_Exit:
 			if (ierr == 0) {
 				loc->oldTrack = loc->track;
 				err = 0;

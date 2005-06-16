@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.304 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.305 2005/06/16 22:45:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2005/06/16 22:45:46 jmc Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -266,7 +266,7 @@ int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 
 void		getenvvars(u_long, char *);
-static long	getenv(char *);
+static long	getenv(const char *);
 
 /* functions called from locore.s */
 void	dumpsys(void);
@@ -423,7 +423,7 @@ cpu_startup(void)
 {
 	int vers;
 	vaddr_t minaddr, maxaddr;
-	int delay;
+	int xdelay;
 	char pbuf[9];
 
 	/*
@@ -448,7 +448,7 @@ cpu_startup(void)
 		printf("Booter version %d.%d is necessary to fully support\n",
 		    CURRENTBOOTERVER / 100, CURRENTBOOTERVER % 100);
 		printf("this kernel.\n\n");
-		for (delay = 0; delay < 1000000; delay++);
+		for (xdelay = 0; xdelay < 1000000; xdelay++);
 	}
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -1154,7 +1154,7 @@ getenvvars(u_long flag, char *buf)
 }
 
 static long
-getenv(char *str)
+getenv(const char *str)
 {
 	/*
 	 * Returns the value of the environment variable "str".
@@ -1165,7 +1165,8 @@ getenv(char *str)
 	 * there without an "=val".
 	 */
 
-	char *s, *s1;
+	char *s;
+	const char *s1;
 	int val, base;
 
 	s = envbuf;
@@ -2025,7 +2026,7 @@ static void
 identifycpu(void)
 {
 	extern u_int delay_factor;
-	char *mpu;
+	const char *mpu;
 
 	switch (cputype) {
 	case CPU_68020:
@@ -2427,10 +2428,10 @@ get_physical(u_int addr, u_long * phys)
 	return 1;
 }
 
-static void	check_video(char *, u_long, u_long);
+static void	check_video(const char *, u_long, u_long);
 
 static void
-check_video(char *id, u_long limit, u_long maxm)
+check_video(const char *id, u_long limit, u_long maxm)
 {
 	u_long addr, phys;
 
