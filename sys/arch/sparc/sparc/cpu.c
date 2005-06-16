@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.190 2005/06/03 22:15:48 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.191 2005/06/16 04:17:49 briggs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.190 2005/06/03 22:15:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.191 2005/06/16 04:17:49 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -101,7 +101,7 @@ int	cpu_arch;			/* sparc architecture version */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
-int	ncpus;				/* # of CPUs detected by PROM */
+int	sparc_ncpus;			/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
 u_int	cpu_ready_mask;			/* the set of CPUs marked as READY */
 static	int cpu_instance;		/* current # of CPUs wired by us */
@@ -427,8 +427,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	if (cpus == NULL) {
 		extern struct pcb idle_u[];
 
-		cpus = malloc(ncpus * sizeof(cpi), M_DEVBUF, M_NOWAIT);
-		bzero(cpus, ncpus * sizeof(cpi));
+		cpus = malloc(sparc_ncpus * sizeof(cpi), M_DEVBUF, M_NOWAIT);
+		bzero(cpus, sparc_ncpus * sizeof(cpi));
 
 		getcpuinfo(&cpuinfo, node);
 
@@ -492,7 +492,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpi->mid = mid;
 	cpi->node = node;
 
-	if (ncpus > 1) {
+	if (sparc_ncpus > 1) {
 		printf(": mid %d", mid);
 		if (mid == 0 && !CPU_ISSUN4D)
 			printf(" [WARNING: mid should not be 0]");
@@ -524,14 +524,14 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 
 	cache_print(sc);
 
-	if (ncpus > 1 && cpu_instance == ncpus) {
+	if (sparc_ncpus > 1 && cpu_instance == sparc_ncpus) {
 		int n;
 		/*
 		 * Install MP cache flush functions, unless the
 		 * single-processor versions are no-ops.
 		 */
-		for (n = 0; n < ncpus; n++) {
-			struct cpu_info *cpi = cpus[n];
+		for (n = 0; n < sparc_ncpus; n++) {
+			cpi = cpus[n];
 			if (cpi == NULL)
 				continue;
 #define SET_CACHE_FUNC(x) \
@@ -554,14 +554,14 @@ cpu_boot_secondary_processors()
 {
 	int n;
 
-	if (cpu_instance != ncpus) {
+	if (cpu_instance != sparc_ncpus) {
 		printf("NOTICE: only %d out of %d CPUs were configured\n",
-			cpu_instance, ncpus);
+			cpu_instance, sparc_ncpus);
 		return;
 	}
 
 	printf("cpu0: booting secondary processors:");
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
@@ -647,7 +647,8 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	 * Wait for this CPU to spin up.
 	 */
 	for (n = 10000; n != 0; n--) {
-		cache_flush((caddr_t)&cpi->flags, sizeof(cpi->flags));
+		cache_flush((caddr_t) __UNVOLATILE(&cpi->flags),
+			    sizeof(cpi->flags));
 		if (cpi->flags & CPUFLG_HATCHED)
 			return;
 		delay(100);
@@ -708,7 +709,7 @@ xcall(func, trap, arg0, arg1, arg2, cpuset)
 	 * finished by the time we start looking.
 	 */
 	fasttrap = trap != NULL ? 1 : 0;
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		/* Note: n == cpi->ci_cpuid */
@@ -748,7 +749,7 @@ xcall(func, trap, arg0, arg1, arg2, cpuset)
 		}
 
 		done = 1;
-		for (n = 0; n < ncpus; n++) {
+		for (n = 0; n < sparc_ncpus; n++) {
 			struct cpu_info *cpi = cpus[n];
 
 			if ((cpuset & (1 << n)) == 0)
@@ -782,7 +783,7 @@ mp_pause_cpus()
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
@@ -809,7 +810,7 @@ mp_resume_cpus()
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
@@ -835,7 +836,7 @@ mp_halt_cpus()
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 		int r;
 
@@ -862,7 +863,7 @@ mp_pause_cpus_ddb()
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpi->mid == cpuinfo.mid)
@@ -881,7 +882,7 @@ mp_resume_cpus_ddb()
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
@@ -1787,7 +1788,7 @@ viking_module_error(void)
 	int n, fatal = 0;
 
 	/* Report on MXCC error registers in each module */
-	for (n = 0; n < ncpus; n++) {
+	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL)
