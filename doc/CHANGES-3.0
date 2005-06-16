@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.135 2005/06/16 09:44:56 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.136 2005/06/16 09:54:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9616,16 +9616,6 @@ usr.bin/gzip/unbzip2.c				1.7
 
 	Fix numerous uninitalized variables.
 	[lukem, ticket #421]
-
-usr.bin/make/make.1				1.110
-usr.bin/make/parse.c				1.100
-usr.bin/make/unit-tests/Makefile		1.16
-usr.bin/make/unit-tests/comment			1.1
-
-	We now support comments until the end of a non-escaped line.
-	Add a unit-test for comments. Addition to PR bin/17732.
-	PR bin/17732: Allow make to understand escaped comments.
-	[rpaulo, ticket #458]
 
 sys/dev/ata/wd.c				1.302
 
