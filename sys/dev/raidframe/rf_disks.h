@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.12 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.12.2.1 2005/06/17 13:35:24 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -44,19 +44,14 @@
 	((_dstat_) == rf_ds_reconstructing) || ((_dstat_) == rf_ds_failed) || \
 	((_dstat_) == rf_ds_dist_spared))
 
-int rf_ConfigureDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-		      RF_Config_t * cfgPtr);
-int rf_ConfigureSpareDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-			   RF_Config_t * cfgPtr);
-int rf_ConfigureDisk(RF_Raid_t * raidPtr, char *buf, RF_RaidDisk_t * diskPtr,
-		     RF_RowCol_t col);
-int rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
-			  RF_AutoConfig_t *auto_config);
-int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
-int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
-int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
-int rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component);
-int rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
-			     RF_SingleComponent_t *component);
+int rf_ConfigureDisks(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+int rf_ConfigureSpareDisks(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+int rf_ConfigureDisk(RF_Raid_t *, char *, RF_RaidDisk_t *, RF_RowCol_t);
+int rf_AutoConfigureDisks(RF_Raid_t *, RF_Config_t *, RF_AutoConfig_t *);
+int rf_CheckLabels(RF_Raid_t *, RF_Config_t *);
+int rf_add_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
+int rf_remove_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
+int rf_delete_component(RF_Raid_t *r, RF_SingleComponent_t *);
+int rf_incorporate_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
 
-#endif				/* !_RF__RF_DISKS_H_ */
+#endif /* !_RF__RF_DISKS_H_ */
