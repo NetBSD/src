@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$NetBSD: rf_options.h,v 1.3.56.1 2005/06/17 13:35:04 tron Exp $	*/
 /*
  * rf_options.h
  */
@@ -35,7 +35,7 @@
 #define RF_DEFAULT_LOCK_TABLE_SIZE 256
 
 typedef struct RF_DebugNames_s {
-	char   *name;
+	const char   *name;
 	long   *ptr;
 }       RF_DebugName_t;
 
