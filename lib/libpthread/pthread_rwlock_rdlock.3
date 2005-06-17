@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.8 2005/03/21 17:55:07 kleink Exp $
+.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.9 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,9 +77,9 @@ function acquires a read lock on
 provided that
 .Fa lock
 is not presently held for writing and no writer threads are
-presently blocked on the lock.  If the read lock cannot be
-immediately acquired, the calling thread blocks until it can
-acquire the lock.
+presently blocked on the lock.
+If the read lock cannot be immediately acquired, the calling thread
+blocks until it can acquire the lock.
 .Pp
 The
 .Fn pthread_rwlock_timedrdlock
@@ -94,7 +94,8 @@ function performs the same action as
 but does not block if the lock cannot be immediately obtained (i.e.,
 the lock is held for writing or there are waiting writers).
 .Pp
-A thread may hold multiple concurrent read locks.  If so,
+A thread may hold multiple concurrent read locks.
+If so,
 .Fn pthread_rwlock_unlock
 must be called once for each lock obtained.
 .Pp
@@ -106,8 +107,8 @@ If successful, the
 .Fn pthread_rwlock_timedrdlock ,
 and
 .Fn pthread_rwlock_tryrdlock
-functions will return zero.  Otherwise an error number will be returned
-to indicate the error.
+functions will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh ERRORS
 The
 .Fn pthread_rwlock_tryrdlock

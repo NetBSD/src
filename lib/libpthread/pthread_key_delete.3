@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_key_delete.3,v 1.4 2003/07/04 08:42:57 wiz Exp $
+.\" $NetBSD: pthread_key_delete.3,v 1.5 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,6 +129,7 @@ The current specifications of
 and
 .Fn pthread_key_delete
 are flawed and do not permit a clean implementation without
-potential problems.  The current implementation of these functions
+potential problems.
+The current implementation of these functions
 .Nx
 in addresses these problems by not supporting key reuse.
