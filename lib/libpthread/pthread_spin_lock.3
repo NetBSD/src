@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_lock.3,v 1.4 2003/07/04 10:19:42 wiz Exp $
+.\" $NetBSD: pthread_spin_lock.3,v 1.5 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,8 +61,8 @@ If successful, the
 .Fn pthread_spin_lock
 and
 .Fn pthread_spin_trylock
-functions will return zero.  Otherwise an error number will be returned
-to indicate the error.
+functions will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh ERRORS
 The
 .Fn pthread_spin_trylock
