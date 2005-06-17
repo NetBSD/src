@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.5 2005/06/17 18:07:06 peter Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.6 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,8 @@ function destroys
 .Pp
 The
 .Fn pthread_mutexattr_settype
-functions set the mutex type value of the attribute.  Valid mutex types are:
+functions set the mutex type value of the attribute.
+Valid mutex types are:
 .Dv PTHREAD_MUTEX_NORMAL ,
 .Dv PTHREAD_MUTEX_ERRORCHECK ,
 .Dv PTHREAD_MUTEX_RECURSIVE ,
@@ -121,8 +122,8 @@ is
 mutexes do not check for usage errors.
 .Dv PTHREAD_MUTEX_NORMAL
 mutexes will deadlock if reentered, and result in undefined behavior if a
-locked mutex is unlocked by another thread.  Attempts to unlock an already
-unlocked
+locked mutex is unlocked by another thread.
+Attempts to unlock an already unlocked
 .Dv PTHREAD_MUTEX_NORMAL
 mutex will result in undefined behavior.
 .Pp
@@ -130,11 +131,11 @@ mutex will result in undefined behavior.
 mutexes do check for usage errors.
 If an attempt is made to relock a
 .Dv PTHREAD_MUTEX_ERRORCHECK
-mutex without first dropping the lock an error will be returned.  If a thread
-attempts to unlock a
+mutex without first dropping the lock an error will be returned.
+If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_ERRORCHECK
-mutex that is locked by another thread, an error will be returned.  If a
-thread attempts to unlock a
+mutex that is locked by another thread, an error will be returned.
+If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_ERRORCHECK
 thread that is unlocked, an error will be
 returned.
@@ -143,13 +144,15 @@ returned.
 mutexes allow recursive locking.
 An attempt to relock a
 .Dv PTHREAD_MUTEX_RECURSIVE
-mutex that is already locked by the same thread succeeds.  An equivalent
-number of
+mutex that is already locked by the same thread succeeds.
+An equivalent number of
 .Xr pthread_mutex_unlock 3
-calls are needed before the mutex will wake another thread waiting on this
-lock.  If a thread attempts to unlock a
+calls are needed before the mutex will wake another thread waiting
+on this lock.
+If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_RECURSIVE
-mutex that is locked by another thread, an error will be returned.  If a thread attempts to unlock a
+mutex that is locked by another thread, an error will be returned.
+If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_RECURSIVE
 thread that is unlocked, an error will be returned.
 .Pp
@@ -157,13 +160,14 @@ thread that is unlocked, an error will be returned.
 mutexes result in undefined behavior if reentered.
 Unlocking a
 .Dv PTHREAD_MUTEX_DEFAULT
-mutex locked by another thread will result in undefined behavior.  Attempts to unlock an already
-unlocked
+mutex locked by another thread will result in undefined behavior.
+Attempts to unlock an already unlocked
 .Dv PTHREAD_MUTEX_DEFAULT
 mutex will result in undefined behavior.
 .Pp
 .Fn pthread_mutexattr_gettype
-functions copy the type value of the attribute to the location pointed to by the second parameter.
+functions copy the type value of the attribute to the location
+pointed to by the second parameter.
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.

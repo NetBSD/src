@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_init.3,v 1.4 2005/06/17 18:07:06 peter Exp $
+.\" $NetBSD: pthread_spin_init.3,v 1.5 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,8 @@
 .Sh DESCRIPTION
 The
 .Fn pthread_spin_init
-function is used to initialize a spinlock.  The
+function is used to initialize a spinlock.
+The
 .Fa pshared
 parameter is currently unused and all spinlocks exhibit the
 .Dv PTHREAD_PROCESS_SHARED
@@ -52,8 +53,8 @@ with an already initialized lock are undefined.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_spin_init
-function will return zero.  Otherwise an error number will be returned
-to indicate the error.
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh ERRORS
 The
 .Fn pthread_spin_init

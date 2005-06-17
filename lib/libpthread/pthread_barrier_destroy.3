@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_destroy.3,v 1.4 2005/06/17 18:07:06 peter Exp $
+.\" $NetBSD: pthread_barrier_destroy.3,v 1.5 2005/06/17 18:26:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,8 @@ The
 .Fn pthread_barrier_destroy
 function causes the resources allocated to
 .Fa barrier
-to be released.  No threads should be blocked on
+to be released.
+No threads should be blocked on
 .Fa barrier .
 .Sh RETURN VALUES
 If successful,
