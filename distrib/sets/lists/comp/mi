@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.792 2005/06/17 18:26:22 peter Exp $
+#	$NetBSD: mi,v 1.793 2005/06/17 18:37:24 peter Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4015,6 +4015,8 @@
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setcreatesuspend_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolote
 ./usr/share/man/cat3/pthread_barierattr_init.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barrierattr_destroy.0	comp-c-catman		.cat
@@ -7887,6 +7889,8 @@
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setdetachstate.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_getschedparam.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_barierattr_init.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_barrierattr_destroy.3	comp-c-man		.man
