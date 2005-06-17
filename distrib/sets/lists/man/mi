@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.792 2005/06/15 18:06:19 xtraeme Exp $
+# $NetBSD: mi,v 1.793 2005/06/17 17:12:57 peter Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1380,7 +1380,7 @@
 ./usr/share/man/cat4/viaenv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viaide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viapm.0			man-sys-catman		.cat
-./usr/share/man/cat4/vinum.0			man-sys-catman		dummy,.cat
+./usr/share/man/cat4/vinum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
@@ -3611,7 +3611,7 @@
 ./usr/share/man/man4/viaenv.4			man-sys-man		.man
 ./usr/share/man/man4/viaide.4			man-sys-man		.man
 ./usr/share/man/man4/viapm.4			man-sys-man		.man
-./usr/share/man/man4/vinum.4			man-sys-man		dummy,.man
+./usr/share/man/man4/vinum.4			man-sys-man		.man
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
