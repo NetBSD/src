@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.148 2005/06/01 17:43:23 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.149 2005/06/17 12:47:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1752,4 +1752,12 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add missing PCI id for Adaptec ASR-2410SA, and use this PCI
 	id symbol instead of hardcoding the number.
 	[tron, ticket #5721]
+
+sys/dev/audio.c					1.196 via patch
+
+	Make sure buffer sizes are initialized correctly even when the pause
+	state is explicitly set.
+	Without this, the machine would crash for some audio hardware that
+	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
+	[is, ticket #5793]
 
