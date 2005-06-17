@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2005/06/12 19:18:34 dyoung Exp $
+#	$NetBSD: Makefile,v 1.56 2005/06/17 21:20:18 dsl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -6,11 +6,6 @@ SRCS=	main.c dkcksum.c interact.c printlabel.c
 MAN=	disklabel.5 disklabel.8
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
-
-.if (${MACHINE} == "hp300") || (${MACHINE} == "vax") \
-	|| (${MACHINE} == "arm32") || (${MACHINE} == "hp700")
-CPPFLAGS+= -DNUMBOOT=1
-.endif
 
 # these have additional requirements on the alignment of a partition
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \

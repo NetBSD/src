@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.55 2005/06/15 20:31:47 dsl Exp $
+.\"	$NetBSD: disklabel.8,v 1.56 2005/06/17 21:20:18 dsl Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 15, 2005
+.Dd June 17, 2005
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@
 .Ar disk
 .Nm
 .Fl w
-.Op Fl Fr
+.\" .Op Fl Fr - except Fr is treated as a macro :-(
+.Op Fl rF
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -54,39 +55,16 @@
 .Ar disk
 .Nm
 .Fl i
+.\" .Op Fl Fr - except Fr is treated as a macro :-(
 .Op Fl FIr
 .Ar disk
 .Nm
 .Fl R
-.Op Fl Fr
+.Op Fl rF
 .Ar disk Ar protofile
 .Nm
 .Op Fl NW
 .Ar disk
-.sp
-.Nm
-.Fl B
-.Op Fl F
-.Op Fl f Ar disktab
-.Op Fl b Ar boot1
-.Ar disk
-.Oo Ar disktype Oc
-.Nm
-.Fl w
-.Fl B
-.Op Fl F
-.Op Fl f Ar disktab
-.Op Fl b Ar boot1
-.Ar disk Ar disktype
-.Oo Ar packid Oc
-.Nm
-.Fl R
-.Fl B
-.Op Fl F
-.Op Fl f Ar disktab
-.Op Fl b Ar boot1
-.Ar disk Ar protofile
-.Oo Ar disktype Oc
 .Sh DESCRIPTION
 .Nm
 can be used to install, examine or modify the label on a disk drive or pack.
@@ -94,9 +72,6 @@ When writing the label, it can be used
 to change the drive identification,
 the disk partitions on the drive,
 or to replace a damaged label.
-On some systems,
-.Nm
-can be used to install bootstrap code as well.
 .Pp
 There are several forms of the command that read (display), install, or edit
 the label on a disk.
@@ -126,15 +101,6 @@ option is similar to the
 .Fl r
 option but provides defaults instead of failing with
 an error, if there is no existing disklabel on the disk.
-.Pp
-The read and install forms also support the
-.Fl B
-option to install bootstrap code on some platforms,
-e.g., hp300, vax, and arm32.
-The
-.Fl B
-option is not supported on all platforms.
-These variants are described later.
 .Pp
 The first form of the command (read) is used to examine the label on the named
 disk drive (e.g.,
@@ -237,49 +203,11 @@ flags for
 explicitly disallow and
 allow, respectively, writing of the pack label area on the selected disk.
 .Pp
-The final three forms of
+Previous versions of
 .Nm
-are used to install bootstrap code on machines where the bootstrap is part
-of the label.
-The
-.Fl B
-option is used (on some platforms only, see above) to denote that
-bootstrap code is to be installed.
-The
-.Fl r
-flag is implied by
-.Fl B
-and never needs to be specified.
-The name of the boot program to be installed can be selected in a
-variety of ways.
-First, the name can be specified explicitly via the
-.Fl b
-flag.
-If the name is not explicitly given, the standard boot program will be used.
-The boot programs are located in
-.Pa /usr/mdec .
-The name of the program is taken from the
-.Dq b0
-parameter of the
-.Xr disktab 5
-entry for the disk if
-.Ar disktype
-was given and its disktab entry exists and includes that parameter.
-Otherwise, boot the program name is derived from the name of the disk.
-This name is of the form
-.Pa basename Ns boot ;
-for example,
-.Pa /usr/mdec/sdboot
-if the disk device is
-.Em sd0 .
-.Pp
-The first of the three boot-installation forms is used to install
-bootstrap code without changing the existing label.
-It is essentially a read command with respect to the disk label
-itself and all options are related to the specification of the boot
-program as described previously.
-The final two forms are analogous to the basic write and restore versions
-except that they will install bootstrap code in addition to a new label.
+could update the bootstrap code on some architectures.
+This functionality has been subsumed by
+.Xr installboot 8 .
 .Sh EXIT STATUS
 The exit status of
 .Nm
@@ -300,10 +228,8 @@ One or more warnings occured while reading the disklabel.
 Subtract 100 to get the number of warnings detected.
 .El
 .Sh FILES
-.Bl -tag -width /usr/mdec/xxboot -compact
+.Bl -tag -width /etc/disktab -compact
 .It Pa /etc/disktab
-.It Pa /usr/mdec/ Ns Em xx Ns boot
-.It Pa /usr/mdec/boot Ns Em xx
 .El
 .Sh EXAMPLES
 .Dl disklabel sd0
@@ -320,7 +246,6 @@ found in
 using
 .Pa foo
 as the disk pack label.
-Any existing bootstrap code will be clobbered.
 If you do not have an entry for your disk in
 .Pa /etc/disktab ,
 you can use this style to put
@@ -336,7 +261,6 @@ editing the file, and replacing the label with
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as well
 as on-disk.
-Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -e -I sd0
 .Pp
@@ -351,40 +275,6 @@ As previous, only use the built-in interactive editor.
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
 .Pa mylabel .
-Existing bootstrap code is unaffected.
-.Pp
-.Dl disklabel -B sd0
-.Pp
-Install a new bootstrap on sd0 (only for platforms which support the
-.Fl B
-option, see above).
-The boot code comes from
-.Pa /usr/mdec/sdboot
-and possibly
-.Pa /usr/mdec/bootsd .
-On-disk and in-core labels are unchanged.
-.Pp
-.Dl disklabel -w -B /dev/rsd0c -b newboot sd2212
-.Pp
-Install a new label and bootstrap (on platforms which support the
-.Fl B
-option, see above).
-The label is derived from disktab information for
-.Dq sd2212
-and installed both in-core and on-disk.
-The bootstrap code comes from the file
-.Pa /usr/mdec/newboot .
-.Pp
-.Dl disklabel -R -r sd0 \*[Lt]protofile\*[Gt]
-.Pp
-Install a new label and bootstrap on a disk, from a prototype label
-file.
-This is a good way to install a label on a previously unlabeled
-disk for which no entry appears in
-.Pa  /etc/disktab ,
-if you create the
-prototype file by dumping some other disk's label to a file and editing
-it appropriately (total size, partition offsets, types, etc.)
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while it is open.
@@ -398,24 +288,6 @@ and the second setting the label on the new partition
 while shrinking the
 .Dq a
 partition.
-.Pp
-On some machines the bootstrap code may not fit entirely in the area
-allocated for it by some filesystems.
-As a result, it may not be possible to have filesystems on some partitions
-of a
-.Dq bootable
-disk.
-When installing bootstrap code,
-.Nm
-checks for these cases.
-If the installed boot code would overlap a partition of type FS_UNUSED
-it is marked as type FS_BOOT.
-The
-.Xr newfs 8
-utility will disallow creation of filesystems on FS_BOOT partitions.
-Conversely, if a partition has a type other than FS_UNUSED or FS_BOOT,
-.Nm
-will not install bootstrap code that overlaps it.
 .Sh SEE ALSO
 .Xr disklabel 5 ,
 .Xr disktab 5 ,
