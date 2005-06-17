@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.221 2005/06/05 23:47:48 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.222 2005/06/17 17:46:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.221 2005/06/05 23:47:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.222 2005/06/17 17:46:18 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1757,10 +1757,8 @@ restart:
 		goto out;
 	}
 
-	  /*
-	   * Remove the fingerprint from the list if there was one.
-	   */
 #ifdef VERIFIED_EXEC
+	/* Handle remove requests for veriexec entries. */
 	if ((error = veriexec_removechk(p, vp, nd.ni_dirp)) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
