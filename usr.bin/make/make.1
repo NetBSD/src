@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.110 2005/06/15 22:39:27 rpaulo Exp $
+.\"	$NetBSD: make.1,v 1.111 2005/06/17 19:25:20 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,6 +132,13 @@ Print debugging information about running multiple shells.
 .It Ar m
 Print debugging information about making targets, including modification
 dates.
+.It Ar n
+Don't delete the temporary command scripts created in /tmp when running
+commands. These are created via 
+.Xr mkstemp 3
+and have names of the form /tmp/makeXXXXX.
+.Em NOTE:
+This can create many file in /tmp so use with care.
 .It Ar s
 Print debugging information about suffix-transformation rules.
 .It Ar t
