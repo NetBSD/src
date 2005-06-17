@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.45 2005/06/16 14:55:58 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.45 2005/06/16 14:55:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2477,12 +2477,9 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	CPU_INFO_ITERATOR cii;
 
 	/*
-	 * if you specifically pass a buffer that is the size of a single cpuid
-	 * sum, or if you are probing for the size, you get the "sum"
-	 * of cp_time (and the size thereof) across all processors.
-	 *
-	 * alternately, you can pass an additional mib number and get
-	 * cp_time for that particular processor.
+	 * here you may either retrieve a single cpu id or the whole
+	 * set.  the size you get back when probing depends on what
+	 * you ask for.
 	 */
 	switch (namelen) {
 	case 0:
