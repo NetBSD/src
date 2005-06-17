@@ -1,4 +1,4 @@
-/*	$NetBSD: altqd.c,v 1.7 2002/03/05 04:11:51 itojun Exp $	*/
+/*	$NetBSD: altqd.c,v 1.8 2005/06/17 12:02:00 peter Exp $	*/
 /*	$KAME: altqd.c,v 1.10 2002/02/20 10:42:26 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -85,7 +85,7 @@ static void sig_handler(int);
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: altqd [-vd] [-f config]\n");
+	fprintf(stderr, "usage: %s [-Ddv] [-f config]\n", getprogname());
 	exit(1);
 }
 
