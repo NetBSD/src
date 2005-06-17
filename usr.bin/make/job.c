@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $	*/
+/*	$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.93 2005/06/16 18:07:45 jmc Exp $");
+__RCSID("$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1991,7 +1991,8 @@ JobStart(GNode *gn, int flags, Job *previous)
 	(void)strcpy(tfile, TMPPAT);
 	if ((tfd = mkstemp(tfile)) == -1)
 	    Punt("Could not create temporary file %s", strerror(errno));
-	(void) eunlink(tfile);
+	if (!DEBUG(SCRIPT))
+		(void) eunlink(tfile);
 	JobSigUnlock(&mask);
 
 	job->cmdFILE = fdopen(tfd, "w+");
