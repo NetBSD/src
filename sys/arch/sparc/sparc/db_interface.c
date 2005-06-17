@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.63 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.64 2005/06/17 09:13:56 hannken Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2005/06/17 09:13:56 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -525,7 +525,7 @@ db_cpu_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
-	char *		modif;
+	const char *	modif;
 {
 	struct cpu_info *ci;
 	if (!have_addr) {
@@ -553,7 +553,7 @@ db_cpu_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	db_printf("using CPU %ld", addr);
-	ddb_regp = (void *)ci->ci_ddb_regs;
+	ddb_regp = __UNVOLATILE(ci->ci_ddb_regs);
 	ddb_cpuinfo = ci;
 }
 
