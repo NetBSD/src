@@ -1,4 +1,4 @@
-.\"	$NetBSD: eshconfig.8,v 1.6 2005/06/17 17:49:07 peter Exp $
+.\"	$NetBSD: eshconfig.8,v 1.7 2005/06/17 18:22:18 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,18 +43,15 @@
 .Nd configure Essential Communications' HIPPI network interface
 .Sh SYNOPSIS
 .Nm eshconfig
+.Op Fl estx
 .Op Fl b Ar bytes
 .Op Fl c Ar bytes
 .Op Fl d Ar filename
-.Op Fl e
 .Op Fl i Ar usecs
 .Op Fl m Ar bytes
 .Op Fl r Ar bytes
-.Op Fl s
-.Op Fl t
 .Op Fl u Ar filename
 .Op Fl w Ar bytes
-.Op Fl x
 .Op Ar interface
 .Sh DESCRIPTION
 .Nm
@@ -88,9 +85,9 @@ EEPROM.
 Interrupt delay in microseconds.
 .It Fl m Ar bytes
 Minimum number of bytes to DMA in one direction (read or write)
-before allowing a DMA in the other direction.  Tuning this prevents
-one direction from dominating the flow of bytes, and artificially
-throttling the NIC.
+before allowing a DMA in the other direction.
+Tuning this prevents one direction from dominating the flow of
+bytes, and artificially throttling the NIC.
 .It Fl r Ar bytes
 Bytes before DMA starts for read (from host to NIC).
 This controls how soon the DMA is triggered;  until this many bytes
@@ -108,7 +105,8 @@ Number of bytes required before write (from NIC to host) DMA
 is started.
 Until this many bytes are ready to be written, the DMA will not start.
 .It Fl x
-Reset the NIC.  This is necessary for the HIPPI-FP support, as
+Reset the NIC.
+This is necessary for the HIPPI-FP support, as
 .Xr ifconfig 8
 will no longer physically reset the NIC when the interfaces goes
 up and down.
