@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.156 2005/02/03 16:15:06 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.157 2005/06/17 09:13:56 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2005/02/03 16:15:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2005/06/17 09:13:56 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -361,7 +361,7 @@ trap(type, psr, pc, tf)
 #if defined(MULTIPROCESSOR)
 		if (type == T_DBPAUSE) {
 			/* XXX - deal with kgdb too */
-			extern void ddb_suspend(struct trapframe *tf);
+			extern void ddb_suspend(struct trapframe *);
 			write_all_windows();
 			ddb_suspend(tf);
 			ADVANCE;
