@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.149 2005/05/24 15:58:11 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.150 2005/06/17 17:46:18 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd May 24, 2005
+.Dd June 17, 2005
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -898,15 +898,17 @@ The strict level defines how
 Verified Exec will treat various situations.
 In strict level 0, the system is in learning mode and will only warn about
 fingerprint mismatches, aswell as allow removal of fingerprinted files.
-In strict level 1, the system is in normal mode.
-It will enforce indirect
-execution if needed, prevent access to files with a fingerprint mismatch,
-and prevent removal of fingerprinted files.
-It will also prevent execution of files with no fingerprint.
-In strict level 2, the system is in critical mode.
+It is the only level where fingerprints can be loaded.
+In strict level 1, the system is in IDS mode.
+It will deny access to files with mismatched fingerprints.
+In strict level 2, the system is in IPS mode.
 It has all effects of
-strict level 1, plus it will deny access (read, write, exec, and delete)
-to files without a valid fingerprint.
+strict level 1, plus it will deny write access to monitored files,
+prevent their removal, and enforce access type (direct, indirect, file).
+Strict level 3 operates as lockdown mode. It will have all effects of
+strict level 2, but it will also prevent access to non-monitored files.
+Furthermore, it will prevent addition of new files to the system, and
+allow writing only to files opened before the strict level was raised.
 .It Li VERIEXEC_ALGORITHMS
 Returns a string with the supported algorithms in Verified Exec.
 .It Li VERIEXEC_COUNT

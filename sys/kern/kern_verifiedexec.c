@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.25 2005/06/14 21:55:21 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.26 2005/06/17 17:46:18 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.25 2005/06/14 21:55:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.26 2005/06/17 17:46:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -358,8 +358,8 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 
 	/* Evaluate fingerprint if needed and set the status on the vp. */
 	if (vp->fp_status == FINGERPRINT_NOTEVAL) {
-		vp->vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
-		if (vp->vhe == NULL) {
+		if ((vp->v_type != VREG) || (vp->vhe =
+		     veriexec_lookup(va->va_fsid, va->va_fileid)) == NULL) {
 			vp->fp_status = FINGERPRINT_NOENTRY;
 			goto out;
 		}
@@ -380,33 +380,25 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		}
 
 		if (veriexec_fp_cmp(vp->vhe->ops, vp->vhe->fp, digest) == 0) {
-			if (vp->vhe->type == VERIEXEC_INDIRECT) {
-				vp->fp_status = FINGERPRINT_INDIRECT;
-			} else {
-				vp->fp_status = FINGERPRINT_VALID;
-			}
+			vp->fp_status = FINGERPRINT_VALID;
 		} else {
 			vp->fp_status = FINGERPRINT_NOMATCH;
 		}
+
 		free(digest, M_TEMP);
 	}
 
-	switch (flag) {
-	case VERIEXEC_DIRECT:
-	case VERIEXEC_INDIRECT:
-		if ((vp->vhe != NULL) && (vp->vhe->type == VERIEXEC_FILE)) {
-			veriexec_report("Execution of 'FILE' entry.",
-					name, va, p, REPORT_NOVERBOSE,
-					REPORT_ALARM, REPORT_NOPANIC);
+	if (vp->vhe == NULL)
+		goto out;
 
-			if (veriexec_strict > 1)
-				return (EPERM);
-		}
+	if (flag != vp->vhe->type) {
+		veriexec_report("Incorrect access type.", name, va, p,
+				REPORT_NOVERBOSE, REPORT_ALARM,
+				REPORT_NOPANIC);
 
-		break;
-
-	case VERIEXEC_FILE:
-		break;
+		/* IPS mode: Enforce access type. */
+		if (veriexec_strict >= 2)
+			return (EPERM);
 	}
 
 out:
@@ -424,30 +416,13 @@ out:
 
 		break;
 
-	case FINGERPRINT_INDIRECT:
-		/* Fingerprint is okay; Make sure it's indirect execution. */
-		veriexec_report("veriexec_verify: Match. [indirect]",
-		    name, va, NULL, REPORT_VERBOSE, REPORT_NOALARM,
-		    REPORT_NOPANIC);
-
-		if (flag == VERIEXEC_DIRECT) {
-			veriexec_report("veriexec_verify: Direct "
-			    "execution.", name, va, NULL,
-			    REPORT_NOVERBOSE, REPORT_ALARM,
-			    REPORT_NOPANIC);
-
-			if (veriexec_strict > 0)
-				error = EPERM;
-		}
-
-		break;
-
 	case FINGERPRINT_NOMATCH:
-		/* Fingerprint mismatch. Deny execution. */
+		/* Fingerprint mismatch. */
 		veriexec_report("veriexec_verify: Mismatch.", name, va,
 		    NULL, REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
 
-		if (veriexec_strict > 0)
+		/* IDS mode: Deny access on fingerprint mismatch. */
+		if (veriexec_strict >= 1)
 			error = EPERM;
 
 		break;
@@ -457,22 +432,8 @@ out:
 		veriexec_report("veriexec_verify: No entry.", name, va,
 		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
-		/* We don't care about these in learning mode. */
-		if (veriexec_strict == 0) {
-			break;
-		}
-
-		/*
-		 * Deny access to files with no entry if
-		 *   - File is being executed, and we're in strict
-		 *     level 1; or
-		 *   - File is being accessed, and we're in strict
-		 *     level 2.
-		 */
-		if (((veriexec_strict == 1) &&
-		    ((flag == VERIEXEC_DIRECT) ||
-		     (flag == VERIEXEC_INDIRECT))) ||
-		    (veriexec_strict > 1))
+		/* Lockdown mode: Deny access to non-monitored files. */
+		if (veriexec_strict >= 3)
 			error = EPERM;
 
 		break;
@@ -491,9 +452,7 @@ out:
 }
 
 /*
- * Veriexec remove policy code. If we have an entry for the file in our
- * tables, we disallow removing if the securelevel is high or we're in
- * strict mode.
+ * Veriexec remove policy code.
  */
 int
 veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
@@ -507,63 +466,16 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	if (error)
 		return (error);
 
-	/*
-	 * Evaluate fingerprint to eliminate FINGERPRINT_NOTEVAL.
-	 * The flag here should have no affect on the return value.
-	 */
-	error = veriexec_verify(p, vp, &va, pathbuf, VERIEXEC_FILE);
-	if (error) {
-		return (error);
-	}
-
-	switch (vp->fp_status) {
-	case FINGERPRINT_VALID:
-	case FINGERPRINT_INDIRECT:
-	case FINGERPRINT_NOMATCH:
-		if (veriexec_strict > 0) {
-			veriexec_report("veriexec_removechk: Denying "
-			    "unlink.", pathbuf, &va, p, REPORT_NOVERBOSE,
-			    REPORT_ALARM, REPORT_NOPANIC);
-
-			error = EPERM;
-		} else {
-			veriexec_report("veriexec_removechk: Removing "
-			    "entry.", pathbuf, &va, NULL,
-			    REPORT_NOVERBOSE, REPORT_NOALARM,
-			    REPORT_NOPANIC);
-			
-			goto veriexec_rm;
-		}
-
-		break;
-
-	case FINGERPRINT_NOENTRY:
-		if (veriexec_strict > 1) {
-			veriexec_report("veriexec_removechk: Denying "
-			    "unlink. [strict]", pathbuf, &va, p,
-			    REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
-
-			error = EPERM;
-		}
-
-		break;
-
-	default:
-		veriexec_report("veriexec_removechk: Invalid status post "
-		    "evaluation; inconsistency detected.", pathbuf, &va,
-		    NULL, REPORT_NOVERBOSE, REPORT_NOALARM, REPORT_PANIC);
-	}
-
-	return (error);
-
-veriexec_rm:
 	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
-	if (vhe == NULL) {
-		veriexec_report("veriexec_removechk: Inconsistency "
-		    "detected: Trying to remove entry without having one.",
-		    pathbuf, &va, NULL, REPORT_NOVERBOSE, REPORT_NOALARM,
-		    REPORT_PANIC);
-	}
+	if (vhe == NULL)
+		return (0);
+
+	veriexec_report("Remove request.", pathbuf, &va, p,
+			REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
+
+	/* IPS mode: Deny removal of monitored files. */
+	if (veriexec_strict >= 2)
+		return (EPERM);
 
 	tbl = veriexec_tblfind(va.va_fsid);
 	if (tbl == NULL) {

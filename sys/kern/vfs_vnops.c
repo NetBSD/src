@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.90 2005/06/11 16:04:59 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.91 2005/06/17 17:46:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.90 2005/06/11 16:04:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.91 2005/06/17 17:46:18 elad Exp $");
 
 #include "fs_union.h"
 
@@ -94,7 +94,7 @@ const struct fileops vnops = {
 int
 vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
-	struct vnode *vp;
+	struct vnode *vp = NULL; /* XXXGCC */
 	struct mount *mp;
 	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred = p->p_ucred;
@@ -120,6 +120,20 @@ restart:
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		if (ndp->ni_vp == NULL) {
+#ifdef VERIFIED_EXEC
+			/* Lockdown mode: Prevent creation of new files. */
+			if (veriexec_strict >= 3) {
+				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
+
+				printf("Veriexec: vn_open: Preventing "
+				       "new file creation in %s.\n",
+				       ndp->ni_dirp);
+
+				error = EPERM;
+				goto bad;
+			}
+#endif /* VERIFIED_EXEC */
+
 			VATTR_NULL(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
@@ -180,16 +194,15 @@ restart:
 
 	if ((fmode & O_CREAT) == 0) {
 #ifdef VERIFIED_EXEC
-		  /* XXX may need pathbuf instead */
-		if ((vp->v_type == VREG) &&
-		    ((error = veriexec_verify(p, vp, &va, ndp->ni_dirp,
-					      VERIEXEC_FILE)) != 0))
+		/* XXX may need pathbuf instead */
+		if ((error = veriexec_verify(p, vp, &va, ndp->ni_dirp,
+					     VERIEXEC_FILE)) != 0)
 			goto bad;
 #endif
+
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
-
 		}
 
 		if (fmode & (FWRITE | O_TRUNC)) {
@@ -201,22 +214,15 @@ restart:
 			    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0)
 				goto bad;
 #ifdef VERIFIED_EXEC
-			  /*
-			   * If file has a fingerprint then
-			   * deny the write request, otherwise
-			   * invalidate the status so we don't
-			   * keep checking for the file having
-			   * a fingerprint.
-			   */
-			if ((vp->fp_status == FINGERPRINT_VALID) ||
-			    (vp->fp_status == FINGERPRINT_INDIRECT)) {
+			if (vp->fp_status != FINGERPRINT_NOENTRY) {
 				veriexec_report("Write access request.",
 						ndp->ni_dirp, &va, p,
 						REPORT_NOVERBOSE,
 						REPORT_ALARM,
 						REPORT_NOPANIC);
 
-				if (veriexec_strict > 0) {
+				/* IPS mode: Deny writing to monitored files. */
+				if (veriexec_strict >= 2) {
 					error = EPERM;
 					goto bad;
 				} else {
