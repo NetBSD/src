@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.186 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.186.2.1 2005/06/17 13:34:50 tron Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186.2.1 2005/06/17 13:34:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -206,12 +206,10 @@ static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 
 /* prototypes */
-static void KernelWakeupFunc(struct buf * bp);
-static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
-		   dev_t dev, RF_SectorNum_t startSect,
-		   RF_SectorCount_t numSect, caddr_t buf,
-		   void (*cbFunc) (struct buf *), void *cbArg,
-		   int logBytesPerSector, struct proc * b_proc);
+static void KernelWakeupFunc(struct buf *);
+static void InitBP(struct buf *, struct vnode *, unsigned,
+    dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
+    void *, int, struct proc *);
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
@@ -1998,7 +1996,7 @@ KernelWakeupFunc(struct buf *vbp)
  */
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
-       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t buf,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t bf,
        void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
        struct proc *b_proc)
 {
@@ -2008,7 +2006,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
 	bp->b_dev = dev;
-	bp->b_data = buf;
+	bp->b_data = bf;
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
@@ -3323,11 +3321,11 @@ rf_disk_unbusy(RF_RaidAccessDesc_t *desc)
 }
 
 void
-rf_pool_init(struct pool *p, size_t size, char *w_chan,
-	     size_t min, size_t max)
+rf_pool_init(struct pool *p, size_t size, const char *w_chan,
+	     size_t xmin, size_t xmax)
 {
 	pool_init(p, size, 0, 0, 0, w_chan, NULL);
-	pool_sethiwat(p, max);
-	pool_prime(p, min);
-	pool_setlowat(p, min);
+	pool_sethiwat(p, xmax);
+	pool_prime(p, xmin);
+	pool_setlowat(p, xmin);
 }
