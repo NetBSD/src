@@ -1,4 +1,4 @@
-.\"	$NetBSD: altqd.8,v 1.8 2003/06/27 22:56:37 wiz Exp $
+.\"	$NetBSD: altqd.8,v 1.9 2005/06/17 12:02:00 peter Exp $
 .\"	$KAME: altqd.8,v 1.9 2002/01/23 06:56:27 itojun Exp $
 .\"
 .\" Copyright (C) 2000
@@ -33,7 +33,7 @@
 .Nd ALTQ daemon
 .Sh SYNOPSIS
 .Nm altqd
-.Op Fl dvD
+.Op Fl Ddv
 .Op Fl f Ar conf_file
 .Sh DESCRIPTION
 .Nm
@@ -50,22 +50,22 @@ and the signal SIGHUP will restart
 .Pp
 The following options are available:
 .Bl -tag -width Fl
-.It Fl f
-Specify a configuration file to read instead of the default.
-The default file is
-.Pa /etc/altq.conf .
-.It Fl d
-Debug mode.
-.Nm
-does not detach and goes into the command mode.
-.It Fl v
-Print debugging information.
-This option implies
-.Fl d .
 .It Fl D
 Dummy mode.
 .Nm
 does not issue altq system calls.
+.It Fl d
+Debug mode.
+.Nm
+does not detach and goes into the command mode.
+.It Fl f Ar conf_file
+Specify a configuration file to read instead of the default.
+The default file is
+.Pa /etc/altq.conf .
+.It Fl v
+Print debugging information.
+This option implies
+.Fl d .
 .El
 .Sh COMMANDS
 When
