@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.55 2003/12/26 10:51:25 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.56 2005/06/17 14:36:16 hira Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.55 2003/12/26 10:51:25 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.56 2005/06/17 14:36:16 hira Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ ls_main(int argc, char *argv[])
 	int kflag = 0;
 	const char *p;
 
+	setprogname(argv[0]);
 	setlocale(LC_ALL, "");
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */

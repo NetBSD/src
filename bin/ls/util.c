@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.27 2003/09/22 02:43:20 jschauma Exp $	*/
+/*	$NetBSD: util.c,v 1.28 2005/06/17 14:36:16 hira Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.27 2003/09/22 02:43:20 jschauma Exp $");
+__RCSID("$NetBSD: util.c,v 1.28 2005/06/17 14:36:16 hira Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: ls [-AaBbCcdFfgikLlmnopqRrSsTtuWwx1] [file ...]\n");
+	    "usage: %s [-AaBbCcdFfghikLlmnopqRrSsTtuWwx1] [file ...]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
