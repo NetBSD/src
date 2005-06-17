@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.136 2005/06/16 09:54:07 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.137 2005/06/17 13:37:51 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9621,4 +9621,31 @@ sys/dev/ata/wd.c				1.302
 
 	Added LBA48 quirk for Seagate ST3200822AS.
 	[martti, ticket #459]
+
+sys/dist/pf/net/pf_norm.c			1.8
+
+	pf_reassemble: clear stale csum_flags.
+	[yamt, ticket #469]
+
+sys/dev/raidframe/rf_dag.h			1.18
+sys/dev/raidframe/rf_dagffrd.c			1.15
+sys/dev/raidframe/rf_dagffwr.c			1.30
+sys/dev/raidframe/rf_dagfuncs.c			1.24
+sys/dev/raidframe/rf_dagutils.c			1.46
+sys/dev/raidframe/rf_dagutils.h			1.19
+sys/dev/raidframe/rf_diskqueue.c		1.41
+sys/dev/raidframe/rf_disks.c			1.58
+sys/dev/raidframe/rf_disks.h			1.13
+sys/dev/raidframe/rf_driver.c			1.108
+sys/dev/raidframe/rf_etimer.h			1.9
+sys/dev/raidframe/rf_general.h			1.15
+sys/dev/raidframe/rf_netbsd.h			1.23
+sys/dev/raidframe/rf_netbsdkintf.c		1.187
+sys/dev/raidframe/rf_options.h			1.4
+sys/dev/raidframe/rf_parityscan.c		1.29
+sys/dev/raidframe/rf_parityscan.h		1.6
+sys/dev/raidframe/rf_raid1.c			1.26
+
+	Code cleanup.
+	[oster, ticket #472]
 
