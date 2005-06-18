@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.138 2005/06/18 06:01:46 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.139 2005/06/18 10:54:54 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9687,4 +9687,24 @@ sys/arch/sparc64/conf/SPLODE			1.35
 	Remove commented out "upa" attachments because NetBSD doesn't have a
 	driver for that anyway. Approved by Martin Husemann.
 	[tron, ticket #457]
+
+sys/arch/xen/i386/gdt.c				1.6
+sys/arch/xen/i386/identcpu.c			1.5-1.6
+sys/arch/xen/i386/xen_machdep.c			1.9
+sys/arch/xen/include/if_xennetvar.h		1.7
+sys/arch/xen/include/xen.h			1.13-1.14
+sys/arch/xen/include/xenfunc.h			1.7
+sys/arch/xen/include/xenpmap.h			1.7
+sys/arch/xen/xen/ctrl_if.c			1.9-1.10
+sys/arch/xen/xen/if_xennet.c			1.26
+sys/arch/xen/xen/privcmd.c			1.4
+
+	Code cleanup.
+	[yamt, ticket #460 to #466, #468, #470, #471]
+
+sys/arch/xen/xen/if_xennet.c			1.27
+
+	xen_network_handler: fix transmit stall. (re)start transmit
+	after collecting tx buffers.
+	[yamt, ticket #467]
 
