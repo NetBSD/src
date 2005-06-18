@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.7 2005/05/28 05:12:17 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.8 2005/06/18 05:33:41 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.7 2005/05/28 05:09:41 snj Exp
+ *	NetBSD: pcidevs,v 1.701.2.8 2005/06/18 05:33:15 riz Exp
  */
 
 /*
@@ -1958,6 +1958,8 @@
 /* Linksys products */
 #define	PCI_PRODUCT_LINKSYS_EG1032	0x1032		/* EG1032 v2 Instant Gigabit Network Adapter */
 #define	PCI_PRODUCT_LINKSYS_EG1064	0x1064		/* EG1064 v2 Instant Gigabit Network Adapter */
+#define	PCI_PRODUCT_LINKSYS_PCMPC200	0xab08		/* PCMPC200 */
+
 /* Lite-On products */
 #define	PCI_PRODUCT_LITEON_82C168	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
 #define	PCI_PRODUCT_LITEON_82C115	0xc115		/* 82C115 (PNIC II) 10/100 Ethernet */
