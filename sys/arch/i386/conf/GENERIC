@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.674 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.675 2005/06/18 16:12:19 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.674 $"
+#ident 		"GENERIC-$Revision: 1.675 $"
 
 maxusers	32		# estimated number of users
 
@@ -804,6 +804,7 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
@@ -1052,17 +1053,17 @@ oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
 # PCI IEEE1394 controllers
-#fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
 #fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
 
-#fw*	at fwbus?			# IP over 1394
+fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus? idhi ? idlo ?
-#sbpscsi* at fwnode?
-#scsibus* at sbpscsi?
+fwnode* at fwbus? idhi ? idlo ?
+sbpscsi* at fwnode?
+scsibus* at sbpscsi?
 
 # Audio Devices
 
