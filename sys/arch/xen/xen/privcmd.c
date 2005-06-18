@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.2.2.1 2005/05/28 13:52:41 tron Exp $ */
+/* $NetBSD: privcmd.c,v 1.2.2.2 2005/06/18 10:43:37 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.1 2005/05/28 13:52:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.2 2005/06/18 10:43:37 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ privcmd_ioctl(void *v)
 		break;
 	case IOCTL_PRIVCMD_MMAP:
 	{
-		int i, j, error;
+		int i, j;
 		privcmd_mmap_t *mcmd = ap->a_data;
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
