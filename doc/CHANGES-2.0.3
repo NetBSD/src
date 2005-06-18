@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.21 2005/06/12 21:31:01 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.22 2005/06/18 04:03:11 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -142,4 +142,11 @@ sys/dev/audio.c					1.196 via patch
 	Without this, the machine would crash for some audio hardware that
 	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
 	[is, ticket #1990]
+
+x11/bin/xdm/config/Makefile			1.9 via patch
+
+	Install the following as executable scripts:
+		GiveConsole TakeConsole Xsetup_0 Xsession Xwilling
+	This fixes PR xsrc/30489.
+	[tron, ticket #1986]
 
