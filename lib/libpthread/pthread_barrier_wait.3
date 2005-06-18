@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_wait.3,v 1.4.6.1 2005/06/18 11:02:02 tron Exp $
+.\" $NetBSD: pthread_barrier_wait.3,v 1.4.6.2 2005/06/18 11:03:38 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,11 +53,14 @@ calls and continue execution.
 .Sh RETURN VALUES
 If successful,
 .Fn pthread_barrier_wait
-will return zero for all waiting threads except for one.  One thread will
-receive status
+will return zero for all waiting threads except for one.
+One thread will receive status
 .Dv PTHREAD_BARRIER_SERIAL_THREAD ,
 which is intended to indicate that this thread may be used to update
-shared data.  It is the responsibility of this thread to insure the visibility and atomicity of any updates to shared data with respect to the other threads participating in the barrier.
+shared data.
+It is the responsibility of this thread to insure the visibility
+and atomicity of any updates to shared data with respect to the
+other threads participating in the barrier.
 In the case of failure, an error value will be returned.
 .Sh ERRORS
 .Fn pthread_barrier_wait
