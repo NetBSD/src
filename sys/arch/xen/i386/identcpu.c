@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4.2.1 2005/06/18 10:41:26 tron Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.1 2005/06/18 10:41:26 tron Exp $");
 
 #include "opt_cputype.h"
 
@@ -1060,7 +1060,7 @@ identifycpu(struct cpu_info *ci)
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
-	char *feature_str[3];
+	const char *feature_str[3];
 
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
