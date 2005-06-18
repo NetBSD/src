@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.126 2005/06/14 21:18:21 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.127 2005/06/18 04:33:20 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2499,4 +2499,27 @@ usr.sbin/pkg_install/lib/str.c			1.52
 	pkg_info(1) for details.
 	Bump PACKAGE_TOOLS_VERSION to 20050530.
 	[wiz, ticket #1989]
+
+distrib/notes/alpha/install			1.29
+distrib/notes/common/main			1.284
+
+	Updated URL for list of NetBSD mirrors.
+	[heinz, ticket #1978]
+
+x11/bin/xdm/config/Makefile			1.9 via patch
+
+	Install the following as executable scripts:
+		GiveConsole TakeConsole Xsetup_0 Xsession Xwilling
+	This fixes PR xsrc/30489.
+	[tron, ticket #1986]
+
+dist/ipf/lib/ipf_dotuning.c			1.2
+sys/dist/ipf/netinet/fil.c			1.16
+
+	bin/29508 - fix "ipf -T" - kernel wasn't setting ipft_cookie and
+	userland was expecting it to be set, thus ignored it.
+	bin/29509 - because ipft_cookie wasn't reset to 0 before making
+	the ioctl call for each variable, only the first name to find
+	was used, each successive call just used the cookie.
+	[darrenr, ticket #1991]
 
