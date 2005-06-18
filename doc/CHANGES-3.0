@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.139 2005/06/18 10:54:54 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.140 2005/06/18 11:15:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9707,4 +9707,33 @@ sys/arch/xen/xen/if_xennet.c			1.27
 	xen_network_handler: fix transmit stall. (re)start transmit
 	after collecting tx buffers.
 	[yamt, ticket #467]
+
+distrib/sets/lists/comp/mi			1.792-1.793
+lib/libc/gen/pthread_atfork.3			1.4
+lib/libpthread/Makefile				1.32-1.33
+lib/libpthread/pthread_barrier_destroy.3	1.4
+lib/libpthread/pthread_barrier_init.3		1.7
+lib/libpthread/pthread_barrier_wait.3		1.5-1.6
+lib/libpthread/pthread_barrierattr.3		1.5
+lib/libpthread/pthread_cond_broadcast.3		1.4
+lib/libpthread/pthread_cond_init.3		1.6
+lib/libpthread/pthread_condattr.3		1.3
+lib/libpthread/pthread_mutexattr.3		1.5
+lib/libpthread/pthread_rwlockattr.3		1.5
+lib/libpthread/pthread_spin_init.3		1.4
+
+	Various correction for libpthread manual pages, from PR lib/29997.
+	[peter, ticket #473]
+
+sys/kern/subr_pool.c				1.101
+
+	Fix some locking issues:
+	- Make the locking rules for pr_rmpage() sane, and don't modify fields
+	  protected by the pool lock without actually holding it.
+	- Always defer freeing the pool page to the back-end allocator, to
+	  avoid invoking the pool_allocator with the pool locked (which would
+	  violate the pool_allocator -> pool locking order).
+	- Fix pool_reclaim() to not violate the pool_cache -> pool locking
+	  order by using a trylock.
+	[thorpej, ticket #474]
 
