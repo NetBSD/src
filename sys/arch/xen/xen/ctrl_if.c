@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2.2.6 2005/04/28 11:26:20 tron Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.2.2.7 2005/06/18 10:44:23 tron Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.6 2005/04/28 11:26:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.7 2005/06/18 10:44:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static void __ctrl_if_tx_tasklet(unsigned long data);
 
 static void __ctrl_if_rx_tasklet(unsigned long data);
 
-#define get_ctrl_if() ((control_if_t *)((char *)HYPERVISOR_shared_info + 2048))
+#define get_ctrl_if() ((control_if_t *)((uintptr_t)HYPERVISOR_shared_info + 2048))
 #define TX_FULL(_c)   \
     (((_c)->tx_req_prod - ctrl_if_tx_resp_cons) == CONTROL_RING_SIZE)
 
