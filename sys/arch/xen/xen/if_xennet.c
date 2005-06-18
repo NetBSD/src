@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.11 2005/06/18 10:45:06 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.12 2005/06/18 10:47:49 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.11 2005/06/18 10:45:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.12 2005/06/18 10:47:49 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.11 2005/06/18 10:45:06 tron Exp
 #define XEDB_MBUF	0x08
 #define XEDB_MEM	0x10
 int xennet_debug = 0x0;
-void printk(char *, ...);
 #define DPRINTF(x) if (xennet_debug) printk x;
 #define DPRINTFN(n,x) if (xennet_debug & (n)) printk x;
 #else
