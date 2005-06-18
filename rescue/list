@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2005/05/22 03:45:30 lukem Exp $
+#	$NetBSD: list,v 1.19 2005/06/18 06:59:23 lukem Exp $
 
 SRCDIRS	bin
 
@@ -99,6 +99,7 @@ PROG	rndctl
 PROG	route
 PROG	routed
 PROG	savecore
+PROG	scan_ffs
 PROG	scsictl
 PROG	setkey
 PROG	shutdown
@@ -109,6 +110,7 @@ PROG	ttyflags
 PROG	tunefs
 PROG	umount
 PROG	wdogctl
+PROG	veriexecctl
 PROG	wsconsctl
 
 SRCDIRS	usr.bin
