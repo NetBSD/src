@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.4.2.2 2005/04/28 10:19:17 tron Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.4.2.3 2005/06/18 10:48:48 tron Exp $	*/
 
 /*
  *
@@ -90,7 +90,7 @@ struct xennet_softc {
 	uint32_t		sc_rx_bufs_to_notify;
 
 	union xennet_bufarray	sc_tx_bufa[NETIF_TX_RING_SIZE];
-	union xennet_bufarray	sc_rx_bufa[NETIF_TX_RING_SIZE];
+	union xennet_bufarray	sc_rx_bufa[NETIF_RX_RING_SIZE];
 
 	SLIST_HEAD(, xennet_txbuf)	sc_tx_bufs;
 
