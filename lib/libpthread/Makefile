@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30.2.1 2005/06/18 11:03:13 tron Exp $
+#	$NetBSD: Makefile,v 1.30.2.2 2005/06/18 11:04:44 tron Exp $
 #
 
 WARNS=	2
@@ -106,6 +106,8 @@ MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3
 MLINKS+=	pthread_attr.3 pthread_attr_setdetachstate.3
 MLINKS+=	pthread_attr.3 pthread_attr_getdetachstate.3
+MLINKS+=	pthread_attr.3 pthread_attr_setschedparam.3
+MLINKS+=	pthread_attr.3 pthread_attr_getschedparam.3
 MLINKS+=	pthread_barrierattr.3 pthread_barrierattr_init.3
 MLINKS+=	pthread_barrierattr.3 pthread_barrierattr_destroy.3
 MLINKS+=	pthread_cleanup_push.3 pthread_cleanup_pop.3
