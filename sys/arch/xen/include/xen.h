@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.10.2.2 2005/04/13 21:39:05 tron Exp $	*/
+/*	$NetBSD: xen.h,v 1.10.2.3 2005/06/18 10:37:24 tron Exp $	*/
 
 /*
  *
@@ -224,7 +224,7 @@ x86_variable_test_bit(const volatile void *ptr, int bitno)
 		"btl %2,%1 ;"
 		"sbbl %0,%0"
 		:"=r" (result)
-		:"m" (*(volatile uint32_t *)(ptr)), "Ir" (bitno));
+		:"m" (*(const volatile uint32_t *)(ptr)), "Ir" (bitno));
 	return result;
 }
 
