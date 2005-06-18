@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27.2.1 2004/05/11 14:46:11 tron Exp $
+.\"	$NetBSD: install,v 1.27.2.1.2.1 2005/06/18 03:37:47 riz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -681,7 +681,7 @@ option to mount.
 To download the install sets with ftp, create a directory in
 which to put them and then use the ftp client to download them.
 Mirror sites are listed at:
-.Lk http://www.NetBSD.org/Sites/net.html
+.Lk http://www.NetBSD.org/mirrors/
 A typical session might be:
 .Pp
 .Dl # Ic mkdir /mnt/usr/release
