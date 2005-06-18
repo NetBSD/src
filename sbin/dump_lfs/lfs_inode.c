@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.10 2005/06/16 20:39:33 jmc Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.11 2005/06/18 01:33:16 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.10 2005/06/16 20:39:33 jmc Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.11 2005/06/18 01:33:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,10 +198,11 @@ fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
 static daddr_t
 lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 {
-	daddr_t residue;
-	daddr_t up = UNASSIGNED; /* XXGCC -Wunitialized sh3 */
+	daddr_t residue, up;
 	int off=0;
 	char bp[MAXBSIZE];
+
+	up = UNASSIGNED;	/* XXXGCC -Wunitialized [sh3] */
 	
 	if(lbn > 0 && lbn > lblkno(fs, idinode->di_size)) {
 		return UNASSIGNED;
