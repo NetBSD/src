@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.3.6.1 2005/03/22 15:22:48 tron Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.3.6.2 2005/06/18 11:02:02 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -134,7 +134,7 @@ mutex without first dropping the lock an error will be returned.  If a thread
 attempts to unlock a
 .Dv PTHREAD_MUTEX_ERRORCHECK
 mutex that is locked by another thread, an error will be returned.  If a
-thread attemps to unlock a
+thread attempts to unlock a
 .Dv PTHREAD_MUTEX_ERRORCHECK
 thread that is unlocked, an error will be
 returned.
@@ -149,7 +149,7 @@ number of
 calls are needed before the mutex will wake another thread waiting on this
 lock.  If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_RECURSIVE
-mutex that is locked by another thread, an error will be returned.  If a thread attemps to unlock a
+mutex that is locked by another thread, an error will be returned.  If a thread attempts to unlock a
 .Dv PTHREAD_MUTEX_RECURSIVE
 thread that is unlocked, an error will be returned.
 .Pp
@@ -172,7 +172,7 @@ Otherwise, an error number is returned to indicate the error.
 shall fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
-Insufficent memory exists to initialize the mutex attributes object.
+Insufficient memory exists to initialize the mutex attributes object.
 .El
 .Pp
 .Fn pthread_mutexattr_settype
