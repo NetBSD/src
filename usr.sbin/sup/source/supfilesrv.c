@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.30 2004/12/21 16:20:09 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.31 2005/06/18 11:07:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1350,9 +1350,9 @@ sendone(TREE * t, void *v)
 #endif
 			if (fd == -1) {
 				if (docompress) {
-					tmpnam(temp_file);
-					fd = open(temp_file,
-					    (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
+					snprintf(temp_file, sizeof(temp_file),
+					     "%s/supfilesrv.XXXXXX", P_tmpdir);
+					fd = mkstemp(temp_file);
 					if (fd < 0)
 						goaway("We died trying to create temp file");
 					close(fd);
