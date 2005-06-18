@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.10 2005/05/28 16:28:14 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.11 2005/06/18 10:45:06 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.10 2005/05/28 16:28:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.11 2005/06/18 10:45:06 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -657,6 +657,7 @@ xen_network_handler(void *arg)
 	struct mbuf *m;
 
 	network_tx_buf_gc(sc);
+	xennet_start(ifp);
 
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rx_resp_cons);
@@ -865,6 +866,7 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 		    VM_PROT_READ | VM_PROT_WRITE);
 
 		id = get_bufarray_entry(sc->sc_rx_bufa);
+		KASSERT(id < NETIF_RX_RING_SIZE);
 		sc->sc_rx_bufa[id].xb_rx.xbrx_va = va;
 		sc->sc_rx_bufa[id].xb_rx.xbrx_sc = sc;
 
@@ -985,12 +987,6 @@ xennet_start(struct ifnet *ifp)
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", sc->sc_dev.dv_xname));
 
-#ifdef DIAGNOSTIC
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m == 0)
-		panic("%s: No packet to start", sc->sc_dev.dv_xname);
-#endif
-
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx->req_prod);
 #endif
@@ -1056,6 +1052,7 @@ xennet_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		bufid = get_bufarray_entry(sc->sc_tx_bufa);
+		KASSERT(bufid < NETIF_TX_RING_SIZE);
 		sc->sc_tx_bufa[bufid].xb_tx.xbtx_m = m;
 
 		DPRINTFN(XEDB_MBUF, ("xennet_start id %d, mbuf %p, buf %p/%p, "
@@ -1099,10 +1096,10 @@ xennet_start(struct ifnet *ifp)
 	network_tx_buf_gc(sc);
 
 	x86_lfence();
-	if (sc->sc_tx->resp_prod != idx)
+	if (sc->sc_tx->resp_prod != idx) {
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
-
-	ifp->if_timer = 5;
+		ifp->if_timer = 5;
+	}
 
 	ifp->if_opackets++;
 
