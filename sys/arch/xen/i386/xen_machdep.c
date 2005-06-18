@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.6.2.2 2005/05/28 16:28:07 tron Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.6.2.3 2005/06/18 10:47:44 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.2 2005/05/28 16:28:07 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.3 2005/06/18 10:47:44 tron Exp $");
 
 #include "opt_xen.h"
 
@@ -60,7 +60,6 @@ static char XBUF[256];
 #define	XENPRINTK(x)
 #define	XENPRINTK2(x)
 #endif
-void printk(char *, ...);
 #define	PRINTF(x) printf x
 #define	PRINTK(x) printk x
 

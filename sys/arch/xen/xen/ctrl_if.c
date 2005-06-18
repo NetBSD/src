@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2.2.7 2005/06/18 10:44:23 tron Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.2.2.8 2005/06/18 10:47:44 tron Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.7 2005/06/18 10:44:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.8 2005/06/18 10:47:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -22,7 +22,6 @@ __KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.7 2005/06/18 10:44:23 tron Exp $")
 #include <machine/ctrl_if.h>
 #include <machine/evtchn.h>
 
-void printk(char *, ...);
 #if 0
 #define DPRINTK(_f, _a...) printk("(file=%s, line=%d) " _f, \
                            __FILE__ , __LINE__ , ## _a )
