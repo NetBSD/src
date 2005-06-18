@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.33.2.1 2005/06/01 17:19:37 riz Exp $
+# 	$NetBSD: SPLODE,v 1.33.2.2 2005/06/18 05:59:20 riz Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33.2.1 $"
+#ident 		"GENERIC-$Revision: 1.33.2.2 $"
 
 maxusers	256
 
@@ -188,7 +188,6 @@ cpu0	at mainbus0
 #### Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# Ultra 1
-#upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 #psycho*	at mainbus0				# Darwin, Ultra5
 #pci*	at psycho?
 #pci*	at ppb?
@@ -439,9 +438,6 @@ cgsix*		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 #cgfourteen0	at obio0			# sun4m
-
-## Sun FFB not supported
-#ffb*		at upa?
 
 #### Other device configuration
 
