@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.127 2005/06/18 04:33:20 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.128 2005/06/18 05:24:10 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2522,4 +2522,15 @@ sys/dist/ipf/netinet/fil.c			1.16
 	the ioctl call for each variable, only the first name to find
 	was used, each successive call just used the cookie.
 	[darrenr, ticket #1991]
+
+doc/3RDPARTY					patch
+
+	Correct the version of ip-filter. PR#29368
+	[peter, ticket #1997]
+
+lib/libc/gen/sysctl.3				1.142
+sbin/sysctl/sysctl.8				1.118
+
+	PR/28782: OBATA Akio: Document that kern.rtc_offset is writable.
+	[peter, ticket #1998]
 
