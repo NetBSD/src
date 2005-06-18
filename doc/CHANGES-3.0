@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.137 2005/06/17 13:37:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.138 2005/06/18 06:01:46 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9648,4 +9648,43 @@ sys/dev/raidframe/rf_raid1.c			1.26
 
 	Code cleanup.
 	[oster, ticket #472]
+
+distrib/macppc/floppies/ramdisk/list		1.26
+etc/etc.macppc/MAKEDEV.conf			1.5
+sys/arch/macppc/conf/INSTALL			1.90
+
+	Enable RAIDframe support in the NetBSD-macppc installation media.
+	Based on patches submitted by Ian Spray in PR port-macppc/30465.
+	[tron, ticket #437]
+
+distrib/utils/sysinst/disks.c			1.88
+
+	Add raid(4) to the list of machine-independent devices which "sysinst"
+	recognizes. This allows upgrading e.g. NetBSD-macppc or NetBSD-sparc64
+	systems with RAIDframe mirrored root devices.
+	[tron, ticket #439]
+
+sys/dev/cardbus/if_tlp_cardbus.c		1.46
+sys/dev/pci/pcidevs				1.717
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for the LinkSys PCMPC200 Cardbus ethernet card.
+	[tron, ticket #450]
+
+sys/dev/pci/if_tlp_pci.c			1.79
+
+	Also use prom_getether() under NetBSD-sparc(64) if the MAC address
+	retrieved from the PROM starts with ff:ff:ff. The driver now works with
+	the onboard interface in the Tadpole SPARCle.
+	[tron, ticket #451]
+
+sys/arch/sparc64/conf/GENERIC32			1.108
+sys/arch/sparc64/conf/NONPLUS			1.49
+sys/arch/sparc64/conf/POWEROFSEVEN.inc		1.34
+sys/arch/sparc64/conf/SPLODE			1.35
+
+	Remove commented out "upa" attachments because NetBSD doesn't have a
+	driver for that anyway. Approved by Martin Husemann.
+	[tron, ticket #457]
 
