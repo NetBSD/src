@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.12 2005/05/22 03:45:30 lukem Exp $
+# $NetBSD: rescue.mi,v 1.13 2005/06/18 06:59:23 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -112,6 +112,7 @@
 ./rescue/rrestore				base-rescue-root
 ./rescue/rtsol					base-rescue-root	use_inet6
 ./rescue/savecore				base-rescue-root
+./rescue/scan_ffs				base-rescue-root
 ./rescue/scp					base-rescue-root	crypto
 ./rescue/scsictl				base-rescue-root
 ./rescue/setkey					base-rescue-root
@@ -133,6 +134,7 @@
 ./rescue/ttyflags				base-rescue-root
 ./rescue/tunefs					base-rescue-root
 ./rescue/umount					base-rescue-root
+./rescue/veriexecctl				base-rescue-root
 ./rescue/vi					base-rescue-root
 ./rescue/wdogctl				base-rescue-root
 ./rescue/wsconsctl				base-rescue-root
