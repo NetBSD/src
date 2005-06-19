@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.7 2005/04/09 02:14:52 atatat Exp $
+# $NetBSD: dhclient-script,v 1.8 2005/06/19 05:04:34 blymn Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -63,7 +63,7 @@ add_new_routes() {
 
 	set -- $new_static_routes
 	while [ $# -gt 1 ]; do
-		route add $0 $1
+		route add $1 $2
 		shift; shift
 	done
 }
