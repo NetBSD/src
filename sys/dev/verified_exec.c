@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.15 2005/06/17 17:46:18 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.15 2005/06/17 17:46:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.15 2005/06/17 17:46:18 elad Exp $\n$NetBSD: verified_exec.c,v 1.15 2005/06/17 17:46:18 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $\n$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -215,8 +215,6 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			return (EINVAL);
 		}
 
-		nid.ni_vp->fp_status = FINGERPRINT_NOTEVAL;
-
 		/* Get attributes for device and inode. */
 		error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
 		if (error)
@@ -267,6 +265,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
 		e->inode = va.va_fileid;
 		e->type = params->type;
+		e->status = FINGERPRINT_NOTEVAL;
 		if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
 			free(e, M_TEMP);
 			printf("Veriexec: veriexecioctl: Invalid or unknown "
@@ -276,14 +275,14 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			return(EINVAL);
 		}
 
-		  /*
-		   * Just a bit of a sanity check - require the size of
-		   * the fp to be passed in, check this against the expected
-		   * size.  Of course userland could lie deliberately, this
-		   * really only protects against the obvious fumble of
-		   * changing the fp type but not updating the fingerprint
-		   * string.
-		   */
+		/*
+		 * Just a bit of a sanity check - require the size of
+		 * the fp to be passed in, check this against the expected
+		 * size.  Of course userland could lie deliberately, this
+		 * really only protects against the obvious fumble of
+		 * changing the fp type but not updating the fingerprint
+		 * string.
+		 */
 		if (e->ops->hash_len != params->size) {
 			printf("Veriexec: veriexecioctl: Inconsistent "
 			       "fingerprint size for type \"%s\" for file "
