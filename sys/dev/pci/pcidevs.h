@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.720 2005/06/15 17:59:14 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.721 2005/06/19 21:17:17 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.719 2005/06/15 17:58:02 bouyer Exp
+ *	NetBSD: pcidevs,v 1.720 2005/06/19 21:16:41 chs Exp
  */
 
 /*
@@ -498,6 +498,7 @@
 #define	PCI_VENDOR_ANALOG	0x11d4		/* Analog Devices */
 #define	PCI_VENDOR_SEGA	0x11db		/* SEGA Enterprises */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran */
+#define	PCI_VENDOR_QUICKLOGIC	0x11e3		/* QuickLogic */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
@@ -563,6 +564,7 @@
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics */
+#define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
 #define	PCI_VENDOR_TITAN	0x14d2		/* Titan Electronics */
 #define	PCI_VENDOR_AVLAB	0x14db		/* Avlab Technology */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -2084,24 +2086,24 @@
 #define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
 #define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
 
+/* Mutech products */
+#define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V3	0x0002		/* DAC960 RAID (v3 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V4	0x0010		/* DAC960 RAID (v4 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V5	0x0020		/* DAC960 RAID (v5 interface) */
-#define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID (i960) */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_3000	0x0030		/* eXtremeRAID 3000 */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_2000	0x0040		/* eXtremeRAID 2000 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID 352 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_170	0x0052		/* AcceleRAID 170 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_160	0x0054		/* AcceleRAID 160 */
 #define	PCI_PRODUCT_MYLEX_EXTREMERAID1100	0xba55		/* eXtremeRAID 1100 */
 #define	PCI_PRODUCT_MYLEX_EXTREMERAID	0xba56		/* eXtremeRAID 2000/3000 */
 
-/* Mylex subsystem IDs */
-#define	PCI_PRODUCT_MYLEX_ACCELERAID_352	0x0050		/* AcceleRAID 352 */
-#define	PCI_PRODUCT_MYLEX_ACCELERAID_170	0x0052		/* AcceleRAID 170 */
-#define	PCI_PRODUCT_MYLEX_ACCELERAID_160	0x0054		/* AcceleRAID 160 */
-#define	PCI_PRODUCT_MYLEX_EXTREMERAID_2000	0x0040		/* eXtremeRAID 2000 */
-#define	PCI_PRODUCT_MYLEX_EXTREMERAID_3000	0x0030		/* eXtremeRAID 3000 */
-
-/* Mutech products */
-#define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+/* Myricom products */
+#define	PCI_PRODUCT_MYRICOM_MYRINET	0x8043		/* Myrinet */
 
 /* Myson-Century Technology products */
 #define	PCI_PRODUCT_MYSON_MTD803	0x0803		/* MTD803 3-in-1 Fast Ethernet Controller */
@@ -2431,6 +2433,9 @@
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
 
+/* QuickLogic products */
+#define	PCI_PRODUCT_QUICKLOGIC_PCWATCHDOG	0x5030		/* PC Watchdog */
+
 /* Rainbow Technologies products */
 #define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
 
@@ -2609,6 +2614,7 @@
 #define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
 #define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* 180 SATA controller */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
+#define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305 AGP VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host-PCI Bridge */
