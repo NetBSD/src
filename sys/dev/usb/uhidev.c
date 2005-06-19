@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.26 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.26 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,19 @@ USB_ATTACH(uhidev)
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
+	}
+
+	if (uaa->vendor == USB_VENDOR_HOSIDEN && 
+	    uaa->product == USB_PRODUCT_HOSIDEN_PPP) {
+		static uByte reportbuf[] = { 1 };
+		/*
+		 *  This device was sold by Konami with its ParaParaParadise 
+		 *  game for PlayStation2.  It needs to be "turned on"
+		 *  before it will send any reports.
+		 */
+
+		usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 0,
+		    &reportbuf, sizeof reportbuf);
 	}
 
 	sc->sc_repdesc = desc;
