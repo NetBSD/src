@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2005/06/19 20:00:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2005/06/19 20:00:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -361,13 +361,13 @@ identifycpu(void)
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
-	case SUN3X_MACH_80:
+	case ID_SUN3X_80:
 		cpu_string = "80";  	/* Hydra */
 		delay_divisor = 102;	/* 20 MHz */
 		cpu_has_vme = FALSE;
 		break;
 
-	case SUN3X_MACH_470:
+	case ID_SUN3X_470:
 		cpu_string = "470"; 	/* Pegasus */
 		delay_divisor = 62; 	/* 33 MHz */
 		cpu_has_vme = TRUE;
