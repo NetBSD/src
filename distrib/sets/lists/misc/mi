@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.119 2005/05/14 20:03:31 dsl Exp $
+# $NetBSD: mi,v 1.120 2005/06/19 07:51:33 wiz Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -465,6 +465,7 @@
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples	share
 ./usr/share/examples/emul/ultrix/etc/svc.conf	misc-sys-examples	share
 ./usr/share/examples/fstab/fstab.cdrom		misc-fstab-examples	share
+./usr/share/examples/fstab/fstab.md		misc-obsolete		obsolete
 ./usr/share/examples/fstab/fstab.nfs.1		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.nfs.2		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.nfs.3		misc-fstab-examples	share
