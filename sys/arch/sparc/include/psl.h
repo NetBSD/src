@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.34 2003/08/07 16:29:40 agc Exp $ */
+/*	$NetBSD: psl.h,v 1.35 2005/06/19 01:54:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,17 +239,11 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-static __inline int getpsr __P((void));
-static __inline void setpsr __P((int));
-static __inline void spl0 __P((void));
-static __inline int splhigh __P((void));
-static __inline void splx __P((int));
-static __inline int getmid __P((void));
-
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static __inline int getpsr()
+static __inline int
+getpsr(void)
 {
 	int psr;
 
@@ -257,7 +251,8 @@ static __inline int getpsr()
 	return (psr);
 }
 
-static __inline int getmid()
+static __inline int
+getmid(void)
 {
 	int mid;
 
@@ -265,14 +260,15 @@ static __inline int getmid()
 	return ((mid >> 20) & 0x3);
 }
 
-static __inline void setpsr(newpsr)
-	int newpsr;
+static __inline void
+setpsr(int newpsr)
 {
 	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
 	__asm __volatile("nop; nop; nop");
 }
 
-static __inline void spl0()
+static __inline void
+spl0(void)
 {
 	int psr, oldipl;
 
@@ -298,8 +294,7 @@ static __inline void spl0()
  * into the ipl field.)
  */
 #define	_SPLSET(name, newipl) \
-static __inline void name __P((void)); \
-static __inline void name() \
+static __inline void name(void) \
 { \
 	int psr, oldipl; \
 	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
@@ -310,76 +305,61 @@ static __inline void name() \
 	__asm __volatile("nop; nop; nop"); \
 }
 
-/* Raise IPL and return previous value */
-#define	_SPLRAISE(name, newipl) \
-static __inline int name __P((void)); \
-static __inline int name() \
-{ \
-	int psr, oldipl; \
-	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
-	oldipl = psr & PSR_PIL; \
-	if ((newipl << 8) <= oldipl) \
-		return (oldipl); \
-	psr &= ~oldipl; \
-	__asm __volatile("wr %0,%1,%%psr" : : \
-	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm __volatile("nop; nop; nop"); \
-	return (oldipl); \
-}
-
-_SPLSET(spllowersoftclock, 1)
-
-_SPLRAISE(splsoftint, 1)
-#define	splsoftclock	splsoftint
-#define	splsoftnet	splsoftint
-
-
-/* audio software interrupts */
-_SPLRAISE(splausoft, IPL_SOFTAUDIO)
-
-/* floppy software interrupts */
-_SPLRAISE(splfdsoft, IPL_SOFTFDC)
-
-/* Block devices */
-_SPLRAISE(splbio, IPL_BIO)
-
-/* tty input runs at software level 6 */
-_SPLRAISE(spltty, IPL_TTY)
-
-/* network hardware interrupts are at level 7 */
-_SPLRAISE(splnet, IPL_NET)
-
-/*
- * Memory allocation (must be as high as highest network, tty, or disk device)
- */
-_SPLRAISE(splvm, IPL_VM)
-
-/* clock interrupts at level 10 */
-_SPLRAISE(splclock, IPL_CLOCK)
-
-_SPLRAISE(splsched, IPL_SCHED)
+_SPLSET(spllowersoftclock, IPL_SOFTCLOCK)
 _SPLSET(spllowerschedclock, IPL_SCHED)
 
+/* Raise IPL and return previous value */
+static __inline int
+splraise(int newipl)
+{
+	int psr, oldipl;
+
+	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+
+	oldipl = psr & PSR_PIL;
+	newipl <<= 8;
+	if (newipl <= oldipl)
+		return (oldipl);
+
+	psr = (psr & ~oldipl) | newipl;
+
+	__asm __volatile("wr %0,0,%%psr" : : "r" (psr));
+	__asm __volatile("nop; nop; nop");
+
+	return (oldipl);
+}
+
+#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()	splraise(IPL_SOFTNET)
+
+#define	splausoft()	splraise(IPL_SOFTAUDIO)
+#define	splfdsoft()	splraise(IPL_SOFTFDC)
+
+#define	splbio()	splraise(IPL_BIO)
+#define	spltty()	splraise(IPL_TTY)
+#define	splnet()	splraise(IPL_NET)
+#define	splvm()		splraise(IPL_VM)
+#define	splclock()	splraise(IPL_CLOCK)
+#define	splsched()	splraise(IPL_SCHED)
+
 /* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
-_SPLRAISE(splfd, 11)
-_SPLRAISE(splts102, 11)
+#define	splfd()		splraise(11)
+#define	splts102()	splraise(11)
 
 /*
  * zs hardware interrupts are at level 12
  * su (com) hardware interrupts are at level 13
  * IPL_SERIAL must protect them all.
  */
-_SPLRAISE(splzs, 12)
+#define	splzs()		splraise(12)
+#define	splserial()	splraise(IPL_SERIAL)
 
-_SPLRAISE(splserial, IPL_SERIAL)
+#define	splaudio()	splraise(IPL_AUDIO)
 
-/* audio hardware interrupts are at level 13 */
-_SPLRAISE(splaudio, IPL_AUDIO)
+#define	splstatclock()	splraise(IPL_STATCLOCK)
 
-/* second sparc timer interrupts at level 14 */
-_SPLRAISE(splstatclock, IPL_STATCLOCK)
-
-static __inline int splhigh()
+static __inline int
+splhigh(void)
 {
 	int psr, oldipl;
 
@@ -393,8 +373,8 @@ static __inline int splhigh()
 #define	spllock()	splhigh()
 
 /* splx does not have a return value */
-static __inline void splx(newipl)
-	int newipl;
+static __inline void
+splx(int newipl)
 {
 	int psr;
 
