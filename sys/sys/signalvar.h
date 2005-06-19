@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.55 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.56 2005/06/19 23:10:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -197,7 +197,6 @@ void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
 void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
 	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
-#endif	/* !_SYS_SIGNALVAR_H_ */
 
 #ifdef	_KERNEL
 #ifdef	SIGPROP
@@ -272,3 +271,4 @@ const int sigprop[NSIG] = {
 extern const int sigprop[NSIG];
 #endif	/* SIGPROP */
 #endif	/* _KERNEL */
+#endif	/* !_SYS_SIGNALVAR_H_ */
