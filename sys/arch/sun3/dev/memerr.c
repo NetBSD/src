@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.18 2005/06/03 15:04:21 tsutsui Exp $ */
+/*	$NetBSD: memerr.c,v 1.19 2005/06/19 20:00:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.18 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.19 2005/06/19 20:00:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,9 @@ memerr_attach(struct device *parent, struct device *self, void *args)
 	 * Which type of memory subsystem do we have?
 	 */
 	switch (cpu_machine_id) {
-	case SUN3_MACH_160:		/* XXX: correct? */
-	case SUN3_MACH_260:
-	case SUN3X_MACH_470:
+	case ID_SUN3_160:		/* XXX: correct? */
+	case ID_SUN3_260:
+	case ID_SUN3X_470:
 		sc->sc_type = ME_ECC;
 		sc->sc_typename = "ECC";
 		sc->sc_csrbits = ME_ECC_STR;

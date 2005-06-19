@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.147 2005/05/29 15:57:01 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2005/05/29 15:57:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2005/06/19 20:00:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1556,7 +1556,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * On the Sun3/50, the video frame buffer is located at
 	 * physical addres 1MB so we must step over it.
 	 */
-	if (cpu_machine_id == SUN3_MACH_50) {
+	if (cpu_machine_id == ID_SUN3_50) {
 		hole_start = m68k_trunc_page(OBMEM_BW50_ADDR);
 		hole_size  = m68k_round_page(OBMEM_BW2_SIZE);
 		if (avail_start > hole_start) {

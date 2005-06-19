@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.11 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.12 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.11 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.12 2005/06/19 20:00:28 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -198,7 +198,7 @@ zs_find_prom(int unit)
 	/*
 	 * The physical address of zs0 is model-dependent.
 	 */
-	zs0_phys = (cpu_machine_id == SUN2_MACH_120 ? 0x002000 : 0x7f2000);
+	zs0_phys = (cpu_machine_id == ID_SUN2_120 ? 0x002000 : 0x7f2000);
 	if (sun68k_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice),
 	    &bh))
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.26 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: bw2.c,v 1.27 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.26 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.27 2005/06/19 20:00:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 		/* Guess based on machine ID. */
 		switch (cpu_machine_id) {
 #ifdef	_SUN3_
-		case SUN3_MACH_60:
+		case ID_SUN3_60:
 			/*
 			 * Only the model 60 can have hi-res.
 			 * Look at the "resolution" jumper.
@@ -259,7 +259,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 				goto high_res;
 			break;
 
-		case SUN3_MACH_260:
+		case ID_SUN3_260:
 			/* The Sun3/260 is ALWAYS high-resolution! */
 			/* fall through */
 		high_res:

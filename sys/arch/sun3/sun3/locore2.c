@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.85 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: locore2.c,v 1.86 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.85 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86 2005/06/19 20:00:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -162,7 +162,7 @@ _save_symtab(void)
 	 * then just ignore the symbols.
 	 */
 
-	if ((cpu_machine_id == SUN3_MACH_50) &&
+	if ((cpu_machine_id == ID_SUN3_50) &&
 	    ((vaddr_t)maxsym > (KERNBASE + OBMEM_BW50_ADDR - USPACE))) {
 		mon_printf("_save_symtab: too large for 3/50");
 		return;
@@ -251,33 +251,33 @@ _verify_hardware(void)
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
-	case SUN3_MACH_50 :
+	case ID_SUN3_50 :
 		cpu_match++;
 		cpu_string = "50";
 		delay_divisor = 128;	/* 16 MHz */
 		break;
 
-	case SUN3_MACH_60 :
+	case ID_SUN3_60 :
 		cpu_match++;
 		cpu_string = "60";
 		delay_divisor = 102;	/* 20 MHz */
 		break;
 
-	case SUN3_MACH_110:
+	case ID_SUN3_110:
 		cpu_match++;
 		cpu_string = "110";
 		delay_divisor = 120;	/* 17 MHz */
 		cpu_has_vme = TRUE;
 		break;
 
-	case SUN3_MACH_160:
+	case ID_SUN3_160:
 		cpu_match++;
 		cpu_string = "160";
 		delay_divisor = 120;	/* 17 MHz */
 		cpu_has_vme = TRUE;
 		break;
 
-	case SUN3_MACH_260:
+	case ID_SUN3_260:
 		cpu_match++;
 		cpu_string = "260";
 		delay_divisor = 82; 	/* 25 MHz */
@@ -287,7 +287,7 @@ _verify_hardware(void)
 #endif
 		break;
 
-	case SUN3_MACH_E  :
+	case ID_SUN3_E  :
 		cpu_match++;
 		cpu_string = "E";
 		delay_divisor = 102;	/* 20 MHz  XXX: Correct? */
