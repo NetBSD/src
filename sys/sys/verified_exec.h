@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.12 2005/05/29 16:07:10 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.13 2005/06/19 18:22:37 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.12 2005/05/29 16:07:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.13 2005/06/19 18:22:37 elad Exp $");
 
 /*
  *
@@ -119,10 +119,16 @@ struct veriexec_fp_ops {
 struct veriexec_hash_entry {
         ino_t         inode;                        /* Inode number. */
         unsigned char type;                         /* Entry type. */
+	unsigned char status;			    /* Evaluation status. */
         unsigned char *fp;                          /* Fingerprint. */
 	struct veriexec_fp_ops *ops;                /* Fingerprint ops vector*/
         LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
+
+/* Valid status field values. */
+#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
+#define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
 
 LIST_HEAD(veriexec_hashhead, veriexec_hash_entry) *hash_tbl;
 
@@ -175,13 +181,11 @@ struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
 int veriexec_fp_calc(struct proc *, struct vnode *,
 		     struct veriexec_hash_entry *, uint64_t, u_char *);
 int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
-
 struct veriexec_hashtbl *veriexec_tblfind(dev_t);
 struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
 int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
-
 int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
-		    const u_char *, int);
+		    const u_char *, int, struct veriexec_hash_entry **);
 int veriexec_removechk(struct proc *, struct vnode *, const char *);
 void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct vattr *,
