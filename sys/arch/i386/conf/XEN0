@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.3 2005/04/15 17:27:21 itohy Exp $
+# $NetBSD: XEN0,v 1.4 2005/06/19 00:23:43 chs Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -204,7 +204,7 @@ pci*		at pchb? bus ?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -216,8 +216,9 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -235,6 +236,8 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
+vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
