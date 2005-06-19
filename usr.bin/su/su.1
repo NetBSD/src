@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.42 2005/06/19 17:26:30 wiz Exp $
+.\"	$NetBSD: su.1,v 1.43 2005/06/19 17:34:03 wiz Exp $
 .\"
 .Dd April 5, 2005
 .Dt SU 1
@@ -207,11 +207,10 @@ the name of the required group can be changed by setting
 .Ar gname
 in
 .Xr pam.conf 5 :
-.sp
-.nf
- auth requisite pam_group.so no_warn group=gname root_only fail_safe
-.fi
-.sp
+.Bd -literal
+auth requisite pam_group.so no_warn group=gname root_only fail_safe
+.Ed
+.Pp
 For the non
 .Xr pam 8
 version of
@@ -231,11 +230,10 @@ version of
 this can be done by adding a line to
 .Xr pam.conf 5
 such as:
-.sp
-.nf
- auth sufficient pam_group.so no_warn group=gname root_only authenticate
-.fi
-.sp
+.Bd -literal
+auth sufficient pam_group.so no_warn group=gname root_only authenticate
+.Ed
+.Pp
 where
 .Ar gname
 is the name of the desired group.
