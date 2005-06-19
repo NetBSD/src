@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.223 2005/06/16 20:15:04 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.224 2005/06/19 18:14:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.223 2005/06/16 20:15:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.224 2005/06/19 18:14:27 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -118,6 +118,14 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.223 2005/06/16 20:15:04 bouyer Exp $");
 
 /* timeout for the control commands */
 #define WDC_CTRL_DELAY 10000 /* 10s, for the recall command */
+
+/*
+ * timeout when waiting for BSY to deassert when probing.
+ * set to 5s. From the standards this could be up to 31, but we can't
+ * wait that much at boot time, and 5s seems to be enouth.
+ */
+#define WDC_PROBE_WAIT 5
+
 
 #if NWD > 0
 extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
@@ -399,10 +407,12 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	u_int8_t st0, st1, sc, sn, cl, ch;
+	u_int8_t st0 = 0, st1 = 0, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
 	int s;
+	int wdc_probe_count =
+	    poll ? (WDC_PROBE_WAIT / WDCDELAY) : (WDC_PROBE_WAIT * hz);
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -410,24 +420,27 @@ wdcprobe1(struct ata_channel *chp, int poll)
 
 	s = splbio();
 	if ((wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+		while (wdc_probe_count-- > 0) {
+			if (wdc->select)
+				wdc->select(chp,0);
 
-		if (wdc->select)
-			wdc->select(chp,0);
+			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM);
+			delay(10);	/* 400ns delay */
+			st0 = bus_space_read_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_status], 0);
 
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		st0 = bus_space_read_1(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_status], 0);
+			if (wdc->select)
+				wdc->select(chp,1);
 
-		if (wdc->select)
-			wdc->select(chp,1);
-
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM | 0x10);
-		delay(10);	/* 400ns delay */
-		st1 = bus_space_read_1(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_status], 0);
+			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM | 0x10);
+			delay(10);	/* 400ns delay */
+			st1 = bus_space_read_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_status], 0);
+			if ((st0 & WDCS_BSY) == 0)
+				break;
+		}
 
 		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    atac->atac_dev.dv_xname,
