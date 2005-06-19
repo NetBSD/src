@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.56 2005/06/17 21:20:18 dsl Exp $
+.\"	$NetBSD: disklabel.8,v 1.57 2005/06/19 17:24:20 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,8 +44,7 @@
 .Ar disk
 .Nm
 .Fl w
-.\" .Op Fl Fr - except Fr is treated as a macro :-(
-.Op Fl rF
+.Op Fl \&Fr
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -60,7 +59,7 @@
 .Ar disk
 .Nm
 .Fl R
-.Op Fl rF
+.Op Fl \&Fr
 .Ar disk Ar protofile
 .Nm
 .Op Fl NW
