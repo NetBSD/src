@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.399 2005/06/01 09:15:41 sekiya Exp $
+$NetBSD: usbdevs,v 1.400 2005/06/19 10:25:36 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor AIPTEK2		0x04fc	AIPTEK International
 vendor ACER		0x0502	Acer
 vendor 3COM		0x0506	3Com
+vendor HOSIDEN		0x0507	Hosiden Corporation
 vendor AZTECH		0x0509	Aztech Systems
 vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor
@@ -927,6 +928,9 @@ product HAWKING UF100		0x400c	10/100 USB Ethernet
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
 product HITACHI DVDCAM_USB	0x001e	DVDCAM USB HS Interface
+
+/* Hosiden Corporation products */
+product	HOSIDEN PPP		0x0011	ParaParaParadise Controller
 
 /* HP products */
 product HP 895C			0x0004	DeskJet 895C
