@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.8 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: leds.c,v 1.9 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.8 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9 2005/06/19 20:00:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ leds_init(void)
 
 #ifdef	_SUN3X_
 	diagreg = obio_find_mapping(OBIO_DIAGREG, 1);
-	if (cpu_machine_id == SUN3X_MACH_80)
+	if (cpu_machine_id == ID_SUN3X_80)
 		ledpat.patlen = 1;
 #endif	/* SUN3X */
 

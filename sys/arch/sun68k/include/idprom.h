@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: idprom.h,v 1.3 2005/06/19 20:00:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,51 +39,7 @@
 #ifndef	_MACHINE_IDPROM_H
 #define	_MACHINE_IDPROM_H
 
-/*
- * structure/definitions for the 32 byte id prom found in all suns.
- */
-
-struct idprom {
-    unsigned char idp_format;
-    unsigned char idp_machtype;
-    unsigned char idp_etheraddr[6];
-    long          idp_date;
-    unsigned char idp_serialnum[3];
-    unsigned char idp_checksum;
-    /* Note: The rest is excluded from the checksum! */
-    unsigned char idp_reserved[16];
-};
-
-#define IDPROM_VERSION 1
-#define IDPROM_SIZE (sizeof(struct idprom))
-#define IDPROM_CKSUM_SIZE 16
-
-/* values for cpu_machine_id */
-
-/* High nibble identifies the architecture. */
-#define IDM_ARCH_MASK	0xf0
-#define IDM_ARCH_SUN2	0x00
-#define IDM_ARCH_SUN3	0x10
-#define IDM_ARCH_SUN4   0x20
-#define IDM_ARCH_SUN3X	0x40
-#define IDM_ARCH_SUN4C	0x50
-#define IDM_ARCH_SUN4M	0x70
-
-/* Low nibble identifies the implementation. */
-#define IDM_IMPL_MASK 0x0f
-
-/* Values of idp_machtype we might see (m68k only). */
-#define SUN2_MACH_120  0x01	/* Sun2 Multibus */
-#define SUN2_MACH_50   0x02	/* Sun2 VME */
-#define SUN3_MACH_160  0x11 	/* Carrera */
-#define SUN3_MACH_50   0x12 	/* M25 */
-#define SUN3_MACH_260  0x13 	/* Sirius */
-#define SUN3_MACH_110  0x14 	/* Prism */
-#define SUN3_MACH_60   0x17 	/* Sun3F */
-#define SUN3_MACH_E    0x18 	/* Sun3E */
-
-#define SUN3X_MACH_470  0x41	/* Pegasus */
-#define SUN3X_MACH_80   0x42	/* Hydra */
+#include <dev/sun/idprom.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 

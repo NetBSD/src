@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.191 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: cpu.c,v 1.192 2005/06/19 20:00:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.191 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192 2005/06/19 20:00:28 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1140,7 +1140,7 @@ cpumatch_sun4(sc, mp, node)
 {
 	struct idprom *idp = prom_getidprom();
 
-	switch (idp->id_machine) {
+	switch (idp->idp_machtype) {
 	case ID_SUN4_100:
 		sc->cpu_type = CPUTYP_4_100;
 		sc->classlvl = 100;
