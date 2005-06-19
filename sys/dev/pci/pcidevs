@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.719 2005/06/15 17:58:02 bouyer Exp $
+$NetBSD: pcidevs,v 1.720 2005/06/19 21:16:41 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -491,6 +491,7 @@ vendor AURAVISION	0x11d1 	Auravision
 vendor ANALOG		0x11d4	Analog Devices
 vendor SEGA		0x11db	SEGA Enterprises
 vendor ZORAN		0x11de	Zoran
+vendor QUICKLOGIC	0x11e3	QuickLogic
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
@@ -556,6 +557,7 @@ vendor ASKEY		0x144f	Askey Computer
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics
+vendor MYRICOM		0x14c1	Myricom
 vendor TITAN		0x14d2	Titan Electronics
 vendor AVLAB		0x14db	Avlab Technology
 vendor INVERTEX		0x14e1	Invertex
@@ -2077,24 +2079,24 @@ product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controlle
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
 
+/* Mutech products */
+product MUTECH MV1000	0x0001	MV1000
+
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
 product MYLEX RAID_V3		0x0002	DAC960 RAID (v3 interface)
 product MYLEX RAID_V4		0x0010	DAC960 RAID (v4 interface)
 product MYLEX RAID_V5		0x0020	DAC960 RAID (v5 interface)
-product MYLEX ACCELERAID	0x0050	AcceleRAID (i960)
+product MYLEX EXTREMERAID_3000	0x0030	eXtremeRAID 3000
+product MYLEX EXTREMERAID_2000	0x0040	eXtremeRAID 2000
+product MYLEX ACCELERAID	0x0050	AcceleRAID 352
+product MYLEX ACCELERAID_170	0x0052	AcceleRAID 170
+product MYLEX ACCELERAID_160	0x0054	AcceleRAID 160
 product MYLEX EXTREMERAID1100	0xba55	eXtremeRAID 1100
 product MYLEX EXTREMERAID	0xba56	eXtremeRAID 2000/3000
 
-/* Mylex subsystem IDs */
-product MYLEX ACCELERAID_352	0x0050	AcceleRAID 352
-product MYLEX ACCELERAID_170	0x0052	AcceleRAID 170
-product MYLEX ACCELERAID_160	0x0054	AcceleRAID 160
-product MYLEX EXTREMERAID_2000	0x0040	eXtremeRAID 2000
-product MYLEX EXTREMERAID_3000	0x0030	eXtremeRAID 3000
-
-/* Mutech products */
-product MUTECH MV1000	0x0001	MV1000
+/* Myricom products */
+product MYRICOM MYRINET	0x8043	Myrinet
 
 /* Myson-Century Technology products */
 product MYSON MTD803	0x0803	MTD803 3-in-1 Fast Ethernet Controller
@@ -2424,6 +2426,9 @@ product QLOGIC ISP2100	0x2100	ISP2100
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
+/* QuickLogic products */
+product QUICKLOGIC PCWATCHDOG	0x5030	PC Watchdog
+
 /* Rainbow Technologies products */
 product RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
 
@@ -2602,6 +2607,7 @@ product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
 product SIS 600PMC		0x0009	600 Power Mngmt Controller
 product SIS 180_SATA		0x0180	180 SATA controller
 product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
+product SIS 300			0x0300	300/305 AGP VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host-PCI Bridge
