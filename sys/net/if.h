@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.108 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.109 2005/06/19 11:34:42 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -710,14 +710,14 @@ do {									\
 	(ifq)->altq_flags |= ALTQF_READY;				\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_CLASSIFY(ifq, m, af, pa)					\
+#define	IFQ_CLASSIFY(ifq, m, af, pattr)					\
 do {									\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			(pa)->pattr_class = (*(ifq)->altq_classify)	\
+			(pattr)->pattr_class = (*(ifq)->altq_classify)	\
 				((ifq)->altq_clfier, (m), (af));	\
-		(pa)->pattr_af = (af);					\
-		(pa)->pattr_hdr = mtod((m), caddr_t);			\
+		(pattr)->pattr_af = (af);				\
+		(pattr)->pattr_hdr = mtod((m), caddr_t);		\
 	}								\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
@@ -745,7 +745,7 @@ do {									\
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
 
-#define	IFQ_CLASSIFY(ifq, m, af, pa) /* nothing */
+#define	IFQ_CLASSIFY(ifq, m, af, pattr) /* nothing */
 
 #endif /* ALTQ */
 
