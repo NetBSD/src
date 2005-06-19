@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.12 2002/07/06 00:53:54 wiz Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.13 2005/06/19 23:43:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.12 2002/07/06 00:53:54 wiz Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.13 2005/06/19 23:43:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -309,7 +309,6 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	status = YPPUSH_SUCC;
 
 	snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
-	map_path[sizeof(map_path) - 1] = '\0';
 
 	/* Make sure we serve the domain. */
 	if ((stat(map_path, &finfo)) != 0 ||
@@ -322,7 +321,6 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	/* Make sure we serve the map. */
 	snprintf(map_path, sizeof(map_path), "%s/%s/%s%s",
 	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-	map_path[sizeof(map_path) - 1] = '\0';
 	if (stat(map_path, &finfo) != 0) {
 		status = YPPUSH_NOMAP;
 		goto out;
@@ -331,7 +329,6 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	/* Open the map file. */
 	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
 	    YP_DB_PATH, domain, map);
-	map_path[sizeof(map_path) - 1] = '\0';
 	db = ypdb_open(map_path, O_RDONLY, 0444);
 	if (db == NULL) {
 		status = YPPUSH_DBM;
@@ -395,7 +392,6 @@ create_db(char *domain, char *map, char *temp_map)
 
 	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s",
 	    YP_DB_PATH, domain, temp_map);
-	db_temp[sizeof(db_temp) - 1] = '\0';
 
 	db = ypdb_open(db_temp, O_RDWR|O_CREAT|O_EXCL, 0444);
 
@@ -409,11 +405,9 @@ install_db(char *domain, char *map, char *temp_map)
 
 	snprintf(db_name, sizeof(db_name), "%s/%s/%s%s",
 	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-	db_name[sizeof(db_name) - 1] = '\0';
 
 	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s%s",
 	    YP_DB_PATH, domain, temp_map, YPDB_SUFFIX);
-	db_temp[sizeof(db_temp) - 1] = '\0';
 
 	if (rename(db_temp, db_name)) {
 		warn("can't rename `%s' -> `%s'", db_temp, db_name);
@@ -430,7 +424,6 @@ unlink_db(char *domain, char *map, char *temp_map)
 
 	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s%s",
 	    YP_DB_PATH, domain, temp_map, YPDB_SUFFIX);
-	db_temp[sizeof(db_temp) - 1] = '\0';
 
 	if (unlink(db_temp)) {
 		warn("can't unlink `%s'", db_temp);
@@ -449,7 +442,6 @@ add_order(DBM *db, u_int ordernum)
 	int status;
 
 	snprintf(datestr, sizeof(datestr), "%010d", ordernum);
-	datestr[sizeof(datestr) - 1] = '\0';
 
 	key.dptr = keystr;
 	key.dsize = strlen(keystr);
