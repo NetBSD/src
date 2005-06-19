@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.718 2005/06/15 17:59:14 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.719 2005/06/19 21:17:17 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.719 2005/06/15 17:58:02 bouyer Exp
+ *	NetBSD: pcidevs,v 1.720 2005/06/19 21:16:41 chs Exp
  */
 
 /*
@@ -1804,6 +1804,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "Zoran",
 	},
 	{
+	    PCI_VENDOR_QUICKLOGIC,
+	    "QuickLogic",
+	},
+	{
 	    PCI_VENDOR_COMPEX,
 	    "Compex",
 	},
@@ -2064,6 +2068,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "COMPAL Electronics",
 	},
 	{
+	    PCI_VENDOR_MYRICOM,
+	    "Myricom",
+	},
+	{
 	    PCI_VENDOR_TITAN,
 	    "Titan Electronics",
 	},
@@ -2316,7 +2324,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 569;
+const int pci_nvendors = 571;
 
 const struct pci_product pci_products[] = {
 	{
@@ -7052,6 +7060,10 @@ const struct pci_product pci_products[] = {
 	    "Hawk System Memory Controller & PCI Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
+	    "MV1000",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
 	    "DAC960 RAID (v2 interface)",
 	},
@@ -7068,19 +7080,15 @@ const struct pci_product pci_products[] = {
 	    "DAC960 RAID (v5 interface)",
 	},
 	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000,
+	    "eXtremeRAID 3000",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000,
+	    "eXtremeRAID 2000",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
-	    "AcceleRAID (i960)",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID1100,
-	    "eXtremeRAID 1100",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
-	    "eXtremeRAID 2000/3000",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_352,
 	    "AcceleRAID 352",
 	},
 	{
@@ -7092,16 +7100,16 @@ const struct pci_product pci_products[] = {
 	    "AcceleRAID 160",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000,
-	    "eXtremeRAID 2000",
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID1100,
+	    "eXtremeRAID 1100",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000,
-	    "eXtremeRAID 3000",
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
+	    "eXtremeRAID 2000/3000",
 	},
 	{
-	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
-	    "MV1000",
+	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_MYRINET,
+	    "Myrinet",
 	},
 	{
 	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
@@ -8144,6 +8152,10 @@ const struct pci_product pci_products[] = {
 	    "8580",
 	},
 	{
+	    PCI_VENDOR_QUICKLOGIC, PCI_PRODUCT_QUICKLOGIC_PCWATCHDOG,
+	    "PC Watchdog",
+	},
+	{
 	    PCI_VENDOR_RAINBOW, PCI_PRODUCT_RAINBOW_CS200,
 	    "CryptoSwift 200 PKI Accelerator",
 	},
@@ -8702,6 +8714,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
 	    "5597/5598 integrated VGA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300,
+	    "300/305 AGP VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
@@ -10332,4 +10348,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2003;
+const int pci_nproducts = 2005;
