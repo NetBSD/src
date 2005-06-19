@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.35 2005/06/19 01:54:51 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.36 2005/06/19 20:31:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,17 +71,6 @@
 #define PSR_CWP		0x0000001f	/* current window pointer */
 
 #define PSR_BITS "\20\16EC\15EF\10S\7PS\6ET"
-
-/* Interesting spl()s */
-#define PIL_FDSOFT	IPL_SOFTFDC	/* compat */
-#define PIL_AUSOFT	IPL_SOFTAUDIO	/* compat */
-#define PIL_TTY		6		/* compat */
-#define PIL_CLOCK	10
-#define PIL_FD		11
-#define PIL_SER		13
-#define	PIL_AUD		13
-#define PIL_HIGH	15
-#define PIL_LOCK	PIL_HIGH
 
 /* 
  * SPARC V9 CCR register
