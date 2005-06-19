@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.127 2005/06/16 12:55:25 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.127 2005/06/16 12:55:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -193,22 +193,18 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-static char *
-usbd_trim_spaces(char *b, size_t s, const char *p)
+static void
+usbd_trim_spaces(char *p)
 {
-	char *q, *e, *bp = b;
+	char *q, *e;
 
-	if (p == NULL)
-		return NULL;
-	(void)strlcpy(b, p, s);
-	q = e = b;
-	while (*q == ' ')	/* skip leading spaces */
+	q = e = p;
+	while (*q == ' ')		/* skip leading spaces */
 		q++;
-	while ((*b = *q++))	/* copy string */
-		if (*b++ != ' ') /* remember last non-space */
-			e = b;
-	*e = '\0';		/* kill trailing spaces */
-	return bp;
+	while ((*p = *q++))		/* copy string */
+		if (*p++ != ' ')	/* remember last non-space */
+			e = p;
+	*e = '\0';			/* kill trailing spaces */
 }
 
 Static void
@@ -216,57 +212,41 @@ usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
 		char p[USB_MAX_ENCODED_STRING_LEN], int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	const char *vendor = NULL, *product = NULL;
-	char vdbuf[64], pdbuf[64];
 #ifdef USBVERBOSE
 	int n;
 #endif
 
-	if (dev == NULL) {
-		v[0] = p[0] = '\0';
+	v[0] = p[0] = '\0';
+	if (dev == NULL)
 		return;
-	}
 
 	if (usedev) {
-		if (usbd_get_string(dev, udd->iManufacturer, v))
-			vendor = NULL;
-		else
-			vendor = v;
-		vendor = usbd_trim_spaces(vdbuf, sizeof(vdbuf), vendor);
-		if (usbd_get_string(dev, udd->iProduct, p))
-			product = NULL;
-		else
-			product = p;
-		product = usbd_trim_spaces(pdbuf, sizeof(pdbuf), product);
-		if (vendor && !*vendor)
-			vendor = NULL;
-		if (product && !*product)
-			product = NULL;
-	} else {
-		vendor = NULL;
-		product = NULL;
+		if (usbd_get_string(dev, udd->iManufacturer, v) ==
+		    USBD_NORMAL_COMPLETION)
+			usbd_trim_spaces(v);
+		if (usbd_get_string(dev, udd->iProduct, p) ==
+		    USBD_NORMAL_COMPLETION)
+			usbd_trim_spaces(p);
 	}
+	/* There is no need for strlcpy & snprintf below. */
 #ifdef USBVERBOSE
-	if (vendor == NULL) {
+	if (v[0] == '\0')
 		for (n = 0; n < usb_nvendors; n++)
-			if (usb_vendors[n].vendor == UGETW(udd->idVendor))
-				vendor = usb_vendors[n].vendorname;
-	}
-	if (product == NULL) {
+			if (usb_vendors[n].vendor == UGETW(udd->idVendor)) {
+				strcpy(v, usb_vendors[n].vendorname);
+				break;
+			}
+	if (p[0] == '\0')
 		for (n = 0; n < usb_nproducts; n++)
 			if (usb_products[n].vendor == UGETW(udd->idVendor) &&
-			    usb_products[n].product == UGETW(udd->idProduct))
-				product = usb_products[n].productname;
-	}
+			    usb_products[n].product == UGETW(udd->idProduct)) {
+				strcpy(p, usb_products[n].productname);
+				break;
+			}
 #endif
-	/* There is no need for strlcpy & snprintf below. */
-	if (vendor != NULL && *vendor)
-		strcpy(v, vendor);
-	else
+	if (v[0] == '\0')
 		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
-	if (product != NULL && *product)
-		strcpy(p, product);
-	else
+	if (p[0] == '\0')
 		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
 }
 
