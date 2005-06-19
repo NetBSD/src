@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.139 2005/06/17 17:46:18 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140 2005/06/19 18:22:37 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,15 +121,12 @@ struct vnode {
 	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* knotes attached to vnode */
-#ifdef VERIFIED_EXEC
-	u_char fp_status;			/* fingerprint status */
-	struct veriexec_hash_entry *vhe;	/* veriexec table entry */
-#endif
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+
 /*
  * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
  * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
@@ -180,16 +177,6 @@ extern struct simplelock global_v_numoutput_slock;
 	(vp)->v_numoutput++;				\
 	simple_unlock(&global_v_numoutput_slock);	\
 } while (/*CONSTCOND*/ 0)
-
-/*
- * Valid states for the fingerprint flag - if signed exec is being used
- */
-#ifdef VERIFIED_EXEC
-#define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
-#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
-#define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
-#define FINGERPRINT_NOENTRY  3  /* fingerprint evaluated but no list entry */
-#endif
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.27 2005/06/17 22:39:08 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.28 2005/06/19 18:22:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.27 2005/06/17 22:39:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.28 2005/06/19 18:22:36 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -351,47 +351,46 @@ veriexec_hashadd(struct veriexec_hashtbl *tbl, struct veriexec_hash_entry *e)
  */
 int
 veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
-		const u_char *name, int flag)
+		const u_char *name, int flag, struct veriexec_hash_entry **ret)
 {
-        u_char *digest;
+	struct veriexec_hash_entry *vhe = NULL;
+        u_char *digest = NULL;
         int error = 0;
 
-	/* Evaluate fingerprint if needed and set the status on the vp. */
-	if (vp->fp_status == FINGERPRINT_NOTEVAL) {
-		if ((vp->v_type != VREG) || (vp->vhe =
-		     veriexec_lookup(va->va_fsid, va->va_fileid)) == NULL) {
-			vp->fp_status = FINGERPRINT_NOENTRY;
-			goto out;
-		}
+	/* XXXEE Ignore non-VREG files. */
+	if (vp->v_type != VREG)
+		return (0);
 
-		veriexec_dprintf(("veriexec: veriexec_verify: Got entry for "
-				  "%s. (dev=%d, inode=%u)\n", name,
-				  va->va_fsid, va->va_fileid));
+	/* Lookup veriexec table entry, save pointer if requested. */
+	vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
+	if (ret != NULL)
+		*ret = vhe;
+	if (vhe == NULL)
+		goto out;
 
-		digest = (u_char *) malloc(vp->vhe->ops->hash_len, M_TEMP,
+	/* Evaluate fingerprint if needed. */
+	if (vhe->status == FINGERPRINT_NOTEVAL) {
+		/* Calculate fingerprint for on-disk file. */
+		digest = (u_char *) malloc(vhe->ops->hash_len, M_TEMP,
 					   M_WAITOK);
-		error = veriexec_fp_calc(p, vp, vp->vhe, va->va_size, digest);
-		
+		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
 		if (error) {
-			veriexec_dprintf(("veriexec: veriexec_verify: "
-					  "Calculation error.\n"));
+			/* XXXEE verbose+ printf here */
 			free(digest, M_TEMP);
 			return (error);
 		}
 
-		if (veriexec_fp_cmp(vp->vhe->ops, vp->vhe->fp, digest) == 0) {
-			vp->fp_status = FINGERPRINT_VALID;
+		/* Compare fingerprint with loaded data. */
+		if (veriexec_fp_cmp(vhe->ops, vhe->fp, digest) == 0) {
+			vhe->status = FINGERPRINT_VALID;
 		} else {
-			vp->fp_status = FINGERPRINT_NOMATCH;
+			vhe->status = FINGERPRINT_NOMATCH;
 		}
 
 		free(digest, M_TEMP);
 	}
 
-	if (vp->vhe == NULL)
-		goto out;
-
-	if (flag != vp->vhe->type) {
+	if (flag != vhe->type) {
 		veriexec_report("Incorrect access type.", name, va, p,
 				REPORT_NOVERBOSE, REPORT_ALARM,
 				REPORT_NOPANIC);
@@ -402,7 +401,19 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 	}
 
 out:
-        switch (vp->fp_status) {
+	/* No entry in the veriexec tables. */
+	if (vhe == NULL) {
+		veriexec_report("veriexec_verify: No entry.", name, va,
+		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
+
+		/* Lockdown mode: Deny access to non-monitored files. */
+		if (veriexec_strict >= 3)
+			return (EPERM);
+
+		return (0);
+	}
+
+        switch (vhe->status) {
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
 		veriexec_report("veriexec_verify: Not-evaluated status "
@@ -423,17 +434,6 @@ out:
 
 		/* IDS mode: Deny access on fingerprint mismatch. */
 		if (veriexec_strict >= 1)
-			error = EPERM;
-
-		break;
-
-	case FINGERPRINT_NOENTRY:
-		/* No entry in the list. */
-		veriexec_report("veriexec_verify: No entry.", name, va,
-		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
-
-		/* Lockdown mode: Deny access to non-monitored files. */
-		if (veriexec_strict >= 3)
 			error = EPERM;
 
 		break;
@@ -494,8 +494,6 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	free(vhe->fp, M_TEMP);
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
-	vp->fp_status = FINGERPRINT_NOENTRY;
-	vp->vhe = NULL;
 
 	return (error);
 }
