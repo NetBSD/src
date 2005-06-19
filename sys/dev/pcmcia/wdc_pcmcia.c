@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.99 2005/03/11 16:17:57 matt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.100 2005/06/19 18:19:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,12 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.99 2005/03/11 16:17:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100 2005/06/19 18:19:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -299,6 +301,13 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 	sc->sc_wdcdev.sc_atac.atac_atapi_adapter._generic.adapt_refcnt = 1;
+
+	/*
+	 * Some devices needs some more delay after power up to stabilize
+	 * and probe properly, so give them half a second.
+	 * See PR 25659 for details.
+	 */
+	tsleep(wdc_pcmcia_attach, PWAIT, "wdcattach", hz / 2);
 
 	wdcattach(&sc->ata_channel);
 	ata_delref(&sc->ata_channel);
