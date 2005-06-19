@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.73 2005/02/26 22:25:34 perry Exp $ */
+/* $NetBSD: device.h,v 1.74 2005/06/19 23:09:50 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -401,9 +401,6 @@ void	evcnt_attach_static(struct evcnt *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);
 void	evcnt_detach(struct evcnt *);
-
-/* compatibility definitions */
-struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\
