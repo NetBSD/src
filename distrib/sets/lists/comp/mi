@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.795 2005/06/19 20:00:29 thorpej Exp $
+#	$NetBSD: mi,v 1.796 2005/06/19 20:23:48 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -435,6 +435,7 @@
 ./usr/include/dev/scsipi/ss_mustek.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/ssvar.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/disklabel.h		comp-c-include
+./usr/include/dev/sun/eeprom.h			comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/fbio.h			comp-c-include
 ./usr/include/dev/sun/idprom.h			comp-c-include

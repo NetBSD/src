@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.1 2001/04/06 13:13:03 fredette Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.2 2005/06/19 20:23:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,19 +44,12 @@
  * wants to use this header file.  To keep that code clean, we fake as
  * much as we need to, but always say that we couldn't map the EEPROM.  
  */
-struct eeprom {
-	u_char	eeScreenSize;
-#define	EE_SCR_1152X900 	0x00
-#define	EE_SCR_1024X1024	0x12
-#define EE_SCR_1600X1280	0x13
-#define EE_SCR_1440X1440	0x14
-	u_char	eeTtyCols;
-	u_char	eeTtyRows;
-};
+
+#include <dev/sun/eeprom.h>
 
 #ifdef	_KERNEL
 #define eeprom_va NULL
 #endif
 
-#endif	/* _MACHINE_EEPROM_H */
+#endif /* _MACHINE_EEPROM_H */
 
