@@ -1,11 +1,11 @@
-/*	$NetBSD: dvma.h,v 1.5 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: idprom.h,v 1.1 2005/06/19 20:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross and Matthew Fredette.
+ * by Adam Glass.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,43 +36,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * DVMA (Direct Virtual Memory Access)
- *
- * For the unfamiliar, this is just DMA where the device doing DMA
- * operates in a virtual address space.  The virtual to physical
- * translations are controlled by the same MMU used bu the CPU.
- * Usually, the virtual space accessed by DVMA devices is a small
- * sub-range of the CPU virtual space, and that range is known as 
- * DVMA space.  
- */
-
-#include <machine/idprom.h>
+#ifndef _DEV_SUN_IDPROM_H_
+#define	_DEV_SUN_IDPROM_H_
 
 /*
- * Note that while the DVMA harware makes the last 1MB visible
- * for secondary masters, the PROM "owns" the last page of it.
- * XXX fredette - is this because of the obio ie SCP?
- * Also note that OBIO devices can actually see all of
- * of kernel virtual space.
+ * structure/definitions for the 32 byte id prom found in all suns.
  */
-#define DVMA_MAP_BASE		0x00F00000
-#define DVMA_MAP_SIZE_120	0x00040000
-#define DVMA_MAP_SIZE_50	0x000F8000
-#define DVMA_MAP_SIZE		(cpu_machine_id == ID_SUN2_120 ? DVMA_MAP_SIZE_120 : DVMA_MAP_SIZE_50)
-#define DVMA_MAP_AVAIL		(DVMA_MAP_SIZE-PAGE_SIZE)
 
-/*
- * To convert an address in DVMA space to a slave address,
- * just use a logical AND with one of the following masks.
- * To convert back, just logical OR with the base address.
- */
-#define DVMA_OBIO_SLAVE_BASE	0x00000000
-#define DVMA_OBIO_SLAVE_MASK	0x00FFffff	/* 16MB */
+struct idprom {
+	uint8_t  idp_format;		/* format identifier (== 1) */
+	uint8_t  idp_machtype;		/* machine type */
+	uint8_t  idp_etheraddr[6];	/* Ethernet address */
+	uint32_t idp_date;		/* date of manufacture */
+	uint8_t  idp_serialnum[3];	/* serial number / host ID */
+	uint8_t  idp_checksum;		/* xor of everything else */
+	/* Note: The rest is excluded from the checksum! */
+	uint8_t  idp_reserved[16];
+};
 
-#define DVMA_MBMEM_SLAVE_BASE 	0x00F00000
-#define DVMA_MBMEM_SLAVE_MASK 	0x000Fffff	/*  1MB */
+#define IDPROM_VERSION 1
+#define IDPROM_SIZE (sizeof(struct idprom))
+#define IDPROM_CKSUM_SIZE 16
 
-#define DVMA_VME_SLAVE_BASE 	0x00F00000
-#define DVMA_VME_SLAVE_MASK 	0x000Fffff	/*  1MB */
+/* High nibble identifies the architecture. */
+#define IDM_ARCH_MASK	0xf0
+#define IDM_ARCH_SUN2	0x00
+#define IDM_ARCH_SUN3	0x10
+#define IDM_ARCH_SUN4   0x20
+#define IDM_ARCH_SUN3X	0x40
+#define IDM_ARCH_SUN4C	0x50
+#define IDM_ARCH_SUN4M	0x70
 
+/* Low nibble identifies the implementation. */
+#define IDM_IMPL_MASK 0x0f
+
+/* Values of idp_machtype we might see. */
+#define	ID_SUN2_120	0x01	/* Sun2 Multibus */
+#define	ID_SUN2_50	0x02	/* Sun2 VME */
+
+#define	ID_SUN3_160	0x11 	/* Carrera */
+#define	ID_SUN3_50	0x12 	/* M25 */
+#define	ID_SUN3_260	0x13 	/* Sirius */
+#define	ID_SUN3_110	0x14 	/* Prism */
+#define	ID_SUN3_60	0x17 	/* Sun3F */
+#define	ID_SUN3_E	0x18 	/* Sun3E */
+
+#define	ID_SUN3X_470	0x41	/* Pegasus */
+#define	ID_SUN3X_80	0x42	/* Hydra */
+
+#define	ID_SUN4_100	0x22	/* Sun 4/100 */
+#define	ID_SUN4_200	0x21	/* Sun 4/200 */
+#define	ID_SUN4_300	0x23	/* Sun 4/300 */
+#define	ID_SUN4_400	0x24	/* Sun 4/400 */
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+extern struct idprom identity_prom;
+extern u_char cpu_machine_id;
+
+void idprom_etheraddr(u_char *);
+void idprom_init(void);
+
+#endif	/* _KERNEL || _STANDALONE */
+
+#endif /* ! _DEV_SUN_IDPROM_H_ */

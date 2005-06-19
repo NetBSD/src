@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.35 2005/05/31 00:55:45 christos Exp $ */
+/*	$NetBSD: promlib.c,v 1.36 2005/06/19 20:00:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.35 2005/05/31 00:55:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.36 2005/06/19 20:00:28 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -960,7 +960,7 @@ prom_getidprom(void)
 	u_long h;
 	u_char *dst;
 
-	if (idprom.id_format != 0)
+	if (idprom.idp_format != 0)
 		/* Already got it */
 		return (&idprom);
 
@@ -995,10 +995,10 @@ prom_getidprom(void)
 	}
 
 	/* Establish hostid */
-	h =  (u_int)idprom.id_machine << 24;
-	h |= idprom.id_hostid[0] << 16;
-	h |= idprom.id_hostid[1] << 8;
-	h |= idprom.id_hostid[2];
+	h =  (u_int)idprom.idp_machtype << 24;
+	h |= idprom.idp_serialnum[0] << 16;
+	h |= idprom.idp_serialnum[1] << 8;
+	h |= idprom.idp_serialnum[2];
 	hostid = h;
 
 	return (&idprom);
@@ -1048,7 +1048,7 @@ void prom_getether(node, cp)
 
 	/* Fall back on the machine's global ethernet address */
 read_idprom:
-	memcpy(cp, idp->id_ether, 6);
+	memcpy(cp, idp->idp_etheraddr, 6);
 }
 
 /*

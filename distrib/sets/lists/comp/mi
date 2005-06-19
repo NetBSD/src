@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.794 2005/06/18 21:25:14 peter Exp $
+#	$NetBSD: mi,v 1.795 2005/06/19 20:00:29 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -437,6 +437,7 @@
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/fbio.h			comp-c-include
+./usr/include/dev/sun/idprom.h			comp-c-include
 ./usr/include/dev/sun/kbd_reg.h			comp-c-include
 ./usr/include/dev/sun/kbd_tables.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/kbd_xlate.h		comp-obsolete		obsolete
