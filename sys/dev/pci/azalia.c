@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.2 2005/06/19 07:42:39 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.3 2005/06/19 12:34:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,12 +40,14 @@
  * TO DO:
  *  o recording support
  *  o mixer value scaling
+ *  o Volume Knob widget
  *  o DAC selection
  *  o ADC selection
+ *  o power hook
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.2 2005/06/19 07:42:39 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.3 2005/06/19 12:34:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -246,7 +248,7 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.2 2005/06/19 07:42:39 kent Exp $");
 #define			COP_AWCAP_STRIPE	0x020
 #define			COP_AWCAP_PROC		0x040
 #define			COP_AWCAP_UNSOL		0x080
-#define			COP_AWCAP_CONLIST	0x100
+#define			COP_AWCAP_CONNLIST	0x100
 #define			COP_AWCAP_DIGITAL	0x200
 #define			COP_AWCAP_POWER		0x400
 #define			COP_AWCAP_LRSWAP	0x800
@@ -560,7 +562,8 @@ typedef struct {
 #define MI_TARGET_INAMP(x)	(x)
 #define MI_TARGET_OUTAMP	0x100
 #define MI_TARGET_CONNLIST	0x101
-#define MI_TARGET_DIR		0x102 /* for bidirectional pin */
+#define MI_TARGET_PINDIR	0x102 /* for bidirectional pin */
+#define MI_TARGET_PINBOOST	0x103 /* for headphone pin */
 } mixer_item_t;
 
 typedef struct codec_t {
@@ -708,14 +711,14 @@ static const struct audio_hw_if azalia_hw_if = {
 static const char *pin_colors[16] = {
 	"unknown", "black", "gray", "blue",
 	"green", "red", "orange", "yellow",
-	"purple", "pink", "0xa", "0xb",
-	"0xc", "0xd", "white", "other"};
+	"purple", "pink", "col0a", "col0b",
+	"col0c", "col0d", "white", "other"};
 #ifdef AZALIA_DEBUG
 static const char *pin_devices[16] = {
 	"line-out", AudioNspeaker, AudioNheadphone, AudioNcd,
 	"SPDIF-out", "digital-out", "modem-line", "modem-handset",
 	"line-in", AudioNaux, AudioNmicrophone, "telephony",
-	"SPDIF-in", "digital-in", "0xe", "other"};
+	"SPDIF-in", "digital-in", "dev0e", "other"};
 #endif
 
 /* ================================================================
@@ -1355,10 +1358,6 @@ azalia_codec_init(codec_t *this)
 		}
 		npin++;
 	}
-	for (i = 0; i < npin; i++) {
-		this->comresp(this, pindexes[i], CORB_SET_PIN_WIDGET_CONTROL,
-		    CORB_PWC_OUTPUT | CORB_PWC_VREF_100, &result);
-	}
 	this->ndacindexes = npin;
 	DPRINTF(("%s: DACs:", __func__));
 	for (i = 0; i < npin; i++) {
@@ -1413,25 +1412,6 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
-	/* XXX unmute all of amplifiers */
-	DPRINTF(("%s: unmute all widgets\n", __func__));
-	FOR_EACH_WIDGET(this, i) {
-		if (this->w[i].widgetcap & COP_AWCAP_INAMP) {
-			for (n = 0; n < this->w[i].nconnections; n++) {
-			this->comresp(this, this->w[i].nid,
-			    CORB_SET_AMPLIFIER_GAIN_MUTE, CORB_AGM_INPUT |
-			    CORB_AGM_LEFT | CORB_AGM_RIGHT | (n << 8) |
-			    COP_AMPCAP_OFFSET(this->w[i].inamp_cap), &result);
-			}
-		}
-		if (this->w[i].widgetcap & COP_AWCAP_OUTAMP) {
-			this->comresp(this, this->w[i].nid,
-			    CORB_SET_AMPLIFIER_GAIN_MUTE, CORB_AGM_OUTPUT |
-			    CORB_AGM_LEFT | CORB_AGM_RIGHT |
-			    COP_AMPCAP_OFFSET(this->w[i].outamp_cap), &result);
-		}
-	}
-	DPRINTF(("%s: done.\n", __func__));
 	azalia_mixer_init(this);
 	return 0;
 }
@@ -1602,25 +1582,11 @@ static int
 azalia_mixer_init(codec_t *this)
 {
 	/*
-	 * o pin	"color%2.2x"
-	 *	conlist -> outputs.<name>.source
-	 *	inamp -> outputs.<name>.<cname>.mute, outputs.<name>.<cname>
-	 *	outamp -> inputs.<name>.mute, inputs.<name>
-	 *	I/O -> outputs.<name>.dir=input/output
-	 *	XXX usually, green=front, orange=surround, gray=c/lfe,
-	 *		black=side?, blue=line-in pink=mic-in
+	 * o pin		"<color>%2.2x"
 	 * o audio output	"dac%2.2x"
-	 *	outamp -> inputs.<name>.mute, inputs.<name>
 	 * o audio input	"adc%2.2x"
-	 *	inamp -> record.<name>.<cname>.mute, record.<name>.<cname>
-	 *	conlist -> record.<name>.source
-	 * o mixer	"mixer%2.2x"
-	 *	outamp -> outputs.<name>.mute, outputs.<name>
-	 *	inamp -> inputs.<name>.<cname>.mute, ...
-	 * o selector	"sel%2.2x"
-	 *	outamp -> outputs.<name>.mute, outputs.<name>
-	 *	inamp -> inputs.<name>.<cname>.mute, inputs.<name>.<cname>
-	 *	conlist -> inputs.<name>.source
+	 * o mixer		"mixer%2.2x"
+	 * o selector		"sel%2.2x"
 	 *
 	 * XXX DAC/ADC selection, SPDIF
 	 */
@@ -1724,7 +1690,7 @@ azalia_mixer_init(codec_t *this)
 				d->mixer_class = AZ_CLASS_INPUT;
 			d->next = AUDIO_MIXER_LAST;
 			d->prev = AUDIO_MIXER_LAST;
-			m->target = MI_TARGET_CONNLIST;
+			m->target = MI_TARGET_OUTAMP;
 			d->un.e.num_mem = 2;
 			d->un.e.member[0].ord = 0;
 			strlcpy(d->un.e.member[0].label.name, AudioNoff, MAX_AUDIO_DEV_LEN);
@@ -1821,7 +1787,7 @@ azalia_mixer_init(codec_t *this)
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			d->next = AUDIO_MIXER_LAST;
 			d->prev = AUDIO_MIXER_LAST;
-			m->target = MI_TARGET_DIR;
+			m->target = MI_TARGET_PINDIR;
 			d->un.e.num_mem = 2;
 			d->un.e.member[0].ord = 0;
 			strlcpy(d->un.e.member[0].label.name, AudioNinput,
@@ -1831,6 +1797,67 @@ azalia_mixer_init(codec_t *this)
 			    MAX_AUDIO_DEV_LEN);
 			this->nmixers++;
 		}
+
+		/* pin headphone-boost */
+		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
+		    w->d.pin.cap & COP_PINCAP_HEADPHONE) {
+			MIXER_REG_PROLOG;
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s.boost", w->name);
+			d->type = AUDIO_MIXER_ENUM;
+			d->mixer_class = AZ_CLASS_OUTPUT;
+			d->next = AUDIO_MIXER_LAST;
+			d->prev = AUDIO_MIXER_LAST;
+			m->target = MI_TARGET_PINBOOST;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
+	}
+
+	/* unmute all */
+	for (i = 0; i < this->nmixers; i++) {
+		mixer_ctrl_t mc;
+
+		if (!IS_MI_TARGET_INAMP(this->mixers[i].target) &&
+		    this->mixers[i].target != MI_TARGET_OUTAMP)
+			continue;
+		if (this->mixers[i].devinfo.type != AUDIO_MIXER_ENUM)
+			continue;
+		mc.dev = i;
+		mc.type = AUDIO_MIXER_ENUM;
+		mc.un.ord = 0;
+		azalia_mixer_set(this, &mc);
+	}
+
+	/*
+	 * for bidirectional pins,
+	 * green=front, orange=surround, gray=c/lfe, black=size --> output
+	 * blue=line-in, pink=mic-in --> input
+	 */
+	for (i = 0; i < this->nmixers; i++) {
+		mixer_ctrl_t mc;
+
+		if (this->mixers[i].target != MI_TARGET_PINDIR)
+			continue;
+		mc.dev = i;
+		mc.type = AUDIO_MIXER_ENUM;
+		switch (this->w[this->mixers[i].nid].d.pin.color) {
+		case CORB_CD_GREEN:
+		case CORB_CD_ORANGE:
+		case CORB_CD_GRAY:
+		case CORB_CD_BLACK:
+			mc.un.ord = 1;
+			break;
+		default:
+			mc.un.ord = 0;
+		}
+		azalia_mixer_set(this, &mc);
 	}
 
 	return 0;
@@ -1916,15 +1943,25 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 	}
 
 	/* pin I/O */
-	else if (m->target == MI_TARGET_DIR) {
+	else if (m->target == MI_TARGET_PINDIR) {
 		err = this->comresp(this, m->nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
 		mc->un.ord = result & CORB_PWC_OUTPUT ? 1 : 0;
+	}
+
+	/* pin headphone-boost */
+	else if (m->target == MI_TARGET_PINBOOST) {
+		err = this->comresp(this, m->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err)
+			return err;
+		mc->un.ord = result & CORB_PWC_HEADPHONE ? 1 : 0;
 
 	} else {
-		aprint_error("%s: internal error in %s: %x\n", XNAME(this->az), __func__, m->target);
+		aprint_error("%s: internal error in %s: %x\n", XNAME(this->az),
+		    __func__, m->target);
 		return -1;
 	}
 	return 0;
@@ -1947,6 +1984,7 @@ azalia_mixer_set(const codec_t *this, const mixer_ctrl_t *mc)
 
 	/* inamp mute */
 	if (IS_MI_TARGET_INAMP(m->target) && m->devinfo.type == AUDIO_MIXER_ENUM) {
+		/* We have to set stereo mute separately to keep each gain value. */
 		err = this->comresp(this, m->nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_INPUT | CORB_GAGM_LEFT | MI_TARGET_INAMP(m->target), &result);
 		if (err)
@@ -2082,7 +2120,7 @@ azalia_mixer_set(const codec_t *this, const mixer_ctrl_t *mc)
 	}
 
 	/* pin I/O */
-	else if (m->target == MI_TARGET_DIR) {
+	else if (m->target == MI_TARGET_PINDIR) {
 		if (mc->un.ord >= 2)
 			return EINVAL;
 		err = this->comresp(this, m->nid,
@@ -2098,9 +2136,31 @@ azalia_mixer_set(const codec_t *this, const mixer_ctrl_t *mc)
 		}
 		err = this->comresp(this, m->nid,
 		    CORB_SET_PIN_WIDGET_CONTROL, result, &result);
+		if (err)
+			return err;
+	}
+
+	/* pin headphone-boost */
+	else if (m->target == MI_TARGET_PINBOOST) {
+		if (mc->un.ord >= 2)
+			return EINVAL;
+		err = this->comresp(this, m->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err)
+			return err;
+		if (mc->un.ord == 0) {
+			result &= ~CORB_PWC_HEADPHONE;
+		} else {
+			result |= CORB_PWC_HEADPHONE;
+		}
+		err = this->comresp(this, m->nid,
+		    CORB_SET_PIN_WIDGET_CONTROL, result, &result);
+		if (err)
+			return err;
 
 	} else {
-		aprint_error("%s: internal error in %s: %x\n", XNAME(this->az), __func__, m->target);
+		aprint_error("%s: internal error in %s: %x\n", XNAME(this->az),
+		    __func__, m->target);
 		return -1;
 	}
 	return 0;
@@ -2148,7 +2208,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	this->widgetcap = result;
 	this->type = COP_AWCAP_TYPE(result);
 	bitmask_snprintf(this->widgetcap, "\20\014LRSWAP\013POWER\012DIGITAL"
-	    "\011CONLIST\010UNSOL\07PROC\06STRIPE\05FORMATOV\04AMPOV\03OUTAMP"
+	    "\011CONNLIST\010UNSOL\07PROC\06STRIPE\05FORMATOV\04AMPOV\03OUTAMP"
 	    "\02INAMP\01STEREO", flagbuf, FLAGBUFLEN);
 	DPRINTF(("%s: ", XNAME(codec->az)));
 	switch (this->type) {
@@ -2275,6 +2335,7 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	this->d.pin.sequence = CORB_CD_SEQUENCE(result);
 	this->d.pin.association = CORB_CD_ASSOCIATION(result);
 	this->d.pin.color = CORB_CD_COLOR(result);
+	this->d.pin.device = CORB_CD_DEVICE(result);
 
 	err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
 	    COP_PINCAP, &result);
@@ -2309,7 +2370,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	int length, i;
 
 	this->selected = -1;
-	if ((this->widgetcap & COP_AWCAP_CONLIST) == 0)
+	if ((this->widgetcap & COP_AWCAP_CONNLIST) == 0)
 		return 0;
 
 	err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
