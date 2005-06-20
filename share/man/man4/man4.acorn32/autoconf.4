@@ -1,4 +1,4 @@
-.\" $NetBSD: autoconf.4,v 1.1 2003/04/17 10:31:46 wiz Exp $
+.\" $NetBSD: autoconf.4,v 1.2 2005/06/20 13:25:24 peter Exp $
 .\"
 .\" Copyright (c) 1995 Mark Brinicombe
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -43,7 +43,7 @@ on which it is running
 and locates controllers, drives, and other devices, printing out
 what it finds on the console.  This procedure is driven by a system
 configuration table which is processed by
-.Xr config 8
+.Xr config 1
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
 kernel are not detected.
@@ -60,6 +60,6 @@ type which it doesn't
 doesn't) understand.
 .El
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr intro 4 ,
-.Xr boot 8 ,
-.Xr config 8
+.Xr boot 8

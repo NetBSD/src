@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.277 2005/06/20 10:41:29 peter Exp $
+.\"	$NetBSD: options.4,v 1.278 2005/06/20 13:25:24 peter Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -51,7 +51,7 @@ This manual page describes a number of miscellaneous kernel
 configuration options that may be specified in a kernel config
 file.
 See
-.Xr config 8
+.Xr config 1
 for information on how to configure and build kernels.
 .Pp
 The
@@ -170,7 +170,7 @@ Set the maxusers variable in the kernel.
 .Ar keyword Ar name Op Ar arguments Op ...
 .Xc
 For the
-.Xr config 8
+.Xr config 1
 .Ar keywords
 file-system, makeoptions, options, and pseudo-device,
 .Ar no
@@ -1346,7 +1346,7 @@ file itself, e.g.
 or
 .Pa std.$MACHINE .
 The embedded config file can be extracted from the resulting kernel with
-.Xr config 8
+.Xr config 1
 .Fl x ,
 or by the following command:
 .Bd -literal -offset indent
@@ -2482,6 +2482,7 @@ bolded
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr pmc 1 ,
@@ -2515,7 +2516,6 @@ bolded
 .Xr ppp 4 ,
 .Xr userconf 4 ,
 .Xr wscons 4 ,
-.Xr config 8 ,
 .Xr edquota 8 ,
 .Xr init 8 ,
 .Xr mdsetimage 8 ,

@@ -1241,7 +1241,7 @@ The default width is 12n.
 The
 .Ql .Cd
 macro is used to demonstrate a
-.Xr config 8
+.Xr config 1
 declaration for a device interface in a section four manual.
 .Pp
 .Dl Usage: .Cd Ao argument Ac ...

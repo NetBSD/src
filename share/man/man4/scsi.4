@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsi.4,v 1.26 2003/10/15 08:38:10 wiz Exp $
+.\"	$NetBSD: scsi.4,v 1.27 2005/06/20 13:25:24 peter Exp $
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -160,7 +160,7 @@ The
 software supports some
 .Nx
 kernel
-.Xr config 8
+.Xr config 1
 options.
 They are:
 .Bl -tag -width SCSIVERBOSE
@@ -333,6 +333,7 @@ shows more detailed information including
 scatter-gather logs.
 .El
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr ioctl 2 ,
 .Xr ata 4 ,
 .Xr cd 4 ,
@@ -342,8 +343,7 @@ scatter-gather logs.
 .Xr se 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr uk 4 ,
-.Xr config 8
+.Xr uk 4
 .Sh HISTORY
 This
 .Nm

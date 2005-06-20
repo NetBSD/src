@@ -1,4 +1,4 @@
-.\" $NetBSD: autoconf.4,v 1.5 2003/07/26 20:17:35 salo Exp $
+.\" $NetBSD: autoconf.4,v 1.6 2005/06/20 13:25:25 peter Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -46,7 +46,7 @@ on which it is running
 and locates controllers, drives, and other devices, printing out
 what it finds on the console.  This procedure is driven by a system
 configuration table which is processed by
-.Xr config 8
+.Xr config 1
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
 kernel are not detected.
@@ -62,6 +62,6 @@ You tried to boot
 on an MVME board which is not yet supported.
 .El
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr intro 4 ,
-.Xr boot 8 ,
-.Xr config 8
+.Xr boot 8

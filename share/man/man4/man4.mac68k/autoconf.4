@@ -1,4 +1,4 @@
-.\" $NetBSD: autoconf.4,v 1.7 2001/06/05 12:30:46 wiz Exp $
+.\" $NetBSD: autoconf.4,v 1.8 2005/06/20 13:25:24 peter Exp $
 .\"
 .\" Copyright (c) 1997 Colin Wood
 .\" Copyright (c) 1995 Mark Brinicombe
@@ -44,7 +44,7 @@ on which it is running
 and locates controllers, drives, and other devices, printing out
 what it finds on the console.  This procedure is driven by a system
 configuration table which is processed by
-.Xr config 8
+.Xr config 1
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
 kernel are usually not detected.
@@ -95,6 +95,6 @@ A device which was configured into the kernel was unable to properly
 initialize itself.
 .El
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr intro 4 ,
-.Xr boot 8 ,
-.Xr config 8
+.Xr boot 8

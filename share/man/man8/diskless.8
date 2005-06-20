@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.27 2003/05/25 19:53:07 fair Exp $
+.\"	$NetBSD: diskless.8,v 1.28 2005/06/20 13:25:25 peter Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -327,7 +327,7 @@ because there is no standard way for the boot program to pass
 the information it gathered on to the kernel.
 .Pp
 In general, the GENERIC kernel
-.Xr config 8
+.Xr config 1
 file for any particular architecture will specify compile-time
 options to use the same protocol used by the secondary boot program
 for that architecture.

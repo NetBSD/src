@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.20 2004/03/31 23:19:36 wiz Exp $
+.\"	$NetBSD: intro.4,v 1.21 2005/06/20 13:25:25 peter Exp $
 .\"
 .Dd March 31, 2004
 .Dt INTRO 4 sparc
@@ -44,7 +44,7 @@ In this part of the manual, the
 section of
 each configurable device gives a sample specification
 for use in constructing a system description for the
-.Xr config 8
+.Xr config 1
 program.
 The
 .Tn DIAGNOSTICS
@@ -90,6 +90,7 @@ The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr autoconf 4 ,
 .Xr bwtwo 4 ,
 .Xr cd 4 ,
@@ -112,8 +113,7 @@ A list of the supported devices is given below.
 .Xr ss 4 ,
 .Xr st 4 ,
 .Xr tcx 4 ,
-.Xr uk 4 ,
-.Xr config 8
+.Xr uk 4
 .Sh SUPPORTED SYSTEMS
 The following Sun SPARC system architectures and models are supported:
 .Bl -tag -width speaker

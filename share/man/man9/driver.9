@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.13 2004/05/16 16:56:01 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.14 2005/06/20 13:25:25 peter Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -338,7 +338,7 @@ I guess it was mine, but I wasn't expecting it
 .Dc .
 .Pp
 For a driver to be compiled into the kernel,
-.Xr config 8
+.Xr config 1
 must be aware of its existence.
 This is done by including an entry in files.\*[Lt]bus\*[Gt] in the
 directory containing the driver.
@@ -361,7 +361,7 @@ foo*	at bar?
 .Ed
 .Pp
 For device interfaces of a driver to be compiled into the kernel,
-.Xr config 8
+.Xr config 1
 must be aware of its existence.
 This is done by including an entry in majors.<arch>.
 For example, the driver
@@ -382,7 +382,7 @@ For a detailed description of the machine description file and the
 language see
 .Xr config 9 .
 .Sh SEE ALSO
-.Xr config 8 ,
+.Xr config 1 ,
 .Xr autoconf 9 ,
 .Xr config 9 ,
 .Xr powerhook_establish 9 ,

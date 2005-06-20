@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.6 2005/05/17 13:59:40 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.7 2005/06/20 13:25:25 peter Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,8 +118,8 @@ If the script reports an error that is difficult to understand,
 you can get more debugging output by using
 .Dl Ic sh Fl x Ar MAKEDEV Ar argument .
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr intro 4 ,
-.Xr config 8 ,
 .Xr mknod 8
 .Sh HISTORY
 The
