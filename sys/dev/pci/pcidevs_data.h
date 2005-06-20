@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.719 2005/06/19 21:17:17 chs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.720 2005/06/20 00:19:38 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.720 2005/06/19 21:16:41 chs Exp
+ *	NetBSD: pcidevs,v 1.721 2005/06/20 00:18:54 briggs Exp
  */
 
 /*
@@ -6312,6 +6312,10 @@ const struct pci_product pci_products[] = {
 	    "6300ESB PCI-X Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_RAID,
+	    "6300ESB SATA RAID Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
 	    "82801FB LPC Interface Bridge",
 	},
@@ -10348,4 +10352,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2005;
+const int pci_nproducts = 2006;
