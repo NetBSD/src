@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.7 2005/06/07 11:33:55 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.8 2005/06/20 09:03:44 sekiya Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.7 2005/06/07 11:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.8 2005/06/20 09:03:44 sekiya Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -118,6 +118,7 @@ static int iwi_load_firmware(struct iwi_softc *, void *, int);
 static int iwi_cache_firmware(struct iwi_softc *, void *);
 static void iwi_free_firmware(struct iwi_softc *);
 static int iwi_config(struct iwi_softc *);
+static int iwi_set_chan(struct iwi_softc *, struct ieee80211_channel *);
 static int iwi_scan(struct iwi_softc *);
 static int iwi_auth_and_assoc(struct iwi_softc *);
 static int iwi_init(struct ifnet *);
@@ -251,7 +252,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_SHPREAMBLE;
+	    IEEE80211_C_TXPMGT | IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
@@ -643,6 +644,8 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode == IEEE80211_M_IBSS)
 			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
+		else if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			iwi_set_chan(sc, ic->ic_ibss_chan);
 		break;
 
 	case IEEE80211_S_ASSOC:
@@ -869,7 +872,11 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 		DPRINTFN(2, ("Scan completed (%u, %u)\n", scan->nchan,
 		    scan->status));
 
-		ieee80211_end_scan(ic);
+		/* monitor mode uses scan to set the channel ... */
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			ieee80211_end_scan(ic);
+		else
+			iwi_set_chan(sc, ic->ic_ibss_chan);
 		break;
 
 	case IWI_NOTIF_TYPE_AUTHENTICATION:
@@ -1808,6 +1815,24 @@ iwi_config(struct iwi_softc *sc)
 }
 
 static int
+iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwi_scan scan;
+
+	bzero(&scan, sizeof scan);
+	scan.type = IWI_SCAN_TYPE_PASSIVE;
+	scan.intval = htole16(2000);
+	scan.channels[0] = 1 | (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ :
+		IWI_CHAN_2GHZ);
+	scan.channels[1] = ieee80211_chan2ieee(ic, chan);
+
+	DPRINTF(("Setting channel to %u\n", ieee80211_chan2ieee(ic, chan)));
+	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, 1);
+}
+
+
+static int
 iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2003,7 +2028,10 @@ iwi_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-	ieee80211_begin_scan(ic);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		ieee80211_begin_scan(ic);
+	else
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;

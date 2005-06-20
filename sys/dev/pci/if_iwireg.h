@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.2 2005/01/11 18:49:05 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.3 2005/06/20 09:03:44 sekiya Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -311,6 +311,7 @@ struct iwi_associate {
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
 	u_int8_t	type;
+#define IWI_SCAN_TYPE_PASSIVE	1
 #define IWI_SCAN_TYPE_BROADCAST	3
 	u_int16_t	intval;
 	u_int8_t	channels[54];
