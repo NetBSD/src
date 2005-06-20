@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2005/04/16 07:45:59 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 2005/06/20 11:04:15 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -118,5 +118,17 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * controller on a PC.
  */
 #define	X86_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
+
+void pci_device_foreach(pci_chipset_tag_t, int,
+			void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			void *);
+        
+void pci_device_foreach_min(pci_chipset_tag_t, int, int,
+			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			    void *);
+        
+void pci_bridge_foreach(pci_chipset_tag_t, int, int,
+	void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
+
 
 #endif /* _X86_PCI_MACHDEP_H_ */

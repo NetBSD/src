@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2005/04/16 07:53:35 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 2005/06/20 11:04:15 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2005/04/16 07:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2005/06/20 11:04:15 sekiya Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +126,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2005/04/16 07:53:35 yamt Exp $"
 #include "opt_pci_conf_mode.h"
 
 int pci_mode = -1;
+
+static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
+struct pci_bridge_hook_arg {
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
+	void *arg; 
+}; 
+
 
 struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
 
@@ -723,3 +730,91 @@ pci_bus_flags()
 	    PCI_FLAGS_MWI_OKAY);
 	return (rval);
 }
+
+void
+pci_device_foreach(pci_chipset_tag_t pc, int maxbus,
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
+{
+	pci_device_foreach_min(pc, 0, maxbus, func, context);
+}
+
+void
+pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
+{
+	const struct pci_quirkdata *qd;
+	int bus, device, function, maxdevs, nfuncs;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (bus = minbus; bus <= maxbus; bus++) {
+		maxdevs = pci_bus_maxdevs(pc, bus);
+		for (device = 0; device < maxdevs; device++) {
+			tag = pci_make_tag(pc, bus, device, 0);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+
+			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
+				PCI_PRODUCT(id));
+
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+			     (qd != NULL &&
+		  	     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+				nfuncs = 8;
+			else
+				nfuncs = 1;
+
+			for (function = 0; function < nfuncs; function++) {
+				tag = pci_make_tag(pc, bus, device, function);
+				id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+				/* Invalid vendor ID value? */
+				if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+					continue;
+				/*
+				 * XXX Not invalid, but we've done this
+				 * ~forever.
+				 */
+				if (PCI_VENDOR(id) == 0)
+					continue;
+				(*func)(pc, tag, context);
+			}
+		}
+	}
+}
+
+void
+pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *ctx)
+{
+	struct pci_bridge_hook_arg bridge_hook;
+
+	bridge_hook.func = func;
+	bridge_hook.arg = ctx;  
+
+	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
+		&bridge_hook);      
+}
+
+static void
+pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
+{
+	struct pci_bridge_hook_arg *bridge_hook = (void *)ctx;
+	pcireg_t reg;
+
+	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
+ 	     (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
+	}
+}
+
+
