@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.20 2005/06/20 11:37:47 darcy Exp $	*/
+/*	$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.20 2005/06/20 11:37:47 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,8 +454,7 @@ aac_init(struct aac_softc *sc)
 {
 	int nsegs, i, rv, state, norm, high;
 	struct aac_adapter_init	*ip;
-	u_int32_t code;
-	u_int8_t *qaddr;
+	u_int32_t code, qoff;
 
 	state = 0;
 
@@ -554,9 +553,9 @@ aac_init(struct aac_softc *sc)
 	 * generic list manipulation functions which 'know' the size of each
 	 * list by virtue of a table.
 	 */
-	qaddr = &sc->sc_common->ac_qbuf[0] + AAC_QUEUE_ALIGN;
-	qaddr -= (u_int32_t)qaddr % AAC_QUEUE_ALIGN; 	/* XXX not portable */
-	sc->sc_queues = (struct aac_queue_table *)qaddr;
+	qoff = offsetof(struct aac_common, ac_qbuf) + AAC_QUEUE_ALIGN;
+	qoff &= ~(AAC_QUEUE_ALIGN - 1);
+	sc->sc_queues = (struct aac_queue_table *)((uintptr_t)sc->sc_common + qoff);
 	ip->CommHeaderAddress = htole32(sc->sc_common_seg.ds_addr +
 	    ((caddr_t)sc->sc_queues - (caddr_t)sc->sc_common));
 	memset(sc->sc_queues, 0, sizeof(struct aac_queue_table));
