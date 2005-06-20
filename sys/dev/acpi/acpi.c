@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.71 2005/05/31 21:08:37 drochner Exp $	*/
+/*	$NetBSD: acpi.c,v 1.72 2005/06/20 12:21:36 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.71 2005/05/31 21:08:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.72 2005/06/20 12:21:36 sekiya Exp $");
 
 #include "opt_acpi.h"
 
@@ -1222,11 +1222,9 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		if (ACPI_FAILURE(rv))
 			continue;
 		line = acpi_get_intr(link);
-		if (line == -1) {
-#ifdef ACPI_DEBUG
+		if (line < 1) {
 			printf("%s: fixing up intr link %s\n",
 			    sc->sc_dev.dv_xname, PrtElement->Source);
-#endif
 			rv = acpi_allocate_resources(link);
 			if (ACPI_FAILURE(rv)) {
 				printf("%s: interrupt allocation failed %s\n",
