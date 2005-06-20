@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.13 2005/06/19 18:22:37 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.14 2005/06/20 15:06:18 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -29,27 +29,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.13 2005/06/19 18:22:37 elad Exp $");
-
 /*
  *
  * Definitions for the Verified Executables kernel function.
  *
  */
+#ifndef _SYS_VERIFIED_EXEC_H_
+#define _SYS_VERIFIED_EXEC_H_
+
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/hash.h>
 
-#ifndef V_EXEC_H
-#define V_EXEC_H 1
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.14 2005/06/20 15:06:18 elad Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
 
 struct veriexec_params  {
 	unsigned char type;
-	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];  /* type of fingerprint
-							 this is */
+	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
 	char file[MAXPATHLEN];
 	unsigned int size;  /* number of bytes in the fingerprint */
 	unsigned char *fingerprint;
@@ -61,7 +60,8 @@ struct veriexec_sizing_params {
 };
 
 /*
- * Types of veriexec inodes we can have
+ * Types of veriexec inodes we can have. Ordered from less strict to
+ * most strict -- this is enforced if a duplicate entry is loaded.
  */
 #define VERIEXEC_DIRECT		0 /* Allow direct execution */
 #define VERIEXEC_INDIRECT	1 /* Only allow indirect execution */
@@ -150,6 +150,7 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 /* Readable values for veriexec_report(). */
 #define	REPORT_NOVERBOSE	0
 #define	REPORT_VERBOSE		1
+#define	REPORT_VERBOSE_HIGH	2
 #define	REPORT_NOPANIC		0
 #define	REPORT_PANIC		1
 #define	REPORT_NOALARM		0
@@ -191,12 +192,6 @@ void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct vattr *,
 		     struct proc *, int, int, int);
 
-#endif
+#endif /* _KERNEL */
 
-#ifdef VERIFIED_EXEC_DEBUG
-#define veriexec_dprintf(x) printf x
-#else
-#define veriexec_dprintf(x)
-#endif /* VERIFIED_EXEC_DEBUG */
-
-#endif
+#endif /* _SYS_VERIFIED_EXEC_H_ */
