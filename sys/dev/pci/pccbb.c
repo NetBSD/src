@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.121 2005/06/01 09:10:57 sekiya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.122 2005/06/20 09:18:36 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.121 2005/06/01 09:10:57 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.122 2005/06/20 09:18:36 sekiya Exp $");
 
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-/* #define CBB_DEBUG */
+#define CBB_DEBUG
 
 /*
 #define CB_PCMCIA_POLL
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.121 2005/06/01 09:10:57 sekiya Exp $");
 #include <dev/pci/pccbbvar.h>
 
 #include "locators.h"
+
+#if defined(__i386__)
+#include "ioapic.h"
+#endif
 
 #ifndef __NetBSD_Version__
 struct cfdriver cbb_cd = {
@@ -517,12 +521,20 @@ pccbbattach(parent, self, aux)
 	/*
 	 * When interrupt isn't routed correctly, give up probing cbb and do
 	 * not kill pcic-compatible port.
+	 *
+	 * However, if we are using an ioapic, avoid this check -- pa_intrline
+	 * may well be zero, with the interrupt routed through the apic.
 	 */
+
+#if NIOAPIC > 0
+	printf("%s: using ioapic for interrupt\n", sc->sc_dev.dv_xname);
+#else
 	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
     		printf("%s: NOT USED because of unconfigured interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+#endif
 
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 
