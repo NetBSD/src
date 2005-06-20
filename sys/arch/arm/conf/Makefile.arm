@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.24 2005/05/31 04:03:09 christos Exp $
+#	$NetBSD: Makefile.arm,v 1.25 2005/06/20 08:42:52 scw Exp $
 
 # Makefile for NetBSD
 #
@@ -61,6 +61,14 @@ locore.o: ${ARM}/arm32/locore.S assym.h
 ##
 LOADADDRESS?=	0xF0000000
 LINKFLAGS_NORMAL=	-X
+# Strip ARM mapping symbols from the kernel image, as they interfere
+# with ddb. But only do this if 'makeoptions DEBUG="-g"' was not specified.
+.if !defined(DEBUG) || empty(DEBUG:M-g*)
+SYSTEM_LD_TAIL?=	@${OBJCOPY} --strip-symbol='$$a'	 \
+				    --strip-symbol='$$t'	 \
+				    --strip-symbol='$$d' $@	;\
+			${SIZE} $@; chmod 755 $@
+.endif
 
 ##
 ## (6) port specific target dependencies
