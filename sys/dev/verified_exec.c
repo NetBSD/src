@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $\n$NetBSD: verified_exec.c,v 1.16 2005/06/19 18:22:36 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $\n$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -121,11 +121,11 @@ int
 veriexecopen(dev_t dev __unused, int flags __unused,
 		 int fmt __unused, struct proc *p __unused)
 {
-#ifdef VERIFIED_EXEC_DEBUG_VERBOSE
-	printf("Veriexec: veriexecopen: Veriexec load device open attempt by "
-	       "uid=%u, pid=%u. (dev=%d)\n", p->p_ucred->cr_uid,
-	       p->p_pid, dev);
-#endif
+	if (veriexec_verbose >= 2) {
+		printf("Veriexec: veriexecopen: Veriexec load device "
+		       "open attempt by uid=%u, pid=%u. (dev=%d)\n",
+		       p->p_ucred->cr_uid, p->p_pid, dev);
+	}
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EPERM);
@@ -207,6 +207,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		error = namei(&nid);
 		if (error)
 			return (error);
+
 		/* Add only regular files. */
 		if (nid.ni_vp->v_type != VREG) {
 			printf("Veriexec: veriexecioctl: Not adding \"%s\": "
@@ -232,32 +233,28 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		hh = veriexec_lookup(va.va_fsid, va.va_fileid);
 		if (hh != NULL) {
 			/*
-			 * Duplicate entry. Still check the type to
-			 * ensure enforcement of a stricter policy.
-			 * I.e. if original entry was direct exec but
-			 * the new params flag the file as indirect or
-			 * file then update the hash entry to the new
-			 * type to ensure duplicate entries do not
-			 * degrade the security policy...
+			 * Duplicate entry; handle access type conflict
+			 * and enforce 'FILE' over 'INDIRECT' over
+			 * 'DIRECT'.
 			 */
-			
-			if ((hh->type != params->type) &&
-			    ((params->type == VERIEXEC_INDIRECT) ||
-			     (params->type == VERIEXEC_FILE))) {
+			if (hh->type < params->type) {
 				hh->type = params->type;
-				printf("Veriexec: veriexecioctl: Duplicate "
-				       "entry for %s, (dev=%lu, inode=%lu) "
-				       "but type mismatched. "
-				       "Updating type to stricter one.\n",
-				       params->file, va.va_fsid, va.va_fileid);
+
+				veriexec_report("Duplicate entry with "
+						"access type mismatch. "
+						"Updating to stricter "
+						"type.", params->file,
+						&va, NULL,
+						REPORT_NOVERBOSE,
+						REPORT_NOALARM,
+						REPORT_NOPANIC);
+			} else {
+				veriexec_report("Duplicate entry.",
+						params->file, &va, NULL,
+						REPORT_VERBOSE_HIGH,
+						REPORT_NOALARM,
+						REPORT_NOPANIC);
 			}
-			
-#ifdef VERIFIED_EXEC_DEBUG_VERBOSE
-			printf("Veriexec: veriexecioctl: Duplicate "
-			       "entry for %s. (dev=%lu, inode=%lu) "
-			       "Ignoring.\n", params->file,
-			       va.va_fsid, va.va_fileid);
-#endif
 
 			return (0);
 		}

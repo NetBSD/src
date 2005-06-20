@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.151 2005/06/17 18:19:39 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.152 2005/06/20 15:06:18 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 17, 2005
+.Dd June 20, 2005
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -892,6 +892,7 @@ mismatches, removal of entries from the tables, modification of a
 fingerprinted file.
 If 1, more messages will be printed (ie., when a file with a valid
 fingerprint is accessed).
+Verbose level 2 is debug mode.
 .It Li VERIEXEC_STRICT
 Controls the strict level of Verified Exec.
 The strict level defines how
