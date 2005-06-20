@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.9 2003/08/07 11:25:50 agc Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.10 2005/06/20 00:29:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,13 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.9 2003/08/07 11:25:50 agc Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.10 2005/06/20 00:29:42 lukem Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -54,6 +55,11 @@ __RCSID("$NetBSD: ypdb.c,v 1.9 2003/08/07 11:25:50 agc Exp $");
 #include "ypdb.h"
 
 /*
+ * ypdb_open --
+ *	dbopen(3) file with the flags & mode.
+ *	First ensure that file has a suffix of YPDB_SUFFIX.
+ *	Try opening as a DB_BTREE first, then DB_HASH.
+ *
  * Returns:
  * 	*DBM on success
  *	 NULL on failure
@@ -62,13 +68,21 @@ __RCSID("$NetBSD: ypdb.c,v 1.9 2003/08/07 11:25:50 agc Exp $");
 DBM *
 ypdb_open(const char *file, int flags, int mode)
 {
-	char path[MAXPATHLEN], *cp;
+	char path[MAXPATHLEN];
+	const char *cp, *suffix;
 	DBM *db;
 	BTREEINFO info;
 
 	cp = strrchr(file, '.');
-	snprintf(path, sizeof(path), "%s%s", file,
-	    (cp != NULL && strcmp(cp, ".db") == 0) ? "" : YPDB_SUFFIX);
+	if (cp != NULL && strcmp(cp, YPDB_SUFFIX) == 0)
+		suffix = "";
+	else
+		suffix = YPDB_SUFFIX;
+	if (strlen(file) + strlen(suffix) > (sizeof(path) - 1)) {
+		warnx("File name `%s' is too long", file);
+		return (NULL);
+	}
+	snprintf(path, sizeof(path), "%s%s", file, suffix);
 
 		/* try our btree format first */
 	info.flags = 0;
