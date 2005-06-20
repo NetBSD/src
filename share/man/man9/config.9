@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.21 2004/12/15 15:37:01 wiz Exp $
+.\"     $NetBSD: config.9,v 1.22 2005/06/20 13:25:25 peter Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,11 +48,11 @@ language
 In
 .Nx ,
 the
-.Xr config 8
+.Xr config 1
 program reads and verifies a machine description file specifying the
 devices to include in the kernel.
 A table is produced by
-.Xr config 8
+.Xr config 1
 which is used by the kernel during autoconfiguration (see
 .Xr autoconf 9 )
 giving needed hints and details on matching hardware devices with
@@ -161,7 +161,7 @@ are defined in file
 .Em filename .
 This statement permits ``options FOO'' for FOO (i.e, without a value)
 in the machine description file.
-.Xr config 8
+.Xr config 1
 will generate an error if a value is given.
 If the filename field is not specified, it will be constructed based upon
 the lower-case of the option name, ``opt_foo.h'' for example.
@@ -175,7 +175,7 @@ are defined in file
 .Em filename .
 This statement permits ``options FOO=bar'' or ``option FOO="\\"com\\""''
 in the machine description file.
-.Xr config 8
+.Xr config 1
 will generate an error if a value is not given.
 If the filename field is not specified, it will be constructed based upon
 the lower-case of the option name, ``opt_foo.h'' for example.
@@ -189,7 +189,7 @@ are defined in file
 .Em filename .
 This statement permits the syntax of either the defflag and defparam
 statements and
-.Xr config 8
+.Xr config 1
 does not perform any checking of whether ``options FOO'' takes a
 value.
 Therefore, the use of the defopt statement is deprecated in
@@ -291,7 +291,7 @@ to currently processed configuration.
 If the specified
 .Ar filename
 doesn't exist,
-.Xr config 8
+.Xr config 1
 exits with error.
 .It package Ar filename
 Changes prefix to directory of
@@ -339,11 +339,11 @@ and
 .Pa sys/dev/\*[Lt]bus\*[Gt]/files.\*[Lt]bus\*[Gt] .
 .Pp
 The grammar for machine description files can be found in
-.Xr config 8 ,
+.Xr config 1 ,
 in
 .Pa usr.sbin/config/gram.y .
 .Sh SEE ALSO
-.Xr config 8 ,
+.Xr config 1 ,
 .Xr autoconf 9 ,
 .Xr driver 9
 .Rs

@@ -1,4 +1,4 @@
-.\"	$NetBSD: console.4,v 1.8 2003/04/09 17:30:04 jmmv Exp $
+.\"	$NetBSD: console.4,v 1.9 2005/06/20 13:25:24 peter Exp $
 .\"
 .Dd April 9, 2003
 .Os
@@ -96,10 +96,10 @@ by the bootloader.
 .Sh EXAMPLES
 .Cd options \&"CONSDEVNAME=\e"com\e"",CONADDR=0x2f8,CONSPEED=19200
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr tty 4 ,
 .Xr boot 8 ,
-.Xr boot_console 8 ,
-.Xr config 8
+.Xr boot_console 8
 .Sh BUGS
 The console device is chosen early in system startup regardless
 if the specified driver / device is present in the system configuration file.

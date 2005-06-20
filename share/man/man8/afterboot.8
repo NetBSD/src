@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.20 2005/05/17 14:08:36 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.21 2005/06/20 13:25:25 peter Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -961,6 +961,7 @@ $ ./build.sh kernel=SOMEFILE
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
+.Xr config 1 ,
 .Xr crontab 1 ,
 .Xr date 1 ,
 .Xr df 1 ,
@@ -991,7 +992,6 @@ $ ./build.sh kernel=SOMEFILE
 .Xr bootparamd 8 ,
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
-.Xr config 8 ,
 .Xr dhcpd 8 ,
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
