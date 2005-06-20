@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.8 2005/02/03 21:35:44 perry Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.9 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.8 2005/02/03 21:35:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.9 2005/06/20 02:49:19 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -306,7 +306,7 @@ speedstep_bad_hb_check(struct pci_attach_args *pa)
 static void
 speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 {
-	struct sysctlnode	*node, *ssnode;
+	const struct sysctlnode	*node, *ssnode;
 	int rv;
 
 	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */

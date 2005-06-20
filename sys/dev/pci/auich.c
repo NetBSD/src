@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.95 2005/04/12 17:30:51 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.96 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.95 2005/04/12 17:30:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.96 2005/06/20 02:49:18 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,7 +435,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
-	struct sysctlnode *node, *node_ac97clock;
+	const struct sysctlnode *node, *node_ac97clock;
 	int err, node_mib, i;
 
 	sc = (struct auich_softc *)self;

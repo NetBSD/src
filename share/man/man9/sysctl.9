@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.5 2004/03/24 23:51:18 wiz Exp $
+.\"	$NetBSD: sysctl.9,v 1.6 2005/06/20 02:49:19 atatat Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,8 +53,8 @@ Primary external interfaces:
 .Fn sysctl_unlock "struct lwp *l"
 .Ft int
 .Fn sysctl_createv "struct sysctllog **log" "int cflags" \
-"struct sysctlnode **rnode" "struct sysctlnode **cnode" "int flags" \
-"int type" "const char *namep" "const char *desc" \
+"const struct sysctlnode **rnode" "const struct sysctlnode **cnode" \
+"int flags" "int type" "const char *namep" "const char *desc" \
 "sysctlfn func" "u_quad_t qv" "void *newp" "size_t newlen" ...
 .Ft int
 .Fn sysctl_destroyv "struct sysctlnode *rnode" ...
@@ -69,19 +69,19 @@ Primary external interfaces:
 Core internal functions:
 .Ft int
 .Fn sysctl_locate "struct lwp *l" "const int *name" "u_int namelen" \
-"struct sysctlnode **rnode" "int *nip"
+"const struct sysctlnode **rnode" "int *nip"
 .Ft int
 .Fn sysctl_lookup "const int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "const void *newp" "size_t newlen" "const int *oname" \
-"struct lwp *l" "struct sysctlnode *rnode"
+"struct lwp *l" "const struct sysctlnode *rnode"
 .Ft int
 .Fn sysctl_create "const int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "const void *newp" "size_t newlen" "const int *oname" \
-"struct lwp *l" "struct sysctlnode *rnode"
+"struct lwp *l" "const struct sysctlnode *rnode"
 .Ft int
 .Fn sysctl_destroy "const int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "const void *newp" "size_t newlen" "const int *oname" \
-"struct lwp *l" "struct sysctlnode *rnode"
+"struct lwp *l" "const struct sysctlnode *rnode"
 .Ft int
 .Fn sysctl_query  "const int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "const void *newp" "size_t newlen" "const int *oname" \
@@ -497,12 +497,6 @@ The use of the
 .Dv SYSCTLFN_ARGS, and
 .Dv SYSCTLFN_CALL
  macros ensure that all arguments are passed properly.
-The
-.Dv SYSCTLFN_RWPROTO
-and
-.Dv SYSCTLFN_RWARGS
-macros are only used internally by those core SYSCTL routines that may
-have cause to modify the data in the given SYSCTL tree.
 The single argument to the
 .Dv SYSCTLFN_CALL
 macro is the pointer to the node being examined.

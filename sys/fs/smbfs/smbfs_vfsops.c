@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.48 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.49 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.48 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.49 2005/06/20 02:49:19 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -69,7 +69,7 @@ SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
 #else
 SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 {
-	struct sysctlnode *smb = NULL;
+	const struct sysctlnode *smb = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.16 2004/05/25 04:29:08 atatat Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.17 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.16 2004/05/25 04:29:08 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.17 2005/06/20 02:49:19 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct sysctlnode linux_sysctl_root = {
  */
 SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
 {
-	struct sysctlnode *node = &linux_sysctl_root;
+	const struct sysctlnode *node = &linux_sysctl_root;
 
 	sysctl_createv(clog, 0, &node, &node,
 		       CTLFLAG_PERMANENT,

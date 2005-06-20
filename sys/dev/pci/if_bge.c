@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.89 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.90 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.89 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.90 2005/06/20 02:49:18 atatat Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3958,7 +3958,7 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 {
 	int rc, bge_root_num;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,

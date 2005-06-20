@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.107 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: bpf.c,v 1.108 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.107 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.108 2005/06/20 02:49:19 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1694,7 +1694,7 @@ sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
 {
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.75 2005/05/30 04:43:46 christos Exp $ */
+/*      $NetBSD: ac97.c,v 1.76 2005/06/20 02:49:18 atatat Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.75 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.76 2005/06/20 02:49:18 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1225,9 +1225,9 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 			}
 		}
 	} else if (as->type == AC97_CODEC_TYPE_MODEM) {
-		struct sysctlnode *node;
-		struct sysctlnode *node_line1;
-		struct sysctlnode *node_line2;
+		const struct sysctlnode *node;
+		const struct sysctlnode *node_line1;
+		const struct sysctlnode *node_line2;
 		uint16_t xrate = 8000;
 		uint16_t xval, reg;
 		int err;

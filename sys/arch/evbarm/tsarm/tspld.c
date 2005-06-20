@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.6 2005/06/04 22:40:03 he Exp $	*/
+/*	$NetBSD: tspld.c,v 1.7 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.6 2005/06/04 22:40:03 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.7 2005/06/20 02:49:19 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -105,7 +105,7 @@ tspldattach(parent, self, aux)
 	int	i, rev, features, jp, model;
 	struct tspld_softc *sc = (struct tspld_softc *)self;
 	bus_space_handle_t 	ioh;
-        struct sysctlnode *node;
+        const struct sysctlnode *node;
 
 	if (sysctl_createv(NULL, 0, NULL, NULL,
 				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",

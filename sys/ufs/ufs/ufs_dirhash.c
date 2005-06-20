@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.3 2005/05/31 02:37:50 christos Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.4 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -1067,7 +1067,7 @@ ufsdirhash_done()
 
 SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
 {
-	struct sysctlnode *rnode, *cnode;
+	const struct sysctlnode *rnode, *cnode;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.45 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: ath.c,v 1.46 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.45 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.46 2005/06/20 02:49:18 atatat Exp $");
 #endif
 
 /*
@@ -334,7 +334,7 @@ sysctl_ath_verify(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 {
 	int rc, ath_node_num;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.35 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.36 2005/06/20 02:49:18 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.35 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36 2005/06/20 02:49:18 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,7 +110,7 @@ darwin_sysctl_redispatch(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 {
-	struct sysctlnode *_root = &darwin_sysctl_root;
+	const struct sysctlnode *_root = &darwin_sysctl_root;
 
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.5 2005/02/27 00:27:42 perry Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.6 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -322,7 +322,7 @@ static void
 pms_sysctl_synaptics(struct sysctllog **clog)
 {
 	int rc, root_num;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,

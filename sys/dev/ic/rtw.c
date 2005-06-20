@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.46 2005/06/10 02:35:34 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.47 2005/06/20 02:49:18 atatat Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.46 2005/06/10 02:35:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.47 2005/06/20 02:49:18 atatat Exp $");
 
 #include "bpfilter.h"
 
@@ -120,7 +120,7 @@ static int rtw_sysctl_verify_rxbufs_limit(SYSCTLFN_PROTO);
 SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
 {
 	int rc;
-	struct sysctlnode *cnode, *rnode;
+	const struct sysctlnode *cnode, *rnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,

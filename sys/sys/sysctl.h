@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.137 2005/06/16 14:55:58 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.138 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -944,15 +944,9 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #define SYSCTLFN_ARGS const int *name, u_int namelen, void *oldp, \
 	size_t *oldlenp, const void *newp, size_t newlen, \
 	const int *oname, struct lwp *l, const struct sysctlnode *rnode
-#define SYSCTLFN_RWPROTO const int *, u_int, void *, \
-	size_t *, const void *, size_t, \
-	const int *, struct lwp *, struct sysctlnode *
-#define SYSCTLFN_RWARGS const int *name, u_int namelen, void *oldp, \
-	size_t *oldlenp, const void *newp, size_t newlen, \
-	const int *oname, struct lwp *l, struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
-	oname, l, __UNCONST(node) /*XXXUNCONST*/
+	oname, l, node
 
 #ifdef _LKM
 
@@ -1021,28 +1015,28 @@ void	sysctl_init(void);
  * typical syscall call order
  */
 int	sysctl_lock(struct lwp *, void *, size_t);
-int	sysctl_dispatch(SYSCTLFN_RWPROTO);
+int	sysctl_dispatch(SYSCTLFN_PROTO);
 void	sysctl_unlock(struct lwp *);
 
 /*
  * tree navigation primitives (must obtain lock before using these)
  */
-int	sysctl_locate(struct lwp *, const int *, u_int, struct sysctlnode **,
-		      int *);
+int	sysctl_locate(struct lwp *, const int *, u_int,
+		      const struct sysctlnode **, int *);
 int	sysctl_query(SYSCTLFN_PROTO);
 #ifdef SYSCTL_DEBUG_CREATE
 #define sysctl_create _sysctl_create
 #endif /* SYSCTL_DEBUG_CREATE */
-int	sysctl_create(SYSCTLFN_RWPROTO);
-int	sysctl_destroy(SYSCTLFN_RWPROTO);
-int	sysctl_lookup(SYSCTLFN_RWPROTO);
+int	sysctl_create(SYSCTLFN_PROTO);
+int	sysctl_destroy(SYSCTLFN_PROTO);
+int	sysctl_lookup(SYSCTLFN_PROTO);
 int	sysctl_describe(SYSCTLFN_PROTO);
 
 /*
  * simple variadic interface for adding/removing nodes
  */
 int	sysctl_createv(struct sysctllog **, int,
-		       struct sysctlnode **, struct sysctlnode **,
+		       const struct sysctlnode **, const struct sysctlnode **,
 		       int, int, const char *, const char *,
 		       sysctlfn, u_quad_t, void *, size_t, ...);
 int	sysctl_destroyv(struct sysctlnode *, ...);
@@ -1199,8 +1193,8 @@ struct sysctldesc {
 		__sysc_desc_roundup(l)))
 #define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 
-static __inline struct sysctlnode *
-sysctl_rootof(struct sysctlnode *n)
+static __inline const struct sysctlnode *
+sysctl_rootof(const struct sysctlnode *n)
 {
 	while (n->sysctl_parent != NULL)
 		n = n->sysctl_parent;
