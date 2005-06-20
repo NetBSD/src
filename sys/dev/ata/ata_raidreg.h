@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.1 2003/01/27 18:21:28 thorpej Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.2 2005/06/20 02:11:57 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -108,6 +108,66 @@ struct promise_raid_conf {
 	} raid;
 	uint32_t	filler2[346];
 	uint32_t	checksum;
+} __attribute__((__packed__));
+
+/*
+ * Macro to compute the LBA of the Adaptec HostRAID configuration structure,
+ * using the disk's softc structure.
+ */
+#define	ADP_LBA(wd)							\
+	((wd)->sc_capacity - 17)
+
+struct adaptec_raid_conf {
+	uint32_t	magic_0;
+#define	ADP_MAGIC_0	0x900765c4
+
+	uint32_t	generation;
+	uint16_t	dummy_0;
+	uint16_t	total_configs;
+	uint16_t	dummy_1;
+	uint16_t	checksum;
+	uint32_t	dummy_2;
+	uint32_t	dummy_3;
+	uint32_t	flags;
+	uint32_t	timestamp;
+	uint32_t	dummy_4[4];
+	uint32_t	dummy_5[4];
+	struct {
+		uint16_t	total_disks;
+		uint16_t	generation;
+		uint32_t	magic_0;
+		uint8_t		dummy_0;
+		uint8_t		type;
+#define ADP_T_RAID0			0x00
+#define ADP_T_RAID1			0x01
+		uint8_t		dummy_1;
+		uint8_t		flags;
+
+		uint8_t		dummy_2;
+		uint8_t		dummy_3;
+		uint8_t		dummy_4;
+		uint8_t		dummy_5;
+
+		uint32_t	disk_number;
+		uint32_t	dummy_6;
+		uint32_t	sectors;
+		uint16_t	stripe_sectors;
+		uint16_t	dummy_7;
+
+		uint32_t	dummy_8[4];
+		uint8_t		name[16];
+	} configs[127];
+	uint32_t	dummy_6[13];
+	uint32_t	magic_1;
+#define ADP_MAGIC_1		0x0950f89f
+	uint32_t	dummy_7[3];
+	uint32_t	magic_2;
+	uint32_t	dummy_8[46];
+	uint32_t	magic_3;
+#define ADP_MAGIC_3		0x4450544d
+	uint32_t	magic_4;
+#define ADP_MAGIC_4		0x0950f89f
+	uint32_t	dummy_9[62];
 } __attribute__((__packed__));
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */
