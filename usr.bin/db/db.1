@@ -1,6 +1,6 @@
-.\" 	$NetBSD: db.1,v 1.16 2003/06/26 17:14:13 wiz Exp $
+.\" 	$NetBSD: db.1,v 1.17 2005/06/20 02:53:38 lukem Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2003
+.Dd June 20, 2005
 .Dt DB 1
 .Os
 .
@@ -58,19 +58,19 @@ databases
 .Op Fl f Ar infile
 .Ek
 .Bk -words
-.Op Fl O Ar str
+.Op Fl O Ar outsep
 .Ek
 .Bk -words
-.Op Fl S Ar chr
+.Op Fl S Ar visitem
 .Ek
 .Bk -words
-.Op Fl T Ar str
+.Op Fl T Ar visspec
 .Ek
 .Bk -words
-.Op Fl X Ar str
+.Op Fl X Ar extravis
 .Ek
 .Ar type
-.Ar database
+.Ar dbfile
 .Bk -words
 .Op Ar key Op Ar \&.\&.\&.
 .Ek
@@ -85,10 +85,10 @@ databases
 .Op Fl f Ar infile
 .Ek
 .Bk -words
-.Op Fl U Ar chr
+.Op Fl U Ar unvisitem
 .Ek
 .Ar type
-.Ar database
+.Ar dbfile
 .Bk -words
 .Op Ar key Op Ar \&.\&.\&.
 .Ek
@@ -100,7 +100,7 @@ databases
 .Op Fl E Ar endian
 .Ek
 .Bk -words
-.Op Fl F Ar sep
+.Op Fl F Ar insep
 .Ek
 .Bk -words
 .Op Fl f Ar infile
@@ -109,10 +109,10 @@ databases
 .Op Fl m Ar mode
 .Ek
 .Bk -words
-.Op Fl U Ar chr
+.Op Fl U Ar unvisitem
 .Ek
 .Ar type
-.Ar database
+.Ar dbfile
 .Bk -words
 .Op Ar key Ar value Op Ar \&.\&.\&.
 .Ek
@@ -127,7 +127,8 @@ and
 databases.
 .Pp
 .Nm
-has three modes of operation:
+has three modes of operation to perform upon
+.Ar dbfile :
 .Bl -tag -width "delete" -offset indent
 .It read
 Displays the given
@@ -155,7 +156,7 @@ and
 and keys and values described in
 .Ar infile
 (in the latter case, entries are separated by
-.Ar sep ) .
+.Ar insep ) .
 .El
 .Pp
 There are two mandatory arguments:
@@ -165,7 +166,7 @@ is the database type; either
 or
 .Sq Sy hash ,
 and
-.Ar database
+.Ar dbfile
 is the database file to manipulate.
 .Pp
 Options valid for all modes are:
@@ -190,7 +191,7 @@ Defaults to
 .It Fl f Ar infile
 Contains a list of keys
 (for read and delete), or
-.Ar sep
+.Ar insep
 separated keys and values (for write)
 to be used as arguments to the given mode.
 If
@@ -225,17 +226,17 @@ Read mode specific options are:
 .It Fl K
 Display key.
 .
-.It Fl O Ar str
+.It Fl O Ar outsep
 Field separator string between key and value.
 Defaults to a single tab
 .Pq Sq \et .
 .
-.It Fl S Ar chr
+.It Fl S Ar visitem
 Specify items to
 .Xr strvis 3
 encode.
 The
-.Ar chr
+.Ar visitem
 option-argument is a character specifying if the key
 .Pq Ar k ,
 the value
@@ -244,12 +245,12 @@ or both
 .Pq Ar b
 should be encoded.
 .
-.It Fl T Ar str
+.It Fl T Ar visspec
 Control how the items specified by the
 .Fl S
 option are encoded.
 The
-.Ar str
+.Ar visspec
 option-argument is a string specifying
 .Xr strvis 3
 options.
@@ -265,11 +266,11 @@ corresponding options for the meaning of these characters.
 .It Fl V
 Display value.
 .
-.It Fl X Ar str
+.It Fl X Ar extravis
 When encoding items with
 .Fl S
 option also encode characters in
-.Ar str ,
+.Ar extravis ,
 per
 .Xr svis 3 .
 .
@@ -296,8 +297,8 @@ Allow duplicate entries.
 .Fl R
 to be useful.)
 .
-.It Fl F Ar sep
-Field separator between key and value used when parsing
+.It Fl F Ar insep
+Input field separator string between key and value used when parsing
 .Ar infile .
 Defaults to a single space
 .Pq Sq \  .
@@ -316,12 +317,12 @@ If not specified, writing to an existing entry raises an error.
 Write and delete mode specific options are:
 .Bl -tag -width Fl -offset indent
 .
-.It Fl U Ar chr
+.It Fl U Ar unvisitem
 Specify items to
 .Xr strunvis 3
 decode.
 The
-.Ar chr
+.Ar unvisitem
 option-argument is a character specifying if the key
 .Pq Ar k ,
 the value
