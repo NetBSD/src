@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.475 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.476 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -42,3 +42,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbarm: Add support for the Arcom Viper.  [pooka 20050606]
 	scan_ffs(8): Added scan_ffs from OpenBSD. Utility to find FFSv1/FFSv2
 		partitions, to recover lost disklabels. [xtraeme 20050615]
+	ataraid(4): Add man page and adapt support for Adaptec HostRAID
+		from FreeBSD. [briggs 20050620]
