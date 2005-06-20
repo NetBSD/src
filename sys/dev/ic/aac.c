@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.19 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: aac.c,v 1.20 2005/06/20 11:37:47 darcy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.19 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.20 2005/06/20 11:37:47 darcy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,8 +371,8 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	if (bufsize != sizeof(*info)) {
 		aprint_error("%s: "
-		    "RequestAdapterInfo returned wrong data size (%d != %d)\n",
-		    sc->sc_dv.dv_xname, bufsize, sizeof(*info));
+		    "RequestAdapterInfo returned wrong data size (%d != %lu)\n",
+		    sc->sc_dv.dv_xname, bufsize, (long unsigned) sizeof(*info));
 		return;
 	}
 	info = (struct aac_adapter_info *)&tbuf[0];
@@ -699,8 +699,8 @@ aac_startup(struct aac_softc *sc)
 		}
 		if (rsize != sizeof(mir)) {
 			aprint_error("%s: container info response wrong size "
-			    "(%d should be %d)\n",
-			    sc->sc_dv.dv_xname, rsize, sizeof(mir));
+			    "(%d should be %lu)\n",
+			    sc->sc_dv.dv_xname, rsize, (long unsigned) sizeof(mir));
 			continue;
 		}
 
