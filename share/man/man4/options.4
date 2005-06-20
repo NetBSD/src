@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.276 2005/06/04 09:33:51 wiz Exp $
+.\"	$NetBSD: options.4,v 1.277 2005/06/20 10:41:29 peter Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 4, 2005
+.Dd June 20, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1306,6 +1306,11 @@ this value is inherited by its child processes.
 It defaults to
 .Em OPEN_MAX ,
 which is currently defined to be 64.
+.It Cd options MAXFILES=integer
+Sets the default value of the
+.Em kern.maxfiles
+sysctl variable, which indicates the maximum number of files that may
+be open in the system.
 .It Cd options DEFCORENAME=string
 Sets the default value of the
 .Em kern.defcorename
