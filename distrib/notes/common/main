@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.286 2005/06/14 12:15:18 gdt Exp $
+.\"	$NetBSD: main,v 1.287 2005/06/20 13:25:23 peter Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -979,7 +979,7 @@ or
 This set contains the sources to the
 .Nx \*V
 kernel for all architectures;
-.Xr config 8 ;
+.Xr config 1 ;
 and
 .Xr dbsym 8 .
 .showsize 26 140
