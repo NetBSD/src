@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.9 2005/06/10 10:28:17 bouyer Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.10 2005/06/20 02:49:19 atatat Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.9 2005/06/10 10:28:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10 2005/06/20 02:49:19 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -257,7 +257,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	char enaddrstr[18];
 	uint32_t ui;
 	int error;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	aprint_normal("%s: faking Ethernet device\n",
 	    self->dv_xname);
@@ -1188,7 +1188,7 @@ tap_kqread(struct knote *kn, long hint)
  */
 SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 {
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 	int error = 0;
 
 	if ((error = sysctl_createv(clog, 0, NULL, NULL,

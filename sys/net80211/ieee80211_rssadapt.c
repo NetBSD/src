@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.9 2005/02/26 22:45:09 perry Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.10 2005/06/20 02:49:18 atatat Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -143,7 +143,7 @@ SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
     "sysctl ieee80211 rssadapt subtree setup")
 {
 	int rc;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,

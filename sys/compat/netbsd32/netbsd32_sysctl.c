@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.15 2004/04/27 03:49:03 atatat Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.16 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.15 2004/04/27 03:49:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.16 2005/06/20 02:49:18 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -103,7 +103,7 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 {
-	struct sysctlnode *_root = &netbsd32_sysctl_root;
+	const struct sysctlnode *_root = &netbsd32_sysctl_root;
 	extern char machine_arch32[];
 
 	sysctl_createv(clog, 0, &_root, NULL,
