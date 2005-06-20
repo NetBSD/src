@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.8 2005/05/29 21:34:23 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.9 2005/06/20 02:49:19 atatat Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8 2005/05/29 21:34:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9 2005/06/20 02:49:19 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ est_init(struct cpu_info *ci)
 {
 	const struct est_cpu	*ccpu;
 	const struct fqlist	*fql;
-	struct sysctlnode	*node, *estnode, *freqnode;
+	const struct sysctlnode	*node, *estnode, *freqnode;
 	u_int64_t		msr;
 	int			i, j, rc;
 	int			mhz, mv;

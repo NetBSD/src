@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.105 2005/06/01 12:29:58 drochner Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.105 2005/06/01 12:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1470,7 +1470,7 @@ db_show_arptab(db_expr_t addr, int have_addr, db_expr_t count, const char *modif
 
 SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
 {
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.33 2005/01/15 11:01:46 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.33 2005/01/15 11:01:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $");
 
 #include "bpfilter.h"
 
@@ -331,7 +331,7 @@ an_attach(struct an_softc *sc)
 SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
 {
 	int rc;
-	struct sysctlnode *cnode, *rnode;
+	const struct sysctlnode *cnode, *rnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
