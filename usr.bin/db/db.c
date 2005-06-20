@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.13 2004/10/04 10:56:12 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.14 2005/06/20 02:53:38 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.13 2004/10/04 10:56:12 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.14 2005/06/20 02:53:38 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'F':
-			if (! optarg[0] || optarg[1])
+			if (! optarg[0])
 				errx(1, "Invalid field separator `%s'",
 				    optarg);
 			fieldsep = optarg;
@@ -525,10 +525,12 @@ parseline(FILE *fp, const char *sep, char **kp, char **vp)
 	*kp = key;
 	if (vp == NULL)			/* don't split if don't want value */
 		return (1);
-	if ((val = strchr(key, sep[0])) == NULL)
+	if ((val = strstr(key, sep)) == NULL)
 		val = key + len;
-	else
-		*val++ = '\0';
+	else {
+		*val = '\0';
+		val += strlen(sep);
+	}
 	*vp = val;
 	return (1);
 }
@@ -626,35 +628,36 @@ usage(void)
 	const char *p = getprogname();
 
 	fprintf(stderr,
-    "usage: %s [-KiNqV] [-E end] [-f inf] [-O str] [-S chr] [-T str] [-X str]\n"
-    "             type dbfile [key [...]]\n"
-    "       %s -d [-iNq] [-E end] [-f inf] [-U chr] type dbfile [key [...]]\n"
-    "       %s -w [-CDiNqR] [-E end] [-F sep] [-f inf] [-m mod] [-U chr]\n"
-    "             type dbfile [key val [...]]\n"
+"usage: %s    [-KiNqV] [-E endian] [-f infile] [-O outsep] [-S visitem]\n"
+"             [-T visspec] [-X extravis] type dbfile [key [...]]\n"
+"       %s -d [-iNq] [-E endian] [-f infile] [-U unvisitem]\n"
+"             type dbfile [key [...]]\n"
+"       %s -w [-CDiNqR] [-E endian] [-F isep] [-f infile] [-m mode]\n"
+"             [-U unvisitem] type dbfile [key value [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
-	    "Supported modes:\n"
-	    "\t\tread keys  [default]\n"
-	    "\t-d\tdelete keys\n"
-	    "\t-w\twrite (add) keys/values\n"
-	    "Supported options:\n"
-	    "\t-C\tcreate empty (truncated) database\n"
-	    "\t-D\tallow duplicates\n"
-	    "\t-E end\tdatabase endian: `B'ig, `L'ittle, `H'ost  [default: H]\n"
-	    "\t-F sep\tfield separator character  [default: ' ']\n"
-	    "\t-f inf\tfile of keys (read|delete) or keys/vals (write)\n"
-	    "\t-i\tignore case of key by converting to lower case\n"
-	    "\t-K\tprint key\n"
-	    "\t-m mod\tmode of created database  [default: 0644]\n"
-	    "\t-N\tdon't NUL terminate key\n"
-	    "\t-O str\toutput field separator string [default: '\\t']\n"
-	    "\t-q\tquiet operation (missing keys aren't errors)\n"
-	    "\t-R\treplace existing keys\n"
-	    "\t-S chr\titems to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
-	    "\t-T str\toptions to control -S encoding like vis(1) options\n"
-	    "\t-U chr\titems to strunvis(3) decode: 'k'ey, 'v'alue, 'b'oth\n"
-	    "\t-V\tprint value\n"
-	    "\t-X str\textra characters to encode with -S\n"
+"Supported modes:\n"
+"                read keys  [default]\n"
+"   -d           delete keys\n"
+"   -w           write (add) keys/values\n"
+"Supported options:\n"
+"   -C           create empty (truncated) database\n"
+"   -D           allow duplicates\n"
+"   -E endian    database endian: `B'ig, `L'ittle, `H'ost  [default: H]\n"
+"   -F isep      input field separator string  [default: ' ']\n"
+"   -f infile    file of keys (read|delete) or keys/vals (write)\n"
+"   -i           ignore case of key by converting to lower case\n"
+"   -K           print key\n"
+"   -m mode      mode of created database  [default: 0644]\n"
+"   -N           don't NUL terminate key\n"
+"   -O outsep    output field separator string [default: '\t']\n"
+"   -q           quiet operation (missing keys aren't errors)\n"
+"   -R           replace existing keys\n"
+"   -S visitem   items to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
+"   -T visspec   options to control -S encoding like vis(1) options\n"
+"   -U unvisitem items to strunvis(3) decode: 'k'ey, 'v'alue, 'b'oth\n"
+"   -V           print value\n"
+"   -X extravis  extra characters to encode with -S\n"
 	    );
 	exit(1);
 }
