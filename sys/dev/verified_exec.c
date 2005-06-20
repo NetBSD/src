@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.18 2005/06/20 15:32:29 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.18 2005/06/20 15:32:29 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $\n$NetBSD: verified_exec.c,v 1.17 2005/06/20 15:06:18 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.18 2005/06/20 15:32:29 elad Exp $\n$NetBSD: verified_exec.c,v 1.18 2005/06/20 15:32:29 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -113,8 +113,10 @@ veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
 		   void *aux)
 {
 	veriexec_dev_usage = 0;
-	veriexec_dprintf(("Veriexec: veriexecattach: Veriexec pseudo-device "
-	    "attached.\n"));
+
+	if (veriexec_verbose >= 2)
+		printf("Veriexec: veriexecattach: Veriexec pseudo-device"
+		       "attached.\n");
 }
 
 int
@@ -131,7 +133,9 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
-		veriexec_dprintf(("Veriexec: load device already in use\n"));
+		if (veriexec_verbose >= 2)
+			printf("Veriexec: load device already in use.\n");
+
 		return(EBUSY);
 	}
 
@@ -294,9 +298,9 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
 		memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 
-		veriexec_dprintf(("Veriexec: veriexecioctl: New entry. (file=%s,"
-		    " dev=%d, inode=%u)\n", params->vxp_file, va.va_fsid,
-		    va.va_fileid));
+		veriexec_report("New entry.", params->file, &va, NULL,
+				REPORT_VERBOSE_HIGH, REPORT_NOALARM,
+				REPORT_NOPANIC);
 
 		error = veriexec_hashadd(tbl, e);
 
