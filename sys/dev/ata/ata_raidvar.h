@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.1 2003/01/27 18:21:28 thorpej Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.2 2005/06/20 02:11:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,8 @@
  * sorted.
  */
 #define	ATA_RAID_TYPE_PROMISE	0
-#define	ATA_RAID_TYPE_MAX	0
+#define	ATA_RAID_TYPE_ADAPTEC	1
+#define	ATA_RAID_TYPE_MAX	1
 
 /*
  * Max # of disks supported by a single array.  This is limited by
@@ -117,5 +118,8 @@ int	ata_raid_config_block_rw(struct vnode *, daddr_t, void *,
 
 /* Promise RAID support */
 int	ata_raid_read_config_promise(struct wd_softc *);
+
+/* Adaptec HostRAID support */
+int	ata_raid_read_config_adaptec(struct wd_softc *);
 
 #endif /* _DEV_ATA_ATA_RAIDVAR_H_ */
