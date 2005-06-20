@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.12 2004/10/30 16:01:48 dsl Exp $ */
+/*	$NetBSD: mkalias.c,v 1.13 2005/06/20 00:08:35 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.12 2004/10/30 16:01:48 dsl Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.13 2005/06/20 00:08:35 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -222,7 +222,8 @@ main(int argc, char *argv[])
 		err(1, "Unable to open input database `%s'", input);
 
 	if (output != NULL) {
-		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
+		if (strlen(output) + strlen(YPDB_SUFFIX) >
+		    (sizeof(db_outfile) + 1))
 			warnx("file name `%s' too long", output);
 		snprintf(db_outfile, sizeof(db_outfile),
 			 "%s%s", output, YPDB_SUFFIX);
@@ -235,8 +236,8 @@ main(int argc, char *argv[])
 	
 		/* note: output is now directory where map goes ! */
 	
-		if (strlen(output) + strlen(mapname)
-		    + strlen(YPDB_SUFFIX) > MAXPATHLEN)
+		if (strlen(output) + strlen(mapname) + strlen(YPDB_SUFFIX) >
+		    (sizeof(db_mapname) - 1))
 			errx(1, "Directory name `%s' too long", output);
 	
 		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,

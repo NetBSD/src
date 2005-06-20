@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.20 2004/10/30 16:01:48 dsl Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.21 2005/06/20 00:08:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.20 2004/10/30 16:01:48 dsl Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.21 2005/06/20 00:08:35 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 			err(1, "can't open `%s'", infile);
 	}
 
-	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
+	if (strlen(database) + strlen(YPDB_SUFFIX) > (sizeof(db_outfile) - 1))
 		errx(1, "file name `%s' too long", database);
 
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
@@ -267,8 +267,8 @@ create_database(char *infile, char *database, char *yp_input_file,
 
 	/* NOTE: database is now directory where map goes ! */
 
-	if (strlen(database) + strlen(mapname) +
-	    strlen(YPDB_SUFFIX) > MAXPATHLEN)
+	if (strlen(database) + strlen(mapname) + strlen(YPDB_SUFFIX) >
+	    (sizeof(db_mapname) - 1))
 		errx(1, "directory name `%s' too long", database);
 
 	snprintf(db_tempname, sizeof(db_tempname), "%s%s",
