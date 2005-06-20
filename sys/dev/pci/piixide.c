@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.21 2005/06/15 18:01:12 bouyer Exp $	*/
+/*	$NetBSD: piixide.c,v 1.22 2005/06/20 02:10:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.21 2005/06/15 18:01:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.22 2005/06/20 02:10:18 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,11 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_6300ESB_SATA,
 	  0,
 	  "Intel 6300ESB Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_6300ESB_RAID,
+	  0,
+	  "Intel 6300ESB Serial ATA/RAID Controller",
 	  piixsata_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_IDE,
@@ -720,7 +725,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
-	pcireg_t interface;
+	pcireg_t interface, cmdsts;
 	int channel;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -743,6 +748,14 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+
+	cmdsts = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+	cmdsts &= ~0x0400;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, cmdsts);
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
