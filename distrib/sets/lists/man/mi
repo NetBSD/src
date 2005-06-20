@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.793 2005/06/17 17:12:57 peter Exp $
+# $NetBSD: mi,v 1.794 2005/06/20 03:08:25 briggs Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -661,6 +661,7 @@
 ./usr/share/man/cat4/atalk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atapi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atapibus.0			man-sys-catman		.cat
+./usr/share/man/cat4/ataraid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atari/ahdi.0		man-obsolete		obsolete
 ./usr/share/man/cat4/atari/et.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atari/floppy.0		man-sys-catman		.cat
@@ -2890,6 +2891,7 @@
 ./usr/share/man/man4/atalk.4			man-sys-man		.man
 ./usr/share/man/man4/atapi.4			man-sys-man		.man
 ./usr/share/man/man4/atapibus.4			man-sys-man		.man
+./usr/share/man/man4/ataraid.4			man-sys-man		.man
 ./usr/share/man/man4/atari/ahdi.4		man-obsolete		obsolete
 ./usr/share/man/man4/atari/et.4			man-sys-man		.man
 ./usr/share/man/man4/atari/floppy.4		man-sys-man		.man
