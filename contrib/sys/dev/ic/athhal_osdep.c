@@ -118,7 +118,7 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 	int debug_nodenum;
 #endif /* AH_DEBUG */
 	int ath_nodenum, hal_nodenum, version_nodenum;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
