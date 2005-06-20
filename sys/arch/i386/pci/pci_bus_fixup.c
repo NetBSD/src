@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.4 2002/01/22 15:08:53 uch Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.5 2005/06/20 11:04:46 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.4 2002/01/22 15:08:53 uch Exp $");
-
-#include "opt_pcibios.h"
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.5 2005/06/20 11:04:46 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.4 2002/01/22 15:08:53 uch Exp $"
 #include <dev/pci/ppbreg.h>
 
 #include <i386/pci/pci_bus_fixup.h>
-#include <i386/pci/pcibios.h>
 
 /* this array lists the parent for each bus number */
 int pci_bus_parent[256];
@@ -109,10 +106,8 @@ pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 			if (PCI_VENDOR(reg) == 0)
 				continue;
 
-#ifdef PCIBIOSVERBOSE
-			printf("PCI fixup examining %02x:%02x\n",
+			aprint_debug("PCI fixup examining %02x:%02x\n",
 			       PCI_VENDOR(reg), PCI_PRODUCT(reg));
-#endif
 
 			reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
@@ -142,11 +137,9 @@ pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 
 				pci_bus_tag[bus_max]=tag;
 
-#ifdef PCIBIOSVERBOSE
-				printf("PCI bridge %d: primary %d, "
+				aprint_debug("PCI bridge %d: primary %d, "
 				    "secondary %d, subordinate %d\n",
 				    bridge, bus, bus_max, bus_sub);
-#endif
 
 				/* Next bridge's secondary bus #. */
 				bus_max = (bus_sub > bus_max) ?
