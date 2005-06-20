@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.182 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.182 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.182 2005/06/09 02:19:59 atatat Exp
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
 MALLOC_DEFINE(M_SYSCTLDATA, "sysctldata", "misc sysctl data");
 
-static int sysctl_mmap(SYSCTLFN_RWPROTO);
+static int sysctl_mmap(SYSCTLFN_PROTO);
 static int sysctl_alloc(struct sysctlnode *, int);
 static int sysctl_realloc(struct sysctlnode *);
 
@@ -105,11 +105,11 @@ static int sysctl_cvt_in(struct lwp *, int *, const void *, size_t,
 static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 			  void *, size_t, size_t *);
 
-static int sysctl_log_add(struct sysctllog **, struct sysctlnode *);
+static int sysctl_log_add(struct sysctllog **, const struct sysctlnode *);
 static int sysctl_log_realloc(struct sysctllog *);
 
 struct sysctllog {
-	struct sysctlnode *log_root;
+	const struct sysctlnode *log_root;
 	int *log_num;
 	int log_size, log_left;
 };
@@ -368,7 +368,7 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
  * ********************************************************************
  */
 int
-sysctl_dispatch(SYSCTLFN_RWARGS)
+sysctl_dispatch(SYSCTLFN_ARGS)
 {
 	int error;
 	sysctlfn fn;
@@ -479,9 +479,9 @@ sysctl_unlock(struct lwp *l)
  */
 int
 sysctl_locate(struct lwp *l, const int *name, u_int namelen,
-	      struct sysctlnode **rnode, int *nip)
+	      const struct sysctlnode **rnode, int *nip)
 {
-	struct sysctlnode *node, *pnode;
+	const struct sysctlnode *node, *pnode;
 	int tn, si, ni, error, alias;
 
 	/*
@@ -590,7 +590,8 @@ sysctl_query(SYSCTLFN_ARGS)
 {
 	int error, ni, elim, v;
 	size_t out, left, t;
-	struct sysctlnode *enode, *onode, qnode;
+	const struct sysctlnode *enode, *onode;
+	struct sysctlnode qnode;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_query: rnode %p wrong version\n", rnode);
@@ -619,7 +620,7 @@ sysctl_query(SYSCTLFN_ARGS)
 	 * if the request specifies a version, check it
 	 */
 	if (qnode.sysctl_ver != 0) {
-		enode = __UNCONST(rnode); /* XXXUNCONST discard const */
+		enode = rnode;
 		if (qnode.sysctl_ver != enode->sysctl_ver &&
 		    qnode.sysctl_ver != sysctl_rootof(enode)->sysctl_ver)
 			return (EINVAL);
@@ -686,7 +687,7 @@ sysctl_query(SYSCTLFN_ARGS)
  * is proper.
  */
 int
-sysctl_create(SYSCTLFN_RWARGS)
+sysctl_create(SYSCTLFN_ARGS)
 {
 	struct sysctlnode nnode, *node, *pnode;
 	int error, ni, at, nm, type, sz, flags, rw, anum, v;
@@ -745,7 +746,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 		       "node %p\n", rnode);
 		return (EINVAL);
 	}
-	pnode = rnode;
+	pnode = __UNCONST(rnode); /* we are adding children to this node */
 
 	if (newp == NULL)
 		return (EINVAL);
@@ -1186,9 +1187,9 @@ sysctl_create(SYSCTLFN_RWARGS)
  * ********************************************************************
  */
 #ifdef SYSCTL_DEBUG_CREATE
-int _sysctl_create(SYSCTLFN_RWPROTO);
+int _sysctl_create(SYSCTLFN_PROTO);
 int
-_sysctl_create(SYSCTLFN_RWARGS)
+_sysctl_create(SYSCTLFN_ARGS)
 {
 	const struct sysctlnode *node;
 	int k, rc, ni, nl = namelen + (name - oname);
@@ -1225,7 +1226,7 @@ _sysctl_create(SYSCTLFN_RWARGS)
  * oldp.  Since we're removing stuff, there's not much to check.
  */
 int
-sysctl_destroy(SYSCTLFN_RWARGS)
+sysctl_destroy(SYSCTLFN_ARGS)
 {
 	struct sysctlnode *node, *pnode, onode, nnode;
 	int ni, error, v;
@@ -1391,7 +1392,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
  * unless the node says otherwise.
  */
 int
-sysctl_lookup(SYSCTLFN_RWARGS)
+sysctl_lookup(SYSCTLFN_ARGS)
 {
 	int error, rw;
 	size_t sz, len;
@@ -1456,12 +1457,17 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	 * step one, copy out the stuff we have presently
 	 */
 	if (rnode->sysctl_flags & CTLFLAG_IMMEDIATE) {
+		/*
+		 * note that we discard const here because we are
+		 * modifying the contents of the node (which is okay
+		 * because it's ours)
+		 */
 		switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
 		case CTLTYPE_INT:
-			d = &rnode->sysctl_idata;
+			d = __UNCONST(&rnode->sysctl_idata);
 			break;
 		case CTLTYPE_QUAD:
-			d = &rnode->sysctl_qdata;
+			d = __UNCONST(&rnode->sysctl_qdata);
 			break;
 		default:
 			return (EINVAL);
@@ -1560,9 +1566,10 @@ sysctl_lookup(SYSCTLFN_RWARGS)
  * unfortunately.
  */
 static int
-sysctl_mmap(SYSCTLFN_RWARGS)
+sysctl_mmap(SYSCTLFN_ARGS)
 {
-	struct sysctlnode nnode, *node;
+	const struct sysctlnode *node;
+	struct sysctlnode nnode;
 	int error;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
@@ -1839,14 +1846,15 @@ sysctl_describe(SYSCTLFN_ARGS)
  */
 int
 sysctl_createv(struct sysctllog **log, int cflags,
-	       struct sysctlnode **rnode, struct sysctlnode **cnode,
+	       const struct sysctlnode **rnode, const struct sysctlnode **cnode,
 	       int flags, int type, const char *namep, const char *descr,
 	       sysctlfn func, u_quad_t qv, void *newp, size_t newlen,
 	       ...)
 {
 	va_list ap;
 	int error, ni, namelen, name[CTL_MAXNAME];
-	struct sysctlnode *pnode, nnode, onode, *root;
+	const struct sysctlnode *root, *pnode;
+	struct sysctlnode nnode, onode, *dnode;
 	size_t sz;
 
 	/*
@@ -2021,7 +2029,11 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				/*
 				 * allow first caller to *set* a
 				 * description actually to set it
+				 * 
+				 * discard const here so we can attach
+				 * the description
 				 */
+				dnode = __UNCONST(pnode);
 				if (pnode->sysctl_desc != NULL)
 					/* skip it...we've got one */;
 				else if (flags & CTLFLAG_OWNDESC) {
@@ -2030,13 +2042,13 @@ sysctl_createv(struct sysctllog **log, int cflags,
 							 M_WAITOK|M_CANFAIL);
 					if (d != NULL) {
 						memcpy(d, descr, l);
-						pnode->sysctl_desc = d;
-						pnode->sysctl_flags |=
+						dnode->sysctl_desc = d;
+						dnode->sysctl_flags |=
 						    CTLFLAG_OWNDESC;
 					}
 				}
 				else
-					pnode->sysctl_desc = descr;
+					dnode->sysctl_desc = descr;
 			}
 		}
 		else {
@@ -2073,7 +2085,8 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 {
 	va_list ap;
 	int error, name[CTL_MAXNAME], namelen, ni;
-	struct sysctlnode *pnode, *node, dnode;
+	const struct sysctlnode *pnode, *node;
+	struct sysctlnode dnode, *onode;
 	size_t sz;
 
 	va_start(ap, rnode);
@@ -2157,9 +2170,14 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 			sz = strlen(node->sysctl_desc) + 1;
 			d = malloc(sz, M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 			if (d != NULL) {
+				/*
+				 * discard const so that we can
+				 * re-attach the description
+				 */
 				memcpy(d, node->sysctl_desc, sz);
-				node->sysctl_desc = d;
-				node->sysctl_flags |= CTLFLAG_OWNDESC;
+				onode = __UNCONST(node);
+				onode->sysctl_desc = d;
+				onode->sysctl_flags |= CTLFLAG_OWNDESC;
 			}
 			else {
 				/*
@@ -2382,10 +2400,10 @@ sysctl_free(struct sysctlnode *rnode)
 }
 
 int
-sysctl_log_add(struct sysctllog **logp, struct sysctlnode *node)
+sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 {
 	int name[CTL_MAXNAME], namelen, i;
-	struct sysctlnode *pnode;
+	const struct sysctlnode *pnode;
 	struct sysctllog *log;
 
 	if (node->sysctl_flags & CTLFLAG_PERMANENT)
@@ -2465,7 +2483,8 @@ sysctl_log_add(struct sysctllog **logp, struct sysctlnode *node)
 void
 sysctl_teardown(struct sysctllog **logp)
 {
-	struct sysctlnode node, *rnode;
+	const struct sysctlnode *rnode;
+	struct sysctlnode node;
 	struct sysctllog *log;
 	uint namelen;
 	int *name, t, v, error, ni;

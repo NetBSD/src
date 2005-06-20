@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.66 2005/05/30 04:35:23 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.67 2005/06/20 02:49:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.66 2005/05/30 04:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.67 2005/06/20 02:49:18 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
         struct ctlname ctlnames[] = CTL_NAMES;
-        struct sysctlnode *node;
+        const struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
