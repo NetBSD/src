@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.28 2005/06/19 18:22:36 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.29 2005/06/20 15:06:18 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.28 2005/06/19 18:22:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.29 2005/06/20 15:06:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -260,10 +260,9 @@ bad:
 int
 veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
 {
-#ifdef VERIFIED_EXEC_DEBUG
-	int i;
+	if (veriexec_verbose >= 2) {
+		int i;
 
-	if (veriexec_verbose > 1) {
 		printf("comparing hashes...\n");
 		printf("fp1: ");
 		for (i = 0; i < ops->hash_len; i++) {
@@ -275,7 +274,6 @@ veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
 		}
 		printf("\n");
 	}
-#endif
 
 	return (memcmp(fp1, fp2, ops->hash_len));
 }
@@ -357,7 +355,6 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
         u_char *digest = NULL;
         int error = 0;
 
-	/* XXXEE Ignore non-VREG files. */
 	if (vp->v_type != VREG)
 		return (0);
 
@@ -375,7 +372,9 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 					   M_WAITOK);
 		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
 		if (error) {
-			/* XXXEE verbose+ printf here */
+			veriexec_report("Fingerprint calculation error.",
+					name, va, NULL, REPORT_NOVERBOSE,
+					REPORT_NOALARM, REPORT_NOPANIC);
 			free(digest, M_TEMP);
 			return (error);
 		}
@@ -510,8 +509,8 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
  */
 void
 veriexec_report(const u_char *msg, const u_char *filename,
-		struct vattr *va, struct proc *p, int verbose_only,
-		int alarm, int die)
+		struct vattr *va, struct proc *p, int verbose, int alarm,
+		int die)
 {
 	void (*f)(const char *, ...);
 
@@ -523,7 +522,7 @@ veriexec_report(const u_char *msg, const u_char *filename,
 	else
 		f = (void (*)(const char *, ...)) printf;
 
-	if (!verbose_only || veriexec_verbose) {
+	if (!verbose || (verbose == veriexec_verbose)) {
 		if (!alarm || p == NULL)
 			f("veriexec: %s [%s, %d:%u%s", msg, filename,
 			    va->va_fsid, va->va_fileid,
