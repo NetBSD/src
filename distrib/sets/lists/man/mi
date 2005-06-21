@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.795 2005/06/21 17:37:06 kent Exp $
+# $NetBSD: mi,v 1.796 2005/06/21 18:11:38 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -507,6 +507,7 @@
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
 ./usr/share/man/cat4/aac.0			man-sys-catman		.cat
+./usr/share/man/cat4/ac97.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acardide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aceride.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman		.cat
@@ -2738,6 +2739,7 @@
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
 ./usr/share/man/man4/aac.4			man-sys-man		.man
+./usr/share/man/man4/ac97.4			man-sys-man		.man
 ./usr/share/man/man4/acardide.4			man-sys-man		.man
 ./usr/share/man/man4/aceride.4			man-sys-man		.man
 ./usr/share/man/man4/acorn26/arckbd.4		man-sys-man		.man
