@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.129 2005/06/21 11:17:46 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.130 2005/06/21 23:12:59 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2538,4 +2538,55 @@ usr.sbin/pkg_install/lib/str.c			1.53
 
 	Comment out too noisy warning.
 	[wiz, ticket #2012]
+
+distrib/sets/lists/comp/mi			1.792-1.793
+lib/libc/gen/pthread_atfork.3			1.4
+lib/libpthread/Makefile				1.32-1.33
+lib/libpthread/pthread_barrier_destroy.3	1.4
+lib/libpthread/pthread_barrier_init.3		1.7
+lib/libpthread/pthread_barrier_wait.3		1.5-1.6
+lib/libpthread/pthread_barrierattr.3		1.5
+lib/libpthread/pthread_cond_broadcast.3		1.4
+lib/libpthread/pthread_cond_init.3		1.6
+lib/libpthread/pthread_condattr.3		1.3
+lib/libpthread/pthread_mutexattr.3		1.5
+lib/libpthread/pthread_rwlockattr.3		1.5
+lib/libpthread/pthread_spin_init.3		1.4
+
+	Fix various spelling errors, and create correct links for
+	manual pages.  PR#29997
+	[peter, ticket #2002]
+
+distrib/sets/lists/comp/mi			1.794
+
+	Fix a typo noted by Asmodehn Shade on -current-users.
+	[peter, ticket #2004]
+
+sys/dev/ic/gem.c				1.40
+sys/dev/ic/gemvar.h				1.12
+
+	Pad small packets with a static buffer at the end of the S/G list.
+	Avoids leaking kernel memory when small packets are transmitted.
+	Tested on a ibook G4.
+	[bouyer, ticket #2006]
+
+sys/dev/pci/pcidevs				1.719
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add Intel 82801FBM Serial ATA Controller. From Kurt Schreiner
+	on tech-kern@
+	[bouyer, ticket #2007]
+
+sys/dev/pci/piixide.c				1.21
+
+	Support Intel 82801FBM Serial ATA Controller. From Kurt Schreiner
+	on tech-kern.
+	[bouyer, ticket #2008]
+
+sys/dev/pci/if_stge.c				1.27
+
+	Fix some big-endian issues. stge(4) now works on sparc64 with hardware
+	checksums.
+	[bouyer, ticket #2009]
 
