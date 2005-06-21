@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.140 2005/06/18 11:15:10 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.141 2005/06/21 21:29:55 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9736,4 +9736,29 @@ sys/kern/subr_pool.c				1.101
 	- Fix pool_reclaim() to not violate the pool_cache -> pool locking
 	  order by using a trylock.
 	[thorpej, ticket #474]
+
+distrib/sets/lists/comp/mi			1.794
+
+	Correct entry for obsolete manual page "pthread_barierattr_destroy.0".
+	[peter, ticket #475]
+
+sys/dev/pci/pcidevs				1.719
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/piixide.c				1.21
+
+	Add support for Intel 82801FBM Serial ATA Controller.
+	[bouyer, ticket #476, #479]
+
+sys/dev/ic/gem.c				1.40
+sys/dev/ic/gemvar.h				1.12
+
+	Pad small packets with a static buffer at the end of the S/G list.
+	Avoids leaking kernel memory when small packets are transmitted.
+	[bouyer, ticket #484]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.6
+
+	Map the Sun keyboard "help" key.
+	[jdc, ticket #486]
 
