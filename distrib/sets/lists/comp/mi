@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.689.2.10.2.2 2005/06/21 22:38:44 riz Exp $
+#	$NetBSD: mi,v 1.689.2.10.2.3 2005/06/21 22:41:43 riz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3791,7 +3791,7 @@
 ./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setschedparam.0	comp-c-catman		.cat
-./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolote
+./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barierattr_init.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barrierattr_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrierattr_init.0		comp-c-catman		.cat
