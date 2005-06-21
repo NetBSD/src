@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.84 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.85 2005/06/21 14:01:13 ws Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.84 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85 2005/06/21 14:01:13 ws Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -477,7 +477,7 @@ ptspoll(dev, events, p)
 	struct tty *tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
-		return (EIO);
+		return (POLLHUP);
 
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }

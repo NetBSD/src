@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.55 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.55 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,16 +568,16 @@ ucompoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
-	int error;
+	int revents;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	sc->sc_refcnt++;
-	error = ((*tp->t_linesw->l_poll)(tp, events, p));
+	revents = ((*tp->t_linesw->l_poll)(tp, events, p));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
-	return (error);
+	return (revents);
 }
 
 struct tty *

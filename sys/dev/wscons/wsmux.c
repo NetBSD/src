@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.38 2005/06/21 14:01:13 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.38 2005/06/21 14:01:13 ws Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $");
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -577,14 +578,14 @@ wsmuxpoll(dev_t dev, int events, struct proc *p)
 
 	if (WSMUXCTL(minr)) {
 		/* control device */
-		return (EINVAL);
+		return (0);
 	}
 
 	if (sc->sc_base.me_evp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("wsmuxpoll: not open\n");
 #endif
-		return (EACCES);
+		return (POLLHUP);
 	}
 
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
