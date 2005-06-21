@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.20 2003/11/10 08:51:52 wiz Exp $	 */
+/*	$NetBSD: exec.c,v 1.21 2005/06/21 18:16:59 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -92,11 +92,8 @@
 
 extern struct btinfo_console btinfo_console;
 
-int 
-exec_netbsd(file, loadaddr, boothowto)
-	const char     *file;
-	physaddr_t      loadaddr;
-	int             boothowto;
+int
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 {
 	u_long          boot_argv[BOOT_NARGS];
 	int		fd;
@@ -134,7 +131,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		 */
 		if (xmsmem > extmem)
 			extmem = xmsmem;
-		/* 
+		/*
 		 * Get the size of the kernel
 		 */
 		marks[MARK_START] = loadaddr;
@@ -147,7 +144,7 @@ exec_netbsd(file, loadaddr, boothowto)
 
 		loadaddr = xmsalloc(kernsize);
 		if (!loadaddr)
-			return(ENOMEM);
+			return ENOMEM;
 	}
 #endif
 	marks[MARK_START] = loadaddr;
@@ -206,11 +203,11 @@ exec_netbsd(file, loadaddr, boothowto)
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
-		x86_trunc_page(basemem*1024));
+		  x86_trunc_page(basemem*1024));
 	panic("exec returned");
 
 out:
 	BI_FREE();
 	bootinfo = 0;
-	return (-1);
+	return -1;
 }
