@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.8 2005/06/18 05:33:41 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.9 2005/06/21 21:22:36 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.8 2005/06/18 05:33:15 riz Exp
+ *	NetBSD: pcidevs,v 1.701.2.9 2005/06/21 21:21:46 tron Exp
  */
 
 /*
@@ -6272,6 +6272,10 @@ const struct pci_product pci_products[] = {
 	    "82801FR Serial ATA Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_SATA,
+	    "82801FBM Serial ATA Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0,
 	    "82801FB/FR USB UHCI Controller",
 	},
@@ -10156,4 +10160,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1960;
+const int pci_nproducts = 1961;

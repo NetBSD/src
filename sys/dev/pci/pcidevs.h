@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.8 2005/06/18 05:33:41 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.9 2005/06/21 21:22:36 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.8 2005/06/18 05:33:15 riz Exp
+ *	NetBSD: pcidevs,v 1.701.2.9 2005/06/21 21:21:46 tron Exp
  */
 
 /*
@@ -1842,6 +1842,7 @@
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FR_SATA	0x2652		/* 82801FR Serial ATA Controller */
+#define	PCI_PRODUCT_INTEL_82801FBM_SATA	0x2653		/* 82801FBM Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_USB_0	0x2658		/* 82801FB/FR USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_USB_1	0x2659		/* 82801FB/FR USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_USB_2	0x265a		/* 82801FB/FR USB UHCI Controller */
