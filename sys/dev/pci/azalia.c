@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.5 2005/06/20 11:48:47 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.6 2005/06/21 14:51:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,14 +38,13 @@
 
 /*
  * TO DO:
- *  - recording support
  *  - Volume Knob widget
  *  - power hook
  *  - detach
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.5 2005/06/20 11:48:47 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.6 2005/06/21 14:51:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -472,7 +471,7 @@ typedef struct {
 #define		ICH_PCI_HDCTL_CLKDETINV		0x02
 #define		ICH_PCI_HDCTL_SIGNALMODE	0x01
 
-/* #define AZALIA_DEBUG */
+/*#define AZALIA_DEBUG*/
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else
@@ -494,8 +493,10 @@ typedef struct {
 #define AZALIA_DMA_DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
 
 typedef struct {
+	struct azalia_t *az;
 	int regbase;
 	int number;
+	int dir;		/* AUMODE_PLAY or AUMODE_RECORD */
 	uint32_t intr_bit;
 	azalia_dma_t bdlist;
 	azalia_dma_t buffer;
@@ -503,18 +504,18 @@ typedef struct {
 	void *intr_arg;
 	bus_addr_t dmaend, dmanext; /* XXX needed? */
 } stream_t;
-#define STR_READ_1(z, s, r)	\
-	bus_space_read_1((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r)
-#define STR_READ_2(z, s, r)	\
-	bus_space_read_2((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r)
-#define STR_READ_4(z, s, r)	\
-	bus_space_read_4((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r)
-#define STR_WRITE_1(z, s, r, v)	\
-	bus_space_write_1((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r, v)
-#define STR_WRITE_2(z, s, r, v)	\
-	bus_space_write_2((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r, v)
-#define STR_WRITE_4(z, s, r, v)	\
-	bus_space_write_4((z)->iot, (z)->ioh, (s)->regbase + HDA_SD_##r, v)
+#define STR_READ_1(s, r)	\
+	bus_space_read_1((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
+#define STR_READ_2(s, r)	\
+	bus_space_read_2((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
+#define STR_READ_4(s, r)	\
+	bus_space_read_4((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
+#define STR_WRITE_1(s, r, v)	\
+	bus_space_write_1((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r, v)
+#define STR_WRITE_2(s, r, v)	\
+	bus_space_write_2((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r, v)
+#define STR_WRITE_4(s, r, v)	\
+	bus_space_write_4((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r, v)
 
 typedef int nid_t;
 
@@ -668,6 +669,13 @@ static int	azalia_widget_print_audio(const widget_t *, const char *);
 static int	azalia_widget_init_pin(widget_t *, const codec_t *);
 static int	azalia_widget_print_pin(const widget_t *);
 static int	azalia_widget_init_connection(widget_t *, const codec_t *);
+
+static int	azalia_stream_init(stream_t *, azalia_t *, int, int, int);
+static int	azalia_stream_reset(stream_t *);
+static int	azalia_stream_start(stream_t *, void *, void *, int,
+	void (*)(void *), void *, uint16_t);
+static int	azalia_stream_halt(stream_t *);
+static int	azalia_stream_intr(stream_t *, uint32_t);
 
 static int	azalia_open(void *, int);
 static void	azalia_close(void *);
@@ -829,7 +837,6 @@ static int
 azalia_intr(void *v)
 {
 	azalia_t *az;
-	stream_t *str;
 	int ret;
 	uint32_t intsts;
 	uint8_t rirbsts;
@@ -842,14 +849,8 @@ azalia_intr(void *v)
 	if (intsts == 0)
 		return ret;
 
-	str = &az->pstream;
-	if (intsts & str->intr_bit) {
-		STR_WRITE_1(az, str, STS,
-		    HDA_SD_STS_DESE | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
-		//printf("[p]");
-		str->intr(str->intr_arg);
-		ret++;
-	}
+	ret += azalia_stream_intr(&az->pstream, intsts);
+	ret += azalia_stream_intr(&az->rstream, intsts);
 
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 	if (rirbsts & (HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL)) {
@@ -960,25 +961,11 @@ azalia_attach_intr(struct device *self)
 			return;
 	}
 
-	az->pstream.regbase = HDA_SD_BASE + (az->nistreams + 0) * HDA_SD_SIZE;
-	az->pstream.intr_bit = 1 << ((az->pstream.regbase - HDA_SD_BASE) / HDA_SD_SIZE);
-	az->pstream.number = 1;
-	az->rstream.regbase = HDA_SD_BASE + 0 * HDA_SD_SIZE;
-	az->rstream.intr_bit = 1 << ((az->rstream.regbase - HDA_SD_BASE) / HDA_SD_SIZE);
-	az->rstream.number = 2;
-	/* setup BDL buffers */
-	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
-				  128, &az->pstream.bdlist);
-	if (err) {
-		aprint_error("%s: can't allocate a BDL buffer\n", XNAME(az));
+	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
+	    1, AUMODE_PLAY))
 		return;
-	}
-	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
-				  128, &az->rstream.bdlist);
-	if (err) {
-		aprint_error("%s: can't allocate a BDL buffer\n", XNAME(az));
+	if (azalia_stream_init(&az->rstream, az, 0, 2, AUMODE_RECORD))
 		return;
-	}
 
 	az->audiodev = audio_attach_mi(&azalia_hw_if, az, &az->dev);
 	return;
@@ -1736,13 +1723,17 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	nid_t nid;
 	boolean_t flag222;
 
-	/* XXX */
-
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
 	if (dir == AUMODE_RECORD) {
-		printf("%s: not implemented for AUMODE_RECORD\n", __func__);
-		return -1;
+		nid = this->adcs[this->cur_adc];
+		DPRINTF(("%s: record: nid=0x%.2x\n", __func__, nid));
+		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
+		if (err)
+			goto exit;
+		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
+				    (number << 4) | 0, NULL);
+		goto exit;
 	}
 	group = &this->dacgroups[this->cur_dac];
 	flag222 = group->nconv >= 3 &&
@@ -2788,6 +2779,147 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 }
 
 /* ================================================================
+ * Stream functions
+ * ================================================================ */
+
+static int
+azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum, int dir)
+{
+	int err;
+
+	this->az = az;
+	this->regbase = HDA_SD_BASE + regindex * HDA_SD_SIZE;
+	this->intr_bit = 1 << regindex;
+	this->number = strnum;
+	this->dir = dir;
+
+	/* setup BDL buffers */
+	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
+				  128, &this->bdlist);
+	if (err) {
+		aprint_error("%s: can't allocate a BDL buffer\n", XNAME(az));
+		return err;
+	}
+	return 0;
+}
+
+static int
+azalia_stream_reset(stream_t *this)
+{
+	int i;
+	uint16_t ctl;
+
+	ctl = STR_READ_2(this, CTL);
+	STR_WRITE_2(this, CTL, ctl | HDA_SD_CTL_SRST);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		ctl = STR_READ_2(this, CTL);
+		if (ctl & HDA_SD_CTL_SRST)
+			break;
+	}
+	if (i <= 0) {
+		aprint_error("%s: stream reset failure 1\n", XNAME(this->az));
+		return -1;
+	}
+	STR_WRITE_2(this, CTL, ctl & ~HDA_SD_CTL_SRST);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		ctl = STR_READ_2(this, CTL);
+		if ((ctl & HDA_SD_CTL_SRST) == 0)
+			break;
+	}
+	if (i <= 0) {
+		aprint_error("%s: stream reset failure 2\n", XNAME(this->az));
+		return -1;
+	}
+	return 0;
+}
+
+static int
+azalia_stream_start(stream_t *this, void *start, void *end, int blk,
+    void (*intr)(void *), void *arg, uint16_t fmt)
+{
+	bdlist_entry_t *bdlist;
+	bus_addr_t dmaaddr;
+	int err, index;
+	uint16_t ctl;
+	uint8_t ctl2, intctl;
+
+	this->intr = intr;
+	this->intr_arg = arg;
+
+	err = azalia_stream_reset(this);
+	if (err)
+		return err;
+
+	/* setup BDL */
+	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
+	this->dmaend = dmaaddr + ((caddr_t)end - (caddr_t)start);
+	bdlist = (bdlist_entry_t*)this->bdlist.addr;
+	for (index = 0; index < HDA_BDL_MAX; index++) {
+		bdlist[index].low = dmaaddr;
+		bdlist[index].high = PTR_UPPER32(dmaaddr);
+		bdlist[index].length = blk;
+		bdlist[index].flags = BDLIST_ENTRY_IOC;
+		dmaaddr += blk;
+		if (dmaaddr >= this->dmaend) {
+			index++;
+			break;
+		}
+	}
+	/* The BDL covers the whole of the buffer. */
+	this->dmanext = AZALIA_DMA_DMAADDR(&this->buffer);
+
+	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
+	STR_WRITE_4(this, BDPL, dmaaddr);
+	STR_WRITE_4(this, BDPU, PTR_UPPER32(dmaaddr));
+	STR_WRITE_2(this, LVI, (index - 1) & HDA_SD_LVI_LVI);
+	ctl2 = STR_READ_1(this, CTL2);
+	STR_WRITE_1(this, CTL2,
+	    (ctl2 & ~HDA_SD_CTL2_STRM) | (this->number << HDA_SD_CTL2_STRM_SHIFT));
+	STR_WRITE_4(this, CBL, ((caddr_t)end - (caddr_t)start));
+
+	STR_WRITE_2(this, FMT, fmt);
+	/* XXX */
+	err = azalia_codec_connect_stream(&this->az->codecs[0], this->dir,
+	    fmt, this->number);
+	if (err)
+		return EINVAL;
+
+	intctl = AZ_READ_1(this->az, INTCTL);
+	intctl |= this->intr_bit;
+	AZ_WRITE_1(this->az, INTCTL, intctl);
+
+	ctl = STR_READ_2(this, CTL);
+	ctl |= ctl | HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN;
+	STR_WRITE_2(this, CTL, ctl);
+	return 0;
+}
+
+static int
+azalia_stream_halt(stream_t *this)
+{
+	uint16_t ctl;
+
+	ctl = STR_READ_2(this, CTL);
+	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
+	STR_WRITE_2(this, CTL, ctl);
+	AZ_WRITE_1(this->az, INTCTL, AZ_READ_1(this->az, INTCTL) & ~this->intr_bit);
+	return 0;
+}
+
+static int
+azalia_stream_intr(stream_t *this, uint32_t intsts)
+{
+	if ((intsts & this->intr_bit) == 0)
+		return 0;
+	STR_WRITE_1(this, STS, HDA_SD_STS_DESE
+	    | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
+	this->intr(this->intr_arg);
+	return 1;
+}
+
+/* ================================================================
  * MI audio entries
  * ================================================================ */
 
@@ -2837,7 +2969,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 		index = auconv_set_converter(codec->formats, codec->nformats,
 		    AUMODE_RECORD, r, TRUE, rfil);
 		if (index < 0)
-			return 0/* XXX EINVAL */;
+			return EINVAL;
 	}
 	if (smode & AUMODE_PLAY && p != NULL) {
 		index = auconv_set_converter(codec->formats, codec->nformats,
@@ -2879,34 +3011,20 @@ static int
 azalia_halt_output(void *v)
 {
 	azalia_t *az;
-	stream_t *str;
-	uint16_t ctl;
 
 	DPRINTF(("%s\n", __func__));
 	az = v;
-	str = &az->pstream;
-	ctl = STR_READ_2(az, str, CTL);
-	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
-	STR_WRITE_2(az, str, CTL, ctl);
-	AZ_WRITE_1(az, INTCTL, AZ_READ_1(az, INTCTL) & ~str->intr_bit);
-	return 0;
+	return azalia_stream_halt(&az->pstream);
 }
 
 static int
 azalia_halt_input(void *v)
 {
 	azalia_t *az;
-	stream_t *str;
-	uint16_t ctl;
 
 	DPRINTF(("%s\n", __func__));
 	az = v;
-	str = &az->rstream;
-	ctl = STR_READ_2(az, str, CTL);
-	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
-	STR_WRITE_2(az, str, CTL, ctl);
-	AZ_WRITE_1(az, INTCTL, AZ_READ_1(az, INTCTL) & ~str->intr_bit);
-	return 0;
+	return azalia_stream_halt(&az->rstream);
 }
 
 static int
@@ -3010,102 +3128,39 @@ azalia_trigger_output(void *v, void *start, void *end, int blk,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	azalia_t *az;
-	stream_t *str;
-	bdlist_entry_t *bdlist;
-	bus_addr_t dmaaddr;
-	int err, index, i;
-	uint16_t fmt, ctl;
-	uint8_t ctl2, intctl;
+	int err;
+	uint16_t fmt;
 
 	DPRINTF(("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %u/%ubit %uHz}\n",
 	    __func__, v, start, end, blk, param->encoding, param->channels,
 	    param->validbits, param->precision, param->sample_rate));
 
-	az = v;
-	str = &az->pstream;
-	str->intr = intr;
-	str->intr_arg = arg;
-
-	/* reset the stream */
-	ctl = STR_READ_2(az, str, CTL);
-	STR_WRITE_2(az, str, CTL, ctl | HDA_SD_CTL_SRST);
-	for (i = 5000; i >= 0; i--) {
-		DELAY(10);
-		ctl = STR_READ_2(az, str, CTL);
-		if (ctl & HDA_SD_CTL_SRST)
-			break;
-	}
-	if (i <= 0) {
-		aprint_error("%s: stream reset failure 1\n", XNAME(az));
-		return -1;
-	}
-	STR_WRITE_2(az, str, CTL, ctl & ~HDA_SD_CTL_SRST);
-	for (i = 5000; i >= 0; i--) {
-		DELAY(10);
-		ctl = STR_READ_2(az, str, CTL);
-		if ((ctl & HDA_SD_CTL_SRST) == 0)
-			break;
-	}
-	if (i <= 0) {
-		aprint_error("%s: stream reset failure 2\n", XNAME(az));
-		return -1;
-	}
-
-	/* setup BDL */
-	dmaaddr = AZALIA_DMA_DMAADDR(&str->buffer);
-	str->dmaend = dmaaddr + ((caddr_t)end - (caddr_t)start);
-	bdlist = (bdlist_entry_t*)str->bdlist.addr;
-	for (index = 0; index < HDA_BDL_MAX; index++) {
-		bdlist[index].low = dmaaddr;
-		bdlist[index].high = PTR_UPPER32(dmaaddr);
-		bdlist[index].length = blk;
-		bdlist[index].flags = BDLIST_ENTRY_IOC;
-		dmaaddr += blk;
-		if (dmaaddr >= str->dmaend) {
-			index++;
-			break;
-		}
-	}
-	/* The BDL covers the whole of the buffer. */
-	str->dmanext = AZALIA_DMA_DMAADDR(&str->buffer);
-
-	dmaaddr = AZALIA_DMA_DMAADDR(&str->bdlist);
-	STR_WRITE_4(az, str, BDPL, dmaaddr);
-	STR_WRITE_4(az, str, BDPU, PTR_UPPER32(dmaaddr));
-	STR_WRITE_2(az, str, LVI, (index - 1) & HDA_SD_LVI_LVI);
-	ctl2 = STR_READ_1(az, str, CTL2);
-	STR_WRITE_1(az, str, CTL2,
-	    (ctl2 & ~HDA_SD_CTL2_STRM) | (str->number << HDA_SD_CTL2_STRM_SHIFT));
-	STR_WRITE_4(az, str, CBL, ((caddr_t)end - (caddr_t)start));
-
 	err = azalia_params2fmt(param, &fmt);
 	if (err)
 		return EINVAL;
-	STR_WRITE_2(az, str, FMT, fmt);
-	err = azalia_codec_connect_stream(&az->codecs[0], AUMODE_PLAY,
-	    fmt, str->number);
-	if (err)
-		return EINVAL;
 
-	intctl = AZ_READ_1(az, INTCTL);
-	intctl |= str->intr_bit;
-	AZ_WRITE_1(az, INTCTL, intctl);
-
-	ctl = STR_READ_2(az, str, CTL);
-	ctl |= ctl | HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN;
-	STR_WRITE_2(az, str, CTL, ctl);
-	return 0;
+	az = v;
+	return azalia_stream_start(&az->pstream, start, end, blk, intr, arg, fmt);
 }
 
 static int
 azalia_trigger_input(void *v, void *start, void *end, int blk,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
+	azalia_t *az;
+	int err;
+	uint16_t fmt;
+
 	DPRINTF(("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %u/%ubit %uHz}\n",
 	    __func__, v, start, end, blk, param->encoding, param->channels,
 	    param->validbits, param->precision, param->sample_rate));
-	aprint_error("%s: NOT IMPLEMENTED\n", __func__); /* XXX */
-	return ENXIO;
+
+	err = azalia_params2fmt(param, &fmt);
+	if (err)
+		return EINVAL;
+
+	az = v;
+	return azalia_stream_start(&az->rstream, start, end, blk, intr, arg, fmt);
 }
 
 /* --------------------------------
