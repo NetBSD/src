@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.73 2005/06/21 08:19:25 sekiya Exp $	*/
+/*	$NetBSD: acpi.c,v 1.74 2005/06/21 11:49:10 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.73 2005/06/21 08:19:25 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.74 2005/06/21 11:49:10 sekiya Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -95,6 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.73 2005/06/21 08:19:25 sekiya Exp $");
 #include <dev/acpi/acpi_osd.h>
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
+#endif
+
+#if defined(ACPI_PCI_FIXUP)
+#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP.  Please adjust your kernel configuration file.
 #endif
 
 #ifdef PCI_INTR_FIXUP
