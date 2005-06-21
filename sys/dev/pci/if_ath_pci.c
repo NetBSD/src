@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,48 +35,32 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.12 2005/03/05 19:06:12 imp Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
  */
 
-#include "opt_inet.h"
-
 #include <sys/param.h>
 #include <sys/systm.h> 
-#include <sys/mbuf.h>   
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/errno.h>
 
 #include <machine/bus.h>
 #include <machine/resource.h>
 #include <sys/bus.h>
 #include <sys/rman.h>
+
+#include <sys/socket.h>
  
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
-#include <net/if_llc.h>
 #include <net/if_arp.h>
 
-#include <net80211/ieee80211.h>
-#include <net80211/ieee80211_crypto.h>
-#include <net80211/ieee80211_node.h>
-#include <net80211/ieee80211_proto.h>
 #include <net80211/ieee80211_var.h>
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_ether.h>
-#endif
 
 #include <dev/ath/if_athvar.h>
 #include <contrib/dev/ath/ah.h>
@@ -92,13 +76,11 @@ struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	struct resource		*sc_sr;		/* memory resource */
 	struct resource		*sc_irq;	/* irq resource */
-	void			*sc_ih;		/* intererupt handler */
-	u_int8_t		sc_saved_intline;
-	u_int8_t		sc_saved_cachelinesz;
-	u_int8_t		sc_saved_lattimer;
+	void			*sc_ih;		/* interrupt handler */
 };
 
 #define	BS_BAR	0x10
+#define	PCIR_RETRY_TIMEOUT	0x41
 
 static int
 ath_pci_probe(device_t dev)
@@ -106,11 +88,41 @@ ath_pci_probe(device_t dev)
 	const char* devname;
 
 	devname = ath_hal_probe(pci_get_vendor(dev), pci_get_device(dev));
-	if (devname) {
+	if (devname != NULL) {
 		device_set_desc(dev, devname);
-		return 0;
+		return BUS_PROBE_DEFAULT;
 	}
 	return ENXIO;
+}
+
+static u_int32_t
+ath_pci_setup(device_t dev)
+{
+	u_int32_t cmd;
+
+	/*
+	 * Enable memory mapping and bus mastering.
+	 */
+	cmd = pci_read_config(dev, PCIR_COMMAND, 4);
+	cmd |= PCIM_CMD_MEMEN | PCIM_CMD_BUSMASTEREN;
+	pci_write_config(dev, PCIR_COMMAND, cmd, 4);
+	cmd = pci_read_config(dev, PCIR_COMMAND, 4);
+	if ((cmd & PCIM_CMD_MEMEN) == 0) {
+		device_printf(dev, "failed to enable memory mapping\n");
+		return 0;
+	}
+	if ((cmd & PCIM_CMD_BUSMASTEREN) == 0) {
+		device_printf(dev, "failed to enable bus mastering\n");
+		return 0;
+	}
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with C3 CPU state.
+	 */
+	pci_write_config(dev, PCIR_RETRY_TIMEOUT, 0, 1);
+
+	return 1;
 }
 
 static int
@@ -118,27 +130,13 @@ ath_pci_attach(device_t dev)
 {
 	struct ath_pci_softc *psc = device_get_softc(dev);
 	struct ath_softc *sc = &psc->sc_sc;
-	u_int32_t cmd;
 	int error = ENXIO;
 	int rid;
 
-	bzero(psc, sizeof (*psc));
 	sc->sc_dev = dev;
- 
-	cmd = pci_read_config(dev, PCIR_COMMAND, 4);
-	cmd |= PCIM_CMD_MEMEN | PCIM_CMD_BUSMASTEREN;
-	pci_write_config(dev, PCIR_COMMAND, cmd, 4);
-	cmd = pci_read_config(dev, PCIR_COMMAND, 4);
 
-	if ((cmd & PCIM_CMD_MEMEN) == 0) {
-		device_printf(dev, "failed to enable memory mapping\n");
+	if (!ath_pci_setup(dev))
 		goto bad;
-	}
-
-	if ((cmd & PCIM_CMD_BUSMASTEREN) == 0) {
-		device_printf(dev, "failed to enable bus mastering\n");
-		goto bad;
-	}
 
 	/* 
 	 * Setup memory-mapping of PCI registers.
@@ -185,7 +183,7 @@ ath_pci_attach(device_t dev)
 			       NULL, NULL,		/* filter, filterarg */
 			       0x3ffff,			/* maxsize XXX */
 			       ATH_MAX_SCATTER,		/* nsegments */
-			       0xffff,			/* maxsegsize XXX */
+			       BUS_SPACE_MAXADDR,	/* maxsegsize */
 			       BUS_DMA_ALLOCNOW,	/* flags */
 			       NULL,			/* lockfunc */
 			       NULL,			/* lockarg */
@@ -251,10 +249,6 @@ ath_pci_suspend(device_t dev)
 
 	ath_suspend(&psc->sc_sc);
 
-	psc->sc_saved_intline	= pci_read_config(dev, PCIR_INTLINE, 1);
-	psc->sc_saved_cachelinesz= pci_read_config(dev, PCIR_CACHELNSZ, 1);
-	psc->sc_saved_lattimer	= pci_read_config(dev, PCIR_LATTIMER, 1);
-
 	return (0);
 }
 
@@ -262,16 +256,9 @@ static int
 ath_pci_resume(device_t dev)
 {
 	struct ath_pci_softc *psc = device_get_softc(dev);
-	u_int16_t cmd;
 
-	pci_write_config(dev, PCIR_INTLINE,	psc->sc_saved_intline, 1);
-	pci_write_config(dev, PCIR_CACHELNSZ,	psc->sc_saved_cachelinesz, 1);
-	pci_write_config(dev, PCIR_LATTIMER,	psc->sc_saved_lattimer, 1);
-
-	/* re-enable mem-map and busmastering */
-	cmd = pci_read_config(dev, PCIR_COMMAND, 2);
-	cmd |= PCIM_CMD_MEMEN | PCIM_CMD_BUSMASTEREN;
-	pci_write_config(dev, PCIR_COMMAND, cmd, 2);
+	if (!ath_pci_setup(dev))
+		return ENXIO;
 
 	ath_resume(&psc->sc_sc);
 
@@ -300,3 +287,4 @@ DRIVER_MODULE(if_ath, cardbus, ath_pci_driver, ath_devclass, 0, 0);
 MODULE_VERSION(if_ath, 1);
 MODULE_DEPEND(if_ath, ath_hal, 1, 1, 1);	/* Atheros HAL */
 MODULE_DEPEND(if_ath, wlan, 1, 1, 1);		/* 802.11 media layer */
+MODULE_DEPEND(if_ath, ath_rate, 1, 1, 1);	/* rate control algorithm */
