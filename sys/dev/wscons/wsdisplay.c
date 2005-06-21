@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.83 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.84 2005/06/21 14:01:13 ws Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.83 2005/05/29 21:56:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.84 2005/06/21 14:01:13 ws Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.83 2005/05/29 21:56:35 christos Exp 
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -906,10 +907,10 @@ wsdisplaypoll(dev_t dev, int events, struct proc *p)
 		return (0);
 
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
-		return (ENXIO);
+		return (POLLHUP);
 
 	if (!WSSCREEN_HAS_TTY(scr))
-		return (ENODEV);
+		return (POLLERR);
 
 	tp = scr->scr_tty;
 	return ((*tp->t_linesw->l_poll)(tp, events, p));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.46 2005/06/04 22:45:12 uwe Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.47 2005/06/21 14:01:13 ws Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.46 2005/06/04 22:45:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.47 2005/06/21 14:01:13 ws Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.46 2005/06/04 22:45:12 uwe Exp $");
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/ioctl.h>
@@ -175,6 +176,24 @@ ttynullioctl(tp, cmd, data, flags, p)
 	tp = tp; data = data; flags = flags; p = p;
 #endif
 	return (EPASSTHROUGH);
+}
+
+/*
+ * Return error to line discipline
+ * specific poll call.
+ */
+/*ARGSUSED*/
+int
+ttyerrpoll(tp, events, p)
+	struct tty *tp;
+	int events;
+	struct proc *p;
+{
+
+#ifdef lint
+	tp = tp; events = events; p = p;
+#endif
+	return (POLLERR);
 }
 
 /*

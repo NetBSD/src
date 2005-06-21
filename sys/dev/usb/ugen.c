@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.74 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.75 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.74 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.75 2005/06/21 14:01:12 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1341,20 +1341,20 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	/* XXX always IN */
 	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 	if (sce == NULL)
-		return (EINVAL);
+		return (POLLERR);
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
 		printf("ugenpoll: no edesc\n");
-		return (EIO);
+		return (POLLERR);
 	}
 	if (!sce->pipeh) {
 		printf("ugenpoll: no pipe\n");
-		return (EIO);
+		return (POLLERR);
 	}
 #endif
 	s = splusb();

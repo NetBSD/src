@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.48 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.49 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.48 2005/05/11 10:02:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.49 2005/06/21 14:01:12 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,7 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	/*
 	 * We have no easy way of determining if a read will

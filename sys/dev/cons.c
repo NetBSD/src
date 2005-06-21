@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.55 2005/04/28 07:54:39 martin Exp $	*/
+/*	$NetBSD: cons.c,v 1.56 2005/06/21 14:01:11 ws Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.55 2005/04/28 07:54:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.56 2005/06/21 14:01:11 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.55 2005/04/28 07:54:39 martin Exp $");
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/conf.h>
@@ -268,7 +269,7 @@ cnpoll(dev_t dev, int events, struct proc *p)
 	 */
 	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return error;
+		return POLLHUP;
 	return ((*cdev->d_poll)(dev, events, p));
 }
 

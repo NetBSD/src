@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.82 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.83 2005/06/21 14:01:13 ws Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.82 2005/05/29 21:56:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.83 2005/06/21 14:01:13 ws Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.82 2005/05/29 21:56:35 christos Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
@@ -1194,7 +1195,7 @@ wskbdpoll(dev_t dev, int events, struct proc *p)
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	if (sc->sc_base.me_evp == NULL)
-		return (EINVAL);
+		return (POLLERR);
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 

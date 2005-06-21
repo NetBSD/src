@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.196 2005/06/11 08:14:19 is Exp $	*/
+/*	$NetBSD: audio.c,v 1.197 2005/06/21 14:01:11 ws Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.196 2005/06/11 08:14:19 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197 2005/06/21 14:01:11 ws Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1045,29 +1045,29 @@ int
 audiopoll(dev_t dev, int events, struct proc *p)
 {
 	struct audio_softc *sc;
-	int error;
+	int revents;
 
 	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
 	if (sc->sc_dying)
-		return EIO;
+		return POLLHUP;
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_poll(sc, events, p);
+		revents = audio_poll(sc, events, p);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		error = ENODEV;
+		revents = 0;
 		break;
 	default:
-		error = ENXIO;
+		revents = POLLERR;
 		break;
 	}
 	if (--sc->sc_refcnt < 0)
 		wakeup(&sc->sc_refcnt);
-	return error;
+	return revents;
 }
 
 int
