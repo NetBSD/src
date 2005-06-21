@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.9 2005/06/21 14:16:27 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.10 2005/06/21 14:20:35 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -239,8 +239,7 @@ boot2(u_int boot_biosdev, u_int boot_biossector)
 	default_filename = DEFFILENAME;
 
 	printf("Press return to boot now, any other key for boot menu\n");
-	currname = 0;
-	for (;;) {
+	for (currname = 0; currname < NUMNAMES; currname++) {
 		printf("booting %s - starting in ",
 		       sprint_bootsel(names[currname][0]));
 
@@ -259,9 +258,9 @@ boot2(u_int boot_biosdev, u_int boot_biossector)
 		bootit(names[currname][0], 0, 0);
 		/* since it failed, try compressed bootfile. */
 		bootit(names[currname][1], 0, 1);
-		/* since it failed, try switching bootfile. */
-		currname = (currname + 1) % NUMNAMES;
 	}
+
+	bootmenu();	/* does not return */
 }
 
 /* ARGSUSED */
@@ -325,7 +324,7 @@ command_dev(char *arg)
 		return;
 	}
 
-	if (!strchr(arg, ':') != NULL ||
+	if (strchr(arg, ':') != NULL ||
 	    parsebootfile(arg, &fsname, &devname, &default_unit,
 			  &default_partition, &file)) {
 		command_help(NULL);
