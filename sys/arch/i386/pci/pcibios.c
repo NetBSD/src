@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.25 2005/06/21 08:19:26 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.26 2005/06/21 11:46:25 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.25 2005/06/21 08:19:26 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.26 2005/06/21 11:46:25 sekiya Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -85,6 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.25 2005/06/21 08:19:26 sekiya Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
+
+#if 	defined(PCIBIOS_INTR_FIXUP) || defined(PCIBIOS_ADDR_FIXUP) || \
+	defined(PCIBIOS_BUS_FIXUP)
+#error The options PCIBIOS_INTR_FIXUP, PCIBIOS_ADDR_FIXUP, and PCIBIOS_BUS_FIXUP have been obsoleted by PCI_INTR_FIXUP, PCI_ADDR_FIXUP, and PCI_BUS_FIXUP.  Please adjust your kernel configuration file.
+#endif
+
 #ifdef PCI_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
 #endif
