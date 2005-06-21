@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.678 2005/06/21 02:23:13 kent Exp $
+# $NetBSD: GENERIC,v 1.679 2005/06/21 08:19:25 sekiya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.678 $"
+#ident 		"GENERIC-$Revision: 1.679 $"
 
 maxusers	32		# estimated number of users
 
@@ -330,7 +330,7 @@ cpu* at mainbus?
 #options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
 
 #acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
@@ -399,9 +399,6 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
@@ -411,6 +408,11 @@ pci*	at ppb? bus ?
 					# work, but should not be enabled
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# PCI fixups, for both PCIBIOS and ACPI
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 # System Controllers
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller

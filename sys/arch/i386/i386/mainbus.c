@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.58 2005/06/21 08:19:26 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58 2005/06/21 08:19:26 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $"
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -83,6 +84,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2005/06/01 16:49:14 drochner Exp $"
 
 #if NVESABIOS > 0
 #include <arch/i386/bios/vesabios.h>
+#endif
+
+#if NPCI > 0
+#if defined(PCI_BUS_FIXUP)
+#include <arch/i386/pci/pci_bus_fixup.h>
+#endif
 #endif
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
@@ -176,6 +183,9 @@ mainbus_attach(parent, self, aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
+#if defined(PCI_BUS_FIXUP)
+	int pci_maxbus = 0;
+#endif
 	int mpacpi_active = 0;
 
 	printf("\n");
@@ -189,6 +199,10 @@ mainbus_attach(parent, self, aux)
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
 	pci_mode = pci_mode_detect();
+#if defined(PCI_BUS_FIXUP)
+	pci_maxbus = pci_bus_fixup(NULL, 0);
+	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+#endif
 #endif
 
 #if NACPI > 0
