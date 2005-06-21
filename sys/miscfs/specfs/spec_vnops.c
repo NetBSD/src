@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.80 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.81 2005/06/21 14:01:13 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.80 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81 2005/06/21 14:01:13 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.80 2005/02/26 22:59:00 perry Exp $"
 #include <sys/stat.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
@@ -509,7 +510,7 @@ spec_poll(v)
 		dev = ap->a_vp->v_rdev;
 		cdev = cdevsw_lookup(dev);
 		if (cdev == NULL)
-			return (ENXIO);
+			return (POLLERR);
 		return (*cdev->d_poll)(dev, ap->a_events, ap->a_p);
 
 	default:

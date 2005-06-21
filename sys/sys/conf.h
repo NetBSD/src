@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.118 2005/06/04 22:45:11 uwe Exp $	*/
+/*	$NetBSD: conf.h,v 1.119 2005/06/21 14:01:13 ws Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -183,8 +183,8 @@ struct linesw *ttyldisc_lookup(const char *);
 #define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
 #define	ttyerrinput ((int (*)(int, struct tty *))enodev)
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
-#define	ttyerrpoll ((int (*)(struct tty *, int, struct proc *))enodev)
 
+int	ttyerrpoll (struct tty *, int, struct proc *);
 int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
 #endif
 

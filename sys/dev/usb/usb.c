@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.81 2005/01/24 01:30:38 joff Exp $	*/
+/*	$NetBSD: usb.c,v 1.82 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.81 2005/01/24 01:30:38 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82 2005/06/21 14:01:12 ws Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -593,7 +593,7 @@ usbpoll(dev_t dev, int events, usb_proc_ptr p)
 
 		return (revents);
 	} else {
-		return (ENXIO);
+		return (0);
 	}
 }
 

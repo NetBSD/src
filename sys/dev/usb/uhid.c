@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.63 2005/03/02 11:37:27 mycroft Exp $	*/
+/*	$NetBSD: uhid.c,v 1.64 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.63 2005/03/02 11:37:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64 2005/06/21 14:01:12 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,7 +574,7 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))
