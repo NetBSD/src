@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.8 2005/06/18 05:33:15 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.9 2005/06/21 21:21:46 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1835,6 +1835,7 @@ product INTEL 6300ESB_PCIX	0x25ae	6300ESB PCI-X Bridge
 product INTEL 82801FB_LPC	0x2640	82801FB LPC Interface Bridge
 product INTEL 82801FB_SATA	0x2651	82801FB Serial ATA Controller
 product INTEL 82801FR_SATA	0x2652	82801FR Serial ATA Controller
+product INTEL 82801FBM_SATA	0x2653	82801FBM Serial ATA Controller
 product INTEL 82801FB_USB_0	0x2658	82801FB/FR USB UHCI Controller
 product INTEL 82801FB_USB_1	0x2659	82801FB/FR USB UHCI Controller
 product INTEL 82801FB_USB_2	0x265a	82801FB/FR USB UHCI Controller
