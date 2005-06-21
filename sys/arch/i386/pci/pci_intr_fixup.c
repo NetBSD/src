@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.31 2005/02/03 21:35:44 perry Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.32 2005/06/21 08:19:26 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.31 2005/02/03 21:35:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.32 2005/06/21 08:19:26 sekiya Exp $");
 
 #include "opt_pcibios.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,7 +727,7 @@ pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 		PCIBIOS_PRINTV((" fixed up\n"));
 	} else {
 		/* routed by BIOS, but inconsistent */
-#ifdef PCIBIOS_INTR_FIXUP_FORCE
+#ifdef PCI_INTR_FIXUP_FORCE
 		/* believe PCI IRQ Routing table */
 		PCIBIOS_PRINTV((" WARNING: overriding irq %d\n", irq));
 #else

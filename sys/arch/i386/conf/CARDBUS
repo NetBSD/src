@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.73 2004/08/26 14:33:01 itohy Exp $
+# $NetBSD: CARDBUS,v 1.74 2005/06/21 08:19:25 sekiya Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -12,12 +12,14 @@ include 	"arch/i386/conf/GENERIC"
 # Configure PCI using BIOS information
 options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# PCI fixups, for both PCIBIOS and ACPI
+options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
  
  # Cardbus bridges
 ppb*	at cardbus? dev ? function ?	# Cardbus-PCI bridges (www.magma.com)

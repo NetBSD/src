@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.263 2005/05/15 22:20:23 fvdl Exp $
+#	$NetBSD: files.i386,v 1.264 2005/06/21 08:19:26 sekiya Exp $
 #
 # new style config file for i386 architecture
 #
@@ -42,10 +42,12 @@ defflag			COMPAT_OLDBOOT
 
 # PCI BIOS options
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
-			PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
-			PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
+
+# PCI fixup options
+defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
+			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
 # Large page size
 defflag			LARGEPAGES
@@ -157,16 +159,16 @@ include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
 file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/i386/pci/pcibios.c		pcibios
-file	arch/i386/pci/pci_intr_fixup.c	pcibios & pcibios_intr_fixup
-file	arch/i386/pci/piix.c		pcibios & pcibios_intr_fixup
-file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
-file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
-file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
-file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
-file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
-file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
-file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
-file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
+file	arch/i386/pci/pci_intr_fixup.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/piix.c		pcibios & pci_intr_fixup
+file	arch/i386/pci/opti82c558.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/opti82c700.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/sis85c503.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/via82c586.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/amd756.c		pcibios & pci_intr_fixup
+file	arch/i386/pci/ali1543.c		pcibios & pci_intr_fixup
+file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
+file	arch/i386/pci/pci_addr_fixup.c	pcibios & pci_addr_fixup
 defparam		PCI_CONF_MODE
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 

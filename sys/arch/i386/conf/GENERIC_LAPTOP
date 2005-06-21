@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.141 2005/06/21 02:23:13 kent Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.142 2005/06/21 08:19:25 sekiya Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	32		# estimated number of users
 
@@ -250,9 +250,9 @@ apm0	at mainbus0			# Advanced power management
 
 # Advanced Configuration and Power Interface
 
-#acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
-#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+acpi0 		at mainbus0
+
+options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
@@ -317,12 +317,14 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 options 	PCIBIOS			# PCI BIOS support
 options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# PCI fixups, for both PCIBIOS and ACPI
+options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and

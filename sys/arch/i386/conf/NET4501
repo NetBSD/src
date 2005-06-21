@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.33 2005/02/25 13:46:50 simonb Exp $
+# $NetBSD: NET4501,v 1.34 2005/06/21 08:19:26 sekiya Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.33 $"
+#ident 		"NET4501-$Revision: 1.34 $"
 
 maxusers	32		# estimated number of users
 
@@ -189,9 +189,9 @@ pci*	at mainbus? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup

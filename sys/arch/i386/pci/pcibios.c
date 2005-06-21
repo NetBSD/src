@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.24 2005/06/21 06:51:29 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.25 2005/06/21 08:19:26 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.24 2005/06/21 06:51:29 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.25 2005/06/21 08:19:26 sekiya Exp $");
 
 #include "opt_pcibios.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,13 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.24 2005/06/21 06:51:29 sekiya Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
-#ifdef PCIBIOS_INTR_FIXUP
+#ifdef PCI_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
 #endif
-#ifdef PCIBIOS_BUS_FIXUP
+#ifdef PCI_BUS_FIXUP
 #include <i386/pci/pci_bus_fixup.h>
 #endif
-#ifdef PCIBIOS_ADDR_FIXUP
+#ifdef PCI_ADDR_FIXUP
 #include <i386/pci/pci_addr_fixup.h>
 #endif
 
@@ -150,11 +151,11 @@ pcibios_init(void)
 	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
 
-#if defined(PCIBIOS_ADDR_FIXUP)
+#if defined(PCI_ADDR_FIXUP)
 	/*
 	 * Initialize pointers used by rbus routines here.  That way, if 
 	 * PCIBIOS initialization fails, the rbus code doesn't break
-	 * spectacularly when PCIBIOS_ADDR_FIXUP is defined. 
+	 * spectacularly when PCI_ADDR_FIXUP is defined. 
 	 */
 
 	pciaddr.extent_port = NULL;
@@ -209,7 +210,7 @@ pcibios_init(void)
 	 */
 	pcibios_pir_init();
 
-#ifdef PCIBIOS_INTR_FIXUP
+#ifdef PCI_INTR_FIXUP
 	if (pcibios_pir_table != NULL) {
 		int rv;
 		u_int16_t pciirq;
@@ -238,14 +239,14 @@ pcibios_init(void)
 	}
 #endif
 
-#ifdef PCIBIOS_BUS_FIXUP
+#ifdef PCI_BUS_FIXUP
 	pcibios_max_bus = pci_bus_fixup(NULL, 0);
 #ifdef PCIBIOSVERBOSE
 	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
 #endif
 #endif
 
-#ifdef PCIBIOS_ADDR_FIXUP
+#ifdef PCI_ADDR_FIXUP
 	pci_addr_fixup(NULL, pcibios_max_bus);
 #endif
 }

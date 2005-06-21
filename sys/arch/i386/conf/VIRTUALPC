@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.21 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: VIRTUALPC,v 1.22 2005/06/21 08:19:26 sekiya Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.21 $"
+#ident 		"VIRTUALPC-$Revision: 1.22 $"
 
 maxusers	32		# estimated number of users
 
@@ -278,7 +278,7 @@ cpu* at mainbus?
 #options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
 
 #acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 
 # ACPI devices
@@ -312,9 +312,9 @@ pci*	at mainbus? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
