@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.15 2003/01/20 01:29:18 simonb Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.16 2005/06/21 06:51:29 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2003/01/20 01:29:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2005/06/21 06:51:29 sekiya Exp $");
 
 #include "opt_pcibios.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2003/01/20 01:29:18 simonb Exp
 #include <dev/isa/isavar.h>
 
 #include <dev/pci/pcivar.h>
-#ifdef PCIBIOS_ADDR_FIXUP
+#if defined(PCIBIOS_ADDR_FIXUP)
 #include <arch/i386/pci/pci_addr_fixup.h>
 #endif
 
@@ -74,30 +74,29 @@ bus_addr_t rbus_min_start = RBUS_MIN_START;
  *   shares the all memory region of ex_iomem.
  */
 rbus_tag_t
-rbus_pccbb_parent_mem(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
 	bus_addr_t start;
 	bus_size_t size;
-	struct extent *ex;
-#ifdef PCIBIOS_ADDR_FIXUP
-	ex = pciaddr.extent_mem;
-#else
 	extern struct extent *iomem_ex;
-	ex = iomem_ex;
+	struct extent *ex = iomem_ex;
+
+#if defined(PCIBIOS_ADDR_FIXUP)
+	if (pciaddr.extent_mem != NULL)
+		ex = pciaddr.extent_mem;
 #endif
 
 	start = ex->ex_start;
 
 	/*
 	 * XXX: unfortunately, iomem_ex cannot be used for the dynamic
-	 * bus_space allocatoin.  There are some hidden memory (or
-	 * some obstacles which do not recognised by the kernel) in
+	 * bus_space allocation.  There are some hidden memory (or
+	 * some obstacles which are not recognised by the kernel) in
 	 * the region governed by iomem_ex.  So I decide to use only
 	 * very high address region.
 	 *
-	 * if defined PCIBIOS_ADDR_FIXUP, PCI device using area
-	 * which do not recognised by the kernel are already reserved.
+	 * If pcibios_addr_fixup() succeeded, the PCI device is using an area
+	 * which is not recognised by the kernel as already reserved.
 	 */
 
 	if (start < rbus_min_start) 
@@ -113,25 +112,25 @@ rbus_pccbb_parent_mem(pa)
  * rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa)
  */
 rbus_tag_t
-rbus_pccbb_parent_io(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_io(struct pci_attach_args *pa)
 {
-	struct extent *ex;
 	bus_addr_t start;
 	bus_size_t size;
 	rbus_tag_t ret;
-#ifdef PCIBIOS_ADDR_FIXUP
-	ex = pciaddr.extent_port;
-#else
 	extern struct extent *ioport_ex;
-	ex = ioport_ex;
+	struct extent *ex = ioport_ex;
+
+#if defined(PCIBIOS_ADDR_FIXUP)
+	if (pciaddr.extent_port != NULL)
+		ex = pciaddr.extent_port;
 #endif
+
 	start = RBUS_IO_BASE;
 	size  = RBUS_IO_SIZE;
 
 	ret = rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
-	if(ret == NULL) {
+	if (ret == NULL)
 	  panic("failed to alloc I/O space");
-	}
+
 	return ret;
 }

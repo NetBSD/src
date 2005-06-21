@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.23 2005/06/20 11:04:15 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.24 2005/06/21 06:51:29 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.23 2005/06/20 11:04:15 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.24 2005/06/21 06:51:29 sekiya Exp $");
 
 #include "opt_pcibios.h"
 
@@ -149,6 +149,17 @@ pcibios_init(void)
 {
 	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
+
+#if defined(PCIBIOS_ADDR_FIXUP)
+	/*
+	 * Initialize pointers used by rbus routines here.  That way, if 
+	 * PCIBIOS initialization fails, the rbus code doesn't break
+	 * spectacularly when PCIBIOS_ADDR_FIXUP is defined. 
+	 */
+
+	pciaddr.extent_port = NULL;
+	pciaddr.extent_mem = NULL;
+#endif
 
 	if (bios32_service(BIOS32_MAKESIG('$', 'P', 'C', 'I'),
 	    &pcibios_entry, &ei) == 0) {
