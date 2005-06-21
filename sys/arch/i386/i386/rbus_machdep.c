@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.16 2005/06/21 06:51:29 sekiya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.17 2005/06/21 08:19:26 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2005/06/21 06:51:29 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.17 2005/06/21 08:19:26 sekiya Exp $");
 
 #include "opt_pcibios.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2005/06/21 06:51:29 sekiya Exp
 #include <dev/isa/isavar.h>
 
 #include <dev/pci/pcivar.h>
-#if defined(PCIBIOS_ADDR_FIXUP)
+#if defined(PCI_ADDR_FIXUP)
 #include <arch/i386/pci/pci_addr_fixup.h>
 #endif
 
@@ -81,7 +82,7 @@ rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 	extern struct extent *iomem_ex;
 	struct extent *ex = iomem_ex;
 
-#if defined(PCIBIOS_ADDR_FIXUP)
+#if defined(PCI_ADDR_FIXUP)
 	if (pciaddr.extent_mem != NULL)
 		ex = pciaddr.extent_mem;
 #endif
@@ -120,7 +121,7 @@ rbus_pccbb_parent_io(struct pci_attach_args *pa)
 	extern struct extent *ioport_ex;
 	struct extent *ex = ioport_ex;
 
-#if defined(PCIBIOS_ADDR_FIXUP)
+#if defined(PCI_ADDR_FIXUP)
 	if (pciaddr.extent_port != NULL)
 		ex = pciaddr.extent_port;
 #endif

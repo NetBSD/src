@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.72 2005/06/20 12:21:36 sekiya Exp $	*/
+/*	$NetBSD: acpi.c,v 1.73 2005/06/21 08:19:25 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.72 2005/06/20 12:21:36 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.73 2005/06/21 08:19:25 sekiya Exp $");
 
 #include "opt_acpi.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.72 2005/06/20 12:21:36 sekiya Exp $");
 #include <dev/acpi/acpidevs_data.h>
 #endif
 
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 #include <dev/pci/pcidevs.h>
 #endif
 
@@ -152,10 +153,10 @@ static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 void			acpi_pci_fixup(struct acpi_softc *);
 #endif
-#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
+#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
@@ -316,7 +317,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fix up PCI devices.
 	 */
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 	if ((sc->sc_quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) == 0)
 		acpi_pci_fixup(sc);
 #endif
@@ -1060,7 +1061,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return ret;
 }
 
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 ACPI_STATUS acpi_pci_fixup_bus(ACPI_HANDLE, UINT32, void *, void **);
 /*
  * acpi_pci_fixup:
@@ -1248,9 +1249,9 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	AcpiOsFree(buf.Pointer);
 	return AE_OK;
 }
-#endif /* ACPI_PCI_FIXUP */
+#endif /* PCI_INTR_FIXUP */
 
-#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
+#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 /* XXX This very incomplete */
 static ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
@@ -1335,4 +1336,4 @@ out1:
 out:
 	return rv;
 }
-#endif /* ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV */
+#endif /* PCI_INTR_FIXUP || ACPI_ACTIVATE_DEV */
