@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.4 2005/05/27 21:40:09 gavan Exp $	*/
+/*	$NetBSD: realprot.S,v 1.5 2005/06/21 14:48:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ prot_to_real_main:
 	 * Otherwise the control bits don't get changed.
 	 * The correct base addresses are loaded later.
 	 */
-	movw    $bootrealdata, %ax  
+	movw    $bootrealdata, %ax
 	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
@@ -268,7 +268,7 @@ xreal:
 	pop	%bp
 
 #ifdef EPIA_HACK
-	call epia_nops 
+	call epia_nops
 #endif
 
 	sti
