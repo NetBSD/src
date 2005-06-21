@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.9 2005/05/19 10:01:03 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.10 2005/06/21 22:54:23 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.9 2005/05/19 10:00:17 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.10 2005/06/21 22:54:04 riz Exp 
  */
 
 /*
@@ -5492,6 +5492,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801FR Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_SATA,
+	    0,
+	    "Intel",
+	    "82801FBM Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0,
