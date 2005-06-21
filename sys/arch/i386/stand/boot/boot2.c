@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.8 2005/06/21 14:13:40 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.9 2005/06/21 14:16:27 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -247,7 +247,7 @@ boot2(u_int boot_biosdev, u_int boot_biossector)
 		c = awaitkey(boot_params.bp_timeout, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0') &&
 		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
-		    || check_password(boot_params.bp_password))) {
+		     || check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		}
@@ -325,7 +325,7 @@ command_dev(char *arg)
 		return;
 	}
 
-	if (!strchr(arg, ':') ||
+	if (!strchr(arg, ':') != NULL ||
 	    parsebootfile(arg, &fsname, &devname, &default_unit,
 			  &default_partition, &file)) {
 		command_help(NULL);
@@ -339,7 +339,7 @@ command_dev(char *arg)
 
 static const struct cons_devs {
 	const char	*name;
-	u_int	tag;
+	u_int		tag;
 } cons_devs[] = {
 	{ "pc",		CONSDEV_PC },
 	{ "com0",	CONSDEV_COM0 },
