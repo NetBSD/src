@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.7 2005/06/15 19:07:36 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.8 2005/06/21 14:13:40 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -66,12 +66,9 @@ extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
 
 static const char * const names[][2] = {
-    { "netbsd", "netbsd.gz" },
-    { "netbsd.old", "netbsd.old.gz" },
-    { "onetbsd", "onetbsd.gz" },
-#ifdef notyet
-    { "netbsd.el", "netbsd.el.gz" },
-#endif /*notyet*/
+	{ "netbsd", "netbsd.gz" },
+	{ "onetbsd", "onetbsd.gz" },
+	{ "netbsd.old", "netbsd.old.gz" },
 };
 
 #define NUMNAMES (sizeof(names)/sizeof(names[0]))
@@ -121,7 +118,7 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 	if (fname == NULL)
 		return 0;
 
-	if ((col = strchr(fname, ':'))) {	/* device given */
+	if ((col = strchr(fname, ':')) != NULL) {	/* device given */
 		static char savedevname[MAXDEVNAME+1];
 		int devlen;
 		u_int u = 0, p = 0;
@@ -273,13 +270,13 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	    "boot [xdNx:][filename] [-acdqsv]\n"
-	    "     (ex. \"hd0a:netbsd.old -s\"\n"
-	    "ls [path]\n"
-	    "dev xd[N[x]]:\n"
-	    "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	    "help|?\n"
-	    "quit\n");
+	       "boot [xdNx:][filename] [-acdqsv]\n"
+	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+	       "ls [path]\n"
+	       "dev xd[N[x]]:\n"
+	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "help|?\n"
+	       "quit\n");
 }
 
 void
@@ -341,8 +338,8 @@ command_dev(char *arg)
 }
 
 static const struct cons_devs {
-    const char	*name;
-    u_int	tag;
+	const char	*name;
+	u_int	tag;
 } cons_devs[] = {
 	{ "pc",		CONSDEV_PC },
 	{ "com0",	CONSDEV_COM0 },
@@ -354,7 +351,8 @@ static const struct cons_devs {
 	{ "com2kbd",	CONSDEV_COM2KBD },
 	{ "com3kbd",	CONSDEV_COM3KBD },
 	{ "auto",	CONSDEV_AUTO },
-	{ 0, 0 } };
+	{ NULL,		0 }
+};
 
 void
 command_consdev(char *arg)
