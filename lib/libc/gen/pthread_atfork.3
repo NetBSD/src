@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_atfork.3,v 1.3 2003/04/16 13:34:38 wiz Exp $
+.\"	$NetBSD: pthread_atfork.3,v 1.3.4.1 2005/06/21 22:38:28 riz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ and
 .Ar child
 handlers are called in the order in which they were registered, while the
 .Ar prepare
-handlers are called in reverse of the order in which they were registerd.
+handlers are called in reverse of the order in which they were registered.
 .Pp
 Any of the handlers given may be
 .Dv NULL .
@@ -95,7 +95,7 @@ function returns 0 on success and an error number on failure.
 The following error code may be returned:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
-Insufficent memory exists to register the fork handlers.
+Insufficient memory exists to register the fork handlers.
 .El
 .Sh SEE ALSO
 .Xr fork 2
