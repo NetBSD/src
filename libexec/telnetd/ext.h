@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.19 2005/02/06 05:58:20 perry Exp $	*/
+/*	$NetBSD: ext.h,v 1.20 2005/06/21 22:29:53 lha Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@ extern int	auth_level;
 #endif
 
 extern slcfun	slctab[NSLC + 1];	/* slc mapping table */
-extern char	*terminaltype;
+extern char	terminaltype[41];
 
 /*
  * I/O data buffers, pointers, and counters.
