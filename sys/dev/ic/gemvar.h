@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.11 2005/02/04 02:10:36 perry Exp $ */
+/*	$NetBSD: gemvar.h,v 1.11.4.1 2005/06/21 21:28:30 tron Exp $ */
 
 /*
  *
@@ -149,6 +149,8 @@ struct gem_softc {
 	int		sc_cdnseg;	/* number of segments */
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+
+	bus_dmamap_t sc_nulldmamap;	/* for small packets padding */
 
 	/*
 	 * Software state for transmit and receive descriptors.
