@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.38 2005/03/05 18:32:59 heas Exp $ */
+/*	$NetBSD: gem.c,v 1.38.2.1 2005/06/21 21:28:37 tron Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.38 2005/03/05 18:32:59 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.38.2.1 2005/06/21 21:28:37 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -128,6 +128,8 @@ void		gem_power(int, void *);
 #define	DPRINTF(sc, x)	/* nothing */
 #endif
 
+#define ETHER_MIN_TX (ETHERMIN + sizeof(struct ether_header))
+
 
 /*
  * gem_attach:
@@ -145,6 +147,7 @@ gem_attach(sc, enaddr)
 	struct ifmedia_entry *ifm;
 	int i, error;
 	u_int32_t v;
+	char *nullbuf;
 
 	/* Make sure the chip is stopped. */
 	ifp->if_softc = sc;
@@ -152,11 +155,12 @@ gem_attach(sc, enaddr)
 
 	/*
 	 * Allocate the control data structures, and create and load the
-	 * DMA map for it.
+	 * DMA map for it. gem_control_data is 9216 bytes, we have space for
+	 * the padding buffer in the bus_dmamem_alloc()'d memory.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
-	    sizeof(struct gem_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
-	    1, &sc->sc_cdnseg, 0)) != 0) {
+	    sizeof(struct gem_control_data) + ETHER_MIN_TX, PAGE_SIZE,
+	    0, &sc->sc_cdseg, 1, &sc->sc_cdnseg, 0)) != 0) {
 		aprint_error(
 		   "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -171,6 +175,9 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
+
+	nullbuf =
+	    (caddr_t)sc->sc_control_data + sizeof(struct gem_control_data);
 
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
@@ -188,6 +195,25 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
+
+	memset(nullbuf, 0, ETHER_MIN_TX);
+	if ((error = bus_dmamap_create(sc->sc_dmatag,
+	    ETHER_MIN_TX, 1, ETHER_MIN_TX, 0, 0, &sc->sc_nulldmamap)) != 0) {
+		aprint_error("%s: unable to create padding DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_4;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmatag, sc->sc_nulldmamap,
+	    nullbuf, ETHER_MIN_TX, NULL, 0)) != 0) {
+		aprint_error(
+		    "%s: unable to load padding DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_5;
+	}
+
+	bus_dmamap_sync(sc->sc_dmatag, sc->sc_nulldmamap, 0, ETHER_MIN_TX,
+	    BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Initialize the transmit job descriptors.
@@ -209,7 +235,7 @@ gem_attach(sc, enaddr)
 		    &txs->txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_4;
+			goto fail_6;
 		}
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
@@ -222,7 +248,7 @@ gem_attach(sc, enaddr)
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_5;
+			goto fail_7;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
@@ -415,19 +441,23 @@ gem_attach(sc, enaddr)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
- fail_5:
+ fail_7:
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmatag,
 			    sc->sc_rxsoft[i].rxs_dmamap);
 	}
- fail_4:
+ fail_6:
 	for (i = 0; i < GEM_TXQUEUELEN; i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmatag,
 			    sc->sc_txsoft[i].txs_dmamap);
 	}
 	bus_dmamap_unload(sc->sc_dmatag, sc->sc_cddmamap);
+ fail_5:
+	bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
+ fail_4:
+	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)nullbuf, ETHER_MIN_TX);
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cddmamap);
  fail_2:
@@ -1001,6 +1031,7 @@ gem_start(ifp)
 	struct gem_txsoft *txs, *last_txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx = -1, ofree, seg;
+	uint64_t flags = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1039,7 +1070,9 @@ gem_start(ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m0,
-		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0 ||
+		      (m0->m_pkthdr.len < ETHER_MIN_TX &&
+		       dmamap->dm_nsegs == GEM_NTXSEGS)) {
 			if (m0->m_pkthdr.len > MCLBYTES) {
 				printf("%s: unable to allocate jumbo Tx "
 				    "cluster\n", sc->sc_dev.dv_xname);
@@ -1078,7 +1111,8 @@ gem_start(ifp)
 		 * Ensure we have enough descriptors free to describe
 		 * the packet.
 		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
+		if (dmamap->dm_nsegs > ((m0->m_pkthdr.len < ETHER_MIN_TX) ?
+		     (sc->sc_txfree - 1) : sc->sc_txfree)) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed to anything yet,
@@ -1116,7 +1150,6 @@ gem_start(ifp)
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = GEM_NEXTTX(nexttx)) {
-			uint64_t flags;
 
 			/*
 			 * If this is the first descriptor we're
@@ -1168,13 +1201,41 @@ gem_start(ifp)
 			}
 			if (seg == dmamap->dm_nsegs - 1) {
 				flags |= GEM_TD_END_OF_PACKET;
+			} else {
+				/* last flag set outside of loop */
+				sc->sc_txdescs[nexttx].gd_flags =
+					GEM_DMA_WRITE(sc, flags);
 			}
-			sc->sc_txdescs[nexttx].gd_flags =
-				GEM_DMA_WRITE(sc, flags);
 			lasttx = nexttx;
 		}
+		if (m0->m_pkthdr.len < ETHER_MIN_TX) {
+			/* add padding buffer at end of chain */
+			flags &= ~GEM_TD_END_OF_PACKET;
+			sc->sc_txdescs[lasttx].gd_flags =
+			    GEM_DMA_WRITE(sc, flags);
+
+			sc->sc_txdescs[nexttx].gd_addr =
+			    GEM_DMA_WRITE(sc,
+			    sc->sc_nulldmamap->dm_segs[0].ds_addr);
+			flags = ((ETHER_MIN_TX - m0->m_pkthdr.len) &
+			    GEM_TD_BUFSIZE) | GEM_TD_END_OF_PACKET;
+			lasttx = nexttx;
+			nexttx = GEM_NEXTTX(nexttx);
+			seg++;
+		}
+		sc->sc_txdescs[lasttx].gd_flags = GEM_DMA_WRITE(sc, flags);
 
 		KASSERT(lasttx != -1);
+
+		/*
+		 * Store a pointer to the packet so we can free it later,
+		 * and remember what txdirty will be once the packet is
+		 * done.
+		 */
+		txs->txs_mbuf = m0;
+		txs->txs_firstdesc = sc->sc_txnext;
+		txs->txs_lastdesc = lasttx;
+		txs->txs_ndescs = seg;
 
 #ifdef GEM_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
@@ -1195,18 +1256,8 @@ gem_start(ifp)
 		GEM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		/*
-		 * Store a pointer to the packet so we can free it later,
-		 * and remember what txdirty will be once the packet is
-		 * done.
-		 */
-		txs->txs_mbuf = m0;
-		txs->txs_firstdesc = sc->sc_txnext;
-		txs->txs_lastdesc = lasttx;
-		txs->txs_ndescs = dmamap->dm_nsegs;
-
 		/* Advance the tx pointer. */
-		sc->sc_txfree -= dmamap->dm_nsegs;
+		sc->sc_txfree -= txs->txs_ndescs;
 		sc->sc_txnext = nexttx;
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
