@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.25 2005/06/04 04:41:40 tsutsui Exp $ */
+/*	$NetBSD: cgsix.c,v 1.26 2005/06/21 01:12:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.25 2005/06/04 04:41:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.26 2005/06/21 01:12:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,13 +669,13 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		}
 #endif
 	}
+	printf("\n");
 
 	fb_attach(&sc->sc_fb, isconsole);
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
 
-	printf("\n");
 	printf("%s: framebuffer size: %d MB\n", sc->sc_dev.dv_xname, 
 	    sc->sc_ramsize >> 20);
 
