@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.28 2003/10/21 06:22:46 simonb Exp $	*/
+/*	$NetBSD: irframe.c,v 1.29 2005/06/21 14:01:12 ws Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.28 2003/10/21 06:22:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.29 2005/06/21 14:01:12 ws Exp $");
 
 #include "irframe.h"
 
@@ -386,9 +386,9 @@ irframepoll(dev_t dev, int events, struct proc *p)
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
-		return (ENXIO);
+		return (POLLHUP);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
-		return (EIO);
+		return (POLLHUP);
 
 	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
 }
