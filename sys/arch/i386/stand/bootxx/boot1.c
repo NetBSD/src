@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.6 2004/06/27 15:37:11 dsl Exp $	*/
+/*	$NetBSD: boot1.c,v 1.7 2005/06/22 15:06:19 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.6 2004/06/27 15:37:11 dsl Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.7 2005/06/22 15:06:19 junyoung Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: boot1.c,v 1.6 2004/06/27 15:37:11 dsl Exp $");
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
+
+#define BIOSDISK_SECSIZE	512	/* XXX */
 
 static uint32_t bios_sector;
 
