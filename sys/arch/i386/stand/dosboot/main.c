@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2005/06/22 20:36:17 junyoung Exp $	 */
+/*	$NetBSD: main.c,v 1.21 2005/06/22 20:42:45 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -45,7 +45,7 @@
 #include <libi386.h>
 
 #ifdef SUPPORT_LYNX
-extern int exec_lynx __P((const char*, int));
+extern int exec_lynx(const char*, int);
 #endif
 
 int errno;
@@ -60,17 +60,17 @@ static char    *default_devname;
 static int      default_unit, default_partition;
 static char    *default_filename;
 
-char *sprint_bootsel __P((const char *));
-static void bootit __P((const char *, int, int));
-void usage __P((void));
-int main __P((int, char **));
+char *sprint_bootsel(const char *);
+static void bootit(const char *, int, int);
+void usage(void);
+int main(int, char **);
 
-void	command_help __P((char *));
-void	command_ls __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
-void	command_mode __P((char *));
-void	command_dev __P((char *));
+void	command_help(char *);
+void	command_ls(char *);
+void	command_quit(char *);
+void	command_boot(char *);
+void	command_mode(char *);
+void	command_dev(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
