@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.122 2005/06/20 09:18:36 sekiya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.123 2005/06/22 22:57:17 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.122 2005/06/20 09:18:36 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.123 2005/06/22 22:57:17 sekiya Exp $");
 
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-#define CBB_DEBUG
 
 /*
 #define CB_PCMCIA_POLL
