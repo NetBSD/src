@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.10 2005/06/13 11:34:11 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.11 2005/06/22 06:06:34 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -46,11 +46,17 @@
  */
 struct biosdisk_ll {
 	int             dev;		/* BIOS device number */
+	int		type;		/* device type; see below */
 	int             sec, head, cyl;	/* geometry */
 	int		flags;		/* see below */
 	int		chs_sectors;	/* # of sectors addressable by CHS */
+	int		secsize;	/* bytes per sector */
 };
 #define	BIOSDISK_EXT13	1		/* BIOS supports int13 extension */
+
+#define BIOSDISK_TYPE_FD	0
+#define BIOSDISK_TYPE_HD	1
+#define BIOSDISK_TYPE_CD	2
 
 /*
  * Version 1.x drive parameters from int13 extensions
@@ -113,8 +119,6 @@ struct biosdisk_ext13info {
 #define EXT13_CHANGELINE	0x0010	/* changeline support */
 #define EXT13_LOCKABLE		0x0020	/* device is lockable */
 #define EXT13_MAXGEOM		0x0040	/* geometry set to max; no media */
-
-#define BIOSDISK_SECSIZE 512
 
 int set_geometry(struct biosdisk_ll *, struct biosdisk_ext13info *);
 int readsects(struct biosdisk_ll *, daddr_t, int, char *, int);
