@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.14 2005/06/21 18:34:47 junyoung Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.15 2005/06/22 06:06:34 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -36,6 +36,8 @@
 #include "libi386.h"
 #include "biosdisk_ll.h"
 #include "bootinfo.h"
+
+#define BIOSDISK_SECSIZE	512	/* XXX */
 
 #ifdef BIOSDISK_EXT13INFO_V3
 static struct {

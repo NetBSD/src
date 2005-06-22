@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2004/03/24 16:54:18 drochner Exp $	 */
+/*	$NetBSD: conf.c,v 1.3 2005/06/22 06:06:34 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -39,15 +39,22 @@
 #ifdef SUPPORT_DOSFS
 #include <lib/libsa/dosfs.h>
 #endif
+#ifdef SUPPORT_CD9660
+#include <lib/libsa/cd9660.h>
+#endif
 
 #include <biosdisk.h>
 
 struct devsw devsw[] = {
-	{"disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl},
+	{"disk", biosdisk_strategy, biosdisk_open, biosdisk_close,
+	 biosdisk_ioctl},
 };
 int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
 struct fs_ops file_system[] = {
+#ifdef SUPPORT_CD9660
+	FS_OPS(cd9660),
+#endif
 #ifdef SUPPORT_USTARFS
 	FS_OPS(ustarfs),
 #endif
