@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.4 2004/03/24 16:46:27 drochner Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.5 2005/06/22 06:06:34 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -25,9 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int biosdiskstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int biosdiskopen(struct open_file *, ...);
-int biosdiskclose(struct open_file *);
-int biosdiskioctl(struct open_file *, u_long, void *);
-u_int biosdiskfindptn(int, u_int);
+int biosdisk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int biosdisk_open(struct open_file *, ...);
+int biosdisk_close(struct open_file *);
+int biosdisk_ioctl(struct open_file *, u_long, void *);
+int biosdisk_findpartition(int, u_int);
 

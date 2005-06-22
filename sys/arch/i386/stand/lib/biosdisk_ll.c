@@ -1,4 +1,40 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.20 2005/06/13 11:27:40 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.21 2005/06/22 06:06:34 junyoung Exp $	 */
+
+/*-
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Bang Jun-Young.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1996
@@ -50,8 +86,8 @@ static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
 
 /*
  * we get from get_diskinfo():
- * xxxx  %ch  %cl  %dh (registers after int13/8), ie
- * xxxx cccc Csss hhhh
+ *   unused      %ch      %cl      %dh (registers after int13/8), ie
+ * xxxxxxxx cccccccc CCssssss hhhhhhhh
  */
 #define	SPT(di)		(((di)>>8)&0x3f)
 #define	HEADS(di)	(((di)&0xff)+1)
@@ -65,7 +101,6 @@ int
 set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 {
 	int diskinfo;
-	char buf[512];
 
 	diskinfo = get_diskinfo(d->dev);
 	d->sec = SPT(diskinfo);
@@ -73,11 +108,31 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	d->cyl = CYL(diskinfo);
 	d->chs_sectors = d->sec * d->head * d->cyl;
 
+	if (d->dev >= 0x80 + get_harddrives()) {
+		d->secsize = 2048;
+		d->type = BIOSDISK_TYPE_CD;
+	} else {
+		d->secsize = 512;
+		if (d->dev & 0x80)
+			d->type = BIOSDISK_TYPE_HD;
+		else
+			d->type = BIOSDISK_TYPE_FD;
+	}
+
+	/*
+	 * Some broken BIOSes such as one found on Soltek SL-75DRV2 report
+	 * that they don't support int13 extension for CD-ROM drives while
+	 * they actually do. As a workaround, if the boot device is a CD we
+	 * assume that the extension is available. Note that only very old
+	 * BIOSes don't support the extended mode, and they don't work with
+	 * ATAPI CD-ROM drives, either. So there's no problem.
+	 */
 	d->flags = 0;
-	if ((d->dev & 0x80) && int13_extension(d->dev)) {
+	if (d->type == BIOSDISK_TYPE_CD ||
+	    (d->type == BIOSDISK_TYPE_HD && int13_extension(d->dev))) {
 		d->flags |= BIOSDISK_EXT13;
 		if (ed != NULL) {
-			ed->size = sizeof *ed;
+			ed->size = sizeof(*ed);
 			int13_getextinfo(d->dev, ed);
 		}
 	}
@@ -86,18 +141,16 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	 * If the drive is 2.88MB floppy drive, check that we can actually
 	 * read sector >= 18. If not, assume 1.44MB floppy disk.
 	 */
-	if (d->dev == 0 && SPT(diskinfo) == 36) {
+	if (d->type == BIOSDISK_TYPE_FD && SPT(diskinfo) == 36) {
+		char buf[512];
+
 		if (biosread(d->dev, 0, 0, 18, 1, buf)) {
 			d->sec = 18;
 			d->chs_sectors /= 2;
 		}
 	}
 
-	/*
-	 * get_diskinfo assumes floppy if BIOS call fails. Check at least
-	 * "valid" geometry.
-	 */
-	return (!d->sec || !d->head);
+	return 0;
 }
 
 /*
@@ -105,7 +158,6 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
  * floppies, the bootstrap has to be loaded on a 64K boundary to ensure that
  * this buffer doesn't cross a 64K DMA boundary.
  */
-#define RA_SECTORS      (DISKBUFSIZE / BIOSDISK_SECSIZE)
 static int      ra_dev;
 static int      ra_end;
 static int      ra_first;
@@ -126,23 +178,25 @@ static int      ra_first;
 	(((d)->dev & 0x80) != 0)
 #else
 #define	NEED_INT13EXT(d, dblk, num)				\
-	(((d)->dev & 0x80) != 0 && ((dblk) + (num)) >= (d)->chs_sectors)
+	(((d)->type == BIOSDISK_TYPE_CD) ||                     \
+	 ((d)->type == BIOSDISK_TYPE_HD &&			\
+	  ((dblk) + (num)) >= (d)->chs_sectors))
 #endif
 
 static int
 do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 {
-	int		cyl, head, sec, nsec, spc, dblk32;
-	struct {
-		int8_t	size;
-		int8_t	resvd;
-		int16_t	cnt;
-		int16_t	off;
-		int16_t	seg;
-		int64_t	sec;
-	}		ext;
 
 	if (NEED_INT13EXT(d, dblk, num)) {
+		struct {
+			int8_t size;
+			int8_t resvd;
+			int16_t cnt;
+			int16_t off;
+			int16_t seg;
+			int64_t sec;
+		} ext;
+
 		if (!(d->flags & BIOSDISK_EXT13))
 			return -1;
 		ext.size = sizeof(ext);
@@ -160,6 +214,8 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 
 		return ext.cnt;
 	} else {
+		int cyl, head, sec, nsec, spc, dblk32;
+
 		dblk32 = (int)dblk;
 		spc = d->head * d->sec;
 		cyl = dblk32 / spc;
@@ -179,11 +235,10 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 	}
 }
 
-/* NB if 'cold' is set below not all of the program is loaded, so
- * musn't use data segment, bss, call library functions or do
- * read-ahead.
+/*
+ * NB if 'cold' is set below not all of the program is loaded, so
+ * mustn't use data segment, bss, call library functions or do read-ahead.
  */
-
 int
 readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 {
@@ -209,7 +264,7 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 			} else {
 				/* fill read-ahead buffer */
 				trbuf = alloc_diskbuf(0); /* no data yet */
-				maxsecs = RA_SECTORS;
+				maxsecs = DISKBUFSIZE / d->secsize;
 			}
 
 			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
@@ -238,13 +293,31 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 			if (nsec > num)
 				nsec = num;
 			memcpy(buf,
-			       diskbufp + (dblk - ra_first) * BIOSDISK_SECSIZE,
-			       nsec * BIOSDISK_SECSIZE);
+			       diskbufp + (dblk - ra_first) * d->secsize,
+			       nsec * d->secsize);
 		}
-		buf += nsec * BIOSDISK_SECSIZE;
+		buf += nsec * d->secsize;
 		num -= nsec;
 		dblk += nsec;
 	}
 
 	return 0;
+}
+
+/*
+ * Return the number of hard disk drives.
+ */
+int
+get_harddrives(void)
+{
+	/*
+	 * Some BIOSes are buggy so that they return incorrect number
+	 * of hard drives with int13/ah=8. We read a byte at 0040:0075
+	 * instead, which is known to be always correct.
+	 */
+	int n = 0;
+
+	pvbcopy((void *)0x475, &n, 1);
+
+	return n;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.10 2005/06/21 14:20:35 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.11 2005/06/22 06:06:34 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -56,14 +56,15 @@
 #include <biosmca.h>
 #endif
 
-int errno;
-extern int boot_biosdev;
-extern int boot_biossector;	/* may be wrong... */
-
 extern struct x86_boot_params boot_params;
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
+
+int errno;
+
+int boot_biosdev;
+u_int boot_biossector;
 
 static const char * const names[][2] = {
 	{ "netbsd", "netbsd.gz" },
@@ -83,7 +84,7 @@ static const char *default_filename;
 char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
-void boot2(u_int, u_int);
+void boot2(int, u_int);
 
 void	command_help(char *);
 void	command_ls(char *);
@@ -105,7 +106,7 @@ const struct bootblk_command commands[] = {
 
 int
 parsebootfile(const char *fname, char **fsname, char **devname,
-	      u_int *unit, u_int *partition, const char **file)
+	      int *unit, int *partition, const char **file)
 {
 	const char *col;
 
@@ -121,7 +122,7 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 	if ((col = strchr(fname, ':')) != NULL) {	/* device given */
 		static char savedevname[MAXDEVNAME+1];
 		int devlen;
-		u_int u = 0, p = 0;
+		int u = 0, p = 0;
 		int i = 0;
 
 		devlen = col - fname;
@@ -213,8 +214,14 @@ print_banner(void)
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 }
 
+/*
+ * Called from the initial entry point boot_start in biosboot.S
+ *
+ * biosdev: BIOS drive number the system booted from
+ * biossector: Sector number of the NetBSD partition
+ */
 void
-boot2(u_int boot_biosdev, u_int boot_biossector)
+boot2(int biosdev, u_int biossector)
 {
 	int currname;
 	char c;
@@ -231,9 +238,13 @@ boot2(u_int boot_biosdev, u_int boot_biossector)
 
 	print_banner();
 
+	/* need to remember these */
+	boot_biosdev = biosdev;
+	boot_biossector = biossector;
+
 	/* try to set default device to what BIOS tells us */
-	bios2dev(boot_biosdev, &default_devname, &default_unit,
-		 boot_biossector, &default_partition);
+	bios2dev(biosdev, biossector, &default_devname, &default_unit,
+		 &default_partition);
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
