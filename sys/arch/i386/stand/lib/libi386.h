@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.20 2005/06/22 06:06:34 junyoung Exp $	*/
+/*	$NetBSD: libi386.h,v 1.21 2005/06/22 20:40:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -68,8 +68,7 @@ int iskey(int);
 char awaitkey(int, int);
 
 /* this is in "user code"! */
-int parsebootfile(const char *, char **, char **, int *, int *,
-		  const char **);
+int parsebootfile(const char *, char **, char **, int *, int *, const char **);
 
 #ifdef XMS
 physaddr_t ppbcopy(physaddr_t, physaddr_t, int);
