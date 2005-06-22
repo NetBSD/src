@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.29 2005/06/20 15:06:18 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.30 2005/06/22 21:50:27 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.29 2005/06/20 15:06:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.30 2005/06/22 21:50:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -522,7 +522,7 @@ veriexec_report(const u_char *msg, const u_char *filename,
 	else
 		f = (void (*)(const char *, ...)) printf;
 
-	if (!verbose || (verbose == veriexec_verbose)) {
+	if (!verbose || (verbose <= veriexec_verbose)) {
 		if (!alarm || p == NULL)
 			f("veriexec: %s [%s, %d:%u%s", msg, filename,
 			    va->va_fsid, va->va_fileid,
