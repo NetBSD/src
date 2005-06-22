@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.47 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.48 2005/06/22 22:07:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.76 2005/01/24 20:31:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.47 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.48 2005/06/22 22:07:48 martin Exp $");
 #endif
 
 /*
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.47 2005/06/22 06:15:51 dyoung Exp $");
 #include <netinet/in.h> 
 #endif
 
+#include <sys/device.h>
 #include <dev/ic/ath_netbsd.h>
 
 #define	AR_DEBUG

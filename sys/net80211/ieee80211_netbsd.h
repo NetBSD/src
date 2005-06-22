@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.2 2005/06/22 06:16:02 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.3 2005/06/22 22:07:49 martin Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -164,7 +164,6 @@ typedef struct ieee80211_lock acl_lock_t;
  *				is the last reference, otherwise 0
  * ieee80211_node_refcnt	reference count for printing (only)
  */
-#include <machine/atomic.h>
 
 #define ieee80211_node_initref(_ni) \
 	do { ((_ni)->ni_refcnt = 1); } while (0)

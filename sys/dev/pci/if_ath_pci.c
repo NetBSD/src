@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.10 2005/06/22 22:07:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.10 2005/06/22 22:07:48 martin Exp $");
 #endif
 
 /*
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $"
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 
