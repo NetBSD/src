@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.9 2005/06/21 21:22:36 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.10 2005/06/22 18:35:44 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.9 2005/06/21 21:21:46 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.10 2005/06/22 18:35:00 tron Exp
  */
 
 /*
@@ -8688,6 +8688,10 @@ const struct pci_product pci_products[] = {
 	    "964 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965,
+	    "965 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
 	    "5597/5598 IDE controller",
 	},
@@ -10160,4 +10164,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1961;
+const int pci_nproducts = 1962;
