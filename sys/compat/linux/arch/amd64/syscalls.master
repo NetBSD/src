@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2005/05/22 19:29:15 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.5 2005/06/22 15:10:51 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -153,7 +153,8 @@
 			    int optname, void *optval, int optlen); }
 55	STD		{ int linux_sys_getsockopt(int s, int level, \
 			    int optname, void *optval, int *optlen); }
-56	STD		{ int linux_sys_clone(int flags, void *stack); }
+56	STD		{ int linux_sys_clone(int flags, void *stack, \
+			    void *parent_tidptr, void *child_tidptr); }
 57	NOARGS		{ int sys_fork(void); }
 58	NOARGS		{ int sys___vfork14(void); }
 59	STD		{ int linux_sys_execve(const char *path, char **argp, \
@@ -365,7 +366,7 @@
 216	UNIMPL		remap_file_pages
 217	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
-218	UNIMPL		set_tid_address
+218	STD		{ int linux_sys_set_tid_address(int *tid); }
 219	UNIMPL		restart_syscall
 220	UNIMPL		semtimedop
 221	UNIMPL		fadvise64

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.18 2004/09/10 22:22:20 wiz Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.19 2005/06/22 15:10:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.18 2004/09/10 22:22:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19 2005/06/22 15:10:51 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.18 2004/09/10 22:22:20 wiz Exp $")
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -70,8 +71,16 @@ linux_sys_clone(l, v, retval)
 	struct linux_sys_clone_args /* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
+#ifdef __amd64__
+		syscallarg(void *) parent_tidptr;
+		syscallarg(void *) child_tidptr;
+#endif
 	} */ *uap = v;
 	int flags, sig;
+	int error;
+#ifdef __amd64__
+	struct linux_emuldata *led;
+#endif
 
 	/*
 	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
@@ -108,14 +117,44 @@ linux_sys_clone(l, v, retval)
 		return (EINVAL);
 	sig = linux_to_native_signo[sig];
 
+#ifdef __amd64__
+	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
+
+	if (SCARG(uap, flags) & LINUX_CLONE_PARENT_SETTID) {
+		if (SCARG(uap, parent_tidptr) == NULL) {
+			printf("linux_sys_clone: NULL parent_tidptr\n");
+			return EINVAL;
+		}
+
+		if ((error = copyout(&l->l_proc->p_pid,
+		    SCARG(uap, parent_tidptr), 
+		    sizeof(l->l_proc->p_pid))) != 0)
+			return error;
+	}
+
+	/* CLONE_CHILD_CLEARTID: TID clear in the child on exit() */
+	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_CLEARTID)
+		led->child_clear_tid = SCARG(uap, child_tidptr);
+	else	
+		led->child_clear_tid = NULL;
+
+	/* CLONE_CHILD_SETTID: TID set in the child on clone() */
+	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_SETTID)
+		led->child_set_tid = SCARG(uap, child_tidptr);
+	else
+		led->child_set_tid = NULL;
+#endif
 	/*
 	 * Note that Linux does not provide a portable way of specifying
 	 * the stack area; the caller must know if the stack grows up
 	 * or down.  So, we pass a stack size of 0, so that the code
 	 * that makes this adjustment is a noop.
 	 */
-	return (fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    NULL, NULL, retval, NULL));
+	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
+	    NULL, NULL, retval, NULL)) != 0)
+		return error;
+
+	return 0;
 }
 
 int
@@ -367,3 +406,24 @@ linux_sys_exit_group(l, v, retval)
 	return 0;
 }
 #endif /* !__m68k__ */
+
+#ifdef __amd64__
+int
+linux_sys_set_tid_address(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_set_tid_address_args /* {
+		syscallarg(int *) tidptr;
+	} */ *uap = v;
+	struct linux_emuldata *led;
+
+	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
+	led->clear_tid = SCARG(uap, tid);
+
+	*retval = l->l_proc->p_pid;
+
+	return 0;
+}
+#endif /* __amd64__ */
