@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.20 2004/01/15 09:39:15 onoe Exp $	*/
+/*	$NetBSD: awivar.h,v 1.21 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ struct awi_softc {
 	device_t		sc_dev;
 #endif
 	struct am79c930_softc 	sc_chip;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	u_char			sc_banner[AWI_BANNER_LEN];
 	int			(*sc_enable)(struct awi_softc *);
@@ -127,6 +128,8 @@ struct awi_softc {
 	struct awi_mib_mgt	sc_mib_mgt;
 	struct awi_mib_phy	sc_mib_phy;
 };
+
+#define	sc_if	sc_ec.ec_if
 
 #define awi_read_1(sc, off) ((sc)->sc_chip.sc_ops->read_1)(&sc->sc_chip, off)
 #define awi_read_2(sc, off) ((sc)->sc_chip.sc_ops->read_2)(&sc->sc_chip, off)

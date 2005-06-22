@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal-mips-be-elf.hal.o.uue,v 1.1.1.1 2005/06/21 20:38:17 dyoung Exp $
+ * $Id: athhal-mips-be-elf.hal.o.uue,v 1.2 2005/06/22 06:15:10 dyoung Exp $
  */
 #define	ATH_HAL_VERSION	"0.9.14.9"
 begin 644 hal.o

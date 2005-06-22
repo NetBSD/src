@@ -30,7 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.3 2004/12/31 22:42:38 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11 NULL crypto support.
@@ -38,13 +43,11 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.3 2004/12/31 22
 #include <sys/param.h>
 #include <sys/systm.h> 
 #include <sys/mbuf.h>   
-#include <sys/module.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
 
 #include <net80211/ieee80211_var.h>
 

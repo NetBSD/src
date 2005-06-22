@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.22 2005/03/02 05:20:43 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.23 2005/06/22 06:15:51 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -60,13 +60,14 @@
 #define	RTW_DEBUG_BUGS		0x100000
 #define	RTW_DEBUG_BEACON	0x200000
 #define	RTW_DEBUG_LED		0x400000
-#define	RTW_DEBUG_MAX		0x7fffff
+#define	RTW_DEBUG_KEY		0x800000
+#define	RTW_DEBUG_MAX		0xffffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
 	if ((rtw_debug & (__flags)) != 0) printf __x
 #define	DPRINTF(__sc, __flags, __x)				\
-	if (((__sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) != 0)	\
+	if (((__sc)->sc_if.if_flags & IFF_DEBUG) != 0)	\
 		RTW_DPRINTF(__flags, __x)
 #define	RTW_PRINT_REGS(__regs, __dvname, __where)	\
 	rtw_print_regs((__regs), (__dvname), (__where))
@@ -271,9 +272,8 @@ struct rtw_mtbl {
 	void			(*mt_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, uint32_t);
-	struct ieee80211_node	*(*mt_node_alloc)(struct ieee80211com *);
-	void			(*mt_node_free)(struct ieee80211com *,
-					struct ieee80211_node *);
+	struct ieee80211_node	*(*mt_node_alloc)(struct ieee80211_node_table*);
+	void			(*mt_node_free)(struct ieee80211_node *);
 };
 
 enum rtw_pwrstate { RTW_OFF = 0, RTW_SLEEP, RTW_ON };
@@ -401,6 +401,7 @@ struct rtw_led_state {
 
 struct rtw_softc {
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;
 	bus_dma_tag_t		sc_dmat;
@@ -475,7 +476,7 @@ struct rtw_softc {
 	int			sc_hwverid;
 };
 
-#define	sc_if		sc_ic.ic_if
+#define	sc_if		sc_ec.ec_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
 

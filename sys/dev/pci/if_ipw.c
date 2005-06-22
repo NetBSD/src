@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.11 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.11 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -168,7 +168,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211_rateset *rs;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
@@ -225,6 +225,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
@@ -261,12 +262,12 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(ic);
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ipw_newstate;
 
-	ieee80211_media_init(ifp, ipw_media_change, ieee80211_media_status);
+	ieee80211_media_init(ic, ipw_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -286,14 +287,14 @@ static int
 ipw_detach(struct device* self, int flags)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	ipw_reset(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	ieee80211_ifdetach(ifp);
+	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 
 	if (sc->sc_ih != NULL) {
@@ -324,7 +325,7 @@ ipw_media_change(struct ifnet *ifp)
 static int
 ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = ic->ic_ifp;
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
 	u_int32_t val, len;
@@ -422,9 +423,9 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
     struct ipw_soft_bd *sbd, struct ipw_soft_buf *sbuf)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
-	struct ieee80211_frame *wh;
+	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
 	int error;
 
@@ -453,14 +454,14 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	}
 #endif
 
-	wh = mtod(m, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame_min *);
 
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* Send it up to the upper layer */
-	ieee80211_input(ifp, m, ni, status->rssi, 0/*rstamp*/);
+	ieee80211_input(ic, m, ni, status->rssi, 0/*rstamp*/);
 
-	ieee80211_release_node(ic, ni);
+	ieee80211_free_node(ni);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
@@ -577,7 +578,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		bus_dmamap_unload(sc->sc_dmat, sbuf->map);
 		m_freem(sbuf->m);
 		if (sbuf->ni != NULL)
-			ieee80211_release_node(ic, sbuf->ni);
+			ieee80211_free_node(sbuf->ni);
 		/* kill watchdog timer */
 		sc->sc_tx_timer = 0;
 		TAILQ_INSERT_TAIL(&sc->sc_free_sbuf, sbuf, next);
@@ -590,7 +591,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 static void
 ipw_tx_intr(struct ipw_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	u_int32_t r, i;
 
 	r = CSR_READ_4(sc, IPW_CSR_TX_READ_INDEX);
@@ -708,20 +709,22 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
-	int error, i;
+	int error, i, iswep;
 
 #ifdef DIAGNOSTIC
 	KASSERT(ipw_tx_ready(sc));
 #endif
 
-	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
-		m = ieee80211_wep_crypt(ifp, m, 1);
-		if (m == NULL)
-			return ENOBUFS;
-	}
+	wh = mtod(m, struct ieee80211_frame *);
+
+	iswep = (wh->i_fc[1] & IEEE80211_FC1_WEP) ? 1 : 0;
+
+	if (iswep && (k = ieee80211_crypto_encap(ic, ni, m)) == NULL)
+		return EIO;
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -735,14 +738,12 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	}
 #endif
 
-	wh = mtod(m, struct ieee80211_frame *);
-
 	shdr = TAILQ_FIRST(&sc->sc_free_shdr);
 	sbuf = TAILQ_FIRST(&sc->sc_free_sbuf);
 
 	shdr->hdr.type = htole32(IPW_HDR_TYPE_SEND);
 	shdr->hdr.subtype = htole32(0);
-	shdr->hdr.encrypted = (wh->i_fc[1] & IEEE80211_FC1_WEP) ? 1 : 0;
+	shdr->hdr.encrypted = iswep;
 	shdr->hdr.encrypt = 0;
 	shdr->hdr.keyidx = 0;
 	shdr->hdr.keysz = 0;
@@ -865,7 +866,13 @@ ipw_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		m = ieee80211_encap(ifp, m, &ni);
+		ni = ieee80211_find_txnode(ic,
+		    mtod(m, struct ether_header *)->ether_dhost);
+		if (ni == NULL) {
+			/* NB: ieee80211_find_txnode does stat+msg */
+			continue;
+		}
+		m = ieee80211_encap(ic, m, ni);
 		if (m == NULL)
 			continue;
 
@@ -876,7 +883,7 @@ ipw_start(struct ifnet *ifp)
 
 		if (ipw_tx_start(ifp, m, ni) != 0) {
 			if (ni != NULL)
-				ieee80211_release_node(ic, ni);
+				ieee80211_free_node(ni);
 			break;
 		}
 
@@ -905,7 +912,7 @@ ipw_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 	}
 
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
 static int
@@ -1000,7 +1007,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error != ENETRESET)
 			break;
 
@@ -1435,7 +1442,7 @@ ipw_rx_stop(struct ipw_softc *sc)
 static void
 ipw_reset(struct ipw_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int ntries;
 
 	ipw_stop(ifp, 1);
@@ -1569,7 +1576,7 @@ static int
 ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ipw_fw_hdr hdr;
 	u_int32_t r, len, fw_size, uc_size;
 	u_char *fw, *uc;
@@ -1700,9 +1707,9 @@ static int
 ipw_config(struct ipw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ipw_security security;
-	struct ieee80211_wepkey *k;
+	struct ieee80211_key *k;
 	struct ipw_wep_key wepkey;
 	struct ipw_scan_options options;
 	struct ipw_configuration config;
@@ -1782,7 +1789,7 @@ ipw_config(struct ipw_softc *sc)
 		return error;
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		data = htole32(ic->ic_txpower);
+		data = htole32(ic->ic_bss->ni_txpower);
 		DPRINTF(("Setting adapter tx power index to %u\n", data));
 		error = ipw_cmd(sc, IPW_CMD_SET_TX_POWER_INDEX, &data,
 		    sizeof data);
@@ -1842,13 +1849,13 @@ ipw_config(struct ipw_softc *sc)
 	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		k = ic->ic_nw_keys;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
-			if (k->wk_len == 0)
+			if (k->wk_keylen == 0)
 				continue;
 
 			wepkey.idx = i;
-			wepkey.len = k->wk_len;
+			wepkey.len = k->wk_keylen;
 			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_len);
+			bcopy(k->wk_key, wepkey.key, k->wk_keylen);
 			DPRINTF(("Setting wep key index %d len %d\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
@@ -1857,7 +1864,7 @@ ipw_config(struct ipw_softc *sc)
 				return error;
 		}
 
-		data = htole32(ic->ic_wep_txkey);
+		data = htole32(ic->ic_def_txkey);
 		DPRINTF(("Setting adapter tx key index to %u\n", data));
 		error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY_INDEX, &data,
 		    sizeof data);

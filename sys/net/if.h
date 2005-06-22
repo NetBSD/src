@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.109 2005/06/19 11:34:42 peter Exp $	*/
+/*	$NetBSD: if.h,v 1.110 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -778,6 +778,7 @@ void	if_attachdomain1 __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
+void	if_link_state_change(struct ifnet *, int);
 void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
 int	ifconf __P((u_long, caddr_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.15 2004/12/19 08:09:23 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.16 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -185,6 +185,7 @@ enum atw_revision {
 
 struct atw_softc {
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_enable)(struct atw_softc *);
 	void			(*sc_disable)(struct atw_softc *);
@@ -194,9 +195,8 @@ struct atw_softc {
 	void			(*sc_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, u_int32_t);
-	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211com *);
-	void			(*sc_node_free)(struct ieee80211com *,
-					struct ieee80211_node *);
+	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211_node_table*);
+	void			(*sc_node_free)(struct ieee80211_node *);
 
 	struct atw_stats sc_stats;	/* debugging stats */
 
@@ -294,10 +294,9 @@ struct atw_softc {
 	} sc_txtapu;
 };
 
+#define	sc_if		sc_ec.ec_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
-
-#define	sc_if			sc_ic.ic_if
 
 /* XXX this is fragile. try not to introduce any u_int32_t's. */
 struct atw_frame {
@@ -363,6 +362,7 @@ struct atw_frame {
 #define	ATWF_RTSCTS		0x00000100	/* RTS/CTS enabled */
 #define	ATWF_ATTACHED		0x00000800	/* attach has succeeded */
 #define	ATWF_ENABLED		0x00001000	/* chip is enabled */
+#define	ATWF_WEP_SRAM_VALID	0x00002000	/* SRAM matches s/w state */
 
 #define	ATW_IS_ENABLED(sc)	((sc)->sc_flags & ATWF_ENABLED)
 
