@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.82 2005/06/01 15:38:32 lukem Exp $	*/
+/*	$NetBSD: eval.c,v 1.83 2005/06/22 23:32:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.82 2005/06/01 15:38:32 lukem Exp $");
+__RCSID("$NetBSD: eval.c,v 1.83 2005/06/22 23:32:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ evalsubshell(union node *n, int flags)
 	expredir(n->nredir.redirect);
 	INTOFF;
 	jp = makejob(n, 1);
-	if (forkshell(jp, n, backgnd) == 0) {
+	if (forkshell(jp, n, backgnd ? FORK_BG : FORK_FG) == 0) {
 		INTON;
 		if (backgnd)
 			flags &=~ EV_TESTED;
@@ -434,7 +434,7 @@ evalsubshell(union node *n, int flags)
 		/* never returns */
 		evaltree(n->nredir.n, flags | EV_EXIT);
 	}
-	if (! backgnd)
+	if (! backgnd && (flags & EV_EXIT) == 0)
 		exitstatus = waitforjob(jp);
 	INTON;
 }
@@ -507,7 +507,7 @@ evalpipe(union node *n)
 				error("Pipe call failed");
 			}
 		}
-		if (forkshell(jp, lp->n, n->npipe.backgnd) == 0) {
+		if (forkshell(jp, lp->n, n->npipe.backgnd ? FORK_BG : FORK_FG) == 0) {
 			INTON;
 			if (prevfd > 0) {
 				close(0);
