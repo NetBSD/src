@@ -40,6 +40,7 @@
 #include <machine/bus.h>
 #include <machine/stdarg.h>
 #include <sys/endian.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
