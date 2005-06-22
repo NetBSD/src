@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.264 2005/06/21 08:19:26 sekiya Exp $
+#	$NetBSD: files.i386,v 1.265 2005/06/22 00:58:48 sekiya Exp $
 #
 # new style config file for i386 architecture
 #
@@ -168,7 +168,7 @@ file	arch/i386/pci/via82c586.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/amd756.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
-file	arch/i386/pci/pci_addr_fixup.c	pcibios & pci_addr_fixup
+file	arch/i386/pci/pci_addr_fixup.c	pci_addr_fixup
 defparam		PCI_CONF_MODE
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
@@ -178,7 +178,7 @@ file 	arch/x86/pci/aapic.c			aapic
 
 # Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
 include	"dev/pci/files.ath"
-object	/athhal-elf.o	ath
+object	/athhal-i386-elf.hal.o	ath
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.58 2005/06/21 08:19:26 sekiya Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58 2005/06/21 08:19:26 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58 2005/06/21 08:19:26 sekiya Exp $");
 #if NPCI > 0
 #if defined(PCI_BUS_FIXUP)
 #include <arch/i386/pci/pci_bus_fixup.h>
+#if defined(PCI_ADDR_FIXUP)
+#include <arch/i386/pci/pci_addr_fixup.h>
+#endif
 #endif
 #endif
 
@@ -202,6 +205,11 @@ mainbus_attach(parent, self, aux)
 #if defined(PCI_BUS_FIXUP)
 	pci_maxbus = pci_bus_fixup(NULL, 0);
 	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+#if defined(PCI_ADDR_FIXUP)
+	pciaddr.extent_port = NULL;
+	pciaddr.extent_mem = NULL;
+	pci_addr_fixup(NULL, pci_maxbus);
+#endif
 #endif
 #endif
 

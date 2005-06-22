@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.14 2005/05/31 17:51:49 christos Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.15 2005/06/22 00:58:48 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.14 2005/05/31 17:51:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.15 2005/06/22 00:58:48 sekiya Exp $");
 
 #include "opt_pcibios.h"
 
@@ -44,10 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.14 2005/05/31 17:51:49 christos
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pcibios.h>
 #include <i386/pci/pci_addr_fixup.h>
 
 struct pciaddr pciaddr;
+
+static int pciaddrverbose = 0;
 
 void	pciaddr_resource_reserve(pci_chipset_tag_t, pcitag_t, void *context);
 int	pciaddr_do_resource_reserve(pci_chipset_tag_t, pcitag_t, int,
@@ -72,7 +73,6 @@ void
 pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 {
 	extern paddr_t avail_end;
-#ifdef PCIBIOSVERBOSE
 	const char *verbose_header = 
 		"[%s]-----------------------\n"
 		"  device vendor product\n"
@@ -80,7 +80,6 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 		"--------------------------------------------\n";
 	const char *verbose_footer = 
 		"--------------------------[%3d devices bogus]\n";
-#endif
 	const struct {
 		bus_addr_t start;
 		bus_size_t size;
@@ -108,9 +107,9 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	/* 
 	 * 1. check & reserve system BIOS setting.
 	 */
-	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
+	aprint_debug(verbose_header, "System BIOS Setting");
 	pci_device_foreach(pc, maxbus, pciaddr_resource_reserve, NULL);
-	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
+	aprint_debug(verbose_footer, pciaddr.nbogus);
 
 	/* 
 	 * 2. reserve non-PCI area.
@@ -133,9 +132,9 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 		start = PCIADDR_ISAMEM_RESERVE;
 	pciaddr.mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
 	pciaddr.port_alloc_start = PCIADDR_ISAPORT_RESERVE;
-	PCIBIOS_PRINTV((" Physical memory end: 0x%08x\n PCI memory mapped I/O "
+	aprint_debug(" Physical memory end: 0x%08x\n PCI memory mapped I/O "
 			"space start: 0x%08x\n", (unsigned)avail_end, 
-			(unsigned)pciaddr.mem_alloc_start));
+			(unsigned)pciaddr.mem_alloc_start);
 
 	if (pciaddr.nbogus == 0)
 		return; /* no need to fixup */
@@ -143,20 +142,18 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	/* 
 	 * 4. do fixup 
 	 */
-	PCIBIOS_PRINTV((verbose_header, "PCIBIOS fixup stage"));
+	aprint_debug(verbose_header, "PCIBIOS fixup stage");
 	pciaddr.nbogus = 0;
 	pci_device_foreach_min(pc, 0, maxbus, pciaddr_resource_allocate, NULL);
-	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
+	aprint_debug(verbose_footer, pciaddr.nbogus);
 
 }
 
 void
 pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
-#ifdef PCIBIOSVERBOSE
-	if (pcibiosverbose)
+	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);
-#endif
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_reserve,
 				&pciaddr);
@@ -165,10 +162,8 @@ pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 void
 pciaddr_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
-#ifdef PCIBIOSVERBOSE
-	if (pcibiosverbose)
+	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);
-#endif
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_allocate,
 				&pciaddr);
@@ -245,9 +240,9 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		/* reservation/allocation phase */
 		error += (*func) (pc, tag, mapreg, ctx, type, &addr, size);
 
-		PCIBIOS_PRINTV(("\n\t%02xh %s 0x%08x 0x%08x", 
+		aprint_debug("\n\t%02xh %s 0x%08x 0x%08x", 
 				mapreg, type ? "port" : "mem ", 
-				(unsigned int)addr, (unsigned int)size));
+				(unsigned int)addr, (unsigned int)size);
 	}
     
 	/* enable/disable PCI device */
@@ -263,7 +258,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 	if (error)
 		pciaddr.nbogus++;
 
-	PCIBIOS_PRINTV(("\n\t\t[%s]\n", error ? "NG" : "OK"));
+	aprint_debug("\n\t\t[%s]\n", error ? "NG" : "OK");
 }
 
 int
@@ -289,23 +284,21 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 		 pciaddrmap->mem_alloc_start : pciaddrmap->port_alloc_start);
 
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
-		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
+		aprint_debug("No available resources. fixup failed\n");
 		return (1);
 	}
 	error = extent_alloc_subregion(ex, start, ex->ex_end, size,
 				       size, 0,
 				       EX_FAST|EX_NOWAIT|EX_MALLOCOK, addr);
 	if (error) {
-		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
+		aprint_debug("No available resources. fixup failed\n");
 		return (1);
 	}
 
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-#ifdef PCIBIOSVERBOSE
-	if (!pcibiosverbose)
-#endif 
+	if (!pciaddrverbose)
 	{
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
@@ -315,9 +308,7 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 		printf("fixup failed. (new address=%#x)\n", (unsigned)*addr);
 		return (1);
 	}
-#ifdef PCIBIOSVERBOSE
-	if (!pcibiosverbose)
-#endif
+	if (!pciaddrverbose)
 		printf("new address 0x%08x\n", (unsigned)*addr);
 
 	return (0);
@@ -339,7 +330,7 @@ pciaddr_do_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 	
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT| EX_MALLOCOK);
 	if (error) {
-		PCIBIOS_PRINTV(("Resource conflict.\n"));
+		aprint_debug("Resource conflict.\n");
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		return (1);
 	}
