@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.32 2005/06/12 19:46:15 dyoung Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.33 2005/06/22 21:35:28 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.32 2005/06/12 19:46:15 dyoung Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.33 2005/06/22 21:35:28 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: disklabel.c,v 1.32 2005/06/12 19:46:15 dyoung Exp $");
 #include <ufs/ffs/fs.h>
 
 #if HAVE_NBTOOL_CONFIG_H
-#include "../../sys/sys/disklabel.h"
-#include "../../include/disktab.h"
+#include <nbinclude/sys/disklabel.h>
+#include <nbinclude/disktab.h>
 #else
 #include <sys/disklabel.h>
 #include <disktab.h>
