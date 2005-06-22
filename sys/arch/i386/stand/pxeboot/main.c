@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2003/06/23 14:48:37 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2005/06/22 20:42:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -68,7 +68,7 @@ const struct bootblk_command commands[] = {
 #ifdef COMPAT_OLDBOOT
 int
 parsebootfile(const char *fname, char **fsname, char **devname,
-    u_int *unit, u_int *partition, const char **file)
+    int *unit, int *partition, const char **file)
 {
 	return (EINVAL);
 }
