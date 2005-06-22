@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.14 2005/06/13 11:13:17 junyoung Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.15 2005/06/22 15:29:48 junyoung Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -56,12 +56,12 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/asm.h>
 
 /*
-# BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
-#	Call with	%ah = 0x0
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:
-#			%al = 0x0 on success; err code on failure
-*/
+ * BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
+ *	Call with	%ah = 0x0
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ */
 ENTRY(biosdiskreset)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -92,22 +92,22 @@ ENTRY(biosdiskreset)
 	ret
 
 /*
-# BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
-#	Call with	%ah = 0x2
-#			%al = number of sectors
-#			%ch = cylinder
-#			%cl = sector
-#			%dh = head
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#			%es:%bx = segment:offset of buffer
-#	Return:
-#			%al = 0x0 on success; err code on failure
-#
-# biosread( dev, cyl, head, sect, count, buff_addr );
-#
-#  Note: On failure, you must reset the disk with biosdiskreset() before
-#        sending another command.
-*/
+ * BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
+ *	Call with	%ah = 0x2
+ *			%al = number of sectors
+ *			%ch = cylinder
+ *			%cl = sector
+ *			%dh = head
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *			%es:%bx = segment:offset of buffer
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ *
+ * biosread( dev, cyl, head, sect, count, buff_addr );
+ *
+ *  Note: On failure, you must reset the disk with biosdiskreset() before
+ *        sending another command.
+ */
 ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -157,12 +157,11 @@ ENTRY(biosread)
 	ret
 
 /*
-#
-# get_diskinfo():  return a word that represents the
-#	max number of sectors, heads and cylinders for this device
-#
-*/
-
+ *
+ * get_diskinfo():  return a word that represents the
+ *	max number of sectors, heads and cylinders for this device
+ *
+ */
 ENTRY(get_diskinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -217,9 +216,8 @@ ok:
 	ret
 
 /*
-# int13_extension: check for availibility of int13 extensions.
-*/
-
+ * int13_extension: check for availibility of int13 extensions.
+ */
 ENTRY(int13_extension)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -260,14 +258,14 @@ ENTRY(int13_extension)
 	ret
 
 /*
-# BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
-#	Call with	%ah = 0x42
-#			%ds:%si = parameter block (data buffer address
-#				must be a real mode physical address).
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:
-#			%al = 0x0 on success; err code on failure
-*/
+ * BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
+ *	Call with	%ah = 0x42
+ *			%ds:%si = parameter block (data buffer address
+ *				must be a real mode physical address).
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ */
 ENTRY(biosextread)
 	pushl	%ebp
 	movl	%esp, %ebp
