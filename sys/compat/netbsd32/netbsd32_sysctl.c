@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.16 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.17 2005/06/22 03:13:34 atatat Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.16 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.17 2005/06/22 03:13:34 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -156,7 +156,7 @@ netbsd32___sysctl(l, v, retval)
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
 	} */ *uap = v;
-	struct sysctlnode *pnode;
+	const struct sysctlnode *pnode;
 	netbsd32_size_t netbsd32_oldlen;
 	size_t oldlen, *oldlenp, savelen;
 	int name[CTL_MAXNAME], error, nerror, *namep;
