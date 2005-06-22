@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.6 2005/06/15 07:29:20 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.7 2005/06/22 21:28:18 manu Exp $	*/
 
-/* $Id: isakmp.c,v 1.6 2005/06/15 07:29:20 manu Exp $ */
+/* $Id: isakmp.c,v 1.7 2005/06/22 21:28:18 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2141,7 +2141,23 @@ isakmp_chkph1there(iph2)
 		return;
 	}
 
+	/* 
+	 * Search isakmp status table by address and port 
+	 * If NAT-T is in use, consider null ports as a 
+	 * wildcard and use IKE ports instead.
+	 */
+#ifdef ENABLE_NATT
+	if (!extract_port(iph2->src) && !extract_port(iph2->dst)) {
+		if ((iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL) {
+			set_port(iph2->src, extract_port(iph1->local));
+			set_port(iph2->dst, extract_port(iph1->remote));
+		}
+	} else {
+		iph1 = getph1byaddr(iph2->src, iph2->dst);
+	}
+#else
 	iph1 = getph1byaddr(iph2->src, iph2->dst);
+#endif
 
 	/* XXX Even if ph1 as responder is there, should we not start
 	 * phase 2 negotiation ? */
