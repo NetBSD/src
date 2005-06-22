@@ -1,8 +1,8 @@
-.\"	$NetBSD: wtf.6,v 1.8 2003/04/25 19:08:31 jmmv Exp $
+.\"	$NetBSD: wtf.6,v 1.9 2005/06/22 20:11:03 hubertf Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd April 25, 2003
+.Dd June 22, 2005
 .Dt WTF 6
 .Os
 .Sh NAME
@@ -11,7 +11,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar dbfile
-.Op Fl t Ar type
 .Op Ar is
 .Ar acronym Ar ...
 .Sh DESCRIPTION
@@ -19,11 +18,13 @@ The
 .Nm
 utility displays the expansion of the acronyms
 specified on the command line.
-If the acronym is unknown,
+If the acronym is not in any of the acronyms databases,
 .Nm
 will check to see if the acronym is known by the
 .Xr whatis 1
-command.
+or the
+.Xr pkg_info 1
+commands.
 .Pp
 If
 .Dq is
@@ -38,13 +39,6 @@ The following options are available:
 Overrides the default acronym database, bypassing the value of the
 .Ev ACRONYMDB
 variable.
-.It Fl t Ar type
-Specifies the acronym's type.
-Simply put, it makes the program use the acronyms database named
-.Pa /usr/share/misc/acronyms.type ,
-where
-.Ar type
-is given by the argument.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width ACRONYMDB
@@ -52,7 +46,9 @@ is given by the argument.
 The default acronym database may be overridden by setting the
 environment variable
 .Ev ACRONYMDB
-to the name of a file in the proper format (acronym[tab]meaning).
+to the name of one or more space-seperated file names of
+acronym databases.
+The files must be in the proper format (acronym[tab]meaning). 
 .El
 .Sh FILES
 .Bl -tag -width /usr/share/misc/acronyms.XXXX -compact
@@ -62,6 +58,7 @@ default acronym database.
 computer-related acronym database.
 .El
 .Sh SEE ALSO
+.Xr pkg_info 1 ,
 .Xr whatis 1
 .Sh HISTORY
 .Nm
