@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.2 2005/02/26 22:45:09 perry Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -31,9 +31,9 @@
 #ifndef _NET80211_IEEE80211_SYSCTL_H_
 #define _NET80211_IEEE80211_SYSCTL_H_
 
-#include <net80211/ieee80211_channel.h>
+#include <net80211/_ieee80211.h>
 
-/* sysctl(9) interface to net80211 client/peer records */
+/* sysctl(9) interface to net80211 client/peer records */   
 
 /* Name index, offset from net.link.ieee80211.node. */
 
@@ -55,7 +55,7 @@
 						 */
 
 #define	IEEE80211_SYSCTL_OP_ALL		0
-
+ 
 /* Every record begins with this information. */
 struct ieee80211_node_sysctlhdr {
 /*00*/	u_int16_t	sh_ifindex;
@@ -78,7 +78,7 @@ struct ieee80211_node_sysctl {
 /*1a*/	u_int8_t	ns_rssi;	/* recv ssi */
 /*1b*/	u_int8_t	ns_esslen;
 /*1c*/	u_int8_t	ns_essid[IEEE80211_NWID_LEN];
-/*3c*/	u_int8_t	ns_pwrsave;	/* power saving mode */
+/*3c*/	u_int8_t	ns_rsvd0;	/* reserved */
 /*3d*/	u_int8_t	ns_erp;		/* 11g only */
 /*3e*/	u_int16_t	ns_associd;	/* assoc response */
 /*40*/	u_int32_t	ns_inact;	/* inactivity mark count */

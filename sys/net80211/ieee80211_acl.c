@@ -30,7 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.3 2004/12/31 22:42:38 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11 MAC ACL support.
@@ -47,14 +52,13 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.3 2004/12/31 22:42:38 s
 #include <sys/kernel.h>
 #include <sys/systm.h> 
 #include <sys/mbuf.h>   
-#include <sys/module.h>
 #include <sys/queue.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
+#include <net/if_ether.h>
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
@@ -271,31 +275,3 @@ static const struct ieee80211_aclator mac = {
 	.iac_setpolicy	= acl_setpolicy,
 	.iac_getpolicy	= acl_getpolicy,
 };
-
-/*
- * Module glue.
- */
-static int
-wlan_acl_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		if (bootverbose)
-			printf("wlan: <802.11 MAC ACL support>\n");
-		ieee80211_aclator_register(&mac);
-		return 0;
-	case MOD_UNLOAD:
-		ieee80211_aclator_unregister(&mac);
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t wlan_acl_mod = {
-	"wlan_acl",
-	wlan_acl_modevent,
-	0
-};
-DECLARE_MODULE(wlan_acl, wlan_acl_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(wlan_acl, 1);
-MODULE_DEPEND(wlan_acl, wlan, 1, 1, 1);

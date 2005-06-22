@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.9 2004/01/28 15:07:52 onoe Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.10 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.9 2004/01/28 15:07:52 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.10 2005/06/22 06:16:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.9 2004/01/28 15:07:52 onoe Exp $"
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
