@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.7 2005/06/22 15:10:51 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.8 2005/06/22 20:20:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.7 2005/06/22 15:10:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8 2005/06/22 20:20:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -255,7 +255,8 @@ linux_sendsig(ksi, mask)
 	case LINUX_SIGCHLD:
 		sigframe.info._sifields._sigchld._pid = ksi->ksi_pid;
 		sigframe.info._sifields._sigchld._uid = ksi->ksi_uid;
-		sigframe.info._sifields._sigchld._status = ksi->ksi_status;
+		sigframe.info._sifields._sigchld._status = 
+		    ((ksi->ksi_status & 0xff00U) >> 8); 
 		sigframe.info._sifields._sigchld._utime = ksi->ksi_utime;
 		sigframe.info._sifields._sigchld._stime = ksi->ksi_stime;
 		break;
