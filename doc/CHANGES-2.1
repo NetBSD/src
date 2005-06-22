@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.130 2005/06/21 23:12:59 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.131 2005/06/22 10:46:55 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -767,7 +767,7 @@ sys/dev/pci/pciidevar.h				1.26
 	[bouyer, ticket #1016]
 
 share/mk/bsd.x11.mk				1.42
-xfree/xc/config/cf/Imake.rules			1.6
+xsrc/xfree/xc/config/cf/Imake.rules		1.6
 
 	Modify CppRawFileTarget() to transform trailing backslashes in the
 	input manpages so the backslash is followed by a blank, defeating the C
@@ -1467,13 +1467,13 @@ sys/arch/sparc64/sparc64/locore.c		1.197-1.204 via patch
 	the "sleep forever" problem (PR port-sparc64/21750).
 	[martin, ticket #1487]
 
-xfree/xc/programs/xterm/charproc.c		1.6
+xsrc/xfree/xc/programs/xterm/charproc.c		1.6
 
 	Fix handling of ST sequences outside of complex escape sequences.
 	Patch provided by Johnny Billquist in PR xsrc/29003.
 	[tron, ticket #1107]
 
-xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c 1.2
 
 	Don't switch to primary virtual console during startup under
 	NetBSD 2.0 and above as suggested by Cliff Wright in
@@ -1481,7 +1481,7 @@ xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c 1.2
 	because of wscons).
 	[tron, ticket #1127]
 
-xfree/xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c 1.2
 
 	Stop core dump when configuring ATI driver. PR#29155.
 	[dsl, ticket #1135]
