@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.11 2003/04/25 19:08:31 jmmv Exp $
+#	$NetBSD: wtf,v 1.12 2005/06/22 20:11:03 hubertf Exp $
 #
 # Public domain
 #
@@ -10,9 +10,9 @@ usage() {
 	exit 1
 }
 
-acronyms=${ACRONYMDB:-/usr/share/misc/acronyms}
+acronyms=${ACRONYMDB:-`ls /usr/share/misc/acronyms*`}
 
-args=`getopt f:t: $*`
+args=`getopt f: $*`
 if [ $? -ne 0 ]; then
 	usage
 fi
@@ -22,9 +22,6 @@ while [ $# -gt 0 ]; do
 		-f)
 			acronyms=$2; shift
 			;;
-		-t)
-			acronyms=/usr/share/misc/acronyms.$2; shift
-			;;
 		--)
 			shift; break
 			;;
@@ -32,7 +29,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-if [ X"$1" = X"is" ] ; then
+if [ "$1" = "is" ] ; then
 	shift
 fi
 
@@ -40,27 +37,43 @@ if [ $# -lt 1 ] ; then
 	usage
 fi
 
-if [ ! -f $acronyms ]; then
-	echo "`basename $0`: cannot open acronyms database file \`$acronyms'"
-	exit 1
-fi
+for f in $acronyms
+do
+	if [ ! -f $f ]; then
+		echo "`basename $0`: cannot open acronyms database file \`$f'" 1>&2
+		exit 1
+	fi
+done
 
 rv=0
 while [ $# -gt 0 ] ; do
+	# Search acronyms list first
 	target=`echo $1 | tr '[a-z]' '[A-Z]'`
-	ans=`fgrep $target < $acronyms 2>/dev/null \
-             | sed -ne "\|^$target[[:space:]]|s|^$target[[:space:]]*||p"`
+	ans=`cat $acronyms | fgrep -h $target 2>/dev/null \
+	     | sed -ne "\|^$target[[:space:]]|s|^$target[[:space:]]*||p"`
 	if [ "$ans" != "" ] ; then
 		echo "$target: $ans"
-	else
-		ans=`whatis $1 2> /dev/null | egrep "^$1[, ]" 2> /dev/null`
-		if [ $? -eq 0 ] ; then
-			echo "$1: $ans"
-		else
-			echo "Gee...  I don't know what $1 means..." 1>&2
-			rv=1
-		fi
+		shift ; continue
 	fi
+
+	# Try whatis(1) next
+	ans=`whatis $1 2>/dev/null`
+	if [ $? -eq 0 ] ; then
+		echo "$ans" | sort | uniq
+		shift ; continue
+	fi
+
+	# Try pkg_info(1) next
+	ans=`pkg_info -qc $1 2> /dev/null`
+	if [ $? -eq 0 ] ; then
+		echo "$1: $ans"
+		shift ; continue
+	fi
+
+	# Give up!
+	echo "`basename $0`, I don't know what $1 means!" 1>&2
+	rv=1
+	
 	shift
 done
 exit $rv
