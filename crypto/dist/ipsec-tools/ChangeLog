@@ -1,3 +1,12 @@
+2005-06-22  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Ludo Stellingwerff <ludo@protactive.nl>:
+	* src/racoon/isakmp.c: NAT-T fix: We treat null ports in SPD as 
+	  wildcard so that IKE ports are used instead. This was done on
+	  phase 2 initiation from the kernel (acquire message), but not 
+	  on phase 2 initiation retries when the phase 2 had been queued
+	  for a phase 1.
+
 2005-06-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Larry Baird <lab@gta.com>
