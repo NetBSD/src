@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile.disklabel,v 1.1 2005/06/12 19:46:17 dyoung Exp $
+#	$NetBSD: Makefile.disklabel,v 1.2 2005/06/22 21:35:28 he Exp $
 
 _ARCHDIR=	${.CURDIR}/../../sys/arch
+_INCDIR=	${.CURDIR}/../../include
 _SYSDIR=	${.CURDIR}/../../sys/sys
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
 _ARCH_INCS!=	cd ${_ARCHDIR} && find . -name disklabel.h
 
-_INCS=		bootblock.h \
+_INCS=		disktab.h
+_SYSINCS=	bootblock.h \
 		disklabel.h disklabel_acorn.h disklabel_gpt.h dkbad.h
 
 HOST_CPPFLAGS+=	-I${TOOLDIR}/include
@@ -17,7 +19,9 @@ beforedepend:
 	cd ${_ARCHDIR} && \
 	    ${TOOL_PAX} -s /include\\/// -rw ${_ARCH_INCS} \
 	    ${TOOLDIR}/include/nbinclude
+	cd ${_INCDIR} && \
+	    ${TOOL_PAX} -rw ${_INCS} ${TOOLDIR}/include/nbinclude
 	cd ${_SYSDIR} && \
-	    ${TOOL_PAX} -rw ${_INCS} ${TOOLDIR}/include/nbinclude/sys
+	    ${TOOL_PAX} -rw ${_SYSINCS} ${TOOLDIR}/include/nbinclude/sys
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine
