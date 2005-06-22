@@ -1,4 +1,4 @@
-.\"	$NetBSD: esa.4,v 1.7 2005/03/24 22:31:58 jmcneill Exp $
+.\"	$NetBSD: esa.4,v 1.8 2005/06/22 04:19:09 kent Exp $
 .\"
 .\" Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 6, 2002
+.Dd June 22, 2005
 .Dt ESA 4
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd ESS Technology Allegro-1 / Maestro-3 family audio device driver
 .Sh SYNOPSIS
 .Cd "esa*   at pci? dev ? function ?"
-.Cd "audio* at esa?"
+.Cd "audio* at audiobus?"
 .Cd "options ESA_NUM_VOICES=4"
 .Sh DESCRIPTION
 The
@@ -51,6 +51,7 @@ Note that due to microcode constraints, the
 .Nm
 driver is currently limited to 4 simultaneous voices.
 .Sh SEE ALSO
+.Xr ac97 4 ,
 .Xr audio 4 ,
 .Xr pci 4
 .Sh HISTORY
