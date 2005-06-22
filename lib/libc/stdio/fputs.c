@@ -1,4 +1,4 @@
-/*	$NetBSD: fputs.c,v 1.13 2003/08/07 16:43:24 agc Exp $	*/
+/*	$NetBSD: fputs.c,v 1.14 2005/06/22 19:45:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputs.c,v 1.13 2003/08/07 16:43:24 agc Exp $");
+__RCSID("$NetBSD: fputs.c,v 1.14 2005/06/22 19:45:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,8 +64,10 @@ fputs(s, fp)
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(fp != NULL);
 
-	/* LINTED we don't touch s */
-	iov.iov_base = (void *)s;
+	if (s == NULL)
+		s = "(null)";
+
+	iov.iov_base = __UNCONST(s);
 	iov.iov_len = uio.uio_resid = strlen(s);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
