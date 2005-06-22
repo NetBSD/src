@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.22 2005/06/13 11:23:28 junyoung Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.23 2005/06/22 05:30:13 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -133,21 +133,21 @@ biosdiskstrategy(void *devdata, int flag, daddr_t dblk, size_t size,
 }
 
 static struct biosdisk *
-alloc_biosdisk(int dev)
+alloc_biosdisk(int biosdev)
 {
 	struct biosdisk *d;
 
-	d = alloc(sizeof *d);
+	d = alloc(sizeof(*d));
 	if (d == NULL)
 		return NULL;
-	memset(d, 0, sizeof *d);
+	memset(d, 0, sizeof(*d));
 
-	d->ll.dev = dev;
+	d->ll.dev = biosdev;
 	if (set_geometry(&d->ll, NULL)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
 #endif
-		free(d, sizeof *d);
+		free(d, sizeof(*d));
 		return NULL;
 	}
 	return d;
@@ -192,7 +192,7 @@ read_label(struct biosdisk *d)
 	int sector_386bsd = -1;
 #endif
 
-	memset(&dflt_lbl, 0, sizeof dflt_lbl);
+	memset(&dflt_lbl, 0, sizeof(dflt_lbl));
 	dflt_lbl.d_npartitions = 8;
 
 	d->boff = 0;
@@ -216,7 +216,8 @@ read_label(struct biosdisk *d)
 #endif
 			return EIO;
 		}
-		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts, sizeof mbr);
+		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts,
+		       sizeof(mbr));
 		/* Look for NetBSD partition ID */
 		for (i = 0; i < MBR_PART_COUNT; i++) {
 			typ = mbr[i].mbrp_type;
@@ -279,7 +280,7 @@ read_label(struct biosdisk *d)
 	 */
 	/* XXX fill it to make checksum match kernel one */
 	dflt_lbl.d_checksum = dkcksum(&dflt_lbl);
-	memcpy(d->buf, &dflt_lbl, sizeof dflt_lbl);
+	memcpy(d->buf, &dflt_lbl, sizeof(dflt_lbl));
 	return -1;
 }
 #endif /* NO_DISKLABEL */
@@ -313,17 +314,18 @@ biosdiskfindptn(int biosdev, u_int sector)
 		}
 	}
 
-	free(d, sizeof *d);
+	free(d, sizeof(*d));
 	return partition;
 #endif /* NO_DISKLABEL */
 }
 
 int
 biosdiskopen(struct open_file *f, ...)
-/* file, biosdev, partition */
+/* struct open_file *f, int biosdev, int partition */
 {
 	va_list ap;
 	struct biosdisk *d;
+	int biosdev;
 	int partition;
 #ifndef NO_DISKLABEL
 	struct disklabel *lp;
@@ -331,8 +333,9 @@ biosdiskopen(struct open_file *f, ...)
 	int error = 0;
 
 	va_start(ap, f);
-	d = alloc_biosdisk(va_arg(ap, int));
-	if (!d) {
+	biosdev = va_arg(ap, int);
+	d = alloc_biosdisk(biosdev);
+	if (d == NULL) {
 		error = ENXIO;
 		goto out;
 	}
@@ -360,7 +363,7 @@ biosdiskopen(struct open_file *f, ...)
 
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
 	if (partition >= lp->d_npartitions ||
-	   lp->d_partitions[partition].p_fstype == FS_UNUSED) {
+	    lp->d_partitions[partition].p_fstype == FS_UNUSED) {
 #ifdef DISK_DEBUG
 		printf("illegal partition\n");
 #endif
