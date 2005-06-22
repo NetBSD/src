@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.15 2005/06/22 06:06:34 junyoung Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.16 2005/06/22 06:09:47 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -63,13 +63,13 @@ bi_getbiosgeom(void)
 {
 	struct btinfo_biosgeom *bibg;
 	int i, j, nvalid;
-	int nhd = 0;
+	int nhd;
 	unsigned int cksum;
 	struct biosdisk_ll d;
 	struct biosdisk_ext13info ed;
 	char buf[BIOSDISK_SECSIZE];
 
-	pvbcopy((void *)(0x400 + 0x75), &nhd, 1);
+	nhd = get_harddrives();
 #ifdef GEOM_DEBUG
 	printf("nhd %d\n", nhd);
 #endif
