@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.4 2005/05/22 19:29:40 fvdl Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.5 2005/06/22 15:10:51 manu Exp $ */
 
 /*
  * System call numbers.
@@ -163,7 +163,7 @@
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	LINUX_SYS_getsockopt	55
 
-/* syscall: "clone" ret: "int" args: "int" "void *" */
+/* syscall: "clone" ret: "int" args: "int" "void *" "void *" "void *" */
 #define	LINUX_SYS_clone	56
 
 /* syscall: "fork" ret: "int" args: */
@@ -495,6 +495,9 @@
 
 /* syscall: "getdents64" ret: "int" args: "int" "struct linux_dirent64 *" "unsigned int" */
 #define	LINUX_SYS_getdents64	217
+
+/* syscall: "set_tid_address" ret: "int" args: "int *" */
+#define	LINUX_SYS_set_tid_address	218
 
 /* syscall: "clock_settime" ret: "int" args: "clockid_t" "struct linux_timespec *" */
 #define	LINUX_SYS_clock_settime	227
