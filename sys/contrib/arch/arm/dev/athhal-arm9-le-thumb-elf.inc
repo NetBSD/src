@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: athhal-arm9-le-thumb-elf.inc,v 1.1.1.1 2005/06/21 20:37:58 dyoung Exp $
+# $Id: athhal-arm9-le-thumb-elf.inc,v 1.2 2005/06/22 06:14:52 dyoung Exp $
 #
 
 #

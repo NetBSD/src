@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.1 2005/03/19 23:13:42 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.2 2005/06/22 06:14:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.1 2005/03/19 23:13:42 thorpej Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.2 2005/06/22 06:14:51 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -216,56 +216,91 @@ ieee80211_statistics(void)
 	if (ioctl(s, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
 	    (caddr_t)&ifr) == -1)
 		return;
-#define	RX_PRINT(desc, member) printf("\trx " desc ": %u\n", stats.member)
-#define	TX_PRINT(desc, member) printf("\ttx " desc ": %u\n", stats.member)
+#define	STAT_PRINT(_member, _desc)	\
+	printf("\t" _desc ": %" PRIu32 "\n", stats._member)
 
-	RX_PRINT("too short", is_rx_tooshort);
-	RX_PRINT("bad version", is_rx_badversion);
-	RX_PRINT("wrong bss", is_rx_wrongbss);
-	RX_PRINT("duplicate", is_rx_dup);
-	RX_PRINT("wrong direction", is_rx_wrongdir);
-	RX_PRINT("multicast echo", is_rx_mcastecho);
-	RX_PRINT("STA not associated", is_rx_notassoc);
-	RX_PRINT("WEP-encrypted but WEP not configured", is_rx_nowep);
-	RX_PRINT("WEP processing failed", is_rx_wepfail);
-#if 0
-	RX_PRINT("single (M)MSDU, both WEP/non-WEP fragments", is_rx_wepmix);
-	RX_PRINT("non-consecutive fragments", is_rx_fragorder);
-#endif
-	RX_PRINT("decapsulation failed", is_rx_decap);
-	RX_PRINT("management-type discarded", is_rx_mgtdiscard);
-	RX_PRINT("control-type discarded", is_rx_ctl);
-	RX_PRINT("truncated rate set", is_rx_rstoobig);
-	RX_PRINT("beacon/prresp element missing", is_rx_elem_missing);
-	RX_PRINT("beacon/prresp element too big", is_rx_elem_toobig);
-	RX_PRINT("beacon/prresp element too small", is_rx_elem_toosmall);
-	RX_PRINT("beacon/prresp element unknown", is_rx_elem_unknown);
-	RX_PRINT("invalid channel", is_rx_badchan);
-	RX_PRINT("channel mismatch", is_rx_chanmismatch);
-	RX_PRINT("failed node allocation", is_rx_nodealloc);
-	RX_PRINT("SSID mismatch", is_rx_ssidmismatch);
-	RX_PRINT("unsupported authentication algor.", is_rx_auth_unsupported);
-	RX_PRINT("STA authentication failure", is_rx_auth_fail);
-	RX_PRINT("association for wrong bss", is_rx_assoc_bss);
-	RX_PRINT("association without authenication", is_rx_assoc_notauth);
-	RX_PRINT("association capability mismatch", is_rx_assoc_capmismatch);
-	RX_PRINT("association without rate match", is_rx_assoc_norate);
-	RX_PRINT("deauthentication", is_rx_deauth);
-	RX_PRINT("disassocation", is_rx_disassoc);
-	RX_PRINT("unknown subtype", is_rx_badsubtype);
-	RX_PRINT("failed, mbuf unavailable", is_rx_nombuf);
-	RX_PRINT("failed, bad ICV", is_rx_decryptcrc);
-	RX_PRINT("discard mgmt frame in ad-hoc demo mode", is_rx_ahdemo_mgt);
-	RX_PRINT("bad authentication", is_rx_bad_auth);
-	TX_PRINT("failed, mbuf unavailable", is_tx_nombuf);
-	TX_PRINT("failed, no node", is_tx_nonode);
-	TX_PRINT("unknown mgmt frame", is_tx_unknownmgt);
-	printf("\tactive scans: %u\n", stats.is_scan_active);
-	printf("\tpassive scans: %u\n", stats.is_scan_passive);
-	printf("\tnodes timed-out for inactivity: %u\n",
-	    stats.is_node_timeout);
-	printf("\tcrypto context memory unavailable: %u\n",
-	    stats.is_crypto_nomem);
+	STAT_PRINT(is_rx_badversion, "rx frame with bad version");
+	STAT_PRINT(is_rx_tooshort, "rx frame too short");
+	STAT_PRINT(is_rx_wrongbss, "rx from wrong bssid");
+	STAT_PRINT(is_rx_dup, "rx discard 'cuz dup");
+	STAT_PRINT(is_rx_wrongdir, "rx w/ wrong direction");
+	STAT_PRINT(is_rx_mcastecho, "rx discard 'cuz mcast echo");
+	STAT_PRINT(is_rx_notassoc, "rx discard 'cuz sta !assoc");
+	STAT_PRINT(is_rx_noprivacy, "rx w/ wep but privacy off");
+	STAT_PRINT(is_rx_unencrypted, "rx w/o wep and privacy on");
+	STAT_PRINT(is_rx_wepfail, "rx wep processing failed");
+	STAT_PRINT(is_rx_decap, "rx decapsulation failed");
+	STAT_PRINT(is_rx_mgtdiscard, "rx discard mgt frames");
+	STAT_PRINT(is_rx_ctl, "rx discard ctrl frames");
+	STAT_PRINT(is_rx_beacon, "rx beacon frames");
+	STAT_PRINT(is_rx_rstoobig, "rx rate set truncated");
+	STAT_PRINT(is_rx_elem_missing, "rx required element missin");
+	STAT_PRINT(is_rx_elem_toobig, "rx element too big");
+	STAT_PRINT(is_rx_elem_toosmall, "rx element too small");
+	STAT_PRINT(is_rx_elem_unknown, "rx element unknown");
+	STAT_PRINT(is_rx_badchan, "rx frame w/ invalid chan");
+	STAT_PRINT(is_rx_chanmismatch, "rx frame chan mismatch");
+	STAT_PRINT(is_rx_nodealloc, "rx frame dropped");
+	STAT_PRINT(is_rx_ssidmismatch, "rx frame ssid mismatch ");
+	STAT_PRINT(is_rx_auth_unsupported, "rx w/ unsupported auth alg");
+	STAT_PRINT(is_rx_auth_fail, "rx sta auth failure");
+	STAT_PRINT(is_rx_auth_countermeasures, "rx auth discard 'cuz CM");
+	STAT_PRINT(is_rx_assoc_bss, "rx assoc from wrong bssid");
+	STAT_PRINT(is_rx_assoc_notauth, "rx assoc w/o auth");
+	STAT_PRINT(is_rx_assoc_capmismatch, "rx assoc w/ cap mismatch");
+	STAT_PRINT(is_rx_assoc_norate, "rx assoc w/ no rate match");
+	STAT_PRINT(is_rx_assoc_badwpaie, "rx assoc w/ bad WPA IE");
+	STAT_PRINT(is_rx_deauth, "rx deauthentication");
+	STAT_PRINT(is_rx_disassoc, "rx disassociation");
+	STAT_PRINT(is_rx_badsubtype, "rx frame w/ unknown subtyp");
+	STAT_PRINT(is_rx_nobuf, "rx failed for lack of buf");
+	STAT_PRINT(is_rx_decryptcrc, "rx decrypt failed on crc");
+	STAT_PRINT(is_rx_ahdemo_mgt, "rx discard ahdemo mgt fram");
+	STAT_PRINT(is_rx_bad_auth, "rx bad auth request");
+	STAT_PRINT(is_rx_unauth, "rx on unauthorized port");
+	STAT_PRINT(is_rx_badkeyid, "rx w/ incorrect keyid");
+	STAT_PRINT(is_rx_ccmpreplay, "rx seq# violation (CCMP)");
+	STAT_PRINT(is_rx_ccmpformat, "rx format bad (CCMP)");
+	STAT_PRINT(is_rx_ccmpmic, "rx MIC check failed (CCMP)");
+	STAT_PRINT(is_rx_tkipreplay, "rx seq# violation (TKIP)");
+	STAT_PRINT(is_rx_tkipformat, "rx format bad (TKIP)");
+	STAT_PRINT(is_rx_tkipmic, "rx MIC check failed (TKIP)");
+	STAT_PRINT(is_rx_tkipicv, "rx ICV check failed (TKIP)");
+	STAT_PRINT(is_rx_badcipher, "rx failed 'cuz key type");
+	STAT_PRINT(is_rx_nocipherctx, "rx failed 'cuz key !setup");
+	STAT_PRINT(is_rx_acl, "rx discard 'cuz acl policy");
+
+	STAT_PRINT(is_tx_nobuf, "tx failed for lack of buf");
+	STAT_PRINT(is_tx_nonode, "tx failed for no node");
+	STAT_PRINT(is_tx_unknownmgt, "tx of unknown mgt frame");
+	STAT_PRINT(is_tx_badcipher, "tx failed 'cuz key type");
+	STAT_PRINT(is_tx_nodefkey, "tx failed 'cuz no defkey");
+	STAT_PRINT(is_tx_noheadroom, "tx failed 'cuz no space");
+
+	STAT_PRINT(is_scan_active, "active scans started");
+	STAT_PRINT(is_scan_passive, "passive scans started");
+	STAT_PRINT(is_node_timeout, "nodes timed out inactivity");
+	STAT_PRINT(is_crypto_nomem, "no memory for crypto ctx");
+	STAT_PRINT(is_crypto_tkip, "tkip crypto done in s/w");
+	STAT_PRINT(is_crypto_tkipenmic, "tkip en-MIC done in s/w");
+	STAT_PRINT(is_crypto_tkipdemic, "tkip de-MIC done in s/w");
+	STAT_PRINT(is_crypto_tkipcm, "tkip counter measures");
+	STAT_PRINT(is_crypto_ccmp, "ccmp crypto done in s/w");
+	STAT_PRINT(is_crypto_wep, "wep crypto done in s/w");
+	STAT_PRINT(is_crypto_setkey_cipher, "cipher rejected key");
+	STAT_PRINT(is_crypto_setkey_nokey, "no key index for setkey");
+	STAT_PRINT(is_crypto_delkey, "driver key delete failed");
+	STAT_PRINT(is_crypto_badcipher, "unknown cipher");
+	STAT_PRINT(is_crypto_nocipher, "cipher not available");
+	STAT_PRINT(is_crypto_attachfail, "cipher attach failed");
+	STAT_PRINT(is_crypto_swfallback, "cipher fallback to s/w");
+	STAT_PRINT(is_crypto_keyfail, "driver key alloc failed");
+	STAT_PRINT(is_crypto_enmicfail, "en-MIC failed");
+	STAT_PRINT(is_ibss_capmismatch, "merge failed-cap mismatch");
+	STAT_PRINT(is_ibss_norate, "merge failed-rate mismatch");
+	STAT_PRINT(is_ps_unassoc, "ps-poll for unassoc. sta");
+	STAT_PRINT(is_ps_badaid, "ps-poll w/ incorrect aid");
+	STAT_PRINT(is_ps_qempty, "ps-poll w/ nothing to send");
 }
 
 void

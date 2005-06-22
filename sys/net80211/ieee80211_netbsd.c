@@ -1,3 +1,4 @@
+/* $NetBSD: ieee80211_netbsd.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -26,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.7 2005/03/29 19:36:42 sam Exp $");
+#ifdef __FreeBSD__
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
+#else
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11 support (FreeBSD-specific code)
@@ -34,117 +39,487 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.7 2005/03/29 19:36:
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h> 
-#include <sys/linker.h>
 #include <sys/mbuf.h>   
-#include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+
+#include <machine/stdarg.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
+#include <net/if_ether.h>
 #include <net/route.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_sysctl.h>
 
-SYSCTL_NODE(_net, OID_AUTO, wlan, CTLFLAG_RD, 0, "IEEE 80211 parameters");
+#define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
+
+static void ieee80211_sysctl_fill_node(struct ieee80211_node *,
+    struct ieee80211_node_sysctl *, int, struct ieee80211_channel *, int);
+static struct ieee80211_node *ieee80211_node_walknext(
+    struct ieee80211_node_walk *);
+static struct ieee80211_node *ieee80211_node_walkfirst(
+    struct ieee80211_node_walk *, u_short);
+static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
-SYSCTL_INT(_net_wlan, OID_AUTO, debug, CTLFLAG_RW, &ieee80211_debug,
-	    0, "debugging printfs");
 #endif
 
 static int
-ieee80211_sysctl_inact(SYSCTL_HANDLER_ARGS)
+ieee80211_sysctl_inact(SYSCTLFN_ARGS)
 {
-	int inact = (*(int *)arg1) * IEEE80211_INACT_WAIT;
-	int error;
+	int error, t;
+	struct sysctlnode node;
 
-	error = sysctl_handle_int(oidp, &inact, 0, req);
-	if (error || !req->newptr)
-		return error;
-	*(int *)arg1 = inact / IEEE80211_INACT_WAIT;
-	return 0;
+	node = *rnode;
+	/* sysctl_lookup copies the product from t.  Then, it
+	 * copies the new value onto t.
+	 */
+	t = *(int*)rnode->sysctl_data * IEEE80211_INACT_WAIT;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	/* The new value was in seconds.  Convert to inactivity-wait
+	 * intervals.  There are IEEE80211_INACT_WAIT seconds per
+	 * interval.
+	 */
+	*(int*)rnode->sysctl_data = t / IEEE80211_INACT_WAIT;
+
+	return (0);
 }
 
 static int
-ieee80211_sysctl_parent(SYSCTL_HANDLER_ARGS)
+ieee80211_sysctl_parent(SYSCTLFN_ARGS)
 {
-	struct ieee80211com *ic = arg1;
-	const char *name = ic->ic_ifp->if_xname;
+	struct ieee80211com *ic;
+	char pname[IFNAMSIZ];
+	struct sysctlnode node;
 
-	return SYSCTL_OUT(req, name, strlen(name));
+	node = *rnode;
+	ic = node.sysctl_data;
+	strncpy(pname, ic->ic_ifp->if_xname, IFNAMSIZ);
+	node.sysctl_data = pname;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+/*
+ * Create or get top of sysctl tree net.link.ieee80211.
+ */
+static const struct sysctlnode *
+ieee80211_sysctl_treetop(struct sysctllog **log)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+
+	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link",
+	    "link-layer statistics and controls",
+	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211",
+	    "IEEE 802.11 WLAN statistics and controls",
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return rnode;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	return NULL;
 }
 
 void
 ieee80211_sysctl_attach(struct ieee80211com *ic)
 {
-	struct sysctl_ctx_list *ctx;
-	struct sysctl_oid *oid;
-	char num[14];			/* sufficient for 32 bits */
+	int rc;
+	const struct sysctlnode *cnode, *rnode;
+	char num[sizeof("vap") + 14];		/* sufficient for 32 bits */
 
-	MALLOC(ctx, struct sysctl_ctx_list *, sizeof(struct sysctl_ctx_list),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ctx == NULL) {
-		if_printf(ic->ic_ifp, "%s: cannot allocate sysctl context!\n",
-			__func__);
+	if ((rnode = ieee80211_sysctl_treetop(NULL)) == NULL)
 		return;
-	}
-	sysctl_ctx_init(ctx);
-	snprintf(num, sizeof(num), "%u", ic->ic_vap);
-	oid = SYSCTL_ADD_NODE(ctx, &SYSCTL_NODE_CHILDREN(_net, wlan),
-		OID_AUTO, num, CTLFLAG_RD, NULL, "");
-	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"%parent", CTLFLAG_RD, ic, 0, ieee80211_sysctl_parent, "A",
-		"parent device");
+
+	snprintf(num, sizeof(num), "vap%u", ic->ic_vap);
+
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, num, SYSCTL_DESCR("virtual AP"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING,
+	    "parent", SYSCTL_DESCR("parent device"),
+	    ieee80211_sysctl_parent, 0, ic, IFNAMSIZ, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
 #ifdef IEEE80211_DEBUG
-	ic->ic_debug = ieee80211_debug;
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"debug", CTLFLAG_RW, &ic->ic_debug, 0,
-		"control debugging printfs");
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("control debugging printfs"),
+	    NULL, ieee80211_debug, &ic->ic_debug, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 #endif
 	/* XXX inherit from tunables */
-	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"inact_run", CTLTYPE_INT | CTLFLAG_RW, &ic->ic_inact_run, 0,
-		ieee80211_sysctl_inact, "I",
-		"station inactivity timeout (sec)");
-	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"inact_probe", CTLTYPE_INT | CTLFLAG_RW, &ic->ic_inact_probe, 0,
-		ieee80211_sysctl_inact, "I",
-		"station inactivity probe timeout (sec)");
-	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"inact_auth", CTLTYPE_INT | CTLFLAG_RW, &ic->ic_inact_auth, 0,
-		ieee80211_sysctl_inact, "I",
-		"station authentication timeout (sec)");
-	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"inact_init", CTLTYPE_INT | CTLFLAG_RW, &ic->ic_inact_init, 0,
-		ieee80211_sysctl_inact, "I",
-		"station initial state timeout (sec)");
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(oid), OID_AUTO,
-		"driver_caps", CTLFLAG_RW, &ic->ic_caps, 0,
-		"driver capabilities");
-	ic->ic_sysctl = ctx;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "inact_run", SYSCTL_DESCR("station inactivity timeout (sec)"),
+	    ieee80211_sysctl_inact, 0, &ic->ic_inact_run, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "inact_probe",
+	    SYSCTL_DESCR("station inactivity probe timeout (sec)"),
+	    ieee80211_sysctl_inact, 0, &ic->ic_inact_probe, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "inact_auth",
+	    SYSCTL_DESCR("station authentication timeout (sec)"),
+	    ieee80211_sysctl_inact, 0, &ic->ic_inact_auth, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "inact_init",
+	    SYSCTL_DESCR("station initial state timeout (sec)"),
+	    ieee80211_sysctl_inact, 0, &ic->ic_inact_init, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "driver_caps", SYSCTL_DESCR("driver capabilities"),
+	    NULL, 0, &ic->ic_caps, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 }
 
 void
 ieee80211_sysctl_detach(struct ieee80211com *ic)
 {
+	sysctl_teardown(&ic->ic_sysctllog);
+}
 
-	if (ic->ic_sysctl != NULL) {
-		sysctl_ctx_free(ic->ic_sysctl);
-		ic->ic_sysctl = NULL;
+/*
+ * Pointers for testing:
+ *
+ *	If there are no interfaces, or else no 802.11 interfaces,
+ *	ieee80211_node_walkfirst must return NULL.
+ *
+ *	If there is any single 802.11 interface, ieee80211_node_walkfirst
+ *	must not return NULL.
+ */	
+static struct ieee80211_node *
+ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
+    u_short if_index)
+{
+	struct ieee80211com *ic;
+	(void)memset(nw, 0, sizeof(*nw));
+
+	nw->nw_ifindex = if_index;
+
+	LIST_FOREACH(ic, &ieee80211com_head, ic_list) {
+		if (if_index != 0 && ic->ic_ifp->if_index != if_index)
+			continue;
+		nw->nw_ic = ic;
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_sta.nt_node);
+		break;
 	}
+
+	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
+
+	return nw->nw_ni;
+}
+
+static struct ieee80211_node *
+ieee80211_node_walknext(struct ieee80211_node_walk *nw)
+{
+	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
+
+	if (nw->nw_ic == NULL && nw->nw_ni == NULL)
+		return NULL;
+
+	nw->nw_ni = TAILQ_NEXT(nw->nw_ni, ni_list);
+
+	if (nw->nw_ni == NULL) {
+		if (nw->nw_ifindex != 0)
+			return NULL;
+
+		nw->nw_ic = LIST_NEXT(nw->nw_ic, ic_list);
+		if (nw->nw_ic == NULL)
+			return NULL;
+
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_sta.nt_node);
+	}
+
+	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
+
+	return nw->nw_ni;
+}
+
+static void
+ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
+    struct ieee80211_node_sysctl *ns, int ifindex,
+    struct ieee80211_channel *chan0, int is_bss)
+{
+	ns->ns_ifindex = ifindex;
+	ns->ns_capinfo = ni->ni_capinfo;
+	ns->ns_flags = (is_bss) ? IEEE80211_NODE_SYSCTL_F_BSS : 0;
+	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
+	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
+	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
+		ns->ns_freq = ni->ni_chan->ic_freq;
+		ns->ns_chanflags = ni->ni_chan->ic_flags;
+		ns->ns_chanidx = ni->ni_chan - chan0;
+	} else {
+		ns->ns_freq = ns->ns_chanflags = 0;
+		ns->ns_chanidx = 0;
+	}
+	ns->ns_rssi = ni->ni_rssi;
+	ns->ns_esslen = ni->ni_esslen;
+	(void)memcpy(ns->ns_essid, ni->ni_essid, sizeof(ns->ns_essid));
+	ns->ns_erp = ni->ni_erp;
+	ns->ns_associd = ni->ni_associd;
+	ns->ns_inact = ni->ni_inact * IEEE80211_INACT_WAIT;
+	ns->ns_rstamp = ni->ni_rstamp;
+	ns->ns_rates = ni->ni_rates;
+	ns->ns_txrate = ni->ni_txrate;
+	ns->ns_intval = ni->ni_intval;
+	(void)memcpy(ns->ns_tstamp, &ni->ni_tstamp, sizeof(ns->ns_tstamp));
+	ns->ns_txseq = ni->ni_txseqs[0];
+	ns->ns_rxseq = ni->ni_rxseqs[0];
+	ns->ns_fhdwell = ni->ni_fhdwell;
+	ns->ns_fhindex = ni->ni_fhindex;
+	ns->ns_fails = ni->ni_fails;
+}
+
+/* Between two examinations of the sysctl tree, I expect each
+ * interface to add no more than 5 nodes.
+ */
+#define IEEE80211_SYSCTL_NODE_GROWTH	5
+
+static int
+ieee80211_sysctl_node(SYSCTLFN_ARGS)
+{
+	struct ieee80211_node_walk nw;
+	struct ieee80211_node *ni;
+	struct ieee80211_node_sysctl ns;
+	char *dp;
+	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
+	size_t len, needed, eltsize, out_size;
+	int error, s, nelt;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != IEEE80211_SYSCTL_NODENAMELEN)
+		return (EINVAL);
+
+	/* ifindex.op.arg.header-type.eltsize.nelt */
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	ifindex = name[IEEE80211_SYSCTL_NODENAME_IF];
+	op = name[IEEE80211_SYSCTL_NODENAME_OP];
+	arg = name[IEEE80211_SYSCTL_NODENAME_ARG];
+	hdr_type = name[IEEE80211_SYSCTL_NODENAME_TYPE];
+	eltsize = name[IEEE80211_SYSCTL_NODENAME_ELTSIZE];
+	nelt = name[IEEE80211_SYSCTL_NODENAME_ELTCOUNT];
+	out_size = MIN(sizeof(ns), eltsize);
+
+	if (op != IEEE80211_SYSCTL_OP_ALL || arg != 0 ||
+	    hdr_type != IEEE80211_SYSCTL_T_NODE || eltsize < 1 || nelt < 0)
+		return (EINVAL);
+
+	error = 0;
+	needed = 0;
+	ifcount = 0;
+	last_ifindex = 0;
+
+	s = splnet();
+
+	for (ni = ieee80211_node_walkfirst(&nw, ifindex); ni != NULL;
+	     ni = ieee80211_node_walknext(&nw)) {
+		struct ieee80211com *ic;
+
+		ic = nw.nw_ic;
+		cur_ifindex = ic->ic_ifp->if_index;
+
+		if (cur_ifindex != last_ifindex) {
+			ifcount++;
+			last_ifindex = cur_ifindex;
+		}
+
+		if (nelt <= 0)
+			continue;
+
+		if (len >= eltsize) {
+			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
+			    &ic->ic_channels[0], ni == ic->ic_bss);
+			error = copyout(&ns, dp, out_size);
+			if (error)
+				goto cleanup;
+			dp += eltsize;
+			len -= eltsize;
+		}
+		needed += eltsize;
+		if (nelt != INT_MAX)
+			nelt--;
+	}
+cleanup:
+	splx(s);
+
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += ifcount * IEEE80211_SYSCTL_NODE_GROWTH * eltsize;
+
+	return (error);
+}
+
+/*
+ * Setup sysctl(3) MIB, net.ieee80211.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
+{
+	int rc;
+	const struct sysctlnode *cnode, *rnode;
+
+	if ((rnode = ieee80211_sysctl_treetop(clog)) == NULL)
+		return;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nodes", "client/peer stations",
+	    ieee80211_sysctl_node, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef IEEE80211_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("control debugging printfs"),
+	    NULL, 0, &ieee80211_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif /* IEEE80211_DEBUG */
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
 int
 ieee80211_node_dectestref(struct ieee80211_node *ni)
 {
-	/* XXX need equivalent of atomic_dec_and_test */
-	atomic_subtract_int(&ni->ni_refcnt, 1);
-	return atomic_cmpset_int(&ni->ni_refcnt, 0, 1);
+	int rc, s;
+	s = splnet();
+	if (--ni->ni_refcnt == 0) {
+		rc = 1;
+		ni->ni_refcnt = 1;
+	} else
+		rc = 0;
+	splx(s);
+	return rc;
+}
+
+void
+if_printf(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	printf("%s: ", ifp->if_xname);
+	vprintf(fmt, ap);
+
+	va_end(ap);
+	return;
+}
+
+struct mbuf *
+m_getcl(int how, int type, int flags)
+{
+	struct mbuf *m;
+
+	if ((flags & M_PKTHDR) != 0)
+		MGETHDR(m, how, type);
+	else
+		MGET(m, how, type);
+
+	if (m == NULL)
+		return NULL;
+
+	MCLGET(m, flags);
+
+	if ((m->m_flags & M_EXT) == 0) {
+		m_free(m);
+		return NULL;
+	}
+	return m;
+}
+
+/*
+ * Append the specified data to the indicated mbuf chain,
+ * Extend the mbuf chain if the new data does not fit in
+ * existing space.
+ *
+ * Return 1 if able to complete the job; otherwise 0.
+ */
+int
+m_append(struct mbuf *m0, int len, caddr_t cp)
+{
+	struct mbuf *m, *n;
+	int remainder, space;
+
+	for (m = m0; m->m_next != NULL; m = m->m_next)
+		;
+	remainder = len;
+	space = M_TRAILINGSPACE(m);
+	if (space > 0) {
+		/*
+		 * Copy into available space.
+		 */
+		if (space > remainder)
+			space = remainder;
+		memmove(mtod(m, caddr_t) + m->m_len, cp, space);
+		m->m_len += space;
+		cp += space, remainder -= space;
+	}
+	while (remainder > 0) {
+		/*
+		 * Allocate a new mbuf; could check space
+		 * and allocate a cluster instead.
+		 */
+		n = m_get(M_DONTWAIT, m->m_type);
+		if (n == NULL)
+			break;
+		n->m_len = min(MLEN, remainder);
+		memmove(mtod(n, caddr_t), cp, n->m_len);
+		cp += n->m_len, remainder -= n->m_len;
+		m->m_next = n;
+		m = n;
+	}
+	if (m0->m_flags & M_PKTHDR)
+		m0->m_pkthdr.len += len - remainder;
+	return (remainder == 0);
 }
 
 /*
@@ -168,8 +543,8 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 	 */
 	/* XXX 4-address frame? */
 	len = roundup(sizeof(struct ieee80211_frame) + pktlen, 4);
-	KASSERT(len <= MCLBYTES, ("802.11 mgt frame too large: %u", len));
-	if (len < MINCLSIZE) {
+	IASSERT(len <= MCLBYTES, ("802.11 mgt frame too large: %u", len));
+	if (len <= MHLEN) {
 		m = m_gethdr(M_NOWAIT, MT_HEADER);
 		/*
 		 * Align the data in case additional headers are added.
@@ -188,8 +563,6 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 	return m;
 }
 
-#include <sys/libkern.h>
-
 void
 get_random_bytes(void *p, size_t n)
 {
@@ -198,7 +571,7 @@ get_random_bytes(void *p, size_t n)
 	while (n > 0) {
 		u_int32_t v = arc4random();
 		size_t nb = n > sizeof(u_int32_t) ? sizeof(u_int32_t) : n;
-		bcopy(&v, dp, n > sizeof(u_int32_t) ? sizeof(u_int32_t) : n);
+		(void)memcpy(dp, &v, nb);
 		dp += sizeof(u_int32_t), n -= nb;
 	}
 }
@@ -209,18 +582,18 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_join_event iev;
 
-	memset(&iev, 0, sizeof(iev));
 	if (ni == ic->ic_bss) {
+		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_bssid);
 		rt_ieee80211msg(ifp, newassoc ?
 			RTM_IEEE80211_ASSOC : RTM_IEEE80211_REASSOC,
 			&iev, sizeof(iev));
 		if_link_state_change(ifp, LINK_STATE_UP);
-	} else {
+	} else if (newassoc) {
+		/* fire off wireless event only for new station */
+		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_macaddr);
-		rt_ieee80211msg(ifp, newassoc ?
-			RTM_IEEE80211_JOIN : RTM_IEEE80211_REJOIN,
-			&iev, sizeof(iev));
+		rt_ieee80211msg(ifp, RTM_IEEE80211_JOIN, &iev, sizeof(iev));
 	}
 }
 
@@ -315,31 +688,3 @@ ieee80211_load_module(const char *modname)
 	printf("%s: load the %s module by hand for now.\n", __func__, modname);
 #endif
 }
-
-/*
- * Module glue.
- *
- * NB: the module name is "wlan" for compatibility with NetBSD.
- */
-static int
-wlan_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		if (bootverbose)
-			printf("wlan: <802.11 Link Layer>\n");
-		return 0;
-	case MOD_UNLOAD:
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t wlan_mod = {
-	"wlan",
-	wlan_modevent,
-	0
-};
-DECLARE_MODULE(wlan, wlan_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(wlan, 1);
-MODULE_DEPEND(wlan, ether, 1, 1, 1);

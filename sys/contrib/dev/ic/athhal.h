@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal.h,v 1.1.1.1 2005/06/21 20:37:50 dyoung Exp $
+ * $Id: athhal.h,v 1.2 2005/06/22 06:15:37 dyoung Exp $
  */
 
 #ifndef _ATH_AH_H_
@@ -46,7 +46,7 @@
  * follow must call back into the HAL through interface, supplying the
  * reference as the first parameter.
  */
-#include "ah_osdep.h"
+#include "athhal_osdep.h"
 
 /*
  * __ahdecl is analogous to _cdecl; it defines the calling

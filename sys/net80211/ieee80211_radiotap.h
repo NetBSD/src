@@ -1,5 +1,5 @@
-/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.10 2005/01/04 00:34:58 dyoung Exp $ */
+/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.11 2005/06/22 06:16:02 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -46,11 +46,11 @@
  * function of...") that I cannot set false expectations for lawyerly
  * readers.
  */
-#ifdef _KERNEL
+#if defined(__KERNEL__) || defined(_KERNEL)
 #ifndef DLT_IEEE802_11_RADIO
 #define	DLT_IEEE802_11_RADIO	127	/* 802.11 plus WLAN header */
 #endif
-#endif /* _KERNEL */
+#endif /* defined(__KERNEL__) || defined(_KERNEL) */
 
 /* XXX tcpdump/libpcap do not tolerate variable-length headers,
  * yet, so we pad every radiotap header to 64 bytes. Ugh.
@@ -178,7 +178,6 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_ANTENNA = 11,
 	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
-	IEEE80211_RADIOTAP_FCS = 14,
 	IEEE80211_RADIOTAP_EXT = 31,
 };
 
@@ -207,6 +206,11 @@ enum ieee80211_radiotap_type {
 						 */
 #define	IEEE80211_RADIOTAP_F_FRAG	0x08	/* sent/received
 						 * with fragmentation
+						 */
+#define	IEEE80211_RADIOTAP_F_FCS	0x10	/* frame includes FCS */
+#define	IEEE80211_RADIOTAP_F_DATAPAD	0x20	/* frame has padding between
+						 * 802.11 header and payload
+						 * (to 32-bit boundary)
 						 */
 
 #endif /* _NET_IF_IEEE80211RADIOTAP_H_ */

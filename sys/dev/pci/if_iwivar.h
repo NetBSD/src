@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.2 2005/01/11 18:49:05 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -68,7 +68,7 @@ struct iwi_tx_radiotap_header {
 
 struct iwi_softc {
 	struct device		sc_dev;
-
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
@@ -137,6 +137,8 @@ struct iwi_softc {
 	int			sc_txtap_len;
 #endif
 };
+
+#define	sc_if	sc_ec.ec_if
 
 #define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
 #define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)

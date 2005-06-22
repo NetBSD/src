@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.10 2005/06/20 02:49:18 atatat Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.11 2005/06/22 06:16:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -29,6 +29,11 @@
  * OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.11 2005/06/22 06:16:02 dyoung Exp $");
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kernel.h>		/* for hz */
@@ -38,9 +43,9 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211.h>
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_rssadapt.h>
 
 #ifdef interpolate
@@ -248,7 +253,7 @@ out:
 void
 ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
 {
-	long interval;
+	long interval; 
 
 	ra->ra_pktrate =
 	    (ra->ra_pktrate + 10 * (ra->ra_nfail + ra->ra_nok)) / 2;
@@ -274,7 +279,7 @@ ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
 	                              ra->ra_avg_rssi, (rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: src %s rssi %d avg %d -> %d\n",
-	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
+	    ic->ic_ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 	    rssi, last_avg_rssi, ra->ra_avg_rssi));
 }
 
@@ -317,7 +322,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 	                (id->id_rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: dst %s rssi %d threshold[%d, %d.%d] %d -> %d\n",
-	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
+	    ic->ic_ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 	    id->id_rssi, id->id_len,
 	    (rs->rs_rates[id->id_rateidx] & IEEE80211_RATE_VAL) / 2,
 	    (rs->rs_rates[id->id_rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
@@ -354,7 +359,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 		rate = (rs->rs_rates[id->id_rateidx + 1] & IEEE80211_RATE_VAL);
 
 		RSSADAPT_PRINTF(("%s: threshold[%d, %d.%d] decay %d ",
-		    ic->ic_if.if_xname,
+		    ic->ic_ifp->if_xname,
 		    IEEE80211_RSSADAPT_BKT0 << (IEEE80211_RSSADAPT_BKTPOWER* i),
 		    rate / 2, rate * 5 % 10, (*thrs)[id->id_rateidx + 1]));
 		oldthr = (*thrs)[id->id_rateidx + 1];
@@ -370,7 +375,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 
 #ifdef IEEE80211_DEBUG
 	if (RSSADAPT_DO_PRINT()) {
-		printf("%s: dst %s thresholds\n", ic->ic_if.if_xname,
+		printf("%s: dst %s thresholds\n", ic->ic_ifp->if_xname,
 		    ether_sprintf(ni->ni_macaddr));
 		for (i = 0; i < IEEE80211_RSSADAPT_BKTS; i++) {
 			printf("%d-byte", IEEE80211_RSSADAPT_BKT0 << (IEEE80211_RSSADAPT_BKTPOWER * i));

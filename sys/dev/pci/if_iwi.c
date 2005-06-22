@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.8 2005/06/20 09:03:44 sekiya Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.8 2005/06/20 09:03:44 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -171,7 +171,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
 	char devinfo[256];
@@ -246,6 +246,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
@@ -315,11 +316,11 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(ic);
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwi_newstate;
-	ieee80211_media_init(ifp, iwi_media_change, iwi_media_status);
+	ieee80211_media_init(ic, iwi_media_change, iwi_media_status);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -339,7 +340,7 @@ static int
 iwi_detach(struct device* self, int flags)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	iwi_stop(ifp, 1);
 	iwi_free_firmware(sc);
@@ -347,7 +348,7 @@ iwi_detach(struct device* self, int flags)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	ieee80211_ifdetach(ifp);
+	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 
 	iwi_release(sc);
@@ -630,7 +631,7 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 static int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct iwi_softc *sc = ic->ic_softc;
+	struct iwi_softc *sc = ic->ic_ifp->if_softc;
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -755,9 +756,9 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
     struct iwi_frame *frame)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
-	struct ieee80211_frame *wh;
+	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
 	int error;
 
@@ -783,7 +784,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 
 	m_adj(m, sizeof (struct iwi_hdr) + sizeof (struct iwi_frame));
 
-	wh = mtod(m, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * Hardware decrypts the frame itself but leaves the WEP bit
@@ -795,7 +796,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		    IEEE80211_WEP_KIDLEN, wh, sizeof (struct ieee80211_frame));
 		m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
 		m_adj(m, -IEEE80211_WEP_CRCLEN);
-		wh = mtod(m, struct ieee80211_frame *);
+		wh = mtod(m, struct ieee80211_frame_min *);
 	}
 
 #if NBPFILTER > 0
@@ -812,9 +813,9 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* Send the frame to the upper layer */
-	ieee80211_input(ifp, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
+	ieee80211_input(ic, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
 
-	ieee80211_release_node(ic, ni);
+	ieee80211_free_node(ni);
 
 	MGETHDR(buf->m, M_DONTWAIT, MT_DATA);
 	if (buf->m == NULL) {
@@ -910,7 +911,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 			break;
 
 		case IWI_DEASSOCIATED:
-			ieee80211_begin_scan(ic);
+			ieee80211_begin_scan(ic, 0);
 			break;
 
 		default:
@@ -975,8 +976,7 @@ iwi_rx_intr(struct iwi_softc *sc)
 static void
 iwi_tx_intr(struct iwi_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct iwi_tx_buf *buf;
 	u_int32_t r, i;
 
@@ -990,7 +990,7 @@ iwi_tx_intr(struct iwi_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, buf->map);
 		m_freem(buf->m);
 		buf->m = NULL;
-		ieee80211_release_node(ic, buf->ni);
+		ieee80211_free_node(buf->ni);
 		buf->ni = NULL;
 
 		sc->tx_queued--;
@@ -1023,7 +1023,7 @@ iwi_intr(void *arg)
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
-		iwi_stop(&sc->sc_ic.ic_if, 1);
+		iwi_stop(&sc->sc_if, 1);
 	}
 
 	if (r & IWI_INTR_FW_INITED) {
@@ -1033,7 +1033,7 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_RADIO_OFF) {
 		DPRINTF(("radio transmitter off\n"));
-		iwi_stop(&sc->sc_ic.ic_if, 1);
+		iwi_stop(&sc->sc_if, 1);
 	}
 
 	if (r & IWI_INTR_RX_TRANSFER)
@@ -1165,7 +1165,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
-		desc->wep_txkey = ic->ic_wep_txkey;
+		desc->wep_txkey = ic->ic_def_txkey;
 	} else
 		desc->flags |= IWI_DATA_FLAG_NO_WEP;
 
@@ -1223,7 +1223,12 @@ iwi_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-		m0 = ieee80211_encap(ifp, m0, &ni);
+		if ((ni = ieee80211_find_txnode(ic,
+		    mtod(m0, struct ether_header *)->ether_dhost)) == NULL) {
+			m_freem(m0);
+			continue;
+		}
+		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL)
 			continue;
 
@@ -1234,7 +1239,7 @@ iwi_start(struct ifnet *ifp)
 
 		if (iwi_tx_start(ifp, m0, ni) != 0) {
 			if (ni != NULL)
-				ieee80211_release_node(ic, ni);
+				ieee80211_free_node(ni);
 			break;
 		}
 
@@ -1261,7 +1266,7 @@ iwi_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 	}
 
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
 static int
@@ -1350,7 +1355,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 	}
 
 	if (error == ENETRESET && cmd != SIOCADDMULTI) {
@@ -1707,11 +1712,11 @@ static int
 iwi_config(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct iwi_configuration config;
 	struct iwi_rateset rs;
 	struct iwi_txpower power;
-	struct ieee80211_wepkey *k;
+	struct ieee80211_key *k;
 	struct iwi_wep_key wepkey;
 	u_int32_t data;
 	int error, i;
@@ -1797,9 +1802,9 @@ iwi_config(struct iwi_softc *sc)
 		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
 			wepkey.cmd = IWI_WEP_KEY_CMD_SETKEY;
 			wepkey.idx = i;
-			wepkey.len = k->wk_len;
+			wepkey.len = k->wk_keylen;
 			memset(wepkey.key, 0, sizeof wepkey.key);
-			memcpy(wepkey.key, k->wk_key, k->wk_len);
+			memcpy(wepkey.key, k->wk_key, k->wk_keylen);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = iwi_cmd(sc, IWI_CMD_SET_WEP_KEY, &wepkey,
@@ -1927,8 +1932,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	    IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	if (sc->authmode == IEEE80211_AUTH_SHARED)
-		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;
-	memcpy(assoc.tstamp, ni->ni_tstamp, 8);
+		assoc.auth = (ic->ic_def_txkey << 4) | IWI_AUTH_SHARED;
+	memcpy(assoc.tstamp, ni->ni_tstamp.data, 8);
 	assoc.capinfo = htole16(ni->ni_capinfo);
 	assoc.lintval = htole16(ic->ic_lintval);
 	assoc.intval = htole16(ni->ni_intval);
@@ -2029,7 +2034,7 @@ iwi_init(struct ifnet *ifp)
 	}
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		ieee80211_begin_scan(ic);
+		ieee80211_begin_scan(ic, 1);
 	else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
@@ -2066,7 +2071,7 @@ iwi_stop(struct ifnet *ifp, int disable)
 			buf->m = NULL;
 
 			if (buf->ni != NULL) {
-				ieee80211_release_node(ic, buf->ni);
+				ieee80211_free_node(buf->ni);
 				buf->ni = NULL;
 			}
 		}

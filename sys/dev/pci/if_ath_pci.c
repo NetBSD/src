@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ath_pci.c,v 1.8 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*-
- * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,17 +38,15 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.8 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $");
 #endif
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
  */
-
-#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,22 +61,21 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.8 2005/02/27 00:27:32 perry Exp $")
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_llc.h>
 #include <net/if_arp.h>
 
-#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #endif
 
-#include <dev/ic/athcompat.h>
+#include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <../contrib/sys/dev/ic/athhal.h>
+#include <contrib/dev/ic/athhal.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -92,19 +89,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.8 2005/02/27 00:27:32 perry Exp $")
 
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
-#ifdef __FreeBSD__
-	struct resource		*sc_sr;		/* memory resource */
-	struct resource		*sc_irq;	/* irq resource */
-#else
 	pci_chipset_tag_t	sc_pc;
-#endif
-	void			*sc_ih;		/* intererupt handler */
-	u_int8_t		sc_saved_intline;
-	u_int8_t		sc_saved_cachelinesz;
-	u_int8_t		sc_saved_lattimer;
+	void			*sc_ih;		/* interrupt handler */
 };
 
 #define	BS_BAR	0x10
+#define	PCIR_RETRY_TIMEOUT_REG		0x40
+#define	PCIR_RETRY_TIMEOUT_MASK		0x0000ff00
 
 static int ath_pci_match(struct device *, struct cfdata *, void *);
 static void ath_pci_attach(struct device *, struct device *, void *);
@@ -118,41 +109,49 @@ CFATTACH_DECL(ath_pci,
     ath_pci_detach,
     NULL);
 
-/*
- * translate some product code.  it is a workaround until HAL gets updated.
- */
-static u_int16_t
-ath_product(pcireg_t pa_id)
-{
-	u_int16_t prodid;
-
-	prodid = PCI_PRODUCT(pa_id);
-	switch (prodid) {
-	case 0x1014:	/* IBM 31P9702 minipci a/b/g card */
-		prodid = PCI_PRODUCT_ATHEROS_AR5212;
-		break;
-	default:
-		break;
-	}
-	return prodid;
-}
-
 static int
 ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
-	pci_vendor_id_t vendor;
 
-	vendor = PCI_VENDOR(pa->pa_id);
-	/* XXX HACK until HAL is updated. */
-	if (vendor == 0x128c)
-		vendor = PCI_VENDOR_ATHEROS;
-	devname = ath_hal_probe(vendor, ath_product(pa->pa_id));
-	if (devname)
+	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+	if (devname != NULL)
 		return 1;
-
 	return 0;
+}
+
+static int
+ath_pci_setup(struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	uint32_t res;
+	/*
+	 * Enable memory mapping and bus mastering.
+	 */
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	        PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
+	res = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+
+	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
+		aprint_error("couldn't enable memory mapping\n");
+		return 0;
+	}
+	if ((res & PCI_COMMAND_MASTER_ENABLE) == 0) {
+		aprint_error("couldn't enable bus mastering\n");
+		return 0;
+	}
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with C3 CPU state.
+	 */
+	pci_conf_write(pc, pa->pa_tag, PCIR_RETRY_TIMEOUT_REG,
+	    pci_conf_read(pc, pa->pa_tag, PCIR_RETRY_TIMEOUT_REG) &
+	    ~PCIR_RETRY_TIMEOUT_MASK);
+
+	return 1;
 }
 
 static void
@@ -160,7 +159,6 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 	struct ath_softc *sc = &psc->sc_sc;
-	u_int32_t res;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t iot;
@@ -171,25 +169,13 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->sc_pc = pc;
 
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	        PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
-	res = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
-		aprint_error("couldn't enable memory mapping\n");
+	if (!ath_pci_setup(pa))
 		goto bad;
-	}
-
-	if ((res & PCI_COMMAND_MASTER_ENABLE) == 0) {
-		aprint_error("couldn't enable bus mastering\n");
-		goto bad;
-	}
 
 	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh,
+	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
 	    NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
@@ -207,7 +193,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad1;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih); 
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ath_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error("couldn't map interrupt\n");
@@ -225,7 +211,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad3;
 	}
 
-	if (ath_attach(ath_product(pa->pa_id), sc) == 0)
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
 	shutdownhook_disestablish(hook);

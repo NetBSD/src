@@ -33,28 +33,32 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.1.1.1 2005/06/21 20:37:50 dyoung Exp $
+ * $Id: athhal_osdep.c,v 1.2 2005/06/22 06:15:37 dyoung Exp $
  */
 #include "opt_ah.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/module.h>
 #include <sys/sysctl.h>
-#include <sys/bus.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <machine/stdarg.h>
 
-#include <net/ethernet.h>		/* XXX for ether_sprintf */
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_media.h>
+#include <net/if_arp.h>
+#include <net/if_ether.h>
 
-#include <contrib/dev/ath/ah.h>
+#include <contrib/dev/ic/athhal.h>
+
+#define	__printflike(__a, __b)	__attribute__((__format__(__printf__,__a,__b)))
 
 extern	void ath_hal_printf(struct ath_hal *, const char*, ...)
 		__printflike(2,3);
-extern	void ath_hal_vprintf(struct ath_hal *, const char*, __va_list)
+extern	void ath_hal_vprintf(struct ath_hal *, const char*, va_list)
 		__printflike(2, 0);
 extern	const char* ath_hal_ether_sprintf(const u_int8_t *mac);
 extern	void *ath_hal_malloc(size_t);
@@ -68,32 +72,68 @@ extern	void HALDEBUG(struct ath_hal *ah, const char* fmt, ...);
 extern	void HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...);
 #endif /* AH_DEBUG */
 
-/* NB: put this here instead of the driver to avoid circular references */
-SYSCTL_NODE(_hw, OID_AUTO, ath, CTLFLAG_RD, 0, "Atheros driver parameters");
-SYSCTL_NODE(_hw_ath, OID_AUTO, hal, CTLFLAG_RD, 0, "Atheros HAL parameters");
-
 #ifdef AH_DEBUG
 static	int ath_hal_debug = 0;
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, debug, CTLFLAG_RW, &ath_hal_debug,
-	    0, "Atheros HAL debugging printfs");
-TUNABLE_INT("hw.ath.hal.debug", &ath_hal_debug);
 #endif /* AH_DEBUG */
 
-SYSCTL_STRING(_hw_ath_hal, OID_AUTO, version, CTLFLAG_RD, ath_hal_version, 0,
-	"Atheros HAL version");
-
 int	ath_hal_dma_beacon_response_time = 2;	/* in TU's */
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, dma_brt, CTLFLAG_RW,
-	   &ath_hal_dma_beacon_response_time, 0,
-	   "Atheros HAL DMA beacon response time");
 int	ath_hal_sw_beacon_response_time = 10;	/* in TU's */
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, sw_brt, CTLFLAG_RW,
-	   &ath_hal_sw_beacon_response_time, 0,
-	   "Atheros HAL software beacon response time");
 int	ath_hal_additional_swba_backoff = 0;	/* in TU's */
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, swba_backoff, CTLFLAG_RW,
-	   &ath_hal_additional_swba_backoff, 0,
-	   "Atheros HAL additional SWBA backoff time");
+
+SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
+{
+	int rc;
+	const struct sysctlnode *cnode, *rnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "ath", SYSCTL_DESCR("Atheros driver parameters"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "hal", SYSCTL_DESCR("Atheros HAL parameters"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "version",
+	    SYSCTL_DESCR("Atheros HAL version"), NULL, 0, &ath_hal_version, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "dma_brt",
+	    SYSCTL_DESCR("Atheros HAL DMA beacon response time"), NULL, 0,
+	    &ath_hal_dma_beacon_response_time, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "sw_brt",
+	    SYSCTL_DESCR("Atheros HAL software beacon response time"), NULL, 0,
+	    &ath_hal_sw_beacon_response_time, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "swba_backoff",
+	    SYSCTL_DESCR("Atheros HAL additional SWBA backoff time"), NULL, 0,
+	    &ath_hal_additional_swba_backoff, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef AH_DEBUG
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("Atheros HAL debugging printfs"), NULL, 0,
+	    &ath_hal_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif /* AH_DEBUG */
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
 
 void*
 ath_hal_malloc(size_t size)
@@ -182,10 +222,10 @@ ath_hal_setlogging(int enable)
 	int error;
 
 	if (enable) {
-		error = suser(curthread);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error == 0) {
 			error = alq_open(&ath_hal_alq, ath_hal_logfile,
-				curthread->td_ucred, ALQ_DEFAULT_CMODE,
+				curproc->p_ucred,
 				sizeof (struct athregrec), ath_hal_alq_qsize);
 			ath_hal_alq_lost = 0;
 			ath_hal_alq_emitdev = 1;
@@ -362,16 +402,22 @@ ath_hal_delay(int n)
 u_int32_t
 ath_hal_getuptime(struct ath_hal *ah)
 {
-	struct bintime bt;
-	getbinuptime(&bt);
-	return (bt.sec * 1000) +
-		(((uint64_t)1000 * (uint32_t)(bt.frac >> 32)) >> 32);
+	struct timeval boot, cur, diff;
+	int s;
+	s = splclock();
+	boot = boottime;
+	cur = time;
+	splx(s);
+
+	timersub(&cur, &boot, &diff);
+
+	return diff.tv_sec * 1000 + diff.tv_usec / 1000;
 }
 
 void
 ath_hal_memzero(void *dst, size_t n)
 {
-	bzero(dst, n);
+	(void)memset(dst, 0, n);
 }
 
 void *
@@ -379,37 +425,3 @@ ath_hal_memcpy(void *dst, const void *src, size_t n)
 {
 	return memcpy(dst, src, n);
 }
-
-/*
- * Module glue.
- */
-
-static int
-ath_hal_modevent(module_t mod, int type, void *unused)
-{
-	const char *sep;
-	int i;
-
-	switch (type) {
-	case MOD_LOAD:
-		printf("ath_hal: %s (", ath_hal_version);
-		sep = "";
-		for (i = 0; ath_hal_buildopts[i] != NULL; i++) {
-			printf("%s%s", sep, ath_hal_buildopts[i]);
-			sep = ", ";
-		}
-		printf(")\n");
-		return 0;
-	case MOD_UNLOAD:
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t ath_hal_mod = {
-	"ath_hal",
-	ath_hal_modevent,
-	0
-};
-DECLARE_MODULE(ath_hal, ath_hal_mod, SI_SUB_DRIVERS, SI_ORDER_ANY);
-MODULE_VERSION(ath_hal, 1);

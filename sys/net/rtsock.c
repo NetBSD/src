@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.77 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.77 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -101,6 +101,8 @@ struct walkarg {
 static struct mbuf *rt_msg1(int, struct rt_addrinfo *, caddr_t, int);
 static int rt_msg2(int, struct rt_addrinfo *, caddr_t, struct walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
+static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
+    struct rt_addrinfo *);
 static int sysctl_dumpentry(struct radix_node *, void *);
 static int sysctl_iflist(int, struct walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
@@ -537,6 +539,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, caddr_t data, int datalen)
 		break;
 
 	case RTM_IFANNOUNCE:
+	case RTM_IEEE80211:
 		len = sizeof(struct if_announcemsghdr);
 		break;
 
@@ -819,6 +822,20 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 	}
 }
 
+static struct mbuf *
+rt_makeifannouncemsg(struct ifnet *ifp, int type, int what,
+    struct rt_addrinfo *info)
+{
+	struct if_announcemsghdr ifan;
+
+	memset(info, 0, sizeof(*info));
+	memset(&ifan, 0, sizeof(ifan));
+	ifan.ifan_index = ifp->if_index;
+	strlcpy(ifan.ifan_name, ifp->if_xname, sizeof(ifan.ifan_name));
+	ifan.ifan_what = what;
+	return rt_msg1(type, info, (caddr_t)&ifan, sizeof(ifan));
+}
+
 /*
  * This is called to generate routing socket messages indicating
  * network interface arrival and departure.
@@ -826,20 +843,57 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 void
 rt_ifannouncemsg(struct ifnet *ifp, int what)
 {
-	struct if_announcemsghdr ifan;
 	struct mbuf *m;
 	struct rt_addrinfo info;
 
 	if (route_cb.any_count == 0)
 		return;
-	memset(&info, 0, sizeof(info));
-	memset(&ifan, 0, sizeof(ifan));
-	ifan.ifan_index = ifp->if_index;
-	strlcpy(ifan.ifan_name, ifp->if_xname, sizeof(ifan.ifan_name));
-	ifan.ifan_what = what;
-	m = rt_msg1(RTM_IFANNOUNCE, &info, (caddr_t)&ifan, sizeof(ifan));
-	if (m == 0)
+	m = rt_makeifannouncemsg(ifp, RTM_IFANNOUNCE, what, &info);
+	if (m == NULL)
 		return;
+	route_proto.sp_protocol = 0;
+	raw_input(m, &route_proto, &route_src, &route_dst);
+}
+
+/*
+ * This is called to generate routing socket messages indicating
+ * IEEE80211 wireless events.
+ * XXX we piggyback on the RTM_IFANNOUNCE msg format in a clumsy way.
+ */
+void
+rt_ieee80211msg(struct ifnet *ifp, int what, void *data, size_t data_len)
+{
+	struct mbuf *m;
+	struct rt_addrinfo info;
+
+	if (route_cb.any_count == 0)
+		return;
+	m = rt_makeifannouncemsg(ifp, RTM_IEEE80211, what, &info);
+	if (m == NULL)
+		return;
+	/*
+	 * Append the ieee80211 data.  Try to stick it in the
+	 * mbuf containing the ifannounce msg; otherwise allocate
+	 * a new mbuf and append.
+	 *
+	 * NB: we assume m is a single mbuf.
+	 */
+	if (data_len > M_TRAILINGSPACE(m)) {
+		struct mbuf *n = m_get(M_NOWAIT, MT_DATA);
+		if (n == NULL) {
+			m_freem(m);
+			return;
+		}
+		(void)memcpy(mtod(n, void *), data, data_len);
+		n->m_len = data_len;
+		m->m_next = n;
+	} else if (data_len > 0) {
+		(void)memcpy(mtod(m, u_int8_t *) + m->m_len, data, data_len);
+		m->m_len += data_len;
+	}
+	if (m->m_flags & M_PKTHDR)
+		m->m_pkthdr.len += data_len;
+	mtod(m, struct if_announcemsghdr *)->ifan_msglen += data_len;
 	route_proto.sp_protocol = 0;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 }

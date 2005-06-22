@@ -30,7 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.5 2004/12/31 22:42:38 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11 WEP crypto support.
@@ -40,14 +45,12 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.5 2004/12/31 22:
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/module.h>
 #include <sys/endian.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
 
 #include <net80211/ieee80211_var.h>
 
@@ -59,7 +62,7 @@ static	int wep_decap(struct ieee80211_key *, struct mbuf *);
 static	int wep_enmic(struct ieee80211_key *, struct mbuf *);
 static	int wep_demic(struct ieee80211_key *, struct mbuf *);
 
-static const struct ieee80211_cipher wep = {
+const struct ieee80211_cipher ieee80211_cipher_wep = {
 	.ic_name	= "WEP",
 	.ic_cipher	= IEEE80211_CIPHER_WEP,
 	.ic_header	= IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN,
@@ -73,6 +76,8 @@ static const struct ieee80211_cipher wep = {
 	.ic_enmic	= wep_enmic,
 	.ic_demic	= wep_demic,
 };
+
+#define	wep	ieee80211_cipher_wep
 
 static	int wep_encrypt(struct ieee80211_key *, struct mbuf *, int hdrlen);
 static	int wep_decrypt(struct ieee80211_key *, struct mbuf *, int hdrlen);
@@ -471,29 +476,3 @@ wep_decrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	return 1;
 #undef S_SWAP
 }
-
-/*
- * Module glue.
- */
-static int
-wep_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		ieee80211_crypto_register(&wep);
-		return 0;
-	case MOD_UNLOAD:
-		ieee80211_crypto_unregister(&wep);
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t wep_mod = {
-	"wlan_wep",
-	wep_modevent,
-	0
-};
-DECLARE_MODULE(wlan_wep, wep_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(wlan_wep, 1);
-MODULE_DEPEND(wlan_wep, wlan, 1, 1, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $");
 #include <net/if_media.h>
 #include <net/if_types.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -163,7 +163,7 @@ int
 an_attach(struct an_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int i, s;
 	struct an_rid_wepkey *akey;
 	int buflen, kid, rid;
@@ -262,6 +262,7 @@ an_attach(struct an_softc *sc)
 	ifp->if_watchdog = an_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_PMGT | IEEE80211_C_IBSS |
@@ -310,12 +311,12 @@ an_attach(struct an_softc *sc)
 	 * Call MI attach routine.
 	 */
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(ic);
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = an_newstate;
 
-	ieee80211_media_init(ifp, an_media_change, an_media_status);
+	ieee80211_media_init(ic, an_media_change, an_media_status);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -388,7 +389,8 @@ an_sysctl_verify_debug(SYSCTLFN_ARGS)
 int
 an_detach(struct an_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
 	if (!sc->sc_attached)
@@ -397,8 +399,7 @@ an_detach(struct an_softc *sc)
 	s = splnet();
 	sc->sc_invalid = 1;
 	an_stop(ifp, 1);
-	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
-	ieee80211_ifdetach(ifp);
+	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 	splx(s);
 	return 0;
@@ -418,7 +419,7 @@ an_activate(struct device *self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_invalid = 1;
-		if_deactivate(&sc->sc_ic.ic_if);
+		if_deactivate(&sc->sc_if);
 		break;
 	}
 	splx(s);
@@ -431,7 +432,7 @@ an_power(int why, void *arg)
 {
 	int s;
 	struct an_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	s = splnet();
 	switch (why) {
@@ -458,14 +459,14 @@ an_shutdown(struct an_softc *sc)
 {
 
 	if (sc->sc_attached)
-		an_stop(&sc->sc_ic.ic_if, 1);
+		an_stop(&sc->sc_if, 1);
 }
 
 int
 an_intr(void *arg)
 {
 	struct an_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int i;
 	u_int16_t status;
 
@@ -708,6 +709,7 @@ an_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 	struct an_txframe frmhdr;
+	struct ether_header *eh;
 	struct mbuf *m;
 	u_int16_t len;
 	int cur, fid;
@@ -742,12 +744,15 @@ an_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
-			ifp->if_oerrors++;
-			continue;
+		eh = mtod(m, struct ether_header *);
+		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
+		if (ni == NULL) {
+			/* NB: ieee80211_find_txnode does stat+msg */
+			goto bad;
 		}
-		if (ni != NULL)
-			ieee80211_release_node(ic, ni);
+		if ((m = ieee80211_encap(ic, m, ni)) == NULL)
+			goto bad;
+		ieee80211_free_node(ni);
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
@@ -801,18 +806,12 @@ an_start(struct ifnet *ifp)
 		}
 #endif
 		if (sizeof(frmhdr) + AN_TXGAP_802_11 + sizeof(len) +
-		    m->m_pkthdr.len > AN_TX_MAX_LEN) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
+		    m->m_pkthdr.len > AN_TX_MAX_LEN)
+			goto bad;
 
 		fid = sc->sc_txd[cur].d_fid;
-		if (an_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
+		if (an_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0)
+			goto bad;
 		/* dummy write to avoid seek. */
 		an_write_bap(sc, fid, -1, &frmhdr, AN_TXGAP_802_11);
 		an_mwrite_bap(sc, fid, -1, m, m->m_pkthdr.len);
@@ -831,6 +830,10 @@ an_start(struct ifnet *ifp)
 		ifp->if_timer = 1;
 		AN_INC(cur, AN_TX_RING_CNT);
 		sc->sc_txnext = cur;
+		continue;
+bad:
+		ifp->if_oerrors++;
+		m_freem(m);
 	}
 }
 
@@ -873,7 +876,7 @@ an_watchdog(struct ifnet *ifp)
 		}
 		ifp->if_timer = 1;
 	}
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
 static int
@@ -918,7 +921,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = an_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	default:
-		error = ieee80211_ioctl(ifp, command, data);
+		error = ieee80211_ioctl(&sc->sc_ic, command, data);
 		break;
 	}
 	if (error == ENETRESET) {
@@ -1181,7 +1184,7 @@ static int
 an_set_nwkey_eap(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 {
 	int i, error, len;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct an_rid_leapkey *key;
 	u_int16_t unibuf[sizeof(key->an_key)];
 	static const int leap_rid[] = { AN_RID_LEAP_PASS, AN_RID_LEAP_USER };
@@ -1345,8 +1348,8 @@ static void
 an_rx_intr(struct an_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	struct ieee80211_frame *wh;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
 	struct an_rxframe frmhdr;
 	struct mbuf *m;
@@ -1464,7 +1467,7 @@ an_rx_intr(struct an_softc *sc)
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
-	wh = mtod(m, struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * WEP is decrypted by hardware. Clear WEP bit
@@ -1479,15 +1482,15 @@ an_rx_intr(struct an_softc *sc)
 #endif /* AN_DEBUG */
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	ieee80211_input(ifp, m, ni, frmhdr.an_rx_signal_strength,
+	ieee80211_input(ic, m, ni, frmhdr.an_rx_signal_strength,
 	    le32toh(frmhdr.an_rx_time));
-	ieee80211_release_node(ic, ni);
+	ieee80211_free_node(ni);
 }
 
 static void
 an_tx_intr(struct an_softc *sc, int status)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int cur, fid;
 
 	sc->sc_tx_timer = 0;
@@ -1553,7 +1556,7 @@ an_cmd(struct an_softc *sc, int cmd, int val)
 
 	/* make sure that previous command completed */
 	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
-		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
+		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: command 0x%x busy\n", sc->sc_dev.dv_xname,
 			    CSR_READ_2(sc, AN_COMMAND));
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
@@ -1585,13 +1588,13 @@ an_cmd(struct an_softc *sc, int cmd, int val)
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 
 	if (i == AN_TIMEOUT) {
-		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
+		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: command 0x%x param 0x%x timeout\n",
 			    sc->sc_dev.dv_xname, cmd, val);
 		return ETIMEDOUT;
 	}
 	if (status & AN_STAT_CMD_RESULT) {
-		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
+		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: command 0x%x param 0x%x status 0x%x "
 			    "resp 0x%x 0x%x 0x%x\n",
 			    sc->sc_dev.dv_xname, cmd, val, status,
@@ -1802,7 +1805,7 @@ an_write_rid(struct an_softc *sc, int rid, void *buf, int buflen)
 static int
 an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct an_softc *sc = ic->ic_softc;
+	struct an_softc *sc = (struct an_softc *)ic->ic_ifp->if_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
 	enum ieee80211_state ostate;
 	int buflen;
@@ -1830,7 +1833,7 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		memcpy(ni->ni_essid, sc->sc_buf.sc_status.an_ssid,
 		    ni->ni_esslen);
 		ni->ni_rates = ic->ic_sup_rates[IEEE80211_MODE_11B];	/*XXX*/
-		if (ic->ic_if.if_flags & IFF_DEBUG) {
+		if (ic->ic_ifp->if_flags & IFF_DEBUG) {
 			printf("%s: ", sc->sc_dev.dv_xname);
 			if (ic->ic_opmode == IEEE80211_M_STA)
 				printf("associated ");

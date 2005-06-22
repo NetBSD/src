@@ -33,6 +33,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: athhal_version.h,v 1.1.1.1 2005/06/21 20:37:50 dyoung Exp $
+ * $Id: athhal_version.h,v 1.2 2005/06/22 06:15:37 dyoung Exp $
  */
 #define	ATH_HAL_VERSION	"0.9.14.9"

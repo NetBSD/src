@@ -1,7 +1,7 @@
-/*	$NetBSD: athioctl.h,v 1.6 2004/07/28 08:57:40 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.7 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*-
- * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.7 2004/04/02 23:57:10 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.9 2004/12/31 22:41:45 sam Exp $
  */
 
 /*
@@ -48,10 +48,13 @@ struct ath_stats {
 	u_int32_t	ast_watchdog;	/* device reset by watchdog */
 	u_int32_t	ast_hardware;	/* fatal hardware error interrupts */
 	u_int32_t	ast_bmiss;	/* beacon miss interrupts */
+	u_int32_t	ast_bstuck;	/* beacon stuck interrupts */
 	u_int32_t	ast_rxorn;	/* rx overrun interrupts */
 	u_int32_t	ast_rxeol;	/* rx eol interrupts */
 	u_int32_t	ast_txurn;	/* tx underrun interrupts */
+	u_int32_t	ast_mib;	/* mib interrupts */
 	u_int32_t	ast_intrcoal;	/* interrupts coalesced */
+	u_int32_t	ast_tx_packets;	/* packet sent on the interface */
 	u_int32_t	ast_tx_mgmt;	/* management frames transmitted */
 	u_int32_t	ast_tx_discard;	/* frames discarded prior to assoc */
 	u_int32_t	ast_tx_qstop;	/* output stopped 'cuz no buffer */
@@ -74,17 +77,25 @@ struct ath_stats {
 	u_int32_t	ast_tx_shortpre;/* tx frames with short preamble */
 	u_int32_t	ast_tx_altrate;	/* tx frames with alternate rate */
 	u_int32_t	ast_tx_protect;	/* tx frames with protection */
+	u_int32_t	ast_tx_ctsburst;/* tx frames with cts and bursting */
+	u_int32_t	ast_tx_ctsext;	/* tx frames with cts extension */
 	u_int32_t	ast_rx_nombuf;	/* rx setup failed 'cuz no mbuf */
 	u_int32_t	ast_rx_busdma;	/* rx setup failed for dma resrcs */
 	u_int32_t	ast_rx_orn;	/* rx failed 'cuz of desc overrun */
 	u_int32_t	ast_rx_crcerr;	/* rx failed 'cuz of bad CRC */
 	u_int32_t	ast_rx_fifoerr;	/* rx failed 'cuz of FIFO overrun */
 	u_int32_t	ast_rx_badcrypt;/* rx failed 'cuz decryption */
+	u_int32_t	ast_rx_badmic;	/* rx failed 'cuz MIC failure */
 	u_int32_t	ast_rx_phyerr;	/* rx failed 'cuz of PHY err */
 	u_int32_t	ast_rx_phy[32];	/* rx PHY error per-code counts */
 	u_int32_t	ast_rx_tooshort;/* rx discarded 'cuz frame too short */
 	u_int32_t	ast_rx_toobig;	/* rx discarded 'cuz frame too large */
+	u_int32_t	ast_rx_packets;	/* packet recv on the interface */
+	u_int32_t	ast_rx_mgt;	/* management frames received */
 	u_int32_t	ast_rx_ctl;	/* rx discarded 'cuz ctl frame */
+	int8_t		ast_tx_rssi;	/* tx rssi of last ack */
+	int8_t		ast_rx_rssi;	/* rx rssi from histogram */
+	u_int32_t	ast_be_xmit;	/* beacons transmitted */
 	u_int32_t	ast_be_nombuf;	/* beacon setup failed 'cuz no mbuf */
 	u_int32_t	ast_per_cal;	/* periodic calibration calls */
 	u_int32_t	ast_per_calfail;/* periodic calibration failed */
@@ -92,6 +103,10 @@ struct ath_stats {
 	u_int32_t	ast_rate_calls;	/* rate control checks */
 	u_int32_t	ast_rate_raise;	/* rate control raised xmit rate */
 	u_int32_t	ast_rate_drop;	/* rate control dropped xmit rate */
+	u_int32_t	ast_ant_defswitch;/* rx/default antenna switches */
+	u_int32_t	ast_ant_txswitch;/* tx antenna switches */
+	u_int32_t	ast_ant_rx[8];	/* rx frames with antenna */
+	u_int32_t	ast_ant_tx[8];	/* tx frames with antenna */
 };
 
 #define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
@@ -109,7 +124,6 @@ struct ath_diag {
 	u_int	ad_out_size;
 
 };
-
 #define	SIOCGATHDIAG	_IOWR('i', 138, struct ath_diag)
 
 /*

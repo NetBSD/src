@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.40 2005/05/29 21:22:53 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.41 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -188,6 +188,7 @@ struct rt_msghdr {
 #define RTM_OIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
 #define RTM_IFINFO	0xf	/* iface/link going up/down etc. */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
+#define	RTM_IEEE80211	0x11	/* IEEE80211 wireless event */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -284,6 +285,7 @@ int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
+void	 rt_ieee80211msg(struct ifnet *, int, void *, size_t);
 void	 rt_ifmsg(struct ifnet *);
 void	 rt_maskedcopy(const struct sockaddr *,
 	    struct sockaddr *, const struct sockaddr *);
