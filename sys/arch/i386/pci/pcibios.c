@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.27 2005/06/22 00:58:48 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.27 2005/06/22 00:58:48 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -93,12 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.27 2005/06/22 00:58:48 sekiya Exp $");
 
 #ifdef PCI_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
-#endif
-#ifdef PCI_BUS_FIXUP
-#include <i386/pci/pci_bus_fixup.h>
-#endif
-#ifdef PCI_ADDR_FIXUP
-#include <i386/pci/pci_addr_fixup.h>
 #endif
 
 #include <machine/bios32.h> 
