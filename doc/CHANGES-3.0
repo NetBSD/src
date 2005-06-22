@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.141 2005/06/21 21:29:55 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.142 2005/06/22 18:39:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9761,4 +9761,22 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.6
 
 	Map the Sun keyboard "help" key.
 	[jdc, ticket #486]
+
+sys/dev/pci/if_stge.c				1.27
+
+	Fix some big-endian issues. stge(4) now works on sparc64 with hardware
+	checksums.
+	[bouyer, ticket #477]
+
+sys/dev/pci/pcidevs				1.718
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add SIS 965 bridge.
+	[bouyer, ticket #478]
+
+sys/dev/ic/wdc.c				1.223
+
+	Remove a (wdc == NULL) test. We know wdc is not NULL at this point.
+	[bouyer, ticket #480]
 
