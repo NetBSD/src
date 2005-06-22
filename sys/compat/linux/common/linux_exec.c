@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.76 2005/06/02 16:54:52 tsutsui Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.77 2005/06/22 15:10:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.76 2005/06/02 16:54:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77 2005/06/22 15:10:51 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
 static void linux_e_proc_fork __P((struct proc *, struct proc *, int));
 static void linux_e_proc_exit __P((struct proc *));
 static void linux_e_proc_init __P((struct proc *, struct proc *, int));
+
+static void linux_userret_settid __P((struct lwp *, void *));
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
@@ -159,6 +161,7 @@ linux_e_proc_init(p, parent, forkflags)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 	struct linux_emuldata_shared *s;
+	struct linux_emuldata *ep = NULL;
 
 	if (!e) {
 		/* allocate new Linux emuldata */
@@ -172,9 +175,17 @@ linux_e_proc_init(p, parent, forkflags)
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
 
+	if (parent)
+		ep = parent->p_emuldata;
+
 	if (forkflags & FORK_SHAREVM) {
-		struct linux_emuldata *e2 = parent->p_emuldata;
-		s = e2->s;
+#ifdef DIAGNOSTIC
+		if (ep == NULL) {
+			killproc(p, "FORK_SHAREVM while emuldata is NULL\n");
+			return;
+		}
+#endif
+		s = ep->s;
 		s->refs++;
 	} else {
 		struct vmspace *vm;
@@ -193,9 +204,33 @@ linux_e_proc_init(p, parent, forkflags)
 		vm = (parent) ? parent->p_vmspace : p->p_vmspace;
 		s->p_break = vm->vm_daddr + ctob(vm->vm_dsize);
 
+		/*
+		 * Linux threads are emulated as NetBSD processes (not lwp)
+		 * We use native PID for Linux TID. The Linux TID is the
+		 * PID of the first process in the group. It is stored
+		 * here
+		 */
+		s->group_pid = p->p_pid;
 	}
 
 	e->s = s;
+
+	/* 
+	 * initialize TID pointers. ep->child_clear_tid and 
+	 * ep->child_set_tid will not be used beyond this point.
+	 */
+	e->child_clear_tid = NULL;
+	e->child_set_tid = NULL;
+	if (ep != NULL) {
+		e->clear_tid = ep->child_clear_tid;
+		e->set_tid = ep->child_set_tid;
+		ep->child_clear_tid = NULL;
+		ep->child_set_tid = NULL;
+	} else {
+		e->clear_tid = NULL;
+		e->set_tid = NULL;
+	}
+
 	p->p_emuldata = e;
 }
 
@@ -222,6 +257,23 @@ linux_e_proc_exit(p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
+	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
+	if (e->clear_tid != NULL) {
+		int error;
+		int null = 0;
+
+		if ((error = copyout(&null, 
+		    e->clear_tid, 
+		    sizeof(null))) != 0)
+			printf("linux_e_proc_exit: cannot clear TID\n");
+
+#ifdef notyet /* Not yet implemented */
+		if ((error = linux_sys_futex(e->clear_tid, 
+		    LINUX_FUTEX_WAKE, 1, NULL, NULL, 0)) != 0)
+			printf("linux_e_proc_exit: linux_sys_futex failed\n");
+#endif
+	}
+
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
 	if (e->s->refs == 0)
@@ -238,6 +290,8 @@ linux_e_proc_fork(p, parent, forkflags)
 	struct proc *p, *parent;
 	int forkflags;
 {
+	struct linux_emuldata *e;
+
 	/*
 	 * The new process might share some vmspace-related stuff
 	 * with parent, depending on fork flags (CLONE_VM et.al).
@@ -246,4 +300,36 @@ linux_e_proc_fork(p, parent, forkflags)
 	 */
 	p->p_emuldata = NULL;
 	linux_e_proc_init(p, parent, forkflags);
+
+	/* 
+	 * Emulate LINUX_CLONE_CHILD_SETTID: This cannot be done  
+	 * right now because the child VM is not set up. We will
+	 * do it at userret time.
+	 */
+	e = p->p_emuldata;
+	if (e->set_tid != NULL) 
+		p->p_userret = (*linux_userret_settid);
+
+	return;
+}
+
+static void
+linux_userret_settid(l, arg)
+	struct lwp *l;
+	void *arg;
+{
+	struct proc *p = l->l_proc;
+	struct linux_emuldata *led = p->p_emuldata;
+	int error;
+
+	p->p_userret = NULL;
+
+	/* Emulate LINUX_CLONE_CHILD_SETTID  */
+	if (led->set_tid != NULL) {
+		if ((error = copyout(&p->p_pid,
+		    led->set_tid, sizeof(p->p_pid))) != 0)
+			printf("linux_userret_settid: cannot set TID\n");
+	}
+
+	return;	
 }

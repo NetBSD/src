@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.4 2005/05/22 19:29:40 fvdl Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.5 2005/06/22 15:10:51 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.4 2005/05/22 19:29:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.5 2005/06/22 15:10:51 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -142,7 +142,7 @@ struct sysent linux_sysent[] = {
 	    linux_sys_setsockopt },		/* 54 = setsockopt */
 	{ 5, s(struct linux_sys_getsockopt_args), 0,
 	    linux_sys_getsockopt },		/* 55 = getsockopt */
-	{ 2, s(struct linux_sys_clone_args), 0,
+	{ 4, s(struct linux_sys_clone_args), 0,
 	    linux_sys_clone },			/* 56 = clone */
 	{ 0, 0, 0,
 	    sys_fork },				/* 57 = fork */
@@ -466,8 +466,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 216 = unimplemented remap_file_pages */
 	{ 3, s(struct linux_sys_getdents64_args), 0,
 	    linux_sys_getdents64 },		/* 217 = getdents64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 218 = unimplemented set_tid_address */
+	{ 1, s(struct linux_sys_set_tid_address_args), 0,
+	    linux_sys_set_tid_address },	/* 218 = set_tid_address */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 219 = unimplemented restart_syscall */
 	{ 0, 0, 0,

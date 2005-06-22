@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 2005/05/22 19:31:15 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.7 2005/06/22 15:10:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2005/05/22 19:31:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.7 2005/06/22 15:10:51 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -188,7 +188,8 @@ linux_sendsig(ksi, mask)
 
 	bzero(&sigframe, sizeof(sigframe));
 	if (ps->sa_sigdesc[sig].sd_vers != 0)
-		sigframe.pretcode = (char *)ps->sa_sigdesc[sig].sd_tramp;
+		sigframe.pretcode = 
+		    (char *)(u_long)ps->sa_sigdesc[sig].sd_tramp;
 	else
 		sigframe.pretcode = NULL;
 

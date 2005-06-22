@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.4 2005/05/22 19:29:40 fvdl Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.5 2005/06/22 15:10:51 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -218,6 +218,8 @@ struct linux_sys_getsockopt_args {
 struct linux_sys_clone_args {
 	syscallarg(int) flags;
 	syscallarg(void *) stack;
+	syscallarg(void *) parent_tidptr;
+	syscallarg(void *) child_tidptr;
 };
 
 struct linux_sys_execve_args {
@@ -608,6 +610,10 @@ struct linux_sys_getdents64_args {
 	syscallarg(unsigned int) count;
 };
 
+struct linux_sys_set_tid_address_args {
+	syscallarg(int *) tid;
+};
+
 struct linux_sys_clock_settime_args {
 	syscallarg(clockid_t) which;
 	syscallarg(struct linux_timespec *) tp;
@@ -963,6 +969,8 @@ int	linux_sys_fremovexattr(struct lwp *, void *, register_t *);
 int	linux_sys_time(struct lwp *, void *, register_t *);
 
 int	linux_sys_getdents64(struct lwp *, void *, register_t *);
+
+int	linux_sys_set_tid_address(struct lwp *, void *, register_t *);
 
 int	linux_sys_clock_settime(struct lwp *, void *, register_t *);
 

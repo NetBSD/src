@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.4 2005/05/22 19:29:40 fvdl Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.5 2005/06/22 15:10:51 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.4 2005/05/22 19:29:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.5 2005/06/22 15:10:51 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -248,7 +248,7 @@ const char *const linux_syscallnames[] = {
 	"#215 (unimplemented epoll_wait_old)",		/* 215 = unimplemented epoll_wait_old */
 	"#216 (unimplemented remap_file_pages)",		/* 216 = unimplemented remap_file_pages */
 	"getdents64",			/* 217 = getdents64 */
-	"#218 (unimplemented set_tid_address)",		/* 218 = unimplemented set_tid_address */
+	"set_tid_address",			/* 218 = set_tid_address */
 	"#219 (unimplemented restart_syscall)",		/* 219 = unimplemented restart_syscall */
 	"#220 (unimplemented semtimedop)",		/* 220 = unimplemented semtimedop */
 	"#221 (unimplemented fadvise64)",		/* 221 = unimplemented fadvise64 */

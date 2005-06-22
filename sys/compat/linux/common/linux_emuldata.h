@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.7 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.8 2005/06/22 15:10:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 struct linux_emuldata_shared {
 	caddr_t	p_break;	/* Processes' idea of break */
 	int refs;
+	pid_t group_pid;	/* PID of Linux process (group of threads) */
 };
 
 struct linux_emuldata {
@@ -57,6 +58,10 @@ struct linux_emuldata {
 	int	debugreg[8];	/* GDB information for ptrace - for use, */
 				/* see ../arch/i386/linux_ptrace.c */
 	struct linux_emuldata_shared *s;
+	int *child_set_tid;	/* in clone(): Child's TID to set on clone */
+	int *child_clear_tid;	/* in clone(): Child's TID to clear on exit */
+	int *set_tid;		/* in clone(): Own TID to set on clone */
+	int *clear_tid;		/* Own TID to clear on exit */
 };
 
 #endif /* !_COMMON_LINUX_EMULDATA_H */
