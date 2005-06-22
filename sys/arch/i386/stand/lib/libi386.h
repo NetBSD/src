@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.19 2005/06/13 11:37:41 junyoung Exp $	*/
+/*	$NetBSD: libi386.h,v 1.20 2005/06/22 06:06:34 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -68,8 +68,8 @@ int iskey(int);
 char awaitkey(int, int);
 
 /* this is in "user code"! */
-int parsebootfile(const char *, char **, char **, unsigned int *,
-		  unsigned int *, const char **);
+int parsebootfile(const char *, char **, char **, int *, int *,
+		  const char **);
 
 #ifdef XMS
 physaddr_t ppbcopy(physaddr_t, physaddr_t, int);
@@ -119,6 +119,8 @@ int getmementry(int *, int *);
 int int13_extension(int);
 struct biosdisk_ext13info;
 void int13_getextinfo(int, struct biosdisk_ext13info *);
+int get_harddrives(void);
+
 int pcibios_cfgread(unsigned int, int, int *);
 int pcibios_cfgwrite(unsigned int, int, int);
 int pcibios_finddev(int, int, int, unsigned int *);
