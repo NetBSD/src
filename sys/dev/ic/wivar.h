@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.55 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: wivar.h,v 1.56 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,6 +75,7 @@ typedef SLIST_HEAD(,wi_rssdesc) wi_rssdescq_t;
  */
 struct wi_softc	{
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	void			*sc_ih;		/* interrupt handler */
 	int			(*sc_enable)(struct wi_softc *);
@@ -83,6 +84,8 @@ struct wi_softc	{
 
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	void			(*sc_set_tim)(struct ieee80211com *,
+				    struct ieee80211_node *, int);
 
 	int			sc_attached;
 	int			sc_enabled;
@@ -166,10 +169,9 @@ struct wi_softc	{
 	struct callout		sc_rssadapt_ch;
 };
 
+#define	sc_if		sc_ec.ec_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
-
-#define	sc_if			sc_ic.ic_if
 
 struct wi_node {
 	struct ieee80211_node		wn_node;

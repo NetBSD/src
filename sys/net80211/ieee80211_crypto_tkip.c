@@ -30,7 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.7 2004/12/31 22:42:38 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11i TKIP crypto support.
@@ -44,14 +49,12 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.7 2004/12/31 22
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/module.h>
 #include <sys/endian.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
 
 #include <net80211/ieee80211_var.h>
 
@@ -63,7 +66,7 @@ static	int tkip_enmic(struct ieee80211_key *, struct mbuf *);
 static	int tkip_decap(struct ieee80211_key *, struct mbuf *);
 static	int tkip_demic(struct ieee80211_key *, struct mbuf *);
 
-static const struct ieee80211_cipher tkip  = {
+const struct ieee80211_cipher ieee80211_cipher_tkip  = {
 	.ic_name	= "TKIP",
 	.ic_cipher	= IEEE80211_CIPHER_TKIP,
 	.ic_header	= IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
@@ -79,11 +82,12 @@ static const struct ieee80211_cipher tkip  = {
 	.ic_demic	= tkip_demic,
 };
 
+#define	tkip	ieee80211_cipher_tkip
+
 typedef	uint8_t u8;
 typedef	uint16_t u16;
 typedef	uint32_t __u32;
 typedef	uint32_t u32;
-#define	memmove(dst, src, n)	ovbcopy(src, dst, n)
 
 struct tkip_ctx {
 	struct ieee80211com *tc_ic;	/* for diagnostics */
@@ -615,7 +619,7 @@ wep_encrypt(u8 *key, struct mbuf *m0, u_int off, size_t data_len,
 		}
 		m = m->m_next;
 		if (m == NULL) {
-			KASSERT(data_len == 0,
+			IASSERT(data_len == 0,
 			    ("out of buffers with data_len %zu\n", data_len));
 			break;
 		}
@@ -673,7 +677,7 @@ wep_decrypt(u8 *key, struct mbuf *m, u_int off, size_t data_len)
 		}
 		m = m->m_next;
 		if (m == NULL) {
-			KASSERT(data_len == 0,
+			IASSERT(data_len == 0,
 			    ("out of buffers with data_len %zu\n", data_len));
 			break;
 		}
@@ -831,7 +835,7 @@ michael_mic(struct tkip_ctx *ctx, const u8 *key,
 			break;
 		m = m->m_next;
 		if (m == NULL) {
-			KASSERT(0, ("out of data, data_len %zu\n", data_len));
+			IASSERT(0, ("out of data, data_len %zu\n", data_len));
 			break;
 		}
 		if (space != 0) {
@@ -840,7 +844,7 @@ michael_mic(struct tkip_ctx *ctx, const u8 *key,
 			 * Block straddles buffers, split references.
 			 */
 			data_next = mtod(m, const uint8_t *);
-			KASSERT(m->m_len >= sizeof(uint32_t) - space,
+			IASSERT(m->m_len >= sizeof(uint32_t) - space,
 				("not enough data in following buffer, "
 				"m_len %u need %zu\n", m->m_len,
 				sizeof(uint32_t) - space));
@@ -966,29 +970,3 @@ tkip_decrypt(struct tkip_ctx *ctx, struct ieee80211_key *key,
 	}
 	return 1;
 }
-
-/*
- * Module glue.
- */
-static int
-tkip_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		ieee80211_crypto_register(&tkip);
-		return 0;
-	case MOD_UNLOAD:
-		ieee80211_crypto_unregister(&tkip);
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t tkip_mod = {
-	"wlan_tkip",
-	tkip_modevent,
-	0
-};
-DECLARE_MODULE(wlan_tkip, tkip_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(wlan_tkip, 1);
-MODULE_DEPEND(wlan_tkip, wlan, 1, 1, 1);

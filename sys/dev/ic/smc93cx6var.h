@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6var.h,v 1.7 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: smc93cx6var.h,v 1.8 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -77,6 +77,7 @@ struct seeprom_descriptor {
  *  A failed read attempt returns 0, and a successful read returns 1.
  */
 
+/* XXX bus barriers */
 #define SEEPROM_INB(sd) \
 	(((sd)->sd_regsize == 4) \
 	    ? bus_space_read_4((sd)->sd_tag, (sd)->sd_bsh, \

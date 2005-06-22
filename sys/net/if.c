@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.158 2005/05/29 21:22:52 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.159 2005/06/22 06:16:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.158 2005/05/29 21:22:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.159 2005/06/22 06:16:02 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.158 2005/05/29 21:22:52 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1162,6 +1163,21 @@ link_rtrequest(cmd, rt, info)
 		IFAREF(ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
+	}
+}
+
+/*
+ * Handle a change in the interface link state.
+ */
+void
+if_link_state_change(struct ifnet *ifp, int link_state)
+{
+	/* Notify that the link state has changed. */
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		rt_ifmsg(ifp);
+		log(LOG_NOTICE, "%s: link state changed to %s\n", ifp->if_xname,
+		    (link_state == LINK_STATE_UP) ? "UP" : "DOWN" );
 	}
 }
 

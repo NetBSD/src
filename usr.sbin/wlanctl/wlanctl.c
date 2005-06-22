@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.1 2004/07/16 03:13:51 dyoung Exp $ */
+/* $NetBSD: wlanctl.c,v 1.2 2005/06/22 06:16:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -272,9 +272,6 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 
 		printf("\trssi %d txseq %d rxseq %d\n",
 		    pns->ns_rssi, pns->ns_txseq, pns->ns_rxseq);
-
-		if (pns->ns_pwrsave)
-			printf("\tpower-saving\n");
 	}
 	return 0;
 }

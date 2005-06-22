@@ -35,7 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.7 2005/04/02 18:54:30 sam Exp $");
+#ifdef __FreeBSD__
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.4 2005/01/24 19:32:10 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.2 2005/06/22 06:15:51 dyoung Exp $");
+#endif
 
 /*
  * Atsushi Onoe's rate control algorithm.
@@ -45,22 +50,18 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.7 2005/04/02 18:54:
 #include <sys/param.h>
 #include <sys/systm.h> 
 #include <sys/sysctl.h>
-#include <sys/module.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/mutex.h>
 #include <sys/errno.h>
 
 #include <machine/bus.h>
-#include <machine/resource.h>
-#include <sys/bus.h>
 
 #include <sys/socket.h>
  
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/ethernet.h>		/* XXX for ether_sprintf */
+#include <net/if_ether.h>		/* XXX for ether_sprintf */
 
 #include <net80211/ieee80211_var.h>
 
@@ -68,12 +69,12 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.7 2005/04/02 18:54:
 
 #ifdef INET
 #include <netinet/in.h> 
-#include <netinet/if_ether.h>
 #endif
 
-#include <dev/ath/if_athvar.h>
-#include <dev/ath/ath_rate/onoe/onoe.h>
-#include <contrib/dev/ath/ah_desc.h>
+#include <dev/ic/ath_netbsd.h>
+#include <dev/ic/athvar.h>
+#include <dev/ic/athrate-onoe.h>
+#include <contrib/dev/ic/athhal_desc.h>
 
 #define	ONOE_DEBUG
 #ifdef ONOE_DEBUG
@@ -462,19 +463,21 @@ ath_ratectl(void *arg)
 static void
 ath_rate_sysctlattach(struct ath_softc *sc)
 {
-	struct sysctl_ctx_list *ctx = device_get_sysctl_ctx(sc->sc_dev);
-	struct sysctl_oid *tree = device_get_sysctl_tree(sc->sc_dev);
+	struct sysctllog **clog = &sc->sc_sysctllog;
+	const struct sysctlnode *cnode, *rnode;
 
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
-		"rate_interval", CTLFLAG_RW, &ath_rateinterval, 0,
-		"rate control: operation interval (ms)");
+	if ((rnode = ath_sysctl_treetop(NULL)) == NULL)
+		return;
+
+	SYSCTL_GLOBAL_INT(CTLFLAG_READWRITE, "rate_interval",
+	    "rate control: operation interval (ms)", rateinterval);
 	/* XXX bounds check values */
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
-		"rate_raise", CTLFLAG_RW, &ath_rate_raise, 0,
-		"rate control: retry threshold to credit rate raise (%%)");
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
-		"rate_raise_threshold", CTLFLAG_RW, &ath_rate_raise_threshold,0,
-		"rate control: # good periods before raising rate");
+	SYSCTL_GLOBAL_INT(CTLFLAG_READWRITE, "rate_raise",
+	    "rate control: retry threshold to credit rate raise (%%)",
+	    rate_raise);
+	SYSCTL_GLOBAL_INT(CTLFLAG_READWRITE, "rate_raise_threshold",
+	    "rate control: # good periods before raising rate",
+	    rate_raise_threshold);
 }
 
 struct ath_ratectrl *
@@ -486,7 +489,7 @@ ath_rate_attach(struct ath_softc *sc)
 	if (osc == NULL)
 		return NULL;
 	osc->arc.arc_space = sizeof(struct onoe_node);
-	callout_init(&osc->timer, debug_mpsafenet ? CALLOUT_MPSAFE : 0);
+	ATH_CALLOUT_INIT(&osc->timer, debug_mpsafenet ? CALLOUT_MPSAFE : 0);
 	ath_rate_sysctlattach(sc);
 
 	return &osc->arc;
@@ -497,32 +500,6 @@ ath_rate_detach(struct ath_ratectrl *arc)
 {
 	struct onoe_softc *osc = (struct onoe_softc *) arc;
 
-	callout_drain(&osc->timer);
+	callout_stop(&osc->timer);
 	free(osc, M_DEVBUF);
 }
-
-/*
- * Module glue.
- */
-static int
-onoe_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		if (bootverbose)
-			printf("ath_rate: <Atsushi Onoe's rate control algorithm>\n");
-		return 0;
-	case MOD_UNLOAD:
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t onoe_mod = {
-	"ath_rate",
-	onoe_modevent,
-	0
-};
-DECLARE_MODULE(ath_rate, onoe_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(ath_rate, 1);
-MODULE_DEPEND(ath_rate, wlan, 1, 1, 1);

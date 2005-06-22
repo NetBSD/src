@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.11 2005/06/22 06:15:51 dyoung Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.11 2005/06/22 06:15:51 dyoung Exp $");
 
 #ifndef __NetBSD__
 #include "opt_aic7xxx.h"
@@ -85,6 +85,7 @@ static struct seeprom_cmd {
  	unsigned char bits[3];
 } seeprom_read = {3, {1, 1, 0}};
 
+/* XXX bus barriers */
 #define CLOCK_PULSE(sd, rdy)	do {					\
 	/*								\
 	 * Wait for the SEERDY to go high; about 800 ns.		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.2 2005/02/27 00:27:51 perry Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -130,6 +130,7 @@ struct atu_cdata {
 
 struct atu_softc {
 	USBBASEDEVICE           atu_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
@@ -179,6 +180,8 @@ struct atu_softc {
 	int			atu_wepkeylen;
 	u_int8_t		atu_wepkeys[4][13];
 };
+
+#define	sc_if	sc_ec.ec_if
 
 /* Commands for uploading the firmware (standard DFU interface) */
 #define DFU_DNLOAD		UT_WRITE_CLASS_INTERFACE, 0x01

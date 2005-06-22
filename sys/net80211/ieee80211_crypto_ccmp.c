@@ -30,7 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.4 2004/12/31 22:42:38 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+#endif
 
 /*
  * IEEE 802.11i AES-CCMP crypto support.
@@ -44,13 +49,11 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.4 2004/12/31 22
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/module.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/ethernet.h>
 
 #include <net80211/ieee80211_var.h>
 
@@ -71,7 +74,7 @@ static	int ccmp_decap(struct ieee80211_key *, struct mbuf *);
 static	int ccmp_enmic(struct ieee80211_key *, struct mbuf *);
 static	int ccmp_demic(struct ieee80211_key *, struct mbuf *);
 
-static const struct ieee80211_cipher ccmp = {
+const struct ieee80211_cipher ieee80211_cipher_ccmp = {
 	.ic_name	= "AES-CCM",
 	.ic_cipher	= IEEE80211_CIPHER_AES_CCM,
 	.ic_header	= IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
@@ -86,6 +89,8 @@ static const struct ieee80211_cipher ccmp = {
 	.ic_enmic	= ccmp_enmic,
 	.ic_demic	= ccmp_demic,
 };
+
+#define	ccmp	ieee80211_cipher_ccmp
 
 static	int ccmp_encrypt(struct ieee80211_key *, struct mbuf *, int hdrlen);
 static	int ccmp_decrypt(struct ieee80211_key *, u_int64_t pn,
@@ -456,7 +461,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			pos_next = mtod(m, uint8_t *);
 			len = min(data_len, AES_BLOCK_LEN);
 			space_next = len > space ? len - space : 0;
-			KASSERT(m->m_len >= space_next,
+			IASSERT(m->m_len >= space_next,
 				("not enough data in following buffer, "
 				"m_len %u need %u\n", m->m_len, space_next));
 
@@ -547,7 +552,7 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 			pos_next = mtod(m, uint8_t *);
 			len = min(data_len, AES_BLOCK_LEN);
 			space_next = len > space ? len - space : 0;
-			KASSERT(m->m_len >= space_next,
+			IASSERT(m->m_len >= space_next,
 				("not enough data in following buffer, "
 				"m_len %u need %u\n", m->m_len, space_next));
 
@@ -577,29 +582,3 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 	return 1;
 }
 #undef CCMP_DECRYPT
-
-/*
- * Module glue.
- */
-static int
-ccmp_modevent(module_t mod, int type, void *unused)
-{
-	switch (type) {
-	case MOD_LOAD:
-		ieee80211_crypto_register(&ccmp);
-		return 0;
-	case MOD_UNLOAD:
-		ieee80211_crypto_unregister(&ccmp);
-		return 0;
-	}
-	return EINVAL;
-}
-
-static moduledata_t ccmp_mod = {
-	"wlan_ccmp",
-	ccmp_modevent,
-	0
-};
-DECLARE_MODULE(wlan_ccmp, ccmp_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-MODULE_VERSION(wlan_ccmp, 1);
-MODULE_DEPEND(wlan_ccmp, wlan, 1, 1, 1);

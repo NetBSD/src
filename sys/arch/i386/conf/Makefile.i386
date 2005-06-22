@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.138 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.139 2005/06/22 06:14:51 dyoung Exp $
 
 # Makefile for NetBSD
 #
@@ -107,17 +107,20 @@ clock.o: config_time.h
 # XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
 # XXX - Also, config has no simple was to just add foo.o to the Makefile. 
 #       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-elf.o)
-OBJS:=${OBJS:C/\/athhal-elf.o/athhal-elf.o/}
+.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
+OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
  
-.PATH: $S/../contrib/sys/arch/i386/dev
+.PATH: $S/contrib/arch/i386/dev
 ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${UUDECODE} -p $> \> ${.TARGET}; \
 		rm -f ${.TARGET}; \
 		${UUDECODE} -p $> > ${.TARGET}
-athhal-elf.o: athhal-elf-o.uue
+athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
 	${ATH_UUDEC}
+all depend:	opt_ah.h
+opt_ah.h:	athhal-i386-elf.opt_ah.h
+	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##
