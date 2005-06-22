@@ -1,4 +1,4 @@
-.\"	$NetBSD: gus.4,v 1.11 2001/09/19 01:03:44 wiz Exp $
+.\"	$NetBSD: gus.4,v 1.12 2005/06/22 04:30:08 kent Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 1995
+.Dd June 22, 2005
 .Dt GUS 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 Gravis UltraSound/UltraSound MAX audio device driver
 .Sh SYNOPSIS
 .Cd "gus0 at isa? port 0xPPP irq X drq Y drq2 Z"
-.Cd "audio* at gus?"
+.Cd "audio* at audiobus?"
 .Sh DESCRIPTION
 The
 .Nm
