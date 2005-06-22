@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.108 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: bpf.c,v 1.109 2005/06/22 10:36:16 peter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.108 2005/06/20 02:49:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.109 2005/06/22 10:36:16 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,8 +589,10 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (error)
 		return (error);
 
-	if (m->m_pkthdr.len > ifp->if_mtu)
+	if (m->m_pkthdr.len > ifp->if_mtu) {
+		m_freem(m);
 		return (EMSGSIZE);
+	}
 
 	if (d->bd_hdrcmplt)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
