@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2003/08/31 22:40:13 fvdl Exp $	 */
+/*	$NetBSD: main.c,v 1.20 2005/06/22 20:36:17 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -64,8 +64,6 @@ char *sprint_bootsel __P((const char *));
 static void bootit __P((const char *, int, int));
 void usage __P((void));
 int main __P((int, char **));
-int parsebootfile __P((const char *, char**, char**, unsigned int*,
-			      unsigned int*, const char**));
 
 void	command_help __P((char *));
 void	command_ls __P((char *));
@@ -90,7 +88,7 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 	const char     *fname;
 	char          **fsmode; /* out */
 	char          **devname; /* out */
-	unsigned int   *unit, *partition; /* out */
+	int            *unit, *partition; /* out */
 	const char    **file; /* out */
 {
 	const char     *col, *help;
