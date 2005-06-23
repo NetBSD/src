@@ -1,4 +1,4 @@
-/*	$NetBSD: scan_ffs.c,v 1.3 2005/06/15 20:03:03 christos Exp $	*/
+/*	$NetBSD: scan_ffs.c,v 1.4 2005/06/23 17:25:31 xtraeme Exp $	*/
 /*	$OpenBSD: scan_ffs.c,v 1.11 2004/02/16 19:13:03 deraadt Exp$	*/
 
 /*
@@ -39,7 +39,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.3 2005/06/15 20:03:03 christos Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.4 2005/06/23 17:25:31 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -234,7 +234,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-lv] [-s start] [-e end] device", getprogname());
+		"Usage: %s [-lv] [-s start] [-e end] device\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
