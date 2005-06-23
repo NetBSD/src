@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.38 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: namei.h,v 1.39 2005/06/23 17:00:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -178,8 +178,6 @@ struct	namecache {
 
 extern struct pool pnbuf_pool;		/* pathname buffer pool */
 extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
-
-MALLOC_DECLARE(M_NAMEI);
 
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
