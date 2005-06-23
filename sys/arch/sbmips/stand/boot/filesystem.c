@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.3 2005/06/23 19:14:24 junyoung Exp $	*/
+/* $NetBSD: filesystem.c,v 1.4 2005/06/23 19:44:01 junyoung Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -40,16 +40,11 @@
 #include <lib/libsa/lfs.h>
 
 struct fs_ops file_system[] = {
-    { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
-	ustarfs_stat },	/* this one can work from tape, so put it first */
-    { ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
-	ufs_stat },
-    { cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	cd9660_stat },
-    { lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
-	lfsv1_stat },
-    { lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
-	lfsv2_stat },
+	FS_OPS(ustarfs),	/* this can work from tape, so put it first */
+	FS_OPS(ufs),
+	FS_OPS(cd9660),
+	FS_OPS(lfsv1),
+	FS_OPS(lfsv2),
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
