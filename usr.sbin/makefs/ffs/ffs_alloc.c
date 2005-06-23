@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.14 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.15 2005/06/23 00:53:16 fvdl Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.14 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.15 2005/06/23 00:53:16 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		cg = dtog(fs, bpref);
 	bno = ffs_hashalloc(ip, cg, bpref, size, ffs_alloccg);
 	if (bno > 0) {
-		DIP(ip, blocks) += size / DEV_BSIZE;
+		DIP_ADD(ip, blocks, size / DEV_BSIZE);
 		*bnp = bno;
 		return (0);
 	}
