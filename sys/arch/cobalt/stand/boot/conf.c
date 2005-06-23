@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2003/08/07 16:27:18 agc Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2005/06/23 19:44:00 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,8 +60,10 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
  * Filesystem configuration
  */
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-/*	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat }*/
+	FS_OPS(ufs),
+#if 0
+	FS_OPS(nfs),
+#endif
 };
 
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);

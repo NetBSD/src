@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/06/06 19:48:11 fredette Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2005/06/23 19:44:01 junyoung Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.12 2000/05/30 22:02:28 mickey Exp $	*/
 
@@ -42,12 +42,9 @@ const char version[] = "0.6";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
-	{ lif_open,    lif_close,    lif_read,    lif_write,    lif_seek,
-	  lif_stat    },
-	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
-	  ufs_stat    },
-	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	  cd9660_stat },
+	FS_OPS(lif),
+	FS_OPS(ufs),
+	FS_OPS(cd9660),
 };
 int nfsys = NENTS(file_system);
 

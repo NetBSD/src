@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.7 2005/06/22 16:38:18 junyoung Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.8 2005/06/23 19:44:01 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -196,20 +196,13 @@ static struct devsw devsw[1] = {
 int ndevs = sizeof devsw / sizeof devsw[0];
 
 #ifdef SPARC_BOOT_UFS
-static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
+static struct fs_ops file_system_ufs = FS_OPS(ufs);
 #endif
 #ifdef SPARC_BOOT_HSFS
-static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
-};
+static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 #endif
 #ifdef NETBOOT
-static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+static struct fs_ops file_system_nfs = FS_OPS(nfs);
 #endif
 
 struct fs_ops file_system[3];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.14 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.15 2005/06/23 19:44:01 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -151,23 +151,11 @@ static struct devsw devsw[1] = {
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
-static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
-static struct fs_ops file_system_hfs = {
-	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
-};
-static struct fs_ops file_system_ustarfs = {
-	ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
-	    ustarfs_stat
-};
-static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
-};
-static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+static struct fs_ops file_system_ufs = FS_OPS(ufs);
+static struct fs_ops file_system_hfs = FS_OPS(hfs);
+static struct fs_ops file_system_ustarfs = FS_OPS(ustarfs);
+static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
+static struct fs_ops file_system_nfs = FS_OPS(nfs);
 
 struct fs_ops file_system[4];
 int nfsys;
