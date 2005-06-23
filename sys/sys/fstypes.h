@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.4 2005/06/23 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.5 2005/06/23 01:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -140,14 +140,31 @@ typedef struct fhandle	fhandle_t;
 /*
  * Mask of flags that are visible to statvfs()
  */
-#define	MNT_VISFLAGMASK	\
-    (MNT_SOFTDEP | MNT_NODEVMTIME | MNT_SYMPERM | MNT_EXPUBLIC | \
-     MNT_EXNORESPORT | MNT_NOATIME | \
-     MNT_IGNORE | MNT_MAGICLINKS | \
-     MNT_NOCOREDUMP | MNT_ROOTFS | MNT_QUOTA | MNT_LOCAL | \
-     MNT_EXKERB | MNT_EXPORTANON | MNT_DEFEXPORTED | MNT_EXPORTED | \
-     MNT_EXRDONLY | MNT_ASYNC | MNT_UNION | MNT_NODEV | \
-     MNT_NOSUID | MNT_NOEXEC | MNT_SYNCHRONOUS | MNT_RDONLY)
+#define	MNT_VISFLAGMASK	( \
+     MNT_RDONLY | \
+     MNT_SYNCHRONOUS | \
+     MNT_NOEXEC | \
+     MNT_NOSUID | \
+     MNT_NODEV | \
+     MNT_UNION | \
+     MNT_ASYNC | \
+     MNT_NOCOREDUMP | \
+     MNT_IGNORE | \
+     MNT_MAGICLINKS | \
+     MNT_NOATIME | \
+     MNT_SYMPERM | \
+     MNT_NODEVMTIME | \
+     MNT_SOFTDEP | \
+     MNT_EXRDONLY | \
+     MNT_EXPORTED | \
+     MNT_DEFEXPORTED | \
+     MNT_EXPORTANON | \
+     MNT_EXKERB | \
+     MNT_EXNORESPORT | \
+     MNT_EXPUBLIC | \
+     MNT_LOCAL | \
+     MNT_QUOTA | \
+     MNT_ROOTFS)
 
 /*
  * External filesystem control flags.
