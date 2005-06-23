@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.56 2005/06/17 21:20:18 dsl Exp $
+#	$NetBSD: Makefile,v 1.57 2005/06/23 00:54:47 fvdl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
 SRCS=	main.c dkcksum.c interact.c printlabel.c
 MAN=	disklabel.5 disklabel.8
-LDADD+= -lutil
+.if (${HOSTPROG:U} == "")
 DPADD+= ${LIBUTIL}
+LDADD+= -lutil
+.endif
 
 # these have additional requirements on the alignment of a partition
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
