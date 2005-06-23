@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.83 2005/06/22 23:32:45 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.84 2005/06/23 23:05:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.83 2005/06/22 23:32:45 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.84 2005/06/23 23:05:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ evalsubshell(union node *n, int flags)
 		/* never returns */
 		evaltree(n->nredir.n, flags | EV_EXIT);
 	}
-	if (! backgnd && (flags & EV_EXIT) == 0)
+	if (! backgnd)
 		exitstatus = waitforjob(jp);
 	INTON;
 }
