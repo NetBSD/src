@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.14 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.14 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $");
 
 #include "opt_userconf.h"
 
@@ -49,39 +49,21 @@ __KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.14 2005/05/29 22:24:15 christos 
 
 extern struct cfdata cfdata[];
 
-int userconf_base = 16;				/* Base for "large" numbers */
-int userconf_maxdev = -1;			/* # of used device slots   */
-int userconf_totdev = -1;			/* # of device slots        */
-int userconf_maxlocnames = -1;			/* # of locnames            */
-int userconf_cnt = -1;				/* Line counter for ...     */
-int userconf_lines = 12;			/* ... # of lines per page  */
-int userconf_histlen = 0;
-int userconf_histcur = 0;
-char userconf_history[1024];
-int userconf_histsz = sizeof(userconf_history);
-char userconf_argbuf[40];			/* Additional input         */
-char userconf_cmdbuf[40];			/* Command line             */
-char userconf_histbuf[40];
-
-void userconf_init(void);
-int userconf_more(void);
-void userconf_modify(const char *, int*);
-void userconf_hist_cmd(char);
-void userconf_hist_int(int);
-void userconf_hist_eoc(void);
-void userconf_pnum(int);
-void userconf_pdevnam(short);
-void userconf_pdev(short);
-int userconf_number(char *, int *);
-int userconf_device(char *, int *, short *, short *);
-void userconf_change(int);
-void userconf_disable(int);
-void userconf_enable(int);
-void userconf_help(void);
-void userconf_list(void);
-void userconf_common_dev(char *, int, short, short, char);
-void userconf_add_read(char *, char, char *, int, int *);
-int userconf_parse(char *);
+static int userconf_base = 16;			/* Base for "large" numbers */
+static int userconf_maxdev = -1;		/* # of used device slots   */
+static int userconf_totdev = -1;		/* # of device slots        */
+#if 0
+static int userconf_maxlocnames = -1;		/* # of locnames            */
+#endif
+static int userconf_cnt = -1;			/* Line counter for ...     */
+static int userconf_lines = 12;			/* ... # of lines per page  */
+static int userconf_histlen = 0;
+static int userconf_histcur = 0;
+static char userconf_history[1024];
+static int userconf_histsz = sizeof(userconf_history);
+static char userconf_argbuf[40];		/* Additional input         */
+static char userconf_cmdbuf[40];		/* Command line             */
+static char userconf_histbuf[40];
 
 static int getsn(char *, int);
 
@@ -91,7 +73,7 @@ static int getsn(char *, int);
 #define UC_FIND 'f'
 #define UC_SHOW 's'
 
-const char *userconf_cmds[] = {
+static const char *userconf_cmds[] = {
 	"base",		"b",
 	"change",	"c",
 	"disable",	"d",
@@ -106,8 +88,8 @@ const char *userconf_cmds[] = {
 	"",		 "",
 };
 
-void
-userconf_init()
+static void
+userconf_init(void)
 {
 	int i;
 	struct cfdata *cf;
@@ -120,8 +102,8 @@ userconf_init()
 	userconf_totdev = i - 1;
 }
 
-int
-userconf_more()
+static int
+userconf_more(void)
 {
 	int quit = 0;
 	char c = '\0';
@@ -140,9 +122,8 @@ userconf_more()
 	return (quit);
 }
 
-void
-userconf_hist_cmd(cmd)
-	char cmd;
+static void
+userconf_hist_cmd(char cmd)
 {
 	userconf_histcur = userconf_histlen;
 	if (userconf_histcur < userconf_histsz) {
@@ -151,9 +132,8 @@ userconf_hist_cmd(cmd)
 	}
 }
 
-void
-userconf_hist_int(val)
-	int val;
+static void
+userconf_hist_int(int val)
 {
 	snprintf(userconf_histbuf, sizeof(userconf_histbuf), " %d", val);
 	if ((userconf_histcur + strlen(userconf_histbuf)) < userconf_histsz) {
@@ -164,8 +144,8 @@ userconf_hist_int(val)
 	}
 }
 
-void
-userconf_hist_eoc()
+static void
+userconf_hist_eoc(void)
 {
 	if (userconf_histcur < userconf_histsz) {
 		userconf_history[userconf_histcur] = '\n';
@@ -174,9 +154,8 @@ userconf_hist_eoc()
 	}
 }
 
-void
-userconf_pnum(val)
-	int val;
+static void
+userconf_pnum(int val)
 {
 	if (val > -2 && val < 16) {
 		printf("%d",val);
@@ -196,9 +175,8 @@ userconf_pnum(val)
 	}
 }
 
-void
-userconf_pdevnam(dev)
-	short dev;
+static void
+userconf_pdevnam(short dev)
 {
 	struct cfdata *cd;
 
@@ -222,9 +200,8 @@ userconf_pdevnam(dev)
 	}
 }
 
-void
-userconf_pdev(devno)
-	short devno;
+static void
+userconf_pdev(short devno)
 {
 	struct cfdata *cd;
 	const struct cfparent *cfp;
@@ -271,10 +248,8 @@ userconf_pdev(devno)
 	printf("\n");
 }
 
-int
-userconf_number(c, val)
-	char *c;
-	int *val;
+static int
+userconf_number(char *c, int *val)
 {
 	u_int num = 0;
 	int neg = 0;
@@ -316,11 +291,8 @@ userconf_number(c, val)
 	return (0);
 }
 
-int
-userconf_device(cmd, len, unit, state)
-	char *cmd;
-	int *len;
-	short *unit, *state;
+static int
+userconf_device(char *cmd, int *len, short *unit, short *state)
 {
 	short u = 0, s = FSTATE_FOUND;
 	int l = 0;
@@ -354,10 +326,8 @@ userconf_device(cmd, len, unit, state)
 	return(-1);
 }
 
-void
-userconf_modify(item, val)
-	const char *item;
-	int  *val;
+static void
+userconf_modify(const char *item, int *val)
 {
 	int ok = 0;
 	int a;
@@ -386,9 +356,8 @@ userconf_modify(item, val)
 	}
 }
 
-void
-userconf_change(devno)
-	int devno;
+static void
+userconf_change(int devno)
 {
 	struct cfdata *cd;
 	char c = '\0';
@@ -442,9 +411,8 @@ userconf_change(devno)
 	}
 }
 
-void
-userconf_disable(devno)
-	int devno;
+static void
+userconf_disable(int devno)
 {
 	int done = 0;
 
@@ -481,9 +449,8 @@ userconf_disable(devno)
 	}
 }
 
-void
-userconf_enable(devno)
-	int devno;
+static void
+userconf_enable(int devno)
 {
 	int done = 0;
 
@@ -520,8 +487,8 @@ userconf_enable(devno)
 	}
 }
 
-void
-userconf_help()
+static void
+userconf_help(void)
 {
 	int j = 0, k;
 
@@ -570,8 +537,8 @@ userconf_help()
 	}
 }
 
-void
-userconf_list()
+static void
+userconf_list(void)
 {
 	int i = 0;
 
@@ -586,12 +553,8 @@ userconf_list()
 	userconf_cnt = -1;
 }
 
-void
-userconf_common_dev(dev, len, unit, state, routine)
-	char *dev;
-	int len;
-	short unit, state;
-	char routine;
+static void
+userconf_common_dev(char *dev, int len, short unit, short state, char routine)
 {
 	int i = 0;
 
@@ -656,13 +619,9 @@ userconf_common_dev(dev, len, unit, state, routine)
 	}
 }
 
-void
-userconf_add_read(prompt, field, dev, len, val)
-	char *prompt;
-	char field;
-	char *dev;
-	int len;
-	int *val;
+#if 0
+static void
+userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
 {
 	int ok = 0;
 	int a;
@@ -704,10 +663,10 @@ userconf_add_read(prompt, field, dev, len, val)
 		}
 	}
 }
+#endif /* 0 */
 
-int
-userconf_parse(cmd)
-	char *cmd;
+static int
+userconf_parse(char *cmd)
 {
 	char *c, *v;
 	int i = 0, j = 0, k, a;
@@ -825,7 +784,7 @@ userconf_parse(cmd)
 extern void user_config(void);
 
 void
-user_config()
+user_config(void)
 {
 	char prompt[] = "uc> ";
 
@@ -845,9 +804,7 @@ user_config()
  * XXX shouldn't this be a common function?
  */
 static int
-getsn(cp, size)
-	char *cp;
-	int size;
+getsn(char *cp, int size)
 {
 	char *lp;
 	int c, len;
