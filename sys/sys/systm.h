@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.178 2005/05/31 16:10:47 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.179 2005/06/23 00:30:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -94,6 +94,7 @@ extern char machine[];		/* machine type */
 extern char machine_arch[];	/* machine architecture */
 extern const char osrelease[];	/* short system version */
 extern const char ostype[];	/* system type */
+extern const char kernel_ident[];/* kernel configuration ID */
 extern const char version[];	/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.247 2005/05/29 22:24:14 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248 2005/06/23 00:30:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.247 2005/05/29 22:24:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248 2005/06/23 00:30:28 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.247 2005/05/29 22:24:14 christos Exp
 #include "opt_systrace.h"
 #include "opt_posix.h"
 #include "opt_kcont.h"
+#include "opt_rootfs_magiclinks.h"
 
 #include "opencrypto.h"
 #include "rnd.h"
@@ -537,6 +538,9 @@ main(void)
 	inittodr(rootfstime);
 
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
+#ifdef ROOTFS_MAGICLINKS
+	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_MAGICLINKS;
+#endif
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*
