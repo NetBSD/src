@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.30 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.31 2005/06/23 23:51:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -139,10 +139,19 @@
  *		- There seems to be an interrupt logic bug, requiring
  *		  that interrupts be disabled on the chip during the
  *		  interrupt handler.
+ *	
+ *	- ASIX AX88140
+ *	
+ *	  21433 clone with a few differences:
+ *
+ *	  	- Specific broadcast bit in the OPMODE register.
+ *	  	- Transmit buffer must be 32-bit aligned.
+ *	  	- The BUSMODE_SWR bit is not self-clearing.
+ *	  	- External 10BaseT PHY or 10/100 MII.
  *
  * Some of the clone chips have different registers, and some have
  * different bits in the same registers.  These will be denoted by
- * PMAC, PNICII, PNIC, DM, WINB, and ADM in the register/bit names.
+ * PMAC, PNICII, PNIC, DM, WINB, ADM and AX in the register/bit names.
  */
 
 /*
@@ -437,6 +446,7 @@ struct tulip_desc {
 		 *	Winbond 89C040F
 		 *	Xircom X3201-3
 		 *	Davicom DM9102 (buggy BUSMODE register)
+		 *	ASIX AX88140
 		 */
 #define	BUSMODE_TAP_NONE	0x00000000	/*     no auto-polling */
 #define	BUSMODE_TAP_200us	0x00020000	/*   200 uS */
@@ -585,6 +595,7 @@ struct tulip_desc {
 #define	OPMODE_PM		0x00000080	/* pass all multicast */
 #define	OPMODE_WINB_AEP		0x00000080	/* accept error packet */
 #define	OPMODE_FKD		0x00000100	/* flaky oscillator disable */
+#define OPMODE_AX_RB		0x00000100	/* recieve broadcast packets */
 #define	OPMODE_FD		0x00000200	/* full-duplex mode */
 #define	OPMODE_OM		0x00000c00	/* operating mode */
 #define	OPMODE_OM_NORMAL	0x00000000	/*     normal mode */
@@ -1538,5 +1549,21 @@ struct tulip_desc {
 /* Sample Frame Data Register */
 #define	CSR_DM_SFDR		TULIP_CSR14
 	/* See 21143 SIAGEN register */
+
+/*
+ * ASIX AX88140A and AX88141 registers.
+ */
+
+/* CSR13 - Filtering Index */
+#define CSR_AX_FILTIDX		TULIP_CSR13
+
+/* CSR14 - Filtering data */
+#define CSR_AX_FILTDATA		TULIP_CSR14
+
+/* Filtering Index values */
+#define AX_FILTIDX_PAR0		0x00000000
+#define AX_FILTIDX_PAR1		0x00000001
+#define AX_FILTIDX_MAR0		0x00000002
+#define AX_FILTIDX_MAR1		0x00000003
 
 #endif /* _DEV_IC_TULIPREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.136 2005/03/23 13:24:47 wiz Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137 2005/06/23 23:51:41 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.136 2005/03/23 13:24:47 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137 2005/06/23 23:51:41 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -116,6 +116,7 @@ void	tlp_power(int, void *);
 void	tlp_filter_setup(struct tulip_softc *);
 void	tlp_winb_filter_setup(struct tulip_softc *);
 void	tlp_al981_filter_setup(struct tulip_softc *);
+void	tlp_asix_filter_setup(struct tulip_softc *);
 
 void	tlp_rxintr(struct tulip_softc *);
 void	tlp_txintr(struct tulip_softc *);
@@ -141,6 +142,7 @@ void	tlp_2114x_preinit(struct tulip_softc *);
 void	tlp_2114x_mii_preinit(struct tulip_softc *);
 void	tlp_pnic_preinit(struct tulip_softc *);
 void	tlp_dm9102_preinit(struct tulip_softc *);
+void	tlp_asix_preinit(struct tulip_softc *);
 
 void	tlp_21140_reset(struct tulip_softc *);
 void	tlp_21142_reset(struct tulip_softc *);
@@ -239,6 +241,11 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_AN983:
 	case TULIP_CHIP_AN985:
 		sc->sc_filter_setup = tlp_al981_filter_setup;
+		break;
+
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		sc->sc_filter_setup = tlp_asix_filter_setup;
 		break;
 
 	default:
@@ -360,6 +367,16 @@ tlp_attach(sc, enaddr)
 		sc->sc_txthresh = TXTH_DM9102_SF;
 		break;
 
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		/*
+		 * Run these chips in ring mode.
+		 */
+		sc->sc_tdctl_ch = 0;
+		sc->sc_tdctl_er = TDCTL_ER;
+		sc->sc_preinit = tlp_asix_preinit;
+		break;
+
 	default:
 		/*
 		 * Default to running in ring mode.
@@ -434,6 +451,8 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_X3201_3:
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
 		sc->sc_ntxsegs = 1;
 		break;
 
@@ -1579,11 +1598,14 @@ tlp_reset(sc)
 	TULIP_WRITE(sc, CSR_BUSMODE, BUSMODE_SWR);
 
 	/*
-	 * Xircom clone doesn't bring itself out of reset automatically.
+	 * Xircom and ASIX clones don't bring themselves out of 
+	 * reset automatically.
 	 * Instead, we have to wait at least 50 PCI cycles, and then
 	 * clear SWR.
 	 */
-	if (sc->sc_chip == TULIP_CHIP_X3201_3) {
+	if (sc->sc_chip == TULIP_CHIP_X3201_3 ||
+	    sc->sc_chip == TULIP_CHIP_AX88140 ||
+	    sc->sc_chip == TULIP_CHIP_AX88141) {
 		delay(10);
 		TULIP_WRITE(sc, CSR_BUSMODE, 0);
 	}
@@ -1681,6 +1703,12 @@ tlp_init(ifp)
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 		sc->sc_busmode |= BUSMODE_PNIC_MBO;
+		if (sc->sc_maxburst == 0)
+			sc->sc_maxburst = 16;
+		break;
+	
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
 		if (sc->sc_maxburst == 0)
 			sc->sc_maxburst = 16;
 		break;
@@ -1915,6 +1943,26 @@ tlp_init(ifp)
 		reg = enaddr[4] |
 		      (enaddr[5] << 8);
 		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR1, reg);
+		break;
+	    }
+
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+	    {
+		u_int32_t reg;
+		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		    
+		reg = enaddr[0] |
+		      (enaddr[1] << 8) |
+		      (enaddr[2] << 16) |
+		      (enaddr[3] << 24);
+		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR0);
+		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
+
+		reg = enaddr[4] | (enaddr[5] << 8);
+		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR1);
+		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
+		break;
 	    }
 
 	default:
@@ -2980,6 +3028,78 @@ tlp_al981_filter_setup(sc)
 }
 
 /*
+ * tlp_asix_filter_setup:
+ * 
+ * 	Set the ASIX AX8814x recieve filter.
+ */
+void
+tlp_asix_filter_setup(sc)
+	struct tulip_softc *sc;
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	u_int32_t hash, mchash[2];
+
+	DPRINTF(sc, ("%s: tlp_asix_filter_setup: sc_flags 0x%08x\n",
+		sc->sc_dev.dv_xname, sc->sc_flags));
+
+	sc->sc_opmode &= ~(OPMODE_PM|OPMODE_AX_RB|OPMODE_PR);
+
+	if (ifp->if_flags & IFF_MULTICAST)
+		sc->sc_opmode |= OPMODE_PM;
+
+	if (ifp->if_flags & IFF_BROADCAST)
+		sc->sc_opmode |= OPMODE_AX_RB;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_opmode |= OPMODE_PR;
+		goto allmulti;
+	}
+
+	mchash[0] = mchash[1] = 0;
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
+		}
+		hash = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) 
+		       & 0x3f;
+		if (hash < 32)
+			mchash[0] |= (1 << hash);
+		else
+			mchash[1] |= (1 << (hash - 32));
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	goto setit;
+
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	mchash[0] = mchash[1] = 0xffffffff;
+
+setit:
+	TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_MAR0);
+	TULIP_WRITE(sc, CSR_AX_FILTDATA, mchash[0]);
+	TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_MAR1);
+	TULIP_WRITE(sc, CSR_AX_FILTDATA, mchash[1]);
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	DPRINTF(sc, ("%s: tlp_asix_filter_setup: returning\n",
+		sc->sc_dev.dv_xname));
+}
+
+
+/*
  * tlp_idle:
  *
  *	Cause the transmit and/or receive processes to go idle.
@@ -3065,9 +3185,18 @@ tlp_idle(sc, bits)
 	if ((csr & ackmask) != ackmask) {
 		if ((bits & OPMODE_ST) != 0 && (csr & STATUS_TPS) == 0 &&
 		    (csr & STATUS_TS) != STATUS_TS_STOPPED) {
-			printf("%s: transmit process failed to idle: "
-			    "state %s\n", sc->sc_dev.dv_xname,
-			    tx_state_names[(csr & STATUS_TS) >> 20]);
+			switch (sc->sc_chip) {
+			case TULIP_CHIP_AX88140:
+			case TULIP_CHIP_AX88141:
+				/*
+				 * Filter the message out on noisy chips.
+				 */
+				break;
+			default:
+				printf("%s: transmit process failed to idle: "
+				    "state %s\n", sc->sc_dev.dv_xname,
+				    tx_state_names[(csr & STATUS_TS) >> 20]);
+			}
 		}
 		if ((bits & OPMODE_SR) != 0 && (csr & STATUS_RPS) == 0 &&
 		    (csr & STATUS_RS) != STATUS_RS_STOPPED) {
@@ -3541,6 +3670,30 @@ tlp_pnic_preinit(sc)
 		 */
 		sc->sc_opmode |= OPMODE_PNIC_TBEN;
 	}
+}
+
+/*
+ * tlp_asix_preinit:
+ * 
+ * 	Pre-init function for the ASIX chipsets.
+ */
+void
+tlp_asix_preinit(sc)
+	struct tulip_softc *sc;
+{
+
+	switch (sc->sc_chip) {
+		case TULIP_CHIP_AX88140:
+		case TULIP_CHIP_AX88141:
+			/* XXX Handle PHY. */
+			sc->sc_opmode |= OPMODE_HBD|OPMODE_PS; 
+			break;
+		default:
+			/* Nothing */
+			break;
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 }
 
 /*
@@ -6095,3 +6248,83 @@ tlp_dm9102_tmsw_setmedia(sc)
 	/* XXX HomePNA on DM9102A. */
 	return (tlp_mii_setmedia(sc));
 }
+
+/*
+ * ASIX AX88140A/AX88141 media switch. Internal PHY or MII.
+ */
+
+void	tlp_asix_tmsw_init(struct tulip_softc *);
+void	tlp_asix_tmsw_getmedia(struct tulip_softc *, struct ifmediareq *);
+int	tlp_asix_tmsw_setmedia(struct tulip_softc *);
+
+const struct tulip_mediasw tlp_asix_mediasw = {
+	tlp_asix_tmsw_init, tlp_asix_tmsw_getmedia,
+	tlp_asix_tmsw_setmedia
+};
+
+void
+tlp_asix_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int32_t opmode;
+
+	sc->sc_mii.mii_ifp = ifp;
+        sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+        sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+            tlp_mediastatus);
+
+	/*
+	 * Configure OPMODE properly for the internal MII interface.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		opmode = OPMODE_HBD|OPMODE_PS;
+		break;
+        default:
+                opmode = 0;
+                break;
+        }
+
+	TULIP_WRITE(sc, CSR_OPMODE, opmode);
+
+	/* Now, probe the internal MII for the internal PHY. */
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+
+	/* XXX Figure how to handle the PHY. */
+	
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
+
+	
+}
+
+void
+tlp_asix_tmsw_getmedia(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	
+	/* XXX PHY handling. */
+	tlp_mii_getmedia(sc, ifmr);
+}
+
+int
+tlp_asix_tmsw_setmedia(sc)
+	struct tulip_softc *sc;
+{
+	
+	/* XXX PHY handling. */
+	return (tlp_mii_setmedia(sc));
+}
+
