@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.6 2004/12/09 11:21:50 peter Exp $
+.\"	$NetBSD: statvfs.5,v 1.7 2005/06/23 02:04:08 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd April 14, 2004
+.Dd July 22, 2005
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -92,6 +92,16 @@ The
 .Fa f_flag
 argument can have the following bits set:
 .Bl -tag -width ST_SYNCHRONOUS
+.It Dv ST_MAGICLINKS
+Expand special strings
+.Po
+beginning with
+.Dq @
+.Pc
+when traversing symbolic links.
+See
+.Xr symlink 7
+for a list of supported strings.
 .It Dv ST_RDONLY
 The filesystem is mounted read-only;
 Even the super-user may not write on it.
@@ -101,12 +111,12 @@ Files may not be executed from the filesystem.
 Setuid and setgid bits on files are not honored when they are executed.
 .It Dv ST_NODEV
 Special files in the filesystem may not be opened.
+.It Dv ST_UNION
+Union with underlying filesystem instead of obscuring it.
 .It Dv ST_SYNCHRONOUS
 All I/O to the filesystem is done synchronously.
 .It Dv ST_ASYNC
 No filesystem I/O is done synchronously.
-.It Dv ST_UNION
-Union with underlying filesystem.
 .It Dv ST_NOCOREDUMP
 Don't write core dumps to this file system.
 .It Dv ST_NOATIME
