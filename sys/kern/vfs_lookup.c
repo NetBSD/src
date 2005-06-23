@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.61 2005/06/23 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.61 2005/06/23 00:30:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.61 2005/06/23 00:30:28 thorpej Exp 
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
-
-MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
 
 /*
  * Substitute replacement text for 'magic' strings in symlinks.
