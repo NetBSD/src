@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.478 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.479 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -47,3 +47,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	azalia(4): Add driver for High Definition Audio. [kent 20050621]
 	wtf(6): Now searches all acronyms databases (the -t switch is
 		done), whatis(1) and then pkg_info(1). [hubertf 20050622]
+	make(1): Remove (undocumented) support for automagically setting
+		.OBJDIR to ./obj.${MACHINE, ./obj or /usr/obj/`pwd`.
+		[lukem 20050623]
