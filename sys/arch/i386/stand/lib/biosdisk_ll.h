@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.11 2005/06/22 06:06:34 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.12 2005/06/23 20:20:37 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -119,6 +119,8 @@ struct biosdisk_ext13info {
 #define EXT13_CHANGELINE	0x0010	/* changeline support */
 #define EXT13_LOCKABLE		0x0020	/* device is lockable */
 #define EXT13_MAXGEOM		0x0040	/* geometry set to max; no media */
+
+#define BIOSDISK_DEFAULT_SECSIZE	512
 
 int set_geometry(struct biosdisk_ll *, struct biosdisk_ext13info *);
 int readsects(struct biosdisk_ll *, daddr_t, int, char *, int);
