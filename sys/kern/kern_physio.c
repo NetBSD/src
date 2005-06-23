@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.60 2004/03/23 13:22:33 junyoung Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.60 2004/03/23 13:22:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,11 +89,42 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.60 2004/03/23 13:22:33 junyoung Ex
  *
  * The routines "getphysbuf" and "putphysbuf" steal and return a swap
  * buffer.  Leffler, et al., says that swap buffers are used to do the
- * I/O, so raw I/O requests don't have to be single-threaded.
+ * I/O, so raw I/O requests don't have to be single-threaded.  Of course,
+ * NetBSD doesn't use "swap buffers" -- we have our own memory pool for
+ * buffer descriptors.
  */
 
-struct buf *getphysbuf(void);
-void putphysbuf(struct buf *bp);
+/*
+ * allocate a buffer structure for use in physical I/O.
+ */
+static struct buf *
+getphysbuf(void)
+{
+	struct buf *bp;
+	int s;
+
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
+	memset(bp, 0, sizeof(*bp));
+	BUF_INIT(bp);
+	return(bp);
+}
+
+/*
+ * get rid of a swap buffer structure which has been used in physical I/O.
+ */
+static void
+putphysbuf(struct buf *bp)
+{
+	int s;
+
+	if (__predict_false(bp->b_flags & B_WANTED))
+		panic("putphysbuf: private buf B_WANTED");
+	s = splbio();
+	pool_put(&bufpool, bp);
+	splx(s);
+}
 
 /*
  * Do "physical I/O" on behalf of a user.  "Physical I/O" is I/O directly
@@ -102,13 +133,8 @@ void putphysbuf(struct buf *bp);
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, min_phys, uio)
-	void (*strategy)(struct buf *);
-	struct buf *bp;
-	dev_t dev;
-	int flags;
-	void (*min_phys)(struct buf *);
-	struct uio *uio;
+physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
+    void (*min_phys)(struct buf *), struct uio *uio)
 {
 	struct iovec *iovp;
 	struct lwp *l = curlwp;
@@ -294,39 +320,6 @@ done:
 }
 
 /*
- * allocate a buffer structure for use in physical I/O.
- */
-struct buf *
-getphysbuf()
-{
-	struct buf *bp;
-	int s;
-
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	memset(bp, 0, sizeof(*bp));
-	BUF_INIT(bp);
-	return(bp);
-}
-
-/*
- * get rid of a swap buffer structure which has been used in physical I/O.
- */
-void
-putphysbuf(bp)
-        struct buf *bp;
-{
-	int s;
-
-	if (__predict_false(bp->b_flags & B_WANTED))
-		panic("putphysbuf: private buf B_WANTED");
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
-}
-
-/*
  * Leffler, et al., says on p. 231:
  * "The minphys() routine is called by physio() to adjust the
  * size of each I/O transfer before the latter is passed to
@@ -336,8 +329,7 @@ putphysbuf(bp)
  * and return the new count;
  */
 void
-minphys(bp)
-	struct buf *bp;
+minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > MAXPHYS)

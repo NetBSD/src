@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.89 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.90 2005/06/23 23:15:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.89 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.90 2005/06/23 23:15:12 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -187,10 +187,7 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_clock_settime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_clock_settime_args /* {
 		syscallarg(clockid_t) clock_id;
@@ -207,9 +204,7 @@ sys_clock_settime(l, v, retval)
 
 
 int
-clock_settime1(clock_id, tp)
-	clockid_t clock_id;
-	const struct timespec *tp;
+clock_settime1(clockid_t clock_id, const struct timespec *tp)
 {
 	struct timespec ats;
 	struct timeval atv;
@@ -368,10 +363,8 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-settimeofday1(utv, utzp, p)
-	const struct timeval *utv;
-	const struct timezone *utzp;
-	struct proc *p;
+settimeofday1(const struct timeval *utv, const struct timezone *utzp,
+    struct proc *p)
 {
 	struct timeval atv;
 	struct timezone atz;
@@ -428,10 +421,7 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-adjtime1(delta, olddelta, p)
-	const struct timeval *delta;
-	struct timeval *olddelta;
-	struct proc *p;
+adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 {
 	struct timeval atv;
 	long ndelta, ntickdelta, odelta;
