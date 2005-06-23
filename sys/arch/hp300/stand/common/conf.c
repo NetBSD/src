@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2005/06/23 19:14:24 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 2005/06/23 19:55:21 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -137,18 +137,9 @@ int	npunit = (sizeof(punitsw) / sizeof(punitsw[0]));
 /*
  * Filesystem configuration
  */
-struct fs_ops file_system_rawfs[] = {
-	{ rawfs_open, rawfs_close, rawfs_read, rawfs_write, rawfs_seek,
-	    rawfs_stat },
-};
-
-struct fs_ops file_system_ufs[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-};
-
-struct fs_ops file_system_nfs[] = {
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
-};
+struct fs_ops file_system_rawfs[] = { FS_OPS(rawfs) };
+struct fs_ops file_system_ufs[] = { FS_OPS(ufs) };
+struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
 
 struct fs_ops file_system[1];
 int	nfsys = 1;		/* we always know which one we want */
