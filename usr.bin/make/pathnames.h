@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.14 2004/05/07 00:04:40 ross Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.15 2005/06/23 02:31:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,8 +39,6 @@
 #include <paths.h>
 #endif
 
-#define	_PATH_OBJDIR		"obj"
-#define	_PATH_OBJDIRPREFIX	"/usr/obj"
 #ifndef _PATH_DEFSHELLDIR
 #define	_PATH_DEFSHELLDIR	"/bin"
 #endif
