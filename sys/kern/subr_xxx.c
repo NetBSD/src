@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xxx.c,v 1.13 2003/08/07 16:31:54 agc Exp $	*/
+/*	$NetBSD: subr_xxx.c,v 1.14 2005/06/23 18:46:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.13 2003/08/07 16:31:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.14 2005/06/23 18:46:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.13 2003/08/07 16:31:54 agc Exp $");
  * Unsupported device function (e.g. writing to read-only device).
  */
 int
-enodev()
+enodev(void)
 {
 
 	return (ENODEV);
@@ -58,7 +58,7 @@ enodev()
  * Unconfigured device function; driver not configured.
  */
 int
-enxio()
+enxio(void)
 {
 
 	return (ENXIO);
@@ -68,7 +68,7 @@ enxio()
  * Unsupported ioctl function.
  */
 int
-enoioctl()
+enoioctl(void)
 {
 
 	return (ENOTTY);
@@ -80,7 +80,7 @@ enoioctl()
  * that is not supported by the current system binary.
  */
 int
-enosys ()
+enosys(void)
 {
 
 	return (ENOSYS);
@@ -91,7 +91,7 @@ enosys ()
  * on a specific object or file type.
  */
 int
-eopnotsupp()
+eopnotsupp(void)
 {
 
 	return (EOPNOTSUPP);
@@ -102,8 +102,7 @@ eopnotsupp()
  */
 /*ARGSUSED*/
 int
-nullop(v)
-	void *v;
+nullop(void *v)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.31 2004/04/08 06:20:30 atatat Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.32 2005/06/23 18:46:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.31 2004/04/08 06:20:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.32 2005/06/23 18:46:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ extern char etext[];
 
 
 void
-kmstartup()
+kmstartup(void)
 {
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
@@ -215,10 +215,7 @@ SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
  */
 /* ARGSUSED */
 int
-sys_profil(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_profil(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;
@@ -273,9 +270,7 @@ sys_profil(l, v, retval)
  * inaccurate.
  */
 void
-addupc_intr(p, pc)
-	struct proc *p;
-	u_long pc;
+addupc_intr(struct proc *p, u_long pc)
 {
 	struct uprof *prof;
 	caddr_t addr;
@@ -300,10 +295,7 @@ addupc_intr(p, pc)
  * update fails, we simply turn off profiling.
  */
 void
-addupc_task(p, pc, ticks)
-	struct proc *p;
-	u_long pc;
-	u_int ticks;
+addupc_task(struct proc *p, u_long pc, u_int ticks)
 {
 	struct uprof *prof;
 	caddr_t addr;
