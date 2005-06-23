@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.12 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.12 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	struct proc *p;
 {
 #ifndef	ISODEVMAP
-	free(ndp->ni_pnbuf, M_NAMEI);
+	PNBUF_PUT(ndp->ni_pnbuf);
 	vput(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	return (EINVAL);
@@ -111,7 +111,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	if (ip->i_mnt->iso_ftype != ISO_FTYPE_RRIP
 	    || vap->va_type != vp->v_type
 	    || (vap->va_type != VCHR && vap->va_type != VBLK)) {
-		free(ndp->ni_pnbuf, M_NAMEI);
+		PNBUF_PUT(ndp->ni_pnbuf);
 		vput(ndp->ni_dvp);
 		vput(ndp->ni_vp);
 		return (EINVAL);
@@ -674,7 +674,7 @@ cd9660_readlink(v)
 	    uio->uio_iov->iov_len >= MAXPATHLEN)
 		symname = uio->uio_iov->iov_base;
 	else
-		MALLOC(symname, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+		symname = PNBUF_GET();
 
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
@@ -682,7 +682,7 @@ cd9660_readlink(v)
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
 		if (uio->uio_segflg != UIO_SYSSPACE ||
 		    uio->uio_iov->iov_len < MAXPATHLEN)
-			FREE(symname, M_NAMEI);
+			PNBUF_PUT(symname);
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -697,7 +697,7 @@ cd9660_readlink(v)
 	if (uio->uio_segflg != UIO_SYSSPACE ||
 	    uio->uio_iov->iov_len < MAXPATHLEN) {
 		error = uiomove(symname, symlen, uio);
-		FREE(symname, M_NAMEI);
+		PNBUF_PUT(symname);
 		return (error);
 	}
 	uio->uio_resid -= symlen;
