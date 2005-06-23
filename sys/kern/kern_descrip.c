@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.133 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.134 2005/06/23 23:15:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.133 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134 2005/06/23 23:15:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,20 +83,6 @@ MALLOC_DEFINE(M_FILE, "file", "Open file structure");
 MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
 MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
-static __inline void	fd_used(struct filedesc *, int);
-static __inline void	fd_unused(struct filedesc *, int);
-static __inline int	find_next_zero(uint32_t *, int, u_int);
-int			finishdup(struct proc *, int, int, register_t *);
-int			find_last_set(struct filedesc *, int);
-int			fcntl_forfs(int, struct proc *, int, void *);
-
-dev_type_open(filedescopen);
-
-const struct cdevsw filedesc_cdevsw = {
-	filedescopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
-
 static __inline int
 find_next_zero(uint32_t *bitmap, int want, u_int bits)
 {
@@ -128,7 +114,7 @@ find_next_zero(uint32_t *bitmap, int want, u_int bits)
 	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
 }
 
-int
+static int
 find_last_set(struct filedesc *fd, int last)
 {
 	int off, i;
@@ -221,6 +207,50 @@ fd_getfile(struct filedesc *fdp, int fd)
 	}
 
 	return (fp);
+}
+
+/*
+ * Common code for dup, dup2, and fcntl(F_DUPFD).
+ */
+static int
+finishdup(struct proc *p, int old, int new, register_t *retval)
+{
+	struct filedesc	*fdp;
+	struct file	*fp, *delfp;
+
+	fdp = p->p_fd;
+
+	/*
+	 * If there is a file in the new slot, remember it so we
+	 * can close it after we've finished the dup.  We need
+	 * to do it after the dup is finished, since closing
+	 * the file may block.
+	 *
+	 * Note: `old' is already used for us.
+	 * Note: Caller already marked `new' slot "used".
+	 */
+	simple_lock(&fdp->fd_slock);
+	delfp = fdp->fd_ofiles[new];
+
+	fp = fdp->fd_ofiles[old];
+	KDASSERT(fp != NULL);
+	fdp->fd_ofiles[new] = fp;
+	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
+	simple_unlock(&fdp->fd_slock);
+
+	*retval = new;
+	simple_lock(&fp->f_slock);
+	fp->f_count++;
+	FILE_UNUSE_HAVELOCK(fp, p);
+
+	if (delfp != NULL) {
+		simple_lock(&delfp->f_slock);
+		FILE_USE(delfp);
+		if (new < fdp->fd_knlistsize)
+			knote_fdclose(p, new);
+		(void) closef(delfp, p);
+	}
+	return (0);
 }
 
 /*
@@ -334,6 +364,73 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 
 	/* finishdup() will unuse the descriptors for us */
 	return (finishdup(p, old, new, retval));
+}
+
+/*
+ * fcntl call which is being passed to the file's fs.
+ */
+static int
+fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
+{
+	struct file	*fp;
+	struct filedesc	*fdp;
+	int		error;
+	u_int		size;
+	void		*data, *memp;
+#define STK_PARAMS	128
+	char		stkbuf[STK_PARAMS];
+
+	/* fd's value was validated in sys_fcntl before calling this routine */
+	fdp = p->p_fd;
+	fp = fdp->fd_ofiles[fd];
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+		return (EBADF);
+
+	/*
+	 * Interpret high order word to find amount of data to be
+	 * copied to/from the user's address space.
+	 */
+	size = (size_t)F_PARAM_LEN(cmd);
+	if (size > F_PARAM_MAX)
+		return (EINVAL);
+	memp = NULL;
+	if (size > sizeof(stkbuf)) {
+		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		data = memp;
+	} else
+		data = stkbuf;
+	if (cmd & F_FSIN) {
+		if (size) {
+			error = copyin(arg, data, size);
+			if (error) {
+				if (memp)
+					free(memp, M_IOCTLOPS);
+				return (error);
+			}
+		} else
+			*(void **)data = arg;
+	} else if ((cmd & F_FSOUT) && size)
+		/*
+		 * Zero the buffer so the user always
+		 * gets back something deterministic.
+		 */
+		memset(data, 0, size);
+	else if (cmd & F_FSVOID)
+		*(void **)data = arg;
+
+
+	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, p);
+
+	/*
+	 * Copy any data to user, size was
+	 * already set and checked above.
+	 */
+	if (error == 0 && (cmd & F_FSOUT) && size)
+		error = copyout(data, arg, size);
+	if (memp)
+		free(memp, M_IOCTLOPS);
+	return (error);
 }
 
 /*
@@ -540,50 +637,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
-}
-
-/*
- * Common code for dup, dup2, and fcntl(F_DUPFD).
- */
-int
-finishdup(struct proc *p, int old, int new, register_t *retval)
-{
-	struct filedesc	*fdp;
-	struct file	*fp, *delfp;
-
-	fdp = p->p_fd;
-
-	/*
-	 * If there is a file in the new slot, remember it so we
-	 * can close it after we've finished the dup.  We need
-	 * to do it after the dup is finished, since closing
-	 * the file may block.
-	 *
-	 * Note: `old' is already used for us.
-	 * Note: Caller already marked `new' slot "used".
-	 */
-	simple_lock(&fdp->fd_slock);
-	delfp = fdp->fd_ofiles[new];
-
-	fp = fdp->fd_ofiles[old];
-	KDASSERT(fp != NULL);
-	fdp->fd_ofiles[new] = fp;
-	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
-	simple_unlock(&fdp->fd_slock);
-
-	*retval = new;
-	simple_lock(&fp->f_slock);
-	fp->f_count++;
-	FILE_UNUSE_HAVELOCK(fp, p);
-
-	if (delfp != NULL) {
-		simple_lock(&delfp->f_slock);
-		FILE_USE(delfp);
-		if (new < fdp->fd_knlistsize)
-			knote_fdclose(p, new);
-		(void) closef(delfp, p);
-	}
-	return (0);
 }
 
 void
@@ -1507,7 +1560,7 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
  * references to this file will be direct to the other driver.
  */
 /* ARGSUSED */
-int
+static int
 filedescopen(dev_t dev, int mode, int type, struct proc *p)
 {
 
@@ -1522,6 +1575,11 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 	curlwp->l_dupfd = minor(dev);	/* XXX */
 	return EDUPFD;
 }
+
+const struct cdevsw filedesc_cdevsw = {
+	filedescopen, noclose, noread, nowrite, noioctl,
+	    nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * Duplicate the specified descriptor to a free descriptor.
@@ -1609,73 +1667,6 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		return (error);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * fcntl call which is being passed to the file's fs.
- */
-int
-fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
-{
-	struct file	*fp;
-	struct filedesc	*fdp;
-	int		error;
-	u_int		size;
-	void		*data, *memp;
-#define STK_PARAMS	128
-	char		stkbuf[STK_PARAMS];
-
-	/* fd's value was validated in sys_fcntl before calling this routine */
-	fdp = p->p_fd;
-	fp = fdp->fd_ofiles[fd];
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return (EBADF);
-
-	/*
-	 * Interpret high order word to find amount of data to be
-	 * copied to/from the user's address space.
-	 */
-	size = (size_t)F_PARAM_LEN(cmd);
-	if (size > F_PARAM_MAX)
-		return (EINVAL);
-	memp = NULL;
-	if (size > sizeof(stkbuf)) {
-		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
-		data = memp;
-	} else
-		data = stkbuf;
-	if (cmd & F_FSIN) {
-		if (size) {
-			error = copyin(arg, data, size);
-			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
-			}
-		} else
-			*(void **)data = arg;
-	} else if ((cmd & F_FSOUT) && size)
-		/*
-		 * Zero the buffer so the user always
-		 * gets back something deterministic.
-		 */
-		memset(data, 0, size);
-	else if (cmd & F_FSVOID)
-		*(void **)data = arg;
-
-
-	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, p);
-
-	/*
-	 * Copy any data to user, size was
-	 * already set and checked above.
-	 */
-	if (error == 0 && (cmd & F_FSOUT) && size)
-		error = copyout(data, arg, size);
-	if (memp)
-		free(memp, M_IOCTLOPS);
-	return (error);
 }
 
 /*

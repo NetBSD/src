@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.60 2004/12/13 08:46:43 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.60 2004/12/13 08:46:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61 2005/06/23 23:15:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,24 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.60 2004/12/13 08:46:43 yamt Exp $");
  */
 
 /*
- * The global accounting state and related data.  Gain the lock before
- * accessing these variables.
- */
-enum {
-	ACCT_STOP,
-	ACCT_ACTIVE,
-	ACCT_SUSPENDED
-} acct_state;				/* The current accounting state. */
-struct vnode *acct_vp;			/* Accounting vnode pointer. */
-struct ucred *acct_ucred;		/* Credential of accounting file
-					   owner (i.e root).  Used when
- 					   accounting file i/o.  */
-struct proc *acct_dkwatcher;		/* Free disk space checker. */
-
-/*
  * Lock to serialize system calls and kernel threads.
  */
-struct	lock acct_lock;
+static struct lock acct_lock;
 #define	ACCT_LOCK()						\
 do {								\
 	(void) lockmgr(&acct_lock, LK_EXCLUSIVE, NULL);		\
@@ -134,14 +119,19 @@ do {								\
 } while (/* CONSTCOND */0)
 
 /*
- * Internal accounting functions.
- * The former's operation is described in Leffler, et al., and the latter
- * was provided by UCB with the 4.4BSD-Lite release
+ * The global accounting state and related data.  Gain the lock before
+ * accessing these variables.
  */
-comp_t	encode_comp_t(u_long, u_long);
-void	acctwatch(void *);
-void	acct_stop(void);
-int	acct_chkfree(void);
+static enum {
+	ACCT_STOP,
+	ACCT_ACTIVE,
+	ACCT_SUSPENDED
+} acct_state;				/* The current accounting state. */
+static struct vnode *acct_vp;		/* Accounting vnode pointer. */
+static struct ucred *acct_ucred;	/* Credential of accounting file
+					   owner (i.e root).  Used when
+ 					   accounting file i/o.  */
+static struct proc *acct_dkwatcher;	/* Free disk space checker. */
 
 /*
  * Values associated with enabling and disabling accounting
@@ -150,39 +140,46 @@ int	acctsuspend = 2;	/* stop accounting when < 2% free space left */
 int	acctresume = 4;		/* resume when free space risen to > 4% */
 int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
 
-void
-acct_init()
-{
+/*
+ * Encode_comp_t converts from ticks in seconds and microseconds
+ * to ticks in 1/AHZ seconds.  The encoding is described in
+ * Leffler, et al., on page 63.
+ */
 
-	acct_state = ACCT_STOP;
-	acct_vp = NULLVP;
-	acct_ucred = NULL;
-	lockinit(&acct_lock, PWAIT, "acctlk", 0, 0);
+#define	MANTSIZE	13			/* 13 bit mantissa. */
+#define	EXPSIZE		3			/* Base 8 (3 bit) exponent. */
+#define	MAXFRACT	((1 << MANTSIZE) - 1)	/* Maximum fractional value. */
+
+static comp_t
+encode_comp_t(u_long s, u_long us)
+{
+	int exp, rnd;
+
+	exp = 0;
+	rnd = 0;
+	s *= AHZ;
+	s += us / (1000000 / AHZ);	/* Maximize precision. */
+
+	while (s > MAXFRACT) {
+	rnd = s & (1 << (EXPSIZE - 1));	/* Round up? */
+		s >>= EXPSIZE;		/* Base 8 exponent == 3 bit shift. */
+		exp++;
+	}
+
+	/* If we need to round up, do it (and handle overflow correctly). */
+	if (rnd && (++s > MAXFRACT)) {
+		s >>= EXPSIZE;
+		exp++;
+	}
+
+	/* Clean it up and polish it off. */
+	exp <<= MANTSIZE;		/* Shift the exponent into place */
+	exp += s;			/* and add on the mantissa. */
+	return (exp);
 }
 
-void
-acct_stop()
-{
-	int error;
-
-	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
-		error = vn_close(acct_vp, FWRITE, acct_ucred, NULL);
-#ifdef DIAGNOSTIC
-		if (error != 0)
-			printf("acct_stop: failed to close, errno = %d\n",
-			    error);
-#endif
-		acct_vp = NULLVP;
-	}
-	if (acct_ucred != NULL) {
-		crfree(acct_ucred);
-		acct_ucred = NULL;
-	}
-	acct_state = ACCT_STOP;
-}
-
-int
-acct_chkfree()
+static int
+acct_chkfree(void)
 {
 	int error;
 	struct statvfs sb;
@@ -213,15 +210,84 @@ acct_chkfree()
 	return (0);
 }
 
+static void
+acct_stop(void)
+{
+	int error;
+
+	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
+		error = vn_close(acct_vp, FWRITE, acct_ucred, NULL);
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			printf("acct_stop: failed to close, errno = %d\n",
+			    error);
+#endif
+		acct_vp = NULLVP;
+	}
+	if (acct_ucred != NULL) {
+		crfree(acct_ucred);
+		acct_ucred = NULL;
+	}
+	acct_state = ACCT_STOP;
+}
+
+/*
+ * Periodically check the file system to see if accounting
+ * should be turned on or off.  Beware the case where the vnode
+ * has been vgone()'d out from underneath us, e.g. when the file
+ * system containing the accounting file has been forcibly unmounted.
+ */
+static void
+acctwatch(void *arg)
+{
+	int error;
+
+	log(LOG_NOTICE, "Accounting started\n");
+	ACCT_LOCK();
+	while (acct_state != ACCT_STOP) {
+		if (acct_vp->v_type == VBAD) {
+			log(LOG_NOTICE, "Accounting terminated\n");
+			acct_stop();
+			continue;
+		}
+
+		error = acct_chkfree();
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			printf("acctwatch: failed to statvfs, error = %d\n",
+			    error);
+#endif
+
+		ACCT_UNLOCK();
+		error = tsleep(acctwatch, PSWP, "actwat", acctchkfreq * hz);
+		ACCT_LOCK();
+#ifdef DIAGNOSTIC
+		if (error != 0 && error != EWOULDBLOCK)
+			printf("acctwatch: sleep error %d\n", error);
+#endif
+	}
+	acct_dkwatcher = NULL;
+	ACCT_UNLOCK();
+
+	kthread_exit(0);
+}
+
+void
+acct_init(void)
+{
+
+	acct_state = ACCT_STOP;
+	acct_vp = NULLVP;
+	acct_ucred = NULL;
+	lockinit(&acct_lock, PWAIT, "acctlk", 0, 0);
+}
+
 /*
  * Accounting system call.  Written based on the specification and
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_acct(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_acct_args /* {
 		syscallarg(const char *) path;
@@ -321,8 +387,7 @@ sys_acct(l, v, retval)
  * "acct.h" header file.)
  */
 int
-acct_process(p)
-	struct proc *p;
+acct_process(struct proc *p)
 {
 	struct acct acct;
 	struct rusage *r;
@@ -410,85 +475,4 @@ acct_process(p)
  out:
 	ACCT_UNLOCK();
 	return (error);
-}
-
-/*
- * Encode_comp_t converts from ticks in seconds and microseconds
- * to ticks in 1/AHZ seconds.  The encoding is described in
- * Leffler, et al., on page 63.
- */
-
-#define	MANTSIZE	13			/* 13 bit mantissa. */
-#define	EXPSIZE		3			/* Base 8 (3 bit) exponent. */
-#define	MAXFRACT	((1 << MANTSIZE) - 1)	/* Maximum fractional value. */
-
-comp_t
-encode_comp_t(s, us)
-	u_long s, us;
-{
-	int exp, rnd;
-
-	exp = 0;
-	rnd = 0;
-	s *= AHZ;
-	s += us / (1000000 / AHZ);	/* Maximize precision. */
-
-	while (s > MAXFRACT) {
-	rnd = s & (1 << (EXPSIZE - 1));	/* Round up? */
-		s >>= EXPSIZE;		/* Base 8 exponent == 3 bit shift. */
-		exp++;
-	}
-
-	/* If we need to round up, do it (and handle overflow correctly). */
-	if (rnd && (++s > MAXFRACT)) {
-		s >>= EXPSIZE;
-		exp++;
-	}
-
-	/* Clean it up and polish it off. */
-	exp <<= MANTSIZE;		/* Shift the exponent into place */
-	exp += s;			/* and add on the mantissa. */
-	return (exp);
-}
-
-/*
- * Periodically check the file system to see if accounting
- * should be turned on or off.  Beware the case where the vnode
- * has been vgone()'d out from underneath us, e.g. when the file
- * system containing the accounting file has been forcibly unmounted.
- */
-void
-acctwatch(arg)
-	void *arg;
-{
-	int error;
-
-	log(LOG_NOTICE, "Accounting started\n");
-	ACCT_LOCK();
-	while (acct_state != ACCT_STOP) {
-		if (acct_vp->v_type == VBAD) {
-			log(LOG_NOTICE, "Accounting terminated\n");
-			acct_stop();
-			continue;
-		}
-
-		error = acct_chkfree();
-#ifdef DIAGNOSTIC
-		if (error != 0)
-			printf("acctwatch: failed to statvfs, error = %d\n",
-			    error);
-#endif
-
-		ACCT_UNLOCK();
-		error = tsleep(acctwatch, PSWP, "actwat", acctchkfreq * hz);
-		ACCT_LOCK();
-#ifdef DIAGNOSTIC
-		if (error != 0 && error != EWOULDBLOCK)
-			printf("acctwatch: sleep error %d\n", error);
-#endif
-	}
-	acct_dkwatcher = NULL;
-	ACCT_UNLOCK();
-
-	kthread_exit(0);
 }
