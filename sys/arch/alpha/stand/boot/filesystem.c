@@ -1,4 +1,4 @@
-/* $NetBSD: filesystem.c,v 1.8 2003/02/23 23:23:07 simonb Exp $ */
+/*	$NetBSD: filesystem.c,v 1.9 2005/06/23 19:14:23 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -38,7 +38,7 @@
 #include <lib/libsa/ustarfs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/lfs.h>
- 
+
 struct fs_ops file_system[] = {
     { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
 	ustarfs_stat },	/* this one can work from tape, so put it first */
@@ -51,6 +51,6 @@ struct fs_ops file_system[] = {
     { lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
 	lfsv2_stat },
 };
- 
+
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
 
