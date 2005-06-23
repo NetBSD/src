@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.7 2005/06/22 15:06:19 junyoung Exp $	*/
+/*	$NetBSD: boot1.c,v 1.8 2005/06/23 20:20:37 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.7 2005/06/22 15:06:19 junyoung Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.8 2005/06/23 20:20:37 junyoung Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -50,8 +50,6 @@ __RCSID("$NetBSD: boot1.c,v 1.7 2005/06/22 15:06:19 junyoung Exp $");
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
-
-#define BIOSDISK_SECSIZE	512	/* XXX */
 
 static uint32_t bios_sector;
 
@@ -136,14 +134,15 @@ blkdevstrategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf, si
 	if (flag != F_READ)
 		return EROFS;
 
-	if (size & (BIOSDISK_SECSIZE - 1))
+	if (size & (BIOSDISK_DEFAULT_SECSIZE - 1))
 		return EINVAL;
 
 	if (rsize)
 		*rsize = size;
 
 	if (size != 0 && readsects(&d, bios_sector + dblk,
-				   size / BIOSDISK_SECSIZE, buf, 1) != 0)
+				   size / BIOSDISK_DEFAULT_SECSIZE,
+				   buf, 1) != 0)
 		return EIO;
 
 	return 0;

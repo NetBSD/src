@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.16 2005/06/22 06:09:47 junyoung Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.17 2005/06/23 20:20:37 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -37,8 +37,6 @@
 #include "biosdisk_ll.h"
 #include "bootinfo.h"
 
-#define BIOSDISK_SECSIZE	512	/* XXX */
-
 #ifdef BIOSDISK_EXT13INFO_V3
 static struct {
 	char	*name;
@@ -67,7 +65,7 @@ bi_getbiosgeom(void)
 	unsigned int cksum;
 	struct biosdisk_ll d;
 	struct biosdisk_ext13info ed;
-	char buf[BIOSDISK_SECSIZE];
+	char buf[BIOSDISK_DEFAULT_SECSIZE];
 
 	nhd = get_harddrives();
 #ifdef GEOM_DEBUG
@@ -168,7 +166,7 @@ bi_getbiosgeom(void)
 		}
 #endif
 
-		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
+		for (j = 0, cksum = 0; j < BIOSDISK_DEFAULT_SECSIZE; j++)
 			cksum += buf[j];
 		bibg->disk[nvalid].cksum = cksum;
 		memcpy(bibg->disk[nvalid].dosparts, &buf[MBR_PART_OFFSET],
