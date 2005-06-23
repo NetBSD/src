@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.51 2005/03/15 18:22:24 bouyer Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.52 2005/06/23 18:46:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.51 2005/03/15 18:22:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.52 2005/06/23 18:46:17 thorpej Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -105,13 +105,6 @@ simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
-static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
-	    int, struct extent_region *, struct extent_region *);
-static	struct extent_region *extent_alloc_region_descriptor
-	   (struct extent *, int);
-static	void extent_free_region_descriptor(struct extent *,
-	    struct extent_region *);
-
 static struct pool expool;
 static struct simplelock expool_init_slock = SIMPLELOCK_INITIALIZER;
 static int expool_initialized;
@@ -149,16 +142,133 @@ expool_init(void)
 }
 
 /*
+ * Allocate an extent region descriptor.  EXTENT MUST NOT BE LOCKED,
+ * AS THIS FUNCTION MAY BLOCK!  We will handle any locking we may need.
+ */
+static struct extent_region *
+extent_alloc_region_descriptor(struct extent *ex, int flags)
+{
+	struct extent_region *rp;
+	int exflags;
+	int s;
+
+	/*
+	 * If the kernel memory allocator is not yet running, we can't
+	 * use it (obviously).
+	 */
+	if (KMEM_IS_RUNNING == 0)
+		flags &= ~EX_MALLOCOK;
+
+	/*
+	 * XXX Make a static, create-time flags word, so we don't
+	 * XXX have to lock to read it!
+	 */
+	simple_lock(&ex->ex_slock);
+	exflags = ex->ex_flags;
+	simple_unlock(&ex->ex_slock);
+
+	if (exflags & EXF_FIXED) {
+		struct extent_fixed *fex = (struct extent_fixed *)ex;
+
+		for (;;) {
+			simple_lock(&ex->ex_slock);
+			if ((rp = LIST_FIRST(&fex->fex_freelist)) != NULL) {
+				/*
+				 * Don't muck with flags after pulling it off
+				 * the freelist; it may have been dynamically
+				 * allocated, and kindly given to us.  We
+				 * need to remember that information.
+				 */
+				LIST_REMOVE(rp, er_link);
+				simple_unlock(&ex->ex_slock);
+				return (rp);
+			}
+			if (flags & EX_MALLOCOK) {
+				simple_unlock(&ex->ex_slock);
+				goto alloc;
+			}
+			if ((flags & EX_WAITOK) == 0) {
+				simple_unlock(&ex->ex_slock);
+				return (NULL);
+			}
+			ex->ex_flags |= EXF_FLWANTED;
+			if (ltsleep(&fex->fex_freelist,
+			    PNORELOCK| PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+			    "extnt", 0, &ex->ex_slock))
+				return (NULL);
+		}
+	}
+
+ alloc:
+	s = splhigh();
+	if (expool_initialized == 0)
+		expool_init();
+	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	splx(s);
+
+	if (rp != NULL)
+		rp->er_flags = ER_ALLOC;
+
+	return (rp);
+}
+
+/*
+ * Free an extent region descriptor.  EXTENT _MUST_ BE LOCKED!  This
+ * is safe as we do not block here.
+ */
+static void
+extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
+{
+	int s;
+
+	if (ex->ex_flags & EXF_FIXED) {
+		struct extent_fixed *fex = (struct extent_fixed *)ex;
+
+		/*
+		 * If someone's waiting for a region descriptor,
+		 * be nice and give them this one, rather than
+		 * just free'ing it back to the system.
+		 */
+		if (rp->er_flags & ER_ALLOC) {
+			if (ex->ex_flags & EXF_FLWANTED) {
+				/* Clear all but ER_ALLOC flag. */
+				rp->er_flags = ER_ALLOC;
+				LIST_INSERT_HEAD(&fex->fex_freelist, rp,
+				    er_link);
+				goto wake_em_up;
+			} else {
+				s = splhigh();
+				pool_put(&expool, rp);
+				splx(s);
+			}
+		} else {
+			/* Clear all flags. */
+			rp->er_flags = 0;
+			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
+		}
+
+		if (ex->ex_flags & EXF_FLWANTED) {
+ wake_em_up:
+			ex->ex_flags &= ~EXF_FLWANTED;
+			wakeup(&fex->fex_freelist);
+		}
+		return;
+	}
+
+	/*
+	 * We know it's dynamically allocated if we get here.
+	 */
+	s = splhigh();
+	pool_put(&expool, rp);
+	splx(s);
+}
+
+/*
  * Allocate and initialize an extent map.
  */
 struct extent *
-extent_create(name, start, end, mtype, storage, storagesize, flags)
-	const char *name;
-	u_long start, end;
-	struct malloc_type *mtype;
-	caddr_t storage;
-	size_t storagesize;
-	int flags;
+extent_create(const char *name, u_long start, u_long end,
+    struct malloc_type *mtype, caddr_t storage, size_t storagesize, int flags)
 {
 	struct extent *ex;
 	caddr_t cp = storage;
@@ -243,8 +353,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
  * so we don't need any locking.
  */
 void
-extent_destroy(ex)
-	struct extent *ex;
+extent_destroy(struct extent *ex)
 {
 	struct extent_region *rp, *orp;
 
@@ -275,11 +384,8 @@ extent_destroy(ex)
  * If we don't need the region descriptor, it will be freed here.
  */
 static void
-extent_insert_and_optimize(ex, start, size, flags, after, rp)
-	struct extent *ex;
-	u_long start, size;
-	int flags;
-	struct extent_region *after, *rp;
+extent_insert_and_optimize(struct extent *ex, u_long start, u_long size,
+    int flags, struct extent_region *after, struct extent_region *rp)
 {
 	struct extent_region *nextr;
 	int appended = 0;
@@ -383,10 +489,7 @@ extent_insert_and_optimize(ex, start, size, flags, after, rp)
  * Allocate a specific region in an extent map.
  */
 int
-extent_alloc_region(ex, start, size, flags)
-	struct extent *ex;
-	u_long start, size;
-	int flags;
+extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *last, *myrp;
 	u_long end = start + (size - 1);
@@ -533,12 +636,9 @@ extent_alloc_region(ex, start, size, flags)
  * a power of 2.
  */
 int
-extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
-    flags, result)
-	struct extent *ex;
-	u_long substart, subend, size, alignment, skew, boundary;
-	int flags;
-	u_long *result;
+extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
+    u_long size, u_long alignment, u_long skew, u_long boundary,
+    int flags, u_long *result)
 {
 	struct extent_region *rp, *myrp, *last, *bestlast;
 	u_long newstart, newend, exend, beststart, bestovh, ovh;
@@ -904,10 +1004,7 @@ skip:
 }
 
 int
-extent_free(ex, start, size, flags)
-	struct extent *ex;
-	u_long start, size;
-	int flags;
+extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
@@ -1056,135 +1153,8 @@ extent_free(ex, start, size, flags)
 	return (0);
 }
 
-/*
- * Allocate an extent region descriptor.  EXTENT MUST NOT BE LOCKED,
- * AS THIS FUNCTION MAY BLOCK!  We will handle any locking we may need.
- */
-static struct extent_region *
-extent_alloc_region_descriptor(ex, flags)
-	struct extent *ex;
-	int flags;
-{
-	struct extent_region *rp;
-	int exflags;
-	int s;
-
-	/*
-	 * If the kernel memory allocator is not yet running, we can't
-	 * use it (obviously).
-	 */
-	if (KMEM_IS_RUNNING == 0)
-		flags &= ~EX_MALLOCOK;
-
-	/*
-	 * XXX Make a static, create-time flags word, so we don't
-	 * XXX have to lock to read it!
-	 */
-	simple_lock(&ex->ex_slock);
-	exflags = ex->ex_flags;
-	simple_unlock(&ex->ex_slock);
-
-	if (exflags & EXF_FIXED) {
-		struct extent_fixed *fex = (struct extent_fixed *)ex;
-
-		for (;;) {
-			simple_lock(&ex->ex_slock);
-			if ((rp = LIST_FIRST(&fex->fex_freelist)) != NULL) {
-				/*
-				 * Don't muck with flags after pulling it off
-				 * the freelist; it may have been dynamically
-				 * allocated, and kindly given to us.  We
-				 * need to remember that information.
-				 */
-				LIST_REMOVE(rp, er_link);
-				simple_unlock(&ex->ex_slock);
-				return (rp);
-			}
-			if (flags & EX_MALLOCOK) {
-				simple_unlock(&ex->ex_slock);
-				goto alloc;
-			}
-			if ((flags & EX_WAITOK) == 0) {
-				simple_unlock(&ex->ex_slock);
-				return (NULL);
-			}
-			ex->ex_flags |= EXF_FLWANTED;
-			if (ltsleep(&fex->fex_freelist,
-			    PNORELOCK| PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-			    "extnt", 0, &ex->ex_slock))
-				return (NULL);
-		}
-	}
-
- alloc:
-	s = splhigh();
-	if (expool_initialized == 0)
-		expool_init();
-	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
-	splx(s);
-
-	if (rp != NULL)
-		rp->er_flags = ER_ALLOC;
-
-	return (rp);
-}
-
-/*
- * Free an extent region descriptor.  EXTENT _MUST_ BE LOCKED!  This
- * is safe as we do not block here.
- */
-static void
-extent_free_region_descriptor(ex, rp)
-	struct extent *ex;
-	struct extent_region *rp;
-{
-	int s;
-
-	if (ex->ex_flags & EXF_FIXED) {
-		struct extent_fixed *fex = (struct extent_fixed *)ex;
-
-		/*
-		 * If someone's waiting for a region descriptor,
-		 * be nice and give them this one, rather than
-		 * just free'ing it back to the system.
-		 */
-		if (rp->er_flags & ER_ALLOC) {
-			if (ex->ex_flags & EXF_FLWANTED) {
-				/* Clear all but ER_ALLOC flag. */
-				rp->er_flags = ER_ALLOC;
-				LIST_INSERT_HEAD(&fex->fex_freelist, rp,
-				    er_link);
-				goto wake_em_up;
-			} else {
-				s = splhigh();
-				pool_put(&expool, rp);
-				splx(s);
-			}
-		} else {
-			/* Clear all flags. */
-			rp->er_flags = 0;
-			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
-		}
-
-		if (ex->ex_flags & EXF_FLWANTED) {
- wake_em_up:
-			ex->ex_flags &= ~EXF_FLWANTED;
-			wakeup(&fex->fex_freelist);
-		}
-		return;
-	}
-
-	/*
-	 * We know it's dynamically allocated if we get here.
-	 */
-	s = splhigh();
-	pool_put(&expool, rp);
-	splx(s);
-}
-
 void
-extent_print(ex)
-	struct extent *ex;
+extent_print(struct extent *ex)
 {
 	struct extent_region *rp;
 
