@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.98 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.99 2005/06/23 18:46:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.98 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99 2005/06/23 18:46:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -151,8 +151,7 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
  */
 
 void
-tablefull(tab, hint)
-	const char *tab, *hint;
+tablefull(const char *tab, const char *hint)
 {
 	if (hint)
 		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
@@ -284,10 +283,7 @@ log(int level, const char *fmt, ...)
  */
 
 void
-vlog(level, fmt, ap)
-	int level;
-	const char *fmt;
-	va_list ap;
+vlog(int level, const char *fmt, va_list ap)
 {
 	int s;
 
@@ -308,8 +304,7 @@ vlog(level, fmt, ap)
  */
 
 void
-logpri(level)
-	int level;
+logpri(int level)
 {
 	int s;
 
@@ -322,8 +317,7 @@ logpri(level)
  * Note: we must be in the mutex here!
  */
 void
-klogpri(level)
-	int level;
+klogpri(int level)
 {
 	char *p;
 	char snbuf[KPRINTF_BUFSIZE];
@@ -370,10 +364,7 @@ addlog(const char *fmt, ...)
  * => we must already be in the mutex!
  */
 static void
-putchar(c, flags, tp)
-	int c;
-	int flags;
-	struct tty *tp;
+putchar(int c, int flags, struct tty *tp)
 {
 	struct kern_msgbuf *mbp;
 
@@ -459,8 +450,7 @@ uprintf(const char *fmt, ...)
  */
 
 tpr_t
-tprintf_open(p)
-	struct proc *p;
+tprintf_open(struct proc *p)
 {
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -475,8 +465,7 @@ tprintf_open(p)
  */
 
 void
-tprintf_close(sess)
-	tpr_t sess;
+tprintf_close(tpr_t sess)
 {
 
 	if (sess)
@@ -557,9 +546,7 @@ db_printf(const char *fmt, ...)
 }
 
 void
-db_vprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+db_vprintf(const char *fmt, va_list ap)
 {
 
 	/* No mutex needed; DDB pauses all processors. */
@@ -766,9 +753,7 @@ printf(const char *fmt, ...)
  */
 
 void
-vprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+vprintf(const char *fmt, va_list ap)
 {
 	int s;
 
@@ -803,10 +788,7 @@ sprintf(char *bf, const char *fmt, ...)
  */
 
 int
-vsprintf(bf, fmt, ap)
-	char *bf;
-	const char *fmt;
-	va_list ap;
+vsprintf(char *bf, const char *fmt, va_list ap)
 {
 	int retval;
 
@@ -839,11 +821,7 @@ snprintf(char *bf, size_t size, const char *fmt, ...)
  * vsnprintf: print a message to a buffer [already have va_alist]
  */
 int
-vsnprintf(bf, size, fmt, ap)
-        char *bf;
-        size_t size;
-        const char *fmt;
-        va_list ap;
+vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 {
 	int retval;
 	char *p;
@@ -862,11 +840,7 @@ vsnprintf(bf, size, fmt, ap)
  * => returns pointer to the buffer
  */
 char *
-bitmask_snprintf(val, p, bf, buflen)
-	u_quad_t val;
-	const char *p;
-	char *bf;
-	size_t buflen;
+bitmask_snprintf(u_quad_t val, const char *p, char *bf, size_t buflen)
 {
 	char *bp, *q;
 	size_t left;
@@ -1067,12 +1041,7 @@ out:
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
 int
-kprintf(fmt0, oflags, vp, sbuf, ap)
-	const char *fmt0;
-	int oflags;
-	void *vp;
-	char *sbuf;
-	va_list ap;
+kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 {
 	const char *fmt;	/* format string */
 	int ch;			/* character from fmt */
