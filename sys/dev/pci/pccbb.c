@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.123 2005/06/22 22:57:17 sekiya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.124 2005/06/23 14:20:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.123 2005/06/22 22:57:17 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.124 2005/06/23 14:20:23 wiz Exp $");
 
 /*
 #define CBB_DEBUG
@@ -735,7 +735,7 @@ pccbb_pci_callback(self)
 	pccbb_pcmcia_attach_setup(sc, &paa);
 	caa.caa_cb_attach = NULL;
 	if (cba.cba_bus == 0)
-		printf("%s: secondary bus number uninitialized; try PCIBIOS_BUS_FIXUP\n", sc->sc_dev.dv_xname);
+		printf("%s: secondary bus number uninitialized; try PCI_BUS_FIXUP\n", sc->sc_dev.dv_xname);
 	else
 		caa.caa_cb_attach = &cba;
 	caa.caa_16_attach = &paa;
