@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.97 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.98 2005/06/23 23:15:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.97 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98 2005/06/23 23:15:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,7 @@ struct simplelock uihashtbl_slock = SIMPLELOCK_INITIALIZER;
  */
 
 int
-sys_getpriority(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getpriority(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getpriority_args /* {
 		syscallarg(int) which;
@@ -133,10 +130,7 @@ sys_getpriority(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_setpriority(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_setpriority_args /* {
 		syscallarg(int) which;
@@ -195,9 +189,7 @@ sys_setpriority(l, v, retval)
 }
 
 int
-donice(curp, chgp, n)
-	struct proc *curp, *chgp;
-	int n;
+donice(struct proc *curp, struct proc *chgp, int n)
 {
 	struct pcred *pcred = curp->p_cred;
 	int s;
@@ -222,10 +214,7 @@ donice(curp, chgp, n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_setrlimit_args /* {
 		syscallarg(int) which;
@@ -243,11 +232,7 @@ sys_setrlimit(l, v, retval)
 }
 
 int
-dosetrlimit(p, cred, which, limp)
-	struct proc *p;
-	struct  pcred *cred;
-	int which;
-	struct rlimit *limp;
+dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
 	struct plimit *oldplim;
@@ -361,10 +346,7 @@ dosetrlimit(p, cred, which, limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getrlimit_args /* {
 		syscallarg(int) which;
@@ -384,11 +366,8 @@ sys_getrlimit(l, v, retval)
  * system, and interrupt time usage.
  */
 void
-calcru(p, up, sp, ip)
-	struct proc *p;
-	struct timeval *up;
-	struct timeval *sp;
-	struct timeval *ip;
+calcru(struct proc *p, struct timeval *up, struct timeval *sp,
+    struct timeval *ip)
 {
 	u_quad_t u, st, ut, it, tot;
 	unsigned long sec;
@@ -449,10 +428,7 @@ calcru(p, up, sp, ip)
 
 /* ARGSUSED */
 int
-sys_getrusage(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_getrusage(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getrusage_args /* {
 		syscallarg(int) who;
@@ -479,8 +455,7 @@ sys_getrusage(l, v, retval)
 }
 
 void
-ruadd(ru, ru2)
-	struct rusage *ru, *ru2;
+ruadd(struct rusage *ru, struct rusage *ru2)
 {
 	long *ip, *ip2;
 	int i;
@@ -500,8 +475,7 @@ ruadd(ru, ru2)
  * and copy when a limit is changed.
  */
 struct plimit *
-limcopy(lim)
-	struct plimit *lim;
+limcopy(struct plimit *lim)
 {
 	struct plimit *newlim;
 	size_t l = 0;
@@ -531,8 +505,7 @@ limcopy(lim)
 }
 
 void
-limfree(lim)
-	struct plimit *lim;
+limfree(struct plimit *lim)
 {
 	int n;
 
@@ -551,8 +524,7 @@ limfree(lim)
 }
 
 struct pstats *
-pstatscopy(ps)
-	struct pstats *ps;
+pstatscopy(struct pstats *ps)
 {
 
 	struct pstats *newps;
@@ -571,8 +543,7 @@ pstatscopy(ps)
 }
 
 void
-pstatsfree(ps)
-	struct pstats *ps;
+pstatsfree(struct pstats *ps)
 {
 
 	pool_put(&pstats_pool, ps);
