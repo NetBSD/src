@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2005/06/23 19:14:24 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -156,7 +156,7 @@ int	nfsys = 1;		/* we always know which one we want */
 #if 0
 /*
  * Inititalize controllers
- * 
+ *
  * XXX this should be a table
  */
 void ctlrinit(void)
