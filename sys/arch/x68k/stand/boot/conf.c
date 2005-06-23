@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2003/02/23 23:23:10 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2005/06/23 19:14:24 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -63,7 +63,7 @@ struct fs_ops file_system[] = {
     { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
 	ustarfs_stat },
 };
- 
+
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
 
 struct open_file files[SOPEN_MAX];
