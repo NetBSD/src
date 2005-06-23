@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.165 2005/04/10 08:21:36 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.166 2005/06/23 04:20:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.165 2005/04/10 08:21:36 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.166 2005/06/23 04:20:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,6 +437,14 @@ main(int argc, char *argv[])
 	if (EMPTYSTR(confdir))
 		confdir = _DEFAULT_CONFDIR;
 
+	if (dowtmp) {
+#ifdef SUPPORT_UTMPX
+		ftpd_initwtmpx();
+#endif
+#ifdef SUPPORT_UTMP
+		ftpd_initwtmp();
+#endif
+	}
 	errno = 0;
 	l = sysconf(_SC_LOGIN_NAME_MAX);
 	if (l == -1 && errno != 0) {
@@ -1070,25 +1078,25 @@ login_utmp(const char *line, const char *name, const char *host,
 static void
 logout_utmp(void)
 {
+#ifdef SUPPORT_UTMPX
+	int okwtmpx = dowtmp;
+#endif
+#ifdef SUPPORT_UTMP
 	int okwtmp = dowtmp;
+#endif
 	if (logged_in) {
-		if (doutmp) {
 #ifdef SUPPORT_UTMPX
-			okwtmp = logoutx(ttyline, 0, DEAD_PROCESS) & dowtmp;
+		if (doutmp)
+			okwtmpx &= ftpd_logoutx(ttyline, 0, DEAD_PROCESS);
+		if (okwtmpx)
+			ftpd_logwtmpx(ttyline, "", "", NULL, 0, DEAD_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
-			okwtmp = ftpd_logout(ttyline) & dowtmp;
-#endif
-		}
-		if (okwtmp) {
-#ifdef SUPPORT_UTMPX
-			ftpd_logwtmpx(ttyline, "", "", NULL, 0,
-			    DEAD_PROCESS);
-#endif
-#ifdef SUPPORT_UTMP
+		if (doutmp)
+			okwtmp &= ftpd_logout(ttyline);
+		if (okwtmp)
 			ftpd_logwtmp(ttyline, "", "");
 #endif
-		}
 	}
 }
 
