@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.33 2005/06/12 19:14:10 dyoung Exp $
-
-.if (${HOSTPROG:U} == "")
-SUBDIR=	mbr
-.endif
+#	$NetBSD: Makefile,v 1.34 2005/06/23 00:54:47 fvdl Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c
-DPADD+=	${LIBUTIL}
-LDADD+=	-lutil
 
 MAN=	fdisk.8
 
@@ -21,5 +15,8 @@ CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rwd0c"'
 
 .include <bsd.prog.mk>
 .if (${HOSTPROG:U} == "")
+SUBDIR=	mbr
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
 .include <bsd.subdir.mk>
 .endif
