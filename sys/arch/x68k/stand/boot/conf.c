@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2005/06/23 19:14:24 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2005/06/23 19:44:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -52,16 +52,11 @@ const struct devspec devspec[] = {
 };
 
 struct fs_ops file_system[] = {
-    { ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
-	ufs_stat },
-    { lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
-	lfsv1_stat },
-    { lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
-	lfsv2_stat },
-    { cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	cd9660_stat },
-    { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
-	ustarfs_stat },
+	FS_OPS(ufs),
+	FS_OPS(lfsv1),
+	FS_OPS(lfsv2),
+	FS_OPS(cd9660),
+	FS_OPS(ustarfs),
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);

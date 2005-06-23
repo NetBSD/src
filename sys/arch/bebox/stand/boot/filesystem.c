@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.2 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.3 2005/06/23 19:44:00 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,10 +44,10 @@
 #endif
 
 struct fs_ops file_system[] = {
-{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek, cd9660_stat },
+	FS_OPS(ufs),
+	FS_OPS(cd9660),
 #if 0
-{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+	FS_OPS(nfs),
 #endif
 };
 

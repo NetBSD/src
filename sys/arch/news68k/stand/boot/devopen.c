@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2004/09/04 13:43:12 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2005/06/23 19:44:01 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -49,9 +49,8 @@ struct devsw devsw[] = {
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
-	    ustarfs_seek, ustarfs_stat }
+	FS_OPS(ufs),
+	FS_OPS(ustarfs),
 };
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
