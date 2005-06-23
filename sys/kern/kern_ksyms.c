@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_ksyms.c,v 1.24 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.25 2005/06/23 23:15:12 thorpej Exp $	*/
+
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.24 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.25 2005/06/23 23:15:12 thorpej Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -91,19 +92,6 @@ static int ksyms_maxlen;
 #define	FOLLOW_MORE_CALLS	2
 #define	FOLLOW_DEVKSYMS		4
 static int ksyms_debug;
-#endif
-
-#if NKSYMS
-dev_type_open(ksymsopen);
-dev_type_close(ksymsclose);
-dev_type_read(ksymsread);
-dev_type_write(ksymswrite);
-dev_type_ioctl(ksymsioctl);
-
-const struct cdevsw ksyms_cdevsw = {
-	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
-	nullstop, notty, nopoll, nommap, nullkqfilter, DV_DULL
-};
 #endif
 
 #ifdef SYMTAB_SPACE
@@ -263,7 +251,7 @@ ptree_gen(char *off, struct symtab *tab)
 		ptree_add(tab->sd_strstart+sym[i].st_name, i);
 	}
 }
-#endif
+#endif /* USE_PTREE */
 
 /*
  * Finds a certain symbol name in a certain symbol table.
@@ -612,7 +600,7 @@ ksyms_sizes_calc(void)
                 strsz += st->sd_strsize;
         }
 }
-#endif
+#endif /* NKSYMS */
 
 /*
  * Temporary work structure for dynamic loaded symbol tables.
@@ -886,7 +874,6 @@ ksyms_rensymtab(const char *old, const char *new)
 }
 
 #ifdef DDB
-
 /*
  * Keep sifting stuff here, to avoid export of ksyms internals.
  */
@@ -941,10 +928,9 @@ ksyms_sift(char *mod, char *sym, int mode)
 	}
 	return ENOENT;
 }
-#endif
+#endif /* DDB */
 
 #if NKSYMS
-
 /*
  * Static allocated ELF header.
  * Basic info is filled in at attach, sizes at open.
@@ -965,7 +951,7 @@ static struct ksyms_hdr {
 } ksyms_hdr;
 
 
-void
+static void
 ksyms_hdr_init(caddr_t hdraddr)
 {
 
@@ -1024,7 +1010,7 @@ ksyms_hdr_init(caddr_t hdraddr)
 	    sizeof(ksyms_hdr.kh_strtab) - 17);
 };
 
-int
+static int
 ksymsopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 
@@ -1047,7 +1033,7 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	return 0;
 }
 
-int
+static int
 ksymsclose(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 
@@ -1063,7 +1049,7 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct proc *p)
 
 #define	HDRSIZ	sizeof(struct ksyms_hdr)
 
-int
+static int
 ksymsread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct symtab *st;
@@ -1118,13 +1104,13 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	return 0;
 }
 
-int
+static int
 ksymswrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	return EROFS;
 }
 
-int
+static int
 ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
@@ -1197,4 +1183,9 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 
 	return error;
 }
-#endif
+
+const struct cdevsw ksyms_cdevsw = {
+	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
+	    nullstop, notty, nopoll, nommap, nullkqfilter, DV_DULL
+};
+#endif /* NKSYMS */
