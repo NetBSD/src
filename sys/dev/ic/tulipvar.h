@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.54 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.55 2005/06/23 23:51:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -595,6 +595,7 @@ extern const struct tulip_mediasw tlp_pmac_mediasw;
 extern const struct tulip_mediasw tlp_al981_mediasw;
 extern const struct tulip_mediasw tlp_an985_mediasw;
 extern const struct tulip_mediasw tlp_dm9102_mediasw;
+extern const struct tulip_mediasw tlp_asix_mediasw;
 
 void	tlp_attach(struct tulip_softc *, const u_int8_t *);
 int	tlp_activate(struct device *, enum devact);
