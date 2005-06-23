@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.h,v 1.3 2003/08/07 11:25:34 agc Exp $	*/
+/*	$NetBSD: ufs_inode.h,v 1.4 2005/06/23 00:53:16 fvdl Exp $	*/
 /* From:  NetBSD: inode.h,v 1.27 2001/12/18 10:57:23 fvdl Exp $ */
 
 /*
@@ -94,3 +94,19 @@ struct inode {
 #define DIP(ip, field) \
         (((ip)->i_fs->fs_magic == FS_UFS1_MAGIC) ? \
         (ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
+
+#define DIP_ASSIGN(ip, field, value)					\
+	do {								\
+		if ((ip)->i_fs->fs_magic == FS_UFS1_MAGIC)		\
+			(ip)->i_ffs1_##field = (value);			\
+		else							\
+			(ip)->i_ffs2_##field = (value);			\
+	} while(0)
+
+#define DIP_ADD(ip, field, value)					\
+	do {								\
+		if ((ip)->i_fs->fs_magic == FS_UFS1_MAGIC)		\
+			(ip)->i_ffs1_##field += (value);		\
+		else							\
+			(ip)->i_ffs2_##field += (value);		\
+	} while(0)
