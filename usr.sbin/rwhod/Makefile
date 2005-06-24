@@ -1,8 +1,9 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$NetBSD: Makefile,v 1.11 2002/09/18 03:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2005/06/24 13:22:09 christos Exp $
 
 .include <bsd.own.mk>
 
+WARNS=	3
 PROG=	rwhod
 SRCS=	rwhod.c utmpentry.c
 MAN=	rwhod.8
