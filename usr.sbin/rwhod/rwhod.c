@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.25 2005/06/24 13:24:23 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.26 2005/06/24 13:47:30 peter Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.25 2005/06/24 13:24:23 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.26 2005/06/24 13:47:30 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,10 @@ __RCSID("$NetBSD: rwhod.c,v 1.25 2005/06/24 13:24:23 christos Exp $");
 
 #include "utmpentry.h"
 /*
- * Alarm interval. Don't forget to change the down time check in ruptime
+ * Check interval. Don't forget to change the down time check in ruptime
  * if this is changed.
  */
-#define AL_INTERVAL (3 * 60)
+#define CHECK_INTERVAL (3 * 60)
 
 static char	myname[MAXHOSTNAMELEN + 1];
 
@@ -85,7 +85,7 @@ static char	myname[MAXHOSTNAMELEN + 1];
  * started up.  Neighbors are currently directly connected via a hardware
  * interface.
  */
-struct	neighbor {
+struct neighbor {
 	struct	neighbor *n_next;
 	char	*n_name;		/* interface name */
 	struct	sockaddr *n_addr;	/* who to send to */
@@ -97,18 +97,14 @@ static struct	neighbor *neighbors;
 static struct	whod mywd;
 static struct	servent *sp;
 static volatile sig_atomic_t  onsighup;
-static int	alarmcount;
 
 #define	WHDRSIZE	(sizeof(mywd) - sizeof(mywd.wd_we))
-
-int	 main(int, char **);
 
 static int	 configure(int);
 static void	 getboottime(void);
 static void	 send_host_information(int);
-static void	 hup(int);
+static void	 sighup(int);
 static void	 handleread(int);
-static void	 timeadd(struct timeval *, time_t, struct timeval *);
 static void	 quit(const char *);
 static void	 rt_xaddrs(void *, void *, struct rt_addrinfo *);
 static int	 verify(const char *);
@@ -122,33 +118,32 @@ static ssize_t	 Sendto(int, const void *, size_t, int,
 int
 main(int argc, char *argv[])
 {
-	int on = 1;
 	int s;
 	char *cp;
+	socklen_t on = 1;
 	struct sockaddr_in sasin;
 	struct pollfd pfd[1];
-	time_t delta = 0;
-	struct timeval next, now;
+	struct timeval delta, next, now;
 
 	if (getuid())
-		errx(1, "not super user");
+		errx(EXIT_FAILURE, "not super user");
 	sp = getservbyname("who", "udp");
 	if (sp == NULL)
-		errx(1, "udp/who: unknown service");
+		errx(EXIT_FAILURE, "udp/who: unknown service");
 #ifndef DEBUG
-	daemon(1, 0);
-	pidfile(NULL);
+	(void)daemon(1, 0);
+	(void)pidfile(NULL);
 #endif
 	if (chdir(_PATH_RWHODIR) < 0)
-		err(1, "%s", _PATH_RWHODIR);
-	(void)signal(SIGHUP, hup);
+		err(EXIT_FAILURE, "%s", _PATH_RWHODIR);
+	(void)signal(SIGHUP, sighup);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
 	 * Establish host name as returned by system.
 	 */
 	if (gethostname(myname, sizeof(myname) - 1) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	myname[sizeof(myname) - 1] = '\0';
 	if ((cp = strchr(myname, '.')) != NULL)
@@ -157,26 +152,27 @@ main(int argc, char *argv[])
 	getboottime();
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		syslog(LOG_ERR, "socket: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
 		syslog(LOG_ERR, "setsockopt SO_BROADCAST: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	(void)memset(&sasin, 0, sizeof(sasin));
 	sasin.sin_family = AF_INET;
 	sasin.sin_port = sp->s_port;
 	if (bind(s, (struct sockaddr *)&sasin, sizeof(sasin)) < 0) {
 		syslog(LOG_ERR, "bind: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	if (!configure(s))
-		exit(1);
+		exit(EXIT_FAILURE);
 
 	send_host_information(s);
-	delta = AL_INTERVAL;
+	delta.tv_sec = CHECK_INTERVAL;
+	delta.tv_usec = 0;
 	gettimeofday(&now, NULL);
-	timeadd(&now, delta, &next);
+	timeradd(&now, &delta, &next);
 
 	pfd[0].fd = s;
 	pfd[0].events = POLLIN;
@@ -195,23 +191,20 @@ main(int argc, char *argv[])
 			handleread(s);
 
 		(void)gettimeofday(&now, NULL);
-		if (now.tv_sec > next.tv_sec) {
+		if (timercmp(&now, &next, >)) {
 			send_host_information(s);
-			timeadd(&now, delta, &next);
+			timeradd(&now, &delta, &next);
 		}
 	}
+
+	/* NOTREACHED */
+	return 0;
 }
 
 static void
-hup(int signo __unused)
+sighup(int signo __unused)
 {
 	onsighup = 1;
-}
-
-static void
-timeadd(struct timeval *now, time_t delta, struct timeval *next)
-{
-       (next)->tv_sec = (now)->tv_sec + delta;
 }
 
 static void
@@ -268,7 +261,7 @@ handleread(int s)
 	}
 #if ENDIAN != BIG_ENDIAN
 	{
-		int i, n = (cc - WHDRSIZE)/sizeof(struct whoent);
+		int i, n = (cc - WHDRSIZE) / sizeof(struct whoent);
 		struct whoent *we;
 
 		/* undo header byte swapping before writing to file */
@@ -312,25 +305,23 @@ verify(const char *name)
 	return size > 0;
 }
 
-
 static void
 send_host_information(int s)
 {
 	struct neighbor *np;
 	struct whoent *we = mywd.wd_we, *wlast;
-	int i;
+	int i, cc, utmpent = 0;;
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
-	int cc;
 	static struct utmpentry *ohead = NULL;
 	struct utmpentry *ep;
-	int utmpent = 0;
+	static int count = 0;
 
 	now = time(NULL);
-	if (alarmcount % 10 == 0)
+	if (count % 10 == 0)
 		getboottime();
-	alarmcount++;
+	count++;
 
 	(void)getutentries(NULL, &ep);
 	if (ep != ohead) {
@@ -356,7 +347,7 @@ send_host_information(int s)
 	 */
 	if (utmpent && chdir(_PATH_DEV)) {
 		syslog(LOG_ERR, "chdir(%s): %m", _PATH_DEV);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	we = mywd.wd_we;
 	for (i = 0; i < utmpent; i++) {
@@ -376,7 +367,7 @@ send_host_information(int s)
 				np->n_addr, np->n_addrlen);
 	if (utmpent && chdir(_PATH_RWHODIR)) {
 		syslog(LOG_ERR, "chdir(%s): %m", _PATH_RWHODIR);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -392,7 +383,7 @@ getboottime(void)
 	size = sizeof(tm);
 	if (sysctl(mib, 2, &tm, &size, NULL, 0) == -1) {
 		syslog(LOG_ERR, "cannot get boottime: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	mywd.wd_boottime = htonl(tm.tv_sec);
 }
@@ -401,7 +392,7 @@ static void
 quit(const char *msg)
 {
 	syslog(LOG_ERR, "%s", msg);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 #define ROUNDUP(a) \
