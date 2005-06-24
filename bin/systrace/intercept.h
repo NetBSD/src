@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.13 2003/08/25 09:12:45 cb Exp $	*/
+/*	$NetBSD: intercept.h,v 1.14 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -40,7 +40,7 @@ struct intercept_replace;
 struct elevate;
 
 struct intercept_system {
-	char *name;
+	const char *name;
 	int (*init)(void);
 	int (*open)(void);
 	int (*attach)(int, pid_t);
@@ -113,7 +113,7 @@ struct intercept_pid {
 #define INTERCEPT_MAXSYSCALLARGS	10
 
 struct intercept_translate {
-	char *name;
+	const char *name;
 	int (*translate)(struct intercept_translate *, int, pid_t, void *);
 	int (*print)(char *, size_t, struct intercept_translate *);
 	int off2;
@@ -155,7 +155,7 @@ int intercept_replace_init(struct intercept_replace *);
 int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t, u_int);
 int intercept_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 
-int intercept_register_sccb(char *, char *,
+int intercept_register_sccb(const char *, const char *,
     short (*)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_replace *, struct intercept_tlq *, void *),
     void *);
@@ -165,10 +165,10 @@ int intercept_register_gencb(short (*)(int, pid_t, int, const char *, int, const
 int intercept_register_execcb(void (*)(int, pid_t, int, const char *, const char *, void *), void *);
 int intercept_register_pfreecb(void (*)(int, void *), void *);
 
-struct intercept_translate *intercept_register_translation(char *, char *,
-    int, struct intercept_translate *);
+struct intercept_translate *intercept_register_translation(const char *,
+    const char *, int, struct intercept_translate *);
 int intercept_translate(struct intercept_translate *, int, pid_t, int, void *, int);
-char *intercept_translate_print(struct intercept_translate *);
+const char *intercept_translate_print(struct intercept_translate *);
 
 #define intercept_register_transstring(x,y,z)	\
 	intercept_register_translation(x, y, z, &ic_translate_string)

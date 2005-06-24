@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.20 2004/01/24 03:44:46 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.21 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.20 2004/01/24 03:44:46 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.21 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,8 +142,8 @@ intercept_sccb_find(const char *emulation, const char *name)
 }
 
 struct intercept_translate *
-intercept_register_translation(char *emulation, char *name, int offset,
-    struct intercept_translate *tl)
+intercept_register_translation(const char *emulation, const char *name,
+    int offset, struct intercept_translate *tl)
 {
 	struct intercept_syscall *tmp;
 	struct intercept_translate *tlnew;
@@ -182,7 +182,7 @@ intercept_sccb_cbarg(char *emulation, char *name)
 }
 
 int
-intercept_register_sccb(char *emulation, char *name,
+intercept_register_sccb(const char *emulation, const char *name,
     short (*cb)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_replace *, struct intercept_tlq *, void *),
     void *cbarg)

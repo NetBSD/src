@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept-translate.c,v 1.6 2003/08/25 09:12:45 cb Exp $	*/
+/*	$NetBSD: intercept-translate.c,v 1.7 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.6 2003/08/25 09:12:45 cb Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.7 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: intercept-translate.c,v 1.6 2003/08/25 09:12:45 cb Exp $");
 
 #include "intercept.h"
 
-char *error_msg = "error";
+const char *error_msg = "error";
 
 static void ic_trans_free(struct intercept_translate *);
 static int ic_print_filename(char *, size_t, struct intercept_translate *);
@@ -105,7 +105,7 @@ intercept_translate(struct intercept_translate *trans,
 	return (0);
 }
 
-char *
+const char *
 intercept_translate_print(struct intercept_translate *trans)
 {
 	char line[_POSIX2_LINE_MAX];
