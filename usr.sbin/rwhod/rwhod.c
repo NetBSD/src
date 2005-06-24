@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.24 2005/06/24 13:22:09 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.25 2005/06/24 13:24:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.24 2005/06/24 13:22:09 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.25 2005/06/24 13:24:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 	timeadd(&now, delta, &next);
 
 	pfd[0].fd = s;
-	pfd[0].revents = POLLIN;
+	pfd[0].events = POLLIN;
 
 	for (;;) {
 		int n;
