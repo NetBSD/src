@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.720 2005/06/20 00:19:38 briggs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.721 2005/06/24 21:41:16 seb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.721 2005/06/20 00:18:54 briggs Exp
+ *	NetBSD: pcidevs,v 1.722 2005/06/24 21:39:25 seb Exp
  */
 
 /*
@@ -9180,6 +9180,14 @@ const struct pci_product pci_products[] = {
 	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,
+	    "PCI6515A Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515ASM,
+	    "PCI6515A Cardbus Controller (Smart Card mode)",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
 	    "ACX100 802.11b",
 	},
@@ -10352,4 +10360,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2006;
+const int pci_nproducts = 2008;
