@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.16 2004/10/29 19:55:43 dsl Exp $	*/
+/*	$NetBSD: policy.c,v 1.17 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.16 2004/10/29 19:55:43 dsl Exp $");
+__RCSID("$NetBSD: policy.c,v 1.17 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: policy.c,v 1.16 2004/10/29 19:55:43 dsl Exp $");
 static int psccompare(struct policy_syscall *, struct policy_syscall *);
 static int policycompare(struct policy *, struct policy *);
 static int polnrcompare(struct policy *, struct policy *);
-static char *systrace_policyfilename(char *, const char *);
+static char *systrace_policyfilename(const char *, const char *);
 static char *systrace_policyline(char *line);
 static int systrace_policyprocess(struct policy *,
     char *);
@@ -252,7 +252,8 @@ systrace_freepolicy(struct policy *policy)
 	if (policy->policynr != -1)
 		SPLAY_REMOVE(polnrtree, &polnrroot, policy);
 
-	free((char *)policy->name);
+	/* XXX: */
+	free((char *)__UNCONST(policy->name));
 	free(policy);
 }
 
@@ -297,7 +298,7 @@ systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 }
 
 char *
-systrace_policyfilename(char *dirname, const char *name)
+systrace_policyfilename(const char *dirname, const char *name)
 {
 	static char file[2*MAXPATHLEN];
 	const char *p;
