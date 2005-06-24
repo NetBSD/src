@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-error.c,v 1.2 2002/12/05 19:33:39 provos Exp $	*/
+/*	$NetBSD: systrace-error.c,v 1.3 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: systrace-error.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace-error.c,v 1.2 2002/12/05 19:33:39 provos Exp $");
+__RCSID("$NetBSD: systrace-error.c,v 1.3 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: systrace-error.c,v 1.2 2002/12/05 19:33:39 provos Exp $");
 #include "systrace-errno.h"
 
 struct systrace_error {
-	char *name;
+	const char *name;
 	int errno;
 } systrace_errors[] = {
 	{ "EPERM", SYSTRACE_EPERM },

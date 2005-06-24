@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2003/11/28 21:53:32 provos Exp $
+#	$NetBSD: Makefile,v 1.10 2005/06/24 23:21:09 christos Exp $
 #	$OpenBSD: Makefile,v 1.4 2002/06/05 17:34:56 mickey Exp $
 
 .include <bsd.own.mk>
 
+WARNS=3
 PROG=	systrace
 DPADD+=		${LIBEVENT}
 LDADD+=		-levent

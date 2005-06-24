@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.29 2005/06/07 09:00:18 he Exp $	*/
+/*	$NetBSD: systrace.c,v 1.30 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -68,7 +68,7 @@ int cradle = 0;			 /* Set if we are running in cradle mode */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
 char username[LOGIN_NAME_MAX];	/* Username: predicate match and expansion */
-char *guipath = _PATH_XSYSTRACE; /* Path to GUI executable */
+const char *guipath = _PATH_XSYSTRACE; /* Path to GUI executable */
 char dirpath[MAXPATHLEN];
 
 static void child_handler(int);
@@ -112,7 +112,8 @@ make_output(char *output, size_t outlen, const char *binname,
     struct intercept_replace *repl)
 {
 	struct intercept_translate *tl;
-	char *p, *line;
+	char *p;
+	const char *line;
 	int size;
 
 	snprintf(output, outlen,
@@ -428,14 +429,15 @@ usage(void)
 }
 
 int
-requestor_start(char *path, int docradle)
+requestor_start(const char *path, int docradle)
 {
 	char *argv[3];
 	int pair[2];
 	pid_t pid;
+	static char mC[] = "-C";
 
-	argv[0] = path;
-	argv[1] = docradle ? "-C" : NULL;
+	argv[0] = __UNCONST(path);
+	argv[1] = docradle ? mC : NULL;
 	argv[2] = NULL;
 
 	if (!docradle && socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
@@ -482,7 +484,7 @@ requestor_start(char *path, int docradle)
 
 
 static void
-cradle_setup(char *pathtogui)
+cradle_setup(const char *pathtogui)
 {
 	struct stat sb;
 	char cradlepath[MAXPATHLEN], cradleuipath[MAXPATHLEN];

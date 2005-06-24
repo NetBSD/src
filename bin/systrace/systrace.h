@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.18 2005/05/07 15:11:02 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.19 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -170,8 +170,8 @@ struct systrace_alias {
 };
 
 int systrace_initalias(void);
-struct systrace_alias *systrace_new_alias(const char *, const char *, char *, char *);
-void systrace_switch_alias(const char *, const char *, char *, char *);
+struct systrace_alias *systrace_new_alias(const char *, const char *, const char *, const char *);
+void systrace_switch_alias(const char *, const char *, const char *, const char *);
 struct systrace_alias *systrace_find_alias(const char *, const char *);
 void systrace_alias_add_trans(struct systrace_alias *,
     struct intercept_translate *);
@@ -203,13 +203,13 @@ char *filter_expand(char *);
 char *filter_dynamicexpand(struct intercept_pid *, char *);
 int filter_needexpand(char *);
 
-void cradle_start(char *, char *, char *);
+void cradle_start(const char *, const char *, const char *);
 
 int parse_filter(char *, struct filter **);
 
 char *uid_to_name(uid_t);
 
-char *strrpl(char *, size_t, char *, char *);
+char *strrpl(char *, size_t, const char *, const char *);
 
 void make_output(char *, size_t, const char *, pid_t, pid_t, int,
     const char *, int, const char *, const char *, int, struct intercept_tlq *,
@@ -236,7 +236,7 @@ extern struct intercept_translate ic_fcntlcmd;
 
 extern struct intercept_translate ic_linux_oflags;
 
-int requestor_start(char *, int);
+int requestor_start(const char *, int);
 
 #if defined(__i386__) || defined(__m68k__) || defined(__alpha__) || defined(__powerpc__) || defined(__mips__) || defined(__arm__)
 #define HAVE_LINUX_FCNTL_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.12 2005/05/07 15:11:02 provos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.13 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -197,7 +197,7 @@ static int
 print_sockdom(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int domain = (intptr_t)tl->trans_addr;
-	char *what = NULL;
+	const char *what = NULL;
 
 	switch (domain) {
 	case AF_UNIX:
@@ -236,7 +236,7 @@ static int
 print_socktype(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int type = (intptr_t)tl->trans_addr;
-	char *what = NULL;
+	const char *what = NULL;
 
 	switch (type) {
 	case SOCK_STREAM:
@@ -299,7 +299,7 @@ static int
 print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int sig = (intptr_t)tl->trans_addr;
-	char *name;
+	const char *name;
 
 	switch (sig) {
 	case SIGHUP: 
@@ -393,7 +393,7 @@ static int
 print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int cmd = (intptr_t)tl->trans_addr;
-	char *name;
+	const char *name;
 
 	switch (cmd) {
 	case F_DUPFD:

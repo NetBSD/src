@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2004/10/29 19:55:43 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.6 2004/10/29 19:55:43 dsl Exp $");
+__RCSID("$NetBSD: util.c,v 1.7 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -40,8 +40,8 @@ __RCSID("$NetBSD: util.c,v 1.6 2004/10/29 19:55:43 dsl Exp $");
 
 #include "util.h"
 
-char *
-strescape(char *str)
+const char *
+strescape(const char *str)
 {
 	static char escape[8192];
 	int i, p;
@@ -72,7 +72,7 @@ strescape(char *str)
 }
 
 char *
-strrpl(char *str, size_t size, char *match, char *value)
+strrpl(char *str, size_t size, const char *match, const char *value)
 {
 	char *p, *e;
 	int len, rlen;

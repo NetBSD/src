@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.1 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$NetBSD: alias.c,v 1.2 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: alias.c,v 1.4 2002/07/30 05:55:08 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -142,7 +142,7 @@ systrace_reverse(const char *emulation, const char *name)
 
 struct systrace_alias *
 systrace_new_alias(const char *emulation, const char *name,
-    char *aemul, char *aname)
+    const char *aemul, const char *aname)
 {
 	struct systrace_alias *alias;
 	struct systrace_revalias *reverse;
@@ -169,7 +169,7 @@ systrace_new_alias(const char *emulation, const char *name,
 
 void
 systrace_switch_alias(const char *emulation, const char *name,
-    char *aemul, char *aname)
+    const char *aemul, const char *aname)
 {
 	struct systrace_alias *alias;
 	struct systrace_revalias *reverse;

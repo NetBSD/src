@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.25 2005/06/01 15:43:56 lukem Exp $	*/
+/*	$NetBSD: filter.c,v 1.26 2005/06/24 23:21:09 christos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.25 2005/06/01 15:43:56 lukem Exp $");
+__RCSID("$NetBSD: filter.c,v 1.26 2005/06/24 23:21:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,7 +72,7 @@ static int filter_template(int, struct policy *, int);
 static int filter_quickpredicate(struct filter *);
 static void filter_policyrecord(struct policy *, struct filter *, const char *,
     const char *, char *);
-static void filter_replace(char *, size_t, char *, char *);
+static void filter_replace(char *, size_t, const char *, char *);
 
 static int
 filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
@@ -516,7 +516,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 		/* Automatically allow */
 		if (tls != NULL) {
 			struct intercept_translate *tl;
-			char *l, *lst = NULL;
+			const char *l, *lst = NULL;
 			int set = 0;
 
 			/* Explicitly match every component */
@@ -694,7 +694,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 }
 
 static void
-filter_replace(char *buf, size_t buflen, char *match, char *repl)
+filter_replace(char *buf, size_t buflen, const char *match, char *repl)
 {
 	while (strrpl(buf, buflen, match, repl) != NULL)
 		;
@@ -748,7 +748,7 @@ int
 filter_fnmatch(struct intercept_translate *tl, struct logic *logic)
 {
 	int res;
-	char *line;
+	const char *line;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
@@ -760,7 +760,7 @@ filter_fnmatch(struct intercept_translate *tl, struct logic *logic)
 int
 filter_substrmatch(struct intercept_translate *tl, struct logic *logic)
 {
-	char *line;
+	const char *line;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
@@ -771,7 +771,7 @@ filter_substrmatch(struct intercept_translate *tl, struct logic *logic)
 int
 filter_negsubstrmatch(struct intercept_translate *tl, struct logic *logic)
 {
-	char *line;
+	const char *line;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
@@ -782,7 +782,7 @@ filter_negsubstrmatch(struct intercept_translate *tl, struct logic *logic)
 int
 filter_stringmatch(struct intercept_translate *tl, struct logic *logic)
 {
-	char *line;
+	const char *line;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
@@ -793,7 +793,7 @@ filter_stringmatch(struct intercept_translate *tl, struct logic *logic)
 int
 filter_negstringmatch(struct intercept_translate *tl, struct logic *logic)
 {
-	char *line;
+	const char *line;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (1);
@@ -804,7 +804,8 @@ filter_negstringmatch(struct intercept_translate *tl, struct logic *logic)
 int
 filter_inpath(struct intercept_translate *tl, struct logic *logic)
 {
-	char *line, c;
+	const char *line;
+	char c;
 	int len;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
@@ -834,7 +835,7 @@ int
 filter_regex(struct intercept_translate *tl, struct logic *logic)
 {
 	regex_t tmpre, *re;
-	char *line;
+	const char *line;
 	int res;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
