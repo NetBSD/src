@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152 2005/04/26 16:03:08 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.153 2005/06/24 15:59:04 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2005/04/26 16:03:08 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2005/06/24 15:59:04 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4573,15 +4573,18 @@ pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
 const struct pmap_devmap *
 pmap_devmap_find_pa(paddr_t pa, psize_t size)
 {
+	uint64_t endpa;
 	int i;
 
 	if (pmap_devmap_table == NULL)
 		return (NULL);
 
+	endpa = (uint64_t)pa + (uint64_t)size;
+
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
 		if (pa >= pmap_devmap_table[i].pd_pa &&
-		    pa + size <= pmap_devmap_table[i].pd_pa +
-				 pmap_devmap_table[i].pd_size)
+		    endpa <= (uint64_t)pmap_devmap_table[i].pd_pa +
+			     (uint64_t)pmap_devmap_table[i].pd_size)
 			return (&pmap_devmap_table[i]);
 	}
 
