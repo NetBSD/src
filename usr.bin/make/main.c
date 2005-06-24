@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.110 2005/06/23 02:31:31 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.110 2005/06/23 02:31:31 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.110 2005/06/23 02:31:31 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -751,6 +751,10 @@ main(int argc, char **argv)
 	 * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
 	 * MAKEOBJDIR is set in the environment, try only that value
 	 * and fall back to .CURDIR if it does not exist.
+	 *
+	 * Otherwise, try _PATH_OBJDIR.MACHINE, _PATH_OBJDIR, and
+	 * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
+	 * of these paths exist, just use .CURDIR.
 	 */
 	Dir_Init(curdir);
 	(void) Main_SetObjdir(curdir);
@@ -760,6 +764,13 @@ main(int argc, char **argv)
 		(void) Main_SetObjdir(mdpath);
 	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
 		(void) Main_SetObjdir(path);
+	} else {
+		(void) snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
+		if (!Main_SetObjdir(mdpath) && !Main_SetObjdir(_PATH_OBJDIR)) {
+			(void) snprintf(mdpath, MAXPATHLEN, "%s%s", 
+					_PATH_OBJDIRPREFIX, curdir);
+			(void) Main_SetObjdir(mdpath);
+		}
 	}
 
 	create = Lst_Init(FALSE);
