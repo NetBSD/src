@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.400 2005/06/19 10:25:36 augustss Exp $
+$NetBSD: usbdevs,v 1.401 2005/06/24 08:09:31 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -397,6 +397,7 @@ vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
+vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
 vendor CREATIVE2	0x1292	Creative Labs
@@ -744,6 +745,7 @@ product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
+product CYPRESS USBRS232	0x5500	USB-RS232 Interface
 product CYPRESS HUB2		0x6560	USB2 Hub
 
 /* Daisy Technology products */
@@ -759,6 +761,9 @@ product DELL X3			0x4002	Dell Axim X3 PDA
 product DELL X30		0x4003	Dell Axim X30 PDA
 product DELL BC02		0x8000	Dell BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+
+/* DeLorme products */
+product DELORME EARTHMATE	0x0100	Earthmate GPS
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
