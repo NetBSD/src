@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.8 2005/05/03 16:26:29 manu Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.9 2005/06/24 22:57:05 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,5 +54,10 @@
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_siginfo.h>
 #endif
+
+/* From linux/include/asm-generic/siginfo.h */
+#define LINUX_CLD_EXITED	1
+#define LINUX_CLD_KILLED	2
+#define LINUX_CLD_DUMPED	3
 
 #endif /* !_LINUX_SIGINFO_H */

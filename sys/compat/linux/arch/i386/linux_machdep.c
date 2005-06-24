@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.108 2005/06/22 21:57:30 manu Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.109 2005/06/24 22:57:05 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.108 2005/06/22 21:57:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.109 2005/06/24 22:57:05 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -320,10 +320,19 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	case LINUX_SIGCHLD:
 		lsi->lsi_uid = ksi->ksi_uid;
 		lsi->lsi_pid = ksi->ksi_pid;
-		lsi->lsi_status = 
-		    ((ksi->ksi_status & 0xff00U) >> 8);
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
+
+		if (WCOREDUMP(ksi->ksi_status)) {
+			lsi->lsi_code = LINUX_CLD_DUMPED;
+			lsi->lsi_status = _WSTATUS(ksi->ksi_status);
+		} else if (_WSTATUS(ksi->ksi_status)) {
+			lsi->lsi_code = LINUX_CLD_KILLED;
+			lsi->lsi_status = _WSTATUS(ksi->ksi_status);
+		} else {
+			lsi->lsi_code = LINUX_CLD_EXITED;
+			lsi->lsi_status = ((ksi->ksi_status & 0xff00U) >> 8);
+		}
 		break;
 	case LINUX_SIGIO:
 		lsi->lsi_band = ksi->ksi_band;
