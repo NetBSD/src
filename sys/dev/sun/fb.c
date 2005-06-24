@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.20 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: fb.c,v 1.21 2005/06/24 06:40:05 jdc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,13 +46,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.20 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.21 2005/06/24 06:40:05 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/malloc.h>
+#include <sys/types.h>
 
 #include <machine/promlib.h>
 #include <machine/autoconf.h>
@@ -66,7 +68,16 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.20 2005/02/04 02:10:47 perry Exp $");
 #include "kbd.h"
 #include "pfour.h"
 
-static struct fbdevice *devfb;
+
+struct fbdevlist {
+	struct fbdevice *fb_dev;
+	struct fbdevlist *fb_next;
+};
+
+static struct fbdevlist fblist = {
+    NULL,
+    NULL,
+};
 
 dev_type_open(fbopen);
 dev_type_close(fbclose);
@@ -84,8 +95,12 @@ void
 fb_unblank()
 {
 
-	if (devfb)
-		(*devfb->fb_driver->fbd_unblank)(devfb->fb_device);
+	struct fbdevlist *fbl = &fblist;
+
+	while (fbl != NULL && fbl->fb_dev != NULL) {
+		(*fbl->fb_dev->fb_driver->fbd_unblank)(fbl->fb_dev->fb_device);
+		fbl = fbl->fb_next;
+	}
 }
 
 /*
@@ -136,67 +151,59 @@ fb_attach(fb, isconsole)
 	struct fbdevice *fb;
 	int isconsole;
 {
-	static int no_replace, seen_force;
+	static int seen_force = 0;
+	int nfb = 0;
+	struct fbdevlist *fbl = &fblist;
 
 	/*
-	 * We've already had a framebuffer forced into /dev/fb.  Don't
-	 * allow any more, even if this is the console.
+	 * Check to see if we're being forced into /dev/fb0, or if we're
+	 * the console.  If we are, then move/replace the current fb0.
 	 */
-	if (seen_force) {
-		if (devfb) {	/* sanity */
-			printf("%s: /dev/fb already full\n",
-				fb->fb_device->dv_xname);
-			return;
-		} else
-			seen_force = 0;
+	if ((fb->fb_flags & FB_FORCE || (isconsole && !seen_force)) &&
+	    fblist.fb_dev != NULL) {
+		while (fbl->fb_next != NULL) {
+			fbl = fbl->fb_next;
+			nfb++;
+		}
+		if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
+		    M_DEVBUF, M_NOWAIT)) == NULL)
+			printf("%s: replacing %s at /dev/fb0\n",
+			    fb->fb_device->dv_xname,
+			    fblist.fb_dev->fb_device->dv_xname);
+		else {
+			fbl = fbl->fb_next;
+			nfb++;
+			fbl->fb_dev = fblist.fb_dev;
+			fbl->fb_next = NULL;
+			printf("%s: moved to /dev/fb%d\n",
+			    fbl->fb_dev->fb_device->dv_xname, nfb);
+			printf("%s: attached to /dev/fb0\n",
+			    fb->fb_device->dv_xname);
+		}
+		fblist.fb_dev = fb;
+		if (fb->fb_flags & FB_FORCE)
+			seen_force = 1;
+	/* Add to end of fb list. */
+	} else {
+		if (fblist.fb_dev != NULL) {
+			while (fbl->fb_next != NULL) {
+				fbl = fbl->fb_next;
+				nfb++;
+			}
+			if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
+			    M_DEVBUF, M_NOWAIT)) == NULL) {
+				printf("%s: no space to attach after /dev/fb%d\n",
+					fb->fb_device->dv_xname, nfb);
+				return;
+			}
+			fbl = fbl->fb_next;
+			nfb++;
+		}
+		fbl->fb_dev = fb;
+		fbl->fb_next = NULL;
+		printf("%s: attached to /dev/fb%d\n",
+			fbl->fb_dev->fb_device->dv_xname, nfb);
 	}
-
-	/*
-	 * Check to see if we're being forced into /dev/fb.
-	 */
-	if (fb->fb_flags & FB_FORCE) {
-		if (devfb)
-			printf("%s: forcefully replacing %s\n",
-				fb->fb_device->dv_xname,
-				devfb->fb_device->dv_xname);
-		devfb = fb;
-		seen_force = no_replace = 1;
-		goto attached;
-	}
-
-	/*
-	 * Check to see if we're the console.  If we are, then replace
-	 * any currently existing framebuffer.
-	 */
-	if (isconsole) {
-		if (devfb)
-			printf("%s: replacing %s\n", fb->fb_device->dv_xname,
-				devfb->fb_device->dv_xname);
-		devfb = fb;
-		no_replace = 1;
-		goto attached;
-	}
-
-	/*
-	 * For the final case, we check to see if we can replace an
-	 * existing framebuffer, if not, say so and return.
-	 */
-	if (no_replace) {
-		if (devfb) {	/* sanity */
-			printf("%s: /dev/fb already full\n",
-				fb->fb_device->dv_xname);
-			return;
-		} else
-			no_replace = 0;
-	}
-
-	if (devfb)
-		printf("%s: replacing %s\n", fb->fb_device->dv_xname,
-			devfb->fb_device->dv_xname);
-	devfb = fb;
-
- attached:
-	printf("%s: attached to /dev/fb\n", devfb->fb_device->dv_xname);
 }
 
 int
@@ -205,10 +212,16 @@ fbopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	int unit;
+	struct fbdevlist *fbl = &fblist;
 
-	if (devfb == NULL)
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
-	return (devfb->fb_driver->fbd_open)(dev, flags, mode, p);
+
+	return (fbl->fb_dev->fb_driver->fbd_open)(dev, flags, mode, p);
 }
 
 int
@@ -217,8 +230,16 @@ fbclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	int unit;
+	struct fbdevlist *fbl = &fblist;
 
-	return (devfb->fb_driver->fbd_close)(dev, flags, mode, p);
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
+		return (ENXIO);
+
+	return (fbl->fb_dev->fb_driver->fbd_close)(dev, flags, mode, p);
 }
 
 int
@@ -229,8 +250,16 @@ fbioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
+	int unit;
+	struct fbdevlist *fbl = &fblist;
 
-	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
+		return (ENXIO);
+
+	return (fbl->fb_dev->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
 }
 
 int
@@ -239,8 +268,16 @@ fbpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+	int unit;
+	struct fbdevlist *fbl = &fblist;
 
-	return (devfb->fb_driver->fbd_poll)(dev, events, p);
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
+		return (ENXIO);
+
+	return (fbl->fb_dev->fb_driver->fbd_poll)(dev, events, p);
 }
 
 int
@@ -248,8 +285,16 @@ fbkqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
+	int unit;
+	struct fbdevlist *fbl = &fblist;
 
-	return (devfb->fb_driver->fbd_kqfilter)(dev, kn);
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
+		return (ENXIO);
+
+	return (fbl->fb_dev->fb_driver->fbd_kqfilter)(dev, kn);
 }
 
 paddr_t
@@ -258,7 +303,16 @@ fbmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	paddr_t (*map)(dev_t, off_t, int) = devfb->fb_driver->fbd_mmap;
+	int unit;
+	struct fbdevlist *fbl = &fblist;
+
+	unit = minor(dev);
+	while (unit-- && fbl != NULL)
+		fbl = fbl->fb_next;
+	if (fbl == NULL || fbl->fb_dev == NULL)
+		return (ENXIO);
+
+	paddr_t (*map)(dev_t, off_t, int) = fbl->fb_dev->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
@@ -469,12 +523,14 @@ fbrcons_init(fb)
 int
 fbrcons_rows()
 {
-	return (devfb ? devfb->fb_rcons.rc_maxrow : 0);
+	return ((fblist.fb_dev != NULL) ?
+	    fblist.fb_dev->fb_rcons.rc_maxrow : 0);
 }
 
 int
 fbrcons_cols()
 {
-	return (devfb ? devfb->fb_rcons.rc_maxcol : 0);
+	return ((fblist.fb_dev != NULL) ?
+	    fblist.fb_dev->fb_rcons.rc_maxcol : 0);
 }
 #endif /* RASTERCONSOLE */
