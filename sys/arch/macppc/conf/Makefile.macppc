@@ -1,0 +1,149 @@
+#	$NetBSD: Makefile.macppc,v 1.22 2005/06/25 22:08:54 dyoung Exp $
+#
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/powerpc/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/powerpc/conf/Makefile.powerpc
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=powerpc
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+THISPPC=	$S/arch/${MACHINE}
+POWERPC=	$S/arch/powerpc
+.if exists(${THISPPC}/${MACHINE}/genassym.cf)
+GENASSYM_CONF=	${THISPPC}/${MACHINE}/genassym.cf
+.else
+GENASSYM_CONF=	${POWERPC}/${PPCDIR}/genassym.cf
+.endif
+.-include "${THISPPC}/conf/Makefile.${MACHINE}.inc"
+
+##
+## (2) compile settings
+##
+CPPFLAGS+=	-D${MACHINE}=${MACHINE}
+CWARNFLAGS+=	-Wreturn-type
+.if ${PPCDIR} == "oea"
+CFLAGS+=	-mno-strict-align
+.endif
+CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
+AFLAGS+=	${AOPTS}
+
+##
+## (3) libkern and compat
+##
+.if !empty(IDENT:M-DLKM)
+KERN_AS=	obj
+.endif
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+.if !defined(SYSTEM_FIRST_OBJ)
+SYSTEM_FIRST_OBJ= locore.o
+.endif
+.if !defined(SYSTEM_FIRST_SFILE)
+SYSTEM_FIRST_SFILE= ${THISPPC}/${MACHINE}/locore.S
+.endif
+MD_OBJS=	${SYSTEM_FIRST_OBJ}
+MD_CFILES=
+MD_SFILES=	${SYSTEM_FIRST_SFILE}
+
+${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
+	${NORMAL_S}
+
+##
+## (5) link settings
+##
+TEXTADDR?=	0x100000
+LINKFORMAT=	-N
+ENTRYPOINT=	__start
+
+.if defined(NEED_SYMTAB)
+SYSTEM_LD_TAIL_EXTRA=; \
+		echo ${DBSYM} $@; \
+		${DBSYM} $@
+.endif
+
+.if defined(NEED_SREC)
+SYSTEM_LD_TAIL_EXTRA+=; \
+		${OBJCOPY} -v -O srec $@ $@.srec
+.endif
+
+.if defined(NEED_BINARY)
+SYSTEM_LD_TAIL_EXTRA+=; \
+		${OBJCOPY} -v -O binary $@ $@.bin
+.endif
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+locore.o machdep.o: Makefile
+
+setfault.o: assym.h
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
+#       It needs a pathname of some sort for "object"        
+.if !empty(OBJS:M\/athhal-powerpc-be-eabi.hal.o)
+OBJS:=${OBJS:C/\/athhal-powerpc-be-eabi.hal.o/athhal-powerpc-be-eabi.hal.o/}
+ 
+.PATH: $S/contrib/arch/powerpc/dev
+ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${UUDECODE} -p $> \> ${.TARGET}; \
+		rm -f ${.TARGET}; \
+		${UUDECODE} -p $> > ${.TARGET}
+athhal-powerpc-be-eabi.hal.o: athhal-powerpc-be-eabi.hal.o.uue
+	${ATH_UUDEC}
+all depend:	opt_ah.h
+opt_ah.h:	athhal-powerpc-be-eabi.opt_ah.h
+	ln -s ${.ALLSRC} ${.TARGET}
+.endif
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

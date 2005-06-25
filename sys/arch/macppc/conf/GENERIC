@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200 2005/06/25 12:05:17 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.201 2005/06/25 22:08:54 dyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.201 $"
 
 maxusers	32
 
@@ -212,6 +212,7 @@ lpt*	at puc? port ?			# || ports on > "universal" comm boards
 
 # PCI Network devices
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
