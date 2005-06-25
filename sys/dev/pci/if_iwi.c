@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.10 2005/06/25 04:02:45 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.9 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.10 2005/06/25 04:02:45 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -123,6 +123,7 @@ static int iwi_scan(struct iwi_softc *);
 static int iwi_auth_and_assoc(struct iwi_softc *);
 static int iwi_init(struct ifnet *);
 static void iwi_stop(struct ifnet *, int);
+static int iwi_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
 
 static __inline u_int8_t MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
 {
@@ -320,6 +321,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwi_newstate;
+	ic->ic_crypto.cs_key_alloc = iwi_key_alloc;
 	ieee80211_media_init(ic, iwi_media_change, iwi_media_status);
 
 #if NBPFILTER > 0
@@ -555,6 +557,15 @@ iwi_release(struct iwi_softc *sc)
 }
 
 static int
+iwi_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	if (k >= ic->ic_nw_keys && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+		return k - ic->ic_nw_keys;
+
+	return IEEE80211_KEYIX_NONE;
+}
+
+static int
 iwi_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -785,19 +796,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	m_adj(m, sizeof (struct iwi_hdr) + sizeof (struct iwi_frame));
 
 	wh = mtod(m, struct ieee80211_frame_min *);
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		/*
-		 * Hardware decrypts the frame itself but leaves the WEP bit
-		 * set in the 802.11 header and don't remove the iv and crc
-		 * fields
-		 */
-		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-		memmove((char *)wh + IEEE80211_WEP_IVLEN +
-		    IEEE80211_WEP_KIDLEN, wh, sizeof (struct ieee80211_frame));
-		m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
-		m_adj(m, -IEEE80211_WEP_CRCLEN);
-		wh = mtod(m, struct ieee80211_frame_min *);
-	}
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
