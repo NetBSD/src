@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.22 2005/06/25 18:51:03 elad Exp $	*/
+/*	$NetBSD: intercept.c,v 1.23 2005/06/25 21:48:11 elad Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.22 2005/06/25 18:51:03 elad Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.23 2005/06/25 21:48:11 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -399,6 +399,17 @@ intercept_freepid(pid_t pidnr)
 	if (pid->newname)
 		free(pid->newname);
 	free(pid);
+}
+
+struct intercept_pid *
+intercept_findpid(pid_t pid)
+{
+	struct intercept_pid *tmp, tmp2;
+
+	tmp2.pid = pid;
+	tmp = SPLAY_FIND(pidtree, &pids, &tmp2);
+
+	return (tmp);
 }
 
 struct intercept_pid *
@@ -796,8 +807,13 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (action > 0) {
 		error = action;
 		action = ICPOLICY_NEVER;
-	} else
-		elevate = icpid->elevate;
+	} else {
+		icpid = intercept_findpid(pid);
+		if (icpid != NULL)
+			elevate = icpid->elevate;
+		else
+			elevate = NULL;
+	}
 
 
 	/* Resume execution of the process */
