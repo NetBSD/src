@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.21 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.22 2005/06/25 18:51:03 elad Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.21 2005/06/24 23:21:09 christos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.22 2005/06/25 18:51:03 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -631,12 +631,12 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 	/* Need concatenated path for simplifypath */
 	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
-			goto error;
+			return (NULL);
 		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
-			goto error;
+			return (NULL);
 	} else {
 		if (strlcpy(cwd, name, sizeof(cwd)) >= sizeof(cwd))
-			goto error;
+			return (NULL);
 	}
 
 	if (userp != ICLINK_NONE) {
