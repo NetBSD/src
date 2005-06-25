@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.3 2004/07/04 15:22:29 christos Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.4 2005/06/25 06:29:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,8 +76,27 @@ struct darwin_slock {
 	int	dummy;
 };
 
-/* XXX Copied from ppc and possibly wrong */
-#define DARWIN_USRSTACK              0xbfff0000
-#define DARWIN_USRSTACK32    0x00000000bfff000L
+/* XXX probably wrong */
+#define DARWIN_USRSTACK      USRSTACK
+#define DARWIN_USRSTACK32    USRSTACK
+
+/*
+ * Commpage stuff.
+ */
+#define DARWIN_COMMPAGE_BASE 0xbfff9000
+#define DARWIN_COMMPAGE_LEN  0x00007000	/* 7 pages */
+
+#define DARWIN_COMMPAGE_VERSION 1
+
+#define DARWIN_CAP_MMX		0x00000001
+#define DARWIN_CAP_SSE		0x00000002
+#define DARWIN_CAP_SSE2		0x00000004
+#define DARWIN_CAP_PENTIUM4	0x00000008
+#define DARWIN_CAP_CACHE32	0x00000010
+#define DARWIN_CAP_CACHE64	0x00000020
+#define DARWIN_CAP_CACHE128	0x00000040
+#define DARWIN_CAP_UP		0x00008000
+#define DARWIN_CAP_NCPUMASK	0x00ff0000
+#define DARWIN_CAP_NCPUSHIFT	16
 
 #endif /* !_DARWIN_MACHDEP_H_ */
