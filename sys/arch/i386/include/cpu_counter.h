@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.1 2003/02/05 12:18:04 nakayama Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2 2005/06/25 00:08:35 fair Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@ cpu_hascounter(void)
 	 * 1) Intel documentation is very specific that code *must* test
 	 * the CPU feature flag, even if you "know" that a particular
 	 * rev of the hardware supports it.
-	 * 2) We know that the TSC is busted on some Cyrix CPU's..
+	 * 2) We know that the TSC is busted on some Cyrix CPU in that if
+	 * you execute "hlt" when in powersave mode, TSC stops counting,
+	 * even though the CPU clock crystal is still ticking (it always has to).
 	 */
 	return (cpu_feature & CPUID_TSC) != 0;
 #else
