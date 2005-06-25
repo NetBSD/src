@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.h,v 1.1 2003/12/04 01:17:19 christos Exp $ */
+/*	$NetBSD: mach_machdep.h,v 1.2 2005/06/25 08:29:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,12 +38,5 @@
 
 #ifndef	_MACH_MACHDEP_H_
 #define	_MACH_MACHDEP_H_
-
-/* Exception codes */
-#define MACH_BUS_ADRALN		1
-#define MACH_SEGV_MAPERR	2
-#define MACH_TRAP_BRKPT		1
-#define MACH_ILL_ILLOPC		2
-#define MACH_ILL_PRVOPC		3
 
 #endif /* _MACH_MACHDEP_H_ */
