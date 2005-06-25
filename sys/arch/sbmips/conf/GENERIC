@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.36 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC,v 1.37 2005/06/25 12:05:18 rpaulo Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.37 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -68,6 +68,7 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server

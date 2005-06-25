@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.167 2005/05/04 07:54:39 hamajima Exp $
+# $NetBSD: GENERIC,v 1.168 2005/06/25 12:05:17 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 maxusers	16
 
@@ -88,6 +88,7 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.

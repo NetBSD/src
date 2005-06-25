@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.73 2005/06/09 14:43:31 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.74 2005/06/25 12:05:20 rpaulo Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -82,6 +82,7 @@ file-system	OVERLAY		# overlay file system
 file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
