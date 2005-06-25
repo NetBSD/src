@@ -103,6 +103,7 @@ static int
 mkunserv(const char *path)
 {
 	int s;
+	mode_t old_umask;
 	struct sockaddr_un sun;
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -115,8 +116,10 @@ mkunserv(const char *path)
 	    sizeof (sun.sun_path))
 		errx(1, "Path too long: %s", path);
 
+	old_umask = umask(S_IRUSR|S_IWUSR);
 	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "bind()");
+	umask(old_umask);
 
 	if (chmod(path, S_IRUSR | S_IWUSR) == -1)
 		err(1, "chmod()");
