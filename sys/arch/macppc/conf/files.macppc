@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.63 2004/03/25 18:52:25 matt Exp $
+#	$NetBSD: files.macppc,v 1.64 2005/06/25 22:08:54 dyoung Exp $
 #
 # macppc-specific configuration info
 
@@ -203,5 +203,8 @@ file arch/macppc/dev/ki2c.c			ki2c
 device snapper: audiobus, auconv, mulaw, aurateconv
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
+
+# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
+object	/athhal-powerpc-be-eabi.hal.o	ath
 
 include "arch/macppc/conf/majors.macppc"
