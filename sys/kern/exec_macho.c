@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.32 2005/05/29 22:24:14 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.33 2005/06/25 02:22:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.32 2005/05/29 22:24:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.33 2005/06/25 02:22:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -427,7 +427,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 	exec_macho_print_fat_header(fat);
 #endif
 
-	switch(be32toh(fat->magic)){
+	switch (fat->magic) {
 	case MACHO_FAT_MAGIC:
 		for (i = 0; i < be32toh(fat->nfat_arch); i++, arch) {
 			if ((error = exec_read_from(p, vp, sizeof(*fat) +
