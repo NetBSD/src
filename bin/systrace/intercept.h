@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.14 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.15 2005/06/25 21:48:11 elad Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -184,6 +184,7 @@ extern struct intercept_translate ic_translate_unlinkname;
 extern struct intercept_translate ic_translate_connect;
 
 void intercept_freepid(pid_t);
+struct intercept_pid *intercept_findpid(pid_t);
 struct intercept_pid *intercept_getpid(pid_t);
 int intercept_existpids(void);
 
