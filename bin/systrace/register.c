@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.11 2005/06/25 12:17:57 elad Exp $	*/
+/*	$NetBSD: register.c,v 1.12 2005/06/25 12:22:43 elad Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -125,6 +125,10 @@ systrace_initcb(void)
 	/* 61: chroot */
 	X(intercept_register_sccb("netbsd", "chroot", trans_cb, NULL));
 	intercept_register_transfn("netbsd", "chroot", 0);
+
+	/* 74: mprotect */
+	X(intercept_register_sccb("netbsd", "mprotect", trans_cb, NULL));
+	intercept_register_translation("netbsd", "mprotect", 2, &ic_memprot);
 
 	/* 92: fcntl */
  	X(intercept_register_sccb("netbsd", "fcntl", trans_cb, NULL));
@@ -309,6 +313,10 @@ systrace_initcb(void)
 	/* chroot */
 	X(intercept_register_sccb("native", "chroot", trans_cb, NULL));
 	intercept_register_transfn("native", "chroot", 0);
+
+	/* mprotect */
+	X(intercept_register_sccb("netbsd", "mprotect", trans_cb, NULL));
+	intercept_register_translation("netbsd", "mprotect", 2, &ic_memprot);
 
 	/* fcntl */
  	X(intercept_register_sccb("native", "fcntl", trans_cb, NULL));
