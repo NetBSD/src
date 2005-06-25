@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.7 2004/07/15 20:21:55 manu Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.8 2005/06/25 06:29:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -79,5 +79,31 @@ struct darwin_sigframe {
 struct darwin_slock {
 	volatile unsigned int lock_data[10];
 };
+
+/*
+ * Communications page stuff
+ */
+#define DARWIN_COMMPAGE_BASE 0xffff8000
+#define DARWIN_COMMPAGE_LEN  0x00002000	/* 2 pages */
+
+#define DARWIN_COMMPAGE_VERSION 1
+
+#define DARWIN_CAP_ALTIVEC	0x00000001
+#define DARWIN_CAP_64BIT	0x00000002
+#define DARWIN_CAP_CACHE32	0x00000004
+#define DARWIN_CAP_CACHE64	0x00000008
+#define DARWIN_CAP_CACHE128	0x00000010
+#define DARWIN_CAP_DODCBA	0x00000020
+#define DARWIN_CAP_DCBA		0x00000040
+#define DARWIN_CAP_DOSTREAM	0x00000080
+#define DARWIN_CAP_STREAM	0x00000100
+#define DARWIN_CAP_DODCBT	0x00000200
+#define DARWIN_CAP_DCBT		0x00000400
+#define DARWIN_CAP_UP		0x00008000
+#define DARWIN_CAP_NCPUMASK	0x00ff0000
+#define DARWIN_CAP_NCPUSHIFT	16
+#define DARWIN_CAP_GRAPHOP	0x08000000
+#define DARWIN_CAP_STFIWX	0x10000000
+#define DARWIN_CAP_FSQRTX	0x20000000
 
 #endif /* !_DARWIN_MACHDEP_H_ */
