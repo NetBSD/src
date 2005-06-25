@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.80 2005/05/19 15:46:02 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.81 2005/06/25 06:38:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.80 2005/05/19 15:46:02 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.81 2005/06/25 06:38:35 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: route.c,v 1.80 2005/05/19 15:46:02 ginsbach Exp $");
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+#include <net80211/ieee80211_netbsd.h>
 #include <netinet/in.h>
 #include <netatalk/at.h>
 #include <netns/ns.h>
@@ -143,6 +144,9 @@ usage(char *cp)
 	/* NOTREACHED */
 }
 
+#define	PRIETHER	"02x:%02x:%02x:%02x:%02x:%02x"
+#define	PRIETHER_ARGS(__enaddr)	(__enaddr)[0], (__enaddr)[1], (__enaddr)[2], \
+				(__enaddr)[3], (__enaddr)[4], (__enaddr)[5]
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
@@ -1631,6 +1635,7 @@ char *msgtypes[] = {
 	"RTM_OIFINFO: iface status change (pre-1.5)",
 	"RTM_IFINFO: iface status change",
 	"RTM_IFANNOUNCE: iface arrival/departure",
+	"RTM_IEEE80211: IEEE80211 wireless event",
 	0,
 };
 
@@ -1671,6 +1676,13 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
+	union {
+		struct ieee80211_join_event join;
+		struct ieee80211_leave_event leave;
+		struct ieee80211_replay_event replay;
+		struct ieee80211_michael_event michael;
+	} ev;
+	size_t evlen = 0;
 
 	if (verbose == 0)
 		return;
@@ -1703,6 +1715,73 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		(void) printf("metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
+		break;
+	case RTM_IEEE80211:
+		ifan = (struct if_announcemsghdr *)rtm;
+		(void) printf("if# %d, what: ", ifan->ifan_index);
+		switch (ifan->ifan_what) {
+		case RTM_IEEE80211_ASSOC:
+			printf("associate");
+			break;
+		case RTM_IEEE80211_REASSOC:
+			printf("re-associate");
+			break;
+		case RTM_IEEE80211_DISASSOC:
+			printf("disassociate");
+			break;
+		case RTM_IEEE80211_SCAN:
+			printf("scan complete");
+			break;
+		case RTM_IEEE80211_JOIN:
+			evlen = sizeof(ev.join);
+			printf("join");
+			break;
+		case RTM_IEEE80211_LEAVE:
+			evlen = sizeof(ev.leave);
+			printf("leave");
+			break;
+		case RTM_IEEE80211_MICHAEL:
+			evlen = sizeof(ev.michael);
+			printf("michael");
+			break;
+		case RTM_IEEE80211_REPLAY:
+			evlen = sizeof(ev.replay);
+			printf("replay");
+			break;
+		default:
+			evlen = 0;
+			printf("#%d", ifan->ifan_what);
+			break;
+		}
+		if (sizeof(*ifan) + evlen > ifan->ifan_msglen) {
+			printf(" (truncated)\n");
+			break;
+		}
+		(void)memcpy(&ev, (ifan + 1), evlen);
+		switch (ifan->ifan_what) {
+		case RTM_IEEE80211_JOIN:
+		case RTM_IEEE80211_LEAVE:
+			printf(" mac %" PRIETHER,
+			    PRIETHER_ARGS(ev.join.iev_addr));
+			break;
+		case RTM_IEEE80211_REPLAY:
+		case RTM_IEEE80211_MICHAEL:
+			printf(" src %" PRIETHER " dst %" PRIETHER
+			       " cipher %" PRIu8 " keyix %" PRIu8,
+			       PRIETHER_ARGS(ev.replay.iev_src),
+			       PRIETHER_ARGS(ev.replay.iev_dst),
+			       ev.replay.iev_cipher,
+			       ev.replay.iev_keyix);
+			if (ifan->ifan_what == RTM_IEEE80211_REPLAY) {
+				printf(" key rsc %#" PRIx64
+				       " frame rsc %#" PRIx64,
+				       ev.replay.iev_keyrsc, ev.replay.iev_rsc);
+			}
+			break;
+		default:
+			break;
+		}
+		printf("\n");
 		break;
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
