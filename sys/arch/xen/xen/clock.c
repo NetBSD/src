@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2005/05/27 22:02:25 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2005/06/25 18:44:59 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/05/27 22:02:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/06/25 18:44:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,8 +224,10 @@ xen_delay(int n)
 void
 xen_microtime(struct timeval *tv)
 {
-
-	*tv = time;
+	int s = splclock();
+	get_time_values_from_xen();
+	*tv = shadow_tv;
+	splx(s);
 }
 
 void
