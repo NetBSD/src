@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.14 2005/06/25 12:22:43 elad Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.15 2005/06/25 14:37:33 christos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -435,51 +435,49 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 static int
-print_memprot(char *buf, size_t buflen, struct intercept_translate *tl) {
+print_memprot(char *buf, size_t buflen, struct intercept_translate *tl)
+{
 	int prot = (intptr_t)tl->trans_addr;
+	char lbuf[64];
 
 	if (prot == PROT_NONE) {
-		strlcpy(buf, "PROT_NONE", buflen);
-		return (0);
-	} else
-		*buf = '\0';
+		(void)strlcpy(buf, "PROT_NONE", buflen);
+		return 0;
+	}
+
+	*buf = '\0';
 
 	while (prot) {
+		if (*buf)
+			strlcat(buf, "|", buflen);
+
 		if (prot & PROT_READ) {
-			strlcpy(buf, "PROT_READ", buflen);
+			strlcat(buf, "PROT_READ", buflen);
 			prot &= ~PROT_READ;
 			continue;
 		}
 
 		if (prot & PROT_WRITE) {
-			if (*buf)
-				strlcat(buf, "|", buflen);
-
 			strlcat(buf, "PROT_WRITE", buflen);
 			prot &= ~PROT_WRITE;
 			continue;
 		}
 
 		if (prot & PROT_EXEC) {
-			if (*buf)
-				strlcat(buf, "|", buflen);
-
 			strlcat(buf, "PROT_EXEC", buflen);
 			prot &= ~PROT_EXEC;
 			continue;
 		}
 
 		if (prot) {
-			if (*buf)
-				snprintf(buf, buflen, "|<unknown:0x%x>", prot);
-			else
-				snprintf(buf, buflen, "<unknown:0x%x>", prot);
-
+			snprintf(lbuf, sizeof(lbuf), "<unknown:0x%x>", prot);
+			strlcat(buf, lbuf, buflen);
 			prot = 0;
+			continue;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
