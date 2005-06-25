@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.30 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.31 2005/06/25 18:47:42 elad Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -87,7 +87,7 @@ systrace_parameters(void)
 	if ((pw = getpwuid(uid)) == NULL)
 		snprintf(username, sizeof(username), "uid %u", uid);
 	else
-		snprintf(username, sizeof(username), "%s", pw->pw_name);
+		strlcpy(username, pw->pw_name, sizeof(username));
 
 	strlcpy(home, pw->pw_dir, sizeof(home));
 
