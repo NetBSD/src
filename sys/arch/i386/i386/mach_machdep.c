@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.14 2004/02/13 11:36:13 wiz Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.15 2005/06/25 07:46:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.14 2004/02/13 11:36:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.15 2005/06/25 07:46:01 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
+#include "opt_compat_mach.h"
+#include "opt_compat_darwin.h"
 #endif
 
 #include <sys/param.h>
@@ -88,12 +90,24 @@ void
 mach_trap(frame)
 	struct trapframe frame;
 {
+	int ok = 0;
+#ifdef COMPAT_DARWIN
+	extern struct emul emul_darwin;
+#endif
+#ifdef COMPAT_MACH
 	extern struct emul emul_mach;
+#endif
+#ifdef COMPAT_DARWIN
+	ok |= curproc->p_emul == &emul_darwin;
+#endif
+#ifdef COMPAT_MACH
+	ok |= curproc->p_emul == &emul_mach;
+#endif
 
-	if (curproc->p_emul != &emul_mach) {
+	if (!ok) {
 		ksiginfo_t ksi;
 		DPRINTF(("mach trap %d on bad emulation\n", frame.tf_eax));
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLTRP;
 		trapsignal(curlwp, &ksi);
