@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.233 2005/06/18 10:43:47 kent Exp $
+#	$NetBSD: files.pci,v 1.234 2005/06/25 22:08:54 dyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -771,3 +771,7 @@ file	dev/pci/if_iwi.c		iwi
 device	vge: ether, ifnet, arp, mii
 attach	vge at pci
 file	dev/pci/if_vge.c		vge
+
+# Atheros 5210/5211/5212 PCI/Mini-PCI
+attach	ath at pci with ath_pci
+file	dev/pci/if_ath_pci.c		ath_pci
