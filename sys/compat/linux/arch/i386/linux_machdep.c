@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.109 2005/06/24 22:57:05 manu Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.109 2005/06/24 22:57:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.109 2005/06/24 22:57:05 manu Exp
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -323,16 +324,10 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
 
-		if (WCOREDUMP(ksi->ksi_status)) {
-			lsi->lsi_code = LINUX_CLD_DUMPED;
-			lsi->lsi_status = _WSTATUS(ksi->ksi_status);
-		} else if (_WSTATUS(ksi->ksi_status)) {
-			lsi->lsi_code = LINUX_CLD_KILLED;
-			lsi->lsi_status = _WSTATUS(ksi->ksi_status);
-		} else {
-			lsi->lsi_code = LINUX_CLD_EXITED;
-			lsi->lsi_status = ((ksi->ksi_status & 0xff00U) >> 8);
-		}
+		/* We use the same codes */
+		lsi->lsi_code = ksi->ksi_code;
+		/* XXX is that right? */
+		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
 		break;
 	case LINUX_SIGIO:
 		lsi->lsi_band = ksi->ksi_band;
