@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.24 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: files.xen,v 1.25 2005/06/25 23:09:54 dyoung Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -143,7 +143,6 @@ file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
 
 # Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-include	"dev/pci/files.ath"
 object	/athhal-i386-elf.hal.o	ath
 
 #
