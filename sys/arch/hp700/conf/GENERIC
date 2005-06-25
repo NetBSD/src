@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.47 2005/06/25 12:05:17 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 maxusers	32		# estimated number of users
 
@@ -110,6 +110,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # File system options
 options 	QUOTA		# UFS quotas

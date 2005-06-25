@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 2005/02/21 20:36:37 christos Exp $
+#	$NetBSD: GENERIC,v 1.45 2005/06/25 12:05:19 rpaulo Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.44 $"
+#ident		"GENERIC-$Revision: 1.45 $"
 
 # estimated number of users
 maxusers	32
@@ -58,6 +58,7 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda file system (needs vcoda below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # File system options
 #options 	QUOTA		# UFS quotas

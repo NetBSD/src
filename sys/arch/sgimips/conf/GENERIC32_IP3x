@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.25 2005/06/09 14:43:31 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.26 2005/06/25 12:05:19 rpaulo Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.25 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.26 $"
 
 maxusers	32
 
@@ -105,6 +105,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # File system options
 options 	QUOTA		# UFS quotas

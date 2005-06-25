@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.31 2005/06/25 12:05:16 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -75,6 +75,7 @@ file-system 	NFS		# Network filesystem client
 #file-system 	FDESC		# user file descriptor filesystem
 #file-system 	PROCFS		# /proc filesystem
 #file-system 	MFS		# Memory-based filesystem
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)

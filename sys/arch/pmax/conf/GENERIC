@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128 2005/06/09 14:43:31 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.129 2005/06/25 12:05:18 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.128 $"
+#ident		"GENERIC-$Revision: 1.129 $"
 
 maxusers	64
 
@@ -99,6 +99,7 @@ file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas

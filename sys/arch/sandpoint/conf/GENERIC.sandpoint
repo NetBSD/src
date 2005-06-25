@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.22 2005/05/31 22:23:53 tron Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.23 2005/06/25 12:05:18 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -73,6 +73,7 @@ file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
+#file-system	PTYFS
 
 options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots

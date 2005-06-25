@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC,v 1.49 2005/06/25 12:05:18 rpaulo Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	8			# estimated number of users
 
@@ -65,6 +65,7 @@ file-system	NULLFS			# loopback file system
 file-system 	OVERLAY			# overlay file system
 file-system	UNION			# union file system
 file-system	NFS			# Network File System client
+#file-system	PTYFS			# experimental - /dev/ptm support
 
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas

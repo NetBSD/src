@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.41 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: GENERICSBC,v 1.42 2005/06/25 12:05:17 rpaulo Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.41 $"
+#ident 		"GENERICSBC-$Revision: 1.42 $"
 
 maxusers	16		# estimated number of users
 
@@ -96,6 +96,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	CODA		# Venus/Coda distributed file system
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # File system options
 options 	QUOTA		# UFS quotas

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2005/06/09 14:43:31 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.116 2005/06/25 12:05:20 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -101,6 +101,7 @@ file-system 	OVERLAY		# overlay file system
 file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.83 2005/06/25 12:05:16 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32
 
@@ -75,6 +75,7 @@ file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
+#file-system	PTYFS
 
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.

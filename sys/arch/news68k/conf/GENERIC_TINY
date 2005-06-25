@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.37 2005/06/09 14:43:30 tsutsui Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.38 2005/06/25 12:05:18 rpaulo Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.37 $"
+#ident 		"GENERIC_TINY-$Revision: 1.38 $"
 
 maxusers	4
 
@@ -83,6 +83,7 @@ file-system	FDESC		# /dev/fd/*
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas

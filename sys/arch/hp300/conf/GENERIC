@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.115 2005/06/25 12:05:16 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	32		# estimated number of users
 
@@ -115,6 +115,7 @@ file-system	PROCFS		# /proc filesystem
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# Union filesystem (req. for FDESC)
 file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
