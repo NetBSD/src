@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.198 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.199 2005/06/25 03:56:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.198 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.199 2005/06/25 03:56:53 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -180,6 +180,13 @@ STATIC void wi_tx_intr(struct wi_softc *);
 STATIC void wi_tx_ex_intr(struct wi_softc *);
 STATIC void wi_info_intr(struct wi_softc *);
 
+STATIC int wi_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
+STATIC int wi_key_delete(struct ieee80211com *, const struct ieee80211_key *);
+STATIC int wi_key_set(struct ieee80211com *, const struct ieee80211_key *,
+    const u_int8_t[IEEE80211_ADDR_LEN]);
+STATIC void wi_key_update_begin(struct ieee80211com *);
+STATIC void wi_key_update_end(struct ieee80211com *);
+
 STATIC void wi_push_packet(struct wi_softc *);
 STATIC int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
 STATIC int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
@@ -208,6 +215,7 @@ STATIC int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
 STATIC void wi_scan_result(struct wi_softc *, int, int);
 
 STATIC void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
+STATIC void wi_mend_flags(struct wi_softc *);
 
 static inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
@@ -481,6 +489,12 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	ic->ic_node_alloc = wi_node_alloc;
 	ic->ic_node_free = wi_node_free;
 	ic->ic_set_tim = wi_set_tim;
+
+	ic->ic_crypto.cs_key_alloc = wi_key_alloc;
+	ic->ic_crypto.cs_key_delete = wi_key_delete;
+	ic->ic_crypto.cs_key_set = wi_key_set;
+	ic->ic_crypto.cs_key_update_begin = wi_key_update_begin;
+	ic->ic_crypto.cs_key_update_end = wi_key_update_end;
 
 	ieee80211_media_init(ic, wi_media_change, wi_media_status);
 
@@ -822,8 +836,10 @@ wi_init(struct ifnet *ifp)
 	}
 
 	/* Configure WEP. */
-	if (ic->ic_caps & IEEE80211_C_WEP)
+	if (ic->ic_caps & IEEE80211_C_WEP) {
+		sc->sc_cnfauthmode = ic->ic_bss->ni_authmode;
 		wi_write_wep(sc);
+	}
 
 	/* Set multicast filter. */
 	wi_write_multi(sc);
@@ -862,9 +878,10 @@ wi_init(struct ifnet *ifp)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
+	    ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP)
-		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+		ieee80211_create_ibss(ic, ic->ic_ibss_chan);
 
 	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
@@ -1328,7 +1345,10 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		/* fall through */
 	default:
+		ic->ic_flags = sc->sc_ic_flags;
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
+		sc->sc_ic_flags = ic->ic_flags;
+		wi_mend_flags(sc);
 		if (error == ENETRESET) {
 			if (sc->sc_enabled)
 				error = wi_init(ifp);
@@ -1456,7 +1476,15 @@ wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 	                 WI_MAX_FALSE_SYNS))
 		return;
 
-	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	sc->sc_false_syns = MAX(0, sc->sc_false_syns - 1);
+	/*
+	 * XXX hack; we should create a new node with the new bssid
+	 * and replace the existing ic_bss with it but since we don't
+	 * process management frames to collect state we cheat by
+	 * reusing the existing node as we know wi_newstate will be
+	 * called and it will overwrite the node state.
+	 */
+        ieee80211_sta_join(ic, ieee80211_ref_node(ni));
 }
 
 static __inline void
@@ -2401,13 +2429,84 @@ wi_cfg_txrate(struct wi_softc *sc)
 }
 
 STATIC int
+wi_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	int keyix;
+
+	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+		keyix = k - ic->ic_nw_keys;
+	else
+		keyix = IEEE80211_KEYIX_NONE;
+
+	DPRINTF(("%s: alloc key %u\n", __func__, keyix));
+
+	return keyix;
+}
+
+STATIC int
+wi_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	struct wi_softc *sc = ic->ic_ifp->if_softc;
+	u_int keyix = k->wk_keyix;
+
+	DPRINTF(("%s: delete key %u\n", __func__, keyix));
+
+	if (keyix >= IEEE80211_WEP_NKID)
+		return 0;
+	if (k->wk_keylen != 0)
+		sc->sc_flags &= ~WI_FLAGS_WEP_VALID;
+
+	return 1;
+}
+
+static int
+wi_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
+	const u_int8_t mac[IEEE80211_ADDR_LEN])
+{
+	struct wi_softc *sc = ic->ic_ifp->if_softc;
+
+	DPRINTF(("%s: set key %u\n", __func__, k->wk_keyix));
+
+	if (k->wk_keyix >= IEEE80211_WEP_NKID)
+		return 0;
+
+	sc->sc_flags &= ~WI_FLAGS_WEP_VALID;
+
+	return 1;
+}
+
+STATIC void
+wi_key_update_begin(struct ieee80211com *ic)
+{
+	DPRINTF(("%s:\n", __func__));
+}
+
+STATIC void
+wi_key_update_end(struct ieee80211com *ic)
+{
+	struct ifnet *ifp = ic->ic_ifp;
+	struct wi_softc *sc = ifp->if_softc;
+
+	DPRINTF(("%s:\n", __func__));
+
+	if ((sc->sc_flags & WI_FLAGS_WEP_VALID) != 0)
+		return;
+	if (ic->ic_caps & IEEE80211_C_WEP)
+		(void)wi_write_wep(sc);
+}
+
+STATIC int
 wi_write_wep(struct wi_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error = 0;
 	int i, keylen;
 	u_int16_t val;
 	struct wi_key wkey[IEEE80211_WEP_NKID];
+
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
 
 	switch (sc->sc_firmware_type) {
 	case WI_LUCENT:
@@ -2448,7 +2547,9 @@ wi_write_wep(struct wi_softc *sc)
 			}
 			wi_write_val(sc, WI_RID_CNFAUTHMODE,
 			    sc->sc_cnfauthmode);
-			val = PRIVACY_INVOKED | EXCLUDE_UNENCRYPTED;
+			val = PRIVACY_INVOKED;
+			if ((sc->sc_ic_flags & IEEE80211_F_DROPUNENC) != 0)
+				val |= EXCLUDE_UNENCRYPTED;
 			/*
 			 * Encryption firmware has a bug for HostAP mode.
 			 */
@@ -2486,6 +2587,10 @@ wi_write_wep(struct wi_softc *sc)
 		}
 		break;
 	}
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		wi_cmd(sc, WI_CMD_ENABLE | sc->sc_portnum, 0, 0, 0);
+	if (error == 0)
+		sc->sc_flags |= WI_FLAGS_WEP_VALID;
 	return error;
 }
 
@@ -2872,13 +2977,37 @@ wi_rssadapt_updatestats(void *arg)
 		    wi_rssadapt_updatestats, arg);
 }
 
+/*
+ * In HOSTAP mode, restore IEEE80211_F_DROPUNENC when operating
+ * with WEP enabled so that the AP drops unencoded frames at the
+ * 802.11 layer.
+ *
+ * In all other modes, clear IEEE80211_F_DROPUNENC when operating
+ * with WEP enabled so we don't drop unencoded frames at the 802.11
+ * layer.  This is necessary because we must strip the WEP bit from
+ * the 802.11 header before passing frames to ieee80211_input
+ * because the card has already stripped the WEP crypto header from
+ * the packet.
+ */
+STATIC void
+wi_mend_flags(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    (ic->ic_flags & IEEE80211_F_PRIVACY) != 0 &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP)
+		ic->ic_flags &= ~IEEE80211_F_DROPUNENC;
+	else
+		ic->ic_flags = sc->sc_ic_flags;
+}
+
 STATIC int
 wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	int linkstate = LINK_STATE_DOWN, s;
 	u_int16_t val;
 	struct wi_ssid ssid;
 	struct wi_macaddr bssid, old_bssid;
@@ -2897,10 +3026,15 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			callout_stop(&sc->sc_rssadapt_ch);
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
-		return (*sc->sc_newstate)(ic, nstate, arg);
+		break;
+
+	case IEEE80211_S_SCAN:
+	case IEEE80211_S_AUTH:
+	case IEEE80211_S_ASSOC:
+		ic->ic_state = nstate; /* NB: skip normal ieee80211 handling */
+		return 0;
 
 	case IEEE80211_S_RUN:
-		linkstate = LINK_STATE_UP;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		IEEE80211_ADDR_COPY(old_bssid.wi_mac_addr, ni->ni_bssid);
 		wi_read_xrid(sc, WI_RID_CURRENT_BSSID, &bssid,
@@ -2912,10 +3046,6 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			panic("%s: invalid channel %d\n", sc->sc_dev.dv_xname,
 			    le16toh(val));
 		ni->ni_chan = &ic->ic_channels[le16toh(val)];
-
-		/* If not equal, then discount a false synchronization. */
-		if (!IEEE80211_ADDR_EQ(old_bssid.wi_mac_addr, ni->ni_bssid))
-			sc->sc_false_syns = MAX(0, sc->sc_false_syns - 1);
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			ni->ni_esslen = ic->ic_des_esslen;
@@ -2936,26 +3066,19 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ni->ni_rates = ic->ic_sup_rates[
 			    ieee80211_chan2mode(ic, ni->ni_chan)]; /*XXX*/
 		}
+		wi_mend_flags(sc);
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			callout_reset(&sc->sc_rssadapt_ch, hz / 10,
 			    wi_rssadapt_updatestats, sc);
-		break;
-
-	case IEEE80211_S_SCAN:
-	case IEEE80211_S_AUTH:
-	case IEEE80211_S_ASSOC:
+		/* Trigger routing socket messages. XXX Copied from
+		 * ieee80211_newstate.
+		 */
+		if (ic->ic_opmode == IEEE80211_M_STA)
+			ieee80211_notify_node_join(ic, ic->ic_bss, 
+				arg == IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 		break;
 	}
-
-	if (ifp->if_link_state != linkstate) {
-		ifp->if_link_state = linkstate;
-		s = splnet();
-		rt_ifmsg(ifp);
-		splx(s);
-	}
-	ic->ic_state = nstate;
-	/* skip standard ieee80211 handling */
-	return 0;
+	return (*sc->sc_newstate)(ic, nstate, arg);
 }
 
 STATIC void

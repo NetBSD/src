@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.56 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.57 2005/06/25 03:56:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -77,6 +77,7 @@ struct wi_softc	{
 	struct device		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
+	u_int32_t		sc_ic_flags;	/* backup of ic->ic_flags */
 	void			*sc_ih;		/* interrupt handler */
 	int			(*sc_enable)(struct wi_softc *);
 	void			(*sc_disable)(struct wi_softc *);
@@ -200,6 +201,7 @@ struct wi_node {
 #define	WI_FLAGS_BUG_AUTOINC		0x0100
 #define	WI_FLAGS_HAS_FRAGTHR		0x0200
 #define	WI_FLAGS_HAS_DBMADJUST		0x0400
+#define	WI_FLAGS_WEP_VALID		0x0800
 
 struct wi_card_ident {
 	u_int16_t	card_id;
