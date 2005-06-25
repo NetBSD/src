@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.85 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.86 2005/06/25 03:41:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.85 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.86 2005/06/25 03:41:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2147,8 +2147,7 @@ atw_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 	struct atw_softc *sc = ic->ic_ifp->if_softc;
 #endif
 
-	if (&ic->ic_nw_keys[0] <= k &&
-	    k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
 		keyix = k - ic->ic_nw_keys;
 	else
 		keyix = IEEE80211_KEYIX_NONE;
