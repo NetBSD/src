@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.267 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: files.i386,v 1.268 2005/06/25 22:08:54 dyoung Exp $
 #
 # new style config file for i386 architecture
 #
@@ -175,10 +175,6 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 device 	aapic
 attach 	aapic at pci
 file 	arch/x86/pci/aapic.c			aapic
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-include	"dev/pci/files.ath"
-object	/athhal-i386-elf.hal.o	ath
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
@@ -477,5 +473,8 @@ file	arch/i386/bios/vesa_text.c	vesatext
 # Enhanced SpeedStep
 file	arch/i386/i386/est.c		enhanced_speedstep
 defflag	opt_est.h	EST_FREQ_USERWRITE
+
+# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
+object	/athhal-i386-elf.hal.o	ath
 
 include "arch/i386/conf/majors.i386"
