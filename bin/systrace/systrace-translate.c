@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.13 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.14 2005/06/25 12:22:43 elad Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -35,6 +35,7 @@
 #include <sys/tree.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
+#include <sys/mman.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -73,6 +74,7 @@ static int print_uname(char *, size_t, struct intercept_translate *);
 static int print_pidname(char *, size_t, struct intercept_translate *);
 static int print_signame(char *, size_t, struct intercept_translate *);
 static int print_fcntlcmd(char *, size_t, struct intercept_translate *);
+static int print_memprot(char *, size_t, struct intercept_translate *);
 static int get_argv(struct intercept_translate *, int, pid_t, void *);
 static int print_argv(char *, size_t, struct intercept_translate *);
 
@@ -432,6 +434,53 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
+static int
+print_memprot(char *buf, size_t buflen, struct intercept_translate *tl) {
+	int prot = (intptr_t)tl->trans_addr;
+
+	if (prot == PROT_NONE) {
+		strlcpy(buf, "PROT_NONE", buflen);
+		return (0);
+	} else
+		*buf = '\0';
+
+	while (prot) {
+		if (prot & PROT_READ) {
+			strlcpy(buf, "PROT_READ", buflen);
+			prot &= ~PROT_READ;
+			continue;
+		}
+
+		if (prot & PROT_WRITE) {
+			if (*buf)
+				strlcat(buf, "|", buflen);
+
+			strlcat(buf, "PROT_WRITE", buflen);
+			prot &= ~PROT_WRITE;
+			continue;
+		}
+
+		if (prot & PROT_EXEC) {
+			if (*buf)
+				strlcat(buf, "|", buflen);
+
+			strlcat(buf, "PROT_EXEC", buflen);
+			prot &= ~PROT_EXEC;
+			continue;
+		}
+
+		if (prot) {
+			if (*buf)
+				snprintf(buf, buflen, "|<unknown:0x%x>", prot);
+			else
+				snprintf(buf, buflen, "<unknown:0x%x>", prot);
+
+			prot = 0;
+		}
+	}
+
+	return (0);
+}
 
 static int
 get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
@@ -549,4 +598,9 @@ struct intercept_translate ic_signame = {
 struct intercept_translate ic_fcntlcmd = {
 	"cmd",
 	NULL, print_fcntlcmd,
+};
+
+struct intercept_translate ic_memprot = {
+	"prot",
+	NULL, print_memprot,
 };
