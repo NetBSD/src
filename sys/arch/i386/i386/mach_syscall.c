@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.11 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.12 2005/06/25 23:25:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.11 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.12 2005/06/25 23:25:51 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -277,7 +277,7 @@ mach_syscall_fancy(frame)
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(l, realcode, args, rval, error);
 
 	userret(l);
 }
