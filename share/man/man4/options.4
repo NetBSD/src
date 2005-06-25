@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.280 2005/06/23 00:30:29 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.281 2005/06/25 18:55:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -680,7 +680,7 @@ See
 .Xr mount_ext2fs 8
 for details.
 .It Cd file-system LFS
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Include the Log-structured File System
 .Em ( LFS ) .
 See
@@ -737,7 +737,7 @@ and
 .Xr fsck_msdos 8
 for details.
 .It Cd file-system NTFS
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Includes code for the
 .Tn Microsoft Windows NT
 file system.
@@ -795,7 +795,7 @@ See
 .Xr mount_overlay 8
 for details.
 .It Cd file-system PORTAL
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Includes the portal file system.
 This permits interesting tricks like opening
 .Tn TCP
@@ -826,7 +826,7 @@ See
 .Xr mount_umap 8
 for details.
 .It Cd file-system UNION
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
@@ -837,7 +837,7 @@ See
 .Xr mount_union 8
 for details.
 .It Cd file-system CODA
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Includes code for the Coda file system.
 Coda is a distributed file system like NFS and AFS.
 It is freely available, like NFS, but it functions much like AFS in being a
@@ -855,7 +855,7 @@ See http://www.coda.cs.cmu.edu for more details.
 You also need to enable the pseudo-device, vcoda, for the Coda
 file system to work.
 .It Cd file-system SMBFS
-.Em [EXPERIMENTAL]
+.Bq Em EXPERIMENTAL
 Includes code for the SMB/CIFS file system.
 See
 .Xr mount_smbfs 8
