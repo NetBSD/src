@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.3 2004/07/16 04:56:30 christos Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.4 2005/06/25 23:25:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,20 +42,67 @@
 
 	.globl	_C_LABEL(darwin_commpage_bzero)
 _C_LABEL(darwin_commpage_bzero):
-	.long	0x0
+	movl	8(%esp),%ecx
+	xor	%eax,%eax
+	cmpl	$0x0f,%ecx		/* avoid mispredicted branch... */
+
+	pushl	%edi
+	movl	8(%esp),%edi
+
+	cld				/* set fill direction forward */
+
+	/*
+	 * if the string is too short, it's really not worth the overhead
+	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * unaligned set.
+	 *
+	 * NB aligning the transfer is actually pointless on my athlon 700,
+	 * It does make a difference to a PII though.
+	 *
+	 * The PII, PIII and PIV all seem to have a massive performance
+	 * drop when the initial target address is an odd multiple of 4.
+	 */
+	jbe	by_bytes
+
+	movl	%edi,%edx		/* detect misalignment */
+	neg	%edx
+	andl	$7,%edx
+	jnz	align
+aligned:
+	movl	%eax,-4(%edi,%ecx)	/* zap last 4 bytes */
+	shrl	$2,%ecx			/* zero by words */
+	rep
+	stosl
+zdone:
+	pop	%edi
+	ret
+
+align:
+	movl	%eax,(%edi)		/* zap first 8 bytes */
+	movl	%eax,4(%edi)
+	subl	%edx,%ecx		/* remove from main count */
+	add	%edx,%edi
+	jmp	aligned
+
+by_bytes:
+	rep
+	stosb
+
+	popl	%edi
+	ret
 	.globl	_C_LABEL(darwin_commpage_bzero_size)
 _C_LABEL(darwin_commpage_bzero_size) = .-_C_LABEL(darwin_commpage_bzero)
 
 
 	.globl	_C_LABEL(darwin_commpage_pthread_self)
 _C_LABEL(darwin_commpage_pthread_self):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_pthread_self_size)
 _C_LABEL(darwin_commpage_pthread_self_size) = .-_C_LABEL(darwin_commpage_pthread_self)
 
 	.globl	_C_LABEL(darwin_commpage_gettimeofday)
 _C_LABEL(darwin_commpage_gettimeofday):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_gettimeofday_size)
 _C_LABEL(darwin_commpage_gettimeofday_size) = .-_C_LABEL(darwin_commpage_gettimeofday)
 	
@@ -63,7 +110,37 @@ _C_LABEL(darwin_commpage_gettimeofday_size) = .-_C_LABEL(darwin_commpage_gettime
 _C_LABEL(darwin_commpage_bigcopy):
 	.globl	_C_LABEL(darwin_commpage_memcpy)
 _C_LABEL(darwin_commpage_memcpy):
-	.long	0x0
+	push	%esi
+	mov	%edi,%edx
+	movl	8(%esp),%edi
+	movl	12(%esp),%esi
+	movl	16(%esp),%ecx
+	movl	%ecx,%eax
+	cld			/* nope, copy forwards. */
+	shrl	$2,%ecx		/* copy by words */
+	rep
+	movsl
+	and	$3,%eax		/* any bytes left? */
+	jnz	mtrailing
+mdone:
+	movl	8(%esp),%eax
+	mov	%edx,%edi
+	pop	%esi
+	ret
+
+mtrailing:
+	cmp	$2,%eax
+	jb	1f
+	movw	(%esi),%ax
+	movw	%ax,(%edi)
+	je	mdone
+	movb	2(%esi),%al
+	movb	%al,2(%edi)
+	jmp	mdone
+1:	movb	(%esi),%al
+	movb	%al,(%edi)
+	jmp	mdone
+
 	.globl	_C_LABEL(darwin_commpage_memcpy_size)
 _C_LABEL(darwin_commpage_memcpy_size) = .-_C_LABEL(darwin_commpage_memcpy)
 	.globl	_C_LABEL(darwin_commpage_bigcopy_size)
@@ -71,60 +148,122 @@ _C_LABEL(darwin_commpage_bigcopy_size) = .-_C_LABEL(darwin_commpage_bigcopy)
 
 	.globl	_C_LABEL(darwin_commpage_pthread_specific)
 _C_LABEL(darwin_commpage_pthread_specific):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_pthread_specific_size)
 _C_LABEL(darwin_commpage_pthread_specific_size) = .-_C_LABEL(darwin_commpage_pthread_specific)
 
 	.globl	_C_LABEL(darwin_commpage_mach_absolute_time)
 _C_LABEL(darwin_commpage_mach_absolute_time):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_mach_absolute_time_size)
 _C_LABEL(darwin_commpage_mach_absolute_time_size) = .-_C_LABEL(darwin_commpage_mach_absolute_time)
 
 	.globl	_C_LABEL(darwin_commpage_spinlock_try)
 _C_LABEL(darwin_commpage_spinlock_try):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_spinlock_try_size)
 _C_LABEL(darwin_commpage_spinlock_try_size) = .-_C_LABEL(darwin_commpage_spinlock_try)
 
 	.globl	_C_LABEL(darwin_commpage_spinlock_lock)
 _C_LABEL(darwin_commpage_spinlock_lock):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_spinlock_lock_size)
 _C_LABEL(darwin_commpage_spinlock_lock_size) = .-_C_LABEL(darwin_commpage_spinlock_lock)
 
 	.globl	_C_LABEL(darwin_commpage_spinlock_unlock)
 _C_LABEL(darwin_commpage_spinlock_unlock):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_spinlock_unlock_size)
 _C_LABEL(darwin_commpage_spinlock_unlock_size) = .-_C_LABEL(darwin_commpage_spinlock_unlock)
 
 	.globl	_C_LABEL(darwin_commpage_sys_dcache_flush)
 _C_LABEL(darwin_commpage_sys_dcache_flush):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_sys_dcache_flush_size)
 _C_LABEL(darwin_commpage_sys_dcache_flush_size) = .-_C_LABEL(darwin_commpage_sys_dcache_flush)
 
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate)
 _C_LABEL(darwin_commpage_sys_icache_invalidate):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate_size)
 _C_LABEL(darwin_commpage_sys_icache_invalidate_size) = .-_C_LABEL(darwin_commpage_sys_icache_invalidate)
 
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish)
 _C_LABEL(darwin_commpage_spinlock_relinquish):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish_size)
 _C_LABEL(darwin_commpage_spinlock_relinquish_size) = .-_C_LABEL(darwin_commpage_spinlock_relinquish)
 
 	.globl	_C_LABEL(darwin_commpage_pthread_getspecific)
 _C_LABEL(darwin_commpage_pthread_getspecific):
-	.long	0x0
+	ret
 	.globl	_C_LABEL(darwin_commpage_pthread_getspecific_size)
 _C_LABEL(darwin_commpage_pthread_getspecific_size) = .-_C_LABEL(darwin_commpage_pthread_getspecific)
 
 	.globl	_C_LABEL(darwin_commpage_bcopy)
 _C_LABEL(darwin_commpage_bcopy):
-	.long	0x0
+	push	%esi
+	mov	%edi,%edx
+	movl	8(%esp),%esi
+	movl	12(%esp),%edi
+	movl	16(%esp),%ecx
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax	/* overlapping? */
+	movl	%ecx,%eax
+	jb	backwards
+	cld			/* nope, copy forwards. */
+	shrl	$2,%ecx		/* copy by words */
+	rep
+	movsl
+	and	$3,%eax		/* any bytes left? */
+	jnz	trailing
+done:
+	mov	%edx,%edi
+	pop	%esi
+	ret
+
+trailing:
+	cmp	$2,%eax
+	jb	1f
+	movw	(%esi),%ax
+	movw	%ax,(%edi)
+	je	done
+	movb	2(%esi),%al
+	movb	%al,2(%edi)
+	jmp	done
+1:	movb	(%esi),%al
+	movb	%al,(%edi)
+	jmp	done
+
+backwards:
+	addl	%ecx,%edi	/* copy backwards. */
+	addl	%ecx,%esi
+	and	$3,%eax		/* any fractional bytes? */
+	jnz	back_align
+back_aligned:
+	shrl	$2,%ecx
+	subl	$4,%esi
+	subl	$4,%edi
+	std
+	rep
+	movsl
+	cld
+	jmp	done
+
+back_align:
+	sub	%eax,%esi
+	sub	%eax,%edi
+	cmp	$2,%eax
+	jb	1f
+	je	2f
+	movb	2(%esi),%al
+	movb	%al,2(%edi)
+2:	movw	(%esi),%ax
+	movw	%ax,(%edi)
+	jmp	back_aligned
+1:	movb	(%esi),%al
+	movb	%al,(%edi)
+	jmp	back_aligned
 	.globl	_C_LABEL(darwin_commpage_bcopy_size)
 _C_LABEL(darwin_commpage_bcopy_size) = .-_C_LABEL(darwin_commpage_bcopy)
