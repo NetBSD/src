@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.281 2005/06/25 18:55:29 wiz Exp $
+.\"	$NetBSD: options.4,v 1.282 2005/06/25 19:07:04 rpaulo Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 22, 2005
+.Dd June 25, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -863,6 +863,14 @@ for details.
 .Em NOTE :
 You also need to enable the pseudo-device, nsmb, for the SMB
 file system to work.
+.It Cd file-system PTYFS
+.Bq Em EXPERIMENTAL
+Includes code for a special file system (normally mounted on
+.Pa /dev/pts )
+in which pseudo-terminal slave devices become visible in the file system.
+See
+.Xr mount_ptyfs 8
+for details.
 .El
 .Ss File System Options
 .Bl -ohang
