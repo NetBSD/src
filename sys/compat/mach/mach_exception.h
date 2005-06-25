@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.4 2005/02/26 23:10:19 perry Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.5 2005/06/25 08:28:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,18 @@
 
 #ifndef _MACH_EXCEPTION_H_
 #define _MACH_EXCEPTION_H_
+
+/* really should be in mach_signal.h or siginfo.h */
+#define MACH_BUS_ADRALN         1
+
+#define MACH_SEGV_MAPERR        1
+#define MACH_SEGV_ACCERR        2
+
+#define MACH_TRAP_BRKPT         1
+
+#define MACH_ILL_ILLOPC         1
+#define MACH_ILL_ILLTRP         2
+#define MACH_ILL_PRVOPC         3
 
 #define MACH_EXC_BAD_ACCESS		1
 #define MACH_EXC_BAD_INSTRUCTION	2
