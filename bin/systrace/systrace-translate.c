@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.15 2005/06/25 14:37:33 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.16 2005/06/25 18:47:42 elad Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -274,7 +274,7 @@ print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 	uid_t uid = (intptr_t)tl->trans_addr;
 
 	pw = getpwuid(uid);
-	snprintf(buf, buflen, "%s", pw != NULL ? pw->pw_name : "<unknown>");
+	strlcpy(buf, pw != NULL ? pw->pw_name : "<unknown>", buflen);
 
 	return (0);
 }
@@ -287,8 +287,8 @@ print_pidname(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	if (pid != 0) {
 		icpid = intercept_getpid(pid);
-		snprintf(buf, buflen, "%s",
-		    icpid->name != NULL ? icpid->name : "<unknown>");
+		strlcpy(buf, icpid->name != NULL ? icpid->name
+						 : "<unknown>", buflen);
 		if (icpid->name == NULL)
 			intercept_freepid(pid);
 	} else
@@ -387,7 +387,7 @@ print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
 		return (0);
 	}
 
-	snprintf(buf, buflen, "%s", name);
+	strlcpy(buf, name, buflen);
 	return (0);
 }
 
@@ -430,7 +430,7 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 		return (0);
 	}
 
-	snprintf(buf, buflen, "%s", name);
+	strlcpy(buf, name, buflen);
 	return (0);
 }
 
@@ -526,7 +526,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 static int
 print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	snprintf(buf, buflen, "%s", (char *)tl->trans_data);
+	strlcpy(buf, (char *)tl->trans_data, buflen);
 
 	return (0);
 }
