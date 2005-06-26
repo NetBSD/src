@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: tree.c,v 1.6 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * command tree climbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: tree.c,v 1.6 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -561,7 +561,7 @@ wdscan(wp, c)
 	while (1)
 		switch (*wp++) {
 		  case EOS:
-			return (char *) wp;
+			return (char *) __UNCONST(wp);
 		  case CHAR:
 		  case QCHAR:
 			wp++;
@@ -582,7 +582,7 @@ wdscan(wp, c)
 		  case CSUBST:
 			wp++;
 			if (c == CSUBST && nest == 0)
-				return (char *) wp;
+				return (char *) __UNCONST(wp);
 			nest--;
 			break;
 #ifdef KSH
@@ -593,7 +593,7 @@ wdscan(wp, c)
 		  case SPAT:
 		  case CPAT:
 			if (c == wp[-1] && nest == 0)
-				return (char *) wp;
+				return (char *) __UNCONST(wp);
 			if (wp[-1] == CPAT)
 				nest--;
 			break;

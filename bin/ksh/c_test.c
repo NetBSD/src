@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: c_test.c,v 1.6 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.6 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -93,17 +93,17 @@ static const struct t_op b_ops [] = {
 	{"",	TO_NONOP }
     };
 
-static int	test_stat ARGS((const char *path, struct stat *statb));
-static int	test_eaccess ARGS((const char *path, int mode));
-static int	test_oexpr ARGS((Test_env *te, int do_eval));
-static int	test_aexpr ARGS((Test_env *te, int do_eval));
-static int	test_nexpr ARGS((Test_env *te, int do_eval));
-static int	test_primary ARGS((Test_env *te, int do_eval));
-static int	ptest_isa ARGS((Test_env *te, Test_meta meta));
-static const char *ptest_getopnd ARGS((Test_env *te, Test_op op, int do_eval));
-static int	ptest_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
-				const char *opnd2, int do_eval));
-static void	ptest_error ARGS((Test_env *te, int offset, const char *msg));
+static int	test_stat ARGS((const char *, struct stat *));
+static int	test_eaccess ARGS((const char *, int));
+static int	test_oexpr ARGS((Test_env *, int));
+static int	test_aexpr ARGS((Test_env *, int));
+static int	test_nexpr ARGS((Test_env *, int));
+static int	test_primary ARGS((Test_env *, int));
+static int	ptest_isa ARGS((Test_env *, Test_meta));
+static const char *ptest_getopnd ARGS((Test_env *, Test_op, int));
+static int	ptest_eval ARGS((Test_env *, Test_op, const char *,
+				const char *, int));
+static void	ptest_error ARGS((Test_env *, int, const char *));
 
 int
 c_test(wp)
@@ -424,26 +424,26 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 
 /* Nasty kludge to handle Korn's bizarre /dev/fd hack */
 static int
-test_stat(path, statb)
-	const char *path;
+test_stat(pathx, statb)
+	const char *pathx;
 	struct stat *statb;
 {
 #if !defined(HAVE_DEV_FD)
 	int fd;
 
-	if (strncmp(path, "/dev/fd/", 8) == 0 && getn(path + 8, &fd))
+	if (strncmp(pathx, "/dev/fd/", 8) == 0 && getn(pathx + 8, &fd))
 		return fstat(fd, statb);
 #endif /* !HAVE_DEV_FD */
 
-	return stat(path, statb);
+	return stat(pathx, statb);
 }
 
 /* Routine to handle Korn's /dev/fd hack, and to deal with X_OK on
  * non-directories when running as root.
  */
 static int
-test_eaccess(path, mode)
-	const char *path;
+test_eaccess(pathx, mode)
+	const char *pathx;
 	int mode;
 {
 	int res;
@@ -452,7 +452,7 @@ test_eaccess(path, mode)
 	int fd;
 
 	/* Note: doesn't handle //dev/fd, etc.. (this is ok) */
-	if (strncmp(path, "/dev/fd/", 8) == 0 && getn(path + 8, &fd)) {
+	if (strncmp(pathx, "/dev/fd/", 8) == 0 && getn(pathx + 8, &fd)) {
 		int flags;
 
 		if ((flags = fcntl(fd, F_GETFL, 0)) < 0
@@ -464,7 +464,7 @@ test_eaccess(path, mode)
 	}
 #endif /* !HAVE_DEV_FD */
 
-	res = eaccess(path, mode);
+	res = eaccess(pathx, mode);
 	/*
 	 * On most (all?) unixes, access() says everything is executable for
 	 * root - avoid this on files by using stat().
@@ -472,7 +472,7 @@ test_eaccess(path, mode)
 	if (res == 0 && ksheuid == 0 && (mode & X_OK)) {
 		struct stat statb;
 
-		if (stat(path, &statb) < 0)
+		if (stat(pathx, &statb) < 0)
 			res = -1;
 		else if (S_ISDIR(statb.st_mode))
 			res = 0;
