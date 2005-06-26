@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.4 2005/06/26 21:51:37 erh Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -105,6 +105,7 @@ struct ieee80211_key {
 #define	IEEE80211_CIPHER_MAX		(IEEE80211_CIPHER_NONE+1)
 
 #define	IEEE80211_KEYIX_NONE	((u_int16_t) -1)
+#define	IEEE80211_KEY_UNDEFINED(k)	((k).wk_cipher == &ieee80211_cipher_none)
 
 #if defined(__KERNEL__) || defined(_KERNEL)
 
