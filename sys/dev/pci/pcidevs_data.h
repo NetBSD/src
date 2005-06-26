@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.721 2005/06/24 21:41:16 seb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.722 2005/06/26 20:04:10 seb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.722 2005/06/24 21:39:25 seb Exp
+ *	NetBSD: pcidevs,v 1.723 2005/06/26 20:02:48 seb Exp
  */
 
 /*
@@ -3412,6 +3412,10 @@ const struct pci_product pci_products[] = {
 	    "ISDN",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M24_1P,
+	    "Radeon Mobility X600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_A3,
 	    "Radeon Mobility A3",
 	},
@@ -6262,6 +6266,18 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EXP,
 	    "82925X PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_HB,
+	    "82915PM/GM/GMS,82910GML Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_PEG,
+	    "82915PM/GM PCI Express Graphics Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
+	    "82915GM/GMS,82910GML Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
@@ -10360,4 +10376,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2008;
+const int pci_nproducts = 2012;
