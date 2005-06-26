@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.86 2005/06/25 03:41:50 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.87 2005/06/26 04:37:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.86 2005/06/25 03:41:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.87 2005/06/26 04:37:25 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1413,9 +1413,11 @@ atw_init(struct ifnet *ifp)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 		ic->ic_bss->ni_intval = ic->ic_lintval;
 		ic->ic_bss->ni_rssi = 0;
 		ic->ic_bss->ni_rstamp = 0;
+#endif /* !IEEE80211_NO_HOSTAP */
 		break;
 	default:					/* XXX */
 		break;
