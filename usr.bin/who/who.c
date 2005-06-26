@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.14 2004/11/22 17:20:02 peter Exp $	*/
+/*	$NetBSD: who.c,v 1.15 2005/06/26 17:10:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.14 2004/11/22 17:20:02 peter Exp $");
+__RCSID("$NetBSD: who.c,v 1.15 2005/06/26 17:10:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ static void
 who_am_i(const char *fname, int show_labels)
 {
 	struct passwd *pw;
-	char *p;
+	const char *p;
 	char *t;
 	time_t now;
 	struct utmpentry *ehead, *ep;
