@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.2 2005/06/26 21:14:08 christos Exp $	*/
 
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
@@ -51,7 +51,7 @@
 
 int
 ipsec_get_policylen(policy)
-	caddr_t policy;
+	void *policy;
 {
 	return policy ? PFKEY_EXTLEN(policy) : -1;
 }

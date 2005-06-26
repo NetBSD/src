@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.3 2005/05/20 00:57:33 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.4 2005/06/26 21:14:08 christos Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -119,9 +119,9 @@ static int init_x_policy __P((void));
 static int set_x_request __P((struct sockaddr *src, struct sockaddr *dst));
 static int set_sockaddr __P((struct sockaddr *addr));
 static void policy_parse_request_init __P((void));
-static caddr_t policy_parse __P((char *msg, int msglen));
+static void *policy_parse __P((const char *msg, int msglen));
 
-extern void __policy__strbuffer__init__ __P((char *msg));
+extern void __policy__strbuffer__init__ __P((const char *msg));
 extern void __policy__strbuffer__free__ __P((void));
 extern int yyparse __P((void));
 extern int yylex __P((void));
@@ -603,9 +603,9 @@ policy_parse_request_init()
 	return;
 }
 
-static caddr_t
+static void *
 policy_parse(msg, msglen)
-	char *msg;
+	const char *msg;
 	int msglen;
 {
 	int error;
@@ -636,12 +636,12 @@ policy_parse(msg, msglen)
 	return pbuf;
 }
 
-caddr_t
+void *
 ipsec_set_policy(msg, msglen)
-	char *msg;
+	const char *msg;
 	int msglen;
 {
-	caddr_t policy;
+	void *policy;
 
 	policy = policy_parse(msg, msglen);
 	if (policy == NULL) {

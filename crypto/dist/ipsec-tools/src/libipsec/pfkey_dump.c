@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.4 2005/04/27 22:38:56 uwe Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.5 2005/06/26 21:14:08 christos Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -532,9 +532,9 @@ pfkey_spdump1(m, withports)
 		return;
 	}
 	if (withports)
-		d_xpl = ipsec_dump_policy_withports((char *)m_xpl, "\n\t");
+		d_xpl = ipsec_dump_policy_withports(m_xpl, "\n\t");
 	else
-		d_xpl = ipsec_dump_policy((char *)m_xpl, "\n\t");
+		d_xpl = ipsec_dump_policy(m_xpl, "\n\t");
 		
 	if (!d_xpl)
 		printf("\n\tPolicy:[%s]\n", ipsec_strerror());

@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.4 2005/04/27 05:19:49 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.5 2005/06/26 21:14:08 christos Exp $	*/
 
 /* Id: libpfkey.h,v 1.8.2.1 2005/02/24 13:33:54 manubsd Exp */
 
@@ -57,13 +57,13 @@ struct sadb_alg;
 int ipsec_check_keylen __P((u_int, u_int, u_int));
 int ipsec_check_keylen2 __P((u_int, u_int, u_int));
 int ipsec_get_keylen __P((u_int, u_int, struct sadb_alg *));
-char *ipsec_dump_policy __P((caddr_t policy, char *delimiter));
-char *ipsec_dump_policy_withports __P((caddr_t policy, char *delimiter));
-void ipsec_hexdump __P((caddr_t buf, int len));
-int  ipsec_get_policylen __P((caddr_t policy));
-caddr_t ipsec_set_policy __P((char *msg, int msglen));
+char *ipsec_dump_policy __P((void *, const char *));
+char *ipsec_dump_policy_withports __P((void *, const char *));
+void ipsec_hexdump __P((const void *, int));
+int  ipsec_get_policylen __P((void *));
+void *ipsec_set_policy __P((const char *, int));
 const char *ipsec_strerror __P((void));
-void kdebug_sadb __P((struct sadb_msg *base));
+void kdebug_sadb __P((struct sadb_msg *));
 
 
 /* PFKey Routines */
