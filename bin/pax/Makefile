@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2005/05/01 02:59:28 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2005/06/26 19:10:49 christos Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -27,7 +27,6 @@
 
 .include <bsd.own.mk>
 
-WARNS=3
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\

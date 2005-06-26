@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.24 2004/03/27 14:52:36 simonb Exp $	*/
+/*	$NetBSD: ps.h,v 1.25 2005/06/26 19:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,8 +50,8 @@ typedef struct varent {
 } VARENT;
 
 typedef struct var {
-	char	*name;		/* name(s) of variable */
-	char	*header;	/* default header */
+	const char *name;	/* name(s) of variable */
+	const char *header;	/* default header */
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	ARGV0	0x02		/* only print argv[0] */
 #define	LJUST	0x04		/* left adjust on output (trailing blanks) */
@@ -69,7 +69,7 @@ typedef struct var {
 	 */
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
-	char	*fmt;		/* printf format */
+	const char *fmt;	/* printf format */
 
 	/* current longest element */
 	int	width;		/* printing width */

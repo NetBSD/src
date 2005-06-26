@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.39 2005/05/15 18:39:39 dsl Exp $ */
+/* $NetBSD: date.c,v 1.40 2005/06/26 19:10:48 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.39 2005/05/15 18:39:39 dsl Exp $");
+__RCSID("$NetBSD: date.c,v 1.40 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,8 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char buf[1024], *format;
+	char buf[1024];
+	const char *format;
 	int ch;
 
 	setprogname(argv[0]);

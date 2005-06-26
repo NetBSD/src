@@ -1,4 +1,4 @@
-/*	$NetBSD: glbl.c,v 1.5 2005/02/17 16:29:26 xtraeme Exp $	*/
+/*	$NetBSD: glbl.c,v 1.6 2005/06/26 19:10:49 christos Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
    editor */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-__RCSID("$NetBSD: glbl.c,v 1.5 2005/02/17 16:29:26 xtraeme Exp $");
+__RCSID("$NetBSD: glbl.c,v 1.6 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,11 +87,12 @@ exec_global(int interact, int gflag)
 	int status;
 	int n;
 	char *cmd = NULL;
-
 #ifdef BACKWARDS
+	char cmdp[] = "p\n";
+
 	if (!interact) {
 		if (!strcmp(ibufp, "\n"))
-			cmd = "p\n";		/* null cmd-list == `p' */
+			cmd = cmdp;		/* null cmd-list == `p' */
 		else if ((cmd = get_extended_line(&n, 0)) == NULL)
 			return ERR;
 	}

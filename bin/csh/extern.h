@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.16 2005/02/17 16:07:53 xtraeme Exp $ */
+/* $NetBSD: extern.h,v 1.17 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -193,7 +193,7 @@ void unreadc(int);
 /*
  * misc.c
  */
-int any(char *, int);
+int any(const char *, int);
 Char **blkcat(Char **, Char **);
 Char **blkcpy(Char **, Char **);
 Char **blkend(Char **);
@@ -213,7 +213,7 @@ int prefix(Char *, Char *);
 Char **saveblk(Char **);
 Char *strip(Char *);
 Char *quote(Char *);
-char *strsave(char *);
+char *strsave(const char *);
 char *strspl(char *, char *);
 void udvar(Char *) __attribute__((noreturn));
 

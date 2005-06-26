@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.24 2005/02/17 16:29:26 xtraeme Exp $	*/
+/*	$NetBSD: buf.c,v 1.25 2005/06/26 19:10:49 christos Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.24 2005/02/17 16:29:26 xtraeme Exp $");
+__RCSID("$NetBSD: buf.c,v 1.25 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ int
 open_sbuf(void)
 {
 	int u, fd;
-	char *tmp;
+	const char *tmp;
 	size_t s;
 
 	isbinary = newline_added = 0;

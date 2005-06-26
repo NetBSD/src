@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.29 2004/05/13 15:25:58 christos Exp $ */
+/* $NetBSD: func.c,v 1.30 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.29 2004/05/13 15:25:58 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.30 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1110,7 +1110,7 @@ static const struct limits {
 
 static const struct limits *findlim(Char *);
 static RLIM_TYPE getval(const struct limits *, Char **);
-static void limtail(Char *, char *);
+static void limtail(Char *, const char *);
 static void plim(const struct limits *, Char);
 static int setlim(const struct limits *, Char, RLIM_TYPE);
 
@@ -1232,7 +1232,7 @@ getval(const struct limits *lp, Char **v)
 }
 
 static void
-limtail(Char *cp, char *str)
+limtail(Char *cp, const char *str)
 {
     while (*cp && *cp == *str)
 	cp++, str++;

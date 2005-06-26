@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.43 2004/11/16 04:58:14 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.44 2005/06/26 19:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.43 2004/11/16 04:58:14 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.44 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,8 @@ showkey(void)
 {
 	VAR *v;
 	int i;
-	char *p, *sep;
+	const char *p;
+	const char *sep;
 
 	i = 0;
 	sep = "";
@@ -298,5 +299,5 @@ findvar(const char *p)
 static int
 vcmp(const void *a, const void *b)
 {
-        return strcmp(a, ((VAR *)b)->name);
+        return strcmp(a, ((const VAR *)b)->name);
 }

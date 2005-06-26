@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.23 2004/05/10 19:11:31 christos Exp $ */
+/* $NetBSD: dir.c,v 1.24 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23 2004/05/10 19:11:31 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.24 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static struct directory *dfind(Char *);
 static Char *dfollow(Char *);
 static void printdirs(void);
 static Char *dgoto(Char *);
-static void skipargs(Char ***, char *);
+static void skipargs(Char ***, const char *);
 static void dnewcwd(struct directory *);
 static void dset(Char *);
 
@@ -157,7 +157,7 @@ dset(Char *dp)
 #define DIR_LINE 4
 
 static void
-skipargs(Char ***v, char *str)
+skipargs(Char ***v, const char *str)
 {
     Char  **n, *s;
 

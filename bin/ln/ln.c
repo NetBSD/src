@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.29 2004/06/25 14:25:33 wiz Exp $ */
+/* $NetBSD: ln.c,v 1.30 2005/06/26 19:10:49 christos Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.29 2004/06/25 14:25:33 wiz Exp $");
+__RCSID("$NetBSD: ln.c,v 1.30 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ int	vflag;                          /* Verbose output */
 int (*linkf)(const char *, const char *);
 char   linkch;
 
-int	linkit(char *, char *, int);
+int	linkit(const char *, const char *, int);
 void	usage(void);
 int	main(int, char *[]);
 
@@ -142,10 +142,11 @@ main(int argc, char *argv[])
 }
 
 int
-linkit(char *target, char *source, int isdir)
+linkit(const char *target, const char *source, int isdir)
 {
 	struct stat sb;
-	char *p, path[MAXPATHLEN];
+	const char *p;
+	char path[MAXPATHLEN];
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */

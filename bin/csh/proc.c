@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.28 2003/09/19 05:31:11 itojun Exp $ */
+/* $NetBSD: proc.c,v 1.29 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.28 2003/09/19 05:31:11 itojun Exp $");
+__RCSID("$NetBSD: proc.c,v 1.29 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -640,7 +640,7 @@ pprint(struct process *pp, bool flag)
 {
     static struct rusage zru;
     struct process *tp;
-    char *format;
+    const char *format;
     int jobflags, pstatus, reason, status;
     bool hadnl;
 

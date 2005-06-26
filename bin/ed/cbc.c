@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.17 2005/02/17 16:29:26 xtraeme Exp $	*/
+/*	$NetBSD: cbc.c,v 1.18 2005/06/26 19:10:49 christos Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.17 2005/02/17 16:29:26 xtraeme Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.18 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ get_keyword(void)
  * print a warning message and, possibly, terminate
  */
 void
-des_error(char *s /* the message */)
+des_error(const char *s /* the message */)
 {
 	(void)sprintf(errmsg, "%s", s ? s : strerror(errno));
 }

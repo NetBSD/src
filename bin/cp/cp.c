@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.35 2003/09/14 19:20:18 jschauma Exp $ */
+/* $NetBSD: cp.c,v 1.36 2005/06/26 19:10:48 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.35 2003/09/14 19:20:18 jschauma Exp $");
+__RCSID("$NetBSD: cp.c,v 1.36 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,8 @@ __RCSID("$NetBSD: cp.c,v 1.35 2003/09/14 19:20:18 jschauma Exp $");
                 *--(p).p_end = '\0';					\
 }
 
-PATH_T to = { to.p_path, "" };
+static char empty[] = "";
+PATH_T to = { to.p_path, empty };
 
 uid_t myuid;
 int Rflag, fflag, iflag, pflag, rflag, vflag; 
