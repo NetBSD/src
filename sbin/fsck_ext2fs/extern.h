@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2005/02/09 22:55:45 ws Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2005/06/26 23:01:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -28,21 +28,21 @@
 void	adjust(struct inodesc *, short);
 int	allocblk(void);
 int	allocdir(ino_t, ino_t, int);
-void	blkerror(ino_t, char *, daddr_t);
+void	blkerror(ino_t, const char *, daddr_t);
 int	bread(int, char *, daddr_t, long);
 void	bufinit(void);
 void	bwrite(int, char *, daddr_t, long);
 void	cacheino(struct ext2fs_dinode *, ino_t);
-int	changeino(ino_t, char *, ino_t);
+int	changeino(ino_t, const char *, ino_t);
 int	chkrange(daddr_t, int);
 void	ckfini(int);
 int	ckinode(struct ext2fs_dinode *, struct inodesc *);
-void	clri(struct inodesc *, char *, int);
+void	clri(struct inodesc *, const char *, int);
 int	dircheck(struct inodesc *, struct ext2fs_direct *);
-void	direrror(ino_t, char *);
+void	direrror(ino_t, const char *);
 int	dirscan(struct inodesc *);
-int	dofix(struct inodesc *, char *);
-void	fileerror(ino_t, ino_t, char *);
+int	dofix(struct inodesc *, const char *);
+void	fileerror(ino_t, ino_t, const char *);
 int	findino(struct inodesc *);
 int	findname(struct inodesc *);
 void	flush(int, struct bufarea *);
@@ -56,7 +56,7 @@ void	inodirty(void);
 u_int64_t inosize(struct ext2fs_dinode *);
 void	inossize(struct ext2fs_dinode *, u_int64_t);
 int	linkup(ino_t, ino_t);
-int	makeentry(ino_t, ino_t, char *);
+int	makeentry(ino_t, ino_t, const char *);
 void	pass1(void);
 void	pass1b(void);
 void	pass2(void);
@@ -67,7 +67,7 @@ int	pass4check(struct inodesc *);
 void	pass5(void);
 void	pinode(ino_t);
 void	propagate(void);
-int	reply(char *);
+int	reply(const char *);
 void	resetinodebuf(void);
 int	setup(const char *);
 struct	ext2fs_dinode * getnextinode(ino_t);

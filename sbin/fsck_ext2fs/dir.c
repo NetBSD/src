@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.13 2005/02/09 22:55:45 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.14 2005/06/26 23:01:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.13 2005/02/09 22:55:45 ws Exp $");
+__RCSID("$NetBSD: dir.c,v 1.14 2005/06/26 23:01:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: dir.c,v 1.13 2005/02/09 22:55:45 ws Exp $");
 #include "fsutil.h"
 #include "extern.h"
 
-char	*lfname = "lost+found";
+const char	*lfname = "lost+found";
 int	lfmode = 01777;
 struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
 struct	ext2fs_dirtemplate dirhead = {
@@ -491,7 +491,7 @@ linkup(ino_t orphan, ino_t parentdir)
  * fix an entry in a directory.
  */
 int
-changeino(ino_t dir, char *name, ino_t newnum)
+changeino(ino_t dir, const char *name, ino_t newnum)
 {
 	struct inodesc idesc;
 
@@ -509,7 +509,7 @@ changeino(ino_t dir, char *name, ino_t newnum)
  * make an entry in a directory
  */
 int
-makeentry(ino_t parent, ino_t ino, char *name)
+makeentry(ino_t parent, ino_t ino, const char *name)
 {
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
