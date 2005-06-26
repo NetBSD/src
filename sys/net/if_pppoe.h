@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.6 2005/04/27 07:45:52 martin Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.7 2005/06/26 21:18:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 struct pppoediscparms {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
 	char	eth_ifname[IFNAMSIZ];	/* external ethernet interface name */
-	char	*ac_name;		/* access concentrator name (or NULL) */
+	const char *ac_name;		/* access concentrator name (or NULL) */
 	size_t	ac_name_len;		/* on write: length of buffer for ac_name */
-	char	*service_name;		/* service name (or NULL) */
+	const char *service_name;	/* service name (or NULL) */
 	size_t	service_name_len;	/* on write: length of buffer for service name */
 };
 
