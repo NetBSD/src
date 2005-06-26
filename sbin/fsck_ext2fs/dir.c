@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.14 2005/06/26 23:01:39 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.15 2005/06/26 23:04:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.14 2005/06/26 23:01:39 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.15 2005/06/26 23:04:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,14 +281,14 @@ dircheck(struct inodesc *idesc, struct ext2fs_direct *dp)
 }
 
 void
-direrror(ino_t ino, char *errmesg)
+direrror(ino_t ino, const char *errmesg)
 {
 
 	fileerror(ino, ino, errmesg);
 }
 
 void
-fileerror(ino_t cwd, ino_t ino, char *errmesg)
+fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 {
 	struct ext2fs_dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
