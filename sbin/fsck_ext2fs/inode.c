@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.17 2005/02/09 22:55:45 ws Exp $	*/
+/*	$NetBSD: inode.c,v 1.18 2005/06/26 23:01:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.17 2005/02/09 22:55:45 ws Exp $");
+__RCSID("$NetBSD: inode.c,v 1.18 2005/06/26 23:01:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,7 +542,7 @@ inodirty(void)
 }
 
 void
-clri(struct inodesc *idesc, char *type, int flag)
+clri(struct inodesc *idesc, const char *type, int flag)
 {
 	struct ext2fs_dinode *dp;
 
@@ -568,11 +568,17 @@ findname(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
 	u_int16_t namlen = dirp->e2d_namlen;
+	/* from utilities.c namebuf[] variable */
+	char *buf = __UNCONST(idesc->id_name);
+	if (namlen > MAXPATHLEN) {
+		/* XXX: Prevent overflow but don't fix */
+		namlen = MAXPATHLEN;
+	}
 
 	if (fs2h32(dirp->e2d_ino) != idesc->id_parent)
 		return (KEEPON);
-	memcpy(idesc->id_name, dirp->e2d_name, (size_t)namlen);
-	idesc->id_name[namlen] = '\0';
+	(void)memcpy(buf, dirp->e2d_name, (size_t)namlen);
+	buf[namlen] = '\0';
 	return (STOP|FOUND);
 }
 

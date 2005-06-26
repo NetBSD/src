@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2005/06/26 23:01:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2005/06/26 23:01:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ __RCSID("$NetBSD: main.c,v 1.20 2005/01/19 19:31:28 xtraeme Exp $");
 int	returntosingle;
 
 
-static int	argtoi(int, char *, char *, int);
+static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, char *, long, int);
 static void	usage(void);
 
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 }
 
 static int
-argtoi(int flag, char *req, char *str, int base)
+argtoi(int flag, const char *req, const char *str, int base)
 {
 	char *cp;
 	int ret;
