@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.3 2003/10/22 20:26:32 he Exp $	*/
+/*	$NetBSD: sif.c,v 1.4 2005/06/26 19:55:14 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.3 2003/10/22 20:26:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.4 2005/06/26 19:55:14 he Exp $");
 
 #include "debug_playstation2.h"
 
@@ -75,11 +75,11 @@ n		printf("%s: " fmt, __FUNCTION__ , ##args)
 void
 sif_init()
 {
-	u_int32_t version;
+	u_int32_t vers;
 
-	version = sifbios_getver();
+	vers = sifbios_getver();
 	printf("PlayStation 2 SIF BIOS version %d.%d\n",
-	    MAJOR(version), MINOR(version));
+	    MAJOR(vers), MINOR(vers));
 
 	/* Initialize SIF */
 	if (sifdma_init() < 0)
