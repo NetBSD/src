@@ -1,4 +1,4 @@
-/*	$NetBSD: vfslist.c,v 1.5 2005/02/05 14:44:46 xtraeme Exp $	*/
+/*	$NetBSD: vfslist.c,v 1.6 2005/06/26 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vfslist.c	8.1 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: vfslist.c,v 1.5 2005/02/05 14:44:46 xtraeme Exp $");
+__RCSID("$NetBSD: vfslist.c,v 1.6 2005/06/26 21:43:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,26 +62,32 @@ checkvfsname(const char *vfsname, const char **vfslist)
 }
 
 const char **
-makevfslist(char *fslist)
+makevfslist(const char *fslist)
 {
 	const char **av;
-	int i;
-	char *nextcp;
+	size_t i;
+	char *nextcp, *fsl;
 
 	if (fslist == NULL)
-		return (NULL);
+		return NULL;
+
 	if (fslist[0] == 'n' && fslist[1] == 'o') {
 		fslist += 2;
 		skipvfs = 1;
 	}
-	for (i = 0, nextcp = fslist; *nextcp; nextcp++)
+	if ((fsl = strdup(fslist)) == NULL) {
+		warn("strdup");
+		return NULL;
+	}
+	for (i = 0, nextcp = fsl; *nextcp; nextcp++)
 		if (*nextcp == ',')
 			i++;
-	if ((av = malloc((size_t)(i + 2) * sizeof(char *))) == NULL) {
+	if ((av = malloc((i + 2) * sizeof(char *))) == NULL) {
 		warn("malloc");
-		return (NULL);
+		free(fsl);
+		return NULL;
 	}
-	nextcp = fslist;
+	nextcp = fsl;
 	i = 0;
 	av[i++] = nextcp;
 	while ((nextcp = strchr(nextcp, ',')) != NULL) {
@@ -89,5 +95,5 @@ makevfslist(char *fslist)
 		av[i++] = nextcp;
 	}
 	av[i++] = NULL;
-	return (av);
+	return av;
 }
