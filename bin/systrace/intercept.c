@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.23 2005/06/25 21:48:11 elad Exp $	*/
+/*	$NetBSD: intercept.c,v 1.24 2005/06/26 19:58:29 elad Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.23 2005/06/25 21:48:11 elad Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.24 2005/06/26 19:58:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -832,22 +832,39 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 
 	icpid = intercept_getpid(pid);
 	if (!strcmp("execve", name)) {
-
-		/* Commit the name of the new image */
-		if (icpid->name)
-			free(icpid->name);
-		icpid->name = icpid->newname;
-		icpid->newname = NULL;
-
-		if (intercept_newimagecb != NULL)
-			(*intercept_newimagecb)(fd, pid, policynr, emulation,
-			    icpid->name, intercept_newimagecbarg);
-
+		intercept_newimage(fd, pid, policynr, emulation,
+				   icpid->newname, icpid);
+		/* we might have detached by now */
+		if (intercept_findpid(pid) == NULL)
+			return;
 	}
 
  out:
 	/* Resume execution of the process */
 	intercept.answer(fd, pid, seqnr, 0, 0, 0, NULL);
+}
+
+void
+intercept_newimage(int fd, pid_t pid, int policynr, const char *emulation,
+		   char *newname, struct intercept_pid *icpid)
+{
+	if (icpid == NULL)
+		icpid = intercept_getpid(pid);
+
+	if (icpid->name)
+		free(icpid->name);
+	if ((icpid->name = strdup(newname)) == NULL)
+		err(1, "%s:%d: strdup", __func__, __LINE__);
+
+	if (icpid->newname != NULL) {
+		free(icpid->newname);
+		icpid->newname = NULL;
+	}
+
+	if (intercept_newimagecb != NULL)
+		(*intercept_newimagecb)(fd, pid, policynr, emulation,
+		    icpid->name, intercept_newimagecbarg);
+
 }
 
 int

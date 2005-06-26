@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.17 2004/09/12 11:05:43 jdolecek Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.18 2005/06/26 19:58:29 elad Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.17 2004/09/12 11:05:43 jdolecek Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.18 2005/06/26 19:58:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -644,6 +644,19 @@ nbsd_read(int fd)
 		intercept_policy_free(msg.msg_policy);
 		break;
 #endif
+#ifdef SYSTR_MSG_EXECVE
+	case SYSTR_MSG_EXECVE: {
+		struct str_msg_execve *msg_execve = &msg.msg_data.msg_execve;
+
+		intercept_newimage(fd, pid, msg.msg_policy, current->name,
+				   msg_execve->path, NULL);
+
+		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
+			err(1, "%s:%d: answer", __func__, __LINE__);
+
+		break;
+	}
+#endif /* SYSTR_MSG_EXECVE */
 	}
 	return (0);
 }
