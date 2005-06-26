@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2005/06/26 19:57:30 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9 2003/10/08 04:25:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10 2005/06/26 19:57:30 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct dkbad *bdp;
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int dospartoff, cyl, i;
 
 	/* minimal requirements for archtypal disk label */
