@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.92 2005/06/07 08:53:13 he Exp $	*/
+/*	$NetBSD: print.c,v 1.93 2005/06/26 19:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.92 2005/06/07 08:53:13 he Exp $");
+__RCSID("$NetBSD: print.c,v 1.93 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1148,7 +1148,8 @@ printval(bp, v, mode)
 {
 	static char ofmt[32] = "%";
 	int width, vok, fmtlen;
-	char *fcp, *cp;
+	const char *fcp;
+	char *cp;
 	int64_t val;
 	u_int64_t uval;
 

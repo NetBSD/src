@@ -1,4 +1,4 @@
-/* $NetBSD: print.c,v 1.21 2003/08/07 09:05:42 agc Exp $ */
+/* $NetBSD: print.c,v 1.22 2005/06/26 19:10:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.21 2003/08/07 09:05:42 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.22 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: print.c,v 1.21 2003/08/07 09:05:42 agc Exp $");
 
 static void binit(const char *);
 static void bput(const char *);
-static char *ccval(const struct cchar *, int);
+static const char *ccval(const struct cchar *, int);
 
 void
 print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
@@ -239,7 +239,7 @@ bput(const char *s)
 	col += printf(" %s", s);
 }
 
-static char *
+static const char *
 ccval(const struct cchar *p, int c)
 {
 	static char buf[5];
