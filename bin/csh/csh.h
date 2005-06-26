@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.15 2003/08/07 09:05:04 agc Exp $ */
+/* $NetBSD: csh.h,v 1.16 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -357,7 +357,7 @@ struct command {
  */
 
 extern struct biltins {
-    char *bname;
+    const char *bname;
     void (*bfunct)(Char **, struct command *);
     short minargs, maxargs;
 } bfunc[];
@@ -366,7 +366,7 @@ extern int nbfunc;
 extern int nsrchn;
 
 extern struct srch {
-    char *s_name;
+    const char *s_name;
     short s_value;
 } srchn[];
 
@@ -523,7 +523,7 @@ Char HISTSUB;			/* auto-substitute character */
 /*
  * setname is a macro to save space (see sh.err.c)
  */
-char *bname;
+const char *bname;
 
 #define	setname(a) (bname = (a))
 
