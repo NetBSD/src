@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.88 2005/06/12 00:24:32 matt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.89 2005/06/26 17:07:04 thorpej Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -24,7 +24,7 @@ maxusers	2		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
 options 	I386_CPU
-options 	I486_CPU
+#options 	I486_CPU
 #options 	I586_CPU
 #options 	I686_CPU
 
