@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: sh.h,v 1.7 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $ */
+/* $Id: sh.h,v 1.7 2005/06/26 19:09:00 christos Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -459,7 +459,7 @@ struct option {
     char	c;	/* character flag (if any) */
     short	flags;	/* OF_* */
 };
-extern const struct option options[];
+extern const struct option goptions[];
 
 /*
  * flags (the order of these enums MUST match the order in misc.c(options[]))
@@ -676,7 +676,7 @@ EXTERN struct coproc coproc;
 EXTERN sigset_t		sm_default, sm_sigchld;
 #endif /* JOB_SIGS */
 
-extern const char ksh_version[];
+extern char ksh_version[];
 
 /* name of called builtin function (used by error functions) */
 EXTERN char	*builtin_argv0;

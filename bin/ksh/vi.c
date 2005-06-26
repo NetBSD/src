@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.9 2004/10/28 20:15:37 dsl Exp $	*/
+/*	$NetBSD: vi.c,v 1.10 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.9 2004/10/28 20:15:37 dsl Exp $");
+__RCSID("$NetBSD: vi.c,v 1.10 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 #include "config.h"
@@ -33,45 +33,45 @@ struct edstate {
 };
 
 
-static int	vi_hook	ARGS((int ch));
-static void 	vi_reset ARGS((char *buf, size_t len));
-static int	nextstate ARGS((int ch));
-static int	vi_insert ARGS((int ch));
-static int	vi_cmd ARGS((int argcnt, const char *cmd));
-static int	domove ARGS((int argcnt, const char *cmd, int sub));
-static int	redo_insert ARGS((int count));
-static void	yank_range ARGS((int a, int b));
-static int	bracktype ARGS((int ch));
+static int	vi_hook	ARGS((int));
+static void 	vi_reset ARGS((char *, size_t));
+static int	nextstate ARGS((int));
+static int	vi_insert ARGS((int));
+static int	vi_cmd ARGS((int, const char *));
+static int	domove ARGS((int, const char *, int));
+static int	redo_insert ARGS((int));
+static void	yank_range ARGS((int, int));
+static int	bracktype ARGS((int));
 static void	save_cbuf ARGS((void));
 static void	restore_cbuf ARGS((void));
-static void	edit_reset ARGS((char *buf, size_t len));
-static int	putbuf ARGS((const char *buf, int len, int repl));
-static void	del_range ARGS((int a, int b));
-static int	findch ARGS((int ch, int cnt, int forw, int incl));
-static int	forwword ARGS((int argcnt));
-static int	backword ARGS((int argcnt));
-static int	endword ARGS((int argcnt));
-static int	Forwword ARGS((int argcnt));
-static int	Backword ARGS((int argcnt));
-static int	Endword ARGS((int argcnt));
-static int	grabhist ARGS((int save, int n));
-static int	grabsearch ARGS((int save, int start, int fwd, char *pat));
-static void	redraw_line ARGS((int newline));
-static void	refresh ARGS((int leftside));
+static void	edit_reset ARGS((char *, size_t));
+static int	putbuf ARGS((const char *, int, int));
+static void	del_range ARGS((int, int));
+static int	findch ARGS((int, int, int, int));
+static int	forwword ARGS((int));
+static int	backword ARGS((int));
+static int	endword ARGS((int));
+static int	Forwword ARGS((int));
+static int	Backword ARGS((int));
+static int	Endword ARGS((int));
+static int	grabhist ARGS((int, int));
+static int	grabsearch ARGS((int, int, int, char *));
+static void	redraw_line ARGS((int));
+static void	refresh ARGS((int));
 static int	outofwin ARGS((void));
 static void	rewindow ARGS((void));
-static int	newcol ARGS((int ch, int col));
-static void	display ARGS((char *wb1, char *wb2, int leftside));
-static void	ed_mov_opt ARGS((int col, char *wb));
-static int	expand_word ARGS((int command));
-static int	complete_word ARGS((int command, int count));
-static int	print_expansions ARGS((struct edstate *e, int command));
-static int 	char_len ARGS((int c));
-static void 	x_vi_zotc ARGS((int c));
-static void	vi_pprompt ARGS((int full));
+static int	newcol ARGS((int, int));
+static void	display ARGS((char *, char *, int));
+static void	ed_mov_opt ARGS((int, char *));
+static int	expand_word ARGS((int));
+static int	complete_word ARGS((int, int));
+static int	print_expansions ARGS((struct edstate *, int));
+static int 	char_len ARGS((int));
+static void 	x_vi_zotc ARGS((int));
+static void	vi_pprompt ARGS((int));
 static void	vi_error ARGS((void));
 static void	vi_macro_reset ARGS((void));
-static int	x_vi_putbuf	ARGS((const char *s, size_t len));
+static int	x_vi_putbuf	ARGS((const char *, size_t));
 
 #define C_	0x1		/* a valid command that isn't a M_, E_, U_ */
 #define M_	0x2		/* movement command (h, l, etc.) */
@@ -1759,8 +1759,8 @@ grabsearch(save, start, fwd, pat)
 }
 
 static void
-redraw_line(newline)
-	int newline;
+redraw_line(newlinex)
+	int newlinex;
 {
 	(void) memset(wbuf[win], ' ', wbuf_len);
 	if (newline) {
@@ -1957,8 +1957,8 @@ ed_mov_opt(col, wb)
 
 /* replace word with all expansions (ie, expand word*) */
 static int
-expand_word(command)
-	int command;
+expand_word(commandx)
+	int commandx;
 {
 	static struct edstate *buf;
 	int rval = 0;
@@ -1968,7 +1968,7 @@ expand_word(command)
 	int i;
 
 	/* Undo previous expansion */
-	if (command == 0 && expanded == EXPAND && buf) {
+	if (commandx == 0 && expanded == EXPAND && buf) {
 		restore_edstate(es, buf);
 		buf = 0;
 		expanded = NONE;
@@ -2012,8 +2012,8 @@ expand_word(command)
 }
 
 static int
-complete_word(command, count)
-	int command;
+complete_word(commandx, count)
+	int commandx;
 	int count;
 {
 	static struct edstate *buf;
@@ -2027,12 +2027,12 @@ complete_word(command, count)
 	int is_command;
 
 	/* Undo previous completion */
-	if (command == 0 && expanded == COMPLETE && buf) {
+	if (commandx == 0 && expanded == COMPLETE && buf) {
 		print_expansions(buf, 0);
 		expanded = PRINT;
 		return 0;
 	}
-	if (command == 0 && expanded == PRINT && buf) {
+	if (commandx == 0 && expanded == PRINT && buf) {
 		restore_edstate(es, buf);
 		buf = 0;
 		expanded = NONE;
@@ -2121,9 +2121,9 @@ complete_word(command, count)
 }
 
 static int
-print_expansions(e, command)
-	struct edstate *e;
-	int	command;
+print_expansions(ex, commandx)
+	struct edstate *ex;
+	int	commandx;
 {
 	int nwords;
 	int start, end;
@@ -2131,7 +2131,7 @@ print_expansions(e, command)
 	int is_command;
 
 	nwords = x_cf_glob(XCF_COMMAND_FILE|XCF_FULLPATH,
-		e->cbuf, e->linelen, e->cursor,
+		ex->cbuf, ex->linelen, ex->cursor,
 		&start, &end, &words, &is_command);
 	if (nwords == 0) {
 		vi_error();

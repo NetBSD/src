@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.22 2003/10/26 09:30:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2005/06/26 19:09:00 christos Exp $
 
 .include <bsd.own.mk>
 
 CPPFLAGS+=	-I.
 
-WARNS?=	1
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	eval.c exec.c expr.c history.c io.c jobs.c lex.c mail.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.15 2005/05/23 08:03:25 rillig Exp $	*/
+/*	$NetBSD: edit.c,v 1.16 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.15 2005/05/23 08:03:25 rillig Exp $");
+__RCSID("$NetBSD: edit.c,v 1.16 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -395,7 +395,7 @@ set_editmode(ed)
 	if ((rcp = ksh_strrchr_dirsep(ed)))
 		ed = ++rcp;
 	for (i = 0; i < NELEM(edit_flags); i++)
-		if (strstr(ed, options[(int) edit_flags[i]].name)) {
+		if (strstr(ed, goptions[(int) edit_flags[i]].name)) {
 			change_flag(edit_flags[i], OF_SPECIAL, 1);
 			return;
 		}
@@ -460,14 +460,12 @@ x_do_comment(buf, bsize, lenp)
 /*           Common file/command completion code for vi/emacs	             */
 
 
-static char	*add_glob ARGS((const char *str, int slen));
-static void	glob_table ARGS((const char *pat, XPtrV *wp, struct table *tp));
-static void	glob_path ARGS((int flags, const char *pat, XPtrV *wp,
-				const char *path));
+static char	*add_glob ARGS((const char *, int));
+static void	glob_table ARGS((const char *, XPtrV *, struct table *));
+static void	glob_path ARGS((int, const char *, XPtrV *, const char *));
 
 #if 0 /* not used... */
-int	x_complete_word ARGS((const char *str, int slen, int is_command,
-			      int *multiple, char **ret));
+int	x_complete_word ARGS((const char *, int, int, int *, char **));
 int
 x_complete_word(str, slen, is_command, nwordsp, ret)
 	const char *str;
@@ -983,11 +981,11 @@ glob_table(pat, wp, tp)
 }
 
 static void
-glob_path(flags, pat, wp, path)
+glob_path(flags, pat, wp, xpath)
 	int flags;
 	const char *pat;
 	XPtrV *wp;
-	const char *path;
+	const char *xpath;
 {
 	const char *sp, *p;
 	char *xp;
@@ -999,7 +997,7 @@ glob_path(flags, pat, wp, path)
 	XString xs;
 
 	patlen = strlen(pat) + 1;
-	sp = path;
+	sp = xpath;
 	Xinit(xs, xp, patlen + 128, ATEMP);
 	while (sp) {
 		xp = Xstring(xs, xp);
