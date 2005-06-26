@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.h,v 1.1 1998/12/15 23:16:14 pk Exp $	*/
+/*	$NetBSD: shlib.h,v 1.2 2005/06/26 20:47:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ extern char	**search_dirs;	/* Directories to search for libraries. */
 extern int	n_search_dirs;	/* Length of above. */
 
 char		*findshlib __P((char *, int *, int *, int));
-void		add_search_dir __P((char *));
+void		add_search_dir __P((const char *));
 void		add_search_path __P((char *));
 void		std_search_path __P((void));
 void		remove_search_dir __P((char *));
