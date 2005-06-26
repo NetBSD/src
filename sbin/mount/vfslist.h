@@ -1,4 +1,4 @@
-/*	$NetBSD: vfslist.h,v 1.3 2004/04/21 15:21:44 christos Exp $	*/
+/*	$NetBSD: vfslist.h,v 1.4 2005/06/26 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -30,4 +30,4 @@
  */
 
 int checkvfsname(const char *, const char **);
-const char **makevfslist(char *);
+const char **makevfslist(const char *);
