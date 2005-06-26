@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.200 2005/06/26 04:37:25 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.201 2005/06/26 21:51:37 erh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.200 2005/06/26 04:37:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.201 2005/06/26 21:51:37 erh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2584,7 +2584,12 @@ wi_write_wep(struct wi_softc *sc)
 		 * the transmit key and use it for all other keys.
 		 * Perhaps we should use software WEP for such situation.
 		 */
-		keylen = ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen;
+		if (ic->ic_def_txkey == IEEE80211_KEYIX_NONE ||
+		    IEEE80211_KEY_UNDEFINED(ic->ic_nw_keys[ic->ic_def_txkey]))
+			keylen = 13;	/* No keys => 104bit ok */
+		else
+			keylen = ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen;
+
 		if (keylen > IEEE80211_WEP_KEYLEN)
 			keylen = 13;	/* 104bit keys */
 		else
