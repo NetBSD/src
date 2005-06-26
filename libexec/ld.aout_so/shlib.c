@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.19 2004/10/28 20:18:48 dsl Exp $	*/
+/*	$NetBSD: shlib.c,v 1.20 2005/06/26 20:47:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,13 +73,13 @@ int	isdigit();
 char	 **search_dirs;
 int	n_search_dirs;
 
-char	*standard_search_dirs[] = {
+const char	*standard_search_dirs[] = {
 	STANDARD_SEARCH_DIRS
 };
 
 void
 add_search_dir(name)
-	char	*name;
+	const char	*name;
 {
 	n_search_dirs += 2;
 	search_dirs = (char **)
