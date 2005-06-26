@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.11 2005/05/23 08:03:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.11 2005/05/23 08:03:25 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -48,7 +48,7 @@ newblock()
 	ainit(&l->area); /* todo: could use e->area (l->area => l->areap) */
 	if (!e->loc) {
 		l->argc = 0;
-		l->argv = (char **) empty;
+		l->argv = (char **) __UNCONST(empty);
 	} else {
 		l->argc = e->loc->argc;
 		l->argv = e->loc->argv;
@@ -528,11 +528,11 @@ formatstr(vp, s)
 		int slen;
 
 		if (vp->flag & RJUST) {
-			const char *q = s + olen;
+			const char *r = s + olen;
 			/* strip trailing spaces (at&t ksh uses q[-1] == ' ') */
-			while (q > s && isspace((unsigned char)q[-1]))
-				--q;
-			slen = q - s;
+			while (r > s && isspace((unsigned char)r[-1]))
+				--r;
+			slen = r - s;
 			if (slen > vp->u2.field) {
 				s += slen - vp->u2.field;
 				slen = vp->u2.field;
@@ -637,7 +637,7 @@ typeset(var, set, clr, field, base)
 		/* Importing from original environment: must have an = */
 		if (set & IMPORT)
 			return NULL;
-		tvar = (char *) var;
+		tvar = (char *) __UNCONST(var);
 		val = NULL;
 	}
 
@@ -793,7 +793,7 @@ skip_varname(s, aok)
 		if (aok && *s == '[' && (alen = array_ref_len(s)))
 			s += alen;
 	}
-	return (char *) s;
+	return (char *) __UNCONST(s);
 }
 
 /* Return a pointer to the first character past any legal variable name.  */
@@ -826,7 +826,7 @@ skip_wdvarname(s, aok)
 			}
 		}
 	}
-	return (char *) s;
+	return (char *) __UNCONST(s);
 }
 
 /* Check if coded string s is a variable name */
@@ -1208,7 +1208,7 @@ arrayname(str)
 
 	if ((p = strchr(str, '[')) == 0)
 		/* Shouldn't happen, but why worry? */
-		return (char *) str;
+		return (char *) __UNCONST(str);
 
 	return str_nsave(str, p - str, ATEMP);
 }

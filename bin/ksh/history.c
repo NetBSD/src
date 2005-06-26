@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.8 2004/07/16 18:39:18 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.9 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.8 2004/07/16 18:39:18 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.9 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -65,11 +65,10 @@ static int sprinkle ARGS((int));
 
 # endif	/* of EASY_HISTORY */
 
-static int	hist_execute ARGS((char *cmd));
-static int	hist_replace ARGS((char **hp, const char *pat, const char *rep,
-				   int global));
-static char   **hist_get ARGS((const char *str, int approx, int allow_cur));
-static char   **hist_get_newest ARGS((int allow_cur));
+static int	hist_execute ARGS((char *));
+static int	hist_replace ARGS((char **, const char *, const char *, int));
+static char   **hist_get ARGS((const char *, int, int));
+static char   **hist_get_newest ARGS((int));
 static char   **hist_get_oldest ARGS((void));
 static void	histbackup ARGS((void));
 
@@ -340,11 +339,11 @@ hist_execute(cmd)
 }
 
 static int
-hist_replace(hp, pat, rep, global)
+hist_replace(hp, pat, rep, globalv)
 	char **hp;
 	const char *pat;
 	const char *rep;
-	int global;
+	int globalv;
 {
 	char *line;
 
@@ -361,7 +360,7 @@ hist_replace(hp, pat, rep, global)
 
 		Xinit(xs, xp, 128, ATEMP);
 		for (s = *hp; (s1 = strstr(s, pat))
-			      && (!any_subst || global) ; s = s1 + pat_len)
+			      && (!any_subst || globalv) ; s = s1 + pat_len)
 		{
 			any_subst = 1;
 			len = s1 - s;

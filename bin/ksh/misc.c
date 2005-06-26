@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2005/04/19 20:14:29 rillig Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.11 2005/04/19 20:14:29 rillig Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -134,7 +134,7 @@ Xcheck_grow_(xsp, xp, more)
 	return xsp->beg + (xp - old_beg);
 }
 
-const struct option options[] = {
+const struct option goptions[] = {
 	/* Special cases (see parse_args()): -A, -o, -s.
 	 * Options are sorted by their longnames - the order of these
 	 * entries MUST match the order of sh_flag F* enumerations in sh.h.
@@ -202,8 +202,8 @@ option(n)
 {
 	int i;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0)
+	for (i = 0; i < NELEM(goptions); i++)
+		if (goptions[i].name && strcmp(goptions[i].name, n) == 0)
 			return i;
 
 	return -1;
@@ -214,7 +214,7 @@ struct options_info {
 	struct {
 		const char *name;
 		int	flag;
-	} opts[NELEM(options)];
+	} opts[NELEM(goptions)];
 };
 
 static char *options_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
@@ -249,10 +249,10 @@ printoptions(verbose)
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(options); i++)
-			if (options[i].name) {
-				len = strlen(options[i].name);
-				oi.opts[n].name = options[i].name;
+		for (i = n = oi.opt_width = 0; i < NELEM(goptions); i++)
+			if (goptions[i].name) {
+				len = strlen(goptions[i].name);
+				oi.opts[n].name = goptions[i].name;
 				oi.opts[n++].flag = i;
 				if (len > oi.opt_width)
 					oi.opt_width = len;
@@ -262,9 +262,9 @@ printoptions(verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(options); i++)
-			if (Flag(i) && options[i].name)
-				shprintf(" -o %s", options[i].name);
+		for (i = 0; i < NELEM(goptions); i++)
+			if (Flag(i) && goptions[i].name)
+				shprintf(" -o %s", goptions[i].name);
 		shprintf(newline);
 	}
 }
@@ -276,9 +276,9 @@ getoptions()
 	char m[(int) FNFLAGS + 1];
 	register char *cp = m;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].c && Flag(i))
-			*cp++ = options[i].c;
+	for (i = 0; i < NELEM(goptions); i++)
+		if (goptions[i].c && Flag(i))
+			*cp++ = goptions[i].c;
 	*cp = 0;
 	return str_save(m, ATEMP);
 }
@@ -353,8 +353,8 @@ parse_args(argv, what, setargsp)
 	int	what;		/* OF_CMDLINE or OF_SET */
 	int	*setargsp;
 {
-	static char cmd_opts[NELEM(options) + 3]; /* o:\0 */
-	static char set_opts[NELEM(options) + 5]; /* Ao;s\0 */
+	static char cmd_opts[NELEM(goptions) + 3]; /* o:\0 */
+	static char set_opts[NELEM(goptions) + 5]; /* Ao;s\0 */
 	char *opts;
 	char *array = (char *) 0;
 	Getopt go;
@@ -370,12 +370,12 @@ parse_args(argv, what, setargsp)
 		/* see set_opts[] declaration */
 		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(options); i++) {
-			if (options[i].c) {
-				if (options[i].flags & OF_CMDLINE)
-					*p++ = options[i].c;
-				if (options[i].flags & OF_SET)
-					*q++ = options[i].c;
+		for (i = 0; i < NELEM(goptions); i++) {
+			if (goptions[i].c) {
+				if (goptions[i].flags & OF_CMDLINE)
+					*p++ = goptions[i].c;
+				if (goptions[i].flags & OF_SET)
+					*q++ = goptions[i].c;
 			}
 		}
 		*p = '\0';
@@ -421,7 +421,7 @@ parse_args(argv, what, setargsp)
 				 * if the output of "set +o" is to be used.
 				 */
 				;
-			else if (i >= 0 && (options[i].flags & what))
+			else if (i >= 0 && (goptions[i].flags & what))
 				change_flag((enum sh_flag) i, what, set);
 			else {
 				bi_errorf("%s: bad option", go.optarg);
@@ -438,15 +438,15 @@ parse_args(argv, what, setargsp)
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(options); i++)
-				if (optc == options[i].c
-				    && (what & options[i].flags))
+			for (i = 0; i < NELEM(goptions); i++)
+				if (optc == goptions[i].c
+				    && (what & goptions[i].flags))
 				{
 					change_flag((enum sh_flag) i, what,
 						    set);
 					break;
 				}
-			if (i == NELEM(options)) {
+			if (i == NELEM(goptions)) {
 				internal_errorf(1, "parse_args: `%c'", optc);
 				return -1; /* not reached */
 			}
