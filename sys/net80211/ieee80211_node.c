@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.39 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.40 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.43 2005/02/10 16:59:04 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.39 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.40 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -618,6 +618,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 	ieee80211_cancel_scan(ic);
 	ieee80211_notify_scan_done(ic);
 
+#ifndef IEEE80211_NO_HOSTAP
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		u_int8_t maxrssi[IEEE80211_CHAN_MAX];	/* XXX off stack? */
 		int i, bestchan;
@@ -663,6 +664,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 		}
 		/* no suitable channel, should not happen */
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 	/*
 	 * When manually sequencing the state machine; scan just once
@@ -1883,12 +1885,14 @@ ieee80211_getrssi(struct ieee80211com *ic)
 		}
 		break;
 	case IEEE80211_M_HOSTAP:	/* average of all associated stations */
+#ifndef IEEE80211_NO_HOSTAP
 		/* XXX locking */
 		TAILQ_FOREACH(ni, &nt->nt_node, ni_list)
 			if (IEEE80211_AID(ni->ni_associd) != 0) {
 				rssi_samples++;
 				rssi_total += ic->ic_node_getrssi(ni);
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 		break;
 	case IEEE80211_M_MONITOR:	/* XXX */
 	case IEEE80211_M_STA:		/* use stats from associated ap */

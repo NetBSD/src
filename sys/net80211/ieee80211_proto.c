@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.19 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.15 2005/01/24 20:39:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.19 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 /*
@@ -412,9 +412,11 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 				 * Note that this is important for 11b stations
 				 * when they want to associate with an 11g AP.
 				 */
+#ifndef IEEE80211_NO_HOSTAP
 				if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 				    (nrs->rs_rates[i] & IEEE80211_RATE_BASIC))
 					error++;
+#endif /* !IEEE80211_NO_HOSTAP */
 				ignore++;
 			}
 		}
@@ -790,6 +792,7 @@ ieee80211_wme_updateparams_locked(struct ieee80211com *ic)
 		);
 	}
 	
+#ifndef IEEE80211_NO_HOSTAP
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    ic->ic_sta_assoc < 2 && (wme->wme_flags & WME_F_AGGRMODE) == 0) {
         	static const u_int8_t logCwMin[IEEE80211_MODE_MAX] = {
@@ -821,6 +824,7 @@ ieee80211_wme_updateparams_locked(struct ieee80211com *ic)
 			(wme->wme_bssChanParams.cap_info+1) & WME_QOSINFO_COUNT;
 		ic->ic_flags |= IEEE80211_F_WMEUPDATE;
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 	wme->wme_update(ic);
 
@@ -846,7 +850,9 @@ static int
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
+#ifndef IEEE80211_NO_HOSTAP
 	struct ieee80211_node_table *nt;
+#endif /* !IEEE80211_NO_HOSTAP */
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
 
@@ -869,6 +875,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				ieee80211_sta_leave(ic, ni);
 				break;
 			case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 				nt = &ic->ic_sta;
 				IEEE80211_NODE_LOCK(nt);
 				TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
@@ -879,6 +886,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 					    IEEE80211_REASON_ASSOC_LEAVE);
 				}
 				IEEE80211_NODE_UNLOCK(nt);
+#endif /* !IEEE80211_NO_HOSTAP */
 				break;
 			default:
 				break;
@@ -892,6 +900,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				    IEEE80211_REASON_AUTH_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 				nt = &ic->ic_sta;
 				IEEE80211_NODE_LOCK(nt);
 				TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
@@ -900,6 +909,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 					    IEEE80211_REASON_AUTH_LEAVE);
 				}
 				IEEE80211_NODE_UNLOCK(nt);
+#endif /* !IEEE80211_NO_HOSTAP */
 				break;
 			default:
 				break;

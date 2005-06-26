@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.40 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.41 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.33 2005/02/23 04:52:30 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.40 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.41 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -137,9 +137,11 @@ static void ieee80211_discard_mac(struct ieee80211com *,
 static struct mbuf *ieee80211_defrag(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
 static struct mbuf *ieee80211_decap(struct ieee80211com *, struct mbuf *);
+#ifndef IEEE80211_NO_HOSTAP
 static void ieee80211_node_pwrsave(struct ieee80211_node *, int enable);
 static void ieee80211_recv_pspoll(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
+#endif /* !IEEE80211_NO_HOSTAP */
 
 /*
  * Process a received frame.  The node associated with the sender
@@ -161,7 +163,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *key;
 	struct ether_header *eh;
-	int len, hdrsize, off;
+	int hdrsize, off;
 	u_int8_t dir, type, subtype;
 	u_int8_t *bssid;
 	u_int16_t rxseq;
@@ -376,6 +378,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			/* XXX no power-save support */
 			break;
 		case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 			if (dir != IEEE80211_FC1_DIR_TODS) {
 				ic->ic_stats.is_rx_wrongdir++;
 				goto out;
@@ -422,6 +425,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			    (ni->ni_flags & IEEE80211_NODE_PWR_MGT)))
 				ieee80211_node_pwrsave(ni,
 					wh->i_fc[1] & IEEE80211_FC1_PWR_MGT);
+#endif /* !IEEE80211_NO_HOSTAP */
 			break;
 		default:
 			/* XXX here to keep compiler happy */
@@ -540,6 +544,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		IEEE80211_NODE_STAT(ni, rx_data);
 		IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
 
+#ifndef IEEE80211_NO_HOSTAP
 		/* perform as a bridge within the AP */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    (ic->ic_flags & IEEE80211_F_NOBRIDGE) == 0) {
@@ -568,13 +573,14 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				}
 			}
 			if (m1 != NULL) {
-				len = m1->m_pkthdr.len;
+				int len = m1->m_pkthdr.len;
 				IF_ENQUEUE(&ifp->if_snd, m1);
 				if (m != NULL)
 					ifp->if_omcasts++;
 				ifp->if_obytes += len;
 			}
 		}
+#endif /* !IEEE80211_NO_HOSTAP */
 		if (m != NULL) {
 #if NBPFILTER > 0
 			/*
@@ -656,6 +662,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	case IEEE80211_FC0_TYPE_CTL:
 		IEEE80211_NODE_STAT(ni, rx_ctrl);
 		ic->ic_stats.is_rx_ctl++;
+#ifndef IEEE80211_NO_HOSTAP
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			switch (subtype) {
 			case IEEE80211_FC0_SUBTYPE_PS_POLL:
@@ -663,6 +670,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				break;
 			}
 		}
+#endif /* !IEEE80211_NO_HOSTAP */
 		goto out;
 	default:
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
@@ -928,6 +936,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		break;
 
 	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
 			ic->ic_stats.is_rx_bad_auth++;
@@ -945,6 +954,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 		    "[%s] station authenticated (open)\n",
 		    ether_sprintf(ni->ni_macaddr));
+#endif /* !IEEE80211_NO_HOSTAP */
 		break;
 
 	case IEEE80211_M_STA:
@@ -994,7 +1004,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
     u_int32_t rstamp, u_int16_t seq, u_int16_t status)
 {
 	u_int8_t *challenge;
-	int allocbs, estatus;
+	int estatus;
 
 	/*
 	 * NB: this can happen as we allow pre-shared key
@@ -1072,6 +1082,9 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		    "bad operating mode %u", ic->ic_opmode);
 		return;
 	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
+	{
+		int allocbs;
 		if (ic->ic_state != IEEE80211_S_RUN) {
 			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
 			    ni->ni_macaddr, "shared key auth",
@@ -1146,6 +1159,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+	}
+#endif /* !IEEE80211_NO_HOSTAP */
 		break;
 
 	case IEEE80211_M_STA:
@@ -1190,6 +1205,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	}
 	return;
 bad:
+#ifndef IEEE80211_NO_HOSTAP
 	/*
 	 * Send an error response; but only when operating as an AP.
 	 */
@@ -1199,6 +1215,9 @@ bad:
 			IEEE80211_FC0_SUBTYPE_AUTH,
 			(seq + 1) | (estatus<<16));
 	}
+#else
+	;
+#endif /* !IEEE80211_NO_HOSTAP */
 }
 
 /* Verify the existence and length of __elem or get out. */
@@ -2132,11 +2151,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			    IEEE80211_MSG_AUTH | IEEE80211_MSG_CRYPTO,
 			    wh, "auth", "%s", "TKIP countermeasures enabled");
 			ic->ic_stats.is_rx_auth_countermeasures++;
+#ifndef IEEE80211_NO_HOSTAP
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 				IEEE80211_SEND_MGMT(ic, ni,
 					IEEE80211_FC0_SUBTYPE_AUTH,
 					IEEE80211_REASON_MIC_FAILURE);
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 			return;
 		}
 		if (algo == IEEE80211_AUTH_ALG_SHARED)
@@ -2149,12 +2170,14 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
 			    wh, "auth", "unsupported alg %d", algo);
 			ic->ic_stats.is_rx_auth_unsupported++;
+#ifndef IEEE80211_NO_HOSTAP
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 				/* XXX not right */
 				IEEE80211_SEND_MGMT(ic, ni,
 					IEEE80211_FC0_SUBTYPE_AUTH,
 					(seq+1) | (IEEE80211_STATUS_ALG<<16));
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 			return;
 		} 
 		break;
@@ -2509,6 +2532,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 			break;
 		case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 			if (ni != ic->ic_bss) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 				    "station %s deauthenticated by peer "
@@ -2516,6 +2540,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				    ether_sprintf(ni->ni_macaddr), reason);
 				ieee80211_node_leave(ic, ni);
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 			break;
 		default:
 			ic->ic_stats.is_rx_mgtdiscard++;
@@ -2546,12 +2571,14 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 			break;
 		case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 			if (ni != ic->ic_bss) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 				    "[%s] sta disassociated by peer (reason %d)\n",
 				    ether_sprintf(ni->ni_macaddr), reason);
 				ieee80211_node_leave(ic, ni);
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 			break;
 		default:
 			ic->ic_stats.is_rx_mgtdiscard++;
@@ -2571,6 +2598,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 #undef IEEE80211_VERIFY_LENGTH
 #undef IEEE80211_VERIFY_ELEMENT
 
+#ifndef IEEE80211_NO_HOSTAP
 /*
  * Handle station power-save state change.
  */
@@ -2696,6 +2724,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	m->m_flags |= M_PWR_SAV;		/* bypass PS handling */
 	IF_ENQUEUE(&ic->ic_ifp->if_snd, m);
 }
+#endif /* !IEEE80211_NO_HOSTAP */
 
 #ifdef IEEE80211_DEBUG
 /*

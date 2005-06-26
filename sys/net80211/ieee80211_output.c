@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.29 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.30 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.20 2005/02/10 17:00:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.29 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.30 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -547,10 +547,12 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
 		break;
 	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
 		IEEE80211_ADDR_COPY(wh->i_addr2, ni->ni_bssid);
 		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_shost);
+#endif /* !IEEE80211_NO_HOSTAP */
 		break;
 	case IEEE80211_M_MONITOR:
 		goto bad;
@@ -1302,10 +1304,12 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 * When 802.1x is not in use mark the port
 		 * authorized at this point so traffic can flow.
 		 */
+#ifndef IEEE80211_NO_HOSTAP
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    status == IEEE80211_STATUS_SUCCESS &&
 		    ni->ni_authmode != IEEE80211_AUTH_8021X)
 			ieee80211_node_authorize(ic, ni);
+#endif /* !IEEE80211_NO_HOSTAP */
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			timer = IEEE80211_TRANS_WAIT;
 		break;
@@ -1676,6 +1680,7 @@ ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 	}
 
+#ifndef IEEE80211_NO_HOSTAP
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {	/* NB: no IBSS support*/
 		struct ieee80211_tim_ie *tie =
 			(struct ieee80211_tim_ie *) bo->bo_tim;
@@ -1746,6 +1751,7 @@ ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
 		else
 			tie->tim_bitctl &= ~1;
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 	IEEE80211_BEACON_UNLOCK(ic);
 
 	return len_changed;
