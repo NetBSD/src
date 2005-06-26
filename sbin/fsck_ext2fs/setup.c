@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.18 2005/02/09 22:55:45 ws Exp $	*/
+/*	$NetBSD: setup.c,v 1.19 2005/06/26 23:01:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.18 2005/02/09 22:55:45 ws Exp $");
+__RCSID("$NetBSD: setup.c,v 1.19 2005/06/26 23:01:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: setup.c,v 1.18 2005/02/09 22:55:45 ws Exp $");
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-void badsb(int, char *);
+void badsb(int, const char *);
 int calcsb(const char *, int, struct m_ext2fs *);
 static struct disklabel *getdisklabel(const char *, int);
 static int readsb(int);
@@ -435,7 +435,7 @@ copyback_sb(struct bufarea *bp)
 }
 
 void
-badsb(int listerr, char *s)
+badsb(int listerr, const char *s)
 {
 
 	if (!listerr)
