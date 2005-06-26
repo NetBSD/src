@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.142 2005/06/22 18:39:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.143 2005/06/26 11:26:44 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9779,4 +9779,10 @@ sys/dev/ic/wdc.c				1.223
 
 	Remove a (wdc == NULL) test. We know wdc is not NULL at this point.
 	[bouyer, ticket #480]
+
+sys/dev/pci/pciide_sis_reg.h			1.13
+sys/dev/pci/siside.c				1.17
+
+	Add quirk for SIS 96x that masquerade as a SIS503 and add SIS 965.
+	[bouyer, ticket #498]
 
