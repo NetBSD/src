@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumutil.c,v 1.1.1.1 2003/10/10 03:09:38 grog Exp $
+ * $Id: vinumutil.c,v 1.2 2005/06/26 22:34:12 christos Exp $
  * $FreeBSD$
  */
 
@@ -45,6 +45,7 @@
 #include <dev/vinum/statetexts.h>
 #ifndef _KERNEL
 #include <stdio.h>
+#include <string.h>
 extern jmp_buf command_fail;				    /* return on a failed command */
 #endif
 
@@ -84,7 +85,7 @@ plex_state(enum plexstate state)
 }
 
 /* Return plex organization as a string */
-char *
+const char *
 plex_org(enum plexorg org)
 {
     switch (org) {
