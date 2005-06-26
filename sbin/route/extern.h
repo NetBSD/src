@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2005/02/05 14:05:23 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2005/06/26 21:28:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -44,6 +44,6 @@ extern int nflag;
 #define NOTDEFSTRING "0.0.0.0/xxx.xxx.xxx.xxx\0"
 int netmask_length(struct sockaddr *, int);
 char *netmask_string(struct sockaddr *, int);
-char *routename(struct sockaddr *, struct sockaddr *, int);
-char *netname(struct sockaddr *, struct sockaddr *);
-char *ns_print(struct sockaddr_ns *);
+const char *routename(struct sockaddr *, struct sockaddr *, int);
+const char *netname(struct sockaddr *, struct sockaddr *);
+const char *ns_print(struct sockaddr_ns *);
