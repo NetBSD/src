@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.19 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.18 2005/01/24 19:32:09 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.19 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 /*
@@ -1599,6 +1599,7 @@ ieee80211_ioctl_delkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	return 0;
 }
 
+#ifndef IEEE80211_NO_HOSTAP
 static void
 domlme(void *arg, struct ieee80211_node *ni)
 {
@@ -1614,6 +1615,7 @@ domlme(void *arg, struct ieee80211_node *ni)
 	}
 	ieee80211_node_leave(ic, ni);
 }
+#endif /* !IEEE80211_NO_HOSTAP */
 
 static int
 ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
@@ -1663,6 +1665,7 @@ ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
 				mlme.im_reason);
 			break;
 		case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
 			/* NB: the broadcast address means do 'em all */
 			if (!IEEE80211_ADDR_EQ(mlme.im_macaddr, ic->ic_ifp->if_broadcastaddr)) {
 				if ((ni = ieee80211_find_node(&ic->ic_sta,
@@ -1674,6 +1677,7 @@ ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
 				ieee80211_iterate_nodes(&ic->ic_sta,
 						domlme, &mlme);
 			}
+#endif /* !IEEE80211_NO_HOSTAP */
 			break;
 		default:
 			return EINVAL;
