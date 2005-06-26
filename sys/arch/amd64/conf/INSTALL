@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2005/06/09 14:43:29 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.33 2005/06/26 11:24:20 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.32 $"
+#ident 		"INSTALL-$Revision: 1.33 $"
 
 maxusers	32		# estimated number of users
 
@@ -284,7 +284,7 @@ ahd*	at pci? dev ? function ?	# Adaptec aic790x SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+# isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
