@@ -1,4 +1,4 @@
-/* $NetBSD: vext.h,v 1.2 2003/10/11 09:55:58 jdolecek Exp $ */
+/* $NetBSD: vext.h,v 1.3 2005/06/26 22:36:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998
@@ -37,7 +37,7 @@
  */
 
 /*
- * $Id: vext.h,v 1.2 2003/10/11 09:55:58 jdolecek Exp $
+ * $Id: vext.h,v 1.3 2005/06/26 22:36:55 christos Exp $
  * $FreeBSD$
  */
 
@@ -99,94 +99,94 @@ enum {
 #include <machine/cpu.h>
 
 /* Prototype declarations */
-void parseline(int c, char *args[]);			    /* parse a line with c parameters at args */
-void checkentry(int index);
+void parseline(int, char *[]);			    /* parse a line with c parameters at args */
+void checkentry(int);
 int haveargs(int);					    /* check arg, error message if not valid */
 void setsigs(void);
-void catchsig(int ignore);
-void vinum_create(int argc, char *argv[], char *arg0[]);
-void vinum_read(int argc, char *argv[], char *arg0[]);
-void vinum_modify(int argc, char *argv[], char *arg0[]);
-void vinum_volume(int argc, char *argv[], char *arg0[]);
-void vinum_plex(int argc, char *argv[], char *arg0[]);
-void vinum_sd(int argc, char *argv[], char *arg0[]);
-void vinum_drive(int argc, char *argv[], char *arg0[]);
-void vinum_list(int argc, char *argv[], char *arg0[]);
-void vinum_info(int argc, char *argv[], char *arg0[]);
-void vinum_set(int argc, char *argv[], char *arg0[]);
-void vinum_rm(int argc, char *argv[], char *arg0[]);
-void vinum_mv(int argc, char *argv[], char *arg0[]);
-void vinum_init(int argc, char *argv[], char *arg0[]);
+void catchsig(int);
+void vinum_create(int, char *[], char *[]);
+void vinum_read(int, char *[], char *[]);
+void vinum_modify(int, char *[], char *[]);
+void vinum_volume(int, char *[], char *[]);
+void vinum_plex(int, char *[], char *[]);
+void vinum_sd(int, char *[], char *[]);
+void vinum_drive(int, char *[], char *[]);
+void vinum_list(int, char *[], char *[]);
+void vinum_info(int, char *[], char *[]);
+void vinum_set(int, char *[], char *[]);
+void vinum_rm(int, char *[], char *[]);
+void vinum_mv(int, char *[], char *[]);
+void vinum_init(int, char *[], char *[]);
 void listconfig(void);
-void resetstats(struct vinum_ioctl_msg *msg);
-void initvol(int volno);
-void initplex(int plexno, char *name);
-void initsd(int sdno, int dowait);
-void vinum_resetconfig(int argc, char *argv[], char *arg0[]);
-void vinum_start(int argc, char *argv[], char *arg0[]);
-void continue_revive(int plexno);
-void vinum_stop(int argc, char *argv[], char *arg0[]);
-void vinum_makedev(int argc, char *argv[], char *arg0[]);
-void vinum_help(int argc, char *argv[], char *arg0[]);
-void vinum_quit(int argc, char *argv[], char *arg0[]);
-void vinum_setdaemon(int argc, char *argv[], char *arg0[]);
-void vinum_replace(int argc, char *argv[], char *arg0[]);
-void vinum_readpol(int argc, char *argv[], char *arg0[]);
-void reset_volume_stats(int volno, int recurse);
-void reset_plex_stats(int plexno, int recurse);
-void reset_sd_stats(int sdno, int recurse);
-void reset_drive_stats(int driveno);
-void vinum_resetstats(int argc, char *argv[], char *arg0[]);
-void vinum_attach(int argc, char *argv[], char *argv0[]);
-void vinum_detach(int argc, char *argv[], char *argv0[]);
-void vinum_rename(int argc, char *argv[], char *argv0[]);
+void resetstats(struct vinum_ioctl_msg *);
+void initvol(int);
+void initplex(int, char *);
+void initsd(int, int);
+void vinum_resetconfig(int, char *[], char *[]);
+void vinum_start(int, char *[], char *[]);
+void continue_revive(int);
+void vinum_stop(int, char *[], char *[]);
+void vinum_makedev(int, char *[], char *[]);
+void vinum_help(int, char *[], char *[]);
+void vinum_quit(int, char *[], char *[]);
+void vinum_setdaemon(int, char *[], char *[]);
+void vinum_replace(int, char *[], char *[]);
+void vinum_readpol(int, char *[], char *[]);
+void reset_volume_stats(int, int);
+void reset_plex_stats(int, int);
+void reset_sd_stats(int, int);
+void reset_drive_stats(int);
+void vinum_resetstats(int, char *[], char *[]);
+void vinum_attach(int, char *[], char *[]);
+void vinum_detach(int, char *[], char *[]);
+void vinum_rename(int, char *[], char *[]);
 void vinum_rename_2(char *, char *);
-void vinum_replace(int argc, char *argv[], char *argv0[]);
-void vinum_printconfig(int argc, char *argv[], char *argv0[]);
-void printconfig(FILE * of, char *comment);
-void vinum_saveconfig(int argc, char *argv[], char *argv0[]);
+void vinum_replace(int, char *[], char *[]);
+void vinum_printconfig(int, char *[], char *[]);
+void printconfig(FILE *, const char *);
+void vinum_saveconfig(int, char *[], char *[]);
 int checkupdates(void);
 void genvolname(void);
-struct _drive *create_drive(char *devicename);
-void vinum_concat(int argc, char *argv[], char *argv0[]);
-void vinum_stripe(int argc, char *argv[], char *argv0[]);
-void vinum_raid4(int argc, char *argv[], char *argv0[]);
-void vinum_raid5(int argc, char *argv[], char *argv0[]);
-void vinum_mirror(int argc, char *argv[], char *argv0[]);
-void vinum_label(int argc, char *argv[], char *arg0[]);
-void vinum_ld(int argc, char *argv[], char *arg0[]);
-void vinum_ls(int argc, char *argv[], char *arg0[]);
-void vinum_lp(int argc, char *argv[], char *arg0[]);
-void vinum_lv(int argc, char *argv[], char *arg0[]);
-void vinum_setstate(int argc, char *argv[], char *argv0[]);
-void vinum_checkparity(int argc, char *argv[], char *argv0[]);
-void vinum_rebuildparity(int argc, char *argv[], char *argv0[]);
-void parityops(int argc, char *argv[], enum parityop op);
+struct _drive *create_drive(char *);
+void vinum_concat(int, char *[], char *[]);
+void vinum_stripe(int, char *[], char *[]);
+void vinum_raid4(int, char *[], char *[]);
+void vinum_raid5(int, char *[], char *[]);
+void vinum_mirror(int, char *[], char *[]);
+void vinum_label(int, char *[], char *[]);
+void vinum_ld(int, char *[], char *[]);
+void vinum_ls(int, char *[], char *[]);
+void vinum_lp(int, char *[], char *[]);
+void vinum_lv(int, char *[], char *[]);
+void vinum_setstate(int, char *[], char *[]);
+void vinum_checkparity(int, char *[], char *[]);
+void vinum_rebuildparity(int, char *[], char *[]);
+void parityops(int, char *[], enum parityop);
 void start_daemon(void);
-void vinum_debug(int argc, char *argv[], char *arg0[]);
+void vinum_debug(int, char *[], char *[]);
 void make_devices(void);
 void make_vol_dev(int, int);
 void make_plex_dev(int, int);
 void make_sd_dev(int);
 void list_defective_objects(void);
-void vinum_dumpconfig(int argc, char *argv[], char *argv0[]);
-void dumpconfig(char *part);
-int check_drive(char *devicename);
-void get_drive_info(struct _drive *drive, int index);
-void get_sd_info(struct _sd *sd, int index);
-void get_plex_sd_info(struct _sd *sd, int plexno, int sdno);
-void get_plex_info(struct _plex *plex, int index);
-void get_volume_info(struct _volume *volume, int index);
-struct _drive *find_drive_by_devname(char *name);
-int find_object(const char *name, enum objecttype *type);
-char *lltoa(int64_t l, char *s);
+void vinum_dumpconfig(int, char *[], char *[]);
+void dumpconfig(char *);
+int check_drive(char *);
+void get_drive_info(struct _drive *, int);
+void get_sd_info(struct _sd *, int);
+void get_plex_sd_info(struct _sd *, int, int);
+void get_plex_info(struct _plex *, int);
+void get_volume_info(struct _volume *, int);
+struct _drive *find_drive_by_devname(char *);
+int find_object(const char *, enum objecttype *);
+char *lltoa(int64_t, char *);
 void vinum_ldi(int, int);
 void vinum_lvi(int, int);
 void vinum_lpi(int, int);
 void vinum_lsi(int, int);
-int vinum_li(int object, enum objecttype type);
-char *roughlength(int64_t bytes, int);
-u_int64_t sizespec(char *spec);
+int vinum_li(int, enum objecttype);
+char *roughlength(int64_t, int);
+u_int64_t sizespec(char *);
 char *sd_state(enum sdstate);
 void timestamp(void);
 

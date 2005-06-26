@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2003/10/11 09:51:49 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2005/06/26 22:36:55 christos Exp $
 
 PROG=	vinum
 SRCS=	v.c list.c vinumparser.c vinumutil.c vext.h commands.c
 MAN=	vinum.8
 
 CFLAGS+=	-g
-WARNS=	0
 
 DPADD=	${LIBEDIT} ${LIBTERMCAP} ${LIBKVM}
 LDADD=	-ledit -ltermcap -lkvm
