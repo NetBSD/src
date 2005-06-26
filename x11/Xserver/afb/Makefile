@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2005/06/26 06:33:43 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -8,13 +8,13 @@ LIB=	afb
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/${LIB}
 
 SRCS=	afbbltC.c afbbltX.c afbbltCI.c afbbltO.c afbbltG.c afbtileC.c \
-	afbtileG.c afbseg.c afbbitblt.c afbblt.c afbbres.c afbbresd.c \
+	afbtileG.c afbseg.c afbbitblt.c afbbres.c afbbresd.c \
 	afbbstore.c afbclip.c afbcmap.c afbfillarc.c afbfillrct.c \
 	afbfillsp.c afbfont.c afbgc.c afbgetsp.c afbhrzvert.c \
 	afbimage.c afbimggblt.c afbline.c afbmisc.c afbpixmap.c \
 	afbply1rct.c afbplygblt.c afbpntarea.c afbpntwin.c \
 	afbpolypnt.c afbpushpxl.c afbscrinit.c afbsetsp.c afbtegblt.c \
-	afbtile.c afbwindow.c afbzerarc.c
+	afbwindow.c afbzerarc.c
 
 .if defined(X11FLAGS.LOADABLE)
 SRCS+=	afbmodule.c
