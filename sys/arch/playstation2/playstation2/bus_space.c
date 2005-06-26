@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:37 lukem Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2005/06/26 19:56:42 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2005/06/26 19:56:42 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ bus_space_tag_t
 bus_space_create(bus_space_tag_t t, const char *name,
     bus_addr_t addr, bus_size_t size)
 {
-	struct playstation2_bus_space *pbs = (void *)t; /* discard const */
+	struct playstation2_bus_space *pbs = (void *)__UNCONST(t);
 
 	if (pbs == 0)
 		pbs = malloc(sizeof(*pbs), M_DEVBUF, M_NOWAIT);
@@ -186,7 +186,7 @@ bus_space_create(bus_space_tag_t t, const char *name,
 void
 bus_space_destroy(bus_space_tag_t t)
 {
-	struct playstation2_bus_space *pbs = (void *)t;  /* discard const */
+	struct playstation2_bus_space *pbs = (void *)__UNCONST(t);
 	struct extent *ex = pbs->pbs_extent;
 
 	if (ex != 0)
