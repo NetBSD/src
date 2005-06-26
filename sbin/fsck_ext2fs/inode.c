@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.18 2005/06/26 23:01:39 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.19 2005/06/26 23:04:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.18 2005/06/26 23:01:39 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.19 2005/06/26 23:04:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -628,7 +628,7 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr_t blk)
+blkerror(ino_t ino, const char *type, daddr_t blk)
 {
 
 	pfatal("%lld %s I=%u", (long long)blk, type, ino);
