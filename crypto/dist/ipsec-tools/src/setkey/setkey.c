@@ -1,4 +1,4 @@
-/* $NetBSD: setkey.c,v 1.4 2005/04/27 05:19:50 manu Exp $ /
+/* $NetBSD: setkey.c,v 1.5 2005/06/26 23:34:26 christos Exp $ */
 
 /*	KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp	*/
 
@@ -115,8 +115,9 @@ int f_rfcmode = 1;
 #else
 int f_rkwarn = 0;
 #define RK_OPTS ""
+static void rkwarn(void);
 static void
-rkwarn()
+rkwarn(void)
 {
 	if (!f_rkwarn) {
 		f_rkwarn = 1;
@@ -166,8 +167,6 @@ main(argc, argv)
 {
 	FILE *fp = stdin;
 	int c;
-	struct stat sb;
-	int error;
 
 	if (argc == 1) {
 		usage(0);
@@ -330,23 +329,23 @@ stdin_loop()
 		if (! read)
 			break;
 #else
-		char read[1024];
-		read[0] = '\0';
-		fgets (read, sizeof(read), stdin);
-		if (! read[0])
+		char rbuf[1024];
+		rbuf[0] = '\0';
+		fgets (rbuf, sizeof(rbuf), stdin);
+		if (! rbuf[0])
 			break;
-		if (read[strlen(read)-1] == '\n')
-			read[strlen(read)-1] = '\0';
+		if (rbuf[strlen(rbuf)-1] == '\n')
+			rbuf[strlen(rbuf)-1] = '\0';
 #endif
-		comment = strchr(read, '#');
+		comment = strchr(rbuf, '#');
 		if (comment)
 			*comment = '\0';
 
-		if (! read[0])
+		if (! rbuf[0])
 			continue;
 
 		linelen += snprintf (&line[linelen], sizeof(line) - linelen,
-				     "%s%s", linelen > 0 ? " " : "", read);
+				     "%s%s", linelen > 0 ? " " : "", rbuf);
 
 		semicolon = strchr(line, ';');
 		while (semicolon) {
