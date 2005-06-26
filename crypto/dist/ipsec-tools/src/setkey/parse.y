@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 2005/04/10 21:20:55 manu Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2005/06/26 23:49:31 christos Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -59,6 +59,7 @@
 
 #include "libpfkey.h"
 #include "vchar.h"
+#include "extern.h"
 
 #define DEFAULT_NATT_PORT	4500
 
@@ -78,13 +79,6 @@ caddr_t p_key_enc, p_key_auth;
 time_t p_lt_hard, p_lt_soft;
 size_t p_lb_hard, p_lb_soft;
 
-#ifdef HAVE_PFKEY_POLICY_PRIORITY
-extern int last_msg_type;
-extern u_int32_t last_priority;
-#endif
-
-extern int exit_now;
-
 static u_int p_natt_type;
 static struct addrinfo * p_natt_oa = NULL;
 
@@ -93,7 +87,6 @@ static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 static struct addrinfo *parse_addr __P((char *, char *));
 static int fix_portstr __P((vchar_t *, vchar_t *, vchar_t *));
 static int setvarbuf __P((char *, int *, struct sadb_ext *, int, caddr_t, int));
-void parse_init __P((void));
 void free_buffer __P((void));
 
 int setkeymsg0 __P((struct sadb_msg *, unsigned int, unsigned int, size_t));
@@ -104,13 +97,7 @@ static int setkeymsg_addr __P((unsigned int, unsigned int,
 	struct addrinfo *, struct addrinfo *, int));
 static int setkeymsg_add __P((unsigned int, unsigned int,
 	struct addrinfo *, struct addrinfo *));
-extern int setkeymsg __P((char *, size_t *));
-extern int sendkeymsg __P((char *, size_t));
 
-extern int yylex __P((void));
-extern void yyfatal __P((const char *));
-extern void yyerror __P((const char *));
-extern int f_rfcmode;
 %}
 
 %union {
@@ -1168,8 +1155,8 @@ static u_int16_t get_port (struct addrinfo *addr)
 	switch (s->sa_family) {
 	case AF_INET:
 	  {
-		struct sockaddr_in *sin = (struct sockaddr_in *)s;
-		port = ntohs(sin->sin_port);
+		struct sockaddr_in *sin4 = (struct sockaddr_in *)s;
+		port = ntohs(sin4->sin_port);
 		break;
 	  }
 	case AF_INET6:
