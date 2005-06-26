@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.28 2004/11/10 07:23:32 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.29 2005/06/26 16:27:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.28 2004/11/10 07:23:32 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.29 2005/06/26 16:27:36 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -652,16 +652,12 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 			mutex_unlock(&_ns_drec_lock);
 			return (NS_UNAVAIL);
 		}
-	} else {
-		if (_nsdispatching == 0 && _nsconfigure())
-			return (NS_UNAVAIL);
-		_nsdispatching = 1;
-	}
-#else
-	if (_nsdispatching == 0 && _nsconfigure())
-		return (NS_UNAVAIL);
-	_nsdispatching = 1;
+	} else
 #endif /* _REENTRANT */
+	if (_nsdispatching++ == 0 && _nsconfigure()) {
+		_nsdispatching--;
+		return (NS_UNAVAIL);
+	}
 
 	rwlock_rdlock(&_nslock);
 
@@ -702,10 +698,8 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 		LIST_REMOVE(&drec, list);
 		mutex_unlock(&_ns_drec_lock);
 	} else
-		_nsdispatching = 0;
-#else
-	_nsdispatching = 0;
 #endif /* _REENTRANT */
+		_nsdispatching--;
 
 	return (result ? result : NS_NOTFOUND);
 }
