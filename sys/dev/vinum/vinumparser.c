@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumparser.c,v 1.1.1.1 2003/10/10 03:08:50 grog Exp $
+ * $Id: vinumparser.c,v 1.2 2005/06/26 22:33:31 christos Exp $
  * $FreeBSD$
  */
 
@@ -77,6 +77,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #define iswhite isspace					    /* use the ctype macro */
 #endif
 
@@ -190,7 +191,7 @@ tokenize(char *cptr, char *token[], int maxtoken)
     int tokennr;					    /* index of this token */
 
     for (tokennr = 0; tokennr < maxtoken;) {
-	while (iswhite(*cptr))
+	while (iswhite((unsigned char)*cptr))
 	    cptr++;					    /* skip initial white space */
 	if ((*cptr == '\0') || (*cptr == '\n') || (*cptr == '#')) /* end of line */
 	    return tokennr;				    /* return number of tokens found */
@@ -204,14 +205,14 @@ tokenize(char *cptr, char *token[], int maxtoken)
 		cptr++;
 		if ((*cptr == delim) && (cptr[-1] != '\\')) { /* found the partner */
 		    cptr++;				    /* move on past */
-		    if (!iswhite(*cptr))		    /* error, no space after closing quote */
+		    if (!iswhite((unsigned char)*cptr))		    /* error, no space after closing quote */
 			return -1;
 		    *cptr++ = '\0';			    /* delimit */
 		} else if ((*cptr == '\0') || (*cptr == '\n')) /* end of line */
 		    return -1;
 	    }
 	} else {					    /* not quoted */
-	    while ((*cptr != '\0') && (!iswhite(*cptr)) && (*cptr != '\n'))
+	    while ((*cptr != '\0') && (!iswhite((unsigned char)*cptr)) && (*cptr != '\n'))
 		cptr++;
 	    if (*cptr != '\0')				    /* not end of the line, */
 		*cptr++ = '\0';				    /* delimit and move to the next */
@@ -225,11 +226,11 @@ enum keyword
 get_keyword(char *name, struct keywordset *keywordset)
 {
     int i;
-    struct _keywords *keywords = keywordset->k;		    /* point to the keywords */
+    struct _keywords *kwords = keywordset->k;		    /* point to the keywords */
     if (name != NULL) {					    /* parameter exists */
 	for (i = 0; i < keywordset->size; i++)
-	    if (!strcmp(name, keywords[i].name))
-		return (enum keyword) keywords[i].keyword;
+	    if (!strcmp(name, kwords[i].name))
+		return (enum keyword) kwords[i].keyword;
     }
     return kw_invalid_keyword;
 }
