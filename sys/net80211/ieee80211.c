@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.37 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.38 2005/06/26 04:31:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.19 2005/01/27 17:39:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.37 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.38 2005/06/26 04:31:51 dyoung Exp $");
 #endif
 
 /*
@@ -353,6 +353,10 @@ ieee80211_media_init(struct ieee80211com *ic,
 	 */
 	ieee80211_node_lateattach(ic);
 
+#ifdef IEEE80211_NO_HOSTAP
+	ic->ic_caps &= ~IEEE80211_C_HOSTAP;
+#endif /* IEEE80211_NO_HOSTAP */
+
 	/*
 	 * Fill in media characteristics.
 	 */
@@ -615,6 +619,7 @@ ieee80211_media_change(struct ifnet *ifp)
 	else
 		newopmode = IEEE80211_M_STA;
 
+#ifndef IEEE80211_NO_HOSTAP
 	/*
 	 * Autoselect doesn't make sense when operating as an AP.
 	 * If no phy mode has been selected, pick one and lock it
@@ -629,6 +634,7 @@ ieee80211_media_change(struct ifnet *ifp)
 				break;
 			}
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 	/*
 	 * Handle phy mode change.
