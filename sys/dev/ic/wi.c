@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.199 2005/06/25 03:56:53 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.200 2005/06/26 04:37:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.199 2005/06/25 03:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.200 2005/06/26 04:37:25 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -782,11 +782,13 @@ wi_init(struct ifnet *ifp)
 	wi_cfg_txrate(sc);
 	wi_write_ssid(sc, WI_RID_NODENAME, sc->sc_nodename, sc->sc_nodelen);
 
+#ifndef	IEEE80211_NO_HOSTAP
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    sc->sc_firmware_type == WI_INTERSIL) {
 		wi_write_val(sc, WI_RID_OWN_BEACON_INT, ic->ic_lintval);
 		wi_write_val(sc, WI_RID_DTIM_PERIOD, 1);
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 	if (sc->sc_firmware_type == WI_INTERSIL) {
 		struct ieee80211_rateset *rs =
@@ -886,6 +888,7 @@ wi_init(struct ifnet *ifp)
 	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
+#ifndef	IEEE80211_NO_HOSTAP
 	if (!wasenabled &&
 	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    sc->sc_firmware_type == WI_INTERSIL) {
@@ -893,6 +896,7 @@ wi_init(struct ifnet *ifp)
 		wi_cmd(sc, WI_CMD_DISABLE | WI_PORT0, 0, 0, 0);
 		wi_cmd(sc, WI_CMD_ENABLE | WI_PORT0, 0, 0, 0);
 	}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 	if (ic->ic_opmode == IEEE80211_M_STA &&
 	    ((ic->ic_flags & IEEE80211_F_DESBSSID) ||
@@ -1123,6 +1127,7 @@ wi_start(struct ifnet *ifp)
 #endif
 		frmhdr.wi_tx_ctl =
 		    htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX|WI_TXCNTL_TX_OK);
+#ifndef	IEEE80211_NO_HOSTAP
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_ALTRTRY);
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
@@ -1133,6 +1138,7 @@ wi_start(struct ifnet *ifp)
 			}
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_NOCRYPT);
 		}
+#endif /* !IEEE80211_NO_HOSTAP */
 
 		rateidx = wi_choose_rate(ic, ni, wh, m0->m_pkthdr.len);
 		rs = &ni->ni_rates;
@@ -2143,8 +2149,10 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case WI_RID_READ_APS:
+#ifndef	IEEE80211_NO_HOSTAP
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			return ieee80211_cfgget(ic, cmd, data);
+#endif /* !IEEE80211_NO_HOSTAP */
 		if (sc->sc_scan_timer > 0) {
 			error = EINPROGRESS;
 			break;
@@ -2550,12 +2558,14 @@ wi_write_wep(struct wi_softc *sc)
 			val = PRIVACY_INVOKED;
 			if ((sc->sc_ic_flags & IEEE80211_F_DROPUNENC) != 0)
 				val |= EXCLUDE_UNENCRYPTED;
+#ifndef	IEEE80211_NO_HOSTAP
 			/*
 			 * Encryption firmware has a bug for HostAP mode.
 			 */
 			if (sc->sc_firmware_type == WI_INTERSIL &&
 			    ic->ic_opmode == IEEE80211_M_HOSTAP)
 				val |= HOST_ENCRYPT;
+#endif /* !IEEE80211_NO_HOSTAP */
 		} else {
 			wi_write_val(sc, WI_RID_CNFAUTHMODE,
 			    IEEE80211_AUTH_OPEN);
@@ -3048,6 +3058,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ni->ni_chan = &ic->ic_channels[le16toh(val)];
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+#ifndef	IEEE80211_NO_HOSTAP
 			ni->ni_esslen = ic->ic_des_esslen;
 			memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
 			ni->ni_rates = ic->ic_sup_rates[
@@ -3056,6 +3067,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ni->ni_capinfo = IEEE80211_CAPINFO_ESS;
 			if (ic->ic_flags & IEEE80211_F_PRIVACY)
 				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
+#endif /* !IEEE80211_NO_HOSTAP */
 		} else {
 			wi_read_xrid(sc, WI_RID_CURRENT_SSID, &ssid,
 			    sizeof(ssid));
