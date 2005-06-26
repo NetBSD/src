@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.28 2005/05/23 08:03:25 rillig Exp $	*/
+/*	$NetBSD: emacs.c,v 1.29 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.28 2005/05/23 08:03:25 rillig Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.29 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -1637,8 +1637,8 @@ x_version(c)
 	char *o_xbp = xbp, *o_xep = xep, *o_xcp = xcp;
 	int lim = x_lastcp() - xbp;
 
-	xbuf = xbp = xcp = (char *) ksh_version + 4;
-	xend = xep = (char *) ksh_version + 4 + strlen(ksh_version + 4);
+	xbuf = xbp = xcp = ksh_version + 4;
+	xend = xep = ksh_version + 4 + strlen(ksh_version + 4);
 	x_redraw(lim);
 	x_flush();
 
@@ -2071,7 +2071,7 @@ x_prev_histword(c)
       rcp++;
     x_ins(rcp);
   } else {
-    int c;
+    int i;
 
     rcp = cp;
     /*
@@ -2089,10 +2089,10 @@ x_prev_histword(c)
     cp = rcp;
     while (*rcp && !is_cfs(*rcp))
       rcp++;
-    c = *rcp;
+    i = *rcp;
     *rcp = '\0';
     x_ins(cp);
-    *rcp = c;
+    *rcp = i;
   }
   return KSTD;
 }

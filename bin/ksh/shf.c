@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: shf.c,v 1.7 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: shf.c,v 1.7 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -903,6 +903,7 @@ shf_vfprintf(shf, fmt, args)
 	char		numbuf[(BITS(long) + 2) / 3 + 1];
 	/* this stuff for dealing with the buffer */
 	int		nwritten = 0;
+	static char nulls[] = "(null %s)";
 #ifdef FP
 	/* should be in <math.h>
 	 *  extern double frexp();
@@ -1221,7 +1222,7 @@ shf_vfprintf(shf, fmt, args)
 
 		case 's':
 			if (!(s = va_arg(args, char *)))
-				s = "(null %s)";
+				s = nulls;
 			len = strlen(s);
 			break;
 

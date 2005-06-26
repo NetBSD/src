@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 					    "pdksh", (char *) 0
 					};
 
-		argv = (char **) empty_argv;
+		argv = (char **)__UNCONST(empty_argv);
 		argc = 1;
 	}
 	kshname = *argv;
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 
 	/* execute initialization statements */
-	for (wp = (char**) initcoms; *wp != NULL; wp++) {
+	for (wp = (char**)__UNCONST(initcoms); *wp != NULL; wp++) {
 		shcomexec(wp);
 		for (; *wp != NULL; wp++)
 			;
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 	l = e->loc;
 	l->argv = &argv[argi - 1];
 	l->argc = argc - argi;
-	l->argv[0] = (char *) kshname;
+	l->argv[0] = (char *)__UNCONST(kshname);
 	getopts_reset(1);
 
 	/* Disable during .profile/ENV reading */
@@ -412,7 +412,7 @@ main(int argc, char *argv[])
 #ifdef DEFAULT_ENV
 		/* If env isn't set, include default environment */
 		if (env_file == null)
-			env_file = DEFAULT_ENV;
+			env_file = __UNCONST(DEFAULT_ENV);
 #endif /* DEFAULT_ENV */
 		env_file = substitute(env_file, DOTILDE);
 		if (*env_file != '\0')
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 						    "ENV", "SHELL",
 						(char *) 0
 					    };
-		shcomexec((char **) restr_com);
+		shcomexec((char **)__UNCONST(restr_com));
 		/* After typeset command... */
 		Flag(FRESTRICTED) = 1;
 	}

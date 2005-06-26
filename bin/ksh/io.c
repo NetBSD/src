@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.9 2005/06/26 19:09:00 christos Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: io.c,v 1.9 2005/06/26 19:09:00 christos Exp $");
 #endif
 
 
@@ -517,30 +517,30 @@ maketemp(ap, type, tlist)
 	struct temp *tp;
 	int len;
 	int fd;
-	char *path;
+	char *pathx;
 	const char *dir;
 
 	dir = tmpdir ? tmpdir : "/tmp";
 	/* The 20 + 20 is a paranoid worst case for pid/inc */
 	len = strlen(dir) + 3 + 20 + 20 + 1;
 	tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
-	tp->name = path = (char *) &tp[1];
+	tp->name = pathx = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
 	tp->type = type;
 #ifdef __NetBSD__
-	shf_snprintf(path, len, "%s/shXXXXXXXX", dir);
-	fd = mkstemp(path);
+	shf_snprintf(pathx, len, "%s/shXXXXXXXX", dir);
+	fd = mkstemp(pathx);
 	if (fd >= 0)
 		tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
 #else
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
-		shf_snprintf(path, len, "%s/sh%05u.%03x",
+		shf_snprintf(pathx, len, "%s/sh%05u.%03x",
 			     dir, (unsigned) procpid, inc++);
 		/* Mode 0600 to be paranoid, O_TRUNC in case O_EXCL isn't
 		 * really there.
 		 */
-		fd = open(path, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0600);
+		fd = open(pathx, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0600);
 		if (fd >= 0) {
 			tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
 			break;
