@@ -1,4 +1,4 @@
-/* $NetBSD: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $ */
+/* $NetBSD: commands.c,v 1.4 2005/06/26 22:36:55 christos Exp $ */
 
 /* commands.c: vinum interface program, main commands */
 /*-
@@ -38,13 +38,13 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $
+ * $Id: commands.c,v 1.4 2005/06/26 22:36:55 christos Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
 
-__RCSID("$NetBSD: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $");
+__RCSID("$NetBSD: commands.c,v 1.4 2005/06/26 22:36:55 christos Exp $");
 
 static void dorename(struct vinum_rename_msg *msg, const char *oldname, const char *name, int maxlen);
 
@@ -53,7 +53,7 @@ vinum_create(int argc, char *argv[], char *arg0[])
 {
     int error;
     FILE *dfd;						    /* file descriptor for the config file */
-    char buffer[BUFSIZE];				    /* read config file in here */
+    char xbuffer[BUFSIZE];				    /* read config file in here */
     char commandline[BUFSIZE];				    /* issue command from here */
     struct _ioctl_reply *reply;
     int ioctltype;					    /* for ioctl call */
@@ -62,7 +62,7 @@ vinum_create(int argc, char *argv[], char *arg0[])
     FILE *tf;						    /* temp file */
 
     if (argc == 0) {					    /* no args, */
-	char *editor;					    /* editor to start */
+	const char *editor;				    /* editor to start */
 	int status;
 
 	editor = getenv("EDITOR");
@@ -89,7 +89,7 @@ vinum_create(int argc, char *argv[], char *arg0[])
 	fprintf(stderr, "Expecting 1 parameter, not %d\n", argc);
 	return;
     }
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) buffer;
     dfd = fopen(file, "r");
     if (dfd == NULL) {					    /* no go */
 	fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
@@ -104,9 +104,9 @@ vinum_create(int argc, char *argv[], char *arg0[])
     for (;;) {						    /* love this style(9) */
 	char *configline;
 
-	configline = fgets(buffer, BUFSIZE, dfd);
+	configline = fgets(xbuffer, BUFSIZE, dfd);
 	if (History)
-	    fprintf(History, "%s", buffer);
+	    fprintf(History, "%s", xbuffer);
 
 	if (configline == NULL) {
 	    if (ferror(dfd))
@@ -115,9 +115,9 @@ vinum_create(int argc, char *argv[], char *arg0[])
 	}
 	file_line++;					    /* count the lines */
 	if (vflag)
-	    printf("%4d: %s", file_line, buffer);
-	strcpy(commandline, buffer);			    /* make a copy */
-	ioctl(superdev, VINUM_CREATE, buffer);
+	    printf("%4d: %s", file_line, xbuffer);
+	strcpy(commandline, xbuffer);			    /* make a copy */
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (!vflag)					    /* print this line anyway */
 		printf("%4d: %s", file_line, commandline);
@@ -150,26 +150,26 @@ void
 vinum_read(int argc, char *argv[], char *arg0[])
 {
     int error;
-    char buffer[BUFSIZE];				    /* read config file in here */
+    char xbuffer[BUFSIZE];				    /* read config file in here */
     struct _ioctl_reply *reply;
     int i;
 
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
     if (argc < 1) {					    /* wrong arg count */
 	fprintf(stderr, "usage: read drive [drive ...]\n");
 	return;
     }
-    strcpy(buffer, "read ");
+    strcpy(xbuffer, "read ");
     for (i = 0; i < argc; i++) {			    /* each drive name */
-	strcat(buffer, argv[i]);
-	strcat(buffer, " ");
+	strcat(xbuffer, argv[i]);
+	strcat(xbuffer, " ");
     }
 
     if (ioctl(superdev, VINUM_STARTCONFIG, &force)) {	    /* can't get config? */
 	fprintf(stderr, "Can't configure: %s (%d)\n", strerror(errno), errno);
 	return;
     }
-    ioctl(superdev, VINUM_CREATE, &buffer);
+    ioctl(superdev, VINUM_CREATE, xbuffer);
     if (reply->error != 0) {				    /* error in config */
 	fprintf(stdout, "** %s: %s\n", reply->msg, strerror(reply->error));
 	error = ioctl(superdev, VINUM_RELEASECONFIG, NULL); /* save the config to disk */
@@ -225,13 +225,13 @@ vinum_rm(int argc, char *argv[], char *arg0[])
     if (argc == 0)					    /* start everything */
 	fprintf(stderr, "usage: rm object [object...]\n");
     else {						    /* start specified objects */
-	int index;
+	int idx;
 	enum objecttype type;
 
-	for (index = 0; index < argc; index++) {
-	    object = find_object(argv[index], &type);	    /* look for it */
+	for (idx = 0; idx < argc; idx++) {
+	    object = find_object(argv[idx], &type);	    /* look for it */
 	    if (type == invalid_object)
-		fprintf(stderr, "Can't find object: %s\n", argv[index]);
+		fprintf(stderr, "Can't find object: %s\n", argv[idx]);
 	    else {
 		message->index = object;		    /* pass object number */
 		message->type = type;			    /* and type of object */
@@ -241,11 +241,11 @@ vinum_rm(int argc, char *argv[], char *arg0[])
 		if (reply.error != 0) {
 		    fprintf(stderr,
 			"Can't remove %s: %s (%d)\n",
-			argv[index],
+			argv[idx],
 			reply.msg[0] ? reply.msg : strerror(reply.error),
 			reply.error);
 		} else if (vflag)
-		    fprintf(stderr, "%s removed\n", argv[index]);
+		    fprintf(stderr, "%s removed\n", argv[idx]);
 	    }
 	}
 	checkupdates();					    /* make sure we're updating */
@@ -291,16 +291,16 @@ void
 vinum_init(int argc, char *argv[], char *arg0[])
 {
     if (argc > 0) {					    /* initialize plexes */
-	int objindex;
+	int objidx;
 	int objno;
 	enum objecttype type;				    /* type returned */
 
 	if (History)
 	    fflush(History);				    /* don't let all the kids do it. */
-	for (objindex = 0; objindex < argc; objindex++) {
-	    objno = find_object(argv[objindex], &type);	    /* find the object */
+	for (objidx = 0; objidx < argc; objidx++) {
+	    objno = find_object(argv[objidx], &type);	    /* find the object */
 	    if (objno < 0)
-		printf("Can't find %s\n", argv[objindex]);
+		printf("Can't find %s\n", argv[objidx]);
 	    else {
 		switch (type) {
 		case volume_object:
@@ -308,7 +308,7 @@ vinum_init(int argc, char *argv[], char *arg0[])
 		    break;
 
 		case plex_object:
-		    initplex(objno, argv[objindex]);
+		    initplex(objno, argv[objidx]);
 		    break;
 
 		case sd_object:
@@ -316,7 +316,7 @@ vinum_init(int argc, char *argv[], char *arg0[])
 		    break;
 
 		default:
-		    printf("Can't initialize %s: wrong object type\n", argv[objindex]);
+		    printf("Can't initialize %s: wrong object type\n", argv[objidx]);
 		    break;
 		}
 	    }
@@ -402,7 +402,7 @@ initplex(int plexno, char *name)
 
 /* Initialize a subdisk. */
 void
-initsd(int sdno, int dowait)
+initsd(int sdno, int dowaitx)
 {
     pid_t pid;
     struct _ioctl_reply reply;
@@ -414,7 +414,7 @@ initsd(int sdno, int dowait)
     int initsize;					    /* actual size to write */
     int64_t sdsize;					    /* size of subdisk */
 
-    if (dowait == 0) {
+    if (dowaitx == 0) {
 	pid = fork();					    /* into the background with you */
 	if (pid > 0)					    /* I'm the parent */
 	    return;
@@ -489,7 +489,7 @@ initsd(int sdno, int dowait)
 	}
     }
     printf("subdisk %s initialized\n", filename);
-    if (!dowait)
+    if (!dowaitx)
 	exit(0);
 }
 
@@ -504,13 +504,13 @@ vinum_start(int argc, char *argv[], char *arg0[])
 	/* XXX FIXME */
 	fprintf(stderr, "Sorry, you must specify the object names at the moment\n");
     else {						    /* start specified objects */
-	int index;
+	int idx;
 	enum objecttype type;
 
-	for (index = 0; index < argc; index++) {
-	    object = find_object(argv[index], &type);	    /* look for it */
+	for (idx = 0; idx < argc; idx++) {
+	    object = find_object(argv[idx], &type);	    /* look for it */
 	    if (type == invalid_object)
-		fprintf(stderr, "Can't find object: %s\n", argv[index]);
+		fprintf(stderr, "Can't find object: %s\n", argv[idx]);
 	    else {
 		int doit = 0;				    /* set to 1 if we pass our tests */
 		switch (type) {
@@ -594,6 +594,8 @@ vinum_start(int argc, char *argv[], char *arg0[])
 		    else
 			doit = 1;
 		    break;
+		case invalid_object:
+		    break;
 		}
 
 		if (doit) {
@@ -622,7 +624,7 @@ vinum_start(int argc, char *argv[], char *arg0[])
 			else
 			    fprintf(stderr,
 				"Can't start %s: %s (%d)\n",
-				argv[index],
+				argv[idx],
 				reply.msg[0] ? reply.msg : strerror(reply.error),
 				reply.error);
 		    }
@@ -711,7 +713,7 @@ vinum_label(int argc, char *argv[], char *arg0[])
 }
 
 void
-reset_volume_stats(int volno, int recurse)
+reset_volume_stats(int volno, int rec)
 {
     struct vinum_ioctl_msg msg;
     struct _ioctl_reply *reply = (struct _ioctl_reply *) &msg;
@@ -723,18 +725,18 @@ reset_volume_stats(int volno, int recurse)
     if (ioctl(superdev, VINUM_RESETSTATS, &msg) < 0) {
 	fprintf(stderr, "Can't reset stats for volume %d: %s\n", volno, reply->msg);
 	longjmp(command_fail, -1);
-    } else if (recurse) {
-	struct _volume vol;
+    } else if (rec) {
+	struct _volume vl;
 	int plexno;
 
-	get_volume_info(&vol, volno);
+	get_volume_info(&vl, volno);
 	for (plexno = 0; plexno < vol.plexes; plexno++)
-	    reset_plex_stats(vol.plex[plexno], recurse);
+	    reset_plex_stats(vol.plex[plexno], rec);
     }
 }
 
 void
-reset_plex_stats(int plexno, int recurse)
+reset_plex_stats(int plexno, int rec)
 {
     struct vinum_ioctl_msg msg;
     struct _ioctl_reply *reply = (struct _ioctl_reply *) &msg;
@@ -746,21 +748,21 @@ reset_plex_stats(int plexno, int recurse)
     if (ioctl(superdev, VINUM_RESETSTATS, &msg) < 0) {
 	fprintf(stderr, "Can't reset stats for plex %d: %s\n", plexno, reply->msg);
 	longjmp(command_fail, -1);
-    } else if (recurse) {
-	struct _plex plex;
-	struct _sd sd;
+    } else if (rec) {
+	struct _plex plx;
+	struct _sd sdx;
 	int sdno;
 
-	get_plex_info(&plex, plexno);
-	for (sdno = 0; sdno < plex.subdisks; sdno++) {
-	    get_plex_sd_info(&sd, plex.plexno, sdno);
-	    reset_sd_stats(sd.sdno, recurse);
+	get_plex_info(&plx, plexno);
+	for (sdno = 0; sdno < plx.subdisks; sdno++) {
+	    get_plex_sd_info(&sdx, plx.plexno, sdno);
+	    reset_sd_stats(sdx.sdno, rec);
 	}
     }
 }
 
 void
-reset_sd_stats(int sdno, int recurse)
+reset_sd_stats(int sdno, int rec)
 {
     struct vinum_ioctl_msg msg;
     struct _ioctl_reply *reply = (struct _ioctl_reply *) &msg;
@@ -772,7 +774,7 @@ reset_sd_stats(int sdno, int recurse)
     if (ioctl(superdev, VINUM_RESETSTATS, &msg) < 0) {
 	fprintf(stderr, "Can't reset stats for subdisk %d: %s\n", sdno, reply->msg);
 	longjmp(command_fail, -1);
-    } else if (recurse) {
+    } else if (rec) {
 	get_sd_info(&sd, sdno);				    /* get the info */
 	reset_drive_stats(sd.driveno);			    /* and clear the drive */
     }
@@ -854,7 +856,7 @@ vinum_attach(int argc, char *argv[], char *argv0[])
     int plexno = -1;
     char oldname[MAXNAME + 8];
     char newname[MAXNAME + 8];
-    int rename = 0;					    /* set if we want to rename the object */
+    int ren = 0;					    /* set if we want to rename the object */
 
     if ((argc < 2)
 	|| (argc > 4)) {
@@ -875,9 +877,9 @@ vinum_attach(int argc, char *argv[], char *argv0[])
 
     for (i = 2; i < argc; i++) {
 	if (!strcmp(argv[i], "rename")) {
-	    rename = 1;
+	    ren = 1;
 	    msg.rename = 1;				    /* do renaming */
-	} else if (!isdigit(argv[i][0])) {		    /* not an offset */
+	} else if (!isdigit((unsigned char)argv[i][0])) {		    /* not an offset */
 	    fprintf(stderr, "Unknown attribute: %s\n", supername);
 	    return;
 	} else
@@ -929,7 +931,7 @@ vinum_attach(int argc, char *argv[], char *argv0[])
 		reply->msg[0] ? reply->msg : strerror(reply->error),
 		reply->error);
     }
-    if (rename) {
+    if (ren) {
 	struct sd;
 	struct _plex;
 	struct _volume;
@@ -960,6 +962,10 @@ vinum_attach(int argc, char *argv[], char *argv0[])
 	    sprintf(newname, "%s.p%d", vol.name, plexno);
 	    sprintf(oldname, "%s", plex.name);
 	    vinum_rename_2(oldname, newname);		    /* this may recurse */
+	    break;
+	case drive_object:
+	case invalid_object:
+	case volume_object:
 	    break;
 	}
     }
@@ -1086,17 +1092,17 @@ vinum_rename_2(char *oldname, char *newname)
 	dorename(&msg, oldname, newname, MAXVOLNAME);
 	if (recurse) {
 	    int sdno;
-	    int plexno;
+	    int plexnox;
 
 	    get_volume_info(&vol, volno);		    /* find out who we are */
-	    for (plexno = 0; plexno < vol.plexes; plexno++) {
+	    for (plexnox = 0; plexnox < vol.plexes; plexnox++) {
 		char plexname[MAXVOLNAME + 8];
 
 		msg.type = plex_object;
-		sprintf(plexname, "%s.p%d", newname, plexno);
-		msg.index = vol.plex[plexno];		    /* number of the plex */
+		sprintf(plexname, "%s.p%d", newname, plexnox);
+		msg.index = vol.plex[plexnox];		    /* number of the plex */
 		dorename(&msg, plex.name, plexname, MAXPLEXNAME);
-		get_plex_info(&plex, vol.plex[plexno]);	    /* find out who we are */
+		get_plex_info(&plex, vol.plex[plexnox]);	    /* find out who we are */
 		msg.type = sd_object;
 		for (sdno = 0; sdno < plex.subdisks; sdno++) {
 		    char sdname[MAXPLEXNAME + 8];
@@ -1139,7 +1145,7 @@ vinum_rename(int argc, char *argv[], char *argv0[])
 void
 vinum_mv(int argc, char *argv[], char *argv0[])
 {
-    int i;						    /* loop index */
+    int i;						    /* loop idx */
     int srcobj;
     int destobj;
     enum objecttype srct;
@@ -1462,24 +1468,24 @@ void
 vinum_concat(int argc, char *argv[], char *argv0[])
 {
     int o;						    /* object number */
-    char buffer[BUFSIZE];
-    struct _drive *drive;				    /* drive we're currently looking at */
+    char xbuffer[BUFSIZE];
+    struct _drive *drv;				    /* drive we're currently looking at */
     struct _ioctl_reply *reply;
     int ioctltype;
     int error;
     enum objecttype type;
 
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
     if (ioctl(superdev, VINUM_STARTCONFIG, &force)) {	    /* can't get config? */
 	printf("Can't configure: %s (%d)\n", strerror(errno), errno);
 	return;
     }
     if (!objectname)					    /* we need a name for our object */
 	genvolname();
-    sprintf(buffer, "volume %s", objectname);
+    sprintf(xbuffer, "volume %s", objectname);
     if (vflag)
 	printf("volume %s\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);		    /* create the volume */
+    ioctl(superdev, VINUM_CREATE, xbuffer);		    /* create the volume */
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1494,10 +1500,10 @@ vinum_concat(int argc, char *argv[], char *argv0[])
 		reply->error);
 	longjmp(command_fail, -1);			    /* give up */
     }
-    sprintf(buffer, "plex name %s.p0 org concat", objectname);
+    sprintf(xbuffer, "plex name %s.p0 org concat", objectname);
     if (vflag)
 	printf("  plex name %s.p0 org concat\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);
+    ioctl(superdev, VINUM_CREATE, xbuffer);
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1513,12 +1519,12 @@ vinum_concat(int argc, char *argv[], char *argv0[])
 	longjmp(command_fail, -1);			    /* give up */
     }
     for (o = 0; o < argc; o++) {
-	if ((drive = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
-	    drive = create_drive(argv[o]);		    /* create it */
-	sprintf(buffer, "sd name %s.p0.s%d drive %s size 0", objectname, o, drive->label.name);
+	if ((drv = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
+	    drv = create_drive(argv[o]);		    /* create it */
+	sprintf(xbuffer, "sd name %s.p0.s%d drive %s size 0", objectname, o, drv->label.name);
 	if (vflag)
-	    printf("    sd name %s.p0.s%d drive %s size 0\n", objectname, o, drive->label.name);
-	ioctl(superdev, VINUM_CREATE, buffer);
+	    printf("    sd name %s.p0.s%d drive %s size 0\n", objectname, o, drv->label.name);
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (reply->msg[0])
 		fprintf(stderr,
@@ -1542,7 +1548,7 @@ vinum_concat(int argc, char *argv[], char *argv0[])
     error = ioctl(superdev, VINUM_SAVECONFIG, &ioctltype);  /* save the config to disk */
     if (error != 0)
 	perror("Can't save Vinum config");
-    find_object(objectname, &type);			    /* find the index of the volume */
+    find_object(objectname, &type);			    /* find the idx of the volume */
     make_vol_dev(vol.volno, 1);				    /* and create the devices */
     if (vflag) {
 	vflag--;					    /* XXX don't give too much detail */
@@ -1561,23 +1567,23 @@ void
 vinum_stripe(int argc, char *argv[], char *argv0[])
 {
     int o;						    /* object number */
-    char buffer[BUFSIZE];
-    struct _drive *drive;				    /* drive we're currently looking at */
+    char xbuffer[BUFSIZE];
+    struct _drive *drv;				    /* drive we're currently looking at */
     struct _ioctl_reply *reply;
     int ioctltype;
     int error;
     enum objecttype type;
     off_t maxsize;
-    int fe;						    /* freelist entry index */
+    int fe;						    /* freelist entry idx */
     struct drive_freelist freelist;
     struct ferq {					    /* request to pass to ioctl */
 	int driveno;
 	int fe;
-    } *ferq = (struct ferq *) &freelist;
+    } *ferq = (void *) &freelist;
     u_int64_t bigchunk;					    /* biggest chunk in freelist */
 
     maxsize = QUAD_MAX;
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
 
     /*
      * First, check our drives.
@@ -1593,12 +1599,12 @@ vinum_stripe(int argc, char *argv[], char *argv0[])
     if (!objectname)					    /* we need a name for our object */
 	genvolname();
     for (o = 0; o < argc; o++) {
-	if ((drive = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
-	    drive = create_drive(argv[o]);		    /* create it */
+	if ((drv = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
+	    drv = create_drive(argv[o]);		    /* create it */
 	/* Now find the largest chunk available on the drive */
 	bigchunk = 0;					    /* ain't found nothin' yet */
-	for (fe = 0; fe < drive->freelist_entries; fe++) {
-	    ferq->driveno = drive->driveno;
+	for (fe = 0; fe < drv->freelist_entries; fe++) {
+	    ferq->driveno = drv->driveno;
 	    ferq->fe = fe;
 	    if (ioctl(superdev, VINUM_GETFREELIST, &freelist) < 0) {
 		fprintf(stderr,
@@ -1613,10 +1619,10 @@ vinum_stripe(int argc, char *argv[], char *argv0[])
     }
 
     /* Now create the volume */
-    sprintf(buffer, "volume %s", objectname);
+    sprintf(xbuffer, "volume %s", objectname);
     if (vflag)
 	printf("volume %s\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);		    /* create the volume */
+    ioctl(superdev, VINUM_CREATE, xbuffer);		    /* create the volume */
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1631,10 +1637,10 @@ vinum_stripe(int argc, char *argv[], char *argv0[])
 		reply->error);
 	longjmp(command_fail, -1);			    /* give up */
     }
-    sprintf(buffer, "plex name %s.p0 org striped 279k", objectname);
+    sprintf(xbuffer, "plex name %s.p0 org striped 279k", objectname);
     if (vflag)
 	printf("  plex name %s.p0 org striped 279k\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);
+    ioctl(superdev, VINUM_CREATE, xbuffer);
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1650,20 +1656,20 @@ vinum_stripe(int argc, char *argv[], char *argv0[])
 	longjmp(command_fail, -1);			    /* give up */
     }
     for (o = 0; o < argc; o++) {
-	drive = find_drive_by_devname(argv[o]);		    /* we know it exists... */
-	sprintf(buffer,
+	drv = find_drive_by_devname(argv[o]);		    /* we know it exists... */
+	sprintf(xbuffer,
 	    "sd name %s.p0.s%d drive %s size %lldb",
 	    objectname,
 	    o,
-	    drive->label.name,
+	    drv->label.name,
 	    (long long) maxsize);
 	if (vflag)
 	    printf("    sd name %s.p0.s%d drive %s size %lldb\n",
 		objectname,
 		o,
-		drive->label.name,
+		drv->label.name,
 		(long long) maxsize);
-	ioctl(superdev, VINUM_CREATE, buffer);
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (reply->msg[0])
 		fprintf(stderr,
@@ -1687,7 +1693,7 @@ vinum_stripe(int argc, char *argv[], char *argv0[])
     error = ioctl(superdev, VINUM_SAVECONFIG, &ioctltype);  /* save the config to disk */
     if (error != 0)
 	perror("Can't save Vinum config");
-    find_object(objectname, &type);			    /* find the index of the volume */
+    find_object(objectname, &type);			    /* find the idx of the volume */
     make_vol_dev(vol.volno, 1);				    /* and create the devices */
     if (vflag) {
 	vflag--;					    /* XXX don't give too much detail */
@@ -1705,23 +1711,23 @@ void
 vinum_raid4(int argc, char *argv[], char *argv0[])
 {
     int o;						    /* object number */
-    char buffer[BUFSIZE];
-    struct _drive *drive;				    /* drive we're currently looking at */
+    char xbuffer[BUFSIZE];
+    struct _drive *drv;				    /* drive we're currently looking at */
     struct _ioctl_reply *reply;
     int ioctltype;
     int error;
     enum objecttype type;
     off_t maxsize;
-    int fe;						    /* freelist entry index */
+    int fe;						    /* freelist entry idx */
     struct drive_freelist freelist;
     struct ferq {					    /* request to pass to ioctl */
 	int driveno;
 	int fe;
-    } *ferq = (struct ferq *) &freelist;
+    } *ferq = (void *) &freelist;
     u_int64_t bigchunk;					    /* biggest chunk in freelist */
 
     maxsize = QUAD_MAX;
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
 
     /*
      * First, check our drives.
@@ -1737,12 +1743,12 @@ vinum_raid4(int argc, char *argv[], char *argv0[])
     if (!objectname)					    /* we need a name for our object */
 	genvolname();
     for (o = 0; o < argc; o++) {
-	if ((drive = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
-	    drive = create_drive(argv[o]);		    /* create it */
+	if ((drv = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
+	    drv = create_drive(argv[o]);		    /* create it */
 	/* Now find the largest chunk available on the drive */
 	bigchunk = 0;					    /* ain't found nothin' yet */
-	for (fe = 0; fe < drive->freelist_entries; fe++) {
-	    ferq->driveno = drive->driveno;
+	for (fe = 0; fe < drv->freelist_entries; fe++) {
+	    ferq->driveno = drv->driveno;
 	    ferq->fe = fe;
 	    if (ioctl(superdev, VINUM_GETFREELIST, &freelist) < 0) {
 		fprintf(stderr,
@@ -1757,10 +1763,10 @@ vinum_raid4(int argc, char *argv[], char *argv0[])
     }
 
     /* Now create the volume */
-    sprintf(buffer, "volume %s", objectname);
+    sprintf(xbuffer, "volume %s", objectname);
     if (vflag)
 	printf("volume %s\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);		    /* create the volume */
+    ioctl(superdev, VINUM_CREATE, xbuffer);		    /* create the volume */
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1775,10 +1781,10 @@ vinum_raid4(int argc, char *argv[], char *argv0[])
 		reply->error);
 	longjmp(command_fail, -1);			    /* give up */
     }
-    sprintf(buffer, "plex name %s.p0 org raid4 279k", objectname);
+    sprintf(xbuffer, "plex name %s.p0 org raid4 279k", objectname);
     if (vflag)
 	printf("  plex name %s.p0 org raid4 279k\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);
+    ioctl(superdev, VINUM_CREATE, xbuffer);
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1794,20 +1800,20 @@ vinum_raid4(int argc, char *argv[], char *argv0[])
 	longjmp(command_fail, -1);			    /* give up */
     }
     for (o = 0; o < argc; o++) {
-	drive = find_drive_by_devname(argv[o]);		    /* we know it exists... */
-	sprintf(buffer,
+	drv = find_drive_by_devname(argv[o]);		    /* we know it exists... */
+	sprintf(xbuffer,
 	    "sd name %s.p0.s%d drive %s size %lldb",
 	    objectname,
 	    o,
-	    drive->label.name,
+	    drv->label.name,
 	    (long long) maxsize);
 	if (vflag)
 	    printf("    sd name %s.p0.s%d drive %s size %lldb\n",
 		objectname,
 		o,
-		drive->label.name,
+		drv->label.name,
 		(long long) maxsize);
-	ioctl(superdev, VINUM_CREATE, buffer);
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (reply->msg[0])
 		fprintf(stderr,
@@ -1831,7 +1837,7 @@ vinum_raid4(int argc, char *argv[], char *argv0[])
     error = ioctl(superdev, VINUM_SAVECONFIG, &ioctltype);  /* save the config to disk */
     if (error != 0)
 	perror("Can't save Vinum config");
-    find_object(objectname, &type);			    /* find the index of the volume */
+    find_object(objectname, &type);			    /* find the idx of the volume */
     make_vol_dev(vol.volno, 1);				    /* and create the devices */
     if (vflag) {
 	vflag--;					    /* XXX don't give too much detail */
@@ -1849,23 +1855,23 @@ void
 vinum_raid5(int argc, char *argv[], char *argv0[])
 {
     int o;						    /* object number */
-    char buffer[BUFSIZE];
-    struct _drive *drive;				    /* drive we're currently looking at */
+    char xbuffer[BUFSIZE];
+    struct _drive *drv;				    /* drive we're currently looking at */
     struct _ioctl_reply *reply;
     int ioctltype;
     int error;
     enum objecttype type;
     off_t maxsize;
-    int fe;						    /* freelist entry index */
+    int fe;						    /* freelist entry idx */
     struct drive_freelist freelist;
     struct ferq {					    /* request to pass to ioctl */
 	int driveno;
 	int fe;
-    } *ferq = (struct ferq *) &freelist;
+    } *ferq = (void *) &freelist;
     u_int64_t bigchunk;					    /* biggest chunk in freelist */
 
     maxsize = QUAD_MAX;
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
 
     /*
      * First, check our drives.
@@ -1881,12 +1887,12 @@ vinum_raid5(int argc, char *argv[], char *argv0[])
     if (!objectname)					    /* we need a name for our object */
 	genvolname();
     for (o = 0; o < argc; o++) {
-	if ((drive = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
-	    drive = create_drive(argv[o]);		    /* create it */
+	if ((drv = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
+	    drv = create_drive(argv[o]);		    /* create it */
 	/* Now find the largest chunk available on the drive */
 	bigchunk = 0;					    /* ain't found nothin' yet */
-	for (fe = 0; fe < drive->freelist_entries; fe++) {
-	    ferq->driveno = drive->driveno;
+	for (fe = 0; fe < drv->freelist_entries; fe++) {
+	    ferq->driveno = drv->driveno;
 	    ferq->fe = fe;
 	    if (ioctl(superdev, VINUM_GETFREELIST, &freelist) < 0) {
 		fprintf(stderr,
@@ -1901,10 +1907,10 @@ vinum_raid5(int argc, char *argv[], char *argv0[])
     }
 
     /* Now create the volume */
-    sprintf(buffer, "volume %s", objectname);
+    sprintf(xbuffer, "volume %s", objectname);
     if (vflag)
 	printf("volume %s\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);		    /* create the volume */
+    ioctl(superdev, VINUM_CREATE, xbuffer);		    /* create the volume */
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1919,10 +1925,10 @@ vinum_raid5(int argc, char *argv[], char *argv0[])
 		reply->error);
 	longjmp(command_fail, -1);			    /* give up */
     }
-    sprintf(buffer, "plex name %s.p0 org raid5 279k", objectname);
+    sprintf(xbuffer, "plex name %s.p0 org raid5 279k", objectname);
     if (vflag)
 	printf("  plex name %s.p0 org raid5 279k\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);
+    ioctl(superdev, VINUM_CREATE, xbuffer);
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -1938,20 +1944,20 @@ vinum_raid5(int argc, char *argv[], char *argv0[])
 	longjmp(command_fail, -1);			    /* give up */
     }
     for (o = 0; o < argc; o++) {
-	drive = find_drive_by_devname(argv[o]);		    /* we know it exists... */
-	sprintf(buffer,
+	drv = find_drive_by_devname(argv[o]);		    /* we know it exists... */
+	sprintf(xbuffer,
 	    "sd name %s.p0.s%d drive %s size %lldb",
 	    objectname,
 	    o,
-	    drive->label.name,
+	    drv->label.name,
 	    (long long) maxsize);
 	if (vflag)
 	    printf("    sd name %s.p0.s%d drive %s size %lldb\n",
 		objectname,
 		o,
-		drive->label.name,
+		drv->label.name,
 		(long long) maxsize);
-	ioctl(superdev, VINUM_CREATE, buffer);
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (reply->msg[0])
 		fprintf(stderr,
@@ -1975,7 +1981,7 @@ vinum_raid5(int argc, char *argv[], char *argv0[])
     error = ioctl(superdev, VINUM_SAVECONFIG, &ioctltype);  /* save the config to disk */
     if (error != 0)
 	perror("Can't save Vinum config");
-    find_object(objectname, &type);			    /* find the index of the volume */
+    find_object(objectname, &type);			    /* find the idx of the volume */
     make_vol_dev(vol.volno, 1);				    /* and create the devices */
     if (vflag) {
 	vflag--;					    /* XXX don't give too much detail */
@@ -1999,19 +2005,19 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
 {
     int o;						    /* object number */
     int p;						    /* plex number */
-    char buffer[BUFSIZE];
-    struct _drive *drive;				    /* drive we're currently looking at */
+    char xbuffer[BUFSIZE];
+    struct _drive *drv;				    /* drive we're currently looking at */
     struct _ioctl_reply *reply;
     int ioctltype;
     int error;
     enum objecttype type;
     off_t maxsize[2];					    /* maximum subdisk size for striped plexes */
-    int fe;						    /* freelist entry index */
+    int fe;						    /* freelist entry idx */
     struct drive_freelist freelist;
     struct ferq {					    /* request to pass to ioctl */
 	int driveno;
 	int fe;
-    } *ferq = (struct ferq *) &freelist;
+    } *ferq = (void *) &freelist;
     u_int64_t bigchunk;					    /* biggest chunk in freelist */
 
     if (sflag)						    /* striped, */
@@ -2019,7 +2025,7 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
     else
 	maxsize[0] = maxsize[1] = 0;			    /* let the kernel routines do it */
 
-    reply = (struct _ioctl_reply *) &buffer;
+    reply = (struct _ioctl_reply *) xbuffer;
 
     /*
      * First, check our drives.
@@ -2040,13 +2046,13 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
     if (!objectname)					    /* we need a name for our object */
 	genvolname();
     for (o = 0; o < argc; o++) {
-	if ((drive = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
-	    drive = create_drive(argv[o]);		    /* create it */
+	if ((drv = find_drive_by_devname(argv[o])) == NULL) /* doesn't exist */
+	    drv = create_drive(argv[o]);		    /* create it */
 	if (sflag) {					    /* striping, */
 	    /* Find the largest chunk available on the drive */
 	    bigchunk = 0;				    /* ain't found nothin' yet */
-	    for (fe = 0; fe < drive->freelist_entries; fe++) {
-		ferq->driveno = drive->driveno;
+	    for (fe = 0; fe < drv->freelist_entries; fe++) {
+		ferq->driveno = drv->driveno;
 		ferq->fe = fe;
 		if (ioctl(superdev, VINUM_GETFREELIST, &freelist) < 0) {
 		    fprintf(stderr,
@@ -2062,10 +2068,10 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
     }
 
     /* Now create the volume */
-    sprintf(buffer, "volume %s setupstate", objectname);
+    sprintf(xbuffer, "volume %s setupstate", objectname);
     if (vflag)
 	printf("volume %s setupstate\n", objectname);
-    ioctl(superdev, VINUM_CREATE, buffer);		    /* create the volume */
+    ioctl(superdev, VINUM_CREATE, xbuffer);		    /* create the volume */
     if (reply->error != 0) {				    /* error in config */
 	if (reply->msg[0])
 	    fprintf(stderr,
@@ -2082,15 +2088,15 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
     }
     for (p = 0; p < 2; p++) {				    /* create each plex */
 	if (sflag) {
-	    sprintf(buffer, "plex name %s.p%d org striped 279k", objectname, p);
+	    sprintf(xbuffer, "plex name %s.p%d org striped 279k", objectname, p);
 	    if (vflag)
 		printf("  plex name %s.p%d org striped 279k\n", objectname, p);
 	} else {					    /* concat */
-	    sprintf(buffer, "plex name %s.p%d org concat", objectname, p);
+	    sprintf(xbuffer, "plex name %s.p%d org concat", objectname, p);
 	    if (vflag)
 		printf("  plex name %s.p%d org concat\n", objectname, p);
 	}
-	ioctl(superdev, VINUM_CREATE, buffer);
+	ioctl(superdev, VINUM_CREATE, xbuffer);
 	if (reply->error != 0) {			    /* error in config */
 	    if (reply->msg[0])
 		fprintf(stderr,
@@ -2109,22 +2115,22 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
 	}
 	/* Now look at the subdisks */
 	for (o = p; o < argc; o += 2) {			    /* every second one */
-	    drive = find_drive_by_devname(argv[o]);	    /* we know it exists... */
-	    sprintf(buffer,
+	    drv = find_drive_by_devname(argv[o]);	    /* we know it exists... */
+	    sprintf(xbuffer,
 		"sd name %s.p%d.s%d drive %s size %lldb",
 		objectname,
 		p,
 		o >> 1,
-		drive->label.name,
+		drv->label.name,
 		(long long) maxsize[p]);
 	    if (vflag)
 		printf("    sd name %s.p%d.s%d drive %s size %lldb\n",
 		    objectname,
 		    p,
 		    o >> 1,
-		    drive->label.name,
+		    drv->label.name,
 		    (long long) maxsize[p]);
-	    ioctl(superdev, VINUM_CREATE, buffer);
+	    ioctl(superdev, VINUM_CREATE, xbuffer);
 	    if (reply->error != 0) {			    /* error in config */
 		if (reply->msg[0])
 		    fprintf(stderr,
@@ -2151,7 +2157,7 @@ vinum_mirror(int argc, char *argv[], char *argv0[])
     error = ioctl(superdev, VINUM_SAVECONFIG, &ioctltype);  /* save the config to disk */
     if (error != 0)
 	perror("Can't save Vinum config");
-    find_object(objectname, &type);			    /* find the index of the volume */
+    find_object(objectname, &type);			    /* find the idx of the volume */
     make_vol_dev(vol.volno, 1);				    /* and create the devices */
     if (vflag) {
 	vflag--;					    /* XXX don't give too much detail */
@@ -2168,8 +2174,8 @@ vinum_readpol(int argc, char *argv[], char *argv0[])
     struct _ioctl_reply reply;
     struct vinum_ioctl_msg *message = (struct vinum_ioctl_msg *) &reply;
     enum objecttype type;
-    struct _plex plex;
-    struct _volume vol;
+    struct _plex plx;
+    struct _volume vl;
     int plexno;
 
     if (argc == 0) {					    /* start everything */
@@ -2181,20 +2187,20 @@ vinum_readpol(int argc, char *argv[], char *argv0[])
 	fprintf(stderr, "%s is not a volume\n", argv[1]);
 	return;
     }
-    get_volume_info(&vol, object);
+    get_volume_info(&vl, object);
     if (strcmp(argv[2], "round")) {			    /* not 'round' */
 	object = find_object(argv[2], &type);		    /* look for it */
 	if (type != plex_object) {
 	    fprintf(stderr, "%s is not a plex\n", argv[2]);
 	    return;
 	}
-	get_plex_info(&plex, object);
-	plexno = plex.plexno;
+	get_plex_info(&plx, object);
+	plexno = plx.plexno;
     } else						    /* round */
 	plexno = -1;
 
     /* Set the value */
-    message->index = vol.volno;
+    message->index = vl.volno;
     message->otherobject = plexno;
     if (ioctl(superdev, VINUM_READPOL, message) < 0)
 	fprintf(stderr, "Can't set read policy: %s (%d)\n", strerror(errno), errno);
@@ -2212,14 +2218,14 @@ vinum_setstate(int argc, char *argv[], char *argv0[])
     int object;
     struct _ioctl_reply reply;
     struct vinum_ioctl_msg *message = (struct vinum_ioctl_msg *) &reply;
-    int index;
+    int idx;
     enum objecttype type;
     int state;
 
-    for (index = 1; index < argc; index++) {
-	object = find_object(argv[index], &type);	    /* look for it */
+    for (idx = 1; idx < argc; idx++) {
+	object = find_object(argv[idx], &type);	    /* look for it */
 	if (type == invalid_object)
-	    fprintf(stderr, "Can't find object: %s\n", argv[index]);
+	    fprintf(stderr, "Can't find object: %s\n", argv[idx]);
 	else {
 	    int doit = 0;				    /* set to 1 if we pass our tests */
 	    switch (type) {
@@ -2270,7 +2276,7 @@ vinum_setstate(int argc, char *argv[], char *argv0[])
 		if (reply.error != 0)
 		    fprintf(stderr,
 			"Can't start %s: %s (%d)\n",
-			argv[index],
+			argv[idx],
 			reply.msg[0] ? reply.msg : strerror(reply.error),
 			reply.error);
 		if (Verbose)
@@ -2311,26 +2317,26 @@ void
 parityops(int argc, char *argv[], enum parityop op)
 {
     int object;
-    struct _plex plex;
+    struct _plex plx;
     struct _ioctl_reply reply;
     struct vinum_ioctl_msg *message = (struct vinum_ioctl_msg *) &reply;
-    int index;
+    int idx;
     enum objecttype type;
-    char *msg;
+    const char *msg;
     off_t block;
 
     if (op == checkparity)
 	msg = "Checking";
     else
 	msg = "Rebuilding";
-    for (index = 0; index < argc; index++) {
-	object = find_object(argv[index], &type);	    /* look for it */
+    for (idx = 0; idx < argc; idx++) {
+	object = find_object(argv[idx], &type);	    /* look for it */
 	if (type != plex_object)
-	    fprintf(stderr, "%s is not a plex\n", argv[index]);
+	    fprintf(stderr, "%s is not a plex\n", argv[idx]);
 	else {
-	    get_plex_info(&plex, object);
-	    if (!isparity((&plex)))
-		fprintf(stderr, "%s is not a RAID-4 or RAID-5 plex\n", argv[index]);
+	    get_plex_info(&plx, object);
+	    if (!isparity((&plx)))
+		fprintf(stderr, "%s is not a RAID-4 or RAID-5 plex\n", argv[idx]);
 	    else {
 		do {
 		    message->index = object;		    /* pass object number */
@@ -2339,17 +2345,17 @@ parityops(int argc, char *argv[], enum parityop op)
 		    if (force)
 			message->offset = 0;		    /* start at the beginning */
 		    else
-			message->offset = plex.checkblock;  /* continue where we left off */
+			message->offset = plx.checkblock;  /* continue where we left off */
 		    force = 0;				    /* don't reset after the first time */
 		    ioctl(superdev, VINUM_PARITYOP, message);
-		    get_plex_info(&plex, object);
+		    get_plex_info(&plx, object);
 		    if (Verbose) {
-			block = (plex.checkblock << DEV_BSHIFT) * (plex.subdisks - 1);
+			block = (plx.checkblock << DEV_BSHIFT) * (plx.subdisks - 1);
 			if (block != 0)
 			    printf("\r%s at %s (%d%%)    ",
 				msg,
 				roughlength(block, 1),
-				((int) (block * 100 / plex.length) >> DEV_BSHIFT));
+				((int) (block * 100 / plx.length) >> DEV_BSHIFT));
 			if ((reply.error == EAGAIN)
 			    && (reply.msg[0]))		    /* got a comment back */
 			    fputs(reply.msg, stderr);	    /* show it */
@@ -2367,9 +2373,9 @@ parityops(int argc, char *argv[], enum parityop op)
 			    strerror(reply.error));
 		} else if (Verbose) {
 		    if (op == checkparity)
-			fprintf(stderr, "%s has correct parity\n", argv[index]);
+			fprintf(stderr, "%s has correct parity\n", argv[idx]);
 		    else
-			fprintf(stderr, "Rebuilt parity on %s\n", argv[index]);
+			fprintf(stderr, "Rebuilt parity on %s\n", argv[idx]);
 		}
 	    }
 	}
