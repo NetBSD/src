@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.4 2005/06/26 04:34:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -105,10 +105,17 @@ struct ieee80211_node_sysctl {
 } __attribute__((__packed__));
 
 #ifdef __NetBSD__
+enum ieee80211_node_walk_state {
+	IEEE80211_WALK_BSS = 0,
+	IEEE80211_WALK_SCAN,
+	IEEE80211_WALK_STA
+};
+
 struct ieee80211_node_walk {
-	struct ieee80211com	*nw_ic;
-	struct ieee80211_node	*nw_ni;
-	u_short			nw_ifindex;
+	struct ieee80211com		*nw_ic;
+	struct ieee80211_node_table	*nw_nt;
+	struct ieee80211_node		*nw_ni;
+	u_short				nw_ifindex;
 };
 #endif /* __NetBSD__ */
 
