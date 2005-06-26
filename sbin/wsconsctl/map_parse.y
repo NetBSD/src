@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.4 2005/01/19 20:37:52 xtraeme Exp $ */
+/*	$NetBSD: map_parse.y,v 1.5 2005/06/26 22:45:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ keysym_var	: T_KEYSYM_VAR = {
 %%
 
 void
-yyerror(char *msg)
+yyerror(const char *msg)
 {
 	errx(1, "parse: %s", msg);
 }

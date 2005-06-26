@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.7 2005/01/19 20:37:53 xtraeme Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.8 2005/06/26 22:45:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #define WSATTR_WSCOLORS 	16
 
 struct field {
-	char *name;
+	const char *name;
 	void *valp;
 #define FMT_UINT	1		/* unsigned integer */
 #define FMT_STRING	2		/* zero terminated string */
@@ -83,10 +83,10 @@ void field_setup(struct field *, int);
 struct field *field_by_name(char *);
 struct field *field_by_value(void *);
 void field_disable_by_value(void *);
-void pr_field(struct field *, char *);
+void pr_field(struct field *, const char *);
 void rd_field(struct field *, char *, int);
 int name2ksym(char *);
-char *ksym2name(int);
+const char *ksym2name(int);
 keysym_t ksym_upcase(keysym_t);
 void keyboard_get_values(int);
 void keyboard_put_values(int);
@@ -97,6 +97,6 @@ void display_put_values(int);
 #ifndef YYEMPTY
 int yyparse(void);
 #endif
-void yyerror(char *);
+void yyerror(const char *);
 int yylex(void);
 void map_scan_setinput(char *);

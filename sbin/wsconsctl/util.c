@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 2005/01/31 06:24:08 joff Exp $ */
+/*	$NetBSD: util.c,v 1.23 2005/06/26 22:45:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ extern struct wskbd_map_data newkbmap;	/* from map_parse.y */
 
 struct nameint {
 	int value;
-	char *name;
+	const char *name;
 };
 
 static struct nameint kbtype_tab[] = {
@@ -166,7 +166,7 @@ static struct nameint attr_tab[] = {
 static struct field *field_tab;
 static int field_tab_len;
 
-static char *int2name(int, int, struct nameint *, int);
+static const char *int2name(int, int, struct nameint *, int);
 static int name2int(char *, struct nameint *, int);
 static void print_kmap(struct wskbd_map_data *);
 
@@ -210,7 +210,7 @@ field_disable_by_value(void *addr)
 	f->flags |= FLG_DISABLED;
 }
 
-static char *
+static const char *
 int2name(int val, int uflag, struct nameint *tab, int len)
 {
 	static char tmp[20];
@@ -239,9 +239,9 @@ name2int(char *val, struct nameint *tab, int len)
 }
 
 void
-pr_field(struct field *f, char *sep)
+pr_field(struct field *f, const char *sep)
 {
-	char *p;
+	const char *p;
 	u_int flags;
 	int first, i, mask;
 

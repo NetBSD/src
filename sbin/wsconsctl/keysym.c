@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.5 2005/01/19 20:37:52 xtraeme Exp $ */
+/*	$NetBSD: keysym.c,v 1.6 2005/06/26 22:45:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,25 +97,27 @@ static void sort_ksym_tab(void);
 static int
 qcmp_name(const void *a, const void *b)
 {
-	return(strcmp(((struct ksym *) a)->name, ((struct ksym *) b)->name));
+	return(strcmp(((const struct ksym *) a)->name,
+	    ((const struct ksym *) b)->name));
 }
 
 static int
 qcmp_ksym(const void *a, const void *b)
 {
-	return(((struct ksym *) b)->value - ((struct ksym *) a)->value);
+	return(((const struct ksym *) b)->value -
+	    ((const struct ksym *) a)->value);
 }
 
 static int
 bcmp_name(const void *a, const void *b)
 {
-	return(strcmp((char *) a, ((struct ksym *) b)->name));
+	return(strcmp((const char *) a, ((const struct ksym *) b)->name));
 }
 
 static int
 bcmp_ksym(const void *a, const void *b)
 {
-	return(((struct ksym *) b)->value - *((int *) a));
+	return(((const struct ksym *) b)->value - *((const int *) a));
 }
 
 static void
@@ -132,7 +134,7 @@ sort_ksym_tab(void)
 	first_time = 0;
 }
 
-char *
+const char *
 ksym2name(int k)
 {
 	static char tmp[20];

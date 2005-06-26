@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: mkkeysym.sh,v 1.1 1998/12/28 14:01:17 hannken Exp $
+#	$NetBSD: mkkeysym.sh,v 1.2 2005/06/26 22:45:50 christos Exp $
 #
 #	Build a table of keysyms from a file describing keysyms as:
 #
@@ -16,7 +16,7 @@ ${AWK} '
 BEGIN {
 	in_decl = 0;
 	printf("/* DO  NOT EDIT: AUTOMATICALLY GENERATED FROM '$1' */\n\n");
-	printf("struct ksym {\n\tchar *name;\n\tint value;\n};\n\n");
+	printf("struct ksym {\n\tconst char *name;\n\tint value;\n};\n\n");
 	printf("struct ksym ksym_tab_by_name[] = {\n");
 }
 

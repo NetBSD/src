@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.12 2005/06/02 00:15:02 lukem Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.13 2005/06/26 22:45:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -55,17 +55,17 @@ extern int keyboard_field_tab_len;
 extern int mouse_field_tab_len;
 extern int display_field_tab_len;
 
-static void usage(char *);
+static void usage(const char *) __attribute__((__noreturn__));
 
 static void
-usage(char *msg)
+usage(const char *msg)
 {
 	const char *progname = getprogname();
 
 	if (msg != NULL)
 		fprintf(stderr, "%s: %s\n\n", progname, msg);
 
-	fprintf(stderr, "usage: %s [-kmd] [-f file] [-n] name ...\n",
+	fprintf(stderr, "Usage: %s [-kmd] [-f file] [-n] name ...\n",
 		progname);
 	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name=value ...\n",
 		progname);
@@ -81,7 +81,8 @@ main(int argc, char **argv)
 {
 	int i, ch, fd;
 	int aflag, dflag, kflag, mflag, wflag;
-	char *file, *sep, *p;
+	char *p;
+	const char *sep, *file;
 	struct field *f, *field_tab;
 	int do_merge, field_tab_len;
 	void (*getval)(int);
