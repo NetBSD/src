@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 2005/02/17 16:29:26 xtraeme Exp $	*/
+/*	$NetBSD: io.c,v 1.8 2005/06/26 19:10:49 christos Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-__RCSID("$NetBSD: io.c,v 1.7 2005/02/17 16:29:26 xtraeme Exp $");
+__RCSID("$NetBSD: io.c,v 1.8 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ get_stream_line(FILE *fp)
 
 /* write_file: write a range of lines to a named file/pipe; return line count */
 long
-write_file(char *fn, char *mode, long n, long m)
+write_file(const char *fn, const char *mode, long n, long m)
 {
 	FILE *fp;
 	long size;

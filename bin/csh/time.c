@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.14 2003/08/07 09:05:07 agc Exp $ */
+/* $NetBSD: time.c,v 1.15 2005/06/26 19:10:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.14 2003/08/07 09:05:07 agc Exp $");
+__RCSID("$NetBSD: time.c,v 1.15 2005/06/26 19:10:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
         struct timeval *b)
 {
     struct varent *vp;
-    char *cp;
+    const char *cp;
     long i;
     time_t t;
     int ms;

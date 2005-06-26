@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.39 2005/03/11 02:55:23 ginsbach Exp $	*/
+/*	$NetBSD: rcp.c,v 1.40 2005/06/26 19:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.39 2005/03/11 02:55:23 ginsbach Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.40 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ uid_t	userid;
 int errs, rem;
 int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 int family = AF_UNSPEC;
+static char dot[] = ".";
 
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
@@ -115,7 +116,8 @@ main(int argc, char *argv[])
 {
 	struct servent *sp;
 	int ch, fflag, tflag;
-	char *targ, *shell;
+	char *targ;
+	const char *shell;
 
 	fflag = tflag = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
@@ -253,7 +255,7 @@ toremote(char *targ, int argc, char *argv[])
 
 	*targ++ = 0;
 	if (*targ == 0)
-		targ = ".";
+		targ = dot;
 
 	if ((thost = strchr(argv[argc - 1], '@')) != NULL) {
 		/* user@host */
@@ -274,7 +276,7 @@ toremote(char *targ, int argc, char *argv[])
 		if (src) {			/* remote to remote */
 			*src++ = 0;
 			if (*src == 0)
-				src = ".";
+				src = dot;
 			host = strchr(argv[i], '@');
 			len = strlen(_PATH_RSH) + strlen(argv[i]) +
 			    strlen(src) + (tuser ? strlen(tuser) : 0) +
@@ -353,7 +355,7 @@ tolocal(int argc, char *argv[])
 		}
 		*src++ = 0;
 		if (*src == 0)
-			src = ".";
+			src = dot;
 		if ((host = strchr(argv[i], '@')) == NULL) {
 			host = argv[i];
 			suser = pwname;
@@ -518,7 +520,7 @@ rsource(char *name, struct stat *statp)
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
-		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+		if (!strcmp(dp->d_name, dot) || !strcmp(dp->d_name, ".."))
 			continue;
 		if (strlen(name) + 1 + strlen(dp->d_name) >= MAXPATHLEN - 1) {
 			run_err("%s/%s: name too long", name, dp->d_name);
@@ -545,7 +547,8 @@ sink(int argc, char *argv[])
 	int amt, count, exists, first, mask, mode, ofd, omode;
 	int setimes, targisdir;
 	int wrerrno = 0;	/* pacify gcc */
-	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
+	char ch, *cp, *np, *targ, *vect[1], buf[BUFSIZ];
+	const char *why;
 	off_t size;
 
 #define	atime	tv[0]

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.58 2005/06/01 15:30:33 lukem Exp $	*/
+/*	$NetBSD: ps.c,v 1.59 2005/06/26 19:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.58 2005/06/01 15:30:33 lukem Exp $");
+__RCSID("$NetBSD: ps.c,v 1.59 2005/06/26 19:10:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,8 @@ main(int argc, char *argv[])
 			ttname = optarg;
 		tty: {
 			struct stat sb;
-			char *ttypath, pathbuf[MAXPATHLEN];
+			const char *ttypath;
+			char pathbuf[MAXPATHLEN];
 
 			flag = 0;
 			ttypath = NULL;
@@ -271,13 +272,15 @@ main(int argc, char *argv[])
 			else if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;
 			else if (strncmp(ttname, "pts/", 4) == 0 ||
-				strncmp(ttname, "tty", 3) == 0)
-				(void)snprintf(ttypath = pathbuf,
+				strncmp(ttname, "tty", 3) == 0) {
+				(void)snprintf(pathbuf,
 				    sizeof(pathbuf), "%s%s", _PATH_DEV, ttname);
-			else if (*ttname != '/')
-				(void)snprintf(ttypath = pathbuf,
+				ttypath = pathbuf;
+			} else if (*ttname != '/') {
+				(void)snprintf(pathbuf,
 				    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
-			else
+				ttypath = pathbuf;
+			} else
 				ttypath = ttname;
 			what = KERN_PROC_TTY;
 			if (flag == 0) {
@@ -560,20 +563,20 @@ scanvars(void)
 static int
 pscomp(const void *a, const void *b)
 {
-	struct kinfo_proc2 *ka = (struct kinfo_proc2 *)a;
-	struct kinfo_proc2 *kb = (struct kinfo_proc2 *)b;
+	const struct kinfo_proc2 *ka = (const struct kinfo_proc2 *)a;
+	const struct kinfo_proc2 *kb = (const struct kinfo_proc2 *)b;
 
 	int i;
 	int64_t i64;
 	VAR *v;
 	struct varent *ve;
-	sigset_t *sa, *sb;
+	const sigset_t *sa, *sb;
 
 #define	V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
 #define	RDIFF_N(t, n) \
-	if (((t *)((char *)ka + v->off))[n] > ((t *)((char *)kb + v->off))[n]) \
+	if (((const t *)((const char *)ka + v->off))[n] > ((const t *)((const char *)kb + v->off))[n]) \
 		return 1; \
-	if (((t *)((char *)ka + v->off))[n] < ((t *)((char *)kb + v->off))[n]) \
+	if (((const t *)((const char *)ka + v->off))[n] < ((const t *)((const char *)kb + v->off))[n]) \
 		return -1;
 
 #define	RDIFF(type) RDIFF_N(type, 0); continue
@@ -606,8 +609,8 @@ pscomp(const void *a, const void *b)
 		case UINT32:
 			RDIFF(uint32_t);
 		case SIGLIST:
-			sa = (void *)((char *)a + v->off);
-			sb = (void *)((char *)b + v->off);
+			sa = (const void *)((const char *)a + v->off);
+			sb = (const void *)((const char *)b + v->off);
 			i = 0;
 			do {
 				if (sa->__bits[i] > sb->__bits[i])
