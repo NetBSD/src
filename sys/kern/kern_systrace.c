@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.44 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.45 2005/06/26 19:58:29 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.44 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.45 2005/06/26 19:58:29 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1242,6 +1242,42 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	return (error);
 }
 
+void
+systrace_execve(char *path, struct proc *p)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	struct str_message msg;
+	struct str_msg_execve *msg_execve;
+
+	do {
+		systrace_lock();
+		strp = p->p_systrace;
+		if (strp == NULL) {
+			systrace_unlock();
+			return;
+		}
+
+		msg_execve = &msg.msg_data.msg_execve;
+		fst = strp->parent;
+		SYSTRACE_LOCK(fst, curlwp);
+		systrace_unlock();
+
+		/*
+		 * susers will get the execve call anyway. Also, if
+		 * we're not allowed to control the process, escape.
+		 */
+		if (fst->issuser ||
+		    fst->p_ruid != p->p_cred->p_ruid ||
+		    fst->p_rgid != p->p_cred->p_rgid) {
+			SYSTRACE_UNLOCK(fst, curlwp);
+			return;
+		}
+
+		strlcpy(msg_execve->path, path, sizeof(msg_execve->path));
+	} while (systrace_make_msg(strp, SYSTR_MSG_EXECVE, &msg) != 0);
+}
+
 /* Prepare to replace arguments */
 
 int
@@ -1348,7 +1384,6 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 int
 systrace_fname(struct str_process *strp, caddr_t kdata, size_t len)
 {
-
 	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
 		return EINVAL;
 
@@ -1377,9 +1412,10 @@ void
 systrace_namei(struct nameidata *ndp)
 {
 	struct str_process *strp;
-	struct fsystrace *fst;
+	struct fsystrace *fst = NULL; /* XXXGCC */
 	struct componentname *cnp = &ndp->ni_cnd;
 	size_t i;
+	int hamper = 0;
 
 	systrace_lock();
 	strp = cnp->cn_proc->p_systrace;
@@ -1388,18 +1424,21 @@ systrace_namei(struct nameidata *ndp)
 		SYSTRACE_LOCK(fst, curlwp);
 		systrace_unlock();
 
-		for (i = 0; i < strp->nfname; i++) {
+		for (i = 0; i < strp->nfname; i++)
 			if (strcmp(cnp->cn_pnbuf, strp->fname[i]) == 0) {
-				/* ELOOP if namei() tries to readlink */
-				ndp->ni_loopcnt = MAXSYMLINKS;
-				cnp->cn_flags &= ~FOLLOW;
-				cnp->cn_flags |= NOFOLLOW;
+				hamper = 1;
 				break;
 			}
-		}
 		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
+
+	if (hamper) {
+		/* ELOOP if namei() tries to readlink */
+		ndp->ni_loopcnt = MAXSYMLINKS;
+		cnp->cn_flags &= ~FOLLOW;
+		cnp->cn_flags |= NOFOLLOW;
+	}
 }
 
 struct str_process *
@@ -1614,7 +1653,11 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	struct str_msgcontainer *cont;
 	struct str_message *msg;
 	struct fsystrace *fst = strp->parent;
-	int st;
+	int st, pri;
+
+	pri = PWAIT|PCATCH;
+	if (type == SYSTR_MSG_EXECVE)
+		pri &= ~PCATCH;
 
 	cont = pool_get(&systr_msgcontainer_pl, PR_WAITOK);
 	memset(cont, 0, sizeof(struct str_msgcontainer));
@@ -1651,7 +1694,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 		int f;
 		f = curlwp->l_flag & L_SA;
 		curlwp->l_flag &= ~L_SA;
-		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
+		st = tsleep(strp, pri, "systrmsg", 0);
 		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);

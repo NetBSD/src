@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.199 2005/06/10 23:32:16 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.200 2005/06/26 19:58:29 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.199 2005/06/10 23:32:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.200 2005/06/26 19:58:29 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -66,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.199 2005/06/10 23:32:16 elad Exp $")
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 #endif
+
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif /* SYSTRACE */
 
 #include <uvm/uvm_extern.h>
 
@@ -201,7 +205,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  * ON ENTRY:
  *	exec package with appropriate namei info
  *	proc pointer of exec'ing proc
- *      iff verified exec enabled then flag indicating a direct exec or
+ *      if verified exec enabled then flag indicating a direct exec or
  *        an indirect exec (i.e. for a shell script interpreter)
  *	NO SELF-LOCKED VNODES
  *
@@ -222,7 +226,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  */
 int
 #ifdef VERIFIED_EXEC
-check_exec(struct proc *p, struct exec_package *epp, int direct_exec)
+check_exec(struct proc *p, struct exec_package *epp, int flag)
 #else
 check_exec(struct proc *p, struct exec_package *epp)
 #endif
@@ -270,8 +274,8 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 #ifdef VERIFIED_EXEC
         /* Evaluate signature for file... */
-        if ((error = veriexec_verify(p, vp, epp->ep_vap,
-				     epp->ep_name, direct_exec)) != 0)
+        if ((error = veriexec_verify(p, vp, epp->ep_vap, epp->ep_name,
+				     flag, NULL)) != 0)
                 goto bad2;
 #endif
 
@@ -391,6 +395,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	int			oldlwpflags;
+#ifdef SYSTRACE
+	int			wassugid = ISSET(p->p_flag, P_SUGID);
+	char			pathbuf[MAXPATHLEN];
+	size_t			pathbuflen;
+#endif /* SYSTRACE */
 
 	/* Disable scheduler activation upcalls. */
 	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
@@ -416,12 +425,25 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
+#ifdef SYSTRACE
+	error = copyinstr(SCARG(uap, path), pathbuf, sizeof(pathbuf),
+			  &pathbuflen);
+	if (error)
+		goto clrflg;
+
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
+#else
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+#endif /* SYSTRACE */
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
+#ifdef SYSTRACE
+	pack.ep_name = pathbuf;
+#else
 	pack.ep_name = SCARG(uap, path);
+#endif /* SYSTRACE */
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -843,6 +865,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		splx(s);
 	}
 
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE) &&
+	    wassugid && !ISSET(p->p_flag, P_SUGID))
+		systrace_execve(pathbuf, p);
+#endif /* SYSTRACE */
+
 	return (EJUSTRETURN);
 
  bad:
@@ -862,13 +890,17 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
+	free(pack.ep_hdr, M_EXEC);
+
+#ifdef SYSTRACE
+ clrflg:
+#endif /* SYSTRACE */
 	l->l_flag |= oldlwpflags;
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
 
-	free(pack.ep_hdr, M_EXEC);
 	return error;
 
  exec_abort:
