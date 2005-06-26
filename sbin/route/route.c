@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.81 2005/06/25 06:38:35 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.82 2005/06/26 21:28:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.81 2005/06/25 06:38:35 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.82 2005/06/26 21:28:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: route.c,v 1.81 2005/06/25 06:38:35 dyoung Exp $");
 
 typedef union sockunion *sup;
 
-static void usage(char *)__attribute__((__noreturn__));
+static void usage(const char *)__attribute__((__noreturn__));
 static char *any_ntoa(const struct sockaddr *);
 static void set_metric(char *, int);
 static int newroute(int, char **);
@@ -88,7 +88,7 @@ static int inet6_makenetandmask(struct sockaddr_in6 *);
 static int getaddr(int, char *, struct hostent **);
 static int flushroutes(int, char *[], int);
 #ifndef SMALL
-static int prefixlen(char *);
+static int prefixlen(const char *);
 static int x25_makemask(void);
 static void interfaces(void);
 static void monitor(void);
@@ -102,7 +102,7 @@ static void pmsg_common(struct rt_msghdr *);
 static void pmsg_addrs(char *, int);
 static void bprintf(FILE *, int, u_char *);
 static int keyword(char *);
-static void sodump(sup, char *);
+static void sodump(sup, const char *);
 static void sockaddr(char *, struct sockaddr *);
 
 union	sockunion {
@@ -132,13 +132,13 @@ short ns_bh[] = {-1,-1,-1};
 
 
 static void
-usage(char *cp)
+usage(const char *cp)
 {
 
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
-	    "usage: %s [ -fnqvs ] cmd [[ -<qualifers> ] args ]\n",
+	    "Usage: %s [ -fnqvs ] cmd [[ -<qualifers> ] args ]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
@@ -466,10 +466,10 @@ netmask_string(struct sockaddr *mask, int len)
 }
 
 
-char *
+const char *
 routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 {
-	char *cp;
+	const char *cp;
 	static char line[50];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
@@ -513,9 +513,10 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 			hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
 				AF_INET);
 			if (hp) {
-				if ((cp = strchr(hp->h_name, '.')) &&
-				    !strcmp(cp + 1, domain))
-					*cp = 0;
+				char *ccp;
+				if ((ccp = strchr(hp->h_name, '.')) &&
+				    !strcmp(ccp + 1, domain))
+					*ccp = 0;
 				cp = hp->h_name;
 			}
 		}
@@ -597,10 +598,10 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
  * Return the name of the network whose address is given.
  * The address is assumed to be that of a net or subnet, not a host.
  */
-char *
+const char *
 netname(struct sockaddr *sa, struct sockaddr *nm)
 {
-	char *cp = 0;
+	const char *cp = 0;
 	static char line[50];
 	struct netent *np = 0;
 	u_int32_t net, mask;
@@ -773,7 +774,7 @@ set_metric(char *value, int key)
 static int
 newroute(int argc, char **argv)
 {
-	char *cmd, *dest = "", *gateway = "";
+	const char *cmd, *dest = "", *gateway = "";
 	const char *error;
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
 	int key;
@@ -1089,7 +1090,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
 static int
 inet6_makenetandmask(struct sockaddr_in6 *sin6)
 {
-	char *plen;
+	const char *plen;
 	struct in6_addr in6;
 
 	plen = NULL;
@@ -1331,7 +1332,7 @@ netdone:
 }
 
 int
-prefixlen(char *s)
+prefixlen(const char *s)
 {
 	int len = atoi(s), q, r;
 	int max;
@@ -1396,14 +1397,14 @@ x25_makemask(void)
 }
 
 
-char *
+const char *
 ns_print(struct sockaddr_ns *sns)
 {
 	struct ns_addr work;
 	union { union ns_net net_e; u_int32_t int32_t_e; } net;
 	u_short port;
 	static char mybuf[50], cport[10], chost[25];
-	char *host = "";
+	const char *host = "";
 	char *p;
 	u_char *q;
 
@@ -1617,7 +1618,7 @@ mask_addr(void)
 #endif /* SMALL */
 }
 
-char *msgtypes[] = {
+const char *msgtypes[] = {
 	"",
 	"RTM_ADD: Add Route",
 	"RTM_DELETE: Delete Route",
@@ -1910,7 +1911,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	if ((rtm->rtm_addrs & RTF_GATEWAY) == 0)
 		rv = 1;
 	else {
-		char *name;
+		const char *name;
 		int addrs;
 
 		cp = (char *)(rtm + 1);
@@ -2012,7 +2013,7 @@ keyword(char *cp)
 }
 
 static void
-sodump(sup su, char *which)
+sodump(sup su, const char *which)
 {
 #ifdef INET6
 	char ntop_buf[NI_MAXHOST];

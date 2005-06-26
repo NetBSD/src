@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.23 2005/05/13 14:58:47 ginsbach Exp $	*/
+/*	$NetBSD: show.c,v 1.24 2005/06/26 21:28:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.23 2005/05/13 14:58:47 ginsbach Exp $");
+__RCSID("$NetBSD: show.c,v 1.24 2005/06/26 21:28:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ p_rtentry(struct rt_msghdr *rtm)
 static void
 pr_family(int af)
 {
-	char *afname;
+	const char *afname;
 
 	switch (af) {
 	case AF_INET:
@@ -270,8 +270,8 @@ pr_family(int af)
 static void
 p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 {
-	char workbuf[128], *cplim;
-	char *cp = workbuf;
+	char workbuf[128];
+	const char *cp;
 
 	switch(sa->sa_family) {
 
@@ -304,14 +304,15 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 	default:
 	    {
 		u_char *s = (u_char *)sa->sa_data, *slim;
+		char *wp = workbuf, *wplim;
 
 		slim = sa->sa_len + (u_char *) sa;
-		cplim = cp + sizeof(workbuf) - 6;
-		cp += snprintf(cp, cplim - cp, "(%d)", sa->sa_family);
-		while (s < slim && cp < cplim) {
-			cp += snprintf(cp, cplim - cp, " %02x", *s++);
+		wplim = wp + sizeof(workbuf) - 6;
+		wp += snprintf(wp, wplim - wp, "(%d)", sa->sa_family);
+		while (s < slim && wp < wplim) {
+			wp += snprintf(wp, wplim - wp, " %02x", *s++);
 			if (s < slim)
-			    cp += snprintf(cp, cplim - cp, "%02x", *s++);
+			    wp += snprintf(wp, wplim - wp, "%02x", *s++);
 		}
 		cp = workbuf;
 	    }
