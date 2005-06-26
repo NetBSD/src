@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.3 2005/06/26 04:34:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.3 2005/06/26 04:34:43 dyoung Exp $");
 #endif
 
 /*
@@ -230,23 +230,31 @@ ieee80211_sysctl_detach(struct ieee80211com *ic)
  *	must not return NULL.
  */	
 static struct ieee80211_node *
-ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
-    u_short if_index)
+ieee80211_node_walkfirst(struct ieee80211_node_walk *nw, u_short if_index)
 {
-	struct ieee80211com *ic;
 	(void)memset(nw, 0, sizeof(*nw));
 
 	nw->nw_ifindex = if_index;
 
-	LIST_FOREACH(ic, &ieee80211com_head, ic_list) {
-		if (if_index != 0 && ic->ic_ifp->if_index != if_index)
+	LIST_FOREACH(nw->nw_ic, &ieee80211com_head, ic_list) {
+		if (if_index != 0 && nw->nw_ic->ic_ifp->if_index != if_index)
 			continue;
-		nw->nw_ic = ic;
-		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_sta.nt_node);
+		if (!TAILQ_EMPTY(&nw->nw_ic->ic_sta.nt_node))
+			nw->nw_nt = &nw->nw_ic->ic_sta;
+		else if (!TAILQ_EMPTY(&nw->nw_ic->ic_scan.nt_node))
+			nw->nw_nt = &nw->nw_ic->ic_scan;
+		else if (nw->nw_ic->ic_bss == NULL)
+			continue;
 		break;
 	}
 
-	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
+	if (nw->nw_ic == NULL)
+		return NULL;
+
+	if (nw->nw_nt == NULL)
+		nw->nw_ni = nw->nw_ic->ic_bss;
+	else
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
 
 	return nw->nw_ni;
 }
@@ -254,14 +262,22 @@ ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
 static struct ieee80211_node *
 ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 {
-	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
+	if (nw->nw_nt != NULL)
+		nw->nw_ni = TAILQ_NEXT(nw->nw_ni, ni_list);
+	else
+		nw->nw_ni = NULL;
 
-	if (nw->nw_ic == NULL && nw->nw_ni == NULL)
-		return NULL;
-
-	nw->nw_ni = TAILQ_NEXT(nw->nw_ni, ni_list);
-
-	if (nw->nw_ni == NULL) {
+	while (nw->nw_ni == NULL) {
+		if (nw->nw_nt == &nw->nw_ic->ic_sta) {
+			nw->nw_nt = &nw->nw_ic->ic_scan;
+			nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
+			continue;
+		} else if (nw->nw_nt == &nw->nw_ic->ic_scan) {
+			nw->nw_nt = NULL;
+			nw->nw_ni = nw->nw_ic->ic_bss;
+			continue;
+		}
+		KASSERT(nw->nw_nt == NULL);
 		if (nw->nw_ifindex != 0)
 			return NULL;
 
@@ -269,10 +285,9 @@ ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 		if (nw->nw_ic == NULL)
 			return NULL;
 
-		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_sta.nt_node);
+		nw->nw_nt = &nw->nw_ic->ic_sta;
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
 	}
-
-	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
 
 	return nw->nw_ni;
 }
@@ -582,6 +597,10 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_join_event iev;
 
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%s: %snode %s join\n",
+	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
+	    ether_sprintf(ni->ni_macaddr));
+
 	if (ni == ic->ic_bss) {
 		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_bssid);
@@ -602,6 +621,10 @@ ieee80211_notify_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_leave_event iev;
+
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%s: %snode %s leave\n",
+	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
+	    ether_sprintf(ni->ni_macaddr));
 
 	if (ni == ic->ic_bss) {
 		rt_ieee80211msg(ifp, RTM_IEEE80211_DISASSOC, NULL, 0);
