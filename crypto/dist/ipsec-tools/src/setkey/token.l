@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.3 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.4 2005/06/26 23:49:31 christos Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -61,19 +61,7 @@
 #else
 #include "y.tab.h"
 #endif
-
-int lineno = 1;
-
-extern u_char m_buf[BUFSIZ];
-extern u_int m_len;
-extern int f_debug;
-
-int yylex __P((void));
-void yyfatal __P((const char *s));
-void yyerror __P((const char *s));
-extern void parse_init __P((void));
-int parse __P((FILE **));
-int yyparse __P((void));
+#include "extern.h"
 
 /* make the code compile on *BSD-current */
 #ifndef SADB_X_AALG_SHA2_256
@@ -335,6 +323,7 @@ parse(fp)
 {
 	yyin = *fp;
 
+	lineno = 1;
 	parse_init();
 
 	if (yyparse()) {
