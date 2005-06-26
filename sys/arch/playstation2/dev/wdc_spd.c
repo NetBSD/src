@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.18 2004/08/25 10:40:15 he Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.18 2004/08/25 10:40:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,20 +45,20 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.18 2004/08/25 10:40:15 he Exp $");
 
 #define __read_1(a)							\
 ({									\
-	u_int32_t a_ = (a);						\
-	u_int8_t r = (*(__volatile__ u_int8_t *)a_);			\
+	u_int32_t ra_ = (a);						\
+	u_int8_t r = (*(__volatile__ u_int8_t *)ra_);			\
 									\
-	if (a_ == 0xb400004e)	/* (wdc)STAT  LED off */		\
+	if (ra_ == 0xb400004e)	/* (wdc)STAT  LED off */		\
 		SPD_LED_OFF();						\
 									\
 	(r);								\
 })
 #define __write_1(a, v)							\
 {									\
-	u_int32_t a_ = (a);						\
-	(*(__volatile__ u_int8_t *)a_) = (v);				\
+	u_int32_t wa_ = (a);						\
+	(*(__volatile__ u_int8_t *)wa_) = (v);				\
 									\
-	if (a_ == 0xb400004e)	/* (wdc)CMD  LED on */			\
+	if (wa_ == 0xb400004e)	/* (wdc)CMD  LED on */			\
 		SPD_LED_ON();						\
 }
 #define _PLAYSTATION2_BUS_SPACE_PRIVATE
