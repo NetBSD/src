@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumext.h,v 1.3 2005/02/04 02:10:49 perry Exp $
+ * $Id: vinumext.h,v 1.4 2005/06/26 22:32:30 christos Exp $
  */
 
 /* vinumext.h: external definitions */
@@ -64,6 +64,12 @@ struct vnode;
 struct proc;
 #endif
 
+u_int64_t sizespec(char *);
+/* Device number decoding */
+int Volno(dev_t);
+int Plexno(dev_t);
+int Sdno(dev_t);
+
 #ifdef _KERNEL
 int vinum_inactive(int);
 void free_vinum(int);
@@ -74,7 +80,6 @@ struct drive *check_drive(char *);
 enum drive_label_info read_drive_label(struct drive *, int);
 int parse_config(char *, struct keywordset *, int);
 int parse_user_config(char *cptr, struct keywordset *keyset);
-u_int64_t sizespec(char *spec);
 int volume_index(struct volume *volume);
 int plex_index(struct plex *plex);
 int sd_index(struct sd *sd);
@@ -171,11 +176,6 @@ void expand_table(void **, int, int);
 struct request;
 struct rqgroup *allocrqg(struct request *rq, int elements);
 void deallocrqg(struct rqgroup *rqg);
-
-/* Device number decoding */
-int Volno(dev_t x);
-int Plexno(dev_t x);
-int Sdno(dev_t x);
 
 /* State transitions */
 int set_drive_state(int driveno, enum drivestate state, enum setstateflags flags);
