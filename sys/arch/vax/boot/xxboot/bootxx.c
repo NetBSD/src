@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.19 2005/06/27 11:27:17 junyoung Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.20 2005/06/27 11:28:51 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -31,24 +31,24 @@
  *	@(#)boot.c	7.15 (Berkeley) 5/4/91
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "sys/disklabel.h"
-#include "sys/exec.h"
-#include "sys/exec_elf.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
-#include "lib/libsa/cd9660.h"
-#include "lib/libsa/ustarfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/ustarfs.h>
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/mtpr.h"
-#include "machine/reg.h"
-#include "machine/rpb.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/mtpr.h>
+#include <machine/reg.h>
+#include <machine/rpb.h>
 #include "../vax/gencons.h"
 
 #include "../mba/mbareg.h"
@@ -57,8 +57,8 @@
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 
-#include "dev/mscp/mscp.h"
-#include "dev/mscp/mscpreg.h"
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
 
 #include "../boot/data.h"
 
