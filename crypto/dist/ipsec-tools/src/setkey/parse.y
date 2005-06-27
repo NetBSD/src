@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.3 2005/06/26 23:49:31 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.4 2005/06/27 03:19:45 christos Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -75,7 +75,7 @@ u_int32_t p_spi;
 u_int p_ext, p_alg_enc, p_alg_auth, p_replay, p_mode;
 u_int32_t p_reqid;
 u_int p_key_enc_len, p_key_auth_len;
-caddr_t p_key_enc, p_key_auth;
+const char *p_key_enc, *p_key_auth;
 time_t p_lt_hard, p_lt_soft;
 size_t p_lb_hard, p_lb_soft;
 
@@ -86,7 +86,8 @@ static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 
 static struct addrinfo *parse_addr __P((char *, char *));
 static int fix_portstr __P((vchar_t *, vchar_t *, vchar_t *));
-static int setvarbuf __P((char *, int *, struct sadb_ext *, int, caddr_t, int));
+static int setvarbuf __P((char *, int *, struct sadb_ext *, int, const void *,
+    int));
 void free_buffer __P((void));
 
 int setkeymsg0 __P((struct sadb_msg *, unsigned int, unsigned int, size_t));
@@ -927,7 +928,7 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 			/* set dst */
 			sa = d->ai_addr;
@@ -941,7 +942,7 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 			msg->sadb_msg_len = PFKEY_UNIT64(l);
 
@@ -1117,7 +1118,7 @@ setkeymsg_addr(type, satype, srcs, dsts, no_spi)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 			/* set dst */
 			sa = d->ai_addr;
@@ -1130,7 +1131,7 @@ setkeymsg_addr(type, satype, srcs, dsts, no_spi)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 			msg->sadb_msg_len = PFKEY_UNIT64(l);
 
@@ -1218,7 +1219,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m.key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l, &m.ext, sizeof(m.key),
-			(caddr_t)p_key_enc, p_key_enc_len);
+			p_key_enc, p_key_enc_len);
 	}
 
 	/* set authentication algorithm, if present. */
@@ -1236,7 +1237,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m.key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l, &m.ext, sizeof(m.key),
-			(caddr_t)p_key_auth, p_key_auth_len);
+			p_key_auth, p_key_auth_len);
 	}
 
 	/* set lifetime for HARD */
@@ -1329,7 +1330,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 		}
 	}
 #endif
@@ -1369,7 +1370,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 			/* set dst */
 			sa = d->ai_addr;
@@ -1382,7 +1383,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), (caddr_t)sa, salen);
+			    sizeof(m_addr), sa, salen);
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
 			if (p_natt_type) {
@@ -1447,16 +1448,17 @@ static int
 fix_portstr(spec, sport, dport)
 	vchar_t *spec, *sport, *dport;
 {
-	char *p, *p2 = "0";
+	const char *p, *p2 = "0";
+	char *q;
 	u_int l;
 
 	l = 0;
-	for (p = spec->buf; *p != ',' && *p != '\0' && l < spec->len; p++, l++)
+	for (q = spec->buf; *q != ',' && *q != '\0' && l < spec->len; q++, l++)
 		;
-	if (*p != '\0') {
-		if (*p == ',') {
-			*p = '\0';
-			p2 = ++p;
+	if (*q != '\0') {
+		if (*q == ',') {
+			*q = '\0';
+			p2 = ++q;
 		}
 		for (p = p2; *p != '\0' && l < spec->len; p++, l++)
 			;
@@ -1488,7 +1490,7 @@ setvarbuf(buf, off, ebuf, elen, vbuf, vlen)
 	int *off;
 	struct sadb_ext *ebuf;
 	int elen;
-	caddr_t vbuf;
+	const void *vbuf;
 	int vlen;
 {
 	memset(buf + *off, 0, PFKEY_UNUNIT64(ebuf->sadb_ext_len));
