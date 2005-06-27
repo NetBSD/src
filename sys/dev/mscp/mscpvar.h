@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.11 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.12 2005/06/27 11:05:24 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -272,7 +272,7 @@ void	mscp_printevent(struct mscp *);
 void	mscp_go(struct mscp_softc *, struct mscp *, int);
 void	mscp_requeue(struct mscp_softc *);
 void	mscp_dorsp(struct mscp_softc *);
-int	mscp_decodeerror(char *, struct mscp *, struct mscp_softc *);
+int	mscp_decodeerror(const char *, struct mscp *, struct mscp_softc *);
 int	mscp_print(void *, const char *);
 void	mscp_hexdump(struct mscp *);
 void	mscp_strategy(struct buf *, struct device *);
