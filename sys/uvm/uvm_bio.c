@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.38 2005/06/06 12:09:19 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.39 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.38 2005/06/06 12:09:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.39 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.38 2005/06/06 12:09:19 yamt Exp $");
  * local functions
  */
 
-int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **, int,
-    int, vm_fault_t, vm_prot_t, int);
-struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
+static int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
+			  int, int, vm_fault_t, vm_prot_t, int);
+static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 
 /*
  * local data structues
@@ -201,15 +201,10 @@ ubc_init(void)
  * ubc_fault: fault routine for ubc mapping
  */
 
-int
-ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
-	struct uvm_faultinfo *ufi;
-	vaddr_t ign1;
-	struct vm_page **ign2;
-	int ign3, ign4;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
-	int flags;
+static int
+ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
+    int ign3, int ign4, vm_fault_t fault_type, vm_prot_t access_type,
+    int flags)
 {
 	struct uvm_object *uobj;
 	struct ubc_map *umap;
@@ -364,10 +359,8 @@ again:
  * local functions
  */
 
-struct ubc_map *
-ubc_find_mapping(uobj, offset)
-	struct uvm_object *uobj;
-	voff_t offset;
+static struct ubc_map *
+ubc_find_mapping(struct uvm_object *uobj, voff_t offset)
 {
 	struct ubc_map *umap;
 
@@ -389,11 +382,7 @@ ubc_find_mapping(uobj, offset)
  */
 
 void *
-ubc_alloc(uobj, offset, lenp, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	vsize_t *lenp;
-	int flags;
+ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int flags)
 {
 	vaddr_t slot_offset, va;
 	struct ubc_map *umap;
@@ -501,9 +490,7 @@ out:
  */
 
 void
-ubc_release(va, flags)
-	void *va;
-	int flags;
+ubc_release(void *va, int flags)
 {
 	struct ubc_map *umap;
 	struct uvm_object *uobj;
@@ -593,9 +580,7 @@ ubc_release(va, flags)
  */
 
 void
-ubc_flush(uobj, start, end)
-	struct uvm_object *uobj;
-	voff_t start, end;
+ubc_flush(struct uvm_object *uobj, voff_t start, voff_t end)
 {
 	struct ubc_map *umap;
 	vaddr_t va;

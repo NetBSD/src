@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.12 2002/12/01 22:58:43 matt Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.13 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -53,8 +53,7 @@
  */
 
 PAGER_INLINE struct vm_page *
-uvm_pageratop(kva)
-	vaddr_t kva;
+uvm_pageratop(vaddr_t kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
