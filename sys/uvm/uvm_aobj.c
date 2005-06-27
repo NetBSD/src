@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.68 2005/06/27 02:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.68 2005/06/27 02:29:32 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -736,7 +736,7 @@ uao_detach_locked(struct uvm_object *uobj)
  *	start->stop range by a penalty which we define below.
  */
 
-int
+static int
 uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;

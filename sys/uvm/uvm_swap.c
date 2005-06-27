@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.93 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.94 2005/06/27 02:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.93 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.94 2005/06/27 02:29:32 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -236,19 +236,6 @@ static void sw_reg_iodone(struct buf *);
 static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
-
-dev_type_read(swread);
-dev_type_write(swwrite);
-dev_type_strategy(swstrategy);
-
-const struct bdevsw swap_bdevsw = {
-	noopen, noclose, swstrategy, noioctl, nodump, nosize,
-};
-
-const struct cdevsw swap_cdevsw = {
-	nullopen, nullclose, swread, swwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
-};
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -1035,37 +1022,11 @@ swap_off(struct proc *p, struct swapdev *sdp)
  */
 
 /*
- * swread: the read function for the drum (just a call to physio)
- */
-/*ARGSUSED*/
-int
-swread(dev_t dev, struct uio *uio, int ioflag)
-{
-	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-/*
- * swwrite: the write function for the drum (just a call to physio)
- */
-/*ARGSUSED*/
-int
-swwrite(dev_t dev, struct uio *uio, int ioflag)
-{
-	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
-}
-
-/*
  * swstrategy: perform I/O on the drum
  *
  * => we must map the i/o request from the drum to the correct swapdev.
  */
-void
+static void
 swstrategy(struct buf *bp)
 {
 	struct swapdev *sdp;
@@ -1148,6 +1109,41 @@ swstrategy(struct buf *bp)
 	}
 	/* NOTREACHED */
 }
+
+/*
+ * swread: the read function for the drum (just a call to physio)
+ */
+/*ARGSUSED*/
+static int
+swread(dev_t dev, struct uio *uio, int ioflag)
+{
+	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
+
+	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+/*
+ * swwrite: the write function for the drum (just a call to physio)
+ */
+/*ARGSUSED*/
+static int
+swwrite(dev_t dev, struct uio *uio, int ioflag)
+{
+	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
+
+	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
+const struct bdevsw swap_bdevsw = {
+	noopen, noclose, swstrategy, noioctl, nodump, nosize,
+};
+
+const struct cdevsw swap_cdevsw = {
+	nullopen, nullclose, swread, swwrite, noioctl,
+	    nostop, notty, nopoll, nommap, nokqfilter
+};
 
 /*
  * sw_reg_strategy: handle swap i/o to regular files
