@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.4 2005/06/27 11:21:25 junyoung Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
 #define NRSP 0 /* Kludge */
 #define NCMD 0 /* Kludge */
 

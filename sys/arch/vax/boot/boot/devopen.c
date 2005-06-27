@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.11 2003/11/01 13:02:04 jdolecek Exp $ */
+/*	$NetBSD: devopen.c,v 1.12 2005/06/27 11:21:25 junyoung Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -62,7 +62,7 @@ devopen(f, fname, file)
 
 	/*
 	 * Adaptor and controller are normally zero (or uninteresting),
-	 * but we need to do some conversion here anyway (if it's a 
+	 * but we need to do some conversion here anyway (if it's a
 	 * manual boot, but that's checked by the device driver).
 	 * Set them to -1 to tell if it's a set number or default.
 	 */
