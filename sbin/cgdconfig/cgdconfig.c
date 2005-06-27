@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.15 2005/03/30 20:59:34 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.16 2005/06/27 03:07:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.15 2005/03/30 20:59:34 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.16 2005/06/27 03:07:45 christos Exp $");
 #endif
 
 #include <err.h>
@@ -548,10 +548,10 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 		return -1;
 
 	memset(&ci, 0x0, sizeof(ci));
-	ci.ci_disk = (char *)dev;
-	ci.ci_alg = (char *)string_tocharstar(p->algorithm);
-	ci.ci_ivmethod = (char *)string_tocharstar(p->ivmeth);
-	ci.ci_key = (char *)bits_getbuf(p->key);
+	ci.ci_disk = dev;
+	ci.ci_alg = string_tocharstar(p->algorithm);
+	ci.ci_ivmethod = string_tocharstar(p->ivmeth);
+	ci.ci_key = bits_getbuf(p->key);
 	ci.ci_keylen = p->keylen;
 	ci.ci_blocksize = p->bsize;
 

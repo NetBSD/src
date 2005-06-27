@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdparse.y,v 1.1 2003/03/24 02:02:50 elric Exp $ */
+/* $NetBSD: cgdparse.y,v 1.2 2005/06/27 03:07:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,23 +39,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdparse.y,v 1.1 2003/03/24 02:02:50 elric Exp $");
+__RCSID("$NetBSD: cgdparse.y,v 1.2 2005/06/27 03:07:45 christos Exp $");
 #endif
 
 #include <stdio.h>
 
 #include "params.h"
 #include "utils.h"
+#include "extern.h"
 
-extern char *yytext;
-extern int yylineno;
-
-int yylex(void);
-int yyerror(char *);
-
-struct params *cgdparsefile(FILE *);
-
-struct params *yy_global_params;
+static struct params *yy_global_params;
 
 %}
 %union {
@@ -144,8 +137,6 @@ deptoken: KEYGEN_METHOD | KEYGEN_SALT
 	| KEYGEN_ITERATIONS | XOR_KEY
 
 %%
-
-extern FILE *yyin;
 
 struct params *
 cgdparsefile(FILE *f)
