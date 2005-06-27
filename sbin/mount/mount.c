@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.77 2005/03/18 04:24:35 lukem Exp $	*/
+/*	$NetBSD: mount.c,v 1.78 2005/06/27 01:00:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.77 2005/03/18 04:24:35 lukem Exp $");
+__RCSID("$NetBSD: mount.c,v 1.78 2005/06/27 01:00:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,7 +467,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/%s", *edir, execbase);
-			(void)execv(execname, (char * const *)argv);
+			(void)execv(execname, __UNCONST(argv));
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
 		} while (*++edir != NULL);

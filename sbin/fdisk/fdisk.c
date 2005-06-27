@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.91 2005/06/12 19:14:10 dyoung Exp $ */
+/*	$NetBSD: fdisk.c,v 1.92 2005/06/27 01:00:05 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.91 2005/06/12 19:14:10 dyoung Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.92 2005/06/27 01:00:05 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -127,7 +127,7 @@ struct {
 	int		is_corrupt;	/* 1 if extended chain illegal */
 } ext;
 
-char *boot_dir = DEFAULT_BOOTDIR;
+const char *boot_dir = DEFAULT_BOOTDIR;
 char *boot_path = 0;			/* name of file we actually opened */
 
 #ifdef BOOTSEL
@@ -593,7 +593,7 @@ void
 print_part(struct mbr_sector *boot, int part, daddr_t offset)
 {
 	struct mbr_partition *partp;
-	char *e;
+	const char *e;
 
 	if (!sh_flag) {
 		print_mbr_partition(boot, part, offset, 0, 0);
@@ -1072,7 +1072,7 @@ install_bootsel(int needed)
 	struct mbr_bootsel *mbs = &mboot.mbr_bootsel;
 	int p;
 	int ext13 = 0;
-	char *code;
+	const char *code;
 
 	needed |= MBR_BS_NEWMBR;	/* need new bootsel code */
 
@@ -1634,7 +1634,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	struct mbr_partition *partp;
 	struct mbr_sector *boot;
 	daddr_t offset;
-	char *e;
+	const char *e;
 	int upart = part;
 	int p;
 	int fl;
