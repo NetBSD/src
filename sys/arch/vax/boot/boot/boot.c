@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2003/11/01 13:02:04 jdolecek Exp $ */
+/*	$NetBSD: boot.c,v 1.22 2005/06/27 11:21:25 junyoung Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -150,7 +150,7 @@ Xmain(void)
 					      (void *)marks[MARK_END]);
 			}
 			if (!filelist[fileindex].quiet)
-				printf("%s: boot failed: %s\n", 
+				printf("%s: boot failed: %s\n",
 				    filelist[fileindex].name, strerror(errno));
 #if 0 /* Will hang VAX 4000 machines */
 			if (testkey())
@@ -230,7 +230,7 @@ fail:			printf("usage: boot [filename] [-asdqv]\n");
 		}
 		bootrpb.rpb_bootr5 = howto;
 	}
-load:	
+load:
 	marks[MARK_START] = 0;
 	err = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
 	if (err == 0) {
