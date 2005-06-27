@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.143 2005/06/26 11:26:44 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.144 2005/06/27 09:21:15 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9785,4 +9785,11 @@ sys/dev/pci/siside.c				1.17
 
 	Add quirk for SIS 96x that masquerade as a SIS503 and add SIS 965.
 	[bouyer, ticket #498]
+
+libexec/telnetd/ext.h				1.20
+libexec/telnetd/state.c				1.26
+libexec/telnetd/telnetd.c			1.48
+
+	Remove static local variable so its easier to correctly use strlcpy.
+	[lha, ticket #502]
 
