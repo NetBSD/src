@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.9 2005/04/14 21:15:59 perseant Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.10 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -69,7 +69,7 @@ extern char *typemap;		/* ptr to inode type table */
 extern int16_t *lncntp;		/* ptr to link count table */
 
 extern ino_t lfdir;		/* lost & found directory inode number */
-extern char *lfname;		/* lost & found directory name */
+extern const char *lfname;	/* lost & found directory name */
 extern int lfmode;		/* lost & found directory creation mode */
 
 extern daddr_t n_blks;		/* number of blocks in use */

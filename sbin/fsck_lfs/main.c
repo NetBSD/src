@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.24 2005/04/23 20:21:03 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.25 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,7 +52,7 @@
 
 int returntosingle;
 
-static int argtoi(int, char *, char *, int);
+static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
 static void usage(void);
 extern void (*panic_func)(int, const char *, va_list);
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = 0;
-	char *optstring = "b:dfi:m:npPqy";
+	const char *optstring = "b:dfi:m:npPqy";
 
 	sync();
 	skipclean = 1;
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 }
 
 static int
-argtoi(int flag, char *req, char *str, int base)
+argtoi(int flag, const char *req, const char *str, int base)
 {
 	char *cp;
 	int ret;
