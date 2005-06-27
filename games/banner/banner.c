@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.13 2005/06/27 19:49:20 rillig Exp $	*/
+/*	$NetBSD: banner.c,v 1.14 2005/06/27 20:32:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.13 2005/06/27 19:49:20 rillig Exp $");
+__RCSID("$NetBSD: banner.c,v 1.14 2005/06/27 20:32:07 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ const int asc_ptr[NCHARS] = {
  * is the next elt in array) and goto second
  * next element in array.
  */
-const char data_table[NBYTES] = {
+const unsigned char data_table[NBYTES] = {
 /*             0     1     2     3     4     5     6     7     8     9 */
 /*    0 */   129,  227,  130,   34,    6,   90,   19,  129,   32,   10, 
 /*   10 */    74,   40,  129,   31,   12,   64,   53,  129,   30,   14, 
@@ -1102,7 +1102,7 @@ main(argc, argv)
 		for (i = 0; i < NBYTES; i += 10) {
 			printf("/* %4d */  ",i);
 			for (j = i; j < i+10; j++) { 
-				x = data_table[j] & 0377;
+				x = data_table[j];
 				printf(" %3d, ",x);
 			}
 			putchar('\n');
@@ -1139,7 +1139,7 @@ main(argc, argv)
 				printf("bad pc: %d\n",pc);
 				exit(1);
 			}
-			x = data_table[pc] & 0377;
+			x = data_table[pc];
 			if (trace)
 				printf("pc=%d, term=%d, max=%d, linen=%d, x=%d\n",pc,term,max,linen,x);
 			if (x >= 128) {
@@ -1159,7 +1159,7 @@ main(argc, argv)
 			else {
 				y = data_table[pc+1];
 				/* compensate for narrow teminals */
-#ifdef notdef
+#if 0 /* notdef */
 				x = (x*width + (DWIDTH/2)) / DWIDTH;
 				y = (y*width + (DWIDTH/2)) / DWIDTH;
 #endif
