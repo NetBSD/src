@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.33 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: optr.c,v 1.34 2005/06/27 01:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.33 2004/04/21 01:05:32 christos Exp $");
+__RCSID("$NetBSD: optr.c,v 1.34 2005/06/27 01:37:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ int	datesort(const void *, const void *);
 extern  char *time_string;
 extern  char default_time_string[];
 
-static void do_timestamp(time_t, char *);
+static void do_timestamp(time_t, const char *);
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -82,10 +82,10 @@ static void do_timestamp(time_t, char *);
  *	that dump needs attention.
  */
 static	int timeout;
-static	char *attnmessage;		/* attention message */
+static	const char *attnmessage;		/* attention message */
 
 int
-query(char *question)
+query(const char *question)
 {
 	char	replybuffer[64];
 	int	back, errcount;
@@ -186,7 +186,7 @@ interrupt(int signo)
  *	Use wall(1) "-g operator" to do the actual broadcasting.
  */
 void
-broadcast(char	*message)
+broadcast(const char *message)
 {
 	FILE	*fp;
 	char	buf[sizeof(_PATH_WALL) + sizeof(OPGRENT) + 3];
@@ -213,7 +213,7 @@ broadcast(char	*message)
 #define STAMP_LENGTH 80
 
 static void
-do_timestamp(time_t thistime, char *message)
+do_timestamp(time_t thistime, const char *message)
 {
 	struct tm tm_time;
 	char then[STAMP_LENGTH + 1];
@@ -451,7 +451,8 @@ lastdump(char arg)
 	int i;
 	struct fstab *dt;
 	struct dumpdates *dtwalk;
-	char *lastname, *date;
+	char *date;
+	const char *lastname;
 	int dumpme;
 	time_t tnow;
 
@@ -491,8 +492,8 @@ lastdump(char arg)
 int
 datesort(const void *a1, const void *a2)
 {
-	struct dumpdates *d1 = *(struct dumpdates **)a1;
-	struct dumpdates *d2 = *(struct dumpdates **)a2;
+	const struct dumpdates *d1 = *(const struct dumpdates *const *)a1;
+	const struct dumpdates *d2 = *(const struct dumpdates *const *)a2;
 	int diff;
 
 	diff = strncmp(d1->dd_name, d2->dd_name, sizeof(d1->dd_name));
