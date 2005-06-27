@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14 2005/05/31 00:40:17 chs Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.15 2005/06/27 11:03:25 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2005/05/31 00:40:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,7 +105,7 @@ typedef struct {
 	char	       *curp;	/* pointer into result */
 	char	       *ppc;	/* pseudo PC */
 	int		opc;	/* op-code */
-	char	       *argp;	/* pointer into argument-list */
+	const char	*argp;	/* pointer into argument-list */
 	int		itype;	/* instruction-type, eg. branch, call, unspec */
 	int		atype;	/* argument-type, eg. byte, long, address */
 	int		off;	/* offset specified by last argument */
@@ -331,19 +331,19 @@ get_operand(ib, size)
 		break;
 
 	case 5:		/* register */
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		break;
 
 	case 6:		/* register deferred */
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
 	case 7:		/* autodecrement */
 		add_char(ib, '-');
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		if (reg == 0x0F) {	/* pc is not allowed in this mode */
 			err_print("autodecrement not allowd for PC.\n");
@@ -383,7 +383,7 @@ get_operand(ib, size)
 			break;
 		}
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		add_char(ib, '+');
 		break;
@@ -399,7 +399,7 @@ get_operand(ib, size)
 		/* add_str (ib, "b^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -414,7 +414,7 @@ get_operand(ib, size)
 		/* add_str (ib, "w^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -429,7 +429,7 @@ get_operand(ib, size)
 		/* add_str (ib, "l^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
