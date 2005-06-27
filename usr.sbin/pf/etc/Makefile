@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/14 11:26:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2005/06/27 20:32:40 peter Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,5 @@ FILESMODE=	644
 
 CONFIGFILES+=	pf.conf
 CONFIGFILES+=	pf.os
-CONFIGFILES+=	spamd.conf
 
 .include <bsd.prog.mk>
