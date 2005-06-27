@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.11 2002/06/04 15:13:55 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.12 2005/06/27 11:21:25 junyoung Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 
@@ -84,7 +84,7 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	char *msg;
 
 #ifdef DEV_DEBUG
-	printf("raopen: adapter %d ctlr %d unit %d part %d\n", 
+	printf("raopen: adapter %d ctlr %d unit %d part %d\n",
 	    adapt, ctlr, unit, part);
 	printf("raopen: csrbase %x nexaddr %x\n", csrbase, nexaddr);
 #endif
@@ -312,7 +312,7 @@ rastrategy(void *f, int func, daddr_t dblk,
 		uda.uda_cmd.mscp_seq.seq_bytecount = size;
 		uda.uda_cmd.mscp_unit = dunit;
 #ifdef DEV_DEBUG
-		printf("rastrategy: blk 0x%lx count %lx unit %x\n", 
+		printf("rastrategy: blk 0x%lx count %lx unit %x\n",
 		    uda.uda_cmd.mscp_seq.seq_lbn, size, dunit);
 #endif
 #ifdef notdef

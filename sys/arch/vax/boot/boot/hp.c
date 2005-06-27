@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.5 2000/07/19 00:58:25 matt Exp $ */
+/*	$NetBSD: hp.c,v 1.6 2005/06/27 11:21:25 junyoung Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,8 +30,6 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
-
 
 #include "sys/param.h"
 #include "sys/disklabel.h"
