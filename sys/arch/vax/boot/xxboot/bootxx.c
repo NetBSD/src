@@ -1,4 +1,5 @@
-/* $NetBSD: bootxx.c,v 1.18 2004/01/06 17:01:48 matt Exp $ */
+/*	$NetBSD: bootxx.c,v 1.19 2005/06/27 11:27:17 junyoung Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -103,7 +104,7 @@ Xmain()
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 	moved = 0;
 	/*
-	 */ 
+	 */
 	rpb = (void *)0xf0000; /* Safe address right now */
 	bqo = (void *)0xf1000;
         if (from == FROMMV) {
@@ -152,7 +153,7 @@ Xmain()
 			goto die;
 		vax_load_failure++;
 		entry = hdr.elf.e_entry;
-		if (hdr.elf.e_phoff != sizeof(hdr.elf)) 
+		if (hdr.elf.e_phoff != sizeof(hdr.elf))
 			goto die;
 		vax_load_failure++;
 		read(io, &ph, sizeof(ph));
@@ -247,7 +248,7 @@ devopen(f, fname, file)
 		initfn = rpb->iovec + bqo->unit_init;
 		if (rpb->devtyp == BDEV_UDA || rpb->devtyp == BDEV_TK) {
 			/*
-			 * This reset do not seem to be done in the 
+			 * This reset do not seem to be done in the
 			 * ROM routines, so we have to do it manually.
 			 */
 			csr = (struct udadevice *)rpb->csrphy;
