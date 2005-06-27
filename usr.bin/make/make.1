@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.117 2005/06/27 00:17:08 lukem Exp $
+.\"	$NetBSD: make.1,v 1.118 2005/06/27 09:51:09 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -601,14 +601,14 @@ Its value is determined by trying to
 to the following directories in order and using the first match:
 .Bl -enum
 .It
-.Li ${MAKEOBJDIRPREFIX}${.CURDIR}
-.br
+.Ev ${MAKEOBJDIRPREFIX}${.CURDIR}
+.Pp
 (Only if
 .Ql Ev MAKEOBJDIRPREFIX
 is set in the environment or on the command line.)
 .It
-.Li ${MAKEOBJDIR}
-.br
+.Ev ${MAKEOBJDIR}
+.Pp
 (Only if
 .Ql Ev MAKEOBJDIR
 is set in the environment or on the command line.)
