@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.16 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: dir.c,v 1.17 2005/06/27 02:49:32 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -272,14 +272,14 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 }
 
 void
-direrror(ino_t ino, char *errmesg)
+direrror(ino_t ino, const char *errmesg)
 {
 
 	fileerror(ino, ino, errmesg);
 }
 
 void
-fileerror(ino_t cwd, ino_t ino, char *errmesg)
+fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 {
 	char pathbuf[MAXPATHLEN + 1];
 	struct uvnode *vp;
