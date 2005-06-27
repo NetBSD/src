@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.15 2004/02/08 11:47:36 jsm Exp $	*/
+/*	$NetBSD: factor.c,v 1.16 2005/06/27 20:49:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.15 2004/02/08 11:47:36 jsm Exp $");
+__RCSID("$NetBSD: factor.c,v 1.16 2005/06/27 20:49:31 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: factor.c,v 1.15 2004/02/08 11:47:36 jsm Exp $");
  *
  *	number: factor1 factor1 factor2 factor3 factor3 factor3 ...
  *
- * where factor1 < factor2 < factor3 < ...
+ * where factor1 <= factor2 <= factor3 <= ...
  *
  * If no args are given, the list of numbers are read from stdin.
  */
