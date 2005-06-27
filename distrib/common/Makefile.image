@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.28 2004/05/04 02:52:05 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.29 2005/06/27 19:10:32 dbj Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -60,7 +60,7 @@ clean cleandir distclean: cleanfsimage
 .PHONY: cleanfsimage
 
 cleanfsimage:
-	-rm -rf ${WORKDIR}
+	-rm -rf ${WORKDIR} ${WORKBUILT}
 
 .endif	# ! target (${WORKBUILT})				# }
 
@@ -95,6 +95,9 @@ ${IMAGE}: ${WORKBUILT}
 .if defined(IMAGEPOSTBUILD)
 	${IMAGEPOSTBUILD} || { rm -f ${.TARGET} ; false; }
 .endif
+
+.PHONY: fsimage
+fsimage: ${IMAGE}
 
 ${IMAGE}.gz: ${IMAGE}
 	${_MKTARGET_CREATE}
