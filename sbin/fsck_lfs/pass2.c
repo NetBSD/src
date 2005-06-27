@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.13 2005/04/11 23:19:24 perseant Exp $	 */
+/* $NetBSD: pass2.c,v 1.14 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -205,7 +205,7 @@ pass2check(struct inodesc * idesc)
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct ufs1_dinode *dp;
-	char *errmsg;
+	const char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
@@ -436,6 +436,6 @@ again:
 static int
 blksort(const void *inpp1, const void *inpp2)
 {
-	return ((*(struct inoinfo **) inpp1)->i_blks[0] -
-	    (*(struct inoinfo **) inpp2)->i_blks[0]);
+	return ((*(const struct inoinfo *const *) inpp1)->i_blks[0] -
+	    (*(const struct inoinfo *const *) inpp2)->i_blks[0]);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.18 2005/02/26 05:45:54 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.19 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -84,7 +84,7 @@ ftypeok(struct ufs1_dinode * dp)
 }
 
 int
-reply(char *question)
+reply(const char *question)
 {
 	int persevere;
 	char c;
@@ -270,7 +270,7 @@ voidquit(int n)
  * determine whether an inode should be fixed.
  */
 int
-dofix(struct inodesc * idesc, char *msg)
+dofix(struct inodesc * idesc, const char *msg)
 {
 
 	switch (idesc->id_fix) {

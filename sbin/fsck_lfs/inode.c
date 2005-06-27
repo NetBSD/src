@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.27 2005/06/08 19:09:55 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.28 2005/06/27 02:48:28 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -432,7 +432,7 @@ inodirty(struct inode *ip)
 }
 
 void
-clri(struct inodesc * idesc, char *type, int flag)
+clri(struct inodesc * idesc, const char *type, int flag)
 {
 	struct uvnode *vp;
 
@@ -487,10 +487,18 @@ int
 findname(struct inodesc * idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
+	size_t len;
+	char *buf;
 
 	if (dirp->d_ino != idesc->id_parent)
 		return (KEEPON);
-	memcpy(idesc->id_name, dirp->d_name, (size_t) dirp->d_namlen + 1);
+	if ((len = dirp->d_namlen + 1) > MAXPATHLEN) {
+		/* Truncate it but don't overflow the buffer */
+		len = MAXPATHLEN;
+	}
+	/* this is namebuf with utils.h */
+	buf = __UNCONST(idesc->id_name);
+	(void)memcpy(buf, dirp->d_name, len);
 	return (STOP | FOUND);
 }
 
