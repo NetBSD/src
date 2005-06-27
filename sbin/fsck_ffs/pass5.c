@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.45 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: pass5.c,v 1.46 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.45 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.46 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ pass5(void)
 			}
 		}
 		if (fs->fs_maxcontig > 1) {
-			char *doit = 0;
+			const char *doit = NULL;
 
 			if (fs->fs_contigsumsize < 1) {
 				doit = "CREAT";
