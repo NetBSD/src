@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.29 2004/06/25 14:52:36 wiz Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.30 2005/06/27 03:10:32 christos Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -121,7 +121,8 @@ main(int argc, char **argv)
 {
 	int s, ch, once = 0;
 	struct timeval *timeout;
-	char *argv0, *opts;
+	char *argv0;
+	const char *opts;
 	struct pollfd set[2];
 #ifdef USE_RTSOCK
 	int rtsock;
