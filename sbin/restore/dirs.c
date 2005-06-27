@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.44 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: dirs.c,v 1.45 2005/06/27 02:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.44 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.45 2005/06/27 02:03:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,7 +647,7 @@ setdirmodes(int flags)
  * Generate a literal copy of a directory.
  */
 int
-genliteraldir(char *name, ino_t ino)
+genliteraldir(const char *name, ino_t ino)
 {
 	struct inotab *itp;
 	int ofile, dp, i, size;
