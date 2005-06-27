@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.43 2005/06/06 12:09:19 yamt Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.44 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.43 2005/06/06 12:09:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.44 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -112,11 +112,9 @@ udv_init(void)
  */
 
 struct uvm_object *
-udv_attach(arg, accessprot, off, size)
-	void *arg;
-	vm_prot_t accessprot;
-	voff_t off;			/* used only for access check */
-	vsize_t size;			/* used only for access check */
+udv_attach(void *arg, vm_prot_t accessprot,
+    voff_t off,		/* used only for access check */
+    vsize_t size	/* used only for access check */)
 {
 	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
@@ -270,8 +268,7 @@ udv_attach(arg, accessprot, off, size)
  */
 
 static void
-udv_reference(uobj)
-	struct uvm_object *uobj;
+udv_reference(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
 
@@ -291,8 +288,7 @@ udv_reference(uobj)
  */
 
 static void
-udv_detach(uobj)
-	struct uvm_object *uobj;
+udv_detach(struct uvm_object *uobj)
 {
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
@@ -352,13 +348,9 @@ again:
  */
 
 static int
-udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
-	struct uvm_faultinfo *ufi;
-	vaddr_t vaddr;
-	struct vm_page **pps;
-	int npages, centeridx, flags;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
+udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
+    int npages, int centeridx, vm_fault_t fault_type, vm_prot_t access_type,
+    int flags)
 {
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;

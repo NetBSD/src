@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.53 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.54 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.53 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.54 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.53 2005/05/11 13:02:25 yamt Exp $");
 
 static int	uvm_loananon(struct uvm_faultinfo *, void ***,
 			     int, struct vm_anon *);
-static int	uvm_loanentry(struct uvm_faultinfo *, void ***, int);
 static int	uvm_loanuobj(struct uvm_faultinfo *, void ***,
 			     int, vaddr_t);
 static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
@@ -137,10 +136,7 @@ static int	uvm_loanpage(struct vm_page **, int);
  */
 
 static __inline int
-uvm_loanentry(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	vaddr_t curaddr = ufi->orig_rvaddr;
 	vsize_t togo = ufi->size;
@@ -243,12 +239,7 @@ uvm_loanentry(ufi, output, flags)
  */
 
 int
-uvm_loan(map, start, len, v, flags)
-	struct vm_map *map;
-	vaddr_t start;
-	vsize_t len;
-	void *v;
-	int flags;
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 {
 	struct uvm_faultinfo ufi;
 	void **result, **output;
@@ -354,11 +345,8 @@ fail:
  */
 
 int
-uvm_loananon(ufi, output, flags, anon)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	struct vm_anon *anon;
+uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
+    struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	int error;
@@ -465,9 +453,7 @@ uvm_loananon(ufi, output, flags, anon)
  * => fail with EBUSY if meet a wired page.
  */
 static int
-uvm_loanpage(pgpp, npages)
-	struct vm_page **pgpp;
-	int npages;
+uvm_loanpage(struct vm_page **pgpp, int npages)
 {
 	int i;
 	int error = 0;
@@ -529,11 +515,8 @@ uvm_loanpage(pgpp, npages)
  * => fail with EBUSY if we meet a wired page.
  */
 int
-uvm_loanuobjpages(uobj, pgoff, orignpages, origpgpp)
-	struct uvm_object *uobj;
-	voff_t pgoff;
-	int orignpages;
-	struct vm_page **origpgpp;
+uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
+    struct vm_page **origpgpp)
 {
 	int ndone; /* # of pages loaned out */
 	struct vm_page **pgpp;
@@ -639,11 +622,7 @@ fail:
  */
 
 static int
-uvm_loanuobj(ufi, output, flags, va)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	vaddr_t va;
+uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
@@ -852,10 +831,7 @@ fail:
 static struct uvm_object uvm_loanzero_object;
 
 static int
-uvm_loanzero(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	struct vm_anon *anon;
 	struct vm_page *pg;
@@ -957,9 +933,7 @@ again:
  */
 
 static void
-uvm_unloananon(aloans, nanons)
-	struct vm_anon **aloans;
-	int nanons;
+uvm_unloananon(struct vm_anon **aloans, int nanons)
 {
 	struct vm_anon *anon;
 
@@ -984,9 +958,7 @@ uvm_unloananon(aloans, nanons)
  */
 
 static void
-uvm_unloanpage(ploans, npages)
-	struct vm_page **ploans;
-	int npages;
+uvm_unloanpage(struct vm_page **ploans, int npages)
 {
 	struct vm_page *pg;
 	struct simplelock *slock;

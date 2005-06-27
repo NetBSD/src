@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.22 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.23 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.22 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct uvmexp uvmexp;	/* decl */
  */
 
 void
-uvm_init()
+uvm_init(void)
 {
 	vaddr_t kvm_start, kvm_end;
 

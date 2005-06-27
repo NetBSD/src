@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.64 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.64 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -118,9 +118,7 @@ struct uvm_pagerops uvm_vnodeops = {
  */
 
 struct uvm_object *
-uvn_attach(arg, accessprot)
-	void *arg;
-	vm_prot_t accessprot;
+uvn_attach(void *arg, vm_prot_t accessprot)
 {
 	struct vnode *vp = arg;
 	struct uvm_object *uobj = &vp->v_uobj;
@@ -235,8 +233,7 @@ uvn_attach(arg, accessprot)
  */
 
 void
-uvn_reference(uobj)
-	struct uvm_object *uobj;
+uvn_reference(struct uvm_object *uobj)
 {
 	VREF((struct vnode *)uobj);
 }
@@ -251,8 +248,7 @@ uvn_reference(uobj)
  */
 
 void
-uvn_detach(uobj)
-	struct uvm_object *uobj;
+uvn_detach(struct uvm_object *uobj)
 {
 	vrele((struct vnode *)uobj);
 }
@@ -266,11 +262,7 @@ uvn_detach(uobj)
  */
 
 int
-uvn_put(uobj, offlo, offhi, flags)
-	struct uvm_object *uobj;
-	voff_t offlo;
-	voff_t offhi;
-	int flags;
+uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
@@ -294,14 +286,10 @@ uvn_put(uobj, offlo, offhi, flags)
  */
 
 int
-uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	struct vm_page **pps;		/* IN/OUT */
-	int *npagesp;			/* IN (OUT if PGO_LOCKED) */
-	int centeridx;
-	vm_prot_t access_type;
-	int advice, flags;
+uvn_get(struct uvm_object *uobj, voff_t offset,
+    struct vm_page **pps /* IN/OUT */,
+    int *npagesp /* IN (OUT if PGO_LOCKED)*/,
+    int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
@@ -322,12 +310,8 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  */
 
 int
-uvn_findpages(uobj, offset, npagesp, pgs, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	int *npagesp;
-	struct vm_page **pgs;
-	int flags;
+uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
+    struct vm_page **pgs, int flags)
 {
 	int i, count, found, npages, rv;
 
@@ -359,11 +343,8 @@ uvn_findpages(uobj, offset, npagesp, pgs, flags)
 }
 
 int
-uvn_findpage(uobj, offset, pgp, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	struct vm_page **pgp;
-	int flags;
+uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
+    int flags)
 {
 	struct vm_page *pg;
 	boolean_t dirty;
@@ -455,9 +436,7 @@ uvn_findpage(uobj, offset, pgp, flags)
  */
 
 void
-uvm_vnp_setsize(vp, newsize)
-	struct vnode *vp;
-	voff_t newsize;
+uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
 	voff_t pgend = round_page(newsize);
@@ -485,10 +464,7 @@ uvm_vnp_setsize(vp, newsize)
  */
 
 void
-uvm_vnp_zerorange(vp, off, len)
-	struct vnode *vp;
-	off_t off;
-	size_t len;
+uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
 	void *win;
 	int flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.33 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.34 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.33 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.34 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -61,7 +61,7 @@ static int uvm_anon_ctor(void *, void *, int);
  * allocate anons
  */
 void
-uvm_anon_init()
+uvm_anon_init(void)
 {
 
 	pool_cache_init(&uvm_anon_pool_cache, &uvm_anon_pool,
@@ -87,7 +87,7 @@ uvm_anon_ctor(void *arg, void *object, int flags)
  * => new anon is returned locked!
  */
 struct vm_anon *
-uvm_analloc()
+uvm_analloc(void)
 {
 	struct vm_anon *anon;
 
@@ -113,8 +113,7 @@ uvm_analloc()
  */
 
 void
-uvm_anfree(anon)
-	struct vm_anon *anon;
+uvm_anfree(struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_anfree"); UVMHIST_CALLED(maphist);
@@ -220,8 +219,7 @@ uvm_anfree(anon)
  * => anon must be locked or have a reference count of 0.
  */
 void
-uvm_anon_dropswap(anon)
-	struct vm_anon *anon;
+uvm_anon_dropswap(struct vm_anon *anon)
 {
 	UVMHIST_FUNC("uvm_anon_dropswap"); UVMHIST_CALLED(maphist);
 
@@ -252,8 +250,7 @@ uvm_anon_dropswap(anon)
  *	count.
  */
 struct vm_page *
-uvm_anon_lockloanpg(anon)
-	struct vm_anon *anon;
+uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	boolean_t locked = FALSE;
@@ -331,8 +328,7 @@ uvm_anon_lockloanpg(anon)
  */
 
 boolean_t
-uvm_anon_pagein(anon)
-	struct vm_anon *anon;
+uvm_anon_pagein(struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	struct uvm_object *uobj;
@@ -412,8 +408,7 @@ uvm_anon_pagein(anon)
  */
 
 void
-uvm_anon_release(anon)
-	struct vm_anon *anon;
+uvm_anon_release(struct vm_anon *anon)
 {
 	struct vm_page *pg = anon->an_page;
 

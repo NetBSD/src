@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.32 2004/09/17 20:46:03 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.33 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.32 2004/09/17 20:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.33 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,20 +84,8 @@ u_long	uvm_pglistalloc_npages;
  *			power-of-two boundary (relative to zero).
  */
 
-static void uvm_pglist_add(struct vm_page *, struct pglist *);
-static int uvm_pglistalloc_c_ps(struct vm_physseg *, int, paddr_t, paddr_t,
-				paddr_t, paddr_t, struct pglist *);
-static int uvm_pglistalloc_contig(int, paddr_t, paddr_t, paddr_t, paddr_t,
-				  struct pglist *);
-static int uvm_pglistalloc_s_ps(struct vm_physseg *, int, paddr_t, paddr_t,
-				struct pglist *);
-static int uvm_pglistalloc_simple(int, paddr_t, paddr_t,
-				  struct pglist *, int);
-
 static void
-uvm_pglist_add(pg, rlist)
-	struct vm_page *pg;
-	struct pglist *rlist;
+uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 {
 	int free_list, color, pgflidx;
 #ifdef DEBUG
@@ -136,11 +124,8 @@ uvm_pglist_add(pg, rlist)
 }
 
 static int
-uvm_pglistalloc_c_ps(ps, num, low, high, alignment, boundary, rlist)
-	struct vm_physseg *ps;
-	int num;
-	paddr_t low, high, alignment, boundary;
-	struct pglist *rlist;
+uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
+    paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
 	int try, limit, tryidx, end, idx;
 	struct vm_page *pgs;
@@ -241,10 +226,8 @@ uvm_pglistalloc_c_ps(ps, num, low, high, alignment, boundary, rlist)
 }
 
 static int
-uvm_pglistalloc_contig(num, low, high, alignment, boundary, rlist)
-	int num;
-	paddr_t low, high, alignment, boundary;
-	struct pglist *rlist;
+uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
+    paddr_t boundary, struct pglist *rlist)
 {
 	int fl, psi;
 	struct vm_physseg *ps;
@@ -300,11 +283,8 @@ out:
 }
 
 static int
-uvm_pglistalloc_s_ps(ps, num, low, high, rlist)
-	struct vm_physseg *ps;
-	int num;
-	paddr_t low, high;
-	struct pglist *rlist;
+uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
+    struct pglist *rlist)
 {
 	int todo, limit, try;
 	struct vm_page *pg;
@@ -343,11 +323,8 @@ uvm_pglistalloc_s_ps(ps, num, low, high, rlist)
 }
 
 static int
-uvm_pglistalloc_simple(num, low, high, rlist, waitok)
-	int num;
-	paddr_t low, high;
-	struct pglist *rlist;
-	int waitok;
+uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
+    struct pglist *rlist, int waitok)
 {
 	int fl, psi, s, error;
 	struct vm_physseg *ps;
@@ -415,11 +392,8 @@ out:
 }
 
 int
-uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
-	psize_t size;
-	paddr_t low, high, alignment, boundary;
-	struct pglist *rlist;
-	int nsegs, waitok;
+uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
+    paddr_t boundary, struct pglist *rlist, int nsegs, int waitok)
 {
 	int num, res;
 
@@ -456,8 +430,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
  */
 
 void
-uvm_pglistfree(list)
-	struct pglist *list;
+uvm_pglistfree(struct pglist *list)
 {
 	struct vm_page *pg;
 	int s;

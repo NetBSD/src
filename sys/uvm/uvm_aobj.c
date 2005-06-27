@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.66 2005/06/06 12:09:19 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.66 2005/06/06 12:09:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -224,10 +224,7 @@ static struct simplelock uao_list_lock;
  */
 
 static struct uao_swhash_elt *
-uao_find_swhash_elt(aobj, pageidx, create)
-	struct uvm_aobj *aobj;
-	int pageidx;
-	boolean_t create;
+uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 {
 	struct uao_swhash *swhash;
 	struct uao_swhash_elt *elt;
@@ -271,9 +268,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
  */
 
 int
-uao_find_swslot(uobj, pageidx)
-	struct uvm_object *uobj;
-	int pageidx;
+uao_find_swslot(struct uvm_object *uobj, int pageidx)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct uao_swhash_elt *elt;
@@ -314,9 +309,7 @@ uao_find_swslot(uobj, pageidx)
  */
 
 int
-uao_set_swslot(uobj, pageidx, slot)
-	struct uvm_object *uobj;
-	int pageidx, slot;
+uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct uao_swhash_elt *elt;
@@ -393,8 +386,7 @@ uao_set_swslot(uobj, pageidx, slot)
  */
 
 static void
-uao_free(aobj)
-	struct uvm_aobj *aobj;
+uao_free(struct uvm_aobj *aobj)
 {
 	int swpgonlydelta = 0;
 
@@ -480,9 +472,7 @@ uao_free(aobj)
  */
 
 struct uvm_object *
-uao_create(size, flags)
-	vsize_t size;
-	int flags;
+uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
 	static int kobj_alloced = 0;
@@ -588,8 +578,7 @@ uao_init(void)
  */
 
 void
-uao_reference(uobj)
-	struct uvm_object *uobj;
+uao_reference(struct uvm_object *uobj)
 {
 	simple_lock(&uobj->vmobjlock);
 	uao_reference_locked(uobj);
@@ -606,8 +595,7 @@ uao_reference(uobj)
  */
 
 void
-uao_reference_locked(uobj)
-	struct uvm_object *uobj;
+uao_reference_locked(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("uao_reference"); UVMHIST_CALLED(maphist);
 
@@ -631,8 +619,7 @@ uao_reference_locked(uobj)
  */
 
 void
-uao_detach(uobj)
-	struct uvm_object *uobj;
+uao_detach(struct uvm_object *uobj)
 {
 	simple_lock(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
@@ -648,8 +635,7 @@ uao_detach(uobj)
  */
 
 void
-uao_detach_locked(uobj)
-	struct uvm_object *uobj;
+uao_detach_locked(struct uvm_object *uobj)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct vm_page *pg;
@@ -751,10 +737,7 @@ uao_detach_locked(uobj)
  */
 
 int
-uao_put(uobj, start, stop, flags)
-	struct uvm_object *uobj;
-	voff_t start, stop;
-	int flags;
+uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct vm_page *pg, *nextpg, curmp, endmp;
@@ -934,13 +917,8 @@ uao_put(uobj, start, stop, flags)
  */
 
 static int
-uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	struct vm_page **pps;
-	int *npagesp;
-	int centeridx, advice, flags;
-	vm_prot_t access_type;
+uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
+    int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	voff_t current_offset;
@@ -1231,9 +1209,7 @@ gotpage:
  */
 
 void
-uao_dropswap(uobj, pageidx)
-	struct uvm_object *uobj;
-	int pageidx;
+uao_dropswap(struct uvm_object *uobj, int pageidx)
 {
 	int slot;
 
@@ -1251,8 +1227,7 @@ uao_dropswap(uobj, pageidx)
  */
 
 boolean_t
-uao_swap_off(startslot, endslot)
-	int startslot, endslot;
+uao_swap_off(int startslot, int endslot)
 {
 	struct uvm_aobj *aobj, *nextaobj;
 	boolean_t rv;
@@ -1327,9 +1302,7 @@ restart:
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
 static boolean_t
-uao_pagein(aobj, startslot, endslot)
-	struct uvm_aobj *aobj;
-	int startslot, endslot;
+uao_pagein(struct uvm_aobj *aobj, int startslot, int endslot)
 {
 	boolean_t rv;
 
@@ -1408,9 +1381,7 @@ restart:
  */
 
 static boolean_t
-uao_pagein_page(aobj, pageidx)
-	struct uvm_aobj *aobj;
-	int pageidx;
+uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 {
 	struct vm_page *pg;
 	int rv, npages;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.22 2004/05/12 20:09:52 yamt Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.23 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -88,7 +88,7 @@
  */
 
 PAGE_INLINE int
-uvm_lock_fpageq()
+uvm_lock_fpageq(void)
 {
 	int s;
 
@@ -105,8 +105,7 @@ uvm_lock_fpageq()
  */
 
 PAGE_INLINE void
-uvm_unlock_fpageq(s)
-	int s;
+uvm_unlock_fpageq(int s)
 {
 
 	simple_unlock(&uvm.fpageqlock);
@@ -121,9 +120,7 @@ uvm_unlock_fpageq(s)
  */
 
 struct vm_page *
-uvm_pagelookup(obj, off)
-	struct uvm_object *obj;
-	voff_t off;
+uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 	struct pglist *buck;
@@ -149,8 +146,7 @@ uvm_pagelookup(obj, off)
  */
 
 PAGE_INLINE void
-uvm_pagewire(pg)
-	struct vm_page *pg;
+uvm_pagewire(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
 	if (pg->wire_count == 0) {
@@ -168,8 +164,7 @@ uvm_pagewire(pg)
  */
 
 PAGE_INLINE void
-uvm_pageunwire(pg)
-	struct vm_page *pg;
+uvm_pageunwire(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
 	pg->wire_count--;
@@ -191,8 +186,7 @@ uvm_pageunwire(pg)
  */
 
 PAGE_INLINE void
-uvm_pagedeactivate(pg)
-	struct vm_page *pg;
+uvm_pagedeactivate(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
 	if (pg->pqflags & PQ_ACTIVE) {
@@ -215,8 +209,7 @@ uvm_pagedeactivate(pg)
  */
 
 PAGE_INLINE void
-uvm_pageactivate(pg)
-	struct vm_page *pg;
+uvm_pageactivate(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
 	uvm_pagedequeue(pg);
@@ -232,8 +225,7 @@ uvm_pageactivate(pg)
  */
 
 PAGE_INLINE void
-uvm_pagedequeue(pg)
-	struct vm_page *pg;
+uvm_pagedequeue(struct vm_page *pg)
 {
 	if (pg->pqflags & PQ_ACTIVE) {
 		UVM_LOCK_ASSERT_PAGEQ();
@@ -256,8 +248,7 @@ uvm_pagedequeue(pg)
  */
 
 PAGE_INLINE void
-uvm_pagezero(pg)
-	struct vm_page *pg;
+uvm_pagezero(struct vm_page *pg)
 {
 	pg->flags &= ~PG_CLEAN;
 	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
@@ -271,8 +262,7 @@ uvm_pagezero(pg)
  */
 
 PAGE_INLINE void
-uvm_pagecopy(src, dst)
-	struct vm_page *src, *dst;
+uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
 
 	dst->flags &= ~PG_CLEAN;
@@ -284,8 +274,7 @@ uvm_pagecopy(src, dst)
  */
 
 PAGE_INLINE int
-uvm_page_lookup_freelist(pg)
-	struct vm_page *pg;
+uvm_page_lookup_freelist(struct vm_page *pg)
 {
 	int lcv;
 

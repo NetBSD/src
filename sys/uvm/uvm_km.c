@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.82 2005/05/29 21:06:33 christos Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.83 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.82 2005/05/29 21:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.83 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -263,8 +263,7 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
  */
 
 void
-uvm_km_init(start, end)
-	vaddr_t start, end;
+uvm_km_init(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
@@ -325,13 +324,9 @@ uvm_km_init(start, end)
  */
 
 struct vm_map *
-uvm_km_suballoc(map, vmin, vmax, size, flags, fixed, submap)
-	struct vm_map *map;
-	vaddr_t *vmin, *vmax;		/* IN/OUT, OUT */
-	vsize_t size;
-	int flags;
-	boolean_t fixed;
-	struct vm_map_kernel *submap;
+uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
+    vaddr_t *vmax /* OUT */, vsize_t size, int flags, boolean_t fixed,
+    struct vm_map_kernel *submap)
 {
 	int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
 
@@ -386,8 +381,7 @@ uvm_km_suballoc(map, vmin, vmax, size, flags, fixed, submap)
  */
 
 void
-uvm_km_pgremove(startva, endva)
-	vaddr_t startva, endva;
+uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 {
 	struct uvm_object * const uobj = uvm.kernel_object;
 	const voff_t start = startva - vm_map_min(kernel_map);
@@ -452,8 +446,7 @@ uvm_km_pgremove(startva, endva)
  */
 
 void
-uvm_km_pgremove_intrsafe(start, end)
-	vaddr_t start, end;
+uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pg;
 	paddr_t pa;
@@ -516,11 +509,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
  */
 
 vaddr_t
-uvm_km_alloc(map, size, align, flags)
-	struct vm_map *map;
-	vsize_t size;
-	vsize_t align;
-	uvm_flag_t flags;
+uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
 	vaddr_t kva, loopva;
 	vaddr_t offset;
@@ -632,11 +621,7 @@ uvm_km_alloc(map, size, align, flags)
  */
 
 void
-uvm_km_free(map, addr, size, flags)
-	struct vm_map *map;
-	vaddr_t addr;
-	vsize_t size;
-	uvm_flag_t flags;
+uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 {
 
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
@@ -672,9 +657,7 @@ uvm_km_free(map, addr, size, flags)
 
 /* ARGSUSED */
 vaddr_t
-uvm_km_alloc_poolpage_cache(map, waitok)
-	struct vm_map *map;
-	boolean_t waitok;
+uvm_km_alloc_poolpage_cache(struct vm_map *map, boolean_t waitok)
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	return uvm_km_alloc_poolpage(map, waitok);
@@ -719,9 +702,7 @@ again:
 }
 
 vaddr_t
-uvm_km_alloc_poolpage(map, waitok)
-	struct vm_map *map;
-	boolean_t waitok;
+uvm_km_alloc_poolpage(struct vm_map *map, boolean_t waitok)
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	struct vm_page *pg;
@@ -763,9 +744,7 @@ uvm_km_alloc_poolpage(map, waitok)
 
 /* ARGSUSED */
 void
-uvm_km_free_poolpage_cache(map, addr)
-	struct vm_map *map;
-	vaddr_t addr;
+uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t addr)
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
 	uvm_km_free_poolpage(map, addr);
@@ -797,9 +776,7 @@ uvm_km_free_poolpage_cache(map, addr)
 
 /* ARGSUSED */
 void
-uvm_km_free_poolpage(map, addr)
-	struct vm_map *map;
-	vaddr_t addr;
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
 	paddr_t pa;

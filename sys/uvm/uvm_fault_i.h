@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.17 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.18 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -40,20 +40,13 @@
 /*
  * uvm_fault_i.h: fault inline functions
  */
-static boolean_t uvmfault_lookup(struct uvm_faultinfo *, boolean_t);
-static boolean_t uvmfault_relock(struct uvm_faultinfo *);
-static void uvmfault_unlockall(struct uvm_faultinfo *, struct vm_amap *,
-			       struct uvm_object *, struct vm_anon *);
-static void uvmfault_unlockmaps(struct uvm_faultinfo *, boolean_t);
 
 /*
  * uvmfault_unlockmaps: unlock the maps
  */
 
 static __inline void
-uvmfault_unlockmaps(ufi, write_locked)
-	struct uvm_faultinfo *ufi;
-	boolean_t write_locked;
+uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
 {
 	/*
 	 * ufi can be NULL when this isn't really a fault,
@@ -78,11 +71,8 @@ uvmfault_unlockmaps(ufi, write_locked)
  */
 
 static __inline void
-uvmfault_unlockall(ufi, amap, uobj, anon)
-	struct uvm_faultinfo *ufi;
-	struct vm_amap *amap;
-	struct uvm_object *uobj;
-	struct vm_anon *anon;
+uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
+    struct uvm_object *uobj, struct vm_anon *anon)
 {
 
 	if (anon)
@@ -110,9 +100,7 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
  */
 
 static __inline boolean_t
-uvmfault_lookup(ufi, write_lock)
-	struct uvm_faultinfo *ufi;
-	boolean_t write_lock;
+uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 {
 	struct vm_map *tmpmap;
 
@@ -197,8 +185,7 @@ uvmfault_lookup(ufi, write_lock)
  */
 
 static __inline boolean_t
-uvmfault_relock(ufi)
-	struct uvm_faultinfo *ufi;
+uvmfault_relock(struct uvm_faultinfo *ufi)
 {
 	/*
 	 * ufi can be NULL when this isn't really a fault,

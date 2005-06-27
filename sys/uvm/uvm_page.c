@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.104 2005/06/04 13:48:35 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.105 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.104 2005/06/04 13:48:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.105 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -168,9 +168,7 @@ static void uvm_pageremove(struct vm_page *);
  */
 
 __inline static void
-uvm_pageinsert_after(pg, where)
-	struct vm_page *pg;
-	struct vm_page *where;
+uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 {
 	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
@@ -207,8 +205,7 @@ uvm_pageinsert_after(pg, where)
 }
 
 __inline static void
-uvm_pageinsert(pg)
-	struct vm_page *pg;
+uvm_pageinsert(struct vm_page *pg)
 {
 
 	uvm_pageinsert_after(pg, NULL);
@@ -222,8 +219,7 @@ uvm_pageinsert(pg)
  */
 
 static __inline void
-uvm_pageremove(pg)
-	struct vm_page *pg;
+uvm_pageremove(struct vm_page *pg)
 {
 	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
@@ -275,8 +271,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
  */
 
 void
-uvm_page_init(kvm_startp, kvm_endp)
-	vaddr_t *kvm_startp, *kvm_endp;
+uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
 	vsize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray;
@@ -459,7 +454,7 @@ uvm_page_init(kvm_startp, kvm_endp)
  */
 
 void
-uvm_setpagesize()
+uvm_setpagesize(void)
 {
 
 	/*
@@ -484,8 +479,7 @@ uvm_setpagesize()
  */
 
 vaddr_t
-uvm_pageboot_alloc(size)
-	vsize_t size;
+uvm_pageboot_alloc(vsize_t size)
 {
 	static boolean_t initialized = FALSE;
 	vaddr_t addr;
@@ -584,9 +578,7 @@ uvm_pageboot_alloc(size)
 static boolean_t uvm_page_physget_freelist(paddr_t *, int);
 
 static boolean_t
-uvm_page_physget_freelist(paddrp, freelist)
-	paddr_t *paddrp;
-	int freelist;
+uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
 	int lcv, x;
 
@@ -676,8 +668,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 }
 
 boolean_t
-uvm_page_physget(paddrp)
-	paddr_t *paddrp;
+uvm_page_physget(paddr_t *paddrp)
 {
 	int i;
 
@@ -699,9 +690,8 @@ uvm_page_physget(paddrp)
  */
 
 void
-uvm_page_physload(start, end, avail_start, avail_end, free_list)
-	paddr_t start, end, avail_start, avail_end;
-	int free_list;
+uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int free_list)
 {
 	int preload, lcv;
 	psize_t npages;
@@ -836,7 +826,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
  */
 
 void
-uvm_page_rehash()
+uvm_page_rehash(void)
 {
 	int freepages, lcv, bucketcount, oldcount;
 	struct pglist *newbuckets, *oldbuckets;
@@ -1050,12 +1040,8 @@ uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
  */
 
 struct vm_page *
-uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
-	struct uvm_object *obj;
-	voff_t off;
-	int flags;
-	struct vm_anon *anon;
-	int strat, free_list;
+uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
+    int flags, int strat, int free_list)
 {
 	int lcv, try1, try2, s, zeroit = 0, color;
 	struct vm_page *pg;
@@ -1221,9 +1207,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
  */
 
 void
-uvm_pagereplace(oldpg, newpg)
-	struct vm_page *oldpg;
-	struct vm_page *newpg;
+uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
@@ -1246,10 +1230,7 @@ uvm_pagereplace(oldpg, newpg)
  */
 
 void
-uvm_pagerealloc(pg, newobj, newoff)
-	struct vm_page *pg;
-	struct uvm_object *newobj;
-	voff_t newoff;
+uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 {
 	/*
 	 * remove it from the old object
@@ -1314,8 +1295,7 @@ uvm_pagezerocheck(struct vm_page *pg)
  */
 
 void
-uvm_pagefree(pg)
-	struct vm_page *pg;
+uvm_pagefree(struct vm_page *pg)
 {
 	int s;
 	struct pglist *pgfl;
@@ -1451,9 +1431,7 @@ uvm_pagefree(pg)
  */
 
 void
-uvm_page_unbusy(pgs, npgs)
-	struct vm_page **pgs;
-	int npgs;
+uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
 	int i;
@@ -1501,9 +1479,7 @@ uvm_page_unbusy(pgs, npgs)
  * => if "tag" is NULL then we are releasing page ownership
  */
 void
-uvm_page_own(pg, tag)
-	struct vm_page *pg;
-	const char *tag;
+uvm_page_own(struct vm_page *pg, const char *tag)
 {
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
 
@@ -1545,7 +1521,7 @@ uvm_page_own(pg, tag)
  *	there is a process ready to run.
  */
 void
-uvm_pageidlezero()
+uvm_pageidlezero(void)
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;

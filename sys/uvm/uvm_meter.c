@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.34 2005/05/15 08:01:06 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.35 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.34 2005/05/15 08:01:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.35 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,7 +62,7 @@ struct loadavg averunnable;
  * 5 second intervals.
  */
 
-static fixpt_t cexp[3] = {
+static const fixpt_t cexp[3] = {
 	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
 	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
 	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
@@ -79,7 +79,7 @@ static void uvm_total(struct vmtotal *);
  * uvm_meter: calculate load average and wake up the swapper (if needed)
  */
 void
-uvm_meter()
+uvm_meter(void)
 {
 	if ((time.tv_sec % 5) == 0)
 		uvm_loadav(&averunnable);
@@ -92,8 +92,7 @@ uvm_meter()
  * 1, 5, and 15 minute internvals.
  */
 static void
-uvm_loadav(avg)
-	struct loadavg *avg;
+uvm_loadav(struct loadavg *avg)
 {
 	int i, nrun;
 	struct lwp *l;
@@ -414,8 +413,7 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
  * uvm_total: calculate the current state of the system.
  */
 static void
-uvm_total(totalp)
-	struct vmtotal *totalp;
+uvm_total(struct vmtotal *totalp)
 {
 	struct lwp *l;
 #if 0

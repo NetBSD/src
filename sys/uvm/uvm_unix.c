@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.30 2004/08/28 12:44:22 jdolecek Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.31 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.30 2004/08/28 12:44:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.31 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.30 2004/08/28 12:44:22 jdolecek Exp $
  */
 
 int
-sys_obreak(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_obreak(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
@@ -121,9 +118,7 @@ sys_obreak(l, v, retval)
  */
 
 int
-uvm_grow(p, sp)
-	struct proc *p;
-	vaddr_t sp;
+uvm_grow(struct proc *p, vaddr_t sp)
 {
 	struct vmspace *vm = p->p_vmspace;
 	vsize_t nss;
@@ -156,10 +151,7 @@ uvm_grow(p, sp)
 
 /* ARGSUSED */
 int
-sys_ovadvise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ovadvise(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct sys_ovadvise_args /* {

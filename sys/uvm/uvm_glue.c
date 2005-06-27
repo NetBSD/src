@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.88 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.89 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.88 2005/06/10 05:10:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -112,10 +112,7 @@ static void uvm_uarea_free(vaddr_t);
  */
 
 boolean_t
-uvm_kernacc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
 	boolean_t rv;
 	vaddr_t saddr, eaddr;
@@ -144,10 +141,7 @@ uvm_kernacc(addr, len, rw)
  * we can ensure the change takes place properly.
  */
 void
-uvm_chgkprot(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_chgkprot(caddr_t addr, size_t len, int rw)
 {
 	vm_prot_t prot;
 	paddr_t pa;
@@ -175,11 +169,7 @@ uvm_chgkprot(addr, len, rw)
  */
 
 int
-uvm_vslock(p, addr, len, access_type)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
-	vm_prot_t access_type;
+uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
 	struct vm_map *map;
 	vaddr_t start, end;
@@ -200,10 +190,7 @@ uvm_vslock(p, addr, len, access_type)
  */
 
 void
-uvm_vsunlock(p, addr, len)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
+uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 {
 	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
 		round_page((vaddr_t)addr + len));
@@ -215,9 +202,7 @@ uvm_vsunlock(p, addr, len)
  * - the address space is copied as per parent map's inherit values
  */
 void
-uvm_proc_fork(p1, p2, shared)
-	struct proc *p1, *p2;
-	boolean_t shared;
+uvm_proc_fork(struct proc *p1, struct proc *p2, boolean_t shared)
 {
 
 	if (shared == TRUE) {
@@ -246,12 +231,8 @@ uvm_proc_fork(p1, p2, shared)
  *   than just hang
  */
 void
-uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct user *up = l2->l_addr;
 	int error;
@@ -375,8 +356,7 @@ uvm_uarea_drain(boolean_t empty)
  */
 
 void
-uvm_proc_exit(p)
-	struct proc *p;
+uvm_proc_exit(struct proc *p)
 {
 	struct lwp *l = curlwp; /* XXX */
 	struct vmspace *ovm;
@@ -411,8 +391,7 @@ uvm_lwp_exit(struct lwp *l)
  */
 
 void
-uvm_init_limits(p)
-	struct proc *p;
+uvm_init_limits(struct proc *p)
 {
 
 	/*
@@ -442,8 +421,7 @@ int	swapdebug = 0;
  */
 
 void
-uvm_swapin(l)
-	struct lwp *l;
+uvm_swapin(struct lwp *l)
 {
 	vaddr_t addr;
 	int s, error;
@@ -479,7 +457,7 @@ uvm_swapin(l)
  */
 
 void
-uvm_scheduler()
+uvm_scheduler(void)
 {
 	struct lwp *l, *ll;
 	int pri;
@@ -577,7 +555,7 @@ loop:
  */
 
 void
-uvm_swapout_threads()
+uvm_swapout_threads(void)
 {
 	struct lwp *l;
 	struct lwp *outl, *outl2;
@@ -655,8 +633,7 @@ uvm_swapout_threads()
  */
 
 static void
-uvm_swapout(l)
-	struct lwp *l;
+uvm_swapout(struct lwp *l)
 {
 	vaddr_t addr;
 	int s;
@@ -706,11 +683,9 @@ uvm_swapout(l)
  */
 
 int
-uvm_coredump_walkmap(p, iocookie, func, cookie)
-	struct proc *p;
-	void *iocookie;
-	int (*func)(struct proc *, void *, struct uvm_coredump_state *);
-	void *cookie;
+uvm_coredump_walkmap(struct proc *p, void *iocookie,
+    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
+    void *cookie)
 {
 	struct uvm_coredump_state state;
 	struct vmspace *vm = p->p_vmspace;

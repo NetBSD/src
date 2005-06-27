@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.94 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.95 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.94 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.95 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -167,7 +167,7 @@ struct uvm_advice {
  * XXX: borrowed numbers from freebsd.   do they work well for us?
  */
 
-static struct uvm_advice uvmadvice[] = {
+static const struct uvm_advice uvmadvice[] = {
 	{ MADV_NORMAL, 3, 4 },
 	{ MADV_RANDOM, 0, 0 },
 	{ MADV_SEQUENTIAL, 8, 7},
@@ -178,9 +178,6 @@ static struct uvm_advice uvmadvice[] = {
 /*
  * private prototypes
  */
-
-static void uvmfault_amapcopy(struct uvm_faultinfo *);
-static __inline void uvmfault_anonflush(struct vm_anon **, int);
 
 /*
  * inline functions
@@ -193,9 +190,7 @@ static __inline void uvmfault_anonflush(struct vm_anon **, int);
  */
 
 static __inline void
-uvmfault_anonflush(anons, n)
-	struct vm_anon **anons;
-	int n;
+uvmfault_anonflush(struct vm_anon **anons, int n)
 {
 	int lcv;
 	struct vm_page *pg;
@@ -230,8 +225,7 @@ uvmfault_anonflush(anons, n)
  */
 
 static void
-uvmfault_amapcopy(ufi)
-	struct uvm_faultinfo *ufi;
+uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 {
 	for (;;) {
 
@@ -287,10 +281,8 @@ uvmfault_amapcopy(ufi)
  */
 
 int
-uvmfault_anonget(ufi, amap, anon)
-	struct uvm_faultinfo *ufi;
-	struct vm_amap *amap;
-	struct vm_anon *anon;
+uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
+    struct vm_anon *anon)
 {
 	boolean_t we_own;	/* we own anon's page? */
 	boolean_t locked;	/* did we relock? */
@@ -554,11 +546,8 @@ released:
 			 ~VM_PROT_WRITE : VM_PROT_ALL)
 
 int
-uvm_fault(orig_map, vaddr, fault_type, access_type)
-	struct vm_map *orig_map;
-	vaddr_t vaddr;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
+uvm_fault(struct vm_map *orig_map, vaddr_t vaddr, vm_fault_t fault_type,
+    vm_prot_t access_type)
 {
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot, check_prot;
@@ -1726,11 +1715,8 @@ Case2:
  */
 
 int
-uvm_fault_wire(map, start, end, fault_type, access_type)
-	struct vm_map *map;
-	vaddr_t start, end;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
+uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
+    vm_fault_t fault_type, vm_prot_t access_type)
 {
 	vaddr_t va;
 	int error;
@@ -1766,9 +1752,7 @@ uvm_fault_wire(map, start, end, fault_type, access_type)
  */
 
 void
-uvm_fault_unwire(map, start, end)
-	struct vm_map *map;
-	vaddr_t start, end;
+uvm_fault_unwire(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	vm_map_lock_read(map);
 	uvm_fault_unwire_locked(map, start, end);
@@ -1782,9 +1766,7 @@ uvm_fault_unwire(map, start, end)
  */
 
 void
-uvm_fault_unwire_locked(map, start, end)
-	struct vm_map *map;
-	vaddr_t start, end;
+uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	struct vm_map_entry *entry;
 	pmap_t pmap = vm_map_pmap(map);

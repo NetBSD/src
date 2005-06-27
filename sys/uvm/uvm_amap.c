@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.61 2005/05/17 13:55:33 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.62 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.61 2005/05/17 13:55:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.62 2005/06/27 02:19:48 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -77,10 +77,6 @@ static LIST_HEAD(, vm_amap) amap_list;
 /*
  * local functions
  */
-
-static struct vm_amap *amap_alloc1(int, int, int);
-static __inline void amap_list_insert(struct vm_amap *);
-static __inline void amap_list_remove(struct vm_amap *);
 
 static __inline void
 amap_list_insert(struct vm_amap *amap)
@@ -134,17 +130,13 @@ amap_list_remove(struct vm_amap *amap)
  * here are some in-line functions to help us.
  */
 
-static __inline void pp_getreflen(int *, int, int *, int *);
-static __inline void pp_setreflen(int *, int, int, int);
-
 /*
  * pp_getreflen: get the reference and length for a specific offset
  *
  * => ppref's amap must be locked
  */
 static __inline void
-pp_getreflen(ppref, offset, refp, lenp)
-	int *ppref, offset, *refp, *lenp;
+pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
 {
 
 	if (ppref[offset] > 0) {		/* chunk size must be 1 */
@@ -162,8 +154,7 @@ pp_getreflen(ppref, offset, refp, lenp)
  * => ppref's amap must be locked
  */
 static __inline void
-pp_setreflen(ppref, offset, ref, len)
-	int *ppref, offset, ref, len;
+pp_setreflen(int *ppref, int offset, int ref, int len)
 {
 	if (len == 0)
 		return;
@@ -174,7 +165,7 @@ pp_setreflen(ppref, offset, ref, len)
 		ppref[offset+1] = len;
 	}
 }
-#endif
+#endif /* UVM_AMAP_PPREF */
 
 /*
  * amap_alloc1: internal function that allocates an amap, but does not
@@ -183,8 +174,7 @@ pp_setreflen(ppref, offset, ref, len)
  * => lock on returned amap is init'd
  */
 static inline struct vm_amap *
-amap_alloc1(slots, padslots, waitf)
-	int slots, padslots, waitf;
+amap_alloc1(int slots, int padslots, int waitf)
 {
 	struct vm_amap *amap;
 	int totalslots;
@@ -250,9 +240,7 @@ fail1:
  */
 
 struct vm_amap *
-amap_alloc(sz, padsz, waitf)
-	vaddr_t sz, padsz;
-	int waitf;
+amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 {
 	struct vm_amap *amap;
 	int slots, padslots;
@@ -280,8 +268,7 @@ amap_alloc(sz, padsz, waitf)
  * => the amap should have a zero reference count and be empty
  */
 void
-amap_free(amap)
-	struct vm_amap *amap;
+amap_free(struct vm_amap *amap)
 {
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
@@ -309,10 +296,7 @@ amap_free(amap)
  *    one (thus it can't be shared)
  */
 int
-amap_extend(entry, addsize, flags)
-	struct vm_map_entry *entry;
-	vsize_t addsize;
-	int flags;
+amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
@@ -633,9 +617,7 @@ amap_extend(entry, addsize, flags)
  * => entry's map and amap must be locked by the caller
  */
 void
-amap_share_protect(entry, prot)
-	struct vm_map_entry *entry;
-	vm_prot_t prot;
+amap_share_protect(struct vm_map_entry *entry, vm_prot_t prot)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
@@ -676,8 +658,7 @@ amap_share_protect(entry, prot)
  */
 
 void
-amap_wipeout(amap)
-	struct vm_amap *amap;
+amap_wipeout(struct vm_amap *amap)
 {
 	int lcv, slot;
 	struct vm_anon *anon;
@@ -747,12 +728,8 @@ amap_wipeout(amap)
  */
 
 void
-amap_copy(map, entry, waitf, canchunk, startva, endva)
-	struct vm_map *map;
-	struct vm_map_entry *entry;
-	int waitf;
-	boolean_t canchunk;
-	vaddr_t startva, endva;
+amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
+    boolean_t canchunk, vaddr_t startva, vaddr_t endva)
 {
 	struct vm_amap *amap, *srcamap;
 	int slots, lcv;
@@ -924,9 +901,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
  */
 
 void
-amap_cow_now(map, entry)
-	struct vm_map *map;
-	struct vm_map_entry *entry;
+amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int lcv, slot;
@@ -1047,9 +1022,7 @@ ReStart:
  * => origref->ar_amap should be unlocked (we will lock)
  */
 void
-amap_splitref(origref, splitref, offset)
-	struct vm_aref *origref, *splitref;
-	vaddr_t offset;
+amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 {
 	int leftslots;
 
@@ -1089,9 +1062,7 @@ amap_splitref(origref, splitref, offset)
  * => amap locked by caller
  */
 void
-amap_pp_establish(amap, offset)
-	struct vm_amap *amap;
-	vaddr_t offset;
+amap_pp_establish(struct vm_amap *amap, vaddr_t offset)
 {
 	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
 	    M_UVMAMAP, M_NOWAIT);
@@ -1119,11 +1090,7 @@ amap_pp_establish(amap, offset)
  * => caller must check that ppref != PPREF_NONE before calling
  */
 void
-amap_pp_adjref(amap, curslot, slotlen, adjval)
-	struct vm_amap *amap;
-	int curslot;
-	vsize_t slotlen;
-	int adjval;
+amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 {
 	int stopslot, *ppref, lcv, prevlcv;
 	int ref, len, prevref, prevlen;
@@ -1195,9 +1162,7 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
  * => both map and amap must be locked by caller.
  */
 void
-amap_wiperange(amap, slotoff, slots)
-	struct vm_amap *amap;
-	int slotoff, slots;
+amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 {
 	int byanon, lcv, stop, curslot, ptr, slotend;
 	struct vm_anon *anon;
