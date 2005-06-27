@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.66 2005/04/01 11:59:39 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.66 2005/04/01 11:59:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -81,7 +81,7 @@ static boolean_t emerginuse;
  */
 
 void
-uvm_pager_init()
+uvm_pager_init(void)
 {
 	u_int lcv;
 	vaddr_t sva, eva;
@@ -127,10 +127,7 @@ uvm_pager_init()
  */
 
 vaddr_t
-uvm_pagermapin(pps, npages, flags)
-	struct vm_page **pps;
-	int npages;
-	int flags;
+uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 {
 	vsize_t size;
 	vaddr_t kva;
@@ -205,9 +202,7 @@ enter:
  */
 
 void
-uvm_pagermapout(kva, npages)
-	vaddr_t kva;
-	int npages;
+uvm_pagermapout(vaddr_t kva, int npages)
 {
 	vsize_t size = npages << PAGE_SHIFT;
 	struct vm_map_entry *entries;
@@ -250,8 +245,7 @@ uvm_pagermapout(kva, npages)
  */
 
 void
-uvm_aio_biodone1(bp)
-	struct buf *bp;
+uvm_aio_biodone1(struct buf *bp)
 {
 	struct buf *mbp = bp->b_private;
 
@@ -275,8 +269,7 @@ uvm_aio_biodone1(bp)
  */
 
 void
-uvm_aio_biodone(bp)
-	struct buf *bp;
+uvm_aio_biodone(struct buf *bp)
 {
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = uvm_aio_aiodone;
@@ -293,8 +286,7 @@ uvm_aio_biodone(bp)
  */
 
 void
-uvm_aio_aiodone(bp)
-	struct buf *bp;
+uvm_aio_aiodone(struct buf *bp)
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[npages];

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.92 2005/05/29 21:06:33 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.93 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.92 2005/05/29 21:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.93 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -257,7 +257,7 @@ const struct cdevsw swap_cdevsw = {
  *	are brought up (which happens after uvm_init())
  */
 void
-uvm_swap_init()
+uvm_swap_init(void)
 {
 	UVMHIST_FUNC("uvm_swap_init");
 
@@ -307,10 +307,7 @@ uvm_swap_init()
  *	here while adding swap)
  */
 static void
-swaplist_insert(sdp, newspp, priority)
-	struct swapdev *sdp;
-	struct swappri *newspp;
-	int priority;
+swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 {
 	struct swappri *spp, *pspp;
 	UVMHIST_FUNC("swaplist_insert"); UVMHIST_CALLED(pdhist);
@@ -362,9 +359,7 @@ swaplist_insert(sdp, newspp, priority)
  * => we return the swapdev we found (and removed)
  */
 static struct swapdev *
-swaplist_find(vp, remove)
-	struct vnode *vp;
-	boolean_t remove;
+swaplist_find(struct vnode *vp, boolean_t remove)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -396,7 +391,7 @@ swaplist_find(vp, remove)
  * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
  */
 static void
-swaplist_trim()
+swaplist_trim(void)
 {
 	struct swappri *spp, *nextspp;
 
@@ -418,8 +413,7 @@ swaplist_trim()
  * => caller must hold uvm.swap_data_lock
  */
 static struct swapdev *
-swapdrum_getsdp(pgno)
-	int pgno;
+swapdrum_getsdp(int pgno)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -443,10 +437,7 @@ swapdrum_getsdp(pgno)
  * 	[with two helper functions: swap_on and swap_off]
  */
 int
-sys_swapctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_swapctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_swapctl_args /* {
 		syscallarg(int) cmd;
@@ -702,11 +693,7 @@ out:
  * ensure it would fit in the stackgap in any case.
  */
 void
-uvm_swap_stats(cmd, sep, sec, retval)
-	int cmd;
-	struct swapent *sep;
-	int sec;
-	register_t *retval;
+uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 	struct swappri *spp;
 	struct swapdev *sdp;
@@ -763,9 +750,7 @@ uvm_swap_stats(cmd, sep, sec, retval)
  *	if needed.
  */
 static int
-swap_on(p, sdp)
-	struct proc *p;
-	struct swapdev *sdp;
+swap_on(struct proc *p, struct swapdev *sdp)
 {
 	struct vnode *vp;
 	int error, npages, nblocks, size;
@@ -977,9 +962,7 @@ bad:
  * => swap data should be locked, we will unlock.
  */
 static int
-swap_off(p, sdp)
-	struct proc *p;
-	struct swapdev *sdp;
+swap_off(struct proc *p, struct swapdev *sdp)
 {
 	int npages = sdp->swd_npages;
 	int error = 0;
@@ -1056,10 +1039,7 @@ swap_off(p, sdp)
  */
 /*ARGSUSED*/
 int
-swread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+swread(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
@@ -1072,10 +1052,7 @@ swread(dev, uio, ioflag)
  */
 /*ARGSUSED*/
 int
-swwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 
@@ -1089,8 +1066,7 @@ swwrite(dev, uio, ioflag)
  * => we must map the i/o request from the drum to the correct swapdev.
  */
 void
-swstrategy(bp)
-	struct buf *bp;
+swstrategy(struct buf *bp)
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
@@ -1177,10 +1153,7 @@ swstrategy(bp)
  * sw_reg_strategy: handle swap i/o to regular files
  */
 static void
-sw_reg_strategy(sdp, bp, bn)
-	struct swapdev	*sdp;
-	struct buf	*bp;
-	int		bn;
+sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 {
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
@@ -1330,8 +1303,7 @@ out: /* Arrive here at splbio */
  * => reqs are sorted by b_rawblkno (above)
  */
 static void
-sw_reg_start(sdp)
-	struct swapdev	*sdp;
+sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
 	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
@@ -1365,8 +1337,7 @@ sw_reg_start(sdp)
  * => note that we can recover the vndbuf struct by casting the buf ptr
  */
 static void
-sw_reg_iodone(bp)
-	struct buf *bp;
+sw_reg_iodone(struct buf *bp)
 {
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct vndxfer *vnx = vbp->vb_xfer;
@@ -1443,9 +1414,7 @@ sw_reg_iodone(bp)
  * => XXXMRG: "LESSOK" INTERFACE NEEDED TO EXTENT SYSTEM
  */
 int
-uvm_swap_alloc(nslots, lessok)
-	int *nslots;	/* IN/OUT */
-	boolean_t lessok;
+uvm_swap_alloc(int *nslots /* IN/OUT */, boolean_t lessok)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -1525,9 +1494,7 @@ uvm_swapisfull(void)
  * => we lock uvm.swap_data_lock
  */
 void
-uvm_swap_markbad(startslot, nslots)
-	int startslot;
-	int nslots;
+uvm_swap_markbad(int startslot, int nslots)
 {
 	struct swapdev *sdp;
 	UVMHIST_FUNC("uvm_swap_markbad"); UVMHIST_CALLED(pdhist);
@@ -1557,9 +1524,7 @@ uvm_swap_markbad(startslot, nslots)
  * => we lock uvm.swap_data_lock
  */
 void
-uvm_swap_free(startslot, nslots)
-	int startslot;
-	int nslots;
+uvm_swap_free(int startslot, int nslots)
 {
 	struct swapdev *sdp;
 	UVMHIST_FUNC("uvm_swap_free"); UVMHIST_CALLED(pdhist);
@@ -1599,11 +1564,7 @@ uvm_swap_free(startslot, nslots)
  */
 
 int
-uvm_swap_put(swslot, ppsp, npages, flags)
-	int swslot;
-	struct vm_page **ppsp;
-	int npages;
-	int flags;
+uvm_swap_put(int swslot, struct vm_page **ppsp, int npages, int flags)
 {
 	int error;
 
@@ -1619,9 +1580,7 @@ uvm_swap_put(swslot, ppsp, npages, flags)
  */
 
 int
-uvm_swap_get(page, swslot, flags)
-	struct vm_page *page;
-	int swslot, flags;
+uvm_swap_get(struct vm_page *page, int swslot, int flags)
 {
 	int error;
 
@@ -1652,9 +1611,7 @@ uvm_swap_get(page, swslot, flags)
  */
 
 static int
-uvm_swap_io(pps, startslot, npages, flags)
-	struct vm_page **pps;
-	int startslot, npages, flags;
+uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 {
 	daddr_t startblk;
 	struct	buf *bp;

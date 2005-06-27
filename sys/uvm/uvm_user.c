@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_user.c,v 1.11 2001/11/10 07:37:01 lukem Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.12 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_user.c,v 1.11 2001/11/10 07:37:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_user.c,v 1.12 2005/06/27 02:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_user.c,v 1.11 2001/11/10 07:37:01 lukem Exp $");
  */
 
 void
-uvm_deallocate(map, start, size)
-	struct vm_map *map;
-	vaddr_t start;
-	vsize_t size;
+uvm_deallocate(struct vm_map *map, vaddr_t start, vsize_t size)
 {
 
 	if (size == 0)
