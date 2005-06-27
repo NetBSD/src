@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.31 2005/06/26 21:51:37 erh Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.32 2005/06/27 05:49:13 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.20 2005/02/10 17:00:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.31 2005/06/26 21:51:37 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32 2005/06/27 05:49:13 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -714,7 +714,7 @@ ieee80211_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
  *     of first/only fragment
  */
 int
-ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
+ieee80211_compute_duration(struct ieee80211_frame_min *wh, int len,
     uint32_t flags, int fraglen, int rate, struct ieee80211_duration *d0,
     struct ieee80211_duration *dn, int *npktp, int debug)
 {
@@ -728,9 +728,11 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 
 	paylen = len - hdrlen;
 
-	if ((flags & IEEE80211_F_PRIVACY) != 0)
+	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0) {
+		/* XXX assumes the packet is already WEP encapsulated */
+		paylen -= IEEE80211_WEP_TOTLEN;
 		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
-	else
+	} else
 		overlen = IEEE80211_CRC_LEN;
 
 	npkt = paylen / fraglen;
