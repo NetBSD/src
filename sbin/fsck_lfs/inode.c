@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.28 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.29 2005/06/27 02:50:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr_t blk)
+blkerror(ino_t ino, const char *type, daddr_t blk)
 {
 
 	pfatal("%lld %s I=%u", (long long) blk, type, ino);
