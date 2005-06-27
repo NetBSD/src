@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.11 2003/07/15 02:15:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.12 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -229,13 +229,13 @@ ka49_steal_pages()
 static void
 ka49_halt()
 {
-	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
+	((volatile u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
 	asm("halt");
 }
 
 static void
 ka49_reboot(int arg)
 {
-	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
+	((volatile u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
 	asm("halt");
 }

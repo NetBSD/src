@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.36 2003/08/07 16:30:19 agc Exp $ */
+/*	$NetBSD: ka750.c,v 1.37 2005/06/27 11:03:25 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.36 2003/08/07 16:30:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.37 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -234,7 +234,7 @@ ka750_memerr()
 	}
 }
 
-char *mc750[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
+const char *mc750[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
 	"14","15"};
 
 struct mc750frame {
