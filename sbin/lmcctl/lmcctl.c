@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.8 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.9 2005/06/27 01:00:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lmcctl.c,v 1.8 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: lmcctl.c,v 1.9 2005/06/27 01:00:05 christos Exp $");
 #endif
 
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: lmcctl.c,v 1.8 2004/01/05 23:23:33 jmmv Exp $");
 
 #include "extern.h"
 
-static void dumpdata(char *, lmc_ctl_t *);
+static void dumpdata(const char *, lmc_ctl_t *);
 
 void usage(char *);
 
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	int		fd;
 	struct ifreq	ifr;
 	int		ch;
-	char	       *ifname = DEFAULT_INTERFACE;
+	const char       *ifname = DEFAULT_INTERFACE;
 	lmc_ctl_t	wanted;
 	int		flag_c; /* clock source external, internal */
 	int		flag_l; /* line speed */
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-char *clock_sources[] = {
+const char *clock_sources[] = {
 	"External/Line",
 	"Internal"
 };
@@ -288,7 +288,7 @@ char *clock_sources[] = {
 static void
 print_clocking(lmc_ctl_t *ctl)
 {
-	char *source;
+	const char *source;
 
 	if (ctl->clock_source > 1)
 		source = "Unknown Value";
@@ -303,7 +303,7 @@ print_clocking(lmc_ctl_t *ctl)
 	printf("\tApproximate detected rate: %u\n", ctl->ticks * 4096);
 }
 
-char *lmc_t1_cables[] = {
+const char *lmc_t1_cables[] = {
 	"V.10/RS423", "EIA530A", "reserved", "X.21", "V.35",
 	"EIA449/EIA530/V.36", "V.28/EIA232", "none", NULL
 };
@@ -311,7 +311,7 @@ char *lmc_t1_cables[] = {
 static void
 print_t1_cable(lmc_ctl_t *ctl)
 {
-	char *type;
+	const char *type;
 
 	if (ctl->cable_type > 7)
 		type = "Invalid cable type";
@@ -340,7 +340,7 @@ print_protocol(lmc_ctl_t *ctl)
 }
 
 static void
-dumpdata(char *name, lmc_ctl_t *ctl)
+dumpdata(const char *name, lmc_ctl_t *ctl)
 {
 	/*
 	 * Dump the data

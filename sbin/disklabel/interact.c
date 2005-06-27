@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.25 2005/06/12 19:18:34 dyoung Exp $	*/
+/*	$NetBSD: interact.c,v 1.26 2005/06/27 01:00:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.25 2005/06/12 19:18:34 dyoung Exp $");
+__RCSID("$NetBSD: interact.c,v 1.26 2005/06/27 01:00:05 christos Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -633,7 +633,7 @@ static int
 alphacmp(const void *a, const void *b)
 {
 
-	return (strcasecmp(*(const char **)a, *(const char **)b));
+	return (strcasecmp(*(const char * const*)a, *(const char * const*)b));
 }
 
 

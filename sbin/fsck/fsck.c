@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.40 2005/01/19 17:48:15 xtraeme Exp $	*/
+/*	$NetBSD: fsck.c,v 1.41 2005/06/27 01:00:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.40 2005/01/19 17:48:15 xtraeme Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.41 2005/06/27 01:00:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -324,7 +324,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/%s", *edir, execbase);
-			execv(execname, (char * const *)argv);
+			execv(execname, (char * const *)__UNCONST(argv));
 			if (errno != ENOENT) {
 				if (spec)
 					warn("exec %s for %s", execname, spec);

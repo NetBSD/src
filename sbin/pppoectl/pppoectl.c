@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.19 2005/05/10 06:49:10 martin Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.20 2005/06/27 01:00:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.19 2005/05/10 06:49:10 martin Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.20 2005/06/27 01:00:06 christos Exp $");
 #endif
 
 
@@ -160,11 +160,11 @@ main(int argc, char **argv)
 		strncpy(parms.ifname, ifname, sizeof(parms.ifname));
 		strncpy(parms.eth_ifname, eth_if_name, sizeof(parms.eth_ifname));
 		if (access_concentrator) {
-			parms.ac_name = (char*)access_concentrator;
+			parms.ac_name = access_concentrator;
 			parms.ac_name_len = strlen(access_concentrator);
 		}
 		if (service) {
-			parms.service_name = (char*)service;
+			parms.service_name = service;
 			parms.service_name_len = strlen(service);
 		}
 

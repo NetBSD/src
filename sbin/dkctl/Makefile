@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2005/01/20 15:53:35 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.3 2005/06/27 01:00:05 christos Exp $
 
-WARNS=	3
 PROG=	dkctl
 MAN=	dkctl.8
 

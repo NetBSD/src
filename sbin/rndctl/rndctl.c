@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.16 2003/07/13 07:59:24 itojun Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.17 2005/06/27 01:00:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.16 2003/07/13 07:59:24 itojun Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.17 2005/06/27 01:00:06 christos Exp $");
 #endif
 
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: rndctl.c,v 1.16 2003/07/13 07:59:24 itojun Exp $");
 #include <string.h>
 
 typedef struct {
-	char *a_name;
+	const char *a_name;
 	u_int32_t a_type;
 } arg_t;
 
@@ -64,7 +64,7 @@ arg_t source_types[] = {
 
 static void usage(void);
 u_int32_t find_type(char *name);
-char *find_name(u_int32_t);
+const char *find_name(u_int32_t);
 void do_ioctl(rndctl_t *);
 char * strflags(u_int32_t);
 void do_list(int, u_int32_t, char *);
@@ -98,7 +98,7 @@ find_type(char *name)
 	return (0);
 }
 
-char *
+const char *
 find_name(u_int32_t type)
 {
 	arg_t *a;

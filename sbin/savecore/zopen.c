@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.1 2001/01/02 21:39:37 joda Exp $	*/
+/*	$NetBSD: zopen.c,v 1.2 2005/06/27 01:00:06 christos Exp $	*/
 
 /*
  * Public domain stdio wrapper for libz, written by Johan Danielsson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zopen.c,v 1.1 2001/01/02 21:39:37 joda Exp $");
+__RCSID("$NetBSD: zopen.c,v 1.2 2005/06/27 01:00:06 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -24,7 +24,7 @@ xgzread(void *cookie, char *data, int size)
 static int
 xgzwrite(void *cookie, const char *data, int size)
 {
-    return gzwrite(cookie, (void*)data, size);
+    return gzwrite(cookie, __UNCONST(data), size);
 }
 
 FILE *

@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.44 2005/02/05 13:17:54 xtraeme Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.45 2005/06/27 01:00:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.44 2005/02/05 13:17:54 xtraeme Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.45 2005/06/27 01:00:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,8 @@ die_you_gravy_sucking_pig_dog(void)
 		doitfast();
 	dorcshutdown();
 	if (doreboot || dohalt) {
-		char *args[16], **arg, *path;
+		const char *args[16];
+		const char **arg, *path;
 
 		arg = &args[0];
 		if (doreboot) {
@@ -374,7 +375,7 @@ die_you_gravy_sucking_pig_dog(void)
 			*arg++ = bootstr;
 		*arg++ = 0;
 #ifndef DEBUG
-		execve(path, args, (char **)0);
+		execve(path, __UNCONST(args), NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m", path);
 		perror("shutdown");
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.50 2005/04/25 01:33:03 matt Exp $	*/
+/*	$NetBSD: modload.c,v 1.51 2005/06/27 01:00:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.50 2005/04/25 01:33:03 matt Exp $");
+__RCSID("$NetBSD: modload.c,v 1.51 2005/06/27 01:00:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -244,10 +244,10 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	char *kname = NULL;
-	char *entry = DFLT_ENTRY;
+	const char *kname = NULL;
+	const char *entry = DFLT_ENTRY;
 	char *post = NULL;
-	char *ldscript = NULL;
+	const char *ldscript = NULL;
 	char *modobj;
 	char modout[MAXPATHLEN], *p;
 	struct stat stb;
@@ -339,13 +339,15 @@ main(int argc, char **argv)
 		 * Try <modobj>_init if entry is DFLT_ENTRY.
 		 */
 		if (strcmp(entry, DFLT_ENTRY) == 0) {
+			char *nentry;
 			if ((p = strrchr(modout, '/')))
 				p++;
 			else
 				p = modout;
-			asprintf(&entry, "%s%s", p, DFLT_ENTRYEXT);
-			if (!entry)
+			asprintf(&nentry, "%s%s", p, DFLT_ENTRYEXT);
+			if (!nentry)
 				err(1, "malloc");
+			entry = nentry;
 			if (verify_entry(entry, modobj))
 				errx(1, "entry point _%s not found in %s",
 				    entry, modobj);
