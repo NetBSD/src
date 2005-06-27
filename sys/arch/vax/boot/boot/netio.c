@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.7 2003/03/28 18:16:59 he Exp $	*/
+/*	$NetBSD: netio.c,v 1.8 2005/06/27 11:26:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -91,12 +91,12 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/net.h"
-#include "lib/libsa/netif.h"
-#include "lib/libsa/bootparam.h"
-#include "lib/libsa/nfs.h"
-#include "lib/libsa/bootp.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/bootp.h>
 
 #include <lib/libkern/libkern.h>
 
