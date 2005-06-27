@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.39 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.40 2005/06/27 01:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -91,9 +91,9 @@ char	*dumpinomap;	/* map of files to be dumped */
  *	All calculations done in 0.1" units!
  */
 char	*disk;		/* name of the disk file */
-char	*tape;		/* name of the tape file */
-char	*dumpdates;	/* name of the file containing dump date information*/
-char	*temp;		/* name of the file for doing rewrite of dumpdates */
+const char *tape;	/* name of the tape file */
+const char *dumpdates;	/* name of the file containing dump date information*/
+const char *temp;	/* name of the file for doing rewrite of dumpdates */
 char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
@@ -164,11 +164,11 @@ ino_t	fs_maxino(void);
 void	fs_mapinodes(ino_t, u_int64_t *, int *);
 
 /* operator interface functions */
-void	broadcast(char *);
+void	broadcast(const char *);
 void	lastdump(char);
 void	msg(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
 void	msgtail(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
-int	query(char *);
+int	query(const char *);
 void	quit(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
 time_t	do_stats(void);
 void	statussig(int);
@@ -217,9 +217,9 @@ char	*xstrdup(const char *);
 /* rdump routines */
 #if defined(RDUMP) || defined(RRESTORE)
 void	rmtclose(void);
-int	rmthost(char *);
-int	rmtopen(char *, int, int);
-int	rmtwrite(char *, int);
+int	rmthost(const char *);
+int	rmtopen(const char *, int, int);
+int	rmtwrite(const char *, int);
 int	rmtioctl(int, int);
 #endif /* RDUMP || RRESTORE */
 

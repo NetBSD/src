@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.30 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.31 2005/06/27 01:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.30 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.31 2005/06/27 01:37:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,19 +74,19 @@ static	int rmtape;
 static	char *rmtpeer;
 
 static	int	okname(char *);
-static	int	rmtcall(char *, char *, int);
+static	int	rmtcall(const char *, const char *, int);
 static	void	rmtconnaborted(int);
 static	int	rmtgetb(void);
 static	void	rmtgetconn(void);
 static	void	rmtgets(char *, int);
 	int	rmtread(char *, int);
-static	int	rmtreply(char *, int);
+static	int	rmtreply(const char *, int);
 	int	rmtseek(int, int);
 
 extern	int ntrec;		/* blocking factor on tape */
 
 int
-rmthost(char *host)
+rmthost(const char *host)
 {
 
 	if ((rmtpeer = strdup(host)) == NULL)
@@ -173,7 +173,7 @@ okname(char *cp0)
 }
 
 int
-rmtopen(char *tapedevice, int mode, int verbose)
+rmtopen(const char *tapedevice, int mode, int verbose)
 {
 	char buf[256];
 
@@ -214,7 +214,7 @@ rmtread(char *buf, int count)
 }
 
 int
-rmtwrite(char *buf, int count)
+rmtwrite(const char *buf, int count)
 {
 	char line[30];
 
@@ -288,7 +288,7 @@ rmtioctl(int cmd, int count)
 }
 
 static int
-rmtcall(char *cmd, char *buf, int verbose)
+rmtcall(const char *cmd, const char *buf, int verbose)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
@@ -297,7 +297,7 @@ rmtcall(char *cmd, char *buf, int verbose)
 }
 
 static int
-rmtreply(char *cmd, int verbose)
+rmtreply(const char *cmd, int verbose)
 {
 	char *cp;
 	char code[30], emsg[BUFSIZ];
