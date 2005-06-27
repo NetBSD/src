@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2005/03/20 14:24:13 yamt Exp $
+#	$NetBSD: Makefile,v 1.29 2005/06/27 01:00:05 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -6,7 +6,6 @@
 
 .include <bsd.own.mk>
 
-WARNS=	3
 PROG=	ifconfig
 MAN=	ifconfig.8
 

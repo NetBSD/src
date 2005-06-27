@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.16 2004/02/11 18:42:37 jdolecek Exp $	*/
+/*	$NetBSD: elf.c,v 1.17 2005/06/27 01:00:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.16 2004/02/11 18:42:37 jdolecek Exp $");
+__RCSID("$NetBSD: elf.c,v 1.17 2005/06/27 01:00:05 christos Exp $");
 
 #include <sys/param.h>
 
@@ -130,13 +130,13 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *shstrtab, struct elf_section **head)
 
 /* get the symbol table sections and free the rest of them */
 static void
-get_symtab(struct elf_section **symtab)
+get_symtab(struct elf_section **symtb)
 {
 	struct elf_section *head, *cur, *prev;
 
 	head = NULL;
 	prev = NULL;
-	cur = *symtab;
+	cur = *symtb;
 	while (cur) {
 		if ((cur->type == SHT_SYMTAB) || (cur->type == SHT_DYNSYM)) {
 			if (head == NULL) {
@@ -157,7 +157,7 @@ get_symtab(struct elf_section **symtab)
 	if (prev) {
 		prev->next = NULL;
 	}
-	*symtab = head;
+	*symtb = head;
 }
 
 /* free a list of section headers */
@@ -253,7 +253,7 @@ elf_mod_sizes(int fd,
 	Elf_Ehdr ehdr;
 	ssize_t off = 0;
 	size_t data_hole = 0;
-	char *shstrtab, *strtab;
+	char *shstrtab, *strtb;
 	struct elf_section *head, *s;
 
 	if (read_elf_header(fd, &ehdr) < 0)
@@ -292,8 +292,8 @@ elf_mod_sizes(int fd,
 	free(shstrtab);
 
 	/* get string table length */
-	strtab = read_string_table(fd, head, strtablen);
-	free(strtab);
+	strtb = read_string_table(fd, head, strtablen);
+	free(strtb);
 
 	/* get symbol table sections */
 	resrvp->sym_symsize = 0;

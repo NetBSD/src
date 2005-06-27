@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.69 2005/03/15 23:43:50 xtraeme Exp $	*/
+/*	$NetBSD: init.c,v 1.70 2005/06/27 01:00:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.69 2005/03/15 23:43:50 xtraeme Exp $");
+__RCSID("$NetBSD: init.c,v 1.70 2005/06/27 01:00:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -556,7 +556,7 @@ single_user(void)
 #ifdef ALTSHELL
 	const char *shell = INIT_BSHELL;
 #endif
-	char *argv[2];
+	const char *argv[2];
 #ifdef SECURE
 	struct ttyent *typ;
 	struct passwd *pp;
@@ -649,11 +649,11 @@ single_user(void)
 #ifdef ALTSHELL
 		if (altshell[0])
 			argv[0] = altshell;
-		(void)execv(shell, argv);
+		(void)execv(shell, __UNCONST(argv));
 		emergency("can't exec %s for single user: %m", shell);
 		argv[0] = "-sh";
 #endif /* ALTSHELL */
-		(void)execv(INIT_BSHELL, argv);
+		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		emergency("can't exec %s for single user: %m", INIT_BSHELL);
 		(void)sleep(STALL_TIMEOUT);
 		_exit(1);
@@ -730,7 +730,7 @@ runcom(void)
 {
 	pid_t pid, wpid;
 	int status;
-	char *argv[4];
+	const char *argv[4];
 	struct sigaction sa;
 
 	switch ((pid = fork())) {
@@ -750,7 +750,7 @@ runcom(void)
 
 		(void)sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
-		(void)execv(INIT_BSHELL, argv);
+		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		stall("can't exec %s for %s: %m", INIT_BSHELL, _PATH_RUNCOM);
 		_exit(1);	/* force single user mode */
 		/*NOTREACHED*/

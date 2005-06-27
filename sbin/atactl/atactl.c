@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.38 2005/04/12 11:40:46 drochner Exp $	*/
+/*	$NetBSD: atactl.c,v 1.39 2005/06/27 01:00:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.38 2005/04/12 11:40:46 drochner Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.39 2005/06/27 01:00:05 christos Exp $");
 #endif
 
 
@@ -764,7 +764,7 @@ is_smart(void)
 {
 	int retval = 0;
 	struct ataparams *inqbuf;
-	char *status;
+	const char *status;
 
 	inqbuf = getataparams();
 
