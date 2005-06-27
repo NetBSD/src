@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.796 2005/06/21 18:11:38 wiz Exp $
+# $NetBSD: mi,v 1.797 2005/06/27 20:32:39 peter Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1548,7 +1548,7 @@
 ./usr/share/man/cat5/services.0			man-net-catman		.cat
 ./usr/share/man/cat5/shells.0			man-sys-catman		.cat
 ./usr/share/man/cat5/siginfo.0			man-obsolete		obsolete
-./usr/share/man/cat5/pfspamd.conf.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat5/pfspamd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/spamd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
@@ -2128,12 +2128,12 @@
 ./usr/share/man/cat8/smtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/smtpd.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/spamd-setup.0		man-obsolete		obsolete
-./usr/share/man/cat8/pfspamd-setup.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat8/pfspamd-setup.0		man-obsolete		obsolete
 ./usr/share/man/cat8/spamd.0			man-obsolete		obsolete
-./usr/share/man/cat8/pfspamd.0			man-netutil-catman	pf,.cat
+./usr/share/man/cat8/pfspamd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/spamdb.0			man-obsolete		obsolete
-./usr/share/man/cat8/pfspamdb.0			man-netutil-catman	pf,.cat
-./usr/share/man/cat8/pfspamlogd.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat8/pfspamdb.0			man-obsolete		obsolete
+./usr/share/man/cat8/pfspamlogd.0		man-obsolete		obsolete
 ./usr/share/man/cat8/spamlogd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sparc/binstall.0		man-sysutil-catman	.cat
@@ -3784,7 +3784,7 @@
 ./usr/share/man/man5/services.5			man-net-man		.man
 ./usr/share/man/man5/shells.5			man-sys-man		.man
 ./usr/share/man/man5/siginfo.5			man-obsolete		obsolete
-./usr/share/man/man5/pfspamd.conf.5		man-netutil-man		pf,.man
+./usr/share/man/man5/pfspamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/spamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
@@ -4364,12 +4364,12 @@
 ./usr/share/man/man8/smtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/smtpd.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/spamd-setup.8		man-obsolete		obsolete
-./usr/share/man/man8/pfspamd-setup.8		man-netutil-man		pf,.man
+./usr/share/man/man8/pfspamd-setup.8		man-obsolete		obsolete
 ./usr/share/man/man8/spamd.8			man-obsolete		obsolete
-./usr/share/man/man8/pfspamd.8			man-netutil-man		pf,.man
+./usr/share/man/man8/pfspamd.8			man-obsolete		obsolete
 ./usr/share/man/man8/spamdb.8			man-obsolete		obsolete
-./usr/share/man/man8/pfspamdb.8			man-netutil-man		pf,.man
-./usr/share/man/man8/pfspamlogd.8		man-netutil-man		pf,.man
+./usr/share/man/man8/pfspamdb.8			man-obsolete		obsolete
+./usr/share/man/man8/pfspamlogd.8		man-obsolete		obsolete
 ./usr/share/man/man8/spamlogd.8			man-obsolete		obsolete
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sparc/binstall.8		man-sys-man		.man

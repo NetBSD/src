@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.285 2005/05/11 10:41:51 peter Exp $
+#	$NetBSD: NetBSD.dist,v 1.286 2005/06/27 20:32:39 peter Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1099,7 +1099,6 @@
 ./var/chroot/ntpd/var/db	mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/chroot/pflogd		mode=0755
-./var/chroot/pfspamd		mode=0755
 ./var/chroot/sshd		mode=0755
 ./var/crash			mode=0770
 ./var/cron
