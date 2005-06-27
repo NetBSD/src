@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.16 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: restore.c,v 1.17 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: restore.c,v 1.16 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: restore.c,v 1.17 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,7 @@ removeoldnodes(void)
  * Extract new leaves.
  */
 void
-createleaves(char *symtabfile)
+createleaves(const char *symtabfile)
 {
 	struct entry *ep;
 	ino_t first;
