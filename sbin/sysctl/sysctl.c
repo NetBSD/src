@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.103 2005/06/16 14:56:36 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.104 2005/06/27 01:00:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.103 2005/06/16 14:56:36 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.104 2005/06/27 01:00:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ static const struct handlespec {
 	const char *ps_re;
 	void (*ps_p)(HANDLER_PROTO);
 	void (*ps_w)(HANDLER_PROTO);
-	void *ps_d;
+	const void *ps_d;
 } handlers[] = {
 	{ "/kern/clockrate",			kern_clockrate },
 	{ "/kern/vnode",			printother, NULL, "pstat" },
@@ -250,7 +250,8 @@ FILE	*warnfp = stderr;
 char gsname[SYSCTL_NAMELEN * CTL_MAXNAME + CTL_MAXNAME],
 	canonname[SYSCTL_NAMELEN * CTL_MAXNAME + CTL_MAXNAME],
 	gdname[10 * CTL_MAXNAME + CTL_MAXNAME];
-char sep[2] = ".", *eq = " = ";
+char sep[] = ".";
+const char *eq = " = ";
 const char *lname[] = {
 	"top", "second", "third", "fourth", "fifth", "sixth",
 	"seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"
@@ -444,7 +445,7 @@ static const char *
 sf(u_int f)
 {
 	static char s[256];
-	char *c;
+	const char *c;
 
 	s[0] = '\0';
 	c = "";
@@ -529,7 +530,7 @@ purge_tree(struct sysctlnode *rnode)
 	if (rnode->sysctl_desc == (const char*)-1)
 		rnode->sysctl_desc = NULL;
 	if (rnode->sysctl_desc != NULL)
-		free((void*)rnode->sysctl_desc);
+		free(__UNCONST(rnode->sysctl_desc));
 	rnode->sysctl_desc = NULL;
 }
 
@@ -642,7 +643,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	p = findhandler(canonname, 0);
 	if (type != CTLTYPE_NODE && p != NULL) {
 		(*p->ps_p)(gsname, gdname, NULL, name, namelen, pnode, type,
-			   p->ps_d);
+			   __UNCONST(p->ps_d));
 		*sp = *dp = '\0';
 		return;
 	}
@@ -673,7 +674,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 				/* do nothing */;
 			else if (p != NULL)
 				(*p->ps_p)(gsname, gdname, NULL, name, namelen,
-					   pnode, type, p->ps_d);
+					   pnode, type, __UNCONST(p->ps_d));
 			else if ((Aflag || req) && !Mflag)
 				printf("%s: no children\n", gsname);
 		}
@@ -858,7 +859,7 @@ parse(char *l)
 	canonicalize(gsname, canonname);
 	if (type != CTLTYPE_NODE && (w = findhandler(canonname, 1)) != NULL) {
 		(*w->ps_w)(gsname, gdname, value, name, namelen, node, type,
-			   w->ps_d);
+			   __UNCONST(w->ps_d));
 		gsname[0] = '\0';
 		return;
 	}
@@ -1499,8 +1500,7 @@ getdesc1(int *name, u_int namelen, struct sysctlnode *pnode)
 	name[namelen - 1] = node.sysctl_num;
 	if (pnode->sysctl_desc != NULL &&
 	    pnode->sysctl_desc != (const char *)-1)
-		/* LINTED mallocated it, must free it */
-		free((void*)pnode->sysctl_desc);
+		free(__UNCONST(pnode->sysctl_desc));
 	pnode->sysctl_desc = desc;
 }
 

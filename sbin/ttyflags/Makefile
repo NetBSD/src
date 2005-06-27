@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2005/01/19 20:48:13 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.5 2005/06/27 01:00:07 christos Exp $
 
-WARNS=	3
 PROG=	ttyflags
 MAN=	ttyflags.8
 

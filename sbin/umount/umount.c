@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.37 2005/01/31 01:19:30 erh Exp $	*/
+/*	$NetBSD: umount.c,v 1.38 2005/06/27 01:00:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.37 2005/01/31 01:19:30 erh Exp $");
+__RCSID("$NetBSD: umount.c,v 1.38 2005/06/27 01:00:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,8 +280,8 @@ umountfs(const char *name, const char **typelist, int raw)
 		clp->cl_auth = authsys_create_default();
 		try.tv_sec = 20;
 		try.tv_usec = 0;
-		clnt_stat = clnt_call(clp,
-		    RPCMNT_UMOUNT, xdr_dir, name, xdr_void, (caddr_t)0, try);
+		clnt_stat = clnt_call(clp, RPCMNT_UMOUNT, xdr_dir,
+		    __UNCONST(name), xdr_void, NULL, try);
 		if (clnt_stat != RPC_SUCCESS) {
 			clnt_perror(clp, "Bad MNT RPC");
 			return 1;
@@ -324,24 +324,24 @@ getmntname(const char *name, mntwhat what, char **type)
 static int
 sacmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
-	void *p1, *p2;
-	int len;
+	const void *p1, *p2;
+	size_t len;
 
 	if (sa1->sa_family != sa2->sa_family)
 		return 1;
 
 	switch (sa1->sa_family) {
 	case AF_INET:
-		p1 = &((struct sockaddr_in *)sa1)->sin_addr;
-		p2 = &((struct sockaddr_in *)sa2)->sin_addr;
+		p1 = &((const struct sockaddr_in *)sa1)->sin_addr;
+		p2 = &((const struct sockaddr_in *)sa2)->sin_addr;
 		len = 4;
 		break;
 	case AF_INET6:
-		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
-		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
+		p1 = &((const struct sockaddr_in6 *)sa1)->sin6_addr;
+		p2 = &((const struct sockaddr_in6 *)sa2)->sin6_addr;
 		len = 16;
-		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
-		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+		if (((const struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((const struct sockaddr_in6 *)sa2)->sin6_scope_id)
 			return 1;
 		break;
 	default:

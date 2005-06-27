@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/02/05 14:35:25 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.8 2005/06/27 01:00:05 christos Exp $
 #
 # Makefile for modunload
 #
@@ -36,7 +36,5 @@
 
 PROG=	modunload
 MAN=	modunload.8
-
-WARNS=	3
 
 .include <bsd.prog.mk>

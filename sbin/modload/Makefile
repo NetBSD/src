@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 1999/06/13 12:54:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2005/06/27 01:00:05 christos Exp $
 
-WARNS=	1
 PROG=	modload
 SRCS=	modload.c
 MAN=	modload.8
