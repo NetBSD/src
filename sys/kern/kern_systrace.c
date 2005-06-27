@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.45 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.46 2005/06/27 17:11:21 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.45 2005/06/26 19:58:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46 2005/06/27 17:11:21 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -141,6 +141,9 @@ struct str_process {
 	uid_t saveuid;
 	gid_t setegid;
 	gid_t savegid;
+
+	int isscript;
+	char scriptname[MAXPATHLEN];
 };
 
 uid_t	systrace_seteuid(struct proc *,  uid_t);
@@ -153,6 +156,8 @@ void systrace_unlock(void);
 int	systrace_attach(struct fsystrace *, pid_t);
 int	systrace_detach(struct str_process *);
 int	systrace_answer(struct str_process *, struct systrace_answer *);
+int	systrace_setscriptname(struct str_process *, struct 
+	    systrace_scriptname *);
 int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
@@ -317,6 +322,11 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 		if (!pid)
 			ret = EINVAL;
 		break;
+	case STRIOCSCRIPTNAME:
+		pid = ((struct systrace_scriptname *)data)->sn_pid;
+		if (!pid)
+			ret = EINVAL;
+		break;
 	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
@@ -370,6 +380,10 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 		break;
 	case STRIOCIO:
 		ret = systrace_io(strp, (struct systrace_io *)data);
+		break;
+	case STRIOCSCRIPTNAME:
+		ret = systrace_setscriptname(strp,
+		    (struct systrace_scriptname *)data);
 		break;
 	case STRIOCPOLICY:
 		ret = systrace_policy(fst, (struct systrace_policy *)data);
@@ -981,6 +995,16 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 }
 
 int
+systrace_setscriptname(struct str_process *strp,
+		       struct systrace_scriptname *ans)
+{
+	strlcpy(strp->scriptname, ans->sn_scriptname,
+		sizeof(strp->scriptname));
+
+	return (0);
+}
+
+int
 systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 {
 	struct str_policy *strpol;
@@ -1243,7 +1267,18 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 }
 
 void
-systrace_execve(char *path, struct proc *p)
+systrace_execve0(struct proc *p)
+{
+	struct str_process *strp;
+
+	systrace_lock();
+	strp = p->p_systrace;
+	strp->isscript = 0;
+	systrace_unlock();
+}
+
+void
+systrace_execve1(char *path, struct proc *p)
 {
 	struct str_process *strp;
 	struct fsystrace *fst;
@@ -1408,6 +1443,44 @@ systrace_replacefree(struct str_process *strp)
 	}
 }
 
+int
+systrace_scriptname(struct proc *p, char *dst)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	int error = 0;
+
+	systrace_lock();
+	strp = p->p_systrace;
+	fst = strp->parent;
+
+	SYSTRACE_LOCK(fst, curlwp);
+	systrace_unlock();
+
+	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
+			      fst->p_ruid != p->p_cred->p_ruid ||
+			      fst->p_rgid != p->p_cred->p_rgid)) {
+		error = EPERM;
+		goto out;
+	}
+
+	if (strp != NULL) {
+		if (strp->scriptname[0] == '\0') {
+			error = ENOENT;
+			goto out;
+		}
+
+		strlcpy(dst, strp->scriptname, MAXPATHLEN);
+		strp->isscript = 1;
+	}
+
+ out:
+	strp->scriptname[0] = '\0';
+	SYSTRACE_UNLOCK(fst, curlwp);
+
+	return (error);
+}
+
 void
 systrace_namei(struct nameidata *ndp)
 {
@@ -1424,11 +1497,17 @@ systrace_namei(struct nameidata *ndp)
 		SYSTRACE_LOCK(fst, curlwp);
 		systrace_unlock();
 
-		for (i = 0; i < strp->nfname; i++)
+		for (i = 0; i < strp->nfname; i++) {
 			if (strcmp(cnp->cn_pnbuf, strp->fname[i]) == 0) {
 				hamper = 1;
 				break;
 			}
+		}
+
+		if (!hamper && strp->isscript &&
+		    strcmp(cnp->cn_pnbuf, strp->scriptname) == 0)
+			hamper = 1;
+
 		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();

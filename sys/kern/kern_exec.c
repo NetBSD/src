@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.200 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.201 2005/06/27 17:11:21 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.200 2005/06/26 19:58:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201 2005/06/27 17:11:21 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -426,6 +426,9 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * see exec_script_makecmds().
 	 */
 #ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_execve0(p);
+
 	error = copyinstr(SCARG(uap, path), pathbuf, sizeof(pathbuf),
 			  &pathbuflen);
 	if (error)
@@ -868,7 +871,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
 	    wassugid && !ISSET(p->p_flag, P_SUGID))
-		systrace_execve(pathbuf, p);
+		systrace_execve1(pathbuf, p);
 #endif /* SYSTRACE */
 
 	return (EJUSTRETURN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.24 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: intercept.c,v 1.25 2005/06/27 17:11:20 elad Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.24 2005/06/26 19:58:29 elad Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.25 2005/06/27 17:11:20 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,12 +588,15 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 }
 
 char *
-intercept_filename(int fd, pid_t pid, void *addr, int userp)
+intercept_filename(int fd, pid_t pid, void *addr, int userp, char *before)
 {
 	char *name;
 
 	if ((name = intercept_get_string(fd, pid, addr)) == NULL)
 		goto abort;
+
+	if (before != NULL)
+		strlcpy(before, name, MAXPATHLEN);
 
 	if ((name = normalize_filename(fd, pid, name, userp)) == NULL)
 		goto abort;
@@ -748,7 +751,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	/* Special handling for the exec call */
 	if (!strcmp(name, "execve")) {
 		void *addr;
-		char *argname;
+		char *argname, before[MAXPATHLEN];
 
 		icpid->execve_code = code;
 		icpid->policynr = policynr;
@@ -757,10 +760,15 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		argname = intercept_filename(fd, pid, addr, ICLINK_ALL);
+
+		argname = intercept_filename(fd, pid, addr, ICLINK_ALL, before);
 		if (argname == NULL)
 			err(1, "%s:%d: intercept_filename",
 			    __func__, __LINE__);
+
+		if (intercept.scriptname(fd, pid, before) != 0)
+			err(1, "%s:%d: ioctl", __func__, __LINE__);
+
 		icpid->newname = strdup(argname);
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
