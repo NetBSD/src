@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.8 2005/06/15 15:16:23 reinoud Exp $ */
+/* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.8 2005/06/15 15:16:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -102,7 +102,7 @@ enum {
 
 
 /* our `cards' */
-static struct auixp_card_type {
+static const struct auixp_card_type {
 	uint16_t pci_vendor_id;
 	uint16_t pci_product_id;
 	int type;
@@ -130,85 +130,91 @@ struct audio_device auixp_device = {
 
 
 /* autoconfig */
-int	auixp_match( struct device *, struct cfdata *, void *);
-void	auixp_attach(struct device *, struct device *, void *);
-int	auixp_detach(struct device *, int);
+static int	auixp_match( struct device *, struct cfdata *, void *);
+static void	auixp_attach(struct device *, struct device *, void *);
+static int	auixp_detach(struct device *, int);
 
 
 /* audio(9) function prototypes */
-int	auixp_query_encoding(void *, struct audio_encoding *);
-int	auixp_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+static int	auixp_query_encoding(void *, struct audio_encoding *);
+static int	auixp_set_params(void *, int, int, audio_params_t *,
+				 audio_params_t *,
 		stream_filter_list_t *, stream_filter_list_t *);
-int	auixp_commit_settings(void *);
-int	auixp_round_blocksize(void *, int, int, const audio_params_t *);
-int	auixp_trigger_output(void *, void *, void *, int, void (*)(void *),
+static int	auixp_commit_settings(void *);
+static int	auixp_round_blocksize(void *, int, int, const audio_params_t *);
+static int	auixp_trigger_output(void *, void *, void *, int,
+				     void (*)(void *),
 		void *, const audio_params_t *);
-int	auixp_trigger_input(void *, void *, void *, int, void (*)(void *),
+static int	auixp_trigger_input(void *, void *, void *, int,
+				    void (*)(void *),
 		void *, const audio_params_t *);
-int	auixp_halt_output(void *);
-int	auixp_halt_input(void *);
-int	auixp_set_port(void *, mixer_ctrl_t *);
-int	auixp_get_port(void *, mixer_ctrl_t *);
-int	auixp_query_devinfo(void *, mixer_devinfo_t *);
-void *	auixp_malloc(void *, int, size_t, struct malloc_type *, int);
-void	auixp_free(void *, void *, struct malloc_type *);
-int	auixp_getdev(void *, struct audio_device *);
-size_t	auixp_round_buffersize(void *, int, size_t);
-int	auixp_get_props(void *);
-int	auixp_intr(void *);
-int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
+static int	auixp_halt_output(void *);
+static int	auixp_halt_input(void *);
+static int	auixp_set_port(void *, mixer_ctrl_t *);
+static int	auixp_get_port(void *, mixer_ctrl_t *);
+static int	auixp_query_devinfo(void *, mixer_devinfo_t *);
+static void *	auixp_malloc(void *, int, size_t, struct malloc_type *, int);
+static void	auixp_free(void *, void *, struct malloc_type *);
+static int	auixp_getdev(void *, struct audio_device *);
+static size_t	auixp_round_buffersize(void *, int, size_t);
+static int	auixp_get_props(void *);
+static int	auixp_intr(void *);
+static int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
 		struct auixp_dma *);
-int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
-paddr_t	auixp_mappage(void *, void *, off_t, int);
+static int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
+static paddr_t	auixp_mappage(void *, void *, off_t, int);
 
 
 /* power management (do we support that already?) */
-int	auixp_power(struct auixp_softc *, int);
-void	auixp_powerhook(int, void *);
-int	auixp_suspend(struct auixp_softc *);
-int	auixp_resume(struct auixp_softc *);
-void	auixp_config(struct auixp_softc *);	/* do we use it? */
+static int	auixp_power(struct auixp_softc *, int);
+#if 0
+static void	auixp_powerhook(int, void *);
+static int	auixp_suspend(struct auixp_softc *);
+static int	auixp_resume(struct auixp_softc *);
+#endif
 
 
 /* Supporting subroutines */
-int	auixp_init(struct auixp_softc *);
-void	auixp_autodetect_codecs(struct auixp_softc *);
-void	auixp_post_config(struct device *);
+static int	auixp_init(struct auixp_softc *);
+static void	auixp_autodetect_codecs(struct auixp_softc *);
+static void	auixp_post_config(struct device *);
 
-void	auixp_reset_aclink(struct auixp_softc *);
-int	auixp_attach_codec(void *, struct ac97_codec_if *);
-int	auixp_read_codec(void *, uint8_t, uint16_t *);
-int	auixp_write_codec(void *, uint8_t, uint16_t);
-int	auixp_wait_for_codecs(struct auixp_softc *, const char *);
-int	auixp_reset_codec(void *);
-enum ac97_host_flags	auixp_flags_codec(void *);
+static void	auixp_reset_aclink(struct auixp_softc *);
+static int	auixp_attach_codec(void *, struct ac97_codec_if *);
+static int	auixp_read_codec(void *, uint8_t, uint16_t *);
+static int	auixp_write_codec(void *, uint8_t, uint16_t);
+static int	auixp_wait_for_codecs(struct auixp_softc *, const char *);
+static int	auixp_reset_codec(void *);
+static enum ac97_host_flags	auixp_flags_codec(void *);
 
-void	auixp_enable_dma(struct auixp_softc *, struct auixp_dma *);
-void	auixp_disable_dma(struct auixp_softc *, struct auixp_dma *);
-void	auixp_enable_interrupts(struct auixp_softc *);
-void	auixp_disable_interrupts(struct auixp_softc *);
+static void	auixp_enable_dma(struct auixp_softc *, struct auixp_dma *);
+static void	auixp_disable_dma(struct auixp_softc *, struct auixp_dma *);
+static void	auixp_enable_interrupts(struct auixp_softc *);
+static void	auixp_disable_interrupts(struct auixp_softc *);
 
 
 /* statics */
-void	auixp_link_daisychain(struct auixp_softc *,
-		struct auixp_dma *, struct auixp_dma *,
-		int, int);
-int	auixp_allocate_dma_chain(struct auixp_softc *, struct auixp_dma **);
-void	auixp_program_dma_chain(struct auixp_softc *, struct auixp_dma *);
-void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
-void	auixp_update_busbusy(struct auixp_softc *);
+static void	auixp_link_daisychain(struct auixp_softc *,
+				      struct auixp_dma *, struct auixp_dma *,
+				      int, int);
+static int	auixp_allocate_dma_chain(struct auixp_softc *,
+					 struct auixp_dma **);
+static void	auixp_program_dma_chain(struct auixp_softc *,
+					struct auixp_dma *);
+static void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
+static void	auixp_update_busbusy(struct auixp_softc *);
 
 
 #ifdef DEBUG_AUIXP
-struct auixp_softc *static_sc;
-void auixp_dumpreg(void);
+static struct auixp_softc *static_sc;
+sdtatic void auixp_dumpreg(void);
 #	define DPRINTF(x) printf x;
 #else
 #	define DPRINTF(x)
 #endif
 
 
-const struct audio_hw_if auixp_hw_if = {
+static const struct audio_hw_if auixp_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */
@@ -246,7 +252,7 @@ CFATTACH_DECL(auixp, sizeof(struct auixp_softc), auixp_match, auixp_attach,
  * audio(9) functions
  */
 
-int
+static int
 auixp_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 	struct auixp_codec *co;
@@ -291,7 +297,7 @@ auixp_set_rate(struct auixp_codec *co, int mode, u_int srate)
 
 
 /* commit setting and program ATI IXP chip */
-int
+static int
 auixp_commit_settings(void *hdl)
 {
 	struct auixp_codec *co;
@@ -374,7 +380,7 @@ auixp_commit_settings(void *hdl)
 
 
 /* set audio properties in desired setting */
-int
+static int
 auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 		 audio_params_t *rec, stream_filter_list_t *pfil,
 		 stream_filter_list_t *rfil)
@@ -436,7 +442,7 @@ auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 
 
 /* called to translate a requested blocksize to a hw-possible one */
-int
+static int
 auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 	uint32_t new_bs;
@@ -457,7 +463,7 @@ auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
  * when we program the dma chain itself. The trigger routines passes on the
  * kernel virtual address we return here as a reference to the mapping.
  */
-void *
+static void *
 auixp_malloc(void *hdl, int direction, size_t size,
 	     struct malloc_type *type, int flags)
 {
@@ -497,7 +503,7 @@ auixp_malloc(void *hdl, int direction, size_t size,
  * free and release dma capable memory we allocated before and remove its
  * recording
  */
-void
+static void
 auixp_free(void *hdl, void *addr, struct malloc_type *type)
 {
 	struct auixp_codec *co;
@@ -510,6 +516,7 @@ auixp_free(void *hdl, void *addr, struct malloc_type *type)
 		if (KERNADDR(dma) == addr) {
 			SLIST_REMOVE(&sc->sc_dma_list, dma, auixp_dma,
 			    dma_chain);
+			auixp_freemem(sc, dma);
 			free(dma, type);
 			return;
 		}
@@ -517,7 +524,7 @@ auixp_free(void *hdl, void *addr, struct malloc_type *type)
 }
 
 
-int
+static int
 auixp_getdev(void *hdl, struct audio_device *ret)
 {
 
@@ -527,7 +534,7 @@ auixp_getdev(void *hdl, struct audio_device *ret)
 
 
 /* pass request to AC'97 codec code */
-int
+static int
 auixp_set_port(void *hdl, mixer_ctrl_t *mc)
 {
 	struct auixp_codec *co;
@@ -538,7 +545,7 @@ auixp_set_port(void *hdl, mixer_ctrl_t *mc)
 
 
 /* pass request to AC'97 codec code */
-int
+static int
 auixp_get_port(void *hdl, mixer_ctrl_t *mc)
 {
 	struct auixp_codec *co;
@@ -548,7 +555,7 @@ auixp_get_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 /* pass request to AC'97 codec code */
-int
+static int
 auixp_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
 	struct auixp_codec *co;
@@ -558,7 +565,7 @@ auixp_query_devinfo(void *hdl, mixer_devinfo_t *di)
 }
 
 
-size_t
+static size_t
 auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
 {
 
@@ -567,7 +574,7 @@ auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
 }
 
 
-int
+static int
 auixp_get_props(void *hdl)
 {
 
@@ -589,7 +596,7 @@ auixp_get_props(void *hdl)
  * Note that _v variables depict kernel virtual addresses, _p variables depict
  * physical addresses.
  */
-void
+static void
 auixp_link_daisychain(struct auixp_softc *sc,
 		struct auixp_dma *c_dma, struct auixp_dma *s_dma,
 		int blksize, int blocks)
@@ -634,7 +641,7 @@ auixp_link_daisychain(struct auixp_softc *sc,
 }
 
 
-int
+static int
 auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 {
 	struct auixp_dma *dma;
@@ -665,7 +672,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 
 
 /* program dma chain in it's link address descriptor */
-void
+static void
 auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 {
 	bus_space_tag_t    iot;
@@ -692,7 +699,7 @@ auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 
 
 /* called from interrupt code to signal end of one dma-slot */
-void
+static void
 auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
 {
 
@@ -711,7 +718,7 @@ auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
  * The magic `busbusy' bit that needs to be set when dma is active; allowing
  * busmastering?
  */
-void
+static void
 auixp_update_busbusy(struct auixp_softc *sc)
 {
 	bus_space_tag_t    iot;
@@ -740,7 +747,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
  * again.
  */
 /* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
-int
+static int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
@@ -795,7 +802,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 
 /* halt output of audio, just disable it's dma and update bus state */
-int
+static int
 auixp_halt_output(void *hdl)
 {
 	struct auixp_codec *co;
@@ -815,7 +822,7 @@ auixp_halt_output(void *hdl)
 
 
 /* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
-int
+static int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
@@ -870,7 +877,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 
 /* halt sampling audio, just disable it's dma and update bus state */
-int
+static int
 auixp_halt_input(void *hdl)
 {
 	struct auixp_codec *co;
@@ -897,7 +904,7 @@ auixp_halt_input(void *hdl)
  * value > 0 means "i've dealt with it"
  *
  */
-int
+static int
 auixp_intr(void *softc)
 {
 	struct auixp_softc *sc;
@@ -960,7 +967,7 @@ auixp_intr(void *softc)
 
 
 /* allocate memory for dma purposes; on failure of any of the steps, roll back */
-int
+static int
 auixp_allocmem(struct auixp_softc *sc, size_t size,
 	       size_t align, struct auixp_dma *dma)
 {
@@ -1014,7 +1021,7 @@ free:
 
 
 /* undo dma mapping and release memory allocated */
-int
+static int
 auixp_freemem(struct auixp_softc *sc, struct auixp_dma *p)
 {
 
@@ -1028,7 +1035,7 @@ auixp_freemem(struct auixp_softc *sc, struct auixp_dma *p)
 
 
 /* memory map dma memory */
-paddr_t
+static paddr_t
 auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 {
 	struct auixp_codec *co;
@@ -1062,7 +1069,7 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
  */
 
 /* Is it my hardware? */
-int
+static int
 auixp_match(struct device *dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -1083,7 +1090,7 @@ auixp_match(struct device *dev, struct cfdata *match, void *aux)
 
 
 /* it is... now hook up and set up the resources we need */
-void
+static void
 auixp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auixp_softc *sc;
@@ -1091,7 +1098,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t tag;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
-	struct auixp_card_type *card;
+	const struct auixp_card_type *card;
 	const char *intrstr;
 	uint32_t data;
 	char devinfo[256];
@@ -1230,7 +1237,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 
 
 /* called from autoconfigure system when interrupts are enabled */
-void
+static void
 auixp_post_config(struct device *self)
 {
 	struct auixp_softc *sc;
@@ -1304,7 +1311,7 @@ auixp_post_config(struct device *self)
 }
 
 
-void
+static void
 auixp_enable_interrupts(struct auixp_softc *sc)
 {
 	bus_space_tag_t     iot;
@@ -1332,7 +1339,7 @@ auixp_enable_interrupts(struct auixp_softc *sc)
 }
 
 
-void
+static void
 auixp_disable_interrupts(struct auixp_softc *sc)
 {
 	bus_space_tag_t     iot;
@@ -1349,7 +1356,7 @@ auixp_disable_interrupts(struct auixp_softc *sc)
 
 
 /* dismantle what we've set up by undoing setup */
-int
+static int
 auixp_detach(struct device *self, int flags)
 {
 	struct auixp_softc *sc;
@@ -1386,7 +1393,7 @@ auixp_detach(struct device *self, int flags)
  */
 
 
-int
+static int
 auixp_attach_codec(void *aux, struct ac97_codec_if *codec_if)
 {
 	struct auixp_codec *ixp_codec;
@@ -1399,7 +1406,7 @@ auixp_attach_codec(void *aux, struct ac97_codec_if *codec_if)
 }
 
 
-int
+static int
 auixp_read_codec(void *aux, uint8_t reg, uint16_t *result)
 {
 	struct auixp_codec *co;
@@ -1450,7 +1457,7 @@ auixp_read_codec(void *aux, uint8_t reg, uint16_t *result)
 }
 
 
-int
+static int
 auixp_write_codec(void *aux, uint8_t reg, uint16_t data)
 {
 	struct auixp_codec *co;
@@ -1479,7 +1486,7 @@ auixp_write_codec(void *aux, uint8_t reg, uint16_t data)
 }
 
 
-int
+static int
 auixp_reset_codec(void *aux)
 {
 
@@ -1488,7 +1495,7 @@ auixp_reset_codec(void *aux)
 }
 
 
-enum ac97_host_flags
+static enum ac97_host_flags
 auixp_flags_codec(void *aux)
 {
 	struct auixp_codec *ixp_codec;
@@ -1498,7 +1505,7 @@ auixp_flags_codec(void *aux)
 }
 
 
-int
+static int
 auixp_wait_for_codecs(struct auixp_softc *sc, const char *func)
 {
 	bus_space_tag_t      iot;
@@ -1525,7 +1532,7 @@ auixp_wait_for_codecs(struct auixp_softc *sc, const char *func)
 
 
 
-void
+static void
 auixp_autodetect_codecs(struct auixp_softc *sc)
 {
 	bus_space_tag_t      iot;
@@ -1611,7 +1618,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 
 /* initialisation routines */
 
-void
+static void
 auixp_disable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 {
 	bus_space_tag_t      iot;
@@ -1629,7 +1636,7 @@ auixp_disable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 }
 
 
-void
+static void
 auixp_enable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 {
 	bus_space_tag_t      iot;
@@ -1647,7 +1654,7 @@ auixp_enable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 }
 
 
-void
+static void
 auixp_reset_aclink(struct auixp_softc *sc)
 {
 	bus_space_tag_t      iot;
@@ -1729,18 +1736,8 @@ auixp_reset_aclink(struct auixp_softc *sc)
 }
 
 
-/* XXX setup saved configuration XXX */
-void
-auixp_config(struct auixp_softc *sc)
-{
-
-	/* XXX fix me XXX */
-	return;
-}
-
-
 /* chip hard init */
-int
+static int
 auixp_init(struct auixp_softc *sc)
 {
 	bus_space_tag_t      iot;
@@ -1778,7 +1775,7 @@ auixp_init(struct auixp_softc *sc)
  *
  */
 
-int
+static int
 auixp_power(struct auixp_softc *sc, int state)
 {
 	pcitag_t tag;
@@ -1798,7 +1795,8 @@ auixp_power(struct auixp_softc *sc, int state)
 }
 
 
-void
+#if 0
+static void
 auixp_powerhook(int why, void *hdl)
 {
 	struct auixp_softc *sc;
@@ -1818,7 +1816,7 @@ auixp_powerhook(int why, void *hdl)
 }
 
 
-int
+static int
 auixp_suspend(struct auixp_softc *sc)
 {
 
@@ -1827,17 +1825,18 @@ auixp_suspend(struct auixp_softc *sc)
 }
 
 
-int
+static int
 auixp_resume(struct auixp_softc *sc)
 {
 
 	/* XXX no power functions yet XXX */
 	return 0;
 }
+#endif /* 0 */
 
 #ifdef DEBUG_AUIXP
 
-void
+static void
 auixp_dumpreg(void)
 {
 	struct auixp_softc  *sc;
