@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.10 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: bivar.h,v 1.11 2005/06/27 11:05:24 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,7 +66,7 @@ struct bi_attach_args {
 struct bi_list {
 	u_short bl_nr;		/* Unit ID# */
 	u_short bl_havedriver;	/* Have device driver (informal) */
-	char *bl_name;		/* DEC name */
+	const char *bl_name;		/* DEC name */
 };
 
 /* bl_havedriver field meaning */
