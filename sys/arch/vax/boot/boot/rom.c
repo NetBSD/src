@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.5 2002/09/19 17:41:21 ragge Exp $ */
+/*	$NetBSD: rom.c,v 1.6 2005/06/27 11:26:02 junyoung Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -33,16 +33,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "sys/disklabel.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
 
 #define RF_PROTECTED_SECTORS	64	/* XXX <dev/raidframe/raidframevar.h> */
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
 #include "../include/pte.h"
 #include "../include/sid.h"

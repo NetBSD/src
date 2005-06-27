@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.6 2005/06/27 11:21:25 junyoung Exp $ */
+/*	$NetBSD: hp.c,v 1.7 2005/06/27 11:26:02 junyoung Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,12 +31,12 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "sys/param.h"
-#include "sys/disklabel.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
 
-#include "lib/libsa/stand.h"
+#include <lib/libsa/stand.h>
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
 #include "../include/pte.h"
 #include "../include/rpb.h"
