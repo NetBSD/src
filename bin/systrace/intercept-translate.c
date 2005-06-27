@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept-translate.c,v 1.7 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: intercept-translate.c,v 1.8 2005/06/27 17:11:20 elad Exp $	*/
 /*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.7 2005/06/24 23:21:09 christos Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.8 2005/06/27 17:11:20 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,7 +136,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_ALL);
+	name = intercept_filename(fd, pid, addr, ICLINK_ALL, NULL);
 	if (name == NULL)
 		return (-1);
 
@@ -183,7 +183,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_NONE);
+	name = intercept_filename(fd, pid, addr, ICLINK_NONE, NULL);
 	if (name == NULL)
 		return (-1);
 
@@ -207,7 +207,7 @@ ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST);
+	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST, NULL);
 	if (name == NULL)
 		return (-1);
 

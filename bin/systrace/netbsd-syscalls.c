@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.18 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.19 2005/06/27 17:11:20 elad Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.18 2005/06/26 19:58:29 elad Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.19 2005/06/27 17:11:20 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -164,6 +164,7 @@ static int nbsd_setcwd(int, pid_t);
 static int nbsd_restcwd(int);
 static int nbsd_argument(int, void *, int, void **);
 static int nbsd_read(int);
+static int nbsd_scriptname(int, pid_t, char *);
 
 static int
 nbsd_init(void)
@@ -398,6 +399,17 @@ nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
 		return (-1);
 
 	return (0);
+}
+
+static int
+nbsd_scriptname(int fd, pid_t pid, char *scriptname)
+{
+	struct systrace_scriptname sn;
+
+	sn.sn_pid = pid;
+	strlcpy(sn.sn_scriptname, scriptname, sizeof(sn.sn_scriptname));
+
+	return (ioctl(fd, STRIOCSCRIPTNAME, &sn));
 }
 
 static int
@@ -681,4 +693,5 @@ const struct intercept_system intercept = {
 	nbsd_replace,
 	nbsd_clonepid,
 	nbsd_freepid,
+	nbsd_scriptname,
 };

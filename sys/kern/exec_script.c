@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.40 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.41 2005/06/27 17:11:20 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.40 2005/06/26 19:58:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41 2005/06/27 17:11:20 elad Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -230,8 +230,21 @@ check_shell:
 #endif
 		/* normally can't fail, but check for it if diagnostic */
 #ifdef SYSTRACE
-		error = copystr(epp->ep_name, *tmpsap++, MAXPATHLEN,
-				(size_t *)0);
+		error = 1;
+		if (ISSET(p->p_flag, P_SYSTRACE)) {
+			error = systrace_scriptname(p, *tmpsap);
+			if (error == 0)
+				tmpsap++;
+		}
+		if (error) {
+			/*
+			 * Since systrace_scriptname() provides a
+			 * convenience, not a security issue, we are
+			 * safe to do this.
+			 */
+			error = copystr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+					NULL);
+		}
 #else
 		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
 		    (size_t *)0);

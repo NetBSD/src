@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.16 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: intercept.h,v 1.17 2005/06/27 17:11:20 elad Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -60,6 +60,7 @@ struct intercept_system {
 	int (*replace)(int, pid_t, u_int16_t, struct intercept_replace *);
 	void (*clonepid)(struct intercept_pid *, struct intercept_pid *);
 	void (*freepid)(struct intercept_pid *);
+	int (*scriptname)(int, pid_t, char *);
 };
 
 #define INTERCEPT_READ	1
@@ -190,7 +191,7 @@ int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
 char *normalize_filename(int, pid_t, char *, int);
-char *intercept_filename(int, pid_t, void *, int);
+char *intercept_filename(int, pid_t, void *, int, char *);
 void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
 void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,
