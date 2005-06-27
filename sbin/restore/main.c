@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ time_t	dumptime;
 time_t	dumpdate;
 size_t	pagesize;
 FILE	*terminal;
-char	*tmpdir;
+const char	*tmpdir;
 int	dotflag = 0;
 
 FILE *Mtreefile = NULL;
@@ -88,9 +88,10 @@ main(int argc, char *argv[])
 {
 	int ch;
 	ino_t ino;
-	char *inputdev;
-	char *symtbl = "./restoresymtable";
+	const char *inputdev;
+	const char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
+	static char dot[] = ".";
 
 	if (argc < 2)
 		usage();
@@ -193,7 +194,7 @@ main(int argc, char *argv[])
 
 	if (argc == 0) {
 		argc = 1;
-		*--argv = ".";
+		*--argv = dot;
 	}
 
 	switch (command) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.21 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: interactive.c,v 1.22 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.21 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.22 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ copynext(char *input, char *output)
  * remove any imbedded "." and ".." components.
  */
 void
-canon(char *rawname, char *canonname)
+canon(const char *rawname, char *canonname)
 {
 	char *cp, *np;
 
@@ -763,8 +763,8 @@ glob_stat(const char *name, struct stat *stp)
 static int
 fcmp(const void *f1, const void *f2)
 {
-	return (strcmp(((struct afile *)f1)->fname,
-	    ((struct afile *)f2)->fname));
+	return (strcmp(((const struct afile *)f1)->fname,
+	    ((const struct afile *)f2)->fname));
 }
 
 /*

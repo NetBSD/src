@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.20 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: symtab.c,v 1.21 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.20 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.21 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static struct entry **entry;
 static long entrytblsize;
 
 static void		 addino(ino_t, struct entry *);
-static struct entry	*lookupparent(char *);
+static struct entry	*lookupparent(const char *);
 static void		 removeentry(struct entry *);
 
 /*
@@ -140,10 +140,11 @@ deleteino(ino_t inum)
  * Look up an entry by name
  */
 struct entry *
-lookupname(char *name)
+lookupname(const char *name)
 {
 	struct entry *ep;
-	char *np, *cp;
+	char *np;
+	const char *cp;
 	char buf[MAXPATHLEN];
 
 	cp = name;
@@ -166,7 +167,7 @@ lookupname(char *name)
  * Look up the parent of a pathname
  */
 static struct entry *
-lookupparent(char *name)
+lookupparent(const char *name)
 {
 	struct entry *ep;
 	char *tailindex;
@@ -215,7 +216,7 @@ static struct entry *freelist = NULL;
  * add an entry to the symbol table
  */
 struct entry *
-addentry(char *name, ino_t inum, int type)
+addentry(const char *name, ino_t inum, int type)
 {
 	struct entry *np, *ep;
 
@@ -384,7 +385,7 @@ static struct strhdr strtblhdr[allocsize(NAME_MAX) / STRTBLINCR];
  * has an appropriate sized entry, and if not allocates a new one.
  */
 char *
-savename(char *name)
+savename(const char *name)
 {
 	struct strhdr *np, *tp;
 	long len, siz;
@@ -444,7 +445,7 @@ struct symtableheader {
  * dump a snapshot of the symbol table
  */
 void
-dumpsymtable(char *filename, int32_t checkpt)
+dumpsymtable(const char *filename, int32_t checkpt)
 {
 	struct entry *ep, *tep;
 	ino_t i;
@@ -530,7 +531,7 @@ dumpsymtable(char *filename, int32_t checkpt)
  * Initialize a symbol table from a file
  */
 void
-initsymtable(char *filename)
+initsymtable(const char *filename)
 {
 	char *base;
 	long tblsize;

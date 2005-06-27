@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.43 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: dirs.c,v 1.44 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.43 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.44 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ skipdirs(void)
  *	pname and pass them off to be processed.
  */
 void
-treescan(char *pname, ino_t ino, long (*todo)(char *, ino_t, int))
+treescan(const char *pname, ino_t ino, long (*todo)(const char *, ino_t, int))
 {
 	struct inotab *itp;
 	struct direct *dp;

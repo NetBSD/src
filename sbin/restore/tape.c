@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.52 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: tape.c,v 1.53 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.52 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: tape.c,v 1.53 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static int	tapesread;
 static jmp_buf	restart;
 static int	gettingfile = 0;	/* restart has a valid frame */
 #ifdef RRESTORE
-static char	*host = NULL;
+static const char *host = NULL;
 #endif
 
 static int	ofile;
@@ -186,8 +186,9 @@ digest_lookup(const char *name)
  * Set up an input source
  */
 void
-setinput(char *source)
+setinput(const char *source)
 {
+	char *cp;
 	FLUSHTAPEBUF();
 	if (bflag)
 		newtapebuf(ntrec);
@@ -196,10 +197,11 @@ setinput(char *source)
 	terminal = stdin;
 
 #ifdef RRESTORE
-	if (strchr(source, ':')) {
+	if ((cp = strchr(source, ':')) != NULL) {
 		host = source;
-		source = strchr(host, ':');
-		*source++ = '\0';
+		/* Ok, because const strings don't have : */
+		*cp++ = '\0';
+		source = cp;
 		if (rmthost(host) == 0)
 			exit(1);
 	} else
