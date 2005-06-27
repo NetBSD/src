@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.556 2005/06/15 18:06:19 xtraeme Exp $
+# $NetBSD: mi,v 1.557 2005/06/27 20:32:39 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -896,11 +896,11 @@
 ./usr/libexec/sftp-server			base-secsh-bin		crypto
 ./usr/libexec/sm.bin				base-sendmail-usr
 ./usr/libexec/smrsh				base-sendmail-bin	sendmail
-./usr/libexec/pfspamd				base-netutil-bin	pf
+./usr/libexec/pfspamd				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
-./usr/libexec/pfspamd-setup			base-netutil-bin	pf
+./usr/libexec/pfspamd-setup			base-obsolete		obsolete
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
-./usr/libexec/pfspamlogd			base-netutil-bin	pf
+./usr/libexec/pfspamlogd			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
@@ -1131,7 +1131,7 @@
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
-./usr/sbin/pfspamdb				base-netutil-bin	pf
+./usr/sbin/pfspamdb				base-obsolete		obsolete
 ./usr/sbin/spamdb				base-obsolete		obsolete
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
@@ -3504,7 +3504,7 @@
 ./var/chroot/ntpd/var/db			base-ntp-root
 ./var/chroot/ntpd/var/run			base-ntp-root
 ./var/chroot/pflogd				base-sys-root
-./var/chroot/pfspamd				base-sys-root
+./var/chroot/pfspamd				base-obsolete		obsolete
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
 ./var/crash					base-sys-root

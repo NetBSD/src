@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.169 2005/05/31 02:25:36 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.170 2005/06/27 20:32:40 peter Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -215,7 +215,7 @@ MKPAM		If "no", disables building of PAM authentication
 		infrastructure (libraries and support programs).
 		Default: no
 
-MKPF		If "no", don't build or install the pf programs, LKM and spamd.
+MKPF		If "no", don't build or install the pf programs and LKM.
 		Default: yes
 
 MKPIC		If "no", don't build or install shared libraries, and

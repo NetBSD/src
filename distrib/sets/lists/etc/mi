@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.155 2005/04/25 11:38:01 wiz Exp $
+# $NetBSD: mi,v 1.156 2005/06/27 20:32:39 peter Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -249,7 +249,7 @@
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
 ./etc/skeykeys					etc-sys-etc
-./etc/spamd.conf				etc-net-etc		pf
+./etc/spamd.conf				etc-obsolete		obsolete
 ./etc/spwd.db					etc-sys-etc
 ./etc/ssh/ssh_config				etc-secsh-etc		crypto
 ./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto
