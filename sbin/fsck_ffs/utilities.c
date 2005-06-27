@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.49 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: utilities.c,v 1.50 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.49 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.50 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: utilities.c,v 1.49 2005/01/20 15:29:40 xtraeme Exp $");
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror(char *, daddr_t);
+static void rwerror(const char *, daddr_t);
 
 extern int returntosingle;
 
@@ -87,7 +87,7 @@ ftypeok(union dinode *dp)
 }
 
 int
-reply(char *question)
+reply(const char *question)
 {
 	int persevere;
 	char c;
@@ -243,7 +243,7 @@ flush(int fd, struct bufarea *bp)
 }
 
 static void
-rwerror(char *mesg, daddr_t blk)
+rwerror(const char *mesg, daddr_t blk)
 {
 
 	if (preen == 0)
@@ -537,7 +537,7 @@ voidquit(int sig)
  * determine whether an inode should be fixed.
  */
 int
-dofix(struct inodesc *idesc, char *msg)
+dofix(struct inodesc *idesc, const char *msg)
 {
 
 	switch (idesc->id_fix) {
