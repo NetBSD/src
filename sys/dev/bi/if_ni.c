@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.25 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: if_ni.c,v 1.26 2005/06/27 11:05:24 ragge Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.25 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.26 2005/06/27 11:05:24 ragge Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -99,22 +99,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.25 2005/02/27 00:26:59 perry Exp $");
  */
 #define	NRETRIES	100
 #define	INSQTI(e, h)	({						\
-	int ret = 0, i;							\
-	for (i = 0; i < NRETRIES; i++) {				\
+	int ret = 0, __i;						\
+	for (__i = 0; __i < NRETRIES; __i++) {				\
 		if ((ret = insqti(e, h)) != ILCK_FAILED)		\
 			break;						\
 	}								\
-	if (i == NRETRIES)						\
+	if (__i == NRETRIES)						\
 		panic("ni: insqti failed at %d", __LINE__);		\
 	ret;								\
 })
 #define	REMQHI(h)	({						\
-	int i; void *ret = NULL;					\
-	for (i = 0; i < NRETRIES; i++) {				\
+	int __i; void *ret = NULL;					\
+	for (__i = 0; __i < NRETRIES; __i++) {				\
 		if ((ret = remqhi(h)) != (void *)ILCK_FAILED)		\
 			break;						\
 	}								\
-	if (i == NRETRIES)						\
+	if (__i == NRETRIES)						\
 		panic("ni: remqhi failed at %d", __LINE__);		\
 	ret;								\
 })
@@ -151,7 +151,7 @@ static	void	ni_setup(struct ni_softc *);
 static	void	nitimeout(struct ifnet *);
 static	void	ni_shutdown(void *);
 static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
-static	int failtest(struct ni_softc *, int, int, int, char *);
+static	int failtest(struct ni_softc *, int, int, int, const char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
 
@@ -211,7 +211,7 @@ ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
 }
 
 static int
-failtest(struct ni_softc *sc, int reg, int mask, int test, char *str)
+failtest(struct ni_softc *sc, int reg, int mask, int test, const char *str)
 {
 	int i = 100;
 
@@ -353,10 +353,7 @@ niattach(parent, self, aux)
 	/* Set up message free queue */
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
 	for (i = 0; i < NMSGBUF; i++) {
-		struct ni_msg *msg;
-
 		msg = (void *)(va + i * 512);
-
 		res = INSQTI(msg, &fqb->nf_mforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);

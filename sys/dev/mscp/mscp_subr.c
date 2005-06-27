@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.27 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.28 2005/06/27 11:05:24 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.27 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.28 2005/06/27 11:05:24 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -167,6 +167,7 @@ mscp_attach(parent, self, aux)
 {
 	struct	mscp_attach_args *ma = aux;
 	struct	mscp_softc *mi = (void *)self;
+	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
 	int	timeout, next = 0;
@@ -297,7 +298,8 @@ gotit:	/*
 			 */
 			printf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
 				mp->mscp_unit);
-			mscp_printevent((struct mscp *)mp);
+			mp2 = __UNVOLATILE(mp);
+			mscp_printevent(mp2);
 			next++;
 			goto findunit;
 		}
@@ -305,7 +307,7 @@ gotit:	/*
 
 	default:
 		printf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
-		mscp_printevent((struct mscp *)mp);
+		mscp_printevent(__UNVOLATILE(mp));
 		return;
 	}
 
@@ -622,7 +624,7 @@ static char unknown_msg[] = "unknown subcode";
 /*
  * Subcodes for Success (0)
  */
-static char *succ_msgs[] = {
+static const char *succ_msgs[] = {
 	"normal",		/* 0 */
 	"spin down ignored",	/* 1 = Spin-Down Ignored */
 	"still connected",	/* 2 = Still Connected */
@@ -645,7 +647,7 @@ static char *succ_msgs[] = {
 /*
  * Subcodes for Invalid Command (1)
  */
-static char *icmd_msgs[] = {
+static const char *icmd_msgs[] = {
 	"invalid msg length",	/* 0 = Invalid Message Length */
 };
 
@@ -657,7 +659,7 @@ static char *icmd_msgs[] = {
 /*
  * Subcodes for Unit Offline (3)
  */
-static char *offl_msgs[] = {
+static const char *offl_msgs[] = {
 	"unknown drive",	/* 0 = Unknown, or online to other ctlr */
 	"not mounted",		/* 1 = Unmounted, or RUN/STOP at STOP */
 	"inoperative",		/* 2 = Unit Inoperative */
@@ -677,7 +679,7 @@ static char *offl_msgs[] = {
 /*
  * Subcodes for Media Format Error (5)
  */
-static char *media_fmt_msgs[] = {
+static const char *media_fmt_msgs[] = {
 	"fct unread - edc",	/* 0 = FCT unreadable */
 	"invalid sector header",/* 1 = Invalid Sector Header */
 	"not 512 sectors",	/* 2 = Not 512 Byte Sectors */
@@ -690,7 +692,7 @@ static char *media_fmt_msgs[] = {
  * N.B.:  Code 6 subcodes are 7 bits higher than other subcodes
  * (i.e., bits 12-15).
  */
-static char *wrprot_msgs[] = {
+static const char *wrprot_msgs[] = {
 	unknown_msg,
 	"software",		/* 1 = Software Write Protect */
 	"hardware",		/* 2 = Hardware Write Protect */
@@ -704,7 +706,7 @@ static char *wrprot_msgs[] = {
 /*
  * Subcodes for Data Error (8)
  */
-static char *data_msgs[] = {
+static const char *data_msgs[] = {
 	"forced error",		/* 0 = Forced Error (software) */
 	unknown_msg,
 	"header compare",	/* 2 = Header Compare Error */
@@ -726,7 +728,7 @@ static char *data_msgs[] = {
 /*
  * Subcodes for Host Buffer Access Error (9)
  */
-static char *host_buffer_msgs[] = {
+static const char *host_buffer_msgs[] = {
 	unknown_msg,
 	"odd xfer addr",	/* 1 = Odd Transfer Address */
 	"odd xfer count",	/* 2 = Odd Transfer Count */
@@ -737,7 +739,7 @@ static char *host_buffer_msgs[] = {
 /*
  * Subcodes for Controller Error (10)
  */
-static char *cntlr_msgs[] = {
+static const char *cntlr_msgs[] = {
 	unknown_msg,
 	"serdes overrun",	/* 1 = Serialiser/Deserialiser Overrun */
 	"edc",			/* 2 = Error Detection Code? */
@@ -747,7 +749,7 @@ static char *cntlr_msgs[] = {
 /*
  * Subcodes for Drive Error (11)
  */
-static char *drive_msgs[] = {
+static const char *drive_msgs[] = {
 	unknown_msg,
 	"sdi command timeout",	/* 1 = SDI Command Timeout */
 	"ctlr detected protocol",/* 2 = Controller Detected Protocol Error */
@@ -764,9 +766,9 @@ static char *drive_msgs[] = {
  * decoding strings.
  */
 struct code_decode {
-	char	*cdc_msg;
+	const char	*cdc_msg;
 	int	cdc_nsubcodes;
-	char	**cdc_submsgs;
+	const char	**cdc_submsgs;
 } code_decode[] = {
 #define SC(m)	sizeof (m) / sizeof (m[0]), m
 	{"success",			SC(succ_msgs)},
@@ -794,7 +796,7 @@ mscp_printevent(mp)
 	int event = mp->mscp_event;
 	struct code_decode *cdc;
 	int c, sc;
-	char *cm, *scm;
+	const char *cm, *scm;
 
 	/*
 	 * The code is the lower six bits of the event number (aka
@@ -818,7 +820,7 @@ mscp_printevent(mp)
 	printf(" %s (%s) (code %d, subcode %d)\n", cm, scm, c, sc);
 }
 
-static char *codemsg[16] = {
+static const char *codemsg[16] = {
 	"lbn", "code 1", "code 2", "code 3",
 	"code 4", "code 5", "rbn", "code 7",
 	"code 8", "code 9", "code 10", "code 11",
@@ -831,7 +833,7 @@ static char *codemsg[16] = {
  */
 int
 mscp_decodeerror(name, mp, mi)
-	char *name;
+	const char *name;
 	struct mscp *mp;
 	struct mscp_softc *mi;
 {
