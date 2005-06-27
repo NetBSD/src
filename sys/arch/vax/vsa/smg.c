@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.37 2003/07/15 02:15:07 lukem Exp $ */
+/*	$NetBSD: smg.c,v 1.38 2005/06/27 11:03:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.37 2003/07/15 02:15:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.38 2005/06/27 11:03:58 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -203,23 +203,23 @@ int
 smg_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
-	volatile short *curcmd;
+	volatile short *ccmd;
 	volatile short *cfgtst;
 	short tmp, tmp2;
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 
-	curcmd = (short *)va->va_addr;
+	ccmd = (short *)va->va_addr;
 	cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
 	/*
 	 * Try to find the cursor chip by testing the flip-flop.
 	 * If nonexistent, no glass tty.
 	 */
-	curcmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
+	ccmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
 	DELAY(300000);
 	tmp = cfgtst[0];
-	curcmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
+	ccmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
 	DELAY(300000);
 	tmp2 = cfgtst[0];
 	vax_unmap_physmem((vaddr_t)cfgtst, 1);
