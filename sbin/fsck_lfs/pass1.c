@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.20 2005/02/06 06:13:47 perry Exp $	 */
+/* $NetBSD: pass1.c,v 1.21 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -70,10 +70,10 @@ struct ino_daddr {
 static int
 i_d_cmp(const void *va, const void *vb)
 {
-	struct ino_daddr *a, *b;
+	const struct ino_daddr *a, *b;
 
-	a = *((struct ino_daddr **) va);
-	b = *((struct ino_daddr **) vb);
+	a = *((const struct ino_daddr *const *) va);
+	b = *((const struct ino_daddr *const *) vb);
 
 	if (a->daddr == b->daddr) {
 		return (a->ino - b->ino);

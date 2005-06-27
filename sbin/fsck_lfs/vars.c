@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.9 2005/04/14 21:15:59 perseant Exp $	 */
+/* $NetBSD: vars.c,v 1.10 2005/06/27 02:48:28 christos Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,7 +82,6 @@ char *typemap;			/* ptr to inode type table */
 int16_t *lncntp;		/* ptr to link count table */
 
 ino_t lfdir;			/* lost & found directory inode number */
-char *lfname;			/* lost & found directory name */
 int lfmode;			/* lost & found directory creation mode */
 
 daddr_t n_blks;			/* number of blocks in use */
