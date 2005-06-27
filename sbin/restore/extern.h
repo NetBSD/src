@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2005/06/27 02:03:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 struct entry	*addentry(const char *, ino_t, int);
-long		 addfile(char *, ino_t, int);
+long		 addfile(const char *, ino_t, int);
 int		 addwhiteout(char *);
 void		 badentry(struct entry *, const char *);
 void	 	 canon(const char *, char *);
@@ -42,7 +42,7 @@ void		 closemt(void);
 void		 createfiles(void);
 void		 createleaves(const char *);
 void		 createlinks(void);
-long		 deletefile(char *, ino_t, int);
+long		 deletefile(const char *, ino_t, int);
 void		 deleteino(ino_t);
 void		 delwhiteout(struct entry *);
 const struct digest_desc *
@@ -55,7 +55,7 @@ void		 findunreflinks(void);
 char		*flagvalues(struct entry *);
 void		 freeentry(struct entry *);
 void		 freename(char *);
-int	 	 genliteraldir(char *, ino_t);
+int	 	 genliteraldir(const char *, ino_t);
 char		*gentempname(struct entry *);
 void		 getfile(void (*)(char *, long), void (*)(char *, long));
 void		 getvol(int);
@@ -64,16 +64,16 @@ int	 	 inodetype(ino_t);
 int		 linkit(char *, char *, int);
 struct entry	*lookupino(ino_t);
 struct entry	*lookupname(const char *);
-long		 listfile(char *, ino_t, int);
+long		 listfile(const char *, ino_t, int);
 ino_t		 lowerbnd(ino_t);
 void		 mktempname(struct entry *);
-void		 moveentry(struct entry *, char *);
+void		 moveentry(struct entry *, const char *);
 void		 msg(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 char		*myname(struct entry *);
 void		 newnode(struct entry *);
 void		 newtapebuf(long);
-long		 nodeupdates(char *, ino_t, int);
+long		 nodeupdates(const char *, ino_t, int);
 void	 	 onintr(int);
 void		 panic(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
@@ -84,7 +84,7 @@ void		 removeleaf(struct entry *);
 void		 removenode(struct entry *);
 void		 removeoldleaves(void);
 void		 removeoldnodes(void);
-void		 renameit(char *, char *);
+void		 renameit(char *, const char *);
 int		 reply(const char *);
 RST_DIR		*rst_opendir(const char *);
 struct direct	*rst_readdir(RST_DIR *);
@@ -101,7 +101,7 @@ void		 swabst(u_char *, u_char *);
 void	 	 treescan(const char *, ino_t,
     long (*)(const char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
-long		 verifyfile(char *, ino_t, int);
+long		 verifyfile(const char *, ino_t, int);
 void		 writemtree(const char *, const char *, const uid_t,
 				const gid_t, const mode_t, const u_long);
 void		 xtrnull(char *, long);

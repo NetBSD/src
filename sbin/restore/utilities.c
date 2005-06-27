@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.20 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.21 2005/06/27 02:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.20 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.21 2005/06/27 02:03:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ gentempname(struct entry *ep)
  * Rename a file or directory.
  */
 void
-renameit(char *from, char *to)
+renameit(char *from, const char *to)
 {
 	if (!Nflag && rename(from, to) < 0) {
 		fprintf(stderr, "warning: cannot rename %s to %s: %s\n",

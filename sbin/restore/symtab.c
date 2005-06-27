@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.21 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.22 2005/06/27 02:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.21 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.22 2005/06/27 02:03:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ freeentry(struct entry *ep)
  * Relocate an entry in the tree structure
  */
 void
-moveentry(struct entry *ep, char *newname)
+moveentry(struct entry *ep, const char *newname)
 {
 	struct entry *np;
 	char *cp;
