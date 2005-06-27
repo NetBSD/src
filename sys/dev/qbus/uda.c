@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.51 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: uda.c,v 1.52 2005/06/27 11:05:24 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.51 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.52 2005/06/27 11:05:24 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -328,7 +328,7 @@ udaready(struct uba_unit *uu)
 
 static struct saerr {
 	int	code;		/* error code (including UDA_ERR) */
-	char	*desc;		/* what it means: Efoo => foo error */
+	const char	*desc;		/* what it means: Efoo => foo error */
 } saerr[] = {
 	{ 0100001, "Eunibus packet read" },
 	{ 0100002, "Eunibus packet write" },

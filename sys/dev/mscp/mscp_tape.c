@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.24 2005/02/27 00:27:32 perry Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.25 2005/06/27 11:05:24 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.24 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.25 2005/06/27 11:05:24 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -380,7 +380,7 @@ mtgotstatus(usc, mp)
 	return (MSCP_DONE);
 }
 
-static char *mt_ioerrs[] = {
+static const char *mt_ioerrs[] = {
 	"invalid command",	/* 1 M_ST_INVALCMD */
 	"command aborted",	/* 2 M_ST_ABORTED */
 	"unit offline",		/* 3 M_ST_OFFLINE */

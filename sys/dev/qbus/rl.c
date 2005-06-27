@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.24 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: rl.c,v 1.25 2005/06/27 11:05:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.24 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.25 2005/06/27 11:05:24 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ const struct cdevsw rl_cdevsw = {
 #define RL_RREG(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, (reg))
 
-static char *rlstates[] = {
+static const char *rlstates[] = {
 	"drive not loaded",
 	"drive spinning up",
 	"drive brushes out",
@@ -126,7 +126,7 @@ static struct dkdriver rldkdriver = {
 	rlstrategy, minphys
 };
 
-static char *
+static const char *
 rlstate(struct rlc_softc *sc, int unit)
 {
 	int i = 0;
@@ -582,7 +582,7 @@ rlwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(rlstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-static char *rlerr[] = {
+static const char *rlerr[] = {
 	"no",
 	"operation incomplete",
 	"read data CRC",
