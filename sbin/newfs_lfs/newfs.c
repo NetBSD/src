@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.16 2005/04/12 01:06:39 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.17 2005/06/27 02:05:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.16 2005/04/12 01:06:39 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.17 2005/06/27 02:05:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,8 @@ main(int argc, char **argv)
 	int debug, force, fsi, fso, segsize, maxpartitions;
 	uint secsize = 0;
 	daddr_t start;
-	char *cp, *opstring;
+	char *cp;
+	const char *opstring;
 	int byte_sized = 0;
 	int r;
 
