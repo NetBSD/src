@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.15 2005/06/08 19:09:55 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.16 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,7 +53,7 @@
 #include "fsutil.h"
 #include "extern.h"
 
-char *lfname = "lost+found";
+const char *lfname = "lost+found";
 int lfmode = 01700;
 struct dirtemplate emptydir = {0, DIRBLKSIZ};
 struct dirtemplate dirhead = {
@@ -483,7 +483,7 @@ linkup(ino_t orphan, ino_t parentdir)
  * fix an entry in a directory.
  */
 int
-changeino(ino_t dir, char *name, ino_t newnum)
+changeino(ino_t dir, const char *name, ino_t newnum)
 {
 	struct inodesc idesc;
 
@@ -502,7 +502,7 @@ changeino(ino_t dir, char *name, ino_t newnum)
  * make an entry in a directory
  */
 int
-makeentry(ino_t parent, ino_t ino, char *name)
+makeentry(ino_t parent, ino_t ino, const char *name)
 {
 	struct ufs1_dinode *dp;
 	struct inodesc idesc;

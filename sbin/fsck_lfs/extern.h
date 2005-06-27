@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.7 2004/07/18 20:03:12 yamt Exp $	 */
+/* $NetBSD: extern.h,v 1.8 2005/06/27 02:48:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -27,20 +27,20 @@
 void adjust(struct inodesc *, short);
 int allocblk(long);
 int allocdir(ino_t, ino_t, int);
-void blkerror(ino_t, char *, daddr_t);
+void blkerror(ino_t, const char *, daddr_t);
 void cacheino(struct ufs1_dinode *, ino_t);
-int changeino(ino_t, char *, ino_t);
+int changeino(ino_t, const char *, ino_t);
 struct fstab;
 void checkinode(ino_t, struct inodesc *);
 int chkrange(daddr_t, int);
 void ckfini(int);
 int ckinode(struct ufs1_dinode *, struct inodesc *);
-void clri(struct inodesc *, char *, int);
+void clri(struct inodesc *, const char *, int);
 int dircheck(struct inodesc *, struct direct *);
-void direrror(ino_t, char *);
+void direrror(ino_t, const char *);
 int dirscan(struct inodesc *);
-int dofix(struct inodesc *, char *);
-void fileerror(ino_t, ino_t, char *);
+int dofix(struct inodesc *, const char *);
+void fileerror(ino_t, ino_t, const char *);
 int findino(struct inodesc *);
 int findname(struct inodesc *);
 void flush(int, struct ubufarea *);
@@ -52,7 +52,7 @@ void getpathname(char *, size_t, ino_t, ino_t);
 void inocleanup(void);
 void inodirty(struct inode *);
 int linkup(ino_t, ino_t);
-int makeentry(ino_t, ino_t, char *);
+int makeentry(ino_t, ino_t, const char *);
 void pass0(void);
 void pass1(void);
 void pass1b(void);
@@ -66,7 +66,7 @@ void pass6(void);
 int pass6check(struct inodesc *);
 void pinode(ino_t);
 void propagate(void);
-int reply(char *);
+int reply(const char *);
 void resetinodebuf(void);
 int setup(const char *);
 void catch(int);
