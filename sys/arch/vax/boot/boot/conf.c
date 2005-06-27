@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2005/06/23 19:44:01 junyoung Exp $ */
+/*	$NetBSD: conf.c,v 1.13 2005/06/27 11:26:02 junyoung Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,19 +31,19 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "sys/param.h"
+#include <sys/param.h>
 
 #include <netinet/in.h>
 
 #include "../../include/rpb.h"
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
-#include "lib/libsa/nfs.h"
-#include "lib/libsa/cd9660.h"
-#include "lib/libsa/ustarfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/ustarfs.h>
 
 #include "vaxstand.h"
 

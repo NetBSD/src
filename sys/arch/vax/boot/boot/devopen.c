@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.12 2005/06/27 11:21:25 junyoung Exp $ */
+/*	$NetBSD: devopen.c,v 1.13 2005/06/27 11:26:02 junyoung Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,16 +30,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lib/libsa/stand.h"
-#include "lib/libkern/libkern.h"
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-#include "machine/rpb.h"
-#include "machine/sid.h"
-#include "machine/pte.h"
+#include <machine/rpb.h>
+#include <machine/sid.h>
+#include <machine/pte.h>
 #define	VAX780 1
-#include "machine/ka750.h"
+#include <machine/ka750.h>
 
-#include "dev/bi/bireg.h"
+#include <dev/bi/bireg.h>
 
 #include "vaxstand.h"
 

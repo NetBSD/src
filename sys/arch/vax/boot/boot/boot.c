@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2005/06/27 11:21:25 junyoung Exp $ */
+/*	$NetBSD: boot.c,v 1.23 2005/06/27 11:26:02 junyoung Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -33,9 +33,10 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/boot_flag.h>
-#include "lib/libsa/stand.h"
-#include "lib/libsa/loadfile.h"
-#include "lib/libkern/libkern.h"
+
+#include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 
 #define V750UCODE(x)    ((x>>8)&255)
 
