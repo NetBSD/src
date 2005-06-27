@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.24 2003/08/07 16:30:20 agc Exp $	*/
+/*	$NetBSD: ka860.c,v 1.25 2005/06/27 11:03:25 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.24 2003/08/07 16:30:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.25 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,7 +170,7 @@ ka86_memerr()
 }
 
 #define NMC8600 7
-char *mc8600[] = {
+const char *mc8600[] = {
 	"unkn type",	"fbox error",	"ebox error",	"ibox error",
 	"mbox error",	"tbuf error",	"mbox 1D error"
 };
@@ -377,7 +377,7 @@ abus_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < NIOA8600; i++) {
 		sbiar = (struct sbia_regs *)vax_map_physmem((paddr_t)IOA8600(i),
                     (IOAMAPSIZ / VAX_NBPG));
-                if (badaddr((caddr_t)sbiar, 4)) {
+                if (badaddr(__UNVOLATILE(sbiar), 4)) {
                         vax_unmap_physmem((vaddr_t)sbiar, (IOAMAPSIZ / VAX_NBPG));
                         continue;
                 }
