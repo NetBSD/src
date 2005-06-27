@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.120 2005/06/19 07:51:33 wiz Exp $
+# $NetBSD: mi,v 1.121 2005/06/27 20:32:39 peter Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -545,7 +545,7 @@
 ./usr/share/examples/pf/queue2			misc-netutil-examples	pf,share
 ./usr/share/examples/pf/queue3			misc-netutil-examples	pf,share
 ./usr/share/examples/pf/queue4			misc-netutil-examples	pf,share
-./usr/share/examples/pf/spamd			misc-netutil-examples	pf,share
+./usr/share/examples/pf/spamd			misc-obsolete		obsolete
 ./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_REWRITING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_VERIFICATION_README	misc-postfix-examples	postfix,doc
