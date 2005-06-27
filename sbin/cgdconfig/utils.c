@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.8 2005/06/02 01:31:30 lukem Exp $ */
+/* $NetBSD: utils.c,v 1.9 2005/06/27 03:07:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.8 2005/06/02 01:31:30 lukem Exp $");
+__RCSID("$NetBSD: utils.c,v 1.9 2005/06/27 03:07:45 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -107,11 +107,11 @@ words(const char *line, int *num)
 	int	  nwords = 0;
 	char	 *cur;
 	char	**ret;
-	char	 *tmp;
-	char	 *tmp1;
+	const char	 *tmp;
+	char	 *tmp1, *tmpf;
 
 	*num = 0;
-	tmp = (char *)line;
+	tmp = line;
 	if (tmp[0] == '\0')
 		return NULL;
 	while (tmp[0]) {
@@ -121,8 +121,8 @@ words(const char *line, int *num)
 		tmp++;
 	}
 	ret = emalloc((nwords+1) * sizeof(char *));
-	tmp1 = tmp = estrdup(line);
-	while ((cur = strsep_getnext(&tmp, " \t")) != NULL)
+	tmp1 = tmpf = estrdup(line);
+	while ((cur = strsep_getnext(&tmpf, " \t")) != NULL)
 		ret[i++] = estrdup(cur);
 	ret[i] = NULL;
 	free(tmp1);
