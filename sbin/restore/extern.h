@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2005/06/27 01:55:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -31,16 +31,16 @@
  *	@(#)extern.h	8.2 (Berkeley) 1/7/94
  */
 
-struct entry	*addentry(char *, ino_t, int);
+struct entry	*addentry(const char *, ino_t, int);
 long		 addfile(char *, ino_t, int);
 int		 addwhiteout(char *);
-void		 badentry(struct entry *, char *);
-void	 	 canon(char *, char *);
+void		 badentry(struct entry *, const char *);
+void	 	 canon(const char *, char *);
 void		 checkrestore(void);
 void 		 cleanup(void);
 void		 closemt(void);
 void		 createfiles(void);
-void		 createleaves(char *);
+void		 createleaves(const char *);
 void		 createlinks(void);
 long		 deletefile(char *, ino_t, int);
 void		 deleteino(ino_t);
@@ -48,7 +48,7 @@ void		 delwhiteout(struct entry *);
 const struct digest_desc *
 		 digest_lookup(const char *);
 ino_t		 dirlookup(const char *);
-void		 dumpsymtable(char *, int32_t);
+void		 dumpsymtable(const char *, int32_t);
 void	 	 extractdirs(int);
 int		 extractfile(char *);
 void		 findunreflinks(void);
@@ -59,11 +59,11 @@ int	 	 genliteraldir(char *, ino_t);
 char		*gentempname(struct entry *);
 void		 getfile(void (*)(char *, long), void (*)(char *, long));
 void		 getvol(int);
-void		 initsymtable(char *);
+void		 initsymtable(const char *);
 int	 	 inodetype(ino_t);
 int		 linkit(char *, char *, int);
 struct entry	*lookupino(ino_t);
-struct entry	*lookupname(char *);
+struct entry	*lookupname(const char *);
 long		 listfile(char *, ino_t, int);
 ino_t		 lowerbnd(ino_t);
 void		 mktempname(struct entry *);
@@ -85,20 +85,21 @@ void		 removenode(struct entry *);
 void		 removeoldleaves(void);
 void		 removeoldnodes(void);
 void		 renameit(char *, char *);
-int		 reply(char *);
+int		 reply(const char *);
 RST_DIR		*rst_opendir(const char *);
 struct direct	*rst_readdir(RST_DIR *);
 void		 rst_closedir(RST_DIR *);
 void	 	 runcmdshell(void);
-char		*savename(char *);
+char		*savename(const char *);
 void	 	 setdirmodes(int);
-void		 setinput(char *);
+void		 setinput(const char *);
 void		 setup(void);
 void	 	 skipdirs(void);
 void		 skipfile(void);
 void		 skipmaps(void);
 void		 swabst(u_char *, u_char *);
-void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
+void	 	 treescan(const char *, ino_t,
+    long (*)(const char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);
 void		 writemtree(const char *, const char *, const uid_t,
@@ -107,8 +108,8 @@ void		 xtrnull(char *, long);
 
 /* From ../dump/dumprmt.c */
 void		rmtclose(void);
-int		rmthost(char *);
+int		rmthost(const char *);
 int		rmtioctl(int, int);
-int		rmtopen(char *, int);
-int		rmtread(char *, int);
+int		rmtopen(const char *, int);
+int		rmtread(const char *, int);
 int		rmtseek(int, int);

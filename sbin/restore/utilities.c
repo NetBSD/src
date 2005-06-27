@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.19 2005/02/17 15:00:33 xtraeme Exp $	*/
+/*	$NetBSD: utilities.c,v 1.20 2005/06/27 01:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.19 2005/02/17 15:00:33 xtraeme Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.20 2005/06/27 01:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ upperbnd(ino_t start)
  * report on a badly formed entry
  */
 void
-badentry(struct entry *ep, char *message)
+badentry(struct entry *ep, const char *message)
 {
 
 	fprintf(stderr, "bad entry: %s\n", message);
@@ -368,7 +368,7 @@ dirlookup(const char *name)
  * Elicit a reply.
  */
 int
-reply(char *question)
+reply(const char *question)
 {
 	char c;
 
@@ -411,7 +411,7 @@ void
 writemtree(const char *name, const char *type,
     const uid_t uid, const gid_t gid, const mode_t mode, const u_long flags)
 {
-	char *sep = "";
+	const char *sep = "";
 	if ((name[0] != '.') || (name[1] != '/' && name[1] != '\0'))
 		fprintf(Mtreefile, "./");
 	fprintf(Mtreefile, "%s type=%s uid=%d gid=%d mode=%#4.4o",
