@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.13 2005/06/26 19:58:29 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.14 2005/06/27 17:11:21 elad Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -77,6 +77,7 @@ struct str_msg_child {
 #define SYSTR_MSG_UGID		5
 #define SYSTR_MSG_POLICYFREE	6
 #define	SYSTR_MSG_EXECVE	7
+#define	SYSTR_MSG_SCRIPTNAME	8
 
 #define SYSTR_MSG_NOPROCESS(x) \
 	((x)->msg.msg_type == SYSTR_MSG_CHILD || \
@@ -114,6 +115,11 @@ struct systrace_answer {
 	int32_t stra_policy;
 	int32_t stra_error;
 	int32_t stra_flags;
+};
+
+struct systrace_scriptname {
+	pid_t sn_pid;
+	char sn_scriptname[MAXPATHLEN];
 };
 
 #define SYSTR_READ		1
@@ -173,6 +179,7 @@ struct systrace_replace {
 #define STRIOCRESCWD	_IO('s', 107)
 #define STRIOCREPORT	_IOW('s', 108, pid_t)
 #define STRIOCREPLACE	_IOW('s', 109, struct systrace_replace)
+#define	STRIOCSCRIPTNAME	_IOW('s', 110, struct systrace_scriptname)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
@@ -222,7 +229,9 @@ void systrace_exit(struct proc *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);
 void systrace_init(void);
-void systrace_execve(char *, struct proc *);
+void systrace_execve0(struct proc *);
+void systrace_execve1(char *, struct proc *);
+int systrace_scriptname(struct proc *, char *);
 
 #endif /* _KERNEL */
 #endif /* !_SYSTRACE_H_ */
