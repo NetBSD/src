@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.66 2005/06/27 02:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66 2005/06/27 02:29:32 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -77,13 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $
  * functions
  */
 
-void	uvn_detach(struct uvm_object *);
-int	uvn_get(struct uvm_object *, voff_t, struct vm_page **, int *, int,
-	    vm_prot_t, int, int);
-int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
-void	uvn_reference(struct uvm_object *);
+static void	uvn_detach(struct uvm_object *);
+static int	uvn_get(struct uvm_object *, voff_t, struct vm_page **, int *,
+			int, vm_prot_t, int, int);
+static int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
+static void	uvn_reference(struct uvm_object *);
 
-int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **, int);
+static int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **,
+			     int);
 
 /*
  * master pager structure
@@ -232,7 +233,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
  * => caller must be using the same accessprot as was used at attach time
  */
 
-void
+static void
 uvn_reference(struct uvm_object *uobj)
 {
 	VREF((struct vnode *)uobj);
@@ -247,7 +248,7 @@ uvn_reference(struct uvm_object *uobj)
  * => caller must call with object unlocked and map locked.
  */
 
-void
+static void
 uvn_detach(struct uvm_object *uobj)
 {
 	vrele((struct vnode *)uobj);
@@ -261,7 +262,7 @@ uvn_detach(struct uvm_object *uobj)
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  */
 
-int
+static int
 uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
@@ -285,7 +286,7 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
  * => NOTE: caller must check for released pages!!
  */
 
-int
+static int
 uvn_get(struct uvm_object *uobj, voff_t offset,
     struct vm_page **pps /* IN/OUT */,
     int *npagesp /* IN (OUT if PGO_LOCKED)*/,
@@ -342,7 +343,7 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
 	return (found);
 }
 
-int
+static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     int flags)
 {
