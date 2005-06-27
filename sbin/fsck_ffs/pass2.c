@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.41 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: pass2.c,v 1.42 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.41 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.42 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ pass2check(struct inodesc *idesc)
 	struct inostat *info;
 	int n, entrysize, ret = 0;
 	union dinode *dp;
-	char *errmsg;
+	const char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
@@ -609,6 +609,6 @@ static int
 blksort(const void *arg1, const void *arg2)
 {
 
-	return ((*(struct inoinfo **)arg1)->i_blks[0] -
-		(*(struct inoinfo **)arg2)->i_blks[0]);
+	return ((*(const struct inoinfo *const *)arg1)->i_blks[0] -
+		(*(const struct inoinfo *const *)arg2)->i_blks[0]);
 }

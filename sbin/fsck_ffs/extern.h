@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -28,27 +28,27 @@ void		adjust(struct inodesc *, int);
 daddr_t		allocblk(long);
 ino_t		allocdir(ino_t, ino_t, int);
 ino_t		allocino(ino_t request, int type);
-void		blkerror(ino_t, char *, daddr_t);
+void		blkerror(ino_t, const char *, daddr_t);
 int		bread(int, char *, daddr_t, long);
 void		bufinit(void);
 void		bwrite(int, char *, daddr_t, long);
 void		cacheino(union dinode *, ino_t);
 void		catch(int);
 void		catchquit(int);
-int		changeino(ino_t, char *, ino_t);
+int		changeino(ino_t, const char *, ino_t);
 int		chkrange(daddr_t, int);
 void		ckfini(void);
 int		ckinode(union dinode *, struct inodesc *);
 int		clearentry(struct inodesc *);
-void		clri(struct inodesc *, char *, int);
+void		clri(struct inodesc *, const char *, int);
 int		cmpsblks(const struct fs *, struct fs *);
 int		cmpsblks42(const struct fs *, struct fs *);
 int		cmpsblks44(const struct fs *, struct fs *);
 union		dinode * getnextinode(ino_t);
-void		direrror(ino_t, char *);
+void		direrror(ino_t, const char *);
 int		dirscan(struct inodesc *);
-int		dofix(struct inodesc *, char *);
-void		fileerror(ino_t, ino_t, char *);
+int		dofix(struct inodesc *, const char *);
+void		fileerror(ino_t, ino_t, const char *);
 int		findino(struct inodesc *);
 int		findname(struct inodesc *);
 void		flush(int, struct bufarea *);
@@ -66,7 +66,7 @@ void		inocleanup(void);
 void		inodirty(void);
 struct inostat *inoinfo(ino_t);
 int		linkup(ino_t, ino_t, char *);
-int		makeentry(ino_t, ino_t, char *);
+int		makeentry(ino_t, ino_t, const char *);
 void		pass1(void);
 void		pass1b(void);
 int		pass1check(struct inodesc *);
@@ -77,7 +77,7 @@ int		pass4check(struct inodesc *);
 void		pass5(void);
 void		pinode(ino_t);
 void		propagate(ino_t);
-int		reply(char *);
+int		reply(const char *);
 void		setinodebuf(ino_t);
 int		setup(const char *);
 void		voidquit(int);

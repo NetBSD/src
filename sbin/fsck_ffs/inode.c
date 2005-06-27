@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.54 2005/06/02 00:38:41 lukem Exp $	*/
+/*	$NetBSD: inode.c,v 1.55 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.54 2005/06/02 00:38:41 lukem Exp $");
+__RCSID("$NetBSD: inode.c,v 1.55 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -556,7 +556,7 @@ inodirty(void)
 }
 
 void
-clri(struct inodesc *idesc, char *type, int flag)
+clri(struct inodesc *idesc, const char *type, int flag)
 {
 	union dinode *dp;
 
@@ -582,12 +582,20 @@ int
 findname(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
+	size_t len;
+	char *buf;
 
 	if (iswap32(dirp->d_ino) != idesc->id_parent || idesc->id_entryno < 2) {
 		idesc->id_entryno++;
 		return (KEEPON);
 	}
-	memmove(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
+	if ((len = dirp->d_namlen + 1) > MAXPATHLEN) {
+		/* XXX: We don't fix but we ignore */
+		len = MAXPATHLEN;
+	}
+	/* this is namebuf from utilities.c */
+	buf = __UNCONST(idesc->id_name);
+	(void)memcpy(buf, dirp->d_name, (size_t)dirp->d_namlen + 1);
 	return (STOP|FOUND);
 }
 
@@ -648,7 +656,7 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr_t blk)
+blkerror(ino_t ino, const char *type, daddr_t blk)
 {
 	struct inostat *info;
 

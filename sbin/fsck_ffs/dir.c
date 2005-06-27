@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.44 2005/06/02 00:38:41 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.45 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.44 2005/06/02 00:38:41 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.45 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: dir.c,v 1.44 2005/06/02 00:38:41 lukem Exp $");
 #include "fsutil.h"
 #include "extern.h"
 
-char	*lfname = "lost+found";
+const char	*lfname = "lost+found";
 int	lfmode = 01700;
 ino_t	lfdir;
 struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
@@ -333,14 +333,14 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 }
 
 void
-direrror(ino_t ino, char *errmesg)
+direrror(ino_t ino, const char *errmesg)
 {
 
 	fileerror(ino, ino, errmesg);
 }
 
 void
-fileerror(ino_t cwd, ino_t ino, char *errmesg)
+fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 {
 	union dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
@@ -615,7 +615,7 @@ linkup(ino_t orphan, ino_t parentdir, char *name)
  * fix an entry in a directory.
  */
 int
-changeino(ino_t dir, char *name, ino_t newnum)
+changeino(ino_t dir, const char *name, ino_t newnum)
 {
 	struct inodesc idesc;
 
@@ -633,7 +633,7 @@ changeino(ino_t dir, char *name, ino_t newnum)
  * make an entry in a directory
  */
 int
-makeentry(ino_t parent, ino_t ino, char *name)
+makeentry(ino_t parent, ino_t ino, const char *name)
 {
 	union dinode *dp;
 	struct inodesc idesc;

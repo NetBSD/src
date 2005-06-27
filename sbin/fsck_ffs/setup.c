@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.77 2005/06/02 01:23:19 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.78 2005/06/27 01:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.77 2005/06/02 01:23:19 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.78 2005/06/27 01:25:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: setup.c,v 1.77 2005/06/02 01:23:19 dbj Exp $");
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-static void badsb(int, char *);
+static void badsb(int, const char *);
 static int calcsb(const char *, int, struct fs *);
 static struct disklabel *getdisklabel(const char *, int);
 static struct partition *getdisklabelpart(const char *, struct disklabel *);
@@ -905,7 +905,7 @@ cmpsblks44(const struct fs *sb, struct fs *asb)
 
 
 static void
-badsb(int listerr, char *s)
+badsb(int listerr, const char *s)
 {
 
 	if (!listerr)
