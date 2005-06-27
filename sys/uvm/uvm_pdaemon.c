@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.64 2005/05/11 13:02:26 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.64 2005/05/11 13:02:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.65 2005/06/27 02:19:48 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -99,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.64 2005/05/11 13:02:26 yamt Exp $"
  * local prototypes
  */
 
-void		uvmpd_scan(void);
-void		uvmpd_scan_inactive(struct pglist *);
-void		uvmpd_tune(void);
+static void	uvmpd_scan(void);
+static void	uvmpd_scan_inactive(struct pglist *);
+static void	uvmpd_tune(void);
 
 /*
  * XXX hack to avoid hangs when large processes fork.
@@ -116,8 +116,7 @@ int uvm_extrapages;
  */
 
 void
-uvm_wait(wmsg)
-	const char *wmsg;
+uvm_wait(const char *wmsg)
 {
 	int timo = 0;
 	int s = splbio();
@@ -168,7 +167,7 @@ uvm_wait(wmsg)
  * => caller must call with page queues locked
  */
 
-void
+static void
 uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
@@ -380,9 +379,8 @@ uvm_aiodone_daemon(void *arg)
  * => we return TRUE if we are exiting because we met our target
  */
 
-void
-uvmpd_scan_inactive(pglst)
-	struct pglist *pglst;
+static void
+uvmpd_scan_inactive(struct pglist *pglst)
 {
 	int error;
 	struct vm_page *p, *nextpg = NULL; /* Quell compiler warning */
@@ -764,7 +762,7 @@ uvmpd_scan_inactive(pglst)
  * => called with pageq's locked
  */
 
-void
+static void
 uvmpd_scan(void)
 {
 	int inactive_shortage, swap_shortage, pages_freed;

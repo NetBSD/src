@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.22 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.23 2005/06/27 02:19:48 thorpej Exp $	*/
 
 /*
  *
@@ -52,9 +52,7 @@
  * => amap should be locked by caller.
  */
 AMAP_INLINE struct vm_anon *
-amap_lookup(aref, offset)
-	struct vm_aref *aref;
-	vaddr_t offset;
+amap_lookup(struct vm_aref *aref, vaddr_t offset)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -79,11 +77,8 @@ amap_lookup(aref, offset)
  * => XXXCDC: this interface is biased toward array-based amaps.  fix.
  */
 AMAP_INLINE void
-amap_lookups(aref, offset, anons, npages)
-	struct vm_aref *aref;
-	vaddr_t offset;
-	struct vm_anon **anons;
-	int npages;
+amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
+    int npages)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -113,11 +108,8 @@ amap_lookups(aref, offset, anons, npages)
  *	pmap_page_protect on the anon's page.
  */
 AMAP_INLINE void
-amap_add(aref, offset, anon, replace)
-	struct vm_aref *aref;
-	vaddr_t offset;
-	struct vm_anon *anon;
-	boolean_t replace;
+amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
+    boolean_t replace)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -162,9 +154,7 @@ amap_add(aref, offset, anon, replace)
  * => caller must lock amap
  */
 AMAP_INLINE void
-amap_unadd(aref, offset)
-	struct vm_aref *aref;
-	vaddr_t offset;
+amap_unadd(struct vm_aref *aref, vaddr_t offset)
 {
 	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -199,11 +189,7 @@ amap_unadd(aref, offset)
  * => called at fork time to gain the child's reference
  */
 AMAP_INLINE void
-amap_ref(amap, offset, len, flags)
-	struct vm_amap *amap;
-	vaddr_t offset;
-	vsize_t len;
-	int flags;
+amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 {
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
@@ -238,11 +224,7 @@ amap_ref(amap, offset, len, flags)
  * => amap must be unlocked (we will lock it).
  */
 AMAP_INLINE void
-amap_unref(amap, offset, len, all)
-	struct vm_amap *amap;
-	vaddr_t offset;
-	vsize_t len;
-	boolean_t all;
+amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, boolean_t all)
 {
 	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
 
