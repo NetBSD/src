@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.48 2005/06/22 06:15:51 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.49 2005/06/27 05:49:13 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.48 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.49 2005/06/27 05:49:13 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -96,6 +96,15 @@ int rtw_rxbufs_limit = RTW_RXQLEN;
 int rtw_dwelltime = 200;	/* milliseconds */
 
 static void rtw_start(struct ifnet *);
+
+static void rtw_io_enable(struct rtw_regs *, uint8_t, int);
+static int rtw_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
+static int rtw_key_delete(struct ieee80211com *, const struct ieee80211_key *);
+static int rtw_key_set(struct ieee80211com *, const struct ieee80211_key *,
+    const u_int8_t[IEEE80211_ADDR_LEN]);
+static void rtw_key_update_end(struct ieee80211com *);
+static void rtw_key_update_begin(struct ieee80211com *);
+static void rtw_wep_setkeys(struct rtw_softc *, struct ieee80211_key *, int);
 
 static void rtw_led_attach(struct rtw_led_state *, void *);
 static void rtw_led_init(struct rtw_regs *);
@@ -519,11 +528,91 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 	return rtw_chip_reset1(regs, dvname);
 }
 
+static int
+rtw_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	int keyix;
+#ifdef RTW_DEBUG
+	struct rtw_softc *sc = ic->ic_ifp->if_softc;
+#endif
+
+	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+		keyix = k - ic->ic_nw_keys;
+	else
+		keyix = IEEE80211_KEYIX_NONE;
+
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: alloc key %u\n", __func__, keyix));
+
+	return keyix;
+}
+
+static int
+rtw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	struct rtw_softc *sc = ic->ic_ifp->if_softc;
+	u_int keyix = k->wk_keyix;
+
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: delete key %u\n", __func__, keyix));
+
+	if (keyix >= IEEE80211_WEP_NKID)
+		return 0;
+	if (k->wk_keylen != 0)
+		sc->sc_flags &= ~RTW_F_DK_VALID;
+
+	return 1;
+}
+
+static int
+rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
+	const u_int8_t mac[IEEE80211_ADDR_LEN])
+{
+	struct rtw_softc *sc = ic->ic_ifp->if_softc;
+
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: set key %u\n", __func__, k->wk_keyix));
+
+	if (k->wk_keyix >= IEEE80211_WEP_NKID)
+		return 0;
+
+	sc->sc_flags &= ~RTW_F_DK_VALID;
+
+	return 1;
+}
+
+static void
+rtw_key_update_begin(struct ieee80211com *ic)
+{
+#ifdef ATW_DEBUG
+	struct ifnet *ifp = ic->ic_ifp;
+	struct rtw_softc *sc = ifp->if_softc;
+#endif
+
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s:\n", __func__));
+}
+
+static void
+rtw_key_update_end(struct ieee80211com *ic)
+{
+	struct ifnet *ifp = ic->ic_ifp;
+	struct rtw_softc *sc = ifp->if_softc;
+
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s:\n", __func__));
+
+	if ((sc->sc_flags & RTW_F_DK_VALID) != 0)
+		return;
+	if ((sc->sc_flags & RTW_F_ENABLED) == 0)
+		return;
+
+	rtw_io_enable(&sc->sc_regs, RTW_CR_RE | RTW_CR_TE, 0);
+	rtw_wep_setkeys(sc, ic->ic_nw_keys, ic->ic_def_txkey);
+	rtw_io_enable(&sc->sc_regs, RTW_CR_RE | RTW_CR_TE,
+	    (ifp->if_flags & IFF_RUNNING) != 0);
+}
+
 static void
 rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 {
 	uint8_t cfg0, scr;
-	int i, j, tx_key_len;
+	int i, tx_key_len;
 	struct rtw_regs *regs;
 	union rtw_keys *rk;
 
@@ -546,10 +635,10 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 
 	switch (tx_key_len) {
 	case 5:
-		scr |= RTW_SCR_TXSECON | RTW_SCR_RXSECON | RTW_SCR_KM_WEP40;
+		scr |= RTW_SCR_KM_WEP40;
 		break;
 	case 13:
-		scr |= RTW_SCR_TXSECON | RTW_SCR_RXSECON | RTW_SCR_KM_WEP104;
+		scr |= RTW_SCR_KM_WEP104;
 		break;
 	default:
 		goto out;
@@ -557,12 +646,10 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 
 	cfg0 |= RTW_CONFIG0_WEP104 | RTW_CONFIG0_WEP40;
 
-	for (i = j = 0; i < IEEE80211_WEP_NKID; i++) {
-		if (i == txkey)
-			sc->sc_txkey = j;
-		else if (wk[i].wk_keylen != tx_key_len)
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (wk[i].wk_keylen != tx_key_len)
 			continue;
-		(void)memcpy(rk->rk_keys[j++], wk[i].wk_key, wk[i].wk_keylen);
+		(void)memcpy(rk->rk_keys[i], wk[i].wk_key, wk[i].wk_keylen);
 	}
 
 out:
@@ -579,6 +666,7 @@ out:
 	RTW_WRITE8(regs, RTW_SCR, scr);
 	RTW_SYNC(regs, RTW_SCR, RTW_SCR);
 	rtw_set_access(regs, RTW_ACCESS_NONE);
+	sc->sc_flags |= RTW_F_DK_VALID;
 }
 
 static __inline int
@@ -613,6 +701,8 @@ rtw_reset(struct rtw_softc *sc)
 {
 	int rc;
 	uint8_t config1;
+
+	sc->sc_flags &= ~RTW_F_DK_VALID;
 
 	if ((rc = rtw_chip_reset(&sc->sc_regs, sc->sc_dev.dv_xname)) != 0)
 		return rc;
@@ -1786,6 +1876,7 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 
 	rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
+	rtw_wep_setkeys(sc, sc->sc_ic.ic_nw_keys, sc->sc_ic.ic_def_txkey);
 
 	rtw_rxdescs_reset(sc);
 	rtw_txdescs_reset(sc);
@@ -2708,15 +2799,6 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			rtw_pktfilt_load(sc);
 		rc = 0;
 		break;
-	case SIOCS80211NWKEY:
-		if ((rc = ieee80211_ioctl(&sc->sc_ic, cmd, data)) != ENETRESET)
-			break;
-		rc = 0;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			break;
-		rtw_wep_setkeys(sc, sc->sc_ic.ic_nw_keys,
-		    sc->sc_ic.ic_def_txkey);
-		break;
 	default:
 		if ((rc = ieee80211_ioctl(&sc->sc_ic, cmd, data)) != ENETRESET)
 			break;
@@ -2928,6 +3010,7 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		m_freem(m0);
 		return NULL;
 	} else if (dmam->dm_nsegs > ndescfree) {
+		printf("%s: too many tx segments\n", dvname);
 		*ifflagsp |= IFF_OACTIVE;
 		bus_dmamap_unload(dmat, dmam);
 		m_freem(m0);
@@ -2960,7 +3043,7 @@ rtw_start(struct ifnet *ifp)
 	bus_dmamap_t		dmamap;
 	struct ieee80211com	*ic;
 	struct ieee80211_duration *d0;
-	struct ieee80211_frame	*wh;
+	struct ieee80211_frame_min	*wh;
 	struct ieee80211_node	*ni;
 	struct mbuf		*m0;
 	struct rtw_softc	*sc;
@@ -2968,6 +3051,7 @@ rtw_start(struct ifnet *ifp)
 	struct rtw_txdesc_blk	*tdb;
 	struct rtw_txsoft	*ts;
 	struct rtw_txdesc	*td;
+	struct ieee80211_key	*k;
 
 	sc = (struct rtw_softc *)ifp->if_softc;
 	ic = &sc->sc_ic;
@@ -2989,6 +3073,15 @@ rtw_start(struct ifnet *ifp)
 			continue;
 		if (m0 == NULL)
 			break;
+
+		wh = mtod(m0, struct ieee80211_frame_min *);
+
+		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0 &&
+		    (k = ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
+			break;
+		} else
+			k = NULL;
+
 		ts = SIMPLEQ_FIRST(&tsb->tsb_freeq);
 
 		dmamap = ts->ts_dmamap;
@@ -3002,7 +3095,11 @@ rtw_start(struct ifnet *ifp)
 			goto post_dequeue_err;
 		}
 
-		wh = mtod(m0, struct ieee80211_frame *);
+		/* Note well: rtw_dmamap_load_txbuf may have created
+		 * a new chain, so we must find the header once
+		 * more.
+		 */
+		wh = mtod(m0, struct ieee80211_frame_min *);
 
 		/* XXX do real rate control */
 		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
@@ -3038,13 +3135,14 @@ rtw_start(struct ifnet *ifp)
 			ctl0 |= RTW_TXCTL0_RATE_11MBPS;
 			break;
 		}
-
 		/* XXX >= ? Compare after fragmentation? */
 		if (m0->m_pkthdr.len > ic->ic_rtsthreshold)
 			ctl0 |= RTW_TXCTL0_RTSEN;
 
-		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0)
-			ctl0 |= LSHIFT(sc->sc_txkey, RTW_TXCTL0_KEYID_MASK);
+		if (k != NULL) {
+			ctl0 |= LSHIFT(k->wk_keyix, RTW_TXCTL0_KEYID_MASK) &
+			    RTW_TXCTL0_KEYID_MASK;
+		}
 
 		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 		    IEEE80211_FC0_TYPE_MGT) {
@@ -3262,9 +3360,6 @@ rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, uint16_t intval0)
 
 	rtw_set_access(regs, RTW_ACCESS_NONE);
 
-	/* TBD WEP */
-	RTW_WRITE8(regs, RTW_SCR, 0);
-
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
 }
 
@@ -3320,7 +3415,8 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				    sc->sc_dev.dv_xname);
 			} else {
 				IF_ENQUEUE(&sc->sc_beaconq, m);
-				m->m_pkthdr.rcvif = (void *)ic->ic_bss;
+				m->m_pkthdr.rcvif =
+				    (void *)ieee80211_ref_node(ic->ic_bss);
 			}
 			/*FALLTHROUGH*/
 		case IEEE80211_M_AHDEMO:
@@ -3524,7 +3620,7 @@ rtw_set80211props(struct ieee80211com *ic)
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
+	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR;
 
 	nrate = 0;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =
@@ -3550,6 +3646,12 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 
 	mtbl->mt_node_alloc = ic->ic_node_alloc;
 	ic->ic_node_alloc = rtw_node_alloc;
+
+	ic->ic_crypto.cs_key_alloc = rtw_key_alloc;
+	ic->ic_crypto.cs_key_delete = rtw_key_delete;
+	ic->ic_crypto.cs_key_set = rtw_key_set;
+	ic->ic_crypto.cs_key_update_begin = rtw_key_update_begin;
+	ic->ic_crypto.cs_key_update_end = rtw_key_update_end;
 }
 
 static __inline void

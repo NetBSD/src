@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.23 2005/06/22 06:15:51 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.24 2005/06/27 05:49:13 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -101,9 +101,9 @@ enum rtw_rfchipid {
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
 #define RTW_F_SLEEP		0x00000040	/* chip is asleep */
 #define RTW_F_INVALID		0x00000080	/* chip is absent */
+#define	RTW_F_DK_VALID		0x00000100	/* keys in DK0-DK3 are valid */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
-
 enum rtw_access {RTW_ACCESS_NONE = 0,
 		 RTW_ACCESS_CONFIG = 1,
 		 RTW_ACCESS_ANAPARM = 2};
@@ -470,7 +470,6 @@ struct rtw_softc {
 		uint8_t			pad[64];
 	} sc_txtapu;
 	union rtw_keys		sc_keys;
-	int			sc_txkey;
 	struct ifqueue		sc_beaconq;
 	struct rtw_led_state	sc_led_state;
 	int			sc_hwverid;
