@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.24 2005/03/31 15:55:57 xtraeme Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.25 2005/06/27 02:56:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.24 2005/03/31 15:55:57 xtraeme Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.25 2005/06/27 02:56:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ static void	kill_daemon(char *);
 static void	kill_cleaner(char *);
 
 static int short_rds, cleaner_debug, cleaner_bytes, fs_idle;
-static char *nsegs;
+static const char *nsegs;
 
 #ifndef MOUNT_NOMAIN
 int
@@ -255,7 +255,7 @@ kill_cleaner(char *name)
 static void
 invoke_cleaner(char *name)
 {
-	char *args[7], **ap = args;
+	const char *args[7], **ap = args;
 
 	/* Build the argument list. */
 	*ap++ = _PATH_LFS_CLEANERD;
@@ -274,7 +274,7 @@ invoke_cleaner(char *name)
 	*ap++ = name;
 	*ap = NULL;
 
-	execv(args[0], args);
+	execv(args[0], __UNCONST(args));
 	err(1, "exec %s", _PATH_LFS_CLEANERD);
 }
 
