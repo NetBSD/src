@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2005/04/19 07:26:38 hannken Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2005/06/27 01:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2005/04/19 07:26:38 hannken Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2005/06/27 01:37:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,14 +79,14 @@ int	ntrec = NTREC;		/* # tape blocks in each tape record */
 int	cartridge;		/* Assume non-cartridge tape */
 long	dev_bsize = 1;		/* recalculated below */
 long	blocksperfile;		/* output blocks per file */
-char	*host;			/* remote host (if any) */
+const char *host;		/* remote host (if any) */
 int	readcache = -1;		/* read cache size (in readblksize blks) */
 int	readblksize = 32 * 1024; /* read block size */
 char    default_time_string[] = "%T %Z"; /* default timestamp string */
 char    *time_string = default_time_string; /* timestamp string */
 
 int	main(int, char *[]);
-static long numarg(char *, long, long);
+static long numarg(const char *, long, long);
 static void obsolete(int *, char **[]);
 static void usage(void);
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	union dinode *dp;
 	struct fstab *dt;
 	struct statvfs *mntinfo, fsbuf;
-	char *map;
+	char *map, *cp;
 	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, Fflag = 0, honorlevel = 1;
 	int snap_internal = 0;
@@ -358,10 +358,11 @@ main(int argc, char *argv[])
 			tsize = cartridge ? 1700L*120L : 2300L*120L;
 	}
 
-	if (strchr(tape, ':')) {
+	if ((cp = strchr(tape, ':')) != NULL) {
 		host = tape;
-		tape = strchr(host, ':');
-		*tape++ = '\0';
+		/* This is fine, because all the const strings don't have : */
+		*cp++ = '\0';
+		tape = cp;
 #ifdef RDUMP
 		if (rmthost(host) == 0)
 			exit(X_STARTUP);
@@ -645,7 +646,7 @@ usage(void)
  * range (except that a vmax of 0 means unlimited).
  */
 static long
-numarg(char *meaning, long vmin, long vmax)
+numarg(const char *meaning, long vmin, long vmax)
 {
 	char *p;
 	long val;
