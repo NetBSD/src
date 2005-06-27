@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: banner.c,v 1.13 2005/06/27 19:49:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $");
+__RCSID("$NetBSD: banner.c,v 1.13 2005/06/27 19:49:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1025,6 +1025,11 @@ char	print[DWIDTH];
 int	debug, i, j, linen, max, nchars, pc, term, trace, x, y;
 int	width = DWIDTH;	/* -w option: scrunch letters to 80 columns */
 
+static void
+toolong(void)
+{
+	errx(EXIT_FAILURE, "message too long");
+}
 
 int main(int, char *[]);
 
@@ -1063,10 +1068,15 @@ main(argc, argv)
 
 	/* Have now read in the data. Next get the message to be printed. */
 	if (*argv) {
-		strcpy(message, *argv);
+		const size_t msize = sizeof(message);
+
+		if (strlcpy(message, *argv, msize) >= msize)
+			toolong();
 		while (*++argv) {
-			strcat(message, " ");
-			strcat(message, *argv);
+			if (strlcat(message, " ", msize) >= msize)
+				toolong();
+			if (strlcat(message, *argv, msize) >= msize)
+				toolong();
 		}
 		nchars = strlen(message);
 	} else {
