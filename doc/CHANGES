@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.481 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.482 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -49,8 +49,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		done), whatis(1) and then pkg_info(1). [hubertf 20050622]
 	i386: Add cd9660 file system support to the BIOS bootloader.
 	      [junyoung 20050622]
-	make(1): Remove (undocumented) support for automagically setting
-		.OBJDIR to ./obj.${MACHINE, ./obj or /usr/obj/`pwd`.
-		[lukem 20050623]
 	tlp(4): added support for ASIX AX88140A and AX88141.
 		[rpaulo 20050624]
