@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.27 2005/01/14 11:47:43 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.28 2005/06/27 11:03:25 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.27 2005/01/14 11:47:43 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.28 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -112,7 +112,7 @@ struct ka43_mcframe {		/* Format of RigelMAX machine check frame: */
 	int	mc43_psl;	/* trapped PSL */
 };
 
-static char *ka43_mctype[] = {
+static const char *ka43_mctype[] = {
 	"no error (0)",			/* Code 0: No error */
 	"FPA: protocol error",		/* Code 1-5: FPA errors */
 	"FPA: illegal opcode",
@@ -362,7 +362,7 @@ ka43_steal_pages()
 static void
 ka43_clrf()
 {
-        volatile struct ka43_clock *clk = (void *)clk_page;
+        volatile struct ka43_clock *clk = (volatile void *)clk_page;
 
         /*
          * Clear restart and boot in progress flags in the CPMBX.
@@ -378,7 +378,7 @@ ka43_clrf()
 static void
 ka43_halt()
 {
-	volatile struct ka43_clock *clk = (void *)clk_page;
+	volatile struct ka43_clock *clk = (volatile void *)clk_page;
 	clk->req = 3;		/* 3 is halt. */
 	asm("halt");
 }
@@ -387,7 +387,7 @@ static void
 ka43_reboot(arg)
         int arg;
 {
-	volatile struct ka43_clock *clk = (void *)clk_page;
+	volatile struct ka43_clock *clk = (volatile void *)clk_page;
 	clk->req = 2;		/* 2 is reboot. */
 	asm("halt");
 }

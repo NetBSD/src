@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2003/08/07 16:30:18 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38 2005/06/27 11:03:25 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2003/08/07 16:30:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	if (lp->d_npartitions == 0) { /* Assume no label */
 		lp->d_secperunit = 0x1fffffff;
@@ -374,8 +374,8 @@ disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 			if (pfnum == 0)
 				panic("mapin zero entry");
 			pte++;
-			*(int *)io++ = pfnum | flag;
+			*(volatile int *)io++ = pfnum | flag;
 		}
-		*(int *)io = 0;
+		*(volatile int *)io = 0;
 	}
 }

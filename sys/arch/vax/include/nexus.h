@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.21 2003/08/07 16:30:11 agc Exp $	*/
+/*	$NetBSD: nexus.h,v 1.22 2005/06/27 11:03:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -114,7 +114,7 @@ struct mem_softc {
 };
 
 struct bp_conf {
-	char *type;
+	const char *type;
 	int num;
 	int partyp;
 	int bp_addr;

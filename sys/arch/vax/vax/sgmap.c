@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.11 2003/07/15 02:15:05 lukem Exp $ */
+/* $NetBSD: sgmap.c,v 1.12 2005/06/27 11:03:25 ragge Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.11 2003/07/15 02:15:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.12 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
 	 * Create the extent map used to manage the virtual address
 	 * space.
 	 */
-	sgmap->aps_ex = extent_create((char *)name, sgvabase, sgvasize - 1,
+	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
 	    M_DMAMAP, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL) {
 		printf("unable to create extent map for sgmap `%s'\n", name);

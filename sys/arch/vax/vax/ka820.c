@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.40 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: ka820.c,v 1.41 2005/06/27 11:03:25 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.40 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.41 2005/06/27 11:03:25 ragge Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -348,7 +348,7 @@ ka820_memerr()
 {
 	struct mem_bi_softc *sc;
 	int m, hard, csr1, csr2;
-	char *type;
+	const char *type;
 
 static char b1[] = "\20\40ERRSUM\37ECCDIAG\36ECCDISABLE\20CRDINH\17VALID\
 \16INTLK\15BROKE\13MWRITEERR\12CNTLERR\11INTLV";
@@ -393,7 +393,7 @@ static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 }
 
 /* these are bits 0 to 6 in the summary field */
-char *mc8200[] = {
+const char *mc8200[] = {
 	"cpu bad ipl",		"ucode lost err",
 	"ucode par err",	"DAL par err",
 	"BI bus err",		"BTB tag par",

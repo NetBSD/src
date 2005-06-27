@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.23 2003/08/07 16:30:19 agc Exp $	*/
+/*	$NetBSD: ka630.c,v 1.24 2005/06/27 11:03:25 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.23 2003/08/07 16:30:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.24 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +100,7 @@ ka630_memerr()
 }
 
 #define NMC78032 10
-char *mc78032[] = {
+const char *mc78032[] = {
 	0,		"immcr (fsd)",	"immcr (ssd)",	"fpu err 0",
 	"fpu err 7",	"mmu st(tb)",	"mmu st(m=0)",	"pte in p0",
 	"pte in p1",	"un intr id",
@@ -142,7 +142,7 @@ ka630_mchk(cmcf)
 static void
 ka630_halt()
 {
-	((struct ka630clock *)clk_page)->cpmbx = KA630CLK_DOTHIS|KA630CLK_HALT;
+	((volatile struct ka630clock *)clk_page)->cpmbx = KA630CLK_DOTHIS|KA630CLK_HALT;
 	asm("halt");
 }
 
@@ -150,7 +150,7 @@ static void
 ka630_reboot(arg)
 	int arg;
 {
-	((struct ka630clock *)clk_page)->cpmbx =
+	((volatile struct ka630clock *)clk_page)->cpmbx =
 	    KA630CLK_DOTHIS | KA630CLK_REBOOT;
 }
 
@@ -160,7 +160,7 @@ ka630_reboot(arg)
 static void
 ka630_clrf()
 {
-	short i = ((struct ka630clock *)clk_page)->cpmbx;
+	short i = ((volatile struct ka630clock *)clk_page)->cpmbx;
 
-	((struct ka630clock *)clk_page)->cpmbx = i & KA630CLK_LANG;
+	((volatile struct ka630clock *)clk_page)->cpmbx = i & KA630CLK_LANG;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.18 2003/07/15 02:15:03 lukem Exp $ */
+/*	$NetBSD: ka46.c,v 1.19 2005/06/27 11:03:25 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.18 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19 2005/06/27 11:03:25 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -165,13 +165,13 @@ ka46_steal_pages()
 static void
 ka46_halt()
 {
-	((u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_HALT;
+	((volatile u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_HALT;
 	asm("halt");
 }
 
 static void
 ka46_reboot(int arg)
 {
-	((u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_BOOT;
+	((volatile u_int8_t *) clk_page)[KA46_CPMBX] = KA46_HLT_BOOT;
 	asm("halt");
 }
