@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.13 2005/03/30 17:10:18 christos Exp $ */
+/* $NetBSD: params.c,v 1.14 2005/06/27 03:07:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.13 2005/03/30 17:10:18 christos Exp $");
+__RCSID("$NetBSD: params.c,v 1.14 2005/06/27 03:07:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: params.c,v 1.13 2005/03/30 17:10:18 christos Exp $");
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
-
-/* from cgdparse.y */
-struct params	*cgdparsefile(FILE *);
+#include "extern.h"
 
 static void	params_init(struct params *);
 
@@ -71,7 +69,7 @@ static void	spaces(FILE *, int);
 #define DEFAULT_ITERATION_TIME	2000000		/* 1 second in microseconds */
 
 /* crypto defaults functions */
-struct crypto_defaults {
+static struct crypto_defaults {
 	char	alg[32];
 	int	keylen;
 } crypto_defaults[] = {
