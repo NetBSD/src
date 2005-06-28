@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.18 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.18 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,18 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.18 2005/02/27 00:27:32 perry Exp $");
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-void	cac_pci_attach(struct device *, struct device *, void *);
-const struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
-int	cac_pci_match(struct device *, struct cfdata *, void *);
-
-struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
-int	cac_pci_l0_fifo_full(struct cac_softc *);
-void	cac_pci_l0_intr_enable(struct cac_softc *, int);
-int	cac_pci_l0_intr_pending(struct cac_softc *);
-void	cac_pci_l0_submit(struct cac_softc *, struct cac_ccb *);
-
-CFATTACH_DECL(cac_pci, sizeof(struct cac_softc),
-    cac_pci_match, cac_pci_attach, NULL, NULL);
+static struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
+static int	cac_pci_l0_fifo_full(struct cac_softc *);
+static void	cac_pci_l0_intr_enable(struct cac_softc *, int);
+static int	cac_pci_l0_intr_pending(struct cac_softc *);
+static void	cac_pci_l0_submit(struct cac_softc *, struct cac_ccb *);
 
 static const struct cac_linkage cac_pci_l0 = {
 	cac_pci_l0_completed,
@@ -108,7 +101,7 @@ struct cac_pci_product {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
 };
 
-const struct cac_pci_type *
+static const struct cac_pci_type *
 cac_pci_findtype(struct pci_attach_args *pa)
 {
 	const struct cac_pci_type *ct;
@@ -143,14 +136,14 @@ cac_pci_findtype(struct pci_attach_args *pa)
 	return (ct);
 }
 
-int
+static int
 cac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (cac_pci_findtype(aux) != NULL);
 }
 
-void
+static void
 cac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -233,7 +226,10 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 	cac_init(sc, intrstr, (ct->ct_flags & CT_STARTFW) != 0);
 }
 
-void
+CFATTACH_DECL(cac_pci, sizeof(struct cac_softc),
+    cac_pci_match, cac_pci_attach, NULL, NULL);
+
+static void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
@@ -242,7 +238,7 @@ cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 	cac_outl(sc, CAC_42REG_CMD_FIFO, ccb->ccb_paddr);
 }
 
-struct cac_ccb *
+static struct cac_ccb *
 cac_pci_l0_completed(struct cac_softc *sc)
 {
 	struct cac_ccb *ccb;
@@ -266,21 +262,21 @@ cac_pci_l0_completed(struct cac_softc *sc)
 	return (ccb);
 }
 
-int
+static int
 cac_pci_l0_intr_pending(struct cac_softc *sc)
 {
 
 	return ((cac_inl(sc, CAC_42REG_STATUS) & CAC_42_EXTINT) != 0);
 }
 
-void
+static void
 cac_pci_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
 	cac_outl(sc, CAC_42REG_INTR_MASK, (state ? 0 : 8));	/* XXX */
 }
 
-int
+static int
 cac_pci_l0_fifo_full(struct cac_softc *sc)
 {
 

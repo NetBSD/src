@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.8 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.8 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,17 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.8 2005/02/04 02:10:45 perry Exp $");
 #include <dev/ic/mpuvar.h>
 #include <dev/pci/cmpcivar.h>
 
-static int mpu_cmpci_match(struct device *, struct cfdata *, void *);
-static void mpu_cmpci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(mpu_cmpci, sizeof (struct mpu_softc),
-    mpu_cmpci_match, mpu_cmpci_attach, NULL, NULL);
-
 static int
-mpu_cmpci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mpu_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct cmpci_softc *ysc = (struct cmpci_softc *)parent;
@@ -84,10 +75,7 @@ mpu_cmpci_match(parent, match, aux)
 }
 
 static void
-mpu_cmpci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mpu_cmpci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cmpci_softc *ysc = (struct cmpci_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;
@@ -100,3 +88,6 @@ mpu_cmpci_attach(parent, self, aux)
 
 	mpu_attach(sc);
 }
+
+CFATTACH_DECL(mpu_cmpci, sizeof (struct mpu_softc),
+    mpu_cmpci_match, mpu_cmpci_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280_image.h,v 1.2 2001/01/18 20:28:15 jdolecek Exp $	*/
+/*	$NetBSD: cs4280_image.h,v 1.3 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /* This source is based on cwcimage.h in cwcealdr1.zip, the
  * sample source by Crystal Semiconductor.
@@ -11,7 +11,7 @@
 
 #ifndef _CLCS_IMAGE_H
 #define _CLCS_IMAGE_H
-const struct BA1struct BA1Struct = {
+static const struct BA1struct BA1Struct = {
 {{ 0x00000000, 0x00003000 },{ 0x00010000, 0x00003800 },{ 0x00020000, 0x00007000 }},
 {0x00000000,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,

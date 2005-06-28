@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.7 2003/09/01 06:30:24 tls Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.7 2003/09/01 06:30:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $");
 
 #include "opt_amdpm.h"
 
@@ -72,12 +72,7 @@ struct amdpm_softc {
 #endif
 };
 
-int	amdpm_match(struct device *, struct cfdata *, void *);
-void	amdpm_attach(struct device *, struct device *, void *);
-void	amdpm_rnd_callout(void *);
-
-CFATTACH_DECL(amdpm, sizeof(struct amdpm_softc),
-    amdpm_match, amdpm_attach, NULL, NULL);
+static void	amdpm_rnd_callout(void *);
 
 #ifdef AMDPM_RND_COUNTERS
 #define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
@@ -85,7 +80,7 @@ CFATTACH_DECL(amdpm, sizeof(struct amdpm_softc),
 #define	AMDPM_RNDCNT_INCR(ev)	/* nothing */
 #endif
 
-int
+static int
 amdpm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -96,7 +91,7 @@ amdpm_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 amdpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
@@ -178,7 +173,10 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-void
+CFATTACH_DECL(amdpm, sizeof(struct amdpm_softc),
+    amdpm_match, amdpm_attach, NULL, NULL);
+
+static void
 amdpm_rnd_callout(void *v)
 {
 	struct amdpm_softc *sc = v;

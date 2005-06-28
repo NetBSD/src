@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.23 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.23 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -80,41 +80,44 @@ struct fms_dma {
 
 
 
-int	fms_match(struct device *, struct cfdata *, void *);
-void	fms_attach(struct device *, struct device *, void *);
-int	fms_intr(void *);
+static int	fms_match(struct device *, struct cfdata *, void *);
+static void	fms_attach(struct device *, struct device *, void *);
+static int	fms_intr(void *);
 
-int	fms_query_encoding(void *, struct audio_encoding *);
-int	fms_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-		       stream_filter_list_t *, stream_filter_list_t *);
-int	fms_round_blocksize(void *, int, int, const audio_params_t *);
-int	fms_halt_output(void *);
-int	fms_halt_input(void *);
-int	fms_getdev(void *, struct audio_device *);
-int	fms_set_port(void *, mixer_ctrl_t *);
-int	fms_get_port(void *, mixer_ctrl_t *);
-int	fms_query_devinfo(void *, mixer_devinfo_t *);
-void	*fms_malloc(void *, int, size_t, struct malloc_type *, int);
-void	fms_free(void *, void *, struct malloc_type *);
-size_t	fms_round_buffersize(void *, int, size_t);
-paddr_t	fms_mappage(void *, void *, off_t, int);
-int	fms_get_props(void *);
-int	fms_trigger_output(void *, void *, void *, int, void (*)(void *),
-			   void *, const audio_params_t *);
-int	fms_trigger_input(void *, void *, void *, int, void (*)(void *),
-			  void *, const audio_params_t *);
+static int	fms_query_encoding(void *, struct audio_encoding *);
+static int	fms_set_params(void *, int, int, audio_params_t *,
+			       audio_params_t *, stream_filter_list_t *,
+			       stream_filter_list_t *);
+static int	fms_round_blocksize(void *, int, int, const audio_params_t *);
+static int	fms_halt_output(void *);
+static int	fms_halt_input(void *);
+static int	fms_getdev(void *, struct audio_device *);
+static int	fms_set_port(void *, mixer_ctrl_t *);
+static int	fms_get_port(void *, mixer_ctrl_t *);
+static int	fms_query_devinfo(void *, mixer_devinfo_t *);
+static void	*fms_malloc(void *, int, size_t, struct malloc_type *, int);
+static void	fms_free(void *, void *, struct malloc_type *);
+static size_t	fms_round_buffersize(void *, int, size_t);
+static paddr_t	fms_mappage(void *, void *, off_t, int);
+static int	fms_get_props(void *);
+static int	fms_trigger_output(void *, void *, void *, int,
+				   void (*)(void *), void *,
+				   const audio_params_t *);
+static int	fms_trigger_input(void *, void *, void *, int,
+				  void (*)(void *), void *,
+				  const audio_params_t *);
 
 CFATTACH_DECL(fms, sizeof (struct fms_softc),
     fms_match, fms_attach, NULL, NULL);
 
-struct audio_device fms_device = {
+static struct audio_device fms_device = {
 	"Forte Media 801",
 	"1.0",
 	"fms"
 };
 
 
-const struct audio_hw_if fms_hw_if = {
+static const struct audio_hw_if fms_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,
@@ -144,14 +147,10 @@ const struct audio_hw_if fms_hw_if = {
 	NULL,
 };
 
-int	fms_attach_codec(void *, struct ac97_codec_if *);
-int	fms_read_codec(void *, uint8_t, uint16_t *);
-int	fms_write_codec(void *, uint8_t, uint16_t);
-int	fms_reset_codec(void *);
-
-int	fms_allocmem(struct fms_softc *, size_t, size_t,
-			  struct fms_dma *);
-int	fms_freemem(struct fms_softc *, struct fms_dma *);
+static int	fms_attach_codec(void *, struct ac97_codec_if *);
+static int	fms_read_codec(void *, uint8_t, uint16_t *);
+static int	fms_write_codec(void *, uint8_t, uint16_t);
+static int	fms_reset_codec(void *);
 
 #define FM_PCM_VOLUME		0x00
 #define FM_FM_VOLUME		0x02
@@ -215,7 +214,7 @@ int	fms_freemem(struct fms_softc *, struct fms_dma *);
 #define  FM_INTSTATUS_MPU		0x8000
 
 
-int
+static int
 fms_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -229,7 +228,7 @@ fms_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
+static void
 fms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -336,7 +335,7 @@ fms_attach(struct device *parent, struct device *self, void *aux)
  * we allow more than two.
  */
 #define TIMO 50
-int
+static int
 fms_read_codec(void *addr, uint8_t reg, uint16_t *val)
 {
 	struct fms_softc *sc;
@@ -370,7 +369,7 @@ fms_read_codec(void *addr, uint8_t reg, uint16_t *val)
 	return 0;
 }
 
-int
+static int
 fms_write_codec(void *addr, uint8_t reg, uint16_t val)
 {
 	struct fms_softc *sc = addr;
@@ -393,7 +392,7 @@ fms_write_codec(void *addr, uint8_t reg, uint16_t val)
 }
 #undef TIMO
 
-int
+static int
 fms_attach_codec(void *addr, struct ac97_codec_if *cif)
 {
 	struct fms_softc *sc;
@@ -404,7 +403,7 @@ fms_attach_codec(void *addr, struct ac97_codec_if *cif)
 }
 
 /* Cold Reset */
-int
+static int
 fms_reset_codec(void *addr)
 {
 	struct fms_softc *sc;
@@ -417,7 +416,7 @@ fms_reset_codec(void *addr)
 	return 0;
 }
 
-int
+static int
 fms_intr(void *arg)
 {
 	struct fms_softc *sc;
@@ -467,7 +466,7 @@ fms_intr(void *arg)
 	return 1;
 }
 
-int
+static int
 fms_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
@@ -533,7 +532,7 @@ fms_query_encoding(void *addr, struct audio_encoding *fp)
 struct {
 	int limit;
 	int rate;
-} fms_rates[11] = {
+} static const fms_rates[11] = {
 	{  6600,  5500 },
 	{  8750,  8000 },
 	{ 10250,  9600 },
@@ -564,7 +563,7 @@ static const struct audio_format fms_formats[FMS_NFORMATS] = {
 				 32000, 38400, 44100, 48000}},
 };
 
-int
+static int
 fms_set_params(void *addr, int setmode, int usemode,
 	       audio_params_t *play, audio_params_t *rec,
 	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
@@ -608,14 +607,14 @@ fms_set_params(void *addr, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 fms_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 
 	return blk & ~0xf;
 }
 
-int
+static int
 fms_halt_output(void *addr)
 {
 	struct fms_softc *sc;
@@ -630,7 +629,7 @@ fms_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 fms_halt_input(void *addr)
 {
 	struct fms_softc *sc;
@@ -645,7 +644,7 @@ fms_halt_input(void *addr)
 	return 0;
 }
 
-int
+static int
 fms_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -653,7 +652,7 @@ fms_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-int
+static int
 fms_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct fms_softc *sc;
@@ -662,7 +661,7 @@ fms_set_port(void *addr, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
 
-int
+static int
 fms_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct fms_softc *sc;
@@ -671,7 +670,7 @@ fms_get_port(void *addr, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
 
-void *
+static void *
 fms_malloc(void *addr, int direction, size_t size,
 	   struct malloc_type *pool, int flags)
 {
@@ -731,7 +730,7 @@ fail_alloc:
 	return NULL;
 }
 
-void
+static void
 fms_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct fms_softc *sc;
@@ -753,14 +752,14 @@ fms_free(void *addr, void *ptr, struct malloc_type *pool)
 	panic("fms_free: trying to free unallocated memory");
 }
 
-size_t
+static size_t
 fms_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return size;
 }
 
-paddr_t
+static paddr_t
 fms_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct fms_softc *sc;
@@ -779,14 +778,14 @@ fms_mappage(void *addr, void *mem, off_t off, int prot)
 			       BUS_DMA_WAITOK);
 }
 
-int
+static int
 fms_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	       AUDIO_PROP_FULLDUPLEX;
 }
 
-int
+static int
 fms_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct fms_softc *sc;
@@ -795,7 +794,7 @@ fms_query_devinfo(void *addr, mixer_devinfo_t *dip)
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dip);
 }
 
-int
+static int
 fms_trigger_output(void *addr, void *start, void *end, int blksize,
 		   void (*intr)(void *), void *arg,
 		   const audio_params_t *param)
@@ -830,7 +829,7 @@ fms_trigger_output(void *addr, void *start, void *end, int blksize,
 }
 
 
-int
+static int
 fms_trigger_input(void *addr, void *start, void *end, int blksize,
 		  void (*intr)(void *), void *arg, const audio_params_t *param)
 {
