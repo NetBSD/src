@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.26 2005/05/31 19:20:37 drochner Exp $ */
+/* $NetBSD: cgd.c,v 1.27 2005/06/28 20:23:02 drochner Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.26 2005/05/31 19:20:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27 2005/06/28 20:23:02 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct proc *);
 static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct proc *);
-static int	cgdinit(struct cgd_softc *, char *, struct vnode *,
+static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct proc *);
 static void	cgd_cipher(struct cgd_softc *, caddr_t, caddr_t,
 			   size_t, daddr_t, size_t, int);
@@ -512,7 +512,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 	struct	 vnode *vp;
 	int	 ret;
 	int	 keybytes;			/* key length in bytes */
-	char	*cp;
+	const char *cp;
 	char	 inbuf[MAX_KEYSIZE];
 
 	cp = ci->ci_disk;
@@ -607,7 +607,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 }
 
 static int
-cgdinit(struct cgd_softc *cs, char *cpath, struct vnode *vp,
+cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct proc *p)
 {
 	struct	dk_geom *pdg;
