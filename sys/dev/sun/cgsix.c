@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.26 2005/06/21 01:12:17 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.26 2005/06/21 01:12:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,26 +689,45 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	LIST_INIT(&sc->screens);
 	sc->active = NULL;
 	sc->currenttype = &cgsix_defaultscreen;
-	callout_init(&sc->switch_callout);
+	callout_init(&sc->switch_callout);	
 
-	cgsix_init_screen(sc, &cg6_console_screen, 1, &defattr);
-	cg6_console_screen.active = 1;
-	sc->active = &cg6_console_screen;
-
-	cgsix_defaultscreen.nrows = ri->ri_rows;
-	cgsix_defaultscreen.ncols = ri->ri_cols;
-	cgsix_defaultscreen.textops = &ri->ri_ops;
-	cgsix_defaultscreen.capabilities = ri->ri_caps;
-
-	cg6_setup_palette(sc);
-
-	if (isconsole) {
-		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
+	if(isconsole) {
+		/* we mess with cg6_console_screen only once */
+		cgsix_init_screen(sc, &cg6_console_screen, 1, &defattr);
+		cgsix_defaultscreen.textops = &ri->ri_ops;
+		cgsix_defaultscreen.capabilities = ri->ri_caps;
+		cgsix_defaultscreen.nrows = ri->ri_rows;
+		cgsix_defaultscreen.ncols = ri->ri_cols;
+		cg6_console_screen.active = 1;
+		sc->active = &cg6_console_screen;
+		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);	
+	} else {
+		/* 
+		 * we're not the console so we just clear the screen and don't 
+		 * set up any sort of text display
+		 */
+		if (cgsix_defaultscreen.textops == NULL) {
+			/* 
+			 * ugly, but...
+			 * we want the console settings to win, so we only
+			 * touch anything when we find an untouched screen
+			 * definition. In this case we fill it from fb to
+			 * avoid problems in case no cgsix is the console
+			 */
+			ri = &sc->sc_fb.fb_rinfo;
+			cgsix_defaultscreen.textops = &ri->ri_ops;
+			cgsix_defaultscreen.capabilities = ri->ri_caps;
+			cgsix_defaultscreen.nrows = ri->ri_rows;
+			cgsix_defaultscreen.ncols = ri->ri_cols;
+		}
+		sc->active = NULL;
+		cgsix_clearscreen(sc);
 	}
 
-
-	aa.console = isconsole;
+	cg6_setup_palette(sc);
+	
 	aa.scrdata = &cgsix_screenlist;
+	aa.console = isconsole;
 	aa.accessops = &cgsix_accessops;
 	aa.accesscookie = sc;
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
