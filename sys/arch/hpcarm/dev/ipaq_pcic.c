@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.12 2003/07/15 00:25:07 lukem Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.13 2005/06/28 18:30:00 drochner Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.12 2003/07/15 00:25:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.13 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.12 2003/07/15 00:25:07 lukem Exp $")
 static	int	ipaqpcic_match(struct device *, struct cfdata *, void *);
 static	void	ipaqpcic_attach(struct device *, struct device *, void *);
 static	int	ipaqpcic_print(void *, const char *);
-static	int	ipaqpcic_submatch(struct device *, struct cfdata *, void *);
 
 static	int	ipaqpcic_read(struct sapcic_socket *, int);
 static	void	ipaqpcic_write(struct sapcic_socket *, int, int);
@@ -142,8 +141,8 @@ ipaqpcic_attach(parent, self, aux)
 		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].pcmcia =
-		    (struct device *)config_found_sm(&sc->sc_pc.sc_dev,
-		    &paa, ipaqpcic_print, ipaqpcic_submatch);
+		    config_found_ia(&sc->sc_pc.sc_dev, "pcmciabus",
+		    &paa, ipaqpcic_print);
 
 		sa11x0_intr_establish((sa11x0_chipset_tag_t)psc,
 			    i ? IRQ_CD1 : IRQ_CD0,
@@ -166,15 +165,6 @@ ipaqpcic_print(aux, name)
 	const char *name;
 {
 	return (UNCONF);
-}
-
-static int
-ipaqpcic_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	return config_match(parent, cf, aux);
 }
 
 static void

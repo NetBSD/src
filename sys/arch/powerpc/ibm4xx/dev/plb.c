@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.12 2004/02/13 11:36:16 wiz Exp $ */
+/* $NetBSD: plb.c,v 1.13 2005/06/28 18:30:00 drochner Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.12 2004/02/13 11:36:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.13 2005/06/28 18:30:00 drochner Exp $");
 
 #include "locators.h"
 
@@ -95,7 +95,6 @@ const struct plb_dev plb_devs [] = {
 
 static int	plb_match(struct device *, struct cfdata *, void *);
 static void	plb_attach(struct device *, struct device *, void *);
-static int	plb_submatch(struct device *, struct cfdata *, void *);
 static int	plb_print(void *, const char *);
 
 CFATTACH_DECL(plb, sizeof(struct device),
@@ -133,13 +132,6 @@ plb_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static int
-plb_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (config_match(parent, cf, aux));
-}
-
 /*
  * Attach the processor local bus.
  */
@@ -157,7 +149,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
-		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
+		(void) config_found_ia(self, "plb", &paa, plb_print);
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
@@ -165,7 +157,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
-		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
+		(void) config_found_ia(self, "plb", &paa, plb_print);
 		local_plb_devs++;
 	}
 }

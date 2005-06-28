@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.17 2004/02/13 11:36:16 wiz Exp $ */
+/* $NetBSD: opb.c,v 1.18 2005/06/28 18:30:00 drochner Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.17 2004/02/13 11:36:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.18 2005/06/28 18:30:00 drochner Exp $");
 
 #include "locators.h"
 
@@ -119,7 +119,8 @@ const struct opb_limit {
 
 static int	opb_match(struct device *, struct cfdata *, void *);
 static void	opb_attach(struct device *, struct device *, void *);
-static int	opb_submatch(struct device *, struct cfdata *, void *);
+static int	opb_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	opb_print(void *, const char *);
 
 CFATTACH_DECL(opb, sizeof(struct device),
@@ -149,7 +150,8 @@ opb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-opb_submatch(struct device *parent, struct cfdata *cf, void *aux)
+opb_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
 
@@ -185,7 +187,8 @@ opb_attach(struct device *parent, struct device *self, void *aux)
 		oaa.opb_bt = tag;
 		oaa.opb_dmat = paa->plb_dmat;
 
-		(void) config_found_sm(self, &oaa, opb_print, opb_submatch);
+		(void) config_found_sm_loc(self, "opb", NULL, &oaa, opb_print,
+					   opb_submatch);
 	}
 }
 

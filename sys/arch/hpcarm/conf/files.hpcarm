@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.50 2004/05/28 17:52:07 tsarna Exp $
+#	$NetBSD: files.hpcarm,v 1.51 2005/06/28 18:30:00 drochner Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -69,7 +69,8 @@ device	sed: hpcfbif
 attach	sed at saip
 file	arch/hpcarm/dev/sed_saip.c		sed
 
-device	j720ssp {}: wskbddev, wsmousedev, hpctpanel
+device	j720sspapm {}
+device	j720ssp {}: wskbddev, wsmousedev, hpctpanel, j720sspapm
 attach	j720ssp at saip
 file	arch/hpcarm/dev/j720ssp.c		j720ssp
 file	arch/hpcarm/dev/j720kbdmap.c		j720ssp
@@ -78,7 +79,7 @@ file	dev/cninit.c
 
 # APM
 device	apm
-attach	apm at j720ssp
+attach	apm at j720sspapm
 file	arch/hpcarm/dev/apm.c		apm needs-count
 
 # Atmel microcontroller

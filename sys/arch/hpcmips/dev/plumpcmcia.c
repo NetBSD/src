@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.17 2004/08/11 01:54:46 mycroft Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.18 2005/06/28 18:30:00 drochner Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.17 2004/08/11 01:54:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.18 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.17 2004/08/11 01:54:46 mycroft Exp 
 int	plumpcmcia_match(struct device *, struct cfdata *, void *);
 void	plumpcmcia_attach(struct device *, struct device *, void *);
 int	plumpcmcia_print(void *, const char *);
-int	plumpcmcia_submatch(struct device *, struct cfdata *, void *);
 
 int	plumpcmcia_power(void *, int, long, void *);
 
@@ -297,12 +296,6 @@ plumpcmcia_print(void *arg, const char *pnp)
 	return (UNCONF);
 }
 
-int
-plumpcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-	return (config_match(parent, cf, aux));
-}
-
 static void
 plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 {
@@ -315,15 +308,14 @@ plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 	paa.iobase = 0;
 	paa.iosize = ph->ph_iosize;
 
-	if ((ph->ph_pcmcia = config_found_sm((void*)sc, &paa, 
-	    plumpcmcia_print,
-	    plumpcmcia_submatch))) {
+	if ((ph->ph_pcmcia = config_found_ia((void*)sc, "pcmciabus", &paa,
+	    plumpcmcia_print))) {
 		/* Enable slot */
-		plum_conf_write(ph->ph_regt, ph->ph_regh, 
+		plum_conf_write(ph->ph_regt, ph->ph_regh,
 		    PLUM_PCMCIA_SLOTCTRL,
 		    PLUM_PCMCIA_SLOTCTRL_ENABLE);
 		/* Support 3.3V card & enable Voltage Sense Status */
-		plum_conf_write(ph->ph_regt, ph->ph_regh, 
+		plum_conf_write(ph->ph_regt, ph->ph_regh,
 		    PLUM_PCMCIA_FUNCCTRL,
 		    PLUM_PCMCIA_FUNCCTRL_VSSEN |
 		    PLUM_PCMCIA_FUNCCTRL_3VSUPPORT);

@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.8 2003/07/15 03:35:51 lukem Exp $ */
+/* $NetBSD: zbbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.8 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,8 @@ CFATTACH_DECL(zbbus, sizeof(struct device),
     zbbus_match, zbbus_attach, NULL, NULL);
 
 static int	zbbus_print(void *, const char *);
-static int	zbbus_submatch(struct device *, struct cfdata *, void *);
+static int	zbbus_submatch(struct device *, struct cfdata *,
+			       const locdesc_t *, void *);
 static const char *zbbus_entity_type_name(enum zbbus_entity_type type);
 
 static int	zbbus_attached;
@@ -88,7 +89,8 @@ zbbus_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sb1250_zbbus_dev_count; i++) {
 		memset(&za, 0, sizeof za);
 		za.za_locs = sb1250_zbbus_devs[i];
-		config_found_sm(self, &za, zbbus_print, zbbus_submatch);
+		config_found_sm_loc(self, "zbbus", NULL, &za, zbbus_print,
+				    zbbus_submatch);
 	}
 
 	return;
@@ -107,7 +109,8 @@ zbbus_print(void *aux, const char *pnp)
 }
 
 static int
-zbbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+zbbus_submatch(struct device *parent, struct cfdata *cf,
+	       const locdesc_t *ldesc, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 

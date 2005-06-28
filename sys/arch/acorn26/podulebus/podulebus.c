@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.10 2003/07/14 22:48:23 lukem Exp $ */
+/* $NetBSD: podulebus.c,v 1.11 2005/06/28 18:29:58 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.10 2003/07/14 22:48:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.11 2005/06/28 18:29:58 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,8 @@ static int podulebus_match(struct device *, struct cfdata *, void *);
 static void podulebus_attach(struct device *, struct device *, void *);
 static void podulebus_probe_podule(struct device *, int);
 static int podulebus_print(void *, char const *);
-static int podulebus_submatch(struct device *, struct cfdata *, void *);
+static int podulebus_submatch(struct device *, struct cfdata *,
+			      const locdesc_t *, void *);
 static void podulebus_read_chunks(struct podulebus_attach_args *, int);
 static u_int8_t *podulebus_get_chunk(struct podulebus_attach_args *pa, int type);
 #if NPODLOADER > 0
@@ -171,7 +172,7 @@ podulebus_probe_podule(struct device *self, int slotnum)
 			}
 		}
 		pa.pa_slotflags = 0;
-		config_found_sm(self, &pa,
+		config_found_sm_loc(self, &pa, "podulebus", NULL,
 				podulebus_print, podulebus_submatch);
 		if (pa.pa_chunks)
 			FREE(pa.pa_chunks, M_DEVBUF);
@@ -344,7 +345,8 @@ podulebus_print(void *aux, char const *pnp)
 }	
 
 static int
-podulebus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+podulebus_submatch(struct device *parent, struct cfdata *cf,
+		   const locdesc_t *ldesc, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2005/05/20 15:09:45 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 2005/06/28 18:29:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2005/05/20 15:09:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2005/06/28 18:29:59 drochner Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1501,7 +1501,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return;
-	config_found_sm(self, ca, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "mainbus", NULL, ca, mbprint, mbsubmatch);
 }
 
 static void
@@ -1510,7 +1510,8 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
 	    ca->ca_hpa != pdc_hpa.hpa)
-		config_found_sm(self, ca, mbprint, mbsubmatch);
+		config_found_sm_loc(self, "mainbus", NULL, ca, mbprint,
+				    mbsubmatch);
 }
 
 void
@@ -1702,7 +1703,8 @@ mbprint(void *aux, const char *pnp)
 }
 
 int
-mbsubmatch(struct device *parent, struct cfdata *cf, void *aux)
+mbsubmatch(struct device *parent, struct cfdata *cf,
+	   const locdesc_t *, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;

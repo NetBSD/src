@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.9 2002/10/02 05:31:46 thorpej Exp $ */
+/* $NetBSD: lunaws.c,v 1.10 2005/06/28 18:30:00 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.9 2002/10/02 05:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.10 2005/06/28 18:30:00 drochner Exp $");
 
 #include "wsmouse.h"
 
@@ -119,10 +119,6 @@ static void wsintr __P((int));
 
 static int  wsmatch __P((struct device *, struct cfdata *, void *));
 static void wsattach __P((struct device *, struct device *, void *));
-static int  ws_submatch_kbd __P((struct device *, struct cfdata *, void *));
-#if NWSMOUSE > 0
-static int  ws_submatch_mouse __P((struct device *, struct cfdata *, void *));
-#endif
 
 CFATTACH_DECL(ws, sizeof(struct ws_softc),
     wsmatch, wsattach, NULL, NULL);
@@ -174,48 +170,20 @@ wsattach(parent, self, aux)
 	a.keymap = &omkbd_keymapdata;
 	a.accessops = &omkbd_accessops;
 	a.accesscookie = (void *)sc;
-	sc->sc_wskbddev = config_found_sm(self, &a, wskbddevprint,
-					ws_submatch_kbd);
+	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a,
+					  wskbddevprint);
 
 #if NWSMOUSE > 0
 	{
 	struct wsmousedev_attach_args b;
 	b.accessops = &omms_accessops;
 	b.accesscookie = (void *)sc;	
-	sc->sc_wsmousedev = config_found_sm(self, &b, wsmousedevprint,
-					ws_submatch_mouse);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &b,
+					    wsmousedevprint);
 	sc->sc_msreport = 0;
 	}
 #endif
 }
-
-static int
-ws_submatch_kbd(parent, cf, aux)
-        struct device *parent;
-        struct cfdata *cf;
-        void *aux;
-{
-
-        if (strcmp(cf->cf_name, "wskbd"))
-                return (0);
-        return (config_match(parent, cf, aux));
-}
-
-#if NWSMOUSE > 0
-
-static int
-ws_submatch_mouse(parent, cf, aux)
-        struct device *parent;
-        struct cfdata *cf;
-        void *aux;
-{
-
-        if (strcmp(cf->cf_name, "wsmouse"))
-                return (0);
-        return (config_match(parent, cf, aux));
-}
-
-#endif
 
 /*ARGSUSED*/
 static void
