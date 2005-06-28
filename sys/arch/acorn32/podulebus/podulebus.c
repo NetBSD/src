@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.17 2003/05/21 17:17:51 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.18 2005/06/28 18:29:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.17 2003/05/21 17:17:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.18 2005/06/28 18:29:58 drochner Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -76,7 +76,8 @@ u_int poduleread __P((u_int, int));
 int podulebusmatch(struct device *, struct cfdata *, void *);
 void podulebusattach(struct device *, struct device *, void *);
 int podulebusprint(void *, const char *);
-int podulebussubmatch(struct device *, struct cfdata *, void *);
+int podulebussubmatch(struct device *, struct cfdata *,
+		      const locdesc_t *, void *);
 void podulechunkdirectory(podule_t *);
 void podulescan(struct device *);
 
@@ -127,9 +128,10 @@ podulebusprint(aux, name)
 
 
 int
-podulebussubmatch(parent, cf, aux)
+podulebussubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct podule_attach_args *pa = aux;
@@ -507,8 +509,8 @@ podulebusattach(parent, self, aux)
 				pa.pa_ih = pa.pa_podule_number;
 				pa.pa_podule = &podules[loop];
 				pa.pa_iot = &podulebus_bs_tag;
-				config_found_sm(self, &pa, podulebusprint,
-				    podulebussubmatch);
+				config_found_sm_loc(self, "podulebus", NULL, &pa,
+				    podulebusprint, podulebussubmatch);
 				continue;
 			}
 			if (value == 0xffff) {
@@ -522,7 +524,8 @@ podulebusattach(parent, self, aux)
 			pa.pa_ih = pa.pa_podule_number;
 			pa.pa_podule = &podules[loop];
 			pa.pa_iot = &podulebus_bs_tag;
-			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
+			config_found_sm_loc(self, "podulebus", NULL, &pa,
+			    podulebusprint, podulebussubmatch);
 		}
 	}
 }

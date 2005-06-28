@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2003/07/15 01:37:34 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2005/06/28 18:29:59 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2003/07/15 01:37:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2005/06/28 18:29:59 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -69,7 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2003/07/15 01:37:34 lukem Exp $");
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_submatch(struct device *, struct cfdata *, void *);
+static int	mainbus_submatch(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
 static int	mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -161,13 +162,14 @@ mainbus_attach(parent, self, aux)
 		ma.ma_name = md->md_name;
 		ma.ma_addr = md->md_addr;
 		ma.ma_intr = md->md_intr;
-		(void) config_found_sm(self, &ma, mainbus_print,
-		    mainbus_submatch);
+		(void) config_found_sm_loc(self, "mainbus", NULL, &ma,
+		    mainbus_print, mainbus_submatch);
 	}
 }
 
 static int
-mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_submatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.18 2003/07/15 02:29:29 lukem Exp $ */
+/*	$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.18 2003/07/15 02:29:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $");
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 
@@ -70,7 +70,6 @@ int	it8368debug = 1;
 int it8368e_match(struct device *, struct cfdata *, void *);
 void it8368e_attach(struct device *, struct device *, void *);
 int it8368_print(void *, const char *);
-int it8368_submatch(struct device *, struct cfdata *, void *);
 
 #define IT8368_LASTSTATE_PRESENT	0x0002
 #define IT8368_LASTSTATE_HALF		0x0001
@@ -379,13 +378,6 @@ it8368_print(void *arg, const char *pnp)
 	return (UNCONF);
 }
 
-int
-it8368_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (config_match(parent, cf, aux));
-}
-
 void
 it8368_attach_socket(struct it8368e_softc *sc)
 {
@@ -397,9 +389,8 @@ it8368_attach_socket(struct it8368e_softc *sc)
 	paa.iobase = 0;
 	paa.iosize = sc->sc_csiosize;
 	
-	if ((sc->sc_pcmcia = config_found_sm((void*)sc, &paa, it8368_print,
-	    it8368_submatch))) {
-
+	if ((sc->sc_pcmcia = config_found_ia((void*)sc, "pcmciabus", &paa,
+					     it8368_print))) {
 		it8368_init_socket(sc);
 	}
 }

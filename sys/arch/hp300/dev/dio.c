@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.28 2005/01/02 12:03:12 tsutsui Exp $	*/
+/*	$NetBSD: dio.c,v 1.29 2005/06/28 18:29:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.28 2005/01/02 12:03:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.29 2005/06/28 18:29:59 drochner Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -80,7 +80,7 @@ static const char *dio_devinfo(struct dio_attach_args *, char *, size_t);
 static int	diomatch(struct device *, struct cfdata *, void *);
 static void	dioattach(struct device *, struct device *, void *);
 static int	dioprint(void *, const char *);
-static int	diosubmatch(struct device *, struct cfdata *, void *);
+static int	diosubmatch(struct device *, struct cfdata *, const locdesc_t *, void *);
 
 CFATTACH_DECL(dio, sizeof(struct dio_softc),
     diomatch, dioattach, NULL, NULL);
@@ -159,13 +159,15 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		iounmap(va, PAGE_SIZE);
 
 		/* Attach matching device. */
-		config_found_sm(self, &da, dioprint, diosubmatch);
+		config_found_sm_loc(self, "dio", NULL, &da, dioprint,
+				    diosubmatch);
 		scode += scodesize;
 	}
 }
 
 static int
-diosubmatch(struct device *parent, struct cfdata *cf, void *aux)
+diosubmatch(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
