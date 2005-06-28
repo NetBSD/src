@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.84 2005/05/17 17:20:41 hubertf Exp $
+#	$NetBSD: GENERIC_TINY,v 1.85 2005/06/28 09:08:04 wiz Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -529,8 +529,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 

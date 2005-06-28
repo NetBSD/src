@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.103 2005/03/25 23:28:44 cube Exp $
+#	$NetBSD: DISKLESS,v 1.104 2005/06/28 09:08:04 wiz Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -231,9 +231,6 @@ ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 tlp*	at pci? dev ? function ?		# DECchip 21x4x and clones
 
 ukphy*	at mii? phy ?				# generic unknown PHYs
-
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 #sb*	at isapnp?
