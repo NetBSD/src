@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4.2.1 2005/06/28 10:29:17 tron Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4.2.1 2005/06/28 10:29:17 tron Exp $");
 
 #include "opt_kgdb.h"
 
@@ -64,6 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2005/03/09 22:39:21 bouyer Exp $");
 #include <dev/ic/pckbcvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
+
+#include "ukbd.h"
+#if (NUKBD > 0)
+#include <dev/usb/ukbdvar.h>
+#endif
 
 #ifndef __x86_64__
 #include "pc.h"
@@ -168,10 +173,21 @@ consinit()
 		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
 #endif /* CONS_OVERRIDE */
+			int error;
 			vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 			    -1, 1);
-			pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+			error = ENODEV;
+#if (NPCKBC > 0)
+			error = pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
 			    PCKBC_KBD_SLOT);
+#endif
+#if (NUKBD > 0)
+			if (error)
+				error = ukbd_cnattach();
+#endif
+			if (error)
+				printf("WARNING: no console keyboard, "
+				    "error=%d\n", error);
 			return;
 		}
 	}
