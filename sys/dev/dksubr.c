@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.14 2004/10/28 07:07:39 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.14 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  */
 int
 dk_lookup(path, p, vpp)
-	char *path;
+	const char *path;
 	struct proc *p;
 	struct vnode **vpp;	/* result */
 {
