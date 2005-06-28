@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.33 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.34 2005/06/28 16:53:14 kml Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.33 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34 2005/06/28 16:53:14 kml Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,6 +562,7 @@ found:
 			return (error);
 		}
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		uvm_vnp_setsize(vdp, ext2fs_size(dp));
 	}
 	brelse(bp);
 
@@ -837,6 +838,7 @@ ext2fs_direnter(ip, dvp, cnp)
 			if (error)
 				return (error);
 			dp->i_flag |= IN_CHANGE;
+			uvm_vnp_setsize(dvp, ext2fs_size(dp));
 		}
 		return (error);
 	}
