@@ -1,4 +1,4 @@
-/*	NetBSD: pci_machdep.c,v 1.12 2001/06/19 11:56:27 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20 2005/06/28 08:32:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2005/01/13 23:57:04 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2005/06/28 08:32:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
