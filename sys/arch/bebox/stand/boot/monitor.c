@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: monitor.c,v 1.4 2005/06/28 14:36:21 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,19 +37,18 @@
  */
 
 #include <stand.h>
-#define NULL	0
 
 extern int errno;
 extern char *name;
 
-void db_cmd_dump __P((int, char **));
-void db_cmd_get __P((int, char **));
-void db_cmd_mf __P((int, char **));
-void db_cmd_mt __P((int, char **));
-void db_cmd_put __P((int, char **));
-void db_cmd_help __P((int, char **));
+void db_cmd_dump(int, char **);
+void db_cmd_get(int, char **);
+void db_cmd_mf(int, char **);
+void db_cmd_mt(int, char **);
+void db_cmd_put(int, char **);
+void db_cmd_help(int, char **);
 
-extern void exec_kernel __P((char *, void *));
+extern void exec_kernel(char *, void *);
 
 struct {
 	char *name;
@@ -65,19 +64,19 @@ struct {
 };
 
 int
-db_monitor()
+db_monitor(void)
 {
 	int tmp;
 	int argc, flag;
 	char *p, *argv[16];
 	char line[1024];
 
-	while(1) {
+	while (1) {
 		printf("db> ");
 		gets(line);
 
 		flag = 0;
-		for(p = line, argc = 0; *p != '\0'; p++) {
+		for (p = line, argc = 0; *p != '\0'; p++) {
 			if (*p != ' ' && *p != '\t') {
 				if (!flag) {
 					flag++;
@@ -111,17 +110,16 @@ db_monitor()
 }
 
 int
-db_atob(p)
-	char *p;
+db_atob(char *p)
 {
 	int b = 0, width, tmp, exp, x = 0;
-	
+
 	if (p[1] == 'x') {
 		p += 2;
 		x = 1;
 	}
 	width = strlen(p);
-	while(width--) {
+	while (width--) {
 		exp = 1;
 		for (tmp = 1; tmp <= width; tmp++)
 			exp *= (x ? 16 : 10);
@@ -137,9 +135,7 @@ db_atob(p)
 }
 
 void
-db_cmd_dump(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_dump(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, size, i;
@@ -205,15 +201,13 @@ db_cmd_dump(argc, argv)
 	printf("\n");
 	return;
 
-out:	
+out:
 	printf("dump [-b][-h][-w] address size\n");
 	return;
 }
 
 void
-db_cmd_get(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_get(int argc, char **argv)
 {
 	char *p, *r;
 	int mode, add;
@@ -260,15 +254,13 @@ db_cmd_get(argc, argv)
 	printf("\n");
 	return;
 
-out:	
+out:
 	printf("get [-b][-h][-w] address\n");
 	return;
 }
 
 void
-db_cmd_put(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_put(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, data;
@@ -318,7 +310,7 @@ db_cmd_put(argc, argv)
 	printf("\n");
 	return;
 
-out:	
+out:
 	printf("put [-b][-h][-w] address data\n");
 	return;
 }
@@ -352,9 +344,7 @@ struct {
 };
 
 void
-db_cmd_mf(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_mf(int argc, char **argv)
 {
 	int i = 0;
 
@@ -376,9 +366,7 @@ db_cmd_mf(argc, argv)
 }
 
 void
-db_cmd_mt(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_mt(int argc, char **argv)
 {
 	int i = 0;
 
@@ -401,9 +389,7 @@ db_cmd_mt(argc, argv)
 }
 
 void
-db_cmd_help(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_help(int argc, char **argv)
 {
 	int i = 0;
 
