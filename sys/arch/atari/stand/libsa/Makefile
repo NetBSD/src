@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2005/06/14 01:07:36 jmc Exp $
+#	$NetBSD: Makefile,v 1.25 2005/06/28 14:14:00 junyoung Exp $
 
 LIB=	sa
 
@@ -12,10 +12,10 @@ CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
 NO_NET=
 
 DEFS=	-D_STANDALONE -DHEAP_VARIABLE
-INCL=	-I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S} 
+INCL=	-I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 #
-# NetBSD/Atari specific replacements: stand.h dev.c
+# NetBSD/atari specific replacements: dev.c
 #
 
 # machine dependant routines
@@ -27,7 +27,7 @@ SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
 # stand routines
 SRCS+=	alloc.c bcmp.c bcopy.c exec.c files.c getfile.c gets.c globals.c \
 	panic.c memcmp.c memcpy.c memmove.c memset.c printf.c strerror.c \
-	subr_prf.c twiddle.c 
+	subr_prf.c twiddle.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
