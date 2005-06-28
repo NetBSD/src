@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.14 2005/01/20 15:59:40 xtraeme Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.15 2005/06/28 18:14:45 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,7 @@ int rawpartition, maxpartitions;
  * This is a data-driven program
  */
 struct field {
-	char *f_name;
+	const char *f_name;
 	int f_offset;
 	int f_type;	/* 1:char, 2:short, 4:int, >4:string */
 };
@@ -266,7 +266,8 @@ void
 edit_partition(struct disklabel *d, int idx, int modify)
 {
 	struct partition *p;
-	char letter, *comment;
+	char letter;
+	const char *comment;
 
 	if ((idx < 0) || (idx >= maxpartitions)) {
 		printf("bad partition index\n");
@@ -480,8 +481,8 @@ label_quit(struct disklabel *dl, char *dn)
 
 struct cmd {
 	void (*cmd_func)(struct disklabel *, char *);
-	char *cmd_name;
-	char *cmd_descr;
+	const char *cmd_name;
+	const char *cmd_descr;
 } cmds[] = {
 	{ label_print,  "print",  "display the current disk label" },
 	{ label_modify, "modify", "prompt for changes to the label" },
