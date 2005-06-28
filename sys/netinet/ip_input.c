@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.217 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.217 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1872,7 +1872,7 @@ ip_forward(struct mbuf *m, int srcrt)
 
 		rtalloc(&ipforward_rt);
 		if (ipforward_rt.ro_rt == 0) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 			return;
 		}
 		rt = ipforward_rt.ro_rt;
