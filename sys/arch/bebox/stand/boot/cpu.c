@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2005/06/28 20:01:17 junyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * This file contains information proprietary to Be Inc.
@@ -34,7 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include "boot.h"
 
 /*

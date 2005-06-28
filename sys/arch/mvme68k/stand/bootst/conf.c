@@ -1,6 +1,6 @@
-/*	$NetBSD: conf.c,v 1.2 2005/06/23 19:44:01 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2005/06/28 21:03:02 junyoung Exp $	*/
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <rawfs.h>
 #include <dev_tape.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.2 2003/08/07 16:27:06 agc Exp $	*/
+/*	$NetBSD: dev.c,v 1.3 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,6 +31,6 @@
  *	@(#)dev.c	8.1 (Berkeley) 6/11/93
  */
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 
 int errno;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.4 2003/04/20 18:17:07 bjh21 Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <sys/param.h>
 #include "boot.h"
 #include "magic.h"

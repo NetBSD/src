@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.9 2005/06/28 14:41:47 junyoung Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.10 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -32,7 +32,7 @@
 #include <machine/prom.h>
 #include <sys/boot_flag.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 #define KERNEL_NAME "netbsd"

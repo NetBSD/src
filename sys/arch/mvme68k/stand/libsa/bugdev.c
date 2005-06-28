@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.7 2005/06/28 20:13:25 junyoung Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.8 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/disklabel.h>
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 void cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp);
