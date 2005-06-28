@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: kbd.c,v 1.4 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -31,7 +31,7 @@
  */
 
 #if defined(CONS_BE) || defined(CONS_VGA)
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include "boot.h"
 
 /*

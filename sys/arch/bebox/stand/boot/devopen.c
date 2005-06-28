@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2005/06/28 20:06:19 junyoung Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #include <sys/param.h>
 #include <sys/reboot.h>

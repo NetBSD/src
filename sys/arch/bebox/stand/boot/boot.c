@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2002/04/09 15:59:35 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.15 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,7 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <stand.h>
+
+#include <lib/libsa/stand.h>
 #include <loadfile.h>
 #include <sys/boot_flag.h>
 #include <sys/reboot.h>

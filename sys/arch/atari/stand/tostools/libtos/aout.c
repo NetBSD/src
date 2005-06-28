@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.7 2005/06/28 14:22:21 junyoung Exp $	*/
+/*	$NetBSD: aout.c,v 1.8 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #else
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <atari_stand.h>
 #include <string.h>
 #include <libkern.h>

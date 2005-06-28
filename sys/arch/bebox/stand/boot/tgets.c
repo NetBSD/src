@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.4 2003/08/07 16:27:13 agc Exp $	*/
+/*	$NetBSD: tgets.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,7 +31,7 @@
  *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include "boot.h"
 
 int
