@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.94 2005/05/29 22:24:15 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.94 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,8 +134,7 @@ propdb_t dev_propdb;
 #define	ROOT ((struct device *)NULL)
 
 struct matchinfo {
-	cfmatch_t fn;
-	cfmatch_loc_t fn_loc;
+	cfsubmatch_t fn_loc;
 	struct	device *parent;
 	const locdesc_t *ldesc;
 	void	*aux;
@@ -440,10 +439,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 {
 	int pri;
 
-	if (m->fn != NULL) {
-		KASSERT(m->fn_loc == NULL);
-		pri = (*m->fn)(m->parent, cf, m->aux);
-	} else if (m->fn_loc != NULL) {
+	if (m->fn_loc != NULL) {
 		pri = (*m->fn_loc)(m->parent, cf, m->ldesc, m->aux);
 	} else {
 		struct cfattach *ca;
@@ -453,10 +449,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 			/* No attachment for this entry, oh well. */
 			return;
 		}
-	        if (ca->ca_match == NULL) {
-			panic("mapply: no match function for '%s' attachment "
-			    "of '%s'", cf->cf_atname, cf->cf_name);
-		}
+	        KASSERT(ca->ca_match != NULL);
 		pri = (*ca->ca_match)(m->parent, cf, m->aux);
 	}
 	if (pri > m->pri) {
@@ -663,43 +656,7 @@ config_match(struct device *parent, struct cfdata *cf, void *aux)
  * can be ignored).
  */
 struct cfdata *
-config_search(cfmatch_t fn, struct device *parent, void *aux)
-{
-	struct cftable *ct;
-	struct cfdata *cf;
-	struct matchinfo m;
-
-	KASSERT(config_initialized);
-
-	m.fn = fn;
-	m.fn_loc = NULL;
-	m.parent = parent;
-	m.aux = aux;
-	m.match = NULL;
-	m.pri = 0;
-
-	TAILQ_FOREACH(ct, &allcftables, ct_list) {
-		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
-			/*
-			 * Skip cf if no longer eligible, otherwise scan
-			 * through parents for one matching `parent', and
-			 * try match function.
-			 */
-			if (cf->cf_fstate == FSTATE_FOUND)
-				continue;
-			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-			    cf->cf_fstate == FSTATE_DSTAR)
-				continue;
-			if (cfparent_match(parent, cf->cf_pspec))
-				mapply(&m, cf);
-		}
-	}
-	return (m.match);
-}
-
-/* same as above, with real locators passed */
-struct cfdata *
-config_search_loc(cfmatch_loc_t fn, struct device *parent,
+config_search_loc(cfsubmatch_t fn, struct device *parent,
 		  const char *ifattr, const locdesc_t *ldesc, void *aux)
 {
 	struct cftable *ct;
@@ -709,7 +666,6 @@ config_search_loc(cfmatch_loc_t fn, struct device *parent,
 	KASSERT(config_initialized);
 	KASSERT(!ifattr || cfdriver_has_iattr(parent->dv_cfdriver, ifattr));
 
-	m.fn = NULL;
 	m.fn_loc = fn;
 	m.parent = parent;
 	m.ldesc = ldesc;
@@ -757,14 +713,13 @@ config_search_loc(cfmatch_loc_t fn, struct device *parent,
  * must always be in the initial table.
  */
 struct cfdata *
-config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
+config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 	const short *p;
 	struct matchinfo m;
 
-	m.fn = fn;
-	m.fn_loc = NULL;
+	m.fn_loc = fn;
 	m.parent = ROOT;
 	m.aux = aux;
 	m.match = NULL;
@@ -793,26 +748,9 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(struct device *parent, void *aux, cfprint_t print,
-    cfmatch_t submatch)
-{
-	struct cfdata *cf;
-
-	if ((cf = config_search(submatch, parent, aux)) != NULL)
-		return (config_attach(parent, cf, aux, print));
-	if (print) {
-		if (config_do_twiddle)
-			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
-	}
-	return (NULL);
-}
-
-/* same as above, with real locators passed */
-struct device *
 config_found_sm_loc(struct device *parent,
 		const char *ifattr, const locdesc_t *ldesc, void *aux,
-		cfprint_t print, cfmatch_loc_t submatch)
+		cfprint_t print, cfsubmatch_t submatch)
 {
 	struct cfdata *cf;
 
@@ -834,7 +772,7 @@ config_rootfound(const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 
-	if ((cf = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
+	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
 	aprint_error("root device %s not configured\n", rootname);
 	return (NULL);
