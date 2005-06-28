@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.4 2001/07/22 14:32:17 wiz Exp $	*/
+/*	$NetBSD: vga.c,v 1.5 2005/06/28 14:38:06 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -87,7 +87,7 @@ u_short	pccolor;		/* color/attributes for tty output */
 u_short	pccolor_so;		/* color/attributes, standout mode */
 
 /*
- * cursor() sets an offset (0-1999) into the 80x25 text area   
+ * cursor() sets an offset (0-1999) into the 80x25 text area
  */
 static void
 cursor()
@@ -144,7 +144,7 @@ fillw(val, buf, num)
  * "ca" is the color/attributes value (left-shifted by 8)
  * or 0 if the current regular color for that screen is to be used.
  */
-void 
+void
 vga_putc(int c)
 {
 	struct screen *d = &screen;
@@ -191,9 +191,9 @@ vga_putc(int c)
 
 		default:
 			if (d->so) {
-				wrtchar(d->color_so|(c<<8), d); 
+				wrtchar(d->color_so|(c<<8), d);
 			} else {
-				wrtchar(d->color | (c<<8), d); 
+				wrtchar(d->color | (c<<8), d);
 			}
 			if (d->row >= COL)
 				d->row = 0;
@@ -385,7 +385,7 @@ vga_putc(int c)
 		memmove(base, base + COL, COL * (ROW - 1) * CHR);
 		fillw(d->color|(' '<<8), base + COL * (ROW - 1), COL);
 		d->cp -= COL;
-	}	
+	}
 	cursor();
 }
 
