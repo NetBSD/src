@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220koi8x10.h,v 1.2 2005/04/22 14:46:01 yamt Exp $	*/
+/* 	$NetBSD: vt220koi8x10.h,v 1.3 2005/06/28 00:44:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -48,7 +48,7 @@
 
 static u_char _VT220_KOI8_X_8X10_DATA[];
 
-struct wsdisplay_font _VT220KX8X10 = {
+static struct wsdisplay_font _VT220KX8X10 = {
 	_VT220_KOI8_X_8X10_STR,		/* typeface name */
 	'\0',				/* firstchar */
 	256,				/* numchars */

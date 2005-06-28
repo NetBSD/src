@@ -1,4 +1,4 @@
-/*	$NetBSD: sony12x24.h,v 1.7 2005/04/22 14:46:01 yamt Exp $	*/
+/*	$NetBSD: sony12x24.h,v 1.8 2005/06/28 00:44:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 
 static u_char sony12x24_data[];
 
-struct wsdisplay_font sony12x24 = {
+static struct wsdisplay_font sony12x24 = {
 	"sony12x24",			/* typeface name */
 	' ',				/* firstchar */
 	0xff - ' ' + 1,			/* numchars */
