@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.9 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.10 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.9 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.10 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,46 +162,44 @@ int auacer_debug = 0;
 #define	DPRINTF(x,y)	/* nothing */
 #endif
 
-int	auacer_match(struct device *, struct cfdata *, void *);
-void	auacer_attach(struct device *, struct device *, void *);
-int	auacer_intr(void *);
+static int	auacer_intr(void *);
 
-CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
-    auacer_match, auacer_attach, NULL, NULL);
+static int	auacer_query_encoding(void *, struct audio_encoding *);
+static int	auacer_set_params(void *, int, int, audio_params_t *,
+				  audio_params_t *, stream_filter_list_t *,
+				  stream_filter_list_t *);
+static int	auacer_round_blocksize(void *, int, int,
+				       const audio_params_t *);
+static int	auacer_halt_output(void *);
+static int	auacer_halt_input(void *);
+static int	auacer_getdev(void *, struct audio_device *);
+static int	auacer_set_port(void *, mixer_ctrl_t *);
+static int	auacer_get_port(void *, mixer_ctrl_t *);
+static int	auacer_query_devinfo(void *, mixer_devinfo_t *);
+static void	*auacer_allocm(void *, int, size_t, struct malloc_type *, int);
+static void	auacer_freem(void *, void *, struct malloc_type *);
+static size_t	auacer_round_buffersize(void *, int, size_t);
+static paddr_t	auacer_mappage(void *, void *, off_t, int);
+static int	auacer_get_props(void *);
+static int	auacer_trigger_output(void *, void *, void *, int,
+				      void (*)(void *), void *,
+				      const audio_params_t *);
+static int	auacer_trigger_input(void *, void *, void *, int,
+				     void (*)(void *), void *,
+				     const audio_params_t *);
 
-int	auacer_query_encoding(void *, struct audio_encoding *);
-int	auacer_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
-int	auacer_round_blocksize(void *, int, int, const audio_params_t *);
-int	auacer_halt_output(void *);
-int	auacer_halt_input(void *);
-int	auacer_getdev(void *, struct audio_device *);
-int	auacer_set_port(void *, mixer_ctrl_t *);
-int	auacer_get_port(void *, mixer_ctrl_t *);
-int	auacer_query_devinfo(void *, mixer_devinfo_t *);
-void	*auacer_allocm(void *, int, size_t, struct malloc_type *, int);
-void	auacer_freem(void *, void *, struct malloc_type *);
-size_t	auacer_round_buffersize(void *, int, size_t);
-paddr_t	auacer_mappage(void *, void *, off_t, int);
-int	auacer_get_props(void *);
-int	auacer_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
-int	auacer_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
+static int	auacer_alloc_cdata(struct auacer_softc *);
 
-int	auacer_alloc_cdata(struct auacer_softc *);
+static int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
+				struct auacer_dma *);
+static int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
-int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
-	    struct auacer_dma *);
-int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
-
-void	auacer_powerhook(int, void *);
-int	auacer_set_rate(struct auacer_softc *, int, u_int);
-void	auacer_finish_attach(struct device *);
+static void	auacer_powerhook(int, void *);
+static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 
 static void auacer_reset(struct auacer_softc *sc);
 
-struct audio_hw_if auacer_hw_if = {
+static struct audio_hw_if auacer_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */
@@ -242,12 +240,12 @@ static const struct audio_format auacer_formats[AUACER_NFORMATS] = {
 	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
 };
 
-int	auacer_attach_codec(void *, struct ac97_codec_if *);
-int	auacer_read_codec(void *, uint8_t, uint16_t *);
-int	auacer_write_codec(void *, uint8_t, uint16_t);
-int	auacer_reset_codec(void *);
+static int	auacer_attach_codec(void *, struct ac97_codec_if *);
+static int	auacer_read_codec(void *, uint8_t, uint16_t *);
+static int	auacer_write_codec(void *, uint8_t, uint16_t);
+static int	auacer_reset_codec(void *);
 
-int
+static int
 auacer_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -259,7 +257,7 @@ auacer_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 auacer_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auacer_softc *sc;
@@ -359,6 +357,9 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	auacer_reset(sc);
 }
 
+CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
+    auacer_match, auacer_attach, NULL, NULL);
+
 static int
 auacer_ready_codec(struct auacer_softc *sc, int mask)
 {
@@ -387,7 +388,7 @@ auacer_sema_codec(struct auacer_softc *sc)
 	return auacer_ready_codec(sc, ALI_CSPSR_CODEC_READY);
 }
 
-int
+static int
 auacer_read_codec(void *v, uint8_t reg, uint16_t *val)
 {
 	struct auacer_softc *sc;
@@ -432,7 +433,7 @@ auacer_write_codec(void *v, uint8_t reg, uint16_t val)
 	return 0;
 }
 
-int
+static int
 auacer_attach_codec(void *v, struct ac97_codec_if *cif)
 {
 	struct auacer_softc *sc;
@@ -442,7 +443,7 @@ auacer_attach_codec(void *v, struct ac97_codec_if *cif)
 	return 0;
 }
 
-int
+static int
 auacer_reset_codec(void *v)
 {
 	struct auacer_softc *sc;
@@ -492,7 +493,7 @@ auacer_reset(struct auacer_softc *sc)
 	WRITE4(sc, ALI_INTERRUPTSR, 0x00000000);
 }
 
-int
+static int
 auacer_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auacer_softc *sc;
@@ -502,7 +503,7 @@ auacer_query_encoding(void *v, struct audio_encoding *aep)
 	return auconv_query_encoding(sc->sc_encodings, aep);
 }
 
-int
+static int
 auacer_set_rate(struct auacer_softc *sc, int mode, u_int srate)
 {
 	int ret;
@@ -529,7 +530,7 @@ auacer_set_rate(struct auacer_softc *sc, int mode, u_int srate)
 	return ret;
 }
 
-int
+static int
 auacer_set_params(void *v, int setmode, int usemode, audio_params_t *play,
     audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -586,7 +587,7 @@ auacer_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 	return (0);
 }
 
-int
+static int
 auacer_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
 {
 
@@ -620,7 +621,7 @@ auacer_halt(struct auacer_softc *sc, struct auacer_chan *chan)
 	WRITE4(sc, ALI_INTERRUPTSR, ALI_PORT2INTR(port));
 }
 
-int
+static int
 auacer_halt_output(void *v)
 {
 	struct auacer_softc *sc;
@@ -632,7 +633,7 @@ auacer_halt_output(void *v)
 	return 0;
 }
 
-int
+static int
 auacer_halt_input(void *v)
 {
 	/*struct auacer_softc *sc = v;*/
@@ -642,7 +643,7 @@ auacer_halt_input(void *v)
 	return 0;
 }
 
-int
+static int
 auacer_getdev(void *v, struct audio_device *adp)
 {
 	struct auacer_softc *sc;
@@ -653,7 +654,7 @@ auacer_getdev(void *v, struct audio_device *adp)
 	return 0;
 }
 
-int
+static int
 auacer_set_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auacer_softc *sc;
@@ -663,7 +664,7 @@ auacer_set_port(void *v, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
 
-int
+static int
 auacer_get_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auacer_softc *sc;
@@ -673,7 +674,7 @@ auacer_get_port(void *v, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
 
-int
+static int
 auacer_query_devinfo(void *v, mixer_devinfo_t *dp)
 {
 	struct auacer_softc *sc;
@@ -683,7 +684,7 @@ auacer_query_devinfo(void *v, mixer_devinfo_t *dp)
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp);
 }
 
-void *
+static void *
 auacer_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
@@ -710,7 +711,7 @@ auacer_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
 	return KERNADDR(p);
 }
 
-void
+static void
 auacer_freem(void *v, void *ptr, struct malloc_type *pool)
 {
 	struct auacer_softc *sc;
@@ -727,7 +728,7 @@ auacer_freem(void *v, void *ptr, struct malloc_type *pool)
 	}
 }
 
-size_t
+static size_t
 auacer_round_buffersize(void *v, int direction, size_t size)
 {
 
@@ -737,7 +738,7 @@ auacer_round_buffersize(void *v, int direction, size_t size)
 	return size;
 }
 
-paddr_t
+static paddr_t
 auacer_mappage(void *v, void *mem, off_t off, int prot)
 {
 	struct auacer_softc *sc;
@@ -754,7 +755,7 @@ auacer_mappage(void *v, void *mem, off_t off, int prot)
 	    off, prot, BUS_DMA_WAITOK);
 }
 
-int
+static int
 auacer_get_props(void *v)
 {
 	struct auacer_softc *sc;
@@ -833,7 +834,7 @@ auacer_upd_chan(struct auacer_softc *sc, struct auacer_chan *chan)
 	}
 }
 
-int
+static int
 auacer_intr(void *v)
 {
 	struct auacer_softc *sc;
@@ -887,7 +888,7 @@ auacer_setup_chan(struct auacer_softc *sc, struct auacer_chan *chan,
 	WRITE4(sc, ALI_DMACR, val);
 }
 
-int
+static int
 auacer_trigger_output(void *v, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
@@ -913,7 +914,7 @@ auacer_trigger_output(void *v, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 auacer_trigger_input(void *v, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
 		     const audio_params_t *param)
@@ -921,7 +922,7 @@ auacer_trigger_input(void *v, void *start, void *end, int blksize,
 	return EINVAL;
 }
 
-int
+static int
 auacer_allocmem(struct auacer_softc *sc, size_t size, size_t align,
     struct auacer_dma *p)
 {
@@ -959,7 +960,7 @@ auacer_allocmem(struct auacer_softc *sc, size_t size, size_t align,
 	return error;
 }
 
-int
+static int
 auacer_freemem(struct auacer_softc *sc, struct auacer_dma *p)
 {
 
@@ -970,7 +971,7 @@ auacer_freemem(struct auacer_softc *sc, struct auacer_dma *p)
 	return 0;
 }
 
-int
+static int
 auacer_alloc_cdata(struct auacer_softc *sc)
 {
 	bus_dma_segment_t seg;
@@ -1026,7 +1027,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	return error;
 }
 
-void
+static void
 auacer_powerhook(int why, void *addr)
 {
 	struct auacer_softc *sc;

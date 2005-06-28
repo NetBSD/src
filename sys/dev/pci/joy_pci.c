@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.10 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.10 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,18 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.10 2005/02/04 02:10:45 perry Exp $");
 
 #include <dev/ic/joyvar.h>
 
-int	joy_pci_match(struct device *, struct cfdata *, void *);
-void	joy_pci_attach(struct device *, struct device *, void *);
 static int bar_is_io(pci_chipset_tag_t pc, pcitag_t tag, int reg);
 
-CFATTACH_DECL(joy_pci, sizeof(struct joy_softc),
-    joy_pci_match, joy_pci_attach, NULL, NULL);
-
-int
-joy_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+joy_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -84,10 +76,7 @@ joy_pci_match(parent, match, aux)
 
 /* check if this BAR assigns/requests IO space */
 static int
-bar_is_io(pc, tag, reg)
-        pci_chipset_tag_t pc;
-        pcitag_t tag;
-        int reg;
+bar_is_io(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t address, mask;
 	int s;
@@ -106,10 +95,8 @@ bar_is_io(pc, tag, reg)
 	return (PCI_MAPREG_TYPE(address) == PCI_MAPREG_TYPE_IO && PCI_MAPREG_IO_SIZE(mask) > 0);
 }
 
-void
-joy_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+joy_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct joy_softc *sc = (struct joy_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -120,11 +107,13 @@ joy_pci_attach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg++)
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END;
+	     reg += sizeof(pcireg_t))
 		if (bar_is_io(pa->pa_pc, pa->pa_tag, reg))
 			break;
 	if (reg >= PCI_MAPREG_END) {
-		printf("%s: violates PCI spec, no IO region found\n", sc->sc_dev.dv_xname);
+		printf("%s: violates PCI spec, no IO region found\n",
+		       sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -143,3 +132,6 @@ joy_pci_attach(parent, self, aux)
 
 	joyattach(sc);
 }
+
+CFATTACH_DECL(joy_pci, sizeof(struct joy_softc),
+    joy_pci_match, joy_pci_attach, NULL, NULL);

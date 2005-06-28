@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.6 2005/05/30 04:35:23 christos Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.7 2005/06/28 00:28:42 thorpej Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -284,10 +284,7 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ubsec_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -297,10 +294,8 @@ ubsec_probe(parent, match, aux)
 	return (0);
 }
 
-void
-ubsec_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ubsec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ubsec_softc *sc = (struct ubsec_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -477,7 +472,7 @@ ubsec_attach(parent, self, aux)
 /*
  * UBSEC Interrupt routine
  */
-int
+static int
 ubsec_intr(void *arg)
 {
 	struct ubsec_softc *sc = arg;
@@ -1492,10 +1487,8 @@ errout:
 	return (err);
 }
 
-void
-ubsec_callback(sc, q)
-	struct ubsec_softc *sc;
-	struct ubsec_q *q;
+static void
+ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
@@ -1899,8 +1892,7 @@ ubsec_init_board(struct ubsec_softc *sc)
  * Init Broadcom PCI registers
  */
 static void
-ubsec_init_pciregs(pa)
-	struct pci_attach_args *pa;
+ubsec_init_pciregs(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t misc;
@@ -2009,8 +2001,7 @@ ubsec_dmamap_aligned(bus_dmamap_t map)
 
 #ifdef __OpenBSD__
 struct ubsec_softc *
-ubsec_kfind(krp)
-	struct cryptkop *krp;
+ubsec_kfind(struct cryptkop *krp)
 {
 	struct ubsec_softc *sc;
 	int i;
@@ -2783,9 +2774,8 @@ ubsec_ksigbits(struct crparam *cr)
 }
 
 static void
-ubsec_kshift_r(shiftbits, src, srcbits, dst, dstbits)
-	u_int shiftbits, srcbits, dstbits;
-	u_int8_t *src, *dst;
+ubsec_kshift_r(u_int shiftbits, u_int8_t *src, u_int srcbits,
+    u_int8_t *dst, u_int dstbits)
 {
 	u_int slen, dlen;
 	int i, si, di, n;
@@ -2818,9 +2808,8 @@ ubsec_kshift_r(shiftbits, src, srcbits, dst, dstbits)
 }
 
 static void
-ubsec_kshift_l(shiftbits, src, srcbits, dst, dstbits)
-	u_int shiftbits, srcbits, dstbits;
-	u_int8_t *src, *dst;
+ubsec_kshift_l(u_int shiftbits, u_int8_t *src, u_int srcbits,
+    u_int8_t *dst, u_int dstbits)
 {
 	int slen, dlen, i, n;
 

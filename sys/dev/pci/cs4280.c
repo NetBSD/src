@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.34 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.35 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.34 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.35 2005/06/28 00:28:41 thorpej Exp $");
 
 #include "midi.h"
 
@@ -89,41 +89,44 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.34 2005/01/15 15:19:52 kent Exp $");
 #define BA1WRITE4(sc, r, x) bus_space_write_4((sc)->ba1t, (sc)->ba1h, (r), (x))
 
 /* IF functions for audio driver */
-int  cs4280_match(struct device *, struct cfdata *, void *);
-void cs4280_attach(struct device *, struct device *, void *);
-int  cs4280_intr(void *);
-int  cs4280_query_encoding(void *, struct audio_encoding *);
-int  cs4280_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-		       stream_filter_list_t *, stream_filter_list_t *);
-int  cs4280_halt_output(void *);
-int  cs4280_halt_input(void *);
-int  cs4280_getdev(void *, struct audio_device *);
-int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
-			   void *, const audio_params_t *);
-int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
-			  void *, const audio_params_t *);
+static int  cs4280_match(struct device *, struct cfdata *, void *);
+static void cs4280_attach(struct device *, struct device *, void *);
+static int  cs4280_intr(void *);
+static int  cs4280_query_encoding(void *, struct audio_encoding *);
+static int  cs4280_set_params(void *, int, int, audio_params_t *,
+			      audio_params_t *, stream_filter_list_t *,
+			      stream_filter_list_t *);
+static int  cs4280_halt_output(void *);
+static int  cs4280_halt_input(void *);
+static int  cs4280_getdev(void *, struct audio_device *);
+static int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
+				  void *, const audio_params_t *);
+static int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
+				 void *, const audio_params_t *);
 
-int cs4280_reset_codec(void *);
+static int cs4280_reset_codec(void *);
 
 /* For PowerHook */
-void cs4280_power(int, void *);
+static void cs4280_power(int, void *);
 
 /* Internal functions */
-void cs4280_set_adc_rate(struct cs428x_softc *, int );
-void cs4280_set_dac_rate(struct cs428x_softc *, int );
-int  cs4280_download(struct cs428x_softc *, const uint32_t *, uint32_t, uint32_t);
-int  cs4280_download_image(struct cs428x_softc *);
-void cs4280_reset(void *);
-int  cs4280_init(struct cs428x_softc *, int);
-void cs4280_clear_fifos(struct cs428x_softc *);
+static void cs4280_set_adc_rate(struct cs428x_softc *, int );
+static void cs4280_set_dac_rate(struct cs428x_softc *, int );
+static int  cs4280_download(struct cs428x_softc *, const uint32_t *, uint32_t,
+			    uint32_t);
+static int  cs4280_download_image(struct cs428x_softc *);
+static void cs4280_reset(void *);
+static int  cs4280_init(struct cs428x_softc *, int);
+static void cs4280_clear_fifos(struct cs428x_softc *);
 
 #if CS4280_DEBUG > 10
 /* Thease two function is only for checking image loading is succeeded or not. */
-int  cs4280_check_images(struct cs428x_softc *);
-int  cs4280_checkimage(struct cs428x_softc *, uint32_t *, uint32_t, uint32_t);
+static int  cs4280_check_images(struct cs428x_softc *);
+static int  cs4280_checkimage(struct cs428x_softc *, uint32_t *, uint32_t,
+			      uint32_t);
 #endif
 
-const struct audio_hw_if cs4280_hw_if = {
+static const struct audio_hw_if cs4280_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,
@@ -155,13 +158,13 @@ const struct audio_hw_if cs4280_hw_if = {
 
 #if NMIDI > 0
 /* Midi Interface */
-int  cs4280_midi_open(void *, int, void (*)(void *, int),
+static int  cs4280_midi_open(void *, int, void (*)(void *, int),
 		      void (*)(void *), void *);
-void cs4280_midi_close(void*);
-int  cs4280_midi_output(void *, int);
-void cs4280_midi_getinfo(void *, struct midi_info *);
+static void cs4280_midi_close(void*);
+static int  cs4280_midi_output(void *, int);
+static void cs4280_midi_getinfo(void *, struct midi_info *);
 
-const struct midi_hw_if cs4280_midi_hw_if = {
+static const struct midi_hw_if cs4280_midi_hw_if = {
 	cs4280_midi_open,
 	cs4280_midi_close,
 	cs4280_midi_output,
@@ -173,14 +176,14 @@ const struct midi_hw_if cs4280_midi_hw_if = {
 CFATTACH_DECL(clcs, sizeof(struct cs428x_softc),
     cs4280_match, cs4280_attach, NULL, NULL);
 
-struct audio_device cs4280_device = {
+static struct audio_device cs4280_device = {
 	"CS4280",
 	"",
 	"cs4280"
 };
 
 
-int
+static int
 cs4280_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -197,7 +200,7 @@ cs4280_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 cs4280_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs428x_softc *sc;
@@ -317,7 +320,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /* Interrupt handling function */
-int
+static int
 cs4280_intr(void *p)
 {
 	/*
@@ -485,7 +488,7 @@ cs4280_intr(void *p)
 	return handled;
 }
 
-int
+static int
 cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
@@ -543,7 +546,7 @@ cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 	return 0;
 }
 
-int
+static int
 cs4280_set_params(void *addr, int setmode, int usemode,
 		  audio_params_t *play, audio_params_t *rec,
 		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
@@ -647,7 +650,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 cs4280_halt_output(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -660,7 +663,7 @@ cs4280_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 cs4280_halt_input(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -673,7 +676,7 @@ cs4280_halt_input(void *addr)
 	return 0;
 }
 
-int
+static int
 cs4280_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -681,7 +684,7 @@ cs4280_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-int
+static int
 cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 		      void (*intr)(void *), void *arg,
 		      const audio_params_t *param)
@@ -770,7 +773,7 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
 		     const audio_params_t *param)
@@ -842,7 +845,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 }
 
 /* Power Hook */
-void
+static void
 cs4280_power(int why, void *v)
 {
 	static uint32_t pctl = 0, pba = 0, pfie = 0, pdtc = 0;
@@ -920,7 +923,7 @@ cs4280_power(int why, void *v)
 }
 
 /* control AC97 codec */
-int
+static int
 cs4280_reset_codec(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -959,7 +962,7 @@ cs4280_reset_codec(void *addr)
 
 /* Internal functions */
 
-void
+static void
 cs4280_set_adc_rate(struct cs428x_softc *sc, int rate)
 {
 	/* calculate capture rate:
@@ -1077,7 +1080,7 @@ cs4280_set_adc_rate(struct cs428x_softc *sc, int rate)
 	BA1WRITE4(sc, CS4280_CGC, tmp1);
 }
 
-void
+static void
 cs4280_set_dac_rate(struct cs428x_softc *sc, int rate)
 {
 	/*
@@ -1123,7 +1126,7 @@ cs4280_set_dac_rate(struct cs428x_softc *sc, int rate)
 }
 
 /* Download Proceessor Code and Data image */
-int
+static int
 cs4280_download(struct cs428x_softc *sc, const uint32_t *src,
 		uint32_t offset, uint32_t len)
 {
@@ -1159,7 +1162,7 @@ cs4280_download(struct cs428x_softc *sc, const uint32_t *src,
 	return 0;
 }
 
-int
+static int
 cs4280_download_image(struct cs428x_softc *sc)
 {
 	int idx, err;
@@ -1181,7 +1184,7 @@ cs4280_download_image(struct cs428x_softc *sc)
 }
 
 /* Processor Soft Reset */
-void
+static void
 cs4280_reset(void *sc_)
 {
 	struct cs428x_softc *sc;
@@ -1196,7 +1199,7 @@ cs4280_reset(void *sc_)
 	BA1WRITE4(sc, CS4280_SPCR, SPCR_DRQEN);
 }
 
-int
+static int
 cs4280_init(struct cs428x_softc *sc, int init)
 {
 	int n;
@@ -1364,7 +1367,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 	return 0;
 }
 
-void
+static void
 cs4280_clear_fifos(struct cs428x_softc *sc)
 {
 	int pd, cnt, n;
@@ -1399,7 +1402,7 @@ cs4280_clear_fifos(struct cs428x_softc *sc)
 }
 
 #if NMIDI > 0
-int
+static int
 cs4280_midi_open(void *addr, int flags, void (*iintr)(void *, int),
 		 void (*ointr)(void *), void *arg)
 {
@@ -1426,7 +1429,7 @@ cs4280_midi_open(void *addr, int flags, void (*iintr)(void *, int),
 	return 0;
 }
 
-void
+static void
 cs4280_midi_close(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -1443,7 +1446,7 @@ cs4280_midi_close(void *addr)
 	sc->sc_ointr = 0;
 }
 
-int
+static int
 cs4280_midi_output(void *addr, int d)
 {
 	struct cs428x_softc *sc;
@@ -1471,7 +1474,7 @@ cs4280_midi_output(void *addr, int d)
 	return EIO;
 }
 
-void
+static void
 cs4280_midi_getinfo(void *addr, struct midi_info *mi)
 {
 
@@ -1483,7 +1486,7 @@ cs4280_midi_getinfo(void *addr, struct midi_info *mi)
 
 /* DEBUG functions */
 #if CS4280_DEBUG > 10
-int
+static int
 cs4280_checkimage(struct cs428x_softc *sc, uint32_t *src,
 		  uint32_t offset, uint32_t len)
 {
@@ -1510,7 +1513,7 @@ cs4280_checkimage(struct cs428x_softc *sc, uint32_t *src,
 	return err;
 }
 
-int
+static int
 cs4280_check_images(struct cs428x_softc *sc)
 {
 	int idx, err;
@@ -1518,7 +1521,7 @@ cs4280_check_images(struct cs428x_softc *sc)
 
 	offset = 0;
 	err = 0;
-	/*for (idx=0; idx < BA1_MEMORY_COUNT; ++idx) { */
+	/*for (idx=0; idx < BA1_MEMORY_COUNT; ++idx)*/
 	for (idx = 0; idx < 1; ++idx) {
 		err = cs4280_checkimage(sc, &BA1Struct.map[offset],
 				      BA1Struct.memory[idx].offset,

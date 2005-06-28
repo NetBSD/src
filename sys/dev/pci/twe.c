@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.67 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.67 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,15 +128,6 @@ static int	twe_del_unit(struct twe_softc *, int);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
-
-dev_type_open(tweopen);
-dev_type_close(tweclose);
-dev_type_ioctl(tweioctl);
-
-const struct cdevsw twe_cdevsw = {
-	tweopen, tweclose, noread, nowrite, tweioctl,
-	nostop, notty, nopoll, nommap,
-};
 
 extern struct	cfdriver twe_cd;
 
@@ -1738,7 +1729,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 /*
  * Accept an open operation on the control device.
  */
-int
+static int
 tweopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct twe_softc *twe;
@@ -1755,7 +1746,7 @@ tweopen(dev_t dev, int flag, int mode, struct proc *p)
 /*
  * Accept the last close on the control device.
  */
-int
+static int
 tweclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct twe_softc *twe;
@@ -1776,7 +1767,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
 /*
  * Handle control operations.
  */
-int
+static int
 tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct twe_softc *twe;
@@ -1934,6 +1925,11 @@ done:
 		free(pdata, M_DEVBUF);
 	return error;
 }
+
+const struct cdevsw twe_cdevsw = {
+	tweopen, tweclose, noread, nowrite, tweioctl,
+	    nostop, notty, nopoll, nommap,
+};
 
 /*
  * Print some information about the controller

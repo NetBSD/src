@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.26 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.26 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,22 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.26 2005/02/04 02:10:45 perry Exp $");
 
 #define	PCI_CBIO	0x10
 
-int	bha_pci_match(struct device *, struct cfdata *, void *);
-void	bha_pci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(bha_pci, sizeof(struct bha_softc),
-    bha_pci_match, bha_pci_attach, NULL, NULL);
-
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int
-bha_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+bha_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot;
@@ -101,10 +92,8 @@ bha_pci_match(parent, match, aux)
 /*
  * Attach all the sub-devices we can find
  */
-void
-bha_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bha_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;
@@ -165,3 +154,6 @@ bha_pci_attach(parent, self, aux)
 
 	bha_disable_isacompat(sc);
 }
+
+CFATTACH_DECL(bha_pci, sizeof(struct bha_softc),
+    bha_pci_match, bha_pci_attach, NULL, NULL);
