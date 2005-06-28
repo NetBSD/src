@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.65 2005/06/21 08:19:26 sekiya Exp $
+#	$NetBSD: SWINGER,v 1.66 2005/06/28 09:08:04 wiz Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.65 $"
+#ident 		"SWINGER-$Revision: 1.66 $"
 
 maxusers	64		# estimated number of users
 
@@ -700,8 +700,6 @@ sb*	at isapnp?			# SoundBlaster-compatible audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
