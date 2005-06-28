@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.54 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.55 2005/06/28 04:06:52 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.54 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55 2005/06/28 04:06:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,9 @@ static int	uvm_loanpage(struct vm_page **, int);
  *	-1 == error, map is unlocked
  *	 0 == map relock error (try again!), map is unlocked
  *	>0 == number of pages we loaned, map is unlocked
+ *
+ * NOTE: We can live with this being an inline, because it is only called
+ * from one place.
  */
 
 static __inline int
