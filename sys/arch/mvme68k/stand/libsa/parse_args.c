@@ -1,8 +1,8 @@
-/*	$NetBSD: parse_args.c,v 1.8 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.9 2005/06/28 14:41:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -38,10 +38,7 @@
 #define KERNEL_NAME "netbsd"
 
 void
-parse_args(filep, flagp, partp)
-char **filep;
-int *flagp;
-int *partp;
+parse_args(char **filep, int *flagp, int *partp)
 {
 	char *name = KERNEL_NAME, *ptr;
 	int howto = 0, part = 0;
