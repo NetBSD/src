@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.34 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: agp.c,v 1.35 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.34 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.35 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,22 +94,6 @@ MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 /* XXXfvdl get rid of this one. */
 
 extern struct cfdriver agp_cd;
-
-dev_type_open(agpopen);
-dev_type_close(agpclose);
-dev_type_ioctl(agpioctl);
-dev_type_mmap(agpmmap);
-
-const struct cdevsw agp_cdevsw = {
-	agpopen, agpclose, noread, nowrite, agpioctl,
-	nostop, notty, nopoll, agpmmap, nokqfilter,
-};
-
-int agpmatch(struct device *, struct cfdata *, void *);
-void agpattach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(agp, sizeof(struct agp_softc),
-    agpmatch, agpattach, NULL, NULL);
 
 static int agp_info_user(struct agp_softc *, agp_info *);
 static int agp_setup_user(struct agp_softc *, agp_setup *);
@@ -222,7 +206,7 @@ agp_lookup(const struct pci_attach_args *pa)
 	return (ap);
 }
 
-int
+static int
 agpmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
@@ -234,7 +218,7 @@ agpmatch(struct device *parent, struct cfdata *match, void *aux)
 	return (1);
 }
 
-static int agp_max[][2] = {
+static const int agp_max[][2] = {
 	{0,	0},
 	{32,	4},
 	{64,	28},
@@ -247,7 +231,7 @@ static int agp_max[][2] = {
 };
 #define agp_max_size	(sizeof(agp_max) / sizeof(agp_max[0]))
 
-void
+static void
 agpattach(struct device *parent, struct device *self, void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
@@ -298,6 +282,9 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->as_chipc = NULL;
 }
+
+CFATTACH_DECL(agp, sizeof(struct agp_softc),
+    agpmatch, agpattach, NULL, NULL);
 
 int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
@@ -793,7 +780,7 @@ agp_unbind_user(struct agp_softc *sc, agp_unbind *unbind)
 	return AGP_UNBIND_MEMORY(sc, mem);
 }
 
-int
+static int
 agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
@@ -812,7 +799,7 @@ agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	return 0;
 }
 
-int
+static int
 agpclose(dev_t dev, int fflag, int devtype, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
@@ -846,7 +833,7 @@ agpclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	return 0;
 }
 
-int
+static int
 agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
@@ -887,7 +874,7 @@ agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 	return EINVAL;
 }
 
-paddr_t
+static paddr_t
 agpmmap(dev_t dev, off_t offset, int prot)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
@@ -898,6 +885,11 @@ agpmmap(dev_t dev, off_t offset, int prot)
 	return (bus_space_mmap(sc->as_apt, sc->as_apaddr, offset, prot,
 	    BUS_SPACE_MAP_LINEAR));
 }
+
+const struct cdevsw agp_cdevsw = {
+	agpopen, agpclose, noread, nowrite, agpioctl,
+	    nostop, notty, nopoll, agpmmap, nokqfilter,
+};
 
 /* Implementation of the kernel api */
 

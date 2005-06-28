@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_yds.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $	*/
+/*	$NetBSD: mpu_yds.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,12 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
 #include <dev/ic/ac97var.h>
 #include <dev/pci/ydsreg.h>
 #include <dev/pci/ydsvar.h>
-
-static int	mpu_yds_match(struct device *, struct cfdata *, void *);
-static void	mpu_yds_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(mpu_yds, sizeof (struct mpu_softc),
-    mpu_yds_match, mpu_yds_attach, NULL, NULL);
 
 static int
 mpu_yds_match(struct device *parent, struct cfdata *match, void *aux)
@@ -100,3 +94,6 @@ mpu_yds_attach(struct device *parent, struct device *self, void *aux)
 
 	mpu_attach(sc);
 }
+
+CFATTACH_DECL(mpu_yds, sizeof (struct mpu_softc),
+    mpu_yds_match, mpu_yds_attach, NULL, NULL);

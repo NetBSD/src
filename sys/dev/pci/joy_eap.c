@@ -1,4 +1,4 @@
-/* $NetBSD: joy_eap.c,v 1.2 2004/08/03 18:38:52 drochner Exp $ */
+/* $NetBSD: joy_eap.c,v 1.3 2005/06/28 00:28:42 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -11,13 +11,6 @@
 #include <dev/pci/eapreg.h>
 #include <dev/pci/eapvar.h>
 #include <dev/ic/joyvar.h>
-
-int joy_eap_match(struct device *, struct cfdata *, void *);
-void joy_eap_attach(struct device *, struct device *, void *);
-int joy_eap_detach(struct device *, int);
-
-CFATTACH_DECL(joy_eap, sizeof (struct joy_softc),
-	joy_eap_match, joy_eap_attach, joy_eap_detach, NULL);
 
 struct joy_eap_aa {
 	struct audio_attach_args aa_aaa;
@@ -88,7 +81,7 @@ eap_joy_detach(struct device *joydev, struct eap_gameport_args *gpa)
 	return (0);
 }
 
-int
+static int
 joy_eap_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct joy_eap_aa *eaa = aux;
@@ -98,7 +91,7 @@ joy_eap_match(struct device *parent, struct cfdata *match, void *aux)
 	return (1);
 }
 
-void
+static void
 joy_eap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct joy_softc *sc = (struct joy_softc *)self;
@@ -112,9 +105,12 @@ joy_eap_attach(struct device *parent, struct device *self, void *aux)
 	joyattach(sc);
 }
 
-int
+static int
 joy_eap_detach(struct device *self, int flags)
 {
 
 	return (joydetach((struct joy_softc *)self, flags));
 }
+
+CFATTACH_DECL(joy_eap, sizeof (struct joy_softc),
+	joy_eap_match, joy_eap_attach, joy_eap_detach, NULL);

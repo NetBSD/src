@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.10 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.10 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct viaenv_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-const struct envsys_range viaenv_ranges[] = {
+static const struct envsys_range viaenv_ranges[] = {
 	{ 0, 2,		ENVSYS_STEMP },
 	{ 3, 4,		ENVSYS_SFANRPM },
 	{ 0, 1,		ENVSYS_SVOLTS_AC },	/* none */
@@ -88,16 +88,10 @@ const struct envsys_range viaenv_ranges[] = {
 	{ 1, 0,		ENVSYS_SAMPS },		/* none */
 };
 
-int	viaenv_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-int	viaenv_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-
-static int
-        viaenv_match(struct device * parent, struct cfdata * match, void *aux);
-static void
-        viaenv_attach(struct device * parent, struct device * self, void *aux);
-
-CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
-    viaenv_match, viaenv_attach, NULL, NULL);
+static int	viaenv_gtredata(struct sysmon_envsys *,
+				struct envsys_tre_data *);
+static int 	viaenv_streinfo(struct sysmon_envsys *,
+				struct envsys_basic_info *);
 
 static int
 viaenv_match(struct device * parent, struct cfdata * match, void *aux)
@@ -347,7 +341,10 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 		    sc->sc_dev.dv_xname);
 }
 
-int
+CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
+    viaenv_match, viaenv_attach, NULL, NULL);
+
+static int
 viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct viaenv_softc *sc = sme->sme_cookie;
@@ -362,7 +359,7 @@ viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	return (0);
 }
 
-int
+static int
 viaenv_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 

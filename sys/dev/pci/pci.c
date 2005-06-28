@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.92 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pci.c,v 1.93 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.92 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93 2005/06/28 00:28:42 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -57,14 +57,6 @@ int pci_config_dump = 1;
 #else
 int pci_config_dump = 0;
 #endif
-
-int pcimatch(struct device *, struct cfdata *, void *);
-void pciattach(struct device *, struct device *, void *);
-int pcirescan(struct device *, const char *, const int *);
-void pcidevdetached(struct device *, struct device *);
-
-CFATTACH_DECL2(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
 
 int	pciprint(void *, const char *);
 int	pcisubmatch(struct device *, struct cfdata *,
@@ -103,11 +95,19 @@ int pci_enumerate_bus(struct pci_softc *, const int *,
  * We use the generic config_defer() facility to achieve this.
  */
 
-int
-pcimatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+pcirescan(struct device *sc, const char *ifattr, const int *locators)
+{
+
+	KASSERT(ifattr && !strcmp(ifattr, "pci"));
+	KASSERT(locators);
+
+	pci_enumerate_bus((struct pci_softc *)sc, locators, NULL, NULL);
+	return (0);
+}
+
+static int
+pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -127,10 +127,8 @@ pcimatch(parent, cf, aux)
 	return (1);
 }
 
-void
-pciattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+pciattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
@@ -198,20 +196,7 @@ do {									\
 }
 
 int
-pcirescan(struct device *sc, const char *ifattr, const int *locators)
-{
-
-	KASSERT(ifattr && !strcmp(ifattr, "pci"));
-	KASSERT(locators);
-
-	pci_enumerate_bus((struct pci_softc *)sc, locators, NULL, NULL);
-	return (0);
-}
-
-int
-pciprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+pciprint(void *aux, const char *pnp)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -378,7 +363,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	return (ret);
 }
 
-void
+static void
 pcidevdetached(struct device *sc, struct device *dev)
 {
 	struct pci_softc *psc = (struct pci_softc *)sc;
@@ -394,12 +379,8 @@ pcidevdetached(struct device *sc, struct device *dev)
 }
 
 int
-pci_get_capability(pc, tag, capid, offset, value)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int capid;
-	int *offset;
-	pcireg_t *value;
+pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
 {
 	pcireg_t reg;
 	unsigned int ofs;
@@ -724,3 +705,6 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 
 	return;
 }
+
+CFATTACH_DECL2(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);

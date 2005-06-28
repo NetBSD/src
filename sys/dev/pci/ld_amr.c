@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.6 2004/10/28 07:07:41 yamt Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.7 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.6 2004/10/28 07:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.7 2005/06/28 00:28:42 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -74,25 +74,20 @@ struct ld_amr_softc {
 	int	sc_hwunit;
 };
 
-void	ld_amr_attach(struct device *, struct device *, void *);
-int	ld_amr_dobio(struct ld_amr_softc *, void *, int, int, int,
-		     struct buf *);
-int	ld_amr_dump(struct ld_softc *, void *, int, int);
-void	ld_amr_handler(struct amr_ccb *);
-int	ld_amr_match(struct device *, struct cfdata *, void *);
-int	ld_amr_start(struct ld_softc *, struct buf *);
+static int	ld_amr_dobio(struct ld_amr_softc *, void *, int, int, int,
+			     struct buf *);
+static int	ld_amr_dump(struct ld_softc *, void *, int, int);
+static void	ld_amr_handler(struct amr_ccb *);
+static int	ld_amr_start(struct ld_softc *, struct buf *);
 
-CFATTACH_DECL(ld_amr, sizeof(struct ld_amr_softc),
-    ld_amr_match, ld_amr_attach, NULL, NULL);
-
-int
+static int
 ld_amr_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
-void
+static void
 ld_amr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amr_attach_args *amra;
@@ -133,7 +128,10 @@ ld_amr_attach(struct device *parent, struct device *self, void *aux)
 	ldattach(ld);
 }
 
-int
+CFATTACH_DECL(ld_amr, sizeof(struct ld_amr_softc),
+    ld_amr_match, ld_amr_attach, NULL, NULL);
+
+static int
 ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	     int blkno, int dowrite, struct buf *bp)
 {
@@ -179,7 +177,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	return (rv);
 }
 
-int
+static int
 ld_amr_start(struct ld_softc *ld, struct buf *bp)
 {
 
@@ -187,7 +185,7 @@ ld_amr_start(struct ld_softc *ld, struct buf *bp)
 	    bp->b_bcount, bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }
 
-void
+static void
 ld_amr_handler(struct amr_ccb *ac)
 {
 	struct buf *bp;
@@ -213,7 +211,7 @@ ld_amr_handler(struct amr_ccb *ac)
 	lddone(&sc->sc_ld, bp);
 }
 
-int
+static int
 ld_amr_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
 	struct ld_amr_softc *sc;

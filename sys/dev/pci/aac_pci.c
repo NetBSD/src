@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.14 2005/04/06 15:48:16 martti Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.14 2005/04/06 15:48:16 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,31 +92,27 @@ __KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.14 2005/04/06 15:48:16 martti Exp $");
 #include <dev/ic/aacreg.h>
 #include <dev/ic/aacvar.h>
 
-int	aac_pci_match(struct device *, struct cfdata *, void *);
-void	aac_pci_attach(struct device *, struct device *, void *);
-const struct	aac_ident *aac_find_ident(struct pci_attach_args *);
-
 /* i960Rx interface */
-int	aac_rx_get_fwstatus(struct aac_softc *);
-void	aac_rx_qnotify(struct aac_softc *, int);
-int	aac_rx_get_istatus(struct aac_softc *);
-void	aac_rx_clear_istatus(struct aac_softc *, int);
-void	aac_rx_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
+static int	aac_rx_get_fwstatus(struct aac_softc *);
+static void	aac_rx_qnotify(struct aac_softc *, int);
+static int	aac_rx_get_istatus(struct aac_softc *);
+static void	aac_rx_clear_istatus(struct aac_softc *, int);
+static void	aac_rx_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 			   u_int32_t, u_int32_t, u_int32_t);
-uint32_t aac_rx_get_mailbox(struct aac_softc *, int);
-void	aac_rx_set_interrupts(struct aac_softc *, int);
+static uint32_t aac_rx_get_mailbox(struct aac_softc *, int);
+static void	aac_rx_set_interrupts(struct aac_softc *, int);
 
 /* StrongARM interface */
-int	aac_sa_get_fwstatus(struct aac_softc *);
-void	aac_sa_qnotify(struct aac_softc *, int);
-int	aac_sa_get_istatus(struct aac_softc *);
-void	aac_sa_clear_istatus(struct aac_softc *, int);
-void	aac_sa_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
+static int	aac_sa_get_fwstatus(struct aac_softc *);
+static void	aac_sa_qnotify(struct aac_softc *, int);
+static int	aac_sa_get_istatus(struct aac_softc *);
+static void	aac_sa_clear_istatus(struct aac_softc *, int);
+static void	aac_sa_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 			   u_int32_t, u_int32_t, u_int32_t);
-uint32_t aac_sa_get_mailbox(struct aac_softc *, int);
-void	aac_sa_set_interrupts(struct aac_softc *, int);
+static uint32_t aac_sa_get_mailbox(struct aac_softc *, int);
+static void	aac_sa_set_interrupts(struct aac_softc *, int);
 
-const struct aac_interface aac_rx_interface = {
+static const struct aac_interface aac_rx_interface = {
 	aac_rx_get_fwstatus,
 	aac_rx_qnotify,
 	aac_rx_get_istatus,
@@ -126,7 +122,7 @@ const struct aac_interface aac_rx_interface = {
 	aac_rx_set_interrupts
 };
 
-const struct aac_interface aac_sa_interface = {
+static const struct aac_interface aac_sa_interface = {
 	aac_sa_get_fwstatus,
 	aac_sa_qnotify,
 	aac_sa_get_istatus,
@@ -144,7 +140,7 @@ struct aac_ident {
 	u_short	hwif;
 	u_short	quirks;
 	const char	*prodstr;
-} const aac_ident[] = {
+} static const aac_ident[] = {
 	{
 		PCI_VENDOR_DELL,
 		PCI_PRODUCT_DELL_PERC_2SI,
@@ -354,10 +350,7 @@ struct aac_ident {
 	},
 };
 
-CFATTACH_DECL(aac_pci, sizeof(struct aac_softc),
-    aac_pci_match, aac_pci_attach, NULL, NULL);
-
-const struct aac_ident *
+static const struct aac_ident *
 aac_find_ident(struct pci_attach_args *pa)
 {
 	const struct aac_ident *m, *mm;
@@ -381,7 +374,7 @@ aac_find_ident(struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 aac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -394,7 +387,7 @@ aac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	return (aac_find_ident(pa) != NULL);
 }
 
-void
+static void
 aac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -495,17 +488,20 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
+CFATTACH_DECL(aac_pci, sizeof(struct aac_softc),
+    aac_pci_match, aac_pci_attach, NULL, NULL);
+
 /*
  * Read the current firmware status word.
  */
-int
+static int
 aac_sa_get_fwstatus(struct aac_softc *sc)
 {
 
 	return (AAC_GETREG4(sc, AAC_SA_FWSTATUS));
 }
 
-int
+static int
 aac_rx_get_fwstatus(struct aac_softc *sc)
 {
 
@@ -516,14 +512,14 @@ aac_rx_get_fwstatus(struct aac_softc *sc)
  * Notify the controller of a change in a given queue
  */
 
-void
+static void
 aac_sa_qnotify(struct aac_softc *sc, int qbit)
 {
 
 	AAC_SETREG2(sc, AAC_SA_DOORBELL1_SET, qbit);
 }
 
-void
+static void
 aac_rx_qnotify(struct aac_softc *sc, int qbit)
 {
 
@@ -533,14 +529,14 @@ aac_rx_qnotify(struct aac_softc *sc, int qbit)
 /*
  * Get the interrupt reason bits
  */
-int
+static int
 aac_sa_get_istatus(struct aac_softc *sc)
 {
 
 	return (AAC_GETREG2(sc, AAC_SA_DOORBELL0));
 }
 
-int
+static int
 aac_rx_get_istatus(struct aac_softc *sc)
 {
 
@@ -550,14 +546,14 @@ aac_rx_get_istatus(struct aac_softc *sc)
 /*
  * Clear some interrupt reason bits
  */
-void
+static void
 aac_sa_clear_istatus(struct aac_softc *sc, int mask)
 {
 
 	AAC_SETREG2(sc, AAC_SA_DOORBELL0_CLEAR, mask);
 }
 
-void
+static void
 aac_rx_clear_istatus(struct aac_softc *sc, int mask)
 {
 
@@ -567,7 +563,7 @@ aac_rx_clear_istatus(struct aac_softc *sc, int mask)
 /*
  * Populate the mailbox and set the command word
  */
-void
+static void
 aac_sa_set_mailbox(struct aac_softc *sc, u_int32_t command,
 		   u_int32_t arg0, u_int32_t arg1, u_int32_t arg2,
 		   u_int32_t arg3)
@@ -580,7 +576,7 @@ aac_sa_set_mailbox(struct aac_softc *sc, u_int32_t command,
 	AAC_SETREG4(sc, AAC_SA_MAILBOX + 16, arg3);
 }
 
-void
+static void
 aac_rx_set_mailbox(struct aac_softc *sc, u_int32_t command,
 		   u_int32_t arg0, u_int32_t arg1, u_int32_t arg2,
 		   u_int32_t arg3)
@@ -596,14 +592,14 @@ aac_rx_set_mailbox(struct aac_softc *sc, u_int32_t command,
 /*
  * Fetch the specified mailbox
  */
-uint32_t
+static uint32_t
 aac_sa_get_mailbox(struct aac_softc *sc, int mb)
 {
 
 	return (AAC_GETREG4(sc, AAC_SA_MAILBOX + (mb * 4)));
 }
 
-uint32_t
+static uint32_t
 aac_rx_get_mailbox(struct aac_softc *sc, int mb)
 {
 
@@ -613,7 +609,7 @@ aac_rx_get_mailbox(struct aac_softc *sc, int mb)
 /*
  * Set/clear interrupt masks
  */
-void
+static void
 aac_sa_set_interrupts(struct aac_softc *sc, int enable)
 {
 
@@ -623,7 +619,7 @@ aac_sa_set_interrupts(struct aac_softc *sc, int enable)
 		AAC_SETREG2((sc), AAC_SA_MASK0_SET, ~0);
 }
 
-void
+static void
 aac_rx_set_interrupts(struct aac_softc *sc, int enable)
 {
 

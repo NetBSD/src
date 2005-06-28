@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.18 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.18 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -127,7 +127,7 @@ static ahd_device_setup_t ahd_aic7901A_setup;
 static ahd_device_setup_t ahd_aic7902_setup;
 static ahd_device_setup_t ahd_aic790X_setup;
 
-struct ahd_pci_identity ahd_pci_ident_table [] =
+static struct ahd_pci_identity ahd_pci_ident_table [] =
 {
 	/* aic7901 based controllers */
 	{
@@ -219,7 +219,7 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 	}
 };
 
-const u_int ahd_num_pci_devs = NUM_ELEMENTS(ahd_pci_ident_table);
+static const u_int ahd_num_pci_devs = NUM_ELEMENTS(ahd_pci_ident_table);
 
 #define	                DEVCONFIG		0x40
 #define		        PCIXINITPAT	        0x0000E000ul
@@ -258,20 +258,17 @@ static const char *pci_bus_modes[] =
 
 #define		LATTIME		0x0000ff00ul
 
-int	ahd_pci_probe(struct device *, struct cfdata *, void *);
-void	ahd_pci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(ahd_pci, sizeof(struct ahd_softc),
-    ahd_pci_probe, ahd_pci_attach, NULL, NULL);
-
 static int	ahd_check_extport(struct ahd_softc *ahd);
 static void	ahd_configure_termination(struct ahd_softc *ahd,
 					  u_int adapter_control);
 static void	ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat);
 
-const struct ahd_pci_identity *
-ahd_find_pci_device(id, subid)
-	pcireg_t id, subid;
+static int	ahd_pci_test_register_access(struct ahd_softc *);
+
+static int	ahd_pci_intr(struct ahd_softc *);
+
+static const struct ahd_pci_identity *
+ahd_find_pci_device(pcireg_t id, pcireg_t subid)
 {
 	u_int64_t  full_id;
 	const struct	   ahd_pci_identity *entry;
@@ -288,11 +285,8 @@ ahd_find_pci_device(id, subid)
 	return (NULL);
 }
 
-int
-ahd_pci_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ahd_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahd_pci_identity *entry;
@@ -303,10 +297,8 @@ ahd_pci_probe(parent, match, aux)
 	return entry != NULL ? 1 : 0;
 }
 
-void
-ahd_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	struct ahd_softc       	*ahd = (void *)self;
@@ -585,11 +577,14 @@ ahd_pci_attach(parent, self, aux)
 	ahd_attach(ahd);
 }
 
+CFATTACH_DECL(ahd_pci, sizeof(struct ahd_softc),
+    ahd_pci_probe, ahd_pci_attach, NULL, NULL);
+
 /*
  * Perform some simple tests that should catch situations where
  * our registers are invalidly mapped.
  */
-int
+static int
 ahd_pci_test_register_access(struct ahd_softc *ahd)
 {
 	uint32_t cmd;
@@ -965,7 +960,7 @@ static const char *pci_status_strings[] =
 	"%s: Address or Write Phase Parity Error Detected in %s.\n"
 };
 
-int
+static int
 ahd_pci_intr(struct ahd_softc *ahd)
 {
 	uint8_t			pci_status[8];

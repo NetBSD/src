@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.29 2005/04/30 15:24:51 hannken Exp $ */
+/*      $NetBSD: sv.c,v 1.30 2005/06/28 00:28:42 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.29 2005/04/30 15:24:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.30 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,9 @@ int	svdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int	sv_match(struct device *, struct cfdata *, void *);
-void	sv_attach(struct device *, struct device *, void *);
-int	sv_intr(void *);
+static int	sv_match(struct device *, struct cfdata *, void *);
+static void	sv_attach(struct device *, struct device *, void *);
+static int	sv_intr(void *);
 
 struct sv_dma {
 	bus_dmamap_t map;
@@ -136,7 +136,7 @@ struct sv_dma {
 CFATTACH_DECL(sv, sizeof(struct sv_softc),
     sv_match, sv_attach, NULL, NULL);
 
-struct audio_device sv_device = {
+static struct audio_device sv_device = {
 	"S3 SonicVibes",
 	"",
 	"sv"
@@ -144,35 +144,39 @@ struct audio_device sv_device = {
 
 #define ARRAY_SIZE(foo)  ((sizeof(foo)) / sizeof(foo[0]))
 
-int	sv_allocmem(struct sv_softc *, size_t, size_t, int, struct sv_dma *);
-int	sv_freemem(struct sv_softc *, struct sv_dma *);
+static int	sv_allocmem(struct sv_softc *, size_t, size_t, int,
+			    struct sv_dma *);
+static int	sv_freemem(struct sv_softc *, struct sv_dma *);
 
-int	sv_open(void *, int);
-int	sv_query_encoding(void *, struct audio_encoding *);
-int	sv_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
-int	sv_round_blocksize(void *, int, int, const audio_params_t *);
-int	sv_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
-int	sv_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
-int	sv_halt_output(void *);
-int	sv_halt_input(void *);
-int	sv_getdev(void *, struct audio_device *);
-int	sv_mixer_set_port(void *, mixer_ctrl_t *);
-int	sv_mixer_get_port(void *, mixer_ctrl_t *);
-int	sv_query_devinfo(void *, mixer_devinfo_t *);
-void   *sv_malloc(void *, int, size_t, struct malloc_type *, int);
-void	sv_free(void *, void *, struct malloc_type *);
-size_t	sv_round_buffersize(void *, int, size_t);
-paddr_t	sv_mappage(void *, void *, off_t, int);
-int	sv_get_props(void *);
+static void	sv_init_mixer(struct sv_softc *);
+
+static int	sv_open(void *, int);
+static int	sv_query_encoding(void *, struct audio_encoding *);
+static int	sv_set_params(void *, int, int, audio_params_t *,
+			      audio_params_t *, stream_filter_list_t *,
+			      stream_filter_list_t *);
+static int	sv_round_blocksize(void *, int, int, const audio_params_t *);
+static int	sv_trigger_output(void *, void *, void *, int, void (*)(void *),
+				  void *, const audio_params_t *);
+static int	sv_trigger_input(void *, void *, void *, int, void (*)(void *),
+				 void *, const audio_params_t *);
+static int	sv_halt_output(void *);
+static int	sv_halt_input(void *);
+static int	sv_getdev(void *, struct audio_device *);
+static int	sv_mixer_set_port(void *, mixer_ctrl_t *);
+static int	sv_mixer_get_port(void *, mixer_ctrl_t *);
+static int	sv_query_devinfo(void *, mixer_devinfo_t *);
+static void *	sv_malloc(void *, int, size_t, struct malloc_type *, int);
+static void	sv_free(void *, void *, struct malloc_type *);
+static size_t	sv_round_buffersize(void *, int, size_t);
+static paddr_t	sv_mappage(void *, void *, off_t, int);
+static int	sv_get_props(void *);
 
 #ifdef AUDIO_DEBUG
 void    sv_dumpregs(struct sv_softc *sc);
 #endif
 
-const struct audio_hw_if sv_hw_if = {
+static const struct audio_hw_if sv_hw_if = {
 	sv_open,
 	NULL,			/* close */
 	NULL,
@@ -214,14 +218,6 @@ static const struct audio_format sv_formats[SV_NFORMATS] = {
 	 1, AUFMT_MONAURAL, 0, {2000, 48000}},
 };
 
-
-static uint8_t sv_read(struct sv_softc *, uint8_t);
-static uint8_t sv_read_indirect(struct sv_softc *, uint8_t);
-static void sv_write(struct sv_softc *, uint8_t, uint8_t);
-static void sv_write_indirect(struct sv_softc *, uint8_t, uint8_t);
-static void sv_init_mixer(struct sv_softc *);
-
-static void sv_defer(struct device *self);
 
 static void
 sv_write(struct sv_softc *sc, uint8_t reg, uint8_t val)
@@ -270,7 +266,7 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 	splx(s);
 }
 
-int
+static int
 sv_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -283,14 +279,9 @@ sv_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-int pci_alloc_io(pci_chipset_tag_t, pcitag_t, int,
-		 bus_space_tag_t, bus_size_t,
-		 bus_size_t, bus_size_t, int,
-		 bus_space_handle_t *);
-
 static pcireg_t pci_io_alloc_low, pci_io_alloc_high;
 
-int
+static int
 pci_alloc_io(pci_chipset_tag_t pc, pcitag_t pt, int pcioffs,
     bus_space_tag_t iot, bus_size_t size, bus_size_t align,
     bus_size_t bound, int flags, bus_space_handle_t *ioh)
@@ -310,7 +301,7 @@ pci_alloc_io(pci_chipset_tag_t pc, pcitag_t pt, int pcioffs,
 /*
  * Allocate IO addresses when all other configuration is done.
  */
-void
+static void
 sv_defer(struct device *self)
 {
 	struct sv_softc *sc;
@@ -355,7 +346,7 @@ sv_defer(struct device *self)
 	sc->sc_dmaset = 1;
 }
 
-void
+static void
 sv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sv_softc *sc;
@@ -510,7 +501,7 @@ sv_dumpregs(struct sv_softc *sc)
 }
 #endif
 
-int
+static int
 sv_intr(void *p)
 {
 	struct sv_softc *sc;
@@ -536,7 +527,7 @@ sv_intr(void *p)
 	return 1;
 }
 
-int
+static int
 sv_allocmem(struct sv_softc *sc, size_t size, size_t align,
     int direction, struct sv_dma *p)
 {
@@ -575,7 +566,7 @@ free:
 	return error;
 }
 
-int
+static int
 sv_freemem(struct sv_softc *sc, struct sv_dma *p)
 {
 
@@ -586,7 +577,7 @@ sv_freemem(struct sv_softc *sc, struct sv_dma *p)
 	return 0;
 }
 
-int
+static int
 sv_open(void *addr, int flags)
 {
 	struct sv_softc *sc;
@@ -599,7 +590,7 @@ sv_open(void *addr, int flags)
 	return 0;
 }
 
-int
+static int
 sv_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
@@ -657,7 +648,7 @@ sv_query_encoding(void *addr, struct audio_encoding *fp)
 	}
 }
 
-int
+static int
 sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
     audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -779,14 +770,14 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 	return 0;
 }
 
-int
+static int
 sv_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 
 	return blk & -32;	/* keep good alignment */
 }
 
-int
+static int
 sv_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
@@ -841,7 +832,7 @@ sv_trigger_output(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 sv_trigger_input(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
@@ -896,7 +887,7 @@ sv_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 sv_halt_output(void *addr)
 {
 	struct sv_softc *sc;
@@ -911,7 +902,7 @@ sv_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 sv_halt_input(void *addr)
 {
 	struct sv_softc *sc;
@@ -926,7 +917,7 @@ sv_halt_input(void *addr)
 	return 0;
 }
 
-int
+static int
 sv_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -996,7 +987,7 @@ static const struct {
 #define SV_RECORD_GAIN (SV_LAST_MIXER + 3)
 #define SV_SRS_MODE (SV_LAST_MIXER + 4)
 
-int
+static int
 sv_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	int i;
@@ -1098,7 +1089,7 @@ sv_query_devinfo(void *addr, mixer_devinfo_t *dip)
 	return ENXIO;
 }
 
-int
+static int
 sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct sv_softc *sc;
@@ -1263,7 +1254,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	return EINVAL;
 }
 
-int
+static int
 sv_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct sv_softc *sc;
@@ -1384,7 +1375,7 @@ sv_init_mixer(struct sv_softc *sc)
 	}
 }
 
-void *
+static void *
 sv_malloc(void *addr, int direction, size_t size,
     struct malloc_type *pool, int flags)
 {
@@ -1406,7 +1397,7 @@ sv_malloc(void *addr, int direction, size_t size,
 	return KERNADDR(p);
 }
 
-void
+static void
 sv_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct sv_softc *sc;
@@ -1423,14 +1414,14 @@ sv_free(void *addr, void *ptr, struct malloc_type *pool)
 	}
 }
 
-size_t
+static size_t
 sv_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return size;
 }
 
-paddr_t
+static paddr_t
 sv_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct sv_softc *sc;
@@ -1447,7 +1438,7 @@ sv_mappage(void *addr, void *mem, off_t off, int prot)
 			       off, prot, BUS_DMA_WAITOK);
 }
 
-int
+static int
 sv_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;

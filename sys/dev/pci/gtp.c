@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.8 2004/10/29 12:57:18 yamt Exp $ */
+/* $NetBSD: gtp.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.8 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.8 2004/10/29 12:57:18 yamt Exp $");
 
 #define PCI_CBIO 0x10
 
-int	gtp_match(struct device *, struct cfdata *, void *);
-void	gtp_attach(struct device *, struct device *, void *);
+static int	gtp_match(struct device *, struct cfdata *, void *);
+static void	gtp_attach(struct device *, struct device *, void *);
 
-int     gtp_get_info(void *, struct radio_info *);
-int     gtp_set_info(void *, struct radio_info *);
-int     gtp_search(void *, int);
+static int     gtp_get_info(void *, struct radio_info *);
+static int     gtp_set_info(void *, struct radio_info *);
+static int     gtp_search(void *, int);
 
 #define GEMTEK_PCI_CAPS	RADIO_CAPS_DETECT_SIGNAL |			\
 			RADIO_CAPS_DETECT_STEREO |			\
@@ -84,7 +84,7 @@ int     gtp_search(void *, int);
 
 /* define our interface to the high-level radio driver */
 
-const struct radio_hw_if gtp_hw_if = {
+static const struct radio_hw_if gtp_hw_if = {
 	NULL, /* open */
 	NULL, /* close */
 	gtp_get_info,
@@ -107,15 +107,18 @@ struct gtp_softc {
 CFATTACH_DECL(gtp, sizeof(struct gtp_softc),
     gtp_match, gtp_attach, NULL, NULL);
 
-void	gtp_set_mute(struct gtp_softc *);
-void	gtp_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
-void	gtp_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void	gtp_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-int	gtp_state(bus_space_tag_t, bus_space_handle_t);
-u_int32_t	gtp_hardware_read(bus_space_tag_t, bus_space_handle_t,
-		bus_size_t);
+static void	gtp_set_mute(struct gtp_softc *);
+static void	gtp_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+			      int);
+static void	gtp_init(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+			 u_int32_t);
+static void	gtp_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+			 u_int32_t);
+static int	gtp_state(bus_space_tag_t, bus_space_handle_t);
+static uint32_t	gtp_hardware_read(bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t);
 
-int
+static int
 gtp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -135,7 +138,7 @@ gtp_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 gtp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gtp_softc *sc = (struct gtp_softc *) self;
@@ -181,7 +184,7 @@ gtp_attach(struct device *parent, struct device *self, void *aux)
 	radio_attach_mi(&gtp_hw_if, sc, &sc->sc_dev);
 }
 
-int
+static int
 gtp_get_info(void *v, struct radio_info *ri)
 {
 	struct gtp_softc *sc = v;
@@ -202,7 +205,7 @@ gtp_get_info(void *v, struct radio_info *ri)
 	return (0);
 }
 
-int
+static int
 gtp_set_info(void *v, struct radio_info *ri)
 {
 	struct gtp_softc *sc = v;
@@ -218,7 +221,7 @@ gtp_set_info(void *v, struct radio_info *ri)
 	return (0);
 }
 
-int
+static int
 gtp_search(void *v, int f)
 {
 	struct gtp_softc *sc = v;
@@ -229,7 +232,7 @@ gtp_search(void *v, int f)
 	return (0);
 }
 
-void
+static void
 gtp_set_mute(struct gtp_softc *sc)
 {
 	if (sc->mute || !sc->vol)
@@ -239,7 +242,7 @@ gtp_set_mute(struct gtp_softc *sc)
 		    sc->lock, sc->stereo, sc->freq);
 }
 
-void
+static void
 gtp_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 		int bit)
 {
@@ -251,26 +254,26 @@ gtp_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 	bus_space_write_1(iot, ioh, off, GTP_WREN_ON | GTP_CLCK_OFF | data);
 }
 
-void
+static void
 gtp_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t d)
 {
 	bus_space_write_1(iot, ioh, off, GTP_WREN_ON | GTP_DATA_ON | GTP_CLCK_OFF);
 }
 
-void
+static void
 gtp_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t d)
 {
 	bus_space_write_1(iot, ioh, off, GEMTEK_PCI_RSET);
 }
 
-u_int32_t
+static uint32_t
 gtp_hardware_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off)
 {
 	/* UNSUPPORTED */
 	return 0;
 }
 
-int
+static int
 gtp_state(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int ret;

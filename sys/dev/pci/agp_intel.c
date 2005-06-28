@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.14 2003/08/26 18:43:54 tron Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.14 2003/08/26 18:43:54 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
 
-struct agp_methods agp_intel_methods = {
+static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
 	agp_intel_set_aperture,
 	agp_intel_bind_page,

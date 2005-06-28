@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.5 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.6 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.5 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.6 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,25 +76,21 @@ struct weasel_softc {
 	int sc_wdog_period;
 };
 
-int	weasel_pci_match(struct device *, struct cfdata *, void *);
-void	weasel_pci_attach(struct device *, struct device *, void *);
+/* XXX */
 extern int	sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 
-CFATTACH_DECL(weasel_pci, sizeof(struct weasel_softc),
-    weasel_pci_match, weasel_pci_attach, NULL, NULL);
+static int	weasel_pci_wdog_setmode(struct sysmon_wdog *);
+static int	weasel_pci_wdog_tickle(struct sysmon_wdog *);
 
-int	weasel_pci_wdog_setmode(struct sysmon_wdog *);
-int	weasel_pci_wdog_tickle(struct sysmon_wdog *);
+static int	weasel_wait_response(struct weasel_softc *);
+static int	weasel_issue_command(struct weasel_softc *, uint8_t cmd);
 
-int	weasel_wait_response(struct weasel_softc *);
-int	weasel_issue_command(struct weasel_softc *, uint8_t cmd);
+static int	weasel_pci_wdog_arm(struct weasel_softc *);
+static int	weasel_pci_wdog_disarm(struct weasel_softc *);
 
-int	weasel_pci_wdog_arm(struct weasel_softc *);
-int	weasel_pci_wdog_disarm(struct weasel_softc *);
+static int	weasel_pci_wdog_query_state(struct weasel_softc *);
 
-int	weasel_pci_wdog_query_state(struct weasel_softc *);
-
-int
+static int
 weasel_pci_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -106,7 +102,7 @@ weasel_pci_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 weasel_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct weasel_softc *sc = (void *) self;
@@ -271,7 +267,10 @@ weasel_pci_attach(struct device *parent, struct device *self, void *aux)
 		    "with sysmon\n", sc->sc_dev.dv_xname);
 }
 
-int
+CFATTACH_DECL(weasel_pci, sizeof(struct weasel_softc),
+    weasel_pci_match, weasel_pci_attach, NULL, NULL);
+
+static int
 weasel_wait_response(struct weasel_softc *sc)
 {
 	int i;
@@ -285,7 +284,7 @@ weasel_wait_response(struct weasel_softc *sc)
 	return (1);
 }
 
-int
+static int
 weasel_issue_command(struct weasel_softc *sc, uint8_t cmd)
 {
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_WR, cmd);
@@ -294,7 +293,7 @@ weasel_issue_command(struct weasel_softc *sc, uint8_t cmd)
 	return (weasel_wait_response(sc));
 }
 
-int
+static int
 weasel_pci_wdog_setmode(struct sysmon_wdog *smw)
 {
 	struct weasel_softc *sc = smw->smw_cookie;
@@ -316,7 +315,7 @@ weasel_pci_wdog_setmode(struct sysmon_wdog *smw)
 	return (error);
 }
 
-int
+static int
 weasel_pci_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct weasel_softc *sc = smw->smw_cookie;
@@ -355,7 +354,7 @@ weasel_pci_wdog_tickle(struct sysmon_wdog *smw)
 	return (error);
 }
 
-int
+static int
 weasel_pci_wdog_arm(struct weasel_softc *sc)
 {
 	u_int8_t reg;
@@ -396,7 +395,7 @@ weasel_pci_wdog_arm(struct weasel_softc *sc)
 }
 
 
-int
+static int
 weasel_pci_wdog_disarm(struct weasel_softc *sc)
 {
 	u_int8_t reg;
@@ -437,7 +436,7 @@ weasel_pci_wdog_disarm(struct weasel_softc *sc)
 	return(error);
 }
 
-int
+static int
 weasel_pci_wdog_query_state(struct weasel_softc *sc)
 {
 

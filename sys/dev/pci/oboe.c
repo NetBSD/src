@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.18 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: oboe.c,v 1.19 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.18 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,20 +70,20 @@ __KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.18 2005/02/27 00:27:33 perry Exp $");
 
 #include <dev/pci/oboereg.h>
 
-int oboe_match(struct device *parent, struct cfdata *match, void *aux);
-void oboe_attach(struct device *parent, struct device *self, void *aux);
-int oboe_activate(struct device *self, enum devact act);
-int oboe_detach(struct device *self, int flags);
+static int oboe_match(struct device *parent, struct cfdata *match, void *aux);
+static void oboe_attach(struct device *parent, struct device *self, void *aux);
+static int oboe_activate(struct device *self, enum devact act);
+static int oboe_detach(struct device *self, int flags);
 
-int oboe_open(void *h, int flag, int mode, struct proc *p);
-int oboe_close(void *h, int flag, int mode, struct proc *p);
-int oboe_read(void *h, struct uio *uio, int flag);
-int oboe_write(void *h, struct uio *uio, int flag);
-int oboe_set_params(void *h, struct irda_params *params);
-int oboe_get_speeds(void *h, int *speeds);
-int oboe_get_turnarounds(void *h, int *times);
-int oboe_poll(void *h, int events, struct proc *p);
-int oboe_kqfilter(void *h, struct knote *kn);
+static int oboe_open(void *h, int flag, int mode, struct proc *p);
+static int oboe_close(void *h, int flag, int mode, struct proc *p);
+static int oboe_read(void *h, struct uio *uio, int flag);
+static int oboe_write(void *h, struct uio *uio, int flag);
+static int oboe_set_params(void *h, struct irda_params *params);
+static int oboe_get_speeds(void *h, int *speeds);
+static int oboe_get_turnarounds(void *h, int *times);
+static int oboe_poll(void *h, int events, struct proc *p);
+static int oboe_kqfilter(void *h, struct knote *kn);
 
 #ifdef OBOE_DEBUG
 #define DPRINTF(x)	if (oboedebug) printf x
@@ -161,12 +161,12 @@ static int oboe_setbaud(struct oboe_softc *, int);
 CFATTACH_DECL(oboe, sizeof(struct oboe_softc),
     oboe_match, oboe_attach, oboe_detach, oboe_activate);
 
-struct irframe_methods oboe_methods = {
+static struct irframe_methods oboe_methods = {
 	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll,
 	oboe_kqfilter, oboe_set_params, oboe_get_speeds, oboe_get_turnarounds
 };
 
-int
+static int
 oboe_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -178,7 +178,7 @@ oboe_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 oboe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
@@ -247,7 +247,7 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_child = config_found((void *)sc, &ia, ir_print);
 }
 
-int
+static int
 oboe_activate(struct device *self, enum devact act)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
@@ -268,7 +268,7 @@ oboe_activate(struct device *self, enum devact act)
 	return (error);
 }
 
-int
+static int
 oboe_detach(struct device *self, int flags)
 {
 #if 0
@@ -279,7 +279,7 @@ oboe_detach(struct device *self, int flags)
 	return (0);
 }
 
-int
+static int
 oboe_open(void *h, int flag, int mode, struct proc *p)
 {
 	struct oboe_softc *sc = h;
@@ -294,7 +294,7 @@ oboe_open(void *h, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-int
+static int
 oboe_close(void *h, int flag, int mode, struct proc *p)
 {
 	struct oboe_softc *sc = h;
@@ -314,7 +314,7 @@ oboe_close(void *h, int flag, int mode, struct proc *p)
 	return (error);
 }
 
-int
+static int
 oboe_read(void *h, struct uio *uio, int flag)
 {
 	struct oboe_softc *sc = h;
@@ -364,7 +364,7 @@ oboe_read(void *h, struct uio *uio, int flag)
 	return (error);
 }
 
-int
+static int
 oboe_write(void *h, struct uio *uio, int flag)
 {
 	struct oboe_softc *sc = h;
@@ -420,7 +420,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 	return (error);
 }
 
-int
+static int
 oboe_set_params(void *h, struct irda_params *p)
 {
 	struct oboe_softc *sc = h;
@@ -437,7 +437,7 @@ oboe_set_params(void *h, struct irda_params *p)
 	return (0);
 }
 
-int
+static int
 oboe_get_speeds(void *h, int *speeds)
 {
 	struct oboe_softc *sc = h;
@@ -445,7 +445,7 @@ oboe_get_speeds(void *h, int *speeds)
 	return (0);
 }
 
-int
+static int
 oboe_get_turnarounds(void *h, int *turnarounds)
 {
 #if 0
@@ -457,7 +457,7 @@ oboe_get_turnarounds(void *h, int *turnarounds)
 	return (0);
 }
 
-int
+static int
 oboe_poll(void *h, int events, struct proc *p)
 {
 	struct oboe_softc *sc = h;
@@ -519,7 +519,7 @@ static const struct filterops oboeread_filtops =
 static const struct filterops oboewrite_filtops =
 	{ 1, NULL, filt_oboewdetach, filt_seltrue };
 
-int
+static int
 oboe_kqfilter(void *h, struct knote *kn)
 {
 	struct oboe_softc *sc = h;

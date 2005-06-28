@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_fms.c,v 1.8 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: opl_fms.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.8 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.9 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,17 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.8 2005/02/04 02:10:45 perry Exp $");
 
 #include <dev/pci/fmsvar.h>
 
-int	opl_fms_match(struct device *, struct cfdata *, void *);
-void	opl_fms_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(opl_fms, sizeof (struct opl_softc),
-    opl_fms_match, opl_fms_attach, NULL, NULL);
-
-int
-opl_fms_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+opl_fms_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 
@@ -83,11 +74,8 @@ opl_fms_match(parent, match, aux)
 	return (1);
 }
 
-void
-opl_fms_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void
+opl_fms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fms_softc *ssc = (struct fms_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;
@@ -101,3 +89,6 @@ opl_fms_attach(parent, self, aux)
 
 	opl_attach(sc);
 }
+
+CFATTACH_DECL(opl_fms, sizeof (struct opl_softc),
+    opl_fms_match, opl_fms_attach, NULL, NULL);

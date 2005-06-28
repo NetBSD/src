@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.32 2005/01/21 14:37:58 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.33 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.32 2005/01/21 14:37:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.33 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,28 +104,22 @@ struct pcscp_softc {
 #define	PCSCP_WRITE_REG(sc, reg, val)	\
 	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2, (val))
 
-int	pcscp_match(struct device *, struct cfdata *, void *);
-void	pcscp_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
-    pcscp_match, pcscp_attach, NULL, NULL);
-
 /*
  * Functions and the switch for the MI code.
  */
 
-u_char	pcscp_read_reg(struct ncr53c9x_softc *, int);
-void	pcscp_write_reg(struct ncr53c9x_softc *, int, u_char);
-int	pcscp_dma_isintr(struct ncr53c9x_softc *);
-void	pcscp_dma_reset(struct ncr53c9x_softc *);
-int	pcscp_dma_intr(struct ncr53c9x_softc *);
-int	pcscp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
-    size_t *);
-void	pcscp_dma_go(struct ncr53c9x_softc *);
-void	pcscp_dma_stop(struct ncr53c9x_softc *);
-int	pcscp_dma_isactive(struct ncr53c9x_softc *);
+static u_char	pcscp_read_reg(struct ncr53c9x_softc *, int);
+static void	pcscp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static int	pcscp_dma_isintr(struct ncr53c9x_softc *);
+static void	pcscp_dma_reset(struct ncr53c9x_softc *);
+static int	pcscp_dma_intr(struct ncr53c9x_softc *);
+static int	pcscp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *,
+				int, size_t *);
+static void	pcscp_dma_go(struct ncr53c9x_softc *);
+static void	pcscp_dma_stop(struct ncr53c9x_softc *);
+static int	pcscp_dma_isactive(struct ncr53c9x_softc *);
 
-struct ncr53c9x_glue pcscp_glue = {
+static struct ncr53c9x_glue pcscp_glue = {
 	pcscp_read_reg,
 	pcscp_write_reg,
 	pcscp_dma_isintr,
@@ -138,7 +132,7 @@ struct ncr53c9x_glue pcscp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-int
+static int
 pcscp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -156,7 +150,7 @@ pcscp_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * Attach this instance, and then all the sub-devices
  */
-void
+static void
 pcscp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -312,11 +306,14 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_features |= NCR_F_DMASELECT;
 }
 
+CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
+    pcscp_match, pcscp_attach, NULL, NULL);
+
 /*
  * Glue functions.
  */
 
-u_char
+static u_char
 pcscp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -324,7 +321,7 @@ pcscp_read_reg(struct ncr53c9x_softc *sc, int reg)
 	return PCSCP_READ_REG(esc, reg);
 }
 
-void
+static void
 pcscp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char v)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -332,7 +329,7 @@ pcscp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char v)
 	PCSCP_WRITE_REG(esc, reg, v);
 }
 
-int
+static int
 pcscp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -340,7 +337,7 @@ pcscp_dma_isintr(struct ncr53c9x_softc *sc)
 	return (PCSCP_READ_REG(esc, NCR_STAT) & NCRSTAT_INT) != 0;
 }
 
-void
+static void
 pcscp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -350,7 +347,7 @@ pcscp_dma_reset(struct ncr53c9x_softc *sc)
 	esc->sc_active = 0;
 }
 
-int
+static int
 pcscp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -496,7 +493,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 	return 0;
 }
 
-int
+static int
 pcscp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
     int datain, size_t *dmasize)
 {
@@ -560,7 +557,7 @@ pcscp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	return 0;
 }
 
-void
+static void
 pcscp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -596,7 +593,7 @@ pcscp_dma_go(struct ncr53c9x_softc *sc)
 	esc->sc_active = 1;
 }
 
-void
+static void
 pcscp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -610,7 +607,7 @@ pcscp_dma_stop(struct ncr53c9x_softc *sc)
 	esc->sc_active = 0;
 }
 
-int
+static int
 pcscp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;

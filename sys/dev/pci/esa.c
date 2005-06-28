@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.28 2005/01/15 15:19:52 kent Exp $ */
+/* $NetBSD: esa.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.28 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -78,7 +78,7 @@ enum {
 	ESS_MAESTRO3
 };
 
-static struct esa_card_type {
+static const struct esa_card_type {
 	uint16_t pci_vendor_id;
 	uint16_t pci_product_id;
 	int type;
@@ -93,75 +93,78 @@ static struct esa_card_type {
 	{ 0, 0, 0, 0, 0 }
 };
 
-struct audio_device esa_device = {
+static struct audio_device esa_device = {
 	"ESS Allegro",
 	"",
 	"esa"
 };
 
-int		esa_match(struct device *, struct cfdata *, void *);
-void		esa_attach(struct device *, struct device *, void *);
-int		esa_detach(struct device *, int);
+static int		esa_match(struct device *, struct cfdata *, void *);
+static void		esa_attach(struct device *, struct device *, void *);
+static int		esa_detach(struct device *, int);
 
 /* audio(9) functions */
-int		esa_query_encoding(void *, struct audio_encoding *);
-int		esa_set_params(void *, int, int, audio_params_t *,
-			       audio_params_t *, stream_filter_list_t *,
-			       stream_filter_list_t *);
-int		esa_round_blocksize(void *, int, int, const audio_params_t *);
-int		esa_commit_settings(void *);
-int		esa_halt_output(void *);
-int		esa_halt_input(void *);
-int		esa_set_port(void *, mixer_ctrl_t *);
-int		esa_get_port(void *, mixer_ctrl_t *);
-int		esa_query_devinfo(void *, mixer_devinfo_t *);
-void *		esa_malloc(void *, int, size_t, struct malloc_type *, int);
-void		esa_free(void *, void *, struct malloc_type *);
-int		esa_getdev(void *, struct audio_device *);
-size_t		esa_round_buffersize(void *, int, size_t);
-int		esa_get_props(void *);
-int		esa_trigger_output(void *, void *, void *, int,
-				   void (*)(void *), void *,
-				   const audio_params_t *);
-int		esa_trigger_input(void *, void *, void *, int,
-				  void (*)(void *), void *,
-				  const audio_params_t *);
+static int		esa_query_encoding(void *, struct audio_encoding *);
+static int		esa_set_params(void *, int, int, audio_params_t *,
+				       audio_params_t *, stream_filter_list_t *,
+				       stream_filter_list_t *);
+static int		esa_round_blocksize(void *, int, int,
+					    const audio_params_t *);
+static int		esa_commit_settings(void *);
+static int		esa_halt_output(void *);
+static int		esa_halt_input(void *);
+static int		esa_set_port(void *, mixer_ctrl_t *);
+static int		esa_get_port(void *, mixer_ctrl_t *);
+static int		esa_query_devinfo(void *, mixer_devinfo_t *);
+static void *		esa_malloc(void *, int, size_t, struct malloc_type *,
+				   int);
+static void		esa_free(void *, void *, struct malloc_type *);
+static int		esa_getdev(void *, struct audio_device *);
+static size_t		esa_round_buffersize(void *, int, size_t);
+static int		esa_get_props(void *);
+static int		esa_trigger_output(void *, void *, void *, int,
+					   void (*)(void *), void *,
+					   const audio_params_t *);
+static int		esa_trigger_input(void *, void *, void *, int,
+					  void (*)(void *), void *,
+					  const audio_params_t *);
 
-int		esa_intr(void *);
-int		esa_allocmem(struct esa_softc *, size_t, size_t,
-			     struct esa_dma *);
-int		esa_freemem(struct esa_softc *, struct esa_dma *);
-paddr_t		esa_mappage(void *, void *, off_t, int);
+static int		esa_intr(void *);
+static int		esa_allocmem(struct esa_softc *, size_t, size_t,
+				     struct esa_dma *);
+static int		esa_freemem(struct esa_softc *, struct esa_dma *);
+static paddr_t		esa_mappage(void *, void *, off_t, int);
 
 /* Supporting subroutines */
-uint16_t	esa_read_assp(struct esa_softc *, uint16_t, uint16_t);
-void		esa_write_assp(struct esa_softc *, uint16_t, uint16_t,
-			       uint16_t);
-int		esa_init_codec(struct esa_softc *);
-int		esa_attach_codec(void *, struct ac97_codec_if *);
-int		esa_read_codec(void *, uint8_t, uint16_t *);
-int		esa_write_codec(void *, uint8_t, uint16_t);
-int		esa_reset_codec(void *);
-enum ac97_host_flags	esa_flags_codec(void *);
-int		esa_wait(struct esa_softc *);
-int		esa_init(struct esa_softc *);
-void		esa_config(struct esa_softc *);
-uint8_t		esa_assp_halt(struct esa_softc *);
-void		esa_codec_reset(struct esa_softc *);
-int		esa_amp_enable(struct esa_softc *);
-void		esa_enable_interrupts(struct esa_softc *);
-uint32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
+static uint16_t	esa_read_assp(struct esa_softc *, uint16_t, uint16_t);
+static void		esa_write_assp(struct esa_softc *, uint16_t, uint16_t,
+				       uint16_t);
+static int		esa_init_codec(struct esa_softc *);
+static int		esa_attach_codec(void *, struct ac97_codec_if *);
+static int		esa_read_codec(void *, uint8_t, uint16_t *);
+static int		esa_write_codec(void *, uint8_t, uint16_t);
+static int		esa_reset_codec(void *);
+static enum ac97_host_flags	esa_flags_codec(void *);
+static int		esa_wait(struct esa_softc *);
+static int		esa_init(struct esa_softc *);
+static void		esa_config(struct esa_softc *);
+static uint8_t		esa_assp_halt(struct esa_softc *);
+static void		esa_codec_reset(struct esa_softc *);
+static int		esa_amp_enable(struct esa_softc *);
+static void		esa_enable_interrupts(struct esa_softc *);
+static uint32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
 
 /* list management */
-int		esa_add_list(struct esa_voice *, struct esa_list *, uint16_t,
-			     int);
-void		esa_remove_list(struct esa_voice *, struct esa_list *, int);
+static int		esa_add_list(struct esa_voice *, struct esa_list *,
+				     uint16_t, int);
+static void		esa_remove_list(struct esa_voice *, struct esa_list *,
+					int);
 
 /* power management */
-int		esa_power(struct esa_softc *, int);
-void		esa_powerhook(int, void *);
-int		esa_suspend(struct esa_softc *);
-int		esa_resume(struct esa_softc *);
+static int		esa_power(struct esa_softc *, int);
+static void		esa_powerhook(int, void *);
+static int		esa_suspend(struct esa_softc *);
+static int		esa_resume(struct esa_softc *);
 
 
 #define ESA_NENCODINGS 8
@@ -193,7 +196,7 @@ static const struct audio_format esa_formats[ESA_NFORMATS] = {
 	 1, AUFMT_MONAURAL, 0, {ESA_MINRATE, ESA_MAXRATE}},
 };
 
-const struct audio_hw_if esa_hw_if = {
+static const struct audio_hw_if esa_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */
@@ -229,7 +232,7 @@ CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
  * audio(9) functions
  */
 
-int
+static int
 esa_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 
@@ -240,7 +243,7 @@ esa_query_encoding(void *hdl, struct audio_encoding *ae)
 	return 0;
 }
 
-int
+static int
 esa_set_params(void *hdl, int setmode, int usemode,
 	       audio_params_t *play, audio_params_t *rec,
 	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
@@ -291,7 +294,7 @@ esa_set_params(void *hdl, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 esa_commit_settings(void *hdl)
 {
 	struct esa_voice *vc;
@@ -358,14 +361,14 @@ esa_commit_settings(void *hdl)
 	return 0;
 };
 
-int
+static int
 esa_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
 	return bs & ~0x20;	/* Be conservative; align to 32 bytes */
 }
 
-int
+static int
 esa_halt_output(void *hdl)
 {
 	struct esa_voice *vc;
@@ -408,7 +411,7 @@ esa_halt_output(void *hdl)
 	return 0;
 }
 
-int
+static int
 esa_halt_input(void *hdl)
 {
 	struct esa_voice *vc;
@@ -450,7 +453,7 @@ esa_halt_input(void *hdl)
 	return 0;
 }
 
-void *
+static void *
 esa_malloc(void *hdl, int direction, size_t size, struct malloc_type *type,
     int flags)
 {
@@ -477,7 +480,7 @@ esa_malloc(void *hdl, int direction, size_t size, struct malloc_type *type,
 	return KERNADDR(p);
 }
 
-void
+static void
 esa_free(void *hdl, void *addr, struct malloc_type *type)
 {
 	struct esa_voice *vc;
@@ -496,7 +499,7 @@ esa_free(void *hdl, void *addr, struct malloc_type *type)
 		}
 }
 
-int
+static int
 esa_getdev(void *hdl, struct audio_device *ret)
 {
 
@@ -504,7 +507,7 @@ esa_getdev(void *hdl, struct audio_device *ret)
 	return 0;
 }
 
-int
+static int
 esa_set_port(void *hdl, mixer_ctrl_t *mc)
 {
 	struct esa_voice *vc;
@@ -515,7 +518,7 @@ esa_set_port(void *hdl, mixer_ctrl_t *mc)
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, mc);
 }
 
-int
+static int
 esa_get_port(void *hdl, mixer_ctrl_t *mc)
 {
 	struct esa_voice *vc;
@@ -526,7 +529,7 @@ esa_get_port(void *hdl, mixer_ctrl_t *mc)
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, mc);
 }
 
-int
+static int
 esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
 	struct esa_voice *vc;
@@ -537,21 +540,21 @@ esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, di);
 }
 
-size_t
+static size_t
 esa_round_buffersize(void *hdl, int direction, size_t bufsize)
 {
 
 	return bufsize;
 }
 
-int
+static int
 esa_get_props(void *hdl)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
-int
+static int
 esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 		   void (*intr)(void *), void *intrarg,
 		   const audio_params_t *param)
@@ -689,7 +692,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 		  void (*intr)(void *), void *intrarg,
 		  const audio_params_t *param)
@@ -826,7 +829,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 }
 
 /* Interrupt handler */
-int
+static int
 esa_intr(void *hdl)
 {
 	struct esa_softc *sc;
@@ -917,7 +920,7 @@ esa_intr(void *hdl)
 	return 1;
 }
 
-int
+static int
 esa_allocmem(struct esa_softc *sc, size_t size, size_t align,
 	     struct esa_dma *p)
 {
@@ -957,7 +960,7 @@ free:
 	return error;
 }
 
-int
+static int
 esa_freemem(struct esa_softc *sc, struct esa_dma *p)
 {
 
@@ -973,7 +976,7 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
  * Supporting Subroutines
  */
 
-int
+static int
 esa_match(struct device *dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -992,7 +995,7 @@ esa_match(struct device *dev, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 esa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct esa_softc *sc;
@@ -1000,7 +1003,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t tag;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
-	struct esa_card_type *card;
+	const struct esa_card_type *card;
 	const char *intrstr;
 	uint32_t data;
 	char devinfo[256];
@@ -1134,7 +1137,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
-int
+static int
 esa_detach(struct device *self, int flags)
 {
 	struct esa_softc *sc;
@@ -1156,7 +1159,7 @@ esa_detach(struct device *self, int flags)
 	return 0;
 }
 
-uint16_t
+static uint16_t
 esa_read_assp(struct esa_softc *sc, uint16_t region, uint16_t index)
 {
 	uint16_t data;
@@ -1173,7 +1176,7 @@ esa_read_assp(struct esa_softc *sc, uint16_t region, uint16_t index)
 	return data;
 }
 
-void
+static void
 esa_write_assp(struct esa_softc *sc, uint16_t region, uint16_t index,
 	       uint16_t data)
 {
@@ -1190,7 +1193,7 @@ esa_write_assp(struct esa_softc *sc, uint16_t region, uint16_t index,
 	return;
 }
 
-int
+static int
 esa_init_codec(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1204,7 +1207,7 @@ esa_init_codec(struct esa_softc *sc)
 	return (data & 0x1) ? 0 : 1;
 }
 
-int
+static int
 esa_attach_codec(void *aux, struct ac97_codec_if *codec_if)
 {
 	struct esa_softc *sc;
@@ -1215,7 +1218,7 @@ esa_attach_codec(void *aux, struct ac97_codec_if *codec_if)
 	return 0;
 }
 
-int
+static int
 esa_read_codec(void *aux, uint8_t reg, uint16_t *result)
 {
 	struct esa_softc *sc;
@@ -1236,7 +1239,7 @@ esa_read_codec(void *aux, uint8_t reg, uint16_t *result)
 	return 0;
 }
 
-int
+static int
 esa_write_codec(void *aux, uint8_t reg, uint16_t data)
 {
 	struct esa_softc *sc;
@@ -1257,14 +1260,14 @@ esa_write_codec(void *aux, uint8_t reg, uint16_t data)
 	return 0;
 }
 
-int
+static int
 esa_reset_codec(void *aux)
 {
 
 	return 0;
 }
 
-enum ac97_host_flags
+static enum ac97_host_flags
 esa_flags_codec(void *aux)
 {
 	struct esa_softc *sc;
@@ -1273,7 +1276,7 @@ esa_flags_codec(void *aux)
 	return sc->codec_flags;
 }
 
-int
+static int
 esa_wait(struct esa_softc *sc)
 {
 	int i, val;
@@ -1292,7 +1295,7 @@ esa_wait(struct esa_softc *sc)
 	return -1;
 }
 
-int
+static int
 esa_init(struct esa_softc *sc)
 {
 	struct esa_voice *vc;
@@ -1387,7 +1390,7 @@ esa_init(struct esa_softc *sc)
 	return 0;
 }
 
-void
+static void
 esa_config(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1433,7 +1436,7 @@ esa_config(struct esa_softc *sc)
 	return;
 }
 
-uint8_t
+static uint8_t
 esa_assp_halt(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1452,7 +1455,7 @@ esa_assp_halt(struct esa_softc *sc)
 	return reset_state;
 }
 
-void
+static void
 esa_codec_reset(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1515,7 +1518,7 @@ esa_codec_reset(struct esa_softc *sc)
 	return;
 }
 
-int
+static int
 esa_amp_enable(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1553,7 +1556,7 @@ esa_amp_enable(struct esa_softc *sc)
 	return 0;
 }
 
-void
+static void
 esa_enable_interrupts(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1572,7 +1575,7 @@ esa_enable_interrupts(struct esa_softc *sc)
 /*
  * List management
  */
-int
+static int
 esa_add_list(struct esa_voice *vc, struct esa_list *el,
 	     uint16_t val, int index)
 {
@@ -1587,7 +1590,7 @@ esa_add_list(struct esa_voice *vc, struct esa_list *el,
 	return el->currlen++;
 }
 
-void
+static void
 esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 {
 	struct esa_softc *sc;
@@ -1626,7 +1629,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 	return;
 }
 
-int
+static int
 esa_power(struct esa_softc *sc, int state)
 {
 	pcitag_t tag;
@@ -1645,7 +1648,7 @@ esa_power(struct esa_softc *sc, int state)
 	return 0;
 }
 
-void
+static void
 esa_powerhook(int why, void *hdl)
 {
 	struct esa_softc *sc;
@@ -1663,7 +1666,7 @@ esa_powerhook(int why, void *hdl)
 	}
 }
 
-int
+static int
 esa_suspend(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1694,7 +1697,7 @@ esa_suspend(struct esa_softc *sc)
 	return 0;
 }
 
-int
+static int
 esa_resume(struct esa_softc *sc)
 {
 	bus_space_tag_t iot;
@@ -1735,7 +1738,7 @@ esa_resume(struct esa_softc *sc)
 	return 0;
 }
 
-uint32_t
+static uint32_t
 esa_get_pointer(struct esa_softc *sc, struct esa_channel *ch)
 {
 	uint16_t hi, lo;
@@ -1752,7 +1755,7 @@ esa_get_pointer(struct esa_softc *sc, struct esa_channel *ch)
 	return (addr - ch->start);
 }
 
-paddr_t
+static paddr_t
 esa_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct esa_voice *vc;

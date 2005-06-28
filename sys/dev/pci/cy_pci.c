@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.17 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.18 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.17 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.18 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,12 +33,6 @@ struct cy_pci_softc {
 	bus_space_tag_t sc_iot;		/* PLX runtime i/o tag */
 	bus_space_handle_t sc_ioh;	/* PLX runtime i/o handle */
 };
-
-int	cy_pci_match(struct device *, struct cfdata *, void *);
-void	cy_pci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(cy_pci, sizeof(struct cy_pci_softc),
-    cy_pci_match, cy_pci_attach, NULL, NULL);
 
 static const struct cy_pci_product {
 	pci_product_id_t cp_product;	/* product ID */
@@ -81,7 +75,7 @@ cy_pci_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 cy_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -89,7 +83,7 @@ cy_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	return (cy_pci_lookup(pa) != NULL);
 }
 
-void
+static void
 cy_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cy_pci_softc *psc = (void *) self;
@@ -172,3 +166,6 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 		    CY_PCI_INTENA) | 0x900);
 	}
 }
+
+CFATTACH_DECL(cy_pci, sizeof(struct cy_pci_softc),
+    cy_pci_match, cy_pci_attach, NULL, NULL);

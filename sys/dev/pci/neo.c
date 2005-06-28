@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.28 2005/04/08 14:30:57 kent Exp $	*/
+/*	$NetBSD: neo.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.28 2005/04/08 14:30:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,41 +176,43 @@ static int	nm_waitcd(struct neo_softc *);
 static int	nm_loadcoeff(struct neo_softc *, int, int);
 static int	nm_init(struct neo_softc *);
 
-int	neo_match(struct device *, struct cfdata *, void *);
-void	neo_attach(struct device *, struct device *, void *);
-int	neo_intr(void *);
+static int	neo_match(struct device *, struct cfdata *, void *);
+static void	neo_attach(struct device *, struct device *, void *);
+static int	neo_intr(void *);
 
-int	neo_query_encoding(void *, struct audio_encoding *);
-int	neo_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
-int	neo_round_blocksize(void *, int, int, const audio_params_t *);
-int	neo_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
-int	neo_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, const audio_params_t *);
-int	neo_halt_output(void *);
-int	neo_halt_input(void *);
-int	neo_getdev(void *, struct audio_device *);
-int	neo_mixer_set_port(void *, mixer_ctrl_t *);
-int	neo_mixer_get_port(void *, mixer_ctrl_t *);
-int     neo_attach_codec(void *, struct ac97_codec_if *);
-int	neo_read_codec(void *, uint8_t, uint16_t *);
-int	neo_write_codec(void *, uint8_t, uint16_t);
-int     neo_reset_codec(void *);
-enum ac97_host_flags neo_flags_codec(void *);
-int	neo_query_devinfo(void *, mixer_devinfo_t *);
-void   *neo_malloc(void *, int, size_t, struct malloc_type *, int);
-void	neo_free(void *, void *, struct malloc_type *);
-size_t	neo_round_buffersize(void *, int, size_t);
-paddr_t	neo_mappage(void *, void *, off_t, int);
-int	neo_get_props(void *);
-void	neo_set_mixer(struct neo_softc *, int, int);
-void	neo_power(int, void *);
+static int	neo_query_encoding(void *, struct audio_encoding *);
+static int	neo_set_params(void *, int, int, audio_params_t *,
+			       audio_params_t *, stream_filter_list_t *,
+			       stream_filter_list_t *);
+static int	neo_round_blocksize(void *, int, int, const audio_params_t *);
+static int	neo_trigger_output(void *, void *, void *, int,
+				   void (*)(void *), void *,
+				   const audio_params_t *);
+static int	neo_trigger_input(void *, void *, void *, int,
+				  void (*)(void *), void *,
+				  const audio_params_t *);
+static int	neo_halt_output(void *);
+static int	neo_halt_input(void *);
+static int	neo_getdev(void *, struct audio_device *);
+static int	neo_mixer_set_port(void *, mixer_ctrl_t *);
+static int	neo_mixer_get_port(void *, mixer_ctrl_t *);
+static int	neo_attach_codec(void *, struct ac97_codec_if *);
+static int	neo_read_codec(void *, uint8_t, uint16_t *);
+static int	neo_write_codec(void *, uint8_t, uint16_t);
+static int     neo_reset_codec(void *);
+static enum ac97_host_flags neo_flags_codec(void *);
+static int	neo_query_devinfo(void *, mixer_devinfo_t *);
+static void *	neo_malloc(void *, int, size_t, struct malloc_type *, int);
+static void	neo_free(void *, void *, struct malloc_type *);
+static size_t	neo_round_buffersize(void *, int, size_t);
+static paddr_t	neo_mappage(void *, void *, off_t, int);
+static int	neo_get_props(void *);
+static void	neo_power(int, void *);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
 
-struct audio_device neo_device = {
+static struct audio_device neo_device = {
 	"NeoMagic 256",
 	"",
 	"neo"
@@ -243,7 +245,7 @@ static const struct audio_format neo_formats[NEO_NFORMATS] = {
 
 /* -------------------------------------------------------------------- */
 
-const struct audio_hw_if neo_hw_if = {
+static const struct audio_hw_if neo_hw_if = {
 	NULL,				/* open */
 	NULL,				/* close */
 	NULL,				/* drain */
@@ -357,7 +359,7 @@ nm_loadcoeff(struct neo_softc *sc, int dir, int num)
 }
 
 /* The interrupt handler */
-int
+static int
 neo_intr(void *p)
 {
 	struct neo_softc *sc;
@@ -497,7 +499,7 @@ nm_init(struct neo_softc *sc)
 	return 0;
 }
 
-int
+static int
 neo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -548,7 +550,7 @@ neo_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 neo_power(int why, void *addr)
 {
 	struct neo_softc *sc;
@@ -560,7 +562,7 @@ neo_power(int why, void *addr)
 	}
 }
 
-void
+static void
 neo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct neo_softc *sc;
@@ -635,7 +637,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 }
 
-int
+static int
 neo_read_codec(void *v, uint8_t a, uint16_t *d)
 {
 	struct neo_softc *sc;
@@ -651,7 +653,7 @@ neo_read_codec(void *v, uint8_t a, uint16_t *d)
 }
 
 
-int
+static int
 neo_write_codec(void *v, u_int8_t a, u_int16_t d)
 {
 	struct neo_softc *sc;
@@ -672,7 +674,7 @@ neo_write_codec(void *v, u_int8_t a, u_int16_t d)
 	return ENXIO;
 }
 
-int
+static int
 neo_attach_codec(void *v, struct ac97_codec_if *codec_if)
 {
 	struct neo_softc *sc;
@@ -682,7 +684,7 @@ neo_attach_codec(void *v, struct ac97_codec_if *codec_if)
 	return 0;
 }
 
-int
+static int
 neo_reset_codec(void *v)
 {
 	struct neo_softc *sc;
@@ -695,14 +697,14 @@ neo_reset_codec(void *v)
 	return 0;
 }
 
-enum ac97_host_flags
+static enum ac97_host_flags
 neo_flags_codec(void *v)
 {
 
 	return AC97_HOST_DONT_READ;
 }
 
-int
+static int
 neo_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
@@ -761,7 +763,7 @@ neo_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 /* Todo: don't commit settings to card until we've verified all parameters */
-int
+static int
 neo_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
     audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -814,14 +816,14 @@ neo_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 	return 0;
 }
 
-int
+static int
 neo_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 
 	return NM_BUFFSIZE / 2;
 }
 
-int
+static int
 neo_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
@@ -851,7 +853,7 @@ neo_trigger_output(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 neo_trigger_input(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
@@ -880,7 +882,7 @@ neo_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 neo_halt_output(void *addr)
 {
 	struct neo_softc *sc;
@@ -893,7 +895,7 @@ neo_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 neo_halt_input(void *addr)
 {
 	struct neo_softc *sc;
@@ -905,7 +907,7 @@ neo_halt_input(void *addr)
 	return 0;
 }
 
-int
+static int
 neo_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -913,7 +915,7 @@ neo_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-int
+static int
 neo_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct neo_softc *sc;
@@ -922,7 +924,7 @@ neo_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
 
-int
+static int
 neo_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct neo_softc *sc;
@@ -931,7 +933,7 @@ neo_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
 
-int
+static int
 neo_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct neo_softc *sc;
@@ -940,7 +942,7 @@ neo_query_devinfo(void *addr, mixer_devinfo_t *dip)
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dip);
 }
 
-void *
+static void *
 neo_malloc(void *addr, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
@@ -968,7 +970,7 @@ neo_malloc(void *addr, int direction, size_t size, struct malloc_type *pool,
 	return rv;
 }
 
-void
+static void
 neo_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct neo_softc *sc;
@@ -984,14 +986,14 @@ neo_free(void *addr, void *ptr, struct malloc_type *pool)
 		printf("neo_free: bad address %p\n", ptr);
 }
 
-size_t
+static size_t
 neo_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return NM_BUFFSIZE;
 }
 
-paddr_t
+static paddr_t
 neo_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct neo_softc *sc;
@@ -1011,7 +1013,7 @@ neo_mappage(void *addr, void *mem, off_t off, int prot)
 	    BUS_SPACE_MAP_LINEAR);
 }
 
-int
+static int
 neo_get_props(void *addr)
 {
 

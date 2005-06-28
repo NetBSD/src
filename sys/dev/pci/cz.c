@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.31 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.31 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,49 +165,29 @@ struct cz_softc {
 	bus_addr_t cz_fwctl;		/* offset of firmware control */
 };
 
-int	cz_match(struct device *, struct cfdata *, void *);
-void	cz_attach(struct device *, struct device *, void *);
-int	cz_wait_pci_doorbell(struct cz_softc *, const char *);
+static int	cz_wait_pci_doorbell(struct cz_softc *, const char *);
 
-CFATTACH_DECL(cz, sizeof(struct cz_softc),
-    cz_match, cz_attach, NULL, NULL);
+static int	cz_load_firmware(struct cz_softc *);
 
-void	cz_reset_board(struct cz_softc *);
-int	cz_load_firmware(struct cz_softc *);
+static int	cz_intr(void *);
+static void	cz_poll(void *);
+static int	cztty_transmit(struct cztty_softc *, struct tty *);
+static int	cztty_receive(struct cztty_softc *, struct tty *);
 
-int	cz_intr(void *);
-void	cz_poll(void *);
-int	cztty_transmit(struct cztty_softc *, struct tty *);
-int	cztty_receive(struct cztty_softc *, struct tty *);
+static struct	cztty_softc *cztty_getttysoftc(dev_t dev);
+static int	cztty_attached_ttys;
+static int	cz_timeout_ticks;
 
-struct	cztty_softc * cztty_getttysoftc(dev_t dev);
-int	cztty_attached_ttys;
-int	cz_timeout_ticks;
-
-void    czttystart(struct tty *tp);
-int	czttyparam(struct tty *tp, struct termios *t);
-void    cztty_shutdown(struct cztty_softc *sc);
-void	cztty_modem(struct cztty_softc *sc, int onoff);
-void	cztty_break(struct cztty_softc *sc, int onoff);
-void	tiocm_to_cztty(struct cztty_softc *sc, u_long how, int ttybits);
-int	cztty_to_tiocm(struct cztty_softc *sc);
-void	cztty_diag(void *arg);
+static void	czttystart(struct tty *tp);
+static int	czttyparam(struct tty *tp, struct termios *t);
+static void	cztty_shutdown(struct cztty_softc *sc);
+static void	cztty_modem(struct cztty_softc *sc, int onoff);
+static void	cztty_break(struct cztty_softc *sc, int onoff);
+static void	tiocm_to_cztty(struct cztty_softc *sc, u_long how, int ttybits);
+static int	cztty_to_tiocm(struct cztty_softc *sc);
+static void	cztty_diag(void *arg);
 
 extern struct cfdriver cz_cd;
-
-dev_type_open(czttyopen);
-dev_type_close(czttyclose);
-dev_type_read(czttyread);
-dev_type_write(czttywrite);
-dev_type_ioctl(czttyioctl);
-dev_type_stop(czttystop);
-dev_type_tty(czttytty);
-dev_type_poll(czttypoll);
-
-const struct cdevsw cz_cdevsw = {
-	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
-	czttystop, czttytty, czttypoll, nommap, ttykqfilter, D_TTY
-};
 
 /* Macros to clear/set/test flags. */
 #define SET(t, f)       (t) |= (f)
@@ -284,7 +264,7 @@ do {									\
  *
  *	Determine if the given PCI device is a Cyclades-Z board.
  */
-int
+static int
 cz_match(struct device *parent,
     struct cfdata *match,
     void *aux)
@@ -306,11 +286,12 @@ cz_match(struct device *parent,
  *
  *	A Cyclades-Z board was found; attach it.
  */
-void
+static void
 cz_attach(struct device *parent,
     struct device *self,
     void *aux)
 {
+	extern const struct cdevsw cz_cdevsw;	/* XXX */
 	struct cz_softc *cz = (void *) self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
@@ -467,12 +448,16 @@ cz_attach(struct device *parent,
 	}
 }
 
+CFATTACH_DECL(cz, sizeof(struct cz_softc),
+    cz_match, cz_attach, NULL, NULL);
+
+#if 0
 /*
  * cz_reset_board:
  *
  *	Reset the board via the PLX.
  */
-void
+static void
 cz_reset_board(struct cz_softc *cz)
 {
 	u_int32_t reg;
@@ -490,6 +475,7 @@ cz_reset_board(struct cz_softc *cz)
 	delay(1000);
 	CZ_PLX_WRITE(cz, PLX_CONTROL, reg);
 }
+#endif
 
 /*
  * cz_load_firmware:
@@ -497,7 +483,7 @@ cz_reset_board(struct cz_softc *cz)
  *	Load the ZFIRM firmware into the board's RAM and start it
  *	running.
  */
-int
+static int
 cz_load_firmware(struct cz_softc *cz)
 {
 	const struct zfirm_header *zfh;
@@ -688,7 +674,7 @@ cz_load_firmware(struct cz_softc *cz)
  * This card doesn't do interrupts, so scan it for activity every CZ_POLL_MS
  * ms.
  */
-void
+static void
 cz_poll(void *arg)
 {
 	int s = spltty();
@@ -708,7 +694,7 @@ cz_poll(void *arg)
  * We either are receiving an interrupt directly from the board, or we are
  * in polling mode and it's time to poll.
  */
-int
+static int
 cz_intr(void *arg)
 {
 	int	rval = 0;
@@ -848,7 +834,7 @@ cz_intr(void *arg)
  *	Wait for the pci doorbell to be clear - wait for pending
  *	activity to drain.
  */
-int
+static int
 cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 {
 	int	error;
@@ -872,7 +858,7 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 
 #define	CZTTY_SOFTC(dev)	cztty_getttysoftc(dev)
 
-struct cztty_softc *
+static struct cztty_softc *
 cztty_getttysoftc(dev_t dev)
 {
 	int i, j, k = 0, u = minor(dev) & ~CZTTYDIALOUT_MASK;
@@ -901,7 +887,7 @@ cztty_getttysoftc(dev_t dev)
  *
  *	Return a pointer to our tty.
  */
-struct tty *
+static struct tty *
 czttytty(dev_t dev)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -919,7 +905,7 @@ czttytty(dev_t dev)
  *
  *	Shut down a port.
  */
-void
+static void
 cztty_shutdown(struct cztty_softc *sc)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -961,7 +947,7 @@ cztty_shutdown(struct cztty_softc *sc)
  *
  *	Open a Cyclades-Z serial port.
  */
-int
+static int
 czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -1081,7 +1067,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
  *
  *	Close a Cyclades-Z serial port.
  */
-int
+static int
 czttyclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -1111,7 +1097,7 @@ czttyclose(dev_t dev, int flags, int mode, struct proc *p)
  *
  *	Read from a Cyclades-Z serial port.
  */
-int
+static int
 czttyread(dev_t dev, struct uio *uio, int flags)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -1125,7 +1111,7 @@ czttyread(dev_t dev, struct uio *uio, int flags)
  *
  *	Write to a Cyclades-Z serial port.
  */
-int
+static int
 czttywrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -1139,11 +1125,8 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
  *
  *	Poll a Cyclades-Z serial port.
  */
-int
-czttypoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+static int
+czttypoll(dev_t dev, int events, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
@@ -1156,7 +1139,7 @@ czttypoll(dev, events, p)
  *
  *	Perform a control operation on a Cyclades-Z serial port.
  */
-int
+static int
 czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
@@ -1228,7 +1211,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  *
  *	Set or clear BREAK on a port.
  */
-void
+static void
 cztty_break(struct cztty_softc *sc, int onoff)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -1245,7 +1228,7 @@ cztty_break(struct cztty_softc *sc, int onoff)
  *
  *	Set or clear DTR on a port.
  */
-void
+static void
 cztty_modem(struct cztty_softc *sc, int onoff)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -1270,7 +1253,7 @@ cztty_modem(struct cztty_softc *sc, int onoff)
  *
  *	Process TIOCM* ioctls.
  */
-void
+static void
 tiocm_to_cztty(struct cztty_softc *sc, u_long how, int ttybits)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -1310,7 +1293,7 @@ tiocm_to_cztty(struct cztty_softc *sc, u_long how, int ttybits)
  *
  *	Process the TIOCMGET ioctl.
  */
-int
+static int
 cztty_to_tiocm(struct cztty_softc *sc)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -1349,7 +1332,7 @@ cztty_to_tiocm(struct cztty_softc *sc)
  *	XXX Should just copy the whole termios after making
  *	XXX sure all the changes could be done.
  */
-int
+static int
 czttyparam(struct tty *tp, struct termios *t)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(tp->t_dev);
@@ -1488,7 +1471,7 @@ czttyparam(struct tty *tp, struct termios *t)
  *
  *	Start or restart transmission.
  */
-void
+static void
 czttystart(struct tty *tp)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(tp->t_dev);
@@ -1518,7 +1501,7 @@ czttystart(struct tty *tp)
  *
  *	Stop output, e.g., for ^S or output flush.
  */
-void
+static void
 czttystop(struct tty *tp, int flag)
 {
 
@@ -1536,7 +1519,7 @@ czttystop(struct tty *tp, int flag)
  *
  *	Issue a scheduled diagnostic message.
  */
-void
+static void
 cztty_diag(void *arg)
 {
 	struct cztty_softc *sc = arg;
@@ -1567,6 +1550,11 @@ cztty_diag(void *arg)
 	    framing_errors, framing_errors == 1 ? "" : "s");
 }
 
+const struct cdevsw cz_cdevsw = {
+	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
+	    czttystop, czttytty, czttypoll, nommap, ttykqfilter, D_TTY
+};
+
 /*
  * tx and rx ring buffer size macros:
  *
@@ -1588,7 +1576,7 @@ cztty_diag(void *arg)
  *
  * Look at the tty for this port and start sending.
  */
-int
+static int
 cztty_transmit(struct cztty_softc *sc, struct tty *tp)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);
@@ -1634,7 +1622,7 @@ cztty_transmit(struct cztty_softc *sc, struct tty *tp)
 	return (done);
 }
 
-int
+static int
 cztty_receive(struct cztty_softc *sc, struct tty *tp)
 {
 	struct cz_softc *cz = CZTTY_CZ(sc);

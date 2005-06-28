@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.60 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.61 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.60 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.61 2005/06/28 00:28:42 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -76,13 +76,13 @@ struct pci_class {
 	const struct pci_class *subclasses;
 };
 
-const struct pci_class pci_subclass_prehistoric[] = {
+static const struct pci_class pci_subclass_prehistoric[] = {
 	{ "miscellaneous",	PCI_SUBCLASS_PREHISTORIC_MISC,		},
 	{ "VGA",		PCI_SUBCLASS_PREHISTORIC_VGA,		},
 	{ 0 }
 };
 
-const struct pci_class pci_subclass_mass_storage[] = {
+static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,		},
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,		},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
@@ -94,7 +94,7 @@ const struct pci_class pci_subclass_mass_storage[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_network[] = {
+static const struct pci_class pci_subclass_network[] = {
 	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,		},
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
@@ -106,7 +106,7 @@ const struct pci_class pci_subclass_network[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_display[] = {
+static const struct pci_class pci_subclass_display[] = {
 	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,		},
 	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,		},
 	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,		},
@@ -114,7 +114,7 @@ const struct pci_class pci_subclass_display[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_multimedia[] = {
+static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
@@ -122,14 +122,14 @@ const struct pci_class pci_subclass_multimedia[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_memory[] = {
+static const struct pci_class pci_subclass_memory[] = {
 	{ "RAM",		PCI_SUBCLASS_MEMORY_RAM,		},
 	{ "flash",		PCI_SUBCLASS_MEMORY_FLASH,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MEMORY_MISC,		},
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_bridge[] = {
+static const struct pci_class pci_subclass_bridge[] = {
 	{ "host",		PCI_SUBCLASS_BRIDGE_HOST,		},
 	{ "ISA",		PCI_SUBCLASS_BRIDGE_ISA,		},
 	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,		},
@@ -145,7 +145,7 @@ const struct pci_class pci_subclass_bridge[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_communications[] = {
+static const struct pci_class pci_subclass_communications[] = {
 	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
@@ -156,7 +156,7 @@ const struct pci_class pci_subclass_communications[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_system[] = {
+static const struct pci_class pci_subclass_system[] = {
 	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
@@ -166,7 +166,7 @@ const struct pci_class pci_subclass_system[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_input[] = {
+static const struct pci_class pci_subclass_input[] = {
 	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
 	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
 	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
@@ -176,13 +176,13 @@ const struct pci_class pci_subclass_input[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_dock[] = {
+static const struct pci_class pci_subclass_dock[] = {
 	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,			},
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_processor[] = {
+static const struct pci_class pci_subclass_processor[] = {
 	{ "386",		PCI_SUBCLASS_PROCESSOR_386,		},
 	{ "486",		PCI_SUBCLASS_PROCESSOR_486,		},
 	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
@@ -193,7 +193,7 @@ const struct pci_class pci_subclass_processor[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_serialbus[] = {
+static const struct pci_class pci_subclass_serialbus[] = {
 	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,	},
 	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
 	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
@@ -208,7 +208,7 @@ const struct pci_class pci_subclass_serialbus[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_wireless[] = {
+static const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
@@ -220,12 +220,12 @@ const struct pci_class pci_subclass_wireless[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_i2o[] = {
+static const struct pci_class pci_subclass_i2o[] = {
 	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_satcom[] = {
+static const struct pci_class pci_subclass_satcom[] = {
 	{ "TV",			PCI_SUBCLASS_SATCOM_TV,			},
 	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,		},
 	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,		},
@@ -233,14 +233,14 @@ const struct pci_class pci_subclass_satcom[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_crypto[] = {
+static const struct pci_class pci_subclass_crypto[] = {
 	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,		},
 	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	},
 	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,		},
 	{ 0 },
 };
 
-const struct pci_class pci_subclass_dasp[] = {
+static const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
 	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,			},
@@ -249,7 +249,7 @@ const struct pci_class pci_subclass_dasp[] = {
 	{ 0 },
 };
 
-const struct pci_class pci_class[] = {
+static const struct pci_class pci_class[] = {
 	{ "prehistoric",	PCI_CLASS_PREHISTORIC,
 	    pci_subclass_prehistoric,				},
 	{ "mass storage",	PCI_CLASS_MASS_STORAGE,

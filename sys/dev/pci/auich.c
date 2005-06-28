@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.96 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.96 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
 
-const struct audio_hw_if auich_hw_if = {
+static const struct audio_hw_if auich_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */
