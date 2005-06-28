@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.2 2005/06/26 21:14:08 christos Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.3 2005/06/28 16:03:09 christos Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -401,7 +401,7 @@ kdebug_sadb_key(ext)
 	}
 
 	ipsec_hexdump(key + sizeof(struct sadb_key),
-	              (int)(uint32_t)key->sadb_key_bits >> 3);
+	              (int)((uint32_t)key->sadb_key_bits >> 3));
 	printf(" }\n");
 	return;
 }
@@ -474,12 +474,10 @@ kdebug_sadb_x_policy(ext)
 			printf(" }\n");
 
 			/* prevent infinite loop */
-#if 0
-			if (xisr->sadb_x_ipsecrequest_len <= 0) {
+			if (xisr->sadb_x_ipsecrequest_len == 0) {
 				printf("kdebug_sadb_x_policy: wrong policy struct.\n");
 				return;
 			}
-#endif
 			/* prevent overflow */
 			if (xisr->sadb_x_ipsecrequest_len > tlen) {
 				printf("invalid ipsec policy length\n");
