@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.1 2005/04/21 17:09:19 tron Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.2 2005/06/28 10:30:45 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -140,14 +140,18 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 	if (__predict_false(SIMPLEQ_FIRST(&xen_shm_callbacks) != NULL) &&
 	    (flags & XSHM_CALLBACK) == 0) {
 		splx(s);
+#ifdef DEBUG
 		printf("xen_shm_map: ENOMEM1\n");
+#endif
 		return ENOMEM;
 	}
 	/* allocate the needed virtual space */
 	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
 	    != 0) {
 		splx(s);
+#ifdef DEBUG
 		printf("xen_shm_map: ENOMEM\n");
+#endif
 		return ENOMEM;
 	}
 	splx(s);
@@ -237,12 +241,10 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		 * but I've not been able to trigger this code yet,
 		 * so leave them here until we're sure the code works
 		 */
-		printf("xen_shm_unmap: callback\n"); /* XXX */
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
 			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
 			pool_put(&xen_shm_callback_pool, xshmc);
-			printf("xen_shm_unmap: callback cleared\n"); /* XXX */
 		} else {
 			/* callback failed, probably out of ressources */
 			splx(s);
@@ -257,7 +259,6 @@ xen_shm_callback(int (*callback)(void *), void *arg)
 {
 	struct xen_shm_callback_entry *xshmc;
 	int s;
-	printf("xen_shm_callback\n"); /* XXX */
 
 	s = splvm();
 	xshmc = pool_get(&xen_shm_callback_pool, PR_NOWAIT);
