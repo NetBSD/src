@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.24 2005/06/28 04:00:07 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.25 2005/06/28 05:25:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,7 +74,7 @@
  * inline functions [maybe]
  */
 
-#if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE)
+#if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE_C)
 
 #ifndef _UVM_UVM_PAGE_I_H_
 #define _UVM_UVM_PAGE_I_H_
@@ -285,4 +285,4 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 
 #endif /* _UVM_UVM_PAGE_I_H_ */
 
-#endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */
+#endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE_C) */

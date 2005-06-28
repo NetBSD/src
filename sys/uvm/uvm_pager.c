@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.67 2005/06/27 02:19:48 thorpej Exp $
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
-#define UVM_PAGER
+#define UVM_PAGER_C
 #include <uvm/uvm.h>
 
 struct pool *uvm_aiobuf_pool;
