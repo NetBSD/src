@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.202 2005/06/13 20:39:14 jmc Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.203 2005/06/28 01:07:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.202 2005/06/13 20:39:14 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.203 2005/06/28 01:07:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -99,13 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.202 2005/06/13 20:39:14 jmc Exp $");
 
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
-#endif
-
-/* If we are trying to build a small kernel, don't inline much here. */
-#ifdef MALLOC_NOINLINE
-#define __INLINE
-#else
-#define __INLINE __inline
 #endif
 
 #ifndef UVMMAP_NOCOUNTERS
@@ -300,7 +293,7 @@ uvm_compare(const struct vm_map_entry *a, const struct vm_map_entry *b)
 	return (0);
 }
 
-static __INLINE void
+static __inline void
 uvm_rb_augment(struct vm_map_entry *entry)
 {
 
@@ -341,7 +334,7 @@ uvm_rb_subtree_space(const struct vm_map_entry *entry)
 	return (space);
 }
 
-static __INLINE void
+static __inline void
 uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 {
 	/* We need to traverse to the very top */
@@ -351,7 +344,7 @@ uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 	} while ((entry = RB_PARENT(entry, rb_entry)) != NULL);
 }
 
-static __INLINE void
+static void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
 	vaddr_t space = uvm_rb_space(map, entry);
@@ -368,7 +361,7 @@ uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 		uvm_rb_fixup(map, entry->prev);
 }
 
-static __INLINE void
+static void
 uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_map_entry *parent;
@@ -449,19 +442,15 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 	return (-1);
 }
 
-/*
- * local inlines
- */
-
 #ifdef DIAGNOSTIC
-static __INLINE struct vm_map *uvm_kmapent_map(struct vm_map_entry *);
+static struct vm_map *uvm_kmapent_map(struct vm_map_entry *);
 #endif
 
 /*
  * uvm_mapent_alloc: allocate a map entry
  */
 
-static __INLINE struct vm_map_entry *
+static struct vm_map_entry *
 uvm_mapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_map_entry *me;
@@ -486,7 +475,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
  * uvm_mapent_alloc_split: allocate a map entry for clipping.
  */
 
-static __INLINE struct vm_map_entry *
+static struct vm_map_entry *
 uvm_mapent_alloc_split(struct vm_map *map,
     const struct vm_map_entry *old_entry, int flags,
     struct uvm_mapent_reservation *umr)
@@ -519,7 +508,7 @@ uvm_mapent_alloc_split(struct vm_map *map,
  * uvm_mapent_free: free map entry
  */
 
-static __INLINE void
+static void
 uvm_mapent_free(struct vm_map_entry *me)
 {
 	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
@@ -540,7 +529,7 @@ uvm_mapent_free(struct vm_map_entry *me)
  * => caller shouldn't hold map locked if VM_MAP_USE_KMAPENT(map) is true.
  */
 
-static __INLINE void
+static void
 uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
 {
 
@@ -573,7 +562,7 @@ uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
  * uvm_mapent_copy: copy a map entry, preserving flags
  */
 
-static __INLINE void
+static __inline void
 uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 {
 
@@ -587,7 +576,7 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
  * => map should be locked by caller
  */
 
-static __INLINE void
+static __inline void
 uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 {
 
@@ -599,7 +588,7 @@ uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 /*
  * wrapper for calling amap_ref()
  */
-static __INLINE void
+static __inline void
 uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 {
 
@@ -1435,7 +1424,7 @@ failed:
  * entry->next->start and entry->end.  Returns 1 if fits, 0 if doesn't
  * fit, and -1 address wraps around.
  */
-static __INLINE int
+static int
 uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
     vsize_t align, int topdown, struct vm_map_entry *entry)
 {
@@ -4086,7 +4075,7 @@ struct uvm_kmapent_hdr {
 
 
 #ifdef DIAGNOSTIC
-static __INLINE struct vm_map *
+static struct vm_map *
 uvm_kmapent_map(struct vm_map_entry *entry)
 {
 	const struct uvm_kmapent_hdr *ukh;
