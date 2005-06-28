@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.21 2005/06/26 20:55:44 christos Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.22 2005/06/28 15:33:27 christos Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -418,7 +418,8 @@ struct sadb_x_nat_t_frag {
 #define PFKEY_ADDR_PROTO(ext) \
 	(((struct sadb_address *)(void *)(ext))->sadb_address_proto)
 #define PFKEY_ADDR_SADDR(ext) \
-	((struct sockaddr *)(void *)((caddr_t)(ext) + sizeof(struct sadb_address)))
+	((struct sockaddr *)(void *)((char *)(void *)(ext) + \
+	sizeof(struct sadb_address)))
 
 /* in 64bits */
 #define	PFKEY_UNUNIT64(a)	((a) << 3)
