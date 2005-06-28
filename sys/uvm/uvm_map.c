@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.203 2005/06/28 01:07:56 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.204 2005/06/28 05:25:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.203 2005/06/28 01:07:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.204 2005/06/28 05:25:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.203 2005/06/28 01:07:56 thorpej Exp $"
 #include <sys/shm.h>
 #endif
 
-#define UVM_MAP
+#define UVM_MAP_C
 #include <uvm/uvm.h>
 #undef RB_AUGMENT
 #define	RB_AUGMENT(x)	uvm_rb_augment(x)

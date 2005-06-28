@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.105 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.106 2005/06/28 05:25:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.105 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.106 2005/06/28 05:25:42 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.105 2005/06/27 02:19:48 thorpej Exp $
 #include <sys/vnode.h>
 #include <sys/proc.h>
 
-#define UVM_PAGE                /* pull in uvm_page.h functions */
+#define UVM_PAGE_C              /* pull in uvm_page_i.h functions */
 #include <uvm/uvm.h>
 
 /*
