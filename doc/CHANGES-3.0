@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.144 2005/06/27 09:21:15 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.145 2005/06/28 10:33:43 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9792,4 +9792,38 @@ libexec/telnetd/telnetd.c			1.48
 
 	Remove static local variable so its easier to correctly use strlcpy.
 	[lha, ticket #502]
+
+sys/arch/xen/i386/machdep.c			1.17
+sys/arch/xen/i386/xen_machdep.c			1.10
+sys/arch/xen/include/xen.h			1.15
+
+	Add support for x86 boot flags:
+	-s boot single user
+	-a ask root device
+	[bouyer, ticket #481]
+
+sys/arch/xen/conf/files.compat			1.7
+sys/arch/xen/x86/consinit.c			1.5
+
+	Allow compiling a domain0 kernel with vga but without pckbc, and add
+	console support for USB keyboard.
+	[bouyer, ticket #482]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.8
+
+	Remove some debug printf(), and #ifdef DEBUG some others.
+	[bouyer, ticket #483]
+
+sys/dev/pci/pcidevs				1.721
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add Intel 6300ESB SATA RAID Controller.
+	[briggs, ticket #485]
+
+sys/kern/kern_ksyms.c				1.26
+
+	Use %zx in a format string to print a size_t, not %lx, so a kernel
+	with KSYMS_DEBUG will compile.
+	[riz, ticket #508]
 
