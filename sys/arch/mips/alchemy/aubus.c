@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.12 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: aubus.c,v 1.13 2005/06/28 19:46:47 drochner Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.12 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.13 2005/06/28 19:46:47 drochner Exp $");
 
 #include "locators.h"
 
@@ -248,8 +248,7 @@ aubus_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		aprint_normal(" %s 0x%lx", aubuscf_locnames[AUBUSCF_ADDR],
-		    aa->aa_addr);
+		aprint_normal(" addr 0x%lx", aa->aa_addr);
 	if (aa->aa_irq[0] >= 0)
 		aprint_normal(" irq %d", aa->aa_irq[0]);
 	if (aa->aa_irq[1] >= 0)
