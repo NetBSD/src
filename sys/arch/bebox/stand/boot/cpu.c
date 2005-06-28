@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2005/06/28 20:01:17 junyoung Exp $	*/
 
 /*
  * This file contains information proprietary to Be Inc.
@@ -42,25 +42,25 @@
  */
 
 #define	CPU1_HRESET	0x20000000
- 
+
 int
-whichCPU()
+whichCPU(void)
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF3F0;
 
 	if (*CPU_control & 0x02000000) {
-		return (1);
+		return 1;
 	} else {
-		return (0);
+		return 0;
 	}
 }
 
 /*
  * Force CPU #1 into Hard RESET state
  */
- 
+
 void
-resetCPU1()
+resetCPU1(void)
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
 
@@ -71,19 +71,18 @@ resetCPU1()
  * Return state of CPU RESET register
  */
 unsigned long
-cpuState()
+cpuState(void)
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
 
-	return (*CPU_control);
+	return *CPU_control;
 }
 
 /*
  * Start CPU #1
  */
 void
-runCPU1(entry)
-	void *entry;
+runCPU1(void *entry)
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
 	long *PEF_vector = (long *)0x3000;
@@ -112,7 +111,7 @@ runCPU1(entry)
 volatile int cpu_ctr = 0;
 
 void
-cpu1()
+cpu1(void)
 {
 	while (1)
 		cpu_ctr++;
@@ -121,7 +120,7 @@ cpu1()
 volatile int CPU1_alive = 0;
 
 void
-start_CPU1()
+start_CPU1(void)
 {
 	volatile long *key = (volatile long *)0x0080;
 
@@ -135,8 +134,7 @@ start_CPU1()
 }
 
 void
-wait_for(ptr)
-	volatile int *ptr;
+wait_for(volatile int *ptr)
 {
 	int i;
 	for (i = 0; i < 10; i++) {
