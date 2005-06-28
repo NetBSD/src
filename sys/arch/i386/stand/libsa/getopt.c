@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.2 2003/08/07 16:28:04 agc Exp $	*/
+/*	$NetBSD: getopt.c,v 1.3 2005/06/28 21:00:41 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -32,7 +32,7 @@
 /* from: netbsd:lib/libc/stdlib/getopt.c */
 
 #include <lib/libkern/libkern.h>
-#include "stand.h"
+#include <lib/libsa/stand.h>
 
 int	opterr = 1,		/* if error message should be printed */
 	optind = 1,		/* index into parent argv vector */

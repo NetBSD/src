@@ -1,9 +1,9 @@
-/*	$NetBSD: conf.c,v 1.1 1996/05/17 20:11:33 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2005/06/28 21:03:02 junyoung Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 struct devsw devsw[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.5 2005/06/23 19:44:00 junyoung Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.6 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <ufs.h>
 
 struct fs_ops file_system[] = {

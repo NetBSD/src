@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.9 2005/06/27 11:34:30 junyoung Exp $	*/
+/*	$NetBSD: nfs.c,v 1.10 2005/06/28 21:00:41 junyoung Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -44,7 +44,7 @@
 #include "rpcv2.h"
 #include "nfsv2.h"
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "net.h"
 #include "netif.h"
 #include "nfs.h"
