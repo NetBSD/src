@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.6 2001/07/07 09:06:44 scw Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.7 2005/06/28 20:13:25 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "stand.h"
 #include "libsa.h"
 
-void cputobsdlabel __P((struct disklabel *lp, struct cpu_disklabel *clp));
+void cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp);
 
 int errno;
 
@@ -56,10 +56,7 @@ struct bugsc_softc {
 } bugsc_softc[1];
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct bugsc_softc *pp = &bugsc_softc[0];
 	int	error, pn = 0;
@@ -101,13 +98,13 @@ devopen(f, fname, file)
 
 	if (pp->fd < 0) {
 		printf("Can't open device `%s'\n", dev);
-		return (ENXIO);
+		return ENXIO;
 	}
 	error = bugscstrategy(pp, F_READ, LABELSECTOR, DEV_BSIZE, iobuf, &nrd);
 	if (error)
-		return (error);
+		return error;
 	if (nrd != DEV_BSIZE)
-		return (EINVAL);
+		return EINVAL;
 
 	/*LINTED*/
 	cputobsdlabel(&sdlabel, (struct cpu_disklabel *)&(iobuf[0]));
@@ -118,7 +115,7 @@ devopen(f, fname, file)
 	f->f_devdata = (void *)pp;
 	/*LINTED*/
 	*file = (char *)fname;
-	return (0);
+	return 0;
 }
 
 /* silly block scale factor */
@@ -126,13 +123,8 @@ devopen(f, fname, file)
 #define BUG_SCALE (512/BUG_BLOCK_SIZE)
 /*ARGSUSED*/
 int
-bugscstrategy(devdata, func, dblk, size, buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+bugscstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *buf,
+	      size_t *rsize)
 {
 	struct mvmeprom_dskio dio;
 	struct bugsc_softc *pp = (struct bugsc_softc *)devdata;
@@ -160,13 +152,12 @@ printf("rsize %d status %x\n", *rsize, dio.status);
 #endif
 
 	if (dio.status)
-		return (EIO);
-	return (0);
+		return EIO;
+	return 0;
 }
 
 int
-bugscopen(f)
-	struct open_file *f;
+bugscopen(struct open_file *f)
 {
 #ifdef DEBUG
 	printf("bugscopen:\n");
@@ -179,31 +170,25 @@ bugscopen(f)
 	printf("using mvmebug ctrl %d dev %d\n",
 	    bugsc_softc[0].ctrl, bugsc_softc[0].dev);
 #endif
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
 int
-bugscclose(f)
-	struct open_file *f;
+bugscclose(struct open_file *f)
 {
-	return (EIO);
+	return EIO;
 }
 
 /*ARGSUSED*/
 int
-bugscioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+bugscioctl(struct open_file *f, u_long cmd, void *data)
 {
-	return (EIO);
+	return EIO;
 }
 
 void
-cputobsdlabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
@@ -265,9 +250,9 @@ cputobsdlabel(lp, clp)
 	lp->d_sbsize      = (u_int32_t)clp->sbsize;
 
 	memcpy(&(lp->d_partitions[0]), clp->vid_4,
-	    sizeof (struct partition) * 4);
+	    sizeof(struct partition) * 4);
 
 	/* CONSTCOND */
-	memcpy(&(lp->d_partitions[4]), clp->cfg_4, sizeof (struct partition) 
+	memcpy(&(lp->d_partitions[4]), clp->cfg_4, sizeof(struct partition)
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }
