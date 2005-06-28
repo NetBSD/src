@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.164 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.165 2005/06/28 09:30:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.164 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165 2005/06/28 09:30:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -113,10 +113,10 @@ struct vfsops ffs_vfsops = {
 };
 VFS_ATTACH(ffs_vfsops);
 
-struct genfs_ops ffs_genfsops = {
-	ffs_gop_size,
-	ufs_gop_alloc,
-	genfs_gop_write,
+static const struct genfs_ops ffs_genfsops = {
+	.gop_size = ffs_gop_size,
+	.gop_alloc = ufs_gop_alloc,
+	.gop_write = genfs_gop_write,
 };
 
 POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",

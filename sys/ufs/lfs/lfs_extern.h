@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.68 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.69 2005/06/28 09:30:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -283,6 +283,6 @@ extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p)(void *);
 extern int (**lfs_specop_p)(void *);
 extern int (**lfs_fifoop_p)(void *);
-extern struct genfs_ops lfs_genfsops;
+extern const struct genfs_ops lfs_genfsops;
 
 #endif /* !_UFS_LFS_LFS_EXTERN_H_ */

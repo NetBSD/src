@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.97 2005/05/29 21:55:33 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.98 2005/06/28 09:30:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.97 2005/05/29 21:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98 2005/06/28 09:30:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1566,7 +1566,7 @@ genfs_null_putpages(void *v)
 }
 
 void
-genfs_node_init(struct vnode *vp, struct genfs_ops *ops)
+genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
 {
 	struct genfs_node *gp = VTOG(vp);
 
