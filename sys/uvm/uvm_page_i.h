@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.23 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.24 2005/06/28 04:00:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -119,7 +119,7 @@ uvm_unlock_fpageq(int s)
  *	out from under it
  */
 
-struct vm_page *
+PAGE_INLINE struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
