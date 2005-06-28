@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.6 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.7 2005/06/28 20:09:44 seanb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -239,9 +239,9 @@ struct bridge_iflist {
 	struct bridge_timer	bif_hold_timer;
 	struct bridge_timer	bif_message_age_timer;
 	struct bridge_timer	bif_forward_delay_timer;
-	struct bstp_config_unit	bif_config_bpdu;
 	uint16_t		bif_port_id;
 	uint16_t		bif_designated_port;
+	struct bstp_config_unit	bif_config_bpdu;
 	uint8_t			bif_state;
 	uint8_t			bif_topology_change_acknowledge;
 	uint8_t			bif_config_pending;
