@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.722 2005/06/26 20:04:10 seb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.723 2005/06/28 00:31:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -38,7 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const struct pci_vendor pci_vendors[] = {
+static const struct pci_vendor pci_vendors[] = {
 	{
 	    PCI_VENDOR_PEAK,
 	    "Peak System Technik",
@@ -2326,7 +2326,7 @@ const struct pci_vendor pci_vendors[] = {
 };
 const int pci_nvendors = 571;
 
-const struct pci_product pci_products[] = {
+static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
 	    "3c985 Gigabit Ethernet",
