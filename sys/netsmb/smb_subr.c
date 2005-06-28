@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.22 2005/05/29 21:26:27 christos Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.23 2005/06/28 03:24:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.22 2005/05/29 21:26:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.23 2005/06/28 03:24:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,8 @@ smb_maperror(int eclass, int eno)
 		    case ERRquota:
 			return EDQUOT;
 		    case ERRnotlocked:
-			return EBUSY;
+			/* it's okay to try to unlock already unlocked file */
+			return 0;
 		    case NT_STATUS_NOTIFY_ENUM_DIR:
 			return EMSGSIZE;
 		}
