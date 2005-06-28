@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.9 2003/01/24 21:55:13 fvdl Exp $ */
+/*	$NetBSD: bootxx.c,v 1.10 2005/06/28 20:23:50 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include "libsa.h"
 #include "bootxx.h"
 
-int copyboot __P((struct open_file *, u_long *));
+int copyboot(struct open_file *, u_long *);
 
 /*
  * Boot device is derived from ROM provided information.
@@ -74,14 +74,14 @@ extern		char bootprog_name[], bootprog_rev[];
 int main(void);
 
 int
-main()
+main(void)
 {
 	struct open_file	f;
 	u_long	addr;
 	char *foo;
 	int error;
 
-	printf("Boot: bug device: ctrl=%d, dev=%d\n", 
+	printf("Boot: bug device: ctrl=%d, dev=%d\n",
 		bugargs.ctrl_lun, bugargs.dev_lun);
 	printf("\nbootxx: %s first level bootstrap program [%s]\n\n",
 		bootprog_name, bootprog_rev);
@@ -103,9 +103,7 @@ main()
 }
 
 int
-copyboot(fp, addr)
-	struct open_file	*fp;
-	u_long			*addr;
+copyboot(struct open_file *fp, u_long *addr)
 {
 	int	n, i, blknum;
 	char	*laddr = (char *) *addr;
@@ -122,10 +120,8 @@ copyboot(fp, addr)
 	}
 
 	for (i = 0; i < block_count; i++) {
-
 		if ((blknum = block_table[i]) == 0)
 			break;
-
 #ifdef DEBUG
 		printf("bootxx: read block # %d = %d\n", i, blknum);
 #endif
@@ -144,14 +140,13 @@ copyboot(fp, addr)
 
 	if (N_GETMAGIC(x->ah) == OMAGIC)
 		*addr += sizeof(x->ah);
-	else
-	if (memcmp(x->eh.e_ident, ELFMAG, SELFMAG) == 0) {
+	else if (memcmp(x->eh.e_ident, ELFMAG, SELFMAG) == 0) {
 		Elf32_Phdr *ep = (Elf32_Phdr *)(*addr + x->eh.e_phoff);
 		*addr += ep->p_offset;
 	} else {
 		printf("bootxx: secondary bootstrap isn't an executable\n");
-		return(-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
