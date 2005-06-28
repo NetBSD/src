@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.2 2005/06/28 20:21:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -299,7 +299,8 @@ cf_locnames_print(const char *name, void *value, void *arg)
 
 	a = value;
 	if (a->a_locs) {
-		if (fprintf(fp, "const char * const %scf_locnames[] = { ",
+		if (fprintf(fp,
+			    "static const char * const %scf_locnames[] = { ",
 			    name) < 0)
 			return (1);
 		for (nv = a->a_locs; nv; nv = nv->nv_next)
@@ -335,7 +336,7 @@ static int loc[1] = { -1 };\n") < 0)
 
 	if (*packed != NULL)
 		if (fprintf(fp,
-		    "\nconst char * const nullcf_locnames[] = {NULL};\n") < 0)
+	    "\nstatic const char * const nullcf_locnames[] = {NULL};\n") < 0)
 			return (1);
 
 	if (locators.used != 0)
