@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.2 2005/05/31 23:22:14 uwe Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.3 2005/06/28 18:30:00 drochner Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -103,7 +103,6 @@ struct psh3tp_softc {
 /* config machinery */
 static int psh3tp_match(struct device *, struct cfdata *, void *);
 static void psh3tp_attach(struct device *, struct device *, void *);
-static int psh3tp_wsmouse_submatch(struct device *, struct cfdata *, void *);
 
 /* wsmouse accessops */
 static int psh3tp_wsmouse_enable(void *);
@@ -176,8 +175,8 @@ psh3tp_attach(struct device *parent, struct device *self, void *aux)
 	wsma.accessops = &psh3tp_accessops;
 	wsma.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm(
-	    self, &wsma, wsmousedevprint, psh3tp_wsmouse_submatch);
+	sc->sc_wsmousedev = config_found_ia(
+	    self, "wsmousedev", &wsma, wsmousedevprint);
 	if (sc->sc_wsmousedev == NULL)
 		return;
 
@@ -193,14 +192,6 @@ psh3tp_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH7709_INTEVT2_IRQ2,
 	    IST_EDGE, IPL_TTY, psh3tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ2);
-}
-
-
-static int
-psh3tp_wsmouse_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (!strcmp(cf->cf_name, "wsmouse"));
 }
 
 

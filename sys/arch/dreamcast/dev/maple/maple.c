@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.27 2005/02/19 15:40:15 tsutsui Exp $	*/
+/*	$NetBSD: maple.c,v 1.28 2005/06/28 18:29:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.27 2005/02/19 15:40:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.28 2005/06/28 18:29:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -637,7 +637,8 @@ maple_print_unit(void *aux, const char *pnp)
 }
 
 static int
-maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
+maplesubmatch(struct device *parent, struct cfdata *match,
+	      const locdesc_t *ldesc, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -696,8 +697,8 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 		u->u_func[f].f_dev = NULL;
 		if (func & MAPLE_FUNC(f)) {
 			ma.ma_function = f;
-			u->u_func[f].f_dev = config_found_sm(&sc->sc_dev, &ma,
-			    mapleprint, maplesubmatch);
+			u->u_func[f].f_dev = config_found_sm_loc(&sc->sc_dev,
+			    "maple", NULL, &ma, mapleprint, maplesubmatch);
 			u->u_ping_func = f;	/* XXX using largest func */
 		}
 	}

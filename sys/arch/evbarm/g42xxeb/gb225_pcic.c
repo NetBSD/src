@@ -88,7 +88,6 @@ struct opcic_softc {
 static int  	opcic_match(struct device *, struct cfdata *, void *);
 static void  	opcic_attach(struct device *, struct device *, void *);
 static int 	opcic_print(void *, const char *);
-static int 	opcic_submatch(struct device *, struct cfdata *, void *);
 
 static	int	opcic_read(struct sapcic_socket *, int);
 static	void	opcic_write(struct sapcic_socket *, int, int);
@@ -185,8 +184,8 @@ opcic_attach(struct device *parent, struct device *self, void *aux)
 		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].ss.pcmcia =
-		    (struct device *)config_found_sm(&sc->sc_pc.sc_dev,
-		    &paa, opcic_print, opcic_submatch);
+		    (struct device *)config_found_ia(&sc->sc_pc.sc_dev,
+		    "pcmciabus", &paa, opcic_print);
 
 #ifndef DONT_USE_CARD_DETECT_INTR
 		/* interrupt for card insertion/removal */
@@ -208,12 +207,6 @@ static int
 opcic_print(void *aux, const char *name)
 {
 	return (UNCONF);
-}
-
-static int
-opcic_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-	return config_match(parent, cf, aux);
 }
 
 #ifndef DONT_USE_CARD_DETECT_INTR

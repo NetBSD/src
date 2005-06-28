@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.12 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.13 2005/06/28 18:30:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.12 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.13 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -70,7 +70,8 @@ static void bootbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(bootbus, sizeof(struct bootbus_softc),
     bootbus_match, bootbus_attach, NULL, NULL);
 
-static int bootbus_submatch(struct device *, struct cfdata *, void *);
+static int bootbus_submatch(struct device *, struct cfdata *,
+			    const locdesc_t *, void *);
 static int bootbus_print(void *, const char *);
 
 static int bootbus_setup_attach_args(struct bootbus_softc *, bus_space_tag_t,
@@ -130,15 +131,16 @@ bootbus_attach(struct device *parent, struct device *self, void *aux)
 		if (bootbus_setup_attach_args(sc, sc->sc_bustag, node, &baa))
 			panic("bootbus_attach: failed to set up attach args");
 
-		(void) config_found_sm(&sc->sc_dev, &baa, bootbus_print,
-		    bootbus_submatch);
+		(void) config_found_sm_loc(&sc->sc_dev, "bootbus", NULL, &baa,
+					   bootbus_print, bootbus_submatch);
 
 		bootbus_destroy_attach_args(&baa);
 	}
 }
 
 static int
-bootbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+bootbus_submatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
 	struct bootbus_attach_args *baa = aux;
 

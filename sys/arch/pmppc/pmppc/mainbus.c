@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2004/07/29 18:39:00 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2004/07/29 18:39:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,7 +75,8 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static int
-mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_submatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -128,14 +129,16 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		maa.mb_name = "rtc";
 		maa.mb_addr = PMPPC_RTC;
 		maa.mb_irq = PMPPC_I_RTC_INT;
-		config_found_sm(self, &maa, mainbus_print, mainbus_submatch);
+		config_found_sm_loc(self, "mainbus", NULL, &maa, mainbus_print,
+				    mainbus_submatch);
 	}
 
 	if (a_config.a_has_eth) {
 		maa.mb_name = "cs";
 		maa.mb_addr = PMPPC_CS_IO_BASE;
 		maa.mb_irq = PMPPC_I_ETH_INT;
-		config_found_sm(self, &maa, mainbus_print, mainbus_submatch);
+		config_found_sm_loc(self, "mainbus", NULL, &maa, mainbus_print,
+				    mainbus_submatch);
 		maa.mb_bt = &pmppc_mem_tag;
 	}
 	if (a_config.a_flash_width != 0) {
@@ -144,7 +147,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		maa.mb_irq = MAINBUSCF_IRQ_DEFAULT;
 		maa.u.mb_flash.size = a_config.a_flash_size;
 		maa.u.mb_flash.width = a_config.a_flash_width;
-		config_found_sm(self, &maa, mainbus_print, mainbus_submatch);
+		config_found_sm_loc(self, "mainbus", NULL, &maa, mainbus_print,
+				    mainbus_submatch);
 	}
 
 	maa.mb_name = "cpc";
