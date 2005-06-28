@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.2 1997/06/28 21:36:45 leo Exp $	*/
+/*	$NetBSD: diskio.c,v 1.3 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "atari_stand.h"
 #include <sys/disklabel.h>
 

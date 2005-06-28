@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2004/06/29 16:21:16 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <sys/param.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>

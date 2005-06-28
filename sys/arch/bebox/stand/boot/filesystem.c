@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.3 2005/06/23 19:44:00 junyoung Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.4 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <ufs.h>
 #include <cd9660.h>
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.10 2005/06/28 14:52:07 junyoung Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.11 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -32,7 +32,7 @@
 
 #define	boot_BSD	bsd_startup
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <atari_stand.h>
 #include <string.h>
 #include <libkern.h>
@@ -61,7 +61,7 @@ bootxx(void *readsector, void *disklabel, int autoboot)
 	setheap(end, (void*)(LOADADDR3 - 4));
 
 	printf("\033v\nNetBSD/atari secondary bootloader"
-						" ($Revision: 1.10 $)\n\n");
+						" ($Revision: 1.11 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return -1;

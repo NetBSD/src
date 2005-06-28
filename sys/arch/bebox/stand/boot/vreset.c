@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.5 2005/06/27 11:52:28 junyoung Exp $	*/
+/*	$NetBSD: vreset.c,v 1.6 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -41,7 +41,7 @@
  */
 
 #ifdef CONS_VGA
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <machine/bswap.h>
 #include "boot.h"
 #include "iso_font.h"

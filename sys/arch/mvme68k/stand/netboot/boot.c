@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2005/06/28 20:15:29 junyoung Exp $ */
+/*	$NetBSD: boot.c,v 1.14 2005/06/28 21:03:02 junyoung Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,7 +37,7 @@
 
 #include <lib/libkern/libkern.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 #include "config.h"
 

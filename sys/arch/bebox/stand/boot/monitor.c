@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.4 2005/06/28 14:36:21 junyoung Exp $	*/
+/*	$NetBSD: monitor.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 extern int errno;
 extern char *name;

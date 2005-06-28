@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.10 2005/06/28 20:23:50 junyoung Exp $ */
+/*	$NetBSD: bootxx.c,v 1.11 2005/06/28 21:03:02 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <sys/exec_elf.h>
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 #include "bootxx.h"
 

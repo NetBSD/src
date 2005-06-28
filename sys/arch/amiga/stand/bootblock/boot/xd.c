@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.6 2005/06/23 19:44:00 junyoung Exp $
+ * $NetBSD: xd.c,v 1.7 2005/06/28 21:03:01 junyoung Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -33,7 +33,7 @@
 
 #include <sys/types.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <ufs.h>
 #include <ustarfs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2005/06/23 19:44:01 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2005/06/28 21:00:41 junyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #ifdef SUPPORT_NFS
 #include <nfs.h>
 #endif

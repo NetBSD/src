@@ -1,4 +1,4 @@
-/*	$NetBSD: diskbuf.c,v 1.4 2004/03/24 16:46:27 drochner Exp $	*/
+/*	$NetBSD: diskbuf.c,v 1.5 2005/06/28 21:00:41 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -28,8 +28,8 @@
 
 /* data buffer for BIOS disk / DOS I/O  */
 
+#include <lib/libsa/stand.h>
 #include "diskbuf.h"
-#include "stand.h"
 
 char *diskbufp;		/* allocated from heap */
 

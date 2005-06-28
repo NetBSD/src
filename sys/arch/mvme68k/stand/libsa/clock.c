@@ -1,9 +1,9 @@
-/*	$NetBSD: clock.c,v 1.5 2005/06/28 20:26:04 junyoung Exp $ */
+/*	$NetBSD: clock.c,v 1.6 2005/06/28 21:03:02 junyoung Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 /*

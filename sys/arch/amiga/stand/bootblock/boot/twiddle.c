@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.2 2003/08/07 16:26:46 agc Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.3 2005/06/28 21:03:01 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,9 +31,9 @@
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
-/*	From: $NetBSD: twiddle.c,v 1.2 2003/08/07 16:26:46 agc Exp $	*/
+/*	From: $NetBSD: twiddle.c,v 1.3 2005/06/28 21:03:01 junyoung Exp $	*/
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 
 const static char chars[4] = {'|', '/', '-', '\\'};
 

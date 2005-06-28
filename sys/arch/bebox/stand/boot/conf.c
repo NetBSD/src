@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2005/06/28 20:30:46 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/param.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int fdopen(struct open_file *, ...);
