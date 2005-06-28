@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.21 2002/08/27 00:22:53 grant Exp $
+#	$NetBSD: TODO,v 1.22 2005/06/28 07:41:46 rillig Exp $
 
 Things to do ....  in no specific order.
 
@@ -116,3 +116,7 @@ Things to do ....  in no specific order.
 
 	-- Install binary packages.  (possibly a second program
 	   run after installation.)
+
+	-- Provide the user a menu to select each installation step on
+	   its own. Currently there's no way to repeat steps or leave
+	   them out. (See the Debian installer for a good example.)
