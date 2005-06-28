@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.45 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.46 2005/06/28 16:53:14 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.45 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.46 2005/06/28 16:53:14 kml Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ ext2fs_truncate(v)
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		KASSERT(error || ovp->v_size == oip->i_size);
+		KASSERT(error  || ovp->v_size == ext2fs_size(oip));
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	/*
@@ -451,7 +451,7 @@ done:
 	(void)ext2fs_setsize(oip, length);
 	oip->i_e2fs_nblock -= blocksreleased;
 	oip->i_flag |= IN_CHANGE;
-	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_size);
+	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
 	return (allerror);
 }
 
