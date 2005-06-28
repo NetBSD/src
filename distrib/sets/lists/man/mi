@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.797 2005/06/27 20:32:39 peter Exp $
+# $NetBSD: mi,v 1.798 2005/06/28 08:36:48 kent Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1117,7 +1117,7 @@
 ./usr/share/man/cat4/ppi.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ppp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pppoe.0			man-sys-catman		.cat
-./usr/share/man/cat4/pss.0			man-sys-catman		.cat
+./usr/share/man/cat4/pss.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ptm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/puc.0			man-sys-catman		.cat
@@ -1183,7 +1183,7 @@
 ./usr/share/man/cat4/slide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sound.0			man-sys-catman		.cat
-./usr/share/man/cat4/sp.0			man-sys-catman		.cat
+./usr/share/man/cat4/sp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/sparc/audioamd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/bpp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/bwtwo.0		man-sys-catman		.cat
@@ -3351,7 +3351,7 @@
 ./usr/share/man/man4/ppi.4			man-obsolete		obsolete
 ./usr/share/man/man4/ppp.4			man-sys-man		.man
 ./usr/share/man/man4/pppoe.4			man-sys-man		.man
-./usr/share/man/man4/pss.4			man-sys-man		.man
+./usr/share/man/man4/pss.4			man-obsolete		obsolete
 ./usr/share/man/man4/ptm.4			man-sys-man		.man
 ./usr/share/man/man4/pty.4			man-sys-man		.man
 ./usr/share/man/man4/puc.4			man-sys-man		.man
@@ -3417,7 +3417,7 @@
 ./usr/share/man/man4/slide.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
 ./usr/share/man/man4/sound.4			man-sys-man		.man
-./usr/share/man/man4/sp.4			man-sys-man		.man
+./usr/share/man/man4/sp.4			man-obsolete		obsolete
 ./usr/share/man/man4/sparc/audioamd.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/bpp.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/bwtwo.4		man-sys-man		.man

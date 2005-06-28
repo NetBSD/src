@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.482 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.483 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -51,3 +51,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	      [junyoung 20050622]
 	tlp(4): added support for ASIX AX88140A and AX88141.
 		[rpaulo 20050624]
+	pss(4): Remove the pss(4) driver.  It has never been workable.
+		[kent 20050628]

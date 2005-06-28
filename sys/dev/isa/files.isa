@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.138 2005/03/25 23:06:19 cube Exp $
+#	$NetBSD: files.isa,v 1.139 2005/06/28 08:36:47 kent Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -331,16 +331,6 @@ file	dev/isa/ad1848_isa.c		ad1848
 # ICS2101 mixer chip support; used by other drivers
 define	ics2101
 file	dev/isa/ics2101.c		ics2101
-
-
-# Audio systems based on Echo Speech Corp. ESC61[45] ASICs
-device	pss {[port = -1], [size = 0],
-	     [iomem = -1], [iosiz = 0],
-	     [irq = -1], [drq = -1]}
-attach	pss at isa
-device	sp: audiobus, isadma, ad1848, auconv
-attach	sp at pss
-file	dev/isa/pss.c			pss			needs-flag
 
 # Microsoft Windows Sound System
 device	wss { } : audiobus, isadma, ad1848, auconv
