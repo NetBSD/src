@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2005/06/23 19:44:02 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2005/06/28 14:43:26 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -42,7 +42,7 @@ struct devsw devsw[] = {
 	{ 0, 0, 0, 0, 0 }
 };
 
-int ndevs = (sizeof (devsw) / sizeof (devsw[0]));
+int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 const struct devspec devspec[] = {
 	{ "sd", 0, 7 },
@@ -59,6 +59,6 @@ struct fs_ops file_system[] = {
 	FS_OPS(ustarfs),
 };
 
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 struct open_file files[SOPEN_MAX];
