@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.40 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.41 2005/06/28 10:16:33 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct ad1848_isa_softc {
 	void	(*sc_rintr)(void *);	/* rec. DMA completion intr handler */
 	void	*sc_rarg;		/* arg for sc_rintr() */
 
-	/* Only used by pss XXX */
+	/* Only used by gus XXX */
 	int	sc_iobase;
 
 #ifndef AUDIO_NO_POWER_CTL
