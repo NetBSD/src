@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.34 2005/05/29 21:06:33 christos Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.35 2005/06/28 05:25:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,7 +74,7 @@
  * inline functions [maybe]
  */
 
-#if defined(UVM_MAP_INLINE) || defined(UVM_MAP)
+#if defined(UVM_MAP_INLINE) || defined(UVM_MAP_C)
 
 #ifndef _UVM_UVM_MAP_I_H_
 #define _UVM_UVM_MAP_I_H_
@@ -186,4 +186,4 @@ vm_map_to_kernel(struct vm_map *map)
 
 #endif /* _UVM_UVM_MAP_I_H_ */
 
-#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
+#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP_C) */
