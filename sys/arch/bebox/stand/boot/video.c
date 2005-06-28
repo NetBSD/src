@@ -1,4 +1,4 @@
-/*	$NetBSD: video.c,v 1.4 1999/06/28 01:20:45 sakamoto Exp $	*/
+/*	$NetBSD: video.c,v 1.5 2005/06/28 20:51:19 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -67,8 +67,7 @@ struct screen {
 
 
 void
-video_init(buffer)
-	u_char *buffer;
+video_init(u_char *buffer)
 {
 	struct screen *d = &screen;
 
@@ -83,9 +82,7 @@ video_init(buffer)
 }
 
 static void
-wrtchar(c, d)
-	u_char c;
-	struct screen *d;
+wrtchar(u_char c, struct screen *d)
 {
 	u_char *p = VramBase +
 		(d->col * VRAM_WIDTH * FONT_HEIGHT) + (d->row * FONT_WIDTH);
@@ -104,9 +101,7 @@ wrtchar(c, d)
 }
 
 static void
-cursor(d, flag)
-	struct screen *d;
-	int flag;
+cursor(struct screen *d, int flag)
 {
 	int x;
 	int y = FONT_HEIGHT - 1;
@@ -130,9 +125,8 @@ cursor(d, flag)
  * "ca" is the color/attributes value (left-shifted by 8)
  * or 0 if the current regular color for that screen is to be used.
  */
-void 
-video_putc(c)
-	int c;
+void
+video_putc(int c)
 {
 	struct screen *d = &screen;
 
@@ -168,6 +162,7 @@ video_putc(c)
 
 		case '\n':
 			d->col++;
+			/* FALLTHROUGH */
 		case '\r':
 			d->row = 0;
 			break;
@@ -196,7 +191,7 @@ video_putc(c)
 		memset(VramBase + VRAM_SIZE - VRAM_WIDTH * FONT_HEIGHT,
 			d->bgcolor, VRAM_WIDTH * FONT_HEIGHT);
 		d->col = COL - 1;
-	}	
+	}
 	cursor(d, 1);
 }
 #endif
