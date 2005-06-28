@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.48 2005/05/30 04:43:46 christos Exp $
+ * $Id: aic7xxxvar.h,v 1.49 2005/06/28 00:32:28 thorpej Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1254,12 +1254,6 @@ u_int			ahc_index_busy_tcl(struct ahc_softc *, u_int);
 void			ahc_unbusy_tcl(struct ahc_softc *, u_int);
 void			ahc_busy_tcl(struct ahc_softc *, u_int, u_int);
 
-/***************************** PCI Front End *********************************/
-const struct ahc_pci_identity	*ahc_find_pci_device(pcireg_t, pcireg_t, u_int);
-int			 ahc_pci_config(struct ahc_softc *,
-			    struct ahc_pci_identity *);
-int			 ahc_pci_test_register_access(struct ahc_softc *);
-
 /*************************** EISA/VL Front End ********************************/
 struct aic7770_identity *aic7770_find_device(uint32_t);
 int			 aic7770_config(struct ahc_softc *,
@@ -1291,7 +1285,6 @@ int			 ahc_reset(struct ahc_softc *);
 void			 ahc_shutdown(void *);
 
 /*************************** Interrupt Services *******************************/
-void			ahc_pci_intr(struct ahc_softc *);
 void			ahc_clear_intstat(struct ahc_softc *);
 void			ahc_run_qoutfifo(struct ahc_softc *);
 #ifdef AHC_TARGET_MODE
