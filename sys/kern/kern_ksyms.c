@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.23 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.23.2.1 2005/06/28 10:25:25 tron Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.23 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.23.2.1 2005/06/28 10:25:25 tron Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -1070,7 +1070,7 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_DEVKSYMS)
-		printf("ksymsread: offset 0x%llx resid 0x%lx\n",
+		printf("ksymsread: offset 0x%llx resid 0x%zx\n",
 		    (long long)uio->uio_offset, uio->uio_resid);
 #endif
 
