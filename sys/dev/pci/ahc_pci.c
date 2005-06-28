@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.50 2005/05/30 04:35:22 christos Exp $
+ * $Id: ahc_pci.c,v 1.51 2005/06/28 00:28:41 thorpej Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.50 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51 2005/06/28 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ static ahc_device_setup_t ahc_aha394XX_setup;
 static ahc_device_setup_t ahc_aha494XX_setup;
 static ahc_device_setup_t ahc_aha398XX_setup;
 
-struct ahc_pci_identity ahc_pci_ident_table [] =
+static struct ahc_pci_identity ahc_pci_ident_table [] =
 {
 	/* aic7850 based controllers */
 	{
@@ -657,7 +657,7 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 	}
 };
 
-const u_int ahc_num_pci_devs = NUM_ELEMENTS(ahc_pci_ident_table);
+static const u_int ahc_num_pci_devs = NUM_ELEMENTS(ahc_pci_ident_table);
 
 #define AHC_394X_SLOT_CHANNEL_A	4
 #define AHC_394X_SLOT_CHANNEL_B	5
@@ -707,17 +707,10 @@ static void ahc_scbram_config(struct ahc_softc *ahc, int enable,
 				  int pcheck, int fast, int large);
 static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
 
-int ahc_pci_probe(struct device *, struct cfdata *, void *);
-void ahc_pci_attach(struct device *, struct device *, void *);
+static void ahc_pci_intr(struct ahc_softc *);
 
-
-CFATTACH_DECL(ahc_pci, sizeof(struct ahc_softc),
-    ahc_pci_probe, ahc_pci_attach, NULL, NULL);
-
-const struct ahc_pci_identity *
-ahc_find_pci_device(id, subid, func)
-	pcireg_t id, subid;
-	u_int func;
+static const struct ahc_pci_identity *
+ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 {
 	u_int64_t  full_id;
 	const struct	   ahc_pci_identity *entry;
@@ -747,11 +740,8 @@ ahc_find_pci_device(id, subid, func)
 	return (NULL);
 }
 
-int
-ahc_pci_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ahc_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -762,10 +752,8 @@ ahc_pci_probe(parent, match, aux)
 	return (entry != NULL && entry->setup != NULL) ? 1 : 0;
 }
 
-void
-ahc_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -1094,6 +1082,9 @@ ahc_pci_attach(parent, self, aux)
 	return;
 }
 
+CFATTACH_DECL(ahc_pci, sizeof(struct ahc_softc),
+    ahc_pci_probe, ahc_pci_attach, NULL, NULL);
+
 static int
 ahc_9005_subdevinfo_valid(uint16_t device, uint16_t vendor,
 			  uint16_t subdevice, uint16_t subvendor)
@@ -1328,7 +1319,7 @@ done:
  * Perform some simple tests that should catch situations where
  * our registers are invalidly mapped.
  */
-int
+static int
 ahc_pci_test_register_access(struct ahc_softc *ahc)
 {
 	int	 error;
@@ -1394,7 +1385,7 @@ fail:
 }
 #endif
 
-void
+static void
 ahc_pci_intr(struct ahc_softc *ahc)
 {
 	u_int error;
