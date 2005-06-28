@@ -1,7 +1,7 @@
-/*	$NetBSD: devopen.c,v 1.1 2002/02/27 21:02:26 scw Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2005/06/28 20:55:55 junyoung Exp $	*/
 
 #include <sys/param.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 /*
  * Open the device named by the combined device/file name
@@ -14,10 +14,7 @@
  * Pass the PROM device name to open in case it needs it.
  */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct devsw *dp;
 	int error;
@@ -27,5 +24,5 @@ devopen(f, fname, file)
 	f->f_dev = dp;
 	error = (*dp->dv_open)(f, "net");	/* XXXSCW: Fixme */
 
-	return (error);
+	return error;
 }
