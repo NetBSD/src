@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.23 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.23 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,8 @@ MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 extern int (**smbfs_vnodeop_p) __P((void *));
 extern int prtactive;
 
-static struct genfs_ops smbfs_genfsops = {
-	NULL,
-	NULL,
-	genfs_compat_gop_write,
+static const struct genfs_ops smbfs_genfsops = {
+	.gop_write = genfs_compat_gop_write,
 };
 
 struct pool smbfs_node_pool;
