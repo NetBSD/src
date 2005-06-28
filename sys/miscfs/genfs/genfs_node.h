@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.5 2003/09/24 10:22:53 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.6 2005/06/28 09:30:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -54,14 +54,14 @@ struct genfs_ops {
 #define	GOP_SIZE_MEM	0x4	/* in-memory size */
 
 struct genfs_node {
-	struct genfs_ops	*g_op;		/* ops vector */
+	const struct genfs_ops	*g_op;		/* ops vector */
 	struct lock		g_glock;	/* getpages lock */
 };
 
 #define VTOG(vp) ((struct genfs_node *)(vp)->v_data)
 
 void	genfs_size(struct vnode *, off_t, off_t *, int);
-void	genfs_node_init(struct vnode *, struct genfs_ops *);
+void	genfs_node_init(struct vnode *, const struct genfs_ops *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);
 

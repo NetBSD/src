@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.79 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.80 2005/06/28 09:30:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.79 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80 2005/06/28 09:30:38 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -79,10 +79,10 @@ void nfs_gop_size(struct vnode *, off_t, off_t *, int);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
-struct genfs_ops nfs_genfsops = {
-	nfs_gop_size,
-	nfs_gop_alloc,
-	nfs_gop_write,
+static const struct genfs_ops nfs_genfsops = {
+	.gop_size = nfs_gop_size,
+	.gop_alloc = nfs_gop_alloc,
+	.gop_write = nfs_gop_write,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.7 2004/05/20 05:39:34 atatat Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.7 2004/05/20 05:39:34 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,10 @@ POOL_INIT(msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0, "msdosnopl",
 
 extern int prtactive;
 
-struct genfs_ops msdosfs_genfsops = {
-	genfs_size,
-	msdosfs_gop_alloc,
-	genfs_gop_write,
+static const struct genfs_ops msdosfs_genfsops = {
+	.gop_size = genfs_size,
+	.gop_alloc = msdosfs_gop_alloc,
+	.gop_write = genfs_gop_write,
 };
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
