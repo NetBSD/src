@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.6 2002/12/10 17:14:09 thorpej Exp $	*/
+/*	$NetBSD: aout.c,v 1.7 2005/06/28 14:22:21 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,11 +85,7 @@
  *	 error# : Error during load (*errp might contain error string).
  */
 int
-aout_load(fd, od, errp, loadsyms)
-int	fd;
-osdsc_t	*od;
-char	**errp;
-int	loadsyms;
+aout_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 {
 	long		textsz, stringsz;
 	struct exec	ehdr;
@@ -118,17 +114,17 @@ int	loadsyms;
 	od->kentry = ehdr.a_entry;
 
 	if (loadsyms && ehdr.a_syms) {
-	
-	  err = 1;
-	  if (lseek(fd,ehdr.a_text+ehdr.a_data+ehdr.a_syms+sizeof(ehdr),0) <= 0)
-		goto error;
-	  err = 2;
-	  if (read(fd, (char *)&stringsz, sizeof(long)) != sizeof(long))
-		goto error;
-	  err = 3;
-	  if (lseek(fd, sizeof(ehdr), 0) <= 0)
-		goto error;
-	  od->ksize += ehdr.a_syms + sizeof(long) + stringsz;
+		err = 1;
+		if (lseek(fd, ehdr.a_text+ehdr.a_data+ehdr.a_syms+sizeof(ehdr),
+			  0) <= 0)
+			goto error;
+		err = 2;
+		if (read(fd, (char *)&stringsz, sizeof(long)) != sizeof(long))
+			goto error;
+		err = 3;
+		if (lseek(fd, sizeof(ehdr), 0) <= 0)
+			goto error;
+		od->ksize += ehdr.a_syms + sizeof(long) + stringsz;
 	}
 
 	err = 4;
@@ -148,18 +144,18 @@ int	loadsyms;
 	 * Read symbol and string table
 	 */
 	if (loadsyms && ehdr.a_syms) {
-	    long	*p;
+		long	*p;
 
-	    p = (long *)((od->kstart) + textsz + ehdr.a_data + ehdr.a_bss);
-	    *p++ = ehdr.a_syms;
-	    err = 6;
-	    if (read(fd, (char *)p, ehdr.a_syms) != ehdr.a_syms)
-		goto error;
-	    p = (long *)((char *)p + ehdr.a_syms);
-	    err = 7;
-	    if (read(fd, (char *)p, stringsz) != stringsz)
-		goto error;
-	    od->k_esym = (long)((char *)p-(char *)od->kstart +stringsz);
+		p = (long *)((od->kstart) + textsz + ehdr.a_data + ehdr.a_bss);
+		*p++ = ehdr.a_syms;
+		err = 6;
+		if (read(fd, (char *)p, ehdr.a_syms) != ehdr.a_syms)
+			goto error;
+		p = (long *)((char *)p + ehdr.a_syms);
+		err = 7;
+		if (read(fd, (char *)p, stringsz) != stringsz)
+			goto error;
+		od->k_esym = (long)((char *)p-(char *)od->kstart +stringsz);
 	}
 	return 0;
 
