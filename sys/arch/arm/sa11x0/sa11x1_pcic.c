@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.9 2003/08/08 12:29:23 bsh Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.10 2005/06/28 18:29:58 drochner Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.9 2003/08/08 12:29:23 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.10 2005/06/28 18:29:58 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.9 2003/08/08 12:29:23 bsh Exp $");
 #include "sacpcic.h"
 
 static int	sacpcic_print(void *, const char *);
-static int	sacpcic_submatch(struct device *, struct cfdata *, void *);
-
 
 void
 sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
@@ -98,8 +96,8 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].pcmcia =
-		    (struct device *)config_found_sm(&sc->sc_pc.sc_dev,
-		    &paa, sacpcic_print, sacpcic_submatch);
+		    config_found_ia(&sc->sc_pc.sc_dev, "pcmciabus", &paa,
+				    sacpcic_print);
 
 		sacc_intr_establish((sacc_chipset_tag_t)psc,
 				    i ? IRQ_S1_CDVALID : IRQ_S0_CDVALID,
@@ -123,13 +121,6 @@ sacpcic_print(aux, name)
 {
 	return (UNCONF);
 }
-
-int
-sacpcic_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-	return config_match(parent, cf, aux);
-}
-
 
 int
 sacpcic_read(struct sapcic_socket *so, int reg)

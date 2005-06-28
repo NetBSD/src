@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.17 2004/09/29 04:06:52 sekiya Exp $	*/
+/*	$NetBSD: gio.c,v 1.18 2005/06/28 18:30:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.17 2004/09/29 04:06:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.18 2005/06/28 18:30:00 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,7 +67,8 @@ static int	gio_match(struct device *, struct cfdata *, void *);
 static void	gio_attach(struct device *, struct device *, void *);
 static int	gio_print(void *, const char *);
 static int	gio_search(struct device *, struct cfdata *, void *);
-static int	gio_submatch(struct device *, struct cfdata *, void *);
+static int	gio_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 
 CFATTACH_DECL(gio, sizeof(struct gio_softc),
     gio_match, gio_attach, NULL, NULL);
@@ -111,7 +112,8 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
 #endif
 
-		config_found_sm(self, &ga, gio_print, gio_submatch);
+		config_found_sm_loc(self, "gio", NULL, &ga, gio_print,
+				    gio_submatch);
 	}
 
 	config_search(gio_search, self, &ga);
@@ -179,7 +181,8 @@ gio_search(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-gio_submatch(struct device *parent, struct cfdata *cf, void *aux)
+gio_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 

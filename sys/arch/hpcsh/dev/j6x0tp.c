@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.6 2005/05/31 23:21:03 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.7 2005/06/28 18:30:00 drochner Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.6 2005/05/31 23:21:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.7 2005/06/28 18:30:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,10 +133,6 @@ struct j6x0tp_softc {
 /* config machinery */
 static int	j6x0tp_match(struct device *, struct cfdata *, void *);
 static void	j6x0tp_attach(struct device *, struct device *, void *);
-static int	j6x0tp_wsmouse_submatch(struct device *, struct cfdata *,
-					void *);
-static int	j6x0tp_wskbd_submatch(struct device *, struct cfdata *,
-				      void *);
 
 /* wsmouse accessops */
 static int	j6x0tp_wsmouse_enable(void *);
@@ -263,8 +259,8 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	wsma.accessops = &j6x0tp_accessops;
 	wsma.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm(self, &wsma, wsmousedevprint,
-					    j6x0tp_wsmouse_submatch);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &wsma,
+					    wsmousedevprint);
 	if (sc->sc_wsmousedev == NULL)
 		return;
 
@@ -274,8 +270,8 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	wska.accessops = &j6x0tp_wskbd_accessops;
 	wska.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found_sm(self, &wska, wskbddevprint,
-					  j6x0tp_wskbd_submatch);
+	sc->sc_wskbddev = config_found_ia(self,"wskbddev",  &wska,
+					  wskbddevprint);
 
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
@@ -289,22 +285,6 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH7709_INTEVT2_IRQ3, IST_EDGE, IPL_TTY,
 			    j6x0tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ3);
-}
-
-
-static int
-j6x0tp_wsmouse_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (!strcmp(cf->cf_name, "wsmouse"));
-}
-
-
-static int
-j6x0tp_wskbd_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (!strcmp(cf->cf_name, "wskbd"));
 }
 
 
