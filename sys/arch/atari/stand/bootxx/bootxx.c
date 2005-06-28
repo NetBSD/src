@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.9 2002/04/18 20:12:01 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.10 2005/06/28 14:52:07 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -42,19 +42,15 @@
 #include <sys/reboot.h>
 #include <machine/cpu.h>
 
+typedef int      (*bxxx_t)(void *, void *, struct osdsc *);
 
-typedef int      (*bxxx_t) __P((void *, void *, struct osdsc *));
-
-void	boot_BSD __P((struct kparamb *)__attribute__((noreturn)));
-int	bootxxx __P((void *, void *, struct osdsc *));
-int	load_booter __P((struct osdsc *));
-int	usr_info __P((struct osdsc *));
+void	boot_BSD(struct kparamb *) __attribute__((noreturn));
+int	bootxxx(void *, void *, struct osdsc *);
+int	load_booter(struct osdsc *);
+int	usr_info(struct osdsc *);
 
 int
-bootxx(readsector, disklabel, autoboot)
-	void	*readsector,
-		*disklabel;
-	int	autoboot;
+bootxx(void *readsector, void *disklabel, int autoboot)
 {
 	static osdsc_t	os_desc;
 	extern char	end[], edata[];
@@ -64,12 +60,11 @@ bootxx(readsector, disklabel, autoboot)
 	bzero(edata, end - edata);
 	setheap(end, (void*)(LOADADDR3 - 4));
 
-	printf("\033v\nNetBSD/Atari secondary bootloader"
-						" ($Revision: 1.9 $)\n\n");
+	printf("\033v\nNetBSD/atari secondary bootloader"
+						" ($Revision: 1.10 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
-		return(-1);
-
+		return -1;
 
 	for (;;) {
 		od->rootfs = 0;			/* partition a */
@@ -85,11 +80,10 @@ bootxx(readsector, disklabel, autoboot)
 			if (pref < 0)
 				continue;
 			if (pref > 0)
-				return(pref);
+				return pref;
 		}
 		autoboot = 0;			/* in case auto boot fails */
 
-		
 		if (init_dskio(readsector, disklabel, od->rootfs))
 			continue;
 
@@ -103,8 +97,7 @@ bootxx(readsector, disklabel, autoboot)
 
 
 int
-usr_info(od)
-	osdsc_t	*od;
+usr_info(osdsc_t *od)
 {
 	static char	line[800];
 	char		c, *p = line;
@@ -119,14 +112,15 @@ usr_info(od)
 			*p++ = '\0';
 
 		switch (*p++) {
-		  case '\0':
+		case '\0':
 			goto done;
-		  case ':':
+		case ':':
 			if ((c = *p) >= 'a' && c <= 'z')
 				od->rootfs = c - 'a';
 			else if (c >= 'A' && c <= 'Z')
 				od->rootfs = c - ('A' - 27);
-			else return(-1);
+			else
+				return -1;
 
 			if (!od->rootfs)
 				break;
@@ -147,7 +141,7 @@ usr_info(od)
 			od->osname = --p;
 			break;
 		  default:
-			return(-1);
+			return -1;
 		}
 
 		while ((c = *p) && !isspace(c))
@@ -160,22 +154,21 @@ done:
 		c = tolower(c);
 
 	switch (c) {
-	  case 'n':		/* NetBSD */
-		return(0);
-	  case 'l':		/* Linux  */
-		return(0x10);
-	  case 'a':		/* ASV    */
-		return(0x40);
-	  case 't':		/* TOS    */
-		return(0x80);
-	  default:
-		return(-1);
+	case 'n':		/* NetBSD */
+		return 0;
+	case 'l':		/* Linux  */
+		return 0x10;
+	case 'a':		/* ASV    */
+		return 0x40;
+	case 't':		/* TOS    */
+		return 0x80;
+	default:
+		return -1;
 	}
 }
 
 int
-load_booter(od)
-	osdsc_t		*od;
+load_booter(osdsc_t *od)
 {
 	int		fd = -1;
 	u_char		*bstart = (u_char *)(LOADADDR3);
@@ -187,27 +180,26 @@ load_booter(od)
 				"/boot.ata",
 				NULL };		/* NULL terminated!	  */
 
-
 	/*
 	 * Read booter's exec-header.
 	 */
 	for (fname = boot_names[0]; fname != NULL; fname++) {
 		if ((fd = open(fname, 0)) < 0)
 			printf("Cannot open '%s'\n", fname);
-		else break;
+		else
+			break;
 	}
 	if (fd < 0)
-		return (-1);
+		return -1;
 	while((bsize = read(fd, bstart, 1024)) > 0) {
 		bstart += bsize;
-	
 	}
 	close(fd);
 	return 0;
 }
 
 void
-_rtt()
+_rtt(void)
 {
 	printf("Halting...\n");
 	for(;;)
