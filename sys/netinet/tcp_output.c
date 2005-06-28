@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.135 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.135 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -207,7 +207,7 @@ extern struct mbuf *m_copypack();
 #endif
 
 /*
- * Knob to enable Congestion Window Monitoring, and control the
+ * Knob to enable Congestion Window Monitoring, and control
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
