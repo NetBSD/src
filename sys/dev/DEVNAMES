@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.180 2005/06/28 08:45:45 wiz Exp $
+#	$NetBSD: DEVNAMES,v 1.181 2005/06/28 09:02:56 kent Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -111,6 +111,8 @@ audiobell		MI		Attribute
 audiocs			MI
 aue			MI
 auich			MI
+auixp			MI
+aurateconv		MI		Attribute
 autri			MI
 auvia			MI
 auxio			sparc64
@@ -120,9 +122,11 @@ avmebus			atari
 awi			MI
 axe			MI
 az			MI
+azalia			MI
 bah			MI
 bandit			macppc
 bba			MI
+bce			MI
 be			MI
 bha			MI
 bi			MI
@@ -1310,6 +1314,7 @@ wesc			amigappc
 wi			MI
 wl			MI
 wlan			MI		Attribute
+wm			MI
 ws			luna68k
 wsdisplay		MI
 wsdisplaydev		MI		Attribute
