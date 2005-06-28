@@ -1,4 +1,4 @@
-/*	$NetBSD: omron12x20.h,v 1.5 2005/04/22 14:46:01 yamt Exp $	*/
+/*	$NetBSD: omron12x20.h,v 1.6 2005/06/28 00:44:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@
 
 static u_char omron12x20_data[];
 
-struct wsdisplay_font omron12x20 = {
+static struct wsdisplay_font omron12x20 = {
 	"omron12x20",			/* typeface name */
 	' ',				/* firstchar */
 	'~' - ' ' + 1,			/* numchars */
