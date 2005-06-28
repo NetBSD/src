@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.49 2005/06/27 05:49:13 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.50 2005/06/28 07:19:33 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.49 2005/06/27 05:49:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.50 2005/06/28 07:19:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -94,6 +94,7 @@ int rtw_rxbufs_limit = RTW_RXQLEN;
 } while (0)
 
 int rtw_dwelltime = 200;	/* milliseconds */
+static struct ieee80211_cipher rtw_cipher_wep;
 
 static void rtw_start(struct ifnet *);
 
@@ -104,6 +105,7 @@ static int rtw_key_set(struct ieee80211com *, const struct ieee80211_key *,
     const u_int8_t[IEEE80211_ADDR_LEN]);
 static void rtw_key_update_end(struct ieee80211com *);
 static void rtw_key_update_begin(struct ieee80211com *);
+static int rtw_wep_decap(struct ieee80211_key *, struct mbuf *);
 static void rtw_wep_setkeys(struct rtw_softc *, struct ieee80211_key *, int);
 
 static void rtw_led_attach(struct rtw_led_state *, void *);
@@ -529,6 +531,19 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 }
 
 static int
+rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m)
+{
+	struct ieee80211_key keycopy;
+
+	RTW_DPRINTF(RTW_DEBUG_KEY, ("%s:\n", __func__));
+
+	keycopy = *k;
+	keycopy.wk_flags &= ~IEEE80211_KEY_SWCRYPT;
+
+	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m);
+}
+
+static int
 rtw_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
 	int keyix;
@@ -573,6 +588,11 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 	if (k->wk_keyix >= IEEE80211_WEP_NKID)
 		return 0;
 
+	if (k->wk_cipher == &ieee80211_cipher_wep) {
+		rtw_cipher_wep = ieee80211_cipher_wep;
+		rtw_cipher_wep.ic_decap = rtw_wep_decap;
+		ic->ic_nw_keys[k->wk_keyix].wk_cipher = &rtw_cipher_wep;
+	}
 	sc->sc_flags &= ~RTW_F_DK_VALID;
 
 	return 1;
@@ -611,7 +631,7 @@ rtw_key_update_end(struct ieee80211com *ic)
 static void
 rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 {
-	uint8_t cfg0, scr;
+	uint8_t cfg0, psr, scr;
 	int i, tx_key_len;
 	struct rtw_regs *regs;
 	union rtw_keys *rk;
@@ -621,12 +641,13 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 
 	(void)memset(rk->rk_keys, 0, sizeof(rk->rk_keys));
 
+	rtw_set_access(regs, RTW_ACCESS_CONFIG);
+
+	psr = RTW_READ8(regs, RTW_PSR);
 	scr = RTW_READ8(regs, RTW_SCR);
 	cfg0 = RTW_READ8(regs, RTW_CONFIG0);
 	scr &= ~(RTW_SCR_KM_MASK | RTW_SCR_TXSECON | RTW_SCR_RXSECON);
 	cfg0 &= ~(RTW_CONFIG0_WEP104 | RTW_CONFIG0_WEP40);
-
-	rtw_set_access(regs, RTW_ACCESS_CONFIG);
 
 	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)
 		goto out;
@@ -635,10 +656,10 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 
 	switch (tx_key_len) {
 	case 5:
-		scr |= RTW_SCR_KM_WEP40;
+		scr |= RTW_SCR_RXSECON | RTW_SCR_KM_WEP40;
 		break;
 	case 13:
-		scr |= RTW_SCR_KM_WEP104;
+		scr |= RTW_SCR_RXSECON | RTW_SCR_KM_WEP104;
 		break;
 	default:
 		goto out;
@@ -653,13 +674,18 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	}
 
 out:
+	RTW_WRITE8(regs, RTW_PSR, psr & ~RTW_PSR_PSEN);
+
 	bus_space_write_region_4(regs->r_bt, regs->r_bh,
 	    RTW_DK0, rk->rk_words,
 	    sizeof(rk->rk_words) / sizeof(rk->rk_words[0]));
 
-	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0,
-	    sizeof(rk->rk_words) / sizeof(rk->rk_words[0]),
+	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
 	    BUS_SPACE_BARRIER_SYNC);
+
+	printf("%s: psr = %#" PRIx8, sc->sc_dev.dv_xname, psr);
+
+	RTW_WRITE8(regs, RTW_PSR, psr);
 
 	RTW_WRITE8(regs, RTW_CONFIG0, cfg0);
 	RTW_WBW(regs, RTW_CONFIG0, RTW_SCR);
