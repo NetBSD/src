@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2003/08/07 16:28:46 agc Exp $ */
+/*	$NetBSD: boot.c,v 1.13 2005/06/28 20:15:29 junyoung Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,7 +70,7 @@ main()
 			if (line[0]) {
 				bugargs.arg_start = line;
 				cp = line;
-				while (cp < (line + sizeof(line) - 1) && *cp) 
+				while (cp < (line + sizeof(line) - 1) && *cp)
 					cp++;
 				bugargs.arg_end = cp;
 				parse_args(&file, &howto, &part);
@@ -88,8 +88,7 @@ main()
  * machdep_common_ether: get ethernet address
  */
 void
-machdep_common_ether(ether)
-	u_char *ether;
+machdep_common_ether(u_char *ether)
 {
 	u_char *ea;
 
