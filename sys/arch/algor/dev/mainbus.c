@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2005/06/28 18:29:58 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 2005/06/28 19:46:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2005/06/28 19:46:47 drochner Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -248,8 +248,7 @@ mainbus_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ma->ma_name, pnp);
 	if (ma->ma_addr != (bus_addr_t) -1)
-		aprint_normal(" %s 0x%lx", mainbuscf_locnames[MAINBUSCF_ADDR],
-		    ma->ma_addr);
+		aprint_normal(" addr 0x%lx", ma->ma_addr);
 
 	return (UNCONF);
 }
