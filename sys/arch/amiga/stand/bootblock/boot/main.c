@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.17 2003/01/20 05:29:59 simonb Exp $
+ * $NetBSD: main.c,v 1.18 2005/06/28 14:45:47 junyoung Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -304,7 +304,7 @@ again:
 		/* Insert The Evergrowing Kludge List Here: */
 
 		/* a) dont load kernel over DraCo MMU table */
-			
+
 		if (((cpuid >> 24) == 0x7D) &&
 		    ((from & -DRACOMMUMARGIN) == 0x40000000) &&
 		    (size >= DRACOMMUMARGIN)) {
@@ -368,7 +368,7 @@ again:
 	ksize = ((marks[MARK_END] + 3) & ~3)
 	    + sizeof(*nkcd) + ncd*sizeof(*cd)
 	    + sizeof(*nkcd) + nseg * sizeof(struct boot_memseg);
-		
+
 #ifdef PPCBOOTER
 	kp = alloc(ksize);
 #else
@@ -537,7 +537,7 @@ long get_number(char **ptr)
 #ifdef TEST
 	fprintf(stderr, "get_number: got %c0x%x",
 	    sign ? '-' : '+', value);
-#endif	
+#endif
 	return (sign ? -value : value);
 }
 
