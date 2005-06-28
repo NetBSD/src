@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.10 2005/06/22 18:35:44 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.11 2005/06/28 10:32:23 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.10 2005/06/22 18:35:00 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.11 2005/06/28 10:31:51 tron Exp
  */
 
 /*
@@ -1839,6 +1839,7 @@
 #define	PCI_PRODUCT_INTEL_6300ESB_APIC	0x25ac		/* 6300ESB Advanced Interrupt Controller */
 #define	PCI_PRODUCT_INTEL_6300ESB_EHCI	0x25ad		/* 6300ESB USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
+#define	PCI_PRODUCT_INTEL_6300ESB_RAID	0x25b0		/* 6300ESB SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FR_SATA	0x2652		/* 82801FR Serial ATA Controller */
