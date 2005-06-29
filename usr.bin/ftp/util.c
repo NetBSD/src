@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.130 2005/06/29 02:31:19 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.131 2005/06/29 05:00:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.130 2005/06/29 02:31:19 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.131 2005/06/29 05:00:30 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -793,7 +793,7 @@ updatelocalcwd(void)
 
 	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
 		localcwd[0] = '\0';
-	DPRINTF(ttyout, "got localcwd as `%s'\n", localcwd);
+	DPRINTF("got localcwd as `%s'\n", localcwd);
 }
 
 /*
