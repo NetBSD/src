@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.4 2002/05/19 15:10:46 msaitoh Exp $ */
+/* $NetBSD: scifreg.h,v 1.5 2005/06/29 16:51:20 christos Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -129,6 +129,15 @@
 #define	FIFO_XMT_TRIGGER_4	0x0010
 #define	FIFO_XMT_TRIGGER_2	0x0020
 #define	FIFO_XMT_TRIGGER_1	0x0030
+
+#define	SCSPTR2_RTSIO		0x0080  
+#define	SCSPTR2_RTSDT		0x0040
+#define	SCSPTR2_CTSIO		0x0020  
+#define	SCSPTR2_CTSDT		0x0010  
+#define	SCSPTR2_SCKIO		0x0008  
+#define	SCSPTR2_SCKDT		0x0004
+#define	SCSPTR2_SPB2IO		0x0002  
+#define	SCSPTR2_SPB2DT		0x0001  
 
 #define SCLSR2_ORER	0x0001	/* overrun error */
 
