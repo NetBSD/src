@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $	*/
+/*	$NetBSD: job.c,v 1.95 2005/06/29 19:59:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.95 2005/06/29 19:59:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.94 2005/06/17 19:25:20 jmc Exp $");
+__RCSID("$NetBSD: job.c,v 1.95 2005/06/29 19:59:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1339,7 +1339,8 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	 * No commands. Look for .DEFAULT rule from which we might infer
 	 * commands
 	 */
-	if ((DEFAULT != NILGNODE) && !Lst_IsEmpty(DEFAULT->commands)) {
+	if ((DEFAULT != NILGNODE) && !Lst_IsEmpty(DEFAULT->commands) &&
+	    (gn->type & OP_SPECIAL) == 0) {
 	    char *p1;
 	    /*
 	     * Make only looks for a .DEFAULT if the node was never the
