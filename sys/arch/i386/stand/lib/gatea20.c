@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.6 2005/06/24 13:00:01 manu Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.7 2005/06/29 19:08:04 junyoung Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -29,7 +29,9 @@
  * Gate A20 for high memory
  */
 static unsigned char	x_20 = KB_A20;
-void gateA20()
+
+void
+gateA20(void)
 {
 	__asm("pushfl ; cli");
 	/*
