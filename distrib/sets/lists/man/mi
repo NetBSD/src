@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.798 2005/06/28 08:36:48 kent Exp $
+# $NetBSD: mi,v 1.799 2005/06/29 21:38:58 perry Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -99,6 +99,7 @@
 ./usr/share/man/cat1/db.0			man-util-catman		.cat
 ./usr/share/man/cat1/dc.0			man-util-catman		.cat
 ./usr/share/man/cat1/dd.0			man-util-catman		.cat
+./usr/share/man/cat1/deroff.0			man-util-catman		.cat
 ./usr/share/man/cat1/df.0			man-util-catman		.cat
 ./usr/share/man/cat1/diff.0			man-util-catman		.cat
 ./usr/share/man/cat1/diff3.0			man-util-catman		.cat
@@ -405,6 +406,7 @@
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
 ./usr/share/man/cat1/source.0			man-util-catman		.cat
+./usr/share/man/cat1/spell.0			man-util-catman		.cat
 ./usr/share/man/cat1/split.0			man-util-catman		.cat
 ./usr/share/man/cat1/ssh-add.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	crypto,.cat
@@ -2331,6 +2333,7 @@
 ./usr/share/man/man1/db.1			man-util-man		.man
 ./usr/share/man/man1/dc.1			man-util-man		.man
 ./usr/share/man/man1/dd.1			man-util-man		.man
+./usr/share/man/man1/deroff.1			man-util-man		.man
 ./usr/share/man/man1/df.1			man-util-man		.man
 ./usr/share/man/man1/diff.1			man-util-man		.man
 ./usr/share/man/man1/diff3.1			man-util-man		.man
@@ -2637,6 +2640,7 @@
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
 ./usr/share/man/man1/source.1			man-util-man		.man
+./usr/share/man/man1/spell.1			man-util-man		.man
 ./usr/share/man/man1/split.1			man-util-man		.man
 ./usr/share/man/man1/ssh-add.1			man-secsh-man		crypto,.man
 ./usr/share/man/man1/ssh-agent.1		man-secsh-man		crypto,.man

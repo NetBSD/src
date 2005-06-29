@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.557 2005/06/27 20:32:39 peter Exp $
+# $NetBSD: mi,v 1.558 2005/06/29 21:38:58 perry Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -415,6 +415,7 @@
 ./usr/bin/cut					base-util-bin
 ./usr/bin/db					base-util-bin
 ./usr/bin/dc					base-util-bin
+./usr/bin/deroff				base-util-bin
 ./usr/bin/diff					base-util-bin
 ./usr/bin/diff3					base-util-bin
 ./usr/bin/dig					base-netutil-bin
@@ -600,6 +601,7 @@
 ./usr/bin/slogin				base-secsh-bin		crypto
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
+./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
 ./usr/bin/ssh					base-secsh-bin		crypto
 ./usr/bin/ssh-add				base-secsh-bin		crypto
@@ -902,6 +904,7 @@
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
 ./usr/libexec/pfspamlogd			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
+./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftpd				base-netutil-bin

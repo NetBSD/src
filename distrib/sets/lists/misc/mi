@@ -1,8 +1,13 @@
-# $NetBSD: mi,v 1.121 2005/06/27 20:32:39 peter Exp $
+# $NetBSD: mi,v 1.122 2005/06/29 21:38:58 perry Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
+./usr/share/dict/american			misc-reference-share	share
+./usr/share/dict/british			misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
 ./usr/share/dict/propernames			misc-reference-share	share
+./usr/share/dict/special/math			misc-reference-share	share
+./usr/share/dict/special/netbsd			misc-reference-share	share
+./usr/share/dict/stop				misc-reference-share	share
 ./usr/share/dict/web2				misc-reference-share	share
 ./usr/share/dict/web2a				misc-reference-share	share
 ./usr/share/dict/words				misc-reference-share	share
