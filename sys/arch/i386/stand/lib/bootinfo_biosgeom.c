@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.17 2005/06/23 20:20:37 junyoung Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.18 2005/06/29 18:50:38 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -37,7 +37,7 @@
 #include "biosdisk_ll.h"
 #include "bootinfo.h"
 
-#ifdef BIOSDISK_EXT13INFO_V3
+#ifdef BIOSDISK_EXTINFO_V3
 static struct {
 	char	*name;
 	int	flag;
@@ -64,7 +64,7 @@ bi_getbiosgeom(void)
 	int nhd;
 	unsigned int cksum;
 	struct biosdisk_ll d;
-	struct biosdisk_ext13info ed;
+	struct biosdisk_extinfo ed;
 	char buf[BIOSDISK_DEFAULT_SECSIZE];
 
 	nhd = get_harddrives();
@@ -104,11 +104,11 @@ bi_getbiosgeom(void)
 		       ed.totsec, ed.sbytes);
 #endif
 
-		if (d.flags & BIOSDISK_EXT13) {
+		if (d.flags & BIOSDISK_INT13EXT) {
 			bibg->disk[nvalid].totsec = ed.totsec;
 			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
 		}
-#ifdef BIOSDISK_EXT13INFO_V3
+#ifdef BIOSDISK_EXTINFO_V3
 #ifdef GEOM_DEBUG
 		printf("   edd_cfg %x, sig %x, len %x, bus %s type %s\n",
 		       ed.edd_cfg, ed.devpath_sig, ed.devpath_len,
