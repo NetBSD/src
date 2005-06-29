@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13 2004/03/25 01:25:08 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.14 2005/06/29 16:56:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2004/03/25 01:25:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2005/06/29 16:56:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -97,6 +97,9 @@ intc_init()
 		_reg_write_2(SH3_IPRB, 0);
 		break;
 	case CPU_PRODUCT_7750S:
+	case CPU_PRODUCT_7750R:
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R: 
 		_reg_write_2(SH4_IPRD, 0);
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7750:
