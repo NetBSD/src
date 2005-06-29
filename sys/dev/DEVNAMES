@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.181 2005/06/28 09:02:56 kent Exp $
+#	$NetBSD: DEVNAMES,v 1.182 2005/06/29 14:57:22 kent Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -22,6 +22,14 @@ acc			vax
 acemidi			MI
 aceride			MI
 aclock			arc
+acphy			MI
+acpi			MI
+acpiacad		MI
+acpibat			MI
+acpibut			MI
+acpiec			MI
+acpilid			MI
+acpitz			MI
 ad			vax
 ad1848			MI		Attribute
 adb			mac68k
@@ -30,8 +38,6 @@ adc			hpcsh
 ade			alpha
 adv			MI
 adw			MI
-atu			MI
-atw			MI
 ae			mac68k
 aed			mac68k
 aed			macppc
@@ -39,12 +45,14 @@ afsc			amiga
 afsc			amigappc
 aftsc			amiga
 aftsc			amigappc
+agp			MI
 agr			MI
 aha			MI
 ahb			MI
 ahc			MI
 ahc_aic77xx		MI		Attribute
 ahc_seeprom		MI		Attribute
+ahd			MI
 ahsc			amiga
 ahsc			amigappc
 ai			MI
@@ -57,6 +65,7 @@ alpha_pci_sgmap_pte64	alpha		Attribute
 alpha_sgmap		alpha		Attribute
 alpha_shared_intr	alpha		Attribute
 amdpm			MI
+amhphy			MI
 amibus_b16		amiga		Attribute
 amibus_bl		amiga		Attribute
 amibus_wb		amiga		Attribute
@@ -77,6 +86,7 @@ arcwskbd		acorn26
 arcwsmouse		acorn26
 aria			MI
 arp			MI		Attribute
+artsata			MI
 asc			acorn32
 asc			alpha
 asc			arc
@@ -94,10 +104,14 @@ ata_hl			MI		Attribute
 atabus			MI
 atapi			MI		Attribute
 atapibus		MI
+ataraid			MI
 ate			MI
+ath			MI
 atm			MI		Attribute
 atppc			MI
 attimer			MI
+atu			MI
+atw			MI
 atzsc			amiga
 atzsc			amigappc
 auacer			MI
@@ -128,6 +142,7 @@ bandit			macppc
 bba			MI
 bce			MI
 be			MI
+bge			MI
 bha			MI
 bi			MI
 bicc			MI
@@ -137,9 +152,11 @@ bivideo			hpcmips
 bktr			MI
 bm			macppc
 bmd			x68k
+bmtphy			MI
 boca			MI
 bonito			algor
 bpp			MI
+brgphy			MI
 bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
 btl			arc
@@ -171,6 +188,7 @@ cbsc			amigappc
 cd			MI
 cd18xx			MI		Attribute
 cdce			MI
+cec			MI
 cfb			alpha
 cfb			pmax
 cgeight			sparc
@@ -189,6 +207,7 @@ cgtwo			sparc64
 cgtwo			sun3
 ch			MI
 cia			alpha
+ciphy			MI
 cir			MI
 clcd			MI
 clcs			MI
@@ -212,6 +231,7 @@ clockctl		MI
 cmdide			MI
 cmi			vax
 cmpci			MI
+cms			MI
 cnw			MI
 com			MI
 commulti		MI		Attribute
@@ -254,6 +274,7 @@ cpu			x68k
 crime			sgimips
 crypto			MI		Attribute
 cs			MI
+cs80bus			MI
 csa			acorn32
 csc			acorn32
 ct			hp300
@@ -335,13 +356,14 @@ ep			MI
 epclk			evbarm
 epcom			evbarm
 epe			evbarm
-epsoc			evbarm
 epic			MI
+epsoc			evbarm
 es			amiga
 es			amigappc
 esa			MI
 esc			acorn32		Attribute
 esh			MI
+esiop			MI
 esl			MI
 esm			MI
 eso			MI
@@ -430,11 +452,17 @@ gbox			hp300
 gbus			alpha
 gdrom			dreamcast
 gem			MI
+gentbi			MI
+geodeide		MI
+gfe			evbppc
 gio			sgimips
 giobus			sgimips		Attribute
+glxtphy			MI
 gm			macppc
 gpbus			hpcmips
 gpbusif			hpcmips
+gphyter			MI
+gpib			MI
 gpio			evbppc
 grackle			macppc
 grf			amiga
@@ -468,13 +496,13 @@ grfrt			amigappc
 grful			amiga
 grful			amigappc
 gsfb			playstation2
+gsip			MI
 gt			cobalt
 gt			evbmips
 gt			evbppc
-gfe			evbppc
-gtmpsc			evbppc
-gtidma			evbppc
 gten			prep
+gtidma			evbppc
+gtmpsc			evbppc
 gtsc			amiga
 gtsc			amigappc
 gus			MI
@@ -483,6 +511,7 @@ gvpbus			amiga
 gvpbus			amigappc
 hb			news68k
 hb			newsmips
+hcide			MI
 hcsc			MI
 hd44780			MI		Attribute
 hd64461if		hpcsh
@@ -518,6 +547,7 @@ i2c			MI		Attribute
 i2c_eeprom		MI		Attribute
 i8042			shark		Attribute
 i82586			MI		Attribute
+iavc			MI
 ibus			pmax
 ibus			vax
 ichlpcib		i386
@@ -557,8 +587,8 @@ iobus			acorn26
 ioc			acorn26
 ioeb			acorn26
 iomd			acorn32
-iomdkbc			acorn32
 iomdiic			acorn32
+iomdkbc			acorn32
 iommu			sparc
 iommu			sun3
 iop			MI
@@ -569,6 +599,7 @@ ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
 ippp			MI
+ipw			MI
 irdasir			MI		Attribute
 irframe			MI
 irframedrv		MI		Attribute
@@ -595,14 +626,17 @@ ite			amigappc
 ite			atari
 ite			hp300
 ite			x68k
+iteide			MI
 ivsc			amiga
 ivsc			amigappc
+iwi			MI
+iwic			MI
 iwm			mac68k
 ix			MI
 ixpclk			evbarm
+ixpide			MI
 ixpio			evbarm
 ixpsip			evbarm
-ixpide			MI
 iy			MI
 j6x0pwr			hpcsh
 j6x0tp			hpcsh
@@ -715,6 +749,7 @@ mainbus			sun2
 mainbus			sun3
 mainbus			vax
 mainbus			x68k
+makphy			MI
 maple			dreamcast
 mb86960			MI		Attribute
 mba			vax
@@ -776,6 +811,7 @@ mms			bebox
 mms			dreamcast
 mms			i386
 moxa			MI
+mpt			MI
 mpu			MI
 mr			MI
 ms			amiga
@@ -822,6 +858,7 @@ ni			MI
 njs			MI
 np			vax
 npx			i386
+nsclpcsio		MI
 nsio			acorn26		Attribute
 nsphy			MI
 nsphyter		MI
@@ -830,6 +867,7 @@ nubus			mac68k
 nvr			atari
 nvram			macppc
 oak			MI
+obio			evbppc
 obio			iyonix
 obio			mac68k
 obio			macppc
@@ -839,7 +877,6 @@ obio			prep
 obio			sparc
 obio			sun2
 obio			sun3
-obio			evbppc
 obio_norm		mac68k		Attribute
 obio_scsi5380		mac68k		Attribute
 obmem			sun2
@@ -939,6 +976,7 @@ pcons			sparc64
 pcppi			MI
 pcscp			MI
 pdcide			MI
+pdcsata			MI
 pdq			MI		Attribute
 pfb			bebox
 pfckbd			hpcsh
@@ -976,6 +1014,7 @@ puc			MI
 pvr			dreamcast
 pwctl			hpcmips
 px			pmax
+pxg			MI
 qd			MI
 qe			MI
 qec			MI
@@ -1034,6 +1073,7 @@ sacom			hpcarm
 sacpcic			hpcarm
 saip			hpcarm
 saost			hpcarm
+satalink		MI
 satlink			MI
 sb			MI
 sbc			mac68k
@@ -1114,19 +1154,22 @@ smg			vax
 sn			arc
 sn			mac68k
 sn			newsmips
-spif			sparc
-spif			sparc64
 sparcvme		sparc
 spc			MI
 spckbd			shark		Attribute
 spd			playstation2
 spic			MI
+spif			sparc
+spif			sparc64
 spifi			newsmips
 spkr			MI
 sppp			MI		Attribute
 sqphy			MI
 ss			MI
 st			MI
+ste			MI
+stge			MI
+sti			MI
 stpcide			MI
 su			MI
 supio			amiga		Attribute
@@ -1150,6 +1193,7 @@ tcx			sparc
 tcx			sparc64
 te			vax
 tea5757			MI
+tfb			MI
 tga			MI
 ti			MI
 timer			news68k
@@ -1203,11 +1247,14 @@ txcsbus			hpcmips
 txcsbusif		hpcmips
 txioman			hpcmips
 txiomanif		hpcmips
+txp			MI
 txsibif			hpcmips
 txsim			hpcmips
 tz			pmax
 uaudio			MI
 uba			MI
+ubsa			MI
+ubsec			MI
 ucb			hpcmips
 ucbif			hpcmips
 ucbio			hpcmips
@@ -1217,6 +1264,7 @@ ucbtp			hpcmips
 ucom			MI
 ucombus			MI		Attribute
 uda			MI
+udav			MI
 udsbr			MI
 uep			MI
 uftdi			MI
@@ -1263,6 +1311,7 @@ uyap			MI
 va			vax
 veriexec		MI
 vga			MI
+vge			MI
 viaenv			MI
 viaide			MI
 viapm			MI
@@ -1298,7 +1347,6 @@ vsms			alpha
 vt			acorn32
 vt			i386
 vtpbc			algor
-vge			MI
 vz			vax
 wavelan			MI		Attribute
 wd			MI
@@ -1332,9 +1380,6 @@ xafb			newsmips
 xasc			pmax
 xb			alpha
 xbd			xen
-xencons			xen
-xenevt			xen
-xennet			xen
 xbox			MI
 xcfb			pmax
 xcom			x68k
@@ -1344,6 +1389,9 @@ xdc			MI
 xdc			sun3
 xe			next68k
 xel			x68k
+xencons			xen
+xenevt			xen
+xennet			xen
 xi			MI
 xmi			MI
 xsii			pmax
