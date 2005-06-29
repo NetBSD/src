@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.21 2005/06/22 20:40:59 dyoung Exp $	*/
+/*	$NetBSD: libi386.h,v 1.22 2005/06/29 18:50:38 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -97,11 +97,12 @@ void command_help(char *);
 extern const struct bootblk_command commands[];
 
 /* asm bios/dos calls */
-int biosdiskreset(int);
-int biosextread(int, void *);
+int biosdisk_extread(int, void *);
+int biosdisk_read(int, int, int, int, int, void *);
+int biosdisk_reset(int);
+
 int biosgetrtc(u_long *);
 int biosgetsystime(void);
-int biosread(int, int, int, int, int, void *);
 int comgetc(int);
 void cominit(int);
 int computc(int, int);
@@ -111,13 +112,14 @@ int conisshift(void);
 int coniskey(void);
 void conputc(int);
 
-int get_diskinfo(int);
 int getextmem2(int *);
 int getextmemps2(void *);
 int getmementry(int *, int *);
-int int13_extension(int);
-struct biosdisk_ext13info;
-void int13_getextinfo(int, struct biosdisk_ext13info *);
+
+int biosdisk_int13ext(int);
+int biosdisk_getinfo(int);
+struct biosdisk_extinfo;
+void biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 
 int pcibios_cfgread(unsigned int, int, int *);
