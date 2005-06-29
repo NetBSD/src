@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.21 2005/06/22 06:06:34 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.22 2005/06/29 18:02:52 junyoung Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,11 +86,12 @@ static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
 
 /*
  * we get from get_diskinfo():
- *   unused      %ch      %cl      %dh (registers after int13/8), ie
+ *      %ah      %ch      %cl      %dh (registers after int13/8), ie
  * xxxxxxxx cccccccc CCssssss hhhhhhhh
  */
-#define	SPT(di)		(((di)>>8)&0x3f)
-#define	HEADS(di)	(((di)&0xff)+1)
+#define STATUS(di)	((di)>>24)
+#define SPT(di)		(((di)>>8)&0x3f)
+#define HEADS(di)	(((di)&0xff)+1)
 #define CYL(di)		(((((di)>>16)&0xff)|(((di)>>6)&0x300))+1)
 
 #ifndef BIOSDISK_RETRIES
