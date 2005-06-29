@@ -1,0 +1,7 @@
+	$NetBSD: TODO,v 1.1 2005/06/29 20:58:50 perry Exp $
+
+Things this needs:
+
+a) pass WARNS
+b) code cleanup
+c) support for mdoc macros
