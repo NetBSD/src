@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.34 2005/01/06 11:59:35 agc Exp $	*/
+/*	$NetBSD: extract.c,v 1.35 2005/06/29 01:39:37 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.34 2005/01/06 11:59:35 agc Exp $");
+__RCSID("$NetBSD: extract.c,v 1.35 2005/06/29 01:39:37 hubertf Exp $");
 #endif
 #endif
 
@@ -142,10 +142,12 @@ extract_plist(char *home, package_t *pkg)
 	last_file = NULL;
 	Directory = home;
 
-	/* Open Package Database for writing */
-	if (!pkgdb_open(ReadWrite)) {
-		cleanup(0);
-		err(EXIT_FAILURE, "can't open pkgdb");
+	if (!NoRecord) {
+		/* Open Package Database for writing */
+		if (!pkgdb_open(ReadWrite)) {
+			cleanup(0);
+			err(EXIT_FAILURE, "can't open pkgdb");
+		}
 	}
 	/* Do it */
 	while (p) {
@@ -191,8 +193,8 @@ extract_plist(char *home, package_t *pkg)
 					}
 				}
 				if (rename(p->name, try) == 0) {
-					/* note in pkgdb */
-					{
+					if (!NoRecord) {
+						/* note in pkgdb */
 						char   *s, t[MaxPathSize];
 						int     rc;
 
@@ -249,11 +251,12 @@ extract_plist(char *home, package_t *pkg)
 					}
 					perm_count += add_count;
 
-					/* note in pkgdb */
-					/* XXX would be better to store in PUSHOUT, but
-					 * that would probably affect too much code I prefer
-					 * not to touch - HF */
-					{
+					if (!NoRecord) {
+						/* note in pkgdb */
+						/* XXX would be better to store in PUSHOUT, but
+						 * that would probably affect too much code I prefer
+						 * not to touch - HF */
+						
 						char   *s, t[MaxPathSize], *u;
 						int     rc;
 
@@ -331,7 +334,8 @@ extract_plist(char *home, package_t *pkg)
 		p = p->next;
 	}
 	PUSHOUT(Directory);
-	pkgdb_close();
+	if (!NoRecord)
+		pkgdb_close();
 	free(perm_args);
 	free(where_args);
 	return 1;
