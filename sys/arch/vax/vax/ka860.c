@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.25 2005/06/27 11:03:25 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.26 2005/06/29 14:02:54 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,10 +33,13 @@
 /*
  * VAX 8600 specific routines.
  * Also contains abus spec's and memory init routines.
+ *
+ * Todo: Set up all four console lines in a VAX8600.
+ * This is: local, remote, EMM and logical.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.25 2005/06/27 11:03:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26 2005/06/29 14:02:54 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -269,6 +272,22 @@ struct ka86 {
 		 type:8;
 };
 
+/* The manufacturing plant information comes from EK-86XV1-MG-003
+ * VAX 86XX System Maintenance Guide
+ * /bqt
+ */
+
+static const char *manuf[] = {"Unknown",
+			      "Galway, Ireland",
+			      "Franklin, MA",
+			      "Burlington, VT",
+			      "Marlboro, MA"};
+
+int mindex[] = {0,1,1,1,
+		0,2,2,2,
+		0,0,3,3,
+		3,4,4,4};
+
 void
 ka860_init(void)
 {
@@ -278,9 +297,9 @@ ka860_init(void)
 	/* Enable cache */
 	mtpr(3, PR_CSWP);
 
-	printf("cpu0: ka86%d, serial number %d, mfg plant %d, "
-	    "hardware ECO level %d\n", ka86->v8650 ? 5 : 0, ka86->snr,
-	    ka86->plant, ka86->eco);
+	printf("cpu0: ka86%d, serial number %d, rev. %c\n",
+	       ka86->v8650 ? 5 : 0, ka86->snr, ka86->eco+64);
+	printf("cpu0: manufactured in %s.\n", manuf[mindex[ka86->plant]]);
 	printf("cpu0: ");
 	fpa = mfpr(PR_ACCS);
 	if (fpa & 255) {
