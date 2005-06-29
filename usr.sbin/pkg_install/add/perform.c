@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.109 2005/04/07 20:22:40 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.110 2005/06/29 01:40:42 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.109 2005/04/07 20:22:40 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.110 2005/06/29 01:40:42 hubertf Exp $");
 #endif
 #endif
 
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: perform.c,v 1.109 2005/04/07 20:22:40 tron Exp $");
 
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include "lib.h"
 #include "add.h"
 #include "verify.h"
@@ -983,8 +984,11 @@ void
 cleanup(int signo)
 {
 	static int alreadyCleaning;
-	void    (*oldint) (int);
-	void    (*oldhup) (int);
+	void   (*oldint) (int);
+	void   (*oldhup) (int);
+	int    saved_errno;
+
+	saved_errno = errno;
 	oldint = signal(SIGINT, SIG_IGN);
 	oldhup = signal(SIGHUP, SIG_IGN);
 
@@ -1000,6 +1004,7 @@ cleanup(int signo)
 	}
 	signal(SIGINT, oldint);
 	signal(SIGHUP, oldhup);
+	errno = saved_errno;
 }
 
 int
