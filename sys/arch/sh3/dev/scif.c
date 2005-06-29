@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.39 2005/05/31 23:12:18 uwe Exp $ */
+/*	$NetBSD: scif.c,v 1.40 2005/06/29 16:23:45 christos Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.39 2005/05/31 23:12:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.40 2005/06/29 16:23:45 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -358,10 +358,10 @@ InitializeScif(unsigned int bps)
 	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * bps) - 1);
 
 	/*
-	 * wait 1mSec, because Send/Recv must begin 1 bit period after
+	 * wait 2m Sec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
 	 */
-	delay(1000);
+	delay(2000);
 
 #if 0
 	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE);
