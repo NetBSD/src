@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.16 2005/06/29 18:02:52 junyoung Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.17 2005/06/29 18:50:38 junyoung Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -62,7 +62,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *	Return:
  *			%al = 0x0 on success; err code on failure
  */
-ENTRY(biosdiskreset)
+ENTRY(biosdisk_reset)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -103,12 +103,12 @@ ENTRY(biosdiskreset)
  *	Return:
  *			%al = 0x0 on success; err code on failure
  *
- * biosread( dev, cyl, head, sect, count, buff_addr );
+ * biosdisk_read(dev, cyl, head, sect, count, buff_addr);
  *
- *  Note: On failure, you must reset the disk with biosdiskreset() before
+ *  Note: On failure, you must reset the disk with biosdisk_reset() before
  *        sending another command.
  */
-ENTRY(biosread)
+ENTRY(biosdisk_read)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -157,10 +157,10 @@ ENTRY(biosread)
 	ret
 
 /*
- * get_diskinfo():  return a word that represents the
+ * biosdisk_getinfo(int dev):  return a word that represents the
  *	max number of sectors, heads and cylinders for this device
  */
-ENTRY(get_diskinfo)
+ENTRY(biosdisk_getinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	push	%es
@@ -221,9 +221,10 @@ ok:
 	ret
 
 /*
- * int13_extension: check for availibility of int13 extensions.
+ * int biosdisk_int13ext(int dev):
+ *	check for availibility of int13 extensions.
  */
-ENTRY(int13_extension)
+ENTRY(biosdisk_int13ext)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -271,7 +272,7 @@ ENTRY(int13_extension)
  *	Return:
  *			%al = 0x0 on success; err code on failure
  */
-ENTRY(biosextread)
+ENTRY(biosdisk_extread)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -312,7 +313,7 @@ ENTRY(biosextread)
 	popl	%ebp
 	ret
 
-ENTRY(int13_getextinfo)
+ENTRY(biosdisk_getextinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
