@@ -1,4 +1,4 @@
-/*	$NetBSD: tmureg.h,v 1.7 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: tmureg.h,v 1.8 2005/06/29 16:51:20 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -58,30 +58,41 @@
 #define	SH4_TCNT2			0xffd80024
 #define	SH4_TCR2			0xffd80028
 #define	SH4_TCPR2			0xffd8002c
+#define	SH4_TSTR2			0xfe100004
+#define	SH4_TCOR3			0xfe100008
+#define	SH4_TCNT3			0xfe10000c
+#define	SH4_TCR3			0xfe100010
+#define	SH4_TCOR4			0xfe100014
+#define	SH4_TCNT4			0xfe100018
+#define	SH4_TCR4			0xfe10001c
 
-#define	TOCR_TCOE			  0x01
-#define	TSTR_STR2			  0x04
-#define	TSTR_STR1			  0x02
-#define	TSTR_STR0			  0x01
-#define	TCR_ICPF			  0x0200
-#define	TCR_UNF				  0x0100
-#define	TCR_ICPE1			  0x0080
-#define	TCR_ICPE0			  0x0040
-#define	TCR_UNIE			  0x0020
-#define	TCR_CKEG1			  0x0010
-#define	TCR_CKEG0			  0x0008
-#define	TCR_TPSC2			  0x0004
-#define	TCR_TPSC1			  0x0002
-#define	TCR_TPSC0			  0x0001
-#define	TCR_TPSC_P4			  0x0000
-#define	TCR_TPSC_P16			  0x0001
-#define	TCR_TPSC_P64			  0x0002
-#define	TCR_TPSC_P256			  0x0003
-#define	SH3_TCR_TPSC_RTC		  0x0004
-#define	SH3_TCR_TPSC_TCLK		  0x0005
-#define	SH4_TCR_TPSC_P512		  0x0004
-#define	SH4_TCR_TPSC_RTC		  0x0006
-#define	SH4_TCR_TPSC_TCLK		  0x0007
+
+#define	TOCR_TCOE			0x01
+#define	TSTR_STR2			0x04
+#define	TSTR_STR1			0x02
+#define	TSTR_STR0			0x01
+#define	TCR_ICPF			0x0200
+#define	TCR_UNF				0x0100
+#define	TCR_ICPE1			0x0080
+#define	TCR_ICPE0			0x0040
+#define	TCR_UNIE			0x0020
+#define	TCR_CKEG1			0x0010
+#define	TCR_CKEG0			0x0008
+#define	TCR_TPSC2			0x0004
+#define	TCR_TPSC1			0x0002
+#define	TCR_TPSC0			0x0001
+#define	TCR_TPSC_P4			0x0000
+#define	TCR_TPSC_P16			0x0001
+#define	TCR_TPSC_P64			0x0002
+#define	TCR_TPSC_P1024			0x0003
+#define	SH3_TCR_TPSC_RTC		0x0004
+#define	SH3_TCR_TPSC_TCLK		0x0005
+#define	SH4_TCR_TPSC_P512		0x0004
+#define	SH4_TCR_TPSC_RTC		0x0006
+#define	SH4_TCR_TPSC_TCLK		0x0007
+#define	SH4_TSTR2_STR4			0x02
+#define	SH4_TSTR2_STR3			0x01
+
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)

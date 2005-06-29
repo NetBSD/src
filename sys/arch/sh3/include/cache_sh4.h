@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.5 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.6 2005/06/29 16:51:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * SH4: SH7750 SH7750S
+ * SH4: SH7750 SH7750S SH7750R SH7751 SH7751R
  */
 
 #ifndef _SH3_CACHE_SH4_H_
@@ -50,6 +50,7 @@
 #define	SH4_CACHE_LINESZ	32
 
 #define	SH4_CCR			0xff00001c
+#define	  SH4_CCR_EMODE		  0x80000000
 #define	  SH4_CCR_IIX		  0x00008000
 #define	  SH4_CCR_ICI		  0x00000800
 #define	  SH4_CCR_ICE		  0x00000100
@@ -86,7 +87,7 @@
 /* address specification */
 #define	  CCDA_A		  0x00000008	/* associate bit */
 #define	  CCDA_ENTRY_SHIFT	  5		/* line size 32B */
-#define	  CCDA_ENTRY_MASK	  0x00003fe0	/* [13:5] 512-entries */
+#define	  CCDA_ENTRY_MASK	  0x00003fe0	/* [13:5] 256-entries */
 /* data specification */
 #define	  CCDA_V		  0x00000001
 #define	  CCDA_U		  0x00000002
@@ -105,12 +106,12 @@ do {									\
 	u_int32_t __e, __a;						\
 									\
 	/* D-cache */							\
-	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+	for (__e = 0; __e < (sh_cache_size_dcache / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
 		(*(__volatile__ u_int32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
 	}								\
 	/* I-cache */							\
-	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+	for (__e = 0; __e < (sh_cache_size_icache / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
 		(*(__volatile__ u_int32_t *)__a) &= ~(CCIA_V);		\
 	}								\
@@ -118,6 +119,10 @@ do {									\
 
 #define	SH7750_CACHE_FLUSH()		SH4_CACHE_FLUSH()
 #define	SH7750S_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7750R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7751_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7751R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+
 
 #ifndef _LOCORE
 extern void sh4_cache_config(void);

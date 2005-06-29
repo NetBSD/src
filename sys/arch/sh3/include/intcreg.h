@@ -1,4 +1,4 @@
-/*	$NetBSD: intcreg.h,v 1.7 2003/10/07 01:24:32 uwe Exp $	*/
+/*	$NetBSD: intcreg.h,v 1.8 2005/06/29 16:51:20 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -80,11 +80,20 @@
 #define	SH4_IPRB		0xffd00008	/* 16bit */
 #define	SH4_IPRC		0xffd0000c	/* 16bit */
 #define	SH4_IPRD		0xffd00010	/* 16bit */
+#define	SH4_INTPRI00		0xfe080000	/* 32bit */
+#define	SH4_INTREQ00		0xfe080020	/* 32bit */
+#define	SH4_INTMSK00		0xfe080040	/* 32bit */
+#define	SH4_INTMSKCLR00		0xfe080060	/* 32bit */
 
 #define	IPRC_GPIO_MASK		0xf000
 #define	IPRC_DMAC_MASK		0x0f00
 #define	IPRC_SCIF_MASK		0x00f0
 #define	IPRC_HUDI_MASK		0x000f
+
+#define	IPRD_IRL0_MASK		0xf000
+#define	IPRD_IRL1_MASK		0x0f00
+#define	IPRD_IRL2_MASK		0x00f0
+#define	IPRD_IRL3_MASK		0x000f
 
 #define	IPRA_TMU0_MASK		0xf000
 #define	IPRA_TMU1_MASK		0x0f00
@@ -94,5 +103,22 @@
 #define	IPRB_WDT_MASK		0xf000
 #define	IPRB_REF_MASK		0x0f00
 #define	IPRB_SCI_MASK		0x00f0
+
+#define        INTPRI00_PCI0_MASK      0x0000000f
+#define        INTPRI00_PCI1_MASK      0x000000f0
+#define        INTPRI00_TMU3_MASK      0x00000f00
+#define        INTPRI00_TMU4_MASK      0x0000f000
+
+/* INTREQ/INTMSK/INTMSKCLR */
+#define	INTREQ00_PCISERR	0x00000001
+#define	INTREQ00_PCIDMA3	0x00000002
+#define	INTREQ00_PCIDMA2	0x00000004
+#define	INTREQ00_PCIDMA1	0x00000008
+#define	INTREQ00_PCIDMA0	0x00000010
+#define	INTREQ00_PCIPWON	0x00000020
+#define	INTREQ00_PCIPWDWN	0x00000040
+#define	INTREQ00_PCIERR		0x00000080
+#define	INTREQ00_TUNI3		0x00000100
+#define	INTREQ00_TUNI4		0x00000200
 
 #endif /* !_SH3_INTCREG_H_ */
