@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.15 2005/06/22 15:29:48 junyoung Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.16 2005/06/29 18:02:52 junyoung Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -157,10 +157,8 @@ ENTRY(biosread)
 	ret
 
 /*
- *
  * get_diskinfo():  return a word that represents the
  *	max number of sectors, heads and cylinders for this device
- *
  */
 ENTRY(get_diskinfo)
 	pushl	%ebp
@@ -177,16 +175,21 @@ ENTRY(get_diskinfo)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%dx			# save drive #
 	movb	$0x08, %ah		# ask for disk info
 	int	$0x13
+	pop	%bx			# restore drive #
 	jnc	ok
+
+	testb	$0x80, %bl		# is it a hard disk?
+	jnz	ok
 
 	/*
 	 * Urk.  Call failed.  It is not supported for floppies by old BIOS's.
 	 * Guess it's a 15-sector floppy.  Initialize all the registers for
 	 * documentation, although we only need head and sector counts.
 	 */
-#	subb	%ah, %ah		# %ax = 0
+	xorw	%ax, %ax		# set status to success
 #	movb	%ah, %bh		# %bh = 0
 #	movb	$2, %bl			# %bl bits 0-3 = drive type, 2 = 1.2M
 	movb	$79, %ch		# max track
@@ -201,10 +204,12 @@ ok:
 	.code32
 
 	/* form a longword representing all this gunk */
-	shll	$8, %ecx
-	movb	%dh, %cl
-
-	movl	%ecx, %eax
+	shrl	$8, %eax		# clear unnecessary bits
+	shll	$24, %eax
+	shll	$16, %ecx		# do the same for %ecx
+	shrl	$8, %ecx
+	movb	%dh, %cl		# max head
+	orl	%ecx, %eax		# return value in %eax
 
 	pop	%edi
 	pop	%esi
