@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.145 2005/06/28 10:33:43 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.146 2005/06/29 12:26:11 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9826,4 +9826,30 @@ sys/kern/kern_ksyms.c				1.26
 	Use %zx in a format string to print a size_t, not %lx, so a kernel
 	with KSYMS_DEBUG will compile.
 	[riz, ticket #508]
+
+crypto/dist/ipsec-tools/ChangeLog		1.16
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.6
+
+	Consume NAT-T packets that have already been seen through MSG_PEEK
+	[manu, ticket #489]
+
+usr.sbin/user/user.c				1.80
+
+	Be consistent when deleting a non-existent group - tell if the group is
+	non-existent.
+	[agc, ticket #492]
+
+x11/Xserver/afb/Makefile			1.5
+
+	We aren't supposed to build afb{tile,blt}.c this should resolve  
+	issues with duplicate symbols in the libafb.a module
+	[rtr, ticket #509]
+
+sys/arch/xen/xen/clock.c			1.13
+
+	Use the time provided by the hypervisor instead of our global time
+	variable for xen_microtime(). This match more closely what is done
+	on a real i386 (where we read the RTC), and seems to fix gettimeofday()
+	sometime going backward by several seconds for me.
+	[bouyer, ticket #510]
 
