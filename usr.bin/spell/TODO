@@ -1,0 +1,23 @@
+	$NetBSD: TODO,v 1.1 2005/06/29 21:06:12 perry Exp $
+
+Things to do with spell(1)
+
+a) This code needs to be made WARNSable. Right now it isn't.
+b) Make sure that we are very compatible with the SVID and Solaris
+   versions of the command (since those are the best models we have,
+   there being no SuS spec.)
+c) Perhaps the last BSD version of /usr/dict/words that was 32V
+   derived should be merged in to the modern /usr/dict/words file. It
+   has a bunch of useful additions over the original 32V file etc.
+d) The code should be commented and cleaned. The code style is very
+   1970s.
+e) The way this works is bad. All the rules of how to deal with
+   spelling, suffixes, etc, are hard-coded in. That made sense in v7,
+   but it doesn't any more.
+f) The word search algorithm might be made better. millert turned it
+   into a binary search from the orignal hash mechanism.
+g) Also, the general mode that this program works in is VERY 1970s --
+   it just spits out a list of words that are misspelled without
+   context. By merging spell and spellprog, and doing a wee bit of
+   hacking, it should be possible to do things like complaining about
+   the line number that things are misspelled on etc.
