@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.4 2002/05/09 12:30:45 uch Exp $	*/
+/*	$NetBSD: cache.h,v 1.5 2005/06/29 16:31:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,15 +43,25 @@
  * SH4 I/D separated virtual-index physical-tag cache.
  *
  *
- *          size line-size entry way
- * SH7708   4/8K    16B     128  2/4   P0, P2, U0 write-through/back selectable
- *                                    P1 write-through
- * SH7709   4/8K    16B     128  2/4   write-through/back selectable
- * SH7709A  16K     16B     256   4    write-through/back selectable
+ *         size       line-size entry way type
+ * SH7708  4/8K       16B       128   2/4 P0,P2,U0 [1]
+ *                                        P1 [2]
+ * SH7709  4/8K       16B       128   2/4 [1]
+ * SH7709A 16K        16B       256   4   [1]
  *
- * SH7750  I$ D$ line-size entry way
- *         8K 8/16K 32B     256   1    write-through/back selectable
+ * SH7750  I$  D$     line-size entry way
+ *         8K  8/16K  32B       256   1   [1]
+ * SH7750
+ * SH7750S
+ * SH7751  I$  D$     line-size entry way
+ *         8K  8/16K  32B       256   1   [1]
+ * 
+ * SH7750R
+ * SH7751R I$  D$     line-size entry way
+ *         16K 16/32K 32B       512   2   [1]
  *
+ * [1]	write-through/back selectable
+ * [2]	write-through only
  *
  * Cache operations.
  *
