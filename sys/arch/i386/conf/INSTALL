@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.266 2005/06/28 22:57:19 christos Exp $
+#	$NetBSD: INSTALL,v 1.267 2005/06/29 01:40:17 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -107,7 +107,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
-#file-system 	MFS		# memory file system
+file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	NTFS		# Windows/NT Filesystem
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
