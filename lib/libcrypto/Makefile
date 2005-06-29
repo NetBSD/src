@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2005/03/26 02:21:34 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2005/06/29 14:41:16 simonb Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -110,7 +110,6 @@ SRCS+=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c
 SRCS+=fips_sha1dgst.c fips_sha1_selftest.c
 # asm/sx86-elf.s
 .PATH: ${OPENSSLSRC}/fips/sha1
-SRCS+= fips_standalone_sha1.c
 #.PATH: ${OPENSSLSRC}/fips
 SRCS+=fips.c fips_err_wrapper.c
 
