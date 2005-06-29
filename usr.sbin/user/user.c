@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.77.2.2 2005/04/13 15:59:37 tron Exp $ */
+/* $NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.77.2.2 2005/04/13 15:59:37 tron Exp $");
+__RCSID("$NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1990,6 +1990,9 @@ groupdel(int argc, char **argv)
 	if (argc != 1) {
 		usermgmt_usage("groupdel");
 	}
+	if (getgrnam(*argv) == NULL) {
+		errx(EXIT_FAILURE, "No such group `%s'", *argv);
+	}
 	checkeuid();
 	openlog("groupdel", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, NULL)) {
@@ -2057,7 +2060,7 @@ groupmod(int argc, char **argv)
 		err(EXIT_FAILURE, "Duplicate which gid?");
 	}
 	if ((grp = getgrnam(*argv)) == NULL) {
-		err(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
+		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
 	if (!is_local(*argv, _PATH_GROUP)) {
 		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
