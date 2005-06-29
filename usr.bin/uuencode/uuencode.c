@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.10 2005/06/29 20:34:48 wiz Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.11 2005/06/29 20:35:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: uuencode.c,v 1.10 2005/06/29 20:34:48 wiz Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.11 2005/06/29 20:35:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ main(int argc, char *argv[])
 
 	mode = 0;
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	while (getopt(argc, argv, "") != -1)
 		usage();
