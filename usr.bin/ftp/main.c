@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.98 2005/06/10 18:24:15 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.99 2005/06/29 02:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.98 2005/06/10 18:24:15 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.99 2005/06/29 02:31:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -953,7 +953,7 @@ help(int argc, char *argv[])
 	cmd = argv[0];
 	isusage = (strcmp(cmd, "usage") == 0);
 	if (argc == 0 || (isusage && argc == 1)) {
-		fprintf(ttyout, "usage: %s [command [...]]\n", cmd);
+		UPRINTF("usage: %s [command [...]]\n", cmd);
 		return;
 	}
 	if (argc == 1) {

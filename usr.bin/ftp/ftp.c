@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.134 2005/06/10 00:18:46 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.135 2005/06/29 02:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.134 2005/06/10 00:18:46 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.135 2005/06/29 02:31:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,8 +270,7 @@ hookup(char *host, char *port)
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS,
 				(void *)&tos, sizeof(tos)) == -1) {
-			if (debug)
-				warn("setsockopt %s (ignored)",
+				DWARN("setsockopt %s (ignored)",
 				    "IPTOS_LOWDELAY");
 		}
 	}
@@ -300,8 +299,7 @@ hookup(char *host, char *port)
 
 	if (setsockopt(s, SOL_SOCKET, SO_OOBINLINE,
 			(void *)&on, sizeof(on)) == -1) {
-		if (debug)
-			warn("setsockopt %s (ignored)", "SO_OOBINLINE");
+		DWARN("setsockopt %s (ignored)", "SO_OOBINLINE");
 	}
 
 	return (hostname);
@@ -347,6 +345,7 @@ command(const char *fmt, ...)
 	int r;
 	sigfunc oldsigint;
 
+#ifndef NO_DEBUG
 	if (debug) {
 		fputs("---> ", ttyout);
 		va_start(ap, fmt);
@@ -359,6 +358,7 @@ command(const char *fmt, ...)
 		va_end(ap);
 		putc('\n', ttyout);
 	}
+#endif
 	if (cout == NULL) {
 		warnx("No control connection for command.");
 		code = -1;
@@ -1276,11 +1276,13 @@ initconn(void)
 	char *pasvcmd = NULL;
 
 #ifdef INET6
+#ifndef NO_DEBUG
 	if (myctladdr.su_family == AF_INET6 && debug &&
 	    (IN6_IS_ADDR_LINKLOCAL(&myctladdr.si_su.su_sin6.sin6_addr) ||
 	     IN6_IS_ADDR_SITELOCAL(&myctladdr.si_su.su_sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");
 	}
+#endif
 #endif
  reinit:
 	if (passivemode) {
@@ -1293,8 +1295,7 @@ initconn(void)
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG,
 				(void *)&on, sizeof(on)) == -1) {
-			if (debug)
-				warn("setsockopt %s (ignored)", "SO_DEBUG");
+			DWARN("setsockopt %s (ignored)", "SO_DEBUG");
 		}
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
@@ -1316,10 +1317,8 @@ initconn(void)
 				}
 				if (result != COMPLETE) {
 					epsv4bad = 1;
-					if (debug)
-						fputs(
-					"disabling epsv4 for this connection\n",
-						    ttyout);
+					DPRINTF("disabling epsv4 for this "
+					    "connection\n");
 				}
 			}
 			if (result != COMPLETE) {
@@ -1531,9 +1530,8 @@ initconn(void)
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS,
 					(void *)&on, sizeof(on)) == -1) {
-				if (debug)
-					warn("setsockopt %s (ignored)",
-				    	    "IPTOS_THROUGHPUT");
+				DWARN("setsockopt %s (ignored)",
+				    "IPTOS_THROUGHPUT");
 			}
 		}
 #endif
@@ -1567,8 +1565,7 @@ initconn(void)
 	if ((options & SO_DEBUG) &&
 	    setsockopt(data, SOL_SOCKET, SO_DEBUG,
 			(void *)&on, sizeof(on)) == -1) {
-		if (debug)
-			warn("setsockopt %s (ignored)", "SO_DEBUG");
+		DWARN("setsockopt %s (ignored)", "SO_DEBUG");
 	}
 	len = sizeof(data_addr.si_su);
 	memset((char *)&data_addr, 0, sizeof (data_addr));
@@ -1612,10 +1609,8 @@ initconn(void)
 					return (1);
 				if (result != COMPLETE) {
 					epsv4bad = 1;
-					if (debug)
-						fputs(
-					"disabling epsv4 for this connection\n",
-						    ttyout);
+					DPRINTF("disabling epsv4 for this "
+					    "connection\n");
 				}
 			}
 			break;
@@ -1669,9 +1664,7 @@ initconn(void)
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS,
 				(void *)&on, sizeof(on)) == -1)
-			if (debug)
-				warn("setsockopt %s (ignored)",
-				    "IPTOS_THROUGHPUT");
+			DWARN("setsockopt %s (ignored)", "IPTOS_THROUGHPUT");
 	}
 #endif
 	return (0);
@@ -1747,9 +1740,7 @@ dataconn(const char *lmode)
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS,
 				(void *)&tos, sizeof(tos)) == -1) {
-			if (debug)
-				warn("setsockopt %s (ignored)",
-				    "IPTOS_THROUGHPUT");
+			DWARN("setsockopt %s (ignored)", "IPTOS_THROUGHPUT");
 		}
 	}
 #endif
@@ -2010,7 +2001,7 @@ reset(int argc, char *argv[])
 	int nfnd = 1;
 
 	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
+		UPRINTF("usage: %s\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2165,3 +2156,11 @@ ai_unmapped(struct addrinfo *ai)
 	ai->ai_addrlen = len;
 #endif
 }
+
+#ifdef NO_USAGE
+void
+xusage(void)
+{
+	fputs("Usage error\n", ttyout);
+}
+#endif

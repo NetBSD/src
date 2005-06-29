@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.129 2005/06/10 00:18:47 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.130 2005/06/29 02:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.129 2005/06/10 00:18:47 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.130 2005/06/29 02:31:19 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ setpeer(int argc, char *argv[])
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
  usage:
-		fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
+		UPRINTF("usage: %s host-name [port]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -268,6 +268,7 @@ getremoteinfo(void)
 		features[FEAT_FEAT] = 1;
 	} else
 		features[FEAT_FEAT] = 0;
+#ifndef NO_DEBUG
 	if (debug) {
 #define DEBUG_FEAT(x) fprintf(ttyout, "features[" #x "] = %d\n", features[(x)])
 		DEBUG_FEAT(FEAT_FEAT);
@@ -278,6 +279,7 @@ getremoteinfo(void)
 		DEBUG_FEAT(FEAT_TVFS);
 #undef DEBUG_FEAT
 	}
+#endif
 	reply_callback = NULL;
 
 	verbose = overbose;
@@ -387,10 +389,9 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	if (lpass)
 		pass = xstrdup(lpass);
 
-	if (debug)
-		fprintf(ttyout, "ftp_login: user `%s' pass `%s' host `%s'\n",
-		    user ? user : "<null>", pass ? pass : "<null>",
-		    host ? host : "<null>");
+	DPRINTF("ftp_login: user `%s' pass `%s' host `%s'\n",
+	    user ? user : "<null>", pass ? pass : "<null>",
+	    host ? host : "<null>");
 
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.
@@ -766,8 +767,8 @@ remotemodtime(const char *file, int noisy)
 				goto bad_parse_time;
 			else
 				goto cleanup_parse_time;
-		} else if (debug)
-			fprintf(ttyout, "parsed date as: %s", ctime(&rtime));
+		} else 
+			DPRINTF("parsed date as: %s", ctime(&rtime));
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
 			features[FEAT_MDTM] = 0;
@@ -792,8 +793,7 @@ updatelocalcwd(void)
 
 	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
 		localcwd[0] = '\0';
-	if (debug)
-		fprintf(ttyout, "got localcwd as `%s'\n", localcwd);
+	DPRINTF(ttyout, "got localcwd as `%s'\n", localcwd);
 }
 
 /*
@@ -825,8 +825,7 @@ updateremotecwd(void)
 		remotecwd[i] = *cp;
 	}
 	remotecwd[i] = '\0';
-	if (debug)
-		fprintf(ttyout, "got remotecwd as `%s'\n", remotecwd);
+	DPRINTF("got remotecwd as `%s'\n", remotecwd);
 	goto cleanupremotecwd;
  badremotecwd:
 	remotecwd[0]='\0';
@@ -1254,8 +1253,7 @@ isipv6addr(const char *addr)
 		rv = 1;
 		freeaddrinfo(res);
 	}
-	if (debug)
-		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
+	DPRINTF("isipv6addr: got %d for %s\n", rv, addr);
 #endif
 	return (rv == 1) ? 1 : 0;
 }
