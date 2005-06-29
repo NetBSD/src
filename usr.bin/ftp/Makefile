@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2005/02/11 15:13:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.31 2005/06/29 02:31:19 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
 #CPPFLAGS+=-DGATE_SERVER=\"ftp-gw.host\" # -DGATE_PORT=21
 
 .if defined(SMALLPROG)
-CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS
+CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS -DNO_DEBUG -DNO_USAGE
 .else
 LDADD+=	-ledit -ltermcap
 DPADD+=	${LIBEDIT} ${LIBTERMCAP}
