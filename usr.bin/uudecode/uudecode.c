@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.19 2004/11/04 07:43:38 dsl Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.19 2004/11/04 07:43:38 dsl Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -62,21 +62,20 @@ __RCSID("$NetBSD: uudecode.c,v 1.19 2004/11/04 07:43:38 dsl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static int decode __P((void));
-static void usage __P((void));
-int main __P((int, char **));
+static int decode(void);
+static void usage(void);
+int main(int, char *[]);
 
 int pflag;
 char *filename;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rval;
 
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	pflag = 0;
 	while ((ch = getopt(argc, argv, "p")) != -1)
@@ -108,7 +107,7 @@ main(argc, argv)
 }
 
 static int
-decode()
+decode(void)
 {
 	struct passwd *pw;
 	int n;
@@ -221,6 +220,7 @@ decode()
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: uudecode [-p] [file ...]\n");
+	(void)fprintf(stderr, "usage: %s [-p] [file ...]\n",
+		      getprogname());
 	exit(1);
 }
