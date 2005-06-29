@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.88 2005/06/01 15:25:51 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.89 2005/06/29 02:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.88 2005/06/01 15:25:51 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.89 2005/06/29 02:21:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,8 +90,10 @@ static void pax_options(int, char **);
 static void pax_usage(void);
 static void tar_options(int, char **);
 static void tar_usage(void);
+#ifndef NO_CPIO
 static void cpio_options(int, char **);
 static void cpio_usage(void);
+#endif
 
 /* errors from getline */
 #define GETLINE_FILE_CORRUPT 1
@@ -136,6 +138,7 @@ static int getline_error;
  */
 
 FSUB fsub[] = {
+#ifndef NO_CPIO
 /* 0: OLD BINARY CPIO */
 	{ "bcpio", 5120, sizeof(HD_BCPIO), 1, 0, 0, 1, bcpio_id, cpio_strd,
 	bcpio_rd, bcpio_endrd, cpio_stwr, bcpio_wr, cpio_endwr, NULL,
@@ -155,7 +158,7 @@ FSUB fsub[] = {
 	{ "sv4crc", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, crc_id, crc_strd,
 	vcpio_rd, vcpio_endrd, crc_stwr, vcpio_wr, cpio_endwr, NULL,
 	cpio_subtrail, rd_wrfile, wr_rdfile, bad_opt },
-
+#endif
 /* 4: OLD TAR */
 	{ "tar", 10240, BLKMULT, 0, 1, BLKMULT, 0, tar_id, no_op,
 	tar_rd, tar_endrd, no_op, tar_wr, tar_endwr, tar_trail,
@@ -166,12 +169,17 @@ FSUB fsub[] = {
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
 	NULL, rd_wrfile, wr_rdfile, bad_opt }
 };
+#ifndef NO_CPIO
 #define F_BCPIO		0	/* old binary cpio format */
 #define F_CPIO		1	/* old octal character cpio format */
 #define F_SV4CPIO	2	/* SVR4 hex cpio format */
 #define F_SV4CRC	3	/* SVR4 hex with crc cpio format */
 #define F_TAR		4	/* old V7 UNIX tar format */
 #define F_USTAR		5	/* ustar format */
+#else
+#define F_TAR		0	/* old V7 UNIX tar format */
+#define F_USTAR		1	/* ustar format */
+#endif
 #define DEFLT		F_USTAR	/* default write format from list above */
 
 /*
@@ -179,7 +187,11 @@ FSUB fsub[] = {
  * of archive we are dealing with. This helps to properly id archive formats
  * some formats may be subsets of others....
  */
-int ford[] = {F_USTAR, F_TAR, F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, -1};
+int ford[] = {F_USTAR, F_TAR,
+#ifndef NO_CPIO
+    F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, 
+#endif
+    -1};
 
 /*
  * filename record separator
@@ -207,9 +219,11 @@ options(int argc, char **argv)
 	if (strstr(argv0, NM_TAR)) {
 		argv0 = NM_TAR;
 		tar_options(argc, argv);
+#ifndef NO_CPIO
 	} else if (strstr(argv0, NM_CPIO)) {
 		argv0 = NM_CPIO;
 		cpio_options(argc, argv);
+#endif
 	} else {
 		argv0 = NM_PAX;
 		pax_options(argc, argv);
@@ -1339,6 +1353,7 @@ mkpath(path)
 }
 
 
+#ifndef NO_CPIO
 struct option cpio_longopts[] = {
 	{ "reset-access-time",	no_argument,		0,	'a' },
 	{ "make-directories",	no_argument,		0, 	'd' },
@@ -1738,6 +1753,7 @@ cpio_options(int argc, char **argv)
 		break;
 	}
 }
+#endif
 
 /*
  * printflg()
@@ -1809,8 +1825,10 @@ bad_opt(void)
 		(void)fprintf(stderr, "\t%s = %s\n", opt->name, opt->value);
 	if (strcmp(NM_TAR, argv0) == 0)
 		tar_usage();
+#ifndef NO_CPIO
 	else if (strcmp(NM_CPIO, argv0) == 0)
 		cpio_usage();
+#endif
 	else
 		pax_usage();
 	return(0);
@@ -2033,6 +2051,7 @@ tar_usage(void)
 	/* NOTREACHED */
 }
 
+#ifndef NO_CPIO
 /*
  * cpio_usage()
  *	print the usage summary to the user
@@ -2054,3 +2073,4 @@ cpio_usage(void)
 	exit(1);
 	/* NOTREACHED */
 }
+#endif
