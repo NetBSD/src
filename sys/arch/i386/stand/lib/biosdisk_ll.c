@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.22 2005/06/29 18:02:52 junyoung Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.23 2005/06/29 18:50:38 junyoung Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,11 +99,11 @@ static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
 #endif
 
 int
-set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
+set_geometry(struct biosdisk_ll *d, struct biosdisk_extinfo *ed)
 {
 	int diskinfo;
 
-	diskinfo = get_diskinfo(d->dev);
+	diskinfo = biosdisk_getinfo(d->dev);
 	d->sec = SPT(diskinfo);
 	d->head = HEADS(diskinfo);
 	d->cyl = CYL(diskinfo);
@@ -130,11 +130,11 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	 */
 	d->flags = 0;
 	if (d->type == BIOSDISK_TYPE_CD ||
-	    (d->type == BIOSDISK_TYPE_HD && int13_extension(d->dev))) {
-		d->flags |= BIOSDISK_EXT13;
+	    (d->type == BIOSDISK_TYPE_HD && biosdisk_int13ext(d->dev))) {
+		d->flags |= BIOSDISK_INT13EXT;
 		if (ed != NULL) {
 			ed->size = sizeof(*ed);
-			int13_getextinfo(d->dev, ed);
+			biosdisk_getextinfo(d->dev, ed);
 		}
 	}
 
@@ -145,7 +145,7 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	if (d->type == BIOSDISK_TYPE_FD && SPT(diskinfo) == 36) {
 		char buf[512];
 
-		if (biosread(d->dev, 0, 0, 18, 1, buf)) {
+		if (biosdisk_read(d->dev, 0, 0, 18, 1, buf)) {
 			d->sec = 18;
 			d->chs_sectors /= 2;
 		}
@@ -198,7 +198,7 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 			int64_t sec;
 		} ext;
 
-		if (!(d->flags & BIOSDISK_EXT13))
+		if (!(d->flags & BIOSDISK_INT13EXT))
 			return -1;
 		ext.size = sizeof(ext);
 		ext.resvd = 0;
@@ -208,8 +208,8 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 		ext.seg = vtophys(buf) >> 4;
 		ext.sec = dblk;
 
-		if (biosextread(d->dev, &ext)) {
-			(void)biosdiskreset(d->dev);
+		if (biosdisk_extread(d->dev, &ext)) {
+			(void)biosdisk_reset(d->dev);
 			return -1;
 		}
 
@@ -227,8 +227,8 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 		if (nsec > num)
 			nsec = num;
 
-		if (biosread(d->dev, cyl, head, sec, nsec, buf)) {
-			(void)biosdiskreset(d->dev);
+		if (biosdisk_read(d->dev, cyl, head, sec, nsec, buf)) {
+			(void)biosdisk_reset(d->dev);
 			return -1;
 		}
 
