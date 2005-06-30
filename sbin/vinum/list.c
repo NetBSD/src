@@ -1,4 +1,4 @@
-/* $NetBSD: list.c,v 1.4 2005/06/26 22:36:55 christos Exp $ */
+/* $NetBSD: list.c,v 1.5 2005/06/30 12:18:16 drochner Exp $ */
 
 /*      list.c: vinum interface program, list routines
  */
@@ -41,13 +41,13 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: list.c,v 1.4 2005/06/26 22:36:55 christos Exp $
+ * $Id: list.c,v 1.5 2005/06/30 12:18:16 drochner Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
 
-__RCSID("$NetBSD: list.c,v 1.4 2005/06/26 22:36:55 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.5 2005/06/30 12:18:16 drochner Exp $");
 
 #include <sys/utsname.h>
 #include <dev/vinum/request.h>
@@ -221,7 +221,7 @@ vinum_ldi(int driveno, int rec)
 		    roughlength(drive.bytes_read, 1));
 		if (drive.reads != 0)
 		    printf("\t\tAverage read:\t%16lld bytes\n",
-			(long long) drive.bytes_read / drive.reads);
+			(long long)(drive.bytes_read / drive.reads));
 		printf("\t\tWrites: \t%16lld\n\t\tBytes written:\t%16lld (%s)\n",
 		    (long long) drive.writes,
 		    (long long) drive.bytes_written,
@@ -344,7 +344,7 @@ vinum_lvi(int volno, int rec)
 		printf("%7lld\t", (long long) vol.recovered_reads);
 		printf("%7lld\t%15lld\t",
 		    (long long) vol.writes,
-		    vol.bytes_written);
+		    (long long) vol.bytes_written);
 		if (vol.writes != 0)
 		    printf("%7lld\n",
 			(long long) (vol.bytes_written / vol.writes));
@@ -945,7 +945,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.b.b_blkno,
+			    (long long)rq.info.b.b_blkno,
 			    (long)rq.info.b.b_bcount);
 			break;
 
@@ -958,7 +958,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.b.b_blkno,
+			    (long long)rq.info.b.b_blkno,
 			    (long)rq.info.b.b_bcount);
 			break;
 
@@ -977,7 +977,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.rqe.b.b_blkno,
+			    (long long)rq.info.rqe.b.b_blkno,
 			    (long)rq.info.rqe.b.b_bcount,
 			    (long)rq.info.rqe.sdno,
 			    (long)rq.info.rqe.sdoffset,
@@ -992,7 +992,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.rqe.b.b_blkno,
+			    (long long)rq.info.rqe.b.b_blkno,
 			    (long)rq.info.rqe.b.b_bcount,
 			    (long)rq.info.rqe.sdno,
 			    (long)rq.info.rqe.sdoffset,
@@ -1007,7 +1007,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.rqe.b.b_blkno,
+			    (long long)rq.info.rqe.b.b_blkno,
 			    (long)rq.info.rqe.b.b_bcount,
 			    rq.info.rqe.sdno,
 			    (long)rq.info.rqe.sdoffset,
@@ -1022,7 +1022,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.bp,
 			    rq.devmajor,
 			    rq.devminor,
-			    rq.info.rqe.b.b_blkno,
+			    (long long) rq.info.rqe.b.b_blkno,
 			    (long)rq.info.rqe.b.b_bcount,
 			    (long)rq.info.rqe.sdno,
 			    (long)rq.info.rqe.sdoffset,
@@ -1036,7 +1036,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.type,
 			    rq.info.b.b_flags & B_READ ? "Read " : "Write",
 			    rq.bp,
-			    rq.info.b.b_blkno,
+			    (long long)rq.info.b.b_blkno,
 			    (long)rq.info.b.b_bcount,
 			    (long)rq.devminor);
 			break;
@@ -1047,7 +1047,7 @@ vinum_info(int argc, char *argv[], char *argv0[])
 			    rq.type,
 			    rq.info.b.b_flags & B_READ ? "Read " : "Write",
 			    rq.bp,
-			    rq.info.b.b_blkno,
+			    (long long)rq.info.b.b_blkno,
 			    (long)rq.info.b.b_bcount,
 			    (long)rq.devminor);
 			break;
@@ -1331,7 +1331,7 @@ dumpconfig(char *part)
 		    printf("Drive %s: %s (%lld bytes)\n",
 			partname,
 			roughlength(drivelength, 1),
-			drivelength);
+			(long long)drivelength);
 		    if ((!found) && vflag)		    /* we're talkative */
 			printf("*** no configuration found ***\n");
 		}
@@ -1362,7 +1362,7 @@ dumpconfig(char *part)
 		    printf("Drive %s: %s (%lld bytes)\n",
 			partname,
 			roughlength(drivelength, 1),
-			drivelength);
+			(long long)drivelength);
 		    if ((!found) && vflag)		    /* we're talkative */
 			printf("*** no configuration found ***\n");
 		}
