@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.9 2003/11/07 23:04:15 he Exp $ */
+/*	$NetBSD: plum.c,v 1.10 2005/06/30 17:03:53 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.9 2003/11/07 23:04:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.10 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.9 2003/11/07 23:04:15 he Exp $");
 int plum_match(struct device *, struct cfdata *, void *);
 void plum_attach(struct device *, struct device *, void *);
 int plum_print(void *, const char *);
-int plum_search(struct device *, struct cfdata *, void *);
+int plum_search(struct device *, struct cfdata *, const locdesc_t *, void *);
 
 struct plum_softc {
 	struct	device		sc_dev;
@@ -124,12 +124,12 @@ plum_attach(struct device *parent, struct device *self, void *aux)
 	 * attach first.
 	 */
 	sc->sc_pri = 2;
-	config_search(plum_search, self, plum_print);
+	config_search_ia(plum_search, self, "plumif", plum_print);
 	/* 
 	 * Other plum module.
 	 */
 	sc->sc_pri = 1;
-	config_search(plum_search, self, plum_print);
+	config_search_ia(plum_search, self, "plumif", plum_print);
 }
 
 plumreg_t
@@ -157,7 +157,8 @@ plum_print(void *aux, const char *pnp)
 }
 
 int
-plum_search(struct device *parent, struct cfdata *cf, void *aux)
+plum_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct plum_softc *sc = (void*)parent;
 	struct plum_attach_args pa;

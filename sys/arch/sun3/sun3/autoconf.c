@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ cpu_configure(void)
 
 /*
  * bus_scan:
- * This function is passed to config_search() by the attach function
+ * This function is passed to config_search_ia() by the attach function
  * for each of the "bus" drivers (obctl, obio, obmem, vme, ...).
  * The purpose of this function is to copy the "locators" into our
  * confargs structure, so child drivers may use the confargs both
@@ -105,7 +105,8 @@ cpu_configure(void)
  * setup the confargs for each child match and attach call.
  */
 int 
-bus_scan(struct device *parent, struct cfdata *cf, void *aux)
+bus_scan(struct device *parent, struct cfdata *cf,
+	 const locdesc_t *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 

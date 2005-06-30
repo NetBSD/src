@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.11 2005/06/28 18:29:58 drochner Exp $ */
+/* $NetBSD: podulebus.c,v 1.12 2005/06/30 17:03:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.11 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.12 2005/06/30 17:03:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,7 +172,7 @@ podulebus_probe_podule(struct device *self, int slotnum)
 			}
 		}
 		pa.pa_slotflags = 0;
-		config_found_sm_loc(self, &pa, "podulebus", NULL,
+		config_found_sm_loc(self, "podulebus", NULL, &pa,
 				podulebus_print, podulebus_submatch);
 		if (pa.pa_chunks)
 			FREE(pa.pa_chunks, M_DEVBUF);

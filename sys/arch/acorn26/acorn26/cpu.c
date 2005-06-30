@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15 2005/06/09 08:05:31 he Exp $ */
+/* $NetBSD: cpu.c,v 1.16 2005/06/30 17:03:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2005/06/09 08:05:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2005/06/30 17:03:51 drochner Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -50,7 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2005/06/09 08:05:31 he Exp $");
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
-static int cpu_search(struct device *, struct cfdata *, void *);
+static int cpu_search(struct device *, struct cfdata *,
+		      const locdesc_t *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM2
 static int arm2_undef_handler(u_int, u_int, struct trapframe *, int);
@@ -124,11 +125,12 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: CPU type not supported by kernel\n",
 		       self->dv_xname);
 	config_interrupts(self, cpu_delay_calibrate);
-	config_search(cpu_search, self, NULL);
+	config_search_ia(cpu_search, self, "cpu", NULL);
 }
 
 static int
-cpu_search(struct device *parent, struct cfdata *cf, void *aux)
+cpu_search(struct device *parent, struct cfdata *cf,
+	   const locdesc_t *ldesc, void *aux)
 {
 	
 	if (config_match(parent, cf, NULL) > 0)

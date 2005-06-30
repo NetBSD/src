@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2003/07/15 02:54:35 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2003/07/15 02:54:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2003/07/15 02:54:35 lukem Exp $");
 
 static int	mbprobe __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbsearch __P((struct device *, struct cfdata *, void *));
+static int	mbsearch __P((struct device *, struct cfdata *,
+			      const locdesc_t *, void *));
 static int	mbprint __P((void *, const char *));
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -92,7 +93,7 @@ mbattach(parent, self, aux)
 	if (clk != SIR_CLOCK || net != SIR_NET)
 		panic("Wrong clock or net softint allocated");
 
-	config_search(mbsearch, self, NULL);
+	config_search_ia(mbsearch, self, "mainbus", NULL);
 }
 
 static int
@@ -119,9 +120,10 @@ mbprint(aux, pnp)
 }
 
 static int
-mbsearch(parent, cf, aux)
+mbsearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct confargs ca;

@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.12 2003/07/15 02:29:34 lukem Exp $ */
+/*	$NetBSD: txsim.c,v 1.13 2005/06/30 17:03:53 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.12 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.13 2005/06/30 17:03:53 drochner Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.12 2003/07/15 02:29:34 lukem Exp $");
 int	txsim_match(struct device *, struct cfdata *, void *);
 void	txsim_attach(struct device *, struct device *, void *);
 int	txsim_print(void *, const char*);
-int	txsim_search(struct device *, struct cfdata *, void *);
+int	txsim_search(struct device *, struct cfdata *,
+		     const locdesc_t *, void *);
 
 struct txsim_softc {
 	struct	device sc_dev;
@@ -98,18 +99,18 @@ txsim_attach(struct device *parent, struct device *self, void *aux)
 	 * so attach first.
 	 */
 	sc->sc_pri = ATTACH_FIRST;
-	config_search(txsim_search, self, txsim_print);
+	config_search_ia(txsim_search, self, "txsim", txsim_print);
 	/*
 	 * unified I/O manager requires all I/O capable module already
 	 * attached.
 	 */
 	sc->sc_pri = ATTACH_NORMAL;
-	config_search(txsim_search, self, txsim_print);
+	config_search_ia(txsim_search, self, "txsim", txsim_print);
 	/* 
 	 * UART module uses platform dependent config_hooks.
 	 */
 	sc->sc_pri = ATTACH_LAST;
-	config_search(txsim_search, self, txsim_print);
+	config_search_ia(txsim_search, self, "txsim", txsim_print);
 }
 
 int
@@ -119,7 +120,8 @@ txsim_print(void *aux, const char *pnp)
 }
 
 int
-txsim_search(struct device *parent, struct cfdata *cf, void *aux)
+txsim_search(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct txsim_softc *sc = (void*)parent;
 	struct txsim_attach_args ta;

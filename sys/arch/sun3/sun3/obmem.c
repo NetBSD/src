@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.20 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: obmem.c,v 1.21 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.20 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.21 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,5 +73,5 @@ obmem_attach(struct device *parent, struct device *self, void *args)
 	printf("\n");
 
 	/* We know ca_bustype == BUS_OBMEM */
-	(void) config_search(bus_scan, self, args);
+	config_search_ia(bus_scan, self, "obmem", args);
 }

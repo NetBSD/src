@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.15 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.16 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.15 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.16 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,12 +149,12 @@ mbmem_attach(struct device *parent, struct device *self, void *aux)
 	/* Find all `early' mbmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		mbma.mbma_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &mbma);
+		config_search_ia(sun68k_bus_search, self, "mbmem", &mbma);
 	}
 
 	/* Find all other mbmem devices */
 	mbma.mbma_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &mbma);
+	config_search_ia(sun68k_bus_search, self, "mbmem", &mbma);
 }
 
 int
