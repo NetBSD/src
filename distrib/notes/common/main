@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.287 2005/06/20 13:25:23 peter Exp $
+.\"	$NetBSD: main,v 1.288 2005/06/30 13:13:50 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1708,6 +1708,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Todd Vierling Ta Mt tv@NetBSD.org
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
+.It Ta Mike M. Volokhov Ta Mt mishka@NetBSD.org
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.org
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.org
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.org
