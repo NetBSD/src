@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.66 2004/12/14 02:32:03 chs Exp $	*/
+/*	$NetBSD: obio.c,v 1.67 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.66 2004/12/14 02:32:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.67 2005/06/30 17:03:54 drochner Exp $");
 
 #include "locators.h"
 
@@ -96,7 +96,8 @@ struct obio4_busattachargs {
 
 #if defined(SUN4)
 static	int obioprint  __P((void *, const char *));
-static	int obiosearch   __P((struct device *, struct cfdata *, void *));
+static	int obiosearch   __P((struct device *, struct cfdata *,
+			      const locdesc_t *, void *));
 static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 			       int, int));
 static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
@@ -167,12 +168,12 @@ obioattach(parent, self, aux)
 		/* Find all `early' obio devices */
 		for (cpp = special4; *cpp != NULL; cpp++) {
 			oa.name = *cpp;
-			(void)config_search(obiosearch, self, &oa);
+			config_search_ia(obiosearch, self, "obio", &oa);
 		}
 
 		/* Find all other obio devices */
 		oa.name = NULL;
-		(void)config_search(obiosearch, self, &oa);
+		config_search_ia(obiosearch, self, "obio", &oa);
 #endif
 		return;
 	} else if (CPU_ISSUN4M) {
@@ -251,9 +252,10 @@ obio_bus_mmap(t, ba, off, prot, flags)
 }
 
 int
-obiosearch(parent, cf, aux)
+obiosearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct obio4_busattachargs *oap = aux;

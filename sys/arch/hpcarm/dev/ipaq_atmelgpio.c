@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.6 2003/07/15 00:25:07 lukem Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.6 2003/07/15 00:25:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.6 2003/07/15 00:25:07 lukem Exp
 static	int	atmelgpio_match(struct device *, struct cfdata *, void *);
 static	void	atmelgpio_attach(struct device *, struct device *, void *);
 static	int	atmelgpio_print(void *, const char *);
-static	int	atmelgpio_search(struct device *, struct cfdata *, void *);
+static	int	atmelgpio_search(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
 static	void	atmelgpio_init(struct atmelgpio_softc *);
 
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
@@ -131,13 +132,14 @@ atmelgpio_attach(parent, self, aux)
 	 *  Attach each devices
 	 */
 
-	config_search(atmelgpio_search, self, NULL);
+	config_search_ia(atmelgpio_search, self, "atmelgpioif", NULL);
 }
 
 static int
-atmelgpio_search(parent, cf, aux)
+atmelgpio_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)

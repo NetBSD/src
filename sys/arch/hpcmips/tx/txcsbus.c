@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.16 2005/06/07 12:19:46 he Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.17 2005/06/30 17:03:53 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.16 2005/06/07 12:19:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.17 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,8 @@ const struct csmap {
 int	txcsbus_match(struct device *, struct cfdata *, void *);
 void	txcsbus_attach(struct device *, struct device *, void *);
 int	txcsbus_print(void *, const char *);
-int	txcsbus_search(struct device *, struct cfdata *, void *);
+int	txcsbus_search(struct device *, struct cfdata *,
+		       const locdesc_t *, void *);
 
 struct txcsbus_softc {
 	struct	device sc_dev;
@@ -140,7 +141,7 @@ txcsbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *	Attach external chip.
 	 */
-	config_search(txcsbus_search, self, txcsbus_print);
+	config_search_ia(txcsbus_search, self, "txcsbus", txcsbus_print);
 }
 
 int
@@ -189,7 +190,8 @@ txcsbus_print(void *aux, const char *pnp)
 }
 
 int
-txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
+txcsbus_search(struct device *parent, struct cfdata *cf,
+	       const locdesc_t *ldesc, void *aux)
 {
 	struct txcsbus_softc *sc = (void*)parent;
 	struct cs_attach_args ca;

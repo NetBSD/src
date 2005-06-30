@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2004/07/06 16:20:43 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2004/07/06 16:20:43 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2004/07/06 16:20:43 uch Exp $");
 
 static int mainbus_match(struct device *, struct cfdata *, void *);
 static void mainbus_attach(struct device *, struct device *, void *);
-static int mainbus_search(struct device *, struct cfdata *, void *);
+static int mainbus_search(struct device *, struct cfdata *,
+			  const locdesc_t *, void *);
 static int mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -71,7 +72,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    mainbus_print);
 
 	/* Devices */
-	config_search(mainbus_search, self, 0);
+	config_search_ia(mainbus_search, self, "mainbus", 0);
 
 	/* APM */
 	config_found(self, &(struct mainbus_attach_args){.ma_name = "hpcapm"},
@@ -79,7 +80,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_search(struct device *parent, struct cfdata *cf,
+	       const locdesc_t *ldesc, void *aux)
 {
 	struct mainbus_attach_args maa;
 	int locator = cf->cf_loc[MAINBUSCF_ID];

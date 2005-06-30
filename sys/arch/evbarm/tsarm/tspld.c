@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.7 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: tspld.c,v 1.8 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.7 2005/06/20 02:49:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.8 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -63,7 +63,8 @@ int	tspldmatch __P((struct device *, struct cfdata *, void *));
 void	tspldattach __P((struct device *, struct device *, void *));
 static int	tspld_wdog_setmode __P((struct sysmon_wdog *));
 static int	tspld_wdog_tickle __P((struct sysmon_wdog *));
-int tspld_search __P((struct device *, struct cfdata *, void *));
+int tspld_search __P((struct device *, struct cfdata *,
+		      const locdesc_t *, void *));
 int tspld_print __P((void *, const char *));
 
 struct tspld_softc {
@@ -343,9 +344,10 @@ tspldattach(parent, self, aux)
 }
 
 int
-tspld_search(parent, cf, aux)
+tspld_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct tspld_softc *sc = (struct tspld_softc *)parent;
@@ -388,7 +390,7 @@ tspld_callback(self)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(tspld_search, self, NULL);
+	config_search_ia(tspld_search, self, "tspldbus", NULL);
 	
 }
 

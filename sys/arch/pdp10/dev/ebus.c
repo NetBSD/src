@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.2 2004/12/14 02:32:02 chs Exp $	*/
+/*	$NetBSD: ebus.c,v 1.3 2005/06/30 17:03:53 drochner Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -54,7 +54,8 @@ ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-ebus_search(struct device *parent, struct cfdata *cf, void *aux)
+ebus_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct ebus_attach_args ea;
 	int rv;
@@ -73,7 +74,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
-	config_search(ebus_search, self, NULL);
+	config_search_ia(ebus_search, self, "ebus", NULL);
 }
 
 struct cfattach ebus_ca = {

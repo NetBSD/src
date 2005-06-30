@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.16 2005/06/07 12:19:46 he Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.17 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.16 2005/06/07 12:19:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.17 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ static int	vrc4173bcu_match(struct device *, struct cfdata *, void *);
 static void	vrc4173bcu_attach(struct device *, struct device *, void *);
 static int	vrc4173bcu_intr(void *);
 static int	vrc4173bcu_print(void *, const char *);
-static int	vrc4173bcu_search(struct device *, struct cfdata *cf, void *);
+static int	vrc4173bcu_search(struct device *, struct cfdata *cf,
+				  const locdesc_t *, void *);
 static int	vrc4173bcu_pci_intr(void *);
 #ifdef VRC4173BCU_DEBUG
 static void	vrc4173bcu_dump_level2mask(vrip_chipset_tag_t,
@@ -426,7 +427,8 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	 *  sc->sc_pri = 2~1
 	 */
 	for (sc->sc_pri = 2; 0 < sc->sc_pri; sc->sc_pri--)
-		config_search(vrc4173bcu_search, self, vrc4173bcu_print);
+		config_search_ia(vrc4173bcu_search, self, "vripif",
+				 vrc4173bcu_print);
 }
 
 int
@@ -449,7 +451,8 @@ vrc4173bcu_print(void *aux, const char *hoge)
 }
 
 int
-vrc4173bcu_search(struct device *parent, struct cfdata *cf, void *aux)
+vrc4173bcu_search(struct device *parent, struct cfdata *cf,
+		  const locdesc_t *ldesc, void *aux)
 {
 	struct vrc4173bcu_softc *sc = (struct vrc4173bcu_softc *)parent;
 	struct vrip_attach_args va;

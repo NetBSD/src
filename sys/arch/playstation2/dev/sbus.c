@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.6 2003/07/15 02:54:36 lukem Exp $	*/
+/*	$NetBSD: sbus.c,v 1.7 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.6 2003/07/15 02:54:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.7 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,8 @@ STATIC int sbus_intr(void *);
 
 STATIC int sbus_match(struct device *, struct cfdata *, void *);
 STATIC void sbus_attach(struct device *, struct device *, void *);
-STATIC int sbus_search(struct device *, struct cfdata *, void *);
+STATIC int sbus_search(struct device *, struct cfdata *,
+		       const locdesc_t *, void *);
 STATIC int sbus_print(void *, const char *);
 
 CFATTACH_DECL(sbus, sizeof (struct device),
@@ -117,11 +118,12 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize SBUS controller */
 	sbus_init(type);
 
-	config_search(sbus_search, self, 0);
+	config_search_ia(sbus_search, self, "sbus", 0);
 }
 
 int
-sbus_search(struct device *parent, struct cfdata *cf, void *aux)
+sbus_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct sbus_attach_args sa;
 

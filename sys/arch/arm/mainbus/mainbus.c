@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.10 2004/01/03 14:42:12 chris Exp $ */
+/* $NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2004/01/03 14:42:12 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ extern struct bus_space mainbus_bs_tag;
 static int  mainbusmatch  __P((struct device *, struct cfdata *, void *));
 static void mainbusattach __P((struct device *, struct device *, void *));
 static int  mainbusprint  __P((void *aux, const char *mainbus));
-static int  mainbussearch __P((struct device *, struct cfdata *, void *));
+static int  mainbussearch __P((struct device *, struct cfdata *,
+				const locdesc_t *, void *));
 
 /* attach and device structures for the device */
 
@@ -126,9 +127,10 @@ mainbusprint(aux, mainbus)
  */
 
 static int
-mainbussearch(parent, cf, aux)
+mainbussearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct mainbus_attach_args mb;
@@ -176,7 +178,7 @@ mainbusattach(parent, self, aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	config_search(mainbussearch, self, NULL);
+	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
 
 /* End of mainbus.c */

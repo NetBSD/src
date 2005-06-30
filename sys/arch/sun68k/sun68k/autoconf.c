@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2005/06/03 21:57:16 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2005/06/03 21:57:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2005/06/30 17:03:54 drochner Exp $");
 
 #include "opt_kgdb.h"
 
@@ -175,7 +175,7 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
 
 /*
  * sun68k_bus_search:
- * This function is passed to config_search() by the attach function
+ * This function is passed to config_search_ia() by the attach function
  * for each of the "bus" drivers (obio, obmem, mbmem, vme, ...).
  * The purpose of this function is to copy the "locators" into our
  * _attach_args structure, so child drivers may use the _attach_args both
@@ -186,7 +186,8 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
  * setup the _attach_args for each child match and attach call.
  */
 int 
-sun68k_bus_search(struct device *parent, struct cfdata *cf, void *aux)
+sun68k_bus_search(struct device *parent, struct cfdata *cf,
+		  const locdesc_t *ldesc, void *aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;

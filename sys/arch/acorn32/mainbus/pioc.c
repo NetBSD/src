@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.9 2005/06/28 18:29:58 drochner Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.9 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,9 +222,10 @@ piocprint(aux, name)
  */
 
 static int
-piocsearch(parent, cf, aux)
+piocsearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct pioc_softc *sc = (struct pioc_softc *)parent;
@@ -377,7 +378,7 @@ piocattach(parent, self, aux)
 	 * not know the interrupt numbers to use.
 	 * Eventually this information will have to be provided by the
 	 * riscpc specific code.
-	 * Until then just do a config_search() and pick the info up
+	 * Until then just do a config_search_ia() and pick the info up
 	 * from the cfdata.
 	 * Note the child devices require some modifications as well.
 	 */
@@ -514,7 +515,7 @@ piocattach(parent, self, aux)
 	}
 
 #if 0
-	config_search(piocsearch, self, NULL);
+	config_search_ia(piocsearch, self, "pioc", NULL);
 #endif
 }
 

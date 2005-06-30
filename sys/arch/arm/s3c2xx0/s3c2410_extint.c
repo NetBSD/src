@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.2 2003/09/24 11:57:45 mycroft Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.3 2005/06/30 17:03:52 drochner Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.2 2003/09/24 11:57:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.3 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,8 @@ static struct	ssextio_softc *ssextio_softc = NULL;
 /* prototypes */
 static int	ssextio_match(struct device *, struct cfdata *, void *);
 static void	ssextio_attach(struct device *, struct device *, void *);
-static int 	ssextio_search(struct device *, struct cfdata *, void *);
+static int 	ssextio_search(struct device *, struct cfdata *,
+			       const locdesc_t *, void *);
 static int	ssextio_print(void *, const char *);
 
 static int	ssextio_cascaded_intr(void *);
@@ -163,11 +164,12 @@ ssextio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(ssextio_search, self, NULL);
+	config_search_ia(ssextio_search, self, "ssextio", NULL);
 }
 
 static int
-ssextio_search(struct device *parent, struct cfdata *cf, void *aux)
+ssextio_search(struct device *parent, struct cfdata *cf,
+	       const locdesc_t *ldesc, void *aux)
 {
 	struct ssextio_softc *sc = (struct ssextio_softc *)parent;
 	struct s3c24x0_softc *cpuc =(struct s3c24x0_softc *)sc->sc_dev.dv_parent;

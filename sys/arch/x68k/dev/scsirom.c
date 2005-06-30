@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.12 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.13 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.12 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.13 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ scsirom_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf (": External at %p\n", (void*)ia->ia_addr);
 
-	cf = config_search (NULL, self, ia);
+	cf = config_search_ia(NULL, self, "scsirom", ia);
 	if (cf) {
 		config_attach(self, cf, ia, NULL);
 	} else {
