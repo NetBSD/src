@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.33 2005/06/03 22:17:18 martin Exp $	*/
+/*	$NetBSD: kd.c,v 1.34 2005/06/30 12:07:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.33 2005/06/03 22:17:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34 2005/06/30 12:07:51 macallan Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -553,7 +553,7 @@ char prom_stdout_args[16];
 
 extern void prom_cnprobe(struct consdev *);
 static void prom_cninit(struct consdev *);
-static int  prom_cngetc(dev_t);
+int  prom_cngetc(dev_t);
 static void prom_cnputc(dev_t, int);
 extern void prom_cnpollc(dev_t, int);
 
@@ -609,7 +609,7 @@ prom_cnpollc(dev, on)
 /*
  * PROM console input putchar.
  */
-static int
+int
 prom_cngetc(dev)
 	dev_t dev;
 {
