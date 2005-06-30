@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.558 2005/06/29 21:38:58 perry Exp $
+# $NetBSD: mi,v 1.559 2005/06/30 13:41:19 perry Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -836,6 +836,7 @@
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atrun				base-cron-bin
+./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
