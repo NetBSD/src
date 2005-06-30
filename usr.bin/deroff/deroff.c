@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.1 2005/06/29 20:58:50 perry Exp $	*/
+/*	$NetBSD: deroff.c,v 1.2 2005/06/30 16:23:29 christos Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.1 2005/06/29 20:58:50 perry Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.2 2005/06/30 16:23:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,33 +139,33 @@ char *mactab[] = { "-ms", "-mm", "-me", "-ma" };
 
 #define MAXFILES 20
 
-int	iflag;
-int	wordflag;
-int	msflag;		/* processing a source written using a mac package */
-int	mac;		/* which package */
-int	disp;
-int	parag;
-int	inmacro;
-int	intable;
-int	keepblock;	/* keep blocks of text; normally false when msflag */
+static int	iflag;
+static int	wordflag;
+static int	msflag;	 /* processing a source written using a mac package */
+static int	mac;		/* which package */
+static int	disp;
+static int	parag;
+static int	inmacro;
+static int	intable;
+static int	keepblock; /* keep blocks of text; normally false when msflag */
 
-char chars[128];  /* SPECIAL, PUNCT, APOS, DIGIT, or LETTER */
+static char chars[128];  /* SPECIAL, PUNCT, APOS, DIGIT, or LETTER */
 
-char line[LINE_MAX];
-char *lp;
+static char line[LINE_MAX];
+static char *lp;
 
-int c;
-int pc;
-int ldelim;
-int rdelim;
+static int c;
+static int pc;
+static int ldelim;
+static int rdelim;
 
-char fname[PATH_MAX];
-FILE *files[MAXFILES];
-FILE **filesp;
-FILE *infile;
+static char fname[PATH_MAX];
+static FILE *files[MAXFILES];
+static FILE **filesp;
+static FILE *infile;
 
-int argc;
-char **argv;
+static int argc;
+static char **argv;
 
 /*
  *	Macro processing
@@ -173,23 +173,23 @@ char **argv;
  *	Macro table definitions
  */
 typedef	int pacmac;		/* compressed macro name */
-int	argconcat = 0;		/* concat arguments together (-me only) */
+static int	argconcat = 0;	/* concat arguments together (-me only) */
 
 #define	tomac(c1, c2)		((((c1) & 0xFF) << 8) | ((c2) & 0xFF))
 #define	frommac(src, c1, c2)	(((c1)=((src)>>8)&0xFF),((c2) =(src)&0xFF))
 
-struct mactab{
+struct mactab {
 	int	condition;
 	pacmac	macname;
-	int	(*func)();	/* XXX - args */
+	int	(*func)(pacmac);
 };
 
-struct	mactab	troffmactab[];
-struct	mactab	ppmactab[];
-struct	mactab	msmactab[];
-struct	mactab	mmmactab[];
-struct	mactab	memactab[];
-struct	mactab	manmactab[];
+static const struct	mactab	troffmactab[];
+static const struct	mactab	ppmactab[];
+static const struct	mactab	msmactab[];
+static const struct	mactab	mmmactab[];
+static const struct	mactab	memactab[];
+static const struct	mactab	manmactab[];
 
 /*
  *	Macro table initialization
@@ -215,59 +215,61 @@ struct	mactab	manmactab[];
 #define	COMX		1		/* goto comx */
 #define	COM		2		/* goto com */
 
-int	 skeqn(void);
-int	 eof(void);
-int	 _C1(void);
-int	 _C(void);
-int	 EQ(void);
-int	 domacro(void);
-int	 PS(void);
-int	 skip(void);
-int	 intbl(void);
-int	 outtbl(void);
-int	 so(void);
-int	 nx(void);
-int	 skiptocom(void);
-int	 PP(pacmac);
-int	 AU(void);
-int	 SH(pacmac);
-int	 UX(void);
-int	 MMHU(pacmac);
-int	 mesnblock(pacmac);
-int	 mssnblock(pacmac);
-int	 nf(void);
-int	 ce(void);
-int	 meip(pacmac);
-int	 mepp(pacmac);
-int	 mesh(pacmac);
-int	 mefont(pacmac);
-int	 manfont(pacmac);
-int	 manpp(pacmac);
-int	 macsort(const void *, const void *);
-int	 sizetab(struct mactab *);
-void	 getfname(void);
-void	 textline(char *, int);
-void	 work(void);
-void	 regline(void (*)(char *, int), int);
-void	 macro(void);
-void	 tbl(void);
-void	 stbl(void);
-void	 eqn(void);
-void	 backsl(void);
-void	 sce(void);
-void	 refer(int);
-void	 inpic(void);
-void	 msputmac(char *, int);
-void	 msputwords(int);
-void	 meputmac(char *, int);
-void	 meputwords(int);
-void	 noblock(char, char);
-void	 defcomline(pacmac);
-void	 comline(void);
-void	 buildtab(struct mactab **, int *);
-FILE	*opn(char *);
-struct mactab *macfill(struct mactab *, struct mactab *);
-__dead void usage(void);
+static int	 skeqn(void);
+static int	 eof(void);
+#ifdef DEBUG
+static int	 _C1(void);
+static int	 _C(void);
+#endif
+static int	 EQ(pacmac);
+static int	 domacro(pacmac);
+static int	 PS(pacmac);
+static int	 skip(pacmac);
+static int	 intbl(pacmac);
+static int	 outtbl(pacmac);
+static int	 so(pacmac);
+static int	 nx(pacmac);
+static int	 skiptocom(pacmac);
+static int	 PP(pacmac);
+static int	 AU(pacmac);
+static int	 SH(pacmac);
+static int	 UX(pacmac);
+static int	 MMHU(pacmac);
+static int	 mesnblock(pacmac);
+static int	 mssnblock(pacmac);
+static int	 nf(pacmac);
+static int	 ce(pacmac);
+static int	 meip(pacmac);
+static int	 mepp(pacmac);
+static int	 mesh(pacmac);
+static int	 mefont(pacmac);
+static int	 manfont(pacmac);
+static int	 manpp(pacmac);
+static int	 macsort(const void *, const void *);
+static int	 sizetab(const struct mactab *);
+static void	 getfname(void);
+static void	 textline(char *, int);
+static void	 work(void);
+static void	 regline(void (*)(char *, int), int);
+static void	 macro(void);
+static void	 tbl(void);
+static void	 stbl(void);
+static void	 eqn(void);
+static void	 backsl(void);
+static void	 sce(void);
+static void	 refer(int);
+static void	 inpic(void);
+static void	 msputmac(char *, int);
+static void	 msputwords(int);
+static void	 meputmac(char *, int);
+static void	 meputwords(int);
+static void	 noblock(char, char);
+static void	 defcomline(pacmac);
+static void	 comline(void);
+static void	 buildtab(const struct mactab **, int *);
+static FILE	*opn(char *);
+static struct mactab *macfill(struct mactab *, const struct mactab *);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int ac, char **av)
@@ -369,10 +371,10 @@ main(int ac, char **av)
 	chars['?'] = PUNCT;
 	chars[':'] = PUNCT;
 	work();
-	exit(0);
+	return 0;
 }
 
-int
+static int
 skeqn(void)
 {
 
@@ -388,11 +390,11 @@ skeqn(void)
 		}
 	}
 	if (msflag)
-		return((c = 'x'));
-	return((c = ' '));
+		return c == 'x';
+	return c == ' ';
 }
 
-FILE *
+static FILE *
 opn(char *p)
 {
 	FILE *fd;
@@ -400,10 +402,10 @@ opn(char *p)
 	if ((fd = fopen(p, "r")) == NULL)
 		err(1, "fopen %s", p);
 
-	return(fd);
+	return fd;
 }
 
-int
+static int
 eof(void)
 {
 
@@ -417,10 +419,10 @@ eof(void)
 		++argv;
 	} else
 		exit(0);
-	return(C);
+	return C;
 }
 
-void
+static void
 getfname(void)
 {
 	char *p;
@@ -458,7 +460,7 @@ getfname(void)
 }
 
 /*ARGSUSED*/
-void
+static void
 textline(char *str, int constant)
 {
 
@@ -485,7 +487,7 @@ work(void)
 	}
 }
 
-void
+static void
 regline(void (*pfunc)(char *, int), int constant)
 {
 
@@ -514,7 +516,7 @@ regline(void (*pfunc)(char *, int), int constant)
 		(*pfunc)(line, constant);
 }
 
-void
+static void
 macro(void)
 {
 
@@ -530,7 +532,7 @@ macro(void)
 	inmacro = YES;
 }
 
-void
+static void
 tbl(void)
 {
 
@@ -540,7 +542,7 @@ tbl(void)
 	intable = YES;
 }
 
-void
+static void
 stbl(void)
 {
 
@@ -555,7 +557,7 @@ stbl(void)
 	}
 }
 
-void
+static void
 eqn(void)
 {
 	int c1, c2;
@@ -613,7 +615,7 @@ eqn(void)
 }
 
 /* skip over a complete backslash construction */
-void
+static void
 backsl(void)
 {
 	int bdelim;
@@ -686,7 +688,7 @@ sw:
 	}
 }
 
-void
+static void
 sce(void)
 {
 	char *ap;
@@ -732,7 +734,7 @@ sce(void)
 	}
 }
 
-void
+static void
 refer(int c1)
 {
 	int c2;
@@ -757,7 +759,7 @@ refer(int c1)
 	}
 }
 
-void
+static void
 inpic(void)
 {
 	int c1;
@@ -816,25 +818,25 @@ inpic(void)
 }
 
 #ifdef DEBUG
-int
+static int
 _C1(void)
 {
 
-	return(C1get);
+	return C1get);
 }
 
-int
+static int
 _C(void)
 {
 
-	return(Cget);
+	return Cget);
 }
 #endif /* DEBUG */
 
 /*
  *	Put out a macro line, using ms and mm conventions.
  */
-void
+static void
 msputmac(char *s, int constant)
 {
 	char *t;
@@ -881,7 +883,7 @@ msputmac(char *s, int constant)
 /*
  *	put out words (for the -w option) with ms and mm conventions
  */
-void
+static void
 msputwords(int macline)
 {
 	char *p, *p1;
@@ -921,7 +923,7 @@ msputwords(int macline)
 #define SKIPBLANK(cp)	while (*cp == ' ' || *cp == '\t') { cp++; }
 #define SKIPNONBLANK(cp) while (*cp !=' ' && *cp !='\cp' && *cp !='\0') { cp++; }
 
-void
+static void
 meputmac(char *cp, int constant)
 {
 	char	*np;
@@ -1013,7 +1015,7 @@ meputmac(char *cp, int constant)
 /*
  *	put out words (for the -w option) with ms and mm conventions
  */
-void
+static void
 meputwords(int macline)
 {
 
@@ -1039,7 +1041,7 @@ meputwords(int macline)
  *	for me:
  *		([lqbzcdf]
  */
-void
+static void
 noblock(char a1, char a2)
 {
 	int c1,c2;
@@ -1099,24 +1101,27 @@ noblock(char a1, char a2)
 	}
 }
 
-int
-EQ(void)
+static int
+/*ARGSUSED*/
+EQ(pacmac unused)
 {
 
 	eqn();
-	return(0);
+	return 0;
 }
 
-int
-domacro(void)
+static int
+/*ARGSUSED*/
+domacro(pacmac unused)
 {
 
 	macro();
-	return(0);
+	return 0;
 }
 
-int
-PS(void)
+static int
+/*ARGSUSED*/
+PS(pacmac unused)
 {
 
 	for (C; c == ' ' || c == '\t'; C)
@@ -1124,44 +1129,48 @@ PS(void)
 
 	if (c == '<') {		/* ".PS < file" -- don't expect a .PE */
 		SKIP;
-		return(0);
+		return 0;
 	}
 	if (!msflag)
 		inpic();
 	else
 		noblock('P', 'E');
-	return(0);
+	return 0;
 }
 
-int
-skip(void)
+static int
+/*ARGSUSED*/
+skip(pacmac unused)
 {
 
 	SKIP;
-	return(0);
+	return 0;
 }
 
-int
-intbl(void)
+static int
+/*ARGSUSED*/
+intbl(pacmac unused)
 {
 
 	if (msflag)
 		stbl();
 	else
 		tbl();
-	return(0);
+	return 0;
 }
 
-int
-outtbl(void)
+static int
+/*ARGSUSED*/
+outtbl(pacmac unused)
 {
 
 	intable = NO;
-	return(0);
+	return 0;
 }
 
 int
-so(void)
+/*ARGSUSED*/
+so(pacmac unused)
 {
 
 	if (!iflag) {
@@ -1173,11 +1182,12 @@ so(void)
 			infile = *filesp = opn(fname);
 		}
 	}
-	return(0);
+	return 0;
 }
 
-int
-nx(void)
+static int
+/*ARGSUSED*/
+nx(pacmac unused)
 {
 
 	if (!iflag) {
@@ -1188,18 +1198,19 @@ nx(void)
 			fclose(infile);
 		infile = *filesp = opn(fname);
 	}
-	return(0);
+	return 0;
 }
 
-int
-skiptocom(void)
+static int
+/*ARGSUSED*/
+skiptocom(pacmac unused)
 {
 
 	SKIP_TO_COM;
-	return(COMX);
+	return COMX;
 }
 
-int
+static int
 PP(pacmac c12)
 {
 	int c1, c2;
@@ -1209,20 +1220,21 @@ PP(pacmac c12)
 	while (C != '\n')
 		putchar(c);
 	putchar('\n');
-	return(0);
+	return 0;
 }
 
-int
-AU(void)
+static int
+/*ARGSUSED*/
+AU(pacmac unused)
 {
 
 	if (mac == MM)
-		return(0);
+		return 0;
 	SKIP_TO_COM;
-	return(COMX);
+	return COMX;
 }
 
-int
+static int
 SH(pacmac c12)
 {
 	int c1, c2;
@@ -1240,29 +1252,30 @@ SH(pacmac c12)
 				putchar(c);
 			putchar('\n');
 			if (C == '.')
-				return(COM);
+				return COM;
 			putchar('!');
 			putchar(c);
 		}
 		/*NOTREACHED*/
 	} else {
 		SKIP_TO_COM;
-		return(COMX);
+		return COMX;
 	}
 }
 
-int
-UX(void)
+static int
+/*ARGSUSED*/
+UX(pacmac unused)
 {
 
 	if (wordflag)
 		printf("UNIX\n");
 	else
 		printf("UNIX ");
-	return(0);
+	return 0;
 }
 
-int
+static int
 MMHU(pacmac c12)
 {
 	int c1, c2;
@@ -1276,46 +1289,48 @@ MMHU(pacmac c12)
 	} else {
 		SKIP;
 	}
-	return(0);
+	return 0;
 }
 
-int
+static int
 mesnblock(pacmac c12)
 {
 	int c1, c2;
 
 	frommac(c12, c1, c2);
 	noblock(')', c2);
-	return(0);
+	return 0;
 }
 
-int
+static int
 mssnblock(pacmac c12)
 {
 	int c1, c2;
 
 	frommac(c12, c1, c2);
 	noblock(c1, 'E');
-	return(0);
+	return 0;
 }
 
-int
-nf(void)
+static int
+/*ARGUSED*/
+nf(pacmac unused)
 {
 
 	noblock('f', 'i');
-	return(0);
+	return 0;
 }
 
-int
-ce(void)
+static int
+/*ARGUSED*/
+ce(pacmac unused)
 {
 
 	sce();
-	return(0);
+	return 0;
 }
 
-int
+static int
 meip(pacmac c12)
 {
 
@@ -1325,24 +1340,24 @@ meip(pacmac c12)
 		regline(meputmac, ONE);
 	else
 		SKIP;
-	return(0);
+	return 0;
 }
 
 /*
  *	only called for -me .pp or .sh, when parag is on
  */
-int
+static int
 mepp(pacmac c12)
 {
 
 	PP(c12);		/* eats the line */
-	return(0);
+	return 0;
 }
 
 /*
  *	Start of a section heading; output the section name if doing words
  */
-int
+static int
 mesh(pacmac c12)
 {
 
@@ -1352,37 +1367,37 @@ mesh(pacmac c12)
 		defcomline(c12);
 	else
 		SKIP;
-	return(0);
+	return 0;
 }
 
 /*
  *	process a font setting
  */
-int
+static int
 mefont(pacmac c12)
 {
 
 	argconcat = 1;
 	defcomline(c12);
 	argconcat = 0;
-	return(0);
+	return 0;
 }
 
-int
+static int
 manfont(pacmac c12)
 {
 
-	return(mefont(c12));
+	return mefont(c12);
 }
 
-int
+static int
 manpp(pacmac c12)
 {
 
-	return(mepp(c12));
+	return mepp(c12);
 }
 
-void
+static void
 defcomline(pacmac c12)
 {
 	int c1, c2;
@@ -1424,7 +1439,7 @@ defcomline(pacmac c12)
 	--inmacro;
 }
 
-void
+static void
 comline(void)
 {
 	int	c1;
@@ -1434,8 +1449,8 @@ comline(void)
 	int	lb, ub;
 	int	hit;
 	static	int	tabsize = 0;
-	static	struct	mactab	*mactab = (struct mactab *)0;
-	struct	mactab	*mp;
+	static	const struct mactab	*mactab = NULL;
+	const struct mactab	*mp;
 
 	if (mactab == 0)
 		 buildtab(&mactab, &tabsize);
@@ -1526,17 +1541,17 @@ comx:
 	defcomline(c12);
 }
 
-int
+static int
 macsort(const void *p1, const void *p2)
 {
-	struct mactab *t1 = (struct mactab *)p1;
-	struct mactab *t2 = (struct mactab *)p2;
+	const struct mactab *t1 = p1;
+	const struct mactab *t2 = p2;
 
-	return(t1->macname - t2->macname);
+	return t1->macname - t2->macname;
 }
 
-int
-sizetab(struct mactab *mp)
+static int
+sizetab(const struct mactab *mp)
 {
 	int i;
 
@@ -1545,21 +1560,21 @@ sizetab(struct mactab *mp)
 		for (; mp->macname; mp++, i++)
 			/*VOID*/ ;
 	}
-	return(i);
+	return i;
 }
 
-struct mactab *
-macfill(struct mactab *dst, struct mactab *src)
+static struct mactab *
+macfill(struct mactab *dst, const struct mactab *src)
 {
 
 	if (src) {
 		while (src->macname)
 			*dst++ = *src++;
 	}
-	return(dst);
+	return dst;
 }
 
-__dead void
+static void
 usage(void)
 {
 	extern char *__progname;
@@ -1568,12 +1583,12 @@ usage(void)
 	exit(1);
 }
 
-void
-buildtab(struct mactab **r_back, int *r_size)
+static void
+buildtab(const struct mactab **r_back, int *r_size)
 {
-	int	size;
-	struct	mactab	*p, *p1, *p2;
-	struct	mactab	*back;
+	size_t	size;
+	const struct	mactab	*p1, *p2;
+	struct	mactab	*back, *p;
 
 	size = sizetab(troffmactab) + sizetab(ppmactab);
 	p1 = p2 = NULL;
@@ -1598,7 +1613,7 @@ buildtab(struct mactab **r_back, int *r_size)
 	}
 	size += sizetab(p1);
 	size += sizetab(p2);
-	back = (struct mactab *)calloc(size+2, sizeof(struct mactab));
+	back = calloc(size + 2, sizeof(struct mactab));
 	if (back == NULL)
 		err(1, NULL);
 
@@ -1615,7 +1630,7 @@ buildtab(struct mactab **r_back, int *r_size)
 /*
  *	troff commands
  */
-struct	mactab	troffmactab[] = {
+static const struct mactab	troffmactab[] = {
 	M(NONE,		'\\','"',	skip),	/* comment */
 	M(NOMAC,	'd','e',	domacro),	/* define */
 	M(NOMAC,	'i','g',	domacro),	/* ignore till .. */
@@ -1634,7 +1649,7 @@ struct	mactab	troffmactab[] = {
 /*
  *	Preprocessor output
  */
-struct	mactab	ppmactab[] = {
+static const struct mactab	ppmactab[] = {
 	M(FNEST,	'E','Q',	EQ),	/* equation starting */
 	M(FNEST,	'T','S',	intbl),	/* table starting */
 	M(FNEST,	'T','C',	intbl),	/* alternative table? */
@@ -1647,7 +1662,7 @@ struct	mactab	ppmactab[] = {
 /*
  *	Particular to ms and mm
  */
-struct	mactab	msmactab[] = {
+static const struct mactab	msmactab[] = {
 	M(NONE,		'T','L',	skiptocom),	/* title follows */
 	M(NONE,		'F','S',	skiptocom),	/* start footnote */
 	M(NONE,		'O','K',	skiptocom),	/* Other kws */
@@ -1672,7 +1687,7 @@ struct	mactab	msmactab[] = {
 	M(NONE,		0,0,		0)
 };
 
-struct	mactab	mmmactab[] = {
+static const struct mactab	mmmactab[] = {
 	M(NONE,		'H',' ',	MMHU),	/* -mm ? */
 	M(NONE,		'H','U',	MMHU),	/* -mm ? */
 	M(PARAG,	'P',' ',	PP),	/* paragraph for -mm */
@@ -1680,7 +1695,7 @@ struct	mactab	mmmactab[] = {
 	M(NONE,		0,0,		0)
 };
 
-struct	mactab	memactab[] = {
+static const struct mactab	memactab[] = {
 	M(PARAG,	'p','p',	mepp),
 	M(PARAG,	'l','p',	mepp),
 	M(PARAG,	'n','p',	mepp),
@@ -1710,7 +1725,7 @@ struct	mactab	memactab[] = {
 	M(NONE,		0,0,		0)
 };
 
-struct	mactab	manmactab[] = {
+static const struct mactab	manmactab[] = {
 	M(PARAG,	'B','I',	manfont),
 	M(PARAG,	'B','R',	manfont),
 	M(PARAG,	'I','B',	manfont),
