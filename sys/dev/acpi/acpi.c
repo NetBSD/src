@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.74 2005/06/21 11:49:10 sekiya Exp $	*/
+/*	$NetBSD: acpi.c,v 1.75 2005/06/30 19:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.74 2005/06/21 11:49:10 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.75 2005/06/30 19:31:53 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1227,7 +1227,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		if (ACPI_FAILURE(rv))
 			continue;
 		line = acpi_get_intr(link);
-		if (line < 1) {
+		if (line == (uint)-1) {
 			printf("%s: fixing up intr link %s\n",
 			    sc->sc_dev.dv_xname, PrtElement->Source);
 			rv = acpi_allocate_resources(link);
@@ -1237,7 +1237,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 				continue;
 			}
 			line = acpi_get_intr(link);
-			if (line == -1) {
+			if (line == (uint)-1) {
 				printf("%s: get intr failed %s\n",
 				    sc->sc_dev.dv_xname, PrtElement->Source);
 				continue;
