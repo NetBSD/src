@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.11 2003/08/08 12:29:23 bsh Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.12 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.11 2003/08/08 12:29:23 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.12 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,10 @@ sacc_probe(parent, match, aux)
 
 
 int
-sa1111_search(parent, cf, aux)
+sa1111_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct sa1111_attach_args aa;

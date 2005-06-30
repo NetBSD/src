@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2005/06/05 15:02:18 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/06/05 15:02:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/06/05 15:02:18 tsutsui Exp $")
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_search(struct device *, struct cfdata *, void *);
+static int	mainbus_search(struct device *, struct cfdata *,
+			       const locdesc_t *, void *);
 int		mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -69,13 +70,14 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	config_search(mainbus_search, self, &ma);
+	config_search_ia(mainbus_search, self, "mainbus", &ma);
 }
 
 static int
-mainbus_search(parent, cf, aux)
+mainbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;

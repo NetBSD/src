@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.13 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: obmem.c,v 1.14 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.13 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.14 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,12 +130,12 @@ obmem_attach(struct device *parent, struct device *self, void *aux)
 	/* Find all `early' obmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		obma.obma_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &obma);
+		config_search_ia(sun68k_bus_search, self, "obmem", &obma);
 	}
 
 	/* Find all other obmem devices */
 	obma.obma_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &obma);
+	config_search_ia(sun68k_bus_search, self, "obmem", &obma);
 }
 
 int

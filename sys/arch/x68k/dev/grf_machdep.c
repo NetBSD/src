@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.22 2005/06/13 00:07:39 he Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.23 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.22 2005/06/13 00:07:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.23 2005/06/30 17:03:54 drochner Exp $");
 
 #include "locators.h"
 
@@ -105,7 +105,7 @@ extern int x68k_config_found(struct cfdata *, struct device *,
 int grfbusprint(void *auxp, const char *);
 int grfbusmatch(struct device *, struct cfdata *, void *);
 void grfbusattach(struct device *, struct device *, void *);
-int grfbussearch(struct device *, struct cfdata *, void *);
+int grfbussearch(struct device *, struct cfdata *, const locdesc_t *, void *);
 
 /* grf itself */
 void grfattach(struct device *, struct device *, void *);
@@ -156,12 +156,13 @@ grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 		x68k_config_found(cfdata_gbus, NULL, &i, grfbusprint);
 	} else {
 		printf("\n");
-		config_search(grfbussearch, dp, NULL);
+		config_search_ia(grfbussearch, dp, "grfb", NULL);
 	}
 }
 
 int
-grfbussearch(struct device *dp, struct cfdata *match, void *aux)
+grfbussearch(struct device *dp, struct cfdata *match,
+	     const locdesc_t *ldesc, void *aux)
 {
 
 	config_found(dp, &match->cf_loc[GRFBCF_ADDR], grfbusprint);
