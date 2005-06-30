@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.14 2005/06/27 17:11:21 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15 2005/06/30 18:20:24 elad Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -111,7 +111,7 @@ struct systrace_answer {
 	u_int16_t stra_seqnr;
 	int16_t reserved;
  	uid_t stra_seteuid;	/* elevated privileges for system call */
- 	uid_t stra_setegid;
+ 	gid_t stra_setegid;
 	int32_t stra_policy;
 	int32_t stra_error;
 	int32_t stra_flags;
