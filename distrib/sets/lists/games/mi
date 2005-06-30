@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2004/07/06 19:46:27 mycroft Exp $
+# $NetBSD: mi,v 1.36 2005/06/30 13:41:19 perry Exp $
 ./etc/mtree/set.games				games-sys-root
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
@@ -12,6 +12,7 @@
 ./usr/games/canfield				games-games-bin
 ./usr/games/cfscores				games-games-bin
 ./usr/games/chess				games-obsolete		obsolete
+./usr/games/ching				games-games-bin
 ./usr/games/countmail				games-utils-bin
 ./usr/games/cribbage				games-games-bin
 ./usr/games/dab					games-games-bin
@@ -84,6 +85,8 @@
 ./usr/games/worms				games-games-bin
 ./usr/games/wtf					games-utils-bin
 ./usr/games/wump				games-games-bin
+./usr/libexec/ching/castching			games-games-bin
+./usr/libexec/ching/printching			games-games-bin
 ./usr/share/doc/usd/30.rogue/Makefile		games-usd-doc		doc
 ./usr/share/doc/usd/30.rogue/rogue.me		games-usd-doc		doc
 ./usr/share/doc/usd/31.trek/Makefile		games-usd-doc		doc
@@ -109,6 +112,8 @@
 ./usr/share/games/boggle/dictionary		games-games-share	share
 ./usr/share/games/boggle/helpfile		games-games-share	share
 ./usr/share/games/cards.pck			games-games-share	share
+./usr/share/games/ching/hexagrams		games-games-share	share
+./usr/share/games/ching/macros			games-games-share	share
 ./usr/share/games/cribbage.instr		games-games-share	share
 ./usr/share/games/fish.instr			games-games-share	share
 ./usr/share/games/fortune/farber		games-utils-share	share
