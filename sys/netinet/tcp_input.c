@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.229 2005/06/06 12:10:09 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.229 2005/06/06 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1571,10 +1571,25 @@ after_listen:
 		/*
 		 * If last ACK falls within this segment's sequence numbers,
 		 *  record the timestamp.
+		 * NOTE: 
+		 * 1) That the test incorporates suggestions from the latest
+		 *    proposal of the tcplw@cray.com list (Braden 1993/04/26).
+		 * 2) That updating only on newer timestamps interferes with
+		 *    our earlier PAWS tests, so this check should be solely
+		 *    predicated on the sequence space of this segment.
+		 * 3) That we modify the segment boundary check to be 
+		 *        Last.ACK.Sent <= SEG.SEQ + SEG.Len  
+		 *    instead of RFC1323's
+		 *        Last.ACK.Sent < SEG.SEQ + SEG.Len,
+		 *    This modified check allows us to overcome RFC1323's
+		 *    limitations as described in Stevens TCP/IP Illustrated
+		 *    Vol. 2 p.869. In such cases, we can still calculate the
+		 *    RTT correctly when RCV.NXT == Last.ACK.Sent.
 		 */
 		if (opti.ts_present &&
 		    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
-		    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen)) {
+		    SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
+		    ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
 			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = opti.ts_val;
 		}
@@ -2881,7 +2896,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				tp->ts_recent = oi->ts_val;
 				tp->ts_recent_age = tcp_now;
 			}
-			break;
+                        break;
+
 		case TCPOPT_SACK_PERMITTED:
 			if (optlen != TCPOLEN_SACK_PERMITTED)
 				continue;
