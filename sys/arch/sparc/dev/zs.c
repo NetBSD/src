@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.101 2004/04/03 17:43:50 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.102 2005/06/30 12:07:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.101 2004/04/03 17:43:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.102 2005/06/30 12:07:51 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,6 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.101 2004/04/03 17:43:50 chs Exp $");
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/auxiotwo.h>
 #include <sparc/dev/cons.h>
+#include <dev/sun/kbd_ms_ttyvar.h>
+
+#include "kbd.h"
+#include "ms.h"
 
 /*
  * Some warts needed by z8530tty.c -
@@ -189,6 +193,9 @@ static int zs_console_flags __P((int, int, int));
 int  zs_enable __P((struct zs_chanstate *));
 void zs_disable __P((struct zs_chanstate *));
 
+
+/* XXX from dev/ic/z8530tty.c */
+extern struct tty *zstty_get_tty_from_dev(struct device *);
 
 /*
  * Is the zs chip present?
@@ -434,6 +441,7 @@ zs_attach(zsc, zsd, pri)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
+		struct device *child;
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -493,7 +501,9 @@ zs_attach(zsc, zsd, pri)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(&zsc->zsc_dev, (void *)&zsc_args, zs_print)) {
+		 
+		child = config_found(&zsc->zsc_dev, &zsc_args, zs_print);
+		if (child == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -501,6 +511,37 @@ zs_attach(zsc, zsd, pri)
 			zs_write_reg(cs,  9, reset);
 			splx(s);
 		}
+#if (NKBD > 0) || (NMS > 0)
+		/* 
+		 * If this was a zstty it has a keyboard
+		 * property on it we need to attach the
+		 * sunkbd and sunms line disciplines.
+		 */
+		if ((child != NULL)
+		    && (strcmp(child->dv_cfdata->cf_name, "zstty") == 0)
+		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0)) 
+		{
+			struct kbd_ms_tty_attach_args kma;
+			struct tty *tp = zstty_get_tty_from_dev(child);
+			kma.kmta_tp = tp;
+			kma.kmta_dev = tp->t_dev;
+			kma.kmta_consdev = zsc_args.consdev;
+				
+			/* Attach 'em if we got 'em. */
+#if (NKBD > 0)
+			if (channel == 0) {
+				kma.kmta_name = "keyboard";
+				config_found(child, &kma, NULL);
+			}
+#endif
+#if (NMS > 0)
+			if (channel == 1) {
+				kma.kmta_name = "mouse";
+				config_found(child, &kma, NULL);
+			}
+#endif
+		}
+#endif
 	}
 
 	/*
@@ -543,6 +584,7 @@ zs_attach(zsc, zsd, pri)
 		(void)splfd(); /* XXX: splzs - 1 */
 	}
 #endif
+
 }
 
 static int
@@ -1033,3 +1075,9 @@ zs_disable(cs)
 	auxiotwoserialendis (ZS_DISABLE);
 	cs->enabled = 0;
 }
+
+
+
+
+
+
