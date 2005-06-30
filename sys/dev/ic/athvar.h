@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.11 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.12 2005/06/30 00:52:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.20 2005/01/24 20:31:24 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.23 2005/04/12 17:56:43 sam Exp $
  */
 
 /*

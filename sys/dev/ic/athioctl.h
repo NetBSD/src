@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.7 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.8 2005/06/30 00:52:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.9 2004/12/31 22:41:45 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.10 2005/03/30 20:13:08 sam Exp $
  */
 
 /*
