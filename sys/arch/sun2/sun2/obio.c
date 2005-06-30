@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,12 +140,12 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	/* Find all `early' obio devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		oba.oba_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &oba);
+		config_search_ia(sun68k_bus_search, self, "obio", &oba);
 	}
 
 	/* Find all other obio devices */
 	oba.oba_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &oba);
+	config_search_ia(sun68k_bus_search, self, "obio", &oba);
 }
 
 int

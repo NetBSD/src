@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.1 2005/02/26 10:49:53 bsh Exp $ */
+/*	$NetBSD: gb225.c,v 1.2 2005/06/30 17:03:52 drochner Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -62,7 +62,8 @@
 /* prototypes */
 static int	opio_match(struct device *, struct cfdata *, void *);
 static void	opio_attach(struct device *, struct device *, void *);
-static int 	opio_search(struct device *, struct cfdata *, void *);
+static int 	opio_search(struct device *, struct cfdata *,
+			    const locdesc_t *, void *);
 static int	opio_print(void *, const char *);
 #ifdef OPIO_INTR
 static int 	opio_intr( void *arg );
@@ -173,19 +174,20 @@ opio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(opio_search, self, NULL);
+	config_search_ia(opio_search, self, "opio", NULL);
 }
 
 int
-opio_search(struct device *parent, struct cfdata *cf, void *aux)
+opio_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct opio_softc *sc = (struct opio_softc *)parent;
 	struct obio_attach_args oba;
 
 	oba.oba_sc = sc;
         oba.oba_iot = sc->sc_iot;
-        oba.oba_addr = cf->cf_loc[OBIOCF_ADDR];
-        oba.oba_intr = cf->cf_loc[OBIOCF_INTR];
+        oba.oba_addr = cf->cf_loc[OPIOCF_ADDR];
+        oba.oba_intr = cf->cf_loc[OPIOCF_INTR];
 
         if (config_match(parent, cf, &oba) > 0)
                 config_attach(parent, cf, &oba, opio_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.8 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: becc.c,v 1.9 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.8 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.9 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ const char *becc_revisions[] = {
  */
 struct becc_softc *becc_softc;
 
-static int becc_search(struct device *, struct cfdata *, void *);
+static int becc_search(struct device *, struct cfdata *,
+		       const locdesc_t *, void *);
 static int becc_print(void *, const char *);
 
 static void becc_pci_dma_init(struct becc_softc *);
@@ -193,7 +194,7 @@ becc_attach(struct becc_softc *sc)
 	 * the BECC is a soft-core with a variety of peripherals, depending
 	 * on configuration.
 	 */
-	config_search(becc_search, &sc->sc_dev, NULL);
+	config_search_ia(becc_search, &sc->sc_dev, "becc", NULL);
 
 	/*
 	 * Attach the PCI bus.
@@ -218,7 +219,8 @@ becc_attach(struct becc_softc *sc)
  *	Indirect autoconfiguration glue for BECC.
  */
 static int
-becc_search(struct device *parent, struct cfdata *cf, void *aux)
+becc_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct becc_softc *sc = (void *) parent;
 	struct becc_attach_args ba;

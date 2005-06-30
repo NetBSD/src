@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.9 2003/07/15 01:19:56 lukem Exp $	*/
+/*	$NetBSD: vme.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.9 2003/07/15 01:19:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,8 @@ int vmeprint __P((void *, const char *));
 CFATTACH_DECL(vme, sizeof(struct vme_softc),
     vmematch, vmeattach, NULL, NULL);
 
-int	vmesearch __P((struct device *, struct cfdata *, void *));
+int	vmesearch __P((struct device *, struct cfdata *,
+		       const locdesc_t *, void *));
 
 int
 vmematch(parent, cf, aux)
@@ -84,7 +85,7 @@ vmeattach(parent, self, aux)
 	sc->sc_memt = vba->vba_memt;
 	sc->sc_vc   = vba->vba_vc;
 
-	config_search(vmesearch, self, NULL);
+	config_search_ia(vmesearch, self, "vme", NULL);
 }
 
 int
@@ -108,9 +109,10 @@ vmeprint(aux, vme)
 }
 
 int
-vmesearch(parent, cf, aux)
+vmesearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct vme_softc *sc = (struct vme_softc *)parent;

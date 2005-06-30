@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.1 2003/08/08 12:29:22 bsh Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.2 2005/06/30 17:03:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.1 2003/08/08 12:29:22 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.2 2005/06/30 17:03:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ sacc_attach(parent, self, aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(sa1111_search, self, NULL);
+	config_search_ia(sa1111_search, self, "sacc", NULL);
 }
 
 static int

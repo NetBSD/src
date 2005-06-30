@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.14 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: mbio.c,v 1.15 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.14 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.15 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,12 @@ mbio_attach(struct device *parent, struct device *self, void *aux)
 	/* Find all `early' mbio devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		mba.mba_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &mba);
+		config_search_ia(sun68k_bus_search, self, "mbio", &mba);
 	}
 
 	/* Find all other mbio devices */
 	mba.mba_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &mba);
+	config_search_ia(sun68k_bus_search, self, "mbio", &mba);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.5 2004/09/06 07:24:06 sekiya Exp $	*/
+/*	$NetBSD: mace.c,v 1.6 2005/06/30 17:03:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.5 2004/09/06 07:24:06 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.6 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ struct mace_softc {
 static int	mace_match(struct device *, struct cfdata *, void *);
 static void	mace_attach(struct device *, struct device *, void *);
 static int	mace_print(void *, const char *);
-static int	mace_search(struct device *, struct cfdata *, void *);
+static int	mace_search(struct device *, struct cfdata *,
+			    const locdesc_t *, void *);
 
 CFATTACH_DECL(mace, sizeof(struct mace_softc),
     mace_match, mace_attach, NULL, NULL);
@@ -213,7 +214,7 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 		maceintrtab[scratch].irq = 0;
 	}
 
-	config_search(mace_search, self, NULL);
+	config_search_ia(mace_search, self, "mace", NULL);
 }
 
 
@@ -236,7 +237,8 @@ mace_print(void *aux, const char *pnp)
 }
 
 static int
-mace_search(struct device *parent, struct cfdata *cf, void *aux)
+mace_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct mace_softc *sc = (struct mace_softc *)parent;
 	struct mace_attach_args maa;

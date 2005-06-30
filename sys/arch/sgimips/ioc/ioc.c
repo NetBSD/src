@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.1 2003/12/15 10:23:52 sekiya Exp $	 */
+/* $NetBSD: ioc.c,v 1.2 2005/06/30 17:03:54 drochner Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.1 2003/12/15 10:23:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.2 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,8 @@ static int      ioc_match(struct device *, struct cfdata *, void *);
 static void     ioc_attach(struct device *, struct device *, void *);
 #if defined(notyet)
 static int      ioc_print(void *, const char *);
-static int      ioc_search(struct device *, struct cfdata *, void *);
+static int      ioc_search(struct device *, struct cfdata *,
+			   const locdesc_t *, void *);
 #endif
 
 CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
@@ -151,7 +152,7 @@ ioc_attach(struct device * parent, struct device * self, void *aux)
 	 * the IOC.
 	 */
 
-	config_search(ioc_search, self, NULL);
+	config_search_ia(ioc_search, self, "ioc", NULL);
 #endif
 }
 
@@ -173,7 +174,8 @@ ioc_print(void *aux, const char *pnp)
 }
 
 static int
-ioc_search(struct device * parent, struct cfdata * cf, void *aux)
+ioc_search(struct device * parent, struct cfdata * cf,
+	   const locdesc_t *ldesc, void *aux)
 {
 	struct ioc_softc *sc = (struct ioc_softc *) parent;
 	struct ioc_attach_args iaa;

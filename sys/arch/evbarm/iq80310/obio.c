@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2003/07/15 00:25:03 lukem Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003  Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2003/07/15 00:25:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
 
 int	obio_print(void *, const char *);
-int	obio_search(struct device *, struct cfdata *, void *);
+int	obio_search(struct device *, struct cfdata *,
+		    const locdesc_t *, void *);
 
 /* there can be only one */
 int	obio_found;
@@ -124,7 +125,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach all the on-board devices as described in the kernel
 	 * configuration file.
 	 */
-	config_search(obio_search, self, NULL);
+	config_search_ia(obio_search, self, "obio", NULL);
 }
 
 int
@@ -144,7 +145,8 @@ obio_print(void *aux, const char *pnp)
 }
 
 int
-obio_search(struct device *parent, struct cfdata *cf, void *aux)
+obio_search(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 	struct obio_attach_args oba;
 

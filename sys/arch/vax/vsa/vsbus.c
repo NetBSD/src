@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.47 2005/04/01 11:59:36 yamt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.48 2005/06/30 17:03:54 drochner Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.47 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.48 2005/06/30 17:03:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.47 2005/04/01 11:59:36 yamt Exp $");
 int	vsbus_match(struct device *, struct cfdata *, void *);
 void	vsbus_attach(struct device *, struct device *, void *);
 int	vsbus_print(void *, const char *);
-int	vsbus_search(struct device *, struct cfdata *, void *);
+int	vsbus_search(struct device *, struct cfdata *,
+		     const locdesc_t *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
@@ -200,16 +201,17 @@ vsbus_attach(parent, self, aux)
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
-	config_search(vsbus_search, self, NULL);
+	config_search_ia(vsbus_search, self, "vsbus", NULL);
 
 	/* Autoconfig finished, enable interrupts */
 	*sc->sc_intmsk = ~sc->sc_mask;
 }
 
 int
-vsbus_search(parent, cf, aux)
+vsbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct	vsbus_softc *sc = (void *)parent;

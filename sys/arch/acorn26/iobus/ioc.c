@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.9 2003/07/14 22:48:21 lukem Exp $ */
+/* $NetBSD: ioc.c,v 1.10 2005/06/30 17:03:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9 2003/07/14 22:48:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.10 2005/06/30 17:03:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9 2003/07/14 22:48:21 lukem Exp $");
 
 static int ioc_match(struct device *parent, struct cfdata *cf, void *aux);
 static void ioc_attach(struct device *parent, struct device *self, void *aux);
-static int ioc_search(struct device *parent, struct cfdata *cf, void *aux);
+static int ioc_search(struct device *parent, struct cfdata *cf,
+		      const locdesc_t *ldesc, void *aux);
 static int ioc_print(void *aux, const char *pnp);
 static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
@@ -116,13 +117,14 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	printf("\n");
 
-	config_search(ioc_search, self, NULL);
+	config_search_ia(ioc_search, self, "ioc", NULL);
 }
 
 extern struct bus_space ioc_bs_tag;
 
 static int
-ioc_search(struct device *parent, struct cfdata *cf, void *aux)
+ioc_search(struct device *parent, struct cfdata *cf,
+	   const locdesc_t *ldesc, void *aux)
 {
 	struct ioc_softc *sc = (void *)parent;
 	struct ioc_attach_args ioc;

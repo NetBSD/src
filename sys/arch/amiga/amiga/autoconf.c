@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.95 2005/06/13 20:44:11 jmc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.96 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2005/06/13 20:44:11 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.96 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ matchname(fp, sp)
 }
 
 /*
- * use config_search to find appropriate device, then call that device
+ * use config_search_ia to find appropriate device, then call that device
  * directly with NULL device variable storage.  A device can then
  * always tell the difference betwean the real and console init
  * by checking for NULL.
@@ -179,7 +179,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	pdp->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
+	if ((cf = config_search_ia((cfmatch_t)NULL, pdp, NULL, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(pdp, NULL, auxp);

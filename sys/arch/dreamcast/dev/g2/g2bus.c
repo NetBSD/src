@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.9 2005/02/19 15:37:34 tsutsui Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.9 2005/02/19 15:37:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,8 @@ int	g2busprint(void *, const char *);
 CFATTACH_DECL(g2bus, sizeof(struct g2bus_softc),
     g2busmatch, g2busattach, NULL, NULL);
 
-int	g2bussearch(struct device *, struct cfdata *, void *);
+int	g2bussearch(struct device *, struct cfdata *,
+		    const locdesc_t *, void *);
 
 int
 g2busmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -76,7 +77,7 @@ g2busattach(struct device *parent, struct device *self, void *aux)
 
 	ga.ga_memt = &sc->sc_memt;
 
-	config_search(g2bussearch, self, &ga);
+	config_search_ia(g2bussearch, self, "g2bus", &ga);
 }
 
 int
@@ -87,7 +88,8 @@ g2busprint(void *aux, const char *pnp)
 }
 
 int
-g2bussearch(struct device *parent, struct cfdata *cf, void *aux)
+g2bussearch(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, aux) > 0)

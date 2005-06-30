@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.6 2005/06/30 17:03:52 drochner Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.6 2005/06/30 17:03:52 drochner Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -128,7 +128,8 @@ struct pxaip_softc {
 /* prototypes */
 static int	pxaip_match(struct device *, struct cfdata *, void *);
 static void	pxaip_attach(struct device *, struct device *, void *);
-static int 	pxaip_search(struct device *, struct cfdata *, void *);
+static int 	pxaip_search(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static void	pxaip_attach_critical(struct pxaip_softc *);
 static int	pxaip_print(void *, const char *);
 
@@ -179,11 +180,12 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Attach all other devices
 	 */
-	config_search(pxaip_search, self, sc);
+	config_search_ia(pxaip_search, self, "pxaip", sc);
 }
 
 static int
-pxaip_search(struct device *parent, struct cfdata *cf, void *aux)
+pxaip_search(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct pxaip_softc *sc = aux;
 	struct pxaip_attach_args aa;

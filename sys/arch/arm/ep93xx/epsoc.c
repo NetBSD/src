@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.2 2005/06/04 22:37:51 he Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.3 2005/06/30 17:03:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.2 2005/06/04 22:37:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.3 2005/06/30 17:03:52 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.2 2005/06/04 22:37:51 he Exp $");
 
 static int	epsoc_match(struct device *, struct cfdata *, void *);
 static void	epsoc_attach(struct device *, struct device *, void *);
-static int	epsoc_search(struct device *, struct cfdata *, void *);
+static int	epsoc_search(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	epsoc_print(void *, const char *);
 
 CFATTACH_DECL(epsoc, sizeof(struct epsoc_softc),
@@ -164,14 +165,15 @@ epsoc_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(epsoc_search, self, NULL);
+	config_search_ia(epsoc_search, self, "epsoc", NULL);
 	
 }
 
 int
-epsoc_search(parent, cf, aux)
+epsoc_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct epsoc_softc *sc = (struct epsoc_softc *)parent;
