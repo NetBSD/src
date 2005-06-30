@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.98 2005/05/31 00:45:52 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.99 2005/06/30 12:07:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.98 2005/05/31 00:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.99 2005/06/30 12:07:51 macallan Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -290,6 +290,22 @@ static void zstty_softint(struct zs_chanstate *);
 
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
+
+struct tty *zstty_get_tty_from_dev(struct device *);
+
+/*
+ * XXX get the (struct tty *) out of a (struct device *) we trust to be a 
+ * (struct zstty_softc *) - needed by sparc/dev/zs.c, sparc64/dev/zs.c,
+ * sun3/dev/zs.c and sun2/dev/zs.c will probably need it at some point
+ */
+ 
+struct tty *
+zstty_get_tty_from_dev(struct device *dev)
+{
+	struct zstty_softc *sc = (struct zstty_softc *)dev;
+	
+	return sc->zst_tty;
+}
 
 /*
  * zstty_match: how is this zs channel configured?

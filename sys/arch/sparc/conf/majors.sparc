@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.21 2005/06/03 13:15:04 blymn Exp $
+#	$NetBSD: majors.sparc,v 1.22 2005/06/30 12:07:51 macallan Exp $
 #
 # Device majors for sparc
 #
@@ -16,7 +16,7 @@ device-major	swap		char 7	 block 4
 device-major	xy		char 9	 block 3	xy
 
 device-major	zstty		char 12			zstty
-device-major	ms		char 13			ms
+device-major	ms		char 13			ms | sunms
 
 device-major	log		char 16
 device-major	sd		char 17	 block 7	sd
