@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2005/06/29 21:06:12 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2005/06/30 16:25:05 christos Exp $
 
 PROG=	spellprog
+WARNS=	3
 NOMAN=	1
 SRCS=	spellprog.c look.c
 BINDIR=	/usr/libexec
