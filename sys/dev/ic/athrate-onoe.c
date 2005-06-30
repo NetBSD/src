@@ -36,10 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.4 2005/01/24 19:32:10 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.7 2005/04/02 18:54:30 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.3 2005/06/22 22:07:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.4 2005/06/30 00:52:56 dyoung Exp $");
 #endif
 
 /*

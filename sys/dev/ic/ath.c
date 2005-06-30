@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.48 2005/06/22 22:07:48 martin Exp $	*/
+/*	$NetBSD: ath.c,v 1.49 2005/06/30 00:52:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -38,10 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.76 2005/01/24 20:31:24 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.48 2005/06/22 22:07:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.49 2005/06/30 00:52:56 dyoung Exp $");
 #endif
 
 /*
