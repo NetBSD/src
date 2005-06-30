@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.1 2005/06/29 21:06:12 perry Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.2 2005/06/30 16:25:05 christos Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -95,97 +95,98 @@ static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 mil
 #include <string.h>
 #include <unistd.h>
 
+#include "extern.h"
+
 #define DLEV 2
 
-int	 an(char *, char *, char *, int);
-int	 bility(char *, char *, char *, int);
-int	 es(char *, char *, char *, int);
-int	 dict(char *, char *);
-int	 i_to_y(char *, char *, char *, int);
-int	 ily(char *, char *, char *, int);
-int	 ize(char *, char *, char *, int);
-int	 metry(char *, char *, char *, int);
-int	 monosyl(char *, char *);
-int	 ncy(char *, char *, char *, int);
-int	 nop(void);
-int	 trypref(char *, char *, int);
-int	 tryword(char *, char *, int);
-int	 s(char *, char *, char *, int);
-int	 strip(char *, char *, char *, int);
-int	 suffix(char *, int);
-int	 tion(char *, char *, char *, int);
-int	 vowel(int);
-int	 y_to_e(char *, char *, char *, int);
-int	 CCe(char *, char *, char *, int);
-int	 VCe(char *, char *, char *, int);
-char	*lookuppref(char **, char *);
-char	*skipv(char *);
-char	*estrdup(const char *);
-void	 ise(void);
-void	 print_word(FILE *);
-void	 ztos(char *);
-__dead void usage(void);
+static int	 dict(char *, char *);
+static int	 trypref(char *, const char *, size_t);
+static int	 tryword(char *, char *, size_t);
+static int	 suffix(char *, size_t);
+static int	 vowel(int);
+static const char *lookuppref(char **, char *);
+static char	*skipv(char *);
+static char	*estrdup(const char *);
+static void	 ise(void);
+static void	 print_word(FILE *);
+static void	 ztos(char *);
+static int	 monosyl(char *, char *);
+static void 	 usage(void) __attribute__((__noreturn__));
+static void	 getderiv(size_t);
 
-/* from look.c */
-int	 look(unsigned char *, unsigned char *, unsigned char *);
+static int	 an(char *, const char *, const char *, size_t);
+static int	 bility(char *, const char *, const char *, size_t);
+static int	 es(char *, const char *, const char *, size_t);
+static int	 i_to_y(char *, const char *, const char *, size_t);
+static int	 ily(char *, const char *, const char *, size_t);
+static int	 ize(char *, const char *, const char *, size_t);
+static int	 metry(char *, const char *, const char *, size_t);
+static int	 ncy(char *, const char *, const char *, size_t);
+static int	 nop(char *, const char *, const char *, size_t);
+static int	 s(char *, const char *, const char *, size_t);
+static int	 strip(char *, const char *, const char *, size_t);
+static int	 tion(char *, const char *, const char *, size_t);
+static int	 y_to_e(char *, const char *, const char *, size_t);
+static int	 CCe(char *, const char *, const char *, size_t);
+static int	 VCe(char *, const char *, const char *, size_t);
 
-struct suftab {
-	char *suf;
-	int (*p1)();	/* XXX - variable args */
+static struct suftab {
+	const char *suf;
+	int (*p1)(char *, const char *, const char *, size_t);
 	int n1;
-	char *d1;
-	char *a1;
-	int (*p2)();	/* XXX - variable args */
+	const char *d1;
+	const char *a1;
+	int (*p2)(char *, const char *, const char *, size_t);
 	int n2;
-	char *d2;
-	char *a2;
+	const char *d2;
+	const char *a2;
 } suftab[] = {
-	{"ssen", ily, 4, "-y+iness", "+ness" },
-	{"ssel", ily, 4, "-y+i+less", "+less" },
-	{"se", s, 1, "", "+s", es, 2, "-y+ies", "+es" },
-	{"s'", s, 2, "", "+'s"},
-	{"s", s, 1, "", "+s"},
-	{"ecn", ncy, 1, "", "-t+ce"},
-	{"ycn", ncy, 1, "", "-cy+t"},
-	{"ytilb", nop, 0, "", ""},
-	{"ytilib", bility, 5, "-le+ility", ""},
-	{"elbaif", i_to_y, 4, "-y+iable", ""},
-	{"elba", CCe, 4, "-e+able", "+able"},
-	{"yti", CCe, 3, "-e+ity", "+ity"},
-	{"ylb", y_to_e, 1, "-e+y", ""},
-	{"yl", ily, 2, "-y+ily", "+ly"},
-	{"laci", strip, 2, "", "+al"},
-	{"latnem", strip, 2, "", "+al"},
-	{"lanoi", strip, 2, "", "+al"},
-	{"tnem", strip, 4, "", "+ment"},
-	{"gni", CCe, 3, "-e+ing", "+ing"},
-	{"reta", nop, 0, "", ""},
-	{"re", strip, 1, "", "+r", i_to_y, 2, "-y+ier", "+er"},
-	{"de", strip, 1, "", "+d", i_to_y, 2, "-y+ied", "+ed"},
-	{"citsi", strip, 2, "", "+ic"},
-	{"cihparg", i_to_y, 1, "-y+ic", ""},
-	{"tse", strip, 2, "", "+st", i_to_y, 3, "-y+iest", "+est"},
-	{"cirtem", i_to_y, 1, "-y+ic", ""},
-	{"yrtem", metry, 0, "-ry+er", ""},
-	{"cigol", i_to_y, 1, "-y+ic", ""},
-	{"tsigol", i_to_y, 2, "-y+ist", ""},
-	{"tsi", VCe, 3, "-e+ist", "+ist"},
-	{"msi", VCe, 3, "-e+ism", "+ist"},
+	{"ssen",     ily,    4, "-y+iness", "+ness" },
+	{"ssel",     ily,    4, "-y+i+less", "+less" },
+	{"se",       s,      1, "", "+s", es, 2, "-y+ies", "+es" },
+	{"s'",       s,      2, "", "+'s"},
+	{"s",        s,      1, "", "+s"},
+	{"ecn",      ncy,    1, "", "-t+ce"},
+	{"ycn",      ncy,    1, "", "-cy+t"},
+	{"ytilb",    nop,    0, "", ""},
+	{"ytilib",   bility, 5, "-le+ility", ""},
+	{"elbaif",   i_to_y, 4, "-y+iable", ""},
+	{"elba",     CCe,    4, "-e+able", "+able"},
+	{"yti",      CCe,    3, "-e+ity", "+ity"},
+	{"ylb",      y_to_e, 1, "-e+y", ""},
+	{"yl",       ily,    2, "-y+ily", "+ly"},
+	{"laci",     strip,  2, "", "+al"},
+	{"latnem",   strip,  2, "", "+al"},
+	{"lanoi",    strip,  2, "", "+al"},
+	{"tnem",     strip,  4, "", "+ment"},
+	{"gni",      CCe,    3, "-e+ing", "+ing"},
+	{"reta",     nop,    0, "", ""},
+	{"re",       strip,  1, "", "+r", i_to_y, 2, "-y+ier", "+er"},
+	{"de",       strip,  1, "", "+d", i_to_y, 2, "-y+ied", "+ed"},
+	{"citsi",    strip,  2, "", "+ic"},
+	{"cihparg",  i_to_y, 1, "-y+ic", ""},
+	{"tse",      strip,  2, "", "+st", i_to_y, 3, "-y+iest", "+est"},
+	{"cirtem",   i_to_y, 1, "-y+ic", ""},
+	{"yrtem",    metry,  0, "-ry+er", ""},
+	{"cigol",    i_to_y, 1, "-y+ic", ""},
+	{"tsigol",   i_to_y, 2, "-y+ist", ""},
+	{"tsi",      VCe,    3, "-e+ist", "+ist"},
+	{"msi",      VCe,    3, "-e+ism", "+ist"},
 	{"noitacif", i_to_y, 6, "-y+ication", ""},
-	{"noitazi", ize, 5, "-e+ation", ""},
-	{"rota", tion, 2, "-e+or", ""},
-	{"noit", tion, 3, "-e+ion", "+ion"},
-	{"naino", an, 3, "", "+ian"},
-	{"na", an, 1, "", "+n"},
-	{"evit", tion, 3, "-e+ive", "+ive"},
-	{"ezi", CCe, 3, "-e+ize", "+ize"},
-	{"pihs", strip, 4, "", "+ship"},
-	{"dooh", ily, 4, "-y+hood", "+hood"},
-	{"ekil", strip, 4, "", "+like"},
-	{ NULL }
+	{"noitazi",  ize,    5, "-e+ation", ""},
+	{"rota",     tion,   2, "-e+or", ""},
+	{"noit",     tion,   3, "-e+ion", "+ion"},
+	{"naino",    an,     3, "", "+ian"},
+	{"na",       an,     1, "", "+n"},
+	{"evit",     tion,   3, "-e+ive", "+ive"},
+	{"ezi",      CCe,    3, "-e+ize", "+ize"},
+	{"pihs",     strip,  4, "", "+ship"},
+	{"dooh",     ily,    4, "-y+hood", "+hood"},
+	{"ekil",     strip,  4, "", "+like"},
+	{ NULL, }
 };
 
-char *preftab[] = {
+static const char *preftab[] = {
 	"anti",
 	"bio",
 	"dis",
@@ -223,18 +224,21 @@ char *preftab[] = {
 	NULL
 };
 
-struct wlist {
+static struct wlist {
 	int fd;
 	unsigned char *front;
 	unsigned char *back;
 } *wlists;
 
-int vflag;
-int xflag;
-char word[LINE_MAX];
-char original[LINE_MAX];
-char *deriv[40];
-char affix[40];
+static int vflag;
+static int xflag;
+static char word[LINE_MAX];
+static char original[LINE_MAX];
+static char affix[LINE_MAX];
+static struct {
+	const char **buf;
+	size_t maxlev;
+} deriv;
 
 /*
  * The spellprog utility accepts a newline-delimited list of words
@@ -296,6 +300,7 @@ main(int argc, char **argv)
 	/* Open and mmap the word/stop lists. */
 	if ((wlists = malloc(sizeof(struct wlist) * (argc + 1))) == NULL)
 		err(1, "malloc");
+
 	for (i = 0; argc--; i++) {
 		wlists[i].fd = open(argv[i], O_RDONLY, 0);
 		if (wlists[i].fd == -1 || fstat(wlists[i].fd, &sb) != 0)
@@ -306,7 +311,7 @@ main(int argc, char **argv)
 		    MAP_PRIVATE, wlists[i].fd, (off_t)0);
 		if (wlists[i].front == MAP_FAILED)
 			err(1, "%s", argv[i]);
-		wlists[i].back = wlists[i].front + sb.st_size;
+		wlists[i].back = wlists[i].front + (size_t)sb.st_size;
 	}
 	wlists[i].fd = -1;
 
@@ -357,11 +362,9 @@ lcase:
 		}
 		file = stdout;
 	}
-
-	exit(0);
 }
 
-void
+static void
 print_word(FILE *f)
 {
 
@@ -377,15 +380,17 @@ print_word(FILE *f)
  * For each matching suffix in suftab, call the function associated
  * with that suffix (p1 and p2).
  */
-int
-suffix(char *ep, int lev)
+static int
+suffix(char *ep, size_t lev)
 {
 	struct suftab *t;
-	char *cp, *sp;
+	char *cp;
+	const char *sp;
 
 	lev += DLEV;
-	deriv[lev] = deriv[lev-1] = 0;
-	for (t = suftab; (sp = t->suf); t++) {
+	getderiv(lev + 1);
+	deriv.buf[lev] = deriv.buf[lev - 1] = 0;
+	for (t = suftab; (sp = t->suf) != NULL; t++) {
 		cp = ep;
 		while (*sp) {
 			if (*--cp != *sp++)
@@ -394,160 +399,165 @@ suffix(char *ep, int lev)
 		for (sp = cp; --sp >= word && !vowel(*sp);)
 			;	/* nothing */
 		if (sp < word)
-			return (0);
-		if ((*t->p1)(ep-t->n1, t->d1, t->a1, lev+1))
-			return (1);
+			return 0;
+		if ((*t->p1)(ep - t->n1, t->d1, t->a1, lev + 1))
+			return 1;
 		if (t->p2 != NULL) {
-			deriv[lev] = deriv[lev+1] = '\0';
-			return ((*t->p2)(ep-t->n2, t->d2, t->a2, lev));
+			deriv.buf[lev] = deriv.buf[lev + 1] = '\0';
+			return (*t->p2)(ep - t->n2, t->d2, t->a2, lev);
 		}
-		return (0);
+		return 0;
 next:		;
 	}
-	return (0);
+	return 0;
 }
 
-int
-nop(void)
+static int
+/*ARGSUSED*/
+nop(char *ep, const char *d, const char *a, size_t lev)
 {
 
-	return (0);
+	return 0;
 }
 
-int
-strip(char *ep, char *d, char *a, int lev)
+static int
+/*ARGSUSED*/
+strip(char *ep, const char *d, const char *a, size_t lev)
 {
 
-	return (trypref(ep, a, lev) || suffix(ep, lev));
+	return trypref(ep, a, lev) || suffix(ep, lev);
 }
 
-int
-s(char *ep, char *d, char *a, int lev)
+static int
+s(char *ep, const char *d, const char *a, const size_t lev)
 {
 
 	if (lev > DLEV + 1)
-		return (0);
+		return 0;
 	if (*ep == 's' && ep[-1] == 's')
-		return (0);
-	return (strip(ep, d, a, lev));
+		return 0;
+	return strip(ep, d, a, lev);
 }
 
-int
-an(char *ep, char *d, char *a, int lev)
+static int
+/*ARGSUSED*/
+an(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	if (!isupper((unsigned char)*word))	/* must be proper name */
-		return (0);
-	return (trypref(ep,a,lev));
+		return 0;
+	return trypref(ep, a, lev);
 }
 
-int
-ize(char *ep, char *d, char *a, int lev)
+static int
+/*ARGSUSED*/
+ize(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	*ep++ = 'e';
-	return (strip(ep ,"", d, lev));
+	return strip(ep ,"", d, lev);
 }
 
-int
-y_to_e(char *ep, char *d, char *a, int lev)
+static int
+/*ARGSUSED*/
+y_to_e(char *ep, const char *d, const char *a, size_t lev)
 {
 	char c = *ep;
 
 	*ep++ = 'e';
 	if (strip(ep, "", d, lev))
-		return (1);
+		return 1;
 	ep[-1] = c;
-	return (0);
+	return 0;
 }
 
-int
-ily(char *ep, char *d, char *a, int lev)
+static int
+ily(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	if (ep[-1] == 'i')
-		return (i_to_y(ep, d, a, lev));
+		return i_to_y(ep, d, a, lev);
 	else
-		return (strip(ep, d, a, lev));
+		return strip(ep, d, a, lev);
 }
 
-int
-ncy(char *ep, char *d, char *a, int lev)
+static int
+ncy(char *ep, const char *d, const char *a, size_t lev)
 {
 
-	if (skipv(skipv(ep-1)) < word)
-		return (0);
+	if (skipv(skipv(ep - 1)) < word)
+		return 0;
 	ep[-1] = 't';
-	return (strip(ep, d, a, lev));
+	return strip(ep, d, a, lev);
 }
 
-int
-bility(char *ep, char *d, char *a, int lev)
+static int
+bility(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	*ep++ = 'l';
-	return (y_to_e(ep, d, a, lev));
+	return y_to_e(ep, d, a, lev);
 }
 
-int
-i_to_y(char *ep, char *d, char *a, int lev)
+static int
+i_to_y(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	if (ep[-1] == 'i') {
 		ep[-1] = 'y';
 		a = d;
 	}
-	return (strip(ep, "", a, lev));
+	return strip(ep, "", a, lev);
 }
 
-int
-es(char *ep, char *d, char *a, int lev)
+static int
+es(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	if (lev > DLEV)
-		return (0);
+		return 0;
 
 	switch (ep[-1]) {
 	default:
-		return (0);
+		return 0;
 	case 'i':
-		return (i_to_y(ep, d, a, lev));
+		return i_to_y(ep, d, a, lev);
 	case 's':
 	case 'h':
 	case 'z':
 	case 'x':
-		return (strip(ep, d, a, lev));
+		return strip(ep, d, a, lev);
 	}
 }
 
-int
-metry(char *ep, char *d, char *a, int lev)
+static int
+metry(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	ep[-2] = 'e';
 	ep[-1] = 'r';
-	return (strip(ep, d, a, lev));
+	return strip(ep, d, a, lev);
 }
 
-int
-tion(char *ep, char *d, char *a, int lev)
+static int
+tion(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	switch (ep[-2]) {
 	case 'c':
 	case 'r':
-		return (trypref(ep, a, lev));
+		return trypref(ep, a, lev);
 	case 'a':
-		return (y_to_e(ep, d, a, lev));
+		return y_to_e(ep, d, a, lev);
 	}
-	return (0);
+	return 0;
 }
 
 /*
  * Possible consonant-consonant-e ending.
  */
-int
-CCe(char *ep, char *d, char *a, int lev)
+static int
+CCe(char *ep, const char *d, const char *a, size_t lev)
 {
 
 	switch (ep[-1]) {
@@ -560,56 +570,59 @@ CCe(char *ep, char *d, char *a, int lev)
 		case 'w':
 			break;
 		default:
-			return (y_to_e(ep, d, a, lev));
+			return y_to_e(ep, d, a, lev);
 		}
 		break;
 	case 's':
 		if (ep[-2] == 's')
 			break;
+		/*FALLTHROUGH*/
 	case 'c':
 	case 'g':
 		if (*ep == 'a')
-			return (0);
+			return 0;
+		/*FALLTHROUGH*/
 	case 'v':
 	case 'z':
 		if (vowel(ep[-2]))
 			break;
+		/*FALLTHROUGH*/
 	case 'u':
 		if (y_to_e(ep, d, a, lev))
-			return (1);
+			return 1;
 		if (!(ep[-2] == 'n' && ep[-1] == 'g'))
-			return (0);
+			return 0;
 	}
-	return (VCe(ep, d, a, lev));
+	return VCe(ep, d, a, lev);
 }
 
 /*
  * Possible consonant-vowel-consonant-e ending.
  */
-int
-VCe(char *ep, char *d, char *a, int lev)
+static int
+VCe(char *ep, const char *d, const char *a, size_t lev)
 {
 	char c;
 
 	c = ep[-1];
 	if (c == 'e')
-		return (0);
+		return 0;
 	if (!vowel(c) && vowel(ep[-2])) {
 		c = *ep;
 		*ep++ = 'e';
 		if (trypref(ep, d, lev) || suffix(ep, lev))
-			return (1);
+			return 1;
 		ep--;
 		*ep = c;
 	}
-	return (strip(ep, d, a, lev));
+	return strip(ep, d, a, lev);
 }
 
-char *
+static const char *
 lookuppref(char **wp, char *ep)
 {
-	char **sp;
-	char *bp,*cp;
+	const char **sp, *cp;
+	char *bp;
 
 	for (sp = preftab; *sp; sp++) {
 		bp = *wp;
@@ -620,105 +633,108 @@ lookuppref(char **wp, char *ep)
 		for (cp = bp; cp < ep; cp++) {
 			if (vowel(*cp)) {
 				*wp = bp;
-				return (*sp);
+				return *sp;
 			}
 		}
 next:		;
 	}
-	return (0);
+	return 0;
 }
 
 /*
  * If the word is not in the dictionary, try stripping off prefixes
  * until the word is found or we run out of prefixes to check.
  */
-int
-trypref(char *ep, char *a, int lev)
+static int
+trypref(char *ep, const char *a, size_t lev)
 {
-	char *cp;
+	const char *cp;
 	char *bp;
 	char *pp;
 	int val = 0;
 	char space[20];
 
-	deriv[lev] = a;
+	getderiv(lev + 2);
+	deriv.buf[lev] = a;
 	if (tryword(word, ep, lev))
-		return (1);
+		return 1;
 	bp = word;
 	pp = space;
-	deriv[lev+1] = pp;
-	while ((cp = lookuppref(&bp, ep))) {
+	deriv.buf[lev + 1] = pp;
+	while ((cp = lookuppref(&bp, ep)) != NULL) {
 		*pp++ = '+';
 		while ((*pp = *cp++))
 			pp++;
-		if (tryword(bp, ep, lev+1)) {
+		if (tryword(bp, ep, lev + 1)) {
 			val = 1;
 			break;
 		}
 		if (pp - space >= sizeof(space))
-			return (0);
+			return 0;
 	}
-	deriv[lev+1] = deriv[lev+2] = '\0';
-	return (val);
+	deriv.buf[lev + 1] = deriv.buf[lev + 2] = '\0';
+	return val;
 }
 
-int
-tryword(char *bp, char *ep, int lev)
+static int
+tryword(char *bp, char *ep, size_t lev)
 {
-	int i, j;
+	size_t i, j;
 	char duple[3];
 
 	if (ep-bp <= 1)
-		return (0);
+		return 0;
 	if (vowel(*ep) && monosyl(bp, ep))
-		return (0);
+		return 0;
 
 	i = dict(bp, ep);
-	if (i == 0 && vowel(*ep) && ep[-1] == ep[-2] && monosyl(bp, ep-1)) {
+	if (i == 0 && vowel(*ep) && ep[-1] == ep[-2] &&
+	    monosyl(bp, ep - 1)) {
 		ep--;
-		deriv[++lev] = duple;
+		getderiv(++lev);
+		deriv.buf[lev] = duple;
 		duple[0] = '+';
 		duple[1] = *ep;
 		duple[2] = '\0';
 		i = dict(bp, ep);
 	}
 	if (vflag == 0 || i == 0)
-		return (i);
+		return i;
 
 	/* Also tack on possible derivations. (XXX - warn on truncation?) */
 	for (j = lev; j > 0; j--) {
-		if (deriv[j])
-			strlcat(affix, deriv[j], sizeof(affix));
+		if (deriv.buf[j])
+			(void)strlcat(affix, deriv.buf[j], sizeof(affix));
 	}
-	return (i);
+	return i;
 }
 
-int
+static int
 monosyl(char *bp, char *ep)
 {
 
 	if (ep < bp + 2)
-		return (0);
+		return 0;
 	if (vowel(*--ep) || !vowel(*--ep) || ep[1] == 'x' || ep[1] == 'w')
-		return (0);
+		return 0;
 	while (--ep >= bp)
 		if (vowel(*ep))
-			return (0);
-	return (1);
+			return 0;
+	return 1;
 }
 
-char *
-skipv(char *s)
+static char *
+skipv(char *st)
 {
 
-	if (s >= word && vowel(*s))
-		s--;
-	while (s >= word && !vowel(*s))
-		s--;
-	return (s);
+	if (st >= word && vowel(*st))
+		st--;
+	while (st >= word && !vowel(*st))
+		st--;
+	return st;
 }
 
-int
+static int
 vowel(int c)
 {
 
@@ -729,60 +745,61 @@ vowel(int c)
 	case 'o':
 	case 'u':
 	case 'y':
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
  * Crummy way to Britishise.
  */
-void
+static void
 ise(void)
 {
 	struct suftab *tab;
+	char *cp;
 
 	for (tab = suftab; tab->suf; tab++) {
 		/* Assume that suffix will contain 'z' if a1 or d1 do */
 		if (strchr(tab->suf, 'z')) {
-			tab->suf = estrdup(tab->suf);
-			ztos(tab->suf);
+			tab->suf = cp = estrdup(tab->suf);
+			ztos(cp);
 			if (strchr(tab->d1, 'z')) {
-				tab->d1 = estrdup(tab->d1);
-				ztos(tab->d1);
+				tab->d1 = cp = estrdup(tab->d1);
+				ztos(cp);
 			}
 			if (strchr(tab->a1, 'z')) {
-				tab->a1 = estrdup(tab->a1);
-				ztos(tab->a1);
+				tab->a1 = cp = estrdup(tab->a1);
+				ztos(cp);
 			}
 		}
 	}
 }
 
-void
-ztos(char *s)
+static void
+ztos(char *st)
 {
 
-	for (; *s; s++)
-		if (*s == 'z')
-			*s = 's';
+	for (; *st; st++)
+		if (*st == 'z')
+			*st = 's';
 }
 
-char *
-estrdup(const char *s)
+static char *
+estrdup(const char *st)
 {
 	char *d;
 
-	if ((d = strdup(s)) == NULL)
+	if ((d = strdup(st)) == NULL)
 		err(1, "strdup");
-	return (d);
+	return d;
 }
 
 /*
  * Look up a word in the dictionary.
  * Returns 1 if found, 0 if not.
  */
-int
+static int
 dict(char *bp, char *ep)
 {
 	char c;
@@ -798,15 +815,27 @@ dict(char *bp, char *ep)
 			break;
 	}
 	*ep = c;
-	return (rval);
+	return rval;
 }
 
-__dead void
+static void
+getderiv(size_t lev)
+{
+	if (deriv.maxlev < lev) {
+		void *p = realloc(deriv.buf, sizeof(*deriv.buf) * lev);
+		if (p == NULL)
+			err(1, "Cannot grow array");
+		deriv.buf = p;
+		deriv.maxlev = lev;
+	}
+}
+
+
+static void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s [-bvx] [-o found-words] word-list ...\n",
-	    __progname);
+	(void)fprintf(stderr,
+	    "Usage: %s [-bvx] [-o found-words] word-list ...\n",
+	    getprogname());
 	exit(1);
 }
