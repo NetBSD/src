@@ -1,4 +1,4 @@
-/*	$NetBSD: printching.c,v 1.1 2005/06/30 13:30:33 perry Exp $	*/
+/*	$NetBSD: printching.c,v 1.2 2005/06/30 13:44:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ching.phx.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: printching.c,v 1.1 2005/06/30 13:30:33 perry Exp $");
+__RCSID("$NetBSD: printching.c,v 1.2 2005/06/30 13:44:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ int
 doahex(void)
 {
 	int lower, upper;	/* encoded values of lower and upper trigrams */
-	int lnum, unum;		/* indices of upper and lower trigrams */
+	int lnum = 0, unum = 0;	/* indices of upper and lower trigrams */
 	int i;
 
 	lower = codem(0);
