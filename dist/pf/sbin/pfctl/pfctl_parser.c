@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_parser.c,v 1.6 2004/11/21 18:01:14 peter Exp $	*/
-/*	$OpenBSD: pfctl_parser.c,v 1.203.2.1 2004/11/13 23:52:14 brad Exp $ */
+/*	$NetBSD: pfctl_parser.c,v 1.7 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: pfctl_parser.c,v 1.211 2004/12/07 10:33:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -510,6 +511,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 }
 
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
+const char	*pf_lcounters[LCNT_MAX+1] = LCNT_NAMES;
 const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
@@ -612,6 +614,18 @@ print_status(struct pf_status *s, int opts)
 		else
 			printf("%14s\n", "");
 	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Limit Counters\n");
+		for (i = 0; i < LCNT_MAX; i++) {
+			printf("  %-25s %14lld ", pf_lcounters[i],
+				    (unsigned long long)s->lcounters[i]);
+			if (runtime > 0)
+				printf("%14.1f/s\n",
+				    (double)s->lcounters[i] / (double)runtime);
+			else
+				printf("%14s\n", "");
+		}
+	}
 }
 
 void
@@ -631,7 +645,9 @@ print_src_node(struct pf_src_node *sn, int opts)
 	printf(" -> ");
 	aw.v.a.addr = sn->raddr;
 	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
-	printf(" (%d states)\n", sn->states);
+	printf(" ( states %u, connections %u, rate %u.%u/%us )\n", sn->states,
+	    sn->conn, sn->conn_rate.count / 1000,
+	    (sn->conn_rate.count % 1000) / 100, sn->conn_rate.seconds);
 	if (opts & PF_OPT_VERBOSE) {
 		sec = sn->creation % 60;
 		sn->creation /= 60;
@@ -668,11 +684,11 @@ print_src_node(struct pf_src_node *sn, int opts)
 void
 print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 {
-	static const char *actiontypes[] = { "pass", "block", "scrub", "nat",
-	    "no nat", "binat", "no binat", "rdr", "no rdr" };
+	static const char *actiontypes[] = { "pass", "block", "scrub",
+	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr" };
 	static const char *anchortypes[] = { "anchor", "anchor", "anchor",
-	    "nat-anchor", "nat-anchor", "binat-anchor", "binat-anchor",
-	    "rdr-anchor", "rdr-anchor" };
+	    "anchor", "nat-anchor", "nat-anchor", "binat-anchor",
+	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
 	int	i, opts;
 
 	if (verbose)
@@ -680,7 +696,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
 	else if (anchor_call[0])
-		printf("%s %s", anchortypes[r->action], anchor_call);
+		printf("%s \"%s\"", anchortypes[r->action],
+		    anchor_call);
 	else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
@@ -875,11 +892,34 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf("max-src-states %u", r->max_src_states);
 			opts = 0;
 		}
+		if (r->max_src_conn) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-conn %u", r->max_src_conn);
+			opts = 0;
+		}
+		if (r->max_src_conn_rate.limit) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-conn-rate %u/%u",
+			    r->max_src_conn_rate.limit,
+			    r->max_src_conn_rate.seconds);
+			opts = 0;
+		}
 		if (r->max_src_nodes) {
 			if (!opts)
 				printf(", ");
 			printf("max-src-nodes %u", r->max_src_nodes);
 			opts = 0;
+		}
+		if (r->overload_tblname[0]) {
+			if (!opts)
+				printf(", ");
+			printf("overload <%s>", r->overload_tblname);
+			if (r->flush)
+				printf(" flush");
+			if (r->flush & PF_FLUSH_GLOBAL)
+				printf(" global");
 		}
 		if (r->rule_flag & PFRULE_IFBOUND) {
 			if (!opts)
@@ -1269,7 +1309,7 @@ host(const char *s)
 	if ((p = strrchr(s, '/')) != NULL) {
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
-			fprintf(stderr, "invalid netmask\n");
+			fprintf(stderr, "invalid netmask '%s'\n", p);
 			return (NULL);
 		}
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)

@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_osfp.c,v 1.4 2004/11/14 11:26:48 yamt Exp $	*/
-/*	$OpenBSD: pfctl_osfp.c,v 1.9 2004/04/09 12:42:06 cedric Exp $ */
+/*	$NetBSD: pfctl_osfp.c,v 1.5 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: pfctl_osfp.c,v 1.12 2005/02/17 13:18:00 aaron Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -281,9 +281,9 @@ pfctl_flush_my_fingerprints(struct name_list *list)
 	while ((nm = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(nm, nm_entry);
 		pfctl_flush_my_fingerprints(&nm->nm_sublist);
-		fingerprint_count--;
 		free(nm);
 	}
+	fingerprint_count = 0;
 	class_count = 0;
 }
 
@@ -353,7 +353,7 @@ pfctl_get_fingerprint(const char *name)
 
 		if ((wr_name = strdup(name)) == NULL)
 			err(1, "malloc");
-		if ((ptr = index(wr_name, ' ')) == NULL) {
+		if ((ptr = strchr(wr_name, ' ')) == NULL) {
 			free(wr_name);
 			return (PF_OSFP_NOMATCH);
 		}
@@ -513,9 +513,9 @@ found:
 		strlcat(buf, " ", len);
 		strlcat(buf, version_name, len);
 		if (subtype_name) {
-			if (index(version_name, ' '))
+			if (strchr(version_name, ' '))
 				strlcat(buf, " ", len);
-			else if (index(version_name, '.') &&
+			else if (strchr(version_name, '.') &&
 			    isdigit((unsigned char)*subtype_name))
 				strlcat(buf, ".", len);
 			else
@@ -707,9 +707,8 @@ fingerprint_name_entry(struct name_list *list, char *name)
 		nm_entry = calloc(1, sizeof(*nm_entry));
 		if (nm_entry == NULL)
 			err(1, "calloc");
-			LIST_INIT(&nm_entry->nm_sublist);
-			strlcpy(nm_entry->nm_name, name,
-			    sizeof(nm_entry->nm_name));
+		LIST_INIT(&nm_entry->nm_sublist);
+		strlcpy(nm_entry->nm_name, name, sizeof(nm_entry->nm_name));
 	}
 	LIST_INSERT_HEAD(list, nm_entry, nm_entry);
 	return (nm_entry);

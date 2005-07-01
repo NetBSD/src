@@ -1,5 +1,5 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.6 2004/11/19 20:51:34 wiz Exp $
-.\"	$OpenBSD: ftp-proxy.8,v 1.41 2004/07/06 19:49:11 dhartmei Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.7 2005/07/01 12:43:50 peter Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.42 2004/11/19 00:47:23 jmc Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -36,6 +36,7 @@
 .Nd Internet File Transfer Protocol proxy server
 .Sh SYNOPSIS
 .Nm ftp-proxy
+.Bk -words
 .Fl i
 .Op Fl AnrVw
 .Op Fl a Ar address
@@ -45,7 +46,9 @@
 .Op Fl m Ar minport
 .Op Fl t Ar timeout
 .Op Fl u Ar user
+.Ek
 .Nm ftp-proxy
+.Bk -words
 .Fl p
 .Op Fl AnrVw
 .Op Fl a Ar address
@@ -57,6 +60,7 @@
 .Op Fl S Ar address
 .Op Fl t Ar timeout
 .Op Fl u Ar user
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a proxy for the Internet File Transfer Protocol.
