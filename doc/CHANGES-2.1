@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.132 2005/07/01 12:22:30 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.133 2005/07/01 15:14:26 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2595,4 +2595,11 @@ sys/kern/kern_ksyms.c				1.26
 	Use %zx in a format string to print a size_t, not %lx, so a kernel
 	with KSYMS_DEBUG will compile.
 	[riz, ticket #2037]
+
+libexec/telnetd/ext.h				patch
+libexec/telnetd/state.c				patch
+libexec/telnetd/telnetd.c			patch
+
+	Remove static local variable so its easier to correctly use strlcpy.
+	[lha, ticket #2041]
 
