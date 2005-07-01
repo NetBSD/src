@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.17 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: input.c,v 1.18 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.17 2005/02/15 12:56:20 jsm Exp $");
+__RCSID("$NetBSD: input.c,v 1.18 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ typedef struct {
 	int	token;
 	int	to_state;
 	const char	*str;
-	const char	*(*func)(char);
+	const char	*(*func)(int);
 } RULE;
 
 typedef struct {
@@ -175,7 +175,7 @@ int	tval;
 int	dest_type, dest_no, dir;
 
 int
-pop()
+pop(void)
 {
 	if (level == 0)
 		return (-1);
@@ -190,7 +190,7 @@ pop()
 }
 
 void
-rezero()
+rezero(void)
 {
 	iomove(0);
 
@@ -203,8 +203,7 @@ rezero()
 }
 
 void
-push(ruleno, ch)
-	int ruleno, ch;
+push(int ruleno, int ch)
 {
 	int	newstate, newpos;
 
@@ -226,10 +225,10 @@ push(ruleno, ch)
 }
 
 int
-getcommand()
+getcommand(void)
 {
 	int	c, i, done;
-	const char	*s, *(*func)(char);
+	const char	*s, *(*func)(int);
 	PLANE	*pp;
 
 	rezero();
@@ -285,14 +284,14 @@ getcommand()
 }
 
 void
-noise()
+noise(void)
 {
 	putchar('\07');
 	fflush(stdout);
 }
 
 int
-gettoken()
+gettoken(void)
 {
 	while ((tval = getAChar()) == REDRAWTOKEN || tval == SHELLTOKEN)
 	{
@@ -354,9 +353,8 @@ gettoken()
 		return (tval);
 }
 
-const char	*
-setplane(c)
-	char c;
+const char *
+setplane(int c)
 {
 	PLANE	*pp;
 
@@ -368,18 +366,16 @@ setplane(c)
 	return (NULL);
 }
 
-const char	*
-turn(c)
-	char c __attribute__((__unused__));
+const char *
+turn(int c __attribute__((__unused__)))
 {
 	if (p.altitude == 0)
 		return ("Planes at airports may not change direction");
 	return (NULL);
 }
 
-const char	*
-circle(c)
-	char c __attribute__((__unused__));
+const char *
+circle(int c __attribute__((__unused__)))
 {
 	if (p.altitude == 0)
 		return ("Planes cannot circle on the ground");
@@ -387,9 +383,8 @@ circle(c)
 	return (NULL);
 }
 
-const char	*
-left(c)
-	char c __attribute__((__unused__));
+const char *
+left(int c __attribute__((__unused__)))
 {
 	dir = D_LEFT;
 	p.new_dir = p.dir - 1;
@@ -398,9 +393,8 @@ left(c)
 	return (NULL);
 }
 
-const char	*
-right(c)
-	char c __attribute__((__unused__));
+const char *
+right(int c __attribute__((__unused__)))
 {
 	dir = D_RIGHT;
 	p.new_dir = p.dir + 1;
@@ -409,9 +403,8 @@ right(c)
 	return (NULL);
 }
 
-const char	*
-Left(c)
-	char c __attribute__((__unused__));
+const char *
+Left(int c __attribute__((__unused__)))
 {
 	p.new_dir = p.dir - 2;
 	if (p.new_dir < 0)
@@ -419,9 +412,8 @@ Left(c)
 	return (NULL);
 }
 
-const char	*
-Right(c)
-	char c __attribute__((__unused__));
+const char *
+Right(int c __attribute__((__unused__)))
 {
 	p.new_dir = p.dir + 2;
 	if (p.new_dir >= MAXDIR)
@@ -429,9 +421,8 @@ Right(c)
 	return (NULL);
 }
 
-const char	*
-delayb(c)
-	char c;
+const char *
+delayb(int c)
 {
 	int	xdiff, ydiff;
 
@@ -475,49 +466,43 @@ delayb(c)
 	return (NULL);
 }
 
-const char	*
-beacon(c)
-	char c __attribute__((__unused__));
+const char *
+beacon(int c __attribute__((__unused__)))
 {
 	dest_type = T_BEACON;
 	return (NULL);
 }
 
-const char	*
-ex_it(c)
-	char c __attribute__((__unused__));
+const char *
+ex_it(int c __attribute__((__unused__)))
 {
 	dest_type = T_EXIT;
 	return (NULL);
 }
 
-const char	*
-airport(c)
-	char c __attribute__((__unused__));
+const char *
+airport(int c __attribute__((__unused__)))
 {
 	dest_type = T_AIRPORT;
 	return (NULL);
 }
 
-const char	*
-climb(c)
-	char c __attribute__((__unused__));
+const char *
+climb(int c __attribute__((__unused__)))
 {
 	dir = D_UP;
 	return (NULL);
 }
 
-const char	*
-descend(c)
-	char c __attribute__((__unused__));
+const char *
+descend(int c __attribute__((__unused__)))
 {
 	dir = D_DOWN;
 	return (NULL);
 }
 
-const char	*
-setalt(c)
-	char c;
+const char *
+setalt(int c)
 {
 	if ((p.altitude == c - '0') && (p.new_altitude == p.altitude))
 		return ("Already at that altitude");
@@ -525,9 +510,8 @@ setalt(c)
 	return (NULL);
 }
 
-const char	*
-setrelalt(c)
-	char c;
+const char *
+setrelalt(int c)
 {
 	if (c == 0)
 		return ("altitude not changed");
@@ -550,9 +534,8 @@ setrelalt(c)
 	return (NULL);
 }
 
-const char	*
-benum(c)
-	char c;
+const char *
+benum(int c)
 {
 	dest_no = c -= '0';
 
@@ -582,17 +565,15 @@ benum(c)
 	return (NULL);
 }
 
-const char	*
-to_dir(c)
-	char c;
+const char *
+to_dir(int c)
 {
 	p.new_dir = dir_no(c);
 	return (NULL);
 }
 
-const char	*
-rel_dir(c)
-	char c;
+const char *
+rel_dir(int c)
 {
 	int	angle;
 
@@ -615,9 +596,8 @@ rel_dir(c)
 	return (NULL);
 }
 
-const char	*
-mark(c)
-	char c __attribute__((__unused__));
+const char *
+mark(int c __attribute__((__unused__)))
 {
 	if (p.altitude == 0)
 		return ("Cannot mark planes on the ground");
@@ -627,9 +607,8 @@ mark(c)
 	return (NULL);
 }
 
-const char	*
-unmark(c)
-	char c __attribute__((__unused__));
+const char *
+unmark(int c __attribute__((__unused__)))
 {
 	if (p.altitude == 0)
 		return ("Cannot unmark planes on the ground");
@@ -639,9 +618,8 @@ unmark(c)
 	return (NULL);
 }
 
-const char	*
-ignore(c)
-	char c __attribute__((__unused__));
+const char *
+ignore(int c __attribute__((__unused__)))
 {
 	if (p.altitude == 0)
 		return ("Cannot ignore planes on the ground");
@@ -652,24 +630,23 @@ ignore(c)
 }
 
 int
-dir_no(ch)
-	char	ch;
+dir_no(int ch)
 {
-	int	dir;
+	int	dirno;
 
-	dir = -1;
+	dirno = -1;
 	switch (ch) {
-	case 'w':	dir = 0;	break;
-	case 'e':	dir = 1;	break;
-	case 'd':	dir = 2;	break;
-	case 'c':	dir = 3;	break;
-	case 'x':	dir = 4;	break;
-	case 'z':	dir = 5;	break;
-	case 'a':	dir = 6;	break;
-	case 'q':	dir = 7;	break;
+	case 'w':	dirno = 0;	break;
+	case 'e':	dirno = 1;	break;
+	case 'd':	dirno = 2;	break;
+	case 'c':	dirno = 3;	break;
+	case 'x':	dirno = 4;	break;
+	case 'z':	dirno = 5;	break;
+	case 'a':	dirno = 6;	break;
+	case 'q':	dirno = 7;	break;
 	default:
 		fprintf(stderr, "bad character in dir_no\n");
 		break;
 	}
-	return (dir);
+	return (dirno);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@
  */
 
 extern char		GAMES[];
-extern const char	*file;
+extern const char	*filename;
 
 extern int		clck, safe_planes, start_time, test_mode;
 
@@ -70,7 +70,7 @@ int		checkdefs(void);
 int		compar(const void *, const void *);
 void		delete(LIST *, PLANE *);
 int		dir_deg(int);
-int		dir_no(char);
+int		dir_no(int);
 void		done_screen(void);
 void		draw_all(void);
 void		draw_line(WINDOW *, int, int, int, int, const char *);
@@ -92,7 +92,7 @@ int		main(int, char *[]);
 char		name(const PLANE *);
 int		next_plane(void);
 void		noise(void);
-int		number(char);
+int		number(int);
 void		open_score_file(void);
 void		planewin(void);
 int		pop(void);
@@ -109,30 +109,30 @@ int		yylex(void);
 #ifndef YYEMPTY
 int		yyparse(void);
 #endif
-const char     *Left(char);
-const char     *Right(char);
-const char     *airport(char);
-const char     *beacon(char);
-const char     *benum(char);
-const char     *circle(char);
-const char     *climb(char);
+const char     *Left(int);
+const char     *Right(int);
+const char     *airport(int);
+const char     *beacon(int);
+const char     *benum(int);
+const char     *circle(int);
+const char     *climb(int);
 const char     *command(const PLANE *);
 const char     *default_game(void);
-const char     *delayb(char);
-const char     *descend(char);
-const char     *ex_it(char);
+const char     *delayb(int);
+const char     *descend(int);
+const char     *ex_it(int);
 PLANE	       *findplane(int);
-const char     *ignore(char);
-const char     *left(char);
-const char     *mark(char);
+const char     *ignore(int);
+const char     *left(int);
+const char     *mark(int);
 PLANE	       *newplane(void);
 const char     *okay_game(const char *);
-const char     *rel_dir(char);
-const char     *right(char);
-const char     *setalt(char);
-const char     *setplane(char);
-const char     *setrelalt(char);
+const char     *rel_dir(int);
+const char     *right(int);
+const char     *setalt(int);
+const char     *setplane(int);
+const char     *setrelalt(int);
 const char     *timestr(int);
-const char     *to_dir(char);
-const char     *turn(char);
-const char     *unmark(char);
+const char     *to_dir(int);
+const char     *turn(int);
+const char     *unmark(int);

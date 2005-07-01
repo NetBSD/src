@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.10 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: graphics.c,v 1.11 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.10 2003/08/07 09:36:54 agc Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.11 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: graphics.c,v 1.10 2003/08/07 09:36:54 agc Exp $");
 WINDOW	*radar, *cleanradar, *credit, *input, *planes;
 
 int
-getAChar()
+getAChar(void)
 {
 	int c;
 
@@ -76,7 +76,7 @@ getAChar()
 }
 
 void
-erase_all()
+erase_all(void)
 {
 	PLANE	*pp;
 
@@ -91,7 +91,7 @@ erase_all()
 }
 
 void
-draw_all()
+draw_all(void)
 {
 	PLANE	*pp;
 
@@ -111,7 +111,7 @@ draw_all()
 }
 
 void
-init_gr()
+init_gr(void)
 {
 	static char	buffer[BUFSIZ];
 
@@ -124,8 +124,7 @@ init_gr()
 }
 
 void
-setup_screen(scp)
-	const C_SCREEN	*scp;
+setup_screen(const C_SCREEN *scp)
 {
 	int	i, j;
 	char	str[3];
@@ -217,10 +216,7 @@ setup_screen(scp)
 }
 
 void
-draw_line(w, x, y, lx, ly, s)
-	WINDOW	*w;
-	int	 x, y, lx, ly;
-	const char	*s;
+draw_line(WINDOW *w, int x, int y, int lx, int ly, const char *s)
 {
 	int	dx, dy;
 
@@ -237,8 +233,7 @@ draw_line(w, x, y, lx, ly, s)
 }
 
 void
-ioclrtoeol(pos)
-	int pos;
+ioclrtoeol(int pos)
 {
 	wmove(input, 0, pos);
 	wclrtoeol(input);
@@ -247,8 +242,7 @@ ioclrtoeol(pos)
 }
 
 void
-iomove(pos)
-	int pos;
+iomove(int pos)
 {
 	wmove(input, 0, pos);
 	wrefresh(input);
@@ -256,9 +250,7 @@ iomove(pos)
 }
 
 void
-ioaddstr(pos, str)
-	int	 pos;
-	const char	*str;
+ioaddstr(int pos, const char *str)
 {
 	wmove(input, 0, pos);
 	waddstr(input, str);
@@ -267,7 +259,7 @@ ioaddstr(pos, str)
 }
 
 void
-ioclrtobot()
+ioclrtobot(void)
 {
 	wclrtobot(input);
 	wrefresh(input);
@@ -275,9 +267,7 @@ ioclrtobot()
 }
 
 void
-ioerror(pos, len, str)
-	int	 pos, len;
-	const char	*str;
+ioerror(int pos, int len, const char *str)
 {
 	int	i;
 
@@ -291,8 +281,7 @@ ioerror(pos, len, str)
 }
 
 void
-quit(dummy)
-	int dummy __attribute__((__unused__));
+quit(int dummy __attribute__((__unused__)))
 {
 	int			c, y, x;
 #ifdef BSD
@@ -332,7 +321,7 @@ quit(dummy)
 }
 
 void
-planewin()
+planewin(void)
 {
 	PLANE	*pp;
 	int	warning = 0;
@@ -375,9 +364,7 @@ planewin()
 }
 
 void
-loser(p, s)
-	const PLANE	*p;
-	const char	*s;
+loser(const PLANE *p, const char *s)
 {
 	int			c;
 #ifdef BSD
@@ -400,8 +387,8 @@ loser(p, s)
 	if (p == NULL)
 		wprintw(input, "%s\n\nHit space for top players list...", s);
 	else
-		wprintw(input, "Plane '%c' %s\n\nHit space for top players list...",
-			name(p), s);
+		wprintw(input, "Plane '%c' %s\n\n", name(p), s);
+		wprintw(input, "Hit space for top players list...");
 	wrefresh(input);
 	fflush(stdout);
 	while ((c = getchar()) != EOF && c != ' ')
@@ -414,7 +401,7 @@ loser(p, s)
 }
 
 void
-redraw()
+redraw(void)
 {
 	clear();
 	refresh();
@@ -433,7 +420,7 @@ redraw()
 }
 
 void
-done_screen()
+done_screen(void)
 {
 	clear();
 	refresh();

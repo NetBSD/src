@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2003/08/07 09:36:54 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,7 @@ __RCSID("$NetBSD: main.c,v 1.13 2003/08/07 09:36:54 agc Exp $");
 extern FILE	*yyin;
 
 int
-main(ac, av)
-	int	 ac;
-	char	*av[];
+main(int argc, char *argv[])
 {
 	int			seed;
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
@@ -81,7 +79,7 @@ main(ac, av)
 
 	start_time = seed = time(NULL);
 
-	while ((ch = getopt(ac, av, "ulstpg:f:r:")) != -1) {
+	while ((ch = getopt(argc, argv, "ulstpg:f:r:")) != -1) {
 		switch (ch) {
 		case '?':
 		case 'u':
@@ -107,14 +105,14 @@ main(ac, av)
 			break;
 		}
 	}
-	if (optind < ac)
+	if (optind < argc)
 		f_usage++;
 	srandom(seed);
 
 	if (f_usage)
 		fprintf(stderr, 
 		    "Usage: %s -[u?lstp] [-[gf] game_name] [-r random seed]\n",
-			av[0]);
+			argv[0]);
 	if (f_showscore)
 		log_score(1);
 	if (f_list)
@@ -208,12 +206,11 @@ main(ac, av)
 }
 
 int
-read_file(s)
-	const char	*s;
+read_file(const char *s)
 {
 	int		retval;
 
-	file = s;
+	filename = s;
 	yyin = fopen(s, "r");
 	if (yyin == NULL) {
 		warn("fopen %s", s);
@@ -228,8 +225,8 @@ read_file(s)
 		return (0);
 }
 
-const char	*
-default_game()
+const char *
+default_game(void)
 {
 	FILE		*fp;
 	static char	file[256];
@@ -253,9 +250,8 @@ default_game()
 	return (file);
 }
 
-const char	*
-okay_game(s)
-	const char	*s;
+const char *
+okay_game(const char *s)
 {
 	FILE		*fp;
 	static char	file[256];
@@ -290,7 +286,7 @@ okay_game(s)
 }
 
 int
-list_games()
+list_games(void)
 {
 	FILE		*fp;
 	char		line[256], games[256];

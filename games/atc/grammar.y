@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.8 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: grammar.y,v 1.9 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.8 2003/08/07 09:36:54 agc Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.9 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,8 +285,7 @@ Lline:
 %%
 
 void
-check_edge(x, y)
-	int x, y;
+check_edge(int x, int y)
 {
 	if (!(x == 0) && !(x == sp->width - 1) && 
 	    !(y == 0) && !(y == sp->height - 1))
@@ -294,8 +293,7 @@ check_edge(x, y)
 }
 
 void
-check_point(x, y)
-	int x, y;
+check_point(int x, int y)
 {
 	if (x < 1 || x >= sp->width - 1)
 		yyerror("X value out of range.");
@@ -304,8 +302,7 @@ check_point(x, y)
 }
 
 void
-check_linepoint(x, y)
-	int x, y;
+check_linepoint(int x, int y)
 {
 	if (x < 0 || x >= sp->width)
 		yyerror("X value out of range.");
@@ -314,34 +311,31 @@ check_linepoint(x, y)
 }
 
 void
-check_line(x1, y1, x2, y2)
-	int x1, y1, x2, y2;
+check_line(int px1, int py1, int px2, int py2)
 {
 	int	d1, d2;
 
-	check_linepoint(x1, y1);
-	check_linepoint(x2, y2);
+	check_linepoint(px1, py1);
+	check_linepoint(px2, py2);
 
-	d1 = ABS(x2 - x1);
-	d2 = ABS(y2 - y1);
+	d1 = ABS(px2 - px1);
+	d2 = ABS(py2 - py1);
 
 	if (!(d1 == d2) && !(d1 == 0) && !(d2 == 0))
 		yyerror("Bad line endpoints.");
 }
 
 int
-yyerror(s)
-	const char *s;
+yyerror(const char *s)
 {
-	fprintf(stderr, "\"%s\": line %d: %s\n", file, line, s);
+	fprintf(stderr, "\"%s\": line %d: %s\n", filename, line, s);
 	errors++;
 
 	return (errors);
 }
 
 void
-check_edir(x, y, dir)
-	int x, y, dir;
+check_edir(int x, int y, int dir)
 {
 	int	bad = 0;
 
@@ -373,27 +367,27 @@ check_edir(x, y, dir)
 }
 
 int
-checkdefs()
+checkdefs(void)
 {
-	int	err = 0;
+	int	error = 0;
 
 	if (sp->width == 0) {
 		yyerror("'width' undefined.");
-		err++;
+		error++;
 	}
 	if (sp->height == 0) {
 		yyerror("'height' undefined.");
-		err++;
+		error++;
 	}
 	if (sp->update_secs == 0) {
 		yyerror("'update' undefined.");
-		err++;
+		error++;
 	}
 	if (sp->newplane_time == 0) {
 		yyerror("'newplane' undefined.");
-		err++;
+		error++;
 	}
-	if (err)
+	if (error)
 		return (-1);
 	else
 		return (0);
