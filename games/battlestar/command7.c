@@ -1,4 +1,4 @@
-/*	$NetBSD: command7.c,v 1.2 2003/08/07 09:37:01 agc Exp $	*/
+/*	$NetBSD: command7.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command7.c,v 1.2 2003/08/07 09:37:01 agc Exp $");
+__RCSID("$NetBSD: command7.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 int
-fight(enemy, strength)
-	int     enemy, strength;
+fight(int enemy, int strength)
 {
 	int     lifeline = 0;
 	int     hurt;
@@ -72,11 +71,17 @@ fighton:
 	case KILL:
 	case SMITE:
 		if (testbit(inven, TWO_HANDED))
-			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) - ucard(wear) - exhaustion;
+			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) - 
+			    ucard(wear) - exhaustion;
 		else if (testbit(inven, SWORD) || testbit(inven, BROAD))
-			hurt = rnd(50) % (WEIGHT - carrying) - card(injuries, NUMOFINJURIES) - encumber - exhaustion;
-		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) || testbit(inven, CHAIN) || testbit(inven, MACE) || testbit(inven, HALBERD))
-			hurt = rnd(15) - card(injuries, NUMOFINJURIES) - exhaustion;
+			hurt = rnd(50) % (WEIGHT - carrying) - 
+			    card(injuries, NUMOFINJURIES) - encumber - 
+			    exhaustion;
+		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) || 
+		    testbit(inven, CHAIN) || testbit(inven, MACE) || 
+		    testbit(inven, HALBERD))
+			hurt = rnd(15) - card(injuries, NUMOFINJURIES) - 
+			    exhaustion;
 		else
 			hurt = rnd(7) - encumber;
 		if (hurt < 5)
@@ -89,7 +94,8 @@ fighton:
 				puts("He checked your blow. CLASH! CLANG!");
 				break;
 			case 2:
-				puts("His filthy tunic hangs by one less thread.");
+				printf("His filthy tunic hangs by one less ");
+				puts("thread.");
 				break;
 			}
 		else if (hurt < 10) {
@@ -101,7 +107,8 @@ fighton:
 				puts("A trickle of blood runs down his face.");
 				break;
 			case 2:
-				puts("A huge purple bruise is forming on the side of his face.");
+				printf("A huge purple bruise is forming on ");
+				puts("the side of his face.");
 				break;
 			}
 			lifeline++;
@@ -111,23 +118,29 @@ fighton:
 				puts("He staggers back quavering.");
 				break;
 			case 1:
-				puts("He jumps back with his hand over the wound.");
+				printf("He jumps back with his hand over ");
+				puts("the wound.");
 				break;
 			case 2:
-				puts("His shirt falls open with a swath across the chest.");
+				printf("His shirt falls open with a swath ");
+				puts("across the chest.");
 				break;
 			}
 			lifeline += 5;
 		} else if (hurt < 30) {
 			switch (rnd(3)) {
 			case 0:
-				printf("A bloody gash opens up on his %s side.\n", (rnd(2) ? "left" : "right"));
+				printf("A bloody gash opens up on his %s ", 
+				    (rnd(2) ? "left" : "right"));
+				printf("side.\n");
 				break;
 			case 1:
-				puts("The steel bites home and scrapes along his ribs.");
+				printf("The steel bites home and scrapes ");
+				puts("along his ribs.");
 				break;
 			case 2:
-				puts("You pierce him, and his breath hisses through clenched teeth.");
+				printf("You pierce him, and his breath ");
+				puts("hisses through clenched teeth.");
 				break;
 			}
 			lifeline += 10;
@@ -135,30 +148,40 @@ fighton:
 			switch (rnd(3)) {
 			case 0:
 				puts("You smite him to the ground.");
-				if (strength - lifeline > 20)
-					puts("But in a flurry of steel he regains his feet!");
+				if (strength - lifeline > 20) {
+					printf("But in a flurry of steel he ");
+					puts("regains his feet!");
+				}
 				break;
 			case 1:
-				puts("The force of your blow sends him to his knees.");
+				printf("The force of your blow sends him to ");
+				puts("his knees.");
 				puts("His arm swings lifeless at his side.");
 				break;
 			case 2:
-				puts("Clutching his blood drenched shirt, he collapses stunned.");
+				printf("Clutching his blood drenched shirt, ");
+				puts("he collapses stunned.");
 				break;
 			}
 			lifeline += 20;
 		} else {
 			switch (rnd(3)) {
 			case 0:
-				puts("His ribs crack under your powerful swing, flooding his lungs with blood.");
+				printf("His ribs crack under your powerful ");
+				puts("swing, flooding his lungs with blood.");
 				break;
 			case 1:
-				puts("You shatter his upheld arm in a spray of blood.  The blade continues deep");
-				puts("into his back, severing the spinal cord.");
+				printf("You shatter his upheld arm in a ");
+				printf("spray of blood.  The blade ");
+				puts("continues deep");
+				printf("into his back, severing the ");
+				puts("spinal cord.");
 				lifeline += 25;
 				break;
 			case 2:
-				puts("With a mighty lunge the steel slides in, and gasping, he falls to the ground.");
+				printf("With a mighty lunge the steel ");
+				printf("slides in, and gasping, he falls ");
+				puts("to the ground.");
 				lifeline += 25;
 				break;
 			}
@@ -168,13 +191,21 @@ fighton:
 
 	case BACK:
 		if (enemy == DARK && lifeline > strength * 0.33) {
-			puts("He throws you back against the rock and pummels your face.");
+			printf("He throws you back against the rock and ");
+			puts("pummels your face.");
 			if (testbit(inven, AMULET) || testbit(wear, AMULET)) {
 				printf("Lifting the amulet from you, ");
-				if (testbit(inven, MEDALION) || testbit(wear, MEDALION)) {
-					puts("his power grows and the walls of\nthe earth tremble.");
-					puts("When he touches the medallion, your chest explodes and the foundations of the\nearth collapse.");
-					puts("The planet is consumed by darkness.");
+				if (testbit(inven, MEDALION) || 
+				    testbit(wear, MEDALION)) {
+					printf("his power grows and the ");
+					printf("walls of\nthe earth ");
+					printf("tremble.\n");
+					printf("When he touches the ");
+					printf("medallion, your chest ");
+					printf("explodes and the foundations ");
+					printf("of the\nearth collapse.\n");
+					printf("The planet is consumed by ");
+					puts("darkness.");
 					die();
 				}
 				if (testbit(inven, AMULET)) {
@@ -193,8 +224,10 @@ fighton:
 				die();
 			}
 		} else {
-			puts("You escape stunned and disoriented from the fight.");
-			puts("A victorious bellow echoes from the battlescene.");
+			printf("You escape stunned and disoriented from ");
+			puts("the fight.");
+			printf("A victorious bellow echoes from the ");
+			puts("battlescene.");
 			if (back && position != back)
 				moveplayer(back, BACK);
 			else if (ahead && position != ahead)
@@ -211,10 +244,13 @@ fighton:
 	case SHOOT:
 		if (testbit(inven, LASER)) {
 			if (strength - lifeline <= 50) {
-				printf("The %s took a direct hit!\n", objsht[enemy]);
+				printf("The %s took a direct hit!\n", 
+				    objsht[enemy]);
 				lifeline += 50;
 			} else {
-				puts("With his bare hand he deflects the laser blast and whips the pistol from you!");
+				printf("With his bare hand he deflects the ");
+				printf("laser blast and whips the pistol ");
+				puts("from you!");
 				clearbit(inven, LASER);
 				setbit(location[position].objects, LASER);
 				carrying -= objwt[LASER];
@@ -238,7 +274,8 @@ fighton:
 	if (lifeline >= strength) {
 		printf("You have killed the %s.\n", objsht[enemy]);
 		if (enemy == ELF || enemy == DARK)
-			puts("A watery black smoke consumes his body and then vanishes with a peal of thunder!");
+			printf("A watery black smoke consumes his body and ");
+			puts("then vanishes with a peal of thunder!");
 		clearbit(location[position].objects, enemy);
 		power += 2;
 		notes[JINXED]++;
@@ -246,8 +283,10 @@ fighton:
 	}
 	puts("He attacks...");
 	/* Some embellishments. */
-	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) - (testbit(wear, MAIL) != 0) - (testbit(wear, HELM) != 0);
-	hurt += (testbit(wear, AMULET) != 0) + (testbit(wear, MEDALION) != 0) + (testbit(wear, TALISMAN) != 0);
+	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) - 
+	    (testbit(wear, MAIL) != 0) - (testbit(wear, HELM) != 0);
+	hurt += (testbit(wear, AMULET) != 0) + 
+	    (testbit(wear, MEDALION) != 0) + (testbit(wear, TALISMAN) != 0);
 	hurt = hurt < 0 ? 0 : hurt;
 	hurt = hurt >= NUMOFINJURIES ? NUMOFINJURIES - 1 : hurt;
 	if (!injuries[hurt]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2004/01/27 20:30:29 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.31 2005/07/01 06:04:54 jmc Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -362,7 +362,7 @@ void news(void);
 void newway(int);
 void open_score_file(void);
 void parse(void);
-void post(char);
+void post(int);
 void printobjs(void);
 int put(void);
 int puton(void);
@@ -376,7 +376,7 @@ int shoot(void);
 int take(unsigned int[]);
 int takeoff(void);
 int throw(const char *);
-const char *truedirec(int, char);
+const char *truedirec(int, int);
 int ucard(const unsigned int *);
 int use(void);
 int visual(void);
