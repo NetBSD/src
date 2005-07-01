@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2005/06/30 13:41:19 perry Exp $
+# $NetBSD: mi,v 1.37 2005/07/01 03:32:49 snj Exp $
 ./etc/mtree/set.games				games-sys-root
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
@@ -194,6 +194,7 @@
 ./usr/share/man/cat6/caesar.0			games-utils-catman	.cat
 ./usr/share/man/cat6/canfield.0			games-games-catman	.cat
 ./usr/share/man/cat6/chess.0			games-obsolete		obsolete
+./usr/share/man/cat6/ching.0			games-games-catman	.cat
 ./usr/share/man/cat6/countmail.0		games-utils-catman	.cat
 ./usr/share/man/cat6/cribbage.0			games-games-catman	.cat
 ./usr/share/man/cat6/dab.0			games-games-catman	.cat
@@ -245,6 +246,7 @@
 ./usr/share/man/man6/caesar.6			games-utils-man		.man
 ./usr/share/man/man6/canfield.6			games-games-man		.man
 ./usr/share/man/man6/chess.6			games-obsolete		obsolete
+./usr/share/man/man6/ching.6			games-games-man		.man
 ./usr/share/man/man6/countmail.6		games-utils-man		.man
 ./usr/share/man/man6/cribbage.6			games-games-man		.man
 ./usr/share/man/man6/dab.6			games-games-man		.man
