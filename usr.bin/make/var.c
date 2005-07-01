@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.95 2005/06/03 07:02:39 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3261,6 +3261,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
     Buffer  	  buf;	    	    /* Buffer for forming things */
     char    	  *val;		    /* Value to substitute for a variable */
     int	    	  length;   	    /* Length of the variable invocation */
+    Boolean	  trailingBslash;   /* variable ends in \ */
     Boolean 	  doFree;   	    /* Set true if val should be freed */
     static Boolean errorReported;   /* Set true if an error has already
 				     * been reported to prevent a plethora
@@ -3268,8 +3269,11 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 
     buf = Buf_Init(MAKE_BSIZE);
     errorReported = FALSE;
+    trailingBslash = FALSE;
 
     while (*str) {
+	if (*str == '\n' && trailingBslash)
+	    Buf_AddByte(buf, ' ');
 	if (var == NULL && (*str == '$') && (str[1] == '$')) {
 	    /*
 	     * A dollar sign may be escaped either with another dollar sign.
@@ -3389,7 +3393,9 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		 * Copy all the characters from the variable value straight
 		 * into the new string.
 		 */
-		Buf_AddBytes(buf, strlen (val), (Byte *)val);
+		length = strlen(val);
+		Buf_AddBytes(buf, length, (Byte *)val);
+		trailingBslash = length > 0 && val[length - 1] == '\\';
 		if (doFree) {
 		    free ((Address)val);
 		}
