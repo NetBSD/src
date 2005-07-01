@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.28 2005/05/12 06:21:01 augustss Exp $
+#	$NetBSD: files.cardbus,v 1.29 2005/07/01 20:11:20 drochner Exp $
 #
 # files.cardbus
 #
@@ -45,6 +45,12 @@ file	dev/cardbus/if_atw_cardbus.c	atw_cardbus
 #
 attach	rtw at cardbus with rtw_cardbus
 file	dev/cardbus/if_rtw_cardbus.c	rtw_cardbus
+
+#
+# Ralink RT2500
+#
+attach	ral at cardbus with ral_cardbus: ralcommon
+file	dev/cardbus/if_ral_cardbus.c	ral_cardbus
 
 #
 # DECchip 21143 and clones.
