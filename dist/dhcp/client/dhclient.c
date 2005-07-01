@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.14 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.15 2005/07/01 01:19:02 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -82,6 +82,7 @@ int no_daemon=0;
 struct string_list *client_env=NULL;
 int client_env_count=0;
 int onetry=0;
+int fixed = 0;
 int quiet=0;
 int nowait=0;
 
@@ -194,6 +195,8 @@ int main (argc, argv, envp)
 				usage ();
                         path_dhclient_script = argv [i];
 			no_dhclient_script = 1;
+		} else if (!strcmp (argv [i], "-o")) {
+			fixed = 1;
 		} else if (!strcmp (argv [i], "-1")) {
 			onetry = 1;
 		} else if (!strcmp (argv [i], "-q")) {
@@ -906,6 +909,10 @@ void bind_lease (client)
 	      (long)(client -> active -> renewal - cur_time));
 	client -> state = S_BOUND;
 	reinitialize_interfaces ();
+	if (fixed) {
+		unlink(_PATH_DHCLIENT_PID);
+		exit(0);
+	}
 	go_daemon ();
 	if (client -> config -> do_forward_update) {
 		client -> dns_update_timeout = 1;

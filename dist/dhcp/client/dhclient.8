@@ -16,7 +16,7 @@
 .\" Support and other services are available for ISC products - see
 .\" http://www.isc.org for more information.
 .\"
-.\" $Id: dhclient.8,v 1.7 2004/12/01 23:22:42 christos Exp $
+.\" $Id: dhclient.8,v 1.8 2005/07/01 01:19:02 mellon Exp $
 .\"
 .TH dhclient 8
 .SH NAME
@@ -35,6 +35,9 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 ]
 [
 .B -1
+]
+[
+.B -o
 ]
 [
 .B -r
@@ -203,6 +206,13 @@ The
 .B -1
 flag cause dhclient to try once to get a lease.  If it fails, dhclient exits
 with exit code two.
+.PP
+The
+.B -o
+flag cause dhclient to assume that it's been given a fixed lease, so once it
+installs the lease, it exits.   This is really only useful on very small
+systems, and only works on a single interface at a time - if you want it to
+support multiple interfaces, run dhclient on each interface in succession.
 .PP
 The DHCP client normally gets its configuration information from
 .B /etc/dhclient.conf,
