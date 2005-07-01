@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.26 2004/10/24 06:58:14 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2004/10/24 06:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -479,12 +479,12 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		frame->tf_r0 = rval[0];

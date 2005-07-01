@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29 2004/09/30 21:32:27 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.30 2005/07/01 18:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2004/09/30 21:32:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30 2005/07/01 18:01:45 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -250,7 +250,7 @@ syscall_fancy(frame)
 	KERNEL_PROC_LOCK(l);
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
 		KERNEL_PROC_UNLOCK(l);
-		goto bad;
+		goto out;
 	}
 
 	rval[0] = 0;
@@ -271,7 +271,7 @@ syscall_fancy(frame)
 		panic("l_holdcnt leak (%d) in syscall %d\n",
 		    l->l_holdcnt, (int)code);
 #endif /* defined(DIAGNOSTIC) */
-
+out:
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];
