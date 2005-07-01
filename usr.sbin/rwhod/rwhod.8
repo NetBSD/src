@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.14 2005/07/01 13:07:21 christos Exp $
+.\"	$NetBSD: rwhod.8,v 1.15 2005/07/01 15:31:18 christos Exp $
 .\"
 .Dd July 1, 2005
 .Dt RWHOD 8
@@ -36,7 +36,7 @@
 .Nd system status server
 .Sh SYNOPSIS
 .Nm
-.Op Fl g Ar time
+.Op Fl i Ar interval
 .Sh DESCRIPTION
 .Nm
 is the server which maintains the database used by the
@@ -47,14 +47,20 @@ programs.  Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
-.Bl -tag -width flag
-.It Fl g Op Ar time 
-Allows for the broadcast time to be reduced from 3 minutes.
-To reduce the broadcast time, the
+The following option is available:
+.Bl -tag -width XXXXXXXXXXX
+.It Fl i Ar interval 
+Allows for the broadcast interval to be changed from the default 3 minutes.
+The
 .Ar time
-operand can be given as 30 (30 seconds) or
-1m (1 minute), for example.
-This allows for more real time information about the host.
+argument is the number of seconds to change the interval to, or if the
+value is suffixed by
+.Dq m
+then it is interpreted as minutes.
+The maximum allowed value for the broadcast interval is 11 minutes
+because higher values will cause
+.Xr ruptime
+to mark the host as being down.
 .Pp
 .El
 .Nm
