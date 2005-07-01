@@ -1,5 +1,5 @@
-/*	$NetBSD: authpf.c,v 1.3 2004/11/14 11:26:48 yamt Exp $	*/
-/*	$OpenBSD: authpf.c,v 1.85 2004/08/08 00:05:09 deraadt Exp $	*/
+/*	$NetBSD: authpf.c,v 1.4 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.89 2005/02/10 04:24:15 joel Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -170,11 +170,11 @@ main(int argc, char *argv[])
 	}
 
 	if ((n = snprintf(rulesetname, sizeof(rulesetname), "%s(%ld)",
-	    luser, (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+	    luser, (long)getpid())) < 0 || (u_int)n >= sizeof(rulesetname)) {
 		syslog(LOG_INFO, "%s(%ld) too large, ruleset name will be %ld",
 		    luser, (long)getpid(), (long)getpid());
 		if ((n = snprintf(rulesetname, sizeof(rulesetname), "%ld",
-		    (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+		    (long)getpid())) < 0 || (u_int)n >= sizeof(rulesetname)) {
 			syslog(LOG_ERR, "pid too large for ruleset name");
 			goto die;
 		}
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 	rewind(pidfp);
 	fprintf(pidfp, "%ld\n%s\n", (long)getpid(), luser);
 	fflush(pidfp);
-	(void) ftruncate(fileno(pidfp), ftell(pidfp));
+	(void) ftruncate(fileno(pidfp), ftello(pidfp));
 
 	if (change_filter(1, luser, ipsrc) == -1) {
 		printf("Unable to modify filters\r\n");
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 	signal(SIGSTOP, need_death);
 	signal(SIGTSTP, need_death);
 	while (1) {
-		printf("\r\nHello %s, ", luser);
+		printf("\r\nHello %s. ", luser);
 		printf("You are authenticated from host \"%s\"\r\n", ipsrc);
 		setproctitle("%s@%s", luser, ipsrc);
 		print_message(PATH_MESSAGE);
@@ -678,7 +678,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		err(1, "fork failed");
 	case 0:
 		execvp(PATH_PFCTL, pargv);
-		err(1, "exec of %s failed", PATH_PFCTL);
+		warn("exec of %s failed", PATH_PFCTL);
+		_exit(1);
 	}
 
 	/* parent */

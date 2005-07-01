@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_table.c,v 1.5 2005/06/02 09:58:55 lukem Exp $	*/
-/*	$OpenBSD: pfctl_table.c,v 1.61 2004/06/12 22:22:44 cedric Exp $ */
+/*	$NetBSD: pfctl_table.c,v 1.6 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: pfctl_table.c,v 1.62 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -582,7 +582,8 @@ print_iface(struct pfi_if *p, int opts)
 	oprintf(flags, PFI_IFLAG_GROUP, "group", &first, 0);
 	oprintf(flags, PFI_IFLAG_CLONABLE, "clonable", &first, 0);
 	oprintf(flags, PFI_IFLAG_DYNAMIC, "dynamic", &first, 0);
-	oprintf(flags, PFI_IFLAG_ATTACHED, "attached", &first, 1);
+	oprintf(flags, PFI_IFLAG_ATTACHED, "attached", &first, 0);
+	oprintf(flags, PFI_IFLAG_SKIP, "skipped", &first, 1);
 	printf("\n");
 
 	if (!(opts & PF_OPT_VERBOSE2))

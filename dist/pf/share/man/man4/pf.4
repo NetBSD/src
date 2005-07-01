@@ -1,5 +1,5 @@
-.\"	$NetBSD: pf.4,v 1.2 2004/11/14 11:26:48 yamt Exp $
-.\"	$OpenBSD: pf.4,v 1.52 2004/08/24 03:13:46 jaredy Exp $
+.\"	$NetBSD: pf.4,v 1.3 2005/07/01 12:43:50 peter Exp $
+.\"	$OpenBSD: pf.4,v 1.54 2004/12/22 17:17:55 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -334,6 +334,7 @@ Get the internal packet filter statistics.
 .Bd -literal
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	lcounters[LCNT_MAX];
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
@@ -1013,6 +1014,19 @@ The filtering process is the same as for
 .Va pfiio_nzero
 will be set by the kernel to the number of interfaces and drivers
 that have been cleared.
+.It Dv DIOCSETIFFLAG Fa "struct pfioc_iface *io"
+Set the user setable flags (described below) of the pf internal interface
+description.
+The filtering process is the same as for
+.Dv DIOCIGETIFACES .
+.Bd -literal
+#define PFI_IFLAG_SKIP		0x0100	/* skip interface */
+#define PFI_IFLAG_SETABLE_MASK	0x0100	/* mask */
+.Ed
+.It Dv DIOCCLRIFFLAG Fa "struct pfioc_iface *io"
+Works as
+.Dv DIOCSETIFFLAG
+above but clears the flags.
 .El
 .Sh FILES
 .Bl -tag -width /dev/pf -compact

@@ -1,3 +1,4 @@
+/*	$NetBSD: pflogd.h,v 1.3 2005/07/01 12:43:50 peter Exp $	*/
 /*	$OpenBSD: pflogd.h,v 1.2 2004/01/15 20:15:14 canacar Exp $ */
 
 /*
