@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.10 2003/08/07 09:36:51 agc Exp $ */
+/* $NetBSD: setup.c,v 1.11 2005/07/01 00:03:36 jmc Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@ static char copyright[] = "@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.10 2003/08/07 09:36:51 agc Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.11 2005/07/01 00:03:36 jmc Exp $";
 #endif
 #endif				/* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.10 2003/08/07 09:36:51 agc Exp $";
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include "hdr.h"		/* SEED lives in there; keep them coordinated. */
+#include "hdr.h"	/* SEED lives in there; keep them coordinated. */
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
@@ -72,9 +72,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.10 2003/08/07 09:36:51 agc Exp $";
 int main(int, char *[]);
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	FILE   *infile;
 	int     c, count, linestart;
@@ -99,8 +97,9 @@ main(argc, argv)
 	linestart = YES;
 
 	while ((c = getc(infile)) != EOF) {
-		if (linestart && c == ' ') {	/* Convert first spaces to tab */
-			printf("0x%02x,", (unsigned int)('\t' ^ random()) & 0xFF);
+		if (linestart && c == ' ') { /* Convert first spaces to tab */
+			printf("0x%02x,", 
+			    (unsigned int)('\t' ^ random()) & 0xFF);
 			while ((c = getc(infile)) == ' ' && c != EOF);
 			/* Drop the non-whitespace character through */
 			linestart = NO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2003/08/07 09:36:50 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.14 2003/08/07 09:36:50 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.15 2005/07/01 00:03:36 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: init.c,v 1.14 2003/08/07 09:36:50 agc Exp $");
 
 int     blklin = TRUE;
 
-int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000, 04000,
-010000, 020000, 040000, 0100000};
+int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000, 
+		      04000, 010000, 020000, 040000, 0100000};
 
 int     datfd;			/* message file descriptor */
 volatile sig_atomic_t delhit;
@@ -125,17 +125,17 @@ int     turns, lmwarn, iwest, knfloc, detail,	/* various flags and
 
 int     demo, limit;
 
+/* everything for 1st time run */
 void
-init()			/* everything for 1st time run */
+init(void)
 {
 	rdata();		/* read data from orig. file */
 	linkdata();
 	poof();
 }
 
-char   *
-decr(a, b, c, d, e)
-	char    a, b, c, d, e;
+char *
+decr(int a, int b, int c, int d, int e)
 {
 	static char buf[6];
 
@@ -149,7 +149,7 @@ decr(a, b, c, d, e)
 }
 
 void
-linkdata()
+linkdata(void)
 {				/* secondary data manipulation */
 	int     i, j;
 
@@ -273,11 +273,9 @@ linkdata()
 	closng = panic = closed = scorng = FALSE;
 }
 
-
-
+/* come here if he hits a del */
 void
-trapdel(n)			/* come here if he hits a del */
-	int     n __attribute__((__unused__));
+trapdel(int n __attribute__((__unused__)))
 {
 	delhit = 1;		/* main checks, treats as QUIT */
 	signal(SIGINT, trapdel);/* catch subsequent DELs */
@@ -285,7 +283,7 @@ trapdel(n)			/* come here if he hits a del */
 
 
 void
-startup()
+startup(void)
 {
 	demo = Start();
 	srand((int) (time((time_t *) NULL)));	/* random seed */
