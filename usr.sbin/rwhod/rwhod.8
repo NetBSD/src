@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.15 2005/07/01 15:31:18 christos Exp $
+.\"	$NetBSD: rwhod.8,v 1.16 2005/07/01 16:18:46 peter Exp $
 .\"
 .Dd July 1, 2005
 .Dt RWHOD 8
@@ -49,7 +49,7 @@ messages on a network.
 .Pp
 The following option is available:
 .Bl -tag -width XXXXXXXXXXX
-.It Fl i Ar interval 
+.It Fl i Ar interval
 Allows for the broadcast interval to be changed from the default 3 minutes.
 The
 .Ar time
@@ -59,7 +59,7 @@ value is suffixed by
 then it is interpreted as minutes.
 The maximum allowed value for the broadcast interval is 11 minutes
 because higher values will cause
-.Xr ruptime
+.Xr ruptime 1
 to mark the host as being down.
 .Pp
 .El
