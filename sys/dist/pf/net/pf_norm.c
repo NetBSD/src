@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_norm.c,v 1.8 2005/06/08 11:50:46 yamt Exp $	*/
-/*	$OpenBSD: pf_norm.c,v 1.96 2004/07/17 00:17:27 frantzen Exp $ */
+/*	$NetBSD: pf_norm.c,v 1.9 2005/07/01 12:37:35 peter Exp $	*/
+/*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -646,11 +646,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 				 * than this mbuf magic.  For my next trick,
 				 * I'll pull a rabbit out of my laptop.
 				 */
-#ifdef __OpenBSD__
 				*m0 = m_copym2(m, 0, h->ip_hl << 2, M_NOWAIT);
-#else
-				*m0 = m_dup(m, 0, h->ip_hl << 2, M_NOWAIT);
-#endif
 				if (*m0 == NULL)
 					goto no_mem;
 				KASSERT((*m0)->m_next == NULL);
@@ -1272,7 +1268,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 		}
 	}
 
-	if (rm == NULL)
+	if (rm == NULL || rm->action == PF_NOSCRUB)
 		return (PF_PASS);
 	else
 		r->packets++;

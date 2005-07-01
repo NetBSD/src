@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_ioctl.c,v 1.16 2005/03/15 18:08:59 peter Exp $	*/
-/*	$OpenBSD: pf_ioctl.c,v 1.130.2.1 2004/12/19 19:01:50 brad Exp $ */
+/*	$NetBSD: pf_ioctl.c,v 1.17 2005/07/01 12:37:35 peter Exp $	*/
+/*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -160,6 +160,9 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 static u_int16_t	 tagname2tag(struct pf_tags *, char *);
 static void		 tag2tagname(struct pf_tags *, u_int16_t, char *);
 static void		 tag_unref(struct pf_tags *, u_int16_t);
+int			 pf_rtlabel_add(struct pf_addr_wrap *);
+void			 pf_rtlabel_remove(struct pf_addr_wrap *);
+void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
@@ -205,24 +208,24 @@ pfattach(int num)
 	pf_default_rule.nr = -1;
 
 	/* initialize default timeouts */
-	timeout[PFTM_TCP_FIRST_PACKET] = 120;		/* First TCP packet */
-	timeout[PFTM_TCP_OPENING] = 30;			/* No response yet */
-	timeout[PFTM_TCP_ESTABLISHED] = 24*60*60;	/* Established */
-	timeout[PFTM_TCP_CLOSING] = 15 * 60;		/* Half closed */
-	timeout[PFTM_TCP_FIN_WAIT] = 45;		/* Got both FINs */
-	timeout[PFTM_TCP_CLOSED] = 90;			/* Got a RST */
-	timeout[PFTM_UDP_FIRST_PACKET] = 60;		/* First UDP packet */
-	timeout[PFTM_UDP_SINGLE] = 30;			/* Unidirectional */
-	timeout[PFTM_UDP_MULTIPLE] = 60;		/* Bidirectional */
-	timeout[PFTM_ICMP_FIRST_PACKET] = 20;		/* First ICMP packet */
-	timeout[PFTM_ICMP_ERROR_REPLY] = 10;		/* Got error response */
-	timeout[PFTM_OTHER_FIRST_PACKET] = 60;		/* First packet */
-	timeout[PFTM_OTHER_SINGLE] = 30;		/* Unidirectional */
-	timeout[PFTM_OTHER_MULTIPLE] = 60;		/* Bidirectional */
-	timeout[PFTM_FRAG] = 30;			/* Fragment expire */
-	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
-	timeout[PFTM_SRC_NODE] = 0;			/* Source tracking */
-	timeout[PFTM_TS_DIFF] = 30;			/* Allowed TS diff */
+	timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
+	timeout[PFTM_TCP_OPENING] = PFTM_TCP_OPENING_VAL;
+	timeout[PFTM_TCP_ESTABLISHED] = PFTM_TCP_ESTABLISHED_VAL;
+	timeout[PFTM_TCP_CLOSING] = PFTM_TCP_CLOSING_VAL;
+	timeout[PFTM_TCP_FIN_WAIT] = PFTM_TCP_FIN_WAIT_VAL;
+	timeout[PFTM_TCP_CLOSED] = PFTM_TCP_CLOSED_VAL;
+	timeout[PFTM_UDP_FIRST_PACKET] = PFTM_UDP_FIRST_PACKET_VAL;
+	timeout[PFTM_UDP_SINGLE] = PFTM_UDP_SINGLE_VAL;
+	timeout[PFTM_UDP_MULTIPLE] = PFTM_UDP_MULTIPLE_VAL;
+	timeout[PFTM_ICMP_FIRST_PACKET] = PFTM_ICMP_FIRST_PACKET_VAL;
+	timeout[PFTM_ICMP_ERROR_REPLY] = PFTM_ICMP_ERROR_REPLY_VAL;
+	timeout[PFTM_OTHER_FIRST_PACKET] = PFTM_OTHER_FIRST_PACKET_VAL;
+	timeout[PFTM_OTHER_SINGLE] = PFTM_OTHER_SINGLE_VAL;
+	timeout[PFTM_OTHER_MULTIPLE] = PFTM_OTHER_MULTIPLE_VAL;
+	timeout[PFTM_FRAG] = PFTM_FRAG_VAL;
+	timeout[PFTM_INTERVAL] = PFTM_INTERVAL_VAL;
+	timeout[PFTM_SRC_NODE] = PFTM_SRC_NODE_VAL;
+	timeout[PFTM_TS_DIFF] = PFTM_TS_DIFF_VAL;
 
 #ifdef __OpenBSD__
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
@@ -384,6 +387,7 @@ pf_get_ruleset_number(u_int8_t action)
 {
 	switch (action) {
 	case PF_SCRUB:
+	case PF_NOSCRUB:
 		return (PF_RULESET_SCRUB);
 		break;
 	case PF_PASS:
@@ -702,6 +706,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 			 */
 			pf_tbladdr_remove(&rule->src.addr);
 			pf_tbladdr_remove(&rule->dst.addr);
+			if (rule->overload_tbl)
+				pfr_detach_table(rule->overload_tbl);
 		}
 		TAILQ_REMOVE(rulequeue, rule, entries);
 		rule->entries.tqe_prev = NULL;
@@ -718,11 +724,15 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		pf_qid_unref(rule->pqid);
 	pf_qid_unref(rule->qid);
 #endif
+	pf_rtlabel_remove(&rule->src.addr);
+	pf_rtlabel_remove(&rule->dst.addr);
 	pfi_dynaddr_remove(&rule->src.addr);
 	pfi_dynaddr_remove(&rule->dst.addr);
 	if (rulequeue == NULL) {
 		pf_tbladdr_remove(&rule->src.addr);
 		pf_tbladdr_remove(&rule->dst.addr);
+		if (rule->overload_tbl)
+			pfr_detach_table(rule->overload_tbl);
 	}
 	pfi_detach_rule(rule->kif);
 	pf_anchor_remove(rule);
@@ -820,9 +830,58 @@ pf_tag2tagname(u_int16_t tagid, char *p)
 }
 
 void
+pf_tag_ref(u_int16_t tag)
+{
+	struct pf_tagname *t;
+
+	TAILQ_FOREACH(t, &pf_tags, entries)
+		if (t->tag == tag)
+			break;
+	if (t != NULL)
+		t->ref++;
+}
+
+void
 pf_tag_unref(u_int16_t tag)
 {
 	return (tag_unref(&pf_tags, tag));
+}
+
+int
+pf_rtlabel_add(struct pf_addr_wrap *a)
+{
+#ifdef __OpenBSD__
+	if (a->type == PF_ADDR_RTLABEL &&
+	    (a->v.rtlabel = rtlabel_name2id(a->v.rtlabelname)) == 0)
+		return (-1);
+#endif
+	return (0);
+}
+
+void
+pf_rtlabel_remove(struct pf_addr_wrap *a)
+{
+#ifdef __OpenBSD__
+	if (a->type == PF_ADDR_RTLABEL)
+		rtlabel_unref(a->v.rtlabel);
+#endif
+}
+
+void
+pf_rtlabel_copyout(struct pf_addr_wrap *a)
+{
+#ifdef __OpenBSD__
+	const char	*name;
+
+	if (a->type == PF_ADDR_RTLABEL && a->v.rtlabel) {
+		if ((name = rtlabel_id2name(a->v.rtlabel)) == NULL)
+			strlcpy(a->v.rtlabelname, "?",
+			    sizeof(a->v.rtlabelname));
+		else
+			strlcpy(a->v.rtlabelname, name,
+			    sizeof(a->v.rtlabelname));
+	}
+#endif
 }
 
 #ifdef ALTQ
@@ -1115,6 +1174,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCCLRSRCNODES:
 		case DIOCIGETIFACES:
 		case DIOCICLRISTATS:
+		case DIOCSETIFFLAG:
+		case DIOCCLRIFFLAG:
 			break;
 		case DIOCRCLRTABLES:
 		case DIOCRADDTABLES:
@@ -1301,6 +1362,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EBUSY;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
+		if (pf_rtlabel_add(&rule->src.addr) ||
+		    pf_rtlabel_add(&rule->dst.addr))
+			error = EBUSY;
 		if (pfi_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pfi_dynaddr_setup(&rule->dst.addr, rule->af))
@@ -1314,6 +1378,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		TAILQ_FOREACH(pa, &pf_pabuf, entries)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
 				error = EINVAL;
+
+		if (rule->overload_tblname[0]) {
+			if ((rule->overload_tbl = pfr_attach_table(ruleset,
+			    rule->overload_tblname)) == NULL)
+				error = EINVAL;
+			else
+				rule->overload_tbl->pfrkt_flags |=
+				    PFR_TFLAG_ACTIVE;
+		}
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
@@ -1397,6 +1470,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pfi_dynaddr_copyout(&pr->rule.dst.addr);
 		pf_tbladdr_copyout(&pr->rule.src.addr);
 		pf_tbladdr_copyout(&pr->rule.dst.addr);
+		pf_rtlabel_copyout(&pr->rule.src.addr);
+		pf_rtlabel_copyout(&pr->rule.dst.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
 			if (rule->skip[i].ptr == NULL)
 				pr->rule.skip[i].nr = -1;
@@ -1508,9 +1583,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if ((newrule->match_tag = pf_tagname2tag(
 				    newrule->match_tagname)) == 0)
 					error = EBUSY;
-
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
+			if (pf_rtlabel_add(&newrule->src.addr) ||
+			    pf_rtlabel_add(&newrule->dst.addr))
+				error = EBUSY;
 			if (pfi_dynaddr_setup(&newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pfi_dynaddr_setup(&newrule->dst.addr, newrule->af))
@@ -1521,6 +1598,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
 				error = EINVAL;
+
+			if (newrule->overload_tblname[0]) {
+				if ((newrule->overload_tbl = pfr_attach_table(
+				    ruleset, newrule->overload_tblname)) ==
+				    NULL)
+					error = EINVAL;
+				else
+					newrule->overload_tbl->pfrkt_flags |=
+					    PFR_TFLAG_ACTIVE;
+			}
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
 			if (((((newrule->action == PF_NAT) ||
@@ -2177,6 +2264,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(pa, &pp->addr, sizeof(struct pf_pooladdr));
 		pfi_dynaddr_copyout(&pp->addr.addr);
 		pf_tbladdr_copyout(&pp->addr.addr);
+		pf_rtlabel_copyout(&pp->addr.addr);
 		break;
 	}
 
@@ -2757,7 +2845,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
-			int	secs = time_second;
+			int	secs = time_second, diff;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;
@@ -2770,6 +2858,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pstore.expire -= secs;
 			else
 				pstore.expire = 0;
+
+			/* adjust the connection rate estimate */
+			diff = secs - n->conn_rate.last;
+			if (diff >= n->conn_rate.seconds)
+				pstore.conn_rate.count = 0;
+			else
+				pstore.conn_rate.count -=
+				    n->conn_rate.count * diff /
+				    n->conn_rate.seconds;
+
 			error = copyout(&pstore, p, sizeof(*p));
 			if (error)
 				goto fail;
@@ -2800,11 +2898,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETHOSTID: {
 		u_int32_t	*hostid = (u_int32_t *)addr;
 
-		if (*hostid == 0) {
-			error = EINVAL;
-			goto fail;
-		}
-		pf_status.hostid = *hostid;
+		if (*hostid == 0)
+			pf_status.hostid = arc4random();
+		else
+			pf_status.hostid = *hostid;
 		break;
 	}
 
@@ -2829,6 +2926,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		error = pfi_clr_istats(io->pfiio_name, &io->pfiio_nzero,
 		    io->pfiio_flags);
+		break;
+	}
+
+	case DIOCSETIFFLAG: {
+		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+
+		error = pfi_set_flags(io->pfiio_name, io->pfiio_flags);
+		break;
+	}
+
+	case DIOCCLRIFFLAG: {
+		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+
+		error = pfi_clear_flags(io->pfiio_name, io->pfiio_flags);
 		break;
 	}
 
