@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.22 2005/06/18 04:03:11 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.23 2005/07/01 15:15:23 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -149,4 +149,11 @@ x11/bin/xdm/config/Makefile			1.9 via patch
 		GiveConsole TakeConsole Xsetup_0 Xsession Xwilling
 	This fixes PR xsrc/30489.
 	[tron, ticket #1986]
+
+libexec/telnetd/ext.h				patch
+libexec/telnetd/state.c				patch
+libexec/telnetd/telnetd.c			patch
+
+	Remove static local variable so its easier to correctly use strlcpy.
+	[lha, ticket #2041]
 
