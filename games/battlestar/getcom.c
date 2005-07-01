@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.12 2004/11/05 21:30:31 dsl Exp $	*/
+/*	$NetBSD: getcom.c,v 1.13 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,17 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.12 2004/11/05 21:30:31 dsl Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.13 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
-char   *
-getcom(buf, size, prompt, error)
-	char   *buf;
-	int     size;
-	const char   *prompt, *error;
+char *
+getcom(char *buf, int size, const char *prompt, const char *error)
 {
 	for (;;) {
 		fputs(prompt, stdout);
@@ -61,7 +58,7 @@ getcom(buf, size, prompt, error)
 		if (error)
 			puts(error);
 	}
-	/* If we didn't get to the end of the line, don't read it in next time. */
+	/* If we didn't get to the end of line, don't read it in next time. */
 	if (buf[strlen(buf) - 1] != '\n') {
 		int i;
 		while ((i = getchar()) != '\n' && i != EOF)
@@ -76,9 +73,7 @@ getcom(buf, size, prompt, error)
  * and leaves it unchanged if flag = 0
  */
 char   *
-getword(buf1, buf2, flag)
-	char   *buf1, *buf2;
-	int     flag;
+getword(char *buf1, char *buf2, int flag)
 {
 	int cnt;
 
@@ -90,10 +85,12 @@ getword(buf1, buf2, flag)
 			*buf2 = 0;
 			return (0);
 		}
-		while (cnt < WORDLEN && *buf1 && !isspace((unsigned char)*buf1) && *buf1 != ',')
+		while (cnt < WORDLEN && *buf1 && 
+		    !isspace((unsigned char)*buf1) && *buf1 != ',')
 			if (flag < 0) {
 				if (isupper((unsigned char)*buf1)) {
-					*buf2++ = tolower((unsigned char)*buf1++);
+					*buf2++ = 
+					    tolower((unsigned char)*buf1++);
 					cnt++;
 				} else {
 					*buf2++ = *buf1++;
@@ -101,7 +98,8 @@ getword(buf1, buf2, flag)
 				}
 			} else if (flag > 0) {
 				if (islower((unsigned char)*buf1)) {
-					*buf2++ = toupper((unsigned char)*buf1++);
+					*buf2++ = 
+					    toupper((unsigned char)*buf1++);
 					cnt++;
 				} else {
 					*buf2++ = *buf1++;

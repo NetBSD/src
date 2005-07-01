@@ -1,4 +1,4 @@
-/*	$NetBSD: command6.c,v 1.2 2003/08/07 09:37:01 agc Exp $	*/
+/*	$NetBSD: command6.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command6.c,v 1.2 2003/08/07 09:37:01 agc Exp $");
+__RCSID("$NetBSD: command6.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: command6.c,v 1.2 2003/08/07 09:37:01 agc Exp $");
 #include "pathnames.h"
 
 int
-launch()
+launch(void)
 {
 	if (testbit(location[position].objects, VIPER) && !notes[CANTLAUNCH]) {
 		if (fuel > 4) {
@@ -51,8 +51,10 @@ launch()
 			notes[LAUNCHED] = 1;
 			ourtime++;
 			fuel -= 4;
-			puts("You climb into the viper and prepare for launch.");
-			puts("With a touch of your thumb the turbo engines ignite, thrusting you back into\nyour seat.");
+			printf("You climb into the viper and prepare for ");
+			puts("launch.");
+			printf("With a touch of your thumb the turbo engines ");
+			printf("ignite, thrusting you back into\nyour seat.\n");
 			return (1);
 		} else
 			puts("Not enough fuel to launch.");
@@ -62,7 +64,7 @@ launch()
 }
 
 int
-land()
+land(void)
 {
 	if (notes[LAUNCHED] && testbit(location[position].objects, LAND) &&
 	    location[position].down) {
@@ -79,7 +81,7 @@ land()
 }
 
 void
-die()
+die(void)
 {				/* endgame */
 	printf("bye.\nYour rating was %s.\n", rate());
 	post(' ');
@@ -87,14 +89,13 @@ die()
 }
 
 void
-diesig(dummy)
-	int     dummy __attribute__((__unused__));
+diesig(int dummy __attribute__((__unused__)))
 {
 	die();
 }
 
 void
-live()
+live(void)
 {
 	puts("\nYou win!");
 	post('!');
@@ -104,7 +105,7 @@ live()
 static FILE *score_fp;
 
 void
-open_score_file()
+open_score_file(void)
 {
 	score_fp = fopen(_PATH_SCORE, "a");
 	if (score_fp == NULL)
@@ -114,21 +115,21 @@ open_score_file()
 }
 
 void
-post(ch)
-	char    ch;
+post(int ch)
 {
 	time_t tv;
 	char   *date;
-	sigset_t sigset, osigset;
+	sigset_t isigset, osigset;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&isigset);
+	sigaddset(&isigset, SIGINT);
+	sigprocmask(SIG_BLOCK, &isigset, &osigset);
 	tv = time(NULL);
 	date = ctime(&tv);
 	date[24] = '\0';
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%s  %8s  %c%20s", date, username, ch, rate());
+		fprintf(score_fp, "%s  %8s  %c%20s", date, username, 
+		    ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
 		else
@@ -140,8 +141,8 @@ post(ch)
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *) 0);
 }
 
-const char   *
-rate()
+const char *
+rate(void)
 {
 	int     score;
 
@@ -179,10 +180,11 @@ rate()
 }
 
 int
-drive()
+drive(void)
 {
 	if (testbit(location[position].objects, CAR)) {
-		puts("You hop in the car and turn the key.  There is a perceptible grating noise,");
+		printf("You hop in the car and turn the key.  There is ");
+		puts("a perceptible grating noise,");
 		puts("and an explosion knocks you unconscious...");
 		clearbit(location[position].objects, CAR);
 		setbit(location[position].objects, CRASH);
@@ -196,13 +198,16 @@ drive()
 }
 
 int
-ride()
+ride(void)
 {
 	if (testbit(location[position].objects, HORSE)) {
-		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
-		puts("forward through bush and fern.  You are thrown and the horse gallops off.");
+		printf("You climb onto the stallion and kick it in the guts.");
+		puts("  The stupid steed launches");
+		printf("forward through bush and fern.  You are thrown and ");
+		puts("the horse gallops off.");
 		clearbit(location[position].objects, HORSE);
-		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere)
+		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || 
+		    !beenthere[position] || location[position].flyhere)
 			continue;
 		setbit(location[position].objects, HORSE);
 		if (location[position].north)
@@ -220,7 +225,7 @@ ride()
 }
 
 void
-light()
+light(void)
 {				/* synonyms = {strike, smoke} *//* for
 				 * matches, cigars */
 	if (testbit(inven, MATCHES) && matchcount) {
@@ -229,7 +234,8 @@ light()
 		matchlight = 1;
 		matchcount--;
 		if (position == 217) {
-			puts("The whole bungalow explodes with an intense blast.");
+			printf("The whole bungalow explodes with an ");
+			puts("intense blast.");
 			die();
 		}
 	} else
@@ -237,7 +243,7 @@ light()
 }
 
 void
-dooropen()
+dooropen(void)
 {				/* synonyms = {open, unlock} */
 	wordnumber++;
 	if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS

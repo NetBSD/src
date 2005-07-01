@@ -1,4 +1,4 @@
-/*	$NetBSD: command5.c,v 1.2 2003/08/07 09:37:00 agc Exp $	*/
+/*	$NetBSD: command5.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command5.c,v 1.2 2003/08/07 09:37:00 agc Exp $");
+__RCSID("$NetBSD: command5.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,17 +53,20 @@ kiss()
 		return;
 	}
 	if (wordtype[wordnumber] == NOUNS) {
-		if (testbit(location[position].objects, wordvalue[wordnumber])) {
+		if (testbit(location[position].objects, 
+		    wordvalue[wordnumber])) {
 			pleasure++;
 			printf("Kissed.\n");
 			switch (wordvalue[wordnumber]) {
 			case NORMGOD:
 				switch (godready++) {
 				case 0:
-					puts("She squirms and avoids your advances.");
+					printf("She squirms and avoids your ");
+					puts("advances.");
 					break;
 				case 1:
-					puts("She is coming around; she didn't fight it as much.");
+					puts("She is coming around; she ");
+					puts("didn't fight it as much.");
 					break;
 				case 2:
 					puts("She's beginning to like it.");
@@ -74,7 +77,9 @@ kiss()
 				}
 				break;
 			case NATIVE:
-				puts("Her lips are warm and her body robust.  She pulls you down to the ground.");
+				printf("Her lips are warm and her body ");
+				printf("robust.  She pulls you down to ");
+				puts("the ground.");
 				break;
 			case TIMER:
 				puts("The old man blushes.");
@@ -92,7 +97,7 @@ kiss()
 }
 
 void
-love()
+love(void)
 {
 	int     n;
 
@@ -107,13 +112,31 @@ love()
 				return;
 			}
 			if (godready >= 2) {
-				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet,");
-				puts("which you may use as you wish.  As for me, I am the last goddess of the\nwaters.  My father was the Island King, and the rule is rightfully mine.'\n\nShe pulls the throne out into a large bed.");
+				printf("She cuddles up to you, and her mouth ");
+				printf("starts to work:\n'That was my ");
+				printf("sister's amulet.  The lovely ");
+				printf("goddess, Purl, was she.  The Empire\n");
+				printf("captured her just after the Darkness ");
+				printf("came.  My other sister, Vert, was ");
+				printf("killed\nby the Dark Lord himself.  ");
+				printf("He took her amulet and warped its ");
+				printf("power.\nYour quest was foretold by ");
+				printf("my father before he died, but to get ");
+				printf("the Dark Lord's\namulet you must use ");
+				printf("cunning and skill.  I will leave you ");
+				puts("my amulet,");
+				printf("which you may use as you wish.  As ");
+				printf("for me, I am the last goddess of ");
+				printf("the\nwaters.  My father was the ");
+				printf("Island King, and the rule is ");
+				printf("rightfully mine.'\n\nShe pulls the ");
+				puts("throne out into a large bed.");
 				power++;
 				pleasure += 15;
 				ego++;
 				if (card(injuries, NUMOFINJURIES)) {
-					puts("Her kisses revive you; your wounds are healed.\n");
+					printf("Her kisses revive you; your ");
+					printf("wounds are healed.\n");
 					for (n = 0; n < NUMOFINJURIES; n++)
 						injuries[n] = 0;
 					WEIGHT = MAXWEIGHT;
@@ -121,7 +144,8 @@ love()
 				}
 				printf("Goddess:\n");
 				if (!loved)
-					setbit(location[position].objects, MEDALION);
+					setbit(location[position].objects, 
+					    MEDALION);
 				loved = 1;
 				ourtime += 10;
 				printf("Loved.\n");
@@ -132,9 +156,11 @@ love()
 				return;
 			}
 		}
-		if (testbit(location[position].objects, wordvalue[wordnumber])) {
+		if (testbit(location[position].objects, 
+		    wordvalue[wordnumber])) {
 			if (wordvalue[wordnumber] == NATIVE) {
-				puts("The girl is easy prey.  She peels off her sarong and indulges you.");
+				printf("The girl is easy prey.  She peels ");
+				puts("off her sarong and indulges you.");
 				power++;
 				pleasure += 5;
 				printf("Girl:\n");
@@ -156,7 +182,7 @@ love()
 }
 
 int
-zzz()
+zzz(void)
 {
 	int     oldtime;
 	int     n;
@@ -178,7 +204,8 @@ zzz()
 				notes[LAUNCHED] = 0;
 		}
 		if (OUTSIDE && rnd(100) < 50) {
-			puts("You are awakened abruptly by the sound of someone nearby.");
+			printf("You are awakened abruptly by the sound ");
+			puts("of someone nearby.");
 			switch (rnd(4)) {
 			case 0:
 				if (ucard(inven)) {
@@ -186,12 +213,16 @@ zzz()
 					while (!testbit(inven, n))
 						n = rnd(NUMOFOBJECTS);
 					clearbit(inven, n);
-					if (n != AMULET && n != MEDALION && n != TALISMAN)
-						setbit(location[position].objects, n);
+					if (n != AMULET && n != MEDALION && 
+					    n != TALISMAN)
+						setbit(
+						    location[position].objects,
+						    n);
 					carrying -= objwt[n];
 					encumber -= objcumber[n];
 				}
-				puts("A fiendish little Elf is stealing your treasures!");
+				printf("A fiendish little Elf is stealing ");
+				puts("your treasures!");
 				fight(ELF, 10);
 				break;
 			case 1:
@@ -210,7 +241,7 @@ zzz()
 }
 
 void
-chime()
+chime(void)
 {
 	if ((ourtime / CYCLE + 1) % 2 && OUTSIDE)
 		switch ((ourtime % CYCLE) / (CYCLE / 7)) {
@@ -265,13 +296,16 @@ chime()
 }
 
 int
-give()
+give(void)
 {
 	int     obj = -1, result = -1, person = 0, firstnumber, last1, last2;
 
 	last1 = last2 = 0;
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
+	while (wordtype[++wordnumber] != OBJECT && 
+	    wordvalue[wordnumber] != AMULET && 
+	    wordvalue[wordnumber] != MEDALION && 
+	    wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
 		continue;
 	if (wordnumber <= wordcount) {
 		obj = wordvalue[wordnumber];
@@ -280,7 +314,8 @@ give()
 		last1 = wordnumber;
 	}
 	wordnumber = firstnumber;
-	while ((wordtype[++wordnumber] != NOUNS || wordvalue[wordnumber] == obj) && wordnumber <= wordcount);
+	while ((wordtype[++wordnumber] != NOUNS || 
+	    wordvalue[wordnumber] == obj) && wordnumber <= wordcount);
 	if (wordtype[wordnumber] == NOUNS) {
 		person = wordvalue[wordnumber];
 		last2 = wordnumber;
@@ -300,7 +335,8 @@ give()
 	 * the same place.  */
 	wordnumber = last1 - 1;
 	if (person && testbit(location[position].objects, person)) {
-		if (person == NORMGOD && godready < 2 && !(obj == RING || obj == BRACELET))
+		if (person == NORMGOD && godready < 2 && 
+		    !(obj == RING || obj == BRACELET))
 			puts("The goddess won't look at you.");
 		else
 			result = drop("Given");
@@ -309,7 +345,8 @@ give()
 		wordnumber = max(last1, last2) + 1;
 		return (0);
 	}
-	if (result != -1 && (testbit(location[position].objects, obj) || obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
+	if (result != -1 && (testbit(location[position].objects, obj) || 
+	    obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
 		clearbit(location[position].objects, obj);
 		ourtime++;
 		ego++;
@@ -320,35 +357,63 @@ give()
 			break;
 		case NORMGOD:
 			if (obj == RING || obj == BRACELET) {
-				puts("She takes the charm and puts it on.  A little kiss on the cheek is");
+				printf("She takes the charm and puts it on.");
+				puts("  A little kiss on the cheek is");
 				puts("your reward.");
 				ego += 5;
 				godready += 3;
 			}
-			if (obj == AMULET || obj == MEDALION || obj == TALISMAN) {
+			if (obj == AMULET || obj == MEDALION || 
+			    obj == TALISMAN) {
 				win++;
 				ego += 5;
 				power -= 5;
 				if (win >= 3) {
-					puts("The powers of the earth are now legitimate.  You have destroyed the Darkness");
-					puts("and restored the goddess to her throne.  The entire island celebrates with");
-					puts("dancing and spring feasts.  As a measure of her gratitude, the goddess weds you");
-					puts("in the late summer and crowns you Prince Liverwort, Lord of Fungus.");
-					puts("\nBut, as the year wears on and autumn comes along, you become restless and");
-					puts("yearn for adventure.  The goddess, too, realizes that the marriage can't last.");
-					puts("She becomes bored and takes several more natives as husbands.  One evening,");
-					puts("after having been out drinking with the girls, she kicks the throne particularly");
-					puts("hard and wakes you up.  (If you want to win this game, you're going to have to\nshoot her!)");
-					clearbit(location[position].objects, MEDALION);
+					printf("The powers of the earth are ");
+					printf("now legitimate.  You have ");
+					puts("destroyed the Darkness");
+					printf("and restored the goddess to ");
+					printf("her throne.  The entire ");
+					puts("island celebrates with");
+					printf("dancing and spring feasts.  ");
+					printf("As a measure of her ");
+					puts("gratitude, the goddess weds you");
+					printf("in the late summer and ");
+					printf("crowns you Prince Liverwort, ");
+					puts("Lord of Fungus.");
+					printf("\nBut, as the year wears on ");
+					printf("and autumn comes along, you ");
+					puts("become restless and");
+					printf("yearn for adventure.  The ");
+					printf("goddess, too, realizes that ");
+					puts("the marriage can't last.");
+					printf("She becomes bored and takes ");
+					printf("several more natives as ");
+					puts("husbands.  One evening,");
+					printf("after having been out ");
+					printf("drinking with the girls, she ");
+					puts("kicks the throne particularly");
+					printf("hard and wakes you up.  (If ");
+					printf("you want to win this game, ");
+					printf("you're going to have to\n");
+					puts("shoot her!)");
+					clearbit(location[position].objects, 
+					    MEDALION);
 					wintime = ourtime;
 				}
 			}
 			break;
 		case TIMER:
 			if (obj == COINS) {
-				puts("He fingers the coins for a moment and then looks up agape.  `Kind you are and");
-				puts("I mean to repay you as best I can.'  Grabbing a pencil and cocktail napkin...\n");
-				printf("+-----------------------------------------------------------------------------+\n");
+				printf("He fingers the coins for a moment ");
+				printf("and then looks up agape.  `Kind you ");
+				puts("are and");
+				printf("I mean to repay you as best I can.'  ");
+				printf("Grabbing a pencil and cocktail ");
+				puts("napkin...\n");
+				printf("+-----------------------------------");
+				printf("------------------------------------");
+				printf("------+\n");
 				printf("|				   xxxxxxxx\\				      |\n");
 				printf("|				       xxxxx\\	CLIFFS			      |\n");
 				printf("|		FOREST			  xxx\\				      |\n");
@@ -364,9 +429,15 @@ give()
 				printf("|				//		...	    N <-- + --- S     |\n");
 				printf("|		PALM GROVE     //		...		  |	      |\n");
 				printf("|			      //		...		  W	      |\n");
-				printf("+-----------------------------------------------------------------------------+\n");
-				puts("\n`This map shows a secret entrance to the catacombs.");
-				puts("You will know when you arrive because I left an old pair of shoes there.'");
+				printf("+");
+				printf("---------------------------------");
+				printf("---------------------------------");
+				printf("-----------+\n");
+				printf("\n`This map shows a secret entrance ");
+				puts("to the catacombs.");
+				printf("You will know when you arrive ");
+				printf("because I left an old pair of shoes ");
+				puts("there.'");
 			}
 			break;
 		}

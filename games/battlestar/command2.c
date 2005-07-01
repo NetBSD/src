@@ -1,4 +1,4 @@
-/*	$NetBSD: command2.c,v 1.2 2003/08/07 09:37:00 agc Exp $	*/
+/*	$NetBSD: command2.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command2.c,v 1.2 2003/08/07 09:37:00 agc Exp $");
+__RCSID("$NetBSD: command2.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 int
-wearit()
+wearit(void)
 {				/* synonyms = {sheathe, sheath} */
 	int     firstnumber, value;
 
@@ -91,10 +91,11 @@ wearit()
 				printf("You are now wearing %s%s.\n",
 				    A_OR_AN_OR_THE(value), objsht[value]);
 			} else
-				if (testbit(wear, value))
-					printf("You are already wearing the %s.\n",
+				if (testbit(wear, value)) {
+					printf("You are already wearing the %s",
 					    objsht[value]);
-				else
+					printf(".\n");
+				} else
 					printf("You aren't holding the %s.\n",
 					    objsht[value]);
 			if (wordnumber < wordcount - 1 &&
@@ -109,7 +110,7 @@ wearit()
 }
 
 int
-put()
+put(void)
 {				/* synonyms = {buckle, strap, tie} */
 	if (wordvalue[wordnumber + 1] == ON) {
 		wordvalue[++wordnumber] = PUTON;
@@ -127,13 +128,13 @@ put()
 }
 
 int
-draw()
+draw(void)
 {				/* synonyms = {pull, carry} */
 	return (take(wear));
 }
 
 int
-use()
+use(void)
 {
 	wordnumber++;
 	if (wordvalue[wordnumber] == AMULET && testbit(inven, AMULET) &&
@@ -144,13 +145,16 @@ use()
 			if (position == 114) {
 				location[position].down = 160;
 				whichway(location[position]);
-				puts("The waves subside and it is possible to descend to the sea cave now.");
+				printf("The waves subside and it is possible ");
+				puts("to descend to the sea cave now.");
 				ourtime++;
 				return (-1);
 			}
 		}
-		puts("A light mist falls over your eyes and the sound of purling water trickles in");
-		puts("your ears.   When the mist lifts you are standing beside a cool stream.");
+		printf("A light mist falls over your eyes and the sound of ");
+		puts("purling water trickles in");
+		printf("your ears.   When the mist lifts you are standing ");
+		puts("beside a cool stream.");
 		if (position == 229)
 			position = 224;
 		else
@@ -172,11 +176,15 @@ use()
 }
 
 void
-murder()
+murder(void)
 {
 	int     n;
 
-	for (n = 0; !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && testbit(inven, n)) && n < NUMOFOBJECTS; n++);
+	for (n = 0; 
+	    !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || 
+	        n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || 
+	        n == HALBERD) && testbit(inven, n)) && n < NUMOFOBJECTS; 
+	    n++);
 	if (n == NUMOFOBJECTS) {
 		if (testbit(inven, LASER)) {
 			printf("Your laser should do the trick.\n");
@@ -211,16 +219,23 @@ murder()
 
 		case NORMGOD:
 			if (testbit(location[position].objects, BATHGOD)) {
-				puts("The goddess's head slices off.  Her corpse floats in the water.");
+				printf("The goddess's head slices off.  Her ");
+				puts("corpse floats in the water.");
 				clearbit(location[position].objects, BATHGOD);
 				setbit(location[position].objects, DEADGOD);
 				power += 5;
 				notes[JINXED]++;
 			} else
-				if (testbit(location[position].objects, NORMGOD)) {
-					puts("The goddess pleads but you strike her mercilessly.  Her broken body lies in a\npool of blood.");
-					clearbit(location[position].objects, NORMGOD);
-					setbit(location[position].objects, DEADGOD);
+				if (testbit(location[position].objects, 
+				    NORMGOD)) {
+					printf("The goddess pleads but you ");
+					printf("strike her mercilessly.  Her ");
+					printf("broken body lies in a\n");
+					puts("pool of blood.");
+					clearbit(location[position].objects, 
+					    NORMGOD);
+					setbit(location[position].objects, 
+					    DEADGOD);
 					power += 5;
 					notes[JINXED]++;
 					if (wintime)
@@ -240,7 +255,8 @@ murder()
 			break;
 		case NATIVE:
 			if (testbit(location[position].objects, NATIVE)) {
-				puts("The girl screams as you cut her body to shreds.  She is dead.");
+				printf("The girl screams as you cut her ");
+				puts("body to shreds.  She is dead.");
 				clearbit(location[position].objects, NATIVE);
 				setbit(location[position].objects, DEADNATIVE);
 				power += 5;
@@ -250,7 +266,8 @@ murder()
 			break;
 		case MAN:
 			if (testbit(location[position].objects, MAN)) {
-				puts("You strike him to the ground, and he coughs up blood.");
+				printf("You strike him to the ground, and ");
+				puts("he coughs up blood.");
 				puts("Your fantasy is over.");
 				die();
 			}
@@ -270,20 +287,26 @@ murder()
 }
 
 void
-ravage()
+ravage(void)
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
 		continue;
-	if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, wordvalue[wordnumber])
-	    || (wordvalue[wordnumber] == NORMGOD && testbit(location[position].objects, BATHGOD)))) {
+	if (wordtype[wordnumber] == NOUNS && 
+	    (testbit(location[position].objects, wordvalue[wordnumber])
+	    || (wordvalue[wordnumber] == NORMGOD && 
+	        testbit(location[position].objects, BATHGOD)))) {
 		ourtime++;
 		switch (wordvalue[wordnumber]) {
 		case NORMGOD:
-			puts("You attack the goddess, and she screams as you beat her.  She falls down");
-			if (testbit(location[position].objects, BATHGOD))
-				puts("crying and tries to cover her nakedness.");
-			else
-				puts("crying and tries to hold her torn and bloodied dress around her.");
+			printf("You attack the goddess, and she screams as ");
+			puts("you beat her.  She falls down");
+			if (testbit(location[position].objects, BATHGOD)) {
+				printf("crying and tries to cover her ");
+				puts("nakedness.");
+			} else {
+				printf("crying and tries to hold her torn ");
+				puts("and bloodied dress around her.");
+			}
 			power += 5;
 			pleasure += 8;
 			ego -= 10;
@@ -293,15 +316,18 @@ ravage()
 			win = -30000;
 			break;
 		case NATIVE:
-			puts("The girl tries to run, but you catch her and throw her down.  Her face is");
-			puts("bleeding, and she screams as you tear off her clothes.");
+			printf("The girl tries to run, but you catch her and ");
+			puts("throw her down.  Her face is");
+			printf("bleeding, and she screams as you tear off ");
+			puts("her clothes.");
 			power += 3;
 			pleasure += 5;
 			ego -= 10;
 			wordnumber--;
 			murder();
 			if (rnd(100) < 50) {
-				puts("Her screams have attracted attention.  I think we are surrounded.");
+				printf("Her screams have attracted ");
+				puts("attention.  I think we are surrounded.");
 				setbit(location[ahead].objects, WOODSMAN);
 				setbit(location[ahead].objects, DEADWOOD);
 				setbit(location[ahead].objects, MALLET);
@@ -324,12 +350,15 @@ ravage()
 }
 
 int
-follow()
+follow(void)
 {
 	if (followfight == ourtime) {
-		puts("The Dark Lord leaps away and runs down secret tunnels and corridors.");
-		puts("You chase him through the darkness and splash in pools of water.");
-		puts("You have cornered him.  His laser sword extends as he steps forward.");
+		printf("The Dark Lord leaps away and runs down secret ");
+		puts("tunnels and corridors.");
+		printf("You chase him through the darkness and splash in ");
+		puts("pools of water.");
+		printf("You have cornered him.  His laser sword extends ");
+		puts("as he steps forward.");
 		position = FINAL;
 		fight(DARK, 75);
 		setbit(location[position].objects, TALISMAN);
@@ -337,7 +366,8 @@ follow()
 		return (0);
 	} else
 		if (followgod == ourtime) {
-			puts("The goddess leads you down a steamy tunnel and into a high, wide chamber.");
+			printf("The goddess leads you down a steamy tunnel ");
+			puts("and into a high, wide chamber.");
 			puts("She sits down on a throne.");
 			position = 268;
 			setbit(location[position].objects, NORMGOD);

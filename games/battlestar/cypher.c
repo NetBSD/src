@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.22 2003/08/07 09:37:01 agc Exp $	*/
+/*	$NetBSD: cypher.c,v 1.23 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.22 2003/08/07 09:37:01 agc Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.23 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 int
-cypher()
+cypher(void)
 {
 	int     n;
 	int     junk;
@@ -52,9 +52,11 @@ cypher()
 
 	while (wordnumber <= wordcount) {
 		if (wordtype[wordnumber] != VERB &&
-		    !(wordtype[wordnumber] == OBJECT && wordvalue[wordnumber] == KNIFE)) {
+		    !(wordtype[wordnumber] == OBJECT && 
+		    wordvalue[wordnumber] == KNIFE)) {
 			printf("%s: How's that?\n",
-			    (wordnumber == wordcount) ? words[0] : words[wordnumber]);
+			    (wordnumber == wordcount) ? words[0] : 
+			    words[wordnumber]);
 			return (-1);
 		}
 
@@ -70,8 +72,10 @@ cypher()
 
 		case UP:
 			if (location[position].access || wiz || tempwiz) {
-				if (!location[position].access)
-					puts("Zap!  A gust of wind lifts you up.");
+				if (!location[position].access) {
+					printf("Zap!  A gust of wind lifts ");
+					puts("you up.");
+				}
 				if (!moveplayer(location[position].up, AHEAD))
 					return (-1);
 			} else {
@@ -112,11 +116,13 @@ cypher()
 			break;
 
 		case SHOOT:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (testbit(location[position].objects,
+					    n) && objsht[n]) {
 						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = shoot();
@@ -130,11 +136,13 @@ cypher()
 			break;
 
 		case TAKE:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (testbit(location[position].objects,
+					    n) && objsht[n]) {
 						things++;
 						wordvalue[wordnumber + 1] = n;
 						/* Some objects (type NOUNS)
@@ -179,7 +187,8 @@ cypher()
 			break;
 
 		case DROP:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -198,7 +207,8 @@ cypher()
 
 		case KICK:
 		case THROW:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things, wv;
 				things = 0;
 				wv = wordvalue[wordnumber];
@@ -211,13 +221,16 @@ cypher()
 					}
 				wordnumber += 2;
 				if (!things)
-					printf("Nothing to %s!\n", wv == KICK ? "kick" : "throw");
+					printf("Nothing to %s!\n", 
+					    wv == KICK ? "kick" : "throw");
 			} else
-				throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
+				throw(wordvalue[wordnumber] == 
+				    KICK ? "Kicked" : "Thrown");
 			break;
 
 		case TAKEOFF:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -234,7 +247,8 @@ cypher()
 			break;
 
 		case DRAW:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -251,11 +265,13 @@ cypher()
 			break;
 
 		case PUTON:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && objsht[n]) {
+					if (testbit(location[position].objects,
+					    n) && objsht[n]) {
 						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = puton();
@@ -268,7 +284,8 @@ cypher()
 			break;
 
 		case WEARIT:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -285,7 +302,8 @@ cypher()
 			break;
 
 		case EAT:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -311,19 +329,23 @@ cypher()
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n))
 						printf("\t%s\n", objsht[n]);
-				if (WEIGHT == 0)
-					printf("\n= %d kilogram%s (can't lift any weight%s)\n",
+				if (WEIGHT == 0) {
+					printf("\n= %d kilogram%s",
 					    carrying,
-					    (carrying == 1 ? "." : "s."),
-					    (carrying ? " or move with what you have" : ""));
-				else
+					    (carrying == 1 ? "." : "s."));
+					printf(" (can't lift any weight%s)\n",
+					    (carrying ? 
+					    " or move with what you have" : 
+					    ""));
+				} else
 					printf("\n= %d kilogram%s (%d%%)\n",
 					    carrying,
 					    (carrying == 1 ? "." : "s."),
 					    carrying * 100 / WEIGHT);
-				if (CUMBER == 0)
-					printf("Your arms can't pick anything up.\n");
-				else
+				if (CUMBER == 0) {
+					printf("Your arms can't pick ");
+					printf("anything up.\n");
+				} else
 					printf("Your arms are %d%% full.\n",
 					    encumber * 100 / CUMBER);
 			} else
@@ -341,7 +363,9 @@ cypher()
 				for (n = 0; n < NUMOFINJURIES; n++)
 					if (injuries[n])
 						printf("\t%s\n", ouch[n]);
-				printf("\nYou can still carry up to %d kilogram%s\n", WEIGHT, (WEIGHT == 1 ? "." : "s."));
+				printf("\nYou can still carry up to ");
+				printf("%d kilogram%s\n", WEIGHT, 
+				    (WEIGHT == 1 ? "." : "s."));
 			} else
 				puts("\nYou are in perfect health.");
 			wordnumber++;
@@ -352,7 +376,8 @@ cypher()
 			break;
 
 		case OPEN:
-			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+			if (wordnumber < wordcount && 
+			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
@@ -430,8 +455,12 @@ cypher()
 		case SCORE:
 			printf("\tPLEASURE\tPOWER\t\tEGO\n");
 			printf("\t%3d\t\t%3d\t\t%3d\n\n", pleasure, power, ego);
-			printf("This gives you the rating of %s in %d turns.\n", rate(), ourtime);
-			printf("You have visited %d out of %d rooms this run (%d%%).\n", card(beenthere, NUMOFROOMS), NUMOFROOMS, card(beenthere, NUMOFROOMS) * 100 / NUMOFROOMS);
+			printf("This gives you the rating of ");
+			printf("%s in %d turns.\n", rate(), ourtime);
+			printf("You have visited %d out of %d rooms ",
+			    card(beenthere, NUMOFROOMS), NUMOFROOMS);
+			printf("this run (%d%%).\n", 
+			    card(beenthere, NUMOFROOMS) * 100 / NUMOFROOMS);
 			break;
 
 		case KNIFE:
