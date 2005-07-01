@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.14 2005/06/20 15:06:18 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.15 2005/07/01 19:50:04 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <sys/hash.h>
 
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.14 2005/06/20 15:06:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.15 2005/07/01 19:50:04 elad Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
@@ -88,7 +88,7 @@ extern int veriexec_verbose;
 extern int veriexec_strict;
 /* this one requires sysctl.h to be included before verified_exec.h */
 #ifdef VERIEXEC_NEED_NODE
-extern struct sysctlnode *veriexec_count_node;
+extern const struct sysctlnode *veriexec_count_node;
 #endif /* VERIEXEC_NEED_NODE */
 
 /*

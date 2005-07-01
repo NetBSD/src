@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.30 2005/06/22 21:50:27 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.30 2005/06/22 21:50:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -60,7 +60,7 @@ int veriexec_strict = 0;
 char *veriexec_fp_names = NULL;
 unsigned int veriexec_name_max = 0;
 
-struct sysctlnode *veriexec_count_node = NULL;
+const struct sysctlnode *veriexec_count_node = NULL;
 
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
