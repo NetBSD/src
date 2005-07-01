@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.37 2004/08/30 07:44:28 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.46 2005/02/20 15:58:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -199,6 +199,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	st->rule.ptr = r;
 	/* XXX get pointers to nat_rule and anchor */
 
+	/* XXX when we have nat_rule/anchors, use STATE_INC_COUNTERS */
 	r->states++;
 
 	/* fill in the rest of the state entry */
@@ -210,7 +211,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
-	st->creation = ntohl(sp->creation) + time_second;
+	st->creation = time_second - ntohl(sp->creation);
 	st->expire = ntohl(sp->expire) + time_second;
 
 	st->af = sp->af;
@@ -222,11 +223,13 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	bcopy(sp->id, &st->id, sizeof(st->id));
 	st->creatorid = sp->creatorid;
-	st->sync_flags = sp->sync_flags | PFSTATE_FROMSYNC;
+	st->sync_flags = PFSTATE_FROMSYNC;
 
 
 	if (pf_insert_state(kif, st)) {
 		pfi_maybe_destroy(kif);
+		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
+		r->states--;
 		pool_put(&pf_state_pl, st);
 		return (EINVAL);
 	}
@@ -305,6 +308,7 @@ pfsync_input(struct mbuf *m, ...)
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
+		struct pf_state *nexts;
 		struct pfi_kif	*kif;
 		u_int32_t creatorid;
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
@@ -317,9 +321,13 @@ pfsync_input(struct mbuf *m, ...)
 
 		s = splsoftnet();
 		if (cp->ifname[0] == '\0') {
-			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
-				if (st->creatorid == creatorid)
+			for (st = RB_MIN(pf_state_tree_id, &tree_id);
+			    st; st = nexts) {
+                		nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
+				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
+					pf_purge_expired_state(st);
+				}
 			}
 		} else {
 			kif = pfi_lookup_if(cp->ifname);
@@ -330,8 +338,10 @@ pfsync_input(struct mbuf *m, ...)
 				splx(s);
 				goto done;
 			}
-			RB_FOREACH(st, pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext) {
+			for (st = RB_MIN(pf_state_tree_lan_ext,
+			    &kif->pfik_lan_ext); st; st = nexts) {
+				nexts = RB_NEXT(pf_state_tree_lan_ext,
+				    &kif->pfik_lan_ext, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
 					pf_purge_expired_state(st);
@@ -385,6 +395,8 @@ pfsync_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
 		    i < count; i++, sp++) {
+			int flags = PFSYNC_FLAG_STALE;
+
 			/* check for invalid values */
 			if (sp->timeout >= PFTM_MAX ||
 			    sp->src.state > PF_TCPS_PROXY_DST ||
@@ -417,12 +429,21 @@ pfsync_input(struct mbuf *m, ...)
 				    (st->src.state < PF_TCPS_PROXY_SRC ||
 				    sp->src.state >= PF_TCPS_PROXY_SRC))
 					sfail = 1;
-				else if (st->dst.state > sp->dst.state)
-					sfail = 2;
 				else if (SEQ_GT(st->src.seqlo,
 				    ntohl(sp->src.seqlo)))
 					sfail = 3;
-				else if (st->dst.state >= TCPS_SYN_SENT &&
+				else if (st->dst.state > sp->dst.state) {
+					/* There might still be useful
+					 * information about the src state here,
+					 * so import that part of the update,
+					 * then "fail" so we send the updated
+					 * state back to the peer who is missing
+					 * our what we know. */
+					pf_state_peer_ntoh(&sp->src, &st->src);
+					/* XXX do anything with timeouts? */
+					sfail = 7;
+					flags = 0;
+				} else if (st->dst.state >= TCPS_SYN_SENT &&
 				    SEQ_GT(st->dst.seqlo, ntohl(sp->dst.seqlo)))
 					sfail = 4;
 			} else {
@@ -437,18 +458,24 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			if (sfail) {
 				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync: ignoring stale update "
+					printf("pfsync: %s stale update "
 					    "(%d) id: %016llx "
-					    "creatorid: %08x\n", sfail,
+					    "creatorid: %08x\n",
+					    (sfail < 7 ?  "ignoring"
+					     : "partial"), sfail,
 					    betoh64(st->id),
 					    ntohl(st->creatorid));
 				pfsyncstats.pfsyncs_badstate++;
 
-				/* we have a better state, send it out */
-				if (sc->sc_mbuf != NULL && !stale)
-					pfsync_sendout(sc);
-				stale++;
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				if (!(sp->sync_flags & PFSTATE_STALE)) {
+					/* we have a better state, send it */
+					if (sc->sc_mbuf != NULL && !stale)
+						pfsync_sendout(sc);
+					stale++;
+					if (!st->sync_flags)
+						pfsync_pack_state(
+						    PFSYNC_ACT_UPD, st, flags);
+				}
 				continue;
 			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
@@ -572,7 +599,9 @@ pfsync_input(struct mbuf *m, ...)
 					update_requested = 0;
 				}
 				stale++;
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				if (!st->sync_flags)
+					pfsync_pack_state(PFSYNC_ACT_UPD, st,
+					    PFSYNC_FLAG_STALE);
 				continue;
 			}
 			pf_state_peer_ntoh(&up->src, &st->src);
@@ -642,7 +671,9 @@ pfsync_input(struct mbuf *m, ...)
 					pfsyncstats.pfsyncs_badstate++;
 					continue;
 				}
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				if (!st->sync_flags)
+					pfsync_pack_state(PFSYNC_ACT_UPD,
+					    st, 0);
 			}
 		}
 		if (sc->sc_mbuf != NULL)
@@ -743,7 +774,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGETPFSYNC:
 		bzero(&pfsyncr, sizeof(pfsyncr));
 		if (sc->sc_sync_ifp)
-			strlcpy(pfsyncr.pfsyncr_syncif,
+			strlcpy(pfsyncr.pfsyncr_syncdev,
 			    sc->sc_sync_ifp->if_xname, IFNAMSIZ);
 		pfsyncr.pfsyncr_syncpeer = sc->sc_sync_peer;
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
@@ -766,7 +797,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EINVAL);
 		sc->sc_maxupdates = pfsyncr.pfsyncr_maxupdates;
 
-		if (pfsyncr.pfsyncr_syncif[0] == 0) {
+		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
 			sc->sc_sync_ifp = NULL;
 			if (sc->sc_mbuf_net != NULL) {
 				/* Don't keep stale pfsync packets around. */
@@ -783,7 +814,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		if ((sifp = ifunit(pfsyncr.pfsyncr_syncif)) == NULL)
+		if ((sifp = ifunit(pfsyncr.pfsyncr_syncdev)) == NULL)
 			return (EINVAL);
 
 		s = splnet();
@@ -806,6 +837,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			struct in_addr addr;
 
 			if (!(sc->sc_sync_ifp->if_flags & IFF_MULTICAST)) {
+				sc->sc_sync_ifp = NULL;
 				splx(s);
 				return (EADDRNOTAVAIL);
 			}
@@ -814,6 +846,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			if ((imo->imo_membership[0] =
 			    in_addmulti(&addr, sc->sc_sync_ifp)) == NULL) {
+				sc->sc_sync_ifp = NULL;
 				splx(s);
 				return (ENOBUFS);
 			}
@@ -936,7 +969,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 }
 
 int
-pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
+pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 {
 	struct ifnet *ifp = &pfsyncif.sc_if;
 	struct pfsync_softc *sc = ifp->if_softc;
@@ -1053,7 +1086,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->allow_opts = st->allow_opts;
 		sp->timeout = st->timeout;
 
-		sp->sync_flags = st->sync_flags & PFSTATE_NOSYNC;
+		if (flags & PFSYNC_FLAG_STALE)
+			sp->sync_flags |= PFSTATE_STALE;
 	}
 
 	pf_state_peer_hton(&st->src, &sp->src);
@@ -1065,7 +1099,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->expire = htonl(st->expire - secs);
 
 	/* do we need to build "compressed" actions for network transfer? */
-	if (sc->sc_sync_ifp && compress) {
+	if (sc->sc_sync_ifp && flags & PFSYNC_FLAG_COMPRESS) {
 		switch (action) {
 		case PFSYNC_ACT_UPD:
 			newaction = PFSYNC_ACT_UPD_C;

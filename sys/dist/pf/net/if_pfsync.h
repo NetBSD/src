@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.16 2004/08/03 05:32:28 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.19 2005/01/20 17:47:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -84,6 +84,9 @@ struct pfsync_state {
 	u_int8_t	 sync_flags;
 	u_int8_t	 updates;
 } __packed;
+
+#define PFSYNC_FLAG_COMPRESS 	0x01
+#define PFSYNC_FLAG_STALE	0x02
 
 struct pfsync_state_upd {
 	u_int32_t		id[2];
@@ -218,13 +221,11 @@ struct pfsyncstats {
  * Configuration structure for SIOCSETPFSYNC SIOCGETPFSYNC
  */
 struct pfsyncreq {
-	char		 pfsyncr_syncif[IFNAMSIZ];
+	char		 pfsyncr_syncdev[IFNAMSIZ];
 	struct in_addr	 pfsyncr_syncpeer;
 	int		 pfsyncr_maxupdates;
 	int		 pfsyncr_authlevel;
 };
-#define SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)
-#define SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
 
 
 #define pf_state_peer_hton(s,d) do {		\
@@ -271,12 +272,14 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 } while (0)
 #define pfsync_update_state(st) do {				\
 	if (!st->sync_flags)					\
-		pfsync_pack_state(PFSYNC_ACT_UPD, (st), 1);	\
+		pfsync_pack_state(PFSYNC_ACT_UPD, (st), 	\
+		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #define pfsync_delete_state(st) do {				\
 	if (!st->sync_flags)					\
-		pfsync_pack_state(PFSYNC_ACT_DEL, (st), 1);	\
+		pfsync_pack_state(PFSYNC_ACT_DEL, (st),		\
+		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #endif
