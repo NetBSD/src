@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.19 2004/11/05 21:30:31 dsl Exp $	*/
+/*	$NetBSD: bog.c,v 1.20 2005/07/01 16:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.19 2004/11/05 21:30:31 dsl Exp $");
+__RCSID("$NetBSD: bog.c,v 1.20 2005/07/01 16:38:24 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,9 +122,7 @@ int reuse;
 int tlimit;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	long seed;
 	int ch, done, i, selfuse, sflag;
@@ -281,8 +279,7 @@ main(argc, argv)
  * Return a pointer to a legal word or a null pointer when EOF is reached
  */
 char *
-batchword(fp)
-	FILE *fp;
+batchword(FILE *fp)
 {
 	int *p, *q;
 	char *w;
@@ -310,7 +307,7 @@ batchword(fp)
  * Keep track of the running stats
  */
 void
-playgame()
+playgame(void)
 {
 	int i, *p, *q;
 	time_t t;
@@ -431,9 +428,7 @@ timesup: ;
  * Return 1 on success, -1 on failure
  */
 int
-checkword(word, prev, path)
-	const char *word;
-	int prev, *path;
+checkword(const char *word, int prev, int *path)
 {
 	const char *p;
 	char *q;
@@ -515,8 +510,7 @@ checkword(word, prev, path)
  * the current board
  */
 int
-validword(word)
-	const char *word;
+validword(const char *word)
 {
 	int j;
 	const char *q, *w;
@@ -550,7 +544,7 @@ validword(word)
  * Assume both the dictionary and the player's words are already sorted
  */
 void
-checkdict()
+checkdict(void)
 {
 	char *p, *w;
 	const char **pw;
@@ -630,8 +624,7 @@ checkdict()
  * in ascending cube order, oth. make a random board
  */
 void
-newgame(b)
-	const char *b;
+newgame(const char *b)
 {
 	int i, p, q;
 	const char *tmp;
@@ -700,14 +693,13 @@ newgame(b)
 }
 
 int
-compar(p, q)
-	const void *p, *q;
+compar(const void *p, const void *q)
 {
 	return (strcmp(*(const char *const *)p, *(const char *const *)q));
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr,
 	    "usage: bog [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: word.c,v 1.7 2003/08/07 09:37:06 agc Exp $	*/
+/*	$NetBSD: word.c,v 1.8 2005/07/01 16:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: word.c,v 1.7 2003/08/07 09:37:06 agc Exp $");
+__RCSID("$NetBSD: word.c,v 1.8 2005/07/01 16:38:24 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,7 @@ extern int wordlen;
  * NULL on end-of-file
  */
 char *
-nextword(fp)
-	FILE *fp;
+nextword(FILE *fp)
 {
 	int ch, pcount;
 	char *p;
@@ -108,10 +107,7 @@ nextword(fp)
  * Reset the state of nextword() and do the fseek()
  */
 long
-dictseek(fp, offset, ptrname)
-	FILE *fp;
-	long offset;
-	int ptrname;
+dictseek(FILE *fp, long offset, int ptrname)
 {
 	if (fp == NULL) {
 		if ((sp = dictspace + offset) >= dictend)
@@ -124,8 +120,7 @@ dictseek(fp, offset, ptrname)
 }
 
 FILE *
-opendict(dict)
-	const char *dict;
+opendict(const char *dict)
 {
 	FILE *fp;
 
@@ -138,8 +133,7 @@ opendict(dict)
  * Load the given dictionary and initialize the pointers
  */
 int
-loaddict(fp)
-	FILE *fp;
+loaddict(FILE *fp)
 {
 	struct stat statb;
 	long n;
@@ -185,8 +179,7 @@ loaddict(fp)
  * is made for lines that are too long
  */
 int
-loadindex(indexfile)
-	const char *indexfile;
+loadindex(const char *indexfile)
 {
 	int i, j;
 	char buf[BUFSIZ];
