@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.724 2005/07/01 11:00:23 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.725 2005/07/01 19:39:13 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.724 2005/07/01 10:59:32 augustss Exp
+ *	NetBSD: pcidevs,v 1.725 2005/07/01 19:37:59 drochner Exp
  */
 
 /*
@@ -8232,6 +8232,10 @@ static const struct pci_product pci_products[] = {
 	    "RT2460 802.11b",
 	},
 	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
+	    "RT2560 802.11b/g",
+	},
+	{
 	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
 	    "REX PCI-31/33 SCSI",
 	},
@@ -10424,4 +10428,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2024;
+const int pci_nproducts = 2025;

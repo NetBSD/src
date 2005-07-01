@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.726 2005/07/01 11:00:23 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.727 2005/07/01 19:39:13 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.724 2005/07/01 10:59:32 augustss Exp
+ *	NetBSD: pcidevs,v 1.725 2005/07/01 19:37:59 drochner Exp
  */
 
 /*
@@ -2458,6 +2458,7 @@
 
 /* Ralink Technologies products */
 #define	PCI_PRODUCT_RALINK_RT2460	0x0101		/* RT2460 802.11b */
+#define	PCI_PRODUCT_RALINK_RT2560	0x0201		/* RT2560 802.11b/g */
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
