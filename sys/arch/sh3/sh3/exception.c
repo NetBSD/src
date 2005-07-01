@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.20 2005/05/31 22:01:24 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.21 2005/07/01 18:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.20 2005/05/31 22:01:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21 2005/07/01 18:01:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -363,11 +363,12 @@ syscall(struct lwp *l, struct trapframe *tf)
 		goto bad;
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
 	error = (*callp->sy_call)(l, args, rval);
+out:
 	switch (error) {
 	case 0:
 		tf->tf_r0 = rval[0];
