@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.24 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: state.c,v 1.24.2.1 2005/07/01 15:15:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.24 2003/08/07 09:46:51 agc Exp $");
+__RCSID("$NetBSD: state.c,v 1.24.2.1 2005/07/01 15:15:02 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1149,7 +1149,7 @@ suboption()
     }  /* end of case TELOPT_TSPEED */
 
     case TELOPT_TTYPE: {		/* Yaaaay! */
-	static char terminalname[41];
+	char *p;
 
 	if (his_state_is_wont(TELOPT_TTYPE))	/* Ignore if option disabled */
 		break;
@@ -1159,9 +1159,9 @@ suboption()
 	    return;		/* ??? XXX but, this is the most robust */
 	}
 
-	terminaltype = terminalname;
+	p = terminaltype;
 
-	while ((terminaltype < (terminalname + sizeof terminalname-1)) &&
+	while ((p < (terminaltype + sizeof terminaltype-1)) &&
 								    !SB_EOF()) {
 	    register int c;
 
@@ -1169,10 +1169,9 @@ suboption()
 	    if (isupper(c)) {
 		c = tolower(c);
 	    }
-	    *terminaltype++ = c;    /* accumulate name */
+	    *p++ = c;    /* accumulate name */
 	}
-	*terminaltype = 0;
-	terminaltype = terminalname;
+	*p = 0;
 	break;
     }  /* end of case TELOPT_TTYPE */
 

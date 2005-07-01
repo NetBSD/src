@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.43 2003/08/07 09:46:52 agc Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.43.2.1 2005/07/01 15:15:02 tron Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.43 2003/08/07 09:46:52 agc Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.43.2.1 2005/07/01 15:15:02 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -620,7 +620,7 @@ getterminaltype(name, l)
 		     */
 		     _gettermname();
 		    if (strncmp(first, terminaltype, sizeof(first)) != 0) {
-			(void) strlcpy(terminaltype, first, sizeof(first));
+			(void) strlcpy(terminaltype, first, sizeof(terminaltype));
 		    }
 		    break;
 		}
@@ -727,7 +727,7 @@ doit(who)
 	 */
 	*user_name = 0;
 	level = getterminaltype(user_name, sizeof(user_name));
-	setenv("TERM", terminaltype ? terminaltype : "network", 1);
+	setenv("TERM", terminaltype[0] ? terminaltype : "network", 1);
 
 	/*
 	 * Start up the login process on the slave side of the terminal
