@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.484 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.485 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -56,3 +56,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	deroff(1): brought back from the dead. [perry 20050629]
 	spell(1): brought back from the dead. [perry 20050629]
 	ching(6):  brought back from the dead. [perry 20050630]
+	pf(4): PF from OpenBSD 3.7 imported [peter 20050701]
