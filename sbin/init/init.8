@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.35 2005/06/30 21:36:34 snj Exp $
+.\"	$NetBSD: init.8,v 1.36 2005/07/01 17:07:33 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -342,13 +342,16 @@ If
 .Pa /dev/console
 does not exist,
 .Nm
-will create a MFS (memory based file system) mounted over /dev.
+will create a MFS (memory based file system) mounted over
+.Pa /dev .
 Then it will create a
 .Pa /dev/console
 device so you can see things happening.
 The
 .Xr MAKEDEV 8
-and MAKEDEV.local scripts are placed in the new
+and
+.Pa MAKEDEV.local
+scripts are placed in the new
 .Pa /dev
 directory.
 Then
@@ -358,7 +361,8 @@ changes the working directory to
 and runs the scripts using the
 .Dq init
 special target.
-This creates the standard devices considered necessary to boot the system.
+This creates the standard devices considered necessary to boot the
+system.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /dev/console
