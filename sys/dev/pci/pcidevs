@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.724 2005/07/01 10:59:32 augustss Exp $
+$NetBSD: pcidevs,v 1.725 2005/07/01 19:37:59 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2451,6 +2451,7 @@ product RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
 
 /* Ralink Technologies products */
 product RALINK	RT2460		0x0101	RT2460 802.11b
+product RALINK	RT2560		0x0201	RT2560 802.11b/g
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
