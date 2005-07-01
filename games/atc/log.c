@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.13 2004/09/07 13:20:39 jrf Exp $	*/
+/*	$NetBSD: log.c,v 1.14 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.13 2004/09/07 13:20:39 jrf Exp $");
+__RCSID("$NetBSD: log.c,v 1.14 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ __RCSID("$NetBSD: log.c,v 1.13 2004/09/07 13:20:39 jrf Exp $");
 static FILE *score_fp;
 
 int
-compar(va, vb)
-	const void *va, *vb;
+compar(const void *va, const void *vb)
 {
 	const SCORE	*a, *b;
 
@@ -79,9 +78,8 @@ compar(va, vb)
 #define MIN(t)		(((t) % SECAHOUR) / SECAMIN)
 #define SEC(t)		((t) % SECAMIN)
 
-const char	*
-timestr(t)
-	int t;
+const char *
+timestr(int t)
 {
 	static char	s[80];
 
@@ -100,7 +98,7 @@ timestr(t)
 }
 
 void
-open_score_file()
+open_score_file(void)
 {
 	mode_t old_mask;
 	int score_fd;
@@ -135,14 +133,13 @@ open_score_file()
 }
 
 int
-log_score(list_em)
-	int list_em;
+log_score(int list_em)
 {
 	int		i, num_scores = 0, good, changed = 0, found = 0;
 	struct passwd	*pw;
 	char		*cp;
 	SCORE		score[100], thisscore;
-	struct utsname	name;
+	struct utsname	lname;
 	long		offset;
 
 	if (score_fp == NULL) {
@@ -179,12 +176,13 @@ log_score(list_em)
 			return (-1);
 		}
 		strcpy(thisscore.name, pw->pw_name);
-		uname(&name);
-		strlcpy(thisscore.host, name.nodename, sizeof(thisscore.host));
+		uname(&lname);
+		strlcpy(thisscore.host, lname.nodename, sizeof(thisscore.host));
 
-		cp = strrchr(file, '/');
+		cp = strrchr(filename, '/');
 		if (cp == NULL) {
-			fprintf(stderr, "log: where's the '/' in %s?\n", file);
+			fprintf(stderr, "log: where's the '/' in %s?\n", 
+			    filename);
 			return (-1);
 		}
 		cp++;
@@ -271,7 +269,8 @@ log_score(list_em)
 	fclose(score_fp);
 	printf("%2s:  %-8s  %-8s  %-18s  %4s  %9s  %4s\n", "#", "name", "host", 
 		"game", "time", "real time", "planes safe");
-	puts("-------------------------------------------------------------------------------");
+	puts("--------------------------------------------------------------");
+	puts("-----------------");
 	for (i = 0; i < num_scores; i++) {
 		cp = strchr(score[i].host, '.');
 		if (cp != NULL)
@@ -286,8 +285,7 @@ log_score(list_em)
 }
 
 void
-log_score_quit(dummy)
-	int dummy __attribute__((__unused__));
+log_score_quit(int dummy __attribute__((__unused__)))
 {
 	(void)log_score(0);
 	exit(0);
