@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.4,v 1.11 2005/06/30 18:45:51 elad Exp $
+.\"	$NetBSD: systrace.4,v 1.12 2005/07/01 17:13:32 wiz Exp $
 .\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -37,7 +37,8 @@
 The
 .Nm
 kernel facility provides a mechanism to manipulate and enforce access
-policies for system calls.  Using the
+policies for system calls.
+Using the
 .Nm
 facility it is possible to monitor and control a process's access to
 the kernel through system calls.
@@ -58,13 +59,13 @@ The
 facility can assign the following policies to system calls for a
 specific process:
 .Bl -tag -offset indent -width "XXXXXX"
-.It SYSTR_POLICY_ASK
+.It Dv SYSTR_POLICY_ASK
 Send a message on
 .Pa /dev/systrace
 requesting the access policy for the system call.
-.It SYSTR_POLICY_PERMIT
+.It Dv SYSTR_POLICY_PERMIT
 Immediately allow the system call.
-.It SYSTR_POLICY_NEVER
+.It Dv SYSTR_POLICY_NEVER
 Immediately deny the system call and return an error code.
 .El
 .Sh SYSTRACE MESSAGES
@@ -125,30 +126,31 @@ struct str_msg_child {
 .Pp
 These messages are all sent to the userland control process.
 .Bl -tag -width SYSTR_MSG_XXXXXXXXXX
-.It SYSTR_MSG_ASK
+.It Dv SYSTR_MSG_ASK
 This message is sent whenever the kernel does not have a cached simple
 policy for system call number
-.Va code
+.Ar code
 within the currently set emulation.
-.It SYSTR_MSG_RES
+.It Dv SYSTR_MSG_RES
 This message is sent whenever a system call is flagged with
-SYSTR_FLAGS_RESULT.
-.It SYSTR_MSG_EMUL
+.Dv SYSTR_FLAGS_RESULT .
+.It Dv SYSTR_MSG_EMUL
 This message is sent whenever a process gains a child.
-.It SYSTR_MSG_UGID
+.It Dv SYSTR_MSG_UGID
 This message is sent whenever the effective UID or GID has changed
 during the execution of a system call.
-.It SYSTR_MSG_POLICYFREE
+.It Dv SYSTR_MSG_POLICYFREE
 This message is sent whenever the kernel frees the policy identified by
 .Va msg_policy .
-.It SYSTR_MSG_EXECVE
+.It Dv SYSTR_MSG_EXECVE
 This message is sent whenever, before a call to
 .Xr execve 2
-a process is privileged (technically, the process has the P_SUGID flag
-set),
+a process is privileged (technically, the process has the
+,Dv P_SUGID
+flag set),
 but after the call these privileges have been dropped.
 The new image name is specified in the
-.Va path
+.Ar path
 argument.
 .El
 .Sh IOCTL INTERFACE
@@ -159,8 +161,8 @@ facility supports the following
 operations:
 .Bl -tag -width "XXXXXX"
 .It Dv STRIOCATTACH Fa "pid_t"
-Attach to the process with the specified process ID.  This operation
-will fail under the following conditions:
+Attach to the process with the specified process ID.
+This operation will fail under the following conditions:
 .Pp
 .Bl -enum -offset indent -compact -width 2n
 .It
@@ -185,7 +187,7 @@ it.
 Notify the
 .Nm
 facility in response to a
-SYSTR_MSG_ASK
+.Dv SYSTR_MSG_ASK
 message what to do with a system call that was assigned a policy of
 .Dv SYSTR_POLICY_ASK .
 .Bd -literal
@@ -208,7 +210,10 @@ struct systrace_answer {
 Valid return values for
 .Em stra_policy
 are
-SYSTR_POLICY_PERMIT, SYSTR_POLICY_ASK and SYSTR_POLICY_NEVER.
+.Dv SYSTR_POLICY_PERMIT ,
+.Dv SYSTR_POLICY_ASK ,
+and
+.Dv SYSTR_POLICY_NEVER .
 .It Dv STRIOCIO Fa "struct systrace_io"
 Copy data in/out of the process being traced.
 .Bd -literal
@@ -329,5 +334,5 @@ and then in
 When creating new policies, if
 .Va strp_maxents
 is not large enough to accomodate any system calls needed for
-fundamental process operations, the traced process will block forever.
-
+fundamental process operations, the traced process will block
+forever.
