@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.30 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.33 2005/02/09 12:09:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -390,8 +390,9 @@ dump_packet_nobuf(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	}
 
 	if (fwrite((char *)h, sizeof(*h), 1, f) != 1) {
-		/* try to undo header to prevent corruption */
 		off_t pos = ftello(f);
+
+		/* try to undo header to prevent corruption */
 		if (pos < sizeof(*h) ||
 		    ftruncate(fileno(f), pos - sizeof(*h))) {
 			logmsg(LOG_ERR, "Write failed, corrupted logfile!");
@@ -553,6 +554,7 @@ main(int argc, char **argv)
 		pidfile(NULL);
 	}
 
+	tzset();
 	(void)umask(S_IRWXG | S_IRWXO);
 
 	/* filter will be used by the privileged process */
@@ -605,7 +607,7 @@ main(int argc, char **argv)
 
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
-		    dump_packet, (u_char *)dpcap);
+		    phandler, (u_char *)dpcap);
 		if (np < 0)
 			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
 

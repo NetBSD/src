@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.41 2005/03/05 23:11:19 cloder Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -146,8 +146,8 @@ char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
 
-char *User = "proxy";
-char *Group;
+const char *User = "proxy";
+const char *Group;
 
 extern int Debug_Level;
 extern int Use_Rdns;
@@ -175,9 +175,9 @@ static void
 usage(void)
 {
 	syslog(LOG_NOTICE,
-	    "usage: %s [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
-	    " [-R address[:port]] [-S address]", __progname);
+	    "usage: %s [-AnrVw] [-a address] [-D debuglevel] [-g group]"
+	    " [-M maxport] [-m minport] [-R address[:port]] [-S address]"
+	    " [-t timeout] [-u user]", __progname);
 	exit(EX_USAGE);
 }
 
@@ -317,7 +317,7 @@ show_xfer_stats(void)
 	char tbuf[1000];
 	double delta;
 	size_t len;
-	int i;
+	int i = -1;
 
 	if (!Verbose)
 		return;
@@ -344,21 +344,21 @@ show_xfer_stats(void)
 			    "data transfer complete (%dh %dm %ds",
 			    idelta / (60*60), (idelta % (60*60)) / 60,
 			    idelta % 60);
-			if (i >= len)
+			if (i == -1 || i >= len)
 				goto logit;
 			len -= i;
 		} else {
 			i = snprintf(tbuf, len,
 			    "data transfer complete (%dm %ds", idelta / 60,
 			    idelta % 60);
-			if (i >= len)
+			if (i == -1 || i >= len)
 				goto logit;
 			len -= i;
 		}
 	} else {
 		i = snprintf(tbuf, len, "data transfer complete (%.1fs",
 		    delta);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
@@ -367,7 +367,7 @@ show_xfer_stats(void)
 		i = snprintf(&tbuf[strlen(tbuf)], len,
 		    ", %d bytes to server) (%.1fKB/s", client_data_bytes,
 		    (client_data_bytes / delta) / (double)1024);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
@@ -375,20 +375,21 @@ show_xfer_stats(void)
 		i = snprintf(&tbuf[strlen(tbuf)], len,
 		    ", %d bytes to client) (%.1fKB/s", server_data_bytes,
 		    (server_data_bytes / delta) / (double)1024);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
 	strlcat(tbuf, ")", sizeof(tbuf));
  logit:
-	syslog(LOG_INFO, "%s", tbuf);
+	if (i != -1)
+		syslog(LOG_INFO, "%s", tbuf);
 }
 
 void
 log_control_command (char *cmd, int client)
 {
 	/* log an ftp control command or reply */
-	char *logstring;
+	const char *logstring;
 	int level = LOG_DEBUG;
 
 	if (!Verbose)
@@ -541,7 +542,7 @@ connect_port_backchannel(void)
 		 * getting one bound to port 20 - This is deliberately
 		 * not RFC compliant.
 		 */
-		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
+		bcopy(&src_addr, &listen_sa.sin_addr, sizeof(struct in_addr));
 		client_data_socket =  get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &listen_sa);
 		if (client_data_socket < 0) {

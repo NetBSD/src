@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.2 2004/08/08 19:04:25 deraadt Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.5 2005/01/03 15:18:10 frantzen Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -464,6 +464,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 
 			if (src_eq && !dst_eq && p1->por_src_tbl == NULL &&
 			    p2->por_dst_tbl == NULL &&
+			    p2->por_src_tbl == NULL &&
 			    rules_combineable(&p1->por_rule, &p2->por_rule) &&
 			    addrs_combineable(&p1->por_rule.dst,
 			    &p2->por_rule.dst)) {
@@ -485,6 +486,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 				}
 			} else if (!src_eq && dst_eq && p1->por_dst_tbl == NULL
 			    && p2->por_src_tbl == NULL &&
+			    p2->por_dst_tbl == NULL &&
 			    rules_combineable(&p1->por_rule, &p2->por_rule) &&
 			    addrs_combineable(&p1->por_rule.src,
 			    &p2->por_rule.src)) {
@@ -1197,8 +1199,10 @@ add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
 	    unmask(&node_host.addr.v.a.mask, af));
 #endif /* OPT_DEBUG */
 
-	if (append_addr_host((*tbl)->pt_buf, &node_host, 0, 0))
+	if (append_addr_host((*tbl)->pt_buf, &node_host, 0, 0)) {
+		warn("failed to add host");
 		return (1);
+	}
 	if (pf->opts & PF_OPT_VERBOSE) {
 		struct node_tinit *ti;
 
@@ -1264,8 +1268,10 @@ again:
 
 
 	if (pfctl_define_table(tbl->pt_name, PFR_TFLAG_CONST, 1, pf->anchor,
-	    tbl->pt_buf, pf->tticket))
+	    tbl->pt_buf, pf->tticket)) {
+		warn("failed to create table %s", tbl->pt_name);
 		return (1);
+	}
 	return (0);
 }
 
@@ -1318,7 +1324,7 @@ addrs_equal(struct pf_rule_addr *a, struct pf_rule_addr *b)
 int
 addrs_combineable(struct pf_rule_addr *a, struct pf_rule_addr *b)
 {
-	if (a->addr.type != PF_ADDR_ADDRMASK &&
+	if (a->addr.type != PF_ADDR_ADDRMASK ||
 	    b->addr.type != PF_ADDR_ADDRMASK)
 		return (0);
 	if (a->neg != b->neg || a->port_op != b->port_op ||
