@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.7 2003/08/07 09:36:53 agc Exp $	*/
+/*	$NetBSD: extern.c,v 1.8 2005/07/01 00:48:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.7 2003/08/07 09:36:53 agc Exp $");
+__RCSID("$NetBSD: extern.c,v 1.8 2005/07/01 00:48:34 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ char		GAMES[] =	"Game_List";
 
 int		clck, safe_planes, start_time, test_mode;
 
-const char	*file;
+const char	*filename;
 
 FILE		*filein, *fileout;
 
