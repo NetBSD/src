@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.14 2005/06/27 20:32:07 rillig Exp $	*/
+/*	$NetBSD: banner.c,v 1.15 2005/07/01 01:13:05 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.14 2005/06/27 20:32:07 rillig Exp $");
+__RCSID("$NetBSD: banner.c,v 1.15 2005/07/01 01:13:05 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1031,12 +1031,8 @@ toolong(void)
 	errx(EXIT_FAILURE, "message too long");
 }
 
-int main(int, char *[]);
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 { 
 	int ch;
 
@@ -1140,8 +1136,11 @@ main(argc, argv)
 				exit(1);
 			}
 			x = data_table[pc];
-			if (trace)
-				printf("pc=%d, term=%d, max=%d, linen=%d, x=%d\n",pc,term,max,linen,x);
+			if (trace) {
+				printf("pc=%d, term=%d, max=%d, linen=%d, x=%d",
+				    pc,term,max,linen,x);
+				printf("\n");
+			}
 			if (x >= 128) {
 				if (x>192) term++;
 				x = x & 63;
