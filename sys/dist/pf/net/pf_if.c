@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_if.c,v 1.8 2004/12/04 14:26:01 peter Exp $	*/
-/*	$OpenBSD: pf_if.c,v 1.20 2004/08/15 15:31:46 henning Exp $ */
+/*	$NetBSD: pf_if.c,v 1.9 2005/07/01 12:37:35 peter Exp $	*/
+/*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -386,11 +386,14 @@ void
 pfi_dynaddr_update(void *p)
 {
 	struct pfi_dynaddr	*dyn = (struct pfi_dynaddr *)p;
-	struct pfi_kif		*kif = dyn->pfid_kif;
-	struct pfr_ktable	*kt = dyn->pfid_kt;
+	struct pfi_kif		*kif;
+	struct pfr_ktable	*kt;
 
-	if (dyn == NULL || kif == NULL || kt == NULL)
+	if (dyn == NULL || dyn->pfid_kif == NULL || dyn->pfid_kt == NULL)
 		panic("pfi_dynaddr_update");
+
+	kif = dyn->pfid_kif;
+	kt = dyn->pfid_kt;
 	if (kt->pfrkt_larg != pfi_update) {
 		/* this table needs to be brought up-to-date */
 		pfi_table_update(kt, kif, dyn->pfid_net, dyn->pfid_iflags);
@@ -723,8 +726,8 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 	int		 n = 0, s;
 	long		 tzero = time_second;
 
-	s = splsoftnet();
 	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);
+	s = splsoftnet();
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		if (pfi_skip_if(name, p, flags))
 			continue;
@@ -736,6 +739,44 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 	splx(s);
 	if (nzero != NULL)
 		*nzero = n;
+	return (0);
+}
+
+int
+pfi_set_flags(const char *name, int flags)
+{
+	struct pfi_kif	*p;
+	int		 s;
+
+	if (flags & ~PFI_IFLAG_SETABLE_MASK)
+		return (EINVAL);
+
+	s = splsoftnet();
+	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+			continue;
+		p->pfik_flags |= flags;
+	}
+	splx(s);
+	return (0);
+}
+
+int
+pfi_clear_flags(const char *name, int flags)
+{
+	struct pfi_kif	*p;
+	int		 s;
+
+	if (flags & ~PFI_IFLAG_SETABLE_MASK)
+		return (EINVAL);
+
+	s = splsoftnet();
+	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+			continue;
+		p->pfik_flags &= ~flags;
+	}
+	splx(s);
 	return (0);
 }
 

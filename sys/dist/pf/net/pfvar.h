@@ -1,5 +1,5 @@
-/*	$NetBSD: pfvar.h,v 1.8 2004/12/04 14:21:23 peter Exp $	*/
-/*	$OpenBSD: pfvar.h,v 1.202 2004/07/12 00:50:22 itojun Exp $ */
+/*	$NetBSD: pfvar.h,v 1.9 2005/07/01 12:37:35 peter Exp $	*/
+/*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,6 +41,7 @@
 
 #include <net/radix.h>
 #ifdef __OpenBSD__
+#include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #endif
 #include <netinet/tcp_fsm.h>
@@ -60,7 +61,7 @@ struct ip;
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
-enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
+enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
 enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
 	  PF_RULESET_BINAT, PF_RULESET_RDR, PF_RULESET_MAX };
@@ -82,13 +83,34 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
 	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_SRC_NODE,
 	  PFTM_TS_DIFF, PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
+
+/* PFTM default values */
+#define PFTM_TCP_FIRST_PACKET_VAL	120	/* First TCP packet */
+#define PFTM_TCP_OPENING_VAL		30	/* No response yet */
+#define PFTM_TCP_ESTABLISHED_VAL	24*60*60/* Established */
+#define PFTM_TCP_CLOSING_VAL		15 * 60	/* Half closed */
+#define PFTM_TCP_FIN_WAIT_VAL		45	/* Got both FINs */
+#define PFTM_TCP_CLOSED_VAL		90	/* Got a RST */
+#define PFTM_UDP_FIRST_PACKET_VAL	60	/* First UDP packet */
+#define PFTM_UDP_SINGLE_VAL		30	/* Unidirectional */
+#define PFTM_UDP_MULTIPLE_VAL		60	/* Bidirectional */
+#define PFTM_ICMP_FIRST_PACKET_VAL	20	/* First ICMP packet */
+#define PFTM_ICMP_ERROR_REPLY_VAL	10	/* Got error response */
+#define PFTM_OTHER_FIRST_PACKET_VAL	60	/* First packet */
+#define PFTM_OTHER_SINGLE_VAL		30	/* Unidirectional */
+#define PFTM_OTHER_MULTIPLE_VAL		60	/* Bidirectional */
+#define PFTM_FRAG_VAL			30	/* Fragment expire */
+#define PFTM_INTERVAL_VAL		10	/* Expire interval */
+#define PFTM_SRC_NODE_VAL		0	/* Source tracking */
+#define PFTM_TS_DIFF_VAL		30	/* Allowed TS diff */
+
 enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
-	  PF_ADDR_TABLE };
+	  PF_ADDR_TABLE, PF_ADDR_RTLABEL };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
@@ -117,6 +139,10 @@ struct pf_addr {
 #define PFI_AFLAG_MODEMASK	0x07
 #define PFI_AFLAG_NOALIAS	0x08
 
+#ifndef RTLABEL_LEN
+#define RTLABEL_LEN	32
+#endif
+
 struct pf_addr_wrap {
 	union {
 		struct {
@@ -125,6 +151,8 @@ struct pf_addr_wrap {
 		}			 a;
 		char			 ifname[IFNAMSIZ];
 		char			 tblname[PF_TABLE_NAME_SIZE];
+		char			 rtlabelname[RTLABEL_LEN];
+		u_int32_t		 rtlabel;
 	}			 v;
 	union {
 		struct pfi_dynaddr	*dyn;
@@ -299,6 +327,8 @@ struct pfi_dynaddr {
 	(							\
 		(((aw)->type == PF_ADDR_NOROUTE &&		\
 		    pf_routable((x), (af))) ||			\
+		((aw)->type == PF_ADDR_RTLABEL &&		\
+		    !pf_rtlabel_match((x), (af), (aw))) ||	\
 		((aw)->type == PF_ADDR_TABLE &&			\
 		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||	\
 		((aw)->type == PF_ADDR_DYNIFTL &&		\
@@ -490,6 +520,8 @@ struct pf_rule {
 	char			 tagname[PF_TAG_NAME_SIZE];
 	char			 match_tagname[PF_TAG_NAME_SIZE];
 
+	char			 overload_tblname[PF_TABLE_NAME_SIZE];
+
 	TAILQ_ENTRY(pf_rule)	 entries;
 	struct pf_pool		 rpool;
 
@@ -499,6 +531,7 @@ struct pf_rule {
 
 	struct pfi_kif		*kif;
 	struct pf_anchor	*anchor;
+	struct pfr_ktable	*overload_tbl;
 
 	pf_osfp_t		 os_fingerprint;
 
@@ -508,6 +541,11 @@ struct pf_rule {
 	u_int32_t		 src_nodes;
 	u_int32_t		 max_src_nodes;
 	u_int32_t		 max_src_states;
+	u_int32_t		 max_src_conn;
+	struct {
+		u_int32_t		limit;
+		u_int32_t		seconds;
+	}			 max_src_conn_rate;
 	u_int32_t		 qid;
 	u_int32_t		 pqid;
 	u_int32_t		 rt_listid;
@@ -549,6 +587,10 @@ struct pf_rule {
 	u_int8_t		 tos;
 	u_int8_t		 anchor_relative;
 	u_int8_t		 anchor_wildcard;
+
+#define PF_FLUSH		0x01
+#define PF_FLUSH_GLOBAL		0x02
+	u_int8_t		 flush;
 };
 
 /* rule flags */
@@ -574,6 +616,16 @@ struct pf_rule {
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
+
+struct pf_threshold {
+	u_int32_t	limit;
+#define	PF_THRESHOLD_MULT	1000
+#define PF_THRESHOLD_MAX	0xffffffff / PF_THRESHOLD_MULT
+	u_int32_t	seconds;
+	u_int32_t	count;
+	u_int32_t	last;
+};
+
 struct pf_src_node {
 	RB_ENTRY(pf_src_node) entry;
 	struct pf_addr	 addr;
@@ -583,6 +635,8 @@ struct pf_src_node {
 	u_int32_t	 bytes;
 	u_int32_t	 packets;
 	u_int32_t	 states;
+	u_int32_t	 conn;
+	struct pf_threshold	conn_rate;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	sa_family_t	 af;
@@ -656,6 +710,7 @@ struct pf_state {
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
 	u_int32_t	 creatorid;
+	u_int16_t	 tag;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
@@ -665,6 +720,7 @@ struct pf_state {
 	u_int8_t	 sync_flags;
 #define	PFSTATE_NOSYNC	 0x01
 #define	PFSTATE_FROMSYNC 0x02
+#define	PFSTATE_STALE	 0x04
 	u_int8_t	 pad;
 };
 
@@ -776,6 +832,7 @@ struct pfr_kentry {
 	u_int8_t		 pfrke_net;
 	u_int8_t		 pfrke_not;
 	u_int8_t		 pfrke_mark;
+	u_int8_t		 pfrke_intrpool;
 };
 
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
@@ -861,6 +918,8 @@ struct pfi_kif {
 #define PFI_IFLAG_CLONABLE	0x0010	/* clonable group */
 #define PFI_IFLAG_DYNAMIC	0x0020	/* dynamic group */
 #define PFI_IFLAG_ATTACHED	0x0040	/* interface attached */
+#define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
+#define PFI_IFLAG_SETABLE_MASK	0x0100	/* setable via DIOC{SET,CLR}IFFLAG */
 
 struct pf_pdesc {
 	u_int64_t	 tot_len;	/* Make Mickey money */
@@ -903,7 +962,15 @@ struct pf_pdesc {
 #define PFRES_NORM	4		/* Dropping by normalizer */
 #define PFRES_MEMORY	5		/* Dropped due to lacking mem */
 #define PFRES_TS	6		/* Bad TCP Timestamp (RFC1323) */
-#define PFRES_MAX	7		/* total+1 */
+#define PFRES_CONGEST	7		/* Congestion (of ipintrq) */
+#define PFRES_IPOPTIONS 8		/* IP option */
+#define PFRES_PROTCKSUM 9		/* Protocol checksum invalid */
+#define PFRES_BADSTATE	10		/* State mismatch */
+#define PFRES_STATEINS	11		/* State insertion failure */
+#define PFRES_MAXSTATES	12		/* State limit */
+#define PFRES_SRCLIMIT	13		/* Source node/conn limit */
+#define PFRES_SYNPROXY	14		/* SYN proxy */
+#define PFRES_MAX	15		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
@@ -913,6 +980,35 @@ struct pf_pdesc {
 	"normalize", \
 	"memory", \
 	"bad-timestamp", \
+	"congestion", \
+	"ip-option", \
+	"proto-cksum", \
+	"state-mismatch", \
+	"state-insert", \
+	"state-limit", \
+	"src-limit", \
+	"synproxy", \
+	NULL \
+}
+
+/* Counters for other things we want to keep track of */
+#define LCNT_STATES		0	/* states */
+#define LCNT_SRCSTATES		1	/* max-src-states */
+#define LCNT_SRCNODES		2	/* max-src-nodes */
+#define LCNT_SRCCONN		3	/* max-src-conn */
+#define LCNT_SRCCONNRATE	4	/* max-src-conn-rate */
+#define LCNT_OVERLOAD_TABLE	5	/* entry added to overload table */
+#define LCNT_OVERLOAD_FLUSH	6	/* state entries flushed */
+#define LCNT_MAX		7	/* total+1 */
+
+#define LCNT_NAMES { \
+	"max states per rule", \
+	"max-src-states", \
+	"max-src-nodes", \
+	"max-src-conn", \
+	"max-src-conn-rate", \
+	"overload table insertion", \
+	"overload flush states", \
 	NULL \
 }
 
@@ -970,6 +1066,7 @@ struct pf_pdesc {
 
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	lcounters[LCNT_MAX];	/* limit counters */
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
@@ -1296,6 +1393,8 @@ struct pfioc_iface {
 #define DIOCSETHOSTID	_IOWR('D', 86, u_int32_t)
 #define DIOCIGETIFACES	_IOWR('D', 87, struct pfioc_iface)
 #define DIOCICLRISTATS  _IOWR('D', 88, struct pfioc_iface)
+#define DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
+#define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1406,6 +1505,7 @@ u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
+int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
 void	pfr_initialize(void);
 #ifdef _LKM
 void	pfr_destroy(void);
@@ -1427,6 +1527,7 @@ int	pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);
+int	pfr_insert_kentry(struct pfr_ktable *, struct pfr_addr *, long);
 int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
@@ -1465,6 +1566,8 @@ void		 pfi_dynaddr_remove(struct pf_addr_wrap *);
 void		 pfi_fill_oldstatus(struct pf_status *);
 int		 pfi_clr_istats(const char *, int *, int);
 int		 pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
+int		 pfi_set_flags(const char *, int);
+int		 pfi_clear_flags(const char *, int);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 
@@ -1472,6 +1575,7 @@ extern struct pfi_statehead	pfi_statehead;
 
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);
+void		pf_tag_ref(u_int16_t);
 void		pf_tag_unref(u_int16_t);
 int		pf_tag_packet(struct mbuf *, struct pf_tag *, int);
 u_int32_t	pf_qname2qid(char *);
