@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.61 2005/06/13 16:41:44 cube Exp $
+#	$NetBSD: files.usb,v 1.62 2005/07/01 20:11:20 drochner Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -248,3 +248,7 @@ file	dev/usb/usscanner.c		usscanner
 device	atu: ether, ifnet, arp, wlan
 attach	atu at uhub
 file	dev/usb/if_atu.c		atu
+
+# Ralink Technology RT2500USB
+attach	ral at uhub with ural
+file	dev/usb/if_ural.c		ural
