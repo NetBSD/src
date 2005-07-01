@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.485 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.486 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -48,7 +48,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	wtf(6): Now searches all acronyms databases (the -t switch is
 		done), whatis(1) and then pkg_info(1). [hubertf 20050622]
 	i386: Add cd9660 file system support to the BIOS bootloader.
-	      [junyoung 20050622]
+		[junyoung 20050622]
 	tlp(4): added support for ASIX AX88140A and AX88141.
 		[rpaulo 20050624]
 	pss(4): Remove the pss(4) driver.  It has never been workable.
