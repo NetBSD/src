@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.8 2003/08/07 09:36:51 agc Exp $	*/
+/*	$NetBSD: save.c,v 1.9 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.8 2003/08/07 09:36:51 agc Exp $");
+__RCSID("$NetBSD: save.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -120,11 +120,10 @@ struct savestruct save_array[] =
 	{NULL, 0}
 };
 
+/* Two passes on data: first to get checksum, second */
+/* to output the data using checksum to start random #s */
 int
-save(outfile)			/* Two passes on data: first to get checksum,
-				 * second */
-	const char   *outfile;	/* to output the data using checksum to start
-				 * random #s */
+save(const char *outfile)
 {
 	FILE   *out;
 	struct savestruct *p;
@@ -157,8 +156,7 @@ save(outfile)			/* Two passes on data: first to get checksum,
 }
 
 int
-restore(infile)
-	const char   *infile;
+restore(const char *infile)
 {
 	FILE   *in;
 	struct savestruct *p;

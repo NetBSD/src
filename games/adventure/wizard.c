@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.11 2003/08/07 09:36:51 agc Exp $	*/
+/*	$NetBSD: wizard.c,v 1.12 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.11 2003/08/07 09:36:51 agc Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.12 2005/07/01 00:03:36 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: wizard.c,v 1.11 2003/08/07 09:36:51 agc Exp $");
 #include "extern.h"
 
 void
-datime(d, t)
-	int    *d, *t;
+datime(int *d, int *t)
 {
 	time_t  tvec;
 	struct tm *tptr;
@@ -75,14 +74,14 @@ datime(d, t)
 char    magic[6];
 
 void
-poof()
+poof(void)
 {
 	strcpy(magic, DECR('d', 'w', 'a', 'r', 'f'));
 	latncy = 45;
 }
 
 int
-Start()
+Start(void)
 {
 	int     d, t, delay;
 
@@ -109,9 +108,10 @@ Start()
 	return (FALSE);
 }
 
+/* not as complex as advent/10 (for now)        */
 int
-wizard()
-{				/* not as complex as advent/10 (for now)        */
+wizard(void)
+{	
 	char   *word, *x;
 	if (!yesm(16, 0, 7))
 		return (FALSE);
@@ -126,7 +126,7 @@ wizard()
 }
 
 void
-ciao()
+ciao(void)
 {
 	char   *c;
 	char    fname[80];
@@ -144,14 +144,14 @@ ciao()
 	if (save(fname) != 0)
 		return;		/* Save failed */
 	printf("To resume, say \"adventure %s\".\n", fname);
-	printf("\"With these rooms I might now have been familiarly acquainted.\"\n");
+	printf("\"With these rooms I might now have been familiarly ");
+	printf("acquainted.\"\n");
 	exit(0);
 }
 
 
 int
-ran(range)
-	int     range;
+ran(int range)
 {
 	long    i;
 
