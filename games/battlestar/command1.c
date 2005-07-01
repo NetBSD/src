@@ -1,4 +1,4 @@
-/*	$NetBSD: command1.c,v 1.2 2003/08/07 09:37:00 agc Exp $	*/
+/*	$NetBSD: command1.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command1.c,v 1.2 2003/08/07 09:37:00 agc Exp $");
+__RCSID("$NetBSD: command1.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 int
-moveplayer(thataway, token)
-	int     thataway, token;
+moveplayer(int thataway, int token)
 {
 	wordnumber++;
 	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) ||
@@ -59,19 +58,21 @@ moveplayer(thataway, token)
 			return (0);
 		}
 	} else {
-		if (notes[CANTMOVE] && !notes[LAUNCHED])
-			puts("You aren't able to move; you better drop something.");
-		else
-			puts("You are out of fuel; now you will rot in space forever!");
+		if (notes[CANTMOVE] && !notes[LAUNCHED]) {
+			printf("You aren't able to move; you better drop ");
+			puts("something.");
+		} else {
+			printf("You are out of fuel; ");
+			puts("now you will rot in space forever!");
+		}
 	}
 	return (1);
 }
 
+/* Converts day to night and vice versa. 	    */
 void
-convert(tothis)			/* Converts day to night and vice versa. 	    */
-	int     tothis;		/* Day objects are permanent.  Night objects
-				 * are added */
-{				/* at dusk, and subtracted at dawn.		 */
+convert(int tothis)
+{
 	const struct objs *p;
 	unsigned int     i, j;
 
@@ -99,8 +100,10 @@ news()
 	int     hurt;
 
 	if (ourtime > 30 && position < 32) {
-		puts("An explosion of shuddering magnitude splinters bulkheads and");
-		puts("ruptures the battlestar's hull.  You are sucked out into the");
+		printf("An explosion of shuddering magnitude splinters ");
+		puts("bulkheads and");
+		printf("ruptures the battlestar's hull.  You are sucked out ");
+		puts("into the");
 		puts("frozen void of space and killed.");
 		die();
 	}
@@ -116,26 +119,34 @@ news()
 		if (location == nightfile) {
 			convert(TODAY);
 			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
-				puts("Dew lit sunbeams stretch out from a watery sunrise and herald the dawn.");
-				puts("You awake from a misty dream-world into stark reality.");
+				printf("Dew lit sunbeams stretch out from a ");
+				puts("watery sunrise and herald the dawn.");
+				printf("You awake from a misty dream-world ");
+				puts("into stark reality.");
 				puts("It is day.");
 			}
 		} else {
 			convert(TONIGHT);
 			clearbit(location[POOLS].objects, BATHGOD);
 			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
-				puts("The dying sun sinks into the ocean, leaving a blood-stained sunset.");
-				puts("The sky slowly fades from orange to violet to black.  A few stars");
+				printf("The dying sun sinks into the ocean, ");
+				puts("leaving a blood-stained sunset.");
+				printf("The sky slowly fades from orange to ");
+				puts("violet to black.  A few stars");
 				puts("flicker on, and it is night.");
-				puts("The world seems completely different at night.");
+				printf("The world seems completely different ");
+				puts("at night.");
 			}
 		}
 		rythmn = ourtime - ourtime % CYCLE;
 	}
 	if (!wiz && !tempwiz)
-		if ((testbit(inven, TALISMAN) || testbit(wear, TALISMAN)) && (testbit(inven, MEDALION) || testbit(wear, MEDALION)) && (testbit(inven, AMULET) || testbit(wear, AMULET))) {
+		if ((testbit(inven, TALISMAN) || testbit(wear, TALISMAN)) && 
+		    (testbit(inven, MEDALION) || testbit(wear, MEDALION)) && 
+		    (testbit(inven, AMULET) || testbit(wear, AMULET))) {
 			tempwiz = 1;
-			puts("The three amulets glow and reenforce each other in power.\nYou are now a wizard.");
+			printf("The three amulets glow and reenforce each ");
+			puts("other in power.\nYou are now a wizard.");
 		}
 	if (testbit(location[position].objects, ELF)) {
 		printf("%s\n", objdes[ELF]);
@@ -184,16 +195,19 @@ news()
 	}
 	if (testbit(location[position].objects, CYLON)) {
 		puts("Oh my God, you're being shot at by an alien spacecraft!");
-		printf("The targeting computer says we have %d seconds to attack!\n",
+		printf("The targeting computer says we have %d seconds ",
 		    ourclock);
+		printf("to attack!\n");
 		fflush(stdout);
 		sleep(1);
 		if (!visual()) {
 			hurt = rnd(NUMOFINJURIES);
 			injuries[hurt] = 1;
-			puts("Laser blasts sear the cockpit, and the alien veers off in a victory roll.");
+			printf("Laser blasts sear the cockpit, and the alien ");
+			puts("veers off in a victory roll.");
 			puts("The viper shudders under a terrible explosion.");
-			printf("I'm afraid you have suffered %s.\n", ouch[hurt]);
+			printf("I'm afraid you have suffered %s.\n", 
+			    ouch[hurt]);
 		} else
 			clearbit(location[position].objects, CYLON);
 	}
@@ -234,7 +248,7 @@ news()
 }
 
 void
-crash()
+crash(void)
 {
 	int     hurt1, hurt2;
 
@@ -246,8 +260,10 @@ crash()
 		else {
 			puts("You're out of fuel.  We'll have to crash land!");
 			if (!location[position].down) {
-				puts("Your viper strikes the ground and explodes into fiery fragments.");
-				puts("Thick black smoke billows up from the wreckage.");
+				printf("Your viper strikes the ground and ");
+				puts("explodes into fiery fragments.");
+				printf("Thick black smoke billows up from the");
+				puts(" wreckage.");
 				die();
 			}
 			position = location[position].down;
@@ -255,7 +271,8 @@ crash()
 		notes[LAUNCHED] = 0;
 		setbit(location[position].objects, CRASH);
 		ourtime += rnd(CYCLE / 4);
-		puts("The viper explodes into the ground and you lose consciousness...");
+		printf("The viper explodes into the ground and you lose ");
+		puts("consciousness...");
 		zzz();
 		hurt1 = rnd(NUMOFINJURIES - 2) + 2;
 		hurt2 = rnd(NUMOFINJURIES - 2) + 2;

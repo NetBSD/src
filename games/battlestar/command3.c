@@ -1,4 +1,4 @@
-/*	$NetBSD: command3.c,v 1.2 2003/08/07 09:37:00 agc Exp $	*/
+/*	$NetBSD: command3.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command3.c,v 1.2 2003/08/07 09:37:00 agc Exp $");
+__RCSID("$NetBSD: command3.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 void
-dig()
+dig(void)
 {
 	if (testbit(inven, SHOVEL)) {
 		puts("OK");
@@ -65,7 +65,7 @@ dig()
 }
 
 int
-jump()
+jump(void)
 {
 	int     n;
 
@@ -105,33 +105,46 @@ jump()
 }
 
 void
-bury()
+bury(void)
 {
 	int     value;
 
 	if (testbit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber < wordcount)
+		while (wordtype[++wordnumber] != OBJECT && 
+		    wordtype[wordnumber] != NOUNS && wordnumber < wordcount)
 			continue;
 		value = wordvalue[wordnumber];
-		if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, value) || value == BODY))
+		if (wordtype[wordnumber] == NOUNS && 
+		    (testbit(location[position].objects, value) || 
+		    value == BODY))
 			switch (value) {
 			case BODY:
 				wordtype[wordnumber] = OBJECT;
-				if (testbit(inven, MAID) || testbit(location[position].objects, MAID))
+				if (testbit(inven, MAID) || 
+				    testbit(location[position].objects, MAID))
 					value = MAID;
-				if (testbit(inven, DEADWOOD) || testbit(location[position].objects, DEADWOOD))
+				if (testbit(inven, DEADWOOD) || 
+				    testbit(location[position].objects, 
+					DEADWOOD))
 					value = DEADWOOD;
-				if (testbit(inven, DEADGOD) || testbit(location[position].objects, DEADGOD))
+				if (testbit(inven, DEADGOD) || 
+				    testbit(location[position].objects, 
+					DEADGOD))
 					value = DEADGOD;
-				if (testbit(inven, DEADTIME) || testbit(location[position].objects, DEADTIME))
+				if (testbit(inven, DEADTIME) || 
+				    testbit(location[position].objects, 
+					DEADTIME))
 					value = DEADTIME;
-				if (testbit(inven, DEADNATIVE) || testbit(location[position].objects, DEADNATIVE))
+				if (testbit(inven, DEADNATIVE) || 
+				    testbit(location[position].objects, 
+					DEADNATIVE))
 					value = DEADNATIVE;
 				break;
 
 			case NATIVE:
 			case NORMGOD:
-				puts("She screams as you wrestle her into the hole.");
+				printf("She screams as you wrestle her into ");
+				puts("the hole.");
 			case TIMER:
 				power += 7;
 				ego -= 10;
@@ -144,7 +157,9 @@ bury()
 			default:
 				puts("Wha..?");
 			}
-		if (wordtype[wordnumber] == OBJECT && position > 88 && (testbit(inven, value) || testbit(location[position].objects, value))) {
+		if (wordtype[wordnumber] == OBJECT && position > 88 && 
+		    (testbit(inven, value) || 
+		    testbit(location[position].objects, value))) {
 			puts("Buried.");
 			if (testbit(inven, value)) {
 				clearbit(inven, value);
@@ -159,7 +174,8 @@ bury()
 			case DEADTIME:
 			case DEADGOD:
 				ego += 2;
-				printf("The %s should rest easier now.\n", objsht[value]);
+				printf("The %s should rest easier now.\n", 
+				    objsht[value]);
 			}
 		} else
 			puts("It doesn't seem to work.");
@@ -168,13 +184,15 @@ bury()
 }
 
 void
-drink()
+drink(void)
 {
 	int     n;
 
 	if (testbit(inven, POTION)) {
-		puts("The cool liquid runs down your throat but turns to fire and you choke.");
-		puts("The heat reaches your limbs and tingles your spirit.  You feel like falling");
+		printf("The cool liquid runs down your throat but turns to ");
+		puts("fire and you choke.");
+		printf("The heat reaches your limbs and tingles your spirit.");
+		puts("  You feel like falling");
 		puts("asleep.");
 		clearbit(inven, POTION);
 		WEIGHT = MAXWEIGHT;
@@ -188,7 +206,7 @@ drink()
 }
 
 int
-shoot()
+shoot(void)
 {
 	int     firstnumber, value;
 
@@ -197,7 +215,8 @@ shoot()
 		puts("You aren't holding a blaster.");
 	else {
 		wordnumber++;
-		while (wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
+		while (wordnumber <= wordcount && 
+		    wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
 			if (testbit(location[position].objects, value)) {
@@ -208,8 +227,10 @@ shoot()
 				if (value == BOMB)
 					die();
 			} else
-				printf("I don't see any %s around here.\n", objsht[value]);
-			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
+				printf("I don't see any %s around here.\n", 
+				    objsht[value]);
+			if (wordnumber < wordcount - 1 && 
+			    wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
 				return (firstnumber);
@@ -235,11 +256,15 @@ shoot()
 					whichway(location[position]);
 					break;
 				case 31:
-					puts("The laser blast has no effect on the door.");
+					printf("The laser blast has no ");
+					puts("effect on the door.");
 					break;
 				case 20:
-					puts("The blast hits the door and it explodes into flame.  The magnesium burns");
-					puts("so rapidly that we have no chance to escape.");
+					printf("The blast hits the door and ");
+					printf("it explodes into flame.  The ");
+					puts("magnesium burns");
+					printf("so rapidly that we have no ");
+					puts("chance to escape.");
 					die();
 				default:
 					puts("Nothing happens.");
@@ -247,19 +272,31 @@ shoot()
 				break;
 
 			case NORMGOD:
-				if (testbit(location[position].objects, BATHGOD)) {
-					puts("The goddess is hit in the chest and splashes back against the rocks.");
-					puts("Dark blood oozes from the charred blast hole.  Her naked body floats in the");
+				if (testbit(location[position].objects, 
+				    BATHGOD)) {
+					printf("The goddess is hit in the ");
+					printf("chest and splashes back ");
+					puts("against the rocks.");
+					printf("Dark blood oozes from the ");
+					printf("charred blast hole.  Her ");
+					puts("naked body floats in the");
 					puts("pools and then off downstream.");
-					clearbit(location[position].objects, BATHGOD);
+					clearbit(location[position].objects, 
+					    BATHGOD);
 					setbit(location[180].objects, DEADGOD);
 					power += 5;
 					ego -= 10;
 					notes[JINXED]++;
 				} else
-					if (testbit(location[position].objects, NORMGOD)) {
-						puts("The blast catches the goddess in the stomach, knocking her to the ground.");
-						puts("She writhes in the dirt as the agony of death taunts her.");
+					if (testbit(location[position].objects,
+					    NORMGOD)) {
+						printf("The blast catches ");
+						printf("the goddess in the ");
+						printf("stomach, knocking ");
+						puts("her to the ground.");
+						printf("She writhes in the ");
+						printf("dirt as the agony of ");
+						puts("death taunts her.");
 						puts("She has stopped moving.");
 						clearbit(location[position].objects, NORMGOD);
 						setbit(location[position].objects, DEADGOD);
@@ -270,33 +307,45 @@ shoot()
 							live();
 						break;
 					} else
-						puts("I don't see any goddess around here.");
+						printf("I don't see any ");
+						puts("goddess around here.");
 				break;
 
 			case TIMER:
-				if (testbit(location[position].objects, TIMER)) {
-					puts("The old man slumps over the bar.");
+				if (testbit(location[position].objects, 
+				    TIMER)) {
+					printf("The old man slumps over ");
+					puts("the bar.");
 					power++;
 					ego -= 2;
 					notes[JINXED]++;
-					clearbit(location[position].objects, TIMER);
-					setbit(location[position].objects, DEADTIME);
+					clearbit(location[position].objects, 
+					    TIMER);
+					setbit(location[position].objects, 
+					    DEADTIME);
 				} else
 					puts("What old-timer?");
 				break;
 			case MAN:
 				if (testbit(location[position].objects, MAN)) {
-					puts("The man falls to the ground with blood pouring all over his white suit.");
+					printf("The man falls to the ground ");
+					printf("with blood pouring all over ");
+					puts("his white suit.");
 					puts("Your fantasy is over.");
 					die();
 				} else
 					puts("What man?");
 				break;
 			case NATIVE:
-				if (testbit(location[position].objects, NATIVE)) {
-					puts("The girl is blown backwards several feet and lies in a pool of blood.");
-					clearbit(location[position].objects, NATIVE);
-					setbit(location[position].objects, DEADNATIVE);
+				if (testbit(location[position].objects, 
+				    NATIVE)) {
+					printf("The girl is blown backwards ");
+					printf("several feet and lies in a ");
+					puts("pool of blood.");
+					clearbit(location[position].objects, 
+					    NATIVE);
+					setbit(location[position].objects, 
+					    DEADNATIVE);
 					power += 5;
 					ego -= 2;
 					notes[JINXED]++;
@@ -308,7 +357,8 @@ shoot()
 				break;
 
 			default:
-				printf("You can't shoot the %s.\n", objsht[wordvalue[wordnumber]]);
+				printf("You can't shoot the %s.\n", 
+				    objsht[wordvalue[wordnumber]]);
 			}
 		} else
 			puts("You must be a looney.");
