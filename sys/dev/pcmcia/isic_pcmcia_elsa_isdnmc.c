@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.9 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.10 2005/07/01 15:05:07 martin Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_ISDNMC
@@ -170,15 +170,15 @@ elsa_isdnmc_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t 
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_write_multi_1(t, h, ISAC_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ISAC_DATA, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_write_multi_1(t, h, HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, HSCX_DATA, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, ADDR_LATCH, 0x40);
-			bus_space_write_multi_1(t, h, HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, HSCX_DATA, buf, size);
 			break;
 	}
 }
