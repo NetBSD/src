@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.12 2005/06/22 20:11:03 hubertf Exp $
+#	$NetBSD: wtf,v 1.13 2005/07/01 14:21:49 peter Exp $
 #
 # Public domain
 #
 
 usage() {
-	echo "usage: `basename $0` [-f dbfile] [-t type] [is] <acronym>"
+	echo "usage: `basename $0` [-f dbfile] [is] <acronym>"
 	exit 1
 }
 
