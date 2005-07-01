@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.131 2005/06/22 10:46:55 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.132 2005/07/01 12:22:30 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2589,4 +2589,10 @@ sys/dev/pci/if_stge.c				1.27
 	Fix some big-endian issues. stge(4) now works on sparc64 with hardware
 	checksums.
 	[bouyer, ticket #2009]
+
+sys/kern/kern_ksyms.c				1.26
+
+	Use %zx in a format string to print a size_t, not %lx, so a kernel
+	with KSYMS_DEBUG will compile.
+	[riz, ticket #2037]
 
