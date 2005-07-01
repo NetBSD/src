@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.27 2005/06/27 12:07:46 junyoung Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.28 2005/07/01 13:07:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.27 2005/06/27 12:07:46 junyoung Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.28 2005/07/01 13:07:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ static void	 sighup(int);
 static void	 handleread(int);
 static void	 quit(const char *);
 static void	 rt_xaddrs(void *, void *, struct rt_addrinfo *);
+static void	 usage(void) __attribute__((__noreturn__));
 static int	 verify(const char *);
 #ifdef DEBUG
 static char	*interval(int, const char *);
@@ -118,15 +119,49 @@ static ssize_t	 Sendto(int, const void *, size_t, int,
 int
 main(int argc, char *argv[])
 {
-	int s;
-	char *cp;
+	int s, ch;
+	int time_interval = 180;	/* Default time (180 seconds) */
+	char *cp, *ep;
 	socklen_t on = 1;
 	struct sockaddr_in sasin;
 	struct pollfd pfd[1];
 	struct timeval delta, next, now;
 
+	setprogname(argv[0]);
+
 	if (getuid())
 		errx(EXIT_FAILURE, "not super user");
+
+	while ((ch = getopt(argc, argv, "g:")) != -1) {
+		switch (ch) {
+		case 'g':
+			time_interval = (int)strtol(optarg, &ep, 10);
+
+			switch (*ep) {
+			case '\0':
+				break;
+			case 'm':
+			case 'M':
+				/* Time in minutes. */
+				time_interval *= 60;
+				if (ep[1] == '\0')
+					break;
+				/*FALLTHROUGH*/
+			default:
+				errx(1, "Invalid argument: `%s'", optarg);
+			}
+
+			if (time_interval <= 0)
+				errx(1, "Time must be greater than 0");
+
+			if (time_interval > 180)
+				errx(1, "Cannot be greater than 180 seconds");
+			break;
+		default:
+			usage();	
+		}
+	}
+
 	sp = getservbyname("who", "udp");
 	if (sp == NULL)
 		errx(EXIT_FAILURE, "udp/who: unknown service");
@@ -169,7 +204,7 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 
 	send_host_information(s);
-	delta.tv_sec = CHECK_INTERVAL;
+	delta.tv_sec = time_interval;
 	delta.tv_usec = 0;
 	gettimeofday(&now, NULL);
 	timeradd(&now, &delta, &next);
@@ -504,7 +539,7 @@ Sendto(int s, const void *buf, size_t cc, int flags, const struct sockaddr *to,
 	struct whoent *we;
 	struct sockaddr_in *sasin = (struct sockaddr_in *)to;
 
-	printf("sendto %x.%d\n", ntohl(sasin->sin_addr.s_addr),
+	printf("sendto %s.%d\n", inet_ntoa(sasin->sin_addr),
 	    ntohs(sasin->sin_port));
 	printf("hostname %s %s\n", w->wd_hostname,
 	   interval(ntohl(w->wd_sendtime) - ntohl(w->wd_boottime), "  up"));
@@ -553,3 +588,10 @@ interval(int time, const char *updown)
 	return resbuf;
 }
 #endif
+
+static void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-g <time>]", getprogname());
+	exit(1);
+}
