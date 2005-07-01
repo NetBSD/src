@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.14 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.15 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -45,8 +45,7 @@ static const char *getutmp(void);
 static int wizard(const char *);
 
 void
-initialize(filename)
-	const char   *filename;
+initialize(const char *filename)
 {
 	const struct objs *p;
 	char *savefile;
@@ -78,7 +77,7 @@ initialize(filename)
 }
 
 static const char *
-getutmp()
+getutmp(void)
 {
 	struct passwd *ptr;
 
@@ -109,8 +108,7 @@ static const char *const badguys[] = {
 };
 
 static int
-wizard(uname)
-	const char   *uname;
+wizard(const char *uname)
 {
 	int     flag;
 
@@ -120,8 +118,7 @@ wizard(uname)
 }
 
 static int
-checkout(uname)
-	const char   *uname;
+checkout(const char *uname)
 {
 	const char  *const *ptr;
 

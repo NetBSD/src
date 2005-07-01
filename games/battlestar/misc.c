@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2003/08/07 09:37:02 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2005/07/01 06:04:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,16 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 2003/08/07 09:37:02 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2005/07/01 06:04:54 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
+/* for beenthere, injuries */
 int
-card(array, size)		/* for beenthere, injuries */
-	const char   *array;
-	int     size;
+card(const char *array, int size)
 {
 	const char   *end = array + size;
 	int     i = 0;
@@ -55,8 +54,7 @@ card(array, size)		/* for beenthere, injuries */
 }
 
 int
-ucard(array)
-	const unsigned int *array;
+ucard(const unsigned int *array)
 {
 	int     j = 0, n;
 
