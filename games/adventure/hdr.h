@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.10 2003/08/07 09:36:50 agc Exp $	*/
+/*	$NetBSD: hdr.h,v 1.11 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -83,11 +83,10 @@ extern struct hashtab {		/* hash table for vocabulary */
 }       voc[HTSIZE];
 #define SEED 1815622		/* "Encryption" seed */
 
-struct text
-	{
-		char   *seekadr;/* Msg start in virtual disk */
-		int     txtlen;	/* length of msg starting here */
-	};
+struct text {
+	char   *seekadr;/* Msg start in virtual disk */
+	int     txtlen;	/* length of msg starting here */
+};
 
 #define RTXSIZ  205
 extern	struct text rtext[RTXSIZ];	/* random text messages */
@@ -107,11 +106,11 @@ extern	struct text ltext[LOCSIZ];	/* long loc description */
 extern	struct text stext[LOCSIZ];	/* short loc descriptions */
 
 extern	struct travlist {		/* direcs & conditions of travel */
-		struct travlist *next;	/* ptr to next list entry */
-		int     conditions;	/* m in writeup (newloc / 1000) */
-		int     tloc;		/* n in writeup (newloc % 1000) */
-		int     tverb;		/* the verb that takes you there */
-	}      *travel[LOCSIZ], *tkk;	/* travel is closer to keys(...) */
+	struct travlist *next;	/* ptr to next list entry */
+	int     conditions;	/* m in writeup (newloc / 1000) */
+	int     tloc;		/* n in writeup (newloc % 1000) */
+	int     tverb;		/* the verb that takes you there */
+}      *travel[LOCSIZ], *tkk;	/* travel is closer to keys(...) */
 
 extern	int     atloc[LOCSIZ];
 
@@ -122,7 +121,7 @@ extern	int     actspk[35];		/* rtext msg for verb <n> */
 
 extern	int     cond[LOCSIZ];		/* various condition bits */
 
-	extern int setbit[16];		/* bit defn masks 1,2,4,... */
+extern	int	setbit[16];		/* bit defn masks 1,2,4,... */
 
 extern	int     hntmax;
 extern	int     hints[20][5];		/* info on hints */
