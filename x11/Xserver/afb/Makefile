@@ -1,54 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2005/06/26 06:33:43 rtr Exp $
 
-XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../Makefile.serverlib"
-
-LIB=	afb
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/${LIB}
-
-SRCS=	afbbltC.c afbbltX.c afbbltCI.c afbbltO.c afbbltG.c afbtileC.c \
-	afbtileG.c afbseg.c afbbitblt.c afbbres.c afbbresd.c \
-	afbbstore.c afbclip.c afbcmap.c afbfillarc.c afbfillrct.c \
-	afbfillsp.c afbfont.c afbgc.c afbgetsp.c afbhrzvert.c \
-	afbimage.c afbimggblt.c afbline.c afbmisc.c afbpixmap.c \
-	afbply1rct.c afbplygblt.c afbpntarea.c afbpntwin.c \
-	afbpolypnt.c afbpushpxl.c afbscrinit.c afbsetsp.c afbtegblt.c \
-	afbwindow.c afbzerarc.c
+.include <bsd.x11.mk>
 
 .if defined(X11FLAGS.LOADABLE)
-SRCS+=	afbmodule.c
+SRCS=		afbmodule.c
+CPPFLAGS+=	${X11FLAGS.LOADABLE}
+XMODULEDIR=	${X11USRLIBDIR}/modules
 .endif
 
-CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/${LIB} \
-		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
-		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
-		-I${X11SRCDIR.xc}/programs/Xserver/mi \
-		-I${X11SRCDIR.xc}/programs/Xserver/include \
-		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/include/fonts \
-		-I${XSERVERINCDIR}
-
-CPPFLAGS+=	${X11FLAGS.LOADER}
-
-BUILDSYMLINKS=	afbblt.c afbbltC.c \
-		afbblt.c afbbltCI.c \
-		afbblt.c afbbltG.c \
-		afbblt.c afbbltO.c \
-		afbblt.c afbbltX.c \
-		afbline.c afbseg.c \
-		afbtile.c afbtileC.c \
-		afbtile.c afbtileG.c
-
-CPPFLAGS.afbbltC.c=	-DMROP=Mcopy
-CPPFLAGS.afbbltCI.c=	-DMROP=McopyInverted
-CPPFLAGS.afbbltG.c=	-DMROP=0
-CPPFLAGS.afbbltO.c=	-DMROP=Mor
-CPPFLAGS.afbbltX.c=	-DMROP=Mxor
-CPPFLAGS.afbseg.c=	-DPOLYSEGMENT
-CPPFLAGS.afbtileC.c=	-DMROP=Mcopy
-CPPFLAGS.afbtileG.c=	-DMROP=0
-
-.include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
-.include <bsd.lib.mk>
+.include "Makefile.afb"
