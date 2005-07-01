@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.8 2003/08/07 09:36:50 agc Exp $	*/
+/*	$NetBSD: crc.c,v 1.9 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-__RCSID("$NetBSD: crc.c,v 1.8 2003/08/07 09:36:50 agc Exp $");
+__RCSID("$NetBSD: crc.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,10 +115,9 @@ crc_start()
 	crcval = step = 0;
 }
 
+/* Process nr bytes at a time; ptr points to them */
 unsigned long
-crc(ptr, nr)		/* Process nr bytes at a time; ptr points to them */
-	const char   *ptr;
-	int     nr;
+crc(const char *ptr, int nr)
 {
 	int     i;
 	const char   *p;

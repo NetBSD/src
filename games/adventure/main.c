@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2005/07/01 00:03:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2004/01/27 20:30:28 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2005/07/01 00:03:36 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,8 @@ __RCSID("$NetBSD: main.c,v 1.18 2004/01/27 20:30:28 jsm Exp $");
 #include "hdr.h"
 #include "extern.h"
 
-int main(int, char **);
-
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	int     i;
 	int     rval, ll;
@@ -411,7 +407,8 @@ l4080:
 			if (place[eggs] == plac[eggs]
 			    || (toting(eggs) && loc == plac[eggs]))
 				goto l2011;
-			if (place[eggs] == 0 && place[troll] == 0 && prop[troll] == 0)
+			if (place[eggs] == 0 && place[troll] == 0 && 
+			    prop[troll] == 0)
 				prop[troll] = 1;
 			k = 2;
 			if (here(eggs))
@@ -595,14 +592,14 @@ l4090:
 		case 14:	/* 9140 - eat */
 			if (obj == food)
 				goto l8142;
-			if (obj == bird || obj == snake || obj == clam || obj == oyster
-			    || obj == dwarf || obj == dragon || obj == troll
-			    || obj == bear)
+			if (obj == bird || obj == snake || obj == clam
+			    || obj == oyster || obj == dwarf || obj == dragon 
+			    || obj == troll || obj == bear)
 				spk = 71;
 			goto l2011;
 		l9150: case 15:/* 9150 - drink */
 			if (obj == 0 && liqloc(loc) != water && (liq() != water
-				|| !here(bottle)))
+			    || !here(bottle)))
 				goto l8000;
 			if (obj != 0 && obj != water)
 				spk = 110;
@@ -637,7 +634,8 @@ l4090:
 			    || k == liqloc(loc))
 				spk = 94;
 			for (i = 1; i <= 5; i++)
-				if (dloc[i] == loc && dflag >= 2 && obj == dwarf)
+				if (dloc[i] == loc && dflag >= 2 
+				    && obj == dwarf)
 					spk = 94;
 			if (closed)
 				spk = 138;
