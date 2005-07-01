@@ -1,4 +1,4 @@
-/*	$NetBSD: ttext2.c,v 1.7 2003/08/07 09:36:58 agc Exp $	*/
+/*	$NetBSD: ttext2.c,v 1.8 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ttext2.c,v 1.7 2003/08/07 09:36:58 agc Exp $");
+__RCSID("$NetBSD: ttext2.c,v 1.8 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,8 +127,7 @@ const char   *const lastch[] = {
 
 
 int
-text(txt)
-	const char  *const *txt;
+text(const char *const *txt)
 {
 	const char  *const *begin;
 	const char   *a;

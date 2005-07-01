@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.16 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: teach.c,v 1.17 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.16 2005/02/15 12:56:20 jsm Exp $");
+__RCSID("$NetBSD: teach.c,v 1.17 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,9 +60,7 @@ const char   *const contin[] = {
 };
 
 int
-main(argc, argv)
-	int     argc __attribute__((__unused__));
-	char   *argv[];
+main(int argc __attribute__((__unused__)), char *argv[])
 {
 	int     i;
 
@@ -145,7 +143,7 @@ main(argc, argv)
 }
 
 void
-leave()
+leave(void)
 {
 	if (tflag)
 		clear();

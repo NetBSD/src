@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: move.c,v 1.9 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 2004/01/27 20:30:28 jsm Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,9 +92,9 @@ static void mvcheck(struct BOARD *, struct BOARD *);
 static struct BOARD *nextfree(void);
 
 
+/* zero if first move */
 void
-move(okay)
-	int     okay;		/* zero if first move */
+move(int okay)
 {
 	int     i;		/* index */
 	int     l;		/* last man */
@@ -181,10 +181,10 @@ move(okay)
 	fixtty(&raw);		/* no more tty interrupt */
 }
 
+/* 	mvnum   == number of move (rel zero) */
+/* 	swapped == see if swapped also tested */
 void
-trymove(mvnum, swapped)
-	int     mvnum;		/* number of move (rel zero) */
-	int     swapped;	/* see if swapped also tested */
+trymove(int mvnum, int swapped)
 {
 	int     pos;		/* position on board */
 	int     rval;		/* value of roll */
@@ -234,7 +234,7 @@ trymove(mvnum, swapped)
 }
 
 static struct BOARD *
-bsave()
+bsave(void)
 {
 	int     i;		/* index */
 	struct BOARD *now;	/* current position */
@@ -255,52 +255,50 @@ bsave()
 	return (now);
 }
 
+/* new == item to insert */
 static void
-binsert(new)
-	struct BOARD *new;	/* item to insert */
+binsert(struct BOARD *new)
 {
-	struct BOARD *p = checkq;	/* queue pointer */
+	struct BOARD *qp = checkq;	/* queue pointer */
 	int     result;		/* comparison result */
 
-	if (p == 0) {		/* check if queue empty */
-		checkq = p = new;
-		p->b_next = 0;
+	if (qp == 0) {		/* check if queue empty */
+		checkq = qp = new;
+		qp->b_next = 0;
 		return;
 	}
-	result = bcomp(new, p);	/* compare to first element */
+	result = bcomp(new, qp);	/* compare to first element */
 	if (result < 0) {	/* insert in front */
-		new->b_next = p;
+		new->b_next = qp;
 		checkq = new;
 		return;
 	}
 	if (result == 0) {	/* duplicate entry */
-		mvcheck(p, new);
+		mvcheck(qp, new);
 		makefree(new);
 		return;
 	}
-	while (p->b_next != 0) {/* traverse queue */
-		result = bcomp(new, p->b_next);
+	while (qp->b_next != 0) {/* traverse queue */
+		result = bcomp(new, qp->b_next);
 		if (result < 0) {	/* found place */
-			new->b_next = p->b_next;
-			p->b_next = new;
+			new->b_next = qp->b_next;
+			qp->b_next = new;
 			return;
 		}
 		if (result == 0) {	/* duplicate entry */
-			mvcheck(p->b_next, new);
+			mvcheck(qp->b_next, new);
 			makefree(new);
 			return;
 		}
-		p = p->b_next;
+		qp = qp->b_next;
 	}
 	/* place at end of queue */
-	p->b_next = new;
+	qp->b_next = new;
 	new->b_next = 0;
 }
 
 static int
-bcomp(a, b)
-	struct BOARD *a;
-	struct BOARD *b;
+bcomp(struct BOARD *a, struct BOARD *b)
 {
 	int    *aloc = a->b_board;	/* pointer to board a */
 	int    *bloc = b->b_board;	/* pointer to board b */
@@ -316,9 +314,7 @@ bcomp(a, b)
 }
 
 static void
-mvcheck(incumbent, candidate)
-	struct BOARD *incumbent;
-	struct BOARD *candidate;
+mvcheck(struct BOARD *incumbent, struct BOARD *candidate)
 {
 	int     i;
 	int     result;
@@ -339,15 +335,14 @@ mvcheck(incumbent, candidate)
 }
 
 void
-makefree(dead)
-	struct BOARD *dead;	/* dead position */
+makefree(struct BOARD *dead)
 {
 	dead->b_next = freeq;	/* add to freeq */
 	freeq = dead;
 }
 
 static struct BOARD *
-nextfree()
+nextfree(void)
 {
 	struct BOARD *new;
 
@@ -367,7 +362,7 @@ nextfree()
 }
 
 void
-pickmove()
+pickmove(void)
 {
 	/* current game position */
 	struct BOARD *now = bsave();
@@ -391,8 +386,7 @@ pickmove()
 }
 
 static void
-boardcopy(s)
-	struct BOARD *s;	/* game situation */
+boardcopy(struct BOARD *s)
 {
 	int     i;		/* index */
 
@@ -409,7 +403,7 @@ boardcopy(s)
 }
 
 void
-movcmp()
+movcmp(void)
 {
 	int     i;
 
@@ -483,7 +477,7 @@ movcmp()
 }
 
 int
-movegood()
+movegood(void)
 {
 	int     n;
 

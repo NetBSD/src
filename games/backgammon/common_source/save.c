@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.10 2003/08/07 09:36:57 agc Exp $	*/
+/*	$NetBSD: save.c,v 1.11 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.10 2003/08/07 09:36:57 agc Exp $");
+__RCSID("$NetBSD: save.c,v 1.11 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,7 @@ static const char rec[] = "\" to recover your game.\n\n";
 static const char cantrec[] = "Can't recover file:  ";
 
 void
-save(n)
-	int     n;
+save(int n)
 {
 	int     fdesc;
 	char   *fs;
@@ -145,8 +144,7 @@ save(n)
 }
 
 void
-recover(s)
-	const char   *s;
+recover(const char *s)
 {
 	int     fdesc;
 
@@ -168,8 +166,7 @@ recover(s)
 }
 
 void
-norec(s)
-	const char   *s;
+norec(const char *s)
 {
 	const char   *c;
 

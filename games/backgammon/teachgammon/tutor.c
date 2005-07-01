@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.c,v 1.6 2003/08/07 09:36:58 agc Exp $	*/
+/*	$NetBSD: tutor.c,v 1.7 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,17 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tutor.c,v 1.6 2003/08/07 09:36:58 agc Exp $");
+__RCSID("$NetBSD: tutor.c,v 1.7 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "back.h"
 #include "tutor.h"
 
-static const char better[] = "That is a legal move, but there is a better one.\n";
+static const char better[] = 
+	"That is a legal move, but there is a better one.\n";
 
 void
-tutor()
+tutor(void)
 {
 	int     i, j;
 
@@ -129,7 +130,7 @@ tutor()
 }
 
 void
-clrest()
+clrest(void)
 {
 	int     r, c, j;
 
@@ -143,8 +144,7 @@ clrest()
 }
 
 int
-brdeq(b1, b2)
-	const int    *b1, *b2;
+brdeq(const int *b1, const int *b2)
 {
 	const int    *e;
 

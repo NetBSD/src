@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.14 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: back.h,v 1.15 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -141,7 +141,7 @@ void	clend(void);
 void	cline(void);
 int	count(void);
 void	curmove(int, int);
-int	dotable(char, int);
+int	dotable(int, int);
 void	errexit(const char *) __attribute__((__noreturn__));
 void	fancyc(int);
 void	fboard(void);
@@ -179,7 +179,7 @@ void	wrboard(void);
 void	wrbsub(void);
 void	wrhit(int);
 void	wrint(int);
-void	writec(char);
+void	writec(int);
 void	writel(const char *);
 void	wrscore(void);
-int	yorn(char);
+int	yorn(int);
