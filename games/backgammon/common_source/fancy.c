@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.12 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: fancy.c,v 1.13 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.12 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.13 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,8 @@ int     buffnum;		/* pointer to output buffer */
 
 char    tbuf[1024];		/* buffer for decoded termcap entries */
 
-int     oldb[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int     oldb[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		  0, 0, 0, 0, 0, 0};
 
 int     oldr;
 int     oldw;
@@ -80,7 +81,7 @@ int     realr;
 int     realc;
 
 void
-fboard()
+fboard(void)
 {
 	int     i, j, l;
 
@@ -187,11 +188,7 @@ fboard()
  * differently.
  */
 void
-bsect(b, rpos, cpos, cnext)
-	int     b;		/* contents of position */
-	int     rpos;		/* row of position */
-	int     cpos;		/* column of position */
-	int     cnext;		/* direction of position */
+bsect(int b, int rpos, int cpos, int cnext)
 {
 	int     j;		/* index */
 	int     n;		/* number of men on position */
@@ -240,13 +237,14 @@ bsect(b, rpos, cpos, cnext)
 						bct = 3;
 				}
 			}
-			curmove(curr + cnext, curc - bct);	/* reposition cursor */
+			/* reposition cursor */			
+			curmove(curr + cnext, curc - bct);
 		}
 	}
 }
 
 void
-refresh()
+refresh(void)
 {
 	int     i, r, c;
 
@@ -297,18 +295,17 @@ refresh()
 }
 
 void
-fixpos(old, new, r, c, inc)
-	int     old, new, r, c, inc;
+fixpos(int cur, int new, int r, int c, int inc)
 {
 	int     o, n, nv;
 	int     ov, nc;
 	char    col;
 
 	nc = 0;
-	if (old * new >= 0) {
-		ov = abs(old);
+	if (cur * new >= 0) {
+		ov = abs(cur);
 		nv = abs(new);
-		col = (old + new > 0 ? 'r' : 'w');
+		col = (cur + new > 0 ? 'r' : 'w');
 		o = (ov - 1) / 5;
 		n = (nv - 1) / 5;
 		if (o == n) {
@@ -319,23 +316,29 @@ fixpos(old, new, r, c, inc)
 			if (o == 0)
 				nc = c < 54 ? c + 1 : c;
 			if (ov > nv)
-				fixcol(r + inc * (nv - n * 5), nc, abs(ov - nv), ' ', inc);
+				fixcol(r + inc * (nv - n * 5), nc, 
+				    abs(ov - nv), ' ', inc);
 			else
-				fixcol(r + inc * (ov - o * 5), nc, abs(ov - nv), col, inc);
+				fixcol(r + inc * (ov - o * 5), nc, 
+				    abs(ov - nv), col, inc);
 			return;
 		} else {
 			if (c < 54) {
 				if (o + n == 1) {
 					if (n) {
-						fixcol(r, c, abs(nv - 5), col, inc);
+						fixcol(r, c, abs(nv - 5), col, 
+						    inc);
 						if (ov != 5)
-							fixcol(r + inc * ov, c + 1,
-							    abs(ov - 5), col, inc);
+							fixcol(r + inc * ov, 
+							    c + 1, abs(ov - 5),
+							    col, inc);
 					} else {
-						fixcol(r, c, abs(ov - 5), ' ', inc);
+						fixcol(r, c, abs(ov - 5), ' ', 
+						    inc);
 						if (nv != 5)
-							fixcol(r + inc * nv, c + 1,
-							    abs(nv - 5), ' ', inc);
+							fixcol(r + inc * nv, 
+							    c + 1, abs(nv - 5),
+							    ' ', inc);
 					}
 					return;
 				}
@@ -343,37 +346,42 @@ fixpos(old, new, r, c, inc)
 					if (ov != 10)
 						fixcol(r + inc * (ov - 5), c,
 						    abs(ov - 10), col, inc);
-					fixcol(r, c + 2, abs(nv - 10), col, inc);
+					fixcol(r, c + 2, abs(nv - 10), col, 
+					    inc);
 				} else {
 					if (nv != 10)
 						fixcol(r + inc * (nv - 5), c,
 						    abs(nv - 10), ' ', inc);
-					fixcol(r, c + 2, abs(ov - 10), ' ', inc);
+					fixcol(r, c + 2, abs(ov - 10), ' ', 
+					    inc);
 				}
 				return;
 			}
 			if (n > o) {
-				fixcol(r + inc * (ov % 5), c + o, abs(5 * n - ov), col, inc);
+				fixcol(r + inc * (ov % 5), c + o, 
+				    abs(5 * n - ov), col, inc);
 				if (nv != 5 * n)
-					fixcol(r, c + n, abs(5 * n - nv), col, inc);
+					fixcol(r, c + n, abs(5 * n - nv), 
+					    col, inc);
 			} else {
-				fixcol(r + inc * (nv % 5), c + n, abs(5 * n - nv), ' ', inc);
+				fixcol(r + inc * (nv % 5), c + n, 
+				    abs(5 * n - nv), ' ', inc);
 				if (ov != 5 * o)
-					fixcol(r, c + o, abs(5 * o - ov), ' ', inc);
+					fixcol(r, c + o, abs(5 * o - ov), 
+					    ' ', inc);
 			}
 			return;
 		}
 	}
 	nv = abs(new);
 	fixcol(r, c + 1, nv, new > 0 ? 'r' : 'w', inc);
-	if (abs(old) <= abs(new))
+	if (abs(cur) <= abs(new))
 		return;
-	fixcol(r + inc * new, c + 1, abs(old + new), ' ', inc);
+	fixcol(r + inc * new, c + 1, abs(cur + new), ' ', inc);
 }
 
 void
-fixcol(r, c, l, ch, inc)
-	int     l, ch, r, c, inc;
+fixcol(int r, int c, int l, int ch, int inc)
 {
 	int     i;
 
@@ -386,8 +394,7 @@ fixcol(r, c, l, ch, inc)
 }
 
 void
-curmove(r, c)
-	int     r, c;
+curmove(int r, int c)
 {
 	if (curr == r && curc == c)
 		return;
@@ -400,13 +407,13 @@ curmove(r, c)
 }
 
 void
-newpos()
+newpos(void)
 {
 	int     r;		/* destination row */
 	int     c;		/* destination column */
 	int     mode = -1;	/* mode of movement */
 
-	int     count = 1000;	/* character count */
+	int     ccount = 1000;	/* character count */
 	int     i;		/* index */
 	int     n;		/* temporary variable */
 	char   *m;		/* string containing CM movement */
@@ -429,51 +436,53 @@ newpos()
 	if (CM) {		/* try CM to get there */
 		mode = 0;
 		m = (char *) tgoto(CM, c, r);
-		count = strlen(m);
+		ccount = strlen(m);
 	}
 	/* try HO and local movement */
-	if (HO && (n = r + c * lND + lHO) < count) {
+	if (HO && (n = r + c * lND + lHO) < ccount) {
 		mode = 1;
-		count = n;
+		ccount = n;
 	}
 	/* try various LF combinations */
 	if (r >= curr) {
 		/* CR, LF, and ND */
-		if ((n = (r - curr) + c * lND + 1) < count) {
+		if ((n = (r - curr) + c * lND + 1) < ccount) {
 			mode = 2;
-			count = n;
+			ccount = n;
 		}
 		/* LF, ND */
-		if (c >= curc && (n = (r - curr) + (c - curc) * lND) < count) {
+		if (c >= curc && (n = (r - curr) + (c - curc) * lND) < ccount) {
 			mode = 3;
-			count = n;
+			ccount = n;
 		}
 		/* LF, BS */
-		if (c < curc && (n = (r - curr) + (curc - c) * lBC) < count) {
+		if (c < curc && (n = (r - curr) + (curc - c) * lBC) < ccount) {
 			mode = 4;
-			count = n;
+			ccount = n;
 		}
 	}
 	/* try corresponding UP combinations */
 	if (r < curr) {
 		/* CR, UP, and ND */
-		if ((n = (curr - r) * lUP + c * lND + 1) < count) {
+		if ((n = (curr - r) * lUP + c * lND + 1) < ccount) {
 			mode = 5;
-			count = n;
+			ccount = n;
 		}
 		/* UP and ND */
-		if (c >= curc && (n = (curr - r) * lUP + (c - curc) * lND) < count) {
+		if (c >= curc && 
+		    (n = (curr - r) * lUP + (c - curc) * lND) < ccount) {
 			mode = 6;
-			count = n;
+			ccount = n;
 		}
 		/* UP and BS */
-		if (c < curc && (n = (curr - r) * lUP + (curc - c) * lBC) < count) {
+		if (c < curc && 
+		    (n = (curr - r) * lUP + (curc - c) * lBC) < ccount) {
 			mode = 7;
-			count = n;
+			ccount = n;
 		}
 	}
 	/* space over */
-	if (curr == r && c > curc && linect[r] < curc && c - curc < count)
+	if (curr == r && c > curc && linect[r] < curc && c - curc < ccount)
 		mode = 8;
 
 	switch (mode) {
@@ -564,7 +573,7 @@ newpos()
 }
 
 void
-clear()
+clear(void)
 {
 	int     i;
 
@@ -582,8 +591,7 @@ clear()
 }
 
 void
-fancyc(c)
-	char    c;		/* character to output */
+fancyc(int c)
 {
 	int     sp;		/* counts spaces in a tab */
 
@@ -633,7 +641,7 @@ fancyc(c)
 }
 
 void
-clend()
+clend(void)
 {
 	int     i;
 
@@ -654,7 +662,7 @@ clend()
 }
 
 void
-cline()
+cline(void)
 {
 	int     c;
 
@@ -676,7 +684,7 @@ cline()
 }
 
 void
-newline()
+newline(void)
 {
 	cline();
 	if (curr == LI - 1)
@@ -686,8 +694,7 @@ newline()
 }
 
 int
-getcaps(s)
-	const char   *s;
+getcaps(const char *s)
 {
 	char   *code;		/* two letter code */
 	char ***cap;		/* pointer to cap string */

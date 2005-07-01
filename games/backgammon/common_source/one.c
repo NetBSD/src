@@ -1,4 +1,4 @@
-/*	$NetBSD: one.c,v 1.5 2003/08/07 09:36:57 agc Exp $	*/
+/*	$NetBSD: one.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)one.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: one.c,v 1.5 2003/08/07 09:36:57 agc Exp $");
+__RCSID("$NetBSD: one.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 int
-makmove(i)
-	int     i;
+makmove(int i)
 {
 	int     n, d;
 	int     max;
@@ -95,8 +94,7 @@ makmove(i)
 }
 
 void
-moverr(i)
-	int     i;
+moverr(int i)
 {
 	int     j;
 
@@ -118,8 +116,7 @@ moverr(i)
 
 
 int
-checkd(d)
-	int     d;
+checkd(int d)
 {
 	if (d0 != d)
 		swap;
@@ -127,7 +124,7 @@ checkd(d)
 }
 
 int
-last()
+last(void)
 {
 	int     i;
 
@@ -138,8 +135,7 @@ last()
 }
 
 void
-movback(i)
-	int     i;
+movback(int i)
 {
 	int     j;
 
@@ -148,8 +144,7 @@ movback(i)
 }
 
 void
-backone(i)
-	int     i;
+backone(int i)
 {
 	board[p[i]] += cturn;
 	if (g[i] != home) {
