@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.157 2005/06/17 09:13:56 hannken Exp $ */
+/*	$NetBSD: trap.c,v 1.158 2005/07/01 18:01:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2005/06/17 09:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2005/07/01 18:01:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1500,7 +1500,7 @@ syscall(code, tf, pc)
 	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
 		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 			KERNEL_PROC_UNLOCK(l);
-		goto bad;
+		goto out;
 	}
 
 	rval[0] = 0;
@@ -1509,7 +1509,7 @@ syscall(code, tf, pc)
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_UNLOCK(l);
-
+out:
 	switch (error) {
 	case 0:
 		/* Note: fork() does not return here in the child */

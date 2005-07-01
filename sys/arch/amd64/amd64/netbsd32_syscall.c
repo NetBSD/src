@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.5 2004/02/13 17:07:56 drochner Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.6 2005/07/01 18:01:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.5 2004/02/13 17:07:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6 2005/07/01 18:01:44 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -251,16 +251,17 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0) {
-			KERNEL_PROC_UNLOCK(l);
-			goto bad;
-		}
+		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+			goto out;
 	}
 #endif
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+#if defined(KTRACE) || defined(SYSTRACE)
+out:
+#endif
 	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:

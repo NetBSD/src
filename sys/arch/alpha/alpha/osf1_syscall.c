@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.15 2003/10/31 03:28:12 simonb Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.15 2003/10/31 03:28:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,12 +318,12 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	args += hidden;
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		framep->tf_regs[FRAME_V0] = rval[0];
