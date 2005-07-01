@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.402 2005/07/01 11:36:39 augustss Exp $
+$NetBSD: usbdevs,v 1.403 2005/07/01 19:37:59 drochner Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -408,6 +408,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
+vendor CONCEPTRONIC	0x14b2	Conceptronic
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
@@ -710,6 +711,9 @@ product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
 
 /* Composite Corp products looks the same as "TANGTOP" */
 product COMPOSITE USBPS2	0x0001	USB to PS2 Adaptor
+
+/* Conceptronic products */
+product CONCEPTRONIC C54RU	0x3c02	C54RU WLAN
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
@@ -1550,6 +1554,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 
 /* Ralink Technology products */
 product RALINK RT2570		0x1706	RT2570
+product RALINK RT2570_2		0x2570	RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
@@ -1682,7 +1687,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
-product SMC RT2570		0xee13	RT2570
+product SMC 2862WG		0xee13	EZ Connect g Wireless USB Adapter
 product SMC2 2020HUB            0x2020  USB Hub
 product SMC3 2662WUSB		0xa002	2662W-AR Wireless Adapter
 
