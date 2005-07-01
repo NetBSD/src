@@ -1,4 +1,4 @@
-/*	$NetBSD: text.c,v 1.7 2003/08/07 09:36:56 agc Exp $	*/
+/*	$NetBSD: text.c,v 1.8 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: text.c,v 1.7 2003/08/07 09:36:56 agc Exp $");
+__RCSID("$NetBSD: text.c,v 1.8 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,7 @@ const char   *const instr[] = {
 0};
 
 int
-text(t)
-	const char  *const *t;
+text(const char  *const *t)
 {
 	int     i;
 	const char   *s, *a;
