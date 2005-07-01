@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2005/07/01 16:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -55,7 +55,8 @@ FILE	*opendict(const char *);
 void	 playgame(void);
 void	 prompt(const char *);
 void	 prtable(const char *const [],
-	    int, int, int, void (*)(const char *const [], int), int (*)(const char *const [], int));
+	    int, int, int, void (*)(const char *const [], int), 
+	    int (*)(const char *const [], int));
 void	 putstr(const char *);
 void	 redraw(void);
 void	 results(void);

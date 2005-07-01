@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: timer.c,v 1.10 2005/07/01 16:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-__RCSID("$NetBSD: timer.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: timer.c,v 1.10 2005/07/01 16:38:24 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ extern jmp_buf env;
  * Leave the cursor where it was initially
  */
 int
-timerch()
+timerch(void)
 {
 	time_t prevt, t;
 	int col, remaining, row;
@@ -99,19 +99,17 @@ timerch()
  * Returns 1 if input is ready, 0 oth.
  */
 static int
-waitch(delay)
-	int delay;
+waitch(int tdelay)
 {
 	struct pollfd set[1];
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	return (poll(set, 1, delay));
+	return (poll(set, 1, tdelay));
 }
 
 void
-delay(tenths)
-	int tenths;
+delay(int tenths)
 {
 	struct timespec duration;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prtable.c,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: prtable.c,v 1.9 2005/07/01 16:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: prtable.c,v 1.8 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: prtable.c,v 1.9 2005/07/01 16:38:24 jmc Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -63,11 +63,9 @@ static int	get_maxlen(const char *const [], int, int (*)(const char *const *, in
  * an index
  */
 void
-prtable(base, num, d_cols, width, prentry, length)
-	const char *const base[];
-	int num, d_cols, width;
-	void (*prentry)(const char *const [], int);
-	int (*length)(const char *const [], int);
+prtable(const char *const base[], int num, int d_cols, int width, 
+        void (*prentry)(const char *const [], int), 
+        int (*length)(const char *const [], int))
 {
         int c, j;
         int a, b, cols, loc, maxlen, nrows, z;
@@ -114,10 +112,8 @@ prtable(base, num, d_cols, width, prentry, length)
 }
 
 static int
-get_maxlen(base, num, length)
-	const char *const base[];
-	int num;
-	int (*length)(const char *const *, int);
+get_maxlen(const char *const base[], int num, 
+           int (*length)(const char *const *, int))
 {
 	int i, len, max;
 
