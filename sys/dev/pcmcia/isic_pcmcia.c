@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.27 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.28 2005/07/01 15:05:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -95,12 +95,12 @@ CFATTACH_DECL(isic_pcmcia, sizeof(struct pcmcia_isic_softc),
     isic_pcmcia_detach, isic_pcmcia_activate);
 
 struct isic_pcmcia_card_entry {
-	int32_t vendor;		/* vendor ID */
-	int32_t product;	/* product ID */
-	char *cis1_info[4];	/* CIS info to match */
-	char *name;		/* name of controller */
-	int function;		/* expected PCMCIA function type */
-	int card_type;		/* card type found */
+	int32_t vendor;			/* vendor ID */
+	int32_t product;		/* product ID */
+	const char *cis1_info[4];	/* CIS info to match */
+	const char *name;		/* name of controller */
+	int function;			/* expected PCMCIA function type */
+	int card_type;			/* card type found */
 	isic_pcmcia_attach_func attach;	/* card initialization */
 };
 
@@ -304,7 +304,7 @@ isic_pcmcia_activate(self, act)
 int
 isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 {
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -312,7 +312,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",
