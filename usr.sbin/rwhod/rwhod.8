@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.13 2003/08/07 11:25:43 agc Exp $
+.\"	$NetBSD: rwhod.8,v 1.14 2005/07/01 13:07:21 christos Exp $
 .\"
-.Dd December 11, 1993
+.Dd July 1, 2005
 .Dt RWHOD 8
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nd system status server
 .Sh SYNOPSIS
 .Nm
+.Op Fl g Ar time
 .Sh DESCRIPTION
 .Nm
 is the server which maintains the database used by the
@@ -46,6 +47,16 @@ programs.  Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
+.Bl -tag -width flag
+.It Fl g Op Ar time 
+Allows for the broadcast time to be reduced from 3 minutes.
+To reduce the broadcast time, the
+.Ar time
+operand can be given as 30 (30 seconds) or
+1m (1 minute), for example.
+This allows for more real time information about the host.
+.Pp
+.El
 .Nm
 operates as both a producer and consumer of status information.
 As a producer of information it periodically
