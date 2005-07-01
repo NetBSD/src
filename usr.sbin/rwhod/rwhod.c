@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.28 2005/07/01 13:07:21 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.29 2005/07/01 15:31:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.28 2005/07/01 13:07:21 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.29 2005/07/01 15:31:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,12 @@ __RCSID("$NetBSD: rwhod.c,v 1.28 2005/07/01 13:07:21 christos Exp $");
 #include <util.h>
 
 #include "utmpentry.h"
-/*
- * Check interval. Don't forget to change the down time check in ruptime
- * if this is changed.
- */
+
 #define CHECK_INTERVAL (3 * 60)
+
+/* Time interval limit; ruptime will think that we are down > than this */
+#define MAX_INTERVAL (11 * 60)
+
 
 static char	myname[MAXHOSTNAMELEN + 1];
 
@@ -132,9 +133,9 @@ main(int argc, char *argv[])
 	if (getuid())
 		errx(EXIT_FAILURE, "not super user");
 
-	while ((ch = getopt(argc, argv, "g:")) != -1) {
+	while ((ch = getopt(argc, argv, "i:")) != -1) {
 		switch (ch) {
-		case 'g':
+		case 'i':
 			time_interval = (int)strtol(optarg, &ep, 10);
 
 			switch (*ep) {
@@ -152,10 +153,11 @@ main(int argc, char *argv[])
 			}
 
 			if (time_interval <= 0)
-				errx(1, "Time must be greater than 0");
+				errx(1, "Interval must be greater than 0");
 
-			if (time_interval > 180)
-				errx(1, "Cannot be greater than 180 seconds");
+			if (time_interval > MAX_INTERVAL)
+				errx(1, "Interval cannot be greater than"
+				    " %d minutes", MAX_INTERVAL / 60);
 			break;
 		default:
 			usage();	
