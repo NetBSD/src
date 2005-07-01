@@ -1,4 +1,4 @@
-/*	$NetBSD: allow.c,v 1.5 2003/08/07 09:36:56 agc Exp $	*/
+/*	$NetBSD: allow.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: allow.c,v 1.5 2003/08/07 09:36:56 agc Exp $");
+__RCSID("$NetBSD: allow.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 int
-movallow()
+movallow(void)
 {
 	int     i, m, iold;
 	int     r;

@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5 2003/08/07 09:36:57 agc Exp $	*/
+/*	$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: check.c,v 1.5 2003/08/07 09:36:57 agc Exp $");
+__RCSID("$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 void
-getmove()
+getmove(void)
 {
 	int     i, c;
 
@@ -105,8 +105,7 @@ getmove()
 }
 
 int
-movokay(mv)
-	int     mv;
+movokay(int mv)
 {
 	int     i, m;
 
