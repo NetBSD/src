@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.26 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.27 2005/07/01 16:12:11 elad Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.26 2005/06/24 23:21:09 christos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.27 2005/07/01 16:12:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -787,7 +787,7 @@ filter_stringmatch(struct intercept_translate *tl, struct logic *logic)
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
 
-	return (!strcasecmp(line, logic->filterdata));
+	return (!strcmp(line, logic->filterdata));
 }
 
 int
@@ -798,7 +798,7 @@ filter_negstringmatch(struct intercept_translate *tl, struct logic *logic)
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (1);
 
-	return (strcasecmp(line, logic->filterdata) != 0);
+	return (strcmp(line, logic->filterdata) != 0);
 }
 
 int
