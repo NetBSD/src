@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.339 2005/06/22 16:51:41 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.340 2005/07/01 12:46:53 peter Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -582,7 +582,7 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	PF (openbsd packet filter)
-Version:	OpenBSD 3.6
+Version:	OpenBSD 3.7
 Current Vers:	OpenBSD 3.7-current
 Maintainer:	itojun@NetBSD.org
 Archive Site:	ftp://ftp.openbsd.org/
