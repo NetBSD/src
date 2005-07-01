@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_parser.h,v 1.3 2004/11/14 11:26:48 yamt Exp $	*/
-/*	$OpenBSD: pfctl_parser.h,v 1.77 2004/07/16 23:44:25 frantzen Exp $ */
+/*	$NetBSD: pfctl_parser.h,v 1.4 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: pfctl_parser.h,v 1.80 2005/02/07 18:18:14 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,6 +49,7 @@
 #define PF_OPT_SHOWALL		0x0400
 #define PF_OPT_OPTIMIZE		0x0800
 #define PF_OPT_OPTIMIZE_PROFILE	0x1000
+#define PF_OPT_MERGE		0x2000
 
 #define PF_TH_ALL		0xFF
 
@@ -81,6 +82,19 @@ struct pfctl {
 	const char *anchor;
 	const char *ruleset;
 	struct pf_opt_queue opt_queue;
+
+	/* 'set foo' options */
+	u_int32_t	 timeout[PFTM_MAX];
+	u_int32_t	 limit[PF_LIMIT_MAX];
+	u_int32_t	 debug;
+	u_int32_t	 hostid;
+	char		*ifname;
+
+	u_int8_t	 timeout_set[PFTM_MAX];
+	u_int8_t	 limit_set[PF_LIMIT_MAX];
+	u_int8_t	 debug_set;
+	u_int8_t	 hostid_set;
+	u_int8_t	 ifname_set;
 };
 
 struct node_if {
@@ -188,6 +202,7 @@ int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
 int	pfctl_set_logif(struct pfctl *, char *);
 int	pfctl_set_hostid(struct pfctl *, u_int32_t);
 int	pfctl_set_debug(struct pfctl *, char *);
+int	pfctl_set_interface_flags(struct pfctl *, char *, int, int);
 
 int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);

@@ -1,4 +1,5 @@
-/*	$OpenBSD: pflogd.c,v 1.30 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.3 2005/07/01 12:43:50 peter Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.33 2005/02/09 12:09:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -593,6 +594,7 @@ main(int argc, char **argv)
 		pidfile(NULL);
 	}
 
+	tzset();
 	(void)umask(S_IRWXG | S_IRWXO);
 
 	/* filter will be used by the privileged process */
@@ -645,7 +647,7 @@ main(int argc, char **argv)
 
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
-		    dump_packet, (u_char *)dpcap);
+		    phandler, (u_char *)dpcap);
 		if (np < 0)
 			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
 
