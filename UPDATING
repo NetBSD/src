@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.140 2005/06/03 11:02:59 yamt Exp $
+$NetBSD: UPDATING,v 1.141 2005/07/01 09:55:37 augustss Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,8 +17,8 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20050531:
-	genassym.sh(8) was moved to genassym(8). You need to either build
-	tools first or install the version of genassym from /usr/sbin before
+	genassym.sh(8) was moved to genassym(1). You need to either build
+	tools first or install the version of genassym from /usr/bin before
 	you can build a kernel again.
 
 20050520:
