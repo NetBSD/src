@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.401 2005/06/24 08:09:31 skrll Exp $
+$NetBSD: usbdevs,v 1.402 2005/07/01 11:36:39 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -428,6 +428,7 @@ vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
+vendor HANK		0x3353	Hank Connection
 vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
@@ -923,6 +924,9 @@ product HAL IMR001		0x0011	Crossam2+USB IR commander
 product HANDSPRING VISOR	0x0100	Handspring Visor
 product HANDSPRING TREO		0x0200	Handspring Treo
 product HANDSPRING TREO600	0x0300	Handspring Treo 600
+
+/* Hank Connection */
+product HANK HP5187		0x3353	HP Wireless Keyboard&Mouse
 
 /* Hauppauge Computer Works */
 product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV USB FM
