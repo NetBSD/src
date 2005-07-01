@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2005/05/07 15:06:51 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2005/07/01 18:01:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2005/05/07 15:06:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2005/07/01 18:01:44 christos Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1160,11 +1160,13 @@ syscall(struct trapframe *frame, int *args)
 	argsize = callp->sy_argsize;
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	switch (error = (*callp->sy_call)(l, args, rval)) {
+	error = (*callp->sy_call)(l, args, rval);
+out:
+	switch (error) {
 	case 0:
 		l = curlwp;			/* changes on exec() */
 		frame = l->l_md.md_regs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2004/09/02 02:18:38 tacha Exp $     */
+/*	$NetBSD: trap.c,v 1.96 2005/07/01 18:01:45 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2004/09/02 02:18:38 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2005/07/01 18:01:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -437,12 +437,11 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		}
 	}
 
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
-		goto bad;
-	}
+	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
+		goto out;
 
 	err = (*callp->sy_call)(curlwp, args, rval);
+out:
 	KERNEL_PROC_UNLOCK(l);
 	exptr = l->l_addr->u_pcb.framep;
 
