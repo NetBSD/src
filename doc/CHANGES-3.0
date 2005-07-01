@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.146 2005/06/29 12:26:11 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.147 2005/07/01 12:32:05 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9852,4 +9852,25 @@ sys/arch/xen/xen/clock.c			1.13
 	on a real i386 (where we read the RTC), and seems to fix gettimeofday()
 	sometime going backward by several seconds for me.
 	[bouyer, ticket #510]
+
+share/man/man4/tlp.4				1.16
+sys/dev/ic/tulip.c				1.137
+sys/dev/ic/tulipreg.h				1.31
+sys/dev/ic/tulipvar.h				1.55
+sys/dev/pci/if_tlp_pci.c			1.80
+
+	Add support for ASIX AX88140A/AX88141 chipsets using only
+	the 10/100 MII.
+	[rpaulo, ticket #493]
+
+crypto/dist/ipsec-tools/src/libipsec/ipsec_set_policy.3	patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.3	patch
+crypto/dist/ipsec-tools/src/racoon/plainrsa-gen.8	patch
+crypto/dist/ipsec-tools/src/racoon/racoon.8		patch
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5	patch
+crypto/dist/ipsec-tools/src/racoon/racoonctl.8		patch
+crypto/dist/ipsec-tools/src/setkey/setkey.8		patch
+
+	Lots of grammar and mdoc fixes for the ipsec-tools man pages.
+	[wiz, ticket #517]
 
