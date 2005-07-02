@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153.2.1 2005/04/20 11:15:06 tron Exp $
+# $NetBSD: mi,v 1.153.2.2 2005/07/02 23:37:46 tron Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -249,7 +249,7 @@
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
 ./etc/skeykeys					etc-sys-etc
-./etc/spamd.conf				etc-net-etc		pf
+./etc/spamd.conf				etc-obsolete		obsolete
 ./etc/spwd.db					etc-sys-etc
 ./etc/ssh/ssh_config				etc-secsh-etc		crypto
 ./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto
