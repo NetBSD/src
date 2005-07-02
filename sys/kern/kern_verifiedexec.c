@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.11 2005/07/02 15:46:46 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.12 2005/07/02 15:47:07 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.11 2005/07/02 15:46:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.12 2005/07/02 15:47:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -357,7 +357,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
         int error = 0;
 
 	/* Evaluate fingerprint if needed and set the status on the vp. */
-	if ((vp->vhe == NULL) || (vp->fp_status == FINGERPRINT_NOTEVAL)) {
+	if (vp->fp_status == FINGERPRINT_NOTEVAL) {
 		vp->vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
 		if (vp->vhe == NULL) {
 			vp->fp_status = FINGERPRINT_NOENTRY;
