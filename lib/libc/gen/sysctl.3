@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.142.2.4 2005/07/02 15:51:13 tron Exp $
+.\"	$NetBSD: sysctl.3,v 1.142.2.5 2005/07/02 15:52:10 tron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -904,7 +904,8 @@ In strict level 2, the system is in IPS mode.
 It has all effects of
 strict level 1, plus it will deny write access to monitored files,
 prevent their removal, and enforce access type (direct, indirect, file).
-Strict level 3 operates as lockdown mode. It will have all effects of
+Strict level 3 operates as lockdown mode.
+It will have all effects of
 strict level 2, but it will also prevent access to non-monitored files.
 Furthermore, it will prevent addition of new files to the system, and
 allow writing only to files opened before the strict level was raised.
