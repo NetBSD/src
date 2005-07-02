@@ -482,7 +482,12 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 	uschar *q;
 	int i, k;
 
-	s = f->reset ? makeinit(f,1) : f->initstat;
+	/* s = f->reset ? makeinit(f,1) : f->initstat; */
+	if (f->reset) {
+		f->initstat = s = makeinit(f,1);
+	} else {
+		s = f->initstat;
+	}
 	patbeg = p;
 	patlen = -1;
 	do {
@@ -496,7 +501,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 				s = cgoto(f, s, *q);
 			if (s == 1) {	/* no transition */
 				if (patlen >= 0) {
-					patbeg = (char *) p;
+					patbeg = p;
 					return(1);
 				}
 				else
@@ -506,7 +511,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		if (f->out[s])
 			patlen = q-p-1;	/* don't count $ */
 		if (patlen >= 0) {
-			patbeg = (char *) p;
+			patbeg = p;
 			return(1);
 		}
 	nextin:
@@ -535,7 +540,12 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 	uschar *q;
 	int i, k;
 
-	s = f->reset ? makeinit(f,1) : f->initstat;
+	/* s = f->reset ? makeinit(f,1) : f->initstat; */
+	if (f->reset) {
+		f->initstat = s = makeinit(f,1);
+	} else {
+		s = f->initstat;
+	}
 	patlen = -1;
 	while (*p) {
 		q = p;
@@ -548,7 +558,7 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 				s = cgoto(f, s, *q);
 			if (s == 1) {	/* no transition */
 				if (patlen > 0) {
-					patbeg = (char *) p;
+					patbeg = p;
 					return(1);
 				} else
 					goto nnextin;	/* no nonempty match */
@@ -557,7 +567,7 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 		if (f->out[s])
 			patlen = q-p-1;	/* don't count $ */
 		if (patlen > 0 ) {
-			patbeg = (char *) p;
+			patbeg = p;
 			return(1);
 		}
 	nnextin:
@@ -824,6 +834,7 @@ int cgoto(fa *f, int s, int c)
 	int i, j, k;
 	int *p, *q;
 
+	assert(c == HAT || c < NCHARS);
 	while (f->accept >= maxsetvec) {	/* guessing here! */
 		maxsetvec *= 4;
 		setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
