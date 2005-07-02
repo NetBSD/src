@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: dm.c,v 1.22 2005/07/02 08:35:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: dm.c,v 1.22 2005/07/02 08:35:29 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,16 +71,13 @@ void	c_game(const char *, const char  *, const char *, const char *);
 void	c_tty(const char *);
 const char *hour(int);
 double	load(void);
-int	main(int, char *[]);
 void	nogamefile(void);
 void	play(char **) __attribute__((__noreturn__));
 void	read_config(void);
 int	users(void);
 
 int
-main(argc, argv)
-	int argc __attribute__((__unused__));
-	char *argv[];
+main(int argc __attribute__((__unused__)), char *argv[])
 {
 	char *cp;
 
@@ -107,8 +104,7 @@ main(argc, argv)
  *	play the game
  */
 void
-play(args)
-	char **args;
+play(char **args)
 {
 	char pbuf[MAXPATHLEN];
 
@@ -124,7 +120,7 @@ play(args)
  *	read through config file, looking for key words.
  */
 void
-read_config()
+read_config(void)
 {
 	FILE *cfp;
 	char lbuf[BUFSIZ], f1[40], f2[40], f3[40], f4[40], f5[40];
@@ -159,8 +155,7 @@ read_config()
  *	if day is today, see if okay to play
  */
 void
-c_day(s_day, s_start, s_stop)
-	const char *s_day, *s_start, *s_stop;
+c_day(const char *s_day, const char *s_start, const char *s_stop)
 {
 	static const char *const days[] = {
 		"sunday", "monday", "tuesday", "wednesday",
@@ -173,7 +168,8 @@ c_day(s_day, s_start, s_stop)
 		ct = localtime(&now);
 	if (strcasecmp(s_day, days[ct->tm_wday]))
 		return;
-	if (!isdigit((unsigned char)*s_start) || !isdigit((unsigned char)*s_stop))
+	if (!isdigit((unsigned char)*s_start) || 
+	    !isdigit((unsigned char)*s_stop))
 		return;
 	start = atoi(s_start);
 	stop = atoi(s_stop);
@@ -191,8 +187,7 @@ c_day(s_day, s_start, s_stop)
  *	decide if this tty can be used for games.
  */
 void
-c_tty(tty)
-	const char *tty;
+c_tty(const char *tty)
 {
 	static int first = 1;
 	static char *p_tty;
@@ -211,8 +206,8 @@ c_tty(tty)
  *	see if game can be played now.
  */
 void
-c_game(s_game, s_load, s_users, s_priority)
-	const char *s_game, *s_load, *s_users, *s_priority;
+c_game(const char *s_game, const char *s_load, const char *s_users, 
+       const char *s_priority)
 {
 	static int found;
 
@@ -234,7 +229,7 @@ c_game(s_game, s_load, s_users, s_priority)
  *	return 15 minute load average
  */
 double
-load()
+load(void)
 {
 	double avenrun[3];
 
@@ -250,7 +245,7 @@ load()
  *	count them.
  */
 int
-users()
+users(void)
 {
 	static struct utmpentry *ohead = NULL;	
 	struct utmpentry *ep;
@@ -265,7 +260,7 @@ users()
 }
 
 void
-nogamefile()
+nogamefile(void)
 {
 	int fd, n;
 	char buf[BUFSIZ];
@@ -284,8 +279,7 @@ nogamefile()
  *	print out the hour in human form
  */
 const char *
-hour(h)
-	int h;
+hour(int h)
 {
 	static const char *const hours[] = {
 	    "midnight", "1am", "2am", "3am", "4am", "5am",
@@ -304,7 +298,7 @@ hour(h)
  * logfile --
  *	log play of game
  */
-logfile()
+logfile(void)
 {
 	struct passwd *pw;
 	FILE *lp;

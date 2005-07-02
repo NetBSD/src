@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.16 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: fish.c,v 1.17 2005/07/02 08:38:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.16 2005/02/15 12:56:20 jsm Exp $");
+__RCSID("$NetBSD: fish.c,v 1.17 2005/07/02 08:38:24 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ int	gofish(int, int, int *);
 void	goodmove(int, int, int *, int *);
 void	init(void);
 void	instructions(void);
-int	main(int, char *[]);
 int	nrandom(int);
 void	printhand(const int *);
 void	printplayer(int);
@@ -96,9 +95,7 @@ void	usage(void) __attribute__((__noreturn__));
 int	usermove(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, move;
 
@@ -150,7 +147,7 @@ istart:		for (;;) {
 }
 
 int
-usermove()
+usermove(void)
 {
 	int n;
 	const char *const *p;
@@ -205,7 +202,7 @@ usermove()
 }
 
 int
-compmove()
+compmove(void)
 {
 	static int lmove;
 
@@ -223,7 +220,7 @@ compmove()
 }
 
 int
-promove()
+promove(void)
 {
 	int i, max;
 
@@ -262,9 +259,7 @@ promove()
 }
 
 int
-drawcard(player, hand)
-	int player;
-	int *hand;
+drawcard(int player, int *hand)
 {
 	int card;
 
@@ -283,9 +278,7 @@ drawcard(player, hand)
 }
 
 int
-gofish(askedfor, player, hand)
-	int askedfor, player;
-	int *hand;
+gofish(int askedfor, int player, int *hand)
 {
 	printplayer(OTHER(player));
 	(void)printf("say \"GO FISH!\"\n");
@@ -300,9 +293,7 @@ gofish(askedfor, player, hand)
 }
 
 void
-goodmove(player, move, hand, opphand)
-	int player, move;
-	int *hand, *opphand;
+goodmove(int player, int move, int *hand, int *opphand)
 {
 	printplayer(OTHER(player));
 	(void)printf("have %d %s%s.\n",
@@ -324,9 +315,7 @@ goodmove(player, move, hand, opphand)
 }
 
 void
-chkwinner(player, hand)
-	int player;
-	const int *hand;
+chkwinner(int player, const int *hand)
 {
 	int cb, i, ub;
 
@@ -354,8 +343,7 @@ chkwinner(player, hand)
 }
 
 void
-printplayer(player)
-	int player;
+printplayer(int player)
 {
 	switch (player) {
 	case COMPUTER:
@@ -368,8 +356,7 @@ printplayer(player)
 }
 
 void
-printhand(hand)
-	const int *hand;
+printhand(const int *hand)
 {
 	int book, i, j;
 
@@ -389,8 +376,7 @@ printhand(hand)
 }
 
 int
-countcards(hand)
-	const int *hand;
+countcards(const int *hand)
 {
 	int i, count;
 
@@ -400,8 +386,7 @@ countcards(hand)
 }
 
 int
-countbooks(hand)
-	const int *hand;
+countbooks(const int *hand)
 {
 	int i, count;
 
@@ -417,7 +402,7 @@ countbooks(hand)
 }
 
 void
-init()
+init(void)
 {
 	int i, j, temp;
 
@@ -438,15 +423,14 @@ init()
 }
 
 int
-nrandom(n)
-	int n;
+nrandom(int n)
 {
 
 	return((int)random() % n);
 }
 
 void
-instructions()
+instructions(void)
 {
 	int input;
 	pid_t pid;
@@ -487,7 +471,7 @@ instructions()
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: fish [-p]\n");
 	exit(1);
