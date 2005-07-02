@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.15 2004/01/04 05:39:35 dsainty Exp $	*/
+/*	$NetBSD: bthci.c,v 1.16 2005/07/02 07:50:34 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.15 2004/01/04 05:39:35 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.16 2005/07/02 07:50:34 dsainty Exp $");
 
 #include "bthcidrv.h"
 
@@ -470,9 +470,11 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
-		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
-		return (EIO);
+		return (POLLERR);
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    !sc->sc_open || sc->sc_dying)
+		return (POLLHUP);
 
 	revents = events & (POLLOUT | POLLWRNORM);
 
