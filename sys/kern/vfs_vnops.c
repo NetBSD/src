@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.86.2.3 2005/07/02 15:51:06 tron Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.86.2.4 2005/07/02 15:53:33 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.3 2005/07/02 15:51:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.4 2005/07/02 15:53:33 tron Exp $");
 
 #include "fs_union.h"
 
@@ -102,15 +102,9 @@ vn_open(ndp, fmode, cmode)
 	struct ucred *cred = p->p_ucred;
 	struct vattr va;
 	int error;
-#ifdef NEVER /* for the moment I am not convinced this is needed since NDINIT should do this lookup...XXXX blymn */
-	char pathbuf[MAXPATHLEN];
-	unsigned pathlen;
-
-        if (ndp->ni_segflg == UIO_SYSSPACE)
-                error = copystr(pathbuf, ndp->ni_dirp, MAXPATHLEN, &pathlen);
-        else
-                error = copyinstr(pathbuf, ndp->ni_dirp,MAXPATHLEN, &pathlen);
-#endif
+#ifdef VERIFIED_EXEC
+	struct veriexec_hash_entry *vhe = NULL;
+#endif /* VERIFIED_EXEC */
 
 restart:
 	if (fmode & O_CREAT) {
@@ -198,7 +192,7 @@ restart:
 #ifdef VERIFIED_EXEC
 		/* XXX may need pathbuf instead */
 		if ((error = veriexec_verify(p, vp, &va, ndp->ni_dirp,
-					     VERIEXEC_FILE)) != 0)
+					     VERIEXEC_FILE, &vhe)) != 0)
 			goto bad;
 #endif
 
@@ -216,7 +210,7 @@ restart:
 			    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0)
 				goto bad;
 #ifdef VERIFIED_EXEC
-			if (vp->fp_status != FINGERPRINT_NOENTRY) {
+			if (vhe != NULL) {
 				veriexec_report("Write access request.",
 						ndp->ni_dirp, &va, p,
 						REPORT_NOVERBOSE,
@@ -228,7 +222,7 @@ restart:
 					error = EPERM;
 					goto bad;
 				} else {
-					vp->fp_status = FINGERPRINT_NOTEVAL;
+					vhe->status = FINGERPRINT_NOTEVAL;
 				}
 			}
 #endif
