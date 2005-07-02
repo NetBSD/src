@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.11 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: instr.c,v 1.12 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: instr.c,v 1.11 2005/02/15 12:56:20 jsm Exp $");
+__RCSID("$NetBSD: instr.c,v 1.12 2005/07/02 08:32:32 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: instr.c,v 1.11 2005/02/15 12:56:20 jsm Exp $");
 #include "pathnames.h"
 
 void
-instructions()
+instructions(void)
 {
 	int pstat;
 	int fd;
