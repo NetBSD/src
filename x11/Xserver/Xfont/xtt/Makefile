@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2005/03/21 14:38:48 tron Exp $
+#	$NetBSD: Makefile,v 1.7 2005/07/02 08:28:58 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
 
 LIB=	xtt
-
-# XXX we are building module only version
-.PATH:	${X11SRCDIR.xc}/lib/font/FreeType
-SRCS=	xttcap.c
 
 .PATH:	${X11SRCDIR.xc}/lib/font/FreeType/module
 SRCS+=	xttmodule.c
