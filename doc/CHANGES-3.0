@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.153 2005/07/02 23:35:16 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.154 2005/07/02 23:43:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9996,4 +9996,44 @@ games/countmail/countmail			1.6
 
 	Fix fix error on a nonexistent spool file. This closes PR misc/29526
 	[symka, ticket #513]
+
+dist/pf/etc/spamd.conf				delete
+dist/pf/libexec/spamd-setup/Makefile		delete
+dist/pf/libexec/spamd-setup/spamd-setup.8	delete
+dist/pf/libexec/spamd-setup/spamd-setup.c	delete
+dist/pf/libexec/spamd/Makefile			delete
+dist/pf/libexec/spamd/grey.c			delete
+dist/pf/libexec/spamd/grey.h			delete
+dist/pf/libexec/spamd/sdl.c			delete
+dist/pf/libexec/spamd/sdl.h			delete
+dist/pf/libexec/spamd/spamd.8			delete
+dist/pf/libexec/spamd/spamd.c			delete
+dist/pf/libexec/spamlogd/Makefile		delete
+dist/pf/libexec/spamlogd/spamlogd.8		delete
+dist/pf/libexec/spamlogd/spamlogd.c		delete
+dist/pf/share/man/man5/spamd.conf.5		delete
+dist/pf/usr.sbin/spamdb/Makefile		delete
+dist/pf/usr.sbin/spamdb/spamdb.8		delete
+dist/pf/usr.sbin/spamdb/spamdb.c		delete
+distrib/sets/lists/base/mi			1.557
+distrib/sets/lists/etc/mi			1.156
+distrib/sets/lists/man/mi			1.797
+distrib/sets/lists/misc/mi			1.121
+etc/mtree/NetBSD.dist				1.286
+etc/mtree/special				1.88
+etc/services					1.79
+share/man/man5/mk.conf.5			1.27
+share/mk/bsd.README				1.170
+usr.sbin/pf/Makefile				1.6
+usr.sbin/pf/etc/Makefile			1.2
+usr.sbin/pf/examples/Makefile			1.2
+usr.sbin/pf/man/man5/Makefile			1.4
+usr.sbin/pf/spamd-setup/Makefile		delete
+usr.sbin/pf/spamd/Makefile			delete
+usr.sbin/pf/spamdb/Makefile			delete
+usr.sbin/pf/spamlogd/Makefile			delete
+
+	Remove (pf)spamd. A port of the latest spamd will be imported into
+	pkgsrc soon.
+	[peter, ticket #518, #519]
 
