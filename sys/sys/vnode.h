@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.134.2.2 2005/07/02 15:46:53 tron Exp $	*/
+/*	$NetBSD: vnode.h,v 1.134.2.3 2005/07/02 15:51:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -187,10 +187,8 @@ extern struct simplelock global_v_numoutput_slock;
 #ifdef VERIFIED_EXEC
 #define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
 #define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
-#define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
-                                   indirect execs allowed */
-#define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
-#define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
+#define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
+#define FINGERPRINT_NOENTRY  3  /* fingerprint evaluated but no list entry */
 #endif
 
 /*
