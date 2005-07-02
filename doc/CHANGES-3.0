@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.152 2005/07/02 18:53:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.153 2005/07/02 23:35:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9940,4 +9940,60 @@ sys/dev/ata/wd.c				1.304
 
 	The ST3160023A* also need the LBA48 quirk.
 	[bouyer, ticket #497]
+
+sys/dev/ic/wdc.c				1.224
+
+	In wdcprobe1(), wait 5s for the drive to deassert ready. In case of
+	e.g. pcmcia devices, the drive may still be doing its power-on reset.
+	Part of fix for kern/25659.
+	[bouyer, ticket #499]
+
+sys/dev/pcmcia/wdc_pcmcia.c			1.100
+
+	When the PCMCIA socket is powered up, the driver waits for the PCMCIA
+	controller to be ready, but the drive attached to it may not be ready
+	yet. Add a half a second delay before calling wdcattach(), to let the
+	drive have its electronic ready to properly respond to the register
+	tests done in wdcprobe1(). This completes the fix for kern/25659.
+	[bouyer, ticket #500]
+
+lib/libc/net/nsdispatch.c			1.29
+
+	_nsdispatching needs to count, not just be 1 or 0.  Also shuffle  
+	around its use a little to eliminate some duplication.
+	[thorpej, ticket #501]
+
+crypto/dist/ipsec-tools/ChangeLog		1.17
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.7
+
+	NAT-T fix: We treat null ports in SPD as wildcard so that IKE ports
+	are used instead. This was done on phase 2 initiation from the kernel
+	(acquire message), but not on phase 2 initiation retries when the
+	phase 2 had been queued  for a phase 1.
+	[manu, ticket #503]
+
+sys/arch/i386/stand/lib/gatea20.c		1.6
+
+	Support PC engines WRAP.
+	[manu, ticket #504]
+
+games/wtf/wtf					1.12
+games/wtf/wtf.6					1.9-1.10
+
+	* Change program logic to not nest needlessly
+	* Search all acronyms databases, and don't force the user to
+	  know in which category to look (-t is gone)
+	* If an acronym is not found in the database or by whatis(1),
+	  also check pkg_info(1), from PR bin/30539.
+	[hubertf, ticket #506, #507]
+
+etc/rc.d/network				1.49
+
+	PR misc/29317: ifconfig.if does not allow parameters with spaces.
+	[symka, ticket #511]
+
+games/countmail/countmail			1.6
+
+	Fix fix error on a nonexistent spool file. This closes PR misc/29526
+	[symka, ticket #513]
 
