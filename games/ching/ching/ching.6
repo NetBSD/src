@@ -1,4 +1,4 @@
-.\"	$NetBSD: ching.6,v 1.3 2005/07/02 10:40:50 wiz Exp $
+.\"	$NetBSD: ching.6,v 1.4 2005/07/02 10:46:21 wiz Exp $
 .\"
 .\" Copyright (c) Caldera International Inc. 2001-2002. All rights reserved.
 .\"
@@ -84,7 +84,7 @@ as a source of wisdom and advice.
 The text of the
 .Em oracle
 (as it is sometimes known) consists of sixty-four
-.Em hexagrams,
+.Em hexagrams ,
 each symbolized by a particular arrangement of six straight (\-\-\-)
 and broken (\-\ \-) lines.  These lines have values ranging
 from six through nine, with the even values indicating the broken lines.
@@ -92,20 +92,19 @@ from six through nine, with the even values indicating the broken lines.
 Each hexagram consists of two major sections.  The
 .Sy Judgement
 relates specifically to the matter at hand
-.Po e.g.,
-.Dq "It furthers one to have somewhere to go."
+.Po e.g. ,
+.Dq It furthers one to have somewhere to go.
 .Pc
 while the
 .Sy Image
 describes the general attributes of the hexagram and how they apply
 to one's own life
-.Po Do Thus the superior man makes
-.No himself strong
-.No and untiring. Dc Pc
+.Pq Dq Thus the superior man makes himself strong and untiring.
 .Pp
 When any of the lines have the values six or nine, they are moving
 lines; for each there is an appended judgement which becomes
-significant.  Furthermore, the moving lines are inherently unstable
+significant.
+Furthermore, the moving lines are inherently unstable
 and change into their opposites; a second hexagram (and thus an
 additional judgement) is formed.
 .Pp
@@ -118,36 +117,38 @@ Using an algorithm suggested by S. C. Johnson, the
 .Ux
 .Em oracle
 simply reads a question from the standard input (up to an EOF) and
-hashes the individual characters in combination with the time of day,
-process id and any other magic numbers which happen to be lying around
-the system.  The resulting value is used as the seed of a random
-number generator which drives a simulated coin\-toss divination.  The
-answer is then piped through
+hashes the individual characters in combination with the time of
+day, process id and any other magic numbers which happen to be
+lying around the system.
+The resulting value is used as the seed of a random
+number generator which drives a simulated coin\-toss divination.
+The answer is then piped through
 .Xr nroff 1
 for formatting and will appear on the standard output.
 .Pp
 For those who wish to remain steadfast in the old traditions, the
 oracle will also accept the results of a personal divination using,
-for example, coins.  To do this, cast the change and then type the
+for example, coins.
+To do this, cast the change and then type the
 resulting line values as an argument.
 .Pp
 The impatient modern may prefer to settle for Chinese cookies; try
 .Xr fortune 6 .
-.Sh SEE ALSO
-It furthers one to see the great man.
 .Sh DIAGNOSTICS
 The great prince issues commands,
-.br
+.Pp
 Founds states, vests families with fiefs.
-.br
+.Pp
 Inferior people should not be employed.
+.Sh SEE ALSO
+It furthers one to see the great man.
 .Sh BUGS
 Waiting in the mud
-.br
+.Pp
 Brings about the arrival of the enemy.
-.br
+.Pp
 If one is not extremely careful,
-.br
+.Pp
 Somebody may come up from behind and strike him.
-.br
+.Pp
 Misfortune.
