@@ -1,6 +1,6 @@
-.\"	$NetBSD: spell.1,v 1.1 2005/06/29 21:06:12 perry Exp $
+.\"	$NetBSD: spell.1,v 1.2 2005/07/02 10:39:13 wiz Exp $
 .\"
-.\" derived from: OpenBSD: spell.1,v 1.6 2003/06/10 09:12:11 jmc Exp 
+.\" derived from: OpenBSD: spell.1,v 1.6 2003/06/10 09:12:11 jmc Exp
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,26 +74,24 @@
 .Op Fl biltvx
 .Op Fl d Ar list
 .Op Fl h Ar spellhist
-.Oo
-.Fl m
-.Ar m | s | e | a | l
-.Oc
+.Op Fl m Ar a | e | l | m | s
 .Op Fl s Ar stop
 .Op + Ns Ar extra_list
 .Op Ar
 .Sh DESCRIPTION
 .Nm spell
-collects words from the named documents and looks them up in a spelling list.
-Words that neither occur among nor are derivable (by applying certain
-inflections, prefixes or suffixes) from words in the spelling list
-are printed on the standard output.
+collects words from the named documents and looks them up in a
+spelling list.
+Words that neither occur among nor are derivable (by applying
+certain inflections, prefixes or suffixes) from words in the spelling
+list are printed on the standard output.
 .Pp
 If no files are named, words are collected from the standard input.
 .Nm
 ignores most
 .Xr troff 1 ,
 .Xr tbl 1 ,
-.Xr eqn 1
+.Xr eqn 1 ,
 and
 .Xr pic 1
 constructions.
@@ -104,7 +102,13 @@ By default,
 .Nm
 (like
 .Xr deroff 1 )
-follows chains of included files (`.so' and `.nx' commands).
+follows chains of included files
+.Po
+.Dq .so
+and
+.Dq .nx
+commands
+.Pc ) .
 .Pp
 The default spelling list is based on Webster's Second International
 dictionary and should be fairly complete.
@@ -144,20 +148,48 @@ etc., this option insists upon
 in words like
 .Em standardise ,
 Fowler and the OED to the contrary notwithstanding.
-In this mode, American variants of words are added to the stop list.
+In this mode, American variants of words are added to the stop
+list.
+.It Fl d Ar word_list
+Use the specified word list instead of the default system word
+list.
+The word list must be sorted as specified above.
+.It Fl h Ar spellhist
+Store misspelled words in the specified history file.
+The output of
+.Li who -m
+is appended to the history file after the list of misspelled words.
 .It Fl i
 Instruct
 .Xr deroff 1
-to ignore `.so' and `.nx' commands.
+to ignore
+.Dq .so
+and
+.Dq .nx
+commands.
 .It Fl l
 Use
-.Xr delatex
+.Ic delatex
 instead of
 .Xr deroff 1
 if it is present on the system.
+.It Fl m
+Enable support for common
+.Xr troff 1
+macro packages; this option is passed verbatim to
+.Xr deroff 1 .
+Refer the
+.Fl -m
+description in
+.Xr deroff 1
+for details.
+.It Fl s Ar stop_list
+Use the specified stop list instead of the default system stop
+list.
+The stop list must be sorted as specified above.
 .It Fl t
 Use
-.Xr detex
+.Ic detex
 instead of
 .Xr deroff 1
 if it is present on the system.
@@ -165,50 +197,8 @@ if it is present on the system.
 Print all words not literally in the spelling list in addition to
 plausible derivations from spelling list words.
 .It Fl x
-Print every plausible stem, prefixed with `='.
-.It Fl d Ar word_list
-Use the specified word list instead of the default system word list.
-The word list must be sorted as specified above.
-.It Fl h Ar spellhist
-Store misspelled words in the specified history file.
-The output of
-.Li who -m
-is appended to the history file after the list of misspelled words.
-.It Fl m
-Enable support for common
-.Xr troff 1
-macro packages; this option is passed verbatim to
-.Xr deroff 1 .
-The
-.Fl m
-option takes the following arguments:
-.Bl -tag -width Ds
-.It a
-recognize
-.Xr man 7
-macros.
-.It e
-recognize
-.Xr me 7
-macros.
-.It m
-recognize
-.Xr me 7
-macros.
-.It s
-recognize
-.Xr me 7
-macros.
-.It l
-recognize
-.Xr mm 7
-macros and delete
-.Xr mm 7
-lists.
-.El
-.It Fl s Ar stop_list
-Use the specified stop list instead of the default system stop list.
-The stop list must be sorted as specified above.
+Print every plausible stem, prefixed with
+.Sq = .
 .It + Ns Ar extra_list
 Use
 .Ar extra_list
@@ -247,18 +237,20 @@ command appeared in
 .At v6 .
 .Pp
 Unlike historic versions, the
-.Ox
+.Nx
 .Nm
 command does not use hashed word files.
-Instead, it uses lexigraphically sorted files and the same technique as
+Instead, it uses lexigraphically sorted files and the same technique
+as
 .Xr look 1 .
 .Sh BUGS
-The spelling list lacks many technical terms; new installations will
-probably wish to monitor the output for several months to gather local
-additions.
+The spelling list lacks many technical terms; new installations
+will probably wish to monitor the output for several months to
+gather local additions.
 .Pp
 British spelling was done by an American.
 .Pp
 In
 .Fl x
-mode it would be nicer if the stems were grouped with the appropriate word.
+mode it would be nicer if the stems were grouped with the appropriate
+word.
