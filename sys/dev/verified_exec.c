@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.8 2005/07/02 15:50:08 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.8 2005/07/02 15:50:08 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.8 2005/07/02 15:50:08 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.8 2005/07/02 15:50:08 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -161,9 +161,9 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 	/*
 	 * Don't allow updates in multi-user mode.
 	 */
-	if (securelevel >= 1) {
-		printf("Veriexec: veriexecioctl: Securelevel raised, loading"
-		       "fingerprints is not permitted\n");
+	if ((securelevel > 0) || (veriexec_strict > 0)) {
+		printf("Veriexec: veriexecioctl: Securelevel or strict "
+		       "mode, modifying veriexec tables is not permitted.\n"); 
 
 		return (EPERM);
 	}
