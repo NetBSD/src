@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.14 2005/07/02 15:47:50 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.15 2005/07/02 15:48:04 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.14 2005/07/02 15:47:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.15 2005/07/02 15:48:04 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -394,9 +394,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 	switch (flag) {
 	case VERIEXEC_DIRECT:
 	case VERIEXEC_INDIRECT:
-		break;
-	case VERIEXEC_FILE:
-		if ((vp->vhe != NULL) && (vp->vhe->type != VERIEXEC_FILE)) {
+		if ((vp->vhe != NULL) && (vp->vhe->type == VERIEXEC_FILE)) {
 			veriexec_report("Execution of 'FILE' entry.",
 					name, va, p, REPORT_NOVERBOSE,
 					REPORT_ALARM, REPORT_NOPANIC);
@@ -405,6 +403,9 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 				return (EPERM);
 		}
 
+		break;
+
+	case VERIEXEC_FILE:
 		break;
 	}
 
