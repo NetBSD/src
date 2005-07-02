@@ -1,4 +1,4 @@
-/*	$NetBSD: human.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
+/*	$NetBSD: human.cc,v 1.2 2005/07/02 15:48:03 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,13 +40,16 @@
  * human.C: Human interface for dots, using rogue-like keys.
  */
 #include "defs.h"
-RCSID("$NetBSD: human.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
+RCSID("$NetBSD: human.cc,v 1.2 2005/07/02 15:48:03 jdc Exp $")
 
 #include "human.h"
 #include "board.h"
 #include "box.h"
+#include "ttyscrn.h"
 
 #define CONTROL(a) ((a) & 037)
+
+extern GAMESCREEN *sc;
 
 HUMAN::HUMAN(const char c) :
     PLAYER(c),
@@ -99,6 +102,8 @@ void HUMAN::play(const BOARD& b, size_t& y, size_t& x, int& dir)
 	    break;
 
 	case 'q': case 'Q':
+	    // Cleanup
+	    delete sc;
 	    exit(0);
 
 	case CONTROL('L'): case CONTROL('R'):
