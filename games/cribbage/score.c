@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.10 2003/08/07 09:37:10 agc Exp $	*/
+/*	$NetBSD: score.c,v 1.11 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.10 2003/08/07 09:37:10 agc Exp $");
+__RCSID("$NetBSD: score.c,v 1.11 2005/07/02 08:32:32 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,28 +105,24 @@ static int pairpoints, runpoints;		/* Globals from pairuns. */
  *	n must be <= 4
  */
 int
-scorehand(hand, starter, n, crb, do_explain)
-	const CARD hand[];
-	CARD starter;
-	int n;
-	BOOLEAN crb;		/* true if scoring crib */
-	BOOLEAN do_explain;	/* true if must explain this hand */
+scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb, 
+          BOOLEAN do_explain)
 {
 	int i, k;
-	int score;
+	int hscore;
 	BOOLEAN flag;
 	CARD h[(CINHAND + 1)];
 	char buf[32];
 
 	explan[0] = '\0';	/* initialize explanation */
-	score = 0;
+	hscore = 0;
 	flag = TRUE;
 	k = hand[0].suit;
 	for (i = 0; i < n; i++) {	/* check for flush */
 		flag = (flag && (hand[i].suit == k));
 		if (hand[i].rank == JACK)	/* check for his nibs */
 			if (hand[i].suit == starter.suit) {
-				score++;
+				hscore++;
 				if (do_explain)
 					strcat(explan, "His Nobs");
 			}
@@ -137,12 +133,12 @@ scorehand(hand, starter, n, crb, do_explain)
 		if (do_explain && explan[0] != '\0')
 			strcat(explan, ", ");
 		if (starter.suit == k) {
-			score += 5;
+			hscore += 5;
 			if (do_explain)
 				strcat(explan, "Five-flush");
 		} else
 			if (!crb) {
-				score += 4;
+				hscore += 4;
 				if (do_explain && explan[0] != '\0')
 					strcat(explan, ", Four-flush");
 				else
@@ -154,7 +150,7 @@ scorehand(hand, starter, n, crb, do_explain)
 	h[n] = starter;
 	sorthand(h, n + 1);	/* sort by rank */
 	i = 2 * fifteens(h, n + 1);
-	score += i;
+	hscore += i;
 	if (do_explain) {
 		if (i > 0) {
 			(void) sprintf(buf, "%d points in fifteens", i);
@@ -163,7 +159,7 @@ scorehand(hand, starter, n, crb, do_explain)
 			strcat(explan, "No fifteens");
 	}
 	i = pairuns(h, n + 1);
-	score += i;
+	hscore += i;
 	if (do_explain) {
 		if (i > 0) {
 			(void) sprintf(buf, ", %d points in pairs, %d in runs",
@@ -172,7 +168,7 @@ scorehand(hand, starter, n, crb, do_explain)
 		} else
 			strcat(explan, ", No pairs/runs");
 	}
-	return (score);
+	return (hscore);
 }
 
 /*
@@ -180,9 +176,7 @@ scorehand(hand, starter, n, crb, do_explain)
  *	Return number of fifteens in hand of n cards
  */
 int
-fifteens(hand, n)
-	const CARD hand[];
-	int n;
+fifteens(const CARD hand[], int n)
 {
 	int *sp, *np;
 	int i;
@@ -223,9 +217,7 @@ fifteens(hand, n)
  * sets the globals pairpoints and runpoints appropriately
  */
 int
-pairuns(h, n)
-	const CARD h[];
-	int n;
+pairuns(const CARD h[], int n)
 {
 	int i;
 	int runlength, runmult, lastmult, curmult;
@@ -292,10 +284,7 @@ pairuns(h, n)
  * the n cards in tbl during pegging
  */
 int
-pegscore(crd, tbl, n, sum)
-	CARD crd;
-	const CARD tbl[];
-	int n, sum;
+pegscore(CARD crd, const CARD tbl[], int n, int sum)
 {
 	BOOLEAN got[RANKS];
 	int i, j, scr;
@@ -348,9 +337,7 @@ pegscore(crd, tbl, n, sum)
  * points such a crib will get.
  */
 int
-adjust(cb, tnv)
-	const CARD cb[];
-	CARD tnv __attribute__((__unused__));
+adjust(const CARD cb[], CARD tnv __attribute((__unused__)))
 {
 	long scr;
 	int i, c0, c1;
