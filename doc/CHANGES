@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.487 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.488 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -44,7 +44,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		partitions, to recover lost disklabels. [xtraeme 20050615]
 	ataraid(4): Add man page and adapt support for Adaptec HostRAID
 		from FreeBSD. [briggs 20050620]
-	azalia(4): Add driver for High Definition Audio. [kent 20050621]
 	wtf(6): Now searches all acronyms databases (the -t switch is
 		gone), whatis(1) and then pkg_info(1). [hubertf 20050622]
 	i386: Add cd9660 file system support to the BIOS bootloader.
