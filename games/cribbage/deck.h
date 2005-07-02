@@ -1,4 +1,4 @@
-/*	$NetBSD: deck.h,v 1.4 2003/08/07 09:37:10 agc Exp $	*/
+/*	$NetBSD: deck.h,v 1.5 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -74,10 +74,10 @@
 #	define		FALSE		0
 #endif
 
-typedef		struct  {
-			int		rank;
-			int		suit;
-		}		CARD;
+typedef	struct  {
+	int		rank;
+	int		suit;
+} CARD;
 
-typedef		char		BOOLEAN;
+typedef	char	BOOLEAN;
 
