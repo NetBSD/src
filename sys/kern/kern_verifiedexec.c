@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.15 2005/07/02 15:48:04 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.16 2005/07/02 15:48:21 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.15 2005/07/02 15:48:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.16 2005/07/02 15:48:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -469,9 +469,10 @@ out:
 		 *   - File is being accessed, and we're in strict
 		 *     level 2.
 		 */
-		if ((veriexec_strict > 1) ||
-		    ((veriexec_strict == 1) &&
-		    ((flag == VERIEXEC_FILE) || (flag == VERIEXEC_INDIRECT))))
+		if (((veriexec_strict == 1) &&
+		    ((flag == VERIEXEC_DIRECT) ||
+		     (flag == VERIEXEC_INDIRECT))) ||
+		    (veriexec_strict > 1))
 			error = EPERM;
 
 		break;
