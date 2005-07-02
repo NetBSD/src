@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: countmail,v 1.5 2002/07/02 17:18:21 mycroft Exp $
+#	$NetBSD: countmail,v 1.5.6.1 2005/07/02 23:31:40 tron Exp $
 
 #
 # Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 # for krb.
 #set -- `from -t`
 #v=$3
-set -- `from | wc -l`
+set -- `from 2>/dev/null |wc -l`
 v=$1
 #v=`from | wc -l`
 
