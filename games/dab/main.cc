@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cc,v 1.2 2003/12/28 17:53:48 thorpej Exp $	*/
+/*	$NetBSD: main.cc,v 1.3 2005/07/02 15:48:03 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * main.C: Main dots program
  */
 #include "defs.h"
-RCSID("$NetBSD: main.cc,v 1.2 2003/12/28 17:53:48 thorpej Exp $")
+RCSID("$NetBSD: main.cc,v 1.3 2005/07/02 15:48:03 jdc Exp $")
 
 #include <iostream>
 #include <unistd.h>
@@ -51,6 +51,8 @@ RCSID("$NetBSD: main.cc,v 1.2 2003/12/28 17:53:48 thorpej Exp $")
 #include "board.h"
 #include "human.h"
 #include "ttyscrn.h"
+
+GAMESCREEN *sc;
 
 // Print the command line usage
 static void usage(char* pname)
@@ -173,7 +175,7 @@ int main(int argc, char** argv)
 	}
     }
 
-    GAMESCREEN *sc = TTYSCRN::create(acs, ny, nx);
+    sc = TTYSCRN::create(acs, ny, nx);
     if (sc == NULL)
 	::errx(1, "Dimensions too large for current screen.");
 
