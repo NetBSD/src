@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.12 2005/07/02 15:58:47 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.12 2005/07/02 15:58:47 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.12 2005/07/02 15:58:47 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.12 2005/07/02 15:58:47 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -290,7 +290,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			       "\"%s\" (dev=%ld, inode=%ld), size was %u "
 			       "was expecting %d\n", params->fp_type,
 			       params->file, va.va_fsid, va.va_fileid,
-			       params->size, (unsigned long)e->ops->hash_len);
+			       params->size, e->ops->hash_len);
 			free(e, M_TEMP);
 			return(EINVAL);
 		}
