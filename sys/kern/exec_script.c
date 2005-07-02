@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.38.10.1 2005/06/10 15:10:24 tron Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.38.10.2 2005/07/02 17:53:58 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.1 2005/06/10 15:10:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.2 2005/07/02 17:53:58 tron Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -55,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.1 2005/06/10 15:10:24 tron E
 #include <sys/exec_elf.h>
 
 #include <sys/verified_exec.h>
+
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif /* SYSTRACE */
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.
@@ -225,8 +229,13 @@ check_shell:
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
 		/* normally can't fail, but check for it if diagnostic */
+#ifdef SYSTRACE
+		error = copystr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+				(size_t *)0);
+#else
 		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
 		    (size_t *)0);
+#endif /* SYSTRACE */
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			panic("exec_script: copyinstr couldn't fail");
