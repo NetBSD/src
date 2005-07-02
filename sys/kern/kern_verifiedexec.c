@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.17 2005/07/02 15:51:33 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.18 2005/07/02 15:52:41 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.17 2005/07/02 15:51:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.18 2005/07/02 15:52:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -467,8 +467,13 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		return (error);
 
 	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
-	if (vhe == NULL)
+	if (vhe == NULL) {
+		/* Lockdown mode: Deny access to non-monitored files. */
+		if (veriexec_strict >= 3)
+			return (EPERM);
+
 		return (0);
+	}
 
 	veriexec_report("Remove request.", pathbuf, &va, p,
 			REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
