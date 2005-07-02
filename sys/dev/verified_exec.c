@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.6 2005/07/02 15:45:13 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.6 2005/07/02 15:45:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.6 2005/07/02 15:45:13 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.6 2005/07/02 15:45:13 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.7 2005/07/02 15:49:51 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ __RCSID("$Id: verified_exec.c,v 1.5.2.6 2005/07/02 15:45:13 tron Exp $\n$NetBSD:
 #include <sys/verified_exec.h>
 
 /* count of number of times device is open (we really only allow one open) */
-static unsigned veriexec_dev_usage;
+static unsigned int veriexec_dev_usage;
 
 struct veriexec_softc {
         DEVPORT_DEVICE veriexec_dev;
@@ -126,6 +126,9 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 	       "uid=%u, pid=%u. (dev=%d)\n", p->p_ucred->cr_uid,
 	       p->p_pid, dev);
 #endif
+
+	if (suser(p->p_ucred, &p->p_acflag) != 0)
+		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
 		veriexec_dprintf(("Veriexec: load device already in use\n"));
