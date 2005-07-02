@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.7 2003/08/07 09:37:11 agc Exp $	*/
+/*	$NetBSD: support.c,v 1.8 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.7 2003/08/07 09:37:11 agc Exp $");
+__RCSID("$NetBSD: support.c,v 1.8 2005/07/02 08:32:32 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,7 @@ const int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
  * only called if no playable card will score points
  */
 int
-cchose(h, n, s)
-	const CARD h[];
-	int n, s;
+cchose(const CARD h[], int n, int s)
 {
 	int i, j, l;
 
@@ -124,9 +122,7 @@ cchose(h, n, s)
  *	Evaluate and score a player hand or crib
  */
 int
-plyrhand(hand, s)
-	const CARD    hand[];
-	const char   *s;
+plyrhand(const CARD hand[], const char *s)
 {
 	static char prompt[BUFSIZ];
 	int i, j;
@@ -160,9 +156,7 @@ plyrhand(hand, s)
  *	Handle scoring and displaying the computers hand
  */
 int
-comphand(h, s)
-	const CARD h[];
-	const char *s;
+comphand(const CARD h[], const char *s)
 {
 	int j;
 
@@ -180,8 +174,7 @@ comphand(h, s)
 int Lastscore[2] = {-1, -1};
 
 int
-chkscr(scr, inc)
-	int    *scr, inc;
+chkscr(int *scr, int inc)
 {
 	BOOLEAN myturn;
 
@@ -202,10 +195,7 @@ chkscr(scr, inc)
  *	score up on the board.
  */
 void
-prpeg(score, peg, myturn)
-	int score;
-	int peg;
-	BOOLEAN myturn;
+prpeg(int curscore, int pegc, BOOLEAN myturn)
 {
 	int y, x;
 
@@ -214,26 +204,26 @@ prpeg(score, peg, myturn)
 	else
 		y = SCORE_Y + 5;
 
-	if (score <= 0 || score >= glimit) {
-		if (peg == '.')
-			peg = ' ';
-		if (score == 0)
+	if (curscore <= 0 || curscore >= glimit) {
+		if (pegc == '.')
+			pegc = ' ';
+		if (curscore == 0)
 			x = SCORE_X + 2;
 		else {
 			x = SCORE_X + 2;
 			y++;
 		}
 	} else {
-		x = (score - 1) % 30;
-		if (score > 90 || (score > 30 && score <= 60)) {
+		x = (curscore - 1) % 30;
+		if (curscore > 90 || (curscore > 30 && curscore <= 60)) {
 			y++;
 			x = 29 - x;
 		}
 		x += x / 5;
 		x += SCORE_X + 3;
 	}
-	mvaddch(y, x, peg);
-	mvprintw(SCORE_Y + (myturn ? 7 : 1), SCORE_X + 10, "%3d", score);
+	mvaddch(y, x, pegc);
+	mvprintw(SCORE_Y + (myturn ? 7 : 1), SCORE_X + 10, "%3d", curscore);
 }
 
 /*
@@ -241,8 +231,7 @@ prpeg(score, peg, myturn)
  * the crib and puts the best two cards at the end
  */
 void
-cdiscard(mycrib)
-	BOOLEAN mycrib;
+cdiscard(BOOLEAN mycrib)
 {
 	CARD    d[CARDS], h[FULLHAND], cb[2];
 	int i, j, k;
@@ -294,9 +283,7 @@ cdiscard(mycrib)
  * returns true if some card in hand can be played without exceeding 31
  */
 int
-anymove(hand, n, sum)
-	const CARD hand[];
-	int n, sum;
+anymove(const CARD hand[], int n, int sum)
 {
 	int i, j;
 
@@ -315,9 +302,7 @@ anymove(hand, n, sum)
  * the s up to t, or -1 if there is none
  */
 int
-anysumto(hand, n, s, t)
-	const CARD hand[];
-	int n, s, t;
+anysumto(const CARD hand[], int n, int s, int t)
 {
 	int i;
 
@@ -332,9 +317,7 @@ anysumto(hand, n, s, t)
  * return the number of cards in h having the given rank value
  */
 int
-numofval(h, n, v)
-	const CARD h[];
-	int n, v;
+numofval(const CARD h[], int n, int v)
 {
 	int i, j;
 
@@ -350,9 +333,7 @@ numofval(h, n, v)
  * makeknown remembers all n cards in h for future recall
  */
 void
-makeknown(h, n)
-	const CARD h[];
-	int n;
+makeknown(const CARD h[], int n)
 {
 	int i;
 

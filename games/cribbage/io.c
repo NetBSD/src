@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.19 2005/04/19 20:12:07 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.20 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.19 2005/04/19 20:12:07 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.20 2005/07/02 08:32:32 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,7 @@ msgcard(c, brief)
  *	Print the value of a card in ascii
  */
 int
-msgcrd(c, brfrank, mid, brfsuit)
-	CARD c;
-	BOOLEAN brfrank, brfsuit;
-	const char *mid;
+msgcrd(CARD c, BOOLEAN brfrank, const char *mid, BOOLEAN brfsuit)
 {
 	if (c.rank == EMPTY || c.suit == EMPTY)
 		return (FALSE);
@@ -118,11 +115,7 @@ msgcrd(c, brfrank, mid, brfsuit)
  *	Print out a card.
  */
 void
-printcard(win, cardno, c, blank)
-	WINDOW *win;
-	int     cardno;
-	CARD    c;
-	BOOLEAN blank;
+printcard(WINDOW *win, int cardno, CARD c, BOOLEAN blank)
 {
 	prcard(win, cardno * 2, cardno, c, blank);
 }
@@ -132,11 +125,7 @@ printcard(win, cardno, c, blank)
  *	Print out a card on the window at the specified location
  */
 void
-prcard(win, y, x, c, blank)
-	WINDOW *win;
-	int y, x;
-	CARD c;
-	BOOLEAN blank;
+prcard(WINDOW *win, int y, int x, CARD c, BOOLEAN blank)
 {
 	if (c.rank == EMPTY)
 		return;
@@ -159,11 +148,7 @@ prcard(win, y, x, c, blank)
  *	Print a hand of n cards
  */
 void
-prhand(h, n, win, blank)
-	const CARD h[];
-	int n;
-	WINDOW *win;
-	BOOLEAN blank;
+prhand(const CARD h[], int n, WINDOW *win, BOOLEAN blank)
 {
 	int i;
 
@@ -179,10 +164,7 @@ prhand(h, n, win, blank)
  *	input, returns the index of the card found...
  */
 int
-infrom(hand, n, prompt)
-	const CARD hand[];
-	int n;
-	const char *prompt;
+infrom(const CARD hand[], int n, const char *prompt)
 {
 	int i, j;
 	CARD crd;
@@ -235,8 +217,7 @@ infrom(hand, n, prompt)
  *	and then parses it.
  */
 int
-incard(crd)
-	CARD *crd;
+incard(CARD *crd)
 {
 	int i;
 	int rnk, sut;
@@ -320,7 +301,7 @@ gotit:
  *	Reads and converts to upper case
  */
 int
-getuchar()
+getuchar(void)
 {
 	int c;
 
@@ -337,9 +318,7 @@ getuchar()
  *	"hi" inclusive.
  */
 int
-number(lo, hi, prompt)
-	int lo, hi;
-	const char *prompt;
+number(int lo, int hi, const char *prompt)
 {
 	char *p;
 	int sum;
@@ -416,7 +395,7 @@ addmsg(const char *fmt, ...)
 int     Lineno = 0;
 
 void
-endmsg()
+endmsg(void)
 {
 	static int lastline = 0;
 	int len;
@@ -465,7 +444,7 @@ endmsg()
  *	Wait for the user to type ' ' before doing anything else
  */
 void
-do_wait()
+do_wait(void)
 {
 	static const char prompt[] = {'-', '-', 'M', 'o', 'r', 'e', '-', '-', '\0'};
 
@@ -487,8 +466,7 @@ do_wait()
  *	Sit around until the guy types the right key
  */
 void
-wait_for(ch)
-	int ch;
+wait_for(int ch)
 {
 	int c;
 
@@ -505,7 +483,7 @@ wait_for(ch)
  *	Reads and returns a character, checking for gross input errors
  */
 int
-readchar()
+readchar(void)
 {
 	int cnt;
 	unsigned char c;
@@ -533,7 +511,7 @@ over:
  *	compressed to one space; a space is inserted before a ','
  */
 char *
-getline()
+getline(void)
 {
 	char *sp;
 	int c, oy, ox;
@@ -579,8 +557,7 @@ getline()
 }
 
 void
-receive_intr(signo)
-	int signo __attribute__((__unused__));
+receive_intr(int signo __attribute__((__unused__)))
 {
 	bye();
 	exit(1);
@@ -591,7 +568,7 @@ receive_intr(signo)
  *	Leave the program, cleaning things up as we go.
  */
 void
-bye()
+bye(void)
 {
 	signal(SIGINT, SIG_IGN);
 	mvcur(0, COLS - 1, LINES - 1, 0);

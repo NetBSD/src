@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.12 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.13 2005/07/02 08:32:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -53,7 +53,6 @@ extern  BOOLEAN		iwon;			/* if comp won last */
 extern  BOOLEAN		explain;		/* player mistakes explained */
 extern  BOOLEAN		rflag;			/* if all cuts random */
 extern  BOOLEAN		quiet;			/* if suppress random mess */
-extern	BOOLEAN		playing;		/* currently playing game */
 
 extern  char		explan[];		/* string for explanation */
 
@@ -69,7 +68,7 @@ int	 chkscr(int *, int);
 int	 comphand(const CARD [], const char *);
 void	 cremove(CARD, CARD [], int);
 int	 cut(BOOLEAN, int);
-int	 deal(int);
+int	 deal(BOOLEAN);
 void	 discard(BOOLEAN);
 void	 do_wait(void);
 void	 endmsg(void);
