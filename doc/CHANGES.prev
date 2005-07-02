@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.29 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.30 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7956,3 +7956,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	pkill(1): Add -i option to ignore case for both pgrep(1) and pkill(1).
 		[sketch 20050316]
 	postinstall(8): Moved from /etc to /usr/sbin.  [lukem 20050417]
+	azalia(4): Add driver for High Definition Audio. [kent 20050621]
