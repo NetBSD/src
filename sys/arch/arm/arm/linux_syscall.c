@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.12 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.13 2005/07/02 23:08:21 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.12 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.13 2005/07/02 23:08:21 he Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -221,7 +221,6 @@ out:
 		break;
 
 	default:
-	bad:
 		error = native_to_linux_errno[error];
 		frame->tf_r0 = error;
 		break;
