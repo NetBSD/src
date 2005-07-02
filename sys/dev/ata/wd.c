@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.298.2.3 2005/06/16 09:37:09 tron Exp $ */
+/*	$NetBSD: wd.c,v 1.298.2.4 2005/07/02 18:09:12 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.3 2005/06/16 09:37:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.4 2005/07/02 18:09:12 tron Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -235,11 +235,9 @@ static const struct wd_quirk {
 	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
 	 * LBA48
 	 */
-	{ "ST3200822A",
+	{ "ST3200822A*",
 	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3200822AS",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3250823AS",
+	{ "ST3250823A*",
 	  WD_QUIRK_FORCE_LBA48 },
 
 	{ NULL,
