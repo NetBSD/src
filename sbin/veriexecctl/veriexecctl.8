@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.7.2.5 2005/06/10 15:11:58 tron Exp $
+.\" $NetBSD: veriexecctl.8,v 1.7.2.6 2005/07/02 15:45:27 tron Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.7.2.5 2005/06/10 15:11:58 tron Exp $
+.\"	$Id: veriexecctl.8,v 1.7.2.6 2005/07/02 15:45:27 tron Exp $
 .\"
 .Dd April 22, 2005
 .Dt VERIEXECCTL 8
@@ -38,8 +38,6 @@
 .Nm veriexecctl
 .Nd load or report verified exec fingerprints
 .Sh SYNOPSIS
-.Nm
-.Cm fingerprints
 .Nm
 .Cm load Ar veriexec.conf
 .Sh DESCRIPTION
@@ -73,11 +71,7 @@ Where
 is the full path to the file and
 .Em type
 is the type of fingerprint used, see above for the default list.
-Other fingerprints may be available depending on kernel configuration,
-use the
-.Cm fingerprints
-command option to extract the fingerprints supported by the currently
-running kernel.
+Other fingerprints may be available depending on kernel configuration.
 The
 .Em fingerprint
 field is a hexadecimal representation of the fingerprint for
