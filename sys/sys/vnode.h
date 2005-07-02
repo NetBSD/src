@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.134.2.1 2005/06/10 14:48:56 tron Exp $	*/
+/*	$NetBSD: vnode.h,v 1.134.2.2 2005/07/02 15:46:53 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,8 +122,8 @@ struct vnode {
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* knotes attached to vnode */
 #ifdef VERIFIED_EXEC
-	char fp_status;				/* fingerprint status
-						   (see below) */
+	u_char fp_status;			/* fingerprint status */
+	struct veriexec_hash_entry *vhe;	/* veriexec table entry */
 #endif
 };
 #define	v_mountedhere	v_un.vu_mountedhere
