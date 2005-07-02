@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.18 2005/04/29 17:18:30 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.19 2005/07/02 04:05:09 dsainty Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.18 2005/04/29 17:18:30 augustss Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.19 2005/07/02 04:05:09 dsainty Exp $");
 #endif
 
 #include <stdio.h>
@@ -151,6 +151,11 @@ main(int argc, char **argv)
 	fd = open(dev, O_RDWR);
 	if (fd < 0)
 		err(1, "%s", dev);
+
+	/* Avoid passing the device file descriptor to executed commands */
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		err(1, "fcntl(F_SETFD, FD_CLOEXEC)");
+
 	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
 		reportid = -1;
 	repd = hid_get_report_desc(fd);
