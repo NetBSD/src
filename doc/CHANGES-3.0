@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.148 2005/07/02 16:45:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.149 2005/07/02 16:46:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9893,7 +9893,7 @@ sys/sys/vnode.h					1.138-1.140
 	- Various bug-fixes and documentation corrections.
 	- Prevent from non-root users from accessing the veriexec device.
 	- Fix interaction with kernel security levels.
-	[elad, Ticket #487]
+	[elad, ticket #487]
 
 usr.bin/make/make.1				1.110,1.113
 usr.bin/make/parse.c				1.102
