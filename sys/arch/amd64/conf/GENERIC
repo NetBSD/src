@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.1 2005/04/17 11:40:35 tron Exp $
+# $NetBSD: GENERIC,v 1.42.2.2 2005/07/02 16:34:57 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.1 $"
+#ident 		"GENERIC-$Revision: 1.42.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -708,6 +708,7 @@ ugen*	at uhub? port ?
 auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA AC'97 audio
+azalia*	at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
