@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.149 2005/07/02 16:46:28 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.150 2005/07/02 18:05:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9874,20 +9874,26 @@ crypto/dist/ipsec-tools/src/setkey/setkey.8		patch
 	Lots of grammar and mdoc fixes for the ipsec-tools man pages.
 	[wiz, ticket #517]
 
+bin/systrace/intercept.c			1.24
+bin/systrace/intercept.h			1.16
+bin/systrace/netbsd-syscalls.c			1.18
 etc/MAKEDEV.tmpl				1.45
 etc/rc.d/veriexec				1.5
 lib/libc/gen/sysctl.3				1.150-1.152
 sbin/veriexecctl/veriexecctl.8			1.13-1.16
 sbin/veriexecctl/veriexecctl_conf.l		1.6
 sbin/veriexecctl/veriexecctl_parse.y		1.10
-sys/dev/verified_exec.c				1.12-1.18
+sys/dev/verified_exec.c				1.13-1.18
 sys/kern/init_sysctl.c				1.44
+sys/kern/exec_script.c				1.40
+sys/kern/kern_exec.c				1.200
+sys/kern/kern_systrace.c			1.45
 sys/kern/kern_verifiedexec.c			1.20-1.29
+sys/sys/systrace.h				1.13
 sys/kern/vfs_subr.c				1.249-1.250
 sys/kern/vfs_syscalls.c				1.222
 sys/kern/vfs_vnops.c				1.91-1.92
-sys/sys/verified_exec.h				1.13
-sys/sys/verified_exec.h				1.14
+sys/sys/verified_exec.h				1.13-1.14
 sys/sys/vnode.h					1.138-1.140
 
 	- Various bug-fixes and documentation corrections.
