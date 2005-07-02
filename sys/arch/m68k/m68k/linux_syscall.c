@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.8 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.9 2005/07/02 23:08:21 he Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.8 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2005/07/02 23:08:21 he Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -316,7 +316,6 @@ out:
 		/* nothing to do */
 		break;
 	default:
-	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;
