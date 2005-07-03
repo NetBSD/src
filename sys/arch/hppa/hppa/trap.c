@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2005/07/03 22:21:10 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2005/07/03 22:21:10 he Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1200,7 +1200,6 @@ out:
 		p = curproc;
 		break;
 	default:
-	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_t1 = error;
