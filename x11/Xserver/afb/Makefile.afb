@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.afb,v 1.2 2005/07/01 13:47:14 rtr Exp $
+#	$NetBSD: Makefile.afb,v 1.3 2005/07/03 14:30:52 tron Exp $
+
+.include "../Makefile.serverlib"
 
 LIB=	afb
 

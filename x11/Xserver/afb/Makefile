@@ -1,12 +1,14 @@
+#	$NetBSD: Makefile,v 1.7 2005/07/03 14:30:52 tron Exp $
 
-
-.include "../Makefile.serverlib"
 .include <bsd.x11.mk>
 
 .if defined(X11FLAGS.LOADABLE)
-SRCS=		afbmodule.c
-CPPFLAGS+=	${X11FLAGS.LOADABLE}
-XMODULEDIR=	${X11USRLIBDIR}/modules
+SUBDIR+=	afbmod
+.else
+SUBDIR+=	afb
 .endif
 
-.include "Makefile.afb"
+.include <bsd.subdir.mk>
+
+gaga:
+	@echo ${SUBDIR}
