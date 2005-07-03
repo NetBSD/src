@@ -1,4 +1,4 @@
-/* 	$NetBSD: binary.c,v 1.2 2004/10/30 17:37:09 dsl Exp $	*/
+/* 	$NetBSD: binary.c,v 1.2.2.1 2005/07/03 21:17:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: binary.c,v 1.2 2004/10/30 17:37:09 dsl Exp $");
+__RCSID("$NetBSD: binary.c,v 1.2.2.1 2005/07/03 21:17:21 tron Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -40,21 +40,26 @@ __RCSID("$NetBSD: binary.c,v 1.2 2004/10/30 17:37:09 dsl Exp $");
 
 #define BUFFER_SIZE 128
 
+static inline int
+okchar(unsigned char c)
+{
+	return isprint(c) || isspace(c) || c == line_endchar;
+}
+
 int
 bin_file(FILE *f)
 {
 	unsigned char buf[BUFFER_SIZE];
-	int i, m;
+	size_t i, m;
 
 	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = (int)fread(buf, 1, BUFFER_SIZE, f)) == 0)
+	if ((m = fread(buf, 1, BUFFER_SIZE, f)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]) && 
-		    buf[i] != line_endchar)
+		if (!okchar(buf[i]))
 			return 1; 
 	
 	rewind(f);
@@ -70,12 +75,11 @@ gzbin_file(gzFile *f)
 	if (gzseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = gzread(f, buf, BUFFER_SIZE)) == 0)
+	if ((m = gzread(f, buf, BUFFER_SIZE)) <= 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]) &&
-		    buf[i] != line_endchar)
+		if (!okchar(buf[i]))
 			return 1;
 
 	gzrewind(f);
@@ -85,12 +89,10 @@ gzbin_file(gzFile *f)
 int
 mmbin_file(mmf_t *f)
 {
-	int i;
+	size_t i;
 	/* XXX knows too much about mmf internals */
-	for (i = 0; i < BUFFER_SIZE && i < f->len - 1; i++)
-		if (!isprint((unsigned char)f->base[i]) &&
-		    !isspace((unsigned char)f->base[i]) &&
-		    f->base[i] != line_endchar) 
+	for (i = 0; i < BUFFER_SIZE && i < f->len; i++)
+		if (!okchar(f->base[i]))
 			return 1;
 	mmrewind(f);
 	return 0;
