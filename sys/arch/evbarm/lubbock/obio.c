@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 2005/06/30 17:03:52 drochner Exp $ */
+/*	$NetBSD: obio.c,v 1.4 2005/07/03 18:10:53 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2005/07/03 18:10:53 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2005/06/30 17:03:52 drochner Exp $");
 /* prototypes */
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
-static int 	obio_search(struct device *, struct cfdata *, void *);
+static int	obio_search(struct device *, struct cfdata *,
+		    const locdesc_t *, void *);
 static int	obio_print(void *, const char *);
 
 /* attach structures */
@@ -211,7 +212,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	struct obio_softc *sc = (struct obio_softc*)self;
 	int system_id, baseboard_id, expansion_id, processor_card_id;
 	struct pxaip_attach_args *sa = (struct pxaip_attach_args *)aux;
-	char *processor_card_name;
+	const char *processor_card_name;
 	int i;
 	
 
@@ -286,11 +287,8 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-obio_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
+obio_search(struct device *parent, struct cfdata *cf, const locdesc_t *ldesc,
+    void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)parent;
 	struct obio_attach_args oba;
