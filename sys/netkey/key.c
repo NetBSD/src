@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.134 2005/05/29 21:29:43 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.135 2005/07/03 22:57:09 manu Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.134 2005/05/29 21:29:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135 2005/07/03 22:57:09 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4290,11 +4290,7 @@ static int
 key_cmpsaidx_withmode(saidx0, saidx1)
 	struct secasindex *saidx0, *saidx1;
 {
-#ifdef IPSEC_NAT_T
-	int chkport = 1;
-#else
 	int chkport = 0;
-#endif
 
 	/* sanity */
 	if (saidx0 == NULL && saidx1 == NULL)
@@ -4306,6 +4302,15 @@ key_cmpsaidx_withmode(saidx0, saidx1)
 	if (saidx0->proto != saidx1->proto)
 		return 0;
 
+	/*
+	 * If NAT-T is enabled, check ports for tunnel mode.
+	 * Don't do it for transport mode, as there is no
+	 * port information available in the SP.
+	 */
+#ifdef IPSEC_NAT_T
+	if (saidx1->mode == IPSEC_MODE_TUNNEL)
+		chkport = 1;
+#endif
 	/*
 	 * If reqid of SPD is non-zero, unique SA is required.
 	 * The result must be of same reqid in this case.
