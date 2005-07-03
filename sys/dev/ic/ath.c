@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.52 2005/07/03 19:44:50 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.53 2005/07/03 19:58:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.52 2005/07/03 19:44:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53 2005/07/03 19:58:16 dyoung Exp $");
 #endif
 
 /*
@@ -4122,6 +4122,7 @@ ath_calibrate(void *arg)
 
 	sc->sc_stats.ast_per_cal++;
 
+	ATH_LOCK(sc);
 	DPRINTF(sc, ATH_DEBUG_CALIBRATE, "%s: channel %u/%x\n",
 		__func__, sc->sc_curchan.channel, sc->sc_curchan.channelFlags);
 
@@ -4140,6 +4141,7 @@ ath_calibrate(void *arg)
 		sc->sc_stats.ast_per_calfail++;
 	}
 	callout_reset(&sc->sc_cal_ch, ath_calinterval * hz, ath_calibrate, sc);
+	ATH_UNLOCK(sc);
 }
 
 static int
