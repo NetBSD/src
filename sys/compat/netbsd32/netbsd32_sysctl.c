@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.18 2005/07/03 16:53:46 cube Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.19 2005/07/03 17:18:02 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.18 2005/07/03 16:53:46 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19 2005/07/03 17:18:02 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -104,8 +104,8 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 {
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
-	extern char machine_arch32[];
-	extern char machine32[];
+	extern const char machine_arch32[];
+	extern const char machine32[];
 
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
@@ -139,12 +139,12 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, machine32, 0,
+		       NULL, 0, &machine32, 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch", NULL,
-		       NULL, 0, machine_arch32, 0,
+		       NULL, 0, &machine_arch32, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.48 2005/07/03 16:53:46 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2005/07/03 16:53:46 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2005/07/03 16:53:46 cube E
 #include <machine/netbsd32_machdep.h>
 
 /* Provide a the name of the architecture we're emulating */
-char	machine32[] = "sparc";	
-char	machine_arch32[] = "sparc";	
+const char	machine32[] = "sparc";	
+const char	machine_arch32[] = "sparc";	
 
 #if NFIRM_EVENTS > 0
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
