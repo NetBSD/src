@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.51 2005/07/03 19:42:10 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.52 2005/07/03 19:44:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.51 2005/07/03 19:42:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.52 2005/07/03 19:44:50 dyoung Exp $");
 #endif
 
 /*
@@ -683,6 +683,7 @@ ath_detach(struct ath_softc *sc)
 	ath_rate_detach(sc->sc_rc);
 	ath_desc_free(sc);
 	ath_tx_cleanup(sc);
+	sysctl_teardown(&sc->sc_sysctllog);
 	ath_hal_detach(sc->sc_ah);
 	if_detach(ifp);
 	splx(s);
