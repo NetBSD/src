@@ -1,7 +1,7 @@
-/*	$NetBSD: pxa2x0.c,v 1.6 2005/06/30 17:03:52 drochner Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.7 2005/07/03 16:57:44 bsh Exp $ */
 
 /*
- * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.6 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.7 2005/07/03 16:57:44 bsh Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.6 2005/06/30 17:03:52 drochner Exp $");
 #include <arm/mainbus/mainbus.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
+#include <arm/xscale/xscalereg.h>
 
 struct pxaip_softc {
 	struct device sc_dev;
@@ -276,9 +277,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 
 	irq = disable_interrupts(I32_bit|F32_bit);
 
-	__asm __volatile( "mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save) );
+	__asm __volatile("mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save));
 	/* Enable clock counter */
-	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (0x0001) );
+	__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : : "r" (PMNC_E|PMNC_C));
 
 	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
@@ -289,7 +290,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
-	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save) );
+	__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
 
 	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);
@@ -298,7 +299,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 }
 
 void
-pxa2x0_turbo_mode( int f )
+pxa2x0_turbo_mode(int f)
 {
   __asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
 }
