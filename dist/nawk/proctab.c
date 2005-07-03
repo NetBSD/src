@@ -200,7 +200,7 @@ const char *tokname(int n)
 	static char buf[100];
 
 	if (n < FIRSTTOKEN || n > LASTTOKEN) {
-		snprintf(buf, sizeof(buf), "token %d", n);
+		sprintf(buf, "token %d", n);
 		return buf;
 	}
 	return printname[n-FIRSTTOKEN];
