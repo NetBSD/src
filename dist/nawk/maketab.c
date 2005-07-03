@@ -139,7 +139,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf);
 			continue;
 		}
-		names[tok-FIRSTTOKEN] = strdup(name);
+		names[tok-FIRSTTOKEN] = (char *) malloc(strlen(name)+1);
+		strcpy(names[tok-FIRSTTOKEN], name);
 		printf("\t\"%s\",\t/* %d */\n", name, tok);
 		i++;
 	}
