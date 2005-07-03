@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.33 2005/06/28 09:08:04 wiz Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.34 2005/07/03 19:23:29 cube Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.34 $"
 
 maxusers	32		# estimated number of users
 
@@ -923,7 +923,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
 wd*	at umass?
 
 # USB audio
