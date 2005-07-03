@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.8 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.9 2005/07/03 22:22:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ printf("rsize %d status %x\n", *rsize, dio.status);
 }
 
 int
-bugscopen(struct open_file *f)
+bugscopen(struct open_file *f, ...)
 {
 #ifdef DEBUG
 	printf("bugscopen:\n");
