@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.16 2005/07/03 16:53:46 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.16 2005/07/03 16:53:46 cube Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15 2005/06/10 05:10:12 matt E
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* Provide a the name of the architecture we're emulating */
+char	machine32[] = "i386";
 char	machine_arch32[] = "i386";	
 
 int process_read_fpregs32(struct lwp *, struct fpreg32 *);
