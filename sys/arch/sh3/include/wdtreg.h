@@ -1,4 +1,4 @@
-/* $NetBSD: wdtreg.h,v 1.4 2002/04/28 17:10:37 uch Exp $ */
+/* $NetBSD: wdtreg.h,v 1.5 2005/07/03 22:18:32 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -34,23 +34,24 @@
 #if !defined(SH4)
 
 /* SH3 definitions */
-
-#define	SHREG_WTCNT_R	(*(volatile unsigned char  *)0xffffff84)
-#define	SHREG_WTCNT_W	(*(volatile unsigned short *)0xffffff84)
-#define	SHREG_WTCSR_R	(*(volatile unsigned char  *)0xffffff86)
-#define	SHREG_WTCSR_W	(*(volatile unsigned short *)0xffffff86)
+#define	SHREG_WTCNT	0xffffff84
+#define	SHREG_WTCSR	0xffffff86
 
 #else
 
 /* SH4 definitions */
-
-#define	SHREG_WTCNT_R	(*(volatile unsigned char  *)0xffc00008)
-#define	SHREG_WTCNT_W	(*(volatile unsigned short *)0xffc00008)
-#define	SHREG_WTCSR_R	(*(volatile unsigned char  *)0xffc0000c)
-#define	SHREG_WTCSR_W	(*(volatile unsigned short *)0xffc0000c)
+#define	SHREG_WTCNT	0xffc00008
+#define	SHREG_WTCSR	0xffc0000c
 
 #endif
 
+/* read as bytes, write as shorts with a magic number in the upper byte */
+#define	SHREG_WTCNT_R	(*(volatile unsigned char  *)SHREG_WTCNT)
+#define	SHREG_WTCNT_W	(*(volatile unsigned short *)SHREG_WTCNT)
+#define	SHREG_WTCSR_R	(*(volatile unsigned char  *)SHREG_WTCSR)
+#define	SHREG_WTCSR_W	(*(volatile unsigned short *)SHREG_WTCSR)
+
+/* magic upper bytes for write access */
 #define	WTCNT_W_M	0x5A00
 #define	WTCSR_W_M	0xA500
 
