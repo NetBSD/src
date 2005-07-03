@@ -49,43 +49,42 @@ typedef struct ath_task {
 #define TASK_RUN_OR_ENQUEUE(__task)	\
 	((*(__task)->t_func)((__task)->t_context, 1))
 
-typedef int ath_txq_lock_t;
-#define	ATH_TXQ_LOCK_INIT(_sc, _tq)
-#define	ATH_TXQ_LOCK_DESTROY(_tq)
-#define	ATH_TXQ_LOCK(_tq)		\
-	do { (_tq)->axq_lock = splnet(); } while (0)
-#define	ATH_TXQ_UNLOCK(_tq)		\
-	do { splx((_tq)->axq_lock); } while (0)
-#define	ATH_TXQ_LOCK_ASSERT(_tq)
-
 struct ath_lock {
 	int count;
 	int ipl;
 };
 
-#define	ATH_LOCK_INIT_IMPL(_sc, _member)		\
-	do { (_sc)->_member.count = 0; } while (0)
-#define	ATH_LOCK_IMPL(_sc, _member)			\
+#define	ATH_LOCK_INIT_IMPL(_type, _member)		\
+	do { (_type)->_member.count = 0; } while (0)
+#define	ATH_LOCK_IMPL(_type, _member)			\
 	do {						\
 		int __s = splnet();			\
-		if ((_sc)->_member.count++ == 0)	\
-			(_sc)->_member.ipl = __s;	\
+		if ((_type)->_member.count++ == 0)	\
+			(_type)->_member.ipl = __s;	\
 	} while (0)
-#define	ATH_UNLOCK_IMPL(_sc, _member)					\
+#define	ATH_UNLOCK_IMPL(_type, _member)					\
 	do {								\
-		if (--(_sc)->_member.count == 0)			\
-			splx((_sc)->_member.ipl);			\
+		if (--(_type)->_member.count == 0)			\
+			splx((_type)->_member.ipl);			\
 		else {							\
-			KASSERT((_sc)->_member.count >= 0,		\
+			KASSERT((_type)->_member.count >= 0,		\
 			    ("%s: no ATH_LOCK holders", __func__));	\
 		}							\
 	} while (0)
+
 typedef struct ath_lock ath_lock_t;
 #define	ATH_LOCK_INIT(_sc)	ATH_LOCK_INIT_IMPL(_sc, sc_mtx)
 #define	ATH_LOCK_DESTROY(_sc)
 #define	ATH_LOCK(_sc)	ATH_LOCK_IMPL(_sc, sc_mtx)
 #define	ATH_UNLOCK(_sc)	ATH_UNLOCK_IMPL(_sc, sc_mtx)
 #define	ATH_LOCK_ASSERT(_sc)
+
+typedef struct ath_lock ath_txq_lock_t;
+#define	ATH_TXQ_LOCK_INIT(_sc, _tq)	ATH_LOCK_INIT_IMPL(_tq, axq_lock)
+#define	ATH_TXQ_LOCK_DESTROY(_tq)
+#define	ATH_TXQ_LOCK(_tq)		ATH_LOCK_IMPL(_tq, axq_lock)
+#define	ATH_TXQ_UNLOCK(_tq)		ATH_UNLOCK_IMPL(_tq, axq_lock)
+#define	ATH_TXQ_LOCK_ASSERT(_tq)
 
 typedef struct ath_lock ath_txbuf_lock_t;
 #define	ATH_TXBUF_LOCK_INIT(_sc)	ATH_LOCK_INIT_IMPL(_sc, sc_txbuflock)
