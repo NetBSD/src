@@ -465,9 +465,9 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		s = getsval(y);
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 			FATAL("out of memory for %s[%s...]", x->nval, buf);
-		strlcat(buf, s, bufsz);
+		strcat(buf, s);
 		if (np->nnext)
-			strlcat(buf, *SUBSEP, bufsz);
+			strcat(buf, *SUBSEP);
 		tempfree(y);
 	}
 	if (!isarr(x)) {
@@ -512,9 +512,9 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 			s = getsval(y);
 			if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 				FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-			strlcat(buf, s, bufsz);
+			strcat(buf, s);	
 			if (np->nnext)
-				strlcat(buf, *SUBSEP, bufsz);
+				strcat(buf, *SUBSEP);
 			tempfree(y);
 		}
 		freeelem(x, buf);
@@ -551,10 +551,10 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 		s = getsval(x);
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 			FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-		strlcat(buf, s, bufsz);
+		strcat(buf, s);
 		tempfree(x);
 		if (p->nnext)
-			strlcat(buf, *SUBSEP, bufsz);
+			strcat(buf, *SUBSEP);
 	}
 	k = lookup(buf, (Array *) ap->sval);
 	tempfree(ap);
@@ -1142,16 +1142,21 @@ Cell *assign(Node **a, int n)	/* a[0] = a[1], a[0] += a[1], etc. */
 Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 {
 	Cell *x, *y, *z;
+	int n1, n2;
 	char *s;
 
 	x = execute(a[0]);
 	y = execute(a[1]);
 	getsval(x);
 	getsval(y);
-	asprintf(&s, "%s%s", x->sval, y->sval);
+	n1 = strlen(x->sval);
+	n2 = strlen(y->sval);
+	s = (char *) malloc(n1 + n2 + 1);
 	if (s == NULL)
 		FATAL("out of space concatenating %.15s... and %.15s...",
 			x->sval, y->sval);
+	strcpy(s, x->sval);
+	strcpy(s+n1, y->sval);
 	tempfree(y);
 	z = gettemp();
 	z->sval = s;

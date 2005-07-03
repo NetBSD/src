@@ -78,7 +78,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
-		snprintf(temp, sizeof(temp), "%d", i);
+		sprintf(temp, "%d", i);
 		fldtab[i]->nval = tostring(temp);
 	}
 }
@@ -187,8 +187,7 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 
 	if (strlen(*FS) >= sizeof(inputFS))
 		FATAL("field separator %.10s... is too long", *FS);
-	/* for subsequent field splitting */
-	strlcpy(inputFS, *FS, sizeof(inputFS));
+	strcpy(inputFS, *FS);	/* for subsequent field splitting */
 	if ((sep = **RS) == 0) {
 		sep = '\n';
 		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
@@ -227,7 +226,7 @@ char *getargv(int n)	/* get ARGV[n] */
 	char *s, temp[50];
 	extern Array *ARGVtab;
 
-	snprintf(temp, sizeof(temp), "%d", n);
+	sprintf(temp, "%d", n);
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
 	s = getsval(x);
 	   dprintf( ("getargv(%d) returns |%s|\n", n, s) );
