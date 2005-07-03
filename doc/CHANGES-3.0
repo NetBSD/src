@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.155 2005/07/03 11:34:54 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.156 2005/07/03 17:09:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10043,4 +10043,18 @@ share/man/man4/ataraid.4			1.1
 
 	Add an initial man page for ataraid(4).
 	[briggs, ticket #520]
+
+distrib/sets/lists/xserver/md.amiga		1.15
+x11/Xserver/Xserver/Makefile.Xserver		1.22
+x11/Xserver/Xserver/Xamiga/Makefile		1.3
+x11/Xserver/afb/Makefile			1.7
+x11/Xserver/afb/Makefile.afb			1.3
+x11/Xserver/afb/afb/Makefile			1.1
+x11/Xserver/afb/afbmod/Makefile			1.1
+
+	Install "afb" module again on systems which use an X11 server with
+	loadable modules and don't install the static "afb" library on systems
+	which use a static server. This fixes build problems introduced by
+	recent changes.
+	[tron, ticket #544]
 
