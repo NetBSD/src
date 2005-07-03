@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.50 2005/07/03 19:31:03 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.51 2005/07/03 19:42:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.50 2005/07/03 19:31:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.51 2005/07/03 19:42:10 dyoung Exp $");
 #endif
 
 /*
@@ -3317,7 +3317,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	 * negotiated parameters.
 	 */
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)) {
+	    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE) && !ismcast) {
 		shortPreamble = AH_TRUE;
 		sc->sc_stats.ast_tx_shortpre++;
 	} else {
@@ -3374,10 +3374,18 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	case IEEE80211_FC0_TYPE_DATA:
 		atype = HAL_PKT_TYPE_NORMAL;		/* default */
 		/*
-		 * Data frames; consult the rate control module.
+		 * Data frames; consult the rate control module for
+		 * unicast frames.  Send multicast frames at the
+		 * lowest rate.
 		 */
-		ath_rate_findrate(sc, an, shortPreamble, pktlen,
-			&rix, &try0, &txrate);
+		if (!ismcast) {
+			ath_rate_findrate(sc, an, shortPreamble, pktlen,
+				&rix, &try0, &txrate);
+		} else {
+			rix = 0;
+			try0 = ATH_TXMAXTRY;
+			txrate = an->an_tx_mgtrate;
+		}
 		sc->sc_txrate = txrate;			/* for LED blinking */
 		/*
 		 * Default all non-QoS traffic to the background queue.
