@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9 2005/07/03 16:53:46 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.10 2005/07/03 17:18:03 cube Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2005/07/03 16:53:46 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.10 2005/07/03 17:18:03 cube Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -77,8 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2005/07/03 16:53:46 cube Ex
 
 #include <sh5/fpu.h>
 
-char	machine32[] = "sh5";
-char	machine_arch32[] = "sh5";
+const char	machine32[] = "sh5";
+const char	machine_arch32[] = "sh5";
 
 #ifdef COMPAT_16
 int
