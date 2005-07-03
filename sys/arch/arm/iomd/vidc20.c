@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.11 2005/07/03 23:09:03 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.11 2005/07/03 23:09:03 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,8 @@ struct vidc20_softc {
 
 static int  vidcmatch(struct device *, struct cfdata *, void *);
 static void vidcattach(struct device *, struct device *, void *);
-static int  vidcsearch(struct device *, struct cfdata *, void *);
+static int  vidcsearch(struct device *, struct cfdata *,
+		       const locdesc_t *, void *);
 
 /*
  * vidc_base gives the base of the VIDC chip in memory; this is for
