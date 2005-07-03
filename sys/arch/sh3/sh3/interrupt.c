@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.14 2005/06/29 16:56:58 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2005/06/29 16:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -219,6 +219,9 @@ intc_intr_priority(int evtcode, int level)
 		break;
 	case SH_INTEVT_TMU2_TUNI2:
 		SH_IPR(A, 4);
+		break;
+	case SH_INTEVT_WDT_ITI:
+		SH_IPR(B, 12);
 		break;
 	case SH_INTEVT_SCI_ERI:
 	case SH_INTEVT_SCI_RXI:
