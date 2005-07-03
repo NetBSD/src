@@ -53,7 +53,10 @@
 #include <net80211/ieee80211_var.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
- 
+
+static const struct sysctlnode *ath_sysctl_instance(const char *,
+    struct sysctllog **);
+
 void
 device_printf(struct device dv, const char *fmt, ...)
 {
@@ -309,6 +312,29 @@ ath_sysctl_tpc(SYSCTLFN_ARGS)
 	return !ath_hal_settpc(sc->sc_ah, tpc) ? EINVAL : 0;
 }
 
+static const struct sysctlnode *
+ath_sysctl_instance(const char *dvname, struct sysctllog **log)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+
+	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, dvname,
+	    SYSCTL_DESCR("ath information and options"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return rnode;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	return NULL;
+}
+
 const struct sysctlnode *
 ath_sysctl_treetop(struct sysctllog **log)
 {
@@ -344,7 +370,7 @@ ath_sysctlattach(struct ath_softc *sc)
 	sc->sc_debug = ath_debug;
 	sc->sc_txintrperiod = ATH_TXINTR_PERIOD;
 
-	if ((rnode = ath_sysctl_treetop(NULL)) == NULL)
+	if ((rnode = ath_sysctl_instance(sc->sc_dev.dv_xname, log)) == NULL)
 		return;
 
 	if ((rc = SYSCTL_INT(0, countrycode, "EEPROM country code")) != 0)
