@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.41 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.42 2005/07/03 21:10:27 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.33 2005/02/23 04:52:30 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.41 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.42 2005/07/03 21:10:27 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1900,6 +1900,10 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			return;
 		}
 
+		if (ni != ic->ic_bss) {
+			ni = ieee80211_refine_node_for_beacon(ic, ni,
+					&ic->ic_channels[chan], ssid);
+		}
 		/*
 		 * Count frame now that we know it's to be processed.
 		 */
@@ -1914,10 +1918,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * Be careful to ignore beacons received while doing a
 		 * background scan.  We consider only 11g/WMM stuff right now.
 		 */
-		if (ni != ic->ic_bss) {
-			ni = ieee80211_refine_node_for_beacon(ic, ni,
-					&ic->ic_channels[chan], ssid);
-		}
 		if (ic->ic_opmode == IEEE80211_M_STA &&
 		    ni->ni_associd != 0 &&
 		    ((ic->ic_flags & IEEE80211_F_SCAN) == 0 ||
