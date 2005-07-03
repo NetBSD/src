@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.156 2005/07/03 17:09:09 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.157 2005/07/03 21:23:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10057,4 +10057,34 @@ x11/Xserver/afb/afbmod/Makefile			1.1
 	which use a static server. This fixes build problems introduced by
 	recent changes.
 	[tron, ticket #544]
+
+sys/dev/ata/ata_raid.c				1.13
+sys/dev/ata/ata_raid_adaptec.c			1.1
+sys/dev/ata/ata_raidreg.h			1.2
+sys/dev/ata/ata_raidvar.h			1.2
+sys/dev/ata/files.ata				1.12
+
+	Basic support for RAID0 and RAID1 for the Adaptec HostRAID format as
+	found on the Intel 6300ESB on-board RAID.
+	[briggs, ticket #521]
+
+sys/dev/pci/piixide.c				1.22
+
+	Add support for the Intel 6300ESB on-board SATA/RAID controller.
+	[briggs, ticket #522]
+
+sys/dev/mii/miidevs				1.59
+sys/dev/mii/makphy.c				1.16
+
+	Add support for Marvell 88E1111 PHY, from PR kern/30556.
+	[briggs, ticket #523, #524]
+
+usr.bin/grep/binary.c				1.3
+usr.bin/grep/mmfile.c				1.2
+
+	Avoid crashes in grep(1) on empty or very huge files.
+	This fixes PR bin/29806.
+	[mlelstv, ticket #527]
+
+
 
