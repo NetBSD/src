@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.3 2005/06/26 04:34:43 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.3 2005/06/26 04:34:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $");
 #endif
 
 /*
@@ -342,7 +342,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 	char *dp;
 	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
 	size_t len, needed, eltsize, out_size;
-	int error, s, nelt;
+	int error, s, saw_bss = 0, nelt;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -387,6 +387,10 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 		if (nelt <= 0)
 			continue;
 
+		if (saw_bss && ni == ic->ic_bss)
+			continue;
+		else if (ni == ic->ic_bss)
+			saw_bss = 1;
 		if (len >= eltsize) {
 			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
 			    &ic->ic_channels[0], ni == ic->ic_bss);
