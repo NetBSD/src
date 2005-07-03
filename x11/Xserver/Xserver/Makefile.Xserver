@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.Xserver,v 1.21 2005/05/09 16:15:48 he Exp $
+#	$NetBSD: Makefile.Xserver,v 1.22 2005/07/03 14:30:52 tron Exp $
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
 		record randr render xtrap mfb iplan2p4 iplan2p8 \
 		cfb cfb16 cfb24 cfb32 fb \
-		hw/xnest hw/vfb fontbase afb \
+		hw/xnest hw/vfb fontbase afb/afb \
 		\
 		hw/dmx hw/dmx/dmxinput hw/dmx/dmxconfig \
 		\
