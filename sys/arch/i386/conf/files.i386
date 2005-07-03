@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.268 2005/06/25 22:08:54 dyoung Exp $
+#	$NetBSD: files.i386,v 1.269 2005/07/03 12:16:05 cube Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,10 +44,6 @@ defflag			COMPAT_OLDBOOT
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
-
-# PCI fixup options
-defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
-			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
 # Large page size
 defflag			LARGEPAGES
