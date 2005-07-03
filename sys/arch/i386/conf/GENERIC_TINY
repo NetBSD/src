@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.85 2005/06/28 09:08:04 wiz Exp $
+#	$NetBSD: GENERIC_TINY,v 1.86 2005/07/03 19:23:29 cube Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -499,7 +499,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#scsibus* at umass?
 #wd*	at umass?
 
 # USB Ethernet adapters
