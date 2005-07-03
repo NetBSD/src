@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.18 2005/06/28 18:30:00 drochner Exp $ */
+/* $NetBSD: opb.c,v 1.19 2005/07/03 22:25:02 he Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.18 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.19 2005/07/03 22:25:02 he Exp $");
 
 #include "locators.h"
 
@@ -151,7 +151,7 @@ opb_match(struct device *parent, struct cfdata *cf, void *aux)
 
 static int
 opb_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *, void *aux)
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
 
