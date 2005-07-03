@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 2005/07/03 10:22:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2005/07/03 10:22:25 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -115,7 +115,7 @@ x68k_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 	pdp->dv_cfdata = pcfp;
 	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	pdp->dv_unit = 0;
-	if ((cf = config_search_ia((cfmatch_t)NULL, pdp, NULL, auxp)) != NULL) {
+	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(pdp, NULL, auxp);
