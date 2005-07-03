@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.154 2005/07/02 23:43:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.155 2005/07/03 11:34:54 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10036,4 +10036,11 @@ usr.sbin/pf/spamlogd/Makefile			delete
 	Remove (pf)spamd. A port of the latest spamd will be imported into
 	pkgsrc soon.
 	[peter, ticket #518, #519]
+
+distrib/sets/lists/man/mi			1.794
+share/man/man4/Makefile				1.358 via patch
+share/man/man4/ataraid.4			1.1
+
+	Add an initial man page for ataraid(4).
+	[briggs, ticket #520]
 
