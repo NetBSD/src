@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: INSTALL,v 1.67 2005/07/03 13:09:17 isaki Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.66 $"
+#ident 		"INSTALL-$Revision: 1.67 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -277,70 +277,8 @@ ne*	at neptune? addr 0x300			# NE2000 or clone
 
 #### Pseudo devices
 
-## A disk-like interface to files.  Can be used to create floppy, CD,
-## miniroot images, etc.
-
-#pseudo-device	vnd	4
-
-## Concatenated and striped disks; with this, you can create a software-based
-## disk array similar to a "RAID 0" setup.  See ccd(4).
-
-#pseudo-device	ccd	4
-
-## RAIDframe disk driver: software RAID driver.  See raid(4).
-
-#pseudo-device	raid	4
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-
-## Memory disk device, used on boot floppies with compressed
-## kernel-plus-root-disk images.
-
-pseudo-device	md	1
-
-## Loopback network interface; required
+pseudo-device	md		1	# boot floppy image
 pseudo-device	loop
-
-## SLIP and CSLIP interfaces, for IP over a serial line.
 pseudo-device	sl		1
-
-## PPP, the successor to SLIP.  See pppd(8).
-#pseudo-device	ppp		1
-
-## Network "tunnel" device, allowing protocol stacks to run in the userland.
-## This is used by the third-party user-mode "ppp" program, and others.
-#pseudo-device	tun		4
-#pseudo-device	tap			# virtual Ethernet
-
-## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-
-## Berkeley Packet Filter, required to run RARPD.  A generic C-language
-## interface that allows selective examining of incoming packets.
-#pseudo-device	bpfilter	4
-
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-#pseudo-device	ipfilter
-
-## for IPv6
-#pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-
-## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
-#pseudo-device  vlan
-
-## Simple inter-network traffic bridging
-#pseudo-device  bridge
-
-#### Other device configuration
-
-## Pseudo ttys, required for network logins and programs like screen.
-
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-
-## Random device, used to implement /dev/random (a source of random noise),
-## and generate randomness for some kernel formulae.
-
 pseudo-device	rnd
-#pseudo-device	fss		4	# file system snapshot device
