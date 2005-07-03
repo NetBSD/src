@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.42 2005/07/03 21:10:27 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.43 2005/07/03 21:18:42 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.33 2005/02/23 04:52:30 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.42 2005/07/03 21:10:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.43 2005/07/03 21:18:42 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -573,7 +573,14 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				}
 			}
 			if (m1 != NULL) {
-				int len = m1->m_pkthdr.len;
+				int len;
+#ifdef ALTQ
+				if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+					altq_etherclassify(&ifp->if_snd, m1,
+					    &pktattr);
+				}
+#endif
+				len = m1->m_pkthdr.len;
 				IF_ENQUEUE(&ifp->if_snd, m1);
 				if (m != NULL)
 					ifp->if_omcasts++;
