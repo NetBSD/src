@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.49 2005/06/30 00:52:56 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.50 2005/07/03 19:31:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.49 2005/06/30 00:52:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.50 2005/07/03 19:31:03 dyoung Exp $");
 #endif
 
 /*
@@ -2646,7 +2646,7 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 				    "tstamp %ju\n", rstamp, (uintmax_t)tsf,
 				    (uintmax_t)ni->ni_tstamp.tsf);
 				(void) ieee80211_ibss_merge(ic, ni);
-		}
+			}
 		}
 		break;
 	}
