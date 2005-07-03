@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.28 2005/06/28 18:29:59 drochner Exp $	*/
+/*	$NetBSD: maple.c,v 1.29 2005/07/03 23:06:51 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.28 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.29 2005/07/03 23:06:51 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,8 @@ static void	maple_check_subunit_change(struct maple_softc *,
 static void	maple_check_unit_change(struct maple_softc *,
 		    struct maple_unit *);
 static void	maple_print_unit(void *, const char *);
-static int	maplesubmatch(struct device *, struct cfdata *, void *);
+static int	maplesubmatch(struct device *, struct cfdata *,
+		    const locdesc_t *, void *);
 static int	mapleprint(void *, const char *);
 static void	maple_attach_unit(struct maple_softc *, struct maple_unit *);
 static void	maple_detach_unit_nofix(struct maple_softc *,
