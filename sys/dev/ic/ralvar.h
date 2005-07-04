@@ -1,4 +1,4 @@
-/*	$NetBSD: ralvar.h,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
+/*	$NetBSD: ralvar.h,v 1.2 2005/07/04 17:50:10 drochner Exp $ */
 /*	$OpenBSD: ralvar.h,v 1.7 2005/03/11 19:39:35 damien Exp $  */
 
 /*-
@@ -96,7 +96,8 @@ struct ral_node {
 
 struct ral_softc {
 	struct device			sc_dev;
-
+	struct ethercom			sc_ec;
+#define sc_if	sc_ec.ec_if
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
@@ -123,6 +124,8 @@ struct ral_softc {
 	struct ral_tx_ring		atimq;
 	struct ral_tx_ring		bcnq;
 	struct ral_rx_ring		rxq;
+
+	struct ieee80211_beacon_offsets	sc_bo;
 
 	uint32_t			rf_regs[4];
 	uint8_t				txpow[14];

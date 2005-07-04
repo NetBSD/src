@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
+/*	$NetBSD: if_ral_cardbus.c,v 1.2 2005/07/04 17:50:09 drochner Exp $ */
 /*	$OpenBSD: if_ral_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $  */
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.1 2005/07/01 20:06:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.2 2005/07/04 17:50:09 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -133,7 +133,7 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* set up the PCI configuration registers */
 	ral_cardbus_setup(csc);
 
-	printf(": irq %d", csc->sc_intrline);
+	printf(": irq %d\n", csc->sc_intrline);
 
 	ral_attach(sc);
 
