@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.7 2005/07/03 16:57:44 bsh Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.8 2005/07/04 00:42:37 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.7 2005/07/03 16:57:44 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.8 2005/07/04 00:42:37 bsh Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.7 2005/07/03 16:57:44 bsh Exp $");
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/xscalereg.h>
@@ -136,6 +137,16 @@ static int	pxaip_print(void *, const char *);
 
 static int	pxaip_measure_cpuclock(struct pxaip_softc *);
 
+#if defined(CPU_XSCALE_PXA250) && defined(CPU_XSCALE_PXA270)
+# define SUPPORTED_CPU	"PXA250 and PXA270"
+#elif defined(CPU_XSCALE_PXA250)
+# define SUPPORTED_CPU	"PXA250"
+#elif defined(CPU_XSCALE_PXA270)
+# define SUPPORTED_CPU	"PXA270"
+#else
+# define SUPPORTED_CPU	"none of PXA2xx"
+#endif
+
 /* attach structures */
 CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
     pxaip_match, pxaip_attach, NULL, NULL);
@@ -146,7 +157,24 @@ static int
 pxaip_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
+#if	!defined(CPU_XSCALE_PXA270)
+	if (__CPU_IS_PXA270)
+		goto bad_config;
+#endif
+
+#if	!defined(CPU_XSCALE_PXA250)
+	if (__CPU_IS_PXA250)
+		goto bad_config;
+#endif
+
 	return 1;
+
+#if	defined(CPU_XSCALE_PXA250) + defined(CPU_XSCALE_PXA270) != 2
+ bad_config:
+	aprint_error("Kernel is configured for %s, but CPU is %s\n",
+		     SUPPORTED_CPU, __CPU_IS_PXA270 ? "PXA270" : "PXA250");
+	return 0;
+#endif
 }
 
 static void
@@ -172,6 +200,11 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
 	printf("%s: CPU clock = %d.%03d MHz\n", self->dv_xname,
 	    cpuclock/1000, cpuclock%1000 );
+
+	aprint_normal("%s: kernel is configured for " SUPPORTED_CPU
+		      ", cpu type is %s\n",
+		      self->dv_xname,
+		      __CPU_IS_PXA270 ? "PXA270" : "PXA250");
 
 	/*
 	 * Attach critical devices
@@ -255,10 +288,19 @@ pxaip_print(void *aux, const char *name)
 }
 
 static inline uint32_t
-read_clock_counter(void)
+read_clock_counter_xsc1(void)
 {
   uint32_t x;
   __asm __volatile("mrc	p14, 0, %0, c1, c0, 0" : "=r" (x) );
+
+  return x;
+}
+
+static inline uint32_t
+read_clock_counter_xsc2(void)
+{
+  uint32_t x;
+  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x) );
 
   return x;
 }
@@ -270,6 +312,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	uint32_t pmcr_save;
 	bus_space_handle_t ioh;
 	int irq;
+	int is_xsc2 = CPU_IS_PXA270;
+#define	read_clock_counter()	(is_xsc2 ? read_clock_counter_xsc2() : \
+					read_clock_counter_xsc1())
 
 	if (bus_space_map(sc->sc_bust, PXA2X0_RTC_BASE, PXA2X0_RTC_SIZE, 0,
 	    &ioh))
@@ -277,9 +322,20 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 
 	irq = disable_interrupts(I32_bit|F32_bit);
 
-	__asm __volatile("mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save));
-	/* Enable clock counter */
-	__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : : "r" (PMNC_E|PMNC_C));
+	if (is_xsc2) {
+		__asm __volatile(
+			"mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
+		/* Enable clock counter */
+		__asm __volatile(
+			"mcr p14, 0, %0, c0, c1, 0" : : "r" (PMNC_E|PMNC_C));
+	}
+	else {
+		__asm __volatile(
+			"mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save));
+		/* Enable clock counter */
+		__asm __volatile(
+			"mcr p14, 0, %0, c0, c0, 0" : : "r" (PMNC_E|PMNC_C));
+	}
 
 	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
@@ -290,7 +346,12 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
-	__asm __volatile("mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save));
+	if (is_xsc2)
+		__asm __volatile(
+			"mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
+	else
+		__asm __volatile(
+			"mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
 
 	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);

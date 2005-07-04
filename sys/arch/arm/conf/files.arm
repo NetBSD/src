@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.78 2005/06/03 15:55:56 rearnsha Exp $
+#	$NetBSD: files.arm,v 1.79 2005/07/04 00:42:37 bsh Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -9,7 +9,8 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_ARM10 CPU_ARM11 CPU_SA110
 				CPU_SA1100 CPU_SA1110 CPU_IXP12X0
 				CPU_XSCALE_80200 CPU_XSCALE_80321
-				CPU_XSCALE_PXA2X0 CPU_XSCALE_IXP425
+				CPU_XSCALE_PXA250 CPU_XSCALE_PXA270
+				CPU_XSCALE_IXP425
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
 defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
@@ -98,7 +99,8 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm10 |
 							cpu_xscale_80200 |
 							cpu_xscale_80321 |
 							cpu_xscale_ixp425 |
-							cpu_xscale_pxa2x0
+							cpu_xscale_pxa250 |
+							cpu_xscale_pxa270
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10 | cpu_arm11
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_sa1110 |
@@ -107,7 +109,8 @@ file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa1100 | cpu_sa1110
 file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_xscale_80321 |
 						    cpu_xscale_ixp425 |
-						    cpu_xscale_pxa2x0
+						    cpu_xscale_pxa250 |
+						    cpu_xscale_pxa270
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs

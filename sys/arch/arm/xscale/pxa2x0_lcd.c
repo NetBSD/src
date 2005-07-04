@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.9 2005/06/05 15:39:17 he Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.10 2005/07/04 00:42:37 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.9 2005/06/05 15:39:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.10 2005/07/04 00:42:37 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.9 2005/06/05 15:39:17 he Exp $");
 #include <machine/cpu.h>
 #include <arm/cpufunc.h>
 
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
@@ -177,6 +178,10 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		nldd = 4;
 	}
 
+	if (CPU_IS_PXA270 && nldd==16) {
+		pxa2x0_gpio_set_function(86, GPIO_ALT_FN_2_OUT);
+		pxa2x0_gpio_set_function(87, GPIO_ALT_FN_2_OUT);
+	}
 	while (nldd--)
 		pxa2x0_gpio_set_function(58 + nldd, GPIO_ALT_FN_2_OUT);
 
@@ -216,17 +221,23 @@ pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *sc,
 	case 2: val = 1; break;
 	case 4: val = 2; break;
 	case 8: val = 3; break;
-	case 16:    /* FALLTHROUGH */
+	case 16: val = 4; break;
+	case 18: val = 5; break;
+	case 24: val = 33; break;
 	default:
 		val = 4; break;		
 	}
 
 	tmp = bus_space_read_4(iot, ioh, LCDC_LCCR3);
-	bus_space_write_4(iot, ioh, LCDC_LCCR3, 
-	    (tmp & ~LCCR3_BPP) | (val << LCCR3_BPP_SHIFT));
+	if (CPU_IS_PXA270)
+		bus_space_write_4(iot, ioh, LCDC_LCCR3, 
+		  (tmp & ~(LCCR3_BPP|(1<<29))) | (val << LCCR3_BPP_SHIFT));
+	else
+		bus_space_write_4(iot, ioh, LCDC_LCCR3, 
+		    (tmp & ~LCCR3_BPP) | (val << LCCR3_BPP_SHIFT));
 
 	bus_space_write_4(iot, ioh, LCDC_FDADR0, 
-	    scr->depth == 16 ? scr->dma_desc_pa :
+	    scr->depth >= 16 ? scr->dma_desc_pa :
 	    scr->dma_desc_pa + 2 * sizeof (struct lcd_dma_descriptor));
 	bus_space_write_4(iot, ioh, LCDC_FDADR1, 
 	    scr->dma_desc_pa + 1 * sizeof (struct lcd_dma_descriptor));
@@ -352,6 +363,14 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
 	case 16:
 		size = roundup(width,4)*depth/8 * height;
 		break;
+	case 18:
+	case 24:
+		size = roundup(width,4) * 4 * height;
+		break;
+	case 19:
+	case 25:
+		printf("%s: Not supported depth (%d)\n", sc->dev.dv_xname, depth);
+		return NULL;
 	default:
 		printf("%s: Unknown depth (%d)\n", sc->dev.dv_xname, depth);
 		return NULL;
@@ -489,6 +508,9 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *descr,
 	rinfo.ri_width = width;
 	rinfo.ri_height = height;
 	rinfo.ri_stride = width * rinfo.ri_depth / 8;
+#ifdef	CPU_XSCALE_PXA270
+	if (rinfo.ri_depth > 16) rinfo.ri_stride = width * 4;
+#endif
 	rinfo.ri_wsfcookie = cookie;
 
 	rasops_init(&rinfo, 100, 100);
@@ -543,6 +565,10 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 	scr->rinfo.ri_width = sc->geometry->panel_width;
 	scr->rinfo.ri_height = sc->geometry->panel_height;
 	scr->rinfo.ri_stride = scr->rinfo.ri_width * scr->rinfo.ri_depth / 8;
+#ifdef CPU_XSCALE_PXA270
+	if (scr->rinfo.ri_depth > 16)
+		scr->rinfo.ri_stride = scr->rinfo.ri_width * 4;
+#endif
 	scr->rinfo.ri_wsfcookie = -1;	/* XXX */
 
 	rasops_init(&scr->rinfo, type->c.nrows, type->c.ncols);
@@ -600,7 +626,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		wsdisp_info->height = sc->geometry->panel_height;
 		wsdisp_info->width = sc->geometry->panel_width;
-		wsdisp_info->depth = 16; /* XXX */
+		wsdisp_info->depth = sc->active->depth;
 		wsdisp_info->cmsize = 0;
 		return 0;
 

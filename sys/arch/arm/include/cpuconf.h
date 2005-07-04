@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.10 2005/06/03 15:55:56 rearnsha Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.11 2005/07/04 00:42:37 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,6 +42,14 @@
 #include "opt_cputypes.h"
 #endif /* _KERNEL_OPT */
 
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+#define	__CPU_XSCALE_PXA2XX
+#endif
+
+#ifdef CPU_XSCALE_PXA2X0
+#warning option CPU_XSCALE_PXA2X0 is obsolete. Use CPU_XSCALE_PXA250 and/or CPU_XSCALE_PXA270.
+#endif
+
 /*
  * IF YOU CHANGE THIS FILE, MAKE SURE TO UPDATE THE DEFINITION OF
  * "PMAP_NEEDS_PTE_SYNC" IN <arm/arm32/pmap.h> FOR THE CPU TYPE
@@ -64,7 +72,7 @@
 			 defined(CPU_IXP12X0) +				\
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
-			 defined(CPU_XSCALE_PXA2X0) + 			\
+			 defined(__CPU_XSCALE_PXA2XX) +			\
 			 defined(CPU_XSCALE_IXP425))
 #else
 #define	CPU_NTYPES	2
@@ -98,7 +106,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM10) || defined(CPU_XSCALE_80200) ||			\
-     defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0))
+     defined(CPU_XSCALE_80321) || defined(__CPU_XSCALE_PXA2XX))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -165,7 +173,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
+     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.71 2005/06/03 15:55:55 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.71 2005/06/03 15:55:55 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -745,7 +745,7 @@ struct cpu_functions ixp12x0_cpufuncs = {
 #endif	/* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
@@ -801,7 +801,7 @@ struct cpu_functions xscale_cpufuncs = {
 	xscale_setup			/* cpu setup		*/
 };
 #endif
-/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
+/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
 
 /*
  * Global constants also used by locore.s
@@ -814,7 +814,7 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined (CPU_ARM10) || defined (CPU_ARM11) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 static void get_cachetype_cp15 __P((void));
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -1209,9 +1209,10 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_XSCALE_80321 */
-#ifdef CPU_XSCALE_PXA2X0
+#ifdef __CPU_XSCALE_PXA2XX
 	/* ignore core revision to test PXA2xx CPUs */
-	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA250 ||
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X ||
+	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA250 ||
 	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA210) {
 
 		cpufuncs = xscale_cpufuncs;
@@ -1228,7 +1229,7 @@ set_cpufuncs()
 
 		return 0;
 	}
-#endif /* CPU_XSCALE_PXA2X0 */
+#endif /* __CPU_XSCALE_PXA2XX */
 #ifdef CPU_XSCALE_IXP425
 	if (cputype == CPU_ID_IXP425_533 || cputype == CPU_ID_IXP425_400 ||
             cputype == CPU_ID_IXP425_266) {
@@ -1617,7 +1618,7 @@ late_abort_fixup(arg)
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
 	defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-	defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425) || \
+	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
 	defined(CPU_ARM10) || defined(CPU_ARM11)
 
 #define IGN	0
@@ -2234,7 +2235,7 @@ ixp12x0_setup(args)
 #endif /* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -2311,4 +2312,4 @@ xscale_setup(args)
 	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */

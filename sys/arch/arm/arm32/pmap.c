@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2005/06/24 15:59:04 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2005/07/04 00:42:37 bsh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2005/06/24 15:59:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2005/07/04 00:42:37 bsh Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4817,7 +4817,7 @@ pmap_pte_init_xscale(void)
 #elif defined(XSCALE_CACHE_WRITE_BACK)
 	/* force write back cache mode */
 	write_through = 0;
-#elif defined(CPU_XSCALE_PXA2X0)
+#elif defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	/*
 	 * Intel PXA2[15]0 processors are known to have a bug in
 	 * write-back cache on revision 4 and earlier (stepping

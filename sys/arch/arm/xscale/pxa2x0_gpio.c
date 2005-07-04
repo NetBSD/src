@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.3 2005/07/04 00:42:37 bsh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.3 2005/07/04 00:42:37 bsh Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $"
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -65,8 +66,8 @@ struct pxagpio_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
-	void *sc_irqcookie[3];
-	u_int32_t sc_mask[3];
+	void *sc_irqcookie[4];
+	u_int32_t sc_mask[4];
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	struct gpio_irq_handler *sc_handlers[GPIO_NPINS];
 #else
@@ -145,6 +146,8 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	pxagpio_regs = (vaddr_t)bus_space_vaddr(sc->sc_bust, sc->sc_bush);
+
 	memset(sc->sc_handlers, 0, sizeof(sc->sc_handlers));
 
 	/*
@@ -159,6 +162,13 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 	pxagpio_reg_write(sc, GPIO_GEDR0, ~0);
 	pxagpio_reg_write(sc, GPIO_GEDR1, ~0);
 	pxagpio_reg_write(sc, GPIO_GEDR2, ~0);
+#ifdef	CPU_XSCALE_PXA270
+	if (CPU_IS_PXA270) {
+		pxagpio_reg_write(sc, GPIO_GRER3, 0);
+		pxagpio_reg_write(sc, GPIO_GFER3, 0);
+		pxagpio_reg_write(sc, GPIO_GEDR3, ~0);
+	}
+#endif
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
@@ -382,7 +392,10 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 
 	gedr &= sc->sc_mask[bank];
 	ghp = &sc->sc_handlers[gpio_base];
-	pins = (gpio_base < 64) ? 32 : 17;
+	if (CPU_IS_PXA270)
+		pins = (gpio_base < 96) ? 32 : 25;
+	else
+		pins = (gpio_base < 64) ? 32 : 17;
 	handled = 0;
 
 	for (i = 0, mask = 1; i < pins && gedr; i++, ghp++, mask <<= 1) {
@@ -413,7 +426,8 @@ gpio_intrN(void *arg)
 	handled = gpio_dispatch(sc, 0);
 	handled |= gpio_dispatch(sc, 32);
 	handled |= gpio_dispatch(sc, 64);
-
+	if (CPU_IS_PXA270)
+		handled |= gpio_dispatch(sc, 96);
 	return (handled);
 }
 #endif	/* PXAGPIO_HAS_GPION_INTRS */
