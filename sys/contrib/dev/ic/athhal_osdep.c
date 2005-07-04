@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.2 2005/06/22 06:15:37 dyoung Exp $
+ * $Id: athhal_osdep.c,v 1.3 2005/07/04 05:35:09 dyoung Exp $
  */
 #include "opt_ah.h"
 
@@ -300,10 +300,10 @@ ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 	}
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
 	else
 #endif
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
+		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, val);
 }
 
 u_int32_t
@@ -311,7 +311,7 @@ ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
 	u_int32_t val;
 
-	val = bus_space_read_4(ah->ah_st, ah->ah_sh, reg);
+	val = bus_space_read_stream_4(ah->ah_st, ah->ah_sh, reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
 		val = le32toh(val);
@@ -360,10 +360,10 @@ ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
 	else
 #endif
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
+		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, val);
 }
 
 u_int32_t
@@ -371,7 +371,7 @@ ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
 	u_int32_t val;
 
-	val = bus_space_read_4(ah->ah_st, ah->ah_sh, reg);
+	val = bus_space_read_stream_4(ah->ah_st, ah->ah_sh, reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
 		val = le32toh(val);
