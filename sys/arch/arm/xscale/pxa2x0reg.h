@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.5 2004/09/24 17:30:22 nathanw Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.6 2005/07/04 00:27:24 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -67,7 +67,8 @@
 
 #define PXA2X0_PERIPH_START 0x40000000
 /* #define PXA2X0_MEMCTL_START 0x48000000 */
-#define PXA2X0_PERIPH_END   0x480fffff
+#define PXA270_PERIPH_END   0x530fffff
+#define PXA250_PERIPH_END   0x480fffff
 
 #define PXA2X0_SDRAM0_START 0xa0000000
 #define PXA2X0_SDRAM1_START 0xa4000000
@@ -101,7 +102,9 @@
 #define PXA2X0_INTCTL_BASE	0x40d00000 /* Interrupt controller */
 #define	PXA2X0_INTCTL_SIZE	0x20
 #define PXA2X0_GPIO_BASE	0x40e00000
-#define PXA2X0_GPIO_SIZE  	0x70
+
+#define PXA270_GPIO_SIZE  	0x150
+#define PXA250_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
 #define PXA2X0_SSP_BASE 	0x41000000
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
@@ -112,12 +115,25 @@
 #define PXA2X0_LCDC_SIZE	0x220
 #define PXA2X0_MEMCTL_BASE	0x48000000 /* Memory Controller */
 #define PXA2X0_MEMCTL_SIZE	0x48
+#define PXA2X0_USBH_BASE	0x4c000000 /* USB Host controller */
+#define PXA2X0_USBH_SIZE	0x70
+
+/* Internal SRAM storage. PXA27x only */
+#define PXA270_SRAM0_START 0x5c000000
+#define PXA270_SRAM1_START 0x5c010000
+#define PXA270_SRAM2_START 0x5c020000
+#define PXA270_SRAM3_START 0x5c030000
+#define	PXA270_SRAM_BANKS      4
+#define	PXA270_SRAM_BANK_SIZE  0x00010000
 
 /* width of interrupt controller */
 #define ICU_LEN			32   /* but [0..7,15,16] is not used */
 #define ICU_INT_HWMASK		0xffffff00
-#define PXA2X0_IRQ_MIN 8	/* 0..7 are not used by integrated 
+#define PXA250_IRQ_MIN 8	/* 0..7 are not used by integrated 
 				   peripherals */
+#define PXA270_IRQ_MIN 0
+
+#define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
 
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
@@ -243,6 +259,7 @@ struct pxa2x0_dma_desc {
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
+#define CKEN_USBH	(1<<10)
 #define CKEN_USB	(1<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
@@ -301,7 +318,27 @@ struct pxa2x0_dma_desc {
 #define GPIO_GAFR2_L  0x64	/* alternate function [79:64] */
 #define GPIO_GAFR2_U  0x68	/* alternate function [80] */
 
-#define	GPIO_REG(r, pin)	((r) + (((pin) / 32) * 4))
+/* Only for PXA270 */
+#define GPIO_GAFR3_L  0x6c	/* alternate function [111:96] */
+#define GPIO_GAFR3_U  0x70	/* alternate function [120:112] */
+
+#define GPIO_GPLR3  0x100	/* Level reg [120:96] */
+#define GPIO_GPDR3  0x10c	/* dir reg [120:96] */
+#define GPIO_GPSR3  0x118	/* set reg [120:96] */
+#define GPIO_GPCR3  0x124	/* clear reg [120:96] */
+#define GPIO_GRER3  0x130	/* rising edge [120:96] */
+#define GPIO_GFER3  0x13c	/* falling edge [120:96] */
+#define GPIO_GEDR3  0x148	/* edge detect [120:96] */
+
+/* a bit simpler if we don't support PXA270 */
+#define	PXA250_GPIO_REG(r, pin)	((r) + (((pin) / 32) * 4))
+#define	PXA250_GPIO_NPINS    85
+
+#define	PXA270_GPIO_REG(r, pin) \
+(pin < 96 ? PXA250_GPIO_REG(r,pin) : ((r) + 0x100 + ((((pin)-96) / 32) * 4)))
+#define PXA270_GPIO_NPINS    121
+
+
 #define	GPIO_BANK(pin)		((pin) / 32)
 #define	GPIO_BIT(pin)		(1u << ((pin) & 0x1f))
 #define	GPIO_FN_REG(pin)	(GPIO_GAFR0_L + (((pin) / 16) * 4))
@@ -325,8 +362,6 @@ struct pxa2x0_dma_desc {
 #define	GPIO_IS_GPIO(n)		(GPIO_FN(n) == 0)
 #define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
 #define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
-
-#define	GPIO_NPINS    85
 
 /*
  * memory controller
@@ -431,14 +466,29 @@ struct pxa2x0_dma_desc {
 #define LCDC_LCCR3	0x00c	/* Controller Control Register 2 */
 #define  LCCR3_BPP_SHIFT 24		/* Bits per pixel */
 #define  LCCR3_BPP	(0x07<<LCCR3_BPP_SHIFT)
+#define LCDC_LCCR4	0x010	/* Controller Control Register 3 */
+#define LCDC_LCCR5	0x014	/* Controller Control Register 3 */
 #define LCDC_FBR0	0x020	/* DMA ch0 frame branch register */
 #define LCDC_FBR1	0x024	/* DMA ch1 frame branch register */
+#define LCDC_FBR2	0x028	/* DMA ch2 frame branch register */
+#define LCDC_FBR3	0x02c	/* DMA ch3 frame branch register */
+#define LCDC_FBR4	0x030	/* DMA ch4 frame branch register */
+#define LCDC_LCSR1	0x034	/* controller status register 1 PXA27x only */
 #define LCDC_LCSR	0x038	/* controller status register */
 #define  LCSR_LDD	(1U<<0) /* LCD disable done */
 #define  LCSR_SOF	(1U<<1) /* Start of frame */
 #define LCDC_LIIDR	0x03c	/* controller interrupt ID Register */
 #define LCDC_TRGBR	0x040	/* TMED RGB Speed Register */
 #define LCDC_TCR	0x044	/* TMED Control Register */
+#define LCDC_OVL1C1	0x050	/* Overlay 1 control register 1 */
+#define LCDC_OVL1C2	0x060	/* Overlay 1 control register 2 */
+#define LCDC_OVL2C1	0x070	/* Overlay 1 control register 1 */
+#define LCDC_OVL2C2	0x080	/* Overlay 1 control register 2 */
+#define LCDC_CCR	0x090	/* Cursor control register */
+#define LCDC_CMDCR	0x100	/* Command control register */
+#define LCDC_PRSR	0x104	/* Panel read status register */
+#define LCDC_FBR5	0x110	/* DMA ch5 frame branch register */
+#define LCDC_FBR6	0x114	/* DMA ch6 frame branch register */
 #define LCDC_FDADR0	0x200	/* DMA ch0 frame descriptor address */
 #define LCDC_FSADR0	0x204	/* DMA ch0 frame source address */
 #define LCDC_FIDR0	0x208	/* DMA ch0 frame ID register */
@@ -447,6 +497,27 @@ struct pxa2x0_dma_desc {
 #define LCDC_FSADR1	0x214	/* DMA ch1 frame source address */
 #define LCDC_FIDR1	0x218	/* DMA ch1 frame ID register */
 #define LCDC_LDCMD1	0x21c	/* DMA ch1 command register */
+#define LCDC_FDADR2	0x220	/* DMA ch2 frame descriptor address */
+#define LCDC_FSADR2	0x224	/* DMA ch2 frame source address */
+#define LCDC_FIDR2	0x228	/* DMA ch2 frame ID register */
+#define LCDC_LDCMD2	0x22c	/* DMA ch2 command register */
+#define LCDC_FDADR3	0x230	/* DMA ch3 frame descriptor address */
+#define LCDC_FSADR3	0x234	/* DMA ch3 frame source address */
+#define LCDC_FIDR3	0x238	/* DMA ch3 frame ID register */
+#define LCDC_LDCMD3	0x23c	/* DMA ch3 command register */
+#define LCDC_FDADR4	0x240	/* DMA ch4 frame descriptor address */
+#define LCDC_FSADR4	0x244	/* DMA ch4 frame source address */
+#define LCDC_FIDR4	0x248	/* DMA ch4 frame ID register */
+#define LCDC_LDCMD4	0x24c	/* DMA ch4 command register */
+#define LCDC_FDADR5	0x250	/* DMA ch5 frame descriptor address */
+#define LCDC_FSADR5	0x254	/* DMA ch5 frame source address */
+#define LCDC_FIDR5	0x258	/* DMA ch5 frame ID register */
+#define LCDC_LDCMD5	0x25c	/* DMA ch5 command register */
+#define LCDC_FDADR6	0x260	/* DMA ch6 frame descriptor address */
+#define LCDC_FSADR6	0x264	/* DMA ch6 frame source address */
+#define LCDC_FIDR6	0x268	/* DMA ch6 frame ID register */
+#define LCDC_LDCMD6	0x26c	/* DMA ch6 command register */
+#define LCDC_LCDBSCNTR	0x054	/* LCD buffer strength control register */
 
 /*
  * MMC/SD controller
@@ -609,4 +680,37 @@ struct pxa2x0_dma_desc {
 #define USBDC_UDDR13	0x0C00  /* UDC Endpoint 13 Data Register  */
 #define USBDC_UDDR14	0x0E00  /* UDC Endpoint 14 Data Register  */
 #define USBDC_UDDR15	0x00E0  /* UDC Endpoint 15 Data Register  */
+
+#define USBHC_UHCRHDA	0x0048	/* UHC Root Hub Descriptor A */
+#define  UHCRHDA_POTPGT_SHIFT	24	/* Power on to power good time */
+#define  UHCRHDA_NOCP	(1<<12)	/* No over current protection */
+#define  UHCRHDA_OCPM	(1<<11)	/* Over current protection mode */
+#define  UHCRHDA_DT	(1<<10)	/* Device type */
+#define  UHCRHDA_NPS	(1<<9)	/* No power switching */
+#define  UHCRHDA_PSM	(1<<8)	/* Power switching mode */
+#define  UHCRHDA_NDP_MASK	0xff	/* Number downstream ports */
+#define USBHC_UHCRHDB	0x004c	/* UHC Root Hub Descriptor B */
+#define USBHC_UHCRHS	0x0050	/* UHC Root Hub Stauts */
+#define USBHC_UHCHR	0x0064	/* UHC Reset Register */
+#define  UHCHR_SSEP3	(1<<11)	/* Sleep standby enable for port3 */
+#define  UHCHR_SSEP2	(1<<10)	/* Sleep standby enable for port2 */
+#define  UHCHR_SSEP1	(1<<9)	/* Sleep standby enable for port1 */
+#define  UHCHR_PCPL	(1<<7)	/* Power control polarity low */
+#define  UHCHR_PSPL	(1<<6)	/* Power sense polarity low */
+#define  UHCHR_SSE	(1<<5)	/* Sleep standby enable */
+#define  UHCHR_UIT	(1<<4)	/* USB interrupt test */
+#define  UHCHR_SSDC	(1<<3)	/* Simulation scale down clock */
+#define  UHCHR_CGR	(1<<2)	/* Clock generation reset */
+#define  UHCHR_FHR	(1<<1)	/* Force host controller reset */
+#define  UHCHR_FSBIR	(1<<0)	/* Force system bus interface reset */
+#define  UHCHR_MASK	0xeff
+
+/*
+ * PWM controller
+ */
+#define PWM_PWMCR	0x0000	/* Control register */
+#define PWM_PWMDCR	0x0004	/* Duty cycle register */
+#define  PWM_FD		(1<<10)	/* Full duty */
+#define PWM_PWMPCR	0x0008	/* Period register */
+
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */
