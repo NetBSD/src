@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.3 2005/05/07 22:22:02 rearnsha Exp $
+#	$NetBSD: TWINTAIL,v 1.4 2005/07/04 00:46:04 bsh Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -22,7 +22,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_XSCALE_PXA2X0	# Support the XScale core
+options 	CPU_XSCALE_PXA250	# Support the XScale core
+#options 	CPU_XSCALE_PXA270	# You can enable this, but useless for this board.
 #options 	XSCALE_CACHE_WRITE_THROUGH
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 makeoptions	CPUFLAGS="-mcpu=xscale"
@@ -136,7 +137,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	IPKDB_NE
 #options 	IPKDBKEY="\"Debug_it_over_network\""
 #options  	DEBUG_KGDB
-makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g -O2"	# compile full symbol table
 options 	SYMTAB_SPACE=200000
 #options 	AUDIO_DEBUG=2
 
