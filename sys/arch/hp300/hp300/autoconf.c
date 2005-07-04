@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2005/06/02 16:44:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.72 2005/07/04 15:18:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2005/06/02 16:44:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72 2005/07/04 15:18:17 drochner Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -288,7 +288,8 @@ static void	dev_data_insert(struct dev_data *, ddlist_t *);
 
 static int	mainbusmatch(struct device *, struct cfdata *, void *);
 static void	mainbusattach(struct device *, struct device *, void *);
-static int	mainbussearch(struct device *, struct cfdata *, void *);
+static int	mainbussearch(struct device *, struct cfdata *,
+			      const locdesc_t *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
@@ -313,11 +314,12 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	config_search(mainbussearch, self, NULL);
+	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf, void *aux)
+mainbussearch(struct device *parent, struct cfdata *cf,
+	      const locdesc_t *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
