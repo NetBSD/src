@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.1 2005/06/06 20:24:10 pooka Exp $
+#	$NetBSD: VIPER,v 1.2 2005/07/04 14:10:23 pooka Exp $
 #
 #	Arcom Viper
 #
@@ -19,7 +19,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 
-options 	CPU_XSCALE_PXA2X0 # XScale PXA255
+options 	CPU_XSCALE_PXA250 # XScale PXA255
 makeoptions	CPUFLAGS="-mcpu=xscale"
 #options 	CPU_XSCALE_CCLKCFG=xyz
 
