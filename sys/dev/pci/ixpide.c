@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.3 2005/03/07 02:27:17 christos Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.3 2005/03/07 02:27:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ static const struct pciide_product_desc pciide_ixpide_products[] = {
 	{ PCI_PRODUCT_ATI_IXP_IDE_200, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_IXP_IDE_300, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_IXP_IDE_400, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_SB400_SATA_1, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_SB400_SATA_2, 0, ixpdesc, ixp_chip_map },
 	{ 0, 			       0, NULL,	   NULL }
 };
 
