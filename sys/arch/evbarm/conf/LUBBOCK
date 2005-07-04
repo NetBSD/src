@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_XSCALE_PXA2X0	# Support the XScale core
+options 	CPU_XSCALE_PXA250	# Support the XScale core
 #options 	XSCALE_CACHE_WRITE_THROUGH
 #options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
