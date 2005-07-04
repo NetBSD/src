@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 2005/06/28 18:29:59 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 2005/07/04 15:18:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2005/07/04 15:18:17 drochner Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1704,7 +1704,7 @@ mbprint(void *aux, const char *pnp)
 
 int
 mbsubmatch(struct device *parent, struct cfdata *cf,
-	   const locdesc_t *, void *aux)
+	   const locdesc_t *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;
