@@ -1,5 +1,5 @@
-/*	$NetBSD: ral.c,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
-/*	$OpenBSD: ral.c,v 1.53 2005/05/18 20:10:07 damien Exp $  */
+/*	$NetBSD: ral.c,v 1.2 2005/07/04 17:50:10 drochner Exp $ */
+/*	$OpenBSD: ral.c,v 1.55 2005/06/20 18:25:10 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -24,11 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.1 2005/07/01 20:06:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.2 2005/07/04 17:50:10 drochner Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/reboot.h>
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
@@ -58,9 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.1 2005/07/01 20:06:56 drochner Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
+#include <net80211/ieee80211_rssadapt.h>
 
 #include <dev/ic/ralreg.h>
 #include <dev/ic/ralvar.h>
@@ -74,69 +76,72 @@ int ral_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-int		ral_alloc_tx_ring(struct ral_softc *, struct ral_tx_ring *,
-		    int);
-void		ral_reset_tx_ring(struct ral_softc *, struct ral_tx_ring *);
-void		ral_free_tx_ring(struct ral_softc *, struct ral_tx_ring *);
-int		ral_alloc_rx_ring(struct ral_softc *, struct ral_rx_ring *,
-		    int);
-void		ral_reset_rx_ring(struct ral_softc *, struct ral_rx_ring *);
-void		ral_free_rx_ring(struct ral_softc *, struct ral_rx_ring *);
-struct		ieee80211_node *ral_node_alloc(struct ieee80211com *);
-void		ral_node_copy(struct ieee80211com *ic, struct ieee80211_node *,
-		    const struct ieee80211_node *);
-int		ral_media_change(struct ifnet *);
-void		ral_next_scan(void *);
-void		ral_iter_func(void *, struct ieee80211_node *);
-void		ral_rssadapt_updatestats(void *);
-int		ral_newstate(struct ieee80211com *, enum ieee80211_state, int);
-uint16_t	ral_eeprom_read(struct ral_softc *, uint8_t);
-void		ral_encryption_intr(struct ral_softc *);
-void		ral_tx_intr(struct ral_softc *);
-void		ral_prio_intr(struct ral_softc *);
-void		ral_decryption_intr(struct ral_softc *);
-void		ral_rx_intr(struct ral_softc *);
-void		ral_beacon_expire(struct ral_softc *);
-void		ral_wakeup_expire(struct ral_softc *);
-int		ral_ack_rate(int);
-uint16_t	ral_txtime(int, int, uint32_t);
-uint8_t		ral_plcp_signal(int);
-void		ral_setup_tx_desc(struct ral_softc *, struct ral_tx_desc *,
-		    uint32_t, int, int, int, bus_addr_t);
-int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
-		    struct ieee80211_node *);
-int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
-		    struct ieee80211_node *);
-struct mbuf	*ral_get_rts(struct ral_softc *, struct ieee80211_frame *,
-		    uint16_t);
-int		ral_tx_data(struct ral_softc *, struct mbuf *,
-		    struct ieee80211_node *);
-void		ral_start(struct ifnet *);
-void		ral_watchdog(struct ifnet *);
-int		ral_ioctl(struct ifnet *, u_long, caddr_t);
-void		ral_bbp_write(struct ral_softc *, uint8_t, uint8_t);
-uint8_t		ral_bbp_read(struct ral_softc *, uint8_t);
-void		ral_rf_write(struct ral_softc *, uint8_t, uint32_t);
-void		ral_set_chan(struct ral_softc *, struct ieee80211_channel *);
-void		ral_disable_rf_tune(struct ral_softc *);
-void		ral_enable_tsf_sync(struct ral_softc *);
-void		ral_update_plcp(struct ral_softc *);
-void		ral_update_slot(struct ral_softc *);
-void		ral_update_led(struct ral_softc *, int, int);
-void		ral_set_bssid(struct ral_softc *, uint8_t *);
-void		ral_set_macaddr(struct ral_softc *, uint8_t *);
-void		ral_get_macaddr(struct ral_softc *, uint8_t *);
-void		ral_update_promisc(struct ral_softc *);
-void		ral_set_txantenna(struct ral_softc *, int);
-void		ral_set_rxantenna(struct ral_softc *, int);
-const char	*ral_get_rf(int);
-void		ral_read_eeprom(struct ral_softc *);
-int		ral_bbp_init(struct ral_softc *);
-int		ral_init(struct ifnet *);
-void		ral_stop(struct ifnet *, int);
-struct mbuf	*ral_getmbuf(int, int, u_int);
-struct mbuf	*ral_beacon_alloc(struct ieee80211com *,
-		    struct ieee80211_node *);
+static int		ral_alloc_tx_ring(struct ral_softc *,
+			    struct ral_tx_ring *, int);
+static void		ral_reset_tx_ring(struct ral_softc *,
+			    struct ral_tx_ring *);
+static void		ral_free_tx_ring(struct ral_softc *,
+			    struct ral_tx_ring *);
+static int		ral_alloc_rx_ring(struct ral_softc *,
+			    struct ral_rx_ring *, int);
+static void		ral_reset_rx_ring(struct ral_softc *,
+			    struct ral_rx_ring *);
+static void		ral_free_rx_ring(struct ral_softc *,
+			    struct ral_rx_ring *);
+static struct		ieee80211_node *ral_node_alloc(
+			    struct ieee80211_node_table *);
+static int		ral_media_change(struct ifnet *);
+static void		ral_next_scan(void *);
+static void		ral_iter_func(void *, struct ieee80211_node *);
+static void		ral_rssadapt_updatestats(void *);
+static int		ral_newstate(struct ieee80211com *,
+			    enum ieee80211_state, int);
+static uint16_t		ral_eeprom_read(struct ral_softc *, uint8_t);
+static void		ral_encryption_intr(struct ral_softc *);
+static void		ral_tx_intr(struct ral_softc *);
+static void		ral_prio_intr(struct ral_softc *);
+static void		ral_decryption_intr(struct ral_softc *);
+static void		ral_rx_intr(struct ral_softc *);
+static void		ral_beacon_expire(struct ral_softc *);
+static void		ral_wakeup_expire(struct ral_softc *);
+static int		ral_ack_rate(int);
+static uint16_t		ral_txtime(int, int, uint32_t);
+static uint8_t		ral_plcp_signal(int);
+static void		ral_setup_tx_desc(struct ral_softc *,
+			    struct ral_tx_desc *, uint32_t, int, int, int,
+			    bus_addr_t);
+static int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
+			    struct ieee80211_node *);
+static int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
+			    struct ieee80211_node *);
+static struct		mbuf *ral_get_rts(struct ral_softc *,
+			    struct ieee80211_frame *, uint16_t);
+static int		ral_tx_data(struct ral_softc *, struct mbuf *,
+			    struct ieee80211_node *);
+static void		ral_start(struct ifnet *);
+static void		ral_watchdog(struct ifnet *);
+static int		ral_ioctl(struct ifnet *, u_long, caddr_t);
+static void		ral_bbp_write(struct ral_softc *, uint8_t, uint8_t);
+static uint8_t		ral_bbp_read(struct ral_softc *, uint8_t);
+static void		ral_rf_write(struct ral_softc *, uint8_t, uint32_t);
+static void		ral_set_chan(struct ral_softc *,
+			    struct ieee80211_channel *);
+static void		ral_disable_rf_tune(struct ral_softc *);
+static void		ral_enable_tsf_sync(struct ral_softc *);
+static void		ral_update_plcp(struct ral_softc *);
+static void		ral_update_slot(struct ifnet *);
+static void		ral_update_led(struct ral_softc *, int, int);
+static void		ral_set_bssid(struct ral_softc *, uint8_t *);
+static void		ral_set_macaddr(struct ral_softc *, uint8_t *);
+static void		ral_get_macaddr(struct ral_softc *, uint8_t *);
+static void		ral_update_promisc(struct ral_softc *);
+static void		ral_set_txantenna(struct ral_softc *, int);
+static void		ral_set_rxantenna(struct ral_softc *, int);
+static const char	*ral_get_rf(int);
+static void		ral_read_eeprom(struct ral_softc *);
+static int		ral_bbp_init(struct ral_softc *);
+static int		ral_init(struct ifnet *);
+static void		ral_stop(struct ifnet *, int);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -330,7 +335,7 @@ int
 ral_attach(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int i;
 
 	callout_init(&sc->scan_ch);
@@ -341,13 +346,13 @@ ral_attach(struct ral_softc *sc)
 
 	/* retrieve MAC address */
 	ral_get_macaddr(sc, ic->ic_myaddr);
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* retrieve RF rev. no and various other things from EEPROM */
 	ral_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT2560 (rev 0x%02x), RF %s\n", sc->sc_dev.dv_xname,
-	    sc->asic_rev, ral_get_rf(sc->rf_rev));
+	printf("%s: MAC/BBP RT2560 (rev 0x%02x), RF %s, address %s\n",
+	    sc->sc_dev.dv_xname, sc->asic_rev, ral_get_rf(sc->rf_rev),
+	    ether_sprintf(ic->ic_myaddr));
 
 	/*
 	 * Allocate Tx and Rx rings.
@@ -382,14 +387,15 @@ ral_attach(struct ral_softc *sc)
 		goto fail5;
 	}
 
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SHSLOT |
+	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -437,14 +443,14 @@ ral_attach(struct ral_softc *sc)
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = ral_node_alloc;
-	ic->ic_node_copy = ral_node_copy;
+	ic->ic_updateslot = ral_update_slot;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ral_newstate;
-	ieee80211_media_init(ifp, ral_media_change, ieee80211_media_status);
+	ieee80211_media_init(ic, ral_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -459,6 +465,9 @@ ral_attach(struct ral_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 #endif
 
+	if (boothowto & AB_VERBOSE)
+		ieee80211_announce(ic);
+
 	return 0;
 
 fail5:	ral_free_tx_ring(sc, &sc->bcnq);
@@ -471,7 +480,7 @@ fail1:	return ENXIO;
 int
 ral_detach(struct ral_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->rssadapt_ch);
@@ -479,7 +488,7 @@ ral_detach(struct ral_softc *sc)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	ieee80211_ifdetach(ifp);
+	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 
 	ral_free_tx_ring(sc, &sc->txq);
@@ -491,7 +500,7 @@ ral_detach(struct ral_softc *sc)
 	return 0;
 }
 
-int
+static int
 ral_alloc_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring, int count)
 {
 	int i, nsegs, error;
@@ -537,7 +546,7 @@ ral_alloc_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring, int count)
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct ral_tx_data), M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -545,7 +554,6 @@ ral_alloc_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring, int count)
 		goto fail;
 	}
 
-	memset(ring->data, 0, count * sizeof (struct ral_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RAL_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -563,10 +571,9 @@ fail:	ral_free_tx_ring(sc, ring);
 	return error;
 }
 
-void
+static void
 ral_reset_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	int i;
@@ -584,7 +591,7 @@ ral_reset_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 		}
 
 		if (data->ni != NULL) {
-			ieee80211_release_node(ic, data->ni);
+			ieee80211_free_node(data->ni);
 			data->ni = NULL;
 		}
 
@@ -599,10 +606,9 @@ ral_reset_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 	ring->cur_encrypt = ring->next_encrypt = 0;
 }
 
-void
+static void
 ral_free_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ral_tx_data *data;
 	int i;
 
@@ -628,7 +634,7 @@ ral_free_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 			}
 
 			if (data->ni != NULL)
-				ieee80211_release_node(ic, data->ni);
+				ieee80211_free_node(data->ni);
 
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -637,7 +643,7 @@ ral_free_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 	}
 }
 
-int
+static int
 ral_alloc_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring, int count)
 {
 	struct ral_rx_desc *desc;
@@ -684,7 +690,7 @@ ral_alloc_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring, int count)
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct ral_rx_data), M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -695,7 +701,6 @@ ral_alloc_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring, int count)
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
-	memset(ring->data, 0, count * sizeof (struct ral_rx_data));
 	for (i = 0; i < count; i++) {
 		desc = &sc->rxq.desc[i];
 		data = &sc->rxq.data[i];
@@ -745,7 +750,7 @@ fail:	ral_free_rx_ring(sc, ring);
 	return error;
 }
 
-void
+static void
 ral_reset_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring)
 {
 	int i;
@@ -762,7 +767,7 @@ ral_reset_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring)
 	ring->cur_decrypt = 0;
 }
 
-void
+static void
 ral_free_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring)
 {
 	struct ral_rx_data *data;
@@ -796,28 +801,17 @@ ral_free_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring)
 	}
 }
 
-struct ieee80211_node *
-ral_node_alloc(struct ieee80211com *ic)
+static struct ieee80211_node *
+ral_node_alloc(struct ieee80211_node_table *nt)
 {
 	struct ral_node *rn;
 
-	rn = malloc(sizeof (struct ral_node), M_80211_NODE, M_NOWAIT);
-	if (rn == NULL)
-		return NULL;
+	rn = malloc(sizeof (struct ral_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 
-	memset(rn, 0, sizeof (struct ral_node));
-
-	return &rn->ni;
+	return (rn != NULL) ? &rn->ni : NULL;
 }
 
-void
-ral_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
-    const struct ieee80211_node *src)
-{
-	*(struct ral_node *)dst = *(const struct ral_node *)src;
-}
-
-int
+static int
 ral_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -836,7 +830,7 @@ ral_media_change(struct ifnet *ifp)
  * This function is called periodically (every 200ms) during scanning to
  * switch from one channel to another.
  */
-void
+static void
 ral_next_scan(void *arg)
 {
 	struct ral_softc *sc = arg;
@@ -849,7 +843,7 @@ ral_next_scan(void *arg)
 /*
  * This function is called for each neighbor node.
  */
-void
+static void
 ral_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct ral_node *rn = (struct ral_node *)ni;
@@ -861,21 +855,22 @@ ral_iter_func(void *arg, struct ieee80211_node *ni)
  * This function is called periodically (every 100ms) in RUN state to update
  * the rate adaptation statistics.
  */
-void
+static void
 ral_rssadapt_updatestats(void *arg)
 {
 	struct ral_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	ieee80211_iterate_nodes(ic, ral_iter_func, arg);
+	ieee80211_iterate_nodes(&ic->ic_sta, ral_iter_func, arg);
 
 	callout_reset(&sc->rssadapt_ch, hz / 10, ral_rssadapt_updatestats, sc);
 }
 
-int
+static int
 ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct ral_softc *sc = ic->ic_if.if_softc;
+	struct ral_softc *sc = ic->ic_ifp->if_softc;
+	struct ifnet *ifp = &sc->sc_if;
 	enum ieee80211_state ostate;
 	struct mbuf *m;
 	int error = 0;
@@ -914,12 +909,12 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
-			ral_update_slot(sc);
+			ral_update_slot(ifp);
 		}
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS) {
-			m = ral_beacon_alloc(ic, ic->ic_bss);
+			m = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo);
 			if (m == NULL) {
 				printf("%s: could not allocate beacon\n",
 				    sc->sc_dev.dv_xname);
@@ -927,6 +922,7 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				break;
 			}
 
+			ieee80211_ref_node(ic->ic_bss);
 			error = ral_tx_bcn(sc, m, ic->ic_bss);
 			if (error != 0)
 				break;
@@ -950,7 +946,7 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * Read 16 bits at address 'addr' from the serial EEPROM (either 93C46 or
  * 93C66).
  */
-uint16_t
+static uint16_t
 ral_eeprom_read(struct ral_softc *sc, uint8_t addr)
 {
 	uint32_t tmp;
@@ -1008,7 +1004,7 @@ ral_eeprom_read(struct ral_softc *sc, uint8_t addr)
  * Some frames were processed by the hardware cipher engine and are ready for
  * transmission.
  */
-void
+static void
 ral_encryption_intr(struct ral_softc *sc)
 {
 	struct ral_tx_desc *desc;
@@ -1050,11 +1046,11 @@ ral_encryption_intr(struct ral_softc *sc)
 	RAL_WRITE(sc, RAL_TXCSR0, RAL_KICK_TX);
 }
 
-void
+static void
 ral_tx_intr(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	struct ral_node *rn;
@@ -1113,7 +1109,7 @@ ral_tx_intr(struct ral_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m_freem(data->m);
 		data->m = NULL;
-		ieee80211_release_node(ic, data->ni);
+		ieee80211_free_node(data->ni);
 		data->ni = NULL;
 
 		/* descriptor is no longer valid */
@@ -1134,11 +1130,10 @@ ral_tx_intr(struct ral_softc *sc)
 	ral_start(ifp);
 }
 
-void
+static void
 ral_prio_intr(struct ral_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 
@@ -1181,7 +1176,7 @@ ral_prio_intr(struct ral_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m_freem(data->m);
 		data->m = NULL;
-		ieee80211_release_node(ic, data->ni);
+		ieee80211_free_node(data->ni);
 		data->ni = NULL;
 
 		/* descriptor is no longer valid */
@@ -1206,15 +1201,15 @@ ral_prio_intr(struct ral_softc *sc)
  * Some frames were processed by the hardware cipher engine and are ready for
  * transmission to the IEEE802.11 layer.
  */
-void
+static void
 ral_decryption_intr(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ral_rx_desc *desc;
 	struct ral_rx_data *data;
 	struct ral_node *rn;
-	struct ieee80211_frame *wh;
+	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 	int hw, error;
@@ -1276,18 +1271,18 @@ ral_decryption_intr(struct ral_softc *sc)
 		}
 #endif
 
-		wh = mtod(m, struct ieee80211_frame *);
+		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		ieee80211_input(ifp, m, ni, desc->rssi, 0);
+		ieee80211_input(ic, m, ni, desc->rssi, 0);
 
 		/* give rssi to the rate adatation algorithm */
 		rn = (struct ral_node *)ni;
 		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
 
 		/* node is no longer needed */
-		ieee80211_release_node(ic, ni);
+		ieee80211_free_node(ni);
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
@@ -1333,7 +1328,7 @@ skip:		desc->flags = htole32(RAL_RX_BUSY);
  * Some frames were received. Pass them to the hardware cipher engine before
  * sending them to the 802.11 layer.
  */
-void
+static void
 ral_rx_intr(struct ral_softc *sc)
 {
 	struct ral_rx_desc *desc;
@@ -1388,7 +1383,7 @@ ral_rx_intr(struct ral_softc *sc)
  * This function is called periodically in IBSS mode when a new beacon must be
  * sent out.
  */
-void
+static void
 ral_beacon_expire(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1400,15 +1395,25 @@ ral_beacon_expire(struct ral_softc *sc)
 
 	data = &sc->bcnq.data[sc->bcnq.next];
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, data->map);
+
+	ieee80211_beacon_update(ic, data->ni, &sc->sc_bo, data->m, 1);
+
 #if NBPFILTER > 0
 	if (ic->ic_rawbpf != NULL)
 		bpf_mtap(ic->ic_rawbpf, data->m);
 #endif
 
+	ral_tx_bcn(sc, data->m, data->ni);
+
 	DPRINTFN(15, ("beacon expired\n"));
+
+	sc->bcnq.next = (sc->bcnq.next + 1) % RAL_BEACON_RING_COUNT;
 }
 
-void
+static void
 ral_wakeup_expire(struct ral_softc *sc)
 {
 	DPRINTFN(15, ("wakeup expired\n"));
@@ -1464,7 +1469,7 @@ ral_intr(void *arg)
  * Return the expected ack rate for a frame transmitted at rate `rate'.
  * XXX: this should depend on the destination node basic rate set.
  */
-int
+static int
 ral_ack_rate(int rate)
 {
 	switch (rate) {
@@ -1499,7 +1504,7 @@ ral_ack_rate(int rate)
  * The function automatically determines the operating mode depending on the
  * given rate. `flags' indicates whether short preamble is in use or not.
  */
-uint16_t
+static uint16_t
 ral_txtime(int len, int rate, uint32_t flags)
 {
 	uint16_t txtime;
@@ -1535,7 +1540,7 @@ ral_txtime(int len, int rate, uint32_t flags)
 	return txtime;
 }
 
-uint8_t
+static uint8_t
 ral_plcp_signal(int rate)
 {
 	switch (rate) {
@@ -1560,7 +1565,7 @@ ral_plcp_signal(int rate)
 	}
 }
 
-void
+static void
 ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
     uint32_t flags, int len, int rate, int encrypt, bus_addr_t physaddr)
 {
@@ -1612,9 +1617,10 @@ ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
 		desc->plcp_signal |= 0x08;
 }
 
-int
+static int
 ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	int rate, error;
@@ -1633,6 +1639,20 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		return error;
 	}
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct ral_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_antenna = sc->tx_ant;
+
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+	}
+#endif
+
 	data->m = m0;
 	data->ni = ni;
 
@@ -1645,10 +1665,12 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->bcnq.cur * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
+	sc->bcnq.cur = (sc->bcnq.cur + 1) % RAL_BEACON_RING_COUNT;
+
 	return 0;
 }
 
-int
+static int
 ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1728,7 +1750,7 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 /*
  * Build a RTS control frame.
  */
-struct mbuf *
+static struct mbuf *
 ral_get_rts(struct ral_softc *sc, struct ieee80211_frame *wh, uint16_t dur)
 {
 	struct ieee80211_frame_rts *rts;
@@ -1736,7 +1758,7 @@ ral_get_rts(struct ral_softc *sc, struct ieee80211_frame *wh, uint16_t dur)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		sc->sc_ic.ic_stats.is_tx_nombuf++;
+		sc->sc_ic.ic_stats.is_tx_nobuf++;
 		printf("%s: could not allocate RTS frame\n",
 		    sc->sc_dev.dv_xname);
 		return NULL;
@@ -1756,16 +1778,16 @@ ral_get_rts(struct ral_softc *sc, struct ieee80211_frame *wh, uint16_t dur)
 	return m;
 }
 
-int
+static int
 ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	struct ral_node *rn;
 	struct ieee80211_rateset *rs;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
@@ -1790,10 +1812,13 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 	rate &= IEEE80211_RATE_VAL;
 
-	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m0);
+		if (k == NULL)
 			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 	/*
@@ -1900,6 +1925,9 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			m_freem(m0);
 			return error;
 		}
+
+		/* packet header have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 #if NBPFILTER > 0
@@ -1956,12 +1984,13 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	return 0;
 }
 
-void
+static void
 ral_start(struct ifnet *ifp)
 {
 	struct ral_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct mbuf *m0;
+	struct ether_header *eh;
 	struct ieee80211_node *ni;
 
 	for (;;) {
@@ -1993,11 +2022,22 @@ ral_start(struct ifnet *ifp)
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
+
+			if (m0->m_len < sizeof (struct ether_header) &&
+			    !(m0 = m_pullup(m0, sizeof (struct ether_header))))
+				continue;
+
+			eh = mtod(m0, struct ether_header *);
+			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
+			if (ni == NULL) {
+				m_freem(m0);
+				continue;
+			}
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m0);
 #endif
-			m0 = ieee80211_encap(ifp, m0, &ni);
+			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL)
 				continue;
 #if NBPFILTER > 0
@@ -2005,8 +2045,7 @@ ral_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m0);
 #endif
 			if (ral_tx_data(sc, m0, ni) != 0) {
-				if (ni != NULL)
-					ieee80211_release_node(ic, ni);
+				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				break;
 			}
@@ -2017,7 +2056,7 @@ ral_start(struct ifnet *ifp)
 	}
 }
 
-void
+static void
 ral_watchdog(struct ifnet *ifp)
 {
 	struct ral_softc *sc = ifp->if_softc;
@@ -2034,10 +2073,10 @@ ral_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 	}
 
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
-int
+static int
 ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ral_softc *sc = ifp->if_softc;
@@ -2064,8 +2103,8 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ec) :
-		    ether_delmulti(ifr, &ic->ic_ec);
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET)
 			error = 0;
@@ -2077,7 +2116,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * (used by kismet). In IBSS mode, we must explicitly reset
 		 * the interface to generate a new beacon frame.
 		 */
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(ic, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
 			ral_set_chan(sc, ic->ic_ibss_chan);
@@ -2086,7 +2125,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(ic, cmd, data);
 	}
 
 	if (error == ENETRESET) {
@@ -2101,7 +2140,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-void
+static void
 ral_bbp_write(struct ral_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint32_t tmp;
@@ -2123,7 +2162,7 @@ ral_bbp_write(struct ral_softc *sc, uint8_t reg, uint8_t val)
 	DPRINTFN(15, ("BBP R%u <- 0x%02x\n", reg, val));
 }
 
-uint8_t
+static uint8_t
 ral_bbp_read(struct ral_softc *sc, uint8_t reg)
 {
 	uint32_t val;
@@ -2143,7 +2182,7 @@ ral_bbp_read(struct ral_softc *sc, uint8_t reg)
 	return 0;
 }
 
-void
+static void
 ral_rf_write(struct ral_softc *sc, uint8_t reg, uint32_t val)
 {
 	uint32_t tmp;
@@ -2168,7 +2207,7 @@ ral_rf_write(struct ral_softc *sc, uint8_t reg, uint32_t val)
 	DPRINTFN(15, ("RF R[%u] <- 0x%05x\n", reg & 0x3, val & 0xfffff));
 }
 
-void
+static void
 ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
@@ -2275,7 +2314,7 @@ ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 /*
  * Disable RF auto-tuning.
  */
-void
+static void
 ral_disable_rf_tune(struct ral_softc *sc)
 {
 	uint32_t tmp;
@@ -2295,7 +2334,7 @@ ral_disable_rf_tune(struct ral_softc *sc)
  * Refer to IEEE Std 802.11-1999 pp. 123 for more information on TSF
  * synchronization.
  */
-void
+static void
 ral_enable_tsf_sync(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2326,7 +2365,7 @@ ral_enable_tsf_sync(struct ral_softc *sc)
 	DPRINTF(("enabling TSF synchronization\n"));
 }
 
-void
+static void
 ral_update_plcp(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2351,18 +2390,19 @@ ral_update_plcp(struct ral_softc *sc)
 }
 
 /*
- * IEEE 802.11a uses short slot time. Refer to IEEE Std 802.11-1999 pp. 85 to
- * know how these values are computed.
+ * This function can be called by ieee80211_set_shortslottime(). Refer to
+ * IEEE Std 802.11-1999 pp. 85 to know how these values are computed.
  */
-void
-ral_update_slot(struct ral_softc *sc)
+static void
+ral_update_slot(struct ifnet *ifp)
 {
+	struct ral_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t slottime;
 	uint16_t sifs, pifs, difs, eifs;
 	uint32_t tmp;
 
-	slottime = (ic->ic_curmode == IEEE80211_MODE_11A) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
 
 	/* define the MAC slot boundaries */
 	sifs = RAL_SIFS;
@@ -2384,7 +2424,7 @@ ral_update_slot(struct ral_softc *sc)
 	DPRINTF(("setting slottime to %uus\n", slottime));
 }
 
-void
+static void
 ral_update_led(struct ral_softc *sc, int led1, int led2)
 {
 	uint32_t tmp;
@@ -2394,7 +2434,7 @@ ral_update_led(struct ral_softc *sc, int led1, int led2)
 	RAL_WRITE(sc, RAL_LEDCSR, tmp);
 }
 
-void
+static void
 ral_set_bssid(struct ral_softc *sc, uint8_t *bssid)
 {
 	uint32_t tmp;
@@ -2408,7 +2448,7 @@ ral_set_bssid(struct ral_softc *sc, uint8_t *bssid)
 	DPRINTF(("setting BSSID to %s\n", ether_sprintf(bssid)));
 }
 
-void
+static void
 ral_set_macaddr(struct ral_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
@@ -2422,7 +2462,7 @@ ral_set_macaddr(struct ral_softc *sc, uint8_t *addr)
 	DPRINTF(("setting MAC address to %s\n", ether_sprintf(addr)));
 }
 
-void
+static void
 ral_get_macaddr(struct ral_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
@@ -2438,10 +2478,10 @@ ral_get_macaddr(struct ral_softc *sc, uint8_t *addr)
 	addr[5] = (tmp >> 8) & 0xff;
 }
 
-void
+static void
 ral_update_promisc(struct ral_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ifnet *ifp = &sc->sc_if;
 	uint32_t tmp;
 
 	tmp = RAL_READ(sc, RAL_RXCSR0);
@@ -2456,7 +2496,7 @@ ral_update_promisc(struct ral_softc *sc)
 	    "entering" : "leaving"));
 }
 
-void
+static void
 ral_set_txantenna(struct ral_softc *sc, int antenna)
 {
 	uint32_t tmp;
@@ -2483,7 +2523,7 @@ ral_set_txantenna(struct ral_softc *sc, int antenna)
 	RAL_WRITE(sc, RAL_BBPCSR1, tmp);
 }
 
-void
+static void
 ral_set_rxantenna(struct ral_softc *sc, int antenna)
 {
 	uint8_t rx;
@@ -2503,7 +2543,7 @@ ral_set_rxantenna(struct ral_softc *sc, int antenna)
 	ral_bbp_write(sc, RAL_BBP_RX, rx);
 }
 
-const char *
+static const char *
 ral_get_rf(int rev)
 {
 	switch (rev) {
@@ -2518,7 +2558,7 @@ ral_get_rf(int rev)
 	}
 }
 
-void
+static void
 ral_read_eeprom(struct ral_softc *sc)
 {
 	uint16_t val;
@@ -2547,7 +2587,7 @@ ral_read_eeprom(struct ral_softc *sc)
 	}
 }
 
-int
+static int
 ral_bbp_init(struct ral_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
@@ -2581,7 +2621,7 @@ ral_bbp_init(struct ral_softc *sc)
 #undef N
 }
 
-int
+static int
 ral_init(struct ifnet *ifp)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
@@ -2625,12 +2665,9 @@ ral_init(struct ifnet *ifp)
 	/* set supported basic rates (1, 2, 6, 12, 24) */
 	RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x153);
 
-	/* set default sensitivity */
-	ral_bbp_write(sc, 17, 0x48);
-
 	ral_set_txantenna(sc, 1);
 	ral_set_rxantenna(sc, 1);
-	ral_update_slot(sc);
+	ral_update_slot(ifp);
 	ral_update_plcp(sc);
 	ral_update_led(sc, 0, 0);
 
@@ -2679,7 +2716,7 @@ ral_init(struct ifnet *ifp)
 #undef N
 }
 
-void
+static void
 ral_stop(struct ifnet *ifp, int disable)
 {
 	struct ral_softc *sc = ifp->if_softc;
@@ -2714,104 +2751,4 @@ ral_stop(struct ifnet *ifp, int disable)
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-}
-
-struct mbuf *
-ral_getmbuf(int flags, int type, u_int pktlen)
-{
-        struct mbuf *m;
-
-        MGETHDR(m, flags, type);
-        if (m != NULL && pktlen > MHLEN)
-                MCLGET(m, flags);
-
-        return m;
-}
-
-struct mbuf *
-ral_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
-{
-	struct ieee80211_frame *wh;
-	struct mbuf *m;
-	int pktlen;
-	u_int8_t *frm;
-	u_int16_t capinfo;
-	struct ieee80211_rateset *rs;
-
-	rs = &ni->ni_rates;
-	pktlen = sizeof (struct ieee80211_frame)
-	     + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 3 + 6;
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
-		pktlen += 2;
-	m = ral_getmbuf(M_DONTWAIT, MT_DATA,
-	        2 + ic->ic_des_esslen
-	      + 2 + IEEE80211_RATE_SIZE
-	      + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
-	if (m == NULL)
-		return NULL;
-
-	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_BEACON;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
-	*(u_int16_t *)wh->i_seq = 0;
-
-	/*
-	 * beacon frame format
-	 *        [8] time stamp
-	 *        [2] beacon interval
-	 *        [2] cabability information
-	 *        [tlv] ssid
-	 *        [tlv] supported rates
-	 *        [tlv] parameter set (IBSS)
-	 *        [tlv] extended supported rates
-	 */
-	frm = (u_int8_t *)&wh[1];
-	memset(frm, 0, 8);        /* timestamp is set by hardware */
-	frm += 8;
-	*(u_int16_t *)frm = htole16(ni->ni_intval);
-	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	} else {
-		capinfo = IEEE80211_CAPINFO_ESS;
-	}
-	if (ic->ic_flags & IEEE80211_F_PRIVACY)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-	frm = ieee80211_add_rates(frm, rs);
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;	/* TODO: ATIM window */
-	} else {
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
-	}
-	frm = ieee80211_add_xrates(frm, rs);
-	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-
-        return m;
 }
