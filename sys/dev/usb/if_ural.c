@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ural.c,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
-/*	$OpenBSD: if_ral.c,v 1.34 2005/05/18 20:10:17 damien Exp $  */
+/*	$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $ */
+/*	$OpenBSD: if_ral.c,v 1.36 2005/06/20 18:54:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.1 2005/07/01 20:06:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.1 2005/07/01 20:06:56 drochner Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
@@ -87,6 +87,7 @@ int ural_debug = 0;
 static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G },
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_RALINK_RT2570 },
+	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050 },
 	{ USB_VENDOR_CISCOLINKSYS,		USB_PRODUCT_CISCOLINKSYS_WUSB54G },
 	{ USB_VENDOR_CISCOLINKSYS,		USB_PRODUCT_CISCOLINKSYS_WUSB54GP },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU },
@@ -150,9 +151,6 @@ Static void		ural_set_txantenna(struct ural_softc *, int);
 Static void		ural_set_rxantenna(struct ural_softc *, int);
 Static int		ural_init(struct ifnet *);
 Static void		ural_stop(struct ifnet *, int);
-Static struct mbuf	*ural_getmbuf(int, int, u_int);
-Static struct mbuf	*ural_beacon_alloc(struct ieee80211com *,
-			    struct ieee80211_node *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -347,7 +345,7 @@ USB_ATTACH(ural)
 {
 	USB_ATTACH_START(ural, sc, uaa);
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = &sc->sc_if;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
@@ -415,14 +413,15 @@ USB_ATTACH(ural)
 	    USBDEVNAME(sc->sc_dev), sc->asic_rev, ural_get_rf(sc->rf_rev),
 	    ether_sprintf(ic->ic_myaddr));
 
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SHSLOT |
+	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -469,8 +468,6 @@ USB_ATTACH(ural)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, USBDEVNAME(sc->sc_dev), IFNAMSIZ);
 
-	ic->ic_ifp = ifp;
-
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
 
@@ -501,7 +498,8 @@ USB_ATTACH(ural)
 USB_DETACH(ural)
 {
 	USB_DETACH_START(ural, sc);
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
 	s = splusb();
@@ -525,7 +523,7 @@ USB_DETACH(ural)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	ieee80211_ifdetach(&sc->sc_ic);
+	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 
 	splx(s);
@@ -793,7 +791,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct ural_tx_data *data = priv;
 	struct ural_softc *sc = data->sc;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -835,7 +833,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ural_rx_data *data = priv;
 	struct ural_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	struct ural_rx_desc *desc;
 	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
@@ -1225,6 +1223,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	usbd_status error;
 	int xferlen, rate;
 
+	wh = mtod(m0, struct ieee80211_frame *);
+
 	/* XXX this should be reworked! */
 	if (ic->ic_fixed_rate != -1) {
 		if (ic->ic_curmode != IEEE80211_MODE_AUTO)
@@ -1239,10 +1239,13 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 	rate &= IEEE80211_RATE_VAL;
 
-	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m0);
 		if (k == NULL)
 			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 #if NBPFILTER > 0
@@ -1264,8 +1267,6 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	data->m = m0;
 	data->ni = ni;
-
-	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RAL_TX_ACK;
@@ -1338,8 +1339,8 @@ ural_start(struct ifnet *ifp)
 				break;
 			}
 
-			if (m0->m_len < sizeof(struct ether_header) &&
-			    !(m0 = m_pullup(m0, sizeof(struct ether_header))))
+			if (m0->m_len < sizeof (struct ether_header) &&
+			    !(m0 = m_pullup(m0, sizeof (struct ether_header))))
 				continue;
 
 			eh = mtod(m0, struct ether_header *);
@@ -1375,6 +1376,7 @@ Static void
 ural_watchdog(struct ifnet *ifp)
 {
 	struct ural_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = 0;
 
@@ -1388,7 +1390,7 @@ ural_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 	}
 
-	ieee80211_watchdog(&sc->sc_ic);
+	ieee80211_watchdog(ic);
 }
 
 Static int
@@ -1396,9 +1398,7 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-#if 0
 	struct ifreq *ifr;
-#endif
 	int s, error = 0;
 
 	s = splnet();
@@ -1415,13 +1415,13 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				ural_stop(ifp, 1);
 		}
 		break;
-#if 0
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, ic->ic_ec) :
-		    ether_delmulti(ifr, ic->ic_ec);
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET)
 			error = 0;
@@ -1440,7 +1440,7 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = 0;
 		}
 		break;
-#endif
+
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 	}
@@ -1808,13 +1808,13 @@ ural_set_macaddr(struct ural_softc *sc, uint8_t *addr)
 	tmp = addr[4] | addr[5] << 8;
 	ural_write(sc, RAL_MAC_CSR4, tmp);
 
-	DPRINTF(("setting MAC address to %6s\n", ether_sprintf(addr)));
+	DPRINTF(("setting MAC address to %s\n", ether_sprintf(addr)));
 }
 
 Static void
 ural_update_promisc(struct ural_softc *sc)
 {
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	uint16_t tmp;
 
 	tmp = ural_read(sc, RAL_TXRX_CSR2);
@@ -2131,116 +2131,17 @@ ural_stop(struct ifnet *ifp, int disable)
 int
 ural_activate(device_ptr_t self, enum devact act)
 {
+	struct ural_softc *sc = (struct ural_softc *)self;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return EOPNOTSUPP;
+		break;
 
 	case DVACT_DEACTIVATE:
-		/*if_deactivate(&sc->sc_ic.ic_if);*/
+		if_deactivate(&sc->sc_if);
 		break;
 	}
 
 	return 0;
 }
-
-#if 0
-Static struct mbuf *
-ural_getmbuf(int flags, int type, u_int pktlen)
-{
-        struct mbuf *m;
-
-        MGETHDR(m, flags, type);
-        if (m != NULL && pktlen > MHLEN)
-                MCLGET(m, flags);
-
-        return m;
-}
-
-Static struct mbuf *
-ural_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
-{
-	struct ieee80211_frame *wh;
-	struct mbuf *m;
-	int pktlen;
-	u_int8_t *frm;
-	u_int16_t capinfo;
-	struct ieee80211_rateset *rs;
-
-	rs = &ni->ni_rates;
-	pktlen = sizeof (struct ieee80211_frame)
-	     + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 3 + 6;
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
-		pktlen += 2;
-	m = ural_getmbuf(M_DONTWAIT, MT_DATA,
-	        2 + ic->ic_des_esslen
-	      + 2 + IEEE80211_RATE_SIZE
-	      + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
-	if (m == NULL)
-		return NULL;
-
-	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_BEACON;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
-	*(u_int16_t *)wh->i_seq = 0;
-
-	/*
-	 * beacon frame format
-	 *        [8] time stamp
-	 *        [2] beacon interval
-	 *        [2] cabability information
-	 *        [tlv] ssid
-	 *        [tlv] supported rates
-	 *        [tlv] parameter set (IBSS)
-	 *        [tlv] extended supported rates
-	 */
-	frm = (u_int8_t *)&wh[1];
-	memset(frm, 0, 8);        /* timestamp is set by hardware */
-	frm += 8;
-	*(u_int16_t *)frm = htole16(ni->ni_intval);
-	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	} else {
-		capinfo = IEEE80211_CAPINFO_ESS;
-	}
-	if (ic->ic_flags & IEEE80211_F_PRIVACY)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-	frm = ieee80211_add_rates(frm, rs);
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;	/* TODO: ATIM window */
-	} else {
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
-	}
-	frm = ieee80211_add_xrates(frm, rs);
-	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-
-        return m;
-}
-#endif
