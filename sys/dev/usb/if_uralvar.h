@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.2 2005/07/04 17:46:31 drochner Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -71,6 +71,7 @@ struct ural_rx_data {
 struct ural_softc {
 	USBBASEDEVICE		sc_dev;
 	struct ethercom		sc_ec;
+#define sc_if	sc_ec.ec_if
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
