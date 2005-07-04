@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2005/06/01 13:05:31 blymn Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2005/06/01 13:05:31 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1212,11 +1212,11 @@ pmap_bootstrap(kva_start)
 void
 pmap_prealloc_lowmem_ptps(void)
 {
-	pd_entry_t *pd_ents;
+	pd_entry_t *pdes;
 	int level;
 	paddr_t newp;
 
-	pd_ents = pmap_kernel()->pm_pdir;
+	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
 		newp = avail_start;
@@ -1224,11 +1224,11 @@ pmap_prealloc_lowmem_ptps(void)
 		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
-		pd_ents[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
+		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
 		level--;
 		if (level <= 1)
 			break;
-		pd_ents = normal_pdes[level - 2];
+		pdes = normal_pdes[level - 2];
 	}
 }
 
@@ -1704,7 +1704,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 
 static void
 pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
-	      pt_entry_t *ptes, pd_entry_t **pd_ents, int32_t *cpumaskp)
+	      pt_entry_t *ptes, pd_entry_t **pdes, int32_t *cpumaskp)
 {
 	unsigned long index;
 	int level;
@@ -1715,9 +1715,9 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	do {
 		pmap_freepage(pmap, ptp, level);
 		index = pl_i(va, level + 1);
-		opde = pmap_pte_set(&pd_ents[level - 1][index], 0);
+		opde = pmap_pte_set(&pdes[level - 1][index], 0);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
-		    (vaddr_t)pd_ents[level - 2];
+		    (vaddr_t)pdes[level - 2];
 		pmap_tlb_shootdown(curpcb->pcb_pmap,
 		    invaladdr + index * PAGE_SIZE,
 		    opde, cpumaskp);
@@ -1745,7 +1745,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 
 
 static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pd_ents)
+pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 {
 	struct vm_page *ptp, *pptp;
 	int i;
@@ -1769,7 +1769,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pd_ents)
 		ppa = pa;
 
 		index = pl_i(va, i);
-		pva = pd_ents[i - 2];
+		pva = pdes[i - 2];
 
 		if (pmap_valid_entry(pva[index])) {
 			ppa = pva[index] & PG_FRAME;
@@ -2161,7 +2161,7 @@ pmap_deactivate(l)
  */
 
 static boolean_t
-pmap_pdes_valid(vaddr_t va, pd_entry_t **pd_ents, pd_entry_t *lastpde)
+pmap_pdes_valid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
 {
 	int i;
 	unsigned long index;
@@ -2169,7 +2169,7 @@ pmap_pdes_valid(vaddr_t va, pd_entry_t **pd_ents, pd_entry_t *lastpde)
 
 	for (i = PTP_LEVELS; i > 1; i--) {
 		index = pl_i(va, i);
-		pde = pd_ents[i - 2][index];
+		pde = pdes[i - 2][index];
 		if ((pde & PG_V) == 0)
 			return FALSE;
 	}
@@ -2189,10 +2189,10 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	pt_entry_t *ptes, pte;
-	pd_entry_t pde, **pd_ents;
+	pd_entry_t pde, **pdes;
 
-	pmap_map_ptes(pmap, &ptes, &pd_ents);
-	if (pmap_pdes_valid(va, pd_ents, &pde) == FALSE) {
+	pmap_map_ptes(pmap, &ptes, &pdes);
+	if (pmap_pdes_valid(va, pdes, &pde) == FALSE) {
 		pmap_unmap_ptes(pmap);
 		return FALSE;
 	}
@@ -2576,7 +2576,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	int flags;
 {
 	pt_entry_t *ptes;
-	pd_entry_t **pd_ents, pde;
+	pd_entry_t **pdes, pde;
 	boolean_t result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
@@ -2588,14 +2588,14 @@ pmap_do_remove(pmap, sva, eva, flags)
 	 */
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	pmap_map_ptes(pmap, &ptes, &pd_ents);	/* locks pmap */
+	pmap_map_ptes(pmap, &ptes, &pdes);	/* locks pmap */
 
 	/*
 	 * removing one page?  take shortcut function.
 	 */
 
 	if (sva + PAGE_SIZE == eva) {
-		if (pmap_pdes_valid(sva, pd_ents, &pde)) {
+		if (pmap_pdes_valid(sva, pdes, &pde)) {
 
 			/* PA of the PTP */
 			ptppa = pde & PG_FRAME;
@@ -2624,7 +2624,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 			 */
 
 			if (result && ptp && ptp->wire_count <= 1)
-				pmap_free_ptp(pmap, ptp, sva, ptes, pd_ents,
+				pmap_free_ptp(pmap, ptp, sva, ptes, pdes,
 				    &cpumask);
 		}
 
@@ -2661,7 +2661,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 			/* XXXCDC: ugly hack to avoid freeing PDP here */
 			continue;
 
-		if (!pmap_pdes_valid(sva, pd_ents, &pde))
+		if (!pmap_pdes_valid(sva, pdes, &pde))
 			continue;
 
 		/* PA of the PTP */
@@ -2684,7 +2684,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
-			pmap_free_ptp(pmap, ptp, sva, ptes,pd_ents,
+			pmap_free_ptp(pmap, ptp, sva, ptes,pdes,
 			    &cpumask);
 		}
 	}
@@ -2709,7 +2709,7 @@ pmap_page_remove(pg)
 	struct pv_head *pvh;
 	struct pv_entry *pve, *npve, *killlist = NULL;
 	pt_entry_t *ptes, opte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 #ifdef DIAGNOSTIC
 	pd_entry_t pde;
 #endif
@@ -2733,10 +2733,10 @@ pmap_page_remove(pg)
 
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root); pve != NULL; pve = npve) {
 		npve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve);
-		pmap_map_ptes(pve->pv_pmap, &ptes, &pd_ents);	/* locks pmap */
+		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (pve->pv_ptp && pmap_pdes_valid(pve->pv_va, pd_ents, &pde) &&
+		if (pve->pv_ptp && pmap_pdes_valid(pve->pv_va, pdes, &pde) &&
 		   (pde & PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 			printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n",
 			       pg, pve->pv_va, pve->pv_ptp);
@@ -2766,7 +2766,7 @@ pmap_page_remove(pg)
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
 				pmap_free_ptp(pve->pv_pmap, pve->pv_ptp,
-					      pve->pv_va, ptes, pd_ents, &cpumask);
+					      pve->pv_va, ptes, pdes, &cpumask);
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -2803,7 +2803,7 @@ pmap_test_attrs(pg, testbits)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, pte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2833,7 +2833,7 @@ pmap_test_attrs(pg, testbits)
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root);
 	     pve != NULL && (*myattrs & testbits) == 0;
 	     pve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve)) {
-		pmap_map_ptes(pve->pv_pmap, &ptes, &pd_ents);
+		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);
 		pte = ptes[pl1_i(pve->pv_va)];
 		pmap_unmap_ptes(pve->pv_pmap);
 		*myattrs |= pte;
@@ -2866,7 +2866,7 @@ pmap_clear_attrs(pg, clearbits)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 	unsigned char *myattrs;
 	int32_t cpumask = 0;
 
@@ -2885,9 +2885,9 @@ pmap_clear_attrs(pg, clearbits)
 	*myattrs &= ~clearbits;
 
 	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
-		pmap_map_ptes(pve->pv_pmap, &ptes, &pd_ents);	/* locks pmap */
+		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 #ifdef DIAGNOSTIC
-		if (!pmap_pdes_valid(pve->pv_va, pd_ents, NULL))
+		if (!pmap_pdes_valid(pve->pv_va, pdes, NULL))
 			panic("pmap_change_attrs: mapping without PTP "
 			      "detected");
 #endif
@@ -2943,11 +2943,11 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *ptes, *spte, *epte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 	vaddr_t blockend;
 	int32_t cpumask = 0;
 
-	pmap_map_ptes(pmap, &ptes, &pd_ents);		/* locks pmap */
+	pmap_map_ptes(pmap, &ptes, &pdes);		/* locks pmap */
 
 	/* should be ok, but just in case ... */
 	sva &= PG_FRAME;
@@ -2973,7 +2973,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			continue;
 
 		/* empty block? */
-		if (!pmap_pdes_valid(sva, pd_ents, NULL))
+		if (!pmap_pdes_valid(sva, pdes, NULL))
 			continue;
 
 #ifdef DIAGNOSTIC
@@ -3014,11 +3014,11 @@ pmap_unwire(pmap, va)
 	vaddr_t va;
 {
 	pt_entry_t *ptes;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 
-	pmap_map_ptes(pmap, &ptes, &pd_ents);		/* locks pmap */
+	pmap_map_ptes(pmap, &ptes, &pdes);		/* locks pmap */
 
-	if (pmap_pdes_valid(va, pd_ents, NULL)) {
+	if (pmap_pdes_valid(va, pdes, NULL)) {
 
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(ptes[pl1_i(va)]))
@@ -3096,7 +3096,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 	struct vm_page *ptp;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
@@ -3123,11 +3123,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * map in ptes and get a pointer to our PTP (unless we are the kernel)
 	 */
 
-	pmap_map_ptes(pmap, &ptes, &pd_ents);		/* locks pmap */
+	pmap_map_ptes(pmap, &ptes, &pdes);		/* locks pmap */
 	if (pmap == pmap_kernel()) {
 		ptp = NULL;
 	} else {
-		ptp = pmap_get_ptp(pmap, va, pd_ents);
+		ptp = pmap_get_ptp(pmap, va, pdes);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -3355,8 +3355,8 @@ pmap_get_physpage(va, level, paddrp)
  * Used by pmap_growkernel.
  */
 static void
-pmap_alloc_level(pd_ents, kva, lvl, needed_ptps)
-	pd_entry_t **pd_ents;
+pmap_alloc_level(pdes, kva, lvl, needed_ptps)
+	pd_entry_t **pdes;
 	vaddr_t kva;
 	int lvl;
 	long *needed_ptps;
@@ -3372,7 +3372,7 @@ pmap_alloc_level(pd_ents, kva, lvl, needed_ptps)
 		if (level == PTP_LEVELS)
 			pdep = pmap_kernel()->pm_pdir;
 		else
-			pdep = pd_ents[level - 2];
+			pdep = pdes[level - 2];
 		va = kva;
 		index = pl_i(kva, level);
 		endindex = index + needed_ptps[level - 1];
@@ -3478,7 +3478,7 @@ pmap_dump(pmap, sva, eva)
 	vaddr_t sva, eva;
 {
 	pt_entry_t *ptes, *pte;
-	pd_entry_t **pd_ents;
+	pd_entry_t **pdes;
 	vaddr_t blkendva;
 
 	/*
@@ -3494,7 +3494,7 @@ pmap_dump(pmap, sva, eva)
 	 */
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	pmap_map_ptes(pmap, &ptes, &pd_ents);	/* locks pmap */
+	pmap_map_ptes(pmap, &ptes, &pdes);	/* locks pmap */
 
 	/*
 	 * dumping a range of pages: we dump in PTP sized blocks (4MB)
@@ -3508,7 +3508,7 @@ pmap_dump(pmap, sva, eva)
 			blkendva = eva;
 
 		/* valid block? */
-		if (!pmap_pdes_valid(sva, pd_ents, NULL))
+		if (!pmap_pdes_valid(sva, pdes, NULL))
 			continue;
 
 		pte = &ptes[pl1_i(sva)];
