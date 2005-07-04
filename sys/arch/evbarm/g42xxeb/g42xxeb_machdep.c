@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.3 2005/03/18 11:22:23 bsh Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.4 2005/07/04 00:47:49 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -369,7 +369,7 @@ static const struct pmap_devmap g42xxeb_devmap[] = {
     {
 	    G42XXEB_GPIO_VBASE,
 	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA2X0_GPIO_SIZE),
+	    _S(PXA250_GPIO_SIZE),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
