@@ -1,11 +1,11 @@
-#	$NetBSD: files.pxa2x0,v 1.7 2005/04/13 07:42:28 scw Exp $
+#	$NetBSD: files.pxa2x0,v 1.8 2005/07/04 00:42:37 bsh Exp $
 #
-# Configuration info for Intel PXA2[51]0 CPU support
+# Configuration info for Intel PXA2[751]0 CPU support
 #
 
 file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
 
-# PXA2[51]0's integrated peripherals bus.
+# PXA2[751]0's integrated peripherals bus.
 device pxaip { [addr=-1], [size=0], [intr=-1], [index=-1]} : bus_space_generic
 attach pxaip at mainbus
 file	arch/arm/xscale/pxa2x0.c
@@ -59,3 +59,12 @@ defparam	opt_pxa2x0_dmac.h	PXA2X0_DMAC_DMOVER_CONCURRENCY
 device	pxaacu: audiobus, auconv, mulaw, ac97, aurateconv
 attach	pxaacu at pxaip
 file	arch/arm/xscale/pxa2x0_ac97.c		pxaacu
+
+# PWM controller
+device	pwmpxa
+attach	pwmpxa at pxaip
+file	arch/arm/xscale/pxa2x0_pwm.c		pwmpxa
+
+# OHCI USB controller on PXA270
+attach	ohci at pxaip with ohci_pxa
+file	arch/arm/xscale/ohci_pxa27x.c		ohci_pxa
