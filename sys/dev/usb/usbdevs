@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.404 2005/07/04 05:55:05 augustss Exp $
+$NetBSD: usbdevs,v 1.405 2005/07/04 17:42:39 drochner Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -636,6 +636,7 @@ product BELKIN F5U208		0x0208	F5U208 VideoBus II
 product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN UPS		0x0980	UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
+product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
