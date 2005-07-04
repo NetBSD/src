@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.33 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.34 2005/07/04 00:26:06 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -555,6 +555,9 @@ typedef struct firm_event32 {
 	int	value;		/* VKEY_{UP,DOWN} or locator delta */
 	struct netbsd32_timeval time;
 } Firm_event32;
+
+/* from <sys/uuid.h> */
+typedef netbsd32_pointer_t netbsd32_uuidp_t;
 
 void netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
