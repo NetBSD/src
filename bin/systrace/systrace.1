@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.30 2005/04/23 10:56:54 wiz Exp $
+.\"	$NetBSD: systrace.1,v 1.31 2005/07/04 16:32:30 elad Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd April 23, 2005
+.Dd July 4, 2005
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -218,6 +218,9 @@ This is the logical negation of
 .It inpath
 Evaluates to true if the system call argument is a subpath of
 .Va cmdstring .
+Note that
+.Va cmdstring
+must be an absolute pathname, possibly with one trailing slash.
 .It re
 Evaluates to true if the system call arguments matches
 the specified regular expression.
