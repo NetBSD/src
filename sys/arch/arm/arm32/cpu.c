@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.58 2005/06/03 15:55:55 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.59 2005/07/04 00:42:37 bsh Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2005/06/03 15:55:55 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2005/07/04 00:42:37 bsh Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -245,6 +245,14 @@ static const char * const pxa255_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+/* Stepping for PXA27x */
+static const char * const pxa27x_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
+	"step C-0",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 static const char * const ixp425_steppings[16] = {
 	"step 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
@@ -341,6 +349,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  i80321_steppings },
 
+	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
+	  pxa27x_steppings },
 	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210",
@@ -548,7 +558,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_SA1:
 #endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
 #endif
 #ifdef CPU_ARM11

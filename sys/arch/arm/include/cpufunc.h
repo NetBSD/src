@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.33 2005/06/03 15:55:56 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.34 2005/07/04 00:42:37 bsh Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -383,7 +383,7 @@ extern unsigned armv5_dcache_index_inc;
 #if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \
     defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 
 void	armv4_tlb_flushID	__P((void));
 void	armv4_tlb_flushI	__P((void));
@@ -400,7 +400,7 @@ void	ixp12x0_setup		__P((char *));
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 void	xscale_cpwait		__P((void));
 
 void	xscale_cpu_sleep	__P((int));
@@ -438,7 +438,7 @@ void	xscale_cache_flushD_rng	__P((vaddr_t, vsize_t));
 void	xscale_context_switch	__P((void));
 
 void	xscale_setup		__P((char *));
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
