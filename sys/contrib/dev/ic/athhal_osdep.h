@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.h,v 1.2 2005/06/22 06:15:37 dyoung Exp $
+ * $Id: athhal_osdep.h,v 1.3 2005/07/04 05:35:09 dyoung Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -99,22 +99,22 @@ extern	u_int32_t ath_hal_reg_read(struct ath_hal *ah, u_int reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 #define OS_REG_WRITE(_ah, _reg, _val) do {				\
 	if ( (_reg) >= 0x4000 && (_reg) < 0x5000)			\
-		bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh,		\
+		bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh,		\
 			(_reg), htole32(_val));			\
 	else								\
-		bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh,		\
+		bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh,		\
 			(_reg), (_val));				\
 } while (0)
 #define OS_REG_READ(_ah, _reg)						\
 	(((_reg) >= 0x4000 && (_reg) < 0x5000) ?			\
-		le32toh(bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh,	\
+		le32toh(bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh,	\
 			(_reg))) :					\
-		bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
+		bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
 #else /* _BYTE_ORDER == _LITTLE_ENDIAN */
 #define	OS_REG_WRITE(_ah, _reg, _val)					\
-	bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh, (_reg), (_val))
+	bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg), (_val))
 #define	OS_REG_READ(_ah, _reg)						\
-	((u_int32_t) bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
+	((u_int32_t) bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
 #endif /* _BYTE_ORDER */
 #endif /* AH_DEBUG || AH_REGFUNC || AH_DEBUG_ALQ */
 
