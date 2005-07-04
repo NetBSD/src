@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.1 2005/07/01 20:06:56 drochner Exp $ */
+/*	$NetBSD: if_ral_pci.c,v 1.2 2005/07/04 17:50:10 drochner Exp $ */
 /*	$OpenBSD: if_ral_pci.c,v 1.4 2005/02/22 10:41:30 damien Exp $  */
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.1 2005/07/01 20:06:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.2 2005/07/04 17:50:10 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -130,7 +130,7 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	ral_attach(sc);
 }
