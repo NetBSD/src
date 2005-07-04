@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2005/05/30 22:59:55 chs Exp $
+	$NetBSD: syscalls.master,v 1.28 2005/07/04 00:26:07 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -552,7 +552,7 @@
 352	UNIMPL
 353	UNIMPL
 354	UNIMPL
-355	UNIMPL
+355	STD		{ int netbsd32_uuidgen(netbsd32_uuidp_t store, int count); }
 356	STD		{ int netbsd32_getvfsstat(netbsd32_statvfsp_t buf, \
 			    netbsd32_size_t bufsize, int flags); }
 357	STD		{ int netbsd32_statvfs1(const netbsd32_charp path, \

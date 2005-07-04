@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.89 2005/05/30 22:59:55 chs Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.90 2005/07/04 00:26:06 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.89 2005/05/30 22:59:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90 2005/07/04 00:26:06 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2271,4 +2271,18 @@ netbsd32_adjust_limits(struct proc *p)
 	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
 	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
 		*valp = MAXSSIZ32;
+}
+
+int
+netbsd32_uuidgen(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32_uuidgen_args /* {
+		syscallarg(netbsd32_uuidp_t) store;
+		syscallarg(int) count;
+	} */ *uap = v;
+	struct sys_uuidgen_args ua;
+
+	NETBSD32TOP_UAP(store, struct uuid);
+	NETBSD32TO64_UAP(count);
+	return (sys_uuidgen(l, &ua, retval));
 }
