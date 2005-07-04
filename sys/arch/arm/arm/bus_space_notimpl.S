@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.2 2001/09/10 02:20:19 reinoud Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.3 2005/07/04 02:03:27 bsh Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -57,14 +57,22 @@
 	GLOBAL(func)						;	\
 LABEL(func)							;	\
 	stmfd	sp!, {r0-r3}					;	\
-	adr	r0, LNAME(__C(func,_text))			;	\
-	mov	r1, sp						;	\
-	b	_C_LABEL(panic)					;	\
+	adr	r1, LNAME(__C(func,_funcname))			;	\
+	mov	r2, sp						;	\
+	b	bs_notimpl_panic				;	\
 								;	\
-LLABEL(__C(func,_text))						;	\
-	.asciz	FTEXT(func,: args at 0x%08x\n)			;	\
-	.align	0						;
+LLABEL(__C(func,_funcname))					;	\
+	.asciz	__S(func)					;	\
+	.align	0						;	\
 
+bs_notimpl_message:
+	.ascii	__S(BUS_SPACE)
+	.asciz	"_%s: args at %p"
+
+	.align	0
+bs_notimpl_panic:
+	adr	r0, bs_notimpl_message
+	b	_C_LABEL(panic)
 
 /*
  * misc functions
