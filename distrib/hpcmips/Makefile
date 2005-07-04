@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.27 2005/07/04 08:17:00 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -26,12 +26,12 @@ UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
 release:: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
-	cp pbsdboot1.exe ${RELEASEDIR}/${MACHINE}/installation; \
-	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/pbsdboot1.exe
-	cp pbsdboot.exe ${RELEASEDIR}/${MACHINE}/installation; \
-	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/pbsdboot.exe
-	cp hpcboot.exe ${RELEASEDIR}/${MACHINE}/installation; \
-	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/hpcboot.exe
+	${INSTALL} -c -m ${NONBINMODE} \
+		pbsdboot1.exe ${RELEASEDIR}/${MACHINE}/installation
+	${INSTALL} -c -m ${NONBINMODE} \
+		pbsdboot.exe ${RELEASEDIR}/${MACHINE}/installation
+	${INSTALL} -c -m ${NONBINMODE} \
+		hpcboot.exe ${RELEASEDIR}/${MACHINE}/installation
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation '*.gz' '*.exe'
 
 .include <bsd.files.mk>
