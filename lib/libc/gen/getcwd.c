@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.37 2005/07/04 20:44:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.37 2005/07/04 20:44:47 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,10 +160,15 @@ loop:
 	 */
 	if (lstat(resolved, &sb) == -1) {
 		/* Allow nonexistent component if this is the last one. */
-		if (*q == 0 && errno == ENOENT) {
+		if ((*q == 0 || (*q == '/' && *(q + 1) == 0))
+		    && errno == ENOENT) {
 			errno = serrno;
 			return (resolved);
 		}
+		return (NULL);
+	}
+	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
+		errno = ENOTDIR;
 		return (NULL);
 	}
 	if (S_ISLNK(sb.st_mode)) {
