@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.7 2005/03/18 11:22:23 bsh Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.7 2005/03/18 11:22:23 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -374,7 +374,7 @@ static const struct pmap_devmap lubbock_devmap[] = {
     {
 	    LUBBOCK_GPIO_VBASE,
 	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA2X0_GPIO_SIZE),
+	    _S(PXA250_GPIO_SIZE),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
