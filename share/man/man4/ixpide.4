@@ -1,4 +1,4 @@
-.\"	$NetBSD: ixpide.4,v 1.1 2004/12/06 19:34:01 cube Exp $
+.\"	$NetBSD: ixpide.4,v 1.2 2005/07/04 13:01:54 augustss Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -27,7 +27,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2004
+.Dd July 4, 2005
 .Dt IXPIDE 4
 .Os
 .Sh NAME
@@ -49,6 +49,18 @@ driver to disable DMA on chipsets for which DMA would normally be
 enabled.
 This can be used as a debugging aid, or to work around
 problems where the IDE controller is wired up to the system incorrectly.
+.Sh HARDWARE
+The supported IDE controllers are
+.Bl -bullet -compact
+.It
+ATI SB200
+.It
+ATI SB300
+.It
+ATI SB400, Parallel ATA
+.It
+ATI SB400, Serial ATA
+.El
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
