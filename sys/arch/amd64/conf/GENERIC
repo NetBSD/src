@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 2005/07/04 05:57:02 augustss Exp $
+# $NetBSD: GENERIC,v 1.54 2005/07/04 13:43:45 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	32		# estimated number of users
 
@@ -407,11 +407,13 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
 #aac*	at pci? dev ? function ?	# Broken -- 32bit assumptions.
+amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
+ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
