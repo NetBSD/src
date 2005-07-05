@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.16 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.17 2005/07/05 23:04:14 he Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -147,7 +147,9 @@ struct ieee80211_node {
 	struct	ifqueue		ni_savedq;	/* ps-poll queue */
 	struct ieee80211_nodestats ni_stats;	/* per-node statistics */
 };
+#ifdef _KERNEL
 MALLOC_DECLARE(M_80211_NODE);
+#endif /* _KERNEL */
 
 #define	IEEE80211_NODE_AID(ni)	IEEE80211_AID(ni->ni_associd)
 
