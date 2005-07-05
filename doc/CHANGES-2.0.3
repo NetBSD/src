@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.23 2005/07/01 15:15:23 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.24 2005/07/05 19:15:25 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -156,4 +156,10 @@ libexec/telnetd/telnetd.c			patch
 
 	Remove static local variable so its easier to correctly use strlcpy.
 	[lha, ticket #2041]
+
+usr.sbin/user/user.c				1.80
+
+	Be consistent when deleting a non-existent group - tell if the group is
+	non-existent.  Problem noted by Geert Hendrickx, fix from Liam J. Foy.
+	[agc, ticket #2024]
 
