@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.90 2005/06/28 09:08:04 wiz Exp $
+#	$NetBSD: INSTALL_TINY,v 1.91 2005/07/05 15:00:33 tron Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -412,9 +412,9 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
+#eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
+#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
