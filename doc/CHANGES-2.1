@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.134 2005/07/05 19:15:04 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.135 2005/07/05 22:09:42 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2638,4 +2638,89 @@ sys/dev/ata/wd.c				1.304
 
 	The ST3160023A* also need the LBA48 quirk. From Timo Schoeler.
 	[bouyer, ticket #2028]
+
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add the SIS 964 and 965 host bridges.
+	[bouyer, ticket #2029]
+
+sys/dev/ic/wdc.c				1.224 via patch
+
+	In wdcprobe1(), wait 5s for the drive to deassert ready. In case of e.g.
+	pcmcia devices, the drive may still be doing its power-on reset.
+	XXX From the specs the delay could be up to 31s here, but we don't
+	want to wait for 31s if we have a channel with no drives and pull-up
+	resitors on the bus.  Based on patch submitted in kern/25659 by
+	Steven M. Bellovin, part of fix for kern/25659.
+	[bouyer, ticket #2030]
+
+sys/dev/pcmcia/wdc_pcmcia.c			1.100 via patch
+
+	When the PCMCIA socket is powered up, the driver waits for the PCMCIA
+	controller to be ready, but the drive attached to it may not be
+	ready yet.  Add a half a second delay before calling wdcattach(), 
+	to let the drive have its electronic ready to properly respond to
+	the register tests done in wdcprobe1(). Delay based on experiments
+	done by John Refling with various devices as part of the audit-trail
+	of kern/25659; complete the fix for kern/25659.
+	[bouyer, ticket #2031]
+
+sys/dev/pci/pciide_sis_reg.h			1.13 via patch
+sys/dev/pci/siside.c				1.17 via patch
+
+	Add quirk for SIS 96x that masquerade as a SIS503. Based on patch
+	sent by Robert Fuller in kern/30431, information found in the
+	linux kernel.  While here, add SIS 965 to the table (from FreeBSD).
+	[bouyer, ticket #2032]
+
+games/wtf/wtf					1.12
+games/wtf/wtf.6					1.9
+
+	  * Change program logic to not nest needlessly
+	  * Search all acronyms databases, and don't force the user to
+	    know in which category to look (-t is gone)
+	  * If an acronym is not found in the database or by whatis(1),
+	    also check pkg_info(1). Per PR bin/30539 by Geert Hendrickx
+	    (geert.hendrickx@ua.ac.be)
+	[hubertf, ticket #2035]
+
+games/wtf/wtf.6					1.10
+
+	Drop trailing space.
+	[hubertf, ticket #2036]
+
+etc/rc.d/network				1.49
+
+	Fix handling of spaces when variable contains spaces in
+	/etc/ifconfig.if files.  PR#29317.
+	[symka, ticket #2038]
+
+games/countmail/countmail			1.6
+
+	Fix error on a nonexistent mail spool file. PR#29526
+	[symka, ticket #2040]
+
+share/termcap/termcap.src			1.93
+
+	Update rxvt entry to the one coming with rxvt-2.7.10.
+	[wiz, ticket #2054]
+
+sys/sys/stdint.h				1.4
+
+	Include <sys/cdefs.h> for __signed.
+	[kleink, ticket #2059]
+
+sys/dev/pci/if_stge.c				1.28
+
+	Write the station address using 8-bits writes instead of 16-bits.
+	This is what the linux driver does, and makes the DGE-550T work
+	without the STGE_CU_BUG hack. So remove the STGE_CU_BUG hack.
+	Set bit 0x0020 in STGE_DebugCtrl too, the linux driver does it
+	(the comments note this as a workaround, without more details.
+	This doesn't seem to make things worse).  Also initialize
+	STGE_RxDMABurstThresh and STGE_RxDMAUrgentThresh, using
+	values from the linux driver.
+	[bouyer, ticket #2062]
 
