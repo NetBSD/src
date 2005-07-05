@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.37 2005/07/04 20:44:47 elad Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.38 2005/07/05 02:56:12 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.37 2005/07/04 20:44:47 elad Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.38 2005/07/05 02:56:12 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,15 +160,12 @@ loop:
 	 */
 	if (lstat(resolved, &sb) == -1) {
 		/* Allow nonexistent component if this is the last one. */
-		if ((*q == 0 || (*q == '/' && *(q + 1) == 0))
-		    && errno == ENOENT) {
+		while (*q == '/')
+			q++;
+		if (*q == 0 && errno == ENOENT) {
 			errno = serrno;
 			return (resolved);
 		}
-		return (NULL);
-	}
-	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
-		errno = ENOTDIR;
 		return (NULL);
 	}
 	if (S_ISLNK(sb.st_mode)) {
@@ -197,6 +194,10 @@ loop:
 		if (*path == '/')
 			p = resolved;
 		goto loop;
+	}
+	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
+		errno = ENOTDIR;
+		return (NULL);
 	}
 
 	/* Advance both resolved and unresolved path. */
