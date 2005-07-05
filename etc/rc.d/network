@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.44.4.1 2005/05/09 22:42:08 riz Exp $
+# $NetBSD: network,v 1.44.4.2 2005/07/05 21:23:17 riz Exp $
 #
 
 # PROVIDE: network
@@ -206,7 +206,7 @@ network_start()
 						eval ${args#*!}
 						;;
 					*)
-						ifconfig $int $args
+						eval ifconfig $int $args
 						;;
 					esac
 				done < /etc/ifconfig.$int
