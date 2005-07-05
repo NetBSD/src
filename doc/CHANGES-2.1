@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.133 2005/07/01 15:14:26 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.134 2005/07/05 19:15:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2602,4 +2602,40 @@ libexec/telnetd/telnetd.c			patch
 
 	Remove static local variable so its easier to correctly use strlcpy.
 	[lha, ticket #2041]
+
+gnu/dist/gdb/bfd/elf-strtab.c			1.2
+
+	PR/28781: OBATA Akio: gdb -write would core-dump if the executable
+	did not have a string table. Check if the string table has been
+	passed to us before we attempt writing it.
+	[christos, ticket #2019]
+
+include/netdb.h					1.37-1.38
+lib/libc/net/getnetent.3			1.13
+lib/libc/net/getnetent.c			1.16
+lib/libc/net/getnetnamadr.c			1.29
+lib/libc/shlib_version				1.152 via patch
+usr.sbin/pppd/pppd/auth.c			1.35
+
+	Accomodate for the fact that struct netent.n_net has changed
+	from an unsigned long integer to a socklen_t in POSIX-2001.
+	Fixes PR#21411.
+	[kleink, ticket #2015]
+
+usr.sbin/user/user.c				1.80
+
+	Be consistent when deleting a non-existent group - tell if the group is
+	non-existent.  Problem noted by Geert Hendrickx, fix from Liam J. Foy.
+	[agc, ticket #2024]
+
+sys/dev/ata/wd.c				1.303 via patch
+
+	Use pmatch() metacharacters to match both SATA and PATA versions
+	of seagate drives in the quirk table.
+	[bouyer, ticket #2027]
+
+sys/dev/ata/wd.c				1.304
+
+	The ST3160023A* also need the LBA48 quirk. From Timo Schoeler.
+	[bouyer, ticket #2028]
 
