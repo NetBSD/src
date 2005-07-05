@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.162 2005/07/05 21:55:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.163 2005/07/05 22:43:48 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10250,4 +10250,34 @@ libexec/ftpd/ftpd.c				1.165
 
 	Fix bug in PAM related code.
 	[lukem, ticket #538]
+
+xfree/xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c 1.8
+
+	Make XFree86's MGA driver work again on NetBSD-alpha systems.
+	Patch provided by Eike Dehling in PR xsrc/30520.
+	[tron, ticket #488]
+
+xfree/xc/programs/xdm/xdm.man			1.7
+
+	Resolve conflicts from XFree86 4.5.0 import. This fixes PR xsrc/30599 by
+	Juergen Hannken-Illjes.
+	[tron, ticket #495]
+
+x11/Xserver/Makefile.common			1.28
+
+	Fix typo in comment. Patch supplied by Nicolas Joly in PR xsrc/30639.
+	[tron, ticket #514]
+
+sys/lib/libkern/sha1.c				1.9
+
+	Don't use a static buffer in SHA1Transform() because it might cause
+	various problems including sporadic IPSec authentification failures
+	if this code is used by multiple instances in parallel.
+	[tron, ticket #515]
+
+usr.sbin/bind/named/named.conf.5		delete
+
+	Remove outdated BIND 8 version of named.conf(5). The build now picks up
+	the correct version from "src/dist/bind/bin/named".
+	[tron, ticket #516]
 
