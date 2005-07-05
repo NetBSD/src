@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.21 2004/11/10 23:59:06 christos Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.21.2.1 2005/07/05 13:48:12 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.21 2004/11/10 23:59:06 christos Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.21.2.1 2005/07/05 13:48:12 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,6 +120,7 @@ getttyent(void)
 	}
 	tty.ty_status = 0;
 	tty.ty_window = NULL;
+	tty.ty_class = NULL;
 
 #define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && (isspace((unsigned char) p[sizeof(e) - 1]) || p[sizeof(e) - 1] == '\0')
 #define	vcmp(e)	!strncmp(p, e, sizeof(e) - 1) && p[sizeof(e) - 1] == '='
