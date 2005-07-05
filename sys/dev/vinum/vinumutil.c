@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumutil.c,v 1.2 2005/06/26 22:34:12 christos Exp $
+ * $Id: vinumutil.c,v 1.3 2005/07/05 22:20:47 he Exp $
  * $FreeBSD$
  */
 
@@ -52,7 +52,7 @@ extern jmp_buf command_fail;				    /* return on a failed command */
 static char numeric_state[32];				    /* temporary buffer for ASCII conversions */
 #define STATECOUNT(x) (sizeof (x##statetext) / sizeof (char *))
 /* Return drive state as a string */
-char *
+const char *
 drive_state(enum drivestate state)
 {
     if (((unsigned) state) >= STATECOUNT(drive)) {
@@ -63,7 +63,7 @@ drive_state(enum drivestate state)
 }
 
 /* Return volume state as a string */
-char *
+const char *
 volume_state(enum volumestate state)
 {
     if (((unsigned) state) >= STATECOUNT(vol)) {
@@ -74,7 +74,7 @@ volume_state(enum volumestate state)
 }
 
 /* Return plex state as a string */
-char *
+const char *
 plex_state(enum plexstate state)
 {
     if (((unsigned) state) >= STATECOUNT(plex)) {
@@ -115,7 +115,7 @@ plex_org(enum plexorg org)
 }
 
 /* Return sd state as a string */
-char *
+const char *
 sd_state(enum sdstate state)
 {
     if (((unsigned) state) >= STATECOUNT(sd)) {
