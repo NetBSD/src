@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.40 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.41 2005/07/05 19:56:04 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.43 2005/02/10 16:59:04 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.40 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.41 2005/07/05 19:56:04 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1248,8 +1248,6 @@ ieee80211_refine_node_for_beacon(struct ieee80211com *ic,
 			continue;
 
 		if (score > best_score) {
-			ieee80211_ref_node(ni);
-			ieee80211_unref_node(&best);
 			best = ni;
 			best_score = score;
 		}
