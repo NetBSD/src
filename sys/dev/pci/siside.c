@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.5.2.1 2004/07/23 22:00:31 he Exp $	*/
+/*	$NetBSD: siside.c,v 1.5.2.1.2.1 2005/07/05 21:10:53 riz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -144,6 +144,8 @@ static struct sis_hostbr_type {
 	 */
 	{PCI_PRODUCT_SIS_962,   0x00, 6, "962", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_963,   0x00, 6, "963", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_964,   0x00, 6, "964", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_965,   0x00, 6, "965", SIS_TYPE_133NEW},
 };
 
 static struct sis_hostbr_type *sis_hostbr_type_match;
@@ -152,9 +154,24 @@ static int
 sis_hostbr_match(struct pci_attach_args *pa)
 {
 	int i;
+	pcireg_t id, reg;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SIS)
 		return 0;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_85C503) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SIS96x_DETECT);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
+		    reg | SIS96x_DETECT_MASQ);
+		id = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
+		if (((PCI_PRODUCT(id) & 0xfff0) != 0x0960)
+		    && (PCI_PRODUCT(id) != 0x0018)) {
+			pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
+			    reg);
+		} else {
+			pa->pa_id = id;
+		}
+	}
+		
 	sis_hostbr_type_match = NULL;
 	for (i = 0;
 	    i < sizeof(sis_hostbr_type) / sizeof(sis_hostbr_type[0]);
