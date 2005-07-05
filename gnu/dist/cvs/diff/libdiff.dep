@@ -27,7 +27,6 @@
 	
 
 .\diff.c : \
-	"..\lib\fnmatch.h"\
 	"..\lib\getopt.h"\
 	"..\lib\regex.h"\
 	"..\windows-NT\config.h"\
