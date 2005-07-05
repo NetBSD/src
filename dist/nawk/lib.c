@@ -437,7 +437,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			rec = patbeg + patlen;
 		} else {
 			   dprintf( ("no match %s\n", rec) );
-			strlcpy(fr, rec, sizeof(fields) - (fr - fields));
+			strcpy(fr, rec);
 			pfa->initstat = tempstat;
 			break;
 		}
