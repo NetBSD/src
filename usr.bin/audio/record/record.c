@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.38 2004/07/19 19:27:59 mycroft Exp $	*/
+/*	$NetBSD: record.c,v 1.39 2005/07/05 21:05:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.38 2004/07/19 19:27:59 mycroft Exp $");
+__RCSID("$NetBSD: record.c,v 1.39 2005/07/05 21:05:50 mrg Exp $");
 #endif
 
 
@@ -189,6 +189,9 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc != 1)
+		usage();
+
 	/*
 	 * open the audio device
 	 */
@@ -222,8 +225,6 @@ main(argc, argv)
 	/*
 	 * open the output file
 	 */
-	if (argc != 1)
-		usage();
 	if (argv[0][0] != '-' && argv[0][1] != '\0') {
 		/* intuit the file type from the name */
 		if (format == AUDIO_FORMAT_DEFAULT)
