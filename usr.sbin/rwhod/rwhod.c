@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.29 2005/07/01 15:31:18 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.30 2005/07/05 02:46:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.29 2005/07/01 15:31:18 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.30 2005/07/05 02:46:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,9 +112,10 @@ static void	 usage(void) __attribute__((__noreturn__));
 static int	 verify(const char *);
 #ifdef DEBUG
 static char	*interval(int, const char *);
-#define	 sendto Sendto
 static ssize_t	 Sendto(int, const void *, size_t, int,
     const struct sockaddr *, socklen_t);
+#else
+#define	 Sendto sendto
 #endif
 
 int
@@ -174,7 +175,7 @@ main(int argc, char *argv[])
 	if (chdir(_PATH_RWHODIR) < 0)
 		err(EXIT_FAILURE, "%s", _PATH_RWHODIR);
 	(void)signal(SIGHUP, sighup);
-	openlog("rwhod", LOG_PID, LOG_DAEMON);
+	openlog(getprogname(), LOG_PID, LOG_DAEMON);
 	/*
 	 * Establish host name as returned by system.
 	 */
@@ -400,7 +401,7 @@ send_host_information(int s)
 	mywd.wd_vers = WHODVERSION;
 	mywd.wd_type = WHODTYPE_STATUS;
 	for (np = neighbors; np != NULL; np = np->n_next)
-		(void)sendto(s, (char *)&mywd, cc, 0,
+		(void)Sendto(s, (char *)&mywd, cc, 0,
 				np->n_addr, np->n_addrlen);
 	if (utmpent && chdir(_PATH_RWHODIR)) {
 		syslog(LOG_ERR, "chdir(%s): %m", _PATH_RWHODIR);
@@ -540,6 +541,9 @@ Sendto(int s, const void *buf, size_t cc, int flags, const struct sockaddr *to,
 	struct whod *w = (struct whod *)buf;
 	struct whoent *we;
 	struct sockaddr_in *sasin = (struct sockaddr_in *)to;
+	ssize_t ret;
+
+	ret = sendto(s, buf, cc, flags, to, tolen);
 
 	printf("sendto %s.%d\n", inet_ntoa(sasin->sin_addr),
 	    ntohs(sasin->sin_port));
@@ -565,7 +569,7 @@ Sendto(int s, const void *buf, size_t cc, int flags, const struct sockaddr *to,
 		}
 		printf("\n");
 	}
-	return (ssize_t)cc;
+	return ret;
 }
 
 static char *
@@ -594,6 +598,6 @@ interval(int time, const char *updown)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-g <time>]", getprogname());
-	exit(1);
+	(void)fprintf(stderr, "Usage: %s [-i <time>]\n", getprogname());
+	exit(EXIT_FAILURE);
 }
