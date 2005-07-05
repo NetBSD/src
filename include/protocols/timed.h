@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.8 2003/08/07 09:44:13 agc Exp $	*/
+/*	$NetBSD: timed.h,v 1.9 2005/07/05 21:57:08 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -90,7 +90,7 @@ struct tsp {
 #define	TSPTYPENUMBER		25
 
 #ifdef TSPTYPES
-char *tsptype[TSPTYPENUMBER] =
+const char *tsptype[TSPTYPENUMBER] =
   { "ANY", "ADJTIME", "ACK", "MASTERREQ", "MASTERACK", "SETTIME", "MASTERUP", 
   "SLAVEUP", "ELECTION", "ACCEPT", "REFUSE", "CONFLICT", "RESOLVE", "QUIT", 
   "DATE", "DATEREQ", "DATEACK", "TRACEON", "TRACEOFF", "MSITE", "MSITEREQ",
