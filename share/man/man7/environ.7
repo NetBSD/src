@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.20 2003/08/07 10:31:20 agc Exp $
+.\"	$NetBSD: environ.7,v 1.21 2005/07/05 19:46:02 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd July 20, 2003
+.Dd July 5, 2005
 .Dt ENVIRON 7
 .Os
 .Sh NAME
@@ -134,6 +134,8 @@ behaves once the assertion is raised.
 Refer to
 .Xr _DIAGASSERT 3
 for more information.
+.It Ev LOGNAME
+The login name of the user.
 .It Ev MALLOC_OPTIONS
 Control the behaviour of the
 .Fn malloc
@@ -233,6 +235,9 @@ See
 for more information.
 .It Ev USER
 The login name of the user.
+It is recommended that portable applications use
+.Ev LOGNAME
+instead.
 .El
 .Pp
 Further names may be placed in the environment by the
