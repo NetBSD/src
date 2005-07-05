@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.161 2005/07/05 21:05:05 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.162 2005/07/05 21:55:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10240,4 +10240,14 @@ gnu/usr.bin/cvs/include/config.h		patch
 
 	Update CVS to version 1.11.20.
 	[wiz, ticket #552]
+
+libexec/rexecd/rexecd.c				1.22-1.23
+
+	Code cleanup and PAM related bug fixes.
+	[lukem, ticket #529]
+
+libexec/ftpd/ftpd.c				1.165
+
+	Fix bug in PAM related code.
+	[lukem, ticket #538]
 
