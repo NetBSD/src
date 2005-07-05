@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -352,6 +357,7 @@ rtag_proc (argc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 	{
 	    error (0, errno, "cannot chdir to %s", repository);
 	    free (repository);
+	    free (where);
 	    return (1);
 	}
 	/* End section which is identical to patch_proc.  */
@@ -1198,6 +1204,11 @@ Numeric tag %s contains characters other than digits and '.'", name);
     if (strcmp (name, TAG_BASE) == 0
 	|| strcmp (name, TAG_HEAD) == 0)
 	return;
+
+    /* Verify that the tag is valid syntactically.  Some later code once made
+     * assumptions about this.
+     */
+    RCS_check_tag (name);
 
     /* FIXME: This routine doesn't seem to do any locking whatsoever
        (and it is called from places which don't have locks in place).
