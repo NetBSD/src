@@ -110,11 +110,13 @@ allocate_buffer_datas ()
     /* Allocate buffer_data structures in blocks of 16.  */
 #define ALLOC_COUNT (16)
 
-    alc = ((struct buffer_data *)
-	   xmalloc (ALLOC_COUNT * sizeof (struct buffer_data)));
+    alc = xmalloc (ALLOC_COUNT * sizeof (struct buffer_data));
     space = (char *) valloc (ALLOC_COUNT * BUFFER_DATA_SIZE);
-    if (alc == NULL || space == NULL)
+    if (!space)
+    {
+	free (alc);
 	return;
+    }
     for (i = 0; i < ALLOC_COUNT; i++, alc++, space += BUFFER_DATA_SIZE)
     {
 	alc->next = free_buffer_data;

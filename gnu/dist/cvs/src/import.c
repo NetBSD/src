@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -117,6 +122,7 @@ import (argc, argv)
 #else
 		use_editor = 0;
 #endif
+		if (message) free (message);
 		message = xstrdup(optarg);
 		break;
 	    case 'I':
@@ -212,11 +218,22 @@ import (argc, argv)
      * support branching to a single level, so the specified vendor branch
      * must only have two dots in it (like "1.1.1").
      */
-    for (cp = vbranch; *cp != '\0'; cp++)
-	if (!isdigit ((unsigned char) *cp) && *cp != '.')
-	    error (1, 0, "%s is not a numeric branch", vbranch);
-    if (numdots (vbranch) != 2)
-	error (1, 0, "Only branches with two dots are supported: %s", vbranch);
+    {
+	regex_t pat;
+	int ret = regcomp (&pat, "^[1-9][0-9]*\\.[1-9][0-9]*\\.[1-9][0-9]*$",
+			   REG_EXTENDED);
+	assert (!ret);
+	if (regexec (&pat, vbranch, 0, NULL, 0))
+	{
+	    error (1, 0,
+"Only numeric branch specifications with two dots are\n"
+"supported by import, not `%s'.  For example: `1.1.1'.",
+		   vbranch);
+	}
+	regfree (&pat);
+    }
+
+    /* Set vhead to the branch's parent.  */
     vhead = xstrdup (vbranch);
     cp = strrchr (vhead, '.');
     *cp = '\0';
@@ -748,7 +765,7 @@ add_rev (message, rcs, vfile, vers)
     tocvsPath = wrap_tocvs_process_file (vfile);
 
     status = RCS_checkin (rcs, tocvsPath == NULL ? vfile : tocvsPath,
-			  message, vbranch,
+			  message, vbranch, 0,
 			  (RCS_FLAGS_QUIET | RCS_FLAGS_KEEPFILE
 			   | (use_file_modtime ? RCS_FLAGS_MODTIME : 0)));
     ierrno = errno;
