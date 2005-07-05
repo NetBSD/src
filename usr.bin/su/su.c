@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.64 2005/01/10 03:11:50 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.65 2005/07/05 20:15:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.64 2005/01/10 03:11:50 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.65 2005/07/05 20:15:13 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,8 +344,10 @@ badlogin:
 				errx(1, "no directory");
 		} 
 
-		if (asthem || pwd->pw_uid)
+		if (asthem || pwd->pw_uid) {
+			(void)setenv("LOGNAME", pwd->pw_name, 1);
 			(void)setenv("USER", pwd->pw_name, 1);
+		}
 		(void)setenv("HOME", pwd->pw_dir, 1);
 		(void)setenv("SHELL", shell, 1);
 	}

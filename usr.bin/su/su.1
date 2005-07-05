@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.43 2005/06/19 17:34:03 wiz Exp $
+.\"	$NetBSD: su.1,v 1.44 2005/07/05 20:15:13 kleink Exp $
 .\"
-.Dd April 5, 2005
+.Dd July 5, 2005
 .Dt SU 1
 .Os
 .Sh NAME
@@ -66,6 +66,7 @@ will use the S/Key one-time password system as described in
 S/Key is a Trademark of Bellcore.
 .Pp
 By default, the environment is unmodified with the exception of
+.Ev LOGNAME ,
 .Ev USER ,
 .Ev HOME ,
 .Ev SHELL ,
@@ -75,9 +76,11 @@ and
 and
 .Ev SHELL
 are set to the target login's default values.
+.Ev LOGNAME
+and
 .Ev USER
-is set to the target login, unless the target login has a user ID of 0,
-in which case it is unmodified.
+are set to the target login, unless the target login has a user ID of 0,
+in which case they are unmodified.
 .Ev SU_FROM
 is set to the caller's login.
 The invoked shell is the target login's.
@@ -121,6 +124,7 @@ The environment is discarded except for
 .Ev SHELL ,
 .Ev PATH ,
 .Ev TERM ,
+.Ev LOGNAME ,
 .Ev USER ,
 and
 .Ev SU_FROM .
@@ -129,8 +133,10 @@ and
 and
 .Ev SU_FROM
 are modified as above.
+.Ev LOGNAME
+and
 .Ev USER
-is set to the target login.
+are set to the target login.
 .Ev PATH
 is set to the path specified in the
 .Pa /etc/login.conf
@@ -273,6 +279,10 @@ Environment variables used by
 .It Ev HOME
 Default home directory of real user ID unless modified as
 specified above.
+.It Ev LOGNAME
+The user ID is always the effective ID (the target user ID) after an
+.Nm
+unless the user ID is 0 (root).
 .It Ev PATH
 Default search path of real user ID unless modified as specified above.
 .It Ev TERM
