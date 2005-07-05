@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.159 2005/07/05 13:53:32 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.160 2005/07/05 15:39:22 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10118,4 +10118,9 @@ sys/dev/pci/if_stge.c				1.28
 
 	Cleanup code and improve stability.
 	[bouyer, ticket #548]
+
+share/termcap/termcap.src			1.94
+
+	Enable characters in rxvt. Closes PR 30655.
+	[wiz, ticket #549]
 
