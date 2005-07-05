@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27.2.3 2005/05/07 14:25:57 riz Exp $
+# $NetBSD: INSTALL,v 1.27.2.4 2005/07/05 13:41:10 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27.2.3 $"
+#ident 		"INSTALL-$Revision: 1.27.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -312,11 +312,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # RAID controllers and devices
+amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
+ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
