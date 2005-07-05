@@ -1,4 +1,4 @@
-/* $NetBSD: vext.h,v 1.3 2005/06/26 22:36:55 christos Exp $ */
+/* $NetBSD: vext.h,v 1.4 2005/07/05 22:21:38 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998
@@ -37,7 +37,7 @@
  */
 
 /*
- * $Id: vext.h,v 1.3 2005/06/26 22:36:55 christos Exp $
+ * $Id: vext.h,v 1.4 2005/07/05 22:21:38 he Exp $
  * $FreeBSD$
  */
 
@@ -187,7 +187,7 @@ void vinum_lsi(int, int);
 int vinum_li(int, enum objecttype);
 char *roughlength(int64_t, int);
 u_int64_t sizespec(char *);
-char *sd_state(enum sdstate);
+const char *sd_state(enum sdstate);
 void timestamp(void);
 
 extern int force;					    /* set to 1 to force some dangerous ops */
