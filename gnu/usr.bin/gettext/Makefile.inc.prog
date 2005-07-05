@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.prog,v 1.5 2005/05/09 17:19:06 jmc Exp $
+#	$NetBSD: Makefile.inc.prog,v 1.6 2005/07/05 21:52:13 he Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ MAN=${PROG}.1
 CPPFLAGS+=	-I${TOOLTOP}
 
 .if ${MACHINE_ARCH} == "vax"
-depend dependall realdepend realall: stdbool.h
+beforedepend depend dependall realdepend realall: stdbool.h
 
 stdbool.h:
 	sed -e 's:@HAVE__BOOL@:0:g' \
