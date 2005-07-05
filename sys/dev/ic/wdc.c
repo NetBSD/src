@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.2 2005/04/16 10:59:50 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.3 2005/07/05 21:04:08 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.2 2005/04/16 10:59:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.3 2005/07/05 21:04:08 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -124,6 +124,13 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.2 2005/04/16 10:59:50 tron Exp $
 
 /* timeout for the control commands */
 #define WDC_CTRL_DELAY 10000 /* 10s, for the recall command */
+
+/*
+ * timeout when waiting for BSY to deassert when probing.
+ * set to 5s. From the standards this could be up to 31, but we can't
+ * wait that much at boot time, and 5s seems to be enouth.
+ */
+#define WDC_PROBE_WAIT	5
 
 struct pool wdc_xfer_pool;
 
@@ -485,10 +492,12 @@ static int
 wdcprobe1(struct wdc_channel *chp, int poll)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
-	u_int8_t st0, st1, sc, sn, cl, ch;
+	u_int8_t st0 = 0, st1 = 0, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
 	int s;
+	int wdc_probe_count =
+	    poll ? (WDC_PROBE_WAIT / WDCDELAY) : (WDC_PROBE_WAIT * hz);
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -497,24 +506,28 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	s = splbio();
 	if (wdc == NULL ||
 	    (wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+		while (wdc_probe_count-- > 0) {
 
-		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
-			wdc->select(chp,0);
+			if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+				wdc->select(chp,0);
 
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		st0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM);
+			delay(10);	/* 400ns delay */
+			st0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
 		
-		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
-			wdc->select(chp,1);
+			if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+				wdc->select(chp,1);
 
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM | 0x10);
-		delay(10);	/* 400ns delay */
-		st1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM | 0x10);
+			delay(10);	/* 400ns delay */
+			st1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
+			if ((st0 & WDCS_BSY) == 0)
+				break;
+		}
 
 		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe",
