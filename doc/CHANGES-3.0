@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.158 2005/07/04 10:13:22 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.159 2005/07/05 13:53:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10087,4 +10087,35 @@ usr.bin/grep/mmfile.c				1.2
 	Avoid crashes in grep(1) on empty or very huge files.
 	This fixes PR bin/29806.
 	[mlelstv, ticket #527]
+
+lib/libc/gen/getttyent.c			1.22
+
+	Make sure ty_class is cleared on each entry.
+	[lukem, ticket #528]
+
+dist/nawk/lib.c					patch
+
+	Fix handling of RS.
+	[jdolecek, ticket #543]
+
+share/termcap/termcap.src			1.93
+
+	Update rxvt entry to the one coming with rxvt-2.7.10.
+	[wiz, ticket #545]
+
+sys/arch/amd64/conf/GENERIC			1.54
+sys/arch/amd64/conf/INSTALL			1.34
+
+	Added support for amr(4).
+	[martti, ticket #546]
+
+sys/sys/stdint.h				1.4
+
+	Include <sys/cdefs.h> for __signed.
+	[kleink, ticket #547]
+
+sys/dev/pci/if_stge.c				1.28
+
+	Cleanup code and improve stability.
+	[bouyer, ticket #548]
 
