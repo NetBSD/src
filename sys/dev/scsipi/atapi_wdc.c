@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.94 2005/06/07 13:45:11 peter Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.95 2005/07/06 01:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.94 2005/06/07 13:45:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95 2005/07/06 01:46:52 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -611,7 +611,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
-	int ire;
+	int ire, error;
 	int dma_flags = 0;
 	void *cmd;
 
@@ -692,11 +692,22 @@ again:
 		ATADEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
-			if ((*wdc->dma_init)(wdc->dma_arg,
+			error = (*wdc->dma_init)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
-			    xfer->c_databuf, xfer->c_bcount, dma_flags) != 0) {
-				sc_xfer->error = XS_DRIVER_STUFFUP;
-				break;
+			    xfer->c_databuf, xfer->c_bcount, dma_flags);
+			if (error) {
+				if (error == EINVAL) {
+					/*
+					 * We can't do DMA on this transfer
+					 * for some reason.  Fall back to
+					 * PIO.
+					 */
+					xfer->c_flags &= ~C_DMA;
+					error = 0;
+				} else {
+					sc_xfer->error = XS_DRIVER_STUFFUP;
+					break;
+				}
 			}
 		}
 
