@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: insque.c,v 1.1 2005/07/06 14:43:24 drochner Exp $");
+__RCSID("$NetBSD: insque.c,v 1.2 2005/07/06 17:17:15 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -48,10 +48,13 @@ insque(entry, pred)
 	struct qelem *p = (struct qelem *) pred;
 
 	_DIAGASSERT(e != 0);
-	_DIAGASSERT(p != 0);
 
-	e->q_forw = p->q_forw;
 	e->q_back = p;
-	p->q_forw->q_back = e;
-	p->q_forw = e;
+	if (p) {
+		e->q_forw = p->q_forw;
+		if (p->q_forw)
+			p->q_forw->q_back = e;
+		p->q_forw = e;
+	} else
+		e->q_forw = 0;
 }
