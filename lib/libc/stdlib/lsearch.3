@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lsearch.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: lsearch.3,v 1.1 2005/07/06 14:43:24 drochner Exp $
+.\"	$NetBSD: lsearch.3,v 1.2 2005/07/06 16:57:28 drochner Exp $
 .\"
 .Dd July 6, 2005
 .Dt LSEARCH 3
@@ -39,9 +39,9 @@
 .Lb libc
 .Sh SYNOPSIS
 .In search.h
-.Ft char *
-.Fn lsearch "const void *key" "const void *base" "size_t *nelp" "size_t width" "int (*compar)(const void *, const void *)"
-.Ft char *
+.Ft void *
+.Fn lsearch "const void *key" "void *base" "size_t *nelp" "size_t width" "int (*compar)(const void *, const void *)"
+.Ft void *
 .Fn lfind "const void *key" "const void *base" "size_t *nelp" "size_t width" "int (*compar)(const void *, const void *)"
 .Sh DESCRIPTION
 .Pp
@@ -61,15 +61,8 @@ is
 bytes long.
 The
 .Fa compar
-function
-is a comparison routine which is used to compare two elements.
-It takes two arguments which point to the
-.Fa key
-object and to an array member, in that order, and must return an integer
-less than, equivalent to, or greater than zero if the
-.Fa key
-object is considered, respectively, to be less than, equal to, or greater
-than the array member.
+argument points to a function which compares its two arguments and returns
+zero if they are matching, and non-zero otherwise.
 .Pp
 The
 .Fn lsearch
@@ -93,6 +86,13 @@ When an element is added to the array by
 the location referenced by the argument
 .Fa nelp
 is incremented by one.
+.Sh STANDARDS
+The
+.Fn lsearch
+and
+.Fn lfind
+functions conform to
+.St -p1003.1-2001 .
 .Sh SEE ALSO
 .Xr bsearch 3 ,
 .Xr db 3
