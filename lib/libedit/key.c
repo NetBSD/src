@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.15 2003/10/18 23:48:42 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.16 2005/07/06 21:13:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.15 2003/10/18 23:48:42 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.16 2005/07/06 21:13:02 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -85,6 +85,7 @@ private int		 node_trav(EditLine *, key_node_t *, char *,
 private int		 node__try(EditLine *, key_node_t *, const char *,
     key_value_t *, int);
 private key_node_t	*node__get(int);
+private void		 node__free(key_node_t *);
 private void		 node__put(EditLine *, key_node_t *);
 private int		 node__delete(EditLine *, key_node_t **, const char *);
 private int		 node_lookup(EditLine *, const char *, key_node_t *,
@@ -110,7 +111,6 @@ key_init(EditLine *el)
 	return (0);
 }
 
-
 /* key_end():
  *	Free the key maps
  */
@@ -120,8 +120,7 @@ key_end(EditLine *el)
 
 	el_free((ptr_t) el->el_key.buf);
 	el->el_key.buf = NULL;
-	/* XXX: provide a function to clear the keys */
-	el->el_key.map = NULL;
+	node__free(el->el_key.map);
 }
 
 
@@ -468,7 +467,15 @@ node__get(int ch)
 	return (ptr);
 }
 
-
+private void
+node__free(key_node_t *k)
+{
+	if (k == NULL)
+		return;
+	node__free(k->sibling);
+	node__free(k->next);
+	el_free((ptr_t) k);
+}
 
 /* node_lookup():
  *	look for the str starting at node ptr.
