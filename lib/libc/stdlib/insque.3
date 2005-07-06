@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: insque.3,v 1.1 2005/07/06 14:43:24 drochner Exp $
+.\"	$NetBSD: insque.3,v 1.2 2005/07/06 17:02:56 drochner Exp $
 .\"
 .Dd July 6, 2005
 .Dt INSQUE 3
@@ -46,7 +46,24 @@
 and
 .Fn remque
 manipulate queues built from doubly linked lists.
-.Sh DIAGNOSTICS
-These functions are not atomic unless that machine architecture allows it.
+The queue can be either circular or linear.
+The functions expect their
+arguments to point to a structure whose first and second members are
+pointers to the next and previous element, respectively.
+The
+.Fn insque
+function also allows the
+.Fa pred
+argument to be a
+.Dv NULL
+pointer for the initialization of a new linear list's
+head element.
+.Sh STANDARDS
+The
+.Fn insque
+and
+.Fn remque
+functions conform to
+.St -p1003.1-2001 .
 .Sh HISTORY
 These are derived from the insque and remque instructions on a VAX.
