@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.63 2005/07/06 18:53:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.63 2005/07/06 18:53:00 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -82,58 +82,82 @@ struct pool_cache pnbuf_cache;	/* pathname buffer cache */
  * replacement strings (and replacement string lengths) made
  * that impractical.
  */
+#define	VNL(x)							\
+	(sizeof(x) - 1)
+
+#define	VO	'{'
+#define	VC	'}'
+
 #define	MATCH(str)						\
-		((i + (sizeof(str) - 1) == *len) ||		\
-		    ((i + (sizeof(str) - 1) < *len) &&		\
-		      (cp[i + sizeof(str) - 1] == '/'))) &&	\
-		!strncmp((str), &cp[i], sizeof(str) - 1)
+	((termchar == '/' && i + VNL(str) == *len) ||		\
+	 (i + VNL(str) < *len &&				\
+	  cp[i + VNL(str)] == termchar)) &&			\
+	!strncmp((str), &cp[i], VNL(str))
 
 #define	SUBSTITUTE(m, s, sl)					\
-		if ((newlen + (sl)) > MAXPATHLEN)		\
-			return (1);				\
-		i += sizeof(m) - 1;				\
-		memcpy(&tmp[newlen], (s), (sl));		\
-		newlen += (sl);					\
-		change = 1;
+	if ((newlen + (sl)) > MAXPATHLEN)			\
+		return (1);					\
+	i += VNL(m);						\
+	if (termchar != '/')					\
+		i++;						\
+	memcpy(&tmp[newlen], (s), (sl));			\
+	newlen += (sl);						\
+	change = 1;						\
+	termchar = '/';
 
 static int
-symlink_magic(char *cp, int *len)
+symlink_magic(struct proc *p, char *cp, int *len)
 {
 	char tmp[MAXPATHLEN];
 	int change, i, newlen;
+	int termchar = '/';
 
 	for (change = i = newlen = 0; i < *len; ) {
-		if (cp[i] != '@')
+		if (cp[i] != '@') {
 			tmp[newlen++] = cp[i++];
-		else {
+			continue;
+		}
+
+		i++;
+
+		/* Check for @{var} syntax. */
+		if (cp[i] == VO) {
+			termchar = VC;
 			i++;
-			/*
-			 * The following checks should be ordered according
-			 * to frequency of use.
-			 */
-			if (MATCH("machine_arch")) {
-				SUBSTITUTE("machine_arch", MACHINE_ARCH,
-				    sizeof(MACHINE_ARCH) - 1);
-			} else if (MATCH("machine")) {
-				SUBSTITUTE("machine", MACHINE,
-				    sizeof(MACHINE) - 1);
-			} else if (MATCH("hostname")) {
-				SUBSTITUTE("hostname", hostname,
-				    hostnamelen);
-			} else if (MATCH("osrelease")) {
-				SUBSTITUTE("osrelease", osrelease,
-				    strlen(osrelease));
-			} else if (MATCH("kernel_ident")) {
-				SUBSTITUTE("kernel_ident", kernel_ident,
-				    strlen(kernel_ident));
-			} else if (MATCH("domainname")) {
-				SUBSTITUTE("domainname", domainname,
-				    domainnamelen);
-			} else if (MATCH("ostype")) {
-				SUBSTITUTE("ostype", ostype,
-				    strlen(ostype));
-			} else
-				tmp[newlen++] = '@';
+		}
+
+		/*
+		 * The following checks should be ordered according
+		 * to frequency of use.
+		 */
+		if (MATCH("machine_arch")) {
+			SUBSTITUTE("machine_arch", MACHINE_ARCH,
+			    sizeof(MACHINE_ARCH) - 1);
+		} else if (MATCH("machine")) {
+			SUBSTITUTE("machine", MACHINE,
+			    sizeof(MACHINE) - 1);
+		} else if (MATCH("hostname")) {
+			SUBSTITUTE("hostname", hostname,
+			    hostnamelen);
+		} else if (MATCH("osrelease")) {
+			SUBSTITUTE("osrelease", osrelease,
+			    strlen(osrelease));
+		} else if (MATCH("emul")) {
+			SUBSTITUTE("emul", p->p_emul->e_name,
+			    strlen(p->p_emul->e_name));
+		} else if (MATCH("kernel_ident")) {
+			SUBSTITUTE("kernel_ident", kernel_ident,
+			    strlen(kernel_ident));
+		} else if (MATCH("domainname")) {
+			SUBSTITUTE("domainname", domainname,
+			    domainnamelen);
+		} else if (MATCH("ostype")) {
+			SUBSTITUTE("ostype", ostype,
+			    strlen(ostype));
+		} else {
+			tmp[newlen++] = '@';
+			if (termchar == VC)
+				tmp[newlen++] = VO;
 		}
 	}
 
@@ -145,6 +169,12 @@ symlink_magic(char *cp, int *len)
 
 	return (0);
 }
+
+#undef VNL
+#undef VO
+#undef VC
+#undef MATCH
+#undef SUBSTITUTE
 
 /*
  * Convert a pathname into a pointer to a locked inode.
@@ -302,7 +332,7 @@ namei(struct nameidata *ndp)
 		 * check length for potential overflow.
 		 */
 		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
-		     symlink_magic(cp, &linklen)) ||
+		     symlink_magic(cnp->cn_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
