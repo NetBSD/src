@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.50 2005/06/28 07:19:33 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.51 2005/07/06 23:44:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.50 2005/06/28 07:19:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.51 2005/07/06 23:44:16 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3104,6 +3104,7 @@ rtw_start(struct ifnet *ifp)
 
 		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0 &&
 		    (k = ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
+			m_freem(m0);
 			break;
 		} else
 			k = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.202 2005/07/06 06:49:25 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.203 2005/07/06 23:44:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.202 2005/07/06 06:49:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.203 2005/07/06 23:44:16 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1133,6 +1133,7 @@ wi_start(struct ifnet *ifp)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			if (ieee80211_crypto_encap(ic, ni, m0) == NULL) {
+				m_freem(m0);
 				ifp->if_oerrors++;
 				goto next;
 			}

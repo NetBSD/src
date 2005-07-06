@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.7 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.8 2005/07/06 23:44:15 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.7 2004/12/31 22:42:38 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.7 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.8 2005/07/06 23:44:15 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -542,7 +542,6 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 	if (cip->ic_encap(k, m, keyid<<6))
 		return k;
 bad:
-	m_freem(m);
 	return NULL;
 }
 
