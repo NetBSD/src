@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2004/04/18 04:31:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2005/07/06 14:43:24 drochner Exp $
 
 .include <bsd.own.mk>
 
@@ -28,15 +28,13 @@ MLINKS+=stty.3 gtty.3
 
 # compat 4.3 sources
 # missing: ecvt.c gcvt.c sibuf.c sobuf.c strout.c
-SRCS+=	cfree.c lsearch.c regex.c rexec.c
-SRCS+=	insque.c remque.c ruserpass.c
+SRCS+=	cfree.c regex.c rexec.c
+SRCS+=	ruserpass.c
 
 # missing: ecvt.0
-MAN+=	insque.3 lsearch.3 re_comp.3 rexec.3
+MAN+=	re_comp.3 rexec.3
 
 #MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3
-MLINKS+=insque.3 remque.3
-MLINKS+=lsearch.3 lfind.3
 MLINKS+=re_comp.3 re_exec.3
 
 
