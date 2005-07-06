@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.201 2005/06/26 21:51:37 erh Exp $	*/
+/*	$NetBSD: wi.c,v 1.202 2005/07/06 06:49:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.201 2005/06/26 21:51:37 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.202 2005/07/06 06:49:25 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2499,7 +2499,8 @@ wi_key_update_end(struct ieee80211com *ic)
 
 	if ((sc->sc_flags & WI_FLAGS_WEP_VALID) != 0)
 		return;
-	if (ic->ic_caps & IEEE80211_C_WEP)
+	if ((ic->ic_caps & IEEE80211_C_WEP) != 0 && sc->sc_enabled &&
+	    !sc->sc_invalid)
 		(void)wi_write_wep(sc);
 }
 
