@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.1 2005/06/15 06:38:45 junyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.2 2005/07/06 09:22:31 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,6 +99,12 @@ ENTRY(start)
 
 real_start:
 	movb	%dl, boot_drive		/* Save boot drive number */
+
+	movw	$0x475, %si		/* Check presence of hard disks */
+	movb	(%si), %al
+	testb	%al, %al
+	jz	boot_cdrom
+
 	movw	$str_press_key, %si
 	call	message
 next_second:
