@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.132 2005/07/06 11:40:27 macallan Exp $
+#	$NetBSD: files.sparc,v 1.133 2005/07/06 12:16:35 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -114,7 +114,7 @@ device eccmemctl
 attach eccmemctl at mainbus
 file	arch/sparc/sparc/memecc.c		eccmemctl
 
-device tctrl
+device tctrl: sysmon_envsys, sysmon_power, sysmon_taskq
 attach tctrl at obio
 file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
