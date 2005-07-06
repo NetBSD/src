@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.2 2005/06/30 16:23:29 christos Exp $	*/
+/*	$NetBSD: deroff.c,v 1.3 2005/07/06 07:57:19 wiz Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.2 2005/06/30 16:23:29 christos Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.3 2005/07/06 07:57:19 wiz Exp $";
 #endif
 #endif /* not lint */
 
@@ -1579,7 +1579,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-ikpw ] [ -m ( a | e | m | s | l ) ] [ filename ] ... \n", __progname);
+	fprintf(stderr, "usage: %s [-ikpw ] [ -m a | e | l | m | s] [file ...]\n", __progname);
 	exit(1);
 }
 
