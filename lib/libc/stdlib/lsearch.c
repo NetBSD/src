@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.8 2003/08/07 16:44:16 agc Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.1 2005/07/06 14:43:24 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
