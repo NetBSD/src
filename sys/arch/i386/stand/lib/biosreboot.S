@@ -1,4 +1,4 @@
-/*	$NetBSD: biosreboot.S,v 1.2 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: biosreboot.S,v 1.3 2005/07/06 19:29:50 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -31,11 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-	
+
 
 #include <machine/asm.h>
-
-#define	data32	.byte 0x66
 
 	.text
 
@@ -54,7 +52,7 @@ ENTRY(reboot)
 	int	$0x19
 
 	/* NOTE: We should never even get past this point. */
-	
+
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
