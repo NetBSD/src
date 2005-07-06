@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.20 2005/07/06 18:35:39 fair Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.21 2005/07/06 20:29:16 fair Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.20 2005/07/06 18:35:39 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21 2005/07/06 20:29:16 fair Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -544,6 +544,19 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	}
 };
 
+/*
+ * disable the TSC such that we don't use the TSC in microtime(9)
+ * because some CPUs got the implementation wrong.
+ */
+static void
+disable_tsc(struct cpu_info *ci)
+{
+	if (cpu_feature & CPUID_TSC) {
+		cpu_feature &= ~CPUID_TSC;
+		printf("WARNING: broken TSC disabled\n");
+	}
+}
+
 void
 cyrix6x86_cpu_setup(ci)
 	struct cpu_info *ci;
@@ -551,8 +564,13 @@ cyrix6x86_cpu_setup(ci)
 	/*
 	 * i8254 latch check routine:
 	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
-	 *     its built-in i8254-compatible clock module.
+	 *     its built-in i8254-compatible clock module (cs5510 cs5520).
 	 *     Set the variable 'clock_broken_latch' to indicate it.
+	 *
+	 * This bug is not present in the cs5530, and the flag
+	 * is disabled again in sys/arch/i386/pci/pcib.c if this later
+	 * model device is detected. Ideally, this work-around should not
+	 * even be in here, it should be in there. XXX
 	 */
 
 	extern int clock_broken_latch;
@@ -566,8 +584,22 @@ cyrix6x86_cpu_setup(ci)
 	}
 
 	/* set up various cyrix registers */
-	/* Enable suspend on halt */
+	/*
+	 * Enable suspend on halt (powersave mode).
+	 * When powersave mode is enabled, the TSC stops counting
+	 * while the CPU is halted in idle() waiting for an interrupt.
+	 * This means we can't use the TSC for interval time in
+	 * microtime(9), and thus it is disabled here.
+	 *
+	 * It still makes a perfectly good cycle counter
+	 * for program profiling, so long as you remember you're
+	 * counting cycles, and not time. Further, if you don't
+	 * mind not using powersave mode, the TSC works just fine,
+	 * so this should really be optional. XXX
+	 */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	disable_tsc(ci);
+
 	/* enable access to ccr4/ccr5 */
 	c3 = cyrix_read_reg(0xC3);
 	cyrix_write_reg(0xC3, c3 | 0x10);
@@ -593,8 +625,7 @@ winchip_cpu_setup(ci)
 #if defined(I586_CPU)
 	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
-		cpu_feature &= ~CPUID_TSC;
-		printf("WARNING: WinChip C6: broken TSC disabled\n");
+		disable_tsc(ci);
 	}
 #endif
 }
