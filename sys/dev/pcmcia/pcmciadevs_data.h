@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.213 2005/05/07 17:01:11 martin Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.214 2005/07/06 07:06:29 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.211 2005/05/07 16:59:11 martin Exp
+ *	NetBSD: pcmciadevs,v 1.212 2005/07/06 07:05:25 dyoung Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -181,6 +181,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Allied Telesis K.K.",
 	    "Allied Telesis LA-PCM",	}
+	,
+	{
+	    PCMCIA_VENDOR_ALVARION, PCMCIA_PRODUCT_ALVARION_BREEZENET,
+	    PCMCIA_CIS_ALVARION_BREEZENET,
+	    0,
+	    "Alvarion Ltd.",
+	    "Alvarion Ltd. BreezeNET PC-DS.11b",	}
 	,
 	{
 	    PCMCIA_VENDOR_ANYCOM, PCMCIA_PRODUCT_ANYCOM_LSE041,
@@ -2060,6 +2067,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Anycom",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ALVARION,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Alvarion Ltd.",
 	    NULL,
 	},
 	{
