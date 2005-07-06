@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.44 2005/05/29 22:24:14 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.45 2005/07/06 23:08:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.44 2005/05/29 22:24:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.45 2005/07/06 23:08:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,13 +42,21 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.44 2005/05/29 22:24:14 christos Exp 
 #include <sys/exec.h>
 #include <sys/mman.h>
 #include <sys/resourcevar.h>
+#include <sys/device.h>
 
 #include <uvm/uvm.h>
 
-/*
- * XXX cgd 960926: this module should collect simple statistics
- * (calls, extends, kills).
- */
+#define	VMCMD_EVCNT_DECL(name)					\
+static struct evcnt vmcmd_ev_##name =				\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "vmcmd", #name);	\
+EVCNT_ATTACH_STATIC(vmcmd_ev_##name)
+
+#define	VMCMD_EVCNT_INCR(name)					\
+    vmcmd_ev_##name.ev_count++
+
+VMCMD_EVCNT_DECL(calls);
+VMCMD_EVCNT_DECL(extends);
+VMCMD_EVCNT_DECL(kills);
 
 /*
  * new_vmcmd():
@@ -64,6 +72,8 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
     u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
+
+	VMCMD_EVCNT_INCR(calls);
 
 	if (evsp->evs_used >= evsp->evs_cnt)
 		vmcmdset_extend(evsp);
@@ -90,8 +100,11 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 #endif
 
 	/* figure out number of entries in new set */
-	ocnt = evsp->evs_cnt;
-	evsp->evs_cnt += ocnt ? ocnt : EXEC_DEFAULT_VMCMD_SETSIZE;
+	if ((ocnt = evsp->evs_cnt) != 0) {
+		evsp->evs_cnt += ocnt;
+		VMCMD_EVCNT_INCR(extends);
+	} else
+		evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
 	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
@@ -111,6 +124,8 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
 	u_int i;
+
+	VMCMD_EVCNT_INCR(kills);
 
 	if (evsp->evs_cnt == 0)
 		return;
