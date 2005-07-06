@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.131 2005/06/30 12:07:51 macallan Exp $
+#	$NetBSD: files.sparc,v 1.132 2005/07/06 11:40:27 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -148,9 +148,9 @@ file	arch/sparc/dev/sbus.c			sbus needs-flag
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
-device tpcic: pcmciabus
-attach tpcic at sbus
-file	arch/sparc/dev/ts102.c			tpcic
+device tslot: pcmciabus
+attach tslot at sbus
+file	arch/sparc/dev/ts102.c			tslot
 
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
