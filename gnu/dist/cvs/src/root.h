@@ -1,7 +1,11 @@
 /*
- * Copyright (c) 2001, Derek Price and others
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS kit.
@@ -40,3 +44,12 @@ typedef struct cvsroot_s {
     unsigned char isremote;	/* Nonzero if we are doing remote access. */
 #endif /* CLIENT_SUPPORT */
 } cvsroot_t;
+
+cvsroot_t *Name_Root PROTO((const char *dir, const char *update_dir));
+void free_cvsroot_t PROTO((cvsroot_t *root_in));
+cvsroot_t *parse_cvsroot PROTO((const char *root));
+cvsroot_t *local_cvsroot PROTO((const char *dir));
+void Create_Root PROTO((const char *dir, const char *rootdir));
+void root_allow_add PROTO ((char *));
+void root_allow_free PROTO ((void));
+int root_allow_ok PROTO ((char *));
