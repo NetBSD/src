@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.1 2005/07/06 14:43:24 drochner Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.2 2005/07/06 15:47:15 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,12 +47,13 @@ __RCSID("$NetBSD: lsearch.c,v 1.1 2005/07/06 14:43:24 drochner Exp $");
 #include <search.h>
 
 typedef int (*cmp_fn_t) __P((const void *, const void *));
-static void *linear_base __P((const void *, const void *, size_t *, size_t,
+static void *linear_base __P((const void *, void *, size_t *, size_t,
 			     cmp_fn_t, int));
 
 void *
 lsearch(key, base, nelp, width, compar)
-	const void *key, *base;
+	const void *key;
+	void *base;
 	size_t *nelp, width;
 	cmp_fn_t compar;
 {
@@ -75,12 +76,13 @@ lfind(key, base, nelp, width, compar)
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(compar != NULL);
 
-	return(linear_base(key, base, nelp, width, compar, 0));
+	return(linear_base(key, __UNCONST(base), nelp, width, compar, 0));
 }
 
 static void *
 linear_base(key, base, nelp, width, compar, add_flag)
-	const void *key, *base;
+	const void *key;
+	void *base;
 	size_t *nelp, width;
 	cmp_fn_t compar;
 	int add_flag;
@@ -91,9 +93,7 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(compar != NULL);
 
-	/* LINTED const castaway */
 	end = (char *)base + *nelp * width;
-	/* LINTED const castaway */
 	for (element = (char *)base; element < end; element += width)
 		if (!compar(element, key))		/* key found */
 			return element;
