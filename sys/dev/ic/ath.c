@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.53 2005/07/03 19:58:16 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.54 2005/07/06 23:58:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.88 2005/04/12 17:56:43 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53 2005/07/03 19:58:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.54 2005/07/06 23:58:14 dyoung Exp $");
 #endif
 
 /*
@@ -636,8 +636,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
 #endif
-	if (boothowto & AB_VERBOSE)
-		ieee80211_announce(ic);
+	ieee80211_announce(ic);
 	ath_announce(sc);
 	return 0;
 bad2:

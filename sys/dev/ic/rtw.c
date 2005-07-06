@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.51 2005/07/06 23:44:16 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.52 2005/07/06 23:58:14 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.51 2005/07/06 23:44:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.52 2005/07/06 23:58:14 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -4076,6 +4076,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISHED);
 
+	ieee80211_announce(ic);
 	return;
 err:
 	rtw_detach(sc);

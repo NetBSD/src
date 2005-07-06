@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.203 2005/07/06 23:44:16 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.204 2005/07/06 23:58:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.203 2005/07/06 23:44:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.204 2005/07/06 23:58:14 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -515,6 +515,7 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	sc->sc_attached = 1;
 
 	splx(s);
+	ieee80211_announce(ic);
 	return 0;
 }
 

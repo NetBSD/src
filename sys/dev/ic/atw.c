@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.87 2005/06/26 04:37:25 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.88 2005/07/06 23:58:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.87 2005/06/26 04:37:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.88 2005/07/06 23:58:14 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -879,6 +879,7 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_txtap.at_ihdr.it_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.at_ihdr.it_present = ATW_TX_RADIOTAP_PRESENT;
 
+	ieee80211_announce(ic);
 	return;
 
 	/*
