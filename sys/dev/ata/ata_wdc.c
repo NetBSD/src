@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.81 2005/06/07 13:45:11 peter Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.81 2005/06/07 13:45:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -323,7 +323,7 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
-	int nblks;
+	int nblks, error;
 	int dma_flags = 0;
 
 	ATADEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
@@ -397,10 +397,21 @@ again:
 			cmd = (ata_bio->flags & ATA_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
 	    		/* Init the DMA channel. */
-			if ((*wdc->dma_init)(wdc->dma_arg,
+			error = (*wdc->dma_init)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
 			    (char *)xfer->c_databuf + xfer->c_skip,
-			    ata_bio->nbytes, dma_flags) != 0) {
+			    ata_bio->nbytes, dma_flags);
+			if (error) {
+				if (error == EINVAL) {
+					/*
+					 * We can't do DMA on this transfer
+					 * for some reason.  Fall back to
+					 * PIO.
+					 */
+					xfer->c_flags &= ~C_DMA;
+					error = 0;
+					goto do_pio;
+				}
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
 				wdc_ata_bio_done(chp, xfer);
@@ -437,6 +448,7 @@ again:
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
+ do_pio:
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
