@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.117 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.118 2005/07/06 22:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.118 2005/07/06 22:30:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -170,19 +170,10 @@ uiomove(void *buf, size_t n, struct uio *uio)
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
-			if (__predict_true(p == curproc)) {
-				if (uio->uio_rw == UIO_READ)
-					error = copyout(cp, iov->iov_base, cnt);
-				else
-					error = copyin(iov->iov_base, cp, cnt);
-			} else {
-				if (uio->uio_rw == UIO_READ)
-					error = copyout_proc(p, cp,
-					    iov->iov_base, cnt);
-				else
-					error = copyin_proc(p, iov->iov_base,
-					    cp, cnt);
-			}
+			if (uio->uio_rw == UIO_READ)
+				error = copyout_proc(p, cp, iov->iov_base, cnt);
+			else
+				error = copyin_proc(p, iov->iov_base, cp, cnt);
 			if (error)
 				goto out;
 			break;
@@ -276,6 +267,9 @@ copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
+	if (__predict_true(p == curproc))
+		return copyin(uaddr, kaddr, len);
+
 	iov.iov_base = kaddr;
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
@@ -308,6 +302,9 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 
 	if (len == 0)
 		return (0);
+
+	if (__predict_true(p == curproc))
+		return copyout(kaddr, uaddr, len);
 
 	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
 	iov.iov_len = len;

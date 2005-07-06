@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.20 2005/07/06 20:56:49 kleink Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.21 2005/07/06 22:30:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.20 2005/07/06 20:56:49 kleink Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.21 2005/07/06 22:30:42 christos Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -268,12 +268,8 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 		int i;
 
 		end -= slen;
-		if (__predict_true(p == curproc))
-			error = copyin((void *) end, buf, slen);
-		else
-			error = copyin_proc(p, (void *) end, buf, slen);
-		if (error)
-			return (error);
+		if ((error = copyin_proc(p, (void *)end, buf, slen)) != 0)
+			return error;
 
 		ep = (const long *) &buf[slen / sizeof(buf[0])];
 		for (i = 0, ep--; buf <= ep; ep--, i++) {
