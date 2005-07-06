@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.35 2005/05/23 23:57:26 wiz Exp $
+.\"     $NetBSD: wi.4,v 1.36 2005/07/06 07:30:59 dyoung Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.35 2005/05/23 23:57:26 wiz Exp $
+.\"	$Id: wi.4,v 1.36 2005/07/06 07:30:59 dyoung Exp $
 .\"
 .Dd May 7, 2005
 .Dt WI 4
@@ -122,6 +122,8 @@ driver include:
 .Pp
 .Bl -item -offset indent -compact
 .It
+Alvarion BreezeNET
+.It
 Lucent WaveLAN/IEEE 2.0Mb Bronze
 .It
 Lucent WaveLAN/IEEE 2.0Mb Silver
@@ -140,9 +142,25 @@ Corega Wireless LAN PCC-11, PCCA_11, PCCB_11
 .It
 DEC/Cabletron RoamAbout 802.11 DS High Rate
 .It
-D-Link DWL-520 11Mbps PCI Card
+D-Link DWL-520 11Mbps PCI Card, Revs. A1,A2,B1,B2
 .It
-D-Link DWL-650 11Mbps WLAN Card, DCF-650W CF Card
+D-Link DWL-520 11Mbps PCI Card, Rev. C1
+.Em not supported ,
+see 
+.Xr atw 4
+.It
+D-Link DWL-520 11Mbps PCI Card, Rev. D
+.Em not supported ,
+see 
+.Xr rtw 4
+.It
+D-Link DWL-650 11Mbps WLAN Card
+.It
+D-Link DWL-650 11Mbps WLAN Card, Rev. P
+.Em not supported
+(Prism 3 chipset)
+.It
+D-Link DCF-650W CF Card
 .It
 ELECOM Air@Hawk LD-WL11
 .It
@@ -164,6 +182,9 @@ Linksys Group, Inc. Instant Wireless Network PC Card, CF Card
 .It
 Linksys Group, Inc. Instant Wireless Network WMP11 PCI Card
 .It
+Linksys Group, Inc. Instant Wireless Network WMP11v4 PCI Card
+.Em not supported
+.It
 NCR WaveLAN/IEEE
 .It
 NEC Wireless Card CMZ-RT-WP, PK-WL001, PC-WL/11C
@@ -177,6 +198,8 @@ TDK LAK-CD011WL
 SMC EZ Connect 11M Wireless CF Card SMC2642W
 .It
 SMC EliteConnect Wireless Adapter PC Card SMC2531W-B
+.It
+Z-Com XI-626 PCI Card
 .El
 .Pp
 The original PRISM-I chipset is supported by the
