@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.211 2005/05/07 16:59:11 martin Exp $
+$NetBSD: pcmciadevs,v 1.212 2005/07/06 07:05:25 dyoung Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -87,6 +87,7 @@ vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
 vendor ANYCOM			0x0264	Anycom
+vendor ALVARION			0x0268	Alvarion Ltd.
 vendor ARTEM			0x0268	ARtem
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
@@ -146,6 +147,9 @@ product AIRONET 350		0x000a Aironet 350 Wireless LAN Adapter
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
+
+/* Alvarion Ltd. */
+product ALVARION BREEZENET	0x0001 Alvarion Ltd. BreezeNET PC-DS.11b
 
 /* Anycom */
 product ANYCOM LSE041		0x0004 AnyCom BlueCard LSE041 R1B
