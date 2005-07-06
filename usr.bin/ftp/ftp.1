@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.110 2005/07/05 09:29:54 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.111 2005/07/06 11:18:05 wiz Exp $
 .\"
 .\" Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -613,8 +613,9 @@ transferring a
 .Xr tar 1
 archive of the subtree (in binary mode).
 .It Ic hash Op Ar size
-Toggle hash-sign (``#'') printing for each data block
-transferred.
+Toggle hash-sign
+.Pq Sq #
+printing for each data block transferred.
 The size of a data block defaults to 1024 bytes.
 This can be changed by specifying
 .Ar size
@@ -676,16 +677,33 @@ invoked with the next
 command), and remain defined until a
 .Ic close
 command is executed.
-The macro processor interprets `$' and `\e' as special characters.
-A `$' followed by a number (or numbers) is replaced by the
+The macro processor interprets
+.Sq $
+and
+.Sq \e
+as special characters.
+A
+.Sq $
+followed by a number (or numbers) is replaced by the
 corresponding argument on the macro invocation command line.
-A `$' followed by an `i' signals that macro processor that the
-executing macro is to be looped.
-On the first pass `$i' is
-replaced by the first argument on the macro invocation command line,
-on the second pass it is replaced by the second argument, and so on.
-A `\e' followed by any character is replaced by that character.
-Use the `\e' to prevent special treatment of the `$'.
+A
+.Sq $
+followed by an
+.Sq i
+signals the macro processor that the executing macro is to be
+looped.
+On the first pass
+.Dq $i
+is replaced by the first argument on the macro invocation command
+line, on the second pass it is replaced by the second argument,
+and so on.
+A
+.Sq \e
+followed by any character is replaced by that character.
+Use the
+.Sq \e
+to prevent special treatment of the
+.Sq $ .
 .It Ic mdelete Op Ar remote-files
 Delete the
 .Ar remote-files
@@ -828,9 +846,18 @@ and
 .Ic case
 settings).
 Variable templating is accomplished by including the
-sequences `$1', `$2', ..., `$9' in
+sequences
+.Dq $1 ,
+.Dq $2 ,
+\&...
+.Dq $9
+in
 .Ar inpattern .
-Use `\\' to prevent this special treatment of the `$' character.
+Use
+.Sq \e
+to prevent this special treatment of the
+.Sq $
+character.
 All other characters are treated literally, and are used to determine the
 .Ic nmap
 .Op Ar inpattern
@@ -842,13 +869,19 @@ $1.$2 and the remote file name "mydata.data", $1 would have the value
 The
 .Ar outpattern
 determines the resulting mapped filename.
-The sequences `$1', `$2', ...., `$9' are replaced by any value resulting
-from the
+The sequences
+.Dq $1 ,
+.Dq $2 ,
+\&...
+.Dq $9
+are replaced by any value resulting from the
 .Ar inpattern
 template.
-The sequence `$0' is replace by the original filename.
+The sequence
+.Dq $0
+is replaced by the original filename.
 Additionally, the sequence
-.Ql Op Ar seq1 , Ar seq2
+.Dq Op Ar seq1 , Ar seq2
 is replaced by
 .Op Ar seq1
 if
@@ -867,9 +900,18 @@ the output filename "myfile.data" for input filenames "myfile.data" and
 "myfile.myfile" for the input filename ".myfile".
 Spaces may be included in
 .Ar outpattern  ,
-as in the example: `nmap $1 sed "s/  *$//" \*[Gt] $1' .
-Use the `\e' character to prevent special treatment
-of the `$','[',']', and `,' characters.
+as in the example:
+.Dl nmap $1 sed "s/  *$//" \*[Gt] $1
+Use the
+.Sq \e
+character to prevent special treatment
+of the
+.Sq $ ,
+.Sq \&[ ,
+.Sq \&] ,
+and
+.Sq \&,
+characters.
 .It Ic ntrans Op Ar inchars Op Ar outchars
 Set or unset the filename character translation mechanism.
 If no arguments are specified, the filename character
@@ -1444,7 +1486,9 @@ A synonym for
 .El
 .Pp
 Command arguments which have embedded spaces may be quoted with
-quote `"' marks.
+quote
+.Sq \&"
+marks.
 .Pp
 Commands which toggle settings can take an explicit
 .Ic on
@@ -1873,9 +1917,10 @@ A particularly
 useful example of this mechanism is:
 .Dq Li dir \&"\&" \&|more .
 .It
-Failing the above checks, if ``globbing'' is enabled,
-local file names are expanded
-according to the rules used in the
+Failing the above checks, if
+.Dq globbing
+is enabled, local file names are expanded according to the rules
+used in the
 .Xr csh  1  ;
 c.f. the
 .Ic glob
