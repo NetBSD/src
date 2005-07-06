@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.213 2005/05/07 17:01:11 martin Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.214 2005/07/06 07:06:29 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.211 2005/05/07 16:59:11 martin Exp
+ *	NetBSD: pcmciadevs,v 1.212 2005/07/06 07:05:25 dyoung Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -94,6 +94,7 @@
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_ANYCOM	0x0264	/* Anycom */
+#define	PCMCIA_VENDOR_ALVARION	0x0268	/* Alvarion Ltd. */
 #define	PCMCIA_VENDOR_ARTEM	0x0268	/* ARtem */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
@@ -170,6 +171,10 @@
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
+
+/* Alvarion Ltd. */
+#define	PCMCIA_CIS_ALVARION_BREEZENET	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ALVARION_BREEZENET	0x0001
 
 /* Anycom */
 #define	PCMCIA_CIS_ANYCOM_LSE041	{ NULL, NULL, NULL, NULL }
