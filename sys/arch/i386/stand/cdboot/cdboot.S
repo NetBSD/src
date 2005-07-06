@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.2 2005/07/06 09:22:31 junyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.3 2005/07/06 18:12:31 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -55,6 +55,13 @@
 #define LOADER_ADDR	SECONDARY_LOAD_ADDRESS
 
 /*
+ * See src/sys/sys/bootblock.h for details.
+ */
+#define MBR_PART_COUNT	4
+#define MBR_PART_OFFSET	446
+#define MBR_PART_SIZE	16		/* sizeof(struct mbr_partition) */
+
+/*
  * Disk error codes
  */
 #define ERROR_TIMEOUT	0x80
@@ -100,11 +107,47 @@ ENTRY(start)
 real_start:
 	movb	%dl, boot_drive		/* Save boot drive number */
 
-	movw	$0x475, %si		/* Check presence of hard disks */
+	/*
+	 * We can skip boot wait when:
+	 *  - there's no hard disk present.
+	 *  - there's no active partition in the MBR of the 1st hard disk.
+	 */
+
+	/*
+	 * Check presence of hard disks.
+	 */
+	movw	$0x475, %si
 	movb	(%si), %al
 	testb	%al, %al
 	jz	boot_cdrom
 
+	/*
+	 * Find the active partition from the MBR.
+	 */
+	movw	$0x0201, %ax		/* %al = number of sectors to read */
+	movw	$BOOT_ADDR, %bx		/* %es:%bx = data buffer */
+	movw	$0x0001, %cx		/* %ch = low 8 bits of cylinder no */
+					/* %cl = high 2 bits of cyl no & */
+					/*       sector number */
+	movw	$0x0080, %dx		/* %dh = head number */
+					/* %dl = disk number */
+	int	$0x13			/* Read MBR into memory */
+	jc	boot_cdrom		/* CF set on error */
+
+	movb	$1, mbr_loaded
+	movb	$MBR_PART_COUNT, %cl
+	movw	$BOOT_ADDR+MBR_PART_OFFSET, %si
+1:
+	movb	(%si), %al
+	testb	$0x80, %al
+	jnz	found_active
+	addw	$MBR_PART_SIZE, %si
+	decb	%cl
+	testb	%cl, %cl
+	jnz	1b			/* If 0, no active partition found */
+	jmp	boot_cdrom
+
+found_active:
 	movw	$str_press_key, %si
 	call	message
 next_second:
@@ -133,6 +176,8 @@ not_avail:
 boot_hard_disk:
 	movw	$str_crlf, %si
 	call	message
+	cmpb	$1, mbr_loaded
+	jz	1f
 	movw	$0x0201, %ax		/* %al = number of sectors to read */
 	movw	$BOOT_ADDR, %bx		/* %es:%bx = data buffer */
 	movw	$0x0001, %cx		/* %ch = low 8 bits of cylinder no */
@@ -142,6 +187,7 @@ boot_hard_disk:
 					/* %dl = disk number */
 	int	$0x13			/* Read MBR into memory */
 	jc	panic			/* CF set on error */
+1:
 	movw	%cs, %ax		/* Restore initial state */
 	movw	%ax, %ds
 	movw	%ax, %es
@@ -266,6 +312,7 @@ edd_lba:	.quad	0
 
 wait_count:	.byte	6
 boot_drive:	.byte	0
+mbr_loaded:	.byte	0
 
 str_banner:	.ascii	"\r\nNetBSD/i386 cd9660 Primary Bootstrap"
 str_crlf:	.asciz	"\r\n"
