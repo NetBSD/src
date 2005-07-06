@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: spell.sh,v 1.1 2005/06/29 21:06:12 perry Exp $
+# $NetBSD: spell.sh,v 1.2 2005/07/06 08:01:13 wiz Exp $
 #
 # Taken from:
 # OpenBSD: spell.ksh,v 1.8 2004/02/02 22:36:50 fgsch Exp
@@ -40,7 +40,7 @@ DEROFF="deroff -w"
 HISTFILE=
 TMP=`mktemp /tmp/spell.XXXXXXXX` || exit 1
 VTMP=
-USAGE="usage: spell [-biltvx] [-d list] [-h spellhist] [-s stop] [+extra_list] [file ...]"
+USAGE="usage: spell [-biltvx] [-d list] [-h spellhist] [-m a | e | l | m | s]\n\t[-s stop] [+extra_list] [file ...]"
 
 trap "rm -f $TMP $VTMP; exit 0" 0 1 2 15
 
