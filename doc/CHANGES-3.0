@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.163 2005/07/05 22:43:48 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.164 2005/07/06 22:07:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10280,4 +10280,23 @@ usr.sbin/bind/named/named.conf.5		delete
 	Remove outdated BIND 8 version of named.conf(5). The build now picks up
 	the correct version from "src/dist/bind/bin/named".
 	[tron, ticket #516]
+
+usr.bin/su/su_pam.c				1.7-1.9
+
+	Use the getpw*_r methods.
+	[lukem, ticket #530]
+
+sys/dev/ata/ata_wdc.c				1.82
+sys/dev/pci/geodeide.c				1.10
+sys/dev/scsipi/atapi_wdc.c			1.95
+
+	Work arround DMA bug in AMD Geode IDE disk controllers.
+	[thorpej, ticket #553]
+
+xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dac.c 1.2
+
+	Disable blanking on FFB1 boards because turning off the DAC apparently
+	causes video memory corruption - seems to be a hardware bug since
+	newer boards are unaffected
+	[macallan, ticket #558]
 
