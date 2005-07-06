@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.36 2005/07/06 23:58:14 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.36 2005/07/06 23:58:14 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -320,6 +320,7 @@ an_attach(struct an_softc *sc)
 	sc->sc_attached = 1;
 	splx(s);
 
+	ieee80211_announce(ic);
 	return 0;
 }
 
