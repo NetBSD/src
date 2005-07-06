@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58 2005/04/03 20:09:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.59 2005/07/06 14:43:24 drochner Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -8,11 +8,12 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c calloc.c drand48.c erand48.c exit.c _Exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
-	hcreate.c heapsort.c jrand48.c \
-	l64a.c lldiv.c lcong48.c lrand48.c malloc.c merge.c mrand48.c \
+	hcreate.c heapsort.c insque.c jrand48.c \
+	l64a.c lldiv.c lcong48.c lrand48.c lsearch.c \
+	malloc.c merge.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
-	radixsort.c rand.c rand_r.c random.c seed48.c setenv.c srand48.c \
-	strsuftoll.c strtod.c \
+	radixsort.c rand.c rand_r.c random.c remque.c \
+	seed48.c setenv.c srand48.c strsuftoll.c strtod.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
 	__unsetenv13.c unsetenv.c \
@@ -26,7 +27,8 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
-	grantpt.3 hcreate.3 labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 \
+	grantpt.3 hcreate.3 insque.3 labs.3 ldiv.3 llabs.3 lldiv.3 lsearch.3 \
+	malloc.3 memory.3 \
 	posix_openpt.3 ptsname.3 qabs.3 \
 	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 \
 	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3 \
@@ -36,6 +38,8 @@ MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
+MLINKS+=insque.3 remque.3
+MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 rand_r.3

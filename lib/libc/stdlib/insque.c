@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: insque.c,v 1.8 1999/09/20 04:48:03 lukem Exp $");
+__RCSID("$NetBSD: insque.c,v 1.1 2005/07/06 14:43:24 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>

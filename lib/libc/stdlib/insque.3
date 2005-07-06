@@ -24,43 +24,28 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: insque.3,v 1.11 2003/04/16 13:34:59 wiz Exp $
+.\"	$NetBSD: insque.3,v 1.1 2005/07/06 14:43:24 drochner Exp $
 .\"
-.Dd August 12, 1993
+.Dd July 6, 2005
 .Dt INSQUE 3
 .Sh NAME
 .Nm insque ,
 .Nm remque
 .Nd insert/remove element from a queue
 .Sh LIBRARY
-.Lb libcompat
+.Lb libc
 .Sh SYNOPSIS
 .In search.h
-.Ft struct qelem {
-.br
-.Ft 	struct qelem *q_forw;
-.br
-.Ft 	struct qelem *q_back;
-.br
-.Ft 	char q_data[];
-.br
-.Ft };
-.br
-.br
 .Ft void
-.Fn insque "struct qelem *elem" "struct qelem *pred"
+.Fn insque "void *elem" "void *pred"
 .Ft void
-.Fn remque "struct qelem *elem"
+.Fn remque "void *elem"
 .Sh DESCRIPTION
-.Bf -symbolic
-These interfaces are available from the compatibility library, libcompat.
-.Ef
 .Pp
 .Fn insque
 and
 .Fn remque
 manipulate queues built from doubly linked lists.
-Each element in the queue must begin with a "struct qelem".
 .Sh DIAGNOSTICS
 These functions are not atomic unless that machine architecture allows it.
 .Sh HISTORY
