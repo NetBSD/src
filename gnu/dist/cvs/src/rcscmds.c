@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (C) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -262,6 +267,7 @@ RCS_merge(rcs, path, workfile, options, rev1, rev2)
        symbolic). */
     xrev1 = RCS_gettag (rcs, rev1, 0, NULL);
     xrev2 = RCS_gettag (rcs, rev2, 0, NULL);
+    assert (xrev1 && xrev2);
 
     /* Check out chosen revisions.  The error message when RCS_checkout
        fails is not very informative -- it is taken verbatim from RCS 5.7,

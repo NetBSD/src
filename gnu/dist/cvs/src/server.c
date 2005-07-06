@@ -356,13 +356,20 @@ create_adm_p (base_dir, dir)
 
     dir_where_cvsadm_lives = xmalloc (strlen (base_dir) + strlen (dir) + 100);
     if (dir_where_cvsadm_lives == NULL)
+    {
+	free (p);
 	return ENOMEM;
+    }
 
     /* Allocate some space for the temporary string in which we will
        construct filenames. */
     tmp = xmalloc (strlen (base_dir) + strlen (dir) + 100);
     if (tmp == NULL)
+    {
+	free (p);
+	free (dir_where_cvsadm_lives);
 	return ENOMEM;
+    }
 
 
     /* We make several passes through this loop.  On the first pass,
@@ -1835,6 +1842,7 @@ serve_entry (arg)
     cp = xmalloc (strlen (arg) + 2);
     if (cp == NULL)
     {
+	free (p);
 	pending_error = ENOMEM;
 	return;
     }
@@ -4124,6 +4132,7 @@ server_updated (finfo, vers, updated, mode, checksum, filebuf)
 	    free (scratched_file);
 	    scratched_file = NULL;
 	}
+	buf_send_counted (protocol);
 	return;
     }
 
@@ -5487,6 +5496,7 @@ check_repository_password (username, password, repository, host_user_ptr)
     {
 	if (!existence_error (errno))
 	    error (0, errno, "cannot open %s", filename);
+	free (filename);
 	return 0;
     }
 
@@ -6432,12 +6442,10 @@ cvs_output (str, len)
 	size_t to_write = len;
 	const char *p = str;
 
-	/* For symmetry with cvs_outerr we would call fflush (stderr)
-	   here.  I guess the assumption is that stderr will be
-	   unbuffered, so we don't need to.  That sounds like a sound
-	   assumption from the manpage I looked at, but if there was
-	   something fishy about it, my guess is that calling fflush
-	   would not produce a significant performance problem.  */
+	/* Local users that do 'cvs status 2>&1' on a local repository
+	   may see the informational messages out-of-order with the
+	   status messages unless we use the fflush (stderr) here. */
+	fflush (stderr);
 
 	while (to_write > 0)
 	{
@@ -6494,16 +6502,16 @@ this client does not support writing binary files to stdout");
 	size_t written;
 	size_t to_write = len;
 	const char *p = str;
-
-	/* For symmetry with cvs_outerr we would call fflush (stderr)
-	   here.  I guess the assumption is that stderr will be
-	   unbuffered, so we don't need to.  That sounds like a sound
-	   assumption from the manpage I looked at, but if there was
-	   something fishy about it, my guess is that calling fflush
-	   would not produce a significant performance problem.  */
 #ifdef USE_SETMODE_STDOUT
 	int oldmode;
+#endif
 
+	/* Local users that do 'cvs status 2>&1' on a local repository
+	   may see the informational messages out-of-order with the
+	   status messages unless we use the fflush (stderr) here. */
+	fflush (stderr);
+
+#ifdef USE_SETMODE_STDOUT
 	/* It is possible that this should be the same ifdef as
 	   USE_SETMODE_BINARY but at least for the moment we keep them
 	   separate.  Mostly this is just laziness and/or a question

@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2003 The Free Software Foundation.
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
  *
- * Portions Copyright (c) 2003 Derek Price
- *                         and Ximbiot <http://ximbiot.com>,
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
  *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS kit.
