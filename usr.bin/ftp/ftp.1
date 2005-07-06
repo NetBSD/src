@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.111 2005/07/06 11:18:05 wiz Exp $
+.\" 	$NetBSD: ftp.1,v 1.112 2005/07/06 11:21:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -664,9 +664,8 @@ A synonym for
 Define a macro.
 Subsequent lines are stored as the macro
 .Ar macro-name  ;
-a null line (consecutive newline characters
-in a file or
-carriage returns from the terminal) terminates macro input mode.
+a null line (consecutive newline characters in a file or carriage
+returns from the terminal) terminates macro input mode.
 There is a limit of 16 macros and 4096 total characters in all
 defined macros.
 Macro names can be a maximum of 8 characters.
@@ -677,6 +676,10 @@ invoked with the next
 command), and remain defined until a
 .Ic close
 command is executed.
+To invoke a macro, use the
+.Ic $
+command (see above).
+.Pp
 The macro processor interprets
 .Sq $
 and
