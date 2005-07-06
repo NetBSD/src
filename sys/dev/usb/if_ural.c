@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $ */
+/*	$NetBSD: if_ural.c,v 1.3 2005/07/06 23:44:17 dyoung Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.36 2005/06/20 18:54:59 damien Exp $  */
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.3 2005/07/06 23:44:17 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1241,8 +1241,10 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m0);
-		if (k == NULL)
+		if (k == NULL) {
+			m_freem(m0);
 			return ENOBUFS;
+		}
 
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);

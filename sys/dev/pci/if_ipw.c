@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.13 2005/07/06 23:44:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.13 2005/07/06 23:44:15 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -723,8 +723,10 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 
 	iswep = (wh->i_fc[1] & IEEE80211_FC1_WEP) ? 1 : 0;
 
-	if (iswep && (k = ieee80211_crypto_encap(ic, ni, m)) == NULL)
+	if (iswep && (k = ieee80211_crypto_encap(ic, ni, m)) == NULL) {
+		m_freem(m);
 		return EIO;
+	}
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
