@@ -1,4 +1,5 @@
-/*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
+/*	$OpenBSD: ts102reg.h,v 1.3 2003/06/18 17:50:23 miod Exp $	*/
+/*	$NetBSD: ts102reg.h,v 1.8 2005/07/06 11:40:27 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +65,15 @@
 #define	TS102_REG_UCTRL_INT	0x0020	/* Microcontroller Interrupt Register */
 #define	TS102_REG_UCTRL_DATA	0x0024	/* Microcontroller Data Register */
 #define	TS102_REG_UCTRL_STS	0x0028	/* Microcontroller Status Register */
+
+struct uctrl_regs {
+	volatile u_int8_t	intr;	/* Microcontroller Interrupt Reg */
+	volatile u_int8_t	filler0[3];
+	volatile u_int8_t	data;	/* Microcontroller Data Reg */
+	volatile u_int8_t	filler1[3];
+	volatile u_int8_t	stat;	/* Microcontroller Status Reg */
+	volatile u_int8_t	filler2[3];
+};
 
 /* TS102 Card Interrupt Register definitions.
  *
@@ -271,7 +281,7 @@ enum ts102_opcode {			/* Argument	Returned */
 #define TS102_DEVCTL_INT_BTNCLICK	0x10	/* internal button click? */
 #define TS102_DEVCTL_EXT_BTNCLICK	0x20	/* ext. button click?? */
     TS102_OP_CTL_SPEAKER_VOLUME=0x23,	/* mask		ack + 1 byte */
-    TS102_OP_CTL_TFT_BIRGHNESS=0x24,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_TFT_BRIGHTNESS=0x24,	/* mask		ack + 1 byte */
     TS102_OP_CTL_WATCHDOG=0x25,		/* mask		ack + 1 byte */
     TS102_OP_CTL_FCTRY_EEPROM=0x26,	/* mask		ack + 1 byte */
     TS102_OP_CTL_SECURITY_KEY=0x27,	/* no idea */
