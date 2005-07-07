@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.95.2.1 2005/07/07 13:03:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.1 2005/07/07 13:03:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,6 +699,10 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
 			m->m_len = cnt;
 
+#if defined(__HAVE_LAZY_MBUF)
+			m->m_flags |= M_EXT_LAZY;
+			m->m_ext.ext_flags |= M_EXT_LAZY;
+#else /* defined(__HAVE_LAZY_MBUF) */
 			/* map pages */
 			for (i = 0; i < npages; i++) {
 				pmap_kenter_pa(lva, VM_PAGE_TO_PHYS(pgpp[i]),
@@ -707,6 +711,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			}
 
 			pmap_update(pmap_kernel());
+#endif /* defined(__HAVE_LAZY_MBUF) */
 
 			mb->m_next = m;
 			mb = m;
