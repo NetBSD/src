@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.23.12.1 2005/07/07 11:53:25 yamt Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.1 2005/07/07 11:53:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3456,11 +3456,13 @@ tulip_rx_intr(
 #if defined(TULIP_COPY_RXDATA)
 		if (!accept || total_len >= MHLEN - 2) {
 #endif
+#if defined(LCLDMA)
 		    MCLGET(m0, M_DONTWAIT);
 		    if ((m0->m_flags & M_EXT) == 0) {
 			m_freem(m0);
 			m0 = NULL;
 		    }
+#endif /* defined(LCLDMA) */
 #if defined(TULIP_COPY_RXDATA)
 		}
 #endif
@@ -3528,11 +3530,9 @@ tulip_rx_intr(
 	 * mbuf cluster that we really can't use. Otherwise, we
 	 * recycle them efficiently.
 	 */
-	if (ms->m_flags & M_CLUSTER) {	/* not one of ours */
-		struct mbuf *ms2 = ms;
+	if ((ms->m_flags & M_EXT) == 0) {	/* not one of ours */
 		int ring_entry_number = ri->ri_nextout - ri->ri_first;
-		MEXTREMOVE(ms2);	/* uses "ms" internally! */
-		MEXTADD(ms2, sc->tulip_rx_kva[ring_entry_number], 
+		MEXTADD(ms, sc->tulip_rx_kva[ring_entry_number], 
 			TULIP_RX_BUFLEN, MT_DATA, donothing, 0);
 	}
 #ifdef TULIP_DEBUG
