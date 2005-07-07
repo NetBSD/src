@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.3 2005/07/07 12:02:18 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.4 2005/07/07 12:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,9 @@ struct mowner {
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
  */
-#define	mtod(m,t)	((t)((m)->m_data))
+#define	mtod(m,t)	\
+	((t)(__predict_true(((m)->m_flags & M_EXT_LAZY) == 0) \
+	? (m)->m_data : m_mapin(m)))
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
@@ -199,7 +201,8 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct _m_ext_storage {
 	struct simplelock ext_lock;
-	long	ext_refcnt;
+	int	ext_refcnt;
+	int	ext_flags;
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
 		(struct mbuf *, caddr_t, size_t, void *);
@@ -312,6 +315,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
 #define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
 #define	M_EXT_RW	0x08000000	/* ext storage is writable */
+#define	M_EXT_LAZY	0x10000000
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
@@ -555,6 +559,7 @@ do {									\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER|M_EXT_RW;		\
+		(m)->m_ext.ext_flags = 0;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = (pool_cache);			\
@@ -576,6 +581,7 @@ do {									\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_EXT_RW;				\
+		(m)->m_ext.ext_flags = 0;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -589,6 +595,7 @@ do {									\
 	MCLINITREFERENCE(m);						\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
+	(m)->m_ext.ext_flags = 0;					\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
@@ -849,6 +856,7 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);
+caddr_t	m_mapin(struct mbuf *);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
