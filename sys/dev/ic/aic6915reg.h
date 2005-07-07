@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915reg.h,v 1.2 2002/05/03 00:04:07 thorpej Exp $	*/
+/*	$NetBSD: aic6915reg.h,v 1.3 2005/07/07 19:02:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 struct sf_rbd32 {
 	uint32_t	rbd32_addr;		/* address, flags */
-} __attribute__((__packed__));
+};
 
 /*
  * Receive Buffer Descriptor (One-size, 64-bit addressing)
@@ -57,7 +57,7 @@ struct sf_rbd32 {
 struct sf_rbd64 {
 	uint32_t	rbd64_addr_lo;		/* address (LSD), flags */
 	uint32_t	rbd64_addr_hi;		/* address (MDS) */
-} __attribute__((__packed__));
+};
 
 #define	RBD_V		(1U << 0)	/* valid descriptor */
 #define	RBD_E		(1U << 1)	/* end of ring */
@@ -67,7 +67,7 @@ struct sf_rbd64 {
  */
 struct sf_rcd_short {
 	uint32_t	rcd_word0;	/* length, end index, status1 */
-} __attribute__((__packed__));
+};
 
 /*
  * Basic (Type 1) Completion Descriptor
@@ -75,7 +75,7 @@ struct sf_rcd_short {
 struct sf_rcd_basic {
 	uint32_t	rcd_word0;	/* length, end index, status1 */
 	uint32_t	rcd_word1;	/* VLAN ID, status2 */
-} __attribute__((__packed__));
+};
 
 /*
  * Checksum (Type 2) Completion Descriptor
@@ -83,7 +83,7 @@ struct sf_rcd_basic {
 struct sf_rcd_checksum {
 	uint32_t	rcd_word0;	/* length, end index, status1 */
 	uint32_t	rcd_word1;	/* partial TCP/UDP checksum, status2 */
-} __attribute__((__packed__));
+};
 
 /*
  * Full (Type 3) Completion Descriptor
@@ -93,7 +93,7 @@ struct sf_rcd_full {
 	uint32_t	rcd_word1;	/* start index, status3, status2 */
 	uint32_t	rcd_word2;	/* VLAN ID + priority, TCP/UDP csum */
 	uint32_t	rcd_timestamp;	/* timestamp */
-} __attribute__((__packed__));
+};
 
 #define	RCD_W0_ID		(1U << 30)
 
@@ -160,8 +160,8 @@ struct sf_txdesc0 {
 	struct {
 		uint32_t fr_addr;	/* address */
 		uint32_t fr_len;	/* length */
-	} __attribute__((__packed__)) td_frags[SF_NTXFRAGS];
-} __attribute__((__packed__));
+	} td_frags[SF_NTXFRAGS];
+};
 
 #define	TD_W1_NTXBUFS		(0xff << 0)
 
@@ -172,7 +172,7 @@ struct sf_txdesc1 {
 	/* skip field */
 	uint32_t	td_word0;	/* ID, flags */
 	uint32_t	td_addr;	/* buffer address */
-} __attribute__((__packed__));
+};
 
 #define	TD_W0_ID		(0xb << 28)
 #define	TD_W0_INTR		(1U << 27)
@@ -192,14 +192,14 @@ struct sf_txdesc2 {
 	uint32_t	td_reserved;
 	uint32_t	td_addr_lo;	/* buffer address (LSD) */
 	uint32_t	td_addr_hi;	/* buffer address (MSD) */
-} __attribute__((__packed__));
+};
 
 /*
  * Transmit Completion Descriptor.
  */
 struct sf_tcd {
 	uint32_t	tcd_word0;	/* index, priority, flags */
-} __attribute__((__packed__));
+};
 
 #define	TCD_DMA_ID		(0x4 << 29)
 #define	TCD_INDEX(x)		((x) & 0x7fff)
