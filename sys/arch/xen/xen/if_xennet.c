@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.27 2005/06/06 11:51:41 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.28 2005/07/07 12:01:25 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.27 2005/06/06 11:51:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.28 2005/07/07 12:01:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -658,6 +658,7 @@ xen_network_handler(void *arg)
 	struct mbuf *m;
 
 	network_tx_buf_gc(sc);
+	ifp->if_flags &= ~IFF_OACTIVE;
 	xennet_start(ifp);
 
 #if NRND > 0
@@ -996,12 +997,19 @@ xennet_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+	network_tx_buf_gc(sc);
+
 	idx = sc->sc_tx->req_prod;
 	while (/*CONSTCOND*/1) {
 
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		if (sc->sc_tx_entries >= NETIF_TX_RING_SIZE - 1) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
 		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
 		case M_EXT|M_EXT_CLUSTER:
@@ -1092,10 +1100,6 @@ xennet_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 	}
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	network_tx_buf_gc(sc);
 
 	x86_lfence();
 	if (sc->sc_tx->resp_prod != idx) {
