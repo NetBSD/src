@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2.16.1 2005/07/07 12:35:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,21 @@
  * %esi = len
  */
 
+#define	GETDATAPTR \
+	testl	$M_EXT_LAZY, M_FLAGS(%ebp)	; \
+	jz	99f				; \
+	pushl	%eax				; \
+	pushl	%ecx				; \
+	pushl	%edx				; \
+	pushl	%ebp				; \
+	call	_C_LABEL(m_mapin)		; \
+	addl	$4, %esp			; \
+	popl	%edx				; \
+	popl	%ecx				; \
+	popl	%eax				; \
+99:						  \
+	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
+
 #define	SWAP \
 	roll	$8, %eax	; \
 	xorb	$8, %cl
@@ -167,7 +182,7 @@ ENTRY(in6_cksum)
 	movl	28(%esp), %esi		/* %esi = len */
 	testl	%eax, %eax
 	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
-	movl	M_DATA(%ebp), %ebx
+	GETDATAPTR
 	addl	%esi, %eax		/* sum += len */
 	shll	$8, %eax		/* sum = htons(sum) */
 	xorl	%ecx,%ecx		
@@ -199,7 +214,7 @@ ENTRY(in4_cksum)
 	movl	28(%esp), %esi		/* %esi = len */
 	testl	%eax, %eax
 	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
-	movl	M_DATA(%ebp), %ebx
+	GETDATAPTR
 	addl	%esi, %eax		/* sum += len */
 	shll	$8, %eax		/* sum = htons(sum) */
 
@@ -211,7 +226,7 @@ ENTRY(in4_cksum)
 	testl	%ebp, %ebp
 	jz	.Lout_of_mbufs
 
-	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
+	GETDATAPTR
 	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
 	movl	M_NEXT(%ebp), %ebp
 
@@ -251,7 +266,7 @@ ENTRY(in_cksum)
 	testl	%ebp, %ebp
 	jz	.Lout_of_mbufs
 
-	movl	M_DATA(%ebp), %ebx
+	GETDATAPTR
 	movl	M_LEN(%ebp), %edx
 	movl	M_NEXT(%ebp), %ebp
 
