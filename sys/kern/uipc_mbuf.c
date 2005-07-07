@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.1 2005/07/07 11:53:25 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.2 2005/07/07 12:02:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.1 2005/07/07 11:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.2 2005/07/07 12:02:18 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -1364,4 +1364,60 @@ m_getptr(struct mbuf *m, int loc, int *off)
     	}
 
 	return (NULL);
+}
+
+/*
+ * m_ext_free: release a reference to the mbuf external storage.
+ *
+ * => free the mbuf m itsself as well.
+ * => called at splvm.
+ */
+
+void
+m_ext_free(struct mbuf *m)
+{
+	boolean_t embedded = MEXT_ISEMBEDDED(m);
+	boolean_t dofree = TRUE;
+
+	KASSERT((m->m_flags & M_EXT) != 0);
+	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
+	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
+	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
+	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
+
+	MEXT_LOCK(m);
+	if (MCLISREFERENCED(m)) {
+		_MCLDEREFERENCE(m);
+		MEXT_UNLOCK(m);
+		if (embedded) {
+			dofree = FALSE;
+		} else {
+			m->m_ext_ref = m;
+		}
+	} else {
+		MEXT_UNLOCK(m);
+		/*
+		 * dropping the last reference
+		 */
+		if (!embedded) {
+			m_ext_free(m->m_ext_ref);
+			m->m_ext_ref = m;
+		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
+			pool_cache_put_paddr(m->m_ext.ext_arg,
+			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
+		} else if (m->m_ext.ext_free) {
+			(*m->m_ext.ext_free)(dofree ? m : NULL,
+			    m->m_ext.ext_buf, m->m_ext.ext_size,
+			    m->m_ext.ext_arg);
+			/*
+			 * 'm' is already freed by the ext_free callback.
+			 */
+			dofree = FALSE;
+		} else {
+			free(m->m_ext.ext_buf, m->m_ext.ext_type);
+		}
+	}
+	if (dofree) {
+		pool_cache_put(&mbpool_cache, m);
+	}
 }
