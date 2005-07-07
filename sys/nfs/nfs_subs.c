@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.1 2005/07/07 11:53:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.1 2005/07/07 11:53:25 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1000,18 +1000,18 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			return (0);
 		}
 	}
-	if (m1->m_flags & M_EXT) {
-		if (havebuf) {
-			/* If the first mbuf with data has external data
-			 * and there is a previous empty mbuf use it
-			 * to move the data into.
+	if ((m1->m_flags & M_EXT) != 0) {
+		if (havebuf && M_TRAILINGSPACE(havebuf) >= siz &&
+		    nfsm_aligned(mtod(havebuf, char *) + havebuf->m_len)) {
+			/*
+			 * If the first mbuf with data has external data
+			 * and there is a previous mbuf with some trailing
+			 * space, use it to move the data into.
 			 */
 			m2 = m1;
 			*mdp = m1 = havebuf;
-			if (m1->m_flags & M_EXT) {
-				MEXTREMOVE(m1);
-			}
-		} else {
+			*cp2 = mtod(m1, char *) + m1->m_len;
+		} else if (havebuf) {
 			/*
 			 * If the first mbuf has a external data
 			 * and there is no previous empty mbuf
@@ -1019,47 +1019,76 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			 * data to the new mbuf. Also make the first
 			 * mbuf look empty.
 			 */
-			m2 = m_get(M_WAIT, MT_DATA);
-			m2->m_ext = m1->m_ext;
+			m2 = m1;
+			*mdp = m1 = m_get(M_WAIT, MT_DATA);
+			MCLAIM(m1, m2->m_owner);
+			if ((m2->m_flags & M_PKTHDR) != 0) {
+				/* XXX MOVE */
+				M_COPY_PKTHDR(m1, m2);
+				m_tag_delete_chain(m2, NULL);
+				m2->m_flags &= ~M_PKTHDR;
+			}
+			if (havebuf) {
+				havebuf->m_next = m1;
+			}
+			m1->m_next = m2;
+			MRESETDATA(m1);
+			m1->m_len = 0;
 			m2->m_data = src;
 			m2->m_len = left;
-			MCLADDREFERENCE(m1, m2);
-			MEXTREMOVE(m1);
-			m2->m_next = m1->m_next;
-			m1->m_next = m2;
+			*cp2 = mtod(m1, char *);
+		} else {
+			struct mbuf **nextp = &m1->m_next;
+
+			m1->m_len -= left;
+			do {
+				m2 = m_get(M_WAIT, MT_DATA);
+				MCLAIM(m2, m1->m_owner);
+				if (left >= MINCLSIZE) {
+					MCLGET(m2, M_WAIT);
+				}
+				m2->m_next = *nextp;
+				*nextp = m2;
+				nextp = &m2->m_next;
+				len = (m2->m_flags & M_EXT) != 0 ?
+				    MCLBYTES : MLEN;
+				if (len > left) {
+					len = left;
+				}
+				memcpy(mtod(m2, char *), src, len);
+				m2->m_len = len;
+				src += len;
+				left -= len;
+			} while (left > 0);
+			*mdp = m1 = m1->m_next;
+			m2 = m1->m_next;
+			*cp2 = mtod(m1, char *);
 		}
-		m1->m_len = 0;
-		if (m1->m_flags & M_PKTHDR)
-			dst = m1->m_pktdat;
-		else
-			dst = m1->m_dat;
-		m1->m_data = dst;
 	} else {
 		/*
 		 * If the first mbuf has no external data
 		 * move the data to the front of the mbuf.
 		 */
-		if (m1->m_flags & M_PKTHDR)
-			dst = m1->m_pktdat;
-		else
-			dst = m1->m_dat;
-		m1->m_data = dst;
-		if (dst != src)
+		MRESETDATA(m1);
+		dst = mtod(m1, char *);
+		if (dst != src) {
 			memmove(dst, src, left);
-		dst += left;
+		}
 		m1->m_len = left;
 		m2 = m1->m_next;
+		*cp2 = m1->m_data;
 	}
-	*cp2 = m1->m_data;
-	*dposp = mtod(m1, caddr_t) + siz;
+	*dposp = *cp2 + siz;
 	/*
 	 * Loop through mbufs pulling data up into first mbuf until
 	 * the first mbuf is full or there is no more data to
 	 * pullup.
 	 */
+	dst = mtod(m1, char *) + m1->m_len;
 	while ((len = M_TRAILINGSPACE(m1)) != 0 && m2) {
-		if ((len = min(len, m2->m_len)) != 0)
-			memcpy(dst, m2->m_data, len);
+		if ((len = min(len, m2->m_len)) != 0) {
+			memcpy(dst, mtod(m2, char *), len);
+		}
 		m1->m_len += len;
 		dst += len;
 		m2->m_data += len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.1 2005/07/07 11:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100 2005/06/06 06:06:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.1 2005/07/07 11:53:25 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -570,7 +570,6 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		if (m->m_flags & M_EXT) {
 			if (!deep) {
 				n->m_data = m->m_data + off;
-				n->m_ext = m->m_ext;
 				MCLADDREFERENCE(m, n);
 			} else {
 				/*
@@ -629,7 +628,6 @@ m_copypacket(struct mbuf *m, int how)
 	n->m_len = m->m_len;
 	if (m->m_flags & M_EXT) {
 		n->m_data = m->m_data;
-		n->m_ext = m->m_ext;
 		MCLADDREFERENCE(m, n);
 	} else {
 		memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
@@ -648,7 +646,6 @@ m_copypacket(struct mbuf *m, int how)
 		n->m_len = m->m_len;
 		if (m->m_flags & M_EXT) {
 			n->m_data = m->m_data;
-			n->m_ext = m->m_ext;
 			MCLADDREFERENCE(m, n);
 		} else {
 			memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
@@ -973,9 +970,8 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 	}
 extpacket:
 	if (m->m_flags & M_EXT) {
-		n->m_ext = m->m_ext;
-		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
+		MCLADDREFERENCE(m, n);
 	} else {
 		memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + len, remain);
 	}
