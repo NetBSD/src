@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.405 2005/07/04 17:42:39 drochner Exp $
+$NetBSD: usbdevs,v 1.406 2005/07/07 09:58:23 pooka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1445,6 +1445,7 @@ product PANASONIC KXLRW32AN	0x0d09	CD-R Drive KXL-RW32AN
 product PANASONIC KXLCB20AN	0x0d0a	CD-R Drive KXL-CB20AN
 product PANASONIC KXLCB35AN	0x0d0e	DVD-ROM & CD-R/RW
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
+product PANASONIC TYTP50P6S	0x3900	TY-TP50P6-S 50in Touch Panel
 
 /* Pen Driver */
 product PEN USBDISKPRO		0x0120	USB Disk Pro
