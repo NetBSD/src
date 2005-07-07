@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.43 2004/10/29 21:27:27 dsl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.44 2005/07/07 22:31:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.43 2004/10/29 21:27:27 dsl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.44 2005/07/07 22:31:45 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,9 @@ main(int argc, char *argv[])
 	(void)signal(SIGCONT, sig_header);
 
 	for (hdrcnt = 1;;) {
-		if (do_header || ((hdrcnt -= lines) <= 0)) {
+		if (do_header ||
+		    ((hdrcnt -= lines) <= 0) ||
+		    ISSET(todo, SHOW_STATS_X)) {
 			do_header = 0;
 			header();
 			if ((hdrcnt -= lines) <= 0)
