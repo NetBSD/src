@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.67 2005/07/03 13:09:17 isaki Exp $
+#	$NetBSD: INSTALL,v 1.68 2005/07/07 17:05:58 tron Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.67 $"
+#ident 		"INSTALL-$Revision: 1.68 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -187,6 +187,7 @@ options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets

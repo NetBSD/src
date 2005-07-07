@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.109 2005/06/25 12:05:19 rpaulo Exp $
+# 	$NetBSD: GENERIC32,v 1.110 2005/07/07 17:05:58 tron Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	64
 
@@ -175,6 +175,7 @@ options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 options 	MROUTING	# packet forwarding of multicast packets

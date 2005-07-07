@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.23 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: FOURMEG,v 1.24 2005/07/07 17:05:58 tron Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.23 $"
+#ident 		"FOURMEG-$Revision: 1.24 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -79,6 +79,7 @@ options 	INET		# IP prototol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking

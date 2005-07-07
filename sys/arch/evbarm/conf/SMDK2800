@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.23 2005/02/27 02:18:34 bsh Exp $
+#	$NetBSD: SMDK2800,v 1.24 2005/07/07 17:05:47 tron Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -65,6 +65,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

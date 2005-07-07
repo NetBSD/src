@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.13 2005/06/09 14:43:30 tsutsui Exp $
+#	$NetBSD: EXPLORA451,v 1.14 2005/07/07 17:05:47 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -107,6 +107,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
