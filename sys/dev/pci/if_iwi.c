@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.10 2005/06/25 04:02:45 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.11 2005/07/07 00:43:01 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.10 2005/06/25 04:02:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.11 2005/07/07 00:43:01 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -559,7 +559,7 @@ iwi_release(struct iwi_softc *sc)
 static int
 iwi_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
-	if (k >= ic->ic_nw_keys && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+	if (k >= &ic->ic_nw_keys[0] && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
 		return k - ic->ic_nw_keys;
 
 	return IEEE80211_KEYIX_NONE;
