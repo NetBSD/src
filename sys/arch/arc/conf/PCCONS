@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.43 2005/05/31 22:23:52 tron Exp $
+#	$NetBSD: PCCONS,v 1.44 2005/07/07 17:05:46 tron Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -102,6 +102,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.36 2005/01/31 16:54:32 hannken Exp $
+#	$NetBSD: NC_WSCONS,v 1.37 2005/07/07 17:05:46 tron Exp $
 #
 #	NC - with wscons
 #
@@ -61,6 +61,7 @@ file-system	PROCFS		# /proc
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.66 2005/06/28 09:08:04 wiz Exp $
+#	$NetBSD: SWINGER,v 1.67 2005/07/07 17:05:47 tron Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.66 $"
+#ident 		"SWINGER-$Revision: 1.67 $"
 
 maxusers	64		# estimated number of users
 
@@ -126,6 +126,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

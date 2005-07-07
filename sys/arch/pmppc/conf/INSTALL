@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.16 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: INSTALL,v 1.17 2005/07/07 17:05:58 tron Exp $
 #
 #	INSTALL
 #
@@ -98,6 +98,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.58 2005/06/09 14:43:30 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.59 2005/07/07 17:05:46 tron Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.58 $"
+#ident		"GENERIC-$Revision: 1.59 $"
 
 maxusers	32		# estimated number of users
 
@@ -115,6 +115,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

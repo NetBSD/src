@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.25 2005/02/25 13:46:50 simonb Exp $
+# $NetBSD: SLAB,v 1.26 2005/07/07 17:05:58 tron Exp $
 #
 # deberg's development machine
 #
@@ -97,6 +97,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

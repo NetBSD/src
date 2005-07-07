@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.2 2005/04/03 19:29:18 bouyer Exp $
+# $NetBSD: XENU,v 1.3 2005/07/07 17:05:47 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -121,6 +121,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

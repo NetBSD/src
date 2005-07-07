@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.17 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: SMALLRAM,v 1.18 2005/07/07 17:05:57 tron Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.17 $"
+#ident 		"SMALLRAM-$Revision: 1.18 $"
 
 maxusers	8
 
@@ -120,6 +120,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast

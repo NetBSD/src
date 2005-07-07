@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.38 2005/06/03 15:56:49 rearnsha Exp $
+#	$NetBSD: INTEGRATOR,v 1.39 2005/07/07 17:05:47 tron Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -63,6 +63,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

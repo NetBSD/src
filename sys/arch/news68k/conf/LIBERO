@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.30 2005/06/09 14:43:30 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.31 2005/07/07 17:05:57 tron Exp $
 
 #	NEWS1750 config file;
 #
@@ -78,6 +78,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks

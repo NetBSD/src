@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.15 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: VME,v 1.16 2005/07/07 17:05:58 tron Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.15 $"
+#ident 		"VME-$Revision: 1.16 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -82,6 +82,7 @@ options 	INET		# IP prototol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking

@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.29 2005/02/18 21:05:53 dsl Exp $
+# 	$NetBSD: NEWS1200,v 1.30 2005/07/07 17:05:57 tron Exp $
 
 #	news1200 config file
 #
@@ -80,6 +80,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2005/06/25 12:05:18 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.50 2005/07/07 17:05:58 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 maxusers	8			# estimated number of users
 
@@ -80,6 +80,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.35 2005/05/31 22:23:52 tron Exp $
+# $NetBSD: BASIL,v 1.36 2005/07/07 17:05:46 tron Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.35 $"
+#ident 		"BASIL-$Revision: 1.36 $"
 
 maxusers 64
 
@@ -62,6 +62,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
