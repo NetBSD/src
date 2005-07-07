@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.24 2005/02/21 00:29:08 thorpej Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.25 2005/07/07 17:27:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.24 2005/02/21 00:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.25 2005/07/07 17:27:37 drochner Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -108,8 +108,6 @@ Static void umass_scsipi_sense_cb(struct umass_softc *sc, void *priv,
 
 Static struct umass_scsipi_softc *umass_scsipi_setup(struct umass_softc *sc);
 
-Static int scsipiprint(void *aux, const char *pnp);
-
 #if NATAPIBUS > 0
 Static void umass_atapi_probe_device(struct atapibus_softc *, int);
 
@@ -140,7 +138,8 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
-	    config_found(&sc->sc_dev, &scbus->sc_channel, scsipiprint);
+	    config_found_ia(&sc->sc_dev, "scsi", &scbus->sc_channel,
+		scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
@@ -167,7 +166,8 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
-	    config_found(&sc->sc_dev, &scbus->sc_channel, scsipiprint);
+	    config_found_ia(&sc->sc_dev, "atapi", &scbus->sc_channel,
+		atapiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
@@ -205,30 +205,6 @@ umass_scsipi_setup(struct umass_softc *sc)
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 
 	return (scbus);
-}
-
-Static int
-scsipiprint(void *aux, const char *pnp)
-{
-	struct scsipi_channel *chan = aux;
-
-	if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_SCSI) {
-#if NSCSIBUS > 0
-		return (scsiprint(aux, pnp));
-#else
-		if (pnp)
-			aprint_normal("scsibus at %s", pnp);
-		return (UNCONF);
-#endif
-	} else {
-#if NATAPIBUS > 0
-		return (atapiprint(aux, pnp));
-#else
-		if (pnp)
-			aprint_normal("atapibus at %s", pnp);
-		return (UNCONF);
-#endif
-	}
 }
 
 Static void
