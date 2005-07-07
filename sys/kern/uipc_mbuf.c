@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.2 2005/07/07 12:02:18 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.3 2005/07/07 12:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.2 2005/07/07 12:02:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.3 2005/07/07 12:07:38 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -1406,7 +1406,7 @@ m_ext_free(struct mbuf *m)
 			pool_cache_put_paddr(m->m_ext.ext_arg,
 			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 		} else if (m->m_ext.ext_free) {
-			(*m->m_ext.ext_free)(dofree ? m : NULL,
+			(*m->m_ext.ext_free)(m,
 			    m->m_ext.ext_buf, m->m_ext.ext_size,
 			    m->m_ext.ext_arg);
 			/*
@@ -1420,4 +1420,32 @@ m_ext_free(struct mbuf *m)
 	if (dofree) {
 		pool_cache_put(&mbpool_cache, m);
 	}
+}
+
+caddr_t
+m_mapin(struct mbuf *m)
+{
+	KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES|M_EXT_LAZY)) == 0);
+
+	MEXT_LOCK(m);
+	if (m->m_ext.ext_flags & M_EXT_LAZY) {
+		vaddr_t buf = (vaddr_t)m->m_ext.ext_buf;
+		vsize_t size = (vsize_t)m->m_ext.ext_size;
+		vaddr_t va, sva, eva;
+		int i;
+
+		sva = trunc_page(buf);
+		eva = round_page(buf + size);
+
+		for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
+			    VM_PROT_READ);
+		}
+		pmap_update(pmap_kernel());
+		m->m_ext.ext_flags &= ~M_EXT_LAZY;
+	}
+	MEXT_UNLOCK(m);
+
+	m->m_flags &= ~M_EXT_LAZY;
+	return m->m_data;
 }
