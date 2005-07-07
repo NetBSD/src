@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.25 2005/07/06 20:16:23 snj Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.26 2005/07/07 14:20:55 snj Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -288,4 +288,12 @@ gnu/usr.bin/cvs/rcs2log/Makefile		patch
 
 	Update CVS to version 1.11.20.
 	[tron, ticket #2927]
+
+src/gnu/usr.bin/cvs/libcvs/Makefile		patch
+src/gnu/usr.bin/cvs/libdiff/Makefile		patch
+
+	Don't install "libcvs" and "libdiff". This fixes build problems caused
+	by the pullup of ticket #2927.
+	[tron, ticket #2933]
+
 
