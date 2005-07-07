@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.h,v 1.1.1.1 2004/12/31 11:30:46 martti Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.

@@ -1,5 +1,0 @@
-# $NetBSD: md.prep,v 1.9 2005/05/22 03:45:30 lukem Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/boot_com0				base-sysutil-bin
-./usr/mdec/installboot				base-sysutil-bin
-./usr/mdec/mkbootimage				base-sysutil-bin

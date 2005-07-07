@@ -1,6 +1,0 @@
-# $NetBSD: charset.pivot.CNS.src,v 1.1 2005/03/27 22:30:06 tnozaki Exp $
-
-CNS11643-1		UCS			1
-CNS11643-2		UCS			1
-UCS			CNS11643-1		1
-UCS			CNS11643-2		1
