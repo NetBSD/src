@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2005/06/25 12:05:17 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.159 2005/07/07 17:05:57 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	16		# estimated number of users
 
@@ -136,6 +136,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

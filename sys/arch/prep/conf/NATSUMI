@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.35 2005/04/15 17:27:21 itohy Exp $
+#	$NetBSD: NATSUMI,v 1.36 2005/07/07 17:05:58 tron Exp $
 #
 #	for development
 #
@@ -87,6 +87,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

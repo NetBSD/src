@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.2 2005/07/04 14:10:23 pooka Exp $
+#	$NetBSD: VIPER,v 1.3 2005/07/07 17:05:47 tron Exp $
 #
 #	Arcom Viper
 #
@@ -55,6 +55,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS

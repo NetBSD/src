@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.206 2005/06/09 14:43:29 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.207 2005/07/07 17:05:46 tron Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.206 $"
+ident		"ALPHA-$Revision: 1.207 $"
 
 maxusers 32
 
@@ -87,6 +87,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite

@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.61 2005/06/21 08:19:26 sekiya Exp $
+#	$NetBSD: IOPENER,v 1.62 2005/07/07 17:05:47 tron Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.61 $"
+#ident 		"IOPENER-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -114,6 +114,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
