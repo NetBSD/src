@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2005/07/06 19:52:25 snj Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2005/07/07 14:18:03 snj Exp $
 
-MKPRIVATELIB=	yes
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -10,5 +12,8 @@ DIST=	${IDIST}/${LIB}
 .PATH:	${DIST}
 
 SRCS !=	echo ${DIST}/*.c | sed -e s,${DIST}/,,g
+
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
