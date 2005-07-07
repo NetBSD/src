@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.129 2005/07/07 02:05:03 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.130 2005/07/07 14:26:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.129 2005/07/07 02:05:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.130 2005/07/07 14:26:37 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -962,6 +962,14 @@ nfs_doio_read(bp, uiop)
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
 		nfsstats.readlink_bios++;
+		if (p == NULL) {
+			/*
+			 * p can be null because we can be called from namei()
+			 * to resolve symlinks
+			 */
+			KASSERT(uiop->uio_segflg == UIO_SYSSPACE);
+			p = curproc;
+		}
 		error = nfs_readlinkrpc(vp, uiop, p->p_ucred);
 		break;
 	case VDIR:
