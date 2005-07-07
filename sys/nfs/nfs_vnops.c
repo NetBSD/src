@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.222 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.223 2005/07/07 02:05:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222 2005/05/29 20:58:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.223 2005/07/07 02:05:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -3269,25 +3269,18 @@ nfs_strategy(v)
 {
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct proc *p;
 	int error = 0;
 
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("nfs physio/async");
-	if (bp->b_flags & B_ASYNC)
-		p = NULL;
-	else
-		p = curproc;	/* XXX */
 
 	/*
 	 * If the op is asynchronous and an i/o daemon is waiting
 	 * queue the request, wake it up and wait for completion
 	 * otherwise just do it ourselves.
 	 */
-
-	if ((bp->b_flags & B_ASYNC) == 0 ||
-	    nfs_asyncio(bp))
-		error = nfs_doio(bp, p);
+	if ((bp->b_flags & B_ASYNC) == 0 || nfs_asyncio(bp))
+		error = nfs_doio(bp);
 	return (error);
 }
 

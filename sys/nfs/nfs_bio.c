@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.128 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.129 2005/07/07 02:05:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.129 2005/07/07 02:05:03 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -85,7 +85,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
-	struct proc *p;
+	struct proc *p = uio->uio_procp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
 	caddr_t baddr, ep, edp;
@@ -102,7 +102,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		return (0);
 	if (vp->v_type != VDIR && uio->uio_offset < 0)
 		return (EINVAL);
-	p = uio->uio_procp;
 #ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
@@ -221,7 +220,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 			bp->b_flags |= B_READ;
-			error = nfs_doio(bp, p);
+			error = nfs_doio(bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -266,7 +265,7 @@ diragain:
 		if ((bp->b_flags & B_DONE) == 0) {
 		    bp->b_flags |= B_READ;
 		    bp->b_dcookie = ndp->dc_blkcookie;
-		    error = nfs_doio(bp, p);
+		    error = nfs_doio(bp);
 		    if (error) {
 			/*
 			 * Yuck! The directory has been modified on the
@@ -504,8 +503,6 @@ nfs_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
-		panic("nfs_write proc");
 #endif
 	if (vp->v_type != VREG)
 		return (EIO);
@@ -923,6 +920,7 @@ nfs_doio_read(bp, uiop)
 	struct vnode *vp = bp->b_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	struct proc *p = uiop->uio_procp;
 	int error = 0;
 
 	uiop->uio_rw = UIO_READ;
@@ -947,7 +945,7 @@ nfs_doio_read(bp, uiop)
 			len = uiop->uio_resid;
 			memset((char *)bp->b_data + diff, 0, len);
 		}
-		if (uiop->uio_procp && (vp->v_flag & VTEXT) &&
+		if (p && (vp->v_flag & VTEXT) &&
 		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
 		      NQNFS_CKINVALID(vp, np, ND_READ) &&
 		      np->n_lrev != np->n_brev) ||
@@ -955,16 +953,16 @@ nfs_doio_read(bp, uiop)
 		      timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)))) {
 			uprintf("Process killed due to "
 				"text file modification\n");
-			psignal(uiop->uio_procp, SIGKILL);
+			psignal(p, SIGKILL);
 #if 0 /* XXX NJWLWP */
-			uiop->uio_procp->p_holdcnt++;
+			p->p_holdcnt++;
 #endif
 		}
 		break;
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
+		error = nfs_readlinkrpc(vp, uiop, p->p_ucred);
 		break;
 	case VDIR:
 		nfsstats.readdir_bios++;
@@ -1250,9 +1248,8 @@ nfs_doio_phys(bp, uiop)
  * synchronously or from an nfsiod.
  */
 int
-nfs_doio(bp, p)
+nfs_doio(bp)
 	struct buf *bp;
-	struct proc *p;
 {
 	int error;
 	struct uio uio;
