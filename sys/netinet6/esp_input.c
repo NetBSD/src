@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.37 2005/04/29 10:39:09 yamt Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.38 2005/07/07 16:00:56 tron Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.37 2005/04/29 10:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.38 2005/07/07 16:00:56 tron Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
