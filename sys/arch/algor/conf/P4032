@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.31 2005/05/31 22:23:52 tron Exp $
+#	$NetBSD: P4032,v 1.32 2005/07/07 17:05:46 tron Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.31 $"
+#ident 		"P4032-$Revision: 1.32 $"
 
 maxusers 32
 
@@ -53,6 +53,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.

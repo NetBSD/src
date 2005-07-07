@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.49 2005/06/03 23:28:40 chris Exp $
+#	$NetBSD: INSTALL,v 1.50 2005/07/07 17:05:47 tron Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -63,6 +63,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

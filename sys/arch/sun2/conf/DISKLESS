@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.20 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: DISKLESS,v 1.21 2005/07/07 17:05:58 tron Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.20 $"
+#ident 		"DISKLESS-$Revision: 1.21 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -78,6 +78,7 @@ options 	INET		# IP prototol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking

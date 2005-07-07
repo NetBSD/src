@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.22 2005/02/25 13:46:50 simonb Exp $
+# 	$NetBSD: RC3230,v 1.23 2005/07/07 17:05:57 tron Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -73,6 +73,7 @@ options 	INET		# Internet protocols
 options 	INET6		# Internet protocols
 options 	IPSEC		# Internet protocols
 options 	IPSEC_ESP	# Internet protocols
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
