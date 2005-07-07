@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.18 2005/04/23 14:05:28 manu Exp $	*/
+/*	$NetBSD: key.h,v 1.19 2005/07/07 19:34:51 tron Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -34,6 +34,10 @@
 #define _NETKEY_KEY_H_
 
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_ipsec.h"
+#endif
 
 #include <sys/queue.h>
 
