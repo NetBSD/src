@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.1 2005/07/07 11:50:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -197,15 +197,15 @@ struct	pkthdr {
 #endif
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
-struct _m_ext {
+struct _m_ext_storage {
+	struct simplelock ext_lock;
+	long	ext_refcnt;
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
 		(struct mbuf *, caddr_t, size_t, void *);
 	void	*ext_arg;		/* argument for ext_free */
 	size_t	ext_size;		/* size of buffer, for ext_free */
 	struct malloc_type *ext_type;	/* malloc type */
-	struct mbuf *ext_nextref;
-	struct mbuf *ext_prevref;
 	union {
 		paddr_t extun_paddr;	/* physical address (M_EXT_CLUSTER) */
 					/* pages (M_EXT_PAGES) */
@@ -225,6 +225,11 @@ struct _m_ext {
 	int ext_oline;
 	int ext_nline;
 #endif
+};
+
+struct _m_ext {
+	struct mbuf *ext_ref;
+	struct _m_ext_storage ext_storage;
 };
 
 #define	M_PADDR_INVALID		POOL_PADDR_INVALID
@@ -256,7 +261,9 @@ struct _m_ext {
 #define	m_nextpkt	m_hdr.mh_nextpkt
 #define	m_paddr		m_hdr.mh_paddr
 #define	m_pkthdr	M_dat.MH.MH_pkthdr
-#define	m_ext		M_dat.MH.MH_dat.MH_ext
+#define	m_ext_storage	M_dat.MH.MH_dat.MH_ext.ext_storage
+#define	m_ext_ref	M_dat.MH.MH_dat.MH_ext.ext_ref
+#define	m_ext		m_ext_ref->m_ext_storage
 #define	m_pktdat	M_dat.MH.MH_dat.MH_databuf
 #define	m_dat		M_dat.M_databuf
 
@@ -425,6 +432,7 @@ MBUFLOCK(								\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
 		_MOWNERINIT((m), (type));				\
+		(m)->m_ext_ref = (m);					\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -440,6 +448,7 @@ MBUFLOCK(								\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
 		_MOWNERINIT((m), (type));				\
+		(m)->m_ext_ref = (m);					\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -477,35 +486,42 @@ do {									\
 #endif
 
 #define	MCLBUFREF(p)
-#define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
+#define	MCLISREFERENCED(m)	((m)->m_ext.ext_refcnt != 1)
 #define	_MCLDEREFERENCE(m)						\
 do {									\
-	(m)->m_ext.ext_nextref->m_ext.ext_prevref =			\
-		(m)->m_ext.ext_prevref;					\
-	(m)->m_ext.ext_prevref->m_ext.ext_nextref =			\
-		(m)->m_ext.ext_nextref;					\
+	KASSERT((m)->m_ext.ext_refcnt > 1);				\
+	(m)->m_ext.ext_refcnt--;					\
 } while (/* CONSTCOND */ 0)
 
 #define	_MCLADDREFERENCE(o, n)						\
 do {									\
+	KASSERT(((o)->m_flags & M_EXT) != 0);				\
+	KASSERT(((n)->m_flags & M_EXT) == 0);				\
+	KASSERT((o)->m_ext.ext_refcnt >= 1);				\
 	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
-	(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;		\
-	(n)->m_ext.ext_prevref = (o);					\
-	(o)->m_ext.ext_nextref = (n);					\
-	(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);		\
+	(o)->m_ext.ext_refcnt++;					\
+	(n)->m_ext_ref = (o)->m_ext_ref;				\
 	_MOWNERREF((n), (n)->m_flags);					\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
 
 #define	MCLINITREFERENCE(m)						\
 do {									\
-	(m)->m_ext.ext_prevref = (m);					\
-	(m)->m_ext.ext_nextref = (m);					\
+	KDASSERT(((m)->m_flags & M_EXT) == 0);				\
+	(m)->m_ext_ref = (m);						\
+	(m)->m_ext.ext_refcnt = 1;					\
+	simple_lock_init(&(m)->m_ext.ext_lock);				\
 	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
 	MCLREFDEBUGN((m), NULL, 0);					\
 } while (/* CONSTCOND */ 0)
 
-#define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
+#define	MCLADDREFERENCE(o, n)						\
+	MBUFLOCK(							\
+		MEXT_LOCK(o);						\
+		_MCLADDREFERENCE((o), (n));				\
+		MEXT_UNLOCK(o);						\
+	)
+
 
 /*
  * Macros for mbuf external storage.
@@ -519,17 +535,23 @@ do {									\
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
+
+#define	MEXT_LOCK(m)	simple_lock(&(m)->m_ext.ext_lock)
+#define	MEXT_UNLOCK(m)	simple_unlock(&(m)->m_ext.ext_lock)
+#define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
+
 #define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
 	MBUFLOCK(							\
-		(m)->m_ext.ext_buf =					\
+		(m)->m_ext_storage.ext_buf =				\
 		    pool_cache_get_paddr((pool_cache),			\
 		        (how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,	\
-			&(m)->m_ext.ext_paddr);				\
-		if ((m)->m_ext.ext_buf != NULL)				\
+			&(m)->m_ext_storage.ext_paddr);			\
+		if ((m)->m_ext_storage.ext_buf != NULL)			\
 			_MOWNERREF((m), M_EXT|M_CLUSTER);		\
 	);								\
-	if ((m)->m_ext.ext_buf != NULL) {				\
+	if ((m)->m_ext_storage.ext_buf != NULL) {			\
+		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER|M_EXT_RW;		\
@@ -537,7 +559,6 @@ do {									\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = (pool_cache);			\
 		/* ext_paddr initialized above */			\
-		MCLINITREFERENCE(m);					\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -548,9 +569,10 @@ do {									\
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
-	(m)->m_ext.ext_buf =						\
+	(m)->m_ext_storage.ext_buf =					\
 	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
-	if ((m)->m_ext.ext_buf != NULL) {				\
+	if ((m)->m_ext_storage.ext_buf != NULL) {			\
+		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_EXT_RW;				\
@@ -558,20 +580,19 @@ do {									\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
-		MCLINITREFERENCE(m);					\
 		MOWNERREF((m), M_EXT);					\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define	MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
+	MCLINITREFERENCE(m);						\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
 	(m)->m_ext.ext_type = (type);					\
-	MCLINITREFERENCE(m);						\
 	MOWNERREF((m), M_EXT);						\
 } while (/* CONSTCOND */ 0)
 
@@ -908,21 +929,56 @@ m_length(struct mbuf *m)
 static __inline void
 m_ext_free(struct mbuf *m, boolean_t dofree)
 {
+	boolean_t embedded = MEXT_ISEMBEDDED(m);
 
+	KASSERT((m->m_flags & M_EXT) != 0);
+	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
+	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
+	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
+	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
+
+	MEXT_LOCK(m);
 	if (MCLISREFERENCED(m)) {
+		/*
+		 * XXX implementation limit:
+		 * don't allow MEXTREMOVE on EMBEDDED mbuf
+		 * because we can't MEXTADD the mbuf later.
+		 */
+		KASSERT(!(!dofree && MEXT_ISEMBEDDED(m)));
+
 		_MCLDEREFERENCE(m);
-	} else if (m->m_flags & M_CLUSTER) {
-		pool_cache_put_paddr(m->m_ext.ext_arg,
-		    m->m_ext.ext_buf, m->m_ext.ext_paddr);
-	} else if (m->m_ext.ext_free) {
-		(*m->m_ext.ext_free)(dofree ? m : NULL, m->m_ext.ext_buf,
-		    m->m_ext.ext_size, m->m_ext.ext_arg);
-		dofree = FALSE;
+		MEXT_UNLOCK(m);
+		if (embedded) {
+			dofree = FALSE;
+		} else {
+			m->m_ext_ref = m;
+		}
 	} else {
-		free(m->m_ext.ext_buf, m->m_ext.ext_type);
+		MEXT_UNLOCK(m);
+		/*
+		 * dropping the last reference
+		 */
+		if (!embedded) {
+			m_ext_free(m->m_ext_ref, TRUE);
+			m->m_ext_ref = m;
+		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
+			pool_cache_put_paddr(m->m_ext.ext_arg,
+			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
+		} else if (m->m_ext.ext_free) {
+			(*m->m_ext.ext_free)(dofree ? m : NULL,
+			    m->m_ext.ext_buf, m->m_ext.ext_size,
+			    m->m_ext.ext_arg);
+			/*
+			 * 'm' is already freed by the ext_free callback.
+			 */
+			dofree = FALSE;
+		} else {
+			free(m->m_ext.ext_buf, m->m_ext.ext_type);
+		}
 	}
-	if (dofree)
+	if (dofree) {
 		pool_cache_put(&mbpool_cache, m);
+	}
 }
 
 

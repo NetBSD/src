@@ -1,4 +1,0 @@
-# Host: DEC VAX running NetBSD
-NATDEPFILES= infptrace.o inftarg.o fork-child.o kcore-nbsd.o nbsd-thread.o vaxnbsd-nat.o
-XM_FILE= xm-nbsd.h
-NAT_FILE= nm-nbsd.h
