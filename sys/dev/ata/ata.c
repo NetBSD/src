@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $      */
+/*      $NetBSD: ata.c,v 1.71 2005/07/07 17:51:31 drochner Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.71 2005/07/07 17:51:31 drochner Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -161,7 +161,8 @@ ata_channel_attach(struct ata_channel *chp)
 	chp->ch_queue->queue_flags = 0;
 	chp->ch_queue->active_xfer = NULL;
 
-	chp->atabus = config_found(&chp->ch_atac->atac_dev, chp, atabusprint);
+	chp->atabus = config_found_ia(&chp->ch_atac->atac_dev, "ata", chp,
+		atabusprint);
 }
 
 static void
@@ -235,8 +236,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
-		    &adev, ataprint);
+		chp->ata_drives[i] = config_found_ia(&atabus_sc->sc_dev,
+		    "ata_hl", &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
 		else {
