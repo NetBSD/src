@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.2 2005/07/07 11:51:25 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.3 2005/07/07 12:02:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -848,10 +848,10 @@ void	m_copydata(struct mbuf *, int, int, void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
+void	m_ext_free(struct mbuf *);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
-static __inline void m_ext_free(struct mbuf *) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -909,62 +909,6 @@ m_length(struct mbuf *m)
 		pktlen += m0->m_len;
 	return pktlen;
 }
-
-/*
- * m_ext_free: release a reference to the mbuf external storage.
- *
- * => free the mbuf m itsself as well.
- * => called at splvm.
- */
-static __inline void
-m_ext_free(struct mbuf *m)
-{
-	boolean_t embedded = MEXT_ISEMBEDDED(m);
-	boolean_t dofree = TRUE;
-
-	KASSERT((m->m_flags & M_EXT) != 0);
-	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
-	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
-	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
-	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
-
-	MEXT_LOCK(m);
-	if (MCLISREFERENCED(m)) {
-		_MCLDEREFERENCE(m);
-		MEXT_UNLOCK(m);
-		if (embedded) {
-			dofree = FALSE;
-		} else {
-			m->m_ext_ref = m;
-		}
-	} else {
-		MEXT_UNLOCK(m);
-		/*
-		 * dropping the last reference
-		 */
-		if (!embedded) {
-			m_ext_free(m->m_ext_ref);
-			m->m_ext_ref = m;
-		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
-			pool_cache_put_paddr(m->m_ext.ext_arg,
-			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
-		} else if (m->m_ext.ext_free) {
-			(*m->m_ext.ext_free)(dofree ? m : NULL,
-			    m->m_ext.ext_buf, m->m_ext.ext_size,
-			    m->m_ext.ext_arg);
-			/*
-			 * 'm' is already freed by the ext_free callback.
-			 */
-			dofree = FALSE;
-		} else {
-			free(m->m_ext.ext_buf, m->m_ext.ext_type);
-		}
-	}
-	if (dofree) {
-		pool_cache_put(&mbpool_cache, m);
-	}
-}
-
 
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
