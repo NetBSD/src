@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.83 2005/06/16 14:36:42 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.83.2.1 2005/07/07 11:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83 2005/06/16 14:36:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.1 2005/07/07 11:53:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, p))) {
+		if (control && (error = unp_internalize(&control, p))) {
 			goto die;
 		}
 		switch (so->so_type) {
@@ -946,15 +946,17 @@ unp_externalize(struct mbuf *rights, struct proc *p)
 }
 
 int
-unp_internalize(struct mbuf *control, struct proc *p)
+unp_internalize(struct mbuf **controlp, struct proc *p)
 {
 	struct filedesc *fdescp = p->p_fd;
-	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
+	struct cmsghdr *newcm;
 	struct file **rp, **files;
 	struct file *fp;
 	int i, fd, *fdp;
 	int nfds;
 	u_int neededspace;
+	struct mbuf *control = *controlp;
+	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
 
 	/* Sanity check the control message header */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
@@ -1012,8 +1014,10 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	}
 
 	if (newcm) {
-		if (control->m_flags & M_EXT)
-			MEXTREMOVE(control);
+		if (control->m_flags & M_EXT) {
+			m_freem(control);
+			*controlp = control = m_get(M_WAIT, MT_CONTROL);
+		}
 		MEXTADD(control, newcm,
 		    CMSG_SPACE(nfds * sizeof(struct file *)),
 		    M_MBUF, NULL, NULL);
