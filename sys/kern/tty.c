@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.173 2005/06/11 22:42:24 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.174 2005/07/07 00:01:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173 2005/06/11 22:42:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.174 2005/07/07 00:01:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(struct winsize *)data = tp->t_winsize;
 		break;
 	case FIOGETOWN:
-		if (!isctty(p, tp))
+		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? -tp->t_pgrp->pg_id : 0;
 		break;
@@ -1163,7 +1163,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pid_t pgid = *(int *)data;
 		struct pgrp *pgrp;
 
-		if (!isctty(p, tp))
+		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 
 		if (pgid < 0)
