@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.48 2005/07/07 08:49:50 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.49 2005/07/07 19:20:20 mrg Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -402,11 +402,21 @@ Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		(LC_CTYPE) called XPG4DL is now integrated to -current.
 
 Branch:		mrg-vm-swap
-Description:	?
-Status:		?
-Start Date:
-End Date:
-Base Tag:	?
+Description:	dynamic swap allocation, swap-to-files support
+Status:		Terminated; abondoned for mrg-vm-swap2
+Start Date:	12 February 1997
+End Date:	15 March 1997
+Base Tag:	[none]
+Maintainer:	Matthew R. Green <mrg@NetBSD.org>
+Scope:		kernel
+Notes:
+
+Branch:		mrg-vm-swap2
+Description:	dynamic swap allocation, swap-to-files support
+Status:		Terminated; merged to -current
+Start Date:	4 May 1997
+End Date:	12 June 1997
+Base Tag:	mrg-vm-swap2-base
 Maintainer:	Matthew R. Green <mrg@NetBSD.org>
 Scope:		kernel
 Notes:
