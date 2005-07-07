@@ -1,5 +1,0 @@
-# $KTH-KRB: Makefile.am.common,v 1.2 2002/05/19 20:43:54 joda Exp $
-# $NetBSD: Makefile.am.common,v 1.1.1.2 2002/09/12 12:22:01 joda Exp $
-
-include $(top_srcdir)/cf/Makefile.am.common
-
