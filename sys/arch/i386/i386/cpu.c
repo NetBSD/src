@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23 2005/07/06 18:35:39 fair Exp $ */
+/* $NetBSD: cpu.c,v 1.24 2005/07/07 13:20:53 tron Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2005/07/06 18:35:39 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2005/07/07 13:20:53 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -417,7 +417,7 @@ cpu_init(ci)
 	 * N.B. this is not a good idea on processors whose
 	 * frequency varies a lot over time (e.g. modern laptops)
 	 */
-	if (cpu_feature & TSC) {
+	if (cpu_feature & CPUID_TSC) {
 		microtime_func = cc_microtime;
 	}
 #endif
