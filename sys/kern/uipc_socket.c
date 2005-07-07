@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.1 2005/07/07 12:07:38 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.2 2005/07/07 12:42:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.1 2005/07/07 12:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.2 2005/07/07 12:42:25 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -378,10 +378,10 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vsize_t len;
 	vaddr_t lva;
 	int npgs, error;
-#if 0
+#if !defined(__HAVE_LAZY_MBUF)
 	vaddr_t va;
 	int i;
-#endif
+#endif /* !defined(__HAVE_LAZY_MBUF) */
 
 	if (uio->uio_segflg != UIO_USERSPACE)
 		return (0);
@@ -411,20 +411,22 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 		return (0);
 	}
 
-#if 0
+#if !defined(__HAVE_LAZY_MBUF)
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
 		    VM_PROT_READ);
 	pmap_update(pmap_kernel());
-#endif
+#endif /* !defined(__HAVE_LAZY_MBUF) */
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
 
 	MEXTADD(m, (caddr_t) lva, space, M_MBUF, soloanfree, so);
 	m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
 
+#if defined(__HAVE_LAZY_MBUF)
 	m->m_flags |= M_EXT_LAZY;
 	m->m_ext.ext_flags |= M_EXT_LAZY;
+#endif /* defined(__HAVE_LAZY_MBUF) */
 
 	uio->uio_resid -= space;
 	/* uio_offset not updated, not set/used for write(2) */

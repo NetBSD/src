@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.4 2005/07/07 12:07:38 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.5 2005/07/07 12:42:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -122,9 +122,13 @@ struct mowner {
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
  */
-#define	mtod(m,t)	\
+#if defined(__HAVE_LAZY_MBUF) || defined(DEBUG)
+#define	mtod(m, t)	\
 	((t)(__predict_true(((m)->m_flags & M_EXT_LAZY) == 0) \
 	? (m)->m_data : m_mapin(m)))
+#else /* defined(__HAVE_LAZY_MBUF) || defined(DEBUG) */
+#define	mtod(m, t)	((t)((m)->m_data))
+#endif /* defined(__HAVE_LAZY_MBUF) || defined(DEBUG) */
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
