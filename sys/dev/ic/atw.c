@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.88 2005/07/06 23:58:14 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.89 2005/07/07 00:12:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.88 2005/07/06 23:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.89 2005/07/07 00:12:22 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2213,7 +2213,11 @@ atw_key_update_end(struct ieee80211com *ic)
 
 	if ((sc->sc_flags & ATWF_WEP_SRAM_VALID) != 0)
 		return;
+	if (ATW_IS_ENABLED(sc) == 0)
+		return;
+	atw_idle(sc, ATW_NAR_SR | ATW_NAR_ST);
 	atw_write_wep(sc);
+	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
 }
 
 /* Write WEP keys from the ieee80211com to the ADM8211's SRAM. */
