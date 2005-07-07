@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.1 2005/07/07 11:50:20 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.2 2005/07/07 11:51:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -596,16 +596,6 @@ do {									\
 	MOWNERREF((m), M_EXT);						\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTREMOVE(m)							\
-do {									\
-	int _ms_ = splvm(); /* MBUFLOCK */				\
-	_MOWNERREVOKE((m), 0, (m)->m_flags);				\
-	m_ext_free(m, FALSE);						\
-	splx(_ms_);							\
-	(m)->m_flags &= ~M_EXTCOPYFLAGS;				\
-	(m)->m_ext.ext_size = 0;	/* why ??? */			\
-} while (/* CONSTCOND */ 0)
-
 /*
  * Reset the data pointer on an mbuf.
  */
@@ -632,7 +622,7 @@ do {									\
 		(n) = (m)->m_next;					\
 		_MOWNERREVOKE((m), 1, m->m_flags);			\
 		if ((m)->m_flags & M_EXT) {				\
-			m_ext_free(m, TRUE);				\
+			m_ext_free(m);					\
 		} else {						\
 			pool_cache_put(&mbpool_cache, (m));		\
 		}							\
@@ -861,7 +851,7 @@ void	mbinit(void);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
-static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
+static __inline void m_ext_free(struct mbuf *) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -923,13 +913,14 @@ m_length(struct mbuf *m)
 /*
  * m_ext_free: release a reference to the mbuf external storage.
  *
- * => if 'dofree', free the mbuf m itsself as well.
+ * => free the mbuf m itsself as well.
  * => called at splvm.
  */
 static __inline void
-m_ext_free(struct mbuf *m, boolean_t dofree)
+m_ext_free(struct mbuf *m)
 {
 	boolean_t embedded = MEXT_ISEMBEDDED(m);
+	boolean_t dofree = TRUE;
 
 	KASSERT((m->m_flags & M_EXT) != 0);
 	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
@@ -939,13 +930,6 @@ m_ext_free(struct mbuf *m, boolean_t dofree)
 
 	MEXT_LOCK(m);
 	if (MCLISREFERENCED(m)) {
-		/*
-		 * XXX implementation limit:
-		 * don't allow MEXTREMOVE on EMBEDDED mbuf
-		 * because we can't MEXTADD the mbuf later.
-		 */
-		KASSERT(!(!dofree && MEXT_ISEMBEDDED(m)));
-
 		_MCLDEREFERENCE(m);
 		MEXT_UNLOCK(m);
 		if (embedded) {
@@ -959,7 +943,7 @@ m_ext_free(struct mbuf *m, boolean_t dofree)
 		 * dropping the last reference
 		 */
 		if (!embedded) {
-			m_ext_free(m->m_ext_ref, TRUE);
+			m_ext_free(m->m_ext_ref);
 			m->m_ext_ref = m;
 		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
 			pool_cache_put_paddr(m->m_ext.ext_arg,
