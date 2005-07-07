@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.50 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.51 2005/07/07 02:05:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 int nfs_flushstalebuf __P((struct vnode *, struct ucred *, struct proc *, int));
 #define	NFS_FLUSHSTALEBUF_MYWRITE	1	/* assume writes are ours */
 int nfs_asyncio __P((struct buf *));
-int nfs_doio __P((struct buf *, struct proc *));
+int nfs_doio __P((struct buf *));
 
 /* nfs_boot.c */
 /* see nfsdiskless.h */

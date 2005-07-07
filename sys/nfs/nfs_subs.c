@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.150 2005/07/07 02:05:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149 2005/05/29 20:58:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.150 2005/07/07 02:05:03 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -834,7 +834,9 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			if (uiop->uio_segflg == UIO_SYSSPACE)
 				memcpy(uiocp, mbufcp, xfer);
 			else
-				copyout(mbufcp, uiocp, xfer);
+				if ((error = copyout_proc(uiop->uio_procp,
+				    mbufcp, uiocp, xfer)) != 0)
+					return error;
 			left -= xfer;
 			len -= xfer;
 			mbufcp += xfer;
@@ -910,17 +912,19 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 				mlen = M_TRAILINGSPACE(mp);
 			}
 			xfer = (left > mlen) ? mlen : left;
+			cp = mtod(mp, caddr_t) + mp->m_len;
 #ifdef notdef
 			/* Not Yet.. */
 			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
+				(*(uiop->uio_iov->iov_op))(uiocp, cp, xfer);
 			else
 #endif
 			if (uiop->uio_segflg == UIO_SYSSPACE)
-				memcpy(mtod(mp, caddr_t)+mp->m_len, uiocp, xfer);
+				(void)memcpy(cp, uiocp, xfer);
 			else
-				copyin(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
+				/*XXX: Check error */
+				(void)copyin_proc(uiop->uio_procp, uiocp,
+				    cp, xfer);
 			mp->m_len += xfer;
 			left -= xfer;
 			uiocp += xfer;
@@ -939,7 +943,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			mp->m_len = 0;
 			mp2->m_next = mp;
 		}
-		cp = mtod(mp, caddr_t)+mp->m_len;
+		cp = mtod(mp, caddr_t) + mp->m_len;
 		for (left = 0; left < rem; left++)
 			*cp++ = '\0';
 		mp->m_len += rem;
