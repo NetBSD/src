@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.91 2005/07/08 21:39:39 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.92 2005/07/08 22:21:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.91 2005/07/08 21:39:39 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.92 2005/07/08 22:21:43 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2527,4 +2527,19 @@ netbsd32_extattr_list_link(struct lwp *l, void *v, register_t *retval)
 	NETBSD32TOP_UAP(data, void);
 	NETBSD32TOX_UAP(nbytes, size_t);
 	return sys_extattr_list_link(l, &ua, retval);
+}
+
+int
+netbsd32_mlockall(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_mlockall_args /* {
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct sys_mlockall_args ua;
+
+	NETBSD32TO64_UAP(flags);
+	return (sys_mlockall(l, &ua, retval));
 }
