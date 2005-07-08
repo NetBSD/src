@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.114 2004/11/15 00:23:13 mbw Exp $
+.\"	$NetBSD: contents,v 1.115 2005/07/08 13:21:34 abs Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -431,7 +431,7 @@ SRM doesn't recognize your (hard) disk controller but
 does.
 This happens more frequently than you might think.
 SRM will usually only boot from
-.Xr ncr 4
+.Xr siop 4
 or
 .Xr isp 4
 SCSI devices, and on most platforms will not
