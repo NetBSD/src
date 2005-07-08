@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2005/07/08 21:39:39 cube Exp $
+	$NetBSD: syscalls.master,v 1.30 2005/07/08 22:21:43 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -402,8 +402,8 @@
 ;
 240	STD		{ int netbsd32_nanosleep(const netbsd32_timespecp_t rqtp, netbsd32_timespecp_t rmtp); }
 241	STD		{ int netbsd32_fdatasync(int fd); }
-242	UNIMPL
-243	UNIMPL
+242	STD		{ int netbsd32_mlockall(int flags); }
+243	NOARGS		{ int sys_munlockall(void); }
 244	UNIMPL
 245	UNIMPL
 246	UNIMPL
