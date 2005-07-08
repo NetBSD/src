@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2005/07/04 00:26:07 cube Exp $
+	$NetBSD: syscalls.master,v 1.29 2005/07/08 21:39:39 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -561,3 +561,39 @@
 			    int flags); }
 359	STD		{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statvfsp_t buf, int flags); }
+360	STD		{ int netbsd32_extattrctl(const netbsd32_charp path, \
+			    int cmd, const netbsd32_charp filename, int attrnamespace, \
+			    const netbsd32_charp attrname); }
+361	STD		{ int netbsd32_extattr_set_file(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
+362	STD		{ int netbsd32_extattr_get_file(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
+363	STD		{ int netbsd32_extattr_delete_file(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname); }
+364	STD		{ int netbsd32_extattr_set_fd(int fd, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
+365	STD		{ int netbsd32_extattr_get_fd(int fd, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
+366	STD		{ int netbsd32_extattr_delete_fd(int fd, \
+			    int attrnamespace, const netbsd32_charp attrname); }
+367	STD		{ int netbsd32_extattr_set_link(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
+368	STD		{ int netbsd32_extattr_get_link(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
+369	STD		{ int netbsd32_extattr_delete_link(const netbsd32_charp path, \
+			    int attrnamespace, const netbsd32_charp attrname); }
+370	STD		{ int netbsd32_extattr_list_fd(int fd, \
+			    int attrnamespace, netbsd32_voidp data, \
+			    netbsd32_size_t nbytes); }
+371	STD		{ int netbsd32_extattr_list_file(const netbsd32_charp path, \
+			    int attrnamespace, netbsd32_voidp data, \
+			    netbsd32_size_t nbytes); }
+372	STD		{ int netbsd32_extattr_list_link(const netbsd32_charp path, \
+			    int attrnamespace, netbsd32_voidp data, \
+			    netbsd32_size_t nbytes); }
