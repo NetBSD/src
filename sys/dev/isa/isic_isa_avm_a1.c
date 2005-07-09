@@ -35,14 +35,14 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.6 2005/02/27 00:27:17 perry Exp $
+ *	$Id: isic_isa_avm_a1.c,v 1.7 2005/07/09 02:05:09 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.6 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.7 2005/07/09 02:05:09 christos Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_AVM_A1
@@ -149,7 +149,7 @@ avma1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[what+4].t;
 	bus_space_handle_t h = sc->sc_maps[what+4].h;
-	bus_space_write_multi_1(t, h, 0, (u_int8_t*)buf, size);
+	bus_space_write_multi_1(t, h, 0, buf, size);
 }
 #endif
 
