@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.2 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: iavc.c,v 1.3 2005/07/09 02:05:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.2 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.3 2005/07/09 02:05:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -582,7 +582,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
 {
     u_int32_t Length;
     u_int8_t *p;
-    u_int8_t *cardtype, *serial, *profile, *version, *caps, *prot;
+    u_int8_t *cardtype, *serial, *profile, *vers, *caps, *prot;
 
     if (sc->sc_dma) {
 	p = amcc_get_word(dmabuf, &Length);
@@ -604,7 +604,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
     }
 #endif
 
-    version = (p + 1);
+    vers = (p + 1);
     p += (*p + 1); /* driver version */
     cardtype = (p + 1);
     p += (*p + 1); /* card type */
@@ -621,7 +621,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
 	int nbch = ((profile[3]<<8) | profile[2]);
 
 	aprint_normal("%s: AVM %s, s/n %s, %d chans, f/w rev %s, prot %s\n",
-		sc->sc_dev.dv_xname, cardtype, serial, nbch, version, prot);
+		sc->sc_dev.dv_xname, cardtype, serial, nbch, vers, prot);
 	aprint_verbose("%s: %s\n", sc->sc_dev.dv_xname, caps);
 
         capi_ll_control(&sc->sc_capi, CAPI_CTRL_PROFILE, (int) profile);

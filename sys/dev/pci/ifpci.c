@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.16 2005/02/27 00:27:33 perry Exp $
+ *	$Id: ifpci.c,v 1.17 2005/07/09 02:05:09 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.16 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.17 2005/07/09 02:05:09 christos Exp $");
 
 
 #include <sys/param.h>
@@ -483,7 +483,7 @@ avma1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,  ADDR_REG_OFFSET, ISAC_FIFO);
-			bus_space_write_multi_1(sc->sc_maps[0].t, sc->sc_maps[0].h,  ISAC_REG_OFFSET, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(sc->sc_maps[0].t, sc->sc_maps[0].h,  ISAC_REG_OFFSET, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			hscx_write_fifo(0, buf, size, sc);
@@ -497,7 +497,7 @@ avma1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size
 static void
 hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 {
-	u_int32_t *ip;
+	const u_int32_t *ip;
 	size_t cnt;
 	l1_bchan_state_t *Bchan = &sc->sc_chan[chan];
 
@@ -515,7 +515,7 @@ hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 	AVMA1PPSETCMDLONG(cnt);
 	hscx_write_reg(chan, HSCX_STAT, cnt, sc);
 
-	ip = (u_int32_t *)buf;
+	ip = (const u_int32_t *)buf;
 	cnt = 0;
 	while (cnt < len)
 	{

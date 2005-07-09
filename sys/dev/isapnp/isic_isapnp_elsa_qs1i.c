@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.11 2005/02/27 00:27:21 perry Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.12 2005/07/09 02:05:09 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.11 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.12 2005/07/09 02:05:09 christos Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -224,15 +224,15 @@ eqs1pi_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, ELSA_OFF_OFF, 0);
-			bus_space_write_multi_1(t, h, ELSA_OFF_ISAC, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ELSA_OFF_ISAC, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, ELSA_OFF_OFF, 0);
-			bus_space_write_multi_1(t, h, ELSA_OFF_HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ELSA_OFF_HSCX, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, ELSA_OFF_OFF, 0x40);
-			bus_space_write_multi_1(t, h, ELSA_OFF_HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ELSA_OFF_HSCX, buf, size);
 			break;
 	}
 }

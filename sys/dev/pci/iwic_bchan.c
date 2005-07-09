@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_bchan.c,v 1.3 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: iwic_bchan.c,v 1.4 2005/07/09 02:05:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.3 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.4 2005/07/09 02:05:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -311,7 +311,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 	{
 		/* transmit fifo empty, new data can be written to fifo */
 
-		int activity = -1;
+		int activity1 = -1;
 		int len;
 		int nextlen;
 
@@ -345,11 +345,11 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				if(chan->bprot == BPROT_NONE)
 				{
 					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
-						activity = ACT_TX;
+						activity1 = ACT_TX;
 				}
 				else
 				{
-					activity = ACT_TX;
+					activity1 = ACT_TX;
 				}
 			}
 		}

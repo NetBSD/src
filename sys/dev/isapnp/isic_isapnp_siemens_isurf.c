@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.6 2005/02/27 00:27:21 perry Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.7 2005/07/09 02:05:09 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.6 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.7 2005/07/09 02:05:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -198,15 +198,15 @@ siemens_isurf_write_fifo(struct isic_softc *sc, int what, const void *buf, size_
 	switch (what) {
 	case ISIC_WHAT_ISAC:
 		bus_space_write_1(t, h, SIE_ISURF_OFF_ALE, IPAC_ISAC_OFF);
-		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, (u_int8_t*)buf, size);
+		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, buf, size);
 		break;
 	case ISIC_WHAT_HSCXA:
 		bus_space_write_1(t, h, SIE_ISURF_OFF_ALE, IPAC_HSCXA_OFF);
-		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, (u_int8_t*)buf, size);
+		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, buf, size);
 		break;
 	case ISIC_WHAT_HSCXB:
 		bus_space_write_1(t, h, SIE_ISURF_OFF_ALE, IPAC_HSCXB_OFF);
-		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, (u_int8_t*)buf, size);
+		bus_space_write_multi_1(t, h, SIE_ISURF_OFF_RW, buf, size);
 		break;
 	}
 }

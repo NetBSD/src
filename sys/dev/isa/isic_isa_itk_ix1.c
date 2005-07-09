@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.11 2005/07/09 02:05:09 christos Exp $");
 
 #include "opt_isicisa.h"
 
@@ -405,15 +405,15 @@ static void itkix1_write_fifo(struct isic_softc *sc, int what, const void *buf, 
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, ITK_ALE, 0);
-			bus_space_write_multi_1(t, h, ITK_ISAC_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ITK_ISAC_DATA, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, ITK_ALE, HSCXA);
-			bus_space_write_multi_1(t, h, ITK_HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ITK_HSCX_DATA, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, ITK_ALE, HSCXB);
-			bus_space_write_multi_1(t, h, ITK_HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ITK_HSCX_DATA, buf, size);
 			break;
 	}
 }
