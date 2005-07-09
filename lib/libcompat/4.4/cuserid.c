@@ -32,7 +32,7 @@
 #if 0
 static char sccsid[] = "@(#)cuserid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cuserid.c,v 1.6.6.1 2005/07/09 22:52:32 tron Exp $");
+__RCSID("$NetBSD: cuserid.c,v 1.6.6.2 2005/07/09 22:53:06 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,8 @@ cuserid(char *s)
 
 	/* s may be NULL */
 
-	if (getpwuid_r(geteuid(), &pwres, pwbuf, sizeof(pwbuf), &pw) != 0) {
+	if (getpwuid_r(geteuid(), &pwres, pwbuf, sizeof(pwbuf), &pw) != 0
+	    || pw == NULL) {
 		if (s != NULL)
 			*s = '\0';
 		return s;
