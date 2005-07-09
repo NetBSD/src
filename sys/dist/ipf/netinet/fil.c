@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.16 2005/06/11 12:31:40 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.17 2005/07/09 14:51:11 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.16 2005/06/11 12:31:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.17 2005/07/09 14:51:11 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -886,7 +886,7 @@ fr_info_t *fin;
 	int minicmpsz = sizeof(struct icmp);
 	icmphdr_t *icmp;
 
-	if (frpr_pullup(fin, ICMPERR_ICMPHLEN) == -1)
+	if (fin->fin_off == 0 && frpr_pullup(fin, ICMPERR_ICMPHLEN) == -1)
 		return;
 
 	fr_checkv4sum(fin);
@@ -1171,7 +1171,7 @@ fr_info_t *fin;
 static INLINE void frpr_esp(fin)
 fr_info_t *fin;
 {
-	if (frpr_pullup(fin, 8) == -1)
+	if (fin->fin_off == 0 && frpr_pullup(fin, 8) == -1)
 		return;
 
 	if (fin->fin_v == 4)
@@ -1195,7 +1195,7 @@ fr_info_t *fin;
 {
 	grehdr_t *gre;
 
-	if (frpr_pullup(fin, sizeof(grehdr_t)) == -1)
+	if (fin->fin_off == 0 && frpr_pullup(fin, sizeof(grehdr_t)) == -1)
 		return;
 
 	if (fin->fin_v == 4)
@@ -1204,9 +1204,11 @@ fr_info_t *fin;
 	else if (fin->fin_v == 6)
 		frpr_short6(fin, sizeof(grehdr_t));
 #endif
-	gre = fin->fin_dp;
-	if (GRE_REV(gre->gr_flags) == 1)
-		fin->fin_data[0] = gre->gr_call;
+	if (fin->fin_off == 0 ) {
+		gre = fin->fin_dp;
+		if (GRE_REV(gre->gr_flags) == 1)
+			fin->fin_data[0] = gre->gr_call;
+        }
 }
 
 
