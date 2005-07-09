@@ -1,4 +1,4 @@
-/*	$NetBSD: krb4encpwd.c,v 1.6.2.1 2005/07/09 22:56:05 tron Exp $	*/
+/*	$NetBSD: krb4encpwd.c,v 1.6.2.2 2005/07/09 22:57:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)krb4encpwd.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: krb4encpwd.c,v 1.6.2.1 2005/07/09 22:56:05 tron Exp $");
+__RCSID("$NetBSD: krb4encpwd.c,v 1.6.2.2 2005/07/09 22:57:04 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ char *name, *passwd;
   char pwbuf[1024];
   int   passwdok_status = 0;
 
-  if (getpwnam_r(name, &pws, pwbuf, sizeof(pwbuf), &pwd) == 0)
+  if (getpwnam_r(name, &pws, pwbuf, sizeof(pwbuf), &pwd) == 0 && pwd != NULL)
     salt = pwd->pw_passwd;
   else salt = "xx";
 
