@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 2005/07/08 22:21:43 cube Exp $
+	$NetBSD: syscalls.master,v 1.31 2005/07/09 22:40:13 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -597,3 +597,8 @@
 372	STD		{ int netbsd32_extattr_list_link(const netbsd32_charp path, \
 			    int attrnamespace, netbsd32_voidp data, \
 			    netbsd32_size_t nbytes); }
+373	STD		{ int netbsd32_pselect(int nd, netbsd32_fd_setp_t in, \
+			    netbsd32_fd_setp_t ou, netbsd32_fd_setp_t ex, \
+			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
+374	STD		{ int netbsd32_pollts(netbsd32_pollfdp_t fds, u_int nfds, \
+			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
