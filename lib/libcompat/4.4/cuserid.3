@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$NetBSD: cuserid.3,v 1.11 2003/08/07 16:44:17 agc Exp $
+.\"	$NetBSD: cuserid.3,v 1.11.6.1 2005/07/09 22:52:26 tron Exp $
 .\"
 .Dd November 28, 1993
 .Dt CUSERID 3
@@ -118,15 +118,3 @@ to return the user name associated with the calling process' effective user ID.
 .Nm getpwuid Ns Pq Fn getuid
 to return the user name associated with the calling process' real user ID.
 .El
-.Pp
-The
-.Fn cuserid
-function uses
-.Fn getpwuid ;
-thus the results of a user's call to
-.Fn getpwent ,
-.Fn getpwnam
-or
-.Fn getpwuid
-will be overwritten by subsequent calls to
-.Fn cuserid .
