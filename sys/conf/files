@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.722 2005/07/01 20:11:20 drochner Exp $
+#	$NetBSD: files,v 1.723 2005/07/09 01:05:23 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1298,6 +1298,7 @@ file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_vnops.c
+file	kern/vfs_xattr.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
