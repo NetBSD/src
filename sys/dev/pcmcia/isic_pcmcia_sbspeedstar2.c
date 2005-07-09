@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.8 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.9 2005/07/09 02:05:10 christos Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_SBSPEEDSTAR2
@@ -121,15 +121,15 @@ sws_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, SBSS_RW, 0);
-			bus_space_write_multi_1(t, h, SBSS_ISAC, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SBSS_ISAC, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, SBSS_RW, 0);
-			bus_space_write_multi_1(t, h, SBSS_HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SBSS_HSCX, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, SBSS_RW, 0x40);
-			bus_space_write_multi_1(t, h, SBSS_HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SBSS_HSCX, buf, size);
 			break;
 	}
 }
@@ -245,11 +245,11 @@ isic_attach_sbspeedstar2(struct pcmcia_isic_softc *psc, struct pcmcia_config_ent
 
 	/* reset card */
         {
-        	bus_space_tag_t t = sc->sc_maps[0].t;
-        	bus_space_handle_t h = sc->sc_maps[0].h;
-        	bus_space_write_1(t, h, SBSS_RESET, 0x3);
+        	bus_space_tag_t t1 = sc->sc_maps[0].t;
+        	bus_space_handle_t h1 = sc->sc_maps[0].h;
+        	bus_space_write_1(t1, h1, SBSS_RESET, 0x3);
 		DELAY(SEC_DELAY / 5);
-		bus_space_write_1(t, h, SBSS_RESET, 0);
+		bus_space_write_1(t1, h1, SBSS_RESET, 0);
 		DELAY(SEC_DELAY / 5);
 	}
 

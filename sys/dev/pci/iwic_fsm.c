@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_fsm.c,v 1.1 2002/09/24 22:05:19 pooka Exp $	*/
+/*	$NetBSD: iwic_fsm.c,v 1.2 2005/07/09 02:05:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_fsm.c,v 1.1 2002/09/24 22:05:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_fsm.c,v 1.2 2005/07/09 02:05:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwic_fsm.c,v 1.1 2002/09/24 22:05:19 pooka Exp $");
 #include <dev/pci/iwicvar.h>
 
 #if DO_I4B_DEBUG
-static char *state_names[] = {
+static const char *state_names[] = {
 	"F3N",
 	"F3",
 	"F4",
@@ -68,7 +68,7 @@ static char *state_names[] = {
 	"ILLEGAL",
 };
 
-static char *event_names[] = {
+static const char *event_names[] = {
 	"PHAR",
 	"CE",
 	"T3",
@@ -218,9 +218,9 @@ iwic_next_state(struct iwic_softc *sc, int event)
 /*---------------------------------------------------------------------------*
  *      return pointer to current state description
  *---------------------------------------------------------------------------*/
-char *
+const char *
 iwic_printstate(struct iwic_softc *sc)
 {
-	return((char *)state_names[sc->sc_I430state]);
+	return state_names[sc->sc_I430state];
 }
 #endif
