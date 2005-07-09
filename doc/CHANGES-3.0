@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.166 2005/07/09 22:58:32 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.167 2005/07/09 23:07:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10341,4 +10341,17 @@ lib/libtelnet/sra.c				1.2-1.3
 
 	Correct usage of getpw*() functions in "telnet" library.
 	[lukem, ticket #536]
+
+share/man/man7/environ.7			1.21
+
+	Document LOGNAME. This fixes PR misc/30671.
+	[kleink, ticket #550]
+
+usr.bin/su/su.1					1.44 via patch
+usr.bin/su/su.c					1.65
+usr.bin/su/su_pam.c				1.10
+
+	Set LOGNAME in the new environment (in addition to USER).
+	This fixes PR bin/30670.
+	[kleink, ticket #551]
 
