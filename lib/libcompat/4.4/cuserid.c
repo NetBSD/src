@@ -32,7 +32,7 @@
 #if 0
 static char sccsid[] = "@(#)cuserid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cuserid.c,v 1.6 2003/08/07 16:44:17 agc Exp $");
+__RCSID("$NetBSD: cuserid.c,v 1.6.6.1 2005/07/09 22:52:32 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,21 +42,21 @@ __RCSID("$NetBSD: cuserid.c,v 1.6 2003/08/07 16:44:17 agc Exp $");
 #include <unistd.h>
 
 char *
-cuserid(s)
-	char *s;
+cuserid(char *s)
 {
-	struct passwd *pw;
+	struct passwd *pw, pwres;
 	static char buf[L_cuserid];
+	char pwbuf[1024];
 
 	/* s may be NULL */
 
-	if ((pw = getpwuid(geteuid())) == NULL) {
-		if (s)
+	if (getpwuid_r(geteuid(), &pwres, pwbuf, sizeof(pwbuf), &pw) != 0) {
+		if (s != NULL)
 			*s = '\0';
-		return (s);
+		return s;
 	}
-	if (!s)
+	if (s == NULL)
 		s = buf;
 	(void)strncpy(s, pw->pw_name, L_cuserid);
-	return (s);
+	return s;
 }
