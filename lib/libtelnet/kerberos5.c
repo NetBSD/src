@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.12 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.12.6.1 2005/07/09 22:55:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -421,15 +421,16 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 
 		break;
 	case KRB_FORWARD:{
-			struct passwd *pwd;
+			struct passwd pws, *pwd;
+			char pwbuf[1024];
 			char ccname[1024];	/* XXX */
 			krb5_data inbuf;
 			krb5_ccache ccache;
 			inbuf.data = (char *) data;
 			inbuf.length = cnt;
 
-			pwd = getpwnam(UserNameRequested);
-			if (pwd == NULL)
+			if (getpwnam_r(UserNameRequested, &pws, pwbuf,
+			    sizeof(pwbuf), &pwd) != 0)
 				break;
 
 			snprintf(ccname, sizeof(ccname),
