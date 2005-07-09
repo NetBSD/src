@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.25.6.2 2005/04/04 18:02:33 tron Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.25.6.3 2005/07/09 22:50:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.25.6.2 2005/04/04 18:02:33 tron Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.25.6.3 2005/07/09 22:50:21 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -427,7 +427,7 @@ globtilde(pattern, patbuf, patsize, pglob)
 			if ((pwd = getpwuid(getuid())) == NULL)
 #else
 			if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
-			    &pwd) != 0)
+			    &pwd) != 0 || pwd == NULL)
 #endif
 				return pattern;
 			else
@@ -441,7 +441,8 @@ globtilde(pattern, patbuf, patsize, pglob)
 #ifdef NO_GETPW_R
 		if ((pwd = getpwnam(d)) == NULL)
 #else
-		if (getpwnam_r(d, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+		if (getpwnam_r(d, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+		    pwd == NULL)
 #endif
 			return pattern;
 		else
