@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.5.2.4 2005/07/06 21:54:24 tron Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.5.2.5 2005/07/09 23:03:05 tron Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.5.2.4 2005/07/06 21:54:24 tron Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.5.2.5 2005/07/09 23:03:05 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,8 +457,10 @@ out:
 				errx(EXIT_FAILURE, "no directory");
 		} 
 
-		if (asthem || pwd->pw_uid)
+		if (asthem || pwd->pw_uid) {
+			(void)setenv("LOGNAME", pwd->pw_name, 1);
 			(void)setenv("USER", pwd->pw_name, 1);
+		}
 		(void)setenv("HOME", pwd->pw_dir, 1);
 		(void)setenv("SHELL", shell, 1);
 	}
