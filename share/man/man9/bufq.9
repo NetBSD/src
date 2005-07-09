@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.6 2003/04/16 13:35:25 wiz Exp $
+.\"     $NetBSD: bufq.9,v 1.7 2005/07/09 15:25:17 xtraeme Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 16, 2002
+.Dd July 9, 2005
 .Dt BUFQ 9
 .Os
 .Sh NAME
@@ -96,6 +96,8 @@ queue strategy is min seek sort
 .It Dv BUFQ_READ_PRIO
 queue strategy is min seek sort for writes and first-come first-serve
 for reads with read priority
+.It Dv BUFQ_PRIOCSCAN
+queue strategy is per-priority cyclical scan
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
