@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.40.2.2 2005/07/09 22:45:30 tron Exp $	*/
+/*	$NetBSD: rshd.c,v 1.40.2.3 2005/07/09 22:48:00 tron Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.40.2.2 2005/07/09 22:45:30 tron Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.40.2.3 2005/07/09 22:48:00 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,8 @@ doit(struct sockaddr *fromp)
  	}
 #endif /* USE_PAM */
 	setpwent();
-	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL) {
 		syslog(LOG_INFO|LOG_AUTH,
 		    "%s@%s as %s: unknown login. cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
