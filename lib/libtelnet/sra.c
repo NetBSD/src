@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.1.2.4 2005/07/09 22:55:46 tron Exp $");
+__RCSID("$NetBSD: sra.c,v 1.1.2.5 2005/07/09 22:56:45 tron Exp $");
 #endif
 
 #ifdef	SRA
@@ -426,7 +426,8 @@ isroot(const char *usr)
 	struct passwd pws, *pwd;
 	char pwbuf[1024];
 
-	if (getpwnam_r(usr, &pws, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	if (getpwnam_r(usr, &pws, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return 0;
 	return (!pwd->pw_uid);
 }
