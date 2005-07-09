@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.106 2004/08/14 16:06:40 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.107 2005/07/09 15:05:13 xtraeme Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -619,6 +619,8 @@ md_bootxx_name(void)
 			bootfs = "ffsv2";
 		else
 			bootfs = "ffsv1";
+	else if (fstype == FS_BSDLFS)
+			bootfs = "lfsv2";
 	else
 		bootfs = mountnames[fstype];
 
