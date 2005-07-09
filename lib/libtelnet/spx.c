@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.5 2003/08/07 16:44:56 agc Exp $ */
+/*	$NetBSD: spx.c,v 1.5.6.1 2005/07/09 22:55:53 tron Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.5 2003/08/07 16:44:56 agc Exp $");
+__RCSID("$NetBSD: spx.c,v 1.5.6.1 2005/07/09 22:55:53 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,7 +488,8 @@ spx_status(ap, name, l, level)
 	gss_OID          fullname_type;
 	char acl_file[160], fullname[160];
 	int major_status, status = 0;
-	struct passwd  *pwd;
+	struct passwd pws, *pwd;
+	char pwbuf[1024];
 
 	/*
 	 * hard code fullname to
@@ -496,9 +497,9 @@ spx_status(ap, name, l, level)
 	 * and acl_file to "~kannan/.sphinx"
 	 */
 
-	pwd = getpwnam(UserNameRequested);
-	if (pwd == NULL) {
-	  return(AUTH_USER);   /*  not authenticated  */
+	if (getpwnam_r(UserNameRequested, &pws, pwbuf, sizeof(pwbuf), &pwd)
+	    != 0) {
+	    return(AUTH_USER);   /*  not authenticated  */
 	}
 
 	strlcpy(acl_file, pwd->pw_dir, sizeof(acl_file));
