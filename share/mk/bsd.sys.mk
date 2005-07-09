@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.119 2005/06/04 12:17:45 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.120 2005/07/09 18:45:16 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -145,7 +145,7 @@ TOOL_UUDECODE?=		uudecode
 TOOL_VGRIND?=		vgrind -f
 TOOL_ZIC?=		zic
 
-.SUFFIXES:	.o .ln .lo .c ${YHEADER:D.h}
+.SUFFIXES:	.o .ln .lo .c .m ${YHEADER:D.h}
 
 # C
 .c.o:
