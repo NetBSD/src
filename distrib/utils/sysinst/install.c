@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.40 2004/06/05 21:18:59 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.41 2005/07/09 14:56:23 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,9 @@ do_install(void)
 
 	if (find_disks(msg_string(MSG_install)) < 0)
 		return;
-
+	clear();
+	refresh();
+	
 	if (check_swap(diskdev, 0) > 0) {
 		msg_display(MSG_swapactive);
 		process_menu(MENU_ok, NULL);
