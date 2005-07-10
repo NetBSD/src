@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.19 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.20 2005/07/10 16:34:53 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.19 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.20 2005/07/10 16:34:53 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -759,7 +759,7 @@ netbsd32___lstat13(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
