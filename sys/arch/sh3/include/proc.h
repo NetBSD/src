@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 2005/07/10 16:21:01 uwe Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 2005/07/10 22:27:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -59,6 +59,8 @@ struct mdlwp {
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 
 struct mdproc {
+	void (*md_syscall)(struct lwp *, struct trapframe *);
+
 	volatile int md_astpending;	/* AST pending on return to userland */
 };
 
