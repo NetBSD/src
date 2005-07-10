@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.30 2003/07/27 01:19:31 thorpej Exp $
+#	$NetBSD: files.sh3,v 1.31 2005/07/10 22:27:20 uwe Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -23,6 +23,7 @@ file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
+file	arch/sh3/sh3/syscall.c
 file	arch/sh3/sh3/vm_machdep.c
 file	arch/sh3/sh3/cache.c
 file	arch/sh3/sh3/cache_sh3.c	sh3
