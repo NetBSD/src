@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $ */
+/* $NetBSD: syscall.c,v 1.17 2005/07/10 00:45:52 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2005/07/10 00:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $"
 #include <machine/alpha.h>
 #include <machine/userret.h>
 
-void	syscall_intern(struct proc *);
 void	syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
 void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 
