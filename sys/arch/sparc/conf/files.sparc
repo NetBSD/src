@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.133 2005/07/06 12:16:35 macallan Exp $
+#	$NetBSD: files.sparc,v 1.134 2005/07/10 17:02:19 christos Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -298,6 +298,7 @@ file	arch/sparc/sparc/procfs_machdep.c	procfs
 file	arch/sparc/sparc/pmap.c
 # the following overrides the generic "sys_process.c"
 # commented out by deraadt
+file	arch/sparc/sparc/syscall.c
 #file	arch/sparc/sparc/sys_process.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
