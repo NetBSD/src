@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.h,v 1.6 2003/06/29 22:29:43 fvdl Exp $	*/
+/*	$NetBSD: sunos_exec.h,v 1.7 2005/07/10 16:40:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -53,5 +53,7 @@ struct sunos_exec {
 extern const struct emul emul_sunos;
 
 int exec_sunos_aout_makecmds __P((struct proc *, struct exec_package *));
+
+#define	sunos_syscall_intern	syscall_intern
 
 #endif /* !_SUNOS_EXEC_H_ */
