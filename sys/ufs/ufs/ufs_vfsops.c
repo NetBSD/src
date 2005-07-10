@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.23 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.23 2005/07/10 00:18:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $
 #endif
 
 /* how many times ufs_init() was called */
-int ufs_initcount = 0;
+static int ufs_initcount = 0;
 
 POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
     &pool_allocator_nointr);
@@ -73,10 +73,7 @@ POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+ufs_start(struct mount *mp, int flags, struct proc *p)
 {
 
 	return (0);
@@ -86,9 +83,7 @@ ufs_start(mp, flags, p)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+ufs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -103,12 +98,7 @@ ufs_root(mp, vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(mp, cmds, uid, arg, p)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct proc *p;
+ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct proc *p)
 {
 
 #ifndef QUOTA
@@ -177,11 +167,8 @@ ufs_quotactl(mp, cmds, uid, arg, p)
  * exflagsp and credanonp.
  */
 int
-ufs_check_export(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+ufs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp)
 {
 	struct netcred *np;
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -203,10 +190,7 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp)
-	struct mount *mp;
-	struct ufid *ufhp;
-	struct vnode **vpp;
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
@@ -230,7 +214,7 @@ ufs_fhtovp(mp, ufhp, vpp)
  * Initialize UFS filesystems, done only once.
  */
 void
-ufs_init()
+ufs_init(void)
 {
 	if (ufs_initcount++ > 0)
 		return;
@@ -250,7 +234,7 @@ ufs_init()
 }
 
 void
-ufs_reinit()
+ufs_reinit(void)
 {
 	ufs_ihashreinit();
 #ifdef QUOTA
@@ -262,7 +246,7 @@ ufs_reinit()
  * Free UFS filesystem resources, done only once.
  */
 void
-ufs_done()
+ufs_done(void)
 {
 	if (--ufs_initcount > 0)
 		return;

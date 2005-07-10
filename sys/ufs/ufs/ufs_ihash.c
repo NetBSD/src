@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.18 2003/08/07 16:34:45 agc Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.19 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.18 2003/08/07 16:34:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.19 2005/07/10 00:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.18 2003/08/07 16:34:45 agc Exp $");
 /*
  * Structures associated with inode cacheing.
  */
-LIST_HEAD(ihashhead, inode) *ihashtbl;
-u_long	ihash;		/* size of hash table - 1 */
+static LIST_HEAD(ihashhead, inode) *ihashtbl;
+static u_long	ihash;		/* size of hash table - 1 */
 #define INOHASH(device, inum)	(((device) + (inum)) & ihash)
 
 struct lock ufs_hashlock;
@@ -58,7 +58,7 @@ struct simplelock ufs_ihash_slock;
  * Initialize inode hash table.
  */
 void
-ufs_ihashinit()
+ufs_ihashinit(void)
 {
 	lockinit(&ufs_hashlock, PINOD, "ufs_hashlock", 0, 0);
 	ihashtbl =
@@ -71,7 +71,7 @@ ufs_ihashinit()
  */
 
 void
-ufs_ihashreinit()
+ufs_ihashreinit(void)
 {
 	struct inode *ip;
 	struct ihashhead *oldhash, *hash;
@@ -99,7 +99,7 @@ ufs_ihashreinit()
  * Free inode hash table.
  */
 void
-ufs_ihashdone()
+ufs_ihashdone(void)
 {
 	hashdone(ihashtbl, M_UFSMNT);
 }
@@ -109,9 +109,7 @@ ufs_ihashdone()
  * to it. If it is in core, return it, even if it is locked.
  */
 struct vnode *
-ufs_ihashlookup(dev, inum)
-	dev_t dev;
-	ino_t inum;
+ufs_ihashlookup(dev_t dev, ino_t inum)
 {
 	struct inode *ip;
 	struct ihashhead *ipp;
@@ -133,10 +131,7 @@ ufs_ihashlookup(dev, inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev, inum, flags)
-	dev_t dev;
-	ino_t inum;
-	int flags;
+ufs_ihashget(dev_t dev, ino_t inum, int flags)
 {
 	struct ihashhead *ipp;
 	struct inode *ip;
@@ -163,8 +158,7 @@ loop:
 * Insert the inode into the hash table, and return it locked.
  */
 void
-ufs_ihashins(ip)
-	struct inode *ip;
+ufs_ihashins(struct inode *ip)
 {
 	struct ihashhead *ipp;
 
@@ -181,8 +175,7 @@ ufs_ihashins(ip)
  * Remove the inode from the hash table.
  */
 void
-ufs_ihashrem(ip)
-	struct inode *ip;
+ufs_ihashrem(struct inode *ip)
 {
 	simple_lock(&ufs_ihash_slock);
 	LIST_REMOVE(ip, i_hash);

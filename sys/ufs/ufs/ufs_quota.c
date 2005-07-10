@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.34 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.35 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.34 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.35 2005/07/10 00:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,8 +66,7 @@ static const char *quotatypes[] = INITQFNAMES;
  * additional dquots set up here.
  */
 int
-getinoquota(ip)
-	struct inode *ip;
+getinoquota(struct inode *ip)
 {
 	struct ufsmount *ump = ip->i_ump;
 	struct vnode *vp = ITOV(ip);
@@ -98,11 +97,7 @@ getinoquota(ip)
  * Update disk usage, and take corrective action.
  */
 int
-chkdq(ip, change, cred, flags)
-	struct inode *ip;
-	int64_t change;
-	struct ucred *cred;
-	int flags;
+chkdq(struct inode *ip, int64_t change, struct ucred *cred, int flags)
 {
 	struct dquot *dq;
 	int i;
@@ -159,11 +154,7 @@ chkdq(ip, change, cred, flags)
  * Issue an error message if appropriate.
  */
 int
-chkdqchg(ip, change, cred, type)
-	struct inode *ip;
-	int64_t change;
-	struct ucred *cred;
-	int type;
+chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurblocks = dq->dq_curblocks + change;
@@ -213,11 +204,7 @@ chkdqchg(ip, change, cred, type)
  * Check the inode limit, applying corrective action.
  */
 int
-chkiq(ip, change, cred, flags)
-	struct inode *ip;
-	int32_t change;
-	struct ucred *cred;
-	int flags;
+chkiq(struct inode *ip, int32_t change, struct ucred *cred, int flags)
 {
 	struct dquot *dq;
 	int i;
@@ -273,11 +260,7 @@ chkiq(ip, change, cred, flags)
  * Issue an error message if appropriate.
  */
 int
-chkiqchg(ip, change, cred, type)
-	struct inode *ip;
-	int32_t change;
-	struct ucred *cred;
-	int type;
+chkiqchg(struct inode *ip, int32_t change, struct ucred *cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurinodes = dq->dq_curinodes + change;
@@ -329,8 +312,7 @@ chkiqchg(ip, change, cred, type)
  * size and not to have a dquot structure associated with it.
  */
 void
-chkdquot(ip)
-	struct inode *ip;
+chkdquot(struct inode *ip)
 {
 	struct ufsmount *ump = ip->i_ump;
 	int i;
@@ -355,11 +337,7 @@ chkdquot(ip)
  * Q_QUOTAON - set up a quota file for a particular file system.
  */
 int
-quotaon(p, mp, type, fname)
-	struct proc *p;
-	struct mount *mp;
-	int type;
-	caddr_t fname;
+quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *vp, **vpp;
@@ -429,10 +407,7 @@ again:
  * Q_QUOTAOFF - turn off disk quotas for a filesystem.
  */
 int
-quotaoff(p, mp, type)
-	struct proc *p;
-	struct mount *mp;
-	int type;
+quotaoff(struct proc *p, struct mount *mp, int type)
 {
 	struct vnode *vp;
 	struct vnode *qvp, *nextvp;
@@ -482,11 +457,7 @@ again:
  * Q_GETQUOTA - return current values in a dqblk structure.
  */
 int
-getquota(mp, id, type, addr)
-	struct mount *mp;
-	u_long id;
-	int type;
-	caddr_t addr;
+getquota(struct mount *mp, u_long id, int type, caddr_t addr)
 {
 	struct dquot *dq;
 	int error;
@@ -502,11 +473,7 @@ getquota(mp, id, type, addr)
  * Q_SETQUOTA - assign an entire dqblk structure.
  */
 int
-setquota(mp, id, type, addr)
-	struct mount *mp;
-	u_long id;
-	int type;
-	caddr_t addr;
+setquota(struct mount *mp, u_long id, int type, caddr_t addr)
 {
 	struct dquot *dq;
 	struct dquot *ndq;
@@ -562,11 +529,7 @@ setquota(mp, id, type, addr)
  * Q_SETUSE - set current inode and block usage.
  */
 int
-setuse(mp, id, type, addr)
-	struct mount *mp;
-	u_long id;
-	int type;
-	caddr_t addr;
+setuse(struct mount *mp, u_long id, int type, caddr_t addr)
 {
 	struct dquot *dq;
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -609,8 +572,7 @@ setuse(mp, id, type, addr)
  * Q_SYNC - sync quota files to disk.
  */
 int
-qsync(mp)
-	struct mount *mp;
+qsync(struct mount *mp)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *vp, *nextvp;
@@ -666,15 +628,15 @@ again:
  */
 #define DQHASH(dqvp, id) \
 	(((((long)(dqvp)) >> 8) + id) & dqhash)
-LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
-u_long dqhash;
+static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
+static u_long dqhash;
 
 /*
  * Dquot free list.
  */
 #define	DQUOTINC	5	/* minimum free dquots desired */
-TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
-long numdquot, desireddquot = DQUOTINC;
+static TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
+static long numdquot, desireddquot = DQUOTINC;
 
 MALLOC_DEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 
@@ -682,7 +644,7 @@ MALLOC_DEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
  * Initialize the quota system.
  */
 void
-dqinit()
+dqinit(void)
 {
 	dqhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
@@ -690,7 +652,7 @@ dqinit()
 }
 
 void
-dqreinit()
+dqreinit(void)
 {
 	struct dquot *dq;
 	struct dqhashhead *oldhash, *hash;
@@ -718,7 +680,7 @@ dqreinit()
  * Free resources held by quota system.
  */
 void
-dqdone()
+dqdone(void)
 {
 	hashdone(dqhashtbl, M_DQUOT);
 }
@@ -728,12 +690,8 @@ dqdone()
  * reading the information from the file if necessary.
  */
 int
-dqget(vp, id, ump, type, dqp)
-	struct vnode *vp;
-	u_long id;
-	struct ufsmount *ump;
-	int type;
-	struct dquot **dqp;
+dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
+    struct dquot **dqp)
 {
 	struct dquot *dq;
 	struct dqhashhead *dqh;
@@ -846,8 +804,7 @@ dqget(vp, id, ump, type, dqp)
  * Obtain a reference to a dquot.
  */
 void
-dqref(dq)
-	struct dquot *dq;
+dqref(struct dquot *dq)
 {
 
 	dq->dq_cnt++;
@@ -857,9 +814,7 @@ dqref(dq)
  * Release a reference to a dquot.
  */
 void
-dqrele(vp, dq)
-	struct vnode *vp;
-	struct dquot *dq;
+dqrele(struct vnode *vp, struct dquot *dq)
 {
 
 	if (dq == NODQUOT)
@@ -879,9 +834,7 @@ dqrele(vp, dq)
  * Update the disk quota in the quota file.
  */
 int
-dqsync(vp, dq)
-	struct vnode *vp;
-	struct dquot *dq;
+dqsync(struct vnode *vp, struct dquot *dq)
 {
 	struct vnode *dqvp;
 	struct mount *mp;
@@ -934,8 +887,7 @@ dqsync(vp, dq)
  * Flush all entries from the cache for a particular vnode.
  */
 void
-dqflush(vp)
-	struct vnode *vp;
+dqflush(struct vnode *vp)
 {
 	struct dquot *dq, *nextdq;
 	struct dqhashhead *dqh;

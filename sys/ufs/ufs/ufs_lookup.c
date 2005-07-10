@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.63 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.64 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.63 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.64 2005/07/10 00:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,7 @@ int	dirchk = 0;
  *	  nor deleting, add name to cache
  */
 int
-ufs_lookup(v)
-	void *v;
+ufs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
@@ -648,10 +647,7 @@ found:
 }
 
 void
-ufs_dirbad(ip, offset, how)
-	struct inode *ip;
-	doff_t offset;
-	const char *how;
+ufs_dirbad(struct inode *ip, doff_t offset, const char *how)
 {
 	struct mount *mp;
 
@@ -671,10 +667,7 @@ ufs_dirbad(ip, offset, how)
  *	name must be as long as advertised, and null terminated
  */
 int
-ufs_dirbadentry(dp, ep, entryoffsetinblock)
-	struct vnode *dp;
-	struct direct *ep;
-	int entryoffsetinblock;
+ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 {
 	int i;
 	int namlen;
@@ -728,10 +721,8 @@ bad:
  * argument ip is the inode to which the new directory entry will refer.
  */
 void
-ufs_makedirentry(ip, cnp, newdirp)
-	struct inode *ip;
-	struct componentname *cnp;
-	struct direct *newdirp;
+ufs_makedirentry(struct inode *ip, struct componentname *cnp,
+    struct direct *newdirp)
 {
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & SAVENAME) == 0)
@@ -757,12 +748,8 @@ ufs_makedirentry(ip, cnp, newdirp)
  * soft dependency code).
  */
 int
-ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
-	struct vnode *dvp;
-	struct vnode *tvp;
-	struct direct *dirp;
-	struct componentname *cnp;
-	struct buf *newdirbp;
+ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
+    struct componentname *cnp, struct buf *newdirbp)
 {
 	struct ucred *cr;
 	struct proc *p;
@@ -1028,11 +1015,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
  * to the size of the previous entry.
  */
 int
-ufs_dirremove(dvp, ip, flags, isrmdir)
-	struct vnode *dvp;
-	struct inode *ip;
-	int flags;
-	int isrmdir;
+ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 {
 	struct inode *dp = VTOI(dvp);
 	struct direct *ep;
@@ -1127,12 +1110,8 @@ out:
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
-	struct inode *dp, *oip;
-	ino_t newinum;
-	int newtype;
-	int isrmdir;
-	int iflags;
+ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
+    int isrmdir, int iflags)
 {
 	struct buf *bp;
 	struct direct *ep;
@@ -1177,10 +1156,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
  * NB: does not handle corrupted directories.
  */
 int
-ufs_dirempty(ip, parentino, cred)
-	struct inode *ip;
-	ino_t parentino;
-	struct ucred *cred;
+ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
 {
 	doff_t off;
 	struct dirtemplate dbuf;
@@ -1244,9 +1220,7 @@ ufs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ufs_checkpath(source, target, cred)
-	struct inode *source, *target;
-	struct ucred *cred;
+ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
 {
 	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;
