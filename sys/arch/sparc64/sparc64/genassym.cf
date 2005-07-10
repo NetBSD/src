@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2004/12/03 02:04:00 chs Exp $
+#	$NetBSD: genassym.cf,v 1.38 2005/07/10 00:50:16 christos Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ define	LSRUN		LSRUN
 define	LSONPROC	LSONPROC
 
 # proc fields and values
+define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_PID		offsetof(struct proc, p_pid)
