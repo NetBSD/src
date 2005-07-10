@@ -54,20 +54,20 @@ struct ath_lock {
 	int ipl;
 };
 
-#define	ATH_LOCK_INIT_IMPL(_type, _member)		\
-	do { (_type)->_member.count = 0; } while (0)
-#define	ATH_LOCK_IMPL(_type, _member)			\
+#define	ATH_LOCK_INIT_IMPL(_obj, _member)		\
+	do { (_obj)->_member.count = 0; } while (0)
+#define	ATH_LOCK_IMPL(_obj, _member)			\
 	do {						\
 		int __s = splnet();			\
-		if ((_type)->_member.count++ == 0)	\
-			(_type)->_member.ipl = __s;	\
+		if ((_obj)->_member.count++ == 0)	\
+			(_obj)->_member.ipl = __s;	\
 	} while (0)
-#define	ATH_UNLOCK_IMPL(_type, _member)					\
+#define	ATH_UNLOCK_IMPL(_obj, _member)					\
 	do {								\
-		if (--(_type)->_member.count == 0)			\
-			splx((_type)->_member.ipl);			\
+		if (--(_obj)->_member.count == 0)			\
+			splx((_obj)->_member.ipl);			\
 		else {							\
-			KASSERT((_type)->_member.count >= 0,		\
+			KASSERT((_obj)->_member.count >= 0,		\
 			    ("%s: no ATH_LOCK holders", __func__));	\
 		}							\
 	} while (0)
