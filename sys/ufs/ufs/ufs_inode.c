@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.48 2005/07/10 00:18:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.49 2005/07/10 01:08:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.48 2005/07/10 00:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.49 2005/07/10 01:08:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #endif
 
