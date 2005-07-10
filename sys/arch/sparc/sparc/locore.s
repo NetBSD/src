@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215 2005/02/01 22:33:02 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.216 2005/07/10 17:02:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2433,7 +2433,12 @@ _C_LABEL(_syscall):
 	std	%i2, [%sp + CCFSZ + 56]
 	mov	%l1, %o2		! (pc)
 	std	%i4, [%sp + CCFSZ + 64]
-	call	_C_LABEL(syscall)	! syscall(code, &tf, pc, suncompat)
+
+	set	curlwp, %l1
+	ld	[%l1], %l1
+	ld	[%l1 + L_PROC], %l1
+	ld	[%l1 + P_MD_SYSCALL], %l1
+	call	%l1			! syscall(code, &tf, pc, suncompat)
 	 std	%i6, [%sp + CCFSZ + 72]
 	! now load em all up again, sigh
 	ldd	[%sp + CCFSZ + 0], %l0	! new %psr, new pc

@@ -1,6 +1,8 @@
-/*	$NetBSD: proc.h,v 1.13 2005/07/10 17:02:19 christos Exp $ */
+/*	$NetBSD: userret.h,v 1.1 2005/07/10 17:02:19 christos Exp $ */
 
 /*
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -12,6 +14,7 @@
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
+ *	This product includes software developed by Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,7 +24,12 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed by Harvard University.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,41 +45,59 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	8.1 (Berkeley) 6/11/93
+ *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
 
-#ifndef _SPARC_PROC_H_
-#define _SPARC_PROC_H_
+#include <sys/userret.h>
+
+static __inline void userret(struct lwp *, int,  u_quad_t);
+static __inline void share_fpu(struct lwp *, struct trapframe *);
+
 
 /*
- * Machine-dependent part of the proc structure for SPARC.
+ * Define the code needed before returning to user mode, for
+ * trap, mem_access_fault, and syscall.
  */
-struct mdlwp {
-	struct	trapframe *md_tf;	/* trap/syscall registers */
-	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
-	u_long	md_flags;
-	struct cpu_info	*md_fpu;	/* Module holding FPU state */
-};
+static __inline void
+userret(struct lwp *l, int pc, u_quad_t oticks)
+{
+	struct proc *p = l->l_proc;
+	int sig;
+	mi_userret(l);
 
-struct mdproc {
-	void	(*md_syscall)(register_t, struct trapframe *, register_t);
-};
+	if (cpuinfo.want_ast) {
+		cpuinfo.want_ast = 0;
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
+		}
+	}
+	if (cpuinfo.want_resched) {
+		/*
+		 * We are being preempted.
+		 */
+		preempt(0);
+		while ((sig = CURSIG(l)) != 0)
+			postsig(sig);
+	}
 
-/* md_flags */
-#define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
+	/*
+	 * If profiling, charge recent system time to the trapped pc.
+	 */
+	if (p->p_flag & P_PROFIL)
+		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
+}
 
 /*
- * FPU context switch lock
- * Prevent interrupts that grab the kernel lock
+ * If someone stole the FPU while we were away, do not enable it
+ * on return.  This is not done in userret() above as it must follow
+ * the ktrsysret() in syscall().  Actually, it is likely that the
+ * ktrsysret should occur before the call to userret.
  */
-extern struct simplelock	fpulock;
-#define FPU_LOCK(s)		do {	\
-	s = splclock();			\
-	simple_lock(&fpulock);		\
-} while (/* CONSTCOND */ 0)
-#define FPU_UNLOCK(s)		do {	\
-	simple_unlock(&fpulock);	\
-	splx(s);			\
-} while (/* CONSTCOND */ 0)
-
-#endif /* _SPARC_PROC_H_ */
+static __inline void share_fpu(struct lwp *l, struct trapframe *tf)
+{
+	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fplwp != l)
+		tf->tf_psr &= ~PSR_EF;
+}
