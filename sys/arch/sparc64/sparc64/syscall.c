@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2005/07/10 02:34:42 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.3 2005/07/10 05:17:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2005/07/10 02:34:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2005/07/10 05:17:37 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -202,7 +202,17 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t code,
 	if (s64) {
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		register64_t *argp;
-
+#ifdef DEBUG
+#ifdef __arch64__
+		if ((p->p_flag & P_32) != 0) {
+			printf("syscall(): 64-bit stack but P_32 set\n");
+			Debugger();
+		}
+#else
+		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
+		Debugger();
+#endif
+#endif
 		i = (*callp)->sy_narg;
 		if (__predict_false(i > nap)) {	/* usually false */
 			void *pos = (char *)(u_long)tf->tf_out[6] + BIAS +
@@ -260,6 +270,7 @@ syscall_intern(struct proc *p)
 #endif
 	p->p_md.md_syscall = syscall_plain;
 }
+
 /*
  * System calls.  `pc' is just a copy of tf->tf_pc.
  *
