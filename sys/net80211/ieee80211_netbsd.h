@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.3 2005/06/22 22:07:49 martin Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.4 2005/07/10 08:12:50 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -39,9 +39,6 @@
 void if_printf(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
-/*
- * Beacon locking definitions.
- */
 struct ieee80211_lock {
 	int count;
 	int ipl;
@@ -65,6 +62,9 @@ struct ieee80211_lock {
 	IASSERT((_ic)->_member.count > 0,		\
 	    ("%s: IEEE80211_LOCK not held", __func__));
 
+/*
+ * Beacon locking definitions.
+ */
 typedef struct ieee80211_lock ieee80211_beacon_lock_t;
 #define	IEEE80211_BEACON_LOCK_INIT(_ic, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_ic, _name, ic_beaconlock)
