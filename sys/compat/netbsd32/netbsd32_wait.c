@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.6 2003/02/14 10:19:14 dsl Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.7 2005/07/10 11:28:03 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.6 2003/02/14 10:19:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.7 2005/07/10 11:28:03 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ netbsd32_wait4(l, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -parent->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
 		return (EINVAL);
 
 	error =  find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
@@ -77,8 +77,14 @@ netbsd32_wait4(l, v, retval)
 		return 0;
 	}
 
+	/*
+	 * Collect child u-areas.
+	 */
+	uvm_uarea_drain(FALSE);
+
 	retval[0] = child->p_pid;
-	if (child->p_stat == SZOMB) {
+
+	if (P_ZOMBIE(child)) {
 		if (SCARG(uap, status)) {
 			status = child->p_xstat;	/* convert to int */
 			error = copyout((caddr_t)&status,
