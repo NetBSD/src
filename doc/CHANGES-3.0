@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.167 2005/07/09 23:07:31 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.168 2005/07/10 15:34:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10354,4 +10354,14 @@ usr.bin/su/su_pam.c				1.10
 	Set LOGNAME in the new environment (in addition to USER).
 	This fixes PR bin/30670.
 	[kleink, ticket #551]
+
+distrib/i386/floppies/ramdisk-big/list.inet6	1.2
+
+	Correct the path to ping6 & rtsol.
+	[lukem, ticket #568]
+
+sbin/veriexecctl/Makefile			1.9
+
+	Need -I. here as well so OBJDIR's work correctly in all cases.
+	[blymn, ticket #569]
 
