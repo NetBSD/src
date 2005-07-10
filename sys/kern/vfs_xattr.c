@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.2 2005/07/10 22:04:20 thorpej Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.3 2005/07/10 22:10:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.2 2005/07/10 22:04:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.3 2005/07/10 22:10:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,51 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.2 2005/07/10 22:04:20 thorpej Exp $"
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+/*
+ * Credential check based on process requesting service, and per-attribute
+ * permissions.
+ *
+ * NOTE: Vnode must be locked.
+ */
+int
+extattr_check_cred(struct vnode *vp, int attrnamespace,
+    struct ucred *cred, struct proc *p, int access)
+{
+
+	if (cred == NOCRED)
+		return (0);
+
+	switch (attrnamespace) {
+	case EXTATTR_NAMESPACE_SYSTEM:
+		/*
+		 * Do we really want to allow this, or just require that
+		 * these requests come from kernel code (NOCRED case above)?
+		 */
+		return (suser(cred, &p->p_acflag));
+
+	case EXTATTR_NAMESPACE_USER:
+		return (VOP_ACCESS(vp, access, cred, p));
+
+	default:
+		return (EPERM);
+	}
+}
+
+/*
+ * Default vfs_extattrctl routine for file systems that do not support
+ * it.
+ */
+/*ARGSUSED*/
+int
+vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
+    int attrnamespace, const char *attrname, struct proc *p)
+{
+
+	if (vp != NULL)
+		VOP_UNLOCK(vp, 0);
+	return (EOPNOTSUPP);
+}
 
 /*
  * Push extended attribute configuration information into the file
