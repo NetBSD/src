@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.201 2005/06/27 17:11:21 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.202 2005/07/10 00:54:54 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201 2005/06/27 17:11:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.202 2005/07/10 00:54:54 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -130,11 +130,6 @@ struct execsw_entry {
 
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
-#endif
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
 #endif
 
 #ifdef COMPAT_16
