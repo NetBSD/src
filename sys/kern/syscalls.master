@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.146 2005/05/29 21:07:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.147 2005/07/10 22:04:20 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -751,3 +751,30 @@
 			    const sigset_t *mask); }
 374	STD		{ int sys_pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
+375	STD		{ int sys_setxattr(const char *path, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+376	STD		{ int sys_lsetxattr(const char *path, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+377	STD		{ int sys_fsetxattr(int fd, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+378	STD		{ int sys_getxattr(const char *path, \
+			    const char *name, void *value, size_t size); }
+379	STD		{ int sys_lgetxattr(const char *path, \
+			    const char *name, void *value, size_t size); }
+380	STD		{ int sys_fgetxattr(int fd, \
+			    const char *name, void *value, size_t size); }
+381	STD		{ int sys_listxattr(const char *path, \
+			    char *list, size_t size); }
+382	STD		{ int sys_llistxattr(const char *path, \
+			    char *list, size_t size); }
+383	STD		{ int sys_flistxattr(int fd, \
+			    char *list, size_t size); }
+384	STD		{ int sys_removexattr(const char *path, \
+			    const char *name); }
+385	STD		{ int sys_lremovexattr(const char *path, \
+			    const char *name); }
+386	STD		{ int sys_fremovexattr(int fd, \
+			    const char *name); }
