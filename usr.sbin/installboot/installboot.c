@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.17 2004/08/15 22:00:12 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.18 2005/07/10 07:12:13 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.17 2004/08/15 22:00:12 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.18 2005/07/10 07:12:13 isaki Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 		err(1, "Examining file system `%s'", params->filesystem);
 	if (params->fstype != NULL) {
 		if (! params->fstype->match(params))
-			err(1, "File system `%s' is not of type %s",
+			errx(1, "File system `%s' is not of type %s",
 			    params->filesystem, params->fstype->name);
 	} else {
 		params->fstype = &fstypes[0];
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 			err(1, "Examining primary bootstrap `%s'",
 			    params->stage1);
 		if (!S_ISREG(params->s1stat.st_mode))
-			err(1, "`%s' must be a regular file", params->stage1);
+			errx(1, "`%s' must be a regular file", params->stage1);
 	}
 	if (argc == 3) {
 		params->stage2 = argv[2];
