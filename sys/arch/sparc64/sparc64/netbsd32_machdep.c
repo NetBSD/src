@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.50 2005/07/10 16:15:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.50 2005/07/10 16:15:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube E
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/vuid_event.h>
-
 #include <machine/netbsd32_machdep.h>
 
 /* Provide a the name of the architecture we're emulating */
@@ -148,6 +147,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_out[7] = 0;
 }
 
+#ifdef COMPAT_16
 /*
  * NB: since this is a 32-bit address world, sf_scp and sf_sc
  *	can't be a pointer since those are 64-bits wide.
@@ -165,15 +165,15 @@ struct sparc32_sigframe {
 extern int sigdebug;
 #endif
 
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+static void
+netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	register struct sparc32_sigframe *fp;
-	register struct trapframe64 *tf;
-	register int addr, onstack; 
+	struct sparc32_sigframe *fp;
+	struct trapframe64 *tf;
+	int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
@@ -288,6 +288,112 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
+}
+#endif
+
+struct sparc32_sigframe_siginfo {
+	siginfo32_t sf_si;
+	ucontext32_t sf_uc;
+};
+
+static void
+netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	int onstack;
+	int sig = ksi->ksi_signo;
+	ucontext32_t uc;
+	struct sparc32_sigframe_siginfo *fp;
+	netbsd32_pointer_t catcher;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct rwindow32 *oldsp, *newsp;
+	int ucsz;
+
+	/* Need to attempt to zero extend this 32-bit pointer */
+	oldsp = (struct rwindow32*)(u_long)(u_int)tf->tf_out[6];
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct sparc32_sigframe_siginfo *)
+		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
+	else
+		fp = (struct sparc32_sigframe_siginfo *)oldsp;
+	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	uc.uc_flags = _UC_SIGMASK |
+		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+			? _UC_SETSTACK : _UC_CLRSTACK);
+	uc.uc_sigmask = *mask;
+	uc.uc_link = 0;
+	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext32(l, &uc.uc_mcontext, &uc.uc_flags);
+	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
+
+	/*
+	 * Now copy the stack contents out to user space.
+	 * We need to make sure that when we start the signal handler,
+	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
+	 * joins seamlessly with the frame it was in when the signal occurred,
+	 * so that the debugger and _longjmp code can back up through it.
+	 * Since we're calling the handler directly, allocate a full size
+	 * C stack frame.
+	 */
+	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
+	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
+	    copyout(&uc, &fp->sf_uc, ucsz) ||
+	    suword(&newsp->rw_in[6], (intptr_t)oldsp)) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	default:
+		/* Unsupported trampoline version; kill the process. */
+		sigexit(l, SIGILL);
+	case 2:
+		/*
+		 * Arrange to continue execution at the user's handler.
+		 * It needs a new stack pointer, a return address and
+		 * three arguments: (signo, siginfo *, ucontext *).
+		 */
+		catcher = (intptr_t)SIGACTION(p, sig).sa_handler;
+		tf->tf_pc = catcher;
+		tf->tf_npc = catcher + 4;
+		tf->tf_out[0] = sig;
+		tf->tf_out[1] = (intptr_t)&fp->sf_si;
+		tf->tf_out[2] = (intptr_t)&fp->sf_uc;
+		tf->tf_out[6] = (intptr_t)newsp;
+		tf->tf_out[7] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp - 8;
+		break;
+	}
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+void
+netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		netbsd32_sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		netbsd32_sendsig_siginfo(ksi, mask);
 }
 
 /*
