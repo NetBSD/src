@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2005/07/10 00:50:16 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.2 2005/07/10 02:34:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,15 +86,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1 2005/07/10 00:50:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2005/07/10 02:34:42 christos Exp $");
 
 #define NEW_FPSTATE
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +134,7 @@ union args {
 };
 
 static __inline int handle_old(struct trapframe64 *, register_t *);
-static __inline int getargs(struct trapframe64 *, register_t, int,
+static __inline int getargs(struct proc *, struct trapframe64 *, register_t,
     const struct sysent **, union args *);
 void syscall_plain(struct trapframe64 *, register_t, register_t);
 void syscall_fancy(struct trapframe64 *, register_t, register_t);
@@ -169,13 +167,14 @@ handle_old(struct trapframe64 *tf, register_t *code)
  * ones later as needed.
  */
 static __inline int
-getargs(struct trapframe64 *tf, register_t code, int nsys,
+getargs(struct proc *p, struct trapframe64 *tf, register_t code,
     const struct sysent **callp, union args *args)
 {
 	int64_t *ap = &tf->tf_out[0];
 	int i, error, nap = 6;
 	int s64 = tf->tf_out[6] & 1L; /* Do we have a 64-bit stack? */
 
+	*callp = p->p_emul->e_sysent;
 	switch (code) {
 	case SYS_syscall:
 		code = *ap++;
@@ -195,7 +194,7 @@ getargs(struct trapframe64 *tf, register_t code, int nsys,
 		break;
 	}
 
-	if (code < 0 || code >= nsys)
+	if (code < 0 || code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 
 	*callp += code;
@@ -308,7 +307,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 #endif
 #endif
 	struct proc *p = l->l_proc;
-	int error, new, nsys;
+	int error, new;
 	register_t rval[2];
 	u_quad_t sticks;
 	vaddr_t opc, onpc;
@@ -316,8 +315,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
 
 	/*
 	 * save pc/npc in case of ERESTART
@@ -330,7 +327,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(tf, code, nsys, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
@@ -408,7 +405,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	ap = &args;
 #endif
 	struct proc *p = l->l_proc;
-	int error, new, nsys;
+	int error, new;
 	register_t rval[2];
 	u_quad_t sticks;
 	vaddr_t opc, onpc;
@@ -416,8 +413,6 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
 
 	/*
 	 * save pc/npc in case of ERESTART
@@ -430,7 +425,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(tf, code, nsys, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
 		goto bad;
 		
 #ifdef __arch64__
