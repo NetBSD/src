@@ -1,8 +1,11 @@
-# 	$NetBSD: TADPOLE3GX,v 1.26 2005/02/25 13:46:51 simonb Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.27 2005/07/10 15:49:12 macallan Exp $
 
 include "arch/sparc/conf/std.sparc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# all supported SPARCbooks have V8 CPUs
+makeoptions		CCPUOPTS="-mcpu=v8 -mtune=v8"
 
 maxusers	32
 
@@ -183,8 +186,8 @@ iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
 ## SBus to PCMCIA bridge
-#tpcic*	at sbus? slot ? offset ?		# PCMCIA bridge (tadpole 3gx)
-#pcmcia*	at tpcic?
+tslot*	at sbus? slot ? offset ?		# PCMCIA bridge (tadpole 3gx)
+pcmcia*	at tslot?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -218,9 +221,9 @@ zstty*	at zs? channel ?	# mouse
 com*	at obio0					# sun4m (tadpole)
 
 ## PCMCIA serial interfaces
-#com*	at pcmcia?
-#pcmcom*	at pcmcia?
-#com*	at pcmcom?
+com*	at pcmcia?
+pcmcom*	at pcmcia?
+com*	at pcmcom?
 
 #### Disk controllers and disks
 
@@ -257,8 +260,10 @@ ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## PCMCIA IDE controllers
-#wdc*	at pcmcia?
-#wd*	at wdc?
+wdc*	at pcmcia?
+
+atabus* at ata?
+wd*		at atabus? drive ? flags 0x0000
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -282,10 +287,12 @@ ledma0		at sbus0 slot ? offset ?		# sun4m on-board
 le0		at ledma0				# sun4m on-board
 
 # PCMCIA ethernet devices
-#ep*	at pcmcia?
+ep*	at pcmcia?
 #mbe*	at pcmcia?
 #ne*	at pcmcia?
 #sm*	at pcmcia?
+
+wi*	at pcmcia?
 
 ## Loopback network interface; required
 pseudo-device	loop
