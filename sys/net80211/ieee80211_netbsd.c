@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.5 2005/07/10 08:11:40 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.5 2005/07/10 08:11:40 dyoung Exp $");
 #endif
 
 /*
@@ -380,6 +380,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 		cur_ifindex = ic->ic_ifp->if_index;
 
 		if (cur_ifindex != last_ifindex) {
+			saw_bss = 0;
 			ifcount++;
 			last_ifindex = cur_ifindex;
 		}
