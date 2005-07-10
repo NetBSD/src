@@ -1,4 +1,40 @@
-/*	$NetBSD: vfs_xattr.c,v 1.1 2005/07/09 01:05:24 thorpej Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.2 2005/07/10 22:04:20 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.1 2005/07/09 01:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.2 2005/07/10 22:04:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +88,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.1 2005/07/09 01:05:24 thorpej Exp $"
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/extattr.h>
+#include <sys/xattr.h>
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*
- * Push extended attribute configuration information into the VFS.
+ * Push extended attribute configuration information into the file
+ * system.
  *
  * NOTE: Not all file systems that support extended attributes will
  * require the use of this system call.
@@ -678,5 +716,367 @@ sys_extattr_list_link(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
 
 	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*****************************************************************************
+ * Linux-compatible <sys/xattr.h> API for file system extended attributes
+ *****************************************************************************/
+
+int
+sys_setxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_setxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	/* XXX flags */
+
+	error = extattr_set_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_lsetxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_lsetxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	/* XXX flags */
+
+	error = extattr_set_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_fsetxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_fsetxattr_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct vnode *vp;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
+	if (error)
+		return (error);
+	vp = (struct vnode *) fp->f_data;
+
+	/* XXX flags */
+
+	error = extattr_set_vp(vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+int
+sys_getxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_getxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_get_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_lgetxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_lgetxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_get_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_fgetxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_fgetxattr_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct vnode *vp;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
+	if (error)
+		return (error);
+	vp = (struct vnode *) fp->f_data;
+
+	error = extattr_get_vp(vp, EXTATTR_NAMESPACE_USER,
+	    attrname, SCARG(uap, value), SCARG(uap, size), p, retval);
+
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+int
+sys_listxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_listxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(char *) list;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	int error;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_list_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    SCARG(uap, list), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_llistxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_llistxattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(char *) list;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	int error;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_list_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    SCARG(uap, list), SCARG(uap, size), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_flistxattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_flistxattr_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) list;
+		syscallarg(size_t) size;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct vnode *vp;
+	int error;
+
+	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
+	if (error)
+		return (error);
+	vp = (struct vnode *) fp->f_data;
+
+	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_USER,
+	    SCARG(uap, list), SCARG(uap, size), p, retval);
+
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+int
+sys_removexattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_removexattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_delete_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, p);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_lremovexattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_lremovexattr_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	error = extattr_delete_vp(nd.ni_vp, EXTATTR_NAMESPACE_USER,
+	    attrname, p);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_fremovexattr(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_fremovexattr_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) name;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct vnode *vp;
+	char attrname[XATTR_NAME_MAX];
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		return (error);
+
+	error = getvnode(p->p_fd, SCARG(uap, fd), &fp);
+	if (error)
+		return (error);
+	vp = (struct vnode *) fp->f_data;
+
+	error = extattr_delete_vp(vp, EXTATTR_NAMESPACE_USER,
+	    attrname, p);
+
+	FILE_UNUSE(fp, p);
 	return (error);
 }
