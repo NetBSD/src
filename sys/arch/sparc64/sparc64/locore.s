@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205 2005/05/31 00:45:05 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.206 2005/07/10 00:50:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3915,7 +3915,11 @@ syscall_setup:
 	clr	%g4
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
-	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
+	set	CURLWP, %l1
+	LDPTR	[%l1], %l1
+	LDPTR	[%l1 + L_PROC], %l1		! now %l1 points to p
+	LDPTR	[%l1 + P_MD_SYSCALL], %l1
+	call	%l1
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
 	/* see `proc_trampoline' for the reason for this label */

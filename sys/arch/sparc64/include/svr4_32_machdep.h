@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.4 2003/01/18 06:55:22 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.5 2005/07/10 00:50:16 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@ typedef struct svr4_32_mcontext {
 #define	SVR4_32_UC_MACHINE_PAD	23	/* size of uc_pad */
 
 struct svr4_32_ucontext;
+
+#define svr4_32_syscall_intern syscall_intern
 
 int svr4_32_trap __P((int, struct lwp *));
 

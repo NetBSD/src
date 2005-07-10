@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.121 2005/07/10 00:50:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2005/07/10 00:50:16 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/userret.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -77,12 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $");
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -91,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2005/05/31 00:53:02 christos Exp $");
 #include <machine/trap.h>
 #include <machine/instr.h>
 #include <machine/pmap.h>
+#include <machine/userret.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -379,8 +373,6 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void share_fpu __P((struct lwp *, struct trapframe64 *));
-static __inline void userret __P((struct lwp *, int,  u_quad_t));
 
 void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
 void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
@@ -391,7 +383,6 @@ void text_access_fault __P((struct trapframe64 *tf, unsigned type,
 	vaddr_t pc, u_long sfsr));
 void text_access_error __P((struct trapframe64 *tf, unsigned type, 
 	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr));
-void syscall __P((struct trapframe64 *, register_t code, register_t pc));
 
 #ifdef DEBUG
 void print_trapframe __P((struct trapframe64 *));
@@ -431,55 +422,6 @@ print_trapframe(tf)
 
 }
 #endif
-
-/*
- * Define the code needed before returning to user mode, for
- * trap, mem_access_fault, and syscall.
- */
-static __inline void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
-{
-	struct proc *p = l->l_proc;
-
-	mi_userret(l);
-
-	if (want_ast) {
-		want_ast = 0;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
-		}
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
-}
-
-/*
- * If someone stole the FPU while we were away, do not enable it
- * on return.  This is not done in userret() above as it must follow
- * the ktrsysret() in syscall().  Actually, it is likely that the
- * ktrsysret should occur before the call to userret.
- *
- * Oh, and don't touch the FPU bit if we're returning to the kernel.
- */
-static __inline void
-share_fpu(l, tf)
-	struct lwp *l;
-	struct trapframe64 *tf;
-{
-	if (!(tf->tf_tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) &&
-	    fplwp != l)
-		tf->tf_tstate &= ~(PSTATE_PEF << TSTATE_PSTATE_SHIFT);
-}
 
 /*
  * Called from locore.s trap handling, for non-MMU-related traps.
@@ -1801,413 +1743,4 @@ out:
 		print_trapframe(tf);
 	}
 #endif
-}
-
-/*
- * System calls.  `pc' is just a copy of tf->tf_pc.
- *
- * Note that the things labelled `out' registers in the trapframe were the
- * `in' registers within the syscall trap code (because of the automatic
- * `save' effect of each trap).  They are, however, the %o registers of the
- * thing that made the system call, and are named that way here.
- *
- * 32-bit system calls on a 64-bit system are a problem.  Each system call
- * argument is stored in the smaller of the argument's true size or a
- * `register_t'.  Now on a 64-bit machine all normal types can be stored in a
- * `register_t'.  (The only exceptions would be 128-bit `quad's or 128-bit
- * extended precision floating point values, which we don't support.)  For
- * 32-bit syscalls, 64-bit integers like `off_t's, double precision floating
- * point values, and several other types cannot fit in a 32-bit `register_t'.
- * These will require reading in two `register_t' values for one argument.
- *
- * In order to calculate the true size of the arguments and therefore whether
- * any argument needs to be split into two slots, the system call args
- * structure needs to be built with the appropriately sized register_t.
- * Otherwise the emul needs to do some magic to split oversized arguments.
- *
- * We can handle most this stuff for normal syscalls by using either a 32-bit
- * or 64-bit array of `register_t' arguments.  Unfortunately ktrace always
- * expects arguments to be `register_t's, so it loses badly.  What's worse,
- * ktrace may need to do size translations to massage the argument array
- * appropriately according to the emulation that is doing the ktrace.
- *  
- */
-void
-syscall(tf, code, pc)
-	struct trapframe64 *tf;
-	register_t code;
-	register_t pc;
-{
-	int i, nsys, nap;
-	int64_t *ap;
-	const struct sysent *callp;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	int error = 0, new;
-	union args {
-		register32_t i[8];
-		register64_t l[8];
-		register_t   r[8];
-	} args;
-	register_t rval[2];
-	u_quad_t sticks;
-	vaddr_t opc, onpc;
-
-#ifdef DEBUG
-	write_user_windows();
-	if (tf->tf_pc == tf->tf_npc) {
-		printf("syscall: tpc %p == tnpc %p\n", (void *)(u_long)tf->tf_pc,
-		    (void *)(u_long)tf->tf_npc);
-		Debugger();
-	}
-	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
-	    trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
-		printf("%d syscall(%lx, %p, %lx)\n",
-		       curproc ? curproc->p_pid : -1, (u_long)code, tf,
-		       (u_long)pc);
-	if (trapdebug & TDB_FRAME) {
-		print_trapframe(tf);
-	}
-	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d tl %d syscall(%lx, %p, %lx)\n",
-		       curproc ? curproc->p_pid : -1, tl(), (u_long)code, tf,
-		       (u_long)pc); 
-		Debugger();
-	}
-#endif
-
-	uvmexp.syscalls++;
-#ifdef DIAGNOSTIC
-	if (tf->tf_tstate & TSTATE_PRIV)
-		panic("syscall from kernel");
-	if (curpcb != &l->l_addr->u_pcb)
-		panic("syscall: curpcb/ppcb mismatch");
-	if (tf != (struct trapframe64 *)((caddr_t)curpcb + USPACE) - 1)
-		panic("syscall: trapframe");
-#endif
-	sticks = p->p_sticks;
-	l->l_md.md_tf = tf;
-	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
-
-	/*
-	 * save pc/npc in case of ERESTART
-	 * adjust pc/npc to new values
-	 */
-	opc = tf->tf_pc;
-	onpc = tf->tf_npc;
-
-	if (new)
-		tf->tf_pc = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
-	else
-		tf->tf_pc = tf->tf_npc;
-
-	tf->tf_npc = tf->tf_pc + 4;
-
-	/*
-	 * The first six system call arguments are in the six %o registers.
-	 * Any arguments beyond that are in the `argument extension' area
-	 * of the user's stack frame (see <machine/frame.h>).
-	 *
-	 * Check for ``special'' codes that alter this, namely syscall and
-	 * __syscall.  The latter takes a quad syscall number, so that other
-	 * arguments are at their natural alignments.  Adjust the number
-	 * of ``easy'' arguments as appropriate; we will copy the hard
-	 * ones later as needed.
-	 */
-	ap = &tf->tf_out[0];
-	nap = 6;
-
-	switch (code) {
-	case SYS_syscall:
-		code = *ap++;
-		nap--;
-		break;
-	case SYS___syscall:
-		if (code < nsys &&
-		    callp[code].sy_call != callp[p->p_emul->e_nosys].sy_call)
-			break; /* valid system call */
-		if (tf->tf_out[6] & 1L) {
-			/* longs *are* quadwords */
-			code = ap[0];
-			ap += 1;
-			nap -= 1;			
-		} else {
-			code = ap[_QUAD_LOWWORD];
-			ap += 2;
-			nap -= 2;
-		}
-		break;
-	}
-
-#ifdef DEBUG
-	if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
-		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", 
-		       l ? p->p_pid : -1, (int)code, (u_int)code,
-		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
-		       (p->p_emul->e_syscallnames) ?
-		       ((code < 0 || code >= nsys) ? 
-			"illegal syscall" : 
-			p->p_emul->e_syscallnames[code]) :
-		       "unknown syscall");
-	if (p->p_emul->e_syscallnames)
-		l->l_addr->u_pcb.lastcall = 
-			((code < 0 || code >= nsys) ? 
-			 "illegal syscall" : 
-			 p->p_emul->e_syscallnames[code]);
-#endif
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
-	else if (tf->tf_out[6] & 1L) {
-		register64_t *argp;
-#ifdef DEBUG
-#ifdef __arch64__
-		if ((curproc->p_flag & P_32) != 0) {
-			printf("syscall(): 64-bit stack but P_32 set\n");
-			Debugger();
-		}
-#else
-		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
-		Debugger();
-#endif
-#endif
-		/* 64-bit stack -- not really supported on 32-bit kernels */
-		callp += code;
-		i = callp->sy_narg; /* Why divide? */
-
-		if (i > nap) {	/* usually false */
-			if (i > 8)
-				panic("syscall nargs");
-			/* Read the whole block in */
-			error = copyin((caddr_t)(u_long)tf->tf_out[6] + BIAS +
-				       offsetof(struct frame64, fr_argx),
-				       &args.l[nap],
-				       (i - nap) * sizeof(register64_t));
-			i = nap;
-		}
-		/* It should be faster to do <=6 longword copies than call memcpy */
-		for (argp = &args.l[0]; i--;) 
-			*argp++ = *ap++;
-		
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code, code, NULL, args.r);
-#endif
-		if (error)
-			goto bad;
-#ifdef DEBUG
-		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
-			for (i = 0; i < callp->sy_narg; i++) 
-				printf("arg[%d]=%lx ", i, (long)(args.l[i]));
-			printf("\n");
-		}
-		if (trapdebug & TDB_STOPCALL) { 
-			printf("stop precall\n");
-			Debugger();
-		}
-#endif
-	} else {
-		register32_t *argp;
-		int j;
-
-		/* 32-bit stack */
-		callp += code;
-
-#ifdef DIAGNOSTIC
-#if defined(__arch64__)
-		if ((curproc->p_flag & P_32) == 0)
-			printf("syscall(): 32-bit stack but no P_32\n");
-#endif
-#endif
-
-		i = (long)callp->sy_argsize / sizeof(register32_t);
-		if (i > nap) {	/* usually false */
-			register32_t temp[6];
-			if (i > 8)
-				panic("syscall nargs");
-			/* Read the whole block in */
-			error = copyin((caddr_t)(u_long)(tf->tf_out[6] +
-					offsetof(struct frame32, fr_argx)),
-				       &temp, (i - nap) * sizeof(register32_t));
-			/* Copy each to the argument array */
-			for (j = 0; nap + j < i; j++)
-				args.i[nap+j] = temp[j];
-#ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
-				int k;
-				printf("Copyin args of %d from %p:\n", j, 
-				       (caddr_t)(u_long)(tf->tf_out[6] +
-					offsetof(struct frame32, fr_argx)));
-				for (k = 0; k < j; k++)
-					printf("arg %d = %p at %d val %p\n",
-					    k, (void *)(u_long)temp[k], nap + k,
-					    (void *)(u_long)args.i[nap + k]);
-			}
-#endif
-			i = nap;
-		}
-		/* Need to convert from int64 to int32 or we lose */
-		for (j = i, argp = &args.i[0]; i--;) 
-			*argp++ = *ap++;
-
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL)) {
-#if defined(__arch64__)
-			union args args64;
-
-			for (i = 0; i < j; i++)
-				args64.l[i] = args.i[i];
-			ktrsyscall(p, code, code, NULL, args64.r);
-#else
-			ktrsyscall(p, code, code, NULL, args.r);
-#endif
-		}
-#endif
-		if (error)
-			goto bad;
-
-#ifdef DEBUG
-		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
-			for (i = 0; i < (long)callp->sy_argsize /
-				     sizeof(register32_t); i++) 
-				printf("arg[%d]=%x ", i, (int)(args.i[i]));
-			printf("\n");
-		}
-		if (trapdebug & TDB_STOPCALL) { 
-			printf("stop precall\n");
-			Debugger();
-		}
-#endif
-	}
-
-	rval[0] = 0;
-	rval[1] = tf->tf_out[1];
-#ifdef DEBUG
-	if (callp->sy_call == sys_nosys) {
-		printf("trapdebug: emul %s UNIPL syscall %d:%s\n", 
-		       p->p_emul->e_name, (int)code, 
-		       p->p_emul->e_syscallnames ? (
-			       (code < 0 || code >= nsys) ? 
-			       "illegal syscall" : 
-			       p->p_emul->e_syscallnames[code]) :
-		       "unknown syscall");
-	}
-#endif
-
-        /* Lock the kernel if the syscall isn't MP-safe. */
-	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_LOCK(l);
-
-	error = (*callp->sy_call)(l, &args, rval);
-
-	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_UNLOCK(l);
-
-	switch (error) {
-	case 0:
-		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval[0];
-		tf->tf_out[1] = rval[1];
-		if (!new)
-			/* old system call convention: clear C on success */
-			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
-					   TSTATE_CCR_SHIFT);	/* success */
-		break;
-
-	case ERESTART:
-		tf->tf_pc = opc;
-		tf->tf_npc = onpc;
-		break;
-
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_out[0] = error;
-		tf->tf_tstate |= (((int64_t)(ICC_C | XCC_C)) <<
-				  TSTATE_CCR_SHIFT);	/* fail */
-		tf->tf_pc = onpc;
-		tf->tf_npc = tf->tf_pc + 4;
-		break;
-	}
-
-
-	userret(l, pc, sticks);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval);
-#endif
-	share_fpu(l, tf);
-#ifdef DEBUG
-	if (trapdebug & (TDB_STOPCALL | TDB_SYSTOP)) { 
-		Debugger();
-	}
-	if (trapdebug & TDB_FRAME) {
-		print_trapframe(tf);
-	}
-#endif
-}
-
-/*
- * Process the tail end of a fork() for the child.
- */
-void
-child_return(arg)
-	void *arg;
-{
-	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-
-	/*
-	 * Return values in the frame set by cpu_lwp_fork().
-	 */
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, l->l_md.md_tf->tf_pc, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
-			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
-#endif
-}
-
-
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(arg)
-	void *arg;
-{
-	int err;
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, 0, 0);
-}
-
-void
-upcallret(struct lwp *l)
-{
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, 0, 0);
 }
