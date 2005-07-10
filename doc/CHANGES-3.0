@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.168 2005/07/10 15:34:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.169 2005/07/10 20:57:34 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10364,4 +10364,11 @@ sbin/veriexecctl/Makefile			1.9
 
 	Need -I. here as well so OBJDIR's work correctly in all cases.
 	[blymn, ticket #569]
+
+sys/arch/sparc/stand/boot/Makefile		1.33
+sys/arch/sparc/stand/ofwboot/Makefile		1.14
+
+	Enable netboot via DHCP for NetBSD-sparc and NetBSD-sparc64.
+	This fixes PR port-sparc64/26124.
+	[christos, ticket #567]
 
