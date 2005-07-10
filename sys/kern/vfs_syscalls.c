@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.224 2005/07/09 01:05:24 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.225 2005/07/10 14:26:02 cube Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.224 2005/07/09 01:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.225 2005/07/10 14:26:02 cube Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2904,7 +2904,7 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(int) flags;
 		syscallarg(off_t) start;
-		syscallarg(int) length;
+		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
