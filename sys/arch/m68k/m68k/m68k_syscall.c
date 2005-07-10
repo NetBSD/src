@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.15 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.16 2005/07/10 00:45:52 christos Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.16 2005/07/10 00:45:52 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -149,7 +149,6 @@ extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
-void	syscall_intern(struct proc *);
 #ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.14 2005/07/10 00:45:52 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2005/07/10 00:45:52 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -158,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $"
 
 #include <uvm/uvm_extern.h>
 
-void	syscall_intern(struct proc *);
 static void syscall_plain(struct lwp *, struct trapframe *);
 static void syscall_fancy(struct lwp *, struct trapframe *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.13 2005/07/10 00:45:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.13 2005/07/10 00:45:52 christos Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -69,11 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Ex
 extern struct sysent pecoff_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const pecoff_syscallnames[];
-#endif
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
 #endif
 
 #ifdef COMPAT_16

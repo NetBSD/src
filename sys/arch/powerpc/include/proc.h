@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2003/01/18 06:23:29 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2005/07/10 00:45:52 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,9 +47,5 @@ struct trapframe;
 struct mdproc {
 	void (*md_syscall)(struct trapframe *);
 };
-
-#ifdef _KERNEL
-extern void syscall_intern(struct proc *);
-#endif
 
 #endif /* _POWERPC_PROC_H_ */
