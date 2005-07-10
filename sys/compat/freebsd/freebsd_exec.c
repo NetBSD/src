@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.28 2005/07/10 00:45:52 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.29 2005/07/10 04:23:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.28 2005/07/10 00:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.29 2005/07/10 04:23:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -53,6 +53,10 @@ extern struct sysent freebsd_sysent[];
 extern const char * const freebsd_syscallnames[];
 
 struct uvm_object *emul_freebsd_object;
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
+#endif
 
 const struct emul emul_freebsd = {
 	"freebsd",
