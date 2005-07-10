@@ -1,4 +1,4 @@
-/*	$NetBSD: mmfile.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+/*	$NetBSD: mmfile.c,v 1.1.1.2.4.1 2005/07/10 20:40:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mmfile.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
+__RCSID("$NetBSD: mmfile.c,v 1.1.1.2.4.1 2005/07/10 20:40:34 riz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: mmfile.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
 
 #include "grep.h"
 
-#define MAX_MAP_LEN 1048576
+#define MAX_MAP_LEN (SIZE_T_MAX / 64)	/* ~70M is reasonable size */
 
 mmf_t *
 mmopen(char *fn, char *mode)
@@ -59,7 +59,7 @@ mmopen(char *fn, char *mode)
 		goto ouch1;
 	if (fstat(mmf->fd, &st) == -1)
 		goto ouch2;
-	if (st.st_size > SIZE_T_MAX)		/* too big to mmap */		
+	if (st.st_size > MAX_MAP_LEN)		/* too big to mmap */		
 		goto ouch2;
 	if ((st.st_mode & S_IFREG) == 0)	/* only mmap regular files */
 		goto ouch2;
