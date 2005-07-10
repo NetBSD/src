@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.99 2005/03/26 05:12:36 fvdl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.100 2005/07/10 00:45:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99 2005/03/26 05:12:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.100 2005/07/10 00:45:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -153,11 +153,6 @@ static void bsd_to_ultrix_flock(struct flock *, struct ultrix_flock *);
 extern struct sysent ultrix_sysent[];
 extern const char * const ultrix_syscallnames[];
 extern char ultrix_sigcode[], ultrix_esigcode[];
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
-#endif
 
 struct uvm_object *emul_ultrix_object;
 

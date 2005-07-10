@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.28 2005/07/10 00:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2005/07/10 00:45:52 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -211,7 +211,6 @@ swi_handler(trapframe_t *frame)
 
 #define MAXARGS 8
 
-void syscall_intern(struct proc *);
 void syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
 void syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
 
