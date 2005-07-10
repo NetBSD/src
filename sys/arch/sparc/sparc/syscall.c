@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2005/07/10 17:02:19 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.2 2005/07/10 19:07:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1 2005/07/10 17:02:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2005/07/10 19:07:03 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -98,7 +98,7 @@ struct args {
 
 static __inline int handle_new(struct trapframe *, register_t *);
 static __inline int getargs(struct proc *p, struct trapframe *,
-    register_t, const struct sysent **, struct args *);
+    register_t *, const struct sysent **, struct args *);
 #ifdef FPU_DEBUG
 static __inline void save_fpu(struct trapframe *);
 #endif
@@ -125,7 +125,7 @@ handle_new(struct trapframe *tf, register_t *code)
  * ones later as needed.
  */
 static __inline int
-getargs(struct proc *p, struct trapframe *tf, register_t code,
+getargs(struct proc *p, struct trapframe *tf, register_t *code,
     const struct sysent **callp, struct args *args)
 {
 	int *ap = &tf->tf_out[0];
@@ -133,24 +133,24 @@ getargs(struct proc *p, struct trapframe *tf, register_t code,
 
 	*callp = p->p_emul->e_sysent;
 
-	switch (code) {
+	switch (*code) {
 	case SYS_syscall:
-		code = *ap++;
+		*code = *ap++;
 		nap--;
 		break;
 	case SYS___syscall:
 		if (!(p->p_emul->e_flags & EMUL_HAS_SYS___syscall))
 			break;
-		code = ap[_QUAD_LOWWORD];
+		*code = ap[_QUAD_LOWWORD];
 		ap += 2;
 		nap -= 2;
 		break;
 	}
 
-	if (code < 0 || code >= p->p_emul->e_nsysent)
+	if (*code < 0 || *code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 	
-	*callp += code;
+	*callp += *code;
 	i = (*callp)->sy_argsize / sizeof(register_t);
 	if (__predict_false(i > nap)) {	/* usually false */
 		void *off = (char *)tf->tf_out[6] +
@@ -235,7 +235,7 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 
-	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
@@ -322,7 +322,7 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 	
-	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
 	KERNEL_PROC_LOCK(l);
