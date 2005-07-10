@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.95 2004/09/14 16:51:58 jdolecek Exp $
+#	$NetBSD: files.sparc64,v 1.96 2005/07/10 00:50:16 christos Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -186,6 +186,7 @@ file	arch/sparc/sparc/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
 file	arch/sparc64/sparc64/pmap.c
 file	arch/sparc64/sparc64/sys_machdep.c
+file	arch/sparc64/sparc64/syscall.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor

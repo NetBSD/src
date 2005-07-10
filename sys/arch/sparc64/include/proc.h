@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2005/01/02 00:14:46 christos Exp $ */
+/*	$NetBSD: proc.h,v 1.6 2005/07/10 00:50:16 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,11 +52,13 @@ struct mdlwp {
 /*
  * Machine-dependent part of the proc structure for SPARC.
  */
-/* LINTED 0 sized structure */
 struct mdproc {
+	void	(*md_syscall)(struct trapframe *, register_t, register_t);
 };
 
 /* md_flags */
 #define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
+
+#define netbsd32_syscall_intern syscall_intern
 
 #endif /* _SPARC64_PROC_H */
