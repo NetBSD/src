@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.21 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: exception.c,v 1.22 2005/07/10 22:27:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.22 2005/07/10 22:27:20 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -140,7 +140,6 @@ const int exp_types = sizeof exp_type / sizeof exp_type[0];
 
 void general_exception(struct lwp *, struct trapframe *, uint32_t);
 void tlb_exception(struct lwp *, struct trapframe *, uint32_t);
-void syscall(struct lwp *, struct trapframe *);
 void ast(struct lwp *, struct trapframe *);
 
 /*
@@ -177,7 +176,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			ksi.ksi_addr = (void *)tf->tf_spc;
 			goto trapsignal;
 		} else {
-			syscall(l, tf);
+			(*l->l_proc->p_md.md_syscall)(l, tf);
 			return;
 		}
 		break;
@@ -259,146 +258,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	/*NOTREACHED*/
 }
 
-/*
- * void syscall(struct lwp *l, struct trapframe *tf):
- *	l  ... curlwp when exception occur.
- *	tf ... full user context.
- *	System call request from POSIX system call gate interface to kernel.
- */
-void
-syscall(struct lwp *l, struct trapframe *tf)
-{
-	struct proc *p = l->l_proc;
-	caddr_t params;
-	const struct sysent *callp;
-	int error, opc, nsys;
-	size_t argsize;
-	register_t code, args[8], rval[2], ocode;
-
-	uvmexp.syscalls++;
-
-	opc = tf->tf_spc;
-	ocode = code = tf->tf_r0;
-
-	nsys = p->p_emul->e_nsysent;
-	callp = p->p_emul->e_sysent;
-
-	params = (caddr_t)tf->tf_r15;
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-	        code = tf->tf_r4;  /* fuword(params); */
-		/* params += sizeof(int); */
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		if (callp != sysent)
-			break;
-		/* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
-#if _BYTE_ORDER == BIG_ENDIAN
-		code = tf->tf_r5;
-#else
-		code = tf->tf_r4;
-#endif
-		/* params += sizeof(quad_t); */
-		break;
-	default:
-		break;
-	}
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;		/* illegal */
-	else
-		callp += code;
-	argsize = callp->sy_argsize;
-
-	if (ocode == SYS_syscall) {
-		if (argsize) {
-			args[0] = tf->tf_r5;
-			args[1] = tf->tf_r6;
-			args[2] = tf->tf_r7;
-			if (argsize > 3 * sizeof(int)) {
-				argsize -= 3 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[3],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	}
-	else if (ocode == SYS___syscall) {
-		if (argsize) {
-			args[0] = tf->tf_r6;
-			args[1] = tf->tf_r7;
-			if (argsize > 2 * sizeof(int)) {
-				argsize -= 2 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[2],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	} else {
-		if (argsize) {
-			args[0] = tf->tf_r4;
-			args[1] = tf->tf_r5;
-			args[2] = tf->tf_r6;
-			args[3] = tf->tf_r7;
-			if (argsize > 4 * sizeof(int)) {
-				argsize -= 4 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[4],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	}
-
-	if (error)
-		goto bad;
-
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto out;
-
-	rval[0] = 0;
-	rval[1] = tf->tf_r1;
-	error = (*callp->sy_call)(l, args, rval);
-out:
-	switch (error) {
-	case 0:
-		tf->tf_r0 = rval[0];
-		tf->tf_r1 = rval[1];
-		tf->tf_ssr |= PSL_TBIT;	/* T bit */
-
-		break;
-	case ERESTART:
-		/* 2 = TRAPA instruction size */
-		tf->tf_spc = opc - 2;
-
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_r0 = error;
-		tf->tf_ssr &= ~PSL_TBIT;	/* T bit */
-
-		break;
-	}
-
-
-	trace_exit(l, code, args, rval, error);
-
-	userret(l);
-}
 
 /*
  * void tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va):
