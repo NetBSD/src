@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.10 2004/01/05 23:23:39 jmmv Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.11 2005/07/10 17:57:28 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -42,42 +42,44 @@
 #include <errno.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
 
 #define DEFDEV "/dev/ttyEcfg"
 
-static void usage __P((void));
-int main __P((int, char**));
+static void usage(void) __attribute__((__unused__));
+int main(int, char **);
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
-		      "usage: %s [-f wsdev] [-d [-F]] [-k] [-m] [-t type]"
-		      " [-e emul] {vt | [kbd] | [mux]}\n", getprogname());
+	     "Usage: %s [-f wsdev] [-d [-F]] [-k] [-s] [-m] [-t type]"
+	     " [-e emul] {vt | [kbd] | [mux]}\n", getprogname());
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	char *wsdev;
-	int c, delete, kbd, idx, wsfd, res, mux;
+	const char *wsdev;
+	int c, delete, kbd, idx, wsfd, swtch, mux;
 	struct wsdisplay_addscreendata asd;
 	struct wsdisplay_delscreendata dsd;
 	struct wsmux_device wmd;
 
+	setprogname(argv[0]);
 	wsdev = DEFDEV;
 	delete = 0;
 	kbd = 0;
 	mux = 0;
+	swtch = 0;
+	idx = -1;
 	asd.screentype = 0;
 	asd.emul = 0;
 	dsd.flags = 0;
 
-	while ((c = getopt(argc, argv, "f:dkmt:e:F")) != -1) {
+	while ((c = getopt(argc, argv, "f:dkmst:e:F")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
@@ -91,6 +93,9 @@ main(argc, argv)
 		case 'm':
 			mux++;
 			kbd++;
+			break;
+		case 's':
+			swtch++;
 			break;
 		case 't':
 			asd.screentype = optarg;
@@ -110,47 +115,42 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (kbd ? (argc > 1) : (argc != 1))
+	if ((kbd || swtch) ? (argc > 1) : (argc != 1))
 		usage();
 
-	idx = -1;
 	if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
 		errx(1, "invalid index");
 
-	wsfd = open(wsdev, O_RDWR, 0);
-	if (wsfd < 0)
-		err(2, "%s", wsdev);
+	if ((wsfd = open(wsdev, O_RDWR)) == -1)
+		err(EXIT_FAILURE, "Cannot open `%s'", wsdev);
 
-	if (kbd) {
-		if (mux)
-			wmd.type = WSMUX_MUX;
-		else
-			wmd.type = WSMUX_KBD;
+	if (swtch) {
+		if (ioctl(wsfd, VT_ACTIVATE, idx) == -1)
+		    err(EXIT_FAILURE, "Cannot switch to %d", idx);
+	} else if (kbd) {
+		wmd.type = mux ? WSMUX_MUX : WSMUX_KBD;
 		wmd.idx = idx;
 		if (delete) {
-			res = ioctl(wsfd, WSMUX_REMOVE_DEVICE, &wmd);
-			if (res < 0)
-				err(3, "WSMUX_REMOVE_DEVICE");
+			if (ioctl(wsfd, WSMUX_REMOVE_DEVICE, &wmd) == -1)
+				err(EXIT_FAILURE, "WSMUX_REMOVE_DEVICE");
 		} else {
-			res = ioctl(wsfd, WSMUX_ADD_DEVICE, &wmd);
-			if (res < 0)
-				err(3, "WSMUX_ADD_DEVICE");
+			if (ioctl(wsfd, WSMUX_ADD_DEVICE, &wmd) == -1)
+				err(EXIT_FAILURE, "WSMUX_ADD_DEVICE");
 		}
 	} else if (delete) {
 		dsd.idx = idx;
-		res = ioctl(wsfd, WSDISPLAYIO_DELSCREEN, &dsd);
-		if (res < 0)
-			err(3, "WSDISPLAYIO_DELSCREEN");
+		if (ioctl(wsfd, WSDISPLAYIO_DELSCREEN, &dsd) == -1)
+			err(EXIT_FAILURE, "WSDISPLAYIO_DELSCREEN");
 	} else {
 		asd.idx = idx;
-		res = ioctl(wsfd, WSDISPLAYIO_ADDSCREEN, &asd);
-		if (res < 0) {
+		if (ioctl(wsfd, WSDISPLAYIO_ADDSCREEN, &asd) == -1) {
 			if (errno == EBUSY)
-				errx(3, "screen %d is already configured", idx);
+				errx(EXIT_FAILURE,
+				    "screen %d is already configured", idx);
 			else
-				err(3, "WSDISPLAYIO_ADDSCREEN");
+				err(EXIT_FAILURE, "WSDISPLAYIO_ADDSCREEN");
 		}
 	}
 
-	return (0);
+	return 0;
 }
