@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.92 2005/07/08 22:21:43 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.93 2005/07/10 11:28:58 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.92 2005/07/08 22:21:43 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.93 2005/07/10 11:28:58 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2542,4 +2542,18 @@ netbsd32_mlockall(l, v, retval)
 
 	NETBSD32TO64_UAP(flags);
 	return (sys_mlockall(l, &ua, retval));
+}
+
+int
+netbsd32___clone(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32___clone_args /*  {
+		syscallarg(int) flags;
+		syscallarg(netbsd32_voidp) stack;
+	} */ *uap = v;
+	struct sys___clone_args ua;
+
+	NETBSD32TO64_UAP(flags);
+	NETBSD32TOP_UAP(stack, void);
+	return sys___clone(l, &ua, retval);
 }
