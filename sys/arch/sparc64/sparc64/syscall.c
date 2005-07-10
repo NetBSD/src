@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2005/07/10 05:17:37 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.4 2005/07/10 19:05:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2005/07/10 05:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2005/07/10 19:05:47 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -134,8 +134,8 @@ union args {
 };
 
 static __inline int handle_old(struct trapframe64 *, register_t *);
-static __inline int getargs(struct proc *, struct trapframe64 *, register_t,
-    const struct sysent **, union args *);
+static __inline int getargs(struct proc *, struct trapframe64 *,
+    register_t *, const struct sysent **, union args *);
 void syscall_plain(struct trapframe64 *, register_t, register_t);
 void syscall_fancy(struct trapframe64 *, register_t, register_t);
 
@@ -167,7 +167,7 @@ handle_old(struct trapframe64 *tf, register_t *code)
  * ones later as needed.
  */
 static __inline int
-getargs(struct proc *p, struct trapframe64 *tf, register_t code,
+getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
     const struct sysent **callp, union args *args)
 {
 	int64_t *ap = &tf->tf_out[0];
@@ -175,29 +175,29 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t code,
 	int s64 = tf->tf_out[6] & 1L; /* Do we have a 64-bit stack? */
 
 	*callp = p->p_emul->e_sysent;
-	switch (code) {
+	switch (*code) {
 	case SYS_syscall:
-		code = *ap++;
+		*code = *ap++;
 		nap--;
 		break;
 	case SYS___syscall:
 		if (s64) {
 			/* longs *are* quadwords */
-			code = ap[0];
+			*code = ap[0];
 			ap += 1;
 			nap -= 1;			
 		} else {
-			code = ap[_QUAD_LOWWORD];
+			*code = ap[_QUAD_LOWWORD];
 			ap += 2;
 			nap -= 2;
 		}
 		break;
 	}
 
-	if (code < 0 || code >= p->p_emul->e_nsysent)
+	if (*code < 0 || *code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 
-	*callp += code;
+	*callp += *code;
 
 	if (s64) {
 		/* 64-bit stack -- not really supported on 32-bit kernels */
@@ -338,7 +338,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
@@ -436,7 +436,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(p, tf, code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 		
 #ifdef __arch64__
