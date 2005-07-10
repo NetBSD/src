@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.17 2005/07/09 14:51:11 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.18 2005/07/10 05:49:38 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.17 2005/07/09 14:51:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.18 2005/07/10 05:49:38 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
@@ -886,12 +886,17 @@ fr_info_t *fin;
 	int minicmpsz = sizeof(struct icmp);
 	icmphdr_t *icmp;
 
-	if (fin->fin_off == 0 && frpr_pullup(fin, ICMPERR_ICMPHLEN) == -1)
+	if (fin->fin_off != 0) {
+		fprp_short(fin, ICMPERR_ICMPHLEN);
+		return;
+	}
+
+	if (frpr_pullup(fin, ICMPERR_ICMPHLEN) == -1)
 		return;
 
 	fr_checkv4sum(fin);
 
-	if (!fin->fin_off && (fin->fin_dlen > 1)) {
+	if (fin->fin_dlen > 1) {
 		icmp = fin->fin_dp;
 
 		fin->fin_data[0] = *(u_short *)icmp;
