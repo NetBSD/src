@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.4 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.5 2005/07/10 01:08:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -30,8 +30,6 @@
 /*
  * This implements a hash-based lookup scheme for UFS directories.
  */
-
-#ifdef UFS_DIRHASH
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1057,7 +1055,7 @@ ufsdirhash_init()
 }
 
 void
-ufsdirhash_done()
+ufsdirhash_done(void)
 {
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
 #ifdef _LKM
@@ -1117,5 +1115,3 @@ SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
 		       NULL, 0, &ufs_dirhashcheck, 0,
 		       CTL_CREATE, CTL_EOL);
 }
-
-#endif /* UFS_DIRHASH */
