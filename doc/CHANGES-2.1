@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.138 2005/07/07 14:18:29 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.139 2005/07/10 20:46:13 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2857,4 +2857,16 @@ src/gnu/usr.bin/cvs/libdiff/Makefile		patch
 	Don't install "libcvs" and "libdiff". This fixes build problems caused
 	by the pullup of ticket #2927.
 	[tron, ticket #2933]
+
+usr.bin/grep/binary.c				1.3 via patch
+usr.bin/grep/mmfile.c				1.2 via patch
+
+	Avoid crashes in grep(1) on empty or very large files.
+	Fixes PR#29806.
+	[mlelstv, ticket #2044]
+
+share/termcap/termcap.src			1.94
+
+	Enable characters in rxvt. Closes PR 30655.
+	[wiz, ticket #2066]
 
