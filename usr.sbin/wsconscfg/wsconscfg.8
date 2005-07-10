@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsconscfg.8,v 1.14 2003/02/25 10:36:22 wiz Exp $
+.\"	$NetBSD: wsconscfg.8,v 1.15 2005/07/10 17:57:28 christos Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,12 +24,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 12, 1999
+.Dd July 10, 2005
 .Os
 .Dt WSCONSCFG 8
 .Sh NAME
 .Nm wsconscfg
-.Nd configure virtual terminals on a wscons display
+.Nd configure and switch between virtual terminals on a wscons display
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar ctldev
@@ -43,16 +43,20 @@
 .Ar index
 .Nm
 .Op Fl f Ar ctldev
+.Fl s
+.Ar index
+.Nm
+.Op Fl f Ar ctldev
 .Fl k | m
 .Op Fl d
 .Op Ar index
 .Sh DESCRIPTION
 The
 .Nm
-tool allows to create and delete virtual terminals on display devices
-controlled by the wscons terminal framework if the underlying display hardware
-driver supports multiple screens. Further it controls the assignment of
-keyboards to displays.
+tool allows to create, delete and switch between virtual terminals on display
+devices controlled by the wscons terminal framework if the underlying display
+hardware driver supports multiple screens. Further it controls the assignment
+of keyboards to displays.
 The
 .Ar index
 argument specifies which virtual terminal is to be configured; the allowed
@@ -96,6 +100,8 @@ argument can be omitted, in this case the first free keyboard will be used.
 .It Fl m
 Do multiplexor related operations instead of virtual screen configuration.
 Without other flags, a multiplexor will be attached to the display device.
+.It Fl s
+Switch to the specified virtual terminal.
 .It Fl t Ar type
 Specify a screen type to use. Screen types refer to display format, colour
 depth and other low-level display properties. Valid
@@ -133,6 +139,18 @@ before to make the screen useful. See
 .Dl wsconscfg -k
 .Pp
 Connect the first unconnected keyboard to the display.
+.Pp
+.Dl wsconscfg 3
+.Pp
+Create screen 3.
+.Pp
+.Dl wsconscfg -d 3
+.Pp
+Delete screen 3.
+.Pp
+.Dl swconscfg -s 2
+.Pp
+Switch to screen 2.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wskbd 4 ,
