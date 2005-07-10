@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.202 2005/07/10 00:54:54 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.203 2005/07/10 04:20:34 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.202 2005/07/10 00:54:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.203 2005/07/10 04:20:34 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -135,6 +135,10 @@ extern const char * const syscallnames[];
 #ifdef COMPAT_16
 extern char	sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
+#endif
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
 #endif
 
 /* NetBSD emul struct */
