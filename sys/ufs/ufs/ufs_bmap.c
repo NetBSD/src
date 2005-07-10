@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.35 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.36 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.35 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.36 2005/07/10 00:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.35 2005/02/26 22:32:20 perry Exp $");
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
-static boolean_t ufs_issequential __P((const struct ufsmount *,
-					daddr_t, daddr_t));
-
 static boolean_t
-ufs_issequential(ump, daddr0, daddr1)
-	const struct ufsmount *ump;
-	daddr_t daddr0;
-	daddr_t daddr1;
+ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)
 {
 
 	/* for ufs, blocks in a hole is not 'contiguous'. */
@@ -78,8 +72,7 @@ ufs_issequential(ump, daddr0, daddr1)
  * number to index into the array of block pointers described by the dinode.
  */
 int
-ufs_bmap(v)
-	void *v;
+ufs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -116,14 +109,8 @@ ufs_bmap(v)
  */
 
 int
-ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
-	struct vnode *vp;
-	daddr_t bn;
-	daddr_t *bnp;
-	struct indir *ap;
-	int *nump;
-	int *runp;
-	ufs_issequential_callback_t is_sequential;
+ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
+    int *nump, int *runp, ufs_issequential_callback_t is_sequential)
 {
 	struct inode *ip;
 	struct buf *bp;
@@ -330,11 +317,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(vp, bn, ap, nump)
-	struct vnode *vp;
-	daddr_t bn;
-	struct indir *ap;
-	int *nump;
+ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 {
 	daddr_t metalbn, realbn;
 	struct ufsmount *ump;

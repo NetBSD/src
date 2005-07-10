@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.48 2005/07/10 00:18:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.48 2005/07/10 00:18:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -67,8 +67,7 @@ extern int prtactive;
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ufs_inactive(v)
-	void *v;
+ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -139,9 +138,7 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(vp, p)
-	struct vnode *vp;
-	struct proc *p;
+ufs_reclaim(struct vnode *vp, struct proc *p)
 {
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
@@ -191,11 +188,8 @@ ufs_reclaim(vp, p)
  */
 
 int
-ufs_balloc_range(vp, off, len, cred, flags)
-	struct vnode *vp;
-	off_t off, len;
-	struct ucred *cred;
-	int flags;
+ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
+    int flags)
 {
 	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;
 	struct uvm_object *uobj;
