@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.36 2005/07/06 23:58:14 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.37 2005/07/10 19:04:00 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.36 2005/07/06 23:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.37 2005/07/10 19:04:00 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1820,6 +1820,12 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ic->ic_flags &= ~IEEE80211_F_IBSSON;
 		return (*sc->sc_newstate)(ic, nstate, arg);
 
+	case IEEE80211_S_SCAN:
+	case IEEE80211_S_AUTH:
+	case IEEE80211_S_ASSOC:
+		ic->ic_state = nstate; /* NB: skip normal ieee80211 handling */
+		return 0;
+
 	case IEEE80211_S_RUN:
 		buflen = sizeof(sc->sc_buf);
 		an_read_rid(sc, AN_RID_STATUS, &sc->sc_buf, &buflen);
@@ -1851,7 +1857,5 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	default:
 		break;
 	}
-	ic->ic_state = nstate;
-	/* skip standard ieee80211 handling */
-	return 0;
+	return (*sc->sc_newstate)(ic, nstate, arg);
 }
