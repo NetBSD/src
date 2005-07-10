@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/10/26 08:06:56 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5 2005/07/10 15:44:23 martin Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_
@@ -64,8 +64,5 @@ typedef struct {
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
-
-#define _UC_MACHINE32_PAD_32		/* Padding appended to ucontext_t */
-#define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG32_O6])
 
 #endif /* _SPARC64_MCONTEXT_H_ */
