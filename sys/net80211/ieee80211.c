@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.38 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.39 2005/07/11 17:15:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.19 2005/01/27 17:39:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.38 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.39 2005/07/11 17:15:30 dyoung Exp $");
 #endif
 
 /*
@@ -487,26 +487,30 @@ findrate(struct ieee80211com *ic, enum ieee80211_phymode mode, int rate)
 struct ieee80211com *
 ieee80211_find_vap(const u_int8_t mac[IEEE80211_ADDR_LEN])
 {
+	int s;
 	struct ieee80211com *ic;
 
-	/* XXX lock */
+	s = splnet();
 	SLIST_FOREACH(ic, &ieee80211_list, ic_next)
 		if (IEEE80211_ADDR_EQ(mac, ic->ic_myaddr))
-			return ic;
-	return NULL;
+			break;
+	splx(s);
+	return ic;
 }
 
 static struct ieee80211com *
 ieee80211_find_instance(struct ifnet *ifp)
 {
+	int s;
 	struct ieee80211com *ic;
 
-	/* XXX lock */
+	s = splnet();
 	/* XXX not right for multiple instances but works for now */
 	SLIST_FOREACH(ic, &ieee80211_list, ic_next)
 		if (ic->ic_ifp == ifp)
-			return ic;
-	return NULL;
+			break;
+	splx(s);
+	return ic;
 }
 
 /*
