@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.6.2.3 2005/07/11 11:29:04 tron Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.6.2.3 2005/07/11 11:29:04 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -414,7 +414,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the uid. This should exist. */
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL) {
 		retval = PAM_USER_UNKNOWN;
 		goto cleanup3;
 	}
