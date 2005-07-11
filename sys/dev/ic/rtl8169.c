@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.20 2005/05/19 20:11:24 briggs Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.21 2005/07/11 21:42:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1037,7 +1037,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	m_adj(m, RTK_ETHER_ALIGN);
 
 	map = sc->rtk_ldata.rtk_rx_dmamap[idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 
 	if (error)
 		goto out;
@@ -1560,7 +1561,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 
 	txq = &sc->rtk_ldata.rtk_txq[*idx];
 	map = txq->txq_dmamap;
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
 	if (error) {
 		/* XXX try to defrag if EFBIG? */
