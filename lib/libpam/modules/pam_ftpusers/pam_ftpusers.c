@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ftpusers.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $	*/
+/*	$NetBSD: pam_ftpusers.c,v 1.2.2.3 2005/07/11 11:31:18 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ftpusers/pam_ftpusers.c,v 1.1 2002/05/08 00:30:10 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ftpusers.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $");
+__RCSID("$NetBSD: pam_ftpusers.c,v 1.2.2.3 2005/07/11 11:31:18 tron Exp $");
 #endif
 
 #include <ctype.h>
@@ -61,13 +61,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 	struct passwd *pwd, pwres;
-	struct group *grp;
+	struct group *grp, grres;
 	const char *user;
 	int pam_err, found, allow;
 	char *line, *name, **mem;
 	size_t len, ulen;
 	FILE *f;
-	char pwbuf[1024];
+	char pwbuf[1024], grbuf[1024];
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
@@ -102,7 +102,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 			fclose(f);
 			return (PAM_BUF_ERR);
 		}
-		grp = getgrnam(name);
+		(void)getgrnam_r(name, &grres, grbuf, sizeof(grbuf), &grp);
 		free(name);
 		if (grp == NULL)
 			continue;
