@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.20.2.1 2005/05/28 13:40:45 tron Exp $	*/
+/*	$NetBSD: grp.h,v 1.20.2.2 2005/07/11 21:32:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -72,6 +72,7 @@ void		 endgrent(void);
 #if defined(_NETBSD_SOURCE)
 void		 setgrfile(const char *);
 int		 setgroupent(int);
+int		 getgrent_r(struct group *, char *, size_t, struct group **);
 const char	*group_from_gid(gid_t, int);
 int		 gid_from_group(const char *, gid_t *);
 int		 pwcache_groupdb(int (*)(int), void (*)(void),
