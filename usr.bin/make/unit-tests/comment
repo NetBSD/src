@@ -18,8 +18,11 @@ goes \
 on
 
 # This is NOT an escaped comment due to the double backslashes \\
-all: foo bar
+all: hi foo bar
 	@echo comment testing done
+
+hi:
+	@echo comment testing start
 
 foo:
 	@echo this is $@
