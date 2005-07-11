@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.172 2005/07/11 15:05:46 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.173 2005/07/11 21:38:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10428,4 +10428,18 @@ sys/netkey/key.c				1.135
 	Another NAT-T fix: don't check for port information in transport mode,
 	as there is no port information.
 	[manu, ticket #575]
+
+distrib/sets/lists/base/shl.mi			1.307
+include/grp.h					1.21
+include/pwd.h					1.38
+lib/libc/gen/getgrent.3				1.23-1.26,1.28
+lib/libc/gen/getgrent.c				1.55-1.58
+lib/libc/gen/getpwent.3				1.27-1.33,1.35
+lib/libc/gen/getpwent.c				1.67-1.68
+lib/libc/include/namespace.h			1.99
+lib/libc/shlib_version				1.163
+
+	They add getgrent_r and getpwent_r and fix some implementation issues
+	in getpw{nam,uid}_r and getgr{nam,gid}_r.    
+	[lukem, ticket #540, #541]
 
