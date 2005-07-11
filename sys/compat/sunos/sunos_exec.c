@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.48 2005/07/10 16:45:33 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.49 2005/07/11 13:14:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.48 2005/07/10 16:45:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.49 2005/07/11 13:14:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.48 2005/07/10 16:45:33 christos Exp
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
+
+#include <machine/sunos_machdep.h>
 
 extern int nsunos_sysent;
 extern struct sysent sunos_sysent[];
