@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.66.2.1 2005/07/11 21:22:27 tron Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.66.2.2 2005/07/11 21:24:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.66.2.1 2005/07/11 21:22:27 tron Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.66.2.2 2005/07/11 21:24:36 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -248,7 +248,7 @@ _pw_getkey(DB *db, DBT *key,
 	case 0:
 		break;			/* found */
 	case 1:
-		return NS_NOTFOUND;
+		return NS_NOTFOUND;	/* not found */
 	case -1:
 		return NS_UNAVAIL;	/* error in db routines */
 	default:
@@ -429,7 +429,8 @@ _files_end(struct files_state *state)
  *	If search is _PW_KEYBYNUM, look for state->keynum.
  *	If search is _PW_KEYBYNAME, look for name.
  *	If search is _PW_KEYBYUID, look for uid.
- *	Sets *retval to the errno if the result is not NS_SUCCESS.
+ *	Sets *retval to the errno if the result is not NS_SUCCESS
+ *	or NS_NOTFOUND.
  */
 static int
 _files_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
@@ -508,7 +509,7 @@ _files_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 	}
 
  filespwscan_out:
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	return rv;
 }
@@ -797,7 +798,7 @@ _dns_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 		rv = NS_UNAVAIL;
 
  dnspwscan_out:
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	if (hp)
 		hesiod_free_list(state->context, hp);
@@ -1282,7 +1283,7 @@ _nis_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 		break;
 	}
 
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	if (data)
 		free(data);
@@ -1892,7 +1893,8 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
  *	If search is _PW_KEYBYNUM, look for state->keynum.
  *	If search is _PW_KEYBYNAME, look for name.
  *	If search is _PW_KEYBYUID, look for uid.
- *	Sets *retval to the errno if the result is not NS_SUCCESS.
+ *	Sets *retval to the errno if the result is not NS_SUCCESS
+ *	or NS_NOTFOUND.
  */
 static int
 _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
@@ -2124,7 +2126,7 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 			rv = NS_NOTFOUND;
 	}
 
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	return rv;
 }
@@ -2380,7 +2382,13 @@ getpwent_r(struct passwd *pwd, char *buffer, size_t buflen,
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent_r", __nsdefaultcompat,
 	    &retval, pwd, buffer, buflen, result);
 	mutex_unlock(&_pwmutex);
-	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+	switch (r) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 
@@ -2430,7 +2438,13 @@ getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t buflen,
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam_r", __nsdefaultcompat,
 	    &retval, name, pwd, buffer, buflen, result);
 	mutex_unlock(&_pwmutex);
-	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+	switch (r) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 struct passwd *
@@ -2478,7 +2492,13 @@ getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t buflen,
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
 	    &retval, uid, pwd, buffer, buflen, result);
 	mutex_unlock(&_pwmutex);
-	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+	switch (r) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 void
