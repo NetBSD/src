@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.37.2.1 2005/05/28 13:40:38 tron Exp $	*/
+/*	$NetBSD: pwd.h,v 1.37.2.2 2005/07/11 21:32:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -136,6 +136,7 @@ void		 endpwent(void);
 int		 pw_gensalt(char *, size_t, const char *, const char *);
 int		 pw_scan(char *, struct passwd *, int *);
 int		 setpassent(int);
+int		 getpwent_r(struct passwd *, char *, size_t, struct passwd **);
 const char	*user_from_uid(uid_t, int);
 int		 uid_from_user(const char *, uid_t *);
 int		 pwcache_userdb(int (*)(int), void (*)(void),
