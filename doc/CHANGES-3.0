@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.169 2005/07/10 20:57:34 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.170 2005/07/11 11:41:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10371,4 +10371,55 @@ sys/arch/sparc/stand/ofwboot/Makefile		1.14
 	Enable netboot via DHCP for NetBSD-sparc and NetBSD-sparc64.
 	This fixes PR port-sparc64/26124.
 	[christos, ticket #567]
+
+lib/libwrap/options.c				1.12-1.13
+
+	Correct usage of getpw*() functions in "wrap" library.
+	[lukem, ticket #537]
+
+lib/libpam/modules/pam_chroot/pam_chroot.c	1.4
+lib/libpam/modules/pam_ftpusers/pam_ftpusers.c	1.4-1.5
+lib/libpam/modules/pam_group/pam_group.c	1.7-1.9
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.8-1.9
+lib/libpam/modules/pam_lastlog/pam_lastlog.c	1.8
+lib/libpam/modules/pam_login_access/login_access.c 1.3
+lib/libpam/modules/pam_nologin/pam_nologin.c	1.5
+lib/libpam/modules/pam_radius/pam_radius.c	1.4
+lib/libpam/modules/pam_rhosts/pam_rhosts.c	1.4
+lib/libpam/modules/pam_securetty/pam_securetty.c 1.4
+lib/libpam/modules/pam_self/pam_self.c		1.4
+lib/libpam/modules/pam_ssh/pam_ssh.c		1.11
+lib/libpam/modules/pam_unix/pam_unix.c		1.8-1.9
+
+	Correct usage of getpw*() functions in PAM modules.
+	[lukem, ticket #539]
+
+sys/arch/sparc/include/mcontext.h		1.6
+sys/arch/sparc64/include/mcontext.h		1.5
+
+	Fix COMPAT_NETBSD32 ucontext padding and move the definition next to
+	the (sparc) original.
+	[martin, ticket #570]
+
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.50
+
+	Add siginfo based signal delivery.
+	[martin, ticket #571]
+
+usr.sbin/wsconscfg/Makefile			1.2
+usr.sbin/wsconscfg/wsconscfg.8			1.15
+usr.sbin/wsconscfg/wsconscfg.c			1.11
+
+	Add a -s flag to switch between terminals.
+	[rpaulo, ticket #572]
+
+sys/kern/uipc_usrreq.c				1.83
+
+	uipc_usrreq: plug mbuf leak.
+	[yamt, ticket #573]
+
+sys/arch/xen/xen/if_xennet.c			1.28
+
+	Handle TX buffer exhaustion.
+	[yamt, ticket #574]
 
