@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.46 2005/03/17 20:51:00 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.47 2005/07/11 19:50:42 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -225,6 +225,9 @@ void	timer_gettime(struct ptimer *, struct itimerval *);
 void	timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 void	realtimerexpire(void *);
+
+int	dogetitimer(struct proc *, int, struct itimerval *);
+int	dosetitimer(struct proc *, int, struct itimerval *);
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE

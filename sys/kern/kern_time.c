@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.90 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.91 2005/07/11 19:50:42 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.90 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.91 2005/07/11 19:50:42 cube Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -936,24 +936,32 @@ sys_getitimer(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct itimerval aitv;
-	int s, which;
+	int error;
 
-	which = SCARG(uap, which);
+	error = dogetitimer(p, SCARG(uap, which), &aitv);
+	if (error)
+		return error;
+	return (copyout(&aitv, SCARG(uap, itv), sizeof(struct itimerval)));
+}
+
+int
+dogetitimer(struct proc *p, int which, struct itimerval *itvp)
+{
+	int s;
 
 	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
 
 	if ((p->p_timers == NULL) || (p->p_timers->pts_timers[which] == NULL)){
-		timerclear(&aitv.it_value);
-		timerclear(&aitv.it_interval);
+		timerclear(&itvp->it_value);
+		timerclear(&itvp->it_interval);
 	} else {
 		s = splclock();
-		timer_gettime(p->p_timers->pts_timers[which], &aitv);
+		timer_gettime(p->p_timers->pts_timers[which], itvp);
 		splx(s);
 	}
 
-	return (copyout(&aitv, SCARG(uap, itv), sizeof(struct itimerval)));
-
+	return 0;
 }
 
 /* BSD routine to set/arm an interval timer. */
@@ -969,10 +977,9 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;
-	struct itimerval aitv;
 	const struct itimerval *itvp;
-	struct ptimer *pt;
-	int s, error;
+	struct itimerval aitv;
+	int error;
 
 	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
@@ -988,14 +995,24 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	}
 	if (itvp == 0)
 		return (0);
-	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
+
+	return dosetitimer(p, which, &aitv);
+}
+
+int
+dosetitimer(struct proc *p, int which, struct itimerval *itvp)
+{
+	struct ptimer *pt;
+	int s;
+
+	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
 		return (EINVAL);
 
 	/*
 	 * Don't bother allocating data structures if the process just
 	 * wants to clear the timer.
 	 */
-	if (!timerisset(&aitv.it_value) &&
+	if (!timerisset(&itvp->it_value) &&
 	    ((p->p_timers == NULL) ||(p->p_timers->pts_timers[which] == NULL)))
 		return (0);
 
@@ -1026,7 +1043,7 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	} else
 		pt = p->p_timers->pts_timers[which];
 
-	pt->pt_time = aitv;
+	pt->pt_time = *itvp;
 	p->p_timers->pts_timers[which] = pt;
 
 	s = splclock();
