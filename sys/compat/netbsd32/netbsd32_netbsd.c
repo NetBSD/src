@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.94 2005/07/10 14:32:16 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.95 2005/07/11 20:18:05 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.94 2005/07/10 14:32:16 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.95 2005/07/11 20:18:05 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2574,4 +2574,20 @@ netbsd32_fsync_range(struct lwp *l, void *v, register_t *retval)
 	NETBSD32TO64_UAP(start);
 	NETBSD32TO64_UAP(length);
 	return (sys_fsync_range(l, &ua, retval));
+}
+
+int
+netbsd32_rasctl(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32_rasctl_args /* {
+		syscallarg(netbsd32_caddr_t) addr;
+		syscallarg(netbsd32_size_t) len;
+		syscallarg(int) op;
+	} */ *uap = v;
+	struct sys_rasctl_args ua;
+
+	NETBSD32TOX64_UAP(addr, caddr_t);
+	NETBSD32TOX_UAP(len, size_t);
+	NETBSD32TO64_UAP(op);
+	return sys_rasctl(l, &ua, retval);
 }
