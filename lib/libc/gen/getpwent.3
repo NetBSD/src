@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.25.2.5 2005/07/11 21:24:04 tron Exp $
+.\"	$NetBSD: getpwent.3,v 1.25.2.6 2005/07/11 21:24:19 tron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,7 +157,9 @@ function
 accomplishes two purposes.
 First, it causes
 .Fn getpwent
-to ``rewind'' to the beginning of the database.
+to
+.Dq rewind
+to the beginning of the database.
 Additionally, if
 .Fa stayopen
 is non-zero, file descriptors are left open, significantly speeding
@@ -182,8 +184,10 @@ The
 function
 closes any open files.
 .Pp
-These functions have been written to ``shadow'' the password file, e.g.
-allow only certain programs to have access to the encrypted password.
+These functions have been written to
+.Dq shadow
+the password file, e.g. allow only certain programs to have access
+to the encrypted password.
 If the process which calls them has an effective uid of 0, the encrypted
 password will be returned, otherwise, the password field of the returned
 structure will point to the string
@@ -296,7 +300,7 @@ avoided, if possible.
 .Fn getpwent
 makes no attempt to suppress duplicate information if multiple
 sources are specified in
-.Xr nsswitch.conf 5
+.Xr nsswitch.conf 5 .
 .Sh COMPATIBILITY
 The historic function
 .Fn setpwfile
