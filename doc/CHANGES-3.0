@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.170 2005/07/11 11:41:58 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.171 2005/07/11 12:12:11 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -9901,7 +9901,7 @@ usr.bin/make/parse.c				1.102
 usr.bin/make/unit-tests/Makefile		1.16
 usr.bin/make/unit-tests/comment			1.1-1.2
 
-	Add support for parsing unescaped comments, as defined in SUSv3.
+	Add support for parsing escaped comments, as defined in SUSv3.
 	[rpaulo, ticket #491]
 
 distrib/sets/lists/man/mi			1.795
