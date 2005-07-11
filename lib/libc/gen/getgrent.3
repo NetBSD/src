@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgrent.3,v 1.22.2.3 2005/07/11 21:23:58 tron Exp $
+.\"	$NetBSD: getgrent.3,v 1.22.2.4 2005/07/11 21:26:45 tron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getgrent.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 4, 2005
+.Dd April 19, 2005
 .Dt GETGRENT 3
 .Os
 .Sh NAME
@@ -130,7 +130,8 @@ respectively, updating the contents of
 .Ar grp
 and storing a pointer to that in
 .Ar result ,
-and returning 0.
+and returning
+.Dv 0 .
 Storage used by
 .Ar grp
 is allocated from
@@ -138,10 +139,18 @@ is allocated from
 which is
 .Ar buflen
 bytes in size.
-If an error occurs,
-an error number will be returned and
+If the requested entry cannot be found,
 .Ar result
-will point to null.
+will point to
+.Dv NULL
+and
+.Dv 0
+will be returned.
+If an error occurs,
+a non-zero error number will be returned and
+.Ar result
+will point to
+.Dv NULL .
 Calling
 .Fn getgrent_r
 from multiple threads will result in each thread reading a disjoint portion
@@ -175,22 +184,19 @@ The functions
 .Fn getgrnam ,
 and
 .Fn getgrent
-return a pointer to the group entry if successful; if end-of-file
-is reached or an error occurs a null pointer is returned.
+return a valid pointer to a group structure on success
+and a
+.Dv NULL
+pointer if the entry was not found or an error occurs.
 .Pp
 The functions
 .Fn getgrgid_r ,
 .Fn getgrnam_r ,
 and
 .Fn getgrent_r
-return 0 if sucessful and update
-.Ar result
-to point to
-.Ar grp .
-If an error occurs
-an error code is returned and
-.Ar result
-will contain a null pointer.
+return
+.Dv 0
+on success or entry not found and non-zero on failure.
 .Pp
 The
 .Fn setgroupent
