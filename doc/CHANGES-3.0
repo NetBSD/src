@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.171 2005/07/11 12:12:11 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.172 2005/07/11 15:05:46 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10422,4 +10422,10 @@ sys/arch/xen/xen/if_xennet.c			1.28
 
 	Handle TX buffer exhaustion.
 	[yamt, ticket #574]
+
+sys/netkey/key.c				1.135
+
+	Another NAT-T fix: don't check for port information in transport mode,
+	as there is no port information.
+	[manu, ticket #575]
 
