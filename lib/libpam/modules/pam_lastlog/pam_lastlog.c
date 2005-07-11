@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.6.2.1 2005/04/04 17:55:36 tron Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.6.2.1 2005/04/04 17:55:36 tron Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -110,7 +110,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		return pam_err;
 
 	if (user == NULL ||
-	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return PAM_SERVICE_ERR;
 
 	PAM_LOG("Got user: %s", user);
