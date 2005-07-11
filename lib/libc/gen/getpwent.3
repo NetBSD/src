@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.25.2.3 2005/07/11 21:21:32 tron Exp $
+.\"	$NetBSD: getpwent.3,v 1.25.2.4 2005/07/11 21:23:04 tron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)getpwent.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 30, 2005
+.Dd April 4, 2005
 .Dt GETPWENT 3
 .Os
 .Sh NAME
 .Nm getpwent ,
+.Nm getpwent_r ,
 .Nm getpwnam ,
 .Nm getpwnam_r ,
 .Nm getpwuid ,
@@ -48,6 +49,13 @@
 .In pwd.h
 .Ft struct passwd *
 .Fn getpwent void
+.Ft int
+.Fo getpwent_r
+.Fa "struct passwd *pw"
+.Fa "char *buffer"
+.Fa "size_t buflen"
+.Fa "struct passwd **result"
+.Fc
 .Ft struct passwd *
 .Fn getpwnam "const char *name"
 .Ft int
@@ -104,19 +112,25 @@ The functions
 .Fn getpwnam
 and
 .Fn getpwuid
-search the password database for the given user name or user id,
+search the password database for the given user name pointed to by
+.Ar name
+or user id pointed to by
+.Ar uid
 respectively, always returning the first one encountered.
 Identical user names or user ids may result in undefined behavior.
 .Pp
+The
+.Fn getpwent
+function
+sequentially reads the password database and is intended for programs
+that wish to process the complete list of users.
+.Pp
 The functions
-.Fn getpwnam_r
+.Fn getpwnam_r ,
+.Fn getpwuid_r ,
 and
-.Fn getpwuid_r
-search the password database for the given user name pointed to by
-.Ar name
-or the user id pointed to by
-.Ar uid ,
-respectively, updating the contents of
+.Fn getpwent_r
+act like their non re-entrant counterparts, updating the contents of
 .Ar pw
 and storing a pointer to that in
 .Ar result ,
@@ -132,13 +146,10 @@ If an error occurs,
 an error number will be returned and
 .Ar result
 will point to null.
-Identical user names or user ids may result in undefined behavior.
-.Pp
-The
-.Fn getpwent
-function
-sequentially reads the password database and is intended for programs
-that wish to process the complete list of users.
+Calling
+.Fn getpwent_r
+from multiple threads, will result in each thread reading a disjoint portion
+of the password database.
 .Pp
 The
 .Fn setpassent
@@ -196,8 +207,9 @@ functions
 have no return value.
 The functions
 .Fn getpwnam_r ,
+.Fn getpwuid_r ,
 and
-.Fn getpwuid_r
+.Fn getpwent_r
 return
 .Dv 0
 on success and non-zero on failure.
