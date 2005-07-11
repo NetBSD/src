@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.3 2000/11/20 12:12:19 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.4 2005/07/11 15:37:04 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@ struct ieee1394_hwaddr {
 	u_int8_t	iha_offset[6];		/* unicast FIFO address */
 };
 
+#ifdef _KERNEL
+
 /* pseudo header */
 struct ieee1394_header {
 	u_int8_t	ih_uid[8];		/* dst/src uid */
@@ -82,7 +84,6 @@ struct ieee1394_fraghdr {
 struct ieee1394_reass_pkt {
 	LIST_ENTRY(ieee1394_reass_pkt) rp_next;
 	struct mbuf	*rp_m;
-	struct ieee1394_header rp_hdr;
 	u_int16_t	rp_size;
 	u_int16_t	rp_etype;
 	u_int16_t	rp_off;
@@ -94,22 +95,24 @@ struct ieee1394_reass_pkt {
 struct ieee1394_reassq {
 	LIST_ENTRY(ieee1394_reassq) rq_node;
 	LIST_HEAD(, ieee1394_reass_pkt) rq_pkt;
-	u_int8_t	rq_uid[8];
+	u_int32_t	fr_id;
 };
 
 struct ieee1394com {
-	struct ifnet	ic_if;
+	struct ifnet	fc_if;
 	struct ieee1394_hwaddr ic_hwaddr;
 	u_int16_t	ic_dgl;
 	LIST_HEAD(, ieee1394_reassq) ic_reassq;
 };
 
 const char *ieee1394_sprintf(const u_int8_t *);
+void ieee1394_input(struct ifnet *, struct mbuf *, u_int16_t);
 void ieee1394_ifattach(struct ifnet *, const struct ieee1394_hwaddr *);
 void ieee1394_ifdetach(struct ifnet *);
 int  ieee1394_ioctl(struct ifnet *, u_long, caddr_t);
 struct mbuf * ieee1394_fragment(struct ifnet *, struct mbuf *, int, u_int16_t);
 void ieee1394_drain(struct ifnet *);
 void ieee1394_watchdog(struct ifnet *);
+#endif /* _KERNEL */
 
 #endif /* _NET_IF_IEEE1394_H_ */
