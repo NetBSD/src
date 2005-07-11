@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.11 2002/05/24 05:38:20 itojun Exp $	*/
+/*	$NetBSD: options.c,v 1.11.6.1 2005/07/11 11:12:47 tron Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.11 2002/05/24 05:38:20 itojun Exp $");
+__RCSID("$NetBSD: options.c,v 1.11.6.1 2005/07/11 11:12:47 tron Exp $");
 #endif
 #endif
 
@@ -292,12 +292,13 @@ static void user_option(value, request)
 char   *value;
 struct request_info *request;
 {
-    struct passwd *pwd;
+    struct passwd *pwd, pws;
     char   *group;
+    char   pwbuf[1024];
 
     if ((group = split_at(value, '.')) != 0)
 	group_option(group, request);
-    if ((pwd = getpwnam(value)) == 0)
+    if (getpwnam_r(value, &pws, pwbuf, sizeof(pwbuf), &pwd) != 0)
 	tcpd_jump("unknown user: \"%s\"", value);
     endpwent();
 
