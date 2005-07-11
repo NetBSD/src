@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.98 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.98.2.1 2005/07/11 21:22:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -225,6 +225,7 @@
 #define getfsfile		_getfsfile
 #define getfsspec		_getfsspec
 #define getgrent		_getgrent
+#define getgrent_r		_getgrent_r
 #define getgrgid		_getgrgid
 #define getgrgid_r		_getgrgid_r
 #define getgrnam		_getgrnam
@@ -260,6 +261,7 @@
 #define getprotoent		_getprotoent
 #define getprotoent_r		_getprotoent_r
 #define getpwent		_getpwent
+#define getpwent_r		_getpwent_r
 #define getpwnam		_getpwnam
 #define getpwnam_r		_getpwnam_r
 #define getpwuid		_getpwuid
