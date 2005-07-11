@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.5.2.1 2005/04/04 17:55:29 tron Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.5.2.2 2005/07/11 11:18:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.5.2.1 2005/04/04 17:55:29 tron Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.5.2.2 2005/07/11 11:18:33 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	char *const *list;
 	struct passwd *pwd, pwres;
 	struct group *grp;
-	int pam_err;
+	int pam_err, auth;
 	char *promptresp = NULL;
 	char pwbuf[1024];
 
@@ -87,6 +87,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pam_get_item(pamh, PAM_RUSER, &ruser) != PAM_SUCCESS
 	    || ruser == NULL || (pwd = getpwnam(ruser)) == NULL)
 		return (PAM_AUTH_ERR);
+
+	auth = openpam_get_option(pamh, "authenticate") != NULL;
 
 	/* get regulating group */
 	if ((group = openpam_get_option(pamh, "group")) == NULL)
@@ -108,14 +110,17 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
  not_found:
 	if (openpam_get_option(pamh, "deny"))
 		return (PAM_SUCCESS);
-	pam_err = pam_prompt(pamh, PAM_ERROR_MSG, &promptresp,
-	    "%s: You are not listed in the correct secondary group"
-	    " (%s) to %s %s.", getprogname(), group, getprogname(), user);
-	if (pam_err == PAM_SUCCESS && promptresp)
-		free(promptresp);
+	if (!auth) {
+		pam_err = pam_prompt(pamh, PAM_ERROR_MSG, &promptresp,
+		    "%s: You are not listed in the correct secondary group"
+		    " (%s) to %s %s.", getprogname(), group, getprogname(),
+		    user);
+		if (pam_err == PAM_SUCCESS && promptresp)
+			free(promptresp);
+	}
 	return (PAM_AUTH_ERR);
  found:
-	if (openpam_get_option(pamh, "authenticate"))
+	if (auth)
 		if ((pam_err = authenticate(pamh, pwd, flags)) != PAM_SUCCESS)
 			return pam_err;
 
