@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.54.2.1 2005/07/11 21:21:47 tron Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.54.2.2 2005/07/11 21:22:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.54.2.1 2005/07/11 21:21:47 tron Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.54.2.2 2005/07/11 21:22:33 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,7 @@ __RCSID("$NetBSD: getgrent.c,v 1.54.2.1 2005/07/11 21:21:47 tron Exp $");
 #ifdef __weak_alias
 __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
+__weak_alias(getgrent_r,_getgrent_r)
 __weak_alias(getgrgid,_getgrgid)
 __weak_alias(getgrgid_r,_getgrgid_r)
 __weak_alias(getgrnam,_getgrnam)
@@ -459,6 +460,32 @@ _files_getgrent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_files_getgrent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct group	*grp	= va_arg(ap, struct group *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct group   **result	= va_arg(ap, struct group **);
+
+	int	rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(grp != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = __grscan_files(retval, grp, buffer, buflen,
+	    &_files_state, 0, NULL, 0);
+	if (rv == NS_SUCCESS)
+		*result = grp;
+	else
+		*result = NULL;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
 _files_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
@@ -747,6 +774,31 @@ _dns_getgrent(void *nsrv, void *nscb, va_list ap)
 	return rv;
 }
 
+/*ARGSUSED*/
+static int
+_dns_getgrent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct group	*grp	= va_arg(ap, struct group *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct group   **result	= va_arg(ap, struct group **);
+
+	int	rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(grp != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = __grscan_dns(retval, grp, buffer, buflen,
+	    &_dns_state, 0, NULL, 0);
+	if (rv == NS_SUCCESS)
+		*result = grp;
+	else
+		*result = NULL;
+	return rv;
+}
 /*ARGSUSED*/
 static int
 _dns_getgrgid(void *nsrv, void *nscb, va_list ap)
@@ -1065,6 +1117,32 @@ _nis_getgrent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_nis_getgrent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct group	*grp	= va_arg(ap, struct group *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct group   **result	= va_arg(ap, struct group **);
+
+	int	rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(grp != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = __grscan_nis(retval, grp, buffer, buflen,
+	    &_nis_state, 0, NULL, 0);
+	if (rv == NS_SUCCESS)
+		*result = grp;
+	else
+		*result = NULL;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
 _nis_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
@@ -1256,8 +1334,8 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 
 	static const ns_dtab compatentdtab[] = {
 		NS_FILES_CB(__grbad_compat, "files")
-		NS_DNS_CB(_dns_getgrent, NULL)
-		NS_NIS_CB(_nis_getgrent, NULL)
+		NS_DNS_CB(_dns_getgrent_r, NULL)
+		NS_NIS_CB(_nis_getgrent_r, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
 		{ 0 }
 	};
@@ -1306,15 +1384,15 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 				free(state->name);	/* (only check 1 grp) */
 				state->name = NULL;
 			} else if (!search) {		/* any group */
-/* XXXREENTRANT: need to implement and use getgrent_r() */
 				if (searchfunc) {
 					crv = searchfunc(searchcookie,
 					    &cgrpres);
 				} else {
 					crv = nsdispatch(NULL, compatentdtab,
-					    NSDB_GROUP_COMPAT, "getgrent",
+					    NSDB_GROUP_COMPAT, "getgrent_r",
 					    __nsdefaultnis,
-					    &cgrpres);
+					    &cretval, &cgrp, filebuf,
+					    sizeof(filebuf), &cgrpres);
 				}
 			} else if (name) {		/* specific group */
 				crv = nsdispatch(NULL, compatnamdtab,
@@ -1501,6 +1579,32 @@ _compat_getgrent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_compat_getgrent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct group	*grp	= va_arg(ap, struct group *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct group   **result	= va_arg(ap, struct group **);
+
+	int	rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(grp != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = __grscan_compat(retval, grp, buffer, buflen,
+	    &_compat_state, 0, NULL, 0, NULL, NULL);
+	if (rv == NS_SUCCESS)
+		*result = grp;
+	else
+		*result = NULL;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
 _compat_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
@@ -1632,8 +1736,30 @@ getgrent(void)
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent", __nsdefaultcompat,
 	    &retval);
 	mutex_unlock(&__grmutex);
-	return (rv == NS_SUCCESS) ? retval : NULL;
+	return (rv == NS_SUCCESS) ? 0 : retval;
 }
+
+int
+getgrent_r(struct group *grp, char *buffer, size_t buflen,
+    struct group **result)
+{
+	int		rv, retval;
+
+	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_files_getgrent_r, NULL)
+		NS_DNS_CB(_dns_getgrent_r, NULL)
+		NS_NIS_CB(_nis_getgrent_r, NULL)
+		NS_COMPAT_CB(_compat_getgrent_r, NULL)
+		{ 0 }
+	};
+
+	mutex_lock(&__grmutex);
+	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent_r", __nsdefaultcompat,
+	    &retval, grp, buffer, buflen, result);
+	mutex_unlock(&__grmutex);
+	return (rv == NS_SUCCESS) ? 0 : retval;
+}
+
 
 struct group *
 getgrgid(gid_t gid)
