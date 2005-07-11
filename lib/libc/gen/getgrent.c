@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.54.2.3 2005/07/11 21:25:27 tron Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.54.2.4 2005/07/11 21:27:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.54.2.3 2005/07/11 21:25:27 tron Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.54.2.4 2005/07/11 21:27:00 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -365,13 +365,12 @@ __grscan_files(int *retval, struct group *grp, char *buffer, size_t buflen,
 							/* scan line by line */
 	while (fgets(filebuf, sizeof(filebuf), state->fp) != NULL) {
 		ep = strchr(filebuf, '\n');
-		if (ep == NULL) {	/* fail on lines that are too big */
+		if (ep == NULL) {	/* skip lines that are too big */
 			int ch;
 
 			while ((ch = getc(state->fp)) != '\n' && ch != EOF)
 				continue;
-			rv = NS_UNAVAIL;
-			break;
+			continue;
 		}
 		*ep = '\0';				/* clear trailing \n */
 
@@ -380,8 +379,7 @@ __grscan_files(int *retval, struct group *grp, char *buffer, size_t buflen,
 
 							/* validate line */
 		if (! _gr_parse(filebuf, grp, buffer, buflen)) {
-			rv = NS_UNAVAIL;
-			break;
+			continue;			/* skip bad lines */
 		}
 		if (! search) {				/* just want this one */
 			rv = NS_SUCCESS;
@@ -666,6 +664,7 @@ __grscan_dns(int *retval, struct group *grp, char *buffer, size_t buflen,
 			return rv;
 	}
 
+ next_dns_entry:
 	hp = NULL;
 	rv = NS_NOTFOUND;
 
@@ -708,8 +707,12 @@ __grscan_dns(int *retval, struct group *grp, char *buffer, size_t buflen,
 		    (!name && gid == grp->gr_gid)) {	/* want specific */
 			rv = NS_SUCCESS;
 		}
-	} else
-		rv = NS_UNAVAIL;
+	} else {					/* dodgy entry */
+		if (!search) {			/* try again if ! searching */
+			hesiod_free_list(state->context, hp);
+			goto next_dns_entry;
+		}
+	}
 
  dnsgrscan_out:
 	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
@@ -982,6 +985,7 @@ __grscan_nis(int *retval, struct group *grp, char *buffer, size_t buflen,
 			return rv;
 	}
 
+ next_nis_entry:
 	key = NULL;
 	data = NULL;
 	rv = NS_SUCCESS;
@@ -1048,8 +1052,14 @@ __grscan_nis(int *retval, struct group *grp, char *buffer, size_t buflen,
 							/* want specific */
 				rv = NS_SUCCESS;
 			}
-		} else
-			rv = NS_UNAVAIL;
+		} else {				/* dodgy entry */
+			if (!search) {		/* try again if ! searching */
+				if (key)
+					free(key);
+				free(data);
+				goto next_nis_entry;
+			}
+		}
 	}
 
 	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
@@ -1426,13 +1436,12 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 			break;
 
 		ep = strchr(filebuf, '\n');
-		if (ep == NULL) {	/* fail on lines that are too big */
+		if (ep == NULL) {	/* skip lines that are too big */
 			int ch;
 
 			while ((ch = getc(state->fp)) != '\n' && ch != EOF)
 				continue;
-			rv = NS_UNAVAIL;
-			break;
+			continue;
 		}
 		*ep = '\0';				/* clear trailing \n */
 
@@ -1462,8 +1471,7 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 
 							/* validate line */
 		if (! _gr_parse(filebuf, grp, buffer, buflen)) {
-			rv = NS_UNAVAIL;
-			break;
+			continue;			/* skip bad lines */
 		}
 
  compatgrscan_cmpgrp:
