@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.109 2005/06/10 11:36:38 tron Exp $	*/
+/*	$NetBSD: exec.h,v 1.110 2005/07/11 20:15:26 cube Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -283,6 +283,10 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
+
+typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
+int	execve1(struct lwp *, const char *, char * const *, char * const *,
+    execve_fetch_element_t);
 
 #endif /* _KERNEL */
 
