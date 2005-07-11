@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.203 2005/07/10 04:20:34 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.204 2005/07/11 20:15:26 cube Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.203 2005/07/10 04:20:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.204 2005/07/11 20:15:26 cube Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -363,6 +363,12 @@ bad1:
 #define STACK_PTHREADSPACE 0
 #endif
 
+static int
+execve_fetch_element(char * const *array, size_t index, char **value)
+{
+	return copyin(array + index, value, sizeof(*value));
+}
+
 /*
  * exec system call
  */
@@ -375,6 +381,15 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
 	} */ *uap = v;
+
+	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
+	    SCARG(uap, envp), execve_fetch_element);
+}
+
+int
+execve1(struct lwp *l, const char *path, char * const *args,
+    char * const *envs, execve_fetch_element_t fetch_element)
+{
 	int			error;
 	u_int			i;
 	struct exec_package	pack;
@@ -383,7 +398,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	struct proc		*p;
 	struct ucred		*cred;
 	char			*argp;
-	char * const		*cpp;
 	char			*dp, *sp;
 	long			argc, envc;
 	size_t			len;
@@ -428,14 +442,14 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		systrace_execve0(p);
 
-	error = copyinstr(SCARG(uap, path), pathbuf, sizeof(pathbuf),
+	error = copyinstr(path, pathbuf, sizeof(pathbuf),
 			  &pathbuflen);
 	if (error)
 		goto clrflg;
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
 #else
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, path, p);
 #endif /* SYSTRACE */
 
 	/*
@@ -444,7 +458,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #ifdef SYSTRACE
 	pack.ep_name = pathbuf;
 #else
-	pack.ep_name = SCARG(uap, path);
+	pack.ep_name = path;
 #endif /* SYSTRACE */
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
@@ -499,17 +513,18 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	}
 
 	/* Now get argv & environment */
-	if (!(cpp = SCARG(uap, argp))) {
+	if (args == NULL) {
 		error = EINVAL;
 		goto bad;
 	}
-
+	/* 'i' will index the argp/envp element to be retrieved */
+	i = 0;
 	if (pack.ep_flags & EXEC_SKIPARG)
-		cpp++;
+		i++;
 
 	while (1) {
 		len = argp + ARG_MAX - dp;
-		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+		if ((error = (*fetch_element)(args, i, &sp)) != 0)
 			goto bad;
 		if (!sp)
 			break;
@@ -523,16 +538,17 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 			ktrkmem(p, KTR_EXEC_ARG, dp, len - 1);
 #endif
 		dp += len;
-		cpp++;
+		i++;
 		argc++;
 	}
 
 	envc = 0;
 	/* environment need not be there */
-	if ((cpp = SCARG(uap, envp)) != NULL ) {
+	if (envs != NULL) {
+		i = 0;
 		while (1) {
 			len = argp + ARG_MAX - dp;
-			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+			if ((error = (*fetch_element)(envs, i, &sp)) != 0)
 				goto bad;
 			if (!sp)
 				break;
@@ -546,7 +562,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 				ktrkmem(p, KTR_EXEC_ENV, dp, len - 1);
 #endif
 			dp += len;
-			cpp++;
+			i++;
 			envc++;
 		}
 	}
