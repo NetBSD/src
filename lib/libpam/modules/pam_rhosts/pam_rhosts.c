@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_rhosts.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $	*/
+/*	$NetBSD: pam_rhosts.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 Danny Braniss
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_rhosts/pam_rhosts.c,v 1.3 2003/12/11 13:55:16 des Exp $");
 #else
-__RCSID("$NetBSD: pam_rhosts.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $");
+__RCSID("$NetBSD: pam_rhosts.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $");
 #endif
 
 #include <pwd.h>
@@ -59,7 +59,7 @@ PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pw, pwres;
+	struct passwd *pwd, pwres;
 	const char *user;
 	const void *ruser, *rhost;
 	int err, superuser;
@@ -69,9 +69,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (err != PAM_SUCCESS)
 		return (err);
 
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pw) != 0)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_USER_UNKNOWN);
-	if (pw->pw_uid == 0 &&
+	if (pwd->pw_uid == 0 &&
 	    openpam_get_option(pamh, OPT_ALLOW_ROOT) == NULL)
 		return (PAM_AUTH_ERR);
 
