@@ -1,4 +1,4 @@
-/*	$NetBSD: login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+/*	$NetBSD: login_access.c,v 1.2.2.1 2005/07/11 11:31:12 tron Exp $	*/
 
 /*
  * This module implements a simple but effective form of login access
@@ -19,7 +19,7 @@ static char sccsid[] = "%Z% %M% %I% %E% %U%";
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/login_access.c,v 1.12 2004/03/05 08:10:18 markm Exp $");
 #else
-__RCSID("$NetBSD: login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+__RCSID("$NetBSD: login_access.c,v 1.2.2.1 2005/07/11 11:31:12 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -161,7 +161,8 @@ netgroup_match(const char *group __unused,
 static int
 user_match(const char *tok, const char *string)
 {
-    struct group *group;
+    struct group grres, *group;
+    char grbuf[1024];
     int     i;
 
     /*
@@ -174,7 +175,8 @@ user_match(const char *tok, const char *string)
 	return (netgroup_match(tok + 1, (char *) 0, string));
     } else if (string_match(tok, string)) {	/* ALL or exact match */
 	return (YES);
-    } else if ((group = getgrnam(tok)) != NULL) {/* try group membership */
+    } else if (getgrnam_r(tok, &grres, grbuf, sizeof(grbuf), &group) == 0 &&
+	group != NULL) {/* try group membership */
 	for (i = 0; group->gr_mem[i]; i++)
 	    if (strcasecmp(string, group->gr_mem[i]) == 0)
 		return (YES);
