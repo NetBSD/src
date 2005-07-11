@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_chroot.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $	*/
+/*	$NetBSD: pam_chroot.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_chroot/pam_chroot.c,v 1.3 2003/04/30 00:40:24 des Exp $");
 #else
-__RCSID("$NetBSD: pam_chroot.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $");
+__RCSID("$NetBSD: pam_chroot.c,v 1.2.2.2 2005/07/11 11:19:34 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,7 +65,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS ||
 	    user == NULL ||
-	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_SESSION_ERR);
 	if (pwd->pw_uid == 0 && !openpam_get_option(pamh, "also_root"))
 		return (PAM_SUCCESS);
