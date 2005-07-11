@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.52 2005/07/06 23:58:14 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.53 2005/07/11 06:01:42 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.52 2005/07/06 23:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.53 2005/07/11 06:01:42 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3879,6 +3879,7 @@ void
 rtw_attach(struct rtw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_txsoft_blk *tsb;
 	int pri, rc;
 
