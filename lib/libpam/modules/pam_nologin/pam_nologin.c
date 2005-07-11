@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_nologin.c,v 1.3.2.1 2005/04/04 17:55:24 tron Exp $	*/
+/*	$NetBSD: pam_nologin.c,v 1.3.2.2 2005/07/11 11:19:40 tron Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_nologin/pam_nologin.c,v 1.10 2002/04/12 22:27:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_nologin.c,v 1.3.2.1 2005/04/04 17:55:24 tron Exp $");
+__RCSID("$NetBSD: pam_nologin.c,v 1.3.2.2 2005/07/11 11:19:40 tron Exp $");
 #endif
 
 
@@ -92,7 +92,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	 * Do not allow login of unexisting users, so that a directory
 	 * failure will not cause the nologin capability to be ignored.
 	 */
-	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL) {
 		return PAM_USER_UNKNOWN;
 	} else {
 		if (pwd->pw_uid == 0)
