@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.54.2.2 2005/07/11 21:22:33 tron Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.54.2.3 2005/07/11 21:25:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.54.2.2 2005/07/11 21:22:33 tron Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.54.2.3 2005/07/11 21:25:27 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -336,7 +336,8 @@ __grend_files(struct __grstate_files *state)
  *	If search is zero, return the next entry.
  *	If search is non-zero, look for a specific name (if name != NULL),
  *	or a specific gid (if name == NULL).
- *	Sets *retval to the errno if the result is not NS_SUCCESS.
+ *	Sets *retval to the errno if the result is not NS_SUCCESS
+ *	or NS_NOTFOUND.
  */
 int
 __grscan_files(int *retval, struct group *grp, char *buffer, size_t buflen,
@@ -395,7 +396,7 @@ __grscan_files(int *retval, struct group *grp, char *buffer, size_t buflen,
 	}
 
  filesgrscan_out:
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	return rv;
 }
@@ -711,7 +712,7 @@ __grscan_dns(int *retval, struct group *grp, char *buffer, size_t buflen,
 		rv = NS_UNAVAIL;
 
  dnsgrscan_out:
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	if (hp)
 		hesiod_free_list(state->context, hp);
@@ -1051,7 +1052,7 @@ __grscan_nis(int *retval, struct group *grp, char *buffer, size_t buflen,
 			rv = NS_UNAVAIL;
 	}
 
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	if (key)
 		free(key);
@@ -1315,7 +1316,8 @@ __grbad_compat(void *nsrv, void *nscb, va_list ap)
  *	If search is zero, return the next entry.
  *	If search is non-zero, look for a specific name (if name != NULL),
  *	or a specific gid (if name == NULL).
- *	Sets *retval to the errno if the result is not NS_SUCCESS.
+ *	Sets *retval to the errno if the result is not NS_SUCCESS or
+ *	NS_NOTFOUND.
  *
  *	searchfunc is invoked when a compat "+" lookup is required;
  *	searchcookie is passed as the first argument to searchfunc,
@@ -1479,7 +1481,7 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 	}
 
  compatgrscan_out:
-	if (rv != NS_SUCCESS)
+	if (rv != NS_SUCCESS && rv != NS_NOTFOUND)
 		*retval = errno;
 	return rv;
 }
@@ -1736,7 +1738,7 @@ getgrent(void)
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent", __nsdefaultcompat,
 	    &retval);
 	mutex_unlock(&__grmutex);
-	return (rv == NS_SUCCESS) ? 0 : retval;
+	return (rv == NS_SUCCESS) ? retval : NULL;
 }
 
 int
@@ -1757,7 +1759,13 @@ getgrent_r(struct group *grp, char *buffer, size_t buflen,
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent_r", __nsdefaultcompat,
 	    &retval, grp, buffer, buflen, result);
 	mutex_unlock(&__grmutex);
-	return (rv == NS_SUCCESS) ? 0 : retval;
+	switch (rv) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 
@@ -1806,7 +1814,13 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t buflen,
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid_r", __nsdefaultcompat,
 	    &retval, gid, grp, buffer, buflen, result);
 	mutex_unlock(&__grmutex);
-	return (rv == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+	switch (rv) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 struct group *
@@ -1855,7 +1869,13 @@ getgrnam_r(const char *name, struct group *grp, char *buffer, size_t buflen,
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrnam_r", __nsdefaultcompat,
 	    &retval, name, grp, buffer, buflen, result);
 	mutex_unlock(&__grmutex);
-	return (rv == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+	switch (rv) {
+	case NS_SUCCESS:
+	case NS_NOTFOUND:
+		return 0;
+	default:
+		return retval;
+	}
 }
 
 void
