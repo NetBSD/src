@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.5.2.3 2005/07/11 11:23:34 tron Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.5.2.4 2005/07/11 11:30:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.5.2.3 2005/07/11 11:23:34 tron Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.5.2.4 2005/07/11 11:30:36 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,10 +70,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const void *ruser;
 	char *const *list;
 	struct passwd *pwd, pwres;
-	struct group *grp;
+	struct group *grp, grres;
 	int pam_err, auth;
 	char *promptresp = NULL;
 	char pwbuf[1024];
+	char grbuf[1024];
 
 	/* get target account */
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS ||
@@ -85,8 +86,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		return (PAM_IGNORE);
 
 	/* get applicant */
-	if (pam_get_item(pamh, PAM_RUSER, &ruser) != PAM_SUCCESS
-	    || ruser == NULL || (pwd = getpwnam(ruser)) == NULL)
+	if (pam_get_item(pamh, PAM_RUSER, &ruser) != PAM_SUCCESS ||
+	    ruser == NULL ||
+	    getpwnam_r(ruser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd == NULL)
 		return (PAM_AUTH_ERR);
 
 	auth = openpam_get_option(pamh, "authenticate") != NULL;
@@ -94,7 +97,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	/* get regulating group */
 	if ((group = openpam_get_option(pamh, "group")) == NULL)
 		group = "wheel";
-	if ((grp = getgrnam(group)) == NULL || grp->gr_mem == NULL)
+	if (getgrnam_r(group, &grres, grbuf, sizeof(grbuf), &grp) != 0 ||
+	    grp == NULL || grp->gr_mem == NULL)
 		goto failed;
 
 	/* check if the group is empty */
