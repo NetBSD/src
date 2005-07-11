@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2005/07/10 14:32:16 cube Exp $
+	$NetBSD: syscalls.master,v 1.34 2005/07/11 20:18:05 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -540,7 +540,8 @@
 			    netbsd32_voidp tramp, int vers); }
 341	UNIMPL
 342	UNIMPL
-343	UNIMPL
+343	STD		{ int netbsd32_rasctl(netbsd32_caddr_t addr, netbsd32_size_t len, \
+			    int op); }
 344	UNIMPL
 345	UNIMPL
 346	UNIMPL
