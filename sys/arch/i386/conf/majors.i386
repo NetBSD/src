@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.26 2005/06/03 12:39:16 blymn Exp $
+#	$NetBSD: majors.i386,v 1.27 2005/07/11 15:37:04 kiyohara Exp $
 #
 # Device majors for i386
 #
@@ -94,7 +94,6 @@ device-major	kttcp		char 91			kttcp
 device-major	dmoverio	char 92			dmoverio
 device-major	cgd		char 93  block 21	cgd
 # major 94 free (ex veriexec which is now a MI major)
-device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		

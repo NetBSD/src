@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.559 2005/06/30 13:41:19 perry Exp $
+# $NetBSD: mi,v 1.560 2005/07/11 15:37:00 kiyohara Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -962,6 +962,7 @@
 ./usr/sbin/flush				base-obsolete		obsolete
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
+./usr/sbin/fwctl				base-sysutil-bin
 ./usr/sbin/g711conv				base-obsolete		obsolete
 ./usr/sbin/getencstat				base-sysutil-bin
 ./usr/sbin/gettable				base-obsolete		obsolete

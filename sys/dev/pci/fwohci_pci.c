@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.21 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.22 2005/07/11 15:37:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.21 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.22 2005/07/11 15:37:04 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.21 2005/02/27 00:27:32 perry Exp $"
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/ieee1394/ieee1394reg.h>
-#include <dev/ieee1394/ieee1394var.h>
+#include <dev/ieee1394/fw_port.h>
+#include <dev/ieee1394/firewire.h>
+#include <dev/ieee1394/firewirereg.h>
+#include <dev/ieee1394/fwdma.h>
 #include <dev/ieee1394/fwohcireg.h>
 #include <dev/ieee1394/fwohcivar.h>
 
@@ -96,32 +98,25 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	psc->psc_sc.sc_dmat = pa->pa_dmat;
+	psc->psc_sc.fc.dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
-	    &psc->psc_sc.sc_memt, &psc->psc_sc.sc_memh,
-	    NULL, &psc->psc_sc.sc_memsize)) {
+	    &psc->psc_sc.bst, &psc->psc_sc.bsh,
+	    NULL, &psc->psc_sc.bssize)) {
 		aprint_error("%s: can't map OHCI register space\n",
 		    self->dv_xname);
 		return;
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&psc->psc_sc, OHCI_REG_IntMaskClear,
-	    OHCI_Int_MasterEnable);
+	OHCI_CSR_WRITE(&psc->psc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
-
-#if BYTE_ORDER == BIG_ENDIAN
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER,
-	    csr | PCI_GLOBAL_SWAP_BE);
-#endif
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -141,9 +136,9 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
-	if (fwohci_init(&psc->psc_sc, pci_intr_evcnt(pa->pa_pc, ih)) != 0) {
+	if (fwohci_init(&(psc->psc_sc), &(psc->psc_sc.fc._dev)) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
-		bus_space_unmap(psc->psc_sc.sc_memt, psc->psc_sc.sc_memh,
-		    psc->psc_sc.sc_memsize);
+		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
+		    psc->psc_sc.bssize);
 	}
 }

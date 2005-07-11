@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.684 2005/07/07 17:05:47 tron Exp $
+# $NetBSD: GENERIC,v 1.685 2005/07/11 15:37:04 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.684 $"
+#ident 		"GENERIC-$Revision: 1.685 $"
 
 maxusers	32		# estimated number of users
 
@@ -1056,17 +1056,14 @@ oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
 # PCI IEEE1394 controllers
-fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
 
-fw*	at fwbus?			# IP over 1394
-
-# IEEE1394 nodes
-fwnode* at fwbus? idhi ? idlo ?
-sbpscsi* at fwnode?
-scsibus* at sbpscsi?
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
 
 # Audio Devices
 

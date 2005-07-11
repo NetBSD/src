@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.267 $"
+#ident 		"GENERIC-$Revision: 1.268 $"
 
 maxusers 32
 
@@ -578,6 +578,13 @@ radio* at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+# PCI IEEE1394 controllers
+#fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+#ieee1394if* at fwohci?
+#fwip*	at ieee1394if?			# IP over IEEE1394
+#sbp*	at ieee1394if? euihi ? euilo ?
 
 # Audio support
 audio*	at audiobus?

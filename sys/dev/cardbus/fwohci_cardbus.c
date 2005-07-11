@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.13 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.14 2005/07/11 15:37:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.14 2005/07/11 15:37:04 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13 2005/02/27 00:26:59 perry Ex
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ieee1394/ieee1394reg.h>
-#include <dev/ieee1394/ieee1394var.h>
+#include <dev/ieee1394/fw_port.h>
+#include <dev/ieee1394/firewire.h>
+#include <dev/ieee1394/firewirereg.h>
+#include <dev/ieee1394/fwdma.h>
 #include <dev/ieee1394/fwohcireg.h>
 #include <dev/ieee1394/fwohcivar.h>
 
@@ -73,12 +75,10 @@ static int fwohci_cardbus_detach(struct device *, int);
 
 CFATTACH_DECL(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
     fwohci_cardbus_match, fwohci_cardbus_attach,
-    fwohci_cardbus_detach, fwohci_activate);
+    fwohci_cardbus_detach, NULL);
 
 #define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
 #define CARDBUS_OHCI_MAP_REGISTER PCI_OHCI_MAP_REGISTER
-#define CARDBUS_OHCI_CONTROL_REGISTER PCI_OHCI_CONTROL_REGISTER
-#define CARDBUS_GLOBAL_SWAP_BE PCI_GLOBAL_SWAP_BE
 #define cardbus_devinfo pci_devinfo
 
 static int
@@ -114,8 +114,8 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_OHCI_MAP_REGISTER,
 	      CARDBUS_MAPREG_TYPE_MEM, 0,
-	      &sc->sc_sc.sc_memt, &sc->sc_sc.sc_memh,
-	      NULL, &sc->sc_sc.sc_memsize)) {
+	      &sc->sc_sc.bst, &sc->sc_sc.bsh,
+	      NULL, &sc->sc_sc.bssize)) {
 		printf("%s: can't map OHCI register space\n", devname);
 		return;
 	}
@@ -123,7 +123,7 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc_sc.sc_dmat = ca->ca_dmat;
+	sc->sc_sc.fc.dmat = ca->ca_dmat;
 
 #if rbus
 #else
@@ -133,21 +133,13 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&sc->sc_sc, OHCI_REG_IntMaskClear,
-	    OHCI_Int_MasterEnable);
+	OHCI_CSR_WRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
 	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
 	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
 	    csr | CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
-
-#if BYTE_ORDER == BIG_ENDIAN
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-	      CARDBUS_OHCI_CONTROL_REGISTER);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_OHCI_CONTROL_REGISTER,
-	    csr | CARDBUS_GLOBAL_SWAP_BE);
-#endif
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_BIO, fwohci_intr, sc);
@@ -158,10 +150,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
-	if (fwohci_init(&sc->sc_sc, NULL) != 0) {
+	if (fwohci_init(&sc->sc_sc, &(sc->sc_sc.fc._dev)) != 0) {
 		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
-		bus_space_unmap(sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
-		    sc->sc_sc.sc_memsize);
+		bus_space_unmap(sc->sc_sc.bst, sc->sc_sc.bsh,
+		    sc->sc_sc.bssize);
 	}
 }
 
@@ -180,11 +172,11 @@ fwohci_cardbus_detach(struct device *self, int flags)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	if (sc->sc_sc.sc_memsize) {
+	if (sc->sc_sc.bssize) {
 		Cardbus_mapreg_unmap(ct, CARDBUS_OHCI_MAP_REGISTER,
-			sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
-			sc->sc_sc.sc_memsize);
-		sc->sc_sc.sc_memsize = 0;
+			sc->sc_sc.bst, sc->sc_sc.bsh,
+			sc->sc_sc.bssize);
+		sc->sc_sc.bssize = 0;
 	}
 	return (0);
 }
