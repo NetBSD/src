@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2005/01/11 19:38:57 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2005/07/11 02:37:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.31 2005/01/11 19:38:57 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.32 2005/07/11 02:37:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,11 +229,11 @@ clear_traps(int vforked)
  * out what it should be set to.
  */
 
-long
+sig_t
 setsignal(int signo, int vforked)
 {
 	int action;
-	sig_t sigact = SIG_DFL;
+	sig_t sigact = SIG_DFL, sig;
 	char *t, tsig;
 
 	if ((t = trap[signo]) == NULL)
@@ -283,11 +283,13 @@ setsignal(int signo, int vforked)
 			return 0;
 		}
 		if (sigact == SIG_IGN) {
-			if (mflag && (signo == SIGTSTP ||
-			     signo == SIGTTIN || signo == SIGTTOU)) {
-				tsig = S_IGN;	/* don't hard ignore these */
-			} else
-				tsig = S_HARD_IGN;
+			/*
+			 * When we set a trap handler we want it to work,
+			 * even when our parent called us ignoring the
+			 * signal. This is what other shells do, so we
+			 * do not set S_HARD_IGN here.
+			 */
+			tsig = S_IGN;
 		} else {
 			tsig = S_RESET;	/* force to be set */
 		}
@@ -299,10 +301,22 @@ setsignal(int signo, int vforked)
 		case S_CATCH:  	sigact = onsig;		break;
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
-	if (!vforked)
-		*t = action;
-	siginterrupt(signo, 1);
-	return (long)signal(signo, sigact);
+	sig = signal(signo, sigact);
+	if (sig != SIG_ERR) {
+		sigset_t ss;
+		if (!vforked)
+			*t = action;
+		if (action == S_CATCH)
+			(void)siginterrupt(signo, 1);
+		/*
+		 * If our parent accidentally blocked signals for
+		 * us make sure we unblock them
+		 */
+		(void)sigemptyset(&ss);
+		(void)sigaddset(&ss, signo);
+		(void)sigprocmask(SIG_UNBLOCK, &ss, NULL);
+	}
+	return sig;
 }
 
 /*
