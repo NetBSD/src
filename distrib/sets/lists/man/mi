@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.800 2005/07/11 15:37:00 kiyohara Exp $
+# $NetBSD: mi,v 1.801 2005/07/11 16:09:14 kiyohara Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -800,8 +800,9 @@
 ./usr/share/man/cat4/fss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fssbs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fta.0			man-sys-catman		.cat
-./usr/share/man/man4/fwip.0			man-sys-catman		.cat
-./usr/share/man/man4/fwohci.0			man-sys-catman		.cat
+./usr/share/man/cat4/fwiso.0			man-obsolete		obsolete
+./usr/share/man/cat4/fwip.0			man-sys-catman		.cat
+./usr/share/man/cat4/fwohci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fxp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gentbi.0			man-sys-catman		.cat
@@ -3037,6 +3038,7 @@
 ./usr/share/man/man4/fss.4			man-sys-man		.man
 ./usr/share/man/man4/fssbs.4			man-sys-man		.man
 ./usr/share/man/man4/fta.4			man-sys-man		.man
+./usr/share/man/man4/fwiso.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwip.4			man-sys-man		.man
 ./usr/share/man/man4/fwohci.4			man-sys-man		.man
 ./usr/share/man/man4/fxp.4			man-sys-man		.man
