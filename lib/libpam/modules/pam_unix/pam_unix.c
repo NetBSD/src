@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.5.2.3 2005/07/11 11:23:34 tron Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.5.2.4 2005/07/11 11:30:07 tron Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.5.2.3 2005/07/11 11:23:34 tron Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.5.2.4 2005/07/11 11:30:07 tron Exp $");
 #endif
 
 
@@ -90,6 +90,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const char *pass, *user, *realpw;
 	char pwbuf[1024];
 
+	pwd = NULL;
 	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF)) {
 		(void) getpwnam_r(getlogin(), &pwres, pwbuf, sizeof(pwbuf),
 				  &pwd);
@@ -414,6 +415,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	int r;
 #endif
 
+	pwd = NULL;
 	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF))
 		(void) getpwnam_r(getlogin(), &old_pwd, old_pwbuf,
 				  sizeof(old_pwbuf), &pwd);
