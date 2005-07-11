@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.66 2005/02/28 00:40:05 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.66.2.1 2005/07/11 21:22:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.66 2005/02/28 00:40:05 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.66.2.1 2005/07/11 21:22:27 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -137,6 +137,7 @@ __RCSID("$NetBSD: getpwent.c,v 1.66 2005/02/28 00:40:05 lukem Exp $");
 #ifdef __weak_alias
 __weak_alias(endpwent,_endpwent)
 __weak_alias(getpwent,_getpwent)
+__weak_alias(getpwent_r,_getpwent_r)
 __weak_alias(getpwnam,_getpwnam)
 __weak_alias(getpwnam_r,_getpwnam_r)
 __weak_alias(getpwuid,_getpwuid)
@@ -566,6 +567,32 @@ _files_getpwent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_files_getpwent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct passwd	*pw	= va_arg(ap, struct passwd *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct passwd  **result	= va_arg(ap, struct passwd **);
+
+	int	rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(pw != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = _files_pwscan(retval, pw, buffer, buflen, &_files_state,
+	    _PW_KEYBYNUM, NULL, 0);
+	if (rv == NS_SUCCESS)
+		*result = pw;
+	else
+		*result = NULL;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
 _files_getpwnam(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
@@ -865,6 +892,71 @@ _dns_getpwent(void *nsrv, void *nscb, va_list ap)
 		hesiod_free_list(_dns_state.context, hp);
 	if (rv == NS_SUCCESS)
 		*retval = &_dns_passwd;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
+_dns_getpwent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct passwd	*pw	= va_arg(ap, struct passwd *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct passwd  **result	= va_arg(ap, struct passwd **);
+
+	char	**hp, *ep;
+	int	  rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(pw != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	*retval = 0;
+
+	if (_dns_state.num == -1)			/* exhausted search */
+		return NS_NOTFOUND;
+
+	if (_dns_state.context == NULL) {
+			/* only start if Hesiod not setup */
+		rv = _dns_start(&_dns_state);
+		if (rv != NS_SUCCESS)
+			return rv;
+	}
+
+ next_dns_entry:
+	hp = NULL;
+	rv = NS_NOTFOUND;
+
+							/* find passwd-NNN */
+	snprintf(buffer, buflen, "passwd-%u", _dns_state.num);
+	_dns_state.num++;
+
+	hp = hesiod_resolve(_dns_state.context, buffer, "passwd");
+	if (hp == NULL) {
+		if (errno == ENOENT)
+			_dns_state.num = -1;
+		else
+			rv = NS_UNAVAIL;
+	} else {
+		if ((ep = strchr(hp[0], '\n')) != NULL)
+			*ep = '\0';			/* clear trailing \n */
+							/* validate line */
+		if (_pw_parse(hp[0], pw, buffer, buflen, 1))
+			rv = NS_SUCCESS;
+		else {				/* dodgy entry, try again */
+			hesiod_free_list(_dns_state.context, hp);
+			goto next_dns_entry;
+		}
+	}
+
+	if (hp)
+		hesiod_free_list(_dns_state.context, hp);
+	if (rv == NS_SUCCESS)
+		*result = pw;
+	else
+		*result = NULL;
 	return rv;
 }
 
@@ -1309,6 +1401,91 @@ _nis_getpwent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_nis_getpwent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct passwd	*pw	= va_arg(ap, struct passwd *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct passwd  **result	= va_arg(ap, struct passwd **);
+
+	char	*key, *data;
+	int	keylen, datalen, rv, nisr;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(pw != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	*retval = 0;
+
+	if (_nis_state.done)				/* exhausted search */
+		return NS_NOTFOUND;
+	if (_nis_state.domain == NULL) {
+					/* only start if NIS not setup */
+		rv = _nis_start(&_nis_state);
+		if (rv != NS_SUCCESS)
+			return rv;
+	}
+
+ next_nis_entry:
+	key = NULL;
+	data = NULL;
+	rv = NS_NOTFOUND;
+
+	if (_nis_state.current) {			/* already searching */
+		nisr = yp_next(_nis_state.domain, PASSWD_BYNAME(&_nis_state),
+		    _nis_state.current, _nis_state.currentlen,
+		    &key, &keylen, &data, &datalen);
+		free(_nis_state.current);
+		_nis_state.current = NULL;
+		switch (nisr) {
+		case 0:
+			_nis_state.current = key;
+			_nis_state.currentlen = keylen;
+			key = NULL;
+			break;
+		case YPERR_NOMORE:
+			_nis_state.done = 1;
+			goto nisent_out;
+		default:
+			rv = NS_UNAVAIL;
+			goto nisent_out;
+		}
+	} else {					/* new search */
+		if (yp_first(_nis_state.domain, PASSWD_BYNAME(&_nis_state),
+		    &_nis_state.current, &_nis_state.currentlen,
+		    &data, &datalen)) {
+			rv = NS_UNAVAIL;
+			goto nisent_out;
+		}
+	}
+
+	data[datalen] = '\0';				/* clear trailing \n */
+							/* validate line */
+	if (_nis_parse(data, pw, buffer, buflen, &_nis_state))
+		rv = NS_SUCCESS;
+	else {					/* dodgy entry, try again */
+		if (key)
+			free(key);
+		free(data);
+		goto next_nis_entry;
+	}
+
+ nisent_out:
+	if (key)
+		free(key);
+	if (data)
+		free(data);
+	if (rv == NS_SUCCESS)
+		*result = pw;
+	else
+		*result = NULL;
+	return rv;
+}
+
+/*ARGSUSED*/
+static int
 _nis_getpwuid(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
@@ -1662,8 +1839,8 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 {
 	static const ns_dtab compatentdtab[] = {
 		NS_FILES_CB(_passwdcompat_bad, "files")
-		NS_DNS_CB(_dns_getpwent, NULL)
-		NS_NIS_CB(_nis_getpwent, NULL)
+		NS_DNS_CB(_dns_getpwent_r, NULL)
+		NS_NIS_CB(_nis_getpwent_r, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
 		{ 0 }
 	};
@@ -1687,15 +1864,9 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 
 	switch (search) {
 	case _PW_KEYBYNUM:
-/* XXXREENTRANT: implement & use getpwent_r */
 		rv = nsdispatch(NULL, compatentdtab,
-		    NSDB_PASSWD_COMPAT, "getpwent", __nsdefaultnis,
-		    &cpw);
-		if (rv == NS_SUCCESS &&
-		    ! _pw_copy(cpw, pw, buffer, buflen, NULL, 0)) {
-			errno = ERANGE;
-			rv = NS_UNAVAIL;
-		}
+		    NSDB_PASSWD_COMPAT, "getpwent_r", __nsdefaultnis,
+		    &crv, pw, buffer, buflen, &cpw);
 		break;
 	case _PW_KEYBYNAME:
 		_DIAGASSERT(name != NULL);
@@ -2024,6 +2195,33 @@ _compat_getpwent(void *nsrv, void *nscb, va_list ap)
 
 /*ARGSUSED*/
 static int
+_compat_getpwent_r(void *nsrv, void *nscb, va_list ap)
+{
+	int		*retval	= va_arg(ap, int *);
+	struct passwd	*pw	= va_arg(ap, struct passwd *);
+	char		*buffer	= va_arg(ap, char *);
+	size_t		 buflen	= va_arg(ap, size_t);
+	struct passwd  **result	= va_arg(ap, struct passwd **);
+
+	int		rv;
+
+	_DIAGASSERT(retval != NULL);
+	_DIAGASSERT(pw != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	rv = _compat_pwscan(retval, pw, buffer, buflen, &_compat_state,
+	    _PW_KEYBYNUM, NULL, 0);
+	if (rv == NS_SUCCESS)
+		*result = pw;
+	else
+		*result = NULL;
+	return rv;
+}
+
+
+/*ARGSUSED*/
+static int
 _compat_getpwnam(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
@@ -2157,6 +2355,34 @@ getpwent(void)
 	mutex_unlock(&_pwmutex);
 	return (r == NS_SUCCESS) ? retval : NULL;
 }
+
+int
+getpwent_r(struct passwd *pwd, char *buffer, size_t buflen,
+    struct passwd **result)
+{
+	int	r, retval;
+
+	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_files_getpwent_r, NULL)
+		NS_DNS_CB(_dns_getpwent_r, NULL)
+		NS_NIS_CB(_nis_getpwent_r, NULL)
+		NS_COMPAT_CB(_compat_getpwent_r, NULL)
+		{ 0 }
+	};
+
+	_DIAGASSERT(pwd != NULL);
+	_DIAGASSERT(buffer != NULL);
+	_DIAGASSERT(result != NULL);
+
+	*result = NULL;
+	retval = 0;
+	mutex_lock(&_pwmutex);
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent_r", __nsdefaultcompat,
+	    &retval, pwd, buffer, buflen, result);
+	mutex_unlock(&_pwmutex);
+	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
+}
+
 
 struct passwd *
 getpwnam(const char *name)
