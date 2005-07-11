@@ -1,19 +1,20 @@
-#	$NetBSD: files.ieee1394,v 1.7 2002/11/22 16:28:55 jmc Exp $
+#	$NetBSD: files.ieee1394,v 1.8 2005/07/11 15:37:00 kiyohara Exp $
 
-file	dev/ieee1394/fwlynx.c	fwlynx
 file	dev/ieee1394/fwohci.c	fwohci
 
-device	fwnode { }
-attach	fwnode at fwbus: ieee1212
+device	ieee1394if {[euihi = -1], [euilo = -1]}
+attach	ieee1394if at fwbus
+file	dev/ieee1394/firewire.c		ieee1394if
+file	dev/ieee1394/fwdev.c		ieee1394if
+file	dev/ieee1394/fwmem.c		ieee1394if
 
-file	dev/ieee1394/fwnode.c		fwnode
+file	dev/ieee1394/fwdma.c		ieee1394if
+file	dev/ieee1394/fwcrom.c		ieee1394if
 
-device  sbpscsi: scsi, sbp2
-attach  sbpscsi at fwnode
+device	fwip: arp, ieee1394, ifnet
+attach	fwip at ieee1394if
+file	dev/ieee1394/if_fwip.c		fwip
 
-file    dev/ieee1394/sbpscsi.c           sbpscsi
-
-device	fw: arp, ieee1394, ifnet
-attach	fw at fwbus
-
-file	dev/ieee1394/if_fw.c		fw
+device	sbp { }: scsi
+attach	sbp at ieee1394if
+file	dev/ieee1394/sbp.c		sbp

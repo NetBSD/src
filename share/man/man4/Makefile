@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.361 2005/06/28 08:36:48 kent Exp $
+#	$NetBSD: Makefile,v 1.362 2005/07/11 15:37:00 kiyohara Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -16,7 +16,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	dmphy.4 dpt.4 dpti.4 drum.4 eap.4 ebus.4 edc.4 \
 	elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esl.4 esm.4 eso.4 exphy.4 fast_ipsec.4 fd.4 \
-	fpa.4 fms.4 fss.4 fwiso.4 fxp.4 gem.4 gentbi.4 \
+	fpa.4 fms.4 fss.4 fxp.4 gem.4 gentbi.4 \
 	glxtphy.4 gpib.4 gre.4 gphyter.4 gsip.4 hifn.4 hme.4 \
 	hptide.4 icmp.4 icp.4 icsphy.4 idp.4 ieee80211.4 ifmedia.4 \
 	igsfb.4 iha.4 inet.4 inphy.4 intersil7170.4 \
@@ -65,7 +65,7 @@ MAN+=	acpi.4 acpiacad.4 acpibat.4 acpibut.4 acpiec.4 acpilid.4 \
 MAN+=	radio.4 az.4 mr.4 rt.4 rtii.4 sf2r.4
 
 # machine-independent busses
-MAN+=	eisa.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4
+MAN+=	eisa.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4 ieee1394if.4
 
 # machine-independent PCI devices
 MAN+=	cz.4 epic.4 lmc.4 viaenv.4
@@ -87,6 +87,9 @@ MAN+=	dtide.4 ea.4 eb.4 hcide.4
 
 # machine-independent VME devices
 MAN+=	sc.4 si.4
+
+# machine-independent IEEE1394 devices
+MAN+=	fwohci.4 fwip.4 sbp.4
 
 # IPv6/IPsec
 MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4

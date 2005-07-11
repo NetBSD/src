@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.38 2004/04/10 22:48:44 pooka Exp $
+#	$NetBSD: files.sgimips,v 1.39 2005/07/11 15:37:04 kiyohara Exp $
 
 maxpartitions 16
 
@@ -55,5 +55,10 @@ include "dev/scsipi/files.scsipi"
 include "dev/ata/files.ata"
 
 include "arch/sgimips/gio/files.gio"
+
+#
+# Machine-independent IEEE 1394 device support  
+#
+include "dev/ieee1394/files.ieee1394"
 
 include "arch/sgimips/conf/majors.sgimips"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.28 2005/01/08 03:18:18 yamt Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.29 2005/07/11 15:37:05 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28 2005/01/08 03:18:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.29 2005/07/11 15:37:05 kiyohara Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -74,14 +74,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28 2005/01/08 03:18:18 yamt Ex
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
+#include <dev/ieee1394/fw_port.h>
+#include <dev/ieee1394/firewire.h>
+
+#include <dev/ieee1394/firewirereg.h>
+#include <dev/ieee1394/iec13213.h>
+#include <dev/ieee1394/if_fwipvar.h>
+
 #define	IEEE1394_REASS_TIMEOUT	3	/* 3 sec */
 
 #define	senderr(e)	do { error = (e); goto bad; } while(0/*CONSTCOND*/)
 
 static int  ieee1394_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		struct rtentry *);
-static void ieee1394_input(struct ifnet *, struct mbuf *);
-static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *);
+static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, u_int16_t);
 
 static int
 ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
@@ -92,11 +98,13 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	int s, hdrlen, error = 0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = NULL;
-	struct ieee1394_hwaddr hwdst, *myaddr;
+	struct ieee1394_hwaddr *hwdst, *myaddr, baddr;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef INET
 	struct arphdr *ah;
 #endif /* INET */
+	struct m_tag *mtag;
+	int unicast;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -141,12 +149,37 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
+	/*
+	 * For unicast, we make a tag to store the lladdr of the
+	 * destination. This might not be the first time we have seen
+	 * the packet (for instance, the arp code might be trying to
+	 * re-send it after receiving an arp reply) so we only
+	 * allocate a tag if there isn't one there already. For
+	 * multicast, we will eventually use a different tag to store
+	 * the channel number.
+	 */
+	unicast = !(m0->m_flags & (M_BCAST | M_MCAST));
+	if (unicast) {
+		mtag =
+		    m_tag_locate(m0, MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR, NULL);
+		if (!mtag) {
+			mtag = m_tag_alloc(MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR,
+			    sizeof (struct ieee1394_hwaddr), M_NOWAIT);
+			if (!mtag) {
+				error = ENOMEM;
+				goto bad;
+			}
+			m_tag_prepend(m0, mtag);
+		}
+		hwdst = (struct ieee1394_hwaddr *)(mtag + 1);
+	} else {
+		hwdst = &baddr;
+	}
+
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		if (m0->m_flags & (M_BCAST | M_MCAST))
-			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
-		else if (!arpresolve(ifp, rt, m0, dst, (u_char *)&hwdst))
+		if (unicast && (!arpresolve(ifp, rt, m0, dst, (u_char *)hwdst)))
 			return 0;	/* if not yet resolved */
 		/* if broadcasting on a simplex interface, loopback a copy */
 		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -155,16 +188,14 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		break;
 	case AF_ARP:
 		ah = mtod(m0, struct arphdr *);
-		memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
 		ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		etype = htons(ETHERTYPE_ARP);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (m0->m_flags & M_MCAST)
-			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
-		else if (!nd6_storelladdr(ifp, rt, m0, dst, (u_char *)&hwdst)) {
+		if (unicast &&
+		    (!nd6_storelladdr(ifp, rt, m0, dst, (u_char *)hwdst))) {
 			/* something bad happened */
 			return 0;
 		}
@@ -191,7 +222,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
-	    memcmp(&hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
+	    unicast &&
+	    memcmp(hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
 		return looutput(ifp, m0, dst, rt);
 
 	/*
@@ -200,21 +232,22 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 * So the determination of maxrec and fragmentation should be
 	 * called from the driver after probing the topology map.
 	 */
-	if (m0->m_flags & (M_BCAST | M_MCAST)) {
+	if (unicast) {
 		hdrlen = IEEE1394_GASP_LEN;
-		hwdst.iha_speed = 0;	/* XXX */
+		hwdst->iha_speed = 0;	/* XXX */
 	} else
 		hdrlen = 0;
-	if (hwdst.iha_speed > myaddr->iha_speed)
-		hwdst.iha_speed = myaddr->iha_speed;
-	if (hwdst.iha_maxrec > myaddr->iha_maxrec)
-		hwdst.iha_maxrec = myaddr->iha_maxrec;
-	if (hwdst.iha_maxrec > (8 + hwdst.iha_speed))
-		hwdst.iha_maxrec = 8 + hwdst.iha_speed;
-	if (hwdst.iha_maxrec < 8)
-		hwdst.iha_maxrec = 8;
 
-	m0 = ieee1394_fragment(ifp, m0, (2<<hwdst.iha_maxrec) - hdrlen, etype);
+	if (hwdst->iha_speed > myaddr->iha_speed)
+		hwdst->iha_speed = myaddr->iha_speed;
+	if (hwdst->iha_maxrec > myaddr->iha_maxrec)
+		hwdst->iha_maxrec = myaddr->iha_maxrec;
+	if (hwdst->iha_maxrec > (8 + hwdst->iha_speed))
+		hwdst->iha_maxrec = 8 + hwdst->iha_speed;
+	if (hwdst->iha_maxrec < 8)
+			hwdst->iha_maxrec = 8;
+
+	m0 = ieee1394_fragment(ifp, m0, (2<<hwdst->iha_maxrec) - hdrlen, etype);
 	if (m0 == NULL)
 		senderr(ENOBUFS);
 
@@ -224,12 +257,10 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		ifp->if_omcasts++;
 	while ((m = m0) != NULL) {
 		m0 = m->m_nextpkt;
-		M_PREPEND(m, sizeof(struct ieee1394_header), M_DONTWAIT);
 		if (m == NULL) {
 			splx(s);
 			senderr(ENOBUFS);
 		}
-		memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 		if (error) {
 			/* mbuf is already freed */
@@ -323,37 +354,34 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 	return NULL;
 }
 
-static void
-ieee1394_input(struct ifnet *ifp, struct mbuf *m)
+void
+ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
 	int s;
-	struct ieee1394_header *ih;
 	struct ieee1394_unfraghdr *iuh;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
 	}
-	if (m->m_len < sizeof(*ih) + sizeof(*iuh)) {
-		if ((m = m_pullup(m, sizeof(*ih) + sizeof(*iuh))) == NULL)
+	if (m->m_len < sizeof(*iuh)) {
+		if ((m = m_pullup(m, sizeof(*iuh))) == NULL)
 			return;
 	}
 
-	ih = mtod(m, struct ieee1394_header *);
-	iuh = (struct ieee1394_unfraghdr *)&ih[1];
+	iuh = mtod(m, struct ieee1394_unfraghdr *);
 
 	if (ntohs(iuh->iuh_ft) & (IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE)) {
-		if ((m = ieee1394_reass(ifp, m)) == NULL)
+		if ((m = ieee1394_reass(ifp, m, src)) == NULL)
 			return;
-		ih = mtod(m, struct ieee1394_header *);
-		iuh = (struct ieee1394_unfraghdr *)&ih[1];
+		iuh = mtod(m, struct ieee1394_unfraghdr *);
 	}
 	etype = ntohs(iuh->iuh_etype);
 
 	/* strip off the ieee1394 header */
-	m_adj(m, sizeof(*ih) + sizeof(*iuh));
+	m_adj(m, sizeof(*iuh));
 #if NBPFILTER > 0
 	/* XXX: emulate DLT_EN10MB */
 	if (ifp->if_bpf)
@@ -395,35 +423,38 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 }
 
 static struct mbuf *
-ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
+ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, u_int16_t src)
 {
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
-	struct ieee1394_header *ih;
 	struct ieee1394_fraghdr *ifh;
 	struct ieee1394_unfraghdr *iuh;
 	struct ieee1394_reassq *rq;
 	struct ieee1394_reass_pkt *rp, *trp, *nrp = NULL;
 	int len;
-	u_int16_t off, ftype, size, dgl;
+	u_int16_t etype, off, ftype, size, dgl;
+	u_int32_t id;
 
-	if (m0->m_len < sizeof(*ih) + sizeof(*ifh)) {
-		if ((m0 = m_pullup(m0, sizeof(*ih) + sizeof(*ifh))) == NULL)
+	if (m0->m_len < sizeof(*ifh)) {
+		if ((m0 = m_pullup(m0, sizeof(*ifh))) == NULL)
 			return NULL;
 	}
-	ih = mtod(m0, struct ieee1394_header *);
-	ifh = (struct ieee1394_fraghdr *)&ih[1];
-	m_adj(m0, sizeof(*ih) + sizeof(*ifh));
+	ifh = mtod(m0, struct ieee1394_fraghdr *);
+	m_adj(m0, sizeof(*ifh));
 	size = ntohs(ifh->ifh_ft_size);
 	ftype = size & (IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE);
 	size = (size & ~ftype) + 1;
-	dgl = ifh->ifh_dgl;
+	dgl = ntohs(ifh->ifh_dgl);
 	len = m0->m_pkthdr.len;
+	id = dgl | (src << 16);
 	if (ftype & IEEE1394_FT_SUBSEQ) {
 		m_tag_delete_chain(m0, NULL);
 		m0->m_flags &= ~M_PKTHDR;
+		etype = 0;
 		off = ntohs(ifh->ifh_etype_off);
-	} else
+	} else {
+		etype = ifh->ifh_etype_off;
 		off = 0;
+	}
 
 	for (rq = LIST_FIRST(&ic->ic_reassq); ; rq = LIST_NEXT(rq, rq_node)) {
 		if (rq == NULL) {
@@ -435,12 +466,12 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 				m_freem(m0);
 				return NULL;
 			}
-			memcpy(rq->rq_uid, ih->ih_uid, IEEE1394_ADDR_LEN);
+			rq->fr_id = id;
 			LIST_INIT(&rq->rq_pkt);
 			LIST_INSERT_HEAD(&ic->ic_reassq, rq, rq_node);
 			break;
 		}
-		if (memcmp(rq->rq_uid, ih->ih_uid, IEEE1394_ADDR_LEN) == 0)
+		if (rq->fr_id == id)
 			break;
 	}
 	for (rp = LIST_FIRST(&rq->rq_pkt); rp != NULL; rp = nrp) {
@@ -497,6 +528,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 			m_cat(m0, rp->rp_m);
 			rp->rp_m = m0;
 			rp->rp_off = off;
+			rp->rp_etype = etype;	 /* over writing trust etype */
 			rp->rp_len += len;
 			m0 = NULL;	/* mark merged */
 			break;
@@ -519,11 +551,9 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 		LIST_REMOVE(rp, rp_next);
 		m0 = rp->rp_m;
 		m0->m_pkthdr.len = rp->rp_len;
-		M_PREPEND(m0, sizeof(*ih) + sizeof(*iuh), M_DONTWAIT);
+		M_PREPEND(m0, sizeof(*iuh), M_DONTWAIT);
 		if (m0 != NULL) {
-			ih = mtod(m0, struct ieee1394_header *);
-			iuh = (struct ieee1394_unfraghdr *)&ih[1];
-			memcpy(ih, &rp->rp_hdr, sizeof(*ih));
+			iuh = mtod(m0, struct ieee1394_unfraghdr *);
 			iuh->iuh_ft = 0;
 			iuh->iuh_etype = rp->rp_etype;
 		}
@@ -540,9 +570,8 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 		return NULL;
 	}
 	trp->rp_m = m0;
-	memcpy(&trp->rp_hdr, ih, sizeof(*ih));
 	trp->rp_size = size;
-	trp->rp_etype = ifh->ifh_etype_off;	 /* valid only if off==0 */
+	trp->rp_etype = etype;		 /* valid only if off==0 */
 	trp->rp_off = off;
 	trp->rp_dgl = dgl;
 	trp->rp_len = len;
@@ -628,7 +657,6 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_dlt = DLT_EN10MB;	/* XXX */
 	ifp->if_mtu = IEEE1394MTU;
 	ifp->if_output = ieee1394_output;
-	ifp->if_input = ieee1394_input;
 	ifp->if_drain = ieee1394_drain;
 	ifp->if_watchdog = ieee1394_watchdog;
 	ifp->if_timer = 1;
@@ -710,29 +738,6 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-#if __NetBSD_Version__ >= 105080000
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING)
-			(*ifp->if_stop)(ifp, 1);
-		else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP)
-			error = (*ifp->if_init)(ifp);
-		else if ((ifp->if_flags & IFF_UP) != 0)
-			error = (*ifp->if_init)(ifp);
-#else
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING)
-			fw_stop(ifp, 1);
-		else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP)
-			error = fw_init(ifp);
-		else if ((ifp->if_flags & IFF_UP) != 0)
-			error = fw_init(ifp);
-#endif
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		/* nothing to do */
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2005/07/07 17:05:47 tron Exp $
+# $NetBSD: GENERIC,v 1.76 2005/07/11 15:37:04 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 maxusers	32
 
@@ -279,6 +279,14 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 #tlphy*		at mii? phy ?			# ThunderLAN PHYs
 #tqphy*		at mii? phy ?			# TDK Semiconductor PHYs
 #ukphy*		at mii? phy ?			# generic unknown PHYs
+
+# PCI IEEE1394 controllers
+#fwohci*	at pci? dev ? function ?		# IEEE1394 Open Host Controller
+
+#ieee1394if*	at fwohci?
+#fwip*		at ieee1394if?			# IP over IEEE1394
+#sbp*		at ieee1394if? euihi ? euilo ?
+#scsibus*	at sbp?
 
 # PCI audio devices
 #clcs*		at pci? dev ? function ?	# Cirrus Logic CS4280

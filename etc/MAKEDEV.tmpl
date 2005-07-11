@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.45 2005/06/16 15:31:21 elad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.46 2005/07/11 15:37:03 kiyohara Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -213,6 +213,10 @@
 #	maple	Maple bus control devices
 #	mlcd*	Maple bus LCD devices
 #	mmem*	Maple bus storage devices
+#
+# IEEE1394 bus devices:
+#	fw*	IEEE1394 bus generic node access devices
+#	fwmem*	IEEE1394 bus physical memory of the remote node access devices
 #
 # Special purpose devices:
 #	ad*	UNIBUS interface to Data Translation A/D converter
@@ -1520,6 +1524,15 @@ tap*)
 		mkdev tap c %tap_chr% 0xfffff 600
 		;;
 	esac
+	;;
+
+fw*)
+	unit=${i#fw}
+	for j in 0 1 2 3
+	do
+		mkdev fw${unit}.${j} c %fw_chr% $((${unit} * 256 + ${j})) 660 ${g_operator}
+		mkdev fwmem${unit}.${j} c %fw_chr% $((65536 + ${unit} * 256 + ${j})) 660 ${g_operator}
+	done
 	;;
 
 midevend)
