@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.24 2005/05/29 20:56:02 christos Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.25 2005/07/11 14:40:00 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24 2005/05/29 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.25 2005/07/11 14:40:00 christos Exp $");
 
 #include "rnd.h"
 
@@ -236,15 +236,15 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	ACPI_BUFFER abuf;
 	ACPI_STATUS rv;
 	UINT32 *p;
-	int i, drives = -1;
+	int i, drives;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
 	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
 		printf("%s: failed to evaluate _FDE: %s\n",
-		    sc->sc_dev.dv_xname, rv, AcpiFormatException(rv));
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 #endif
-		return drives;
+		return -1;
 	}
 	fde = (ACPI_OBJECT *)abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
