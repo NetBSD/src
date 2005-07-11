@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.202 2005/07/07 17:05:57 tron Exp $
+# $NetBSD: GENERIC,v 1.203 2005/07/11 15:37:04 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.202 $"
+#ident 		"GENERIC-$Revision: 1.203 $"
 
 maxusers	32
 
@@ -434,13 +434,14 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
-fw*	at fwbus?			# IP over 1394
 
-# IEEE1394 nodes
-fwnode* at fwbus? idhi ? idlo ?
-sbpscsi* at fwnode?
-scsibus* at sbpscsi?
+# CardBus IEEE1394 controllers 
+#fwohci*	at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
+scsibus* at sbp?
 
 # Audio Devices
 

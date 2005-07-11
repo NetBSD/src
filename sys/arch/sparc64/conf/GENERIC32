@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.110 2005/07/07 17:05:58 tron Exp $
+# 	$NetBSD: GENERIC32,v 1.111 2005/07/11 15:37:04 kiyohara Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	64
 
@@ -623,15 +623,6 @@ radio*	at udsbr?
 # USB Generic driver
 ugen*	at uhub? port ?
 
-# PCI IEEE1394 controllers
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
-fw*	at fwbus?			# IP over 1394
-
-# IEEE1394 nodes
-#fwnode* at fwbus? idhi ? idlo ?
-#sbpscsi* at fwnode?
-
 ## Loopback network interface; required
 pseudo-device	loop
 
@@ -711,9 +702,6 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 # CardBus USB controllers
 #ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
-
-# CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller UT
 
 ## PCMCIA cards; UT marks untested.
 
