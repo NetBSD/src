@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.173 2005/07/11 21:38:58 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.174 2005/07/12 11:56:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10442,4 +10442,44 @@ lib/libc/shlib_version				1.163
 	They add getgrent_r and getpwent_r and fix some implementation issues
 	in getpw{nam,uid}_r and getgr{nam,gid}_r.    
 	[lukem, ticket #540, #541]
+
+lib/libedit/readline.c				1.50,1.52
+
+	Correct usage of getpw*() functions in "edit" library.
+	[lukem, ticket #542]
+
+sys/arch/i386/include/cpu_counter.h		1.2
+
+	Document more precisely the Cyrix TSC lossage: if you execute "hlt"
+	when in powersave mode, the TSC stops counting.
+	[fair, ticket #554]
+
+sys/dev/pci/geodeide.c				1.9
+
+	According to FreeBSD and other references, the cs5530 IDE controller,
+	while capable of UDMA mode 2, is swamped if you actually go that
+	fast, which is not good for the other functions on this multifunction
+	southbridge chip, so limit UDMA to mode 1.
+	[fair, ticket #555]
+
+share/man/man4/geodeide.4			1.3
+
+	More clearly document the amazing lossage of this chip/core in an
+	expanded BUGS section.
+	[fair, ticket #556]
+
+sys/arch/i386/pci/pcib.c			1.36
+
+	The Cyrix cs5530 PCI host bridge does not have a broken latch on the
+	i8254 clock core, unlike its predecessors the cs5510 and cs5520.
+	[fair, ticket #557]
+
+sys/arch/i386/i386/identcpu.c			1.21
+
+	Disable the use of TSC on Cyrix CPUs and document why:
+	When powersave mode is enabled, the TSC stops counting while the CPU
+	is halted in idle() waiting for an interrupt. This means we can't use
+	the TSC for interval time in microtime(9), and thus it is disabled
+	here.
+	[fair, ticket #561]
 
