@@ -95,15 +95,6 @@ interpret its option string, then the problem may be output in unexpected
 formats.
 
 
-* `release' of a project subdir does not remove the `subdir' entry from
-  `./CVS/Entries'.
-
-
-* Most of the remote commands are encountering assertion failures when listing
-  the toplevel of the repository (e.g. `cvs rlog .').  This appears to be
-  related to the symlinked CVS root fix.
-
-
 * Status
 
                              /*-------.
