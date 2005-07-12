@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.1 2005/07/11 15:35:25 kiyohara Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.2 2005/07/12 09:10:18 wiz Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -74,22 +74,25 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-		"fwctl [-u bus_num] [-rt] [-g gap_count] [-o node] "
-		    "[-b pri_req] [-c node] [-d node] [-l file] "
-		    "[-R file] [-S file] [-m target]\n"
-		"\t-u: specify bus number\n"
-		"\t-g: broadcast gap_count by phy_config packet\n"
-		"\t-o: send link-on packet to the node\n"
-		"\t-s: write RESET_START register on the node\n"
+		"%s [-prt] [-b pri_req] [-c node] [-d node]"
+		" [-g gap_count] [-l file]\n"
+		"\t[-m EUI64 | hostname] [-o node] [-R filename]"
+		" [-S filename]\n"
+		"\t[-s node] [-u bus_num]\n"
 		"\t-b: set PRIORITY_BUDGET register on all supported nodes\n"
 		"\t-c: read configuration ROM\n"
-		"\t-r: bus reset\n"
-		"\t-t: read topology map\n"
 		"\t-d: hex dump of configuration ROM\n"
+		"\t-g: broadcast gap_count by phy_config packet\n"
 		"\t-l: load and parse hex dump file of configuration ROM\n"
-		"\t-R: Receive DV stream\n"
-		"\t-S: Send DV stream\n"
-		"\t-m: set fwmem target\n");
+		"\t-m: set fwmem target\n"
+		"\t-o: send link-on packet to the node\n"
+		"\t-p: dump PHY registers\n"
+		"\t-R: receive DV stream\n"
+		"\t-r: bus reset\n"
+		"\t-S: send DV stream\n"
+		"\t-s: write RESET_START register on the node\n"
+		"\t-t: read topology map\n"
+		"\t-u: specify bus number\n", getprogname());
 	exit(0);
 }
 
