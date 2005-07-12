@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.5 2005/07/12 14:14:46 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.6 2005/07/12 16:24:29 manu Exp $	*/
 
 /* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
 
@@ -1061,10 +1061,6 @@ pk_sendupdate(iph2)
 			natt.frag = iph2->ph1->rmconf->esp_frag;
 		} else {
 			memset (&natt, 0, sizeof (natt));
-
-			/* Remove port information, that SA doesn't use it */
-			set_port(src, 0);
-			set_port(dst, 0);
 		}
 
 		if (pfkey_send_update_nat(
@@ -1088,10 +1084,6 @@ pk_sendupdate(iph2)
 			return -1;
 		}
 #else
-		/* Remove port information, it is not used without NAT-T */
-		set_port(src, 0);
-		set_port(dst, 0);
-
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update\n");
 		if (pfkey_send_update(
 				lcconf->sock_pfkey,
