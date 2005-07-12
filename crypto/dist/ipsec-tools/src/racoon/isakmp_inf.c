@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.4 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.5 2005/07/12 14:13:10 manu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.14.4.2 2005/03/02 20:00:03 vanhu Exp */
 
@@ -149,6 +149,14 @@ isakmp_info_recv(iph1, msg0)
 	} else
 		msg = vdup(msg0);
 
+	/* Safety check */
+	if (msg->l < sizeof(*isakmp) + sizeof(*gen)) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+			"ignore information because the "
+			"message is way too short\n");
+		goto end;
+	}
+
 	isakmp = (struct isakmp *)msg->v;
 	gen = (struct isakmp_gen *)((caddr_t)isakmp + sizeof(struct isakmp));
 
@@ -168,6 +176,14 @@ isakmp_info_recv(iph1, msg0)
 
 	{
 		void *p;
+		/* Safety check */
+		if (msg->l < sizeof(*isakmp) + ntohs(gen->len) + sizeof(*nd)) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+				"ignore information because the "
+				"message is too short\n");
+			goto end;
+		}
+
 		vchar_t *hash, *payload;
 		struct isakmp_gen *nd;
 
@@ -179,6 +195,12 @@ isakmp_info_recv(iph1, msg0)
 		    ntohs(gen->len))) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				 "too long payload length (broken message?)\n");
+			goto end;
+		}
+
+		if (ntohs(nd->len) < sizeof(*nd)) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"too short payload length (broken message?)\n");
 			goto end;
 		}
 
