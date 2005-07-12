@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.4 2005/07/12 12:13:00 drochner Exp $ */
+/*	$NetBSD: if_ural.c,v 1.5 2005/07/12 12:51:03 drochner Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: src/sys/dev/usb/if_ural.c,v 1.9 2005/07/08 19:19:06 damien Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.4 2005/07/12 12:13:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.5 2005/07/12 12:51:03 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -907,7 +907,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->sc_drvbpf != NULL) {
 		struct ural_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
+		tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wr_antenna = sc->rx_ant;
