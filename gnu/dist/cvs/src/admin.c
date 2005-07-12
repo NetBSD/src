@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 1992, Brian Berliner and Jeff Polk
- * Copyright (c) 1989-1992, Brian Berliner
+ * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ *
+ * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ *                                  and others.
+ *
+ * Portions Copyright (c) 1992, Brian Berliner and Jeff Polk
+ * Portions Copyright (c) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
@@ -23,12 +28,16 @@ static int admin_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 static const char *const admin_usage[] =
 {
     "Usage: %s %s [options] files...\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-a users   Append (comma-separated) user names to access list.\n",
     "\t-A file    Append another file's access list.\n",
     "\t-b[rev]    Set default branch (highest branch on trunk if omitted).\n",
+#endif
     "\t-c string  Set comment leader.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-e[users]  Remove (comma-separated) user names from access list\n",
     "\t           (all names if omitted).\n",
+#endif
     "\t-I         Run interactively.\n",
     "\t-k subst   Set keyword substitution mode:\n",
     "\t   kv   (Default) Substitute keyword and value.\n",
@@ -37,10 +46,13 @@ static const char *const admin_usage[] =
     "\t   o    Preserve original string.\n",
     "\t   b    Like o, but mark file as binary.\n",
     "\t   v    Substitute value only.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-l[rev]    Lock revision (latest revision on branch,\n",
     "\t           latest revision on trunk if omitted).\n",
     "\t-L         Set strict locking.\n",
+#endif
     "\t-m rev:msg  Replace revision's log message.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-n tag[:[rev]]  Tag branch or revision.  If :rev is omitted,\n",
     "\t                delete the tag; if rev is omitted, tag the latest\n",
     "\t                revision on the default branch.\n",
@@ -53,14 +65,19 @@ static const char *const admin_usage[] =
     "\t   :rev        rev and previous revisions on the same branch.\n",
     "\t   ::rev       Before rev on the same branch.\n",
     "\t   rev         Just rev.\n",
+#endif
     "\t-q         Run quietly.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-s state[:rev]  Set revision state (latest revision on branch,\n",
     "\t                latest revision on trunk if omitted).\n",
+#endif
     "\t-t[file]   Get descriptive text from file (stdin if omitted).\n",
     "\t-t-string  Set descriptive text.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-u[rev]    Unlock the revision (latest revision on branch,\n",
     "\t           latest revision on trunk if omitted).\n",
     "\t-U         Unset strict locking.\n",
+#endif
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
@@ -105,6 +122,11 @@ struct admin_data
     int ac;
     char **av;
     int av_alloc;
+
+    /* This contains a printable version of the command line used
+     * for logging
+     */
+    char *cmdline;
 };
 
 /* Add an argument.  OPT is the option letter, e.g. 'a'.  ARG is the
@@ -139,20 +161,113 @@ arg_add (dat, opt, arg)
     dat->av[dat->ac++] = newelt;
 }
 
+static size_t
+wescape(dst, src)
+    char *dst;
+    const char *src;
+{
+    const unsigned char *s = src;
+    char *d = dst;
+    for (; *s; s++) {
+	if (!isprint(*s) || isspace(*s) || *s == '|') {
+	    *d++ = '\\';
+	    *d++ = ((*s >> 6) & 3) + '0';
+	    *d++ = ((*s >> 3) & 7) + '0';
+	    *d++ = ((*s >> 0) & 7) + '0';
+	} else  {
+	    *d++ = *s;
+	}
+    }
+    *d = '\0';
+    return d - dst;
+}
+
+static char *
+makecmdline(argc, argv)
+    int argc;
+    char **argv;
+{
+    size_t clen = 1024, wlen = 1024, len, cpos = 0, i;
+    char *cmd = xmalloc(clen);
+    char *word = xmalloc(wlen);
+
+    for (i = 0; i < argc; i++) {
+	char *arg = (strncmp(argv[i], "cvs ", 4) == 0) ? argv[i] + 4 : argv[i];
+	len = strlen(arg);
+	if (len * 4 < wlen) {
+	    wlen += len * 4;
+	    word = xrealloc(word, wlen);
+	}
+	len = wescape(word, arg);
+	if (clen - cpos < len + 2) {
+	    clen += len + 2;
+	    cmd = xrealloc(cmd, clen);
+	}
+	memcpy(&cmd[cpos], word, len);
+	cpos += len;
+	cmd[cpos++] = ' ';
+    }
+    if (cpos != 0)
+	cmd[cpos - 1] = '\0';
+    else
+	cmd[cpos] = '\0';
+    free(word);
+    return cmd;
+}
+
+int
+admin_group_member()
+{
+    struct group *grp;
+    struct group *getgrnam();
+    int i;
+
+    if (CVS_admin_group == NULL)
+	return 1;
+
+    if ((grp = getgrnam(CVS_admin_group)) == NULL)
+	return 0;
+
+    {
+#ifdef HAVE_GETGROUPS
+	gid_t *grps;
+	int n;
+
+	/* get number of auxiliary groups */
+	n = getgroups (0, NULL);
+	if (n < 0)
+	    error (1, errno, "unable to get number of auxiliary groups");
+	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
+	n = getgroups (n, grps);
+	if (n < 0)
+	    error (1, errno, "unable to get list of auxiliary groups");
+	grps[n] = getgid();
+	for (i = 0; i <= n; i++)
+	    if (grps[i] == grp->gr_gid) break;
+	free (grps);
+	if (i > n)
+	    return 0;
+#else
+	char *me = getcaller();
+	char **grnam;
+	
+	for (grnam = grp->gr_mem; *grnam; grnam++)
+	    if (strcmp (*grnam, me) == 0) break;
+	if (!*grnam && getgid() != grp->gr_gid)
+	    return 0;
+#endif
+    }
+}
 int
 admin (argc, argv)
     int argc;
     char **argv;
 {
     int err;
-#ifdef CVS_ADMIN_GROUP
-    struct group *grp;
-    struct group *getgrnam();
-#endif
     struct admin_data admin_data;
     int c;
     int i;
-    int only_k_option;
+    int only_limited_options = 1;
 
     if (argc <= 1)
 	usage (admin_usage);
@@ -160,17 +275,17 @@ admin (argc, argv)
     wrap_setup ();
 
     memset (&admin_data, 0, sizeof admin_data);
+    admin_data.cmdline = makecmdline (argc, argv);
 
     /* TODO: get rid of `-' switch notation in admin_data.  For
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
 
     optind = 0;
-    only_k_option = 1;
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
-	if (c != 'k' && c != 'q')
-	    only_k_option = 0;
+	if (CVS_admin_options == NULL || strchr(CVS_admin_options, c) == NULL)
+	    only_limited_options = 0;
 
 	switch (c)
 	{
@@ -183,6 +298,7 @@ admin (argc, argv)
 		goto usage_error;
 
 	    case 'b':
+		
 		if (admin_data.branch != NULL)
 		{
 		    error (0, 0, "duplicate 'b' option");
@@ -375,53 +491,21 @@ admin (argc, argv)
     argc -= optind;
     argv += optind;
 
-#ifdef CVS_ADMIN_GROUP
-    /* The use of `cvs admin -k' is unrestricted.  However, any other
-       option is restricted if the group CVS_ADMIN_GROUP exists on the
-       server.  */
     if (
 # ifdef CLIENT_SUPPORT
+# ifndef SETXID_SUPPORT
         /* This is only "secure" on the server, since the user could edit the
 	 * RCS file on a local host, but some people like this kind of
 	 * check anyhow.  The alternative would be to check only when
 	 * (server_active) rather than when not on the client.
 	 */
         !current_parsed_root->isremote &&
+# endif
 # endif	/* CLIENT_SUPPORT */
-        !only_k_option
-	&& (grp = getgrnam(CVS_ADMIN_GROUP)) != NULL)
-    {
-#ifdef HAVE_GETGROUPS
-	gid_t *grps;
-	int n;
-
-	/* get number of auxiliary groups */
-	n = getgroups (0, NULL);
-	if (n < 0)
-	    error (1, errno, "unable to get number of auxiliary groups");
-	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
-	n = getgroups (n, grps);
-	if (n < 0)
-	    error (1, errno, "unable to get list of auxiliary groups");
-	grps[n] = getgid();
-	for (i = 0; i <= n; i++)
-	    if (grps[i] == grp->gr_gid) break;
-	free (grps);
-	if (i > n)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#else
-	char *me = getcaller();
-	char **grnam;
-	
-	for (grnam = grp->gr_mem; *grnam; grnam++)
-	    if (strcmp (*grnam, me) == 0) break;
-	if (!*grnam && getgid() != grp->gr_gid)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#endif
-    }
-#endif /* defined CVS_ADMIN_GROUP */
+        !only_limited_options &&
+	!admin_group_member())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       CVS_admin_group);
 
     for (i = 0; i < admin_data.ac; ++i)
     {
@@ -525,6 +609,8 @@ admin (argc, argv)
     Lock_Cleanup ();
 
  return_it:
+    if (admin_data.cmdline != NULL)
+	free (admin_data.cmdline);
     if (admin_data.branch != NULL)
 	free (admin_data.branch);
     if (admin_data.comment != NULL)
@@ -569,6 +655,8 @@ admin_fileproc (callerdat, finfo)
 	goto exitfunc;
     }
 
+    history_write ('X', finfo->update_dir, admin_data->cmdline, finfo->file,
+	finfo->repository);
     rcs = vers->srcfile;
     if (rcs == NULL)
     {
@@ -816,6 +904,13 @@ admin_fileproc (callerdat, finfo)
 		{
 		    tag = xstrdup (arg + 2);
 		    rev = RCS_head (rcs);
+		    if (!rev)
+		    {
+			error (0, 0, "No head revision in archive file `%s'.",
+			       rcs->path);
+			status = 1;
+			continue;
+		    }
 		}
 		else
 		{

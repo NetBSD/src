@@ -221,7 +221,8 @@ arg_should_not_be_sent_to_server (arg)
     /* Try to decide whether we should send arg to the server by
        checking the contents of the corresponding CVSADM directory. */
     {
-	char *t, *this_root;
+	char *t, *root_string;
+	cvsroot_t *this_root = NULL;
 
 	/* Calculate "dirname arg" */
 	for (t = arg + strlen (arg) - 1; t >= arg; t--)
@@ -251,25 +252,31 @@ arg_should_not_be_sent_to_server (arg)
 	    /* Since we didn't find it in the list, check the CVSADM
                files on disk.  */
 	    this_root = Name_Root (arg, (char *) NULL);
+	    root_string = this_root->original;
 	    *t = c;
 	}
 	else
 	{
 	    /* We're at the beginning of the string.  Look at the
                CVSADM files in cwd.  */
-	    this_root = (CVSroot_cmdline ? xstrdup(CVSroot_cmdline)
-			 : Name_Root ((char *) NULL, (char *) NULL));
+	    if (CVSroot_cmdline)
+		root_string = CVSroot_cmdline;
+	    else
+	    {
+		this_root = Name_Root ((char *) NULL, (char *) NULL);
+		root_string = this_root->original;
+	    }
 	}
 
 	/* Now check the value for root. */
-	if (this_root && current_parsed_root
-	    && (strcmp (this_root, current_parsed_root->original) != 0))
+	if (root_string && current_parsed_root
+	    && (strcmp (root_string, current_parsed_root->original) != 0))
 	{
 	    /* Don't send this, since the CVSROOTs don't match. */
-	    free (this_root);
+	    if (this_root) free_cvsroot_t (this_root);
 	    return 1;
 	}
-	free (this_root);
+	if (this_root) free_cvsroot_t (this_root);
     }
     
     /* OK, let's send it. */
@@ -1113,6 +1120,8 @@ call_in_directory (pathname, func, data)
     int reposdirname_absolute;
     int newdir = 0;
 
+    assert (pathname);
+
     reposname = NULL;
     read_line (&reposname);
     assert (reposname != NULL);
@@ -1218,6 +1227,11 @@ call_in_directory (pathname, func, data)
 	char *r;
 
 	newdir = 1;
+
+	/* If toplevel_repos doesn't have at least one character, then the
+	 * reference to r[-1] below could be out of bounds.
+	 */
+	assert (*toplevel_repos);
 
 	repo = xmalloc (strlen (toplevel_repos)
 			+ 10);
@@ -1928,7 +1942,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 #ifdef USE_VMS_FILENAMES
         /* A VMS rename of "blah.dat" to "foo" to implies a
            destination of "foo.dat" which is unfortinate for CVS */
-       sprintf (temp_filename, "%s_new_", filename);
+	sprintf (temp_filename, "%s_new_", filename);
 #else
 #ifdef _POSIX_NO_TRUNC
 	sprintf (temp_filename, ".new.%.9s", filename);
@@ -1981,6 +1995,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 		   entirely possible that future files will not have
 		   the same problem.  */
 		error (0, errno, "cannot write %s", short_pathname);
+		free (temp_filename);
+		free (buf);
 		goto discard_file_and_return;
 	    }
 
@@ -3068,6 +3084,9 @@ handle_m (args, len)
     char *args;
     int len;
 {
+    fd_set wfds;
+    int s;
+
     /* In the case where stdout and stderr point to the same place,
        fflushing stderr will make output happen in the correct order.
        Often stderr will be line-buffered and this won't be needed,
@@ -3075,6 +3094,12 @@ handle_m (args, len)
        based on being confused between default buffering between
        stdout and stderr.  But I'm not sure).  */
     fflush (stderr);
+    FD_ZERO (&wfds);
+    FD_SET (STDOUT_FILENO, &wfds);
+    errno = 0;
+    s = select (STDOUT_FILENO+1, NULL, &wfds, NULL, NULL);
+    if (s < 1 && errno != 0)
+        perror ("cannot write to stdout");
     fwrite (args, len, sizeof (*args), stdout);
     putc ('\n', stdout);
 }
@@ -3122,9 +3147,24 @@ handle_e (args, len)
     char *args;
     int len;
 {
+    fd_set wfds;
+    int s;
+
     /* In the case where stdout and stderr point to the same place,
        fflushing stdout will make output happen in the correct order.  */
     fflush (stdout);
+    FD_ZERO (&wfds);
+    FD_SET (STDERR_FILENO, &wfds);
+    errno = 0;
+    s = select (STDERR_FILENO+1, NULL, &wfds, NULL, NULL);
+    /*
+     * If stderr has problems, then adding a call to
+     *   perror ("cannot write to stderr")
+     * will not work. So, try to write a message on stdout and
+     * terminate cvs.
+     */
+    if (s < 1 && errno != 0)
+        fperrmsg (stdout, 1, errno, "cannot write to stderr");
     fwrite (args, len, sizeof (*args), stderr);
     putc ('\n', stderr);
 }
@@ -4249,7 +4289,8 @@ connect_to_gserver (root, sock, hostname)
 
 	    if (need > sizeof buf)
 	    {
-		int got;
+		ssize_t got;
+		size_t total;
 
 		/* This usually means that the server sent us an error
 		   message.  Read it byte by byte and print it out.
@@ -4258,13 +4299,19 @@ connect_to_gserver (root, sock, hostname)
 		   want to do this to work with older servers.  */
 		buf[0] = cbuf[0];
 		buf[1] = cbuf[1];
-		got = recv (sock, buf + 2, sizeof buf - 2, 0);
-		if (got < 0)
-		    error (1, 0, "recv() from server %s: %s",
-			   root->hostname, SOCK_STRERROR (SOCK_ERRNO));
-		buf[got + 2] = '\0';
-		if (buf[got + 1] == '\n')
-		    buf[got + 1] = '\0';
+		total = 2;
+		while (got = recv (sock, buf + total, sizeof buf - total, 0))
+		{
+		    if (got < 0)
+			error (1, 0, "recv() from server %s: %s",
+			       root->hostname, SOCK_STRERROR (SOCK_ERRNO));
+		    total += got;
+		    if (strrchr (buf + total - got, '\n'))
+			break;
+		}
+		buf[total] = '\0';
+		if (buf[total - 1] == '\n')
+		    buf[total - 1] = '\0';
 		error (1, 0, "error from server %s: %s", root->hostname,
 		       buf);
 	    }
