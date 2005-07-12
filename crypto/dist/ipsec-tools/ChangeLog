@@ -1,3 +1,8 @@
+2005-07-12  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/pfkey.c: Set IKE ports to 0 in the SA when NAT-T is not
+	  used. 
+
 2005-07-04  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/isakmp_inf.c: safety checks on informational messages
