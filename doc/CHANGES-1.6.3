@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.149 2005/06/17 12:47:26 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.150 2005/07/12 03:36:15 snj Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1760,4 +1760,128 @@ sys/dev/audio.c					1.196 via patch
 	Without this, the machine would crash for some audio hardware that
 	needs to divide by the block size (e.g., cs4281.c/cs4280.c).
 	[is, ticket #5793]
+
+gnu/dist/cvs/AUTHORS				patch
+gnu/dist/cvs/BUGS				patch
+gnu/dist/cvs/ChangeLog				patch
+gnu/dist/cvs/HACKING				patch
+gnu/dist/cvs/Makefile.in			patch
+gnu/dist/cvs/NEWS				patch
+gnu/dist/cvs/README				patch
+gnu/dist/cvs/TODO				patch
+gnu/dist/cvs/aclocal.m4				patch
+gnu/dist/cvs/configure				patch
+gnu/dist/cvs/configure.in			patch
+gnu/dist/cvs/contrib/ChangeLog			patch
+gnu/dist/cvs/contrib/Makefile.am		patch
+gnu/dist/cvs/contrib/Makefile.in		patch
+gnu/dist/cvs/contrib/README			patch
+gnu/dist/cvs/contrib/commit_prep.in		patch
+gnu/dist/cvs/contrib/cvs_acls.html		new file
+gnu/dist/cvs/contrib/cvs_acls.in		patch
+gnu/dist/cvs/contrib/log.in			patch
+gnu/dist/cvs/contrib/log_accum.in		patch
+gnu/dist/cvs/contrib/mfpipe.in			patch
+gnu/dist/cvs/contrib/rcslock.in			patch
+gnu/dist/cvs/cvs2netbsd				patch
+gnu/dist/cvs/diff/ChangeLog			patch
+gnu/dist/cvs/diff/Makefile.in			patch
+gnu/dist/cvs/diff/libdiff.dep			patch
+gnu/dist/cvs/doc/ChangeLog			patch
+gnu/dist/cvs/doc/Makefile.am			patch
+gnu/dist/cvs/doc/Makefile.in			patch
+gnu/dist/cvs/doc/cvs.1				patch
+gnu/dist/cvs/doc/cvs.man.header			patch
+gnu/dist/cvs/doc/cvs.texinfo			patch
+gnu/dist/cvs/doc/mkman.in			delete
+gnu/dist/cvs/doc/mkman.pl			new file
+gnu/dist/cvs/doc/stamp-1			patch
+gnu/dist/cvs/doc/stamp-vti			patch
+gnu/dist/cvs/doc/version-client.texi		patch
+gnu/dist/cvs/doc/version.texi			patch
+gnu/dist/cvs/lib/ChangeLog			patch
+gnu/dist/cvs/lib/Makefile.am			patch
+gnu/dist/cvs/lib/Makefile.in			patch
+gnu/dist/cvs/lib/fncase.c			patch
+gnu/dist/cvs/lib/regex.c			patch
+gnu/dist/cvs/lib/sighandle.c			patch
+gnu/dist/cvs/lib/system.h			patch
+gnu/dist/cvs/lib/test-getdate.sh		new file
+gnu/dist/cvs/lib/xtime.h			patch
+gnu/dist/cvs/man/ChangeLog			patch
+gnu/dist/cvs/man/Makefile.am			patch
+gnu/dist/cvs/man/Makefile.in			patch
+gnu/dist/cvs/src/ChangeLog			patch
+gnu/dist/cvs/src/Makefile.am			patch
+gnu/dist/cvs/src/Makefile.in			patch
+gnu/dist/cvs/src/add.c				patch
+gnu/dist/cvs/src/admin.c			patch
+gnu/dist/cvs/src/annotate.c			patch
+gnu/dist/cvs/src/buffer.c			patch
+gnu/dist/cvs/src/build_src.com			patch
+gnu/dist/cvs/src/checkin.c			patch
+gnu/dist/cvs/src/checkout.c			patch
+gnu/dist/cvs/src/classify.c			patch
+gnu/dist/cvs/src/client.c			patch
+gnu/dist/cvs/src/commit.c			patch
+gnu/dist/cvs/src/create_adm.c			patch
+gnu/dist/cvs/src/cvs.h				patch
+gnu/dist/cvs/src/cvsrc.c			patch
+gnu/dist/cvs/src/diff.c				patch
+gnu/dist/cvs/src/edit.c				patch
+gnu/dist/cvs/src/entries.c			patch
+gnu/dist/cvs/src/expand_path.c			patch
+gnu/dist/cvs/src/fileattr.c			patch
+gnu/dist/cvs/src/filesubr.c			patch
+gnu/dist/cvs/src/find_names.c			patch
+gnu/dist/cvs/src/hardlink.c			patch
+gnu/dist/cvs/src/hardlink.h			patch
+gnu/dist/cvs/src/hash.c				patch
+gnu/dist/cvs/src/hash.h				patch
+gnu/dist/cvs/src/history.c			patch
+gnu/dist/cvs/src/history.h			patch
+gnu/dist/cvs/src/ignore.c			patch
+gnu/dist/cvs/src/import.c			patch
+gnu/dist/cvs/src/lock.c				patch
+gnu/dist/cvs/src/log.c				patch
+gnu/dist/cvs/src/login.c			patch
+gnu/dist/cvs/src/logmsg.c			patch
+gnu/dist/cvs/src/main.c				patch
+gnu/dist/cvs/src/mkmodules.c			patch
+gnu/dist/cvs/src/modules.c			patch
+gnu/dist/cvs/src/myndbm.c			patch
+gnu/dist/cvs/src/no_diff.c			patch
+gnu/dist/cvs/src/parseinfo.c			patch
+gnu/dist/cvs/src/patch.c			patch
+gnu/dist/cvs/src/rcs.c				patch
+gnu/dist/cvs/src/rcs.h				patch
+gnu/dist/cvs/src/rcscmds.c			patch
+gnu/dist/cvs/src/recurse.c			patch
+gnu/dist/cvs/src/release.c			patch
+gnu/dist/cvs/src/remove.c			patch
+gnu/dist/cvs/src/repos.c			patch
+gnu/dist/cvs/src/root.c				patch
+gnu/dist/cvs/src/root.h				patch
+gnu/dist/cvs/src/sanity.sh			patch
+gnu/dist/cvs/src/server.c			patch
+gnu/dist/cvs/src/server.h			patch
+gnu/dist/cvs/src/stack.c			patch
+gnu/dist/cvs/src/stack.h			patch
+gnu/dist/cvs/src/status.c			patch
+gnu/dist/cvs/src/subr.c				patch
+gnu/dist/cvs/src/tag.c				patch
+gnu/dist/cvs/src/update.c			patch
+gnu/dist/cvs/src/vers_ts.c			patch
+gnu/dist/cvs/src/version.c			patch
+gnu/dist/cvs/src/wrapper.c			patch
+gnu/dist/cvs/ylwrap				new file
+gnu/usr.bin/cvs/Makefile.inc			patch
+gnu/usr.bin/cvs/cvs/Makefile			patch
+gnu/usr.bin/cvs/cvsbug/Makefile			patch
+gnu/usr.bin/cvs/include/config.h		patch
+gnu/usr.bin/cvs/libcvs/Makefile			patch
+gnu/usr.bin/cvs/rcs2log/Makefile		patch
+
+	Update CVS to version 1.11.20.
+	[tron, ticket #5822]
 
