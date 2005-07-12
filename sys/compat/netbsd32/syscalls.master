@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 2005/07/11 20:18:05 cube Exp $
+	$NetBSD: syscalls.master,v 1.35 2005/07/12 07:45:34 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -604,3 +604,33 @@
 			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
 374	STD		{ int netbsd32_pollts(netbsd32_pollfdp_t fds, u_int nfds, \
 			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
+375	STD		{ int netbsd32_setxattr(const netbsd32_charp path, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size, int flags); }
+376	STD		{ int netbsd32_lsetxattr(const netbsd32_charp path, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size, int flags); }
+377	STD		{ int netbsd32_fsetxattr(int fd, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size, int flags); }
+378	STD		{ int netbsd32_getxattr(const netbsd32_charp path, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size); }
+379	STD		{ int netbsd32_lgetxattr(const netbsd32_charp path, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size); }
+380	STD		{ int netbsd32_fgetxattr(int fd, \
+			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_size_t size); }
+381	STD		{ int netbsd32_listxattr(const netbsd32_charp path, \
+			    netbsd32_charp list, netbsd32_size_t size); }
+382	STD		{ int netbsd32_llistxattr(const netbsd32_charp path, \
+			    netbsd32_charp list, netbsd32_size_t size); }
+383	STD		{ int netbsd32_flistxattr(int fd, \
+			    netbsd32_charp list, netbsd32_size_t size); }
+384	STD		{ int netbsd32_removexattr(const netbsd32_charp path, \
+			    const netbsd32_charp name); }
+385	STD		{ int netbsd32_lremovexattr(const netbsd32_charp path, \
+			    const netbsd32_charp name); }
+386	STD		{ int netbsd32_fremovexattr(int fd, \
+			    const netbsd32_charp name); }
