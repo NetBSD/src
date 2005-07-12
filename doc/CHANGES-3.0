@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.174 2005/07/12 11:56:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.175 2005/07/12 17:45:02 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10482,4 +10482,62 @@ sys/arch/i386/i386/identcpu.c			1.21
 	the TSC for interval time in microtime(9), and thus it is disabled
 	here.
 	[fair, ticket #561]
+
+xfree/xc/programs/Xserver/hw/xfree86/common/atKeynames.h 1.2
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.7
+
+	Added keysyms for Power and Compose keys
+	[macallan, ticket #576]
+
+xfree/xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c 1.3
+
+	Attempt to use as much VRAM as the OS allows us to mmap() - first try
+	2MB, then 1MB, then width*height. Although all CG6 have at least 1MB
+	some drivers only allow to map the amount used as framebuffer.
+	[macallan, ticket #577]
+
+crypto/dist/ipsec-tools/ChangeLog		1.18
+crypto/dist/ipsec-tools/src/racoon/oakley.c	1.2
+
+	Add pkcs7 support.
+	[manu, ticket #578]
+
+crypto/dist/ipsec-tools/ChangeLog		1.19
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	1.5
+
+	Safety checks on informational messages
+	[manu, ticket #579]
+
+crypto/dist/ipsec-tools/ChangeLog		1.20
+crypto/dist/ipsec-tools/src/racoon/pfkey.c	1.5
+
+	Set IKE ports to 0 in SA when NAT-T is not in use. This fixes problems
+	when NAT-T is disabled
+	[manu, ticket #580]
+
+crypto/dist/ipsec-tools/ChangeLog		1.21
+crypto/dist/ipsec-tools/src/racoon/admin.c	1.4
+crypto/dist/ipsec-tools/src/racoon/session.c	1.2
+
+	Don't use adminport when it is disabled.
+	[manu, ticket #581]
+
+crypto/dist/ipsec-tools/src/racoon/pfkey.c	1.6
+
+	Don't wipe out IKE ports for SA update as it breaks things: the SA is
+	taken from an existing SA and already has matching IKE ports.
+	[manu, ticket #582]
+
+crypto/dist/ipsec-tools/ChangeLog		1.23
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/client/phase1-down.sh 1.3
+crypto/dist/ipsec-tools/src/racoon/samples/roadwarrior/client/phase1-up.sh 1.3
+
+	Add comments on how to use the hook scripts without NAT-T.
+	[manu, ticket #583]
+
+crypto/dist/ipsec-tools/ChangeLog		1.22
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c 1.3
+
+	Add support for algorithms with non OpenSSL default key sizes.
+	[manu, ticket #584]
 
