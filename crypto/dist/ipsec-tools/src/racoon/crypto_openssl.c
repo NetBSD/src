@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.2 2005/04/19 19:42:08 manu Exp $	*/
+/* $Id: crypto_openssl.c,v 1.3 2005/07/12 14:51:07 manu Exp $ */
 
 /* Id: crypto_openssl.c,v 1.40.4.1 2005/02/22 23:56:08 manubsd Exp */
 
@@ -1159,10 +1159,52 @@ evp_crypt(vchar_t *data, vchar_t *key, vchar_t *iv, const EVP_CIPHER *e, int enc
 
 	EVP_CIPHER_CTX_init(&ctx);
 
-	if (!EVP_CipherInit(&ctx, e, key->v, iv->v, enc)) {
-		OpenSSL_BUG();
-		vfree(res);
-		return NULL;
+ 	switch(EVP_CIPHER_nid(e)){
+ 	case NID_bf_cbc:
+ 	case NID_bf_ecb:
+ 	case NID_bf_cfb64:
+ 	case NID_bf_ofb64:
+ 	case NID_cast5_cbc:
+ 	case NID_cast5_ecb:
+ 	case NID_cast5_cfb64:
+ 	case NID_cast5_ofb64:
+ 		/* XXX: can we do that also for algos with a fixed key size ?
+ 		 */
+ 		/* init context without key/iv
+          */
+         if (!EVP_CipherInit(&ctx, e, NULL, NULL, enc))
+         {
+             OpenSSL_BUG();
+             vfree(res);
+             return NULL;
+         }
+ 		
+         /* update key size
+          */
+         if (!EVP_CIPHER_CTX_set_key_length(&ctx, key->l))
+         {
+             OpenSSL_BUG();
+             vfree(res);
+             return NULL;
+         }
+ 
+         /* finalize context init with desired key size
+          */
+         if (!EVP_CipherInit(&ctx, NULL, (u_char *) key->v,
+ 							(u_char *) iv->v, enc))
+         {
+             OpenSSL_BUG();
+             vfree(res);
+             return NULL;
+ 		}
+ 		break;
+ 	default:
+ 		if (!EVP_CipherInit(&ctx, e, (u_char *) key->v, 
+ 				(u_char *) iv->v, enc)) {
+ 			OpenSSL_BUG();
+ 			vfree(res);
+ 			return NULL;
+ 		}
 	}
 	
 	if (!EVP_Cipher(&ctx, res->v, data->v, data->l)) {
