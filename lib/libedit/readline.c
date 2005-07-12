@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.49.2.3 2005/07/12 11:33:40 tron Exp $	*/
+/*	$NetBSD: readline.c,v 1.49.2.4 2005/07/12 11:35:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.49.2.3 2005/07/12 11:33:40 tron Exp $");
+__RCSID("$NetBSD: readline.c,v 1.49.2.4 2005/07/12 11:35:03 tron Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1378,9 +1378,10 @@ history_search_pos(const char *str,
 char *
 tilde_expand(char *txt)
 {
-	struct passwd *pass;
+	struct passwd pwres, *pass;
 	char *temp;
 	size_t len = 0;
+	char pwbuf[1024];
 
 	if (txt[0] != '~')
 		return (strdup(txt));
@@ -1398,7 +1399,8 @@ tilde_expand(char *txt)
 		(void)strncpy(temp, txt + 1, len - 2);
 		temp[len - 2] = '\0';
 	}
-	pass = getpwnam(temp);
+	if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
+		pass = NULL;
 	free(temp);		/* value no more needed */
 	if (pass == NULL)
 		return (strdup(txt));
@@ -1563,7 +1565,7 @@ username_completion_function(const char *text, int state)
 		setpwent();
 
 	while (getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pwd) == 0
-	    && text[0] == pwd->pw_name[0]
+	    && pwd != NULL && text[0] == pwd->pw_name[0]
 	    && strcmp(text, pwd->pw_name) == 0);
 
 	if (pwd == NULL) {
