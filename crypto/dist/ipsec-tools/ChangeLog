@@ -1,3 +1,8 @@
+2005-07-01  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Uri <urimobile@optonline.net>
+	* src/racoon/oakley.c: pkcs7 support
+
 2005-06-22  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Ludo Stellingwerff <ludo@protactive.nl>:
