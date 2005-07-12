@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: strnames.c,v 1.2 2005/07/12 16:49:52 manu Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -357,6 +357,9 @@ static struct ksmap name_ipsecdoi_trns_ah[] = {
 { IPSECDOI_AH_MD5,	"MD5", NULL },
 { IPSECDOI_AH_SHA,	"SHA", NULL },
 { IPSECDOI_AH_DES,	"DES", NULL },
+{ IPSECDOI_AH_SHA256,	"SHA256", NULL },
+{ IPSECDOI_AH_SHA384,	"SHA384", NULL },
+{ IPSECDOI_AH_SHA512,	"SHA512", NULL },
 };
 
 char *
@@ -487,10 +490,13 @@ s_ipsecdoi_encmode(k)
 }
 
 static struct ksmap name_attr_ipsec_auth[] = {
-{ IPSECDOI_ATTR_AUTH_HMAC_MD5,	"hmac-md5",	NULL },
-{ IPSECDOI_ATTR_AUTH_HMAC_SHA1,	"hmac-sha",	NULL },
-{ IPSECDOI_ATTR_AUTH_DES_MAC,	"des-mac",	NULL },
-{ IPSECDOI_ATTR_AUTH_KPDK,	"kpdk",		NULL },
+{ IPSECDOI_ATTR_AUTH_HMAC_MD5,		"hmac-md5",	NULL },
+{ IPSECDOI_ATTR_AUTH_HMAC_SHA1,		"hmac-sha",	NULL },
+{ IPSECDOI_ATTR_AUTH_HMAC_SHA2_256,	"hmac-sha256",	NULL },
+{ IPSECDOI_ATTR_AUTH_HMAC_SHA2_384,	"hmac-sha384",	NULL },
+{ IPSECDOI_ATTR_AUTH_HMAC_SHA2_512,	"hmac-sha512",	NULL },
+{ IPSECDOI_ATTR_AUTH_DES_MAC,		"des-mac",	NULL },
+{ IPSECDOI_ATTR_AUTH_KPDK,		"kpdk",		NULL },
 };
 
 char *
@@ -598,6 +604,9 @@ static struct ksmap name_attr_isakmp_hash[] = {
 { OAKLEY_ATTR_HASH_ALG_MD5,	"MD5",		NULL },
 { OAKLEY_ATTR_HASH_ALG_SHA,	"SHA",		NULL },
 { OAKLEY_ATTR_HASH_ALG_TIGER,	"Tiger",	NULL },
+{ OAKLEY_ATTR_HASH_ALG_SHA2_256,"SHA256",	NULL },
+{ OAKLEY_ATTR_HASH_ALG_SHA2_384,"SHA384",	NULL },
+{ OAKLEY_ATTR_HASH_ALG_SHA2_512,"SHA512",	NULL },
 };
 
 char *

@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.conf.5,v 1.17 2005/07/07 12:34:17 tron Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.18 2005/07/12 16:49:52 manu Exp $
 .\"
-.\" $Id: racoon.conf.5,v 1.17 2005/07/07 12:34:17 tron Exp $
+.\" $Id: racoon.conf.5,v 1.18 2005/07/12 16:49:52 manu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -736,7 +736,7 @@ define the hash algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
-.Ic md5, sha1
+.Ic md5, sha1, sha256, sha384, sha512
 for Oakley.
 .\"
 .It Ic authentication_method Ar type ;
@@ -882,7 +882,7 @@ Note that the kernel may not support the algorithm you have specified.
 .\"
 .It Ic authentication_algorithm Ar algorithms ;
 .Ic des , 3des , des_iv64 , des_iv32 ,
-.Ic hmac_md5 , hmac_sha1 , non_auth
+.Ic hmac_md5 , hmac_sha1 , hmac_sha256, hmac_sha384, hmac_sha512, non_auth
 .Pq used with ESP authentication and AH
 .\"
 .It Ic compression_algorithm Ar algorithms ;

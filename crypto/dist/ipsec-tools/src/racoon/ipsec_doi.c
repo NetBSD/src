@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.7 2005/06/03 22:27:06 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.8 2005/07/12 16:49:52 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.38 2005/05/31 16:07:55 monas Exp */
 
@@ -1931,6 +1931,9 @@ check_trns_ah(t_id)
 	switch (t_id) {
 	case IPSECDOI_AH_MD5:
 	case IPSECDOI_AH_SHA:
+	case IPSECDOI_AH_SHA256:
+	case IPSECDOI_AH_SHA384:
+	case IPSECDOI_AH_SHA512:
 		return 0;
 	case IPSECDOI_AH_DES:
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2284,6 +2287,24 @@ ahmismatch:
 						goto ahmismatch;
 				}
 				break;
+ 			case IPSECDOI_ATTR_AUTH_HMAC_SHA2_256:
+ 				if (proto_id == IPSECDOI_PROTO_IPSEC_AH) {
+ 					if (trns->t_id != IPSECDOI_AH_SHA256)
+ 						goto ahmismatch;
+ 				}	
+ 				break;
+ 			case IPSECDOI_ATTR_AUTH_HMAC_SHA2_384:
+ 				if (proto_id == IPSECDOI_PROTO_IPSEC_AH) {
+ 					if (trns->t_id != IPSECDOI_AH_SHA384)
+ 						goto ahmismatch;
+ 				}
+ 				break;
+ 			case IPSECDOI_ATTR_AUTH_HMAC_SHA2_512:
+ 				if (proto_id == IPSECDOI_PROTO_IPSEC_AH) {
+ 					if (trns->t_id != IPSECDOI_AH_SHA512)
+ 					goto ahmismatch;
+ 				}
+ 				break;
 			case IPSECDOI_ATTR_AUTH_DES_MAC:
 			case IPSECDOI_ATTR_AUTH_KPDK:
 				plog(LLV_ERROR, LOCATION, NULL,
@@ -4142,6 +4163,12 @@ ipsecdoi_authalg2trnsid(alg)
 		return IPSECDOI_AH_MD5;
         case IPSECDOI_ATTR_AUTH_HMAC_SHA1:
 		return IPSECDOI_AH_SHA;
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_256:
+		return IPSECDOI_AH_SHA256;
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_384:
+		return IPSECDOI_AH_SHA384;
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_512:
+		return IPSECDOI_AH_SHA512;
         case IPSECDOI_ATTR_AUTH_DES_MAC:
 		return IPSECDOI_AH_DES;
 	case IPSECDOI_ATTR_AUTH_KPDK:

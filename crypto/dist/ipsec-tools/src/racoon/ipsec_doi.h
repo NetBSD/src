@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.1.1.2 2005/02/23 14:54:16 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.2 2005/07/12 16:49:52 manu Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.9 2005/01/29 16:34:24 vanhu Exp */
 
@@ -54,9 +54,9 @@
 #define   IPSECDOI_AH_MD5                              2
 #define   IPSECDOI_AH_SHA                              3
 #define   IPSECDOI_AH_DES                              4
-#define   IPSECDOI_AH_SHA2_256                         5
-#define   IPSECDOI_AH_SHA2_384                         6
-#define   IPSECDOI_AH_SHA2_512                         7
+#define   IPSECDOI_AH_SHA256                           5
+#define   IPSECDOI_AH_SHA384                           6
+#define   IPSECDOI_AH_SHA512                           7
 
 /* 4.4.1 IPSEC Security Protocol Identifiers */
 #define IPSECDOI_PROTO_IPSEC_ESP                     3
@@ -119,9 +119,9 @@
 #define   IPSECDOI_ATTR_AUTH_HMAC_SHA1          2
 #define   IPSECDOI_ATTR_AUTH_DES_MAC            3
 #define   IPSECDOI_ATTR_AUTH_KPDK               4 /*RFC-1826(Key/Pad/Data/Key)*/
-#define   IPSECDOI_ATTR_SHA2_256                5
-#define   IPSECDOI_ATTR_SHA2_384                6
-#define   IPSECDOI_ATTR_SHA2_512                7
+#define   IPSECDOI_ATTR_AUTH_HMAC_SHA2_256      5
+#define   IPSECDOI_ATTR_AUTH_HMAC_SHA2_384      6
+#define   IPSECDOI_ATTR_AUTH_HMAC_SHA2_512      7
 #define   IPSECDOI_ATTR_AUTH_NONE               254	/* NOTE:internal use */
 	/*
 	 * When negotiating ESP without authentication, the Auth
