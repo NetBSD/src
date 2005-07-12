@@ -2,6 +2,8 @@
 
 	* src/racoon/pfkey.c: Set IKE ports to 0 in the SA when NAT-T is not
 	  used. 
+	* src/racoon/{admin.c|session.c}: Don't use adminport if it is 
+	  disabled.
 
 2005-07-04  Emmanuel Dreyfus  <manu@netbsd.org>
 
