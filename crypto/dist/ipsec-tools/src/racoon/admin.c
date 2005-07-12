@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.1.1.2.2.1 2005/05/11 12:16:57 tron Exp $	*/
+/*	$NetBSD: admin.c,v 1.1.1.2.2.2 2005/07/12 17:37:41 tron Exp $	*/
 
 /* Id: admin.c,v 1.17 2005/01/02 08:39:09 manubsd Exp */
 
@@ -572,8 +572,10 @@ admin2pfkey_proto(proto)
 int
 admin_init()
 {
-	if (adminsock_path == NULL)
+	if (adminsock_path == NULL) {
+		lcconf->sock_admin = -1;
 		return 0;
+	}
 
 	memset(&sunaddr, 0, sizeof(sunaddr));
 	sunaddr.sun_family = AF_UNIX;
