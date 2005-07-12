@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.96 2005/07/12 07:45:34 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.97 2005/07/12 15:06:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.96 2005/07/12 07:45:34 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.97 2005/07/12 15:06:17 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1762,12 +1762,18 @@ netbsd32_lseek(l, v, retval)
 		syscallarg(int) whence;
 	} */ *uap = v;
 	struct sys_lseek_args ua;
+	int rv;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	NETBSD32TO64_UAP(whence);
-	return (sys_lseek(l, &ua, retval));
+	rv = sys_lseek(l, &ua, retval);
+#ifdef NETBSD32_OFF_T_RETURN
+	if (rv == 0)
+		NETBSD32_OFF_T_RETURN(retval);
+#endif
+	return rv;
 }
 
 int

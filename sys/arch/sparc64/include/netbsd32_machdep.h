@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.16 2004/02/20 16:11:44 drochner Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.17 2005/07/12 15:06:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -78,5 +78,16 @@ struct netbsd32_sigcontext13 {
 int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct proc *);
 
 #define NETBSD32_MID_MACHINE MID_SPARC
+
+/*
+ * When returning an off_t to userland, we need to modify the syscall
+ * retval array. We return a 64 bit value in %o0 (high) and %o1 (low)
+ * for 32bit userland.
+ */
+#define NETBSD32_OFF_T_RETURN(RV)	\
+	do {				\
+		(RV)[1] = (RV)[0];	\
+		(RV)[0] >>= 32;		\
+	} while (0)
 
 #endif /* _MACHINE_NETBSD32_H_ */
