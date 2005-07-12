@@ -1,3 +1,7 @@
+2005-07-04  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/isakmp_inf.c: safety checks on informational messages
+
 2005-07-01  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Uri <urimobile@optonline.net>
