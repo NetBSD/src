@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwctl.8,v 1.1 2005/07/12 03:23:06 kiyohara Exp $
+.\"	$NetBSD: fwctl.8,v 1.2 2005/07/12 08:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/usr.sbin/fwcontrol/fwcontrol.8,v 1.16 2005/01/18 20:02:34 ru Exp $
 .\"
-.Dd Jun 18, 2005
+.Dd June 18, 2005
 .Dt FWCTL 8
 .Os
 .Sh NAME
@@ -37,22 +37,23 @@
 .Nd IEEE1394 control utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl u Ar bus_num
 .Op Fl prt
+.Op Fl b Ar pri_req
 .Op Fl c Ar node
 .Op Fl d Ar node
-.Op Fl o Ar node
-.Op Fl s Ar node
-.Op Fl l Ar file
 .Op Fl g Ar gap_count
-.Op Fl b Ar pri_req
+.Op Fl o Ar node
+.Op Fl l Ar file
+.Op Fl m Ar EUI64 | hostname
 .Op Fl R Ar filename
 .Op Fl S Ar filename
-.Op Fl m Ar EUI64 | hostname
+.Op Fl s Ar node
+.Op Fl u Ar bus_num
 .Sh DESCRIPTION
 The
 .Nm
-utility is designed to provide a way for users to access and control the
+utility is designed to provide a way for users to access and control
+the
 .Fx
 IEEE1394 subsystem.
 Without options,
@@ -60,27 +61,11 @@ Without options,
 will output a list of devices that are/were connected to the bus.
 .Pp
 The following options are available:
-.Bl -tag -width indent
-.It Fl u Ar bus_num
-Specify the IEEE1394 bus number to be operated on.
-.It Fl r
-Initiate bus reset.
-.It Fl t
-Show the topology map.
-.It Fl p
-Dump PHY registers.
+.Bl -tag -width XmXEUI64XhostnameXX -offset indent
 .It Fl c Ar node
 Show the configuration ROM on the node.
 .It Fl d Ar node
 Hex dump of the configuration ROM.
-.It Fl o Ar node
-Send a link-on PHY packet to the node.
-.It Fl s Ar node
-Write to the
-.Dv RESET_START
-register on the node.
-.It Fl l Ar file
-Load hex dump file of the configuration ROM and parse it.
 .It Fl g Ar gap_count
 Broadcast
 .Ar gap_count
@@ -89,6 +74,15 @@ by phy_config packet.
 Set the
 .Dv PRIORITY_BUDGET
 register on all supported nodes.
+.It Fl l Ar file
+Load hex dump file of the configuration ROM and parse it.
+.It Fl m Ar EUI64 | hostname
+Set default fwmem target.
+Hostname will be converted to EUI64.
+.It Fl o Ar node
+Send a link-on PHY packet to the node.
+.It Fl p
+Dump PHY registers.
 .It Fl R Ar filename
 Receive DV stream and dump it to a file.
 Use Ctrl-C to stop the receiving.
@@ -101,16 +95,21 @@ fwctl -r
 .Pp
 The resulting file contains raw DV data excluding isochronous header
 and CIP header.
-It can be handled by
-.Nm libdv
-in the
-.Fx
-Ports Collection.
+It can be handled by the
+.Pa pkgsrc/multimedia/libdv
+package.
+.It Fl r
+Initiate bus reset.
 .It Fl S Ar filename
 Send a DV file as isochronous stream.
-.It Fl m Ar EUI64 | hostname
-Set default fwmem target.
-Hostname will be converted to EUI64.
+.It Fl s Ar node
+Write to the
+.Dv RESET_START
+register on the node.
+.It Fl t
+Show the topology map.
+.It Fl u Ar bus_num
+Specify the IEEE1394 bus number to be operated on.
 .El
 .Sh FILES
 .Bl -tag
@@ -125,11 +124,11 @@ Receive stream.
 .Pp
 .Dl "dd if=original.dv of=first.dv bs=120000 count=30"
 .Pp
-Get first 30 frames(NTSC).
+Get first 30 frames (NTSC).
 .Pp
 .Dl "dd if=original.dv of=second.dv bs=120000 skip=30 count=30"
 .Pp
-Get second 30 frames(NTSC).
+Get second 30 frames (NTSC).
 .Pp
 .Dl "cat second.dv first.dv | fwctl -S /dev/stdin"
 .Pp
@@ -140,9 +139,9 @@ For PAL, replace
 with
 .Dq Li bs=144000 .
 .Sh SEE ALSO
-.Xr ieee1394if 4 ,
 .Xr fwip 4 ,
 .Xr fwohci 4 ,
+.Xr ieee1394if 4 ,
 .Xr sbp 4
 .Sh HISTORY
 The
@@ -158,4 +157,5 @@ under its present name.
 .An Hidetoshi Shimokawa Aq simokawa@FreeBSD.org
 .An KIYOHARA Takashi Aq kiyohara@NetBSD.org
 .Sh BUGS
-This utility is still under development and provided for debugging purposes.
+This utility is still under development and provided for debugging
+purposes.
