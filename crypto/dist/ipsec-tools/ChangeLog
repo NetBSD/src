@@ -6,6 +6,8 @@
 
 2005-07-12  Emmanuel Dreyfus  <manu@netbsd.org>
 
+	* src/racoon/samples/roadwarrior/client/{pahse1-up.sh|phase1-down.sh}:
+	  Add comments for using the scripts without NAT-T
 	* src/racoon/pfkey.c: Set IKE ports to 0 in the SA when NAT-T is not
 	  used. 
 	* src/racoon/{admin.c|session.c}: Don't use adminport if it is 
