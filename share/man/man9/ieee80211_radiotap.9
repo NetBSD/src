@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.4 2005/07/11 21:59:12 dyoung Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.5 2005/07/12 08:50:49 wiz Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -53,8 +53,7 @@ Radiotap was designed to balance the desire for a capture format
 that conserved CPU and memory bandwidth on embedded systems,
 with the desire for a hardware-independent, extensible format
 that would support the diverse capabilities of virtually all
-802.11
-radios.
+802.11 radios.
 .Pp
 These considerations led radiotap to settle on a format consisting of
 a standard preamble followed by an extensible bitmap indicating the
@@ -186,11 +185,15 @@ arbitrary, fixed reference.
 This bit is reserved for any future extensions to the
 .Vt radiotap
 structure.
-A driver sets IEEE80211_RADIOTAP_EXT to extend the it_present bitmap
-by another 64 bits.
+A driver sets
+.Dv IEEE80211_RADIOTAP_EXT
+to extend the it_present bitmap by another 64 bits.
 The bitmap can be extended by multiples of 32 bits to 96, 128, 160
-bits or longer, by setting IEEE80211_RADIOTAP_EXT in the extensions.
-The bitmap ends at the first extension field where IEEE80211_RADIOTAP_EXT
+bits or longer, by setting
+.Dv IEEE80211_RADIOTAP_EXT
+in the extensions.
+The bitmap ends at the first extension field where
+.Dv IEEE80211_RADIOTAP_EXT
 is not set.
 .El
 .Sh EXAMPLES
