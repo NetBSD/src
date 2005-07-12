@@ -46,8 +46,14 @@ Linux)
 	;;
 esac
 
+# Use this for a NAT-T setup
 LOCAL="${LOCAL_ADDR}[${LOCAL_PORT}]"
 REMOTE="${REMOTE_ADDR}[${REMOTE_PORT}]"
+
+# Use this for a non NAT-T setup
+#LOCAL="${LOCAL_ADDR}"
+#REMOTE="${REMOTE_ADDR}"
+
 
 echo "
 spdadd ${INTERNAL_ADDR4}/32[any] 0.0.0.0/0[any] any
