@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: cvs2netbsd,v 1.1.2.2 2003/12/17 17:40:52 christos Exp $
+#	$NetBSD: cvs2netbsd,v 1.1.2.3 2005/07/12 03:34:11 snj Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
