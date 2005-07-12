@@ -31,6 +31,14 @@
 	  on phase 2 initiation retries when the phase 2 had been queued
 	  for a phase 1.
 
+2005-06-19  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Uri <urimobile@optonline.net> and Larry Baird <lab@gta.com>:
+	* src/libipsec/pfkey_dump.c src/setkey/test-pfkey.c
+	  src/racoon/{algorithm.c|cftoken.l|eaytest.c|ipsec_doi.c}
+	  src/racoon/{ipsec_doi.h|pfkey.c|strnames.c}: Add SHA2 support
+
+
 2005-06-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Larry Baird <lab@gta.com>

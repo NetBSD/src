@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.6 2005/06/28 16:04:54 christos Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.7 2005/07/12 16:49:52 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -160,13 +160,13 @@ static struct val2str str_alg_auth[] = {
 	{ SADB_X_AALG_TCP_MD5, "tcp-md5", },
 #endif
 #ifdef SADB_X_AALG_SHA2_256
-	{ SADB_X_AALG_SHA2_256, "hmac-sha2-256", },
+	{ SADB_X_AALG_SHA2_256, "hmac-sha256", },
 #endif
 #ifdef SADB_X_AALG_SHA2_384
-	{ SADB_X_AALG_SHA2_384, "hmac-sha2-384", },
+	{ SADB_X_AALG_SHA2_384, "hmac-sha384", },
 #endif
 #ifdef SADB_X_AALG_SHA2_512
-	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },
+	{ SADB_X_AALG_SHA2_512, "hmac-sha512", },
 #endif
 #ifdef SADB_X_AALG_RIPEMD160HMAC
 	{ SADB_X_AALG_RIPEMD160HMAC, "hmac-ripemd160", },

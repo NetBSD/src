@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.2 2005/07/12 16:49:52 manu Exp $	*/
 
 /* Id: eaytest.c,v 1.20.4.1 2005/02/18 10:23:10 manubsd Exp */
 
@@ -735,7 +735,11 @@ hmactest(ac, av)
 	vchar_t mod;
 	caddr_t ctx;
 
+#ifdef WITH_SHA2
+	printf("\n**Test for HMAC MD5, SHA1, and SHA256.**\n");
+#else
 	printf("\n**Test for HMAC MD5 & SHA1.**\n");
+#endif
 
 	key = vmalloc(strlen(keyword));
 	memcpy(key->v, keyword, key->l);
@@ -774,20 +778,6 @@ hmactest(ac, av)
 	free(mod.v);
 	vfree(res);
 
-#ifdef WITH_SHA2
-	/* HMAC SHA2 */
-	printf("HMAC SHA2 by eay_hmacsha2_256_one()\n");
-	res = eay_hmacsha2_256_one(key, data);
-	PVDUMP(res);
-	mod.v = str2val(r_hsha2, 16, &mod.l);
-	if (memcmp(res->v, mod.v, mod.l)) {
-		printf(" XXX NG XXX\n");
-		return -1;
-	}
-	free(mod.v);
-	vfree(res);
-#endif
-
 	/* HMAC SHA1 */
 	printf("HMAC SHA1 by eay_hmacsha1_one()\n");
 	res = eay_hmacsha1_one(key, data);
@@ -800,7 +790,7 @@ hmactest(ac, av)
 	free(mod.v);
 	vfree(res);
 
-	/* HMAC MD5 */
+	/* HMAC SHA1 */
 	printf("HMAC SHA1 by eay_hmacsha1_xxx()\n");
 	ctx = eay_hmacsha1_init(key);
 	eay_hmacsha1_update(ctx, data1);
@@ -814,6 +804,20 @@ hmactest(ac, av)
 	}
 	free(mod.v);
 	vfree(res);
+
+#ifdef WITH_SHA2
+	/* HMAC SHA2 */
+	printf("HMAC SHA2 by eay_hmacsha2_256_one()\n");
+	res = eay_hmacsha2_256_one(key, data);
+	PVDUMP(res);
+	mod.v = str2val(r_hsha2, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l)) {
+		printf(" XXX NG XXX\n");
+		return -1;
+	}
+	free(mod.v);
+	vfree(res);
+#endif
 
 	vfree(data);
 	vfree(data1);
