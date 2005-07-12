@@ -1,5 +1,6 @@
-/*	$NetBSD: ral.c,v 1.3 2005/07/06 23:44:15 dyoung Exp $ */
-/*	$OpenBSD: ral.c,v 1.55 2005/06/20 18:25:10 damien Exp $  */
+/*	$NetBSD: ral.c,v 1.4 2005/07/12 12:13:00 drochner Exp $ */
+/*	$OpenBSD: ral.c,v 1.56 2005/07/02 23:14:42 brad Exp $  */
+/*	$FreeBSD: src/sys/dev/ral/if_ral.c,v 1.8 2005/07/08 19:33:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005
@@ -24,12 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.3 2005/07/06 23:44:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.4 2005/07/12 12:13:00 drochner Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
@@ -90,6 +90,8 @@ static void		ral_free_rx_ring(struct ral_softc *,
 			    struct ral_rx_ring *);
 static struct		ieee80211_node *ral_node_alloc(
 			    struct ieee80211_node_table *);
+static int		ral_key_alloc(struct ieee80211com *,
+			    const struct ieee80211_key *);
 static int		ral_media_change(struct ifnet *);
 static void		ral_next_scan(void *);
 static void		ral_iter_func(void *, struct ieee80211_node *);
@@ -395,7 +397,7 @@ ral_attach(struct ral_softc *sc)
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
 	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SHSLOT |
-	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WPA;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -450,6 +452,7 @@ ral_attach(struct ral_softc *sc)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ral_newstate;
+	ic->ic_crypto.cs_key_alloc = ral_key_alloc;
 	ieee80211_media_init(ic, ral_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
@@ -465,8 +468,7 @@ ral_attach(struct ral_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 #endif
 
-	if (boothowto & AB_VERBOSE)
-		ieee80211_announce(ic);
+	ieee80211_announce(ic);
 
 	return 0;
 
@@ -809,6 +811,15 @@ ral_node_alloc(struct ieee80211_node_table *nt)
 	rn = malloc(sizeof (struct ral_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 
 	return (rn != NULL) ? &rn->ni : NULL;
+}
+
+static int
+ral_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+{
+	if (k >= ic->ic_nw_keys && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
+		return k - ic->ic_nw_keys;
+
+	return IEEE80211_KEYIX_NONE;
 }
 
 static int
@@ -1582,6 +1593,7 @@ ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
 
 	desc->physaddr = htole32(physaddr);
 	desc->wme = htole16(RAL_LOGCWMAX(8) | RAL_LOGCWMIN(3) | RAL_AIFSN(2));
+	desc->wme |= htole16(RAL_IVOFFSET(sizeof (struct ieee80211_frame)));
 
 	/*
 	 * Fill PLCP fields.
@@ -2040,8 +2052,10 @@ ral_start(struct ifnet *ifp)
 				bpf_mtap(ifp->if_bpf, m0);
 #endif
 			m0 = ieee80211_encap(ic, m0, ni);
-			if (m0 == NULL)
+			if (m0 == NULL) {
+				ieee80211_free_node(ni);
 				continue;
+			}
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0);
@@ -2726,6 +2740,10 @@ ral_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	sc->sc_tx_timer = 0;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/* abort Tx */
 	RAL_WRITE(sc, RAL_TXCSR0, RAL_ABORT_TX);
 
@@ -2749,8 +2767,4 @@ ral_stop(struct ifnet *ifp, int disable)
 	/* for CardBus, power down the socket */
 	if (disable && sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
-
-	sc->sc_tx_timer = 0;
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
