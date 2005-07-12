@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.6 2005/05/31 04:03:09 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.7 2005/07/12 20:22:45 sekiya Exp $
 
 # Makefile for NetBSD
 #
@@ -102,6 +102,25 @@ clock.o: config_time.h
 %LOAD
 
 %RULES
+
+# XXX -	Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+# XXX -	Also, config has no simple was to just add foo.o to the Makefile.
+#	It needs a pathname of some sort for "object"
+.if !empty(OBJS:M\/athhal-x86_64-elf.hal.o)
+OBJS:=${OBJS:C/\/athhal-x86_64-elf.hal.o/athhal-x86_64-elf.hal.o/}
+
+.PATH: $S/contrib/arch/amd64/dev
+ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${UUDECODE} -p $> \> ${.TARGET}; \
+		rm -f ${.TARGET}; \
+		${UUDECODE} -p $> > ${.TARGET}
+athhal-x86_64-elf.hal.o: athhal-x86_64-elf.hal.o.uue
+	${ATH_UUDEC}
+all depend:	opt_ah.h
+opt_ah.h:	athhal-x86_64-elf.opt_ah.h
+	ln -s ${.ALLSRC} ${.TARGET}
+.endif
 
 ##
 ## (9) port independent kernel machinery

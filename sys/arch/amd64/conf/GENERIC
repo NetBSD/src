@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.57 2005/07/11 15:37:04 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.58 2005/07/12 20:22:45 sekiya Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 maxusers	32		# estimated number of users
 
@@ -498,6 +498,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
@@ -550,6 +551,7 @@ wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 #sm*	at mhzc?
 
 # CardBus network cards
+#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
