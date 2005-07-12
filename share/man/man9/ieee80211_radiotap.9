@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.6 2005/07/12 08:51:11 wiz Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.7 2005/07/12 21:26:33 dyoung Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -61,8 +61,8 @@ presence of optional capture fields.
 .Pp
 The capture fields were packed into the header as compactly as possible,
 modulo the requirements that they had to be packed swiftly,
-with suitable alignment, in the same order as the bits indicating
-their presence.
+with their natural alignment,
+in the same order as the bits indicating their presence.
 .Pp
 This typically includes information such as signal quality and
 timestamps.
@@ -87,14 +87,32 @@ struct ieee80211_radiotap_header {
 .\"
 A device driver implementing
 .Vt radiotap
-typically defines a packed structure embedding an instance of
+typically defines a structure embedding an instance of
 .Vt "struct ieee80211_radiotap_header"
 at the beginning,
-with subsequent fields in the appropriate order,
-and a macro to set the bits of the
+with subsequent fields naturally aligned,
+and in the appropriate order.  Also, a driver defines
+a macro to set the bits of the
 .Va it_present
 bitmap to indicate which fields exist and are filled in by the driver.
 .\"
+.Pp
+Radiotap capture fields
+.Em must be naturally aligned .
+That is, 16-, 32-, and 64-bit fields must begin on 16-, 32-, and
+64-bit boundaries, respectively.
+In this way, drivers can avoid unaligned accesses to radiotap
+capture fields.
+radiotap-compliant drivers must insert padding before a capture
+field to ensure its natural alignment.
+radiotap-compliant packet dissectors, such as
+.Xr tcpdump 8 ,
+expect the padding.
+.Pp
+Developers beware: all compilers may not pack structs alike.
+If a driver developer constructs their radiotap header with a packed
+structure, in order to ensure natural alignment, then it is important
+that they insert padding bytes by themselves.
 .Pp
 Radiotap headers are copied to the userland via a separate bpf attachment.
 It is necessary for the driver to create this attachment after calling
@@ -236,6 +254,9 @@ The
 .Nm
 interface was designed and implemented by
 .An David Young Aq dyoung@pobox.com .
+.An David Young
+is the maintainer of the radiotap capture format.
+Contact him to add new capture fields.
 .Pp
 This manual page was written by
 .An Bruce M. Simpson Aq bms@FreeBSD.org
