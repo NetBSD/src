@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.12 2005/06/20 13:25:25 peter Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.13 2005/07/12 07:26:19 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2005
+.Dd July 12, 2005
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -529,6 +529,13 @@ Maple bus LCD devices, see
 . It Ar mmem#
 Maple bus storage devices, see
 .Xr \&dreamcast/mmem 4
+. El
+.It IEEE1394 bus devices :
+. Bl -tag -width 0123456789 -compact
+. It Ar fw#
+IEEE1394 bus generic node access devices
+. It Ar fwmem#
+IEEE1394 bus physical memory of the remote node access devices
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
