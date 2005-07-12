@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.797 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: mi,v 1.798 2005/07/12 11:40:29 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -278,7 +278,7 @@
 ./usr/include/dev/ic/wi_ieee.h			comp-c-include
 ./usr/include/dev/ic/z8530reg.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/z8530sc.h			comp-obsolete		obsolete
-./usr/include/dev/ieee1394/fwiso_ioctl.h	comp-c-include
+./usr/include/dev/ieee1394/fwiso_ioctl.h	comp-obsolete		obsolete
 ./usr/include/dev/ir/irdaio.h			comp-c-include
 ./usr/include/dev/irdaio.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/ad1848var.h		comp-obsolete		obsolete
