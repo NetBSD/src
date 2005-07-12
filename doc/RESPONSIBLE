@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.54 2005/06/12 12:30:25 wiz Exp $
+#	$NetBSD: RESPONSIBLE,v 1.55 2005/07/12 23:09:39 mrg Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -13,6 +13,8 @@ Userland Programs:
 
 amd		christos
 awk		jdolecek
+audioplay	mrg
+audiorecord	mrg
 bc		phil, simonb
 csh		christos
 cvs		mycroft, christos, wiz
@@ -22,7 +24,7 @@ expr		jdolecek
 file		christos, pooka
 grep		simonb, wiz
 groff		wiz
-gzip		atatat
+gzip		mrg, atatat
 installboot(mi)	lukem
 kerberos	lha, assar, joda
 less/more	mrg
@@ -76,7 +78,7 @@ termcap		blymn, jdc
 X:
 
 [Surely this needs breaking up further]
-XFree86		tron
+XFree86		tron, mrg, rtr
 
 
 Kernel:
@@ -143,7 +145,7 @@ ufs2		fvdl
 kern/general:
 
 ddb		mycroft, jhawk
-emulation	christos, fvdl, manu, jdolecek
+emulation	christos, fvdl, manu, jdolecek, mrg
 kevents		jdolecek
 ksyms		ragge
 lwp/pthread	nathanw
@@ -159,6 +161,7 @@ linux-i386	fvdl, jdolecek
 linux-m68k	itohy
 linux-mips	manu
 linux-powerpc	manu
+netbsd32	mrg
 
 networking:
 
