@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.406 2005/07/07 09:58:23 pooka Exp $
+$NetBSD: usbdevs,v 1.407 2005/07/12 12:10:18 drochner Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -259,6 +259,7 @@ vendor EICON		0x0734	Eicon Networks
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
+vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
@@ -390,7 +391,9 @@ vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf	Pilotech
 vendor EGALAX		0x0eef	eGalax
 vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
+vendor VTECH		0x0f88	VTech
 vendor QUALCOMM		0x1004	Qualcomm
+vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -436,6 +439,7 @@ vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
 vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
+vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
@@ -901,6 +905,9 @@ product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 product GENESYS GL641USB2IDE_2	0x0701	GL641USB USB-IDE Bridge
 product GENESYS GL641USB2IDE	0x0702	GL641USB USB-IDE Bridge
 
+/* GIGABYTE products */
+product GIGABYTE GNWBKG		0x8007	GN-WBKG
+
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
 
@@ -916,6 +923,7 @@ product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
+product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Card Reader
@@ -1255,6 +1263,7 @@ product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
+product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x006d	WLI-U2-KG54-AI WLAN
 
@@ -1263,6 +1272,9 @@ product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
 /* Micro Star International products */
 product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
+product MSI MS6861		0x6861	MS-6861
+product MSI MS6865		0x6865	MS-6865
+product MSI MS6869		0x6869	MS-6869
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1326,9 +1338,6 @@ product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
 product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 A920		0x4002	A920
-
-/* Micro Star International products */
-product MSI BT_DONGLE		0x1967	Bluetooth USB dongle
 
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
@@ -1557,6 +1566,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 /* Ralink Technology products */
 product RALINK RT2570		0x1706	RT2570
 product RALINK RT2570_2		0x2570	RT2570
+product RALINK RT2570_3		0x9020	RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
@@ -1747,6 +1757,9 @@ product SUN KEYBOARD		0x0005	Type 6 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
 
+/* Surecom Technology products */
+product SURECOM EP9001G		0x11f3	EP-9001-g
+
 /* Susteen products */
 product SUSTEEN DCU10	0x0528	USB Cable
 
@@ -1854,6 +1867,9 @@ product VIVITAR DSC350		0x0003	DSC350 Camera
 /* Vodafone products */
 product VODAFONE MC3G		0x5000	Mobile Connect 3G datacard
 
+/* VTech products */
+product VTECH RT2570		0x3012	RT2570
+
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
@@ -1896,6 +1912,9 @@ product ZEEVO BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
 /* Z-Com products */
 product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
+
+/* Zinwell products */
+product ZINWELL ZWXG261		0x0260	ZWX-G261
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
