@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.8.2.1 2005/07/06 22:02:48 tron Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.8.2.2 2005/07/12 11:39:44 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.8.2.1 2005/07/06 22:02:48 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.8.2.2 2005/07/12 11:39:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,14 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+	/*
+	 * The 5530 is utterly swamped by UDMA mode 2, so limit to mode 1
+	 * so that the chip is able to perform the other functions it has
+	 * while IDE UDMA is going on.
+	 */
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_CYRIX_CX5530_IDE) {
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 1;
+	}
 	sc->sc_wdcdev.sc_atac.atac_set_modes = geodeide_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
