@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 2005/07/10 00:50:16 christos Exp $ */
+/*	$NetBSD: proc.h,v 1.7 2005/07/12 21:13:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ struct mdlwp {
  * Machine-dependent part of the proc structure for SPARC.
  */
 struct mdproc {
-	void	(*md_syscall)(struct trapframe *, register_t, register_t);
+	void	(*md_syscall)(struct trapframe64 *, register_t, register_t);
 };
 
 /* md_flags */
