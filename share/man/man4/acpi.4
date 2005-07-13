@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.15 2005/03/25 23:38:32 cube Exp $
+.\" $NetBSD: acpi.4,v 1.16 2005/07/13 14:27:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 25, 2005
+.Dd July 13, 2005
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -60,7 +60,6 @@
 .Pp
 .Cd "options   ACPI_DEBUG"
 .Cd "options   ACPIVERBOSE"
-.Cd "options   ACPI_PCI_FIXUP"
 .Cd "options   ACPI_ACTIVATE_DEV=0"
 .Cd "options   ACPICA_PEDANTIC"
 .Sh DESCRIPTION
@@ -85,9 +84,6 @@ Options:
 .Bl -tag -width ACPI_ACTIVATE_DEV -offset 3n
 .It Nm ACPI_DEBUG
 Enable ACPI debugging message outputs.
-.It Nm ACPI_PCI_FIXUP
-Enable ACPI-based PCI interrupt routing fixup.
-If you have PCI interrupt related problem, try this option.
 .It Nm ACPI_ACTIVATE_DEV
 Determine if the ACPI driver should attempt to activate
 inactive devices.
