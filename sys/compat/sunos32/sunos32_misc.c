@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.31 2005/05/31 00:42:37 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.32 2005/07/13 12:49:32 cube Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.31 2005/05/31 00:42:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.32 2005/07/13 12:49:32 cube Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -405,6 +405,20 @@ again:
 	return (error);
 }
 
+static int
+sunos32_execve_fetch_element(char * const *array, size_t index, char **value)
+{
+	int error;
+	netbsd32_charp const *a32 = (void const *)array;
+	netbsd32_charp e;
+
+	error = copyin(a32 + index, &e, sizeof(e));
+	if (error)
+		return error;
+	*value = (char *)(u_long)(u_int)e;
+	return 0;
+}
+
 int
 sunos32_sys_execv(l, v, retval)
 	struct lwp *l;
@@ -416,16 +430,14 @@ sunos32_sys_execv(l, v, retval)
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_execve_args ua;
+	const char *path = (const char *)(u_long)(u_int)SCARG(uap, path);
 	caddr_t sg;
 
-	SUNOS32TOP_UAP(path, const char);
-	SUNOS32TOP_UAP(argp, char *);
-	SCARG(&ua, envp) = NULL;
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
 
-	return netbsd32_execve2(l, &ua, retval);
+	return execve1(l, path, (char **)(u_long)(u_int)SCARG(uap, argp), NULL,
+	    sunos32_execve_fetch_element);
 }
 
 int
@@ -440,16 +452,15 @@ sunos32_sys_execve(l, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_execve_args ua;
+	const char *path = (const char *)(u_long)(u_int)SCARG(uap, path);
 	caddr_t sg;
 
-	SUNOS32TOP_UAP(path, const char);
-	SUNOS32TOP_UAP(argp, char *);
-	SUNOS32TOP_UAP(envp, char *);
 	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
 
-	return netbsd32_execve2(l, &ua, retval);
+	return execve1(l, path, (char **)(u_long)(u_int)SCARG(uap, argp),
+	    (char **)(u_long)(u_int)SCARG(uap, envp),
+	    sunos32_execve_fetch_element);
 }
 
 int
