@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.2 2005/07/06 11:42:53 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.3 2005/07/13 01:42:06 macallan Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -757,16 +757,17 @@ tslot_event_thread(void *v)
 {
 	struct tslot_softc *sc = v;
 	struct tslot_data *td;
-	int s, status, i;
+	int s, status;
 	unsigned int socket;
 	TSPRINTF("Event kthread starts...\n");
-	
+#if NTCTRL > 0
+	int i;
+
 	/* 
 	 * First-time setup of our LCD symbol. When a card is present at boot 
 	 * time we won't detect a change here and therefore the LCD symbol won't
 	 * light up.
 	 */
-#if NTCTRL > 0
 	for (i = 0; i < TS102_NUM_SLOTS; i++) {
 		td = &sc->sc_slot[i];
 		status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
