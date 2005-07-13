@@ -199,17 +199,17 @@ MEDIA_ITERATOR
 next_media_kind(long *state)
 {
     MEDIA_ITERATOR result;
-    long index;
+    long ix;
 
     result = 0;
-    index = *state;
+    ix = *state;
 
-    switch (index) {
+    switch (ix) {
     case 0:
 #if defined(__linux__) || defined(__unix__)
 	result = create_file_iterator();
 #endif
-	index = 1;
+	ix = 1;
 	if (result != 0) {
 		break;
 	}
@@ -219,7 +219,7 @@ next_media_kind(long *state)
 #if !defined(__linux__) && !defined(__unix__)
 	result = create_ata_iterator();
 #endif
-	index = 2;
+	ix = 2;
 	if (result != 0) {
 		break;
 	}
@@ -229,7 +229,7 @@ next_media_kind(long *state)
 #if !defined(__linux__) && !defined(__unix__)
 	result = create_scsi_iterator();
 #endif
-	index = 3;
+	ix = 3;
 	if (result != 0) {
 		break;
 	}
@@ -240,7 +240,7 @@ next_media_kind(long *state)
 	break;
     }
  
-    *state = index;
+    *state = ix;
     return result;
 }
 
