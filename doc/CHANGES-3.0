@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.176 2005/07/12 19:08:47 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.177 2005/07/13 09:28:50 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10534,4 +10534,11 @@ crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c 1.3
 
 	Add support for algorithms with non OpenSSL default key sizes.
 	[manu, ticket #584]
+
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.51
+
+	Make sure we get the SUN4U version of the sparc frame.h defines.
+	(Otherwise frame32 is undefined and compilation of the netbsd32 lkm
+	fails.)
+	[martin, ticket #585]
 
