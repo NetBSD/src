@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2005/07/10 19:05:47 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.5 2005/07/13 15:16:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2005/07/10 19:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/07/13 15:16:39 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -135,7 +135,7 @@ union args {
 
 static __inline int handle_old(struct trapframe64 *, register_t *);
 static __inline int getargs(struct proc *, struct trapframe64 *,
-    register_t *, const struct sysent **, union args *);
+    register_t *, const struct sysent **, union args *, int *);
 void syscall_plain(struct trapframe64 *, register_t, register_t);
 void syscall_fancy(struct trapframe64 *, register_t, register_t);
 
@@ -168,11 +168,11 @@ handle_old(struct trapframe64 *tf, register_t *code)
  */
 static __inline int
 getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
-    const struct sysent **callp, union args *args)
+    const struct sysent **callp, union args *args, int *s64)
 {
 	int64_t *ap = &tf->tf_out[0];
 	int i, error, nap = 6;
-	int s64 = tf->tf_out[6] & 1L; /* Do we have a 64-bit stack? */
+	*s64 = tf->tf_out[6] & 1L; /* Do we have a 64-bit stack? */
 
 	*callp = p->p_emul->e_sysent;
 	switch (*code) {
@@ -181,7 +181,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		nap--;
 		break;
 	case SYS___syscall:
-		if (s64) {
+		if (*s64) {
 			/* longs *are* quadwords */
 			*code = ap[0];
 			ap += 1;
@@ -199,7 +199,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 
 	*callp += *code;
 
-	if (s64) {
+	if (*s64) {
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		register64_t *argp;
 #ifdef DEBUG
@@ -410,16 +410,13 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #ifdef __arch64__
 	union args args64;
 	int i;
-
-	ap = &args64;
-#else
-	ap = &args;
 #endif
 	struct proc *p = l->l_proc;
 	int error, new;
 	register_t rval[2];
 	u_quad_t sticks;
 	vaddr_t opc, onpc;
+	int s64;
 
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
@@ -436,18 +433,27 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 		
 #ifdef __arch64__
-	for (i = 0; i < callp->sy_narg; i++)
-		args64.l[i] = args.i[i];
+	if (!s64) {
+		for (i = 0; i < callp->sy_narg; i++)
+			args64.l[i] = args.i[i];
+		ap = &args64;
+	} else
+		ap = &args;
 #endif
 	KERNEL_PROC_LOCK(l);
 	if ((error = trace_enter(l, code, code, NULL, ap->r)) != 0) {
 		KERNEL_PROC_UNLOCK(l);
 		goto out;
 	}
+#ifdef __arch64__
+	if (!s64)
+		for (i = 0; i < callp->sy_narg; i++)
+			args.i[i] = args64.l[i];
+#endif
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
