@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.40 2005/07/05 22:01:42 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.41 2005/07/13 10:57:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.40 2005/07/05 22:01:42 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.41 2005/07/13 10:57:11 mrg Exp $");
 #endif
 
 
@@ -452,8 +452,10 @@ write_header_sun(hdrp, lenp, leftp)
 	auh.magic = htonl(AUDIO_FILE_MAGIC);
 	if (outfd == STDOUT_FILENO)
 		auh.data_size = htonl(AUDIO_UNKNOWN_SIZE);
-	else
+	else if (total_size != -1)
 		auh.data_size = htonl(total_size);
+	else
+		auh.data_size = 0;
 	auh.encoding = htonl(sunenc);
 	auh.sample_rate = htonl(sample_rate);
 	auh.channels = htonl(channels);
@@ -632,8 +634,10 @@ fmt_pcm:
 	/* data length */
 	if (outfd == STDOUT_FILENO)
 		datalen = 0;
-	else
+	else if (total_size != -1)
 		datalen = total_size;
+	else
+		datalen = 0;
 
 	/* file length */
 	filelen = 4 + (8 + fmtsz) + (8 + datalen);
