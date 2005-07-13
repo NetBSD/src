@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.183 2005/07/11 15:37:04 kiyohara Exp $
+#	$NetBSD: DEVNAMES,v 1.184 2005/07/13 16:57:44 kiyohara Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -438,6 +438,7 @@ fpu			acorn26
 fpu			mac68k
 frodo			hp300
 fta			MI
+fwbus			MI		Attribute
 fwip			MI
 fwohci			MI
 fxp			MI
