@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.34 2005/07/04 00:26:06 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.35 2005/07/13 11:53:57 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -590,7 +590,6 @@ int	coredump_netbsd32(struct lwp *, void *);
 #include <compat/common/compat_util.h>
 
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
-int netbsd32_execve2(struct lwp *, struct sys_execve_args *, register_t *);
 
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
