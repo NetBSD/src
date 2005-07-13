@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.41 2005/05/29 21:14:40 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.42 2005/07/13 15:08:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,7 +57,7 @@
  *
  * A simple queue is headed by a pair of pointers, one the head of the
  * list and the other to the tail of the list. The elements are singly
- * linked to save space, so only elements can only be removed from the
+ * linked to save space, so elements can only be removed from the
  * head of the list. New elements can be added to the list after
  * an existing element, at the head of the list, or at the end of the
  * list. A simple queue may only be traversed in the forward direction.
