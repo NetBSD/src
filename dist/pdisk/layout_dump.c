@@ -117,12 +117,12 @@ dump_using_layout(void *buffer, layout *desc)
 	
 	switch (entry->format) {
 	case kHex:
-	    printf("0x%x\n", value);
+	    printf("0x%x\n", (unsigned int) value);
 	    break;
 	case kDec:
 	    byte_length = entry->bit_length / 8;
 	    switch (byte_length) {
-	    case 4: printf("%d\n", (signed long)value); break;
+	    case 4: printf("%ld\n", (signed long)value); break;
 	    case 2: printf("%d\n", (signed short)value); break;
 	    case 1: printf("%d\n", (signed char)value); break;
 	    }
@@ -130,7 +130,7 @@ dump_using_layout(void *buffer, layout *desc)
 	case kUns:
 	    byte_length = entry->bit_length / 8;
 	    switch (byte_length) {
-	    case 4: printf("%u\n", (unsigned long)value); break;
+	    case 4: printf("%lu\n", (unsigned long)value); break;
 	    case 2: printf("%u\n", (unsigned short)value); break;
 	    case 1: printf("%u\n", (unsigned char)value); break;
 	    }

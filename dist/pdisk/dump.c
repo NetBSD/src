@@ -63,8 +63,8 @@
 // Types
 //
 typedef struct names {
-    char *abbr;
-    char *full;
+    const char *abbr;
+    const char *full;
 } NAMES;
 
 #ifdef __unix__
@@ -266,7 +266,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     partition_map_header *map;
     int j;
     DPME *p;
-    char *s;
+    const char *s;
     u32 size;
     double bytes;
     int driver;
@@ -438,7 +438,7 @@ show_data_structures(partition_map_header *map)
     partition_map * entry;
     DPME *p;
     BZB *bp;
-    char *s;
+    const char *s;
 
     if (map == NULL) {
 	printf("No partition map exists\n");
@@ -580,14 +580,14 @@ xx: cccc RU *dd s...
 
 
 void
-full_dump_partition_entry(partition_map_header *map, int index)
+full_dump_partition_entry(partition_map_header *map, int ix)
 {
     partition_map * cur;
     DPME *p;
     int i;
     u32 t;
 
-    cur = find_entry_by_disk_address(index, map);
+    cur = find_entry_by_disk_address(ix, map);
     if (cur == NULL) {
 	printf("No such partition\n");
 	return;

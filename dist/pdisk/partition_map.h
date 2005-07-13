@@ -108,11 +108,11 @@ int add_partition_to_map(const char *name, const char *dptype, u32 base, u32 len
 void close_partition_map(partition_map_header *map);
 partition_map_header* create_partition_map(char *name, partition_map_header *oldmap);
 void delete_partition_from_map(partition_map *entry);
-partition_map* find_entry_by_disk_address(long index, partition_map_header *map);
+partition_map* find_entry_by_disk_address(long, partition_map_header *);
 partition_map* find_entry_by_type(const char *type_name, partition_map_header *map);
 partition_map* find_entry_by_base(u32 base, partition_map_header *map);
 partition_map_header* init_partition_map(char *name, partition_map_header* oldmap);
-void move_entry_in_map(long old_index, long index, partition_map_header *map);
+void move_entry_in_map(long, long, partition_map_header *);
 partition_map_header* open_partition_map(char *name, int *valid_file, int ask_logical_size);
 void resize_map(long new_size, partition_map_header *map);
 void write_partition_map(partition_map_header *map);

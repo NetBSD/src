@@ -89,7 +89,7 @@ char io_buffer[MAXIOSIZE];
 //
 long get_number(int first_char);
 char* get_string(int eos);
-int my_getch();
+int my_getch(void);
 void my_ungetch(int c);
 
 
@@ -145,7 +145,7 @@ flush_to_newline(int keep_newline)
 
 
 int
-get_okay(char *prompt, int default_value)
+get_okay(const char *prompt, int default_value)
 {
     int		c;
 
@@ -176,7 +176,7 @@ get_okay(char *prompt, int default_value)
 
 	
 int
-get_command(char *prompt, int promptBeforeGet, int *command)
+get_command(const char *prompt, int promptBeforeGet, int *command)
 {
     int		c;
 
@@ -202,7 +202,7 @@ get_command(char *prompt, int promptBeforeGet, int *command)
 
 	
 int
-get_number_argument(char *prompt, long *number, long default_value)
+get_number_argument(const char *prompt, long *number, long default_value)
 {
     int c;
     int result = 0;
@@ -281,7 +281,7 @@ get_number(int first_char)
 
 	
 int
-get_string_argument(char *prompt, char **string, int reprompt)
+get_string_argument(const char *prompt, char **string, int reprompt)
 {
     int c;
     int result = 0;
@@ -451,7 +451,7 @@ number_of_digits(unsigned long value)
 // Print a message on standard error & flush the input.
 //
 void
-bad_input(char *fmt, ...)
+bad_input(const char *fmt, ...)
 {
     va_list ap;
 

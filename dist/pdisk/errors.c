@@ -115,7 +115,7 @@ do_help()
 
 
 void
-usage(char *kind)
+usage(const char *kind)
 {
     error(-1, "bad usage - %s\n", kind);
     hflag = 1;
@@ -128,7 +128,7 @@ usage(char *kind)
 // the perror(3) message.
 //
 void
-fatal(int value, char *fmt, ...)
+fatal(int value, const char *fmt, ...)
 {
     va_list ap;
 
@@ -157,7 +157,7 @@ fatal(int value, char *fmt, ...)
 // the perror(3) message.
 //
 void
-error(int value, char *fmt, ...)
+error(int value, const char *fmt, ...)
 {
     va_list ap;
 

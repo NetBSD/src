@@ -138,10 +138,10 @@ int get_base_argument(long *number, partition_map_header *map);
 int get_command_line(int *argc, char ***argv);
 int get_size_argument(long *number, partition_map_header *map);
 int get_options(int argc, char **argv);
-void interact();
-void print_edit_notes();
-void print_expert_notes();
-void print_top_notes();
+void interact(void);
+void print_edit_notes(void);
+void print_expert_notes(void);
+void print_top_notes(void);
 
 
 //
@@ -792,7 +792,7 @@ void
 do_rename_partition(partition_map_header *map)
 {
     partition_map * entry;
-    long index;
+    long ix;
     char *name;
 
     if (map == NULL) {
@@ -802,7 +802,7 @@ do_rename_partition(partition_map_header *map)
     if (!rflag && map->writable == 0) {
 	printf("The map is not writable.\n");
     }
-    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
@@ -812,7 +812,7 @@ do_rename_partition(partition_map_header *map)
     }
 
 	// find partition and change it
-    entry = find_entry_by_disk_address(index, map);
+    entry = find_entry_by_disk_address(ix, map);
     if (entry == NULL) {
 	printf("No such partition\n");
     } else {
@@ -828,7 +828,7 @@ void
 do_change_type(partition_map_header *map)
 {
     partition_map * entry;
-    long index;
+    long ix;
     char *type = NULL;
 
     if (map == NULL) {
@@ -840,12 +840,12 @@ do_change_type(partition_map_header *map)
 	printf("The map is not writeable.\n");
     }
 
-    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
 
-    entry = find_entry_by_disk_address(index, map);
+    entry = find_entry_by_disk_address(ix, map);
 
     if (entry == NULL ) {
         printf("No such partition\n");
@@ -873,7 +873,7 @@ void
 do_delete_partition(partition_map_header *map)
 {
     partition_map * cur;
-    long index;
+    long ix;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
@@ -882,13 +882,13 @@ do_delete_partition(partition_map_header *map)
     if (!rflag && map->writable == 0) {
 	printf("The map is not writable.\n");
     }
-    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
 
 	// find partition and delete it
-    cur = find_entry_by_disk_address(index, map);
+    cur = find_entry_by_disk_address(ix, map);
     if (cur == NULL) {
 	printf("No such partition\n");
     } else {
@@ -901,7 +901,7 @@ void
 do_reorder(partition_map_header *map)
 {
     long old_index;
-    long index;
+    long ix;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
@@ -914,12 +914,12 @@ do_reorder(partition_map_header *map)
 	bad_input("Bad partition number");
 	return;
     }
-    if (get_number_argument("New number: ", &index, kDefault) == 0) {
+    if (get_number_argument("New number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
 
-    move_entry_in_map(old_index, index, map);
+    move_entry_in_map(old_index, ix, map);
 }
 
 

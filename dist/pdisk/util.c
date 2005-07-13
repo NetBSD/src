@@ -111,8 +111,8 @@ TrapAvailable(short theTrap)
 int
 istrncmp(const char *x, const char *y, long len)
 {
-    unsigned char *p = (unsigned char *)x;
-    unsigned char *q = (unsigned char *)y;
+    const unsigned char *p = (const unsigned char *)x;
+    const unsigned char *q = (const unsigned char *)y;
 
     while (len > 0) {
 	if (tolower(*p) != tolower(*q)) {
