@@ -300,7 +300,9 @@ print_range_list(range_list *list)
 {
     range_list *cur;
     int printed;
-    char *s;
+    const char *s;
+
+    s = NULL;		/* XXXGCC -Wuninitialized [powerpc] */
     
     if (list == 0) {
 	printf("Empty range list\n");
