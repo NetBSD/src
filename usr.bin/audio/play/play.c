@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.44 2005/06/02 01:38:11 lukem Exp $	*/
+/*	$NetBSD: play.c,v 1.45 2005/07/13 10:57:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.44 2005/06/02 01:38:11 lukem Exp $");
+__RCSID("$NetBSD: play.c,v 1.45 2005/07/13 10:57:11 mrg Exp $");
 #endif
 
 
@@ -331,8 +331,8 @@ play_fd(file, fd)
 			errx(1, "unknown audio file: %s", file);
 	}
 	if (hdrlen > 0) {
-		if (hdrlen >= nr)	/* shouldn't happen */
-			errx(1, "header seems really large");
+		if (hdrlen > nr)	/* shouldn't happen */
+			errx(1, "header seems really large: %lld", (long long)hdrlen);
 		memmove(buffer, buffer + hdrlen, nr - hdrlen);
 		nr -= hdrlen;
 	}
@@ -444,9 +444,11 @@ set_audio_mode:
 		const char *enc = audio_enc_from_val(info.play.encoding);
 
 		printf("%s: sample_rate=%d channels=%d "
+		   "datasize=%lld "
 		   "precision=%d%s%s\n", file,
 		   info.play.sample_rate,
 		   info.play.channels,
+		   (long long)*datasize,
 		   info.play.precision,
 		   enc ? " encoding=" : "", 
 		   enc ? enc : "");
