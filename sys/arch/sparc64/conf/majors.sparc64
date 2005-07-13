@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.21 2005/06/03 13:16:02 blymn Exp $
+#	$NetBSD: majors.sparc64,v 1.22 2005/07/13 17:09:33 kiyohara Exp $
 #
 # Device majors for sparc64
 #
@@ -108,7 +108,6 @@ device-major	cgd		char 127 block 26	cgd
 device-major	kttcp		char 128		kttcp
 device-major	dmoverio	char 129		dmoverio
 # major 130 free (ex veriexec which is now a MI major)
-device-major	fwiso		char 131		fwiso
 device-major	dpt		char 132		dpt
 device-major	twe		char 133		twe
 device-major	nsmb		char 134		nsmb		
