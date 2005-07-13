@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.21 2005/07/13 04:24:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.21 2005/07/13 04:24:26 christos Exp $");
 
 #include "opt_kgdb.h"
 
@@ -78,7 +78,7 @@ label_t *kgdb_recover = 0;
 
 static void kgdb_copy(void *, void *, int);
 /* static void kgdb_zero(void *, int); */
-static void kgdb_send(u_char *);
+static void kgdb_send(const u_char *);
 static int kgdb_recv(u_char *, int);
 static int digit2i(u_char);
 static u_char i2digit(int);
@@ -236,9 +236,9 @@ hex2i(srcp)
  */
 static void
 kgdb_send(bp)
-	u_char *bp;
+	const u_char *bp;
 {
-	u_char *p;
+	const u_char *p;
 	u_char csum, c;
 
 	DPRINTF(("kgdb_send: %s\n", bp));
