@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.34 2005/01/19 03:23:50 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.35 2005/07/14 19:50:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -766,6 +766,7 @@ const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
+
 /*
  * HP 620LX
  */
@@ -790,10 +791,32 @@ const uint8_t hp620lx_jp_keytrans[] = {
 /*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
 };
 
+/* Other models */
+const uint8_t hp620lx_intl_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */
+/* 0 */	2  , 16 , 219, UNK, IGN, UNK, 42 , 30 , /* REC button */
+/* 1 */	3  , 17 , 15 , 44 , UNK, 45 , 41 , 31 ,
+/* 2 */	4  , 18 , UNK, 69 , 59 , 46 , 1  , 32 ,
+/* 3 */	5  , 19 , UNK, UNK, 60 , 56 , UNK, 33 ,
+/* 4 */	6  , 20 , 47 , 57 , 61 , 48 , UNK, 34 ,
+/* 5 */	7  , 21 , UNK, UNK, 62 , 49 , UNK, 35 ,
+/* 6 */	8  , 22 , UNK, 184, 63 , 50 , UNK, 36 ,
+/* 7 */	9  , 23 , 52 , 211, 64 , 51 , UNK, 37 ,
+/* 8 */	10 , 24 , 53 , 203, 65 , 200, 39 , 38 ,
+/* 9 */	11 , 25 , 40 , 208, 66 , 205, 27 , 26 ,
+/*10 */	12 , 13 , 28 , UNK, UNK, UNK, 54 , 43 ,
+/*11 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN, /* ON button */
+/*12 */	29 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*13 */	14 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*14 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
+};
+
 const int hp620lx_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= 120
 };
+
 
 /*
  * HITACHI PERSONA HPW50PAD
@@ -1059,6 +1082,13 @@ const struct hpckbd_keymap_table {
 		hp620lx_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
+	/* Other models */
+	{	&platid_mask_MACH_HP_LX_620,
+		hp620lx_intl_keytrans,
+		hp620lx_special_keymap,
+		NULLCMDMAP,
+		KB_US },
+
 	/*
 	 * PERSONA HPW50PAD
 	 */
