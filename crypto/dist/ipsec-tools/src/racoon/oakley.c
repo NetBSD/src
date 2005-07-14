@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.2 2005/07/12 14:12:20 manu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.3 2005/07/14 11:26:57 he Exp $	*/
 
 /* Id: oakley.c,v 1.17.2.1 2005/03/01 09:51:48 vanhu Exp */
 
@@ -2017,6 +2017,7 @@ oakley_savecert(iph1, gen)
                  PKCS7 *p7;
                  u_char *bp;
                  int i;
+		 STACK_OF(X509) *certs=NULL;
 
                  /* Skip the header */
                  bp = (u_char *)(gen + 1);
@@ -2036,7 +2037,6 @@ oakley_savecert(iph1, gen)
                   * there"s little by way of documentation for any of
                   * it. I can only presume it"s correct.
                   */
-		 STACK_OF(X509) *certs=NULL;
 		 
 		 i = OBJ_obj2nid(p7->type);
 		 switch (i) {
