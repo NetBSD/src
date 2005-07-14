@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.16 2005/06/11 18:18:59 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.17 2005/07/14 15:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ int		 history_is_stifled(void);
 int		 where_history(void);
 HIST_ENTRY	*current_history(void);
 HIST_ENTRY	*history_get(int);
+HIST_ENTRY	*remove_history(int);
 int		 history_total_bytes(void);
 int		 history_set_pos(int);
 HIST_ENTRY	*previous_history(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.27 2005/06/12 06:58:21 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.28 2005/07/14 15:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,6 +197,7 @@ int		history(History *, HistEvent *, int, ...);
 #define	H_CLEAR		19	/* , void);		*/
 #define	H_SETUNIQUE	20	/* , int);		*/
 #define	H_GETUNIQUE	21	/* , void);		*/
+#define	H_DEL		22	/* , int);		*/
 
 
 /*
