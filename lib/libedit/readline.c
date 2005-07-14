@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.57 2005/06/11 18:18:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.58 2005/07/14 15:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.57 2005/06/11 18:18:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.58 2005/07/14 15:00:58 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1155,6 +1155,28 @@ add_history(const char *line)
 		history_length = ev.num;
 
 	return (!(history_length > 0)); /* return 0 if all is okay */
+}
+
+
+/*
+ * remove the specified entry from the history list and return it.
+ */
+HIST_ENTRY *
+remove_history(int num)
+{
+	static HIST_ENTRY she;
+	HistEvent ev;
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
+	if (history(h, &ev, H_DEL, num) != 0)
+		return NULL;
+
+	she.line = ev.str;
+	she.data = NULL;
+
+	return &she;
 }
 
 
