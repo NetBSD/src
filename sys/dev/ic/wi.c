@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.204 2005/07/06 23:58:14 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.205 2005/07/14 00:28:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.204 2005/07/06 23:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.205 2005/07/14 00:28:51 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -215,7 +215,7 @@ STATIC int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
 STATIC void wi_scan_result(struct wi_softc *, int, int);
 
 STATIC void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
-STATIC void wi_mend_flags(struct wi_softc *);
+STATIC void wi_mend_flags(struct wi_softc *, enum ieee80211_state);
 
 static inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
@@ -1353,10 +1353,9 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		/* fall through */
 	default:
-		ic->ic_flags = sc->sc_ic_flags;
+		ic->ic_flags |= sc->sc_ic_flags;
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
-		sc->sc_ic_flags = ic->ic_flags;
-		wi_mend_flags(sc);
+		sc->sc_ic_flags = ic->ic_flags & IEEE80211_F_DROPUNENC;
 		if (error == ENETRESET) {
 			if (sc->sc_enabled)
 				error = wi_init(ifp);
@@ -1365,6 +1364,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	}
+	wi_mend_flags(sc, ic->ic_state);
 	splx(s);
 	return error;
 }
@@ -1589,6 +1589,14 @@ wi_rx_intr(struct wi_softc *sc)
 	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + len;
 	m->m_pkthdr.rcvif = ifp;
 
+	wh = mtod(m, struct ieee80211_frame *);
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		/*
+		 * WEP is decrypted by hardware. Clear WEP bit
+		 * header for ieee80211_input().
+		 */
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+	}
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
 		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1601,17 +1609,10 @@ wi_rx_intr(struct wi_softc *sc)
 		if (frmhdr.wi_status & WI_STAT_PCF)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
+		/* XXX IEEE80211_RADIOTAP_F_WEP */
 		bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m);
 	}
 #endif
-	wh = mtod(m, struct ieee80211_frame *);
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		/*
-		 * WEP is decrypted by hardware. Clear WEP bit
-		 * header for ieee80211_input().
-		 */
-		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-	}
 
 	/* synchronize driver's BSSID with firmware's BSSID */
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
@@ -3008,16 +3009,23 @@ wi_rssadapt_updatestats(void *arg)
  * the packet.
  */
 STATIC void
-wi_mend_flags(struct wi_softc *sc)
+wi_mend_flags(struct wi_softc *sc, enum ieee80211_state nstate)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	if (ic->ic_state == IEEE80211_S_RUN &&
+	if (nstate == IEEE80211_S_RUN &&
 	    (ic->ic_flags & IEEE80211_F_PRIVACY) != 0 &&
 	    ic->ic_opmode != IEEE80211_M_HOSTAP)
 		ic->ic_flags &= ~IEEE80211_F_DROPUNENC;
 	else
-		ic->ic_flags = sc->sc_ic_flags;
+		ic->ic_flags |= sc->sc_ic_flags;
+
+	DPRINTF(("%s: state %d, "
+	    "ic->ic_flags & IEEE80211_F_DROPUNENC = %#" PRIx32 ", "
+	    "sc->sc_ic_flags & IEEE80211_F_DROPUNENC = %#" PRIx32 "\n",
+	    __func__, nstate,
+	    ic->ic_flags & IEEE80211_F_DROPUNENC,
+	    sc->sc_ic_flags & IEEE80211_F_DROPUNENC));
 }
 
 STATIC int
@@ -3050,6 +3058,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
 		ic->ic_state = nstate; /* NB: skip normal ieee80211 handling */
+		wi_mend_flags(sc, nstate);
 		return 0;
 
 	case IEEE80211_S_RUN:
@@ -3086,7 +3095,6 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ni->ni_rates = ic->ic_sup_rates[
 			    ieee80211_chan2mode(ic, ni->ni_chan)]; /*XXX*/
 		}
-		wi_mend_flags(sc);
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			callout_reset(&sc->sc_rssadapt_ch, hz / 10,
 			    wi_rssadapt_updatestats, sc);
@@ -3098,6 +3106,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				arg == IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 		break;
 	}
+	wi_mend_flags(sc, nstate);
 	return (*sc->sc_newstate)(ic, nstate, arg);
 }
 
