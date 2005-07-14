@@ -1,0 +1,397 @@
+.\" $NetBSD: ral.4,v 1.1 2005/07/14 12:46:45 drochner Exp $
+.\" $OpenBSD: ral.4,v 1.37 2005/07/07 15:01:11 jsg Exp $
+.\"
+.\" Copyright (c) 2005
+.\"	Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 15, 2005
+.Os
+.Dt RAL 4
+.Sh NAME
+.Nm ral
+.Nd Ralink Technology RT25x0 IEEE 802.11a/b/g wireless network driver
+.Sh SYNOPSIS
+.Cd "ral* at cardbus?"
+.Cd "ral* at pci?"
+.Cd "ral* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports PCI/CardBus wireless adapters based on the Ralink RT2500
+chipset
+and USB 2.0 wireless adapters based on the Ralink RT2500USB
+chipset.
+.Pp
+The RT2500 chipset consists of two integrated chips, a RT2560 or RT2570 MAC/BBP
+and a radio transceiver (the model of which depends on the card revision).
+.Pp
+The RT2522, RT2523, RT2524, RT2525, RT2525e and RT2526 radio transceivers
+operate in the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
+transceiver that can operate in the 2.4GHz and 5.2GHz bands (802.11a).
+.Pp
+The transmit speed is user-selectable or can be adapted automatically by the
+driver depending on the received-signal strength.
+See
+.Xr rssadapt 9
+for more information.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+.Nm
+supports software WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured with
+.Xr ifconfig 8
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
+.Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.It Cm OFDM6
+Set 802.11a/g OFDM 6Mbps operation.
+.It Cm OFDM9
+Set 802.11a/g OFDM 9Mbps operation.
+.It Cm OFDM12
+Set 802.11a/g OFDM 12Mbps operation.
+.It Cm OFDM18
+Set 802.11a/g OFDM 18Mbps operation.
+.It Cm OFDM24
+Set 802.11a/g OFDM 24Mbps operation.
+.It Cm OFDM36
+Set 802.11a/g OFDM 36Mbps operation.
+.It Cm OFDM48
+Set 802.11a/g OFDM 48Mbps operation.
+.It Cm OFDM54
+Set 802.11a/g OFDM 54Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width monitor -compact
+.It Cm hostap
+Select Host AP operation.
+.It Cm ibss
+Select IBSS operation.
+.It Cm monitor
+Select monitor mode.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and return it to the
+default mode of operation (BSS).
+.It Cm mode Ar mode
+The
+.Nm
+driver supports the following modes:
+.Pp
+.Bl -tag -width 11b -compact
+.It Cm 11a
+Force 802.11a operation (RT5222 only).
+.It Cm 11b
+Force 802.11b operation.
+.It Cm 11g
+Force 802.11g operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.El
+.Sh HARDWARE
+The following PCI adapters should work:
+.Bd -filled
+A-Link WL54H.
+Amigo AWI-926W.
+AMIT WL531P.
+AOpen AOI-831.
+ASUS WL-130g.
+ASUS WIFI-G-AAY.
+Atlantis Land A02-PCI-W54.
+Belkin F5D7000 v3.
+Canyon CN-WF511.
+CNet CWP-854.
+Compex WLP54G.
+Conceptronic C54Ri.
+Corega CG-WLPCI54GL.
+Digitus DN-7006G-RA.
+Dynalink WLG25PCI.
+E-Tech WGPI02.
+Edimax EW-7128g.
+Eminent EM3037.
+Encore ENLWI-G-RLAM.
+Eusso UGL2454-VPR.
+Fiberline WL-400P.
+Foxconn WLL-3350.
+Gigabyte GN-WPKG.
+Hawking HWP54GR.
+Hercules HWGPCI-54.
+iNexQ CR054g-009 (R03).
+JAHT WN-4054PCI.
+KCORP LifeStyle KLS-660.
+LevelOne WNC-0301 v2.
+Linksys WMP54G v4.
+Micronet SP906GK.
+Minitar MN54GPC-R.
+MSI MS-6834.
+MSI PC54G2.
+OvisLink EVO-W54PCI.
+PheeNet HWL-PCIG/RA.
+Pro-Nets PC80211G.
+Repotec RP-WP0854.
+SATech SN-54P.
+Signamax 065-1798.
+Sitecom WL-115.
+SparkLAN WL-660R.
+Surecom EP-9321-g.
+Sweex LC700030.
+TekComm NE-9321-g.
+Tonze PC-6200C.
+Unex CR054g-R02.
+Zinwell ZWX-G361.
+Zonet ZEW1600.
+.Ed
+.Pp
+The following CardBus adapters should work:
+.Bd -filled
+A-Link WL54PC.
+Alfa AWPC036.
+Amigo AWI-914W.
+AMIT WL531C.
+ASUS WL-107G.
+Atlantis Land A02-PCM-W54.
+Belkin F5D7010 v2.
+Canyon CN-WF513.
+CC&C WL-2102.
+CNet CWC-854.
+Conceptronic C54RC.
+Corega CG-WLCB54GL.
+Digitus DN-7001G-RA.
+Dynalink WLG25CARDBUS.
+E-Tech WGPC02.
+E-Tech WGPC03.
+Edimax EW-7108PCg.
+Eminent EM3036.
+Encore ENPWI-G-RLAM.
+Eusso UGL2454-01R.
+Fiberline WL-400X.
+Gigabyte GN-WMKG.
+Hawking HWC54GR.
+Hercules HWGPCMCIA-54.
+JAHT WN-4054P(E).
+KCORP LifeStyle KLS-611.
+LevelOne WPC-0301 v2.
+Micronet SP908GK V3.
+Minitar MN54GCB-R.
+MSI CB54G2.
+MSI MS-6835.
+Pro-Nets CB80211G.
+Repotec RP-WB7108.
+SATech SN-54C.
+Sitecom WL-112.
+SparkLAN WL-611R.
+Surecom EP-9428-g.
+Sweex LC500050.
+TekComm NE-9428-g.
+Tonze PW-6200C.
+Unex MR054g-R02.
+Zinwell ZWX-G160.
+Zonet ZEW1500.
+.Ed
+.Pp
+The following Mini PCI adapters should work:
+.Bd -filled
+Amigo AWI-922W.
+Billionton MIWLGRL.
+Gigabyte GN-WIKG.
+MSI MP54G2.
+MSI MS-6833.
+Tonze PC-620C.
+Zinwell ZWX-G360.
+.Ed
+.Pp
+The following USB 2.0 adapters should work:
+.Bd -filled
+AMIT WL532U.
+ASUS WL-167g.
+Belkin F5D7050.
+Buffalo WLI-U2-KG54.
+Buffalo WLI-U2-KG54-AI.
+Buffalo WLI-U2-KG54-YB.
+CNet CWD-854.
+Compex WLU54G 2A1100.
+Conceptronic C54RU.
+D-Link DWL-G122 (b1).
+Dynalink WLG25USB.
+E-Tech WGUS02.
+Eminent 3035.
+Gigabyte GN-WBKG.
+Hercules HWGUSB2-54.
+KCORP LifeStyle KLS-685.
+Linksys WUSB54G v4.
+Linksys WUSB54GP v4.
+MSI MS-6861.
+MSI MS-6865.
+MSI MS-6869.
+SerComm UB801R.
+SparkLAN WL-685R.
+Surecom EP-9001-g.
+Tonze UW-6200C.
+Zaapa ZNWUSB-54.
+Zonet ZEW2500P.
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "ral%d: device timeout"
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr cardbus 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr usb 4 ,
+.Xr hostapd 8 ,
+.Xr ifconfig 8
+.Pp
+Ralink Technology:
+.Pa http://www.ralinktech.com
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org .
+.Sh CAVEATS
+PCI
+.Nm
+adapters seem to strictly require a system supporting PCI 2.2 or greater and
+will likely not work in systems based on older revisions of the PCI
+specification.
+.Pp
+The USB
+.Nm ral
+driver does not support automatic adaptation of the transmit speed.
