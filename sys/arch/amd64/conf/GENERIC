@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2005/07/12 20:22:45 sekiya Exp $
+# $NetBSD: GENERIC,v 1.59 2005/07/14 11:59:53 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.59 $"
 
 maxusers	32		# estimated number of users
 
@@ -171,7 +171,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options		ACPIVERBOSE	# verboase ACPI configuration messages
+options		ACPIVERBOSE	# verbose ACPI configuration messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
