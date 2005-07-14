@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.46 2005/03/19 17:36:02 christos Exp $
+.\"	$NetBSD: editline.3,v 1.47 2005/07/14 15:00:58 christos Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 19, 2005
+.Dd July 14, 2005
 .Os
 .Dt EDITLINE 3
 .Sh NAME
@@ -634,6 +634,14 @@ the history.
 .It Dv H_GETUNIQUE
 Retrieve the current setting if if adjacent elements should be entered into
 the history.
+.It Dv H_DEL , Fa "int num"
+Delete the event numbered
+.Fa e .
+This function is only provided for
+.Xr readline 3
+compatibility.
+The caller is responsible for free'ing the string in the returned 
+.Fa HistEvent .
 .El
 .Pp
 .Fn history
