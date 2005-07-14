@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2005/07/13 15:16:39 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.6 2005/07/14 12:35:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/07/13 15:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2005/07/14 12:35:08 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -311,10 +311,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 #ifdef __arch64__
 	union args args64;
 	int i;
-
-	ap = &args64;
-#else
-	ap = &args;
 #endif
 #endif
 	struct proc *p = l->l_proc;
@@ -322,6 +318,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	register_t rval[2];
 	u_quad_t sticks;
 	vaddr_t opc, onpc;
+	int s64;
 
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
@@ -338,13 +335,20 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 
 	tf->tf_npc = tf->tf_pc + 4;
 
-	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
 #ifdef __arch64__
-	for (i = 0; i < callp->sy_narg; i++)
-		args64.l[i] = args.i[i];
+	if (s64)
+		ap = &args;
+	else {
+		for (i = 0; i < callp->sy_narg; i++)
+			args64.l[i] = args.i[i];
+		ap = &args64;
+	}
+#else
+	ap = &args;
 #endif
 	scdebug_call(l, code, ap->r);
 #endif /* SYSCALL_DEBUG */
@@ -437,12 +441,15 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 		goto bad;
 		
 #ifdef __arch64__
-	if (!s64) {
+	if (s64)
+		ap = &args;
+	else {
 		for (i = 0; i < callp->sy_narg; i++)
 			args64.l[i] = args.i[i];
 		ap = &args64;
-	} else
-		ap = &args;
+	}
+#else
+	ap = &args;
 #endif
 	KERNEL_PROC_LOCK(l);
 	if ((error = trace_enter(l, code, code, NULL, ap->r)) != 0) {
