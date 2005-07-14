@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.10 2005/02/26 22:58:56 perry Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.11 2005/07/14 02:36:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -287,13 +287,11 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 	if (lseek(fd, elf->e_phoff, SEEK_SET) == -1)  {
 		WARN(("lseek phdr"));
-		FREE(phdr, sz);
-		return 1;
+		goto freephdr;
 	}
 	if (read(fd, phdr, sz) != sz) {
 		WARN(("read program headers"));
-		FREE(phdr, sz);
-		return 1;
+		goto freephdr;
 	}
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
@@ -317,14 +315,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 			if (lseek(fd, phdr[i].p_offset, SEEK_SET) == -1)  {
 				WARN(("lseek text"));
-				FREE(phdr, sz);
-				return 1;
+				goto freephdr;
 			}
 			if (READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz) !=
 			    (ssize_t)phdr[i].p_filesz) {
 				WARN(("read text"));
-				FREE(phdr, sz);
-				return 1;
+				goto freephdr;
 			}
 			first = 0;
 
@@ -374,7 +370,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 		if (read(fd, shp, sz) != sz) {
 			WARN(("read section headers"));
-			return 1;
+			goto freeshp;
 		}
 
 		shpp = maxp;
@@ -412,14 +408,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 					if (lseek(fd, shp[i].sh_offset,
 					    SEEK_SET) == -1) {
 						WARN(("lseek symbols"));
-						FREE(shp, sz);
-						return 1;
+						goto freeshp;
 					}
 					if (READ(fd, maxp, shp[i].sh_size) !=
 					    (ssize_t)shp[i].sh_size) {
 						WARN(("read symbols"));
-						FREE(shp, sz);
-						return 1;
+						goto freeshp;
 					}
 				}
 				shp[i].sh_offset = maxp - elfp;
@@ -472,6 +466,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
+freephdr:
+	FREE(phdr, sz);
+	return 1;
+freeshp:
+	FREE(shp, sz);
+	return 1;
 }
 
 #endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */
