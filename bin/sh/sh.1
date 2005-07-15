@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.81 2005/07/15 17:23:48 christos Exp $
+.\"	$NetBSD: sh.1,v 1.82 2005/07/15 22:33:48 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -115,7 +115,7 @@ That is, commands
 can be typed directly to the running shell or can be put into a file and
 the file can be executed directly by the shell.
 .Ss Invocation
-If no args are present and if the standard input of the shell
+If no arguments are present and if the standard input of the shell
 is connected to a terminal (or if the
 .Fl i
 flag is set),
@@ -210,7 +210,7 @@ disables the option.
 The following options can be set from the command line or
 with the
 .Ic set
-builtin (described later).
+built-in (described later).
 .Bl -tag -width aaaallexportfoo -offset indent
 .It Fl a Em allexport
 Export all variables assigned to.
@@ -268,7 +268,7 @@ and the file specified by the
 .Ev ENV
 environment variable.
 .It Fl I Em ignoreeof
-Ignore EOF's from input when interactive.
+Ignore EOFs from input when interactive.
 .It Fl i Em interactive
 Force the shell to behave interactively.
 .It Fl m Em monitor
@@ -343,7 +343,7 @@ the characters (except single quotes, making it impossible to put
 single-quotes in a single-quoted string).
 .Ss Double Quotes
 Enclosing characters within double quotes preserves the literal
-meaning of all characters except dollarsign
+meaning of all characters except dollar sign
 .Pq $ ,
 backquote
 .Pq ` ,
@@ -368,7 +368,7 @@ Their meaning is discussed later.
 .Ss Aliases
 An alias is a name and corresponding value set using the
 .Ic alias
-builtin command.
+built-in command.
 Whenever a reserved word may occur (see above),
 and after checking for reserved words, the shell
 checks the word to see if it matches an alias.
@@ -489,7 +489,7 @@ instead of
 .Dq \*[Lt]\*[Lt] ,
 then leading tabs in the here-doc-text are stripped.
 .Ss Search and Execution
-There are three types of commands: shell functions, builtin commands, and
+There are three types of commands: shell functions, built-in commands, and
 normal programs -- and the command is searched for (by name) in that order.
 They each are executed in a different way.
 .Pp
@@ -504,10 +504,10 @@ The positional parameters are restored to their original values
 when the command completes.
 This all occurs within the current shell.
 .Pp
-Shell builtins are executed internally to the shell, without spawning a
+Shell built-ins are executed internally to the shell, without spawning a
 new process.
 .Pp
-Otherwise, if the command name doesn't match a function or builtin, the
+Otherwise, if the command name doesn't match a function or built-in, the
 command is searched for as a normal program in the file system (as
 described in the next section).
 When a normal program is executed, the shell runs the program,
@@ -532,8 +532,8 @@ number as a "shell procedure".
 .Ss Path Search
 When locating a command, the shell first looks to see if it has a shell
 function by that name.
-Then it looks for a builtin command by that name.
-If a builtin command is not found, one of two things happen:
+Then it looks for a built-in command by that name.
+If a built-in command is not found, one of two things happen:
 .Bl -enum
 .It
 Command names containing a slash are simply executed without performing
@@ -557,7 +557,7 @@ with zero for normal or success, and non-zero for failure,
 error, or a false indication.
 The man page for each command
 should indicate the various exit codes and what they mean.
-Additionally, the builtin commands return exit codes, as does
+Additionally, the built-in commands return exit codes, as does
 an executed shell function.
 .Pp
 If a command consists entirely of variable assignments then the
@@ -628,7 +628,7 @@ next) to be executed sequentially; a \*[Am] causes asynchronous execution of
 the preceding AND-OR-list.
 .Pp
 Note that unlike some other shells, each process in the pipeline is a
-child of the invoking shell (unless it is a shell builtin, in which case
+child of the invoking shell (unless it is a shell built-in, in which case
 it executes in the current shell -- but any effect it has on the
 environment is wiped).
 .Ss Background Commands -- \*[Am]
@@ -667,7 +667,7 @@ and
 .Dq ||
 both have the same priority.
 Note that these operators are left-associative, so
-.Dq true || echo bar && echo baz
+.Dq true || echo bar \*[Am]\*[Am] echo baz
 writes
 .Dq baz
 and nothing else.
@@ -718,7 +718,7 @@ continue [ num ]
 .Pp
 Break terminates the num innermost for or while loops.
 Continue continues with the next iteration of the innermost loop.
-These are implemented as builtin commands.
+These are implemented as built-in commands.
 .Pp
 The syntax of the case command is
 .Bd -literal -offset indent
@@ -743,7 +743,7 @@ or
 .Dl { list; }
 .Pp
 The first of these executes the commands in a subshell.
-Builtin commands grouped into a (list) will not affect the current shell.
+Built-in commands grouped into a (list) will not affect the current shell.
 The second form does not fork another shell so is slightly more efficient.
 Grouping commands together this way allows you to redirect
 their output as though they were one program:
@@ -775,10 +775,10 @@ This should appear as the first statement of a function, and the syntax is
 .Pp
 .Dl local [ variable | - ] ...
 .Pp
-Local is implemented as a builtin command.
+Local is implemented as a built-in command.
 .Pp
 When a variable is made local, it inherits the initial value and exported
-and readonly flags from the variable with the same name in the surrounding
+and read-only flags from the variable with the same name in the surrounding
 scope, if there is one.
 Otherwise, the variable is initially unset.
 The shell uses dynamic scoping, so that if you make the variable x local to
@@ -799,7 +799,7 @@ The syntax of the return command is
 .Dl return [ exitstatus ]
 .Pp
 It terminates the currently executing function.
-Return is implemented as a builtin command.
+Return is implemented as a built-in command.
 .Ss Variables and Parameters
 The shell maintains a set of parameters.
 A parameter denoted by a name is called a variable.
@@ -820,7 +820,7 @@ The shell sets these initially to the values of its command line arguments
 that follow the name of the shell script.
 The
 .Ic set
-builtin can also be used to set or reset them.
+built-in can also be used to set or reset them.
 .Ss Special Parameters
 A special parameter is a parameter denoted by one of the following special
 characters.
@@ -865,7 +865,7 @@ Expands to the exit status of the most recent pipeline.
 .It - (Hyphen.)
 Expands to the current option flags (the single-letter
 option names concatenated into a string) as specified on
-invocation, by the set builtin command, or implicitly
+invocation, by the set built-in command, or implicitly
 by the shell.
 .It $
 Expands to the process ID of the invoked shell.
@@ -1145,12 +1145,12 @@ in a character class, make it the first character listed (after the
 .Dq \&! ,
 if any).
 To include a minus sign, make it the first or last character listed.
-.Ss Builtins
-This section lists the builtin commands which are builtin because they
+.Ss Built-ins
+This section lists the built-in commands which are built-in because they
 need to perform some operation that can't be performed by a separate
 process.
 In addition to these, there are several other commands that may
-be builtin for efficiency (e.g.
+be built-in for efficiency (e.g.
 .Xr printf 1 ,
 .Xr echo 1 ,
 .Xr test 1 ,
@@ -1174,7 +1174,7 @@ is specified, the value of the alias
 is printed.
 With no arguments, the
 .Ic alias
-builtin prints the
+built-in prints the
 names and values of all defined aliases (see
 .Ic unalias ) .
 .It bg [ Ar job ] ...
@@ -1190,7 +1190,7 @@ jobs are given) in the background.
 Execute the specified command but ignore shell functions when searching
 for it.
 (This is useful when you
-have a shell function with the same name as a builtin command.)
+have a shell function with the same name as a built-in command.)
 .Bl -tag -width 5n
 .It Fl p
 search for command using a
@@ -1200,11 +1200,11 @@ that guarantees to find all the standard utilities.
 Do not execute the command but
 search for the command and print the resolution of the
 command search.
-This is the same as the type builtin.
+This is the same as the type built-in.
 .It Fl v
 Do not execute the command but
 search for the command and print the absolute pathname
-of utilities, the name for builtins or the expansion of aliases.
+of utilities, the name for built-ins or the expansion of aliases.
 .El
 .It cd Op Ar directory Op Ar replace
 Switch to the specified directory (default
@@ -1243,7 +1243,7 @@ Concatenate all the arguments with spaces.
 Then re-parse and execute the command.
 .It exec Op Ar command arg ...
 Unless command is omitted, the shell process is replaced with the
-specified program (which must be a real program, not a shell builtin or
+specified program (which must be a real program, not a shell built-in or
 function).
 Any redirections on the
 .Ic exec
@@ -1282,7 +1282,7 @@ option specified the output will be formatted suitably for non-interactive use.
 .Xc
 The
 .Ic fc
-builtin lists, or edits and re-executes, commands previously entered
+built-in lists, or edits and re-executes, commands previously entered
 to an interactive shell.
 .Bl -tag -width 5n
 .It Fl e No editor
@@ -1380,7 +1380,7 @@ utility due to its handling of arguments containing whitespace.
 .Pp
 The
 .Ic getopts
-builtin may be used to obtain options and their arguments
+built-in may be used to obtain options and their arguments
 from a list of parameters.
 When invoked,
 .Ic getopts
@@ -1394,7 +1394,7 @@ When the shell is invoked,
 is initialized to 1.
 For each option that requires an argument, the
 .Ic getopts
-builtin will place it in the shell variable
+built-in will place it in the shell variable
 .Ev OPTARG .
 If an option is not allowed for in the
 .Va optstring ,
@@ -1500,14 +1500,14 @@ This command lists out all the background processes
 which are children of the current shell process.
 .It pwd Op Fl LP
 Print the current directory.
-If 
+If
 .Fl L
 is specified the cached value (initially set from
 .Ev PWD )
 is checked to see if it refers to the current directory, if it does
 the value is printed.
 Otherwise the current directory name is found using
-.Xr getcwd(3) .
+.Xr getcwd 3 .
 The environment variable
 .Ev PWD
 is set to printed value.
@@ -1515,7 +1515,7 @@ is set to printed value.
 The default is
 .Ic pwd
 .Fl L ,
-but note that the builtin
+but note that the built-in
 .Ic cd
 command doesn't currently support
 .Fl L
@@ -1536,10 +1536,10 @@ same directory, or the initial
 value followed a symbolic link, then the cached value may not
 be the absolute path.
 .Pp
-The builtin command may differ from the program of the same name because
+The built-in command may differ from the program of the same name because
 the program will use
 .Ev PWD
-and the builtin uses a separately cached value.
+and the built-in uses a separately cached value.
 .It Xo read Op Fl p Ar prompt
 .Op Fl r
 .Ar variable
@@ -1560,7 +1560,7 @@ If there are more variables than pieces,
 the remaining variables are assigned the null string.
 The
 .Ic read
-builtin will indicate success unless EOF is encountered on input, in
+built-in will indicate success unless EOF is encountered on input, in
 which case failure is returned.
 .Pp
 By default, unless the
@@ -1602,12 +1602,12 @@ flags, or clears them as described in the section called
 .Sx Argument List Processing .
 .Pp
 The third use of the set command is to set the values of the shell's
-positional parameters to the specified args.
+positional parameters to the specified arguments.
 To change the positional
 parameters without changing any options, use
 .Dq --
 as the first argument to set.
-If no args are present, the set command
+If no arguments are present, the set command
 will clear all the positional parameters (equivalent to executing
 .Dq shift $# . )
 .It setvar Ar variable Ar value
@@ -1664,7 +1664,7 @@ On non-interactive shells, the
 .Ic trap
 command has no effect on signals that were
 ignored on entry to the shell.
-On interractive shells, the
+On interactive shells, the
 .Ic trap
 command will catch or reset signals ignored on entry.
 Issuing
@@ -1698,7 +1698,7 @@ Print date upon receiving signal INT
 Interpret each name as a command and print the resolution of the command
 search.
 Possible resolutions are:
-shell keyword, alias, shell builtin,
+shell keyword, alias, shell built-in,
 command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
@@ -1800,7 +1800,7 @@ is being used interactively from a terminal, the current command
 and the command history (see
 .Ic fc
 in
-.Sx Builtins )
+.Sx Built-ins )
 can be edited using emacs-mode or vi-mode command-line editing.
 The command
 .Ql set -o emacs
@@ -1840,7 +1840,7 @@ If the shell is not an
 interactive shell, the execution of the shell file will be aborted.
 Otherwise
 the shell will return the exit status of the last command executed, or
-if the exit builtin is used with a numeric argument, it will return the
+if the exit built-in is used with a numeric argument, it will return the
 argument.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
@@ -1850,13 +1850,13 @@ Set automatically by
 from the user's login directory in the password file
 .Pq Xr passwd 5 .
 This environment variable also functions as the default argument for the
-cd builtin.
+cd built-in.
 .It Ev PATH
 The default search path for executables.
 See the above section
 .Sx Path Search .
 .It Ev CDPATH
-The search path used with the cd builtin.
+The search path used with the cd built-in.
 .It Ev LANG
 The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.
