@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2003/09/14 12:09:29 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2005/07/15 17:49:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 2003/09/14 12:09:29 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2005/07/15 17:49:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ cmdloop(int top)
 		if (pendingsigs)
 			dotrap();
 		inter = 0;
-		if (iflag && top) {
+		if (iflag == 1 && top) {
 			inter = 1;
 			showjobs(out2, SHOW_CHANGED);
 			chkmail(0);
