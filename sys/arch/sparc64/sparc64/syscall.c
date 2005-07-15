@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2005/07/15 12:34:46 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.9 2005/07/15 13:38:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2005/07/15 12:34:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2005/07/15 13:38:08 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -307,7 +307,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	struct lwp *l = curlwp;
 	union args args;
 #ifdef SYSCALL_DEBUG
-	union args *ap;
+	union args *ap = NULL;
 #ifdef __arch64__
 	union args args64;
 	int i;
@@ -398,7 +398,8 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
+	if (ap)
+		scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 	userret(l, pc, sticks);
