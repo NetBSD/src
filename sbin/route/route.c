@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.82 2005/06/26 21:28:15 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.83 2005/07/15 21:29:54 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.82 2005/06/26 21:28:15 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.83 2005/07/15 21:29:54 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ bad:			usage(*argv);
 		rlen = write(sock, next, rtm->rtm_msglen);
 		if (rlen < (int)rtm->rtm_msglen) {
 			warn("write to routing socket, got %d for rlen", rlen);
-			break;
+			return 1;
 		}
 		seqno++;
 		if (qflag)
@@ -992,8 +992,8 @@ newroute(int argc, char **argv)
 	}
 	if (*cmd == 'g')
 		return rv;
-	oerrno = errno;
 	if (!qflag) {
+		oerrno = errno;
 		(void) printf("%s %s %s", cmd, ishost? "host" : "net", dest);
 		if (*gateway) {
 			(void) printf(": gateway %s", gateway);
@@ -1003,26 +1003,25 @@ newroute(int argc, char **argv)
 		}
 		if (ret == 0)
 			(void) printf("\n");
-	}
-	if (ret != 0) {
-		switch (oerrno) {
-		case ESRCH:
-			error = "not in table";
-			break;
-		case EBUSY:
-			error = "entry in use";
-			break;
-		case ENOBUFS:
-			error = "routing table overflow";
-			break;
-		default:
-			error = strerror(oerrno);
-			break;
+		else {
+			switch (oerrno) {
+			case ESRCH:
+				error = "not in table";
+				break;
+			case EBUSY:
+				error = "entry in use";
+				break;
+			case ENOBUFS:
+				error = "routing table overflow";
+				break;
+			default:
+				error = strerror(oerrno);
+				break;
+			}
+			(void) printf(": %s\n", error);
 		}
-		(void) printf(": %s\n", error);
-		return 1;
 	}
-	return 0;
+	return (ret != 0);
 }
 
 static void
@@ -1552,7 +1551,7 @@ rtmsg(int cmd, int flags)
 	if (debugonly)
 		return (0);
 	if ((rlen = write(sock, (char *)&m_rtmsg, l)) < 0) {
-		perror("writing to routing socket");
+		warn("writing to routing socket");
 		return (-1);
 	}
 #ifndef	SMALL
