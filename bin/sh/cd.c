@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.34 2003/11/14 20:00:28 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.35 2005/07/15 17:49:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.34 2003/11/14 20:00:28 dsl Exp $");
+__RCSID("$NetBSD: cd.c,v 1.35 2005/07/15 17:49:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ docd(char *dest, int print)
 	}
 	updatepwd(badstat ? NULL : dest);
 	INTON;
-	if (print && iflag && curdir)
+	if (print && iflag == 1 && curdir)
 		out1fmt("%s\n", curdir);
 	return 0;
 }
