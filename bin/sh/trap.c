@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2005/07/11 02:37:05 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2005/07/15 17:23:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.32 2005/07/11 02:37:05 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.33 2005/07/15 17:23:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,12 +284,22 @@ setsignal(int signo, int vforked)
 		}
 		if (sigact == SIG_IGN) {
 			/*
-			 * When we set a trap handler we want it to work,
-			 * even when our parent called us ignoring the
-			 * signal. This is what other shells do, so we
-			 * do not set S_HARD_IGN here.
+			 * POSIX 3.14.13 states that non-interactive shells
+			 * should ignore trap commands for signals that were
+			 * ignored upon entry, and leaves the behavior
+			 * unspecified for interactive shells. On interactive
+			 * shells, or if job control is on, and we have a job
+			 * control related signal, we allow the trap to work.
+			 *
+			 * This change allows us to be POSIX compliant, and
+			 * at the same time override the default behavior if
+			 * we need to by setting the interactive flag.
 			 */
-			tsig = S_IGN;
+			if ((mflag && (signo == SIGTSTP ||
+			     signo == SIGTTIN || signo == SIGTTOU)) || iflag) {
+				tsig = S_IGN;
+			} else
+				tsig = S_HARD_IGN;
 		} else {
 			tsig = S_RESET;	/* force to be set */
 		}
