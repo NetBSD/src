@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2005/07/15 23:15:00 he Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -83,7 +83,7 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 	if (*s == '(') {
 		/* lookup device and get index */
 		*s = NULL;
-		if ((*dev = devlookup(nametmp, s - nametmp)) < 0)
+		if ((*dev = devlookup(nametmp)) < 0)
 		    goto baddev;
 
 		/* tokenize device ident */
