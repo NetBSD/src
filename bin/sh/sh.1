@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.80 2005/05/24 00:03:52 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.81 2005/07/15 17:23:48 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd May 7, 2005
+.Dd July 15, 2005
 .Os
 .Dt SH 1
 .Sh NAME
@@ -1660,10 +1660,13 @@ With
 omitted or set to `-' the specified signals are set to their default action.
 When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
-The
+On non-interactive shells, the
 .Ic trap
 command has no effect on signals that were
 ignored on entry to the shell.
+On interractive shells, the
+.Ic trap
+command will catch or reset signals ignored on entry.
 Issuing
 .Ic trap
 with option
