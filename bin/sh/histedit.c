@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.36 2005/05/09 11:35:19 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.37 2005/07/15 17:49:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.36 2005/05/09 11:35:19 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.37 2005/07/15 17:49:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ histedit(void)
 
 #define editing (Eflag || Vflag)
 
-	if (iflag) {
+	if (iflag == 1) {
 		if (!hist) {
 			/*
 			 * turn history on
