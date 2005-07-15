@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.25 2005/06/25 23:09:54 dyoung Exp $
+#	$NetBSD: files.xen,v 1.26 2005/07/15 07:56:22 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -230,6 +230,18 @@ include	"compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/i386/i386/rbus_machdep.c	cardbus
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
 
 # Xen devices
 
