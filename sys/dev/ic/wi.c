@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.205 2005/07/14 00:28:51 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.206 2005/07/15 22:33:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.205 2005/07/14 00:28:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.206 2005/07/15 22:33:29 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.205 2005/07/14 00:28:51 dyoung Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -230,12 +231,14 @@ static	int curtxeps = 0;		/* current tx error msgs/sec */
 static	int wi_txerate = 0;		/* tx error rate: max msgs/sec */
 
 #ifdef WI_DEBUG
+#define	WI_DEBUG_MAX	2
 int wi_debug = 0;
 
 #define	DPRINTF(X)	if (wi_debug) printf X
 #define	DPRINTF2(X)	if (wi_debug > 1) printf X
 #define	IFF_DUMPPKTS(_ifp) \
 	(((_ifp)->if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
+static int wi_sysctl_verify_debug(SYSCTLFN_PROTO);
 #else
 #define	DPRINTF(X)
 #define	DPRINTF2(X)
@@ -275,6 +278,70 @@ wi_card_ident[] = {
 	{ WI_NIC_P3_MINI_SST_ID,	WI_NIC_P3_MINI_STR,	WI_INTERSIL },
 	{ 0,	NULL,	0 },
 };
+
+/*
+ * Setup sysctl(3) MIB, hw.wi.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_wi, "sysctl wi(4) subtree setup")
+{
+	int rc;
+	const struct sysctlnode *cnode, *rnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "wi",
+	    "Lucent/Prism/Symbol 802.11 controls",
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef WI_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    wi_sysctl_verify_debug, 0, &wi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif /* WI_DEBUG */
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+#ifdef WI_DEBUG
+static int
+wi_sysctl_verify(SYSCTLFN_ARGS, int lower, int upper)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < lower || t > upper)
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+static int
+wi_sysctl_verify_debug(SYSCTLFN_ARGS)
+{
+	return wi_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)),
+	    0, WI_DEBUG_MAX);
+}
+#endif /* WI_DEBUG */
 
 STATIC int
 wi_read_xrid(struct wi_softc *sc, int rid, void *buf, int ebuflen)
@@ -1749,7 +1816,7 @@ wi_cmd_intr(struct wi_softc *sc)
 	if (sc->sc_invalid)
 		return;
 #ifdef WI_DEBUG
-	if (wi_debug)
+	if (wi_debug > 1)
 		printf("%s: %d txcmds outstanding\n", __func__, sc->sc_txcmds);
 #endif
 	KASSERT(sc->sc_txcmds > 0);
