@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.37 2004/12/15 07:11:51 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.38 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.37 2004/12/15 07:11:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.38 2005/07/15 05:01:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -76,8 +76,7 @@ static int ffs_balloc_ufs2(void *);
  */
 
 int
-ffs_balloc(v)
-	void *v;
+ffs_balloc(void *v)
 {
 	struct vop_balloc_args *ap = v;
 
@@ -88,8 +87,7 @@ ffs_balloc(v)
 }
 
 static int
-ffs_balloc_ufs1(v)
-	void *v;
+ffs_balloc_ufs1(void *v)
 {
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;
@@ -539,8 +537,7 @@ fail:
 }
 
 static int
-ffs_balloc_ufs2(v)
-	void *v;
+ffs_balloc_ufs2(void *v)
 {
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;

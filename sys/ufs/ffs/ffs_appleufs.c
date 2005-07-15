@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.6 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.7 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.6 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.7 2005/07/15 05:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -59,8 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.6 2005/02/26 22:32:20 perry Exp $
  * this is the same calculation as in_cksum
  */
 u_int16_t
-ffs_appleufs_cksum(appleufs)
-	const struct appleufslabel *appleufs;
+ffs_appleufs_cksum(const struct appleufslabel *appleufs)
 {
 	const u_int16_t *p = (const u_int16_t *)appleufs;
 	int len = APPLEUFS_LABEL_SIZE; /* sizeof(struct appleufslabel) */
@@ -82,10 +81,8 @@ ffs_appleufs_cksum(appleufs)
  * returns 0 if ok, EINVAL if not valid
  */
 int
-ffs_appleufs_validate(name,o,n)
-	const char *name;
-	const struct appleufslabel *o;
-	struct appleufslabel *n;
+ffs_appleufs_validate(const char *name, const struct appleufslabel *o,
+    struct appleufslabel *n)
 {
 	struct appleufslabel tmp;
 	if (!n) n = &tmp;
@@ -128,11 +125,8 @@ ffs_appleufs_validate(name,o,n)
 }
 
 void
-ffs_appleufs_set(appleufs, name, t, uuid)
-	struct appleufslabel *appleufs;
-	const char *name;
-	time_t t;
-	uint64_t uuid;
+ffs_appleufs_set(struct appleufslabel *appleufs, const char *name, time_t t,
+    uint64_t uuid)
 {
 	size_t namelen;
 	if (!name) name = "untitled";

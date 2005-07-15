@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.33 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.34 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.33 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.34 2005/07/15 05:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -72,8 +72,7 @@ void    panic __P((const char *, ...))
  * remaining space in the directory.
  */
 int
-ffs_blkatoff(v)
-	void *v;
+ffs_blkatoff(void *v)
 {
 	struct vop_blkatoff_args /* {
 		struct vnode *a_vp;
@@ -109,11 +108,7 @@ ffs_blkatoff(v)
  * to the incore copy.
  */
 void
-ffs_load_inode(bp, ip, fs, ino)
-	struct buf *bp;
-	struct inode *ip;
-	struct fs *fs;
-	ino_t ino;
+ffs_load_inode(struct buf *bp, struct inode *ip, struct fs *fs, ino_t ino)
 {
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
@@ -160,12 +155,8 @@ ffs_load_inode(bp, ip, fs, ino)
  * of some frags.
  */
 void
-ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
-	struct fs *fs;
-	int fragmap;
-	int32_t fraglist[];
-	int cnt;
-	int needswap;
+ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt,
+    int needswap)
 {
 	int inblk;
 	int field, subfield;
@@ -195,9 +186,7 @@ ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 
 #if defined(_KERNEL) && defined(DIAGNOSTIC)
 void
-ffs_checkoverlap(bp, ip)
-	struct buf *bp;
-	struct inode *ip;
+ffs_checkoverlap(struct buf *bp, struct inode *ip)
 {
 #if 0
 	struct buf *ebp, *ep;
@@ -240,10 +229,7 @@ ffs_checkoverlap(bp, ip)
  *  returns false if any corresponding bit in the free map is 0
  */
 int
-ffs_isblock(fs, cp, h)
-	struct fs *fs;
-	u_char *cp;
-	int32_t h;
+ffs_isblock(struct fs *fs, u_char *cp, int32_t h)
 {
 	u_char mask;
 
@@ -271,10 +257,7 @@ ffs_isblock(fs, cp, h)
  *  returns false if any corresponding bit in the free map is 1
  */
 int
-ffs_isfreeblock(fs, cp, h)
-	struct fs *fs;
-	u_char *cp;
-	int32_t h;
+ffs_isfreeblock(struct fs *fs, u_char *cp, int32_t h)
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -296,10 +279,7 @@ ffs_isfreeblock(fs, cp, h)
  * take a block out of the map
  */
 void
-ffs_clrblock(fs, cp, h)
-	struct fs *fs;
-	u_char *cp;
-	int32_t h;
+ffs_clrblock(struct fs *fs, u_char *cp, int32_t h)
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -325,10 +305,7 @@ ffs_clrblock(fs, cp, h)
  * put a block into the map
  */
 void
-ffs_setblock(fs, cp, h)
-	struct fs *fs;
-	u_char *cp;
-	int32_t h;
+ffs_setblock(struct fs *fs, u_char *cp, int32_t h)
 {
 
 	switch ((int)fs->fs_fragshift) {

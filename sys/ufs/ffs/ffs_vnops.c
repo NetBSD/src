@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.70 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.70 2005/07/15 05:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,7 @@ const struct vnodeopv_desc ffs_fifoop_opv_desc =
 #include <ufs/ufs/ufs_readwrite.c>
 
 int
-ffs_fsync(v)
-	void *v;
+ffs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -335,8 +334,7 @@ ffs_fsync(v)
  */
 /* ARGSUSED */
 static int
-ffs_full_fsync(v)
-	void *v;
+ffs_full_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -474,8 +472,7 @@ loop:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ffs_reclaim(v)
-	void *v;
+ffs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
