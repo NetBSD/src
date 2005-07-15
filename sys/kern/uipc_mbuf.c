@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.4 2005/07/07 12:42:25 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.5 2005/07/15 09:21:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.4 2005/07/07 12:42:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.5 2005/07/15 09:21:44 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -1427,8 +1427,11 @@ caddr_t
 m_mapin(struct mbuf *m)
 {
 #if defined(__HAVE_LAZY_MBUF)
+	int s;
+
 	KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES|M_EXT_LAZY)) == 0);
 
+	s = splvm();
 	MEXT_LOCK(m);
 	if (m->m_ext.ext_flags & M_EXT_LAZY) {
 		vaddr_t buf = (vaddr_t)m->m_ext.ext_buf;
@@ -1447,6 +1450,7 @@ m_mapin(struct mbuf *m)
 		m->m_ext.ext_flags &= ~M_EXT_LAZY;
 	}
 	MEXT_UNLOCK(m);
+	splx(s);
 
 	m->m_flags &= ~M_EXT_LAZY;
 	return m->m_data;
