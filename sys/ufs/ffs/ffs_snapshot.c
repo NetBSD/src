@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs_snapshot.c,v 1.18 2005/07/15 05:01:16 thorpej Exp $	*/
+
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -36,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.18 2005/07/15 05:01:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -129,10 +131,7 @@ static int snapdebug = 0;
  * Vnode is locked on entry and return.
  */
 int
-ffs_snapshot(mp, vp, ctime)
-	struct mount *mp;
-	struct vnode *vp;
-	struct timespec *ctime;
+ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 {
 #if defined(FFS_NO_SNAPSHOT)
 	return EOPNOTSUPP;
@@ -693,11 +692,7 @@ out:
  * replacement pass is done.
  */
 static int
-cgaccount(cg, vp, data, passno)
-	int cg;
-	struct vnode *vp;
-	caddr_t data;
-	int passno;
+cgaccount(int cg, struct vnode *vp, caddr_t data, int passno)
 {
 	struct buf *bp, *ibp;
 	struct inode *ip;
@@ -780,13 +775,10 @@ cgaccount(cg, vp, data, passno)
  * is reproduced once each for UFS1 and UFS2.
  */
 static int
-expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
-	struct vnode *snapvp;
-	struct inode *cancelip;
-	struct fs *fs;
-	int (*acctfunc)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *,
-	    struct fs *, ufs_lbn_t, int);
-	int expungetype;
+expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
+    int (*acctfunc)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *,
+		    struct fs *, ufs_lbn_t, int),
+    int expungetype)
 {
 	int i, s, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
@@ -874,20 +866,12 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
  * its indirect blocks in snapvp.
  */
 static int
-indiracct_ufs1(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
-	    blksperindir, fs, acctfunc, expungetype)
-	struct vnode *snapvp;
-	struct vnode *cancelvp;
-	int level;
-	ufs1_daddr_t blkno;
-	ufs_lbn_t lbn;
-	ufs_lbn_t rlbn;
-	ufs_lbn_t remblks;
-	ufs_lbn_t blksperindir;
-	struct fs *fs;
-	int (*acctfunc)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *,
-	    struct fs *, ufs_lbn_t, int);
-	int expungetype;
+indiracct_ufs1(struct vnode *snapvp, struct vnode *cancelvp, int level,
+    ufs1_daddr_t blkno, ufs_lbn_t lbn, ufs_lbn_t rlbn, ufs_lbn_t remblks,
+    ufs_lbn_t blksperindir, struct fs *fs,
+    int (*acctfunc)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *,
+		    struct fs *, ufs_lbn_t, int),
+    int expungetype)
 {
 	int error, ns, num, i;
 	ufs_lbn_t subblksperindir;
@@ -954,12 +938,9 @@ out:
  * Do both snap accounting and map accounting.
  */
 static int
-fullacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, exptype)
-	struct vnode *vp;
-	ufs1_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int exptype;	/* BLK_SNAP or BLK_NOCOPY */
+fullacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno,
+    int exptype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	int error;
 
@@ -972,12 +953,9 @@ fullacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, exptype)
  * Identify a set of blocks allocated in a snapshot inode.
  */
 static int
-snapacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
-	struct vnode *vp;
-	ufs1_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int expungetype;	/* BLK_SNAP or BLK_NOCOPY */
+snapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno,
+    int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
 	ufs1_daddr_t blkno, *blkp;
@@ -1028,12 +1006,8 @@ snapacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
  * Account for a set of blocks allocated in a snapshot inode.
  */
 static int
-mapacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
-	struct vnode *vp;
-	ufs1_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int expungetype;
+mapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno, int expungetype)
 {
 	ufs1_daddr_t blkno;
 	struct inode *ip;
@@ -1069,13 +1043,10 @@ mapacct_ufs1(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
  * is reproduced once each for UFS1 and UFS2.
  */
 static int
-expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
-	struct vnode *snapvp;
-	struct inode *cancelip;
-	struct fs *fs;
-	int (*acctfunc)(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
-	    struct fs *, ufs_lbn_t, int);
-	int expungetype;
+expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
+    int (*acctfunc)(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
+		    struct fs *, ufs_lbn_t, int),
+    int expungetype)
 {
 	int i, s, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
@@ -1163,20 +1134,12 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
  * its indirect blocks in snapvp.
  */
 static int
-indiracct_ufs2(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
-	    blksperindir, fs, acctfunc, expungetype)
-	struct vnode *snapvp;
-	struct vnode *cancelvp;
-	int level;
-	ufs2_daddr_t blkno;
-	ufs_lbn_t lbn;
-	ufs_lbn_t rlbn;
-	ufs_lbn_t remblks;
-	ufs_lbn_t blksperindir;
-	struct fs *fs;
-	int (*acctfunc)(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
-	    struct fs *, ufs_lbn_t, int);
-	int expungetype;
+indiracct_ufs2(struct vnode *snapvp, struct vnode *cancelvp, int level,
+    ufs2_daddr_t blkno, ufs_lbn_t lbn, ufs_lbn_t rlbn, ufs_lbn_t remblks,
+    ufs_lbn_t blksperindir, struct fs *fs,
+    int (*acctfunc)(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
+		    struct fs *, ufs_lbn_t, int),
+    int expungetype)
 {
 	int error, ns, num, i;
 	ufs_lbn_t subblksperindir;
@@ -1243,12 +1206,9 @@ out:
  * Do both snap accounting and map accounting.
  */
 static int
-fullacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, exptype)
-	struct vnode *vp;
-	ufs2_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int exptype;	/* BLK_SNAP or BLK_NOCOPY */
+fullacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno,
+    int exptype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	int error;
 
@@ -1261,12 +1221,9 @@ fullacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, exptype)
  * Identify a set of blocks allocated in a snapshot inode.
  */
 static int
-snapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
-	struct vnode *vp;
-	ufs2_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int expungetype;	/* BLK_SNAP or BLK_NOCOPY */
+snapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno,
+    int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
 	ufs2_daddr_t blkno, *blkp;
@@ -1317,12 +1274,8 @@ snapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
  * Account for a set of blocks allocated in a snapshot inode.
  */
 static int
-mapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
-	struct vnode *vp;
-	ufs2_daddr_t *oldblkp, *lastblkp;
-	struct fs *fs;
-	ufs_lbn_t lblkno;
-	int expungetype;
+mapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
+    struct fs *fs, ufs_lbn_t lblkno, int expungetype)
 {
 	ufs2_daddr_t blkno;
 	struct inode *ip;
@@ -1355,8 +1308,7 @@ mapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
  * It will not be freed until the last open reference goes away.
  */
 void
-ffs_snapgone(ip)
-	struct inode *ip;
+ffs_snapgone(struct inode *ip)
 {
 	struct ufsmount *ump = VFSTOUFS(ip->i_devvp->v_specmountpoint);
 	struct inode *xp;
@@ -1397,8 +1349,7 @@ ffs_snapgone(ip)
  * Prepare a snapshot file for being removed.
  */
 void
-ffs_snapremove(vp)
-	struct vnode *vp;
+ffs_snapremove(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp), *xp;
 	struct vnode *devvp = ip->i_devvp;
@@ -1507,12 +1458,8 @@ ffs_snapremove(vp)
  * must always have been allocated from a BLK_NOCOPY location.
  */
 int
-ffs_snapblkfree(fs, devvp, bno, size, inum)
-	struct fs *fs;
-	struct vnode *devvp;
-	ufs2_daddr_t bno;
-	long size;
-	ino_t inum;
+ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
+    long size, ino_t inum)
 {
 	struct ufsmount *ump = VFSTOUFS(devvp->v_specmountpoint);
 	struct buf *ibp;
@@ -1688,8 +1635,7 @@ retry:
  * Associate snapshot files when mounting.
  */
 void
-ffs_snapshot_mount(mp)
-	struct mount *mp;
+ffs_snapshot_mount(struct mount *mp)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *devvp = ump->um_devvp;
@@ -1829,8 +1775,7 @@ ffs_snapshot_mount(mp)
  * Disassociate snapshot files when unmounting.
  */
 void
-ffs_snapshot_unmount(mp)
-	struct mount *mp;
+ffs_snapshot_unmount(struct mount *mp)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *devvp = ump->um_devvp;
@@ -1865,9 +1810,7 @@ ffs_snapshot_unmount(mp)
  * copying the block if necessary.
  */
 static int
-ffs_copyonwrite(v, bp)
-	void *v;
-	struct buf *bp;
+ffs_copyonwrite(void *v, struct buf *bp)
 {
 	struct buf *ibp;
 	struct fs *fs;
@@ -2034,10 +1977,7 @@ retry:
  * Read the specified block from disk. Vp is usually a snapshot vnode.
  */
 static int
-readfsblk(vp, data, lbn)
-	struct vnode *vp;
-	caddr_t data;
-	ufs2_daddr_t lbn;
+readfsblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 {
 	int s, error;
 	struct inode *ip = VTOI(vp);
@@ -2073,10 +2013,7 @@ readfsblk(vp, data, lbn)
  * Read the specified block. Bypass UBC to prevent deadlocks.
  */
 static int
-readvnblk(vp, data, lbn)
-	struct vnode *vp;
-	caddr_t data;
-	ufs2_daddr_t lbn;
+readvnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 {
 	int error;
 	daddr_t bn;
@@ -2109,10 +2046,7 @@ readvnblk(vp, data, lbn)
  * Write the specified block. Bypass UBC to prevent deadlocks.
  */
 static int
-writevnblk(vp, data, lbn)
-	struct vnode *vp;
-	caddr_t data;
-	ufs2_daddr_t lbn;
+writevnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 {
 	int s, error;
 	off_t offset;

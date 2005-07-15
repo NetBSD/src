@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.71 2004/08/15 19:01:16 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.72 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.71 2004/08/15 19:01:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.72 2005/07/15 05:01:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.71 2004/08/15 19:01:16 mycroft Exp $
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
-			       daddr_t, int, int64_t *));
+static int ffs_indirtrunc(struct inode *, daddr_t, daddr_t, daddr_t, int,
+			  int64_t *);
 
 /*
  * Update the access, modified, and inode change times as specified
@@ -75,8 +75,7 @@ static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
  */
 
 int
-ffs_update(v)
-	void *v;
+ffs_update(void *v)
 {
 	struct vop_update_args /* {
 		struct vnode *a_vp;
@@ -173,8 +172,7 @@ ffs_update(v)
  * disk blocks.
  */
 int
-ffs_truncate(v)
-	void *v;
+ffs_truncate(void *v)
 {
 	struct vop_truncate_args /* {
 		struct vnode *a_vp;
@@ -522,12 +520,8 @@ done:
  * NB: triple indirect blocks are untested.
  */
 static int
-ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	struct inode *ip;
-	daddr_t lbn, lastbn;
-	daddr_t dbn;
-	int level;
-	int64_t *countp;
+ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
+    int level, int64_t *countp)
 {
 	int i;
 	struct buf *bp;
