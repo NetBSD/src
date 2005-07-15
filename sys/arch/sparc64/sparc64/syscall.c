@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2005/07/15 09:00:15 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.8 2005/07/15 12:34:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2005/07/15 09:00:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2005/07/15 12:34:46 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -410,7 +410,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 {
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
-	union args args, *ap = NULL; /* XXX gcc */
+	union args args, *ap = NULL;
 #ifdef __arch64__
 	union args args64;
 	int i;
@@ -505,7 +505,8 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, ap->r, rval, error);
+	if (ap)
+		trace_exit(l, code, ap->r, rval, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
