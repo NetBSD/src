@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.38 2005/03/20 21:38:17 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.39 2005/07/15 17:46:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.38 2005/03/20 21:38:17 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.39 2005/07/15 17:46:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,8 @@ procargs(int argc, char **argv)
 		sflag = 1;
 	if (iflag == 2 && sflag == 1 && isatty(0) && isatty(1))
 		iflag = 1;
+	if (iflag == 1 && sflag == 2)
+		iflag = 2;
 	if (mflag == 2)
 		mflag = iflag;
 	for (i = 0; i < NOPTS; i++)
