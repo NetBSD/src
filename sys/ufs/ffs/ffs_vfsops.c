@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.165 2005/06/28 09:30:38 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.166 2005/07/15 05:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165 2005/06/28 09:30:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.166 2005/07/15 05:01:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,7 +134,7 @@ static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
  */
 
 int
-ffs_mountroot()
+ffs_mountroot(void)
 {
 	struct fs *fs;
 	struct mount *mp;
@@ -174,12 +174,8 @@ ffs_mountroot()
  * mount system call
  */
 int
-ffs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+ffs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp = NULL;
 	struct ufs_args args;
@@ -474,10 +470,7 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ffs_reload(mp, cred, p)
-	struct mount *mp;
-	struct ucred *cred;
-	struct proc *p;
+ffs_reload(struct mount *mp, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
@@ -694,10 +687,7 @@ static const int sblock_try[] = SBLOCKSEARCH;
  * Common code for mount and mountroot
  */
 int
-ffs_mountfs(devvp, mp, p)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
+ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct buf *bp;
@@ -1010,10 +1000,7 @@ out:
  * Unfortunately new bits get added.
  */
 static void
-ffs_oldfscompat_read(fs, ump, sblockloc)
-	struct fs *fs;
-	struct ufsmount *ump;
-	daddr_t sblockloc;
+ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 {
 	off_t maxfilesize;
 	int32_t *extrasave;
@@ -1090,9 +1077,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
  * Unfortunately new bits get added.
  */
 static void
-ffs_oldfscompat_write(fs, ump)
-	struct fs *fs;
-	struct ufsmount *ump;
+ffs_oldfscompat_write(struct fs *fs, struct ufsmount *ump)
 {
 	int32_t *extrasave;
 
@@ -1126,10 +1111,7 @@ ffs_oldfscompat_write(fs, ump)
  * unmount system call
  */
 int
-ffs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
@@ -1191,10 +1173,7 @@ ffs_unmount(mp, mntflags, p)
  * Flush out all the files in a filesystem.
  */
 int
-ffs_flushfiles(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 {
 	extern int doforce;
 	struct ufsmount *ump;
@@ -1241,10 +1220,7 @@ ffs_flushfiles(mp, flags, p)
  * Get file system statistics.
  */
 int
-ffs_statvfs(mp, sbp, p)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct proc *p;
+ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
@@ -1279,11 +1255,7 @@ ffs_statvfs(mp, sbp, p)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ffs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;
@@ -1385,10 +1357,7 @@ loop:
  * done by the calling routine.
  */
 int
-ffs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct fs *fs;
 	struct inode *ip;
@@ -1525,10 +1494,7 @@ ffs_vget(mp, ino, vpp)
  *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ufid *ufhp;
 	struct fs *fs;
@@ -1546,9 +1512,7 @@ ffs_fhtovp(mp, fhp, vpp)
  */
 /* ARGSUSED */
 int
-ffs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+ffs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct inode *ip;
 	struct ufid *ufhp;
@@ -1562,7 +1526,7 @@ ffs_vptofh(vp, fhp)
 }
 
 void
-ffs_init()
+ffs_init(void)
 {
 	if (ffs_initcount++ > 0)
 		return;
@@ -1580,14 +1544,14 @@ ffs_init()
 }
 
 void
-ffs_reinit()
+ffs_reinit(void)
 {
 	softdep_reinitialize();
 	ufs_reinit();
 }
 
 void
-ffs_done()
+ffs_done(void)
 {
 	if (--ffs_initcount > 0)
 		return;
@@ -1654,9 +1618,7 @@ SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
  * Write a superblock and associated information back to disk.
  */
 int
-ffs_sbupdate(mp, waitfor)
-	struct ufsmount *mp;
-	int waitfor;
+ffs_sbupdate(struct ufsmount *mp, int waitfor)
 {
 	struct fs *fs = mp->um_fs;
 	struct buf *bp;
@@ -1686,9 +1648,7 @@ ffs_sbupdate(mp, waitfor)
 }
 
 int
-ffs_cgupdate(mp, waitfor)
-	struct ufsmount *mp;
-	int waitfor;
+ffs_cgupdate(struct ufsmount *mp, int waitfor)
 {
 	struct fs *fs = mp->um_fs;
 	struct buf *bp;
