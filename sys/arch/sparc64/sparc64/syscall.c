@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2005/07/14 12:35:08 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.7 2005/07/15 09:00:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2005/07/14 12:35:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2005/07/15 09:00:15 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -410,7 +410,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 {
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
-	union args args, *ap;
+	union args args, *ap = NULL; /* XXX gcc */
 #ifdef __arch64__
 	union args args64;
 	int i;
