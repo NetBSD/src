@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248 2005/06/23 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.249 2005/07/15 03:59:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248 2005/06/23 00:30:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.249 2005/07/15 03:59:31 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -619,6 +619,7 @@ main(void)
 void
 setrootfstime(time_t t)
 {
+
 	rootfstime = t;
 }
 
