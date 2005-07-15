@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.10 2005/07/04 15:18:17 drochner Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.11 2005/07/15 23:10:36 he Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.10 2005/07/04 15:18:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.11 2005/07/15 23:10:36 he Exp $");
 
 #define GSCDEBUG
 
@@ -125,7 +125,7 @@ gsc_module_callback(struct device *self, struct confargs *ca)
 	ga.ga_dmatag = sc->sc_ga.ga_dmatag;
 	(*sc->sc_ga.ga_fix_args)(sc->sc_ga.ga_fix_args_cookie, &ga);
 
-	config_found_sm(self, "gsc", NULL, &ga, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "gsc", NULL, &ga, mbprint, mbsubmatch);
 }
 
 int
