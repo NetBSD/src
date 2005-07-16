@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.13 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: kvm.h,v 1.14 2005/07/16 17:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  * by programs that use only sysctl() function to access kernel
  * information.
  */
-#define KVM_NO_FILES	0x80000000
+#define KVM_NO_FILES	((int)0x80000000)
 
 #include <nlist.h>
 #include <sys/cdefs.h>
