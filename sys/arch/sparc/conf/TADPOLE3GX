@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.27 2005/07/10 15:49:12 macallan Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.28 2005/07/16 19:02:45 macallan Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -318,10 +318,10 @@ pseudo-device	ipfilter
 
 #### Audio and video devices
 
-## /dev/audio support (`audioamd' plus `audio')
-##
-# The Tadpole 3GX audio is accessed through the ISDN chip which
-# is not currently supported.
+## /dev/audio support
+
+dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
+audio*		at audiobus?
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 pnozz0 at sbus? slot ? offset ?
