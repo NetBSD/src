@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28 2005/05/29 21:16:44 christos Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.29 2005/07/16 17:50:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,12 +94,14 @@ struct	lwp {
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
+#ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
+#endif
 
 /* These flags are kept in l_flag. */
 #define	L_INMEM		0x00004	/* Loaded into memory. */
