@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.20 2004/07/08 03:22:32 christos Exp $
+#	$NetBSD: mkioctls,v 1.21 2005/07/16 22:00:01 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
 echo "/* Automatically generated file, do not edit! */"
-echo "#define const" 	# XXX: timepps lossage
+#echo "#define const" 	# XXX: timepps lossage
 echo "struct ap_control { int _xxx; };" # XXX: ip_nat.h lossage
 echo "#define COMPAT_43"
 echo "struct lwp;"
@@ -74,11 +74,10 @@ BEGIN {
 	keep["KBDSTPMAT"] = 1;	# Same as LMREADY, pcvt is gone so ok.
 
 	print ""
-	print "char *ioctlname __P((long));"
+	print "#include \"ktrace.h\""
 	print ""
-	print "char *"
-	print "ioctlname(val)"
-	print "\tlong val;"
+	print "const char *"
+	print "ioctlname(u_long val)"
 	print "{"
 	print ""
 	print "\tswitch (val) {\n"

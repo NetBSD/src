@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.15 2003/11/24 16:53:38 manu Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.16 2005/07/16 22:00:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -42,6 +42,6 @@
 #include <sys/cdefs.h>
 
 int	getpoints(int, char *);
-char	*ioctlname(long);
+const char	*ioctlname(u_long);
 char	*siginfocodename(int, int);
 void	dumpfile(const char *, int, int);

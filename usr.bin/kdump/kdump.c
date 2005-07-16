@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.80 2005/06/02 01:53:51 lukem Exp $	*/
+/*	$NetBSD: kdump.c,v 1.81 2005/07/16 22:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.80 2005/06/02 01:53:51 lukem Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.81 2005/07/16 22:00:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,12 +68,12 @@ __RCSID("$NetBSD: kdump.c,v 1.80 2005/06/02 01:53:51 lukem Exp $");
 
 #include <sys/syscall.h>
 
-int timestamp, decimal, plain, tail, maxdata = -1, numeric;
-int word_size = 0;
-pid_t do_pid = -1;
-const char *tracefile = NULL;
-struct ktr_header ktr_header;
-int emul_changed = 0;
+static int timestamp, decimal, plain, tail, maxdata = -1, numeric;
+static int word_size = 0;
+static pid_t do_pid = -1;
+static const char *tracefile = NULL;
+static struct ktr_header ktr_header;
+static int emul_changed = 0;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 #define small(v)	(((long)(v) >= 0) && ((long)(v) < 10))
@@ -101,33 +101,29 @@ static const char * const linux_ptrace_ops[] = {
 };
 
 int	main(int, char **);
-int	fread_tail(char *, int, int);
-int	dumpheader(struct ktr_header *);
-void	output_long(u_long, int);
-void	ioctldecode(u_long);
-void	ktrsyscall(struct ktr_syscall *);
-void	ktrsyscall_size(struct ktr_syscall *);
-void	ktrsysret(struct ktr_sysret *, int);
-void	ktrnamei(char *, int);
-void	ktremul(char *, int, int);
-void	ktrgenio(struct ktr_genio *, int);
-void	ktrpsig(void *, int);
-void	ktrcsw(struct ktr_csw *);
-void	ktruser(struct ktr_user *, int);
-void	ktrmmsg(struct ktr_mmsg *, int);
-void	ktrmool(struct ktr_mool *, int);
-void	usage(void);
-void	eprint(int);
-void	rprint(register_t);
-char	*ioctlname(long);
+static int	fread_tail(void *, size_t, size_t);
+static int	dumpheader(struct ktr_header *);
+static void	output_long(u_long, int);
+static void	ioctldecode(u_long);
+static void	ktrsyscall(struct ktr_syscall *);
+static void	ktrsysret(struct ktr_sysret *, int);
+static void	ktrnamei(char *, int);
+static void	ktremul(char *, int, int);
+static void	ktrgenio(struct ktr_genio *, int);
+static void	ktrpsig(void *, int);
+static void	ktrcsw(struct ktr_csw *);
+static void	ktruser(struct ktr_user *, int);
+static void	ktrmmsg(struct ktr_mmsg *, int);
+static void	ktrmool(struct ktr_mool *, int);
+static void	usage(void) __attribute__((__noreturn__));
+static void	eprint(int);
+static void	rprint(register_t);
 static const char *signame(long, int);
 static void hexdump_buf(const void *, int, int);
 static void visdump_buf(const void *, int, int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, ktrlen, size;
 	void *m;
@@ -137,6 +133,7 @@ main(argc, argv)
 	int col;
 	char *cp;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1) {
 		switch (ch) {
 		case 'e':
@@ -219,7 +216,7 @@ main(argc, argv)
 		errx(1, "malloc: %s", strerror(ENOMEM));
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
-	while (fread_tail((char *)&ktr_header, sizeof(struct ktr_header), 1)) {
+	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
 		if (trpoints & (1 << ktr_header.ktr_type) &&
 		    (do_pid == -1 || ktr_header.ktr_pid == do_pid))
 			col = dumpheader(&ktr_header);
@@ -287,10 +284,8 @@ main(argc, argv)
 	return (0);
 }
 
-int
-fread_tail(buf, size, num)
-	char *buf;
-	int num, size;
+static int
+fread_tail(void *buf, size_t num, size_t size)
 {
 	int i;
 
@@ -301,11 +296,11 @@ fread_tail(buf, size, num)
 	return (i);
 }
 
-int
-dumpheader(kth)
-	struct ktr_header *kth;
+static int
+dumpheader(struct ktr_header *kth)
 {
-	char unknown[64], *type;
+	char unknown[64];
+	const char *type;
 	static struct timeval prevtime;
 	struct timeval temp;
 	int col;
@@ -348,7 +343,8 @@ dumpheader(kth)
 		type = "ARG";
 		break;
 	default:
-		(void)sprintf(unknown, "UNKNOWN(%d)", kth->ktr_type);
+		(void)snprintf(unknown, sizeof(unknown), "UNKNOWN(%d)",
+		    kth->ktr_type);
 		type = unknown;
 	}
 
@@ -369,10 +365,8 @@ dumpheader(kth)
 	return col;
 }
 
-void
-output_long(it, as_x)
-	u_long it;
-	int as_x;
+static void
+output_long(u_long it, int as_x)
 {
 	if (cur_emul->flags & EMUL_FLAG_NETBSD32)
 		printf(as_x ? "%#x" : "%d", (u_int)it);
@@ -380,9 +374,8 @@ output_long(it, as_x)
 		printf(as_x ? "%#lx" : "%ld", it);
 }
 
-void
-ioctldecode(cmd)
-	u_long cmd;
+static void
+ioctldecode(u_long cmd)
 {
 	char dirbuf[4], *dir = dirbuf;
 
@@ -401,15 +394,14 @@ ioctldecode(cmd)
 	putchar(')');
 }
 
-void
-ktrsyscall(ktr)
-	struct ktr_syscall *ktr;
+static void
+ktrsyscall(struct ktr_syscall *ktr)
 {
 	int argcount;
 	const struct emulation *emul = cur_emul;
 	register_t *ap;
 	char c;
-	char *cp;
+	const char *cp;
 	const char *sys_name;
 
 	argcount = ktr->ktr_argsize / sizeof (*ap);
@@ -506,10 +498,8 @@ ktrsyscall(ktr)
 	(void)putchar('\n');
 }
 
-void
-ktrsysret(ktr, len)
-	struct ktr_sysret *ktr;
-	int len;
+static void
+ktrsysret(struct ktr_sysret *ktr, int len)
 {
 	const struct emulation *emul;
 	int error = ktr->ktr_error;
@@ -545,7 +535,7 @@ ktrsysret(ktr, len)
 	(void)putchar('\n');
 }
 
-void
+static void
 rprint(register_t ret)
 {
 
@@ -565,9 +555,8 @@ rprint(register_t ret)
  * We print the original emulation's error numerically, but we
  * translate it to netbsd to print it symbolically.
  */
-void
-eprint(e)
-	int e;
+static void
+eprint(int e)
 {
 	int i = e;
 
@@ -605,19 +594,15 @@ normal:
 	}
 }
 
-void
-ktrnamei(cp, len)
-	char *cp;
-	int len;
+static void
+ktrnamei(char *cp, int len)
 {
 
 	(void)printf("\"%.*s\"\n", len, cp);
 }
 
-void
-ktremul(name, len, bufsize)
-	char *name;
-	int len, bufsize;
+static void
+ktremul(char *name, int len, int bufsize)
 {
 
 	if (len >= bufsize)
@@ -631,10 +616,7 @@ ktremul(name, len, bufsize)
 }
 
 static void
-hexdump_buf(vdp, datalen, word_sz)
-	const void *vdp;
-	int datalen;
-	int word_sz;
+hexdump_buf(const void *vdp, int datalen, int word_sz)
 {
 	const char hex[] = "0123456789abcdef";
 	char chars[16], prev[16];
@@ -775,10 +757,8 @@ visdump_buf(const void *vdp, int datalen, int col)
 	(void)printf("\"\n");
 }
 
-void
-ktrgenio(ktr, len)
-	struct ktr_genio *ktr;
-	int len;
+static void
+ktrgenio(struct ktr_genio *ktr, int len)
 {
 	int datalen = len - sizeof (struct ktr_genio);
 	char *dp = (char *)ktr + sizeof (struct ktr_genio);
@@ -797,10 +777,8 @@ ktrgenio(ktr, len)
 	visdump_buf(dp, datalen, 7);
 }
 
-void
-ktrpsig(v, len)
-	void *v;
-	int len;
+static void
+ktrpsig(void *v, int len)
 {
 	int signo, first;
 	struct {
@@ -901,19 +879,16 @@ ktrpsig(v, len)
 	}
 }
 
-void
-ktrcsw(cs)
-	struct ktr_csw *cs;
+static void
+ktrcsw(struct ktr_csw *cs)
 {
 
 	(void)printf("%s %s\n", cs->out ? "stop" : "resume",
 	    cs->user ? "user" : "kernel");
 }
 
-void
-ktruser(usr, len)
-	struct ktr_user *usr;
-	int len;
+static void
+ktruser(struct ktr_user *usr, int len)
 {
 	int i;
 	unsigned char *dta;
@@ -925,13 +900,11 @@ ktruser(usr, len)
 	printf("\"\n");
 }
 
-void
-ktrmmsg(mmsg, len)
-	struct ktr_mmsg *mmsg;
-	int len;
+static void
+ktrmmsg(struct ktr_mmsg *mmsg, int len)
 {
 	const char *service_name;
-	char *reply;
+	const char *reply;
 	int id;
 
 	id = mmsg->ktr_id;
@@ -950,10 +923,8 @@ ktrmmsg(mmsg, len)
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
 }
 
-void
-ktrmool(mool, len)
-	struct ktr_mool *mool;
-	int len;
+static void
+ktrmool(struct ktr_mool *mool, int len)
 {
 	size_t size = mool->size;
 
@@ -978,12 +949,12 @@ signame(long sig, int xlat)
 		    cur_emul->signalmap[sig] : sig];
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
-	(void)fprintf(stderr, "usage: kdump [-dlNnRT] [-e emulation] "
+	(void)fprintf(stderr, "Usage: %s [-dlNnRT] [-e emulation] "
 	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
-	   "[-x | -X size] [file]\n");
+	   "[-x | -X size] [file]\n", getprogname());
 	exit(1);
 }
