@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.2 2005/07/06 15:47:15 drochner Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.3 2005/07/16 17:15:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,13 +47,13 @@ __RCSID("$NetBSD: lsearch.c,v 1.2 2005/07/06 15:47:15 drochner Exp $");
 #include <search.h>
 
 typedef int (*cmp_fn_t) __P((const void *, const void *));
-static void *linear_base __P((const void *, void *, size_t *, size_t,
+static void *linear_base __P((const void *, const void *, size_t *, size_t,
 			     cmp_fn_t, int));
 
 void *
 lsearch(key, base, nelp, width, compar)
 	const void *key;
-	void *base;
+	const void *base;
 	size_t *nelp, width;
 	cmp_fn_t compar;
 {
@@ -82,21 +82,21 @@ lfind(key, base, nelp, width, compar)
 static void *
 linear_base(key, base, nelp, width, compar, add_flag)
 	const void *key;
-	void *base;
+	const void *base;
 	size_t *nelp, width;
 	cmp_fn_t compar;
 	int add_flag;
 {
-	char *element, *end;
+	const char *element, *end;
 
 	_DIAGASSERT(key != NULL);
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(compar != NULL);
 
-	end = (char *)base + *nelp * width;
-	for (element = (char *)base; element < end; element += width)
+	end = (const char *)base + *nelp * width;
+	for (element = (const char *)base; element < end; element += width)
 		if (!compar(element, key))		/* key found */
-			return element;
+			return __UNCONST(element);
 
 	if (!add_flag)					/* key not found */
 		return(NULL);
@@ -111,6 +111,6 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	 * manual.
 	 */
 	++*nelp;
-	memcpy(end, key, width);
-	return end;
+	memcpy(__UNCONST(end), key, width);
+	return __UNCONST(end);
 }
