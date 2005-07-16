@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.7 2005/06/28 18:30:00 drochner Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.8 2005/07/16 16:36:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.7 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.8 2005/07/16 16:36:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -224,10 +224,12 @@ j6x0tp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/*
-	 * XXX: does platid_mask_MACH_HP_LX matches _JORNADA_6XX too?
-	 * Is 620 wired similarly?
+	 * XXX: platid_mask_MACH_HP_LX also matches 360LX.  It's not
+	 * confirmed whether touch panel in 360LX is connected this
+	 * way.  We may need to regroup platid masks.
 	 */
-	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX))
+	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX)
+	    && !platid_match(&platid, &platid_mask_MACH_HP_LX))
 		return (0);
 
 	if (strcmp(cf->cf_name, "j6x0tp") != 0)
