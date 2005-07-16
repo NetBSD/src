@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.685 2005/07/11 15:37:04 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.686 2005/07/16 22:54:34 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.685 $"
+#ident 		"GENERIC-$Revision: 1.686 $"
 
 maxusers	32		# estimated number of users
 
@@ -181,6 +181,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
+#options 	IPSEC_NAT_T	# nat traversal
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
@@ -1063,7 +1064,7 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
-sbp*	at ieee1394if? euihi ? euilo ?
+sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # Audio Devices
 
