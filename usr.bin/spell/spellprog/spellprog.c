@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.2 2005/06/30 16:25:05 christos Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.3 2005/07/16 22:32:36 christos Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -130,6 +130,10 @@ static int	 y_to_e(char *, const char *, const char *, size_t);
 static int	 CCe(char *, const char *, const char *, size_t);
 static int	 VCe(char *, const char *, const char *, size_t);
 
+/*
+ * This cannot be const because we modify it when we choose british
+ * spelling.
+ */
 static struct suftab {
 	const char *suf;
 	int (*p1)(char *, const char *, const char *, size_t);
@@ -383,7 +387,7 @@ print_word(FILE *f)
 static int
 suffix(char *ep, size_t lev)
 {
-	struct suftab *t;
+	const struct suftab *t;
 	char *cp;
 	const char *sp;
 
@@ -756,7 +760,7 @@ vowel(int c)
 static void
 ise(void)
 {
-	struct suftab *tab;
+	const struct suftab *tab;
 	char *cp;
 
 	for (tab = suftab; tab->suf; tab++) {
