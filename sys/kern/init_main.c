@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.249 2005/07/15 03:59:31 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.250 2005/07/16 22:47:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.249 2005/07/15 03:59:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.250 2005/07/16 22:47:18 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.249 2005/07/15 03:59:31 simonb Exp $
 #include "opt_posix.h"
 #include "opt_kcont.h"
 #include "opt_rootfs_magiclinks.h"
+#include "opt_verified_exec.h"
 
 #include "opencrypto.h"
 #include "rnd.h"
