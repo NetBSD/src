@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.22 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.23 2005/07/16 17:41:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -49,7 +49,9 @@
 #endif
 #endif
 
+#ifndef __lint__
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
+#endif
 
 #if __STDC__
 #define	__strong_alias(alias,sym)	       				\
