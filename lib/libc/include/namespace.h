@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.101 2005/05/15 13:09:13 yamt Exp $	*/
+/*	$NetBSD: namespace.h,v 1.102 2005/07/16 17:12:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/cdefs.h>
 
+#ifndef __lint__
 #define brk		_brk
 #define catclose	_catclose
 #define catgets		_catgets
@@ -674,5 +675,6 @@
 #define fmtcheck		__fmtcheck
 #define __learn_tree		___learn_tree
 #endif /* __weak_alias */
+#endif
 
 #endif /* _NAMESPACE_H_ */
