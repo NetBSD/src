@@ -1,4 +1,4 @@
-/*	$NetBSD: _errx.c,v 1.9 2005/06/12 05:34:34 lukem Exp $	*/
+/*	$NetBSD: _errx.c,v 1.10 2005/07/16 18:01:38 christos Exp $	*/
 
 /*
  * J.T. Conklin, December 12, 1994
@@ -7,10 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _errx.c,v 1.9 2005/06/12 05:34:34 lukem Exp $");
+__RCSID("$NetBSD: _errx.c,v 1.10 2005/07/16 18:01:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __indr_reference
+#if defined(__indr_reference) && !defined(__lint__)
 __indr_reference(_errx, errx)
 #else
 
