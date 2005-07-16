@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.724 2005/07/11 15:37:04 kiyohara Exp $
+#	$NetBSD: files,v 1.725 2005/07/16 22:50:15 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -68,6 +68,14 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_BSDLABEL
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
+
+defflag	opt_verified_exec.h 	VERIFIED_EXEC
+				VERIFIED_EXEC_FP_SHA1
+				VERIFIED_EXEC_FP_SHA256
+				VERIFIED_EXEC_FP_SHA384
+				VERIFIED_EXEC_FP_SHA512
+				VERIFIED_EXEC_FP_MD5
+				VERIFIED_EXEC_FP_RMD160
 
 # compatibility options
 #
