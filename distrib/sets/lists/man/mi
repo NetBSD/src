@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.803 2005/07/14 12:46:45 drochner Exp $
+# $NetBSD: mi,v 1.804 2005/07/16 09:13:01 rtr Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1455,6 +1455,7 @@
 ./usr/share/man/cat5/elf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ethers.0			man-net-catman		.cat
 ./usr/share/man/cat5/exports.0			man-nfsserver-catman	.cat
+./usr/share/man/cat5/forward.0			man-sys-catman		.cat
 ./usr/share/man/cat5/fs.0			man-sys-catman		.cat
 ./usr/share/man/cat5/fstab.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ftpchroot.0		man-netutil-catman	.cat
@@ -3697,6 +3698,7 @@
 ./usr/share/man/man5/elf.5			man-sys-man		.man
 ./usr/share/man/man5/ethers.5			man-net-man		.man
 ./usr/share/man/man5/exports.5			man-nfsserver-man	.man
+./usr/share/man/man5/forward.5			man-sys-man		.man
 ./usr/share/man/man5/fs.5			man-sys-man		.man
 ./usr/share/man/man5/fstab.5			man-sys-man		.man
 ./usr/share/man/man5/ftpchroot.5		man-netutil-man		.man
