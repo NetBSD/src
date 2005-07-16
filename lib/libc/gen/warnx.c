@@ -1,4 +1,4 @@
-/*	$NetBSD: warnx.c,v 1.10 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: warnx.c,v 1.11 2005/07/16 18:00:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warnx.c,v 1.10 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: warnx.c,v 1.11 2005/07/16 18:00:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __weak_alias(warnx, _warnx)
 #endif
 
 void
-warnx(const char *fmt, ...)
+_warnx(const char *fmt, ...)
 {
 	va_list ap;
 
