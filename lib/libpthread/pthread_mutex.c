@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.19 2005/07/16 23:14:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.19 2005/07/16 23:14:53 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -450,17 +450,26 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 }
 
 
+static void
+once_cleanup(void *closure)
+{
+
+       pthread_mutex_unlock((pthread_mutex_t *)closure);
+}
+
+
 int
 pthread_once(pthread_once_t *once_control, void (*routine)(void))
 {
 
 	if (once_control->pto_done == 0) {
 		pthread_mutex_lock(&once_control->pto_mutex);
+		pthread_cleanup_push(&once_cleanup, &once_control->pto_mutex);
 		if (once_control->pto_done == 0) {
 			routine();
 			once_control->pto_done = 1;
 		}
-		pthread_mutex_unlock(&once_control->pto_mutex);
+		pthread_cleanup_pop(1);
 	}
 
 	return 0;
