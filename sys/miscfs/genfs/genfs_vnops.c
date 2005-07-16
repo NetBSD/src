@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.98 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.99 2005/07/16 03:54:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.99 2005/07/16 03:54:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -534,6 +534,12 @@ genfs_getpages(void *v)
 		return (EINVAL);
 	}
 
+	/* uobj is locked */
+
+	if (write && (vp->v_flag & VONWORKLST) == 0) {
+		vn_syncer_add_to_worklist(vp, filedelay);
+	}
+
 	/*
 	 * For PGO_LOCKED requests, just return whatever's in memory.
 	 */
@@ -543,12 +549,6 @@ genfs_getpages(void *v)
 		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
 
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
-	}
-
-	/* uobj is locked */
-
-	if (write && (vp->v_flag & VONWORKLST) == 0) {
-		vn_syncer_add_to_worklist(vp, filedelay);
 	}
 
 	/*
