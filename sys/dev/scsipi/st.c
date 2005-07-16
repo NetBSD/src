@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.181 2005/05/29 22:00:50 christos Exp $ */
+/*	$NetBSD: st.c,v 1.182 2005/07/16 05:12:26 rtr Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.182 2005/07/16 05:12:26 rtr Exp $");
 
 #include "opt_scsi.h"
 
@@ -394,7 +394,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
-	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
+	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "quirks apply, " : "");
 	if (scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE) ||
 	    st->ops(st, ST_OPS_MODESENSE,
