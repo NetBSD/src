@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.36 2004/11/16 04:15:28 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.37 2005/07/16 19:48:09 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.36 2004/11/16 04:15:28 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.37 2005/07/16 19:48:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,7 +123,7 @@ struct state {
 	time_t		ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[/* LINTED constant */BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
+	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
 				(2 * (MY_TZNAME_MAX + 1)))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 };
@@ -208,10 +208,8 @@ static int		lcl_is_set;
 static int		gmt_is_set;
 
 __aconst char *		tzname[2] = {
-	/* LINTED const castaway */
-	(__aconst char *)wildabbr,
-	/* LINTED const castaway */
-	(__aconst char *)wildabbr
+	(__aconst char *)__UNCONST(wildabbr),
+	(__aconst char *)__UNCONST(wildabbr)
 };
 
 #ifdef _REENTRANT
@@ -265,10 +263,8 @@ settzname P((void))
 	register struct state * const	sp = lclptr;
 	register int			i;
 
-	/* LINTED const castaway */
-	tzname[0] = (__aconst char *)wildabbr;
-	/* LINTED const castaway */
-	tzname[1] = (__aconst char *)wildabbr;
+	tzname[0] = (__aconst char *)__UNCONST(wildabbr);
+	tzname[1] = (__aconst char *)__UNCONST(wildabbr);
 #ifdef USG_COMPAT
 	daylight = 0;
 	timezone = 0;
@@ -278,7 +274,7 @@ settzname P((void))
 #endif /* defined ALTZONE */
 #ifdef ALL_STATE
 	if (sp == NULL) {
-		tzname[0] = tzname[1] = (__aconst char *)gmt;
+		tzname[0] = tzname[1] = (__aconst char *)__UNCONST(gmt);
 		return;
 	}
 #endif /* defined ALL_STATE */
@@ -1170,12 +1166,11 @@ struct tm * const	tmp;
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
-		/* LINTED const castaway */
-		tmp->TM_ZONE = (__aconst char *)wildabbr;
+		tmp->TM_ZONE = (__aconst char *)__UNCONST(wildabbr);
 	else {
 #ifdef ALL_STATE
 		if (gmtptr == NULL)
-			tmp->TM_ZONE = (__aconst char *)gmt;
+			tmp->TM_ZONE = (__aconst char *)__UNCONST(gmt);
 		else	tmp->TM_ZONE = gmtptr->chars;
 #endif /* defined ALL_STATE */
 #ifndef ALL_STATE
@@ -1494,7 +1489,7 @@ const int		do_norm_secs;
 	** assuming two's complement arithmetic.
 	** If time_t is unsigned, then (1 << bits) is just above the median.
 	*/
-	/* LINTED constant in conditional context */
+	/*CONSTCOND*/
 	t = TYPE_SIGNED(time_t) ? 0 : (((time_t) 1) << bits);
 	for ( ; ; ) {
 		(*funcp)(&t, offset, &mytm);
