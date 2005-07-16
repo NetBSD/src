@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.8 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.9 2005/07/16 21:59:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -170,7 +170,7 @@ time_pps_setparams(handle, ppsparams)
 	pps_handle_t handle;
 	const pps_params_t *ppsparams;
 {
-	return (ioctl(handle, PPS_IOC_SETPARAMS, ppsparams));
+	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
 static __inline int
@@ -206,7 +206,7 @@ time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
 	const int edge;
 	const int tsformat;
 {
-	return (ioctl(handle, PPS_IOC_KCBIND, &edge));
+	return (ioctl(handle, PPS_IOC_KCBIND, __UNCONST(&edge)));
 }
 #endif /* !_KERNEL*/
 
