@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.8 2005/06/19 05:04:34 blymn Exp $
+# $NetBSD: dhclient-script,v 1.9 2005/07/16 08:41:27 rtr Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -128,6 +128,7 @@ fi
 
 case "$reason" in
 MEDIUM)
+	test -z "$medium" && exit_with_hooks 0
 	eval "ifconfig $interface $medium"
 	eval "ifconfig $interface inet -alias 0.0.0.0 $medium" >/dev/null 2>&1
 
