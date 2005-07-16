@@ -1,4 +1,4 @@
-/* 	$NetBSD: binary.c,v 1.1.1.2.4.1 2005/07/10 20:40:16 riz Exp $	*/
+/* 	$NetBSD: binary.c,v 1.1.1.2.4.2 2005/07/16 15:30:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: binary.c,v 1.1.1.2.4.1 2005/07/10 20:40:16 riz Exp $");
+__RCSID("$NetBSD: binary.c,v 1.1.1.2.4.2 2005/07/16 15:30:38 riz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -70,11 +70,12 @@ gzbin_file(gzFile *f)
 	if (gzseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = gzread(f, buf, BUFFER_SIZE)) <= 0)
+	if ((m = gzread(f, buf, BUFFER_SIZE)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!okchar(buf[i]))
+		if (!isprint(buf[i]) && !isspace(buf[i]) &&
+		    buf[i] != line_endchar)
 			return 1;
 
 	gzrewind(f);
