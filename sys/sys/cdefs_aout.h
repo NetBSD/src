@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.16 2005/07/16 17:41:05 christos Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.17 2005/07/16 17:53:36 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -18,9 +18,7 @@
 #define	____RENAME(x)	__asm__(___STRING(x))
 #endif
 
-#ifndef __lint__
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
-#endif
 
 #ifdef __GNUC__
 #if __STDC__
