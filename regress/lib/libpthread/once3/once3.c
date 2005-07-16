@@ -1,4 +1,4 @@
-/*	$NetBSD: once3.c,v 1.1 2005/07/16 23:02:11 nathanw Exp $	*/
+/*	$NetBSD: once3.c,v 1.2 2005/07/16 23:12:02 nathanw Exp $	*/
 
 #include <pthread.h>
 #include <signal.h>
@@ -36,6 +36,7 @@ main(int argc, char *argv[])
 	pthread_mutex_lock(&mutex);
 	pthread_create(&thread, NULL, threadfunc, NULL);
 	pthread_cancel(thread);
+	pthread_mutex_unlock(&mutex);
 	pthread_join(thread, NULL);
 
 	pthread_once(&once, ofunc);
@@ -43,6 +44,8 @@ main(int argc, char *argv[])
 	/* Cancel timer */
 	timerclear(&it.it_value);
 	setitimer(ITIMER_REAL, &it, NULL);
+
+	printf("Test succeeded\n");
 
 	return 0;
 }
@@ -66,8 +69,8 @@ void *
 threadfunc(void *arg)
 {
 
-	pthread_cleanup_push(cleanup, &mutex);
 	pthread_mutex_lock(&mutex);
+	pthread_cleanup_push(cleanup, &mutex);
 	pthread_once(&once, ofunc);
 	pthread_cleanup_pop(1);
 	return NULL;
