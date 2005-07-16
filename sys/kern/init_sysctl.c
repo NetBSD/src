@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.47 2005/07/16 22:47:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.47 2005/07/16 22:47:18 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_verified_exec.h"
 #include "pty.h"
 #include "rnd.h"
 
