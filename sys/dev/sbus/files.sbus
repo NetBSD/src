@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.21 2005/05/16 14:43:23 macallan Exp $
+#	$NetBSD: files.sbus,v 1.22 2005/07/16 18:58:50 macallan Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -124,3 +124,9 @@ file	dev/sbus/zx.c			zx
 device	pnozz: fb, bt_dac, rasops8, rasops16, rasops32, wsemuldisplaydev
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag
+
+# SUNW,DBRI audio
+device	dbri { }: audiobus, auconv, mulaw
+attach	dbri at sbus
+file	dev/sbus/dbri.c			dbri
+
