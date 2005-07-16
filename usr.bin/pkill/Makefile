@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/01 11:21:58 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2005/07/16 16:21:05 christos Exp $
 
 PROG=	pkill
-SRCS=	pkill.c
-MAN=	pkill.1
+WARNS=	3
 
 LDADD+=	-lkvm
 DPADD+=	${LIBKVM}
