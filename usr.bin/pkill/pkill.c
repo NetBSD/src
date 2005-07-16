@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.9 2005/03/16 08:52:20 sketch Exp $	*/
+/*	$NetBSD: pkill.c,v 1.10 2005/07/16 15:53:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.9 2005/03/16 08:52:20 sketch Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.10 2005/07/16 15:53:56 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -108,8 +108,8 @@ struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
 int	main(int, char **);
 void	usage(void);
-void	killact(struct kinfo_proc2 *);
-void	grepact(struct kinfo_proc2 *);
+int	killact(struct kinfo_proc2 *);
+int	grepact(struct kinfo_proc2 *);
 void	makelist(struct listhead *, enum listtype, char *);
 
 int
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	extern int optind;
 	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
-	void (*action)(struct kinfo_proc2 *);
+	int (*action)(struct kinfo_proc2 *);
 	struct kinfo_proc2 *kp;
 	struct list *li;
 	u_int32_t bestsec, bestusec;
@@ -398,8 +398,7 @@ main(int argc, char **argv)
 		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
 
-		rv = 1;
-		(*action)(kp);
+		rv |= (*action)(kp);
 	}
 
 	exit(rv ? STATUS_MATCH : STATUS_NOMATCH);
@@ -423,22 +422,38 @@ usage(void)
 	exit(STATUS_ERROR);
 }
 
-void
+int
 killact(struct kinfo_proc2 *kp)
 {
+	if (kill(kp->p_pid, signum) == -1) {
+		if (errno == ESRCH)
+			/*
+			 * The process disappeared between us matching
+			 * it and us signalling it.  Return 0 to
+			 * indicate that the process should not be
+			 * considered a match.
+			 */
+			return 0;
 
-	if (kill(kp->p_pid, signum) == -1)
 		err(STATUS_ERROR, "signalling pid %d", (int)kp->p_pid);
+	}
+
+	return 1;
 }
 
-void
+int
 grepact(struct kinfo_proc2 *kp)
 {
 	char **argv;
 
 	if (longfmt && matchargs) {
 		if ((argv = kvm_getargv2(kd, kp, 0)) == NULL)
-			return;
+			/*
+			 * The process disappeared?  Return 0 to
+			 * indicate that the process should not be
+			 * considered a match.
+			 */
+			return 0;
 
 		printf("%d ", (int)kp->p_pid);
 		for (; *argv != NULL; argv++) {
@@ -452,6 +467,8 @@ grepact(struct kinfo_proc2 *kp)
 		printf("%d", (int)kp->p_pid);
 
 	printf("%s", delim);
+
+	return 1;
 }
 
 void
