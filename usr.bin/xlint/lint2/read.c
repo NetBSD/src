@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.15 2004/09/12 08:58:52 yamt Exp $ */
+/* $NetBSD: read.c,v 1.16 2005/07/16 19:54:00 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.15 2004/09/12 08:58:52 yamt Exp $");
+__RCSID("$NetBSD: read.c,v 1.16 2005/07/16 19:54:00 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -89,7 +89,8 @@ static	hte_t **renametab;
 static	int	csrcfile;
 
 
-static	void	inperr(void);
+#define 	inperr()	inperror(__FILE__, __LINE__)
+static	void	inperror(const char *, size_t);
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);
 static	void	funccall(pos_t *, const char *);
@@ -211,10 +212,10 @@ readfile(const char *name)
 
 
 static void
-inperr(void)
+inperror(const char *file, size_t line)
 {
 
-	errx(1, "input file error: %s", fnames[srcfile]);
+	errx(1, "%s,%zd: input file error: %s", file, line, fnames[srcfile]);
 }
 
 /*
@@ -357,9 +358,7 @@ decldef(pos_t *posp, const char *cp)
 
 	used = 0;
 
-	while ((c = *cp) == 't' || c == 'd' || c == 'e' || c == 'u' ||
-	       c == 'r' || c == 'o' || c == 's' || c == 'v' ||
-	       c == 'P' || c == 'S') {
+	while (strchr("tdeurosvPS", (c = *cp)) != NULL) {
 		cp++;
 		switch (c) {
 		case 't':
