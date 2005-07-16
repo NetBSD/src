@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2005/07/10 15:47:37 macallan Exp $
+# $NetBSD: GENERIC,v 1.174 2005/07/16 19:00:39 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 maxusers	32
 
@@ -607,11 +607,12 @@ pseudo-device	bridge
 audioamd0	at mainbus0				# sun4c
 audioamd0	at obio0				# sun4m
 audioamd0	at sbus0 slot ? offset ?		# sun4m
-audio*		at audioamd0
 
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
-audio*		at audiocs0
 
+dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
+
+audio*		at audiobus?
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 ## systems.  If your sun4 system has a cgfour installed in the P4 slot,
