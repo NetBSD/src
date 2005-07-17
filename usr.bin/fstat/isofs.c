@@ -1,4 +1,4 @@
-/*	$NetBSD: isofs.c,v 1.4 2003/08/07 11:13:51 agc Exp $	*/
+/*	$NetBSD: isofs.c,v 1.5 2005/07/17 07:36:26 christos Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isofs.c,v 1.4 2003/08/07 11:13:51 agc Exp $");
+__RCSID("$NetBSD: isofs.c,v 1.5 2005/07/17 07:36:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -74,9 +74,7 @@ __RCSID("$NetBSD: isofs.c,v 1.4 2003/08/07 11:13:51 agc Exp $");
 #include "fstat.h"
 
 int
-isofs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+isofs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct iso_node inode;
 

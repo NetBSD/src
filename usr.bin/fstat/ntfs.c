@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.8 2003/02/02 02:35:58 christos Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.9 2005/07/17 07:36:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.8 2003/02/02 02:35:58 christos Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.9 2005/07/17 07:36:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -58,9 +58,7 @@ __RCSID("$NetBSD: ntfs.c,v 1.8 2003/02/02 02:35:58 christos Exp $");
 #include "fstat.h"
 
 int
-ntfs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+ntfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct ntnode ntnode;
 	struct fnode fn;

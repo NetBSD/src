@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.17 2005/01/10 02:58:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2005/07/17 07:36:26 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
+WARNS=	3
 PROG=	fstat
 SRCS=	fstat.c isofs.c ntfs.c ptyfs.c
 DPADD=	${LIBKVM}
