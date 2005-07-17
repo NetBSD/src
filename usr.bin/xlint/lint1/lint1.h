@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.17 2005/04/07 16:28:40 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.18 2005/07/17 19:35:48 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -394,6 +394,11 @@ typedef struct cstk {
 	pos_t	c_cfpos;	        /* same for csrc_pos */
 	struct	cstk *c_nxt;		/* outer control statement */
 } cstk_t;
+
+typedef struct {
+	size_t lo;
+	size_t hi;
+} range_t;
 
 #include "externs1.h"
 
