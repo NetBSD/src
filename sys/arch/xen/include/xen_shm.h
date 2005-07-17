@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.3 2005/04/16 08:49:29 yamt Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.4 2005/07/17 08:23:43 tls Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <machine/param.h>
+
+#define XENSHM_MAX_PAGES_PER_REQUEST (MAXPHYS >> PAGE_SHIFT)
 
 /*
  * Helper routines for the backend drivers. This implement the necessary
