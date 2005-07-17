@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/07/10 12:12:49 tron Exp $
+#	$NetBSD: Makefile,v 1.19 2005/07/17 09:45:50 he Exp $
 
 NOMAN=		# defined
 
@@ -10,6 +10,7 @@ CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys \
 		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS
 CLEANFILES+=	misc.c misc.h
 WFORMAT=1
+WARNS=3
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=-static
