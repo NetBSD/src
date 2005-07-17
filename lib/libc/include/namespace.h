@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.102 2005/07/16 17:12:36 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.103 2005/07/17 16:07:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define errx		_errx
 #ifdef _REENTRANT
 #define fileno		_fileno
-#endif
+#endif /* _REENTRANT */
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
@@ -675,6 +675,6 @@
 #define fmtcheck		__fmtcheck
 #define __learn_tree		___learn_tree
 #endif /* __weak_alias */
-#endif
+#endif /* !__lint__ */
 
 #endif /* _NAMESPACE_H_ */
