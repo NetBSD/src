@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2005/07/16 19:00:39 macallan Exp $
+# $NetBSD: GENERIC,v 1.175 2005/07/17 00:08:30 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.174 $"
+#ident 		"GENERIC-$Revision: 1.175 $"
 
 maxusers	32
 
@@ -467,6 +467,7 @@ fd*	at fdc0					# the drive itself
 ## miniroot images, etc.
 
 pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).

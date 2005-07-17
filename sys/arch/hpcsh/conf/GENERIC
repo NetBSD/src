@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2005/06/25 12:05:17 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.51 2005/07/17 00:08:28 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -289,6 +289,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
