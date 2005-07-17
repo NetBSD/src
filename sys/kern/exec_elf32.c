@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.105 2005/07/17 23:49:49 junyoung Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.106 2005/07/17 23:53:57 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.105 2005/07/17 23:49:49 junyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.106 2005/07/17 23:53:57 junyoung Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -213,26 +213,26 @@ elf_check_header(Elf_Ehdr *eh, int type)
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    eh->e_ident[EI_CLASS] != ELFCLASS)
-		return (ENOEXEC);
+		return ENOEXEC;
 
 	switch (eh->e_machine) {
 
 	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
-		return (ENOEXEC);
+		return ENOEXEC;
 	}
 
 	if (ELF_EHDR_FLAGS_OK(eh) == 0)
-		return (ENOEXEC);
+		return ENOEXEC;
 
 	if (eh->e_type != type)
-		return (ENOEXEC);
+		return ENOEXEC;
 
 	if (eh->e_shnum > 32768 || eh->e_phnum > 128)
-		return (ENOEXEC);
+		return ENOEXEC;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -564,7 +564,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 
 	error = vn_marktext(epp->ep_vp);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Allocate space to hold all the program headers, and read them
@@ -771,7 +771,7 @@ netbsd_elf_signature(struct proc *p, struct exec_package *epp,
 	error = ENOEXEC;
 out:
 	free(ph, M_TEMP);
-	return (error);
+	return error;
 }
 
 int
