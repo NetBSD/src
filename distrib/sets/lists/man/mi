@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.806 2005/07/17 22:20:59 rpaulo Exp $
+# $NetBSD: mi,v 1.807 2005/07/17 22:39:28 rpaulo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3392,6 +3392,7 @@
 ./usr/share/man/man4/rtfps.4			man-sys-man		.man
 ./usr/share/man/man4/rtii.4			man-sys-man		.man
 ./usr/share/man/man4/rtk.4			man-sys-man		.man
+./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/rtpphy.4			man-obsolete		obsolete
 ./usr/share/man/man4/satalink.4			man-sys-man		.man
 ./usr/share/man/man4/sb.4			man-sys-man		.man
