@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2005/07/17 09:45:50 he Exp $
+#	$NetBSD: Makefile,v 1.20 2005/07/17 15:48:28 he Exp $
 
 NOMAN=		# defined
 
@@ -17,7 +17,7 @@ LDSTATIC?=-static
 .endif
 
 dump.c misc.c: misc.h
-misc.h: ${DESTDIR}/usr/include/sys/errno.h \
+misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 	       ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} CPPFLAGS=${CPPFLAGS:Q} \
