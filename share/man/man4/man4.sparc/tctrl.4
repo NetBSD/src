@@ -1,4 +1,4 @@
-.\"     $NetBSD: tctrl.4,v 1.2 2004/03/31 21:59:47 wiz Exp $
+.\"     $NetBSD: tctrl.4,v 1.3 2005/07/17 01:00:31 macallan Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -50,10 +50,13 @@ is also used to power the laptop off when the
 .Xr reboot 2
 system call is used with the
 .Ar RB_POWERDOWN
-flag is set.
-The PCMCIA part of the controller is not yet supported by
-.Nx .
+flag is set. Power button events are forwarded to
+.Xr powerd 8 .
+The PCMCIA part of the controller is supported by 
+.Xr tslot 4 .
 .Sh SEE ALSO
 .Xr reboot 2 ,
 .Xr intro 4 ,
-.Xr pnozz 4
+.Xr pnozz 4 ,
+.Xr tslot 4 ,
+.Xr powerd 8
