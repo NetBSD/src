@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.9 2005/06/12 14:59:48 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.10 2005/07/17 08:23:43 tls Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -65,12 +65,11 @@ u_long xen_shm_base_address_pg;
 vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
-#define XENSHM_MAX_PAGES_PER_REQUEST (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1)
+#define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
 
-vsize_t xen_shm_size =
-    (BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST * PAGE_SIZE);
+vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
-paddr_t _xen_shm_vaddr2ma[BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST];
+paddr_t _xen_shm_vaddr2ma[XENSHM_NPAGES];
 
 /* vm space management */
 struct extent *xen_shm_ex;
@@ -85,6 +84,9 @@ struct xen_shm_callback_entry {
 };
 /* a pool of struct xen_shm_callback_entry */
 struct pool xen_shm_callback_pool;
+
+/* for ratecheck(9) */
+struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
 
 void
 xen_shm_init()
@@ -138,18 +140,26 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 	 */
 	if (__predict_false(SIMPLEQ_FIRST(&xen_shm_callbacks) != NULL) &&
 	    (flags & XSHM_CALLBACK) == 0) {
+#ifdef DEBUG
+		static struct timeval lasttime;
+#endif
 		splx(s);
 #ifdef DEBUG
-		printf("xen_shm_map: ENOMEM1\n");
+		if (ratecheck(&lasttime, &xen_shm_errintvl))
+			printf("xen_shm_map: ENOMEM1\n");
 #endif
 		return ENOMEM;
 	}
 	/* allocate the needed virtual space */
 	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
 	    != 0) {
+#ifdef DEBUG
+		static struct timeval lasttime;
+#endif
 		splx(s);
 #ifdef DEBUG
-		printf("xen_shm_map: ENOMEM\n");
+		if (ratecheck(&lasttime, &xen_shm_errintvl))
+			printf("xen_shm_map: ENOMEM\n");
 #endif
 		return ENOMEM;
 	}
@@ -235,19 +245,19 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		panic("xen_shm_unmap: extent_free");
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
 	    != NULL)) {
-		/*
-		 * bouyer@: these printf("callback") should go away,
-		 * but I've not been able to trigger this code yet,
-		 * so leave them here until we're sure the code works
-		 */
+		SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
+		splx(s);
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
 			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
 			pool_put(&xen_shm_callback_pool, xshmc);
 		} else {
 			/* callback failed, probably out of ressources */
-			splx(s);
-			return;
+			s = splvm();
+			SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc,
+					    xshmc_entries);
+
+			break;
 		}
 	}
 	splx(s);
