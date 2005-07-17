@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.3 2005/07/16 22:32:36 christos Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.4 2005/07/17 17:08:25 christos Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -760,7 +760,7 @@ vowel(int c)
 static void
 ise(void)
 {
-	const struct suftab *tab;
+	struct suftab *tab;
 	char *cp;
 
 	for (tab = suftab; tab->suf; tab++) {
