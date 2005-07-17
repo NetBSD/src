@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.152 2005/06/20 15:06:18 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.153 2005/07/17 05:06:57 isaki Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -521,7 +521,7 @@ field will be set to \-1 if the driver doesn't have a block device.
 .It Li KERN_FILE
 Return the entire file table.
 The returned data consists of a single
-.Va struct filehead
+.Va struct filelist
 followed by an array of
 .Va struct file ,
 whose size depends on the current number of such objects in the system.
