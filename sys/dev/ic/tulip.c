@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.138 2005/07/08 05:07:31 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.139 2005/07/17 18:11:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.138 2005/07/08 05:07:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.139 2005/07/17 18:11:36 he Exp $");
 
 #include "bpfilter.h"
 
@@ -105,7 +105,6 @@ static void	tlp_shutdown(void *);
 
 static void	tlp_rxdrain(struct tulip_softc *);
 static int	tlp_add_rxbuf(struct tulip_softc *, int);
-static void	tlp_idle(struct tulip_softc *, u_int32_t);
 static void	tlp_srom_idle(struct tulip_softc *);
 static int	tlp_srom_size(struct tulip_softc *);
 
@@ -3067,7 +3066,7 @@ setit:
  *
  *	Cause the transmit and/or receive processes to go idle.
  */
-static void
+void
 tlp_idle(struct tulip_softc *sc, u_int32_t bits)
 {
 	static const char * const tlp_tx_state_names[] = {
