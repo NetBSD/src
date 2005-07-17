@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.15 2005/03/17 18:44:09 tron Exp $
+# $NetBSD: named,v 1.16 2005/07/17 16:30:57 christos Exp $
 #
 
 # PROVIDE: named
@@ -57,6 +57,19 @@ named_precmd()
 			    /bin/pax -rw -pe "$i" "${named_chrootdir}/dev")
 		fi
 	done
+
+	if [ -d /etc/namedb ]; then
+		(cd /etc/namedb && for i in *; do
+			j=${named_chrootdir}/etc/namedb/$i
+			if [ ! -r $j ]; then
+				cp -rp $i $j
+			fi
+		done)
+	fi
+	if [ \( ! -r ${named_chrootdir}/etc/named.conf \) -a \
+	    \( -r ${named_chrootdir}/etc/namedb/named.conf \) ]; then
+		ln -s namedb/named.conf ${named_chrootdir}/etc
+	fi
 
 	if [ -f /etc/localtime ]; then
 		cmp -s /etc/localtime "${named_chrootdir}/etc/localtime" || \
