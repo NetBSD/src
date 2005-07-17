@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.14 2005/03/30 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.15 2005/07/17 00:08:27 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,6 +163,13 @@ struct vnd_softc {
 	struct pool	 sc_vxpool;	/* vndxfer pool */
 	struct pool	 sc_vbpool;	/* vndbuf pool */
 	struct proc 	*sc_kthread;	/* kernel thread */
+	u_int32_t	 sc_comp_blksz;	/* precompressed block size */
+	u_int32_t	 sc_comp_numoffs;/* count of compressed block offsets */
+	u_int64_t	*sc_comp_offsets;/* file idx's to compressed blocks */
+	unsigned char	*sc_comp_buff;	/* compressed data buffer */
+	unsigned char	*sc_comp_decombuf;/* decompressed data buffer */
+	int32_t		 sc_comp_buffblk;/*current decompressed block */
+	z_stream	 sc_comp_stream;/* decompress descriptor */
 };
 #endif
 
@@ -177,6 +184,15 @@ struct vnd_softc {
 #define	VNF_VLABEL	0x080	/* label is valid */
 #define	VNF_KTHREAD	0x100	/* thread is running */
 #define	VNF_VUNCONF	0x200	/* device is unconfiguring */
+#define VNF_COMP	0x400	/* file is compressed */
+
+/* structure of header in a compressed file */
+struct vnd_comp_header
+{
+	char preamble[128];
+	u_int32_t block_size;
+	u_int32_t num_blocks;
+};
 
 /*
  * A simple structure for describing which vnd units are in use.

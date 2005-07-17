@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203 2005/07/11 15:37:04 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.204 2005/07/17 00:08:29 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.204 $"
 
 maxusers	32
 
@@ -481,6 +481,7 @@ midi*	at eap?			# 137[01] MIDI port
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

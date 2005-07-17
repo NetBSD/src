@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.23 2005/06/25 12:05:18 rpaulo Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.24 2005/07/17 00:08:29 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -112,6 +112,7 @@ pseudo-device	loop
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vnd		4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem

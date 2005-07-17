@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.38 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: GENERIC,v 1.39 2005/07/17 00:08:29 hubertf Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -163,6 +163,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # Network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

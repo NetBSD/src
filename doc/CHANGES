@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.491 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.492 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -61,3 +61,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ral(4): Add driver for Ralink PCI/Cardbus/USB wlan adapters
 		(written by Damien Bergamini, ported by FUKAUMI Naoki)
 		[drochner 20050714]
+	vnd(4): Add support for configuring cloop2-compressed images
+		read-only, written by Cliff Wright. [hubertf 20050716]

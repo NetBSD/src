@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.283 2005/07/08 13:21:48 abs Exp $
+.\"	$NetBSD: options.4,v 1.284 2005/07/17 00:08:27 hubertf Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 25, 2005
+.Dd July 16, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1120,6 +1120,15 @@ Do not inline the
 calls in the kernel.
 On i386 GENERIC, this saves 36k of kernel text.
 Useful for install media kernels, small memory systems and embedded systems.
+.It Cd options VND_COMPRESSION
+Enables the
+.Xr vnd 4
+driver to also handle compressed images. See
+.Xr vndcompress 1 ,
+.Xr vnd 4
+and
+.Xr vnconfig 8
+for more information.
 .It Cd options MALLOC_NOINLINE
 Time critical fixed size memory allocation is performed with
 .Fn MALLOC
@@ -2506,6 +2515,7 @@ bolded
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr pmc 1 ,
+.Xr vndcompress 1 ,
 .Xr quota 1 ,
 .Xr gettimeofday 2 ,
 .Xr i386_get_mtrr 2 ,
@@ -2535,6 +2545,7 @@ bolded
 .Xr pcmcia 4 ,
 .Xr ppp 4 ,
 .Xr userconf 4 ,
+.Xr vnd 4 ,
 .Xr wscons 4 ,
 .Xr edquota 8 ,
 .Xr init 8 ,

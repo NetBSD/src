@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.33 2005/07/07 17:05:58 tron Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.34 2005/07/17 00:08:29 hubertf Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.33 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.34 $"
 
 maxusers	32
 
@@ -272,6 +272,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: GENERIC,v 1.90 2005/07/17 00:08:29 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -252,6 +252,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

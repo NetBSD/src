@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2005/07/07 17:05:46 tron Exp $
+# $NetBSD: GENERIC,v 1.32 2005/07/17 00:08:27 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -249,6 +249,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4
 pseudo-device	vnd		4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
