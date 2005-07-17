@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.39 2005/07/07 17:05:57 tron Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.40 2005/07/17 00:08:29 hubertf Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.39 $"
+#ident 		"GENERIC_TINY-$Revision: 1.40 $"
 
 maxusers	4
 
@@ -211,6 +211,7 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	md		1	# memory disk device
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver

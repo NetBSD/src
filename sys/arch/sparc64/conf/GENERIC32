@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.111 2005/07/11 15:37:04 kiyohara Exp $
+# 	$NetBSD: GENERIC32,v 1.112 2005/07/17 00:08:30 hubertf Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	64
 
@@ -404,6 +404,7 @@ ld*	at mlx? unit ?
 ## miniroot images, etc.
 
 pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
