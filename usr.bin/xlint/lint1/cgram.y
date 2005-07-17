@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.34 2004/08/03 12:11:54 yamt Exp $ */
+/* $NetBSD: cgram.y,v 1.35 2005/07/17 19:35:48 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.34 2004/08/03 12:11:54 yamt Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.35 2005/07/17 19:35:48 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,6 +117,7 @@ static __inline void RESTORE(void)
 	tqual_t	y_tqual;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
+	range_t	y_range;
 	strg_t	*y_strg;
 	pqinf_t	*y_pqinf;
 };
@@ -254,6 +255,8 @@ static __inline void RESTORE(void)
 %type	<y_strg>	string
 %type	<y_strg>	string2
 %type	<y_sb>		opt_asm_or_symbolrename
+%type	<y_range>	range
+%type	<y_range>	lorange
 
 
 %%
@@ -1133,11 +1136,26 @@ init_expr_list:
 	| init_expr_list T_COMMA init_expr
 	;
 
+lorange: 
+	  constant T_ELLIPSE {
+		$$.lo = toicon($1, 1);
+	  }
+	;
+range:
+	constant {
+		$$.lo = toicon($1, 1);
+		$$.hi = $$.lo + 1;
+	  }
+	| lorange constant {
+		$$.lo = $1.lo;
+		$$.hi = toicon($2, 1);
+	  }
+	;
+
 init_by_name:
-	  T_LBRACK constant T_RBRACK T_ASSIGN {
+	  T_LBRACK range T_RBRACK T_ASSIGN {
 		if (!Sflag)
 			warning(321);
-		(void) toicon($2, 1);
 	  }
 	| point T_NAME T_ASSIGN {
 		if (!Sflag)
