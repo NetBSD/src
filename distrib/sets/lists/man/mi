@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.804 2005/07/16 09:13:01 rtr Exp $
+# $NetBSD: mi,v 1.805 2005/07/17 18:54:10 macallan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1200,6 +1200,7 @@
 ./usr/share/man/cat4/sparc/cgsix.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/cgthree.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/cgtwo.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc/dbri.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/ie.0		man-sys-catman		.cat
@@ -1215,6 +1216,7 @@
 ./usr/share/man/cat4/sparc/pnozz.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/tctrl.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/tcx.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc/tslot.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/xd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/xy.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman		.cat
@@ -3443,6 +3445,7 @@
 ./usr/share/man/man4/sparc/cgsix.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/cgthree.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/cgtwo.4		man-sys-man		.man
+./usr/share/man/man4/sparc/dbri.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/fd.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/ie.4			man-sys-man		.man
@@ -3458,6 +3461,7 @@
 ./usr/share/man/man4/sparc/pnozz.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/tctrl.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/tcx.4		man-sys-man		.man
+./usr/share/man/man4/sparc/tslot.4		man-sys-man		.man
 ./usr/share/man/man4/sparc/xd.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/xy.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man		.man
