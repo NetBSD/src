@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makeerrnos.sh,v 1.3 2001/02/18 18:38:18 kim Exp $
+#	$NetBSD: makeerrnos.sh,v 1.4 2005/07/17 09:45:50 he Exp $
 
 if [ $# -ne 3 ]; then
 	echo "usage: makeerrnos.sh errno.h signal.h output"
@@ -66,8 +66,8 @@ elines=`expr $elines + 1`
 
 cat <<__EOF__ >$HFILE
 struct	systab	{
-	char	*name;
-	int	value;
+	const char	*name;
+	int		value;
 };
 
 extern struct systab errnos[$lines + 1];

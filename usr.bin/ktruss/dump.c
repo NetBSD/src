@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.21 2005/07/17 08:44:08 he Exp $	*/
+/*	$NetBSD: dump.c,v 1.22 2005/07/17 09:45:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.21 2005/07/17 08:44:08 he Exp $");
+__RCSID("$NetBSD: dump.c,v 1.22 2005/07/17 09:45:50 he Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -595,21 +595,21 @@ ktrsysret(struct ktr_entry *kte)
 	struct ktr_header *kth = &kte->kte_kth;
 	struct ktr_sysret *ktr = (struct ktr_sysret *)(kth + 1);
 	struct ktr_entry *genio;
-	struct ktr_entry *syscall;
+	struct ktr_entry *syscall_ent;
 
 	dumpheader(kth);
 
 	/* Print syscall name and arguments. */
-	syscall = getpendq(kth, KTR_SYSCALL, NULL);
-	if (syscall == NULL)
+	syscall_ent = getpendq(kth, KTR_SYSCALL, NULL);
+	if (syscall_ent == NULL)
 		/*
 		 * Possibilly a child of fork/vfork, or tracing of
 		 * process started during system call.
 		 */
 		syscallnameprint(ktr->ktr_code);
 	else {
-		syscallprint(&syscall->kte_kth);
-		free(syscall);
+		syscallprint(&syscall_ent->kte_kth);
+		free(syscall_ent);
 	}
 
 	/* Print return value and an error if any. */
