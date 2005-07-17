@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.8 2005/07/17 18:11:36 he Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.8 2005/07/17 18:11:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $"
 #define	TLP_AP_CSR	0x00080000	/* CSR base address */
 #define	TLP_AP_RST	0x00100000	/* Board Reset */
 
-
-extern void tlp_idle(struct tulip_softc *, uint32_t);
 
 struct tulip_ap_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
