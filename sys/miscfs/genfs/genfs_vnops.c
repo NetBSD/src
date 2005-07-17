@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.100 2005/07/17 09:13:35 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.101 2005/07/17 12:27:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.100 2005/07/17 09:13:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.101 2005/07/17 12:27:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -537,8 +537,11 @@ genfs_getpages(void *v)
 
 	/* uobj is locked */
 
-	if (write && (vp->v_flag & VONWORKLST) == 0) {
-		vn_syncer_add_to_worklist(vp, filedelay);
+	if (write) {
+		gp->g_dirtygen++;
+		if ((vp->v_flag & VONWORKLST) == 0) {
+			vn_syncer_add_to_worklist(vp, filedelay);
+		}
 	}
 
 	/*
@@ -1089,6 +1092,8 @@ genfs_putpages(void *v)
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
+	struct genfs_node *gp = VTOG(vp);
+	int dirtygen;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1134,6 +1139,7 @@ genfs_putpages(void *v)
 	 * current last page.
 	 */
 
+	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	curmp.uobject = uobj;
 	curmp.offset = (voff_t)-1;
@@ -1165,12 +1171,17 @@ genfs_putpages(void *v)
 			}
 			if (pg->offset < startoff || pg->offset >= endoff ||
 			    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+				if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+					wasclean = FALSE;
+				}
 				pg = TAILQ_NEXT(pg, listq);
 				continue;
 			}
 			off = pg->offset;
-		} else if (pg == NULL ||
-		    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+		} else if (pg == NULL || pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+			if (pg != NULL) {
+				wasclean = FALSE;
+			}
 			off += PAGE_SIZE;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
@@ -1225,7 +1236,20 @@ genfs_putpages(void *v)
 
 		if (flags & PGO_FREE) {
 			pmap_page_protect(pg, VM_PROT_NONE);
+		} else if (flags & PGO_CLEANIT) {
+
+			/*
+			 * if we still have some hope to pull this vnode off
+			 * from the syncer queue, write-protect the page.
+			 */
+
+			if (wasclean && gp->g_dirtygen == dirtygen &&
+			    startoff == 0 && endoff == trunc_page(LLONG_MAX)) {
+				pmap_page_protect(pg,
+				    VM_PROT_READ|VM_PROT_EXECUTE);
+			}
 		}
+
 		if (flags & PGO_CLEANIT) {
 			needs_clean = pmap_clear_modify(pg) ||
 			    (pg->flags & PG_CLEAN) == 0;
@@ -1242,6 +1266,7 @@ genfs_putpages(void *v)
 		 */
 
 		if (needs_clean) {
+			KDASSERT((vp->v_flag & VONWORKLST));
 			wasclean = FALSE;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
@@ -1389,7 +1414,7 @@ genfs_putpages(void *v)
 	 */
 
 	s = splbio();
-	if ((flags & PGO_CLEANIT) && wasclean &&
+	if ((flags & PGO_CLEANIT) && wasclean && gp->g_dirtygen == dirtygen &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 	    (vp->v_flag & VONWORKLST)) {

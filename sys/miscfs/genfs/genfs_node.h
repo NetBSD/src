@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.6 2005/06/28 09:30:37 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.7 2005/07/17 12:27:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -56,6 +56,7 @@ struct genfs_ops {
 struct genfs_node {
 	const struct genfs_ops	*g_op;		/* ops vector */
 	struct lock		g_glock;	/* getpages lock */
+	int			g_dirtygen;
 };
 
 #define VTOG(vp) ((struct genfs_node *)(vp)->v_data)
