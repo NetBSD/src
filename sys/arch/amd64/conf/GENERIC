@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2005/07/17 00:08:28 hubertf Exp $
+# $NetBSD: GENERIC,v 1.61 2005/07/17 14:53:56 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 maxusers	32		# estimated number of users
 
@@ -587,7 +587,6 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-# The EHCI is not ready for prime time.
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
