@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.101 2005/07/17 12:27:47 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.102 2005/07/17 16:07:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.101 2005/07/17 12:27:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.102 2005/07/17 16:07:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1132,6 +1132,20 @@ genfs_putpages(void *v)
 	by_list = (uobj->uo_npages <=
 	    ((endoff - startoff) >> PAGE_SHIFT) * UVM_PAGE_HASH_PENALTY);
 
+#if !defined(DEBUG)
+	/*
+	 * if this vnode is known not to have dirty pages,
+	 * don't bother to clean it out.
+	 */
+
+	if ((vp->v_flag & VONWORKLST) == 0) {
+		if ((flags & (PGO_FREE|PGO_DEACTIVATE)) == 0) {
+			goto skip_scan;
+		}
+		flags &= ~PGO_CLEANIT;
+	}
+#endif /* !defined(DEBUG) */
+
 	/*
 	 * start the loop.  when scanning by list, hold the last page
 	 * in the list before we start.  pages allocated after we start
@@ -1422,6 +1436,10 @@ genfs_putpages(void *v)
 		LIST_REMOVE(vp, v_synclist);
 	}
 	splx(s);
+
+#if !defined(DEBUG)
+skip_scan:
+#endif /* !defined(DEBUG) */
 	if (!wasclean && !async) {
 		s = splbio();
 		/*
