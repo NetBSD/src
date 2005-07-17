@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.99 2005/07/16 03:54:08 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.100 2005/07/17 09:13:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.99 2005/07/16 03:54:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.100 2005/07/17 09:13:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -496,6 +496,7 @@ genfs_getpages(void *v)
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
 	boolean_t overwrite = (flags & PGO_OVERWRITE) != 0;
+	boolean_t blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -606,7 +607,7 @@ genfs_getpages(void *v)
 		struct vm_page *pg1 = pgs[ridx + i];
 
 		if ((pg1->flags & PG_FAKE) ||
-		    (write && (pg1->flags & PG_RDONLY))) {
+		    (blockalloc && (pg1->flags & PG_RDONLY))) {
 			break;
 		}
 	}
@@ -711,7 +712,7 @@ genfs_getpages(void *v)
 	 * now loop over the pages, reading as needed.
 	 */
 
-	if (write) {
+	if (blockalloc) {
 		lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
 	} else {
 		lockmgr(&gp->g_glock, LK_SHARED, NULL);
@@ -727,10 +728,13 @@ genfs_getpages(void *v)
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
-		while ((pgs[pidx]->flags & (PG_FAKE|PG_RDONLY)) == 0) {
+		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
+			if ((pgs[pidx]->flags & PG_RDONLY)) {
+				sawhole = TRUE;
+			}
 			b = MIN(PAGE_SIZE, bytes);
 			offset += b;
 			bytes -= b;
@@ -778,8 +782,8 @@ genfs_getpages(void *v)
 
 		/*
 		 * if this block isn't allocated, zero it instead of
-		 * reading it.  if this is a read access, mark the
-		 * pages we zeroed PG_RDONLY.
+		 * reading it.  unless we are going to allocate blocks,
+		 * mark the pages we zeroed PG_RDONLY.
 		 */
 
 		if (blkno < 0) {
@@ -795,7 +799,8 @@ genfs_getpages(void *v)
 			for (i = 0; i < holepages; i++) {
 				if (write) {
 					pgs[pidx + i]->flags &= ~PG_CLEAN;
-				} else {
+				}
+				if (!blockalloc) {
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
@@ -881,18 +886,21 @@ loopdone:
 	 * the page is completely allocated while the pages are locked.
 	 */
 
-	if (!error && sawhole && write) {
-		for (i = 0; i < npages; i++) {
-			if (pgs[i] == NULL) {
-				continue;
-			}
-			pgs[i]->flags &= ~PG_CLEAN;
-			UVMHIST_LOG(ubchist, "mark dirty pg %p", pgs[i],0,0,0);
-		}
+	if (!error && sawhole && blockalloc) {
 		error = GOP_ALLOC(vp, startoffset, npages << PAGE_SHIFT, 0,
 		    cred);
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
+		if (!error) {
+			for (i = 0; i < npages; i++) {
+				if (pgs[i] == NULL) {
+					continue;
+				}
+				pgs[i]->flags &= ~(PG_CLEAN|PG_RDONLY);
+				UVMHIST_LOG(ubchist, "mark dirty pg %p",
+				    pgs[i],0,0,0);
+			}
+		}
 	}
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	simple_lock(&uobj->vmobjlock);
@@ -974,9 +982,7 @@ out:
 			pg->flags &= ~(PG_FAKE);
 			pmap_clear_modify(pgs[i]);
 		}
-		if (write) {
-			pg->flags &= ~(PG_RDONLY);
-		}
+		KASSERT(!write || !blockalloc || (pg->flags & PG_RDONLY) == 0);
 		if (i < ridx || i >= ridx + orignpages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
 			    pg, pg->offset,0,0);
