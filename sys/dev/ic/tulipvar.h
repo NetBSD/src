@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.55 2005/06/23 23:51:42 rpaulo Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.56 2005/07/17 18:11:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -607,6 +607,7 @@ int	tlp_isv_srom(const u_int8_t *);
 int	tlp_isv_srom_enaddr(struct tulip_softc *, u_int8_t *);
 int	tlp_parse_old_srom(struct tulip_softc *, u_int8_t *);
 void	tlp_reset(struct tulip_softc *);
+void	tlp_idle(struct tulip_softc *, u_int32_t);
 
 int	tlp_mediachange(struct ifnet *);
 void	tlp_mediastatus(struct ifnet *, struct ifmediareq *);
