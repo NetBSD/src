@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.12 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: GENERIC,v 1.13 2005/07/17 00:08:28 hubertf Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -490,6 +490,7 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices

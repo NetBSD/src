@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.38 2005/07/07 17:05:46 tron Exp $
+# $NetBSD: GENERIC.in,v 1.39 2005/07/17 00:08:28 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -609,6 +609,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 ')m4_dnl
 
 pseudo-device	vnd		4	# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.29 2003/08/07 11:25:50 agc Exp $
+.\"	$NetBSD: vnconfig.8,v 1.30 2005/07/17 00:08:27 hubertf Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"     @(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd March 28, 2003
+.Dd July 16, 2005
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm
-.Op Fl crv
+.Op Fl crvz
 .Op Fl f Ar disktab
 .Op Fl t Ar typename
 .Ar vnode_disk
@@ -199,6 +199,14 @@ Configure the device as read-only.
 Unconfigures the device.
 .It Fl v
 Print messages to stdout describing actions taken.
+.It Fl z
+Assume that
+.Ar regular file
+is compressed disk image in cloop2 format, and configures it
+read-only.
+See the
+.Xr vndcompress 1
+manpage on how to create such an image. 
 .El
 .Pp
 If no action option is given,

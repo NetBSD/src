@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: GENERIC,v 1.51 2005/07/17 00:08:29 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 maxusers	8			# estimated number of users
 
@@ -114,6 +114,7 @@ uk* at scsibus? target ? lun ?		# All the things we don't know
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop		1	# loopback network
 pseudo-device	vnd		2	# vnode devices
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	bpfilter	4	# packet filter
 pseudo-device	sl		1	# compressed SLIP
 pseudo-device	ppp		1	# Point-to-Point Protocol

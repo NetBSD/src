@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46 2005/07/07 17:05:58 tron Exp $
+#	$NetBSD: GENERIC,v 1.47 2005/07/17 00:08:29 hubertf Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.46 $"
+#ident		"GENERIC-$Revision: 1.47 $"
 
 # estimated number of users
 maxusers	32
@@ -297,6 +297,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	fss	4		# file system snapshot device
 #pseudo-device	cgd	4		# cryptographic disk devices

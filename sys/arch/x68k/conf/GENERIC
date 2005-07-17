@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: GENERIC,v 1.114 2005/07/17 00:08:30 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	8
 
@@ -428,6 +428,7 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 ## miniroot images, etc.
 
 pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
