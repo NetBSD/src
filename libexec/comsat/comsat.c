@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.33 2005/05/07 23:37:59 christos Exp $	*/
+/*	$NetBSD: comsat.c,v 1.34 2005/07/18 04:01:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.33 2005/05/07 23:37:59 christos Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.34 2005/07/18 04:01:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,19 +81,20 @@ __RCSID("$NetBSD: comsat.c,v 1.33 2005/05/07 23:37:59 christos Exp $");
 #define MAXIDLE	120
 
 static int	logging;
-static int	debug = 0;
+static int	debug;
 static char	hostname[MAXHOSTNAMELEN + 1];
 static time_t	utmpmtime;		/* last modification time for utmp/x */
 static int	nutmp;
 static struct	utmpentry *utmp = NULL;
 static time_t	lastmsgtime;
+static volatile sig_atomic_t needupdate;
 
 int main(int, char *[]);
 static void jkfprintf(FILE *, const char *, off_t, const char *);
 static void mailfor(const char *);
 static void notify(const struct utmpentry *, off_t);
 static void onalrm(int);
-static void reapchildren(int);
+static void checkutmp(void);
 
 int
 main(int argc, char *argv[])
@@ -127,24 +128,26 @@ main(int argc, char *argv[])
 	(void)time(&lastmsgtime);
 	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
-	onalrm(0);
 	(void)signal(SIGALRM, onalrm);
 	(void)signal(SIGTTOU, SIG_IGN);
-	(void)signal(SIGCHLD, reapchildren);
+	(void)signal(SIGCHLD, SIG_IGN);
 	(void)sigemptyset(&nsigset);
 	(void)sigaddset(&nsigset, SIGALRM);
 	if (sigprocmask(SIG_SETMASK, NULL, &osigset) == -1) {
 		syslog(LOG_ERR, "sigprocmask get failed (%m)");
 		exit(1);
 	}
+	needupdate++;
 	for (;;) {
 		cc = recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		if (cc <= 0) {
 			if (errno != EINTR)
 				sleep(1);
 			errno = 0;
+			checkutmp();
 			continue;
-		}
+		} else
+			checkutmp();
 		if (!nutmp)		/* no one has logged in yet */
 			continue;
 		if (sigprocmask(SIG_SETMASK, &nsigset, NULL) == -1) {
@@ -163,19 +166,20 @@ main(int argc, char *argv[])
 
 static void
 /*ARGSUSED*/
-reapchildren(int signo)
+onalrm(int signo)
 {
-
-	while (wait3(NULL, WNOHANG, NULL) != -1)
-		continue;
+	needupdate++;
 }
 
 static void
-/*ARGSUSED*/
-onalrm(int signo)
+checkutmp(void)
 {
 	struct stat statbf;
 	time_t newtime = 0;
+
+	if (!needupdate)
+		return;
+	needupdate = 0;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
