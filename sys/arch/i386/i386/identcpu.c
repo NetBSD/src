@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.17.2.1 2005/07/12 11:50:35 tron Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17.2.2 2005/07/18 20:48:58 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.2.1 2005/07/12 11:50:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.2.2 2005/07/18 20:48:58 riz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1226,9 +1226,6 @@ identifycpu(struct cpu_info *ci)
 		last_tsc = rdtsc();
 		delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-#ifndef NO_TSC_TIME
-		microtime_func = cc_microtime;
-#endif
 	}
 	/* XXX end XXX */
 #endif
