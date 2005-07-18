@@ -1,4 +1,4 @@
-.\"	$NetBSD: tslot.4,v 1.1 2005/07/17 01:00:31 macallan Exp $
+.\"	$NetBSD: tslot.4,v 1.2 2005/07/18 14:53:58 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Michael Lorenz
 .\" All rights reserved.
@@ -43,7 +43,9 @@
 .Cd "pcmcia* at tslot? controller ? socket ?"
 .Sh DESCRIPTION
 .Nm
-is a driver for the PCMCIA part of the TS102 chip found in Tadpole SPARCbooks, the microcontroller interface is supported by 
+is a driver for the PCMCIA part of the TS102 chip found in Tadpole
+SPARCbooks.
+The microcontroller interface is supported by
 .Xr tctrl 4 .
 .Sh KERNEL THREAD
 Each
