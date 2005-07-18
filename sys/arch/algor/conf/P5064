@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.34.2.2 2005/06/01 17:19:41 riz Exp $
+#	$NetBSD: P5064,v 1.34.2.3 2005/07/18 21:13:56 riz Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.34.2.2 $"
+#ident 		"P5064-$Revision: 1.34.2.3 $"
 
 maxusers 32
 
@@ -48,6 +48,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
