@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.22.14.1 2005/04/28 10:48:39 tron Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.22.14.2 2005/07/18 21:06:51 riz Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.22.14.1 2005/04/28 10:48:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.22.14.2 2005/07/18 21:06:51 riz Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
