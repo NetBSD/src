@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.29 2005/02/18 21:05:53 dsl Exp $
+# 	$NetBSD: LIBERO,v 1.29.4.1 2005/07/18 21:13:38 riz Exp $
 
 #	NEWS1750 config file;
 #
@@ -77,6 +77,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
