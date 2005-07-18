@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.26 2005/07/07 14:20:55 snj Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.27 2005/07/18 03:48:49 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -296,4 +296,11 @@ src/gnu/usr.bin/cvs/libdiff/Makefile		patch
 	by the pullup of ticket #2927.
 	[tron, ticket #2933]
 
+
+usr.bin/su/su.1					1.44
+usr.bin/su/su.c					1.65
+
+	Set LOGNAME in the new environment (in addition to USER);
+	fixes PR bin/30670 from Pavel Cahyna.
+	[kleink, ticket #2070]
 
