@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.13 2005/06/20 02:11:57 briggs Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.14 2005/07/18 15:21:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.13 2005/06/20 02:11:57 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.14 2005/07/18 15:21:48 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,9 +115,10 @@ ata_raid_type_name(u_int type)
 {
 	static const char *ata_raid_type_names[] = {
 		"Promise",
+		"Adaptec",
 	};
 
-	if (type <= ATA_RAID_TYPE_MAX)
+	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
 		return (ata_raid_type_names[type]);
 
 	return (NULL);
