@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.36 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: GENERIC,v 1.36.2.1 2005/07/18 21:13:56 riz Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.36.2.1 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -85,6 +85,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
