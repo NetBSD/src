@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.18.2.1 2005/04/17 11:42:03 tron Exp $
+#	$NetBSD: SMDK2410,v 1.18.2.2 2005/07/18 21:14:16 riz Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -69,6 +69,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
