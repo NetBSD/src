@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214 2005/02/25 13:49:07 simonb Exp $
+# $NetBSD: GENERIC,v 1.214.2.1 2005/07/18 21:13:46 riz Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214 $"
+#ident 		"GENERIC-$Revision: 1.214.2.1 $"
 
 
 maxusers	8
@@ -63,6 +63,7 @@ options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
