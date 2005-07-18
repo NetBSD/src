@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165.2.2 2005/05/07 11:34:49 tron Exp $
+# $NetBSD: GENERIC,v 1.165.2.3 2005/07/18 21:14:42 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165.2.2 $"
+#ident 		"GENERIC-$Revision: 1.165.2.3 $"
 
 maxusers	16
 
@@ -102,6 +102,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
