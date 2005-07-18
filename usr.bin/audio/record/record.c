@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.36.2.2 2004/07/23 18:07:14 tron Exp $	*/
+/*	$NetBSD: record.c,v 1.36.2.2.2.1 2005/07/18 04:11:00 riz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.36.2.2 2004/07/23 18:07:14 tron Exp $");
+__RCSID("$NetBSD: record.c,v 1.36.2.2.2.1 2005/07/18 04:11:00 riz Exp $");
 #endif
 
 
@@ -189,6 +189,43 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc != 1)
+		usage();
+
+	/*
+	 * convert the encoding string into a value.
+	 */
+	if (encoding_str) {
+		encoding = audio_enc_to_val(encoding_str);
+		if (encoding == -1)
+			errx(1, "unknown encoding, bailing...");
+	}
+#if 0
+	else
+		encoding = AUDIO_ENCODING_ULAW;
+#endif
+
+	/*
+	 * open the output file
+	 */
+	if (argv[0][0] != '-' && argv[0][1] != '\0') {
+		/* intuit the file type from the name */
+		if (format == AUDIO_FORMAT_DEFAULT)
+		{
+			size_t flen = strlen(*argv);
+			const char *arg = *argv;
+
+			if (strcasecmp(arg + flen - 3, ".au") == 0)
+				format = AUDIO_FORMAT_SUN;
+			else if (strcasecmp(arg + flen - 4, ".wav") == 0)
+				format = AUDIO_FORMAT_WAV;
+		}
+		outfd = open(*argv, O_CREAT|(aflag ? O_APPEND : O_TRUNC)|O_WRONLY, 0666);
+		if (outfd < 0)
+			err(1, "could not open %s", *argv);
+	} else
+		outfd = STDOUT_FILENO;
+
 	/*
 	 * open the audio device
 	 */
@@ -220,40 +257,6 @@ main(argc, argv)
 		err(1, "couldn't malloc buffer of %d size", (int)bufsize);
 
 	/*
-	 * open the output file
-	 */
-	if (argc != 1)
-		usage();
-	if (argv[0][0] != '-' && argv[0][1] != '\0') {
-		/* intuit the file type from the name */
-		if (format == AUDIO_FORMAT_DEFAULT)
-		{
-			size_t flen = strlen(*argv);
-			const char *arg = *argv;
-
-			if (strcasecmp(arg + flen - 3, ".au") == 0)
-				format = AUDIO_FORMAT_SUN;
-			else if (strcasecmp(arg + flen - 4, ".wav") == 0)
-				format = AUDIO_FORMAT_WAV;
-		}
-		outfd = open(*argv, O_CREAT|(aflag ? O_APPEND : O_TRUNC)|O_WRONLY, 0666);
-		if (outfd < 0)
-			err(1, "could not open %s", *argv);
-	} else
-		outfd = STDOUT_FILENO;
-
-	/*
-	 * convert the encoding string into a value.
-	 */
-	if (encoding_str) {
-		encoding = audio_enc_to_val(encoding_str);
-		if (encoding == -1)
-			errx(1, "unknown encoding, bailing...");
-	}
-	else
-		encoding = AUDIO_ENCODING_ULAW;
-
-	/*
 	 * set up audio device for recording with the speified parameters
 	 */
 	AUDIO_INITINFO(&info);
@@ -261,14 +264,17 @@ main(argc, argv)
 	/*
 	 * for these, get the current values for stuffing into the header
 	 */
-#define SETINFO(x)	if (x) info.record.x = x; else x = oinfo.record.x
-	SETINFO (sample_rate);
-	SETINFO (channels);
-	SETINFO (precision);
-	SETINFO (encoding);
-	SETINFO (gain);
-	SETINFO (port);
-	SETINFO (balance);
+#define SETINFO(x)	if (x) \
+				info.record.x = x; \
+			else \
+				info.record.x = x = oinfo.record.x;
+	SETINFO (sample_rate)
+	SETINFO (channels)
+	SETINFO (precision)
+	SETINFO (encoding)
+	SETINFO (gain)
+	SETINFO (port)
+	SETINFO (balance)
 #undef SETINFO
 
 	if (monitor_gain)
@@ -446,8 +452,10 @@ write_header_sun(hdrp, lenp, leftp)
 	auh.magic = htonl(AUDIO_FILE_MAGIC);
 	if (outfd == STDOUT_FILENO)
 		auh.data_size = htonl(AUDIO_UNKNOWN_SIZE);
-	else
+	else if (total_size != -1)
 		auh.data_size = htonl(total_size);
+	else
+		auh.data_size = 0;
 	auh.encoding = htonl(sunenc);
 	auh.sample_rate = htonl(sample_rate);
 	auh.channels = htonl(channels);
@@ -626,8 +634,10 @@ fmt_pcm:
 	/* data length */
 	if (outfd == STDOUT_FILENO)
 		datalen = 0;
-	else
+	else if (total_size != -1)
 		datalen = total_size;
+	else
+		datalen = 0;
 
 	/* file length */
 	filelen = 4 + (8 + fmtsz) + (8 + datalen);
