@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194.4.4 2005/06/09 18:14:11 snj Exp $
+# $NetBSD: GENERIC,v 1.194.4.5 2005/07/18 21:13:11 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194.4.4 $"
+#ident 		"GENERIC-$Revision: 1.194.4.5 $"
 
 maxusers	32
 
@@ -124,6 +124,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
