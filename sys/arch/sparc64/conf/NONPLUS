@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.48.2.1 2005/06/18 05:59:14 riz Exp $
+# 	$NetBSD: NONPLUS,v 1.48.2.2 2005/07/18 21:14:02 riz Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -156,6 +156,7 @@ options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 options 	GATEWAY		# packet forwarding ("router switch")
