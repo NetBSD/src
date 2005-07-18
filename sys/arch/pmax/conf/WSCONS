@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.11 2005/02/25 13:46:51 simonb Exp $
+# $NetBSD: WSCONS,v 1.11.2.1 2005/07/18 21:13:00 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.11 $"
+#ident		"GENERIC-$Revision: 1.11.2.1 $"
 
 maxusers	64
 
@@ -121,6 +121,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
