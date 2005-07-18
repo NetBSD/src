@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.74.4.1 2005/07/18 04:01:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.74.4.1 2005/07/18 04:01:29 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,8 +309,9 @@ uipc_usrreq(so, req, m, nam, control, p)
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, p)))
-			break;
+		if (control && (error = unp_internalize(control, p))) {
+			goto die;
+		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
