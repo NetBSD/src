@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.1.4.2 2005/05/09 17:17:05 tron Exp $
+#	$NetBSD: TWINTAIL,v 1.1.4.3 2005/07/18 21:12:56 riz Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -61,6 +61,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
