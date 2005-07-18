@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.13.4.1 2005/04/17 11:41:09 tron Exp $
+#	$NetBSD: TS7200,v 1.13.4.2 2005/07/18 21:13:04 riz Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -54,6 +54,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
