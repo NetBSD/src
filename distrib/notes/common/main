@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.288 2005/06/30 13:13:50 mishka Exp $
+.\"	$NetBSD: main,v 1.289 2005/07/18 14:13:42 tonio Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1647,6 +1647,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Marc Recht Ta Mt recht@NetBSD.org
 .It Ta Darren Reed Ta Mt darrenr@NetBSD.org
 .It Ta Jeremy C. Reed Ta Mt reed@NetBSD.org
+.It Ta Antoine Reilles Ta Mt tonio@NetBSD.org
 .It Ta Tyler R. Retzlaff Ta Mt rtr@NetBSD.org
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.org
 .It Ta Michael Richardson Ta Mt mcr@NetBSD.org
