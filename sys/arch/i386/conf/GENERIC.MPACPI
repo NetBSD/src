@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.21.4.2 2005/07/02 16:35:04 tron Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.21.4.3 2005/07/18 21:13:47 riz Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.4.2 $"
+#ident 		"GENERIC-$Revision: 1.21.4.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -166,6 +166,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
