@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.178 2005/07/18 14:08:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.179 2005/07/18 21:26:56 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10546,4 +10546,174 @@ crypto/dist/ipsec-tools/src/racoon/oakley.c	1.3
 
 	Fix build problem for NetBSD-vax.
 	[he, ticket #599]
+
+sys/arch/i386/i386/cpu.c			1.23-1.24
+sys/arch/i386/i386/identcpu.c			1.20
+
+	Move "microtime_func = cc_microtime;" to a point after the
+	CPU-specific setup routine is called because some of them
+	"turn off" the TSC because it's broken on those platforms,
+	or not suitable for use as an interval timer.
+	[fair, ticket #562]
+
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.17
+
+	Document that "aes" can be used for IKE and ESP encryption.
+	[tron, ticket #563]
+
+sys/netinet6/ah_input.c				1.48
+sys/netinet6/esp_input.c			1.38
+sys/netinet6/esp_output.c			1.23
+sys/netinet6/files.ipsec			1.3
+sys/netinet6/ipcomp_input.c			1.26
+sys/netkey/key.h				1.19
+sys/netkey/keydb.h				1.25
+
+	Defopt IPSEC_NAT_T.
+	[tron, ticket #565]
+
+sys/arch/acorn26/conf/FOURMEG			1.20
+sys/arch/acorn26/conf/GENERIC			1.31
+sys/arch/acorn26/conf/INSTALL			1.12
+sys/arch/acorn32/conf/EB7500ATX			1.16
+sys/arch/acorn32/conf/GENERIC			1.55
+sys/arch/acorn32/conf/INSTALL			1.32
+sys/arch/acorn32/conf/LOWMEM_WSCONS		1.32
+sys/arch/acorn32/conf/NC			1.31
+sys/arch/acorn32/conf/NC_WSCONS			1.37
+sys/arch/acorn32/conf/RPC_WSCONS		1.37
+sys/arch/algor/conf/P4032			1.32
+sys/arch/algor/conf/P5064			1.38
+sys/arch/algor/conf/P6032			1.32
+sys/arch/alpha/conf/ALPHA			1.207
+sys/arch/alpha/conf/BASIL			1.36
+sys/arch/alpha/conf/FRAU-FARBISSINA		1.41
+sys/arch/alpha/conf/GENERIC			1.267
+sys/arch/amd64/conf/GENERIC			1.56
+sys/arch/amd64/conf/INSTALL			1.35
+sys/arch/amd64/conf/INSTALL_ACPI		1.24
+sys/arch/amiga/conf/AMIGA			1.82
+sys/arch/amiga/conf/DRACO			1.98
+sys/arch/amiga/conf/GENERIC			1.220
+sys/arch/amiga/conf/GENERIC.in			1.38
+sys/arch/amiga/conf/INSTALL			1.57
+sys/arch/amiga/conf/WSCONS			1.36
+sys/arch/arc/conf/ARCTIC			1.34
+sys/arch/arc/conf/GENERIC			1.117
+sys/arch/arc/conf/M403				1.31
+sys/arch/arc/conf/MIMORI			1.36
+sys/arch/arc/conf/PCCONS			1.44
+sys/arch/arc/conf/PICA				1.47
+sys/arch/arc/conf/RAMDISK			1.59
+sys/arch/arc/conf/RPC44				1.16
+sys/arch/atari/conf/GENERIC.in			1.50
+sys/arch/bebox/conf/GENERIC			1.84
+sys/arch/cats/conf/GENERIC			1.84
+sys/arch/cats/conf/INSTALL			1.50
+sys/arch/cobalt/conf/GENERIC			1.75
+sys/arch/cobalt/conf/INSTALL			1.8
+sys/arch/dreamcast/conf/GENERIC			1.55
+sys/arch/evbarm/conf/ADI_BRH			1.27
+sys/arch/evbarm/conf/INTEGRATOR			1.39
+sys/arch/evbarm/conf/IQ31244			1.29
+sys/arch/evbarm/conf/IQ80310			1.45
+sys/arch/evbarm/conf/IQ80321			1.40
+sys/arch/evbarm/conf/IXDP425			1.11
+sys/arch/evbarm/conf/IXM1200			1.15
+sys/arch/evbarm/conf/LUBBOCK			1.16
+sys/arch/evbarm/conf/NAPPI			1.17
+sys/arch/evbarm/conf/SMDK2410			1.20
+sys/arch/evbarm/conf/SMDK2800			1.24
+sys/arch/evbarm/conf/TEAMASA_NPWR		1.41
+sys/arch/evbarm/conf/TEAMASA_NPWR_FC		1.10
+sys/arch/evbarm/conf/TS7200			1.15
+sys/arch/evbarm/conf/TWINTAIL			1.5
+sys/arch/evbarm/conf/ZAO425			1.19
+sys/arch/evbmips/conf/MALTA			1.31
+sys/arch/evbmips/conf/PB1000			1.20
+sys/arch/evbppc/conf/EV64260			1.23
+sys/arch/evbppc/conf/EXPLORA451			1.14
+sys/arch/evbppc/conf/OPENBLOCKS266		1.19
+sys/arch/evbppc/conf/WALNUT			1.21
+sys/arch/hp300/conf/GENERIC			1.116
+sys/arch/hp300/conf/INSTALL			1.24
+sys/arch/hp700/conf/GENERIC			1.48
+sys/arch/hpcarm/conf/IPAQ			1.36
+sys/arch/hpcarm/conf/JORNADA720			1.42
+sys/arch/hpcmips/conf/GENERIC			1.169
+sys/arch/hpcmips/conf/LROUTER			1.25
+sys/arch/hpcmips/conf/MPC303			1.34
+sys/arch/hpcmips/conf/TX3912			1.58
+sys/arch/hpcmips/conf/TX3922			1.64
+sys/arch/hpcmips/conf/VR41XX			1.26
+sys/arch/i386/conf/GENERIC			1.684
+sys/arch/i386/conf/GENERIC.MPACPI		1.35
+sys/arch/i386/conf/GENERIC_LAPTOP		1.146
+sys/arch/i386/conf/GENERIC_PS2TINY		1.36
+sys/arch/i386/conf/IOPENER			1.62
+sys/arch/i386/conf/LAMB				1.52
+sys/arch/i386/conf/NET4501			1.35
+sys/arch/i386/conf/SWINGER			1.67
+sys/arch/i386/conf/VIRTUALPC			1.23
+sys/arch/i386/conf/XEN0				1.6
+sys/arch/i386/conf/XENU				1.3
+sys/arch/iyonix/conf/GENERIC			1.12
+sys/arch/luna68k/conf/GENERIC			1.59
+sys/arch/mac68k/conf/GENERIC			1.159
+sys/arch/mac68k/conf/GENERICSBC			1.43
+sys/arch/mac68k/conf/SMALLRAM			1.18
+sys/arch/macppc/conf/GENERIC			1.202
+sys/arch/mipsco/conf/RC3230			1.23
+sys/arch/mmeye/conf/GENERIC			1.68
+sys/arch/mvme68k/conf/GENERIC			1.56
+sys/arch/mvmeppc/conf/MVME1600			1.17
+sys/arch/netwinder/conf/GENERIC			1.63
+sys/arch/news68k/conf/GENERIC			1.65
+sys/arch/news68k/conf/GENERIC_TINY		1.39
+sys/arch/news68k/conf/LIBERO			1.31
+sys/arch/news68k/conf/NEWS1200			1.30
+sys/arch/newsmips/conf/GENERIC			1.79
+sys/arch/next68k/conf/GENERIC			1.89
+sys/arch/next68k/conf/SLAB			1.26
+sys/arch/ofppc/conf/BRIQ			1.19
+sys/arch/ofppc/conf/GENERIC			1.78
+sys/arch/pc532/conf/BULLBOX			1.20
+sys/arch/pc532/conf/GENERIC			1.50
+sys/arch/pdp10/conf/GENERIC			1.13
+sys/arch/pmax/conf/GENERIC			1.130
+sys/arch/pmax/conf/WSCONS			1.13
+sys/arch/pmppc/conf/INSTALL			1.17
+sys/arch/pmppc/conf/PMPPC			1.27
+sys/arch/prep/conf/GENERIC			1.95
+sys/arch/prep/conf/NATSUMI			1.36
+sys/arch/sbmips/conf/GENERIC			1.38
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.33
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.27
+sys/arch/shark/conf/GENERIC			1.46
+sys/arch/sparc/conf/GENERIC			1.172
+sys/arch/sparc/conf/KRUPS			1.27
+sys/arch/sparc/conf/MRCOFFEE			1.9
+sys/arch/sparc64/conf/GENERIC32			1.110
+sys/arch/sparc64/conf/NONPLUS			1.50
+sys/arch/sparc64/conf/POWEROFSEVEN.inc		1.35
+sys/arch/sparc64/conf/SPLODE			1.36
+sys/arch/sun2/conf/DISKLESS			1.21
+sys/arch/sun2/conf/FOURMEG			1.24
+sys/arch/sun2/conf/GENERIC			1.42
+sys/arch/sun2/conf/INSTALL			1.22
+sys/arch/sun2/conf/RAMDISK			1.23
+sys/arch/sun2/conf/VME				1.16
+sys/arch/sun3/conf/GENERIC			1.117
+sys/arch/sun3/conf/GENERIC3X			1.75
+sys/arch/vax/conf/GENERIC			1.135
+sys/arch/x68k/conf/GENERIC			1.113
+sys/arch/x68k/conf/INSTALL			1.68
+
+	Add (commented out) IPSEC_NAT_T option.
+	[tron, ticket #566]
+
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.8
+
+	Added keysyms for extra keys on Sun Type 6 USB keyboard.
+	[macallan, ticket #592]
 
