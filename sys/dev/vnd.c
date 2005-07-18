@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.115 2005/07/17 00:08:27 hubertf Exp $	*/
+/*	$NetBSD: vnd.c,v 1.116 2005/07/18 16:09:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.115 2005/07/17 00:08:27 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.116 2005/07/18 16:09:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -166,19 +166,19 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.115 2005/07/17 00:08:27 hubertf Exp $");
 #include <dev/vndvar.h>
 
 #if defined(VNDDEBUG) && !defined(DEBUG)
-#define	DEBUG
+#define DEBUG
 #endif
 
 #ifdef DEBUG
 int dovndcluster = 1;
-#define	VDB_FOLLOW	0x01
-#define	VDB_INIT	0x02
-#define	VDB_IO		0x04
-#define	VDB_LABEL	0x08
+#define VDB_FOLLOW	0x01
+#define VDB_INIT	0x02
+#define VDB_IO		0x04
+#define VDB_LABEL	0x08
 int vnddebug = 0x00;
 #endif
 
-#define	vndunit(x)	DISKUNIT(x)
+#define vndunit(x)	DISKUNIT(x)
 
 struct vndxfer {
 	struct buf	*vx_bp;		/* Pointer to parent buffer */
@@ -193,17 +193,17 @@ struct vndbuf {
 	struct vndxfer	*vb_xfer;
 };
 
-#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
-#define	VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
+#define VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
+#define VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
 
-#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
-#define	VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
+#define VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
+#define VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
 
-#define	VNDLABELDEV(dev) \
-	(MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
+#define VNDLABELDEV(dev) \
+    (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 /* called by main() at boot time (XXX: and the LKM driver) */
 void	vndattach(int);
@@ -272,9 +272,9 @@ vndattach(int num)
 
 	for (i = 0; i < numvnd; i++) {
 		vnd_softc[i].sc_unit = i;
-                vnd_softc[i].sc_comp_offsets = NULL;
-                vnd_softc[i].sc_comp_buff = NULL;
-                vnd_softc[i].sc_comp_decombuf = NULL;
+		vnd_softc[i].sc_comp_offsets = NULL;
+		vnd_softc[i].sc_comp_buff = NULL;
+		vnd_softc[i].sc_comp_decombuf = NULL;
 		bufq_alloc(&vnd_softc[i].sc_tab,
 		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 	}
@@ -535,7 +535,7 @@ vndthread(void *arg)
 		}
 #endif /* VND_COMPRESSION */
 		
- 		bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
+		bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 		addr = bp->b_data;
 		flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
 
@@ -600,7 +600,7 @@ vndthread(void *arg)
 				sz = (1 + nra) * bsize;
 			if (resid < sz)
 				sz = resid;
-#ifdef 	DEBUG
+#ifdef	DEBUG
 			if (vnddebug & VDB_IO)
 				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
 				       " sz 0x%x\n",
@@ -891,113 +891,113 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			goto close_and_exit;
 		}
 
-                /* If using a compressed file, initialize its info */
+		/* If using a compressed file, initialize its info */
 		/* (or abort with an error if kernel has no compression) */
-                if (vio->vnd_flags & VNF_COMP) {
+		if (vio->vnd_flags & VNF_COMP) {
 #ifdef VND_COMPRESSION
-                        struct vnd_comp_header *ch;
-                        int i;
-                        u_int32_t comp_size;
-                        u_int32_t comp_maxsize;
+			struct vnd_comp_header *ch;
+			int i;
+			u_int32_t comp_size;
+			u_int32_t comp_maxsize;
  
-                        /* allocate space for compresed file header */
-                        ch = malloc(sizeof(struct vnd_comp_header),
-                        M_TEMP, M_WAITOK);
+			/* allocate space for compresed file header */
+			ch = malloc(sizeof(struct vnd_comp_header),
+			M_TEMP, M_WAITOK);
  
-                        /* read compressed file header */
-                        error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
-                          sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
-                          IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
-                        if(error) {
-                                free(ch, M_TEMP);
-                                VOP_UNLOCK(nd.ni_vp, 0);
-                                goto close_and_exit;
-                        }
+			/* read compressed file header */
+			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
+			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
+			  IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
+			if(error) {
+				free(ch, M_TEMP);
+				VOP_UNLOCK(nd.ni_vp, 0);
+				goto close_and_exit;
+			}
  
-                        /* save some header info */
-                        vnd->sc_comp_blksz = ntohl(ch->block_size);
-                        /* note last offset is the file byte size */
-                        vnd->sc_comp_numoffs = ntohl(ch->num_blocks)+1;
-                        free(ch, M_TEMP);
-                        if(vnd->sc_comp_blksz % DEV_BSIZE !=0) {
-                                VOP_UNLOCK(nd.ni_vp, 0);
-                                error = EINVAL;
-                                goto close_and_exit;
-                        }
-                        if(sizeof(struct vnd_comp_header) +
-                          sizeof(u_int64_t) * vnd->sc_comp_numoffs >
-                          vattr.va_size) {
-                                VOP_UNLOCK(nd.ni_vp, 0);
-                                error = EINVAL;
-                                goto close_and_exit;
-                        }
+			/* save some header info */
+			vnd->sc_comp_blksz = ntohl(ch->block_size);
+			/* note last offset is the file byte size */
+			vnd->sc_comp_numoffs = ntohl(ch->num_blocks)+1;
+			free(ch, M_TEMP);
+			if(vnd->sc_comp_blksz % DEV_BSIZE !=0) {
+				VOP_UNLOCK(nd.ni_vp, 0);
+				error = EINVAL;
+				goto close_and_exit;
+			}
+			if(sizeof(struct vnd_comp_header) +
+			  sizeof(u_int64_t) * vnd->sc_comp_numoffs >
+			  vattr.va_size) {
+				VOP_UNLOCK(nd.ni_vp, 0);
+				error = EINVAL;
+				goto close_and_exit;
+			}
  
-                        /* set decompressed file size */
-                        vattr.va_size =
-                          (vnd->sc_comp_numoffs - 1) * vnd->sc_comp_blksz;
+			/* set decompressed file size */
+			vattr.va_size =
+			  (vnd->sc_comp_numoffs - 1) * vnd->sc_comp_blksz;
  
-                        /* allocate space for all the compressed offsets */
-                        vnd->sc_comp_offsets =
-                        malloc(sizeof(u_int64_t) * vnd->sc_comp_numoffs,
-                        M_DEVBUF, M_WAITOK);
+			/* allocate space for all the compressed offsets */
+			vnd->sc_comp_offsets =
+			malloc(sizeof(u_int64_t) * vnd->sc_comp_numoffs,
+			M_DEVBUF, M_WAITOK);
  
-                        /* read in the offsets */
-                        error = vn_rdwr(UIO_READ, nd.ni_vp,
-                          (caddr_t)vnd->sc_comp_offsets,
-                          sizeof(u_int64_t) * vnd->sc_comp_numoffs,
-                          sizeof(struct vnd_comp_header), UIO_SYSSPACE,
-                          IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
-                        if(error) {
-                                VOP_UNLOCK(nd.ni_vp, 0);
-                                goto close_and_exit;
-                        }
-                        /*
-                         * find largest block size (used for allocation limit).
-                         * Also convert offset to native byte order.
-                         */
-                        comp_maxsize = 0;
-                        for (i = 0; i < vnd->sc_comp_numoffs - 1; i++) {
-                                vnd->sc_comp_offsets[i] =
-                                  be64toh(vnd->sc_comp_offsets[i]);
-                                comp_size = be64toh(vnd->sc_comp_offsets[i + 1])
-                                  - vnd->sc_comp_offsets[i];
-                                if (comp_size > comp_maxsize)
-                                        comp_maxsize = comp_size;
-                        }
-                        vnd->sc_comp_offsets[vnd->sc_comp_numoffs - 1] =
+			/* read in the offsets */
+			error = vn_rdwr(UIO_READ, nd.ni_vp,
+			  (caddr_t)vnd->sc_comp_offsets,
+			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
+			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
+			  IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
+			if(error) {
+				VOP_UNLOCK(nd.ni_vp, 0);
+				goto close_and_exit;
+			}
+			/*
+			 * find largest block size (used for allocation limit).
+			 * Also convert offset to native byte order.
+			 */
+			comp_maxsize = 0;
+			for (i = 0; i < vnd->sc_comp_numoffs - 1; i++) {
+				vnd->sc_comp_offsets[i] =
+				  be64toh(vnd->sc_comp_offsets[i]);
+				comp_size = be64toh(vnd->sc_comp_offsets[i + 1])
+				  - vnd->sc_comp_offsets[i];
+				if (comp_size > comp_maxsize)
+					comp_maxsize = comp_size;
+			}
+			vnd->sc_comp_offsets[vnd->sc_comp_numoffs - 1] =
 			  be64toh(vnd->sc_comp_offsets[vnd->sc_comp_numoffs - 1]);
  
-                        /* create compressed data buffer */
-                        vnd->sc_comp_buff = malloc(comp_maxsize,
-                          M_DEVBUF, M_WAITOK);
+			/* create compressed data buffer */
+			vnd->sc_comp_buff = malloc(comp_maxsize,
+			  M_DEVBUF, M_WAITOK);
  
-                        /* create decompressed buffer */
-                        vnd->sc_comp_decombuf = malloc(vnd->sc_comp_blksz,
-                          M_DEVBUF, M_WAITOK);
-                        vnd->sc_comp_buffblk = -1;
+			/* create decompressed buffer */
+			vnd->sc_comp_decombuf = malloc(vnd->sc_comp_blksz,
+			  M_DEVBUF, M_WAITOK);
+			vnd->sc_comp_buffblk = -1;
  
-                        /* Initialize decompress stream */
-                        bzero(&vnd->sc_comp_stream, sizeof(z_stream));
-                        vnd->sc_comp_stream.zalloc = vnd_alloc;
-                        vnd->sc_comp_stream.zfree = vnd_free;
-                        error = inflateInit2(&vnd->sc_comp_stream, MAX_WBITS);
-                        if(error) {
-                                if(vnd->sc_comp_stream.msg)
-                                        printf("vnd%d: compressed file, %s\n",
-                                          unit, vnd->sc_comp_stream.msg);
-                                VOP_UNLOCK(nd.ni_vp, 0);
-                                error = EINVAL;
-                                goto close_and_exit;
-                        }
+			/* Initialize decompress stream */
+			bzero(&vnd->sc_comp_stream, sizeof(z_stream));
+			vnd->sc_comp_stream.zalloc = vnd_alloc;
+			vnd->sc_comp_stream.zfree = vnd_free;
+			error = inflateInit2(&vnd->sc_comp_stream, MAX_WBITS);
+			if(error) {
+				if(vnd->sc_comp_stream.msg)
+					printf("vnd%d: compressed file, %s\n",
+					  unit, vnd->sc_comp_stream.msg);
+				VOP_UNLOCK(nd.ni_vp, 0);
+				error = EINVAL;
+				goto close_and_exit;
+			}
  
-                        vnd->sc_flags |= VNF_COMP | VNF_READONLY;
+			vnd->sc_flags |= VNF_COMP | VNF_READONLY;
 #else /* !VND_COMPRESSION */
 			error = EOPNOTSUPP;
 			goto close_and_exit;
 #endif /* VND_COMPRESSION */
-                }
+		}
  
-                VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp, 0);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -1012,7 +1012,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			/*
 			 * Sanity-check the sector size.
-			 * XXX Don't allow secsize < DEV_BSIZE.  Should
+			 * XXX Don't allow secsize < DEV_BSIZE.	 Should
 			 * XXX we?
 			 */
 			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
@@ -1111,19 +1111,19 @@ close_and_exit:
 		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, p);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
-                /* free any allocated memory (for compressed file) */
-                if(vnd->sc_comp_offsets) {
-                        free(vnd->sc_comp_offsets, M_DEVBUF);
-                        vnd->sc_comp_offsets = NULL;
-                }
-                if(vnd->sc_comp_buff) {
-                        free(vnd->sc_comp_buff, M_DEVBUF);
-                        vnd->sc_comp_buff = NULL;
-                }
-                if(vnd->sc_comp_decombuf) {
-                        free(vnd->sc_comp_decombuf, M_DEVBUF);
-                        vnd->sc_comp_decombuf = NULL;
-                }
+		/* free any allocated memory (for compressed file) */
+		if(vnd->sc_comp_offsets) {
+			free(vnd->sc_comp_offsets, M_DEVBUF);
+			vnd->sc_comp_offsets = NULL;
+		}
+		if(vnd->sc_comp_buff) {
+			free(vnd->sc_comp_buff, M_DEVBUF);
+			vnd->sc_comp_buff = NULL;
+		}
+		if(vnd->sc_comp_decombuf) {
+			free(vnd->sc_comp_decombuf, M_DEVBUF);
+			vnd->sc_comp_decombuf = NULL;
+		}
 #endif /* VND_COMPRESSION */
 		vndunlock(vnd);
 		return (error);
@@ -1410,21 +1410,21 @@ vndclear(struct vnd_softc *vnd, int myminor)
 		tsleep(&vnd->sc_kthread, PRIBIO, "vnthr", 0);
 
 #ifdef VND_COMPRESSION
-        /* free the compressed file buffers */
-        if(vnd->sc_flags & VNF_COMP) {
-                if(vnd->sc_comp_offsets) {
-                        free(vnd->sc_comp_offsets, M_DEVBUF);
-                        vnd->sc_comp_offsets = NULL;
-                }
-                if(vnd->sc_comp_buff) {
-                        free(vnd->sc_comp_buff, M_DEVBUF);
-                        vnd->sc_comp_buff = NULL;
-                }
-                if(vnd->sc_comp_decombuf) {
-                        free(vnd->sc_comp_decombuf, M_DEVBUF);
-                        vnd->sc_comp_decombuf = NULL;
-                }
-        }
+	/* free the compressed file buffers */
+	if(vnd->sc_flags & VNF_COMP) {
+		if(vnd->sc_comp_offsets) {
+			free(vnd->sc_comp_offsets, M_DEVBUF);
+			vnd->sc_comp_offsets = NULL;
+		}
+		if(vnd->sc_comp_buff) {
+			free(vnd->sc_comp_buff, M_DEVBUF);
+			vnd->sc_comp_buff = NULL;
+		}
+		if(vnd->sc_comp_decombuf) {
+			free(vnd->sc_comp_decombuf, M_DEVBUF);
+			vnd->sc_comp_decombuf = NULL;
+		}
+	}
 #endif /* VND_COMPRESSION */
 	vnd->sc_flags &=
 	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL
@@ -1607,124 +1607,115 @@ vndunlock(struct vnd_softc *sc)
 #ifdef VND_COMPRESSION
 /* compressed file read */
 static void
-compstrategy(bp, bn)
-       struct buf *bp;
-       off_t bn;
+compstrategy(struct buf *bp, off_t bn)
 {
-       int error;
-       int unit = vndunit(bp->b_dev);
-       struct vnd_softc *vnd = &vnd_softc[unit];
-       u_int32_t comp_block;
-       struct uio auio;
-       caddr_t addr;
-       int s;
+	int error;
+	int unit = vndunit(bp->b_dev);
+	struct vnd_softc *vnd = &vnd_softc[unit];
+	u_int32_t comp_block;
+	struct uio auio;
+	caddr_t addr;
+	int s;
 
-       /* set up constants for data move */
-       auio.uio_rw = UIO_READ;
-       auio.uio_segflg = bp->b_flags & B_PHYS ? UIO_USERSPACE : UIO_SYSSPACE;
-       auio.uio_procp = bp->b_proc;
+	/* set up constants for data move */
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = bp->b_flags & B_PHYS ? UIO_USERSPACE : UIO_SYSSPACE;
+	auio.uio_procp = bp->b_proc;
 
-       /* read, and transfer the data */
-       addr = bp->b_data;
-       s = splbio();
-       while(bp->b_resid > 0) {
-               unsigned length;
-               size_t length_in_buffer;
-               u_int32_t offset_in_buffer;
-               struct iovec aiov;
+	/* read, and transfer the data */
+	addr = bp->b_data;
+	s = splbio();
+	while (bp->b_resid > 0) {
+		unsigned length;
+		size_t length_in_buffer;
+		u_int32_t offset_in_buffer;
+		struct iovec aiov;
 
-               /* calculate the compressed block number */
-               comp_block = bn / (off_t)vnd->sc_comp_blksz;
+		/* calculate the compressed block number */
+		comp_block = bn / (off_t)vnd->sc_comp_blksz;
 
-               /* check for good block number */
-               if(comp_block >= vnd->sc_comp_numoffs) {
-                       bp->b_error = EINVAL;
-                       bp->b_flags |= B_ERROR;
-		       splx(s);
-                       return;
-               }
+		/* check for good block number */
+		if (comp_block >= vnd->sc_comp_numoffs) {
+			bp->b_error = EINVAL;
+			bp->b_flags |= B_ERROR;
+			splx(s);
+			return;
+		}
 
-               /* read in the compressed block, if not in buffer */
-               if (comp_block != vnd->sc_comp_buffblk) {
-                       length = vnd->sc_comp_offsets[comp_block + 1] -
-                                vnd->sc_comp_offsets[comp_block];
-		       vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
-                       error = vn_rdwr(UIO_READ, vnd->sc_vp, vnd->sc_comp_buff,
-                         length, vnd->sc_comp_offsets[comp_block],
-                         UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
-                       if(error) {
-                               bp->b_error = error;
-                               bp->b_flags |= B_ERROR;
-			       VOP_UNLOCK(vnd->sc_vp, 0);
-			       splx(s);
-                               return;
-                       }
-                       /* uncompress the buffer */
-                       vnd->sc_comp_stream.next_in = vnd->sc_comp_buff;
-                       vnd->sc_comp_stream.avail_in = length;
-                       vnd->sc_comp_stream.next_out = vnd->sc_comp_decombuf;
-                       vnd->sc_comp_stream.avail_out = vnd->sc_comp_blksz;
-                       inflateReset(&vnd->sc_comp_stream);
-                       error = inflate(&vnd->sc_comp_stream, Z_FINISH);
-                       if(error != Z_STREAM_END) {
-                               if(vnd->sc_comp_stream.msg)
-                                       printf("%s: compressed file, %s\n",
-                                         vnd->sc_xname,
-                                         vnd->sc_comp_stream.msg);
-                               bp->b_error = EBADMSG;
-                               bp->b_flags |= B_ERROR;
-			       VOP_UNLOCK(vnd->sc_vp, 0);
-			       splx(s);
-                               return;
-                       }
-                       vnd->sc_comp_buffblk = comp_block;
-		       VOP_UNLOCK(vnd->sc_vp, 0);
-               }
+		/* read in the compressed block, if not in buffer */
+		if (comp_block != vnd->sc_comp_buffblk) {
+			length = vnd->sc_comp_offsets[comp_block + 1] -
+			    vnd->sc_comp_offsets[comp_block];
+			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
+			error = vn_rdwr(UIO_READ, vnd->sc_vp, vnd->sc_comp_buff,
+			    length, vnd->sc_comp_offsets[comp_block],
+			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
+			if (error) {
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				VOP_UNLOCK(vnd->sc_vp, 0);
+				splx(s);
+				return;
+			}
+			/* uncompress the buffer */
+			vnd->sc_comp_stream.next_in = vnd->sc_comp_buff;
+			vnd->sc_comp_stream.avail_in = length;
+			vnd->sc_comp_stream.next_out = vnd->sc_comp_decombuf;
+			vnd->sc_comp_stream.avail_out = vnd->sc_comp_blksz;
+			inflateReset(&vnd->sc_comp_stream);
+			error = inflate(&vnd->sc_comp_stream, Z_FINISH);
+			if (error != Z_STREAM_END) {
+				if (vnd->sc_comp_stream.msg)
+					printf("%s: compressed file, %s\n",
+					    vnd->sc_xname,
+					    vnd->sc_comp_stream.msg);
+				bp->b_error = EBADMSG;
+				bp->b_flags |= B_ERROR;
+				VOP_UNLOCK(vnd->sc_vp, 0);
+				splx(s);
+				return;
+			}
+			vnd->sc_comp_buffblk = comp_block;
+			VOP_UNLOCK(vnd->sc_vp, 0);
+		}
 
-               /* transfer the usable uncompressed data */
-               offset_in_buffer = bn % (off_t)vnd->sc_comp_blksz;
-               length_in_buffer = vnd->sc_comp_blksz - offset_in_buffer;
-               if(length_in_buffer > bp->b_resid)
-                       length_in_buffer = bp->b_resid;
-               auio.uio_iov = &aiov;
-               auio.uio_iovcnt = 1;
-               aiov.iov_base = addr;
-               aiov.iov_len = length_in_buffer;
-               auio.uio_resid = aiov.iov_len;
-               auio.uio_offset = 0;
-               error = uiomove(vnd->sc_comp_decombuf + offset_in_buffer,
-                 length_in_buffer, &auio);
-               if(error) {
-                       bp->b_error = error;
-                       bp->b_flags |= B_ERROR;
-		       splx(s);
-                       return;
-               }
+		/* transfer the usable uncompressed data */
+		offset_in_buffer = bn % (off_t)vnd->sc_comp_blksz;
+		length_in_buffer = vnd->sc_comp_blksz - offset_in_buffer;
+		if (length_in_buffer > bp->b_resid)
+			length_in_buffer = bp->b_resid;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		aiov.iov_base = addr;
+		aiov.iov_len = length_in_buffer;
+		auio.uio_resid = aiov.iov_len;
+		auio.uio_offset = 0;
+		error = uiomove(vnd->sc_comp_decombuf + offset_in_buffer,
+		    length_in_buffer, &auio);
+		if (error) {
+			bp->b_error = error;
+			bp->b_flags |= B_ERROR;
+			splx(s);
+			return;
+		}
 
-               bn += length_in_buffer;
-               addr += length_in_buffer;
-               bp->b_resid -= length_in_buffer;
-       }
-       splx(s);
+		bn += length_in_buffer;
+		addr += length_in_buffer;
+		bp->b_resid -= length_in_buffer;
+	}
+	splx(s);
 }
 
 /* compression memory allocation routines */
 static void *
-vnd_alloc(aux, items, siz)
-       void *aux;
-       u_int items;
-       u_int siz;
+vnd_alloc(void *aux, u_int items, u_int siz)
 {
-       void *ptr;
-       ptr = malloc(items * siz, M_TEMP, M_NOWAIT);
-       return ptr;
+	return alloc(items * siz, M_TEMP, M_NOWAIT);
 }
 
 static void
-vnd_free(aux, ptr)
-       void *aux;
-       void *ptr;
+vnd_free(void *aux, void *ptr)
 {
-       free(ptr, M_TEMP);
+	free(ptr, M_TEMP);
 }
 #endif /* VND_COMPRESSION */
