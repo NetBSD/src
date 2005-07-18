@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.688 2005/07/17 00:08:28 hubertf Exp $
+# $NetBSD: GENERIC,v 1.689 2005/07/18 12:02:21 augustss Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.688 $"
+#ident 		"GENERIC-$Revision: 1.689 $"
 
 maxusers	32		# estimated number of users
 
@@ -1012,6 +1012,9 @@ ucom*	at ubsa? portno ?
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 
+uipaq*	at uhub? port ?		# iPAQ PDAs
+ucom*	at uipaq? portno ?
+
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 
@@ -1055,6 +1058,7 @@ ugen*	at uhub? port ?
 oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
+
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
@@ -1064,6 +1068,7 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
+
 
 # Audio Devices
 
