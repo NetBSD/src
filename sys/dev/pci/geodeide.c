@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.1.2.3 2004/07/28 10:56:06 tron Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.1.2.3.2.1 2005/07/18 03:57:33 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.1.2.3 2004/07/28 10:56:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.1.2.3.2.1 2005/07/18 03:57:33 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.1.2.3 2004/07/28 10:56:06 tron Exp $"
 static void geodeide_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
 static void geodeide_setup_channel(struct wdc_channel *);
+static int geodeide_dma_init(void *, int, int, void *, size_t, int);
 
 static int  geodeide_match(struct device *, struct cfdata *, void *);
 static void geodeide_attach(struct device *, struct device *, void *);
@@ -121,6 +122,11 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.cap = WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA |
 		    WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		/*
+		 * XXXJRT What chip revisions actually need the DMA
+		 * alignment work-around?
+		 */
+		sc->sc_wdcdev.dma_init = geodeide_dma_init;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
@@ -248,4 +254,19 @@ geodeide_setup_channel(struct wdc_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
+}
+
+static int
+geodeide_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
+{
+
+	/*
+	 * If the buffer is not properly aligned, we can't allow DMA
+	 * and need to fall back to PIO.
+	 */
+	if (((uintptr_t)databuf) & 0xf)
+		return (EINVAL);
+
+	return (pciide_dma_init(v, channel, drive, databuf, datalen, flags));
 }
