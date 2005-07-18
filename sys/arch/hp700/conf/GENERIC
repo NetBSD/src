@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43.4.1 2005/06/01 17:20:03 riz Exp $
+# $NetBSD: GENERIC,v 1.43.4.2 2005/07/18 21:12:53 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.43.4.1 $"
+#ident 		"GENERIC-$Revision: 1.43.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -127,6 +127,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
