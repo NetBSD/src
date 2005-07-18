@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.493 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.494 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -56,6 +56,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	spell(1): brought back from the dead. [perry 20050629]
 	ching(6):  brought back from the dead. [perry 20050630]
 	pf(4): PF from OpenBSD 3.7 imported [peter 20050701]
+	i386: WSDISPLAY_SCROLLSUPPORT is now enabled in GENERIC kernel.
+		[rpaulo 20050702]
 	awk(1): Upgrade to nawk 20050424 [jdolecek 20050702]
 	ieee1394: ieee1394 from FreeBSD imported [kiyohara 20050711]
 	ral(4): Add driver for Ralink PCI/Cardbus/USB wlan adapters
