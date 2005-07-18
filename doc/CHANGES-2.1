@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.139 2005/07/10 20:46:13 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.140 2005/07/18 04:15:28 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2869,4 +2869,43 @@ share/termcap/termcap.src			1.94
 
 	Enable characters in rxvt. Closes PR 30655.
 	[wiz, ticket #2066]
+
+share/man/man7/environ.7			1.21
+
+	Document LOGNAME; from Pavel Cahyna in PR misc/30671.
+	[kleink, ticket #2069]
+
+usr.bin/su/su.1					1.44
+usr.bin/su/su.c					1.65
+
+	Set LOGNAME in the new environment (in addition to USER);
+	fixes PR bin/30670 from Pavel Cahyna.
+	[kleink, ticket #2070]
+
+sys/dev/ata/ata_wdc.c				1.82
+sys/dev/pci/geodeide.c				1.10
+sys/dev/scsipi/atapi_wdc.c			1.95
+
+	When starting an ATA or ATAPI transfer, handle the case where  
+	(*dma_init)() returns EINVAL, indicating that DMA cannot be
+	done for this transfer.  Fall back to PIO in this case.
+	Add a geodeide_dma_init() routine that checks to make sure that  
+	transfers start on a 16 byte boundary, returning EINVAL if not.
+	Works around a chip bug that causes a hard system hang.
+	Problem reported and patch tested by Erik Fair.
+	[thorpej, ticket #2072]
+
+sys/kern/uipc_usrreq.c				1.83
+
+	uipc_usrreq: plug mbuf leak.
+	[yamt, ticket #2940]
+
+usr.bin/audio/play/play.c			1.45
+usr.bin/audio/record/record.c			1.39-1.41
+
+	Check that an output file is given before doing any other work;
+	avoids touching the audio device and then printing an error.
+	Change the default encoding to the device's default (PR#30612).
+	Allow playback of empty files to exit gracefully.
+	[mrg, ticket #5498]
 
