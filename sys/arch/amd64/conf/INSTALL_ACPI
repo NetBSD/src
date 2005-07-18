@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.18.4.3 2005/05/07 14:25:59 riz Exp $
+# $NetBSD: INSTALL_ACPI,v 1.18.4.4 2005/07/18 21:14:32 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.18.4.3 $"
+#ident 		"INSTALL-$Revision: 1.18.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -101,6 +101,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
