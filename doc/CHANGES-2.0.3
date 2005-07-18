@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.27 2005/07/18 03:48:49 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.28 2005/07/18 04:04:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -303,4 +303,9 @@ usr.bin/su/su.c					1.65
 	Set LOGNAME in the new environment (in addition to USER);
 	fixes PR bin/30670 from Pavel Cahyna.
 	[kleink, ticket #2070]
+
+sys/kern/uipc_usrreq.c				1.83
+
+	uipc_usrreq: plug mbuf leak.
+	[yamt, ticket #2940]
 
