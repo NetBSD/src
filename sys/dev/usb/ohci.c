@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.166 2005/05/31 19:21:08 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.167 2005/07/18 11:08:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.166 2005/05/31 19:21:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.167 2005/07/18 11:08:00 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,7 +838,6 @@ ohci_init(ohci_softc_t *sc)
 	OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 	/* disable all interrupts and then switch on all desired interrupts */
 	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
-	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 	/* switch on desired functional features */
 	ctl = OREAD4(sc, OHCI_CONTROL);
 	ctl &= ~(OHCI_CBSR_MASK | OHCI_LES | OHCI_HCFS_MASK | OHCI_IR);
@@ -891,6 +890,10 @@ ohci_init(ohci_softc_t *sc)
 #endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
+
+	/* Finally, turn on interrupts. */
+	DPRINTFN(1,("ohci_init: enabling\n"));
+	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 
 	return (USBD_NORMAL_COMPLETION);
 

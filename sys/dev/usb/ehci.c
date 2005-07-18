@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.104 2005/05/30 04:21:39 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.105 2005/07/18 11:08:00 augustss Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.105 2005/07/18 11:08:00 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -496,9 +496,6 @@ ehci_init(ehci_softc_t *sc)
 
 	lockinit(&sc->sc_doorbell_lock, PZERO, "ehcidb", 0, 0);
 
-	/* Enable interrupts */
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
-
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
 		 EHCI_CMD_ITC_2 | /* 2 microframes interrupt delay */
@@ -520,6 +517,10 @@ ehci_init(ehci_softc_t *sc)
 		aprint_error("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
 		return (USBD_IOERROR);
 	}
+
+	/* Enable interrupts */
+	DPRINTFN(1,("ehci_init: enabling\n"));
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 	return (USBD_NORMAL_COMPLETION);
 
