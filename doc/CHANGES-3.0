@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.177 2005/07/13 09:28:50 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.178 2005/07/18 14:08:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10541,4 +10541,9 @@ sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.51
 	(Otherwise frame32 is undefined and compilation of the netbsd32 lkm
 	fails.)
 	[martin, ticket #585]
+
+crypto/dist/ipsec-tools/src/racoon/oakley.c	1.3
+
+	Fix build problem for NetBSD-vax.
+	[he, ticket #599]
 
