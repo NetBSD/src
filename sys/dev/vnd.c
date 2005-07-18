@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.116 2005/07/18 16:09:37 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.117 2005/07/18 16:36:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.116 2005/07/18 16:09:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.117 2005/07/18 16:36:29 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1710,7 +1710,7 @@ compstrategy(struct buf *bp, off_t bn)
 static void *
 vnd_alloc(void *aux, u_int items, u_int siz)
 {
-	return alloc(items * siz, M_TEMP, M_NOWAIT);
+	return malloc(items * siz, M_TEMP, M_NOWAIT);
 }
 
 static void
