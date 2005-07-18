@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.72 2005/02/18 21:05:54 dsl Exp $
+# $NetBSD: GENERIC3X,v 1.72.4.1 2005/07/18 21:14:45 riz Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -94,6 +94,7 @@ options 	INET		# IP prototol stack support
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
