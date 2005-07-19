@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.12 2003/08/07 11:14:38 agc Exp $	*/
+/*	$NetBSD: head.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.12 2003/08/07 11:14:38 agc Exp $");
+__RCSID("$NetBSD: head.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ ishead(char linebuf[])
 
 /*ARGSUSED*/
 void
-fail(char linebuf[], char reason[])
+fail(char linebuf[], const char reason[])
 {
 
 	/*
@@ -165,7 +165,7 @@ char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
 char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
 
 int
-isdate(char date[])
+isdate(const char date[])
 {
 
 	return cmatch(date, ctype) || 
@@ -178,7 +178,7 @@ isdate(char date[])
  * Return 1 if they match, 0 if they don't
  */
 int
-cmatch(char *cp, char *tp)
+cmatch(const char *cp, char *tp)
 {
 
 	while (*cp && *tp)

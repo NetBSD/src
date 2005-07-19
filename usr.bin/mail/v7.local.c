@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.14 2003/08/07 11:14:42 agc Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.15 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: v7.local.c,v 1.14 2003/08/07 11:14:42 agc Exp $");
+__RCSID("$NetBSD: v7.local.c,v 1.15 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: v7.local.c,v 1.14 2003/08/07 11:14:42 agc Exp $");
  * mail is queued).
  */
 void
-findmail(char *user, char *buf)
+findmail(const char *user, char *buf)
 {
 	char *mbox;
 

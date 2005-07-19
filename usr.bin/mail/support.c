@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.12 2004/10/30 20:44:39 dsl Exp $	*/
+/*	$NetBSD: support.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.12 2004/10/30 20:44:39 dsl Exp $");
+__RCSID("$NetBSD: support.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ touch(struct message *mp)
  * Return true if it is.
  */
 int
-isdir(char name[])
+isdir(const char name[])
 {
 	struct stat sbuf;
 
@@ -231,7 +231,7 @@ ishfield(const char linebuf[], char *colon, const char field[])
  * Copy a string, lowercasing it as we go.
  */
 void
-istrcpy(char *dest, char *src)
+istrcpy(char *dest, const char *src)
 {
 
 	do {
@@ -262,7 +262,7 @@ source(void *v)
 {
 	char **arglist = v;
 	FILE *fi;
-	char *cp;
+	const char *cp;
 
 	if ((cp = expand(*arglist)) == NULL)
 		return(1);
@@ -606,7 +606,7 @@ copy(char *s1, char *s2)
  * See if the given header field is supposed to be ignored.
  */
 int
-isign(char *field, struct ignoretab ignoretabs[2])
+isign(const char *field, struct ignoretab ignoretabs[2])
 {
 	char realfld[LINESIZE];
 

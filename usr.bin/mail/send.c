@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.21 2003/08/07 11:14:41 agc Exp $	*/
+/*	$NetBSD: send.c,v 1.22 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.21 2003/08/07 11:14:41 agc Exp $");
+__RCSID("$NetBSD: send.c,v 1.22 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ extern char *tmpdir;
  */
 int
 sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
-	    char *prefix)
+    const char *prefix)
 {
 	long len;
 	FILE *ibuf;
@@ -73,11 +73,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	 * Compute the prefix string, without trailing whitespace
 	 */
 	if (prefix != NULL) {
-		cp2 = 0;
-		for (cp = prefix; *cp; cp++)
-			if (*cp != ' ' && *cp != '\t')
-				cp2 = cp;
-		prefixlen = cp2 == 0 ? 0 : cp2 - prefix + 1;
+		const char *dp, *dp2 = NULL;
+		for (dp = prefix; *dp; dp++)
+			if (*dp != ' ' && *dp != '\t')
+				dp2 = dp;
+		prefixlen = dp2 == 0 ? 0 : dp2 - prefix + 1;
 	}
 	ibuf = setinput(mp);
 	len = mp->m_size;
@@ -231,7 +231,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
  * Output a reasonable looking status field.
  */
 void
-statusput(struct message *mp, FILE *obuf, char *prefix)
+statusput(struct message *mp, FILE *obuf, const char *prefix)
 {
 	char statout[3];
 	char *cp = statout;
@@ -292,9 +292,9 @@ sendmail(void *v)
 void
 mail1(struct header *hp, int printheaders)
 {
-	char *cp;
+	const char *cp;
 	int pid;
-	char **namelist;
+	const char **namelist;
 	struct name *to;
 	FILE *mtf;
 
@@ -351,7 +351,7 @@ mail1(struct header *hp, int printheaders)
 	}
 	namelist = unpack(cat(hp->h_smopts, to));
 	if (debug) {
-		char **t;
+		const char **t;
 
 		printf("Sendmail arguments:");
 		for (t = namelist; *t != NULL; t++)
@@ -386,7 +386,7 @@ mail1(struct header *hp, int printheaders)
 			cp = expand(cp);
 		else
 			cp = _PATH_SENDMAIL;
-		execv(cp, namelist);
+		execv(cp, (char *const *)__UNCONST(namelist));
 		warn("%s", cp);
 		_exit(1);
 	}
@@ -504,7 +504,7 @@ puthead(struct header *hp, FILE *fo, int w)
  * Format the given header line to not exceed 72 characters.
  */
 void
-fmt(char *str, struct name *np, FILE *fo, int comma)
+fmt(const char *str, struct name *np, FILE *fo, int comma)
 {
 	int col, len;
 
@@ -536,7 +536,7 @@ fmt(char *str, struct name *np, FILE *fo, int comma)
 
 /*ARGSUSED*/
 int
-savemail(char name[], FILE *fi)
+savemail(const char name[], FILE *fi)
 {
 	FILE *fo;
 	char buf[BUFSIZ];
