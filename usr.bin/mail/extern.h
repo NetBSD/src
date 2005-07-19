@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2005/07/19 23:07:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.20 2005/07/19 01:38:38 christos Exp $
+ *	$NetBSD: extern.h,v 1.21 2005/07/19 23:07:10 christos Exp $
  */
 
 struct name;
@@ -54,7 +54,7 @@ char	*copyin(char *, char **);
 char	*detract(struct name *, int);
 const char *expand(const char *);
 const char *getdeadletter(void);
-const	char *getname(int);
+const	char *getname(uid_t);
 struct message;
 char	*hfield(const char [], const struct message *);
 FILE	*infix(struct header *, FILE *);
@@ -65,7 +65,7 @@ char	*nextword(char *, char *);
 char	*readtty(const char [], char []);
 char 	*reedit(char *);
 FILE	*run_editor(FILE *, off_t, int, int);
-void	*salloc(int);
+void	*salloc(size_t);
 char	*savestr(const char *);
 FILE	*setinput(const struct message *);
 char	*skin(char *);
@@ -258,3 +258,8 @@ int	 visual(void *);
 int	 wait_child(int);
 int	 wait_command(int);
 int	 writeback(FILE *);
+
+extern const char *version;
+extern char *tmpdir;
+extern const struct cmd cmdtab[];
+extern int wait_status;

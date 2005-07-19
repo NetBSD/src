@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.7 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.8 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)version.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: version.c,v 1.7 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: version.c,v 1.8 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdio.h>
+#include <signal.h>
+#include "extern.h"
 /*
  * Just keep track of the date/sid of this version of Mail.
  * Load this file first to get a "total" Mail version.

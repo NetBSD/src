@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.15 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.16 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: v7.local.c,v 1.15 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: v7.local.c,v 1.16 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ demail(void)
 	 * bytes if possible, since we wouldn't preserve
 	 * owner/permissions otherwise.
 	 */
-	if (value("keep") != NULL || truncate(mailname, 0) < 0)
+	if (value("keep") != NULL || truncate(mailname, (off_t)0) < 0)
 		(void)close(creat(mailname, 0600));
 }
 
@@ -95,6 +95,6 @@ username(void)
 		return np;
 	if ((np = getname(uid = getuid())) != NULL)
 		return np;
-	printf("Cannot associate a name with uid %u\n", (unsigned)uid);
+	(void)printf("Cannot associate a name with uid %u\n", (unsigned)uid);
 	return NULL;
 }

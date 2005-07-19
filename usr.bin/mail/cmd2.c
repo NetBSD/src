@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: cmd2.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
  *
  * More user commands.
  */
-extern int wait_status;
 static int igcomp(const void *, const void *);
 
 /*
@@ -94,7 +93,7 @@ next(void *v)
 			if (*ip2 == 0)
 				ip2 = msgvec;
 		} while (ip2 != ip);
-		printf("No messages applicable\n");
+		(void)printf("No messages applicable\n");
 		return(1);
 	}
 
@@ -115,7 +114,7 @@ next(void *v)
 		if ((mp->m_flag & (MDELETED|MSAVED)) == 0)
 			break;
 	if (mp >= &message[msgCount]) {
-		printf("At EOF\n");
+		(void)printf("At EOF\n");
 		return(0);
 	}
 	dot = mp;
@@ -186,7 +185,7 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *ignoretabs)
 	if (!f) {
 		*msgvec = first(0, MMNORM);
 		if (*msgvec == 0) {
-			printf("No messages to %s.\n", cmd);
+			(void)printf("No messages to %s.\n", cmd);
 			return(1);
 		}
 		msgvec[1] = 0;
@@ -195,8 +194,8 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *ignoretabs)
 		return(1);
 	if ((fn = expand(fn)) == NULL)
 		return(1);
-	printf("\"%s\" ", fn);
-	fflush(stdout);
+	(void)printf("\"%s\" ", fn);
+	(void)fflush(stdout);
 	if (access(fn, 0) >= 0)
 		disp = "[Appended]";
 	else
@@ -210,17 +209,17 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *ignoretabs)
 		touch(mp);
 		if (sendmessage(mp, obuf, ignoretabs, NULL) < 0) {
 			warn("%s", fn);
-			Fclose(obuf);
+			(void)Fclose(obuf);
 			return(1);
 		}
 		if (markmsg)
 			mp->m_flag |= MSAVED;
 	}
-	fflush(obuf);
+	(void)fflush(obuf);
 	if (ferror(obuf))
 		warn("%s", fn);
-	Fclose(obuf);
-	printf("%s\n", disp);
+	(void)Fclose(obuf);
+	(void)printf("%s\n", disp);
 	return(0);
 }
 
@@ -268,7 +267,7 @@ snarf(char linebuf[], int *flag)
 	while (cp > linebuf && !isspace((unsigned char)*cp))
 		cp--;
 	if (*cp == '\0') {
-		printf("No file specified.\n");
+		(void)printf("No file specified.\n");
 		return(NULL);
 	}
 	if (isspace((unsigned char)*cp))
@@ -285,7 +284,7 @@ int
 delete(void *v)
 {
 	int *msgvec = v;
-	delm(msgvec);
+	(void)delm(msgvec);
 	return 0;
 }
 
@@ -307,9 +306,9 @@ deltype(void *v)
 			list[1] = 0;
 			return(type(list));
 		}
-		printf("At EOF\n");
+		(void)printf("At EOF\n");
 	} else
-		printf("No more messages\n");
+		(void)printf("No more messages\n");
 	return(0);
 }
 
@@ -376,6 +375,7 @@ undeletecmd(void *v)
  * Interactively dump core on "core"
  */
 int
+/*ARGSUSED*/
 core(void *v)
 {
 	int pid;
@@ -388,13 +388,13 @@ core(void *v)
 		abort();
 		_exit(1);
 	}
-	printf("Okie dokie");
-	fflush(stdout);
-	wait_child(pid);
+	(void)printf("Okie dokie");
+	(void)fflush(stdout);
+	(void)wait_child(pid);
 	if (WCOREDUMP(wait_status))
-		printf(" -- Core dumped.\n");
+		(void)printf(" -- Core dumped.\n");
 	else
-		printf(" -- Can't dump core.\n");
+		(void)printf(" -- Can't dump core.\n");
 	return 0;
 }
 
@@ -426,7 +426,7 @@ clob1(int n)
 
 	if (n <= 0)
 		return;
-	for (cp = buf; cp < &buf[512]; *cp++ = 0xFF)
+	for (cp = buf; cp < &buf[512]; *cp++ = (char)0xFF)
 		;
 	clob1(n - 1);
 }
@@ -489,7 +489,7 @@ ignore1(char *list[], struct ignoretab *tab, const char *which)
 		igp = (struct ignore *) calloc(1, sizeof (struct ignore));
 		igp->i_field = calloc((unsigned) strlen(field) + 1,
 			sizeof (char));
-		strcpy(igp->i_field, field);
+		(void)strcpy(igp->i_field, field);
 		igp->i_link = tab->i_head[h];
 		tab->i_head[h] = igp;
 		tab->i_count++;
@@ -508,7 +508,7 @@ igshow(struct ignoretab *tab, const char *which)
 	char **ap, **ring;
 
 	if (tab->i_count == 0) {
-		printf("No fields currently being %s.\n", which);
+		(void)printf("No fields currently being %s.\n", which);
 		return 0;
 	}
 	ring = salloc((tab->i_count + 1) * sizeof (char *));
@@ -519,7 +519,7 @@ igshow(struct ignoretab *tab, const char *which)
 	*ap = 0;
 	qsort(ring, tab->i_count, sizeof (char *), igcomp);
 	for (ap = ring; *ap != 0; ap++)
-		printf("%s\n", *ap);
+		(void)printf("%s\n", *ap);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: main.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
 #undef EXTERN
 
 #include "extern.h"
-
-extern char *version;
 
 int	main(int, char **);
 
@@ -106,14 +104,14 @@ main(int argc, char *argv[])
 				warn("%s", Tflag);
 				exit(1);
 			}
-			close(i);
+			(void)close(i);
 			break;
 		case 'u':
 			/*
 			 * Next argument is person to pretend to be.
 			 */
 			myname = optarg;
-			unsetenv("MAIL");
+			(void)unsetenv("MAIL");
 			break;
 		case 'i':
 			/*
@@ -191,7 +189,7 @@ main(int argc, char *argv[])
 			assign("dontsendempty", "");
 			break;
 		case '?':
-			fputs("\
+			(void)fputs("\
 Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
             [- sendmail-options ...]\n\
        mail [-EiInNv] -f [name]\n\
@@ -208,11 +206,11 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	 * Check for inconsistent arguments.
 	 */
 	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL)) {
-		fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
+		(void)fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
 		exit(1);
 	}
 	if (ef != NULL && to != NULL) {
-		fprintf(stderr, "Cannot give -f and people to send to.\n");
+		(void)fprintf(stderr, "Cannot give -f and people to send to.\n");
 		exit(1);
 	}
 	tinit();
@@ -230,7 +228,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 		rc = "~/.mailrc";
 	load(expand(rc));
 	if (!rcvmode) {
-		mail(to, cc, bcc, smopts, subject);
+		(void)mail(to, cc, bcc, smopts, subject);
 		/*
 		 * why wait?
 		 */
@@ -247,31 +245,32 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 		exit(1);		/* error already reported */
 	if (setjmp(hdrjmp) == 0) {
 		if ((prevint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
-			signal(SIGINT, hdrstop);
+			(void)signal(SIGINT, hdrstop);
 		if (value("quiet") == NULL)
-			printf("Mail version %s.  Type ? for help.\n",
+			(void)printf("Mail version %s.  Type ? for help.\n",
 				version);
 		announce();
-		fflush(stdout);
-		signal(SIGINT, prevint);
+		(void)fflush(stdout);
+		(void)signal(SIGINT, prevint);
 	}
 	commands();
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
 	quit();
-	exit(0);
+	return 0;
 }
 
 /*
  * Interrupt printing of the headers.
  */
 void
+/*ARGSUSED*/
 hdrstop(int signo)
 {
 
-	fflush(stdout);
-	fprintf(stderr, "\nInterrupt\n");
+	(void)fflush(stdout);
+	(void)fprintf(stderr, "\nInterrupt\n");
 	longjmp(hdrjmp, 1);
 }
 
@@ -290,7 +289,7 @@ setscreensize(void)
 	struct winsize ws;
 	speed_t ospeed;
 
-	if (ioctl(1, TIOCGWINSZ, (char *) &ws) < 0)
+	if (ioctl(1, TIOCGWINSZ, &ws) < 0)
 		ws.ws_col = ws.ws_row = 0;
 	if (tcgetattr(1, &tbuf) < 0)
 		ospeed = 9600;

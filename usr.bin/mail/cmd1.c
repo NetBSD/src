@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.22 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.23 2005/07/19 23:07:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.22 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.23 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: cmd1.c,v 1.22 2005/07/19 01:38:38 christos Exp $");
  *
  * User commands.
  */
-extern const struct cmd cmdtab[];
 
 /*
  * Print the current active headings.
@@ -87,7 +86,7 @@ headers(void *v)
 		printhead(mesg);
 	}
 	if (flag == 0) {
-		printf("No more mail.\n");
+		(void)printf("No more mail.\n");
 		return(1);
 	}
 	return(0);
@@ -111,7 +110,7 @@ scroll(void *v)
 	case '+':
 		s++;
 		if (s * size >= msgCount) {
-			printf("On last screenful of messages\n");
+			(void)printf("On last screenful of messages\n");
 			return(0);
 		}
 		screen = s;
@@ -119,14 +118,14 @@ scroll(void *v)
 
 	case '-':
 		if (--s < 0) {
-			printf("On first screenful of messages\n");
+			(void)printf("On first screenful of messages\n");
 			return(0);
 		}
 		screen = s;
 		break;
 
 	default:
-		printf("Unrecognized scrolling command \"%s\"\n", arg);
+		(void)printf("Unrecognized scrolling command \"%s\"\n", arg);
 		return(1);
 	}
 	return(headers(cur));
@@ -197,15 +196,17 @@ printhead(int mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	snprintf(wcount, LINESIZE, "%3ld/%-5ld", mp->m_blines, mp->m_size);
+	(void)snprintf(wcount, LINESIZE, "%3ld/%-5llu", mp->m_blines,
+	    /*LINTED*/
+	    (unsigned long long)mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
 	name = value("show-rcpt") != NULL ?
 		skin(hfield("to", mp)) : nameof(mp, 0);
 	if (subjline == NULL || subjlen < 0)		/* pretty pathetic */
-		printf("%c%c%3d %-20.20s  %16.16s %s\n",
+		(void)printf("%c%c%3d %-20.20s  %16.16s %s\n",
 			curind, dispc, mesg, name, hl.l_date, wcount);
 	else
-		printf("%c%c%3d %-20.20s  %16.16s %s \"%.*s\"\n",
+		(void)printf("%c%c%3d %-20.20s  %16.16s %s \"%.*s\"\n",
 			curind, dispc, mesg, name, hl.l_date, wcount,
 			subjlen, subjline);
 }
@@ -214,9 +215,10 @@ printhead(int mesg)
  * Print out the value of dot.
  */
 int
+/*ARGSUSED*/
 pdot(void *v)
 {
-	printf("%d\n", (int)(dot - &message[0] + 1));
+	(void)printf("%d\n", (int)(dot - &message[0] + 1));
 	return(0);
 }
 
@@ -224,22 +226,23 @@ pdot(void *v)
  * Print out all the possible commands.
  */
 int
+/*ARGSUSED*/
 pcmdlist(void *v)
 {
 	const struct cmd *cp;
 	int cc;
 
-	printf("Commands are:\n");
+	(void)printf("Commands are:\n");
 	for (cc = 0, cp = cmdtab; cp->c_name != NULL; cp++) {
 		cc += strlen(cp->c_name) + 2;
 		if (cc > 72) {
-			printf("\n");
+			(void)printf("\n");
 			cc = strlen(cp->c_name) + 2;
 		}
 		if ((cp+1)->c_name != NULL)
-			printf("%s, ", cp->c_name);
+			(void)printf("%s, ", cp->c_name);
 		else
-			printf("%s\n", cp->c_name);
+			(void)printf("%s\n", cp->c_name);
 	}
 	return(0);
 }
@@ -324,7 +327,7 @@ type1(int *msgvec, int doign, int page)
 				warn("%s", cp);
 				obuf = stdout;
 			} else
-				signal(SIGPIPE, brokpipe);
+				(void)signal(SIGPIPE, brokpipe);
 		}
 	}
 	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
@@ -332,7 +335,7 @@ type1(int *msgvec, int doign, int page)
 		touch(mp);
 		dot = mp;
 		if (value("quiet") == NULL)
-			fprintf(obuf, "Message %d:\n", *ip);
+			(void)fprintf(obuf, "Message %d:\n", *ip);
 		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
 	}
 close_pipe:
@@ -340,9 +343,9 @@ close_pipe:
 		/*
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
-		signal(SIGPIPE, SIG_IGN);
-		Pclose(obuf);
-		signal(SIGPIPE, SIG_DFL);
+		(void)signal(SIGPIPE, SIG_IGN);
+		(void)Pclose(obuf);
+		(void)signal(SIGPIPE, SIG_DFL);
 	}
 	return(0);
 }
@@ -352,6 +355,7 @@ close_pipe:
  * probably caused by quitting more.
  */
 void
+/*ARGSUSED*/
 brokpipe(int signo)
 {
 	longjmp(pipestop, 1);
@@ -385,15 +389,15 @@ top(void *v)
 		touch(mp);
 		dot = mp;
 		if (value("quiet") == NULL)
-			printf("Message %d:\n", *ip);
+			(void)printf("Message %d:\n", *ip);
 		ibuf = setinput(mp);
 		c = mp->m_lines;
 		if (!lineb)
-			printf("\n");
+			(void)printf("\n");
 		for (lines = 0; lines < c && lines <= topl; lines++) {
 			if (readline(ibuf, linebuf, LINESIZE) < 0)
 				break;
-			puts(linebuf);
+			(void)puts(linebuf);
 			lineb = blankline(linebuf);
 		}
 	}
@@ -439,13 +443,14 @@ mboxit(void *v)
  * List the folders the user currently has.
  */
 int
+/*ARGSUSED*/
 folders(void *v)
 {
 	char dirname[PATHSIZE];
 	const char *cmd;
 
 	if (getfold(dirname) < 0) {
-		printf("No value set for \"folder\"\n");
+		(void)printf("No value set for \"folder\"\n");
 		return 1;
 	}
 	if ((cmd = value("LISTER")) == NULL)
@@ -459,6 +464,7 @@ folders(void *v)
  * come in since we started reading mail.
  */
 int
+/*ARGSUSED*/
 inc(void *v)
 {
 	int nmsg, mdot;
@@ -466,12 +472,12 @@ inc(void *v)
 	nmsg = incfile();
 
 	if (nmsg == 0) {
-	printf("No new mail.\n");
+	(void)printf("No new mail.\n");
 	} else if (nmsg > 0) {
 		mdot = newfileinfo(msgCount - nmsg);
 		dot = &message[mdot - 1];
 	} else {
-	printf("\"inc\" command failed...\n");
+	(void)printf("\"inc\" command failed...\n");
 	}
 
 	return 0;

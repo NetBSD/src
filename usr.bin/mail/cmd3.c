@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.26 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.27 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.26 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.27 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ shell(void *v)
 		shellcmd = _PATH_CSHELL;
 	(void)run_command(shellcmd, 0, 0, 1, "-c", cmd, NULL);
 	(void)signal(SIGINT, sigint);
-	printf("!\n");
+	(void)printf("!\n");
 	return 0;
 }
 
@@ -85,7 +85,7 @@ dosh(void *v)
 		shellcmd = _PATH_CSHELL;
 	(void)run_command(shellcmd, 0, 0, 1, NULL);
 	(void)signal(SIGINT, sigint);
-	putchar('\n');
+	(void)putchar('\n');
 	return 0;
 }
 
@@ -111,11 +111,11 @@ bangexp(char *str)
 		if (*cp == '!') {
 			if (n < strlen(lastbang)) {
 overf:
-				printf("Command buffer overflow\n");
+				(void)printf("Command buffer overflow\n");
 				return(-1);
 			}
 			changed++;
-			strcpy(cp2, lastbang);
+			(void)strcpy(cp2, lastbang);
 			cp2 += strlen(lastbang);
 			n -= strlen(lastbang);
 			cp++;
@@ -134,11 +134,11 @@ overf:
 	}
 	*cp2 = 0;
 	if (changed) {
-		printf("!%s\n", bangbuf);
-		fflush(stdout);
+		(void)printf("!%s\n", bangbuf);
+		(void)fflush(stdout);
 	}
-	strcpy(str, bangbuf);
-	strncpy(lastbang, bangbuf, 128);
+	(void)strcpy(str, bangbuf);
+	(void)strncpy(lastbang, bangbuf, 128);
 	lastbang[127] = 0;
 	return(0);
 }
@@ -148,6 +148,7 @@ overf:
  */
 
 int
+/*ARGSUSED*/
 help(void *v)
 {
 	int c;
@@ -158,8 +159,8 @@ help(void *v)
 		return(1);
 	}
 	while ((c = getc(f)) != EOF)
-		putchar(c);
-	Fclose(f);
+		(void)putchar(c);
+	(void)Fclose(f);
 	return(0);
 }
 
@@ -208,7 +209,7 @@ _respond(int *msgvec)
 	struct header head;
 
 	if (msgvec[1] != 0) {
-		printf("Sorry, can't reply to multiple messages at once\n");
+		(void)printf("Sorry, can't reply to multiple messages at once\n");
 		return(1);
 	}
 	mp = &message[msgvec[0] - 1];
@@ -235,7 +236,7 @@ _respond(int *msgvec)
 		np = cat(np, extract(rcv, GTO));
 	else if (np == NULL) {
 		if (replyto != NULL)
-			printf("Empty reply-to field -- replying to author\n");
+			(void)printf("Empty reply-to field -- replying to author\n");
 		np = extract(rcv, GTO);
 	}
 	head.h_to = np;
@@ -273,8 +274,8 @@ reedit(char *subj)
 	    subj[2] == ':')
 		return subj;
 	newsubj = salloc(strlen(subj) + 5);
-	strcpy(newsubj, "Re: ");
-	strcpy(newsubj + 4, subj);
+	(void)strcpy(newsubj, "Re: ");
+	(void)strcpy(newsubj + 4, subj);
 	return newsubj;
 }
 
@@ -290,7 +291,7 @@ preserve(void *v)
 	int *ip, mesg;
 
 	if (edit) {
-		printf("Cannot \"preserve\" in edit mode\n");
+		(void)printf("Cannot \"preserve\" in edit mode\n");
 		return(1);
 	}
 	for (ip = msgvec; *ip != 0; ip++) {
@@ -333,7 +334,9 @@ messize(void *v)
 	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
 		mp = &message[mesg-1];
-		printf("%d: %ld/%ld\n", mesg, mp->m_blines, mp->m_size);
+		(void)printf("%d: %ld/%llu\n", mesg, mp->m_blines,
+		    /*LINTED*/
+		    (unsigned long long)mp->m_size);
 	}
 	return(0);
 }
@@ -343,6 +346,7 @@ messize(void *v)
  * by returning an error.
  */
 int
+/*ARGSUSED*/
 rexit(void *v)
 {
 	if (sourcing)
@@ -376,7 +380,7 @@ set(void *v)
 		*p = NULL;
 		sort(ap);
 		for (p = ap; *p != NULL; p++)
-			printf("%s\t%s\n", *p, value(*p));
+			(void)printf("%s\t%s\n", *p, value(*p));
 		return(0);
 	}
 	errs = 0;
@@ -387,14 +391,14 @@ set(void *v)
 		l = cp - *ap;
 		if (l >= sizeof varbuf)
 			l = sizeof varbuf - 1;
-		strncpy(varbuf, *ap, l);
+		(void)strncpy(varbuf, *ap, l);
 		varbuf[l] = '\0';
 		if (*cp == '\0')
 			cp = "";
 		else
 			cp++;
 		if (equal(varbuf, "")) {
-			printf("Non-null variable name required\n");
+			(void)printf("Non-null variable name required\n");
 			errs++;
 			continue;
 		}
@@ -418,9 +422,9 @@ unset(void *v)
 	for (ap = arglist; *ap != NULL; ap++) {
 		if ((vp2 = lookup(*ap)) == NULL) {
 			if (getenv(*ap)) {
-				unsetenv(*ap);
+				(void)unsetenv(*ap);
 			} else if (!sourcing) {
-				printf("\"%s\": undefined variable\n", *ap);
+				(void)printf("\"%s\": undefined variable\n", *ap);
 				errs++;
 			}
 			continue;
@@ -430,7 +434,7 @@ unset(void *v)
 			variables[h] = variables[h]->v_link;
 			v_free(vp2->v_name);
                         v_free(vp2->v_value);
-			free((char *)vp2);
+			free(vp2);
 			continue;
 		}
 		for (vp = variables[h]; vp->v_link != vp2; vp = vp->v_link)
@@ -438,7 +442,7 @@ unset(void *v)
 		vp->v_link = vp2->v_link;
                 v_free(vp2->v_name);
                 v_free(vp2->v_value);
-		free((char *) vp2);
+		free(vp2);
 	}
 	return(errs);
 }
@@ -512,7 +516,7 @@ sort(char **list)
 		;
 	if (ap-list < 2)
 		return;
-	qsort(list, ap-list, sizeof(*list), diction);
+	qsort(list, (size_t)(ap-list), sizeof(*list), diction);
 }
 
 /*
@@ -546,7 +550,7 @@ file(void *v)
 	char **argv = v;
 
 	if (argv[0] == NULL) {
-		newfileinfo(0);
+		(void)newfileinfo(0);
 		return 0;
 	}
 	if (setfile(*argv) < 0)
@@ -569,11 +573,11 @@ echo(void *v)
 		cp = *ap;
 		if ((cp = expand(cp)) != NULL) {
 			if (ap != argv)
-				putchar(' ');
-			printf("%s", cp);
+				(void)putchar(' ');
+			(void)printf("%s", cp);
 		}
 	}
-	putchar('\n');
+	(void)putchar('\n');
 	return 0;
 }
 
@@ -633,7 +637,7 @@ ifcmd(void *v)
 	char *cp;
 
 	if (cond != CANY) {
-		printf("Illegal nested \"if\"\n");
+		(void)printf("Illegal nested \"if\"\n");
 		return(1);
 	}
 	cond = CANY;
@@ -648,7 +652,7 @@ ifcmd(void *v)
 		break;
 
 	default:
-		printf("Unrecognized if-keyword: \"%s\"\n", cp);
+		(void)printf("Unrecognized if-keyword: \"%s\"\n", cp);
 		return(1);
 	}
 	return(0);
@@ -659,12 +663,13 @@ ifcmd(void *v)
  * flip over the conditional flag.
  */
 int
+/*ARGSUSED*/
 elsecmd(void *v)
 {
 
 	switch (cond) {
 	case CANY:
-		printf("\"Else\" without matching \"if\"\n");
+		(void)printf("\"Else\" without matching \"if\"\n");
 		return(1);
 
 	case CSEND:
@@ -676,7 +681,7 @@ elsecmd(void *v)
 		break;
 
 	default:
-		printf("Mail's idea of conditions is screwed up\n");
+		(void)printf("Mail's idea of conditions is screwed up\n");
 		cond = CANY;
 		break;
 	}
@@ -687,11 +692,12 @@ elsecmd(void *v)
  * End of if statement.  Just set cond back to anything.
  */
 int
+/*ARGSUSED*/
 endifcmd(void *v)
 {
 
 	if (cond == CANY) {
-		printf("\"Endif\" without matching \"if\"\n");
+		(void)printf("\"Endif\" without matching \"if\"\n");
 		return(1);
 	}
 	cond = CANY;
@@ -713,16 +719,16 @@ alternates(void *v)
 		if (altnames == 0)
 			return(0);
 		for (ap = altnames; *ap; ap++)
-			printf("%s ", *ap);
-		printf("\n");
+			(void)printf("%s ", *ap);
+		(void)printf("\n");
 		return(0);
 	}
 	if (altnames != 0)
-		free((char *) altnames);
+		free(altnames);
 	altnames = (char **) calloc((unsigned) c, sizeof (char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = (char *) calloc((unsigned) strlen(*ap) + 1, sizeof (char));
-		strcpy(cp, *ap);
+		cp = calloc((unsigned) strlen(*ap) + 1, sizeof (char));
+		(void)strcpy(cp, *ap);
 		*ap2 = cp;
 	}
 	*ap2 = 0;

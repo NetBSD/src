@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.19 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.20 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.20 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: edit.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
  *
  * Perform message editing functions.
  */
-extern char *tmpdir;
 
 /*
  * Edit a message list.
@@ -94,7 +93,7 @@ edit1(int *msgvec, int editortype)
 			char buf[100];
 			char *p;
 
-			printf("Edit message %d [ynq]? ", msgvec[i]);
+			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
 			if (fgets(buf, sizeof buf, stdin) == 0)
 				break;
 			for (p = buf; *p == ' ' || *p == '\t'; p++)
@@ -120,14 +119,14 @@ edit1(int *msgvec, int editortype)
 			mp->m_flag |= MODIFY;
 			rewind(fp);
 			while ((c = getc(fp)) != EOF) {
-				//
-				// XXX. if you edit a message, we treat
-				// header lines as body lines in the recount.
-				// This is because the original message copy
-				// and the edit reread use different code to
-				// count the lines, and this one here is
-				// simple-minded.
-				//
+				/*
+				 * XXX. if you edit a message, we treat
+				 * header lines as body lines in the recount.
+				 * This is because the original message copy
+				 * and the edit reread use different code to
+				 * count the lines, and this one here is
+				 * simple-minded.
+				 */
 				if (c == '\n') {
 					mp->m_lines++;
 					mp->m_blines++;
@@ -167,13 +166,13 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		goto out;
 	}
 	if (readonlyflag && fchmod(t, 0400) == -1) {
-		close(t);
+		(void)close(t);
 		warn("%s", tempname);
 		(void)unlink(tempname);
 		goto out;
 	}
 	if ((nf = Fdopen(t, "w")) == NULL) {
-		close(t);
+		(void)close(t);
 		warn("%s", tempname);
 		(void)unlink(tempname);
 		goto out;

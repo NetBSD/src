@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.24 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.25 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.24 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.25 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,10 +46,6 @@ __RCSID("$NetBSD: lex.c,v 1.24 2005/07/19 01:38:38 christos Exp $");
  *
  * Lexical processing of commands.
  */
-
-extern char *tmpdir;
-extern char *version;
-extern const struct cmd cmdtab[];
 
 const char	*prompt = "& ";
 
@@ -82,13 +78,13 @@ setfile(const char *name)
 
 	if (fstat(fileno(ibuf), &stb) < 0) {
 		warn("fstat");
-		Fclose(ibuf);
+		(void)Fclose(ibuf);
 		return (-1);
 	}
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFDIR:
-		Fclose(ibuf);
+		(void)Fclose(ibuf);
 		errno = EISDIR;
 		warn("%s", name);
 		return (-1);
@@ -97,7 +93,7 @@ setfile(const char *name)
 		break;
 
 	default:
-		Fclose(ibuf);
+		(void)Fclose(ibuf);
 		errno = EINVAL;
 		warn("%s", name);
 		return (-1);
@@ -123,16 +119,16 @@ setfile(const char *name)
 	if ((i = open(name, 1)) < 0)
 		readonly++;
 	else
-		close(i);
+		(void)close(i);
 	if (shudclob) {
-		fclose(itf);
-		fclose(otf);
+		(void)fclose(itf);
+		(void)fclose(otf);
 	}
 	shudclob = 1;
 	edit = isedit;
-	strcpy(prevfile, mailname);
+	(void)strcpy(prevfile, mailname);
 	if (name != mailname)
-		strcpy(mailname, name);
+		(void)strcpy(mailname, name);
 	mailsize = fsize(ibuf);
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
@@ -143,8 +139,8 @@ setfile(const char *name)
 	if ((itf = fopen(tempname, "r")) == NULL)
 		err(1, "%s", tempname);
 	(void)fcntl(fileno(itf), F_SETFD, 1);
-	rm(tempname);
-	setptr(ibuf, 0);
+	(void)rm(tempname);
+	setptr(ibuf, (off_t)0);
 	setmsize(msgCount);
 	/*
 	 * New mail may have arrived while we were reading
@@ -152,12 +148,12 @@ setfile(const char *name)
 	 * we really are in the file...
 	 */
 	mailsize = ftell(ibuf);
-	Fclose(ibuf);
+	(void)Fclose(ibuf);
 	relsesigs();
 	sawcom = 0;
 	if (!edit && msgCount == 0) {
 nomail:
-		fprintf(stderr, "No mail for %s\n", who);
+		(void)fprintf(stderr, "No mail for %s\n", who);
 		return -1;
 	}
 	return(0);
@@ -170,7 +166,7 @@ nomail:
 int
 incfile(void)
 {
-	int newsize;
+	off_t newsize;
 	int omsgCount = msgCount;
 	FILE *ibuf;
 
@@ -188,7 +184,7 @@ incfile(void)
 	setptr(ibuf, mailsize);
 	setmsize(msgCount);
 	mailsize = ftell(ibuf);
-	Fclose(ibuf);
+	(void)Fclose(ibuf);
 	relsesigs();
 	return(msgCount - omsgCount);
 }
@@ -213,12 +209,12 @@ commands(void)
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-			signal(SIGINT, intr);
+			(void)signal(SIGINT, intr);
 		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-			signal(SIGHUP, hangup);
-		signal(SIGTSTP, stop);
-		signal(SIGTTOU, stop);
-		signal(SIGTTIN, stop);
+			(void)signal(SIGHUP, hangup);
+		(void)signal(SIGTSTP, stop);
+		(void)signal(SIGTTOU, stop);
+		(void)signal(SIGTTIN, stop);
 	}
 	setexit();
 	for (;;) {
@@ -228,11 +224,11 @@ commands(void)
 		 */
 		if (!sourcing && value("interactive") != NULL) {
 			if ((value("autoinc") != NULL) && (incfile() > 0))
-				printf("New mail has arrived.\n");
+				(void)printf("New mail has arrived.\n");
 			reset_on_stop = 1;
-			printf("%s", prompt);
+			(void)printf("%s", prompt);
 		}
-		fflush(stdout);
+		(void)fflush(stdout);
 		sreset();
 		/*
 		 * Read a line of commands from the current input
@@ -258,13 +254,13 @@ commands(void)
 			if (loading)
 				break;
 			if (sourcing) {
-				unstack();
+				(void)unstack();
 				continue;
 			}
 			if (value("interactive") != NULL &&
 			    value("ignoreeof") != NULL &&
 			    ++eofloop < 25) {
-				printf("Use \"quit\" to quit.\n");
+				(void)printf("Use \"quit\" to quit.\n");
 				continue;
 			}
 			break;
@@ -306,10 +302,10 @@ execute(char linebuf[], int contxt)
 		;
 	if (*cp == '!') {
 		if (sourcing) {
-			printf("Can't \"!\" while sourcing\n");
+			(void)printf("Can't \"!\" while sourcing\n");
 			goto out;
 		}
-		shell(cp+1);
+		(void)shell(cp+1);
 		return(0);
 	}
 	cp2 = word;
@@ -329,7 +325,7 @@ execute(char linebuf[], int contxt)
 		return(0);
 	com = lex(word);
 	if (com == NULL) {
-		printf("Unknown command: \"%s\"\n", word);
+		(void)printf("Unknown command: \"%s\"\n", word);
 		goto out;
 	}
 
@@ -350,22 +346,22 @@ execute(char linebuf[], int contxt)
 	 */
 
 	if (!rcvmode && (com->c_argtype & M) == 0) {
-		printf("May not execute \"%s\" while sending\n",
+		(void)printf("May not execute \"%s\" while sending\n",
 		    com->c_name);
 		goto out;
 	}
 	if (sourcing && com->c_argtype & I) {
-		printf("May not execute \"%s\" while sourcing\n",
+		(void)printf("May not execute \"%s\" while sourcing\n",
 		    com->c_name);
 		goto out;
 	}
 	if (readonly && com->c_argtype & W) {
-		printf("May not execute \"%s\" -- message file is read only\n",
+		(void)printf("May not execute \"%s\" -- message file is read only\n",
 		   com->c_name);
 		goto out;
 	}
 	if (contxt && com->c_argtype & R) {
-		printf("Cannot recursively invoke \"%s\"\n", com->c_name);
+		(void)printf("Cannot recursively invoke \"%s\"\n", com->c_name);
 		goto out;
 	}
 	switch (com->c_argtype & ~(F|P|I|M|T|W|R)) {
@@ -375,7 +371,7 @@ execute(char linebuf[], int contxt)
 		 * legal message.
 		 */
 		if (msgvec == 0) {
-			printf("Illegal use of \"message list\"\n");
+			(void)printf("Illegal use of \"message list\"\n");
 			break;
 		}
 		if ((c = getmsglist(cp, msgvec, com->c_msgflag)) < 0)
@@ -386,7 +382,7 @@ execute(char linebuf[], int contxt)
 			msgvec[1] = 0;
 		}
 		if (*msgvec == 0) {
-			printf("No applicable messages\n");
+			(void)printf("No applicable messages\n");
 			break;
 		}
 		e = (*com->c_func)(msgvec);
@@ -398,7 +394,7 @@ execute(char linebuf[], int contxt)
 		 * if none exist.
 		 */
 		if (msgvec == 0) {
-			printf("Illegal use of \"message list\"\n");
+			(void)printf("Illegal use of \"message list\"\n");
 			break;
 		}
 		if (getmsglist(cp, msgvec, com->c_msgflag) < 0)
@@ -424,12 +420,12 @@ execute(char linebuf[], int contxt)
 				sizeof arglist / sizeof *arglist)) < 0)
 			break;
 		if (c < com->c_minargs) {
-			printf("%s requires at least %d arg(s)\n",
+			(void)printf("%s requires at least %d arg(s)\n",
 				com->c_name, com->c_minargs);
 			break;
 		}
 		if (c > com->c_maxargs) {
-			printf("%s takes no more than %d arg(s)\n",
+			(void)printf("%s takes no more than %d arg(s)\n",
 				com->c_name, com->c_maxargs);
 			break;
 		}
@@ -459,7 +455,7 @@ out:
 		if (loading)
 			return 1;
 		if (sourcing)
-			unstack();
+			(void)unstack();
 		return 0;
 	}
 	if (com == NULL)
@@ -468,7 +464,7 @@ out:
 		if ((dot->m_flag & MDELETED) == 0) {
 			muvec[0] = dot - &message[0] + 1;
 			muvec[1] = 0;
-			type(muvec);
+			(void)type(muvec);
 		}
 	if (!sourcing && (com->c_argtype & T) == 0)
 		sawcom = 1;
@@ -484,8 +480,8 @@ setmsize(int sz)
 {
 
 	if (msgvec != 0)
-		free((char *) msgvec);
-	msgvec = (int *) calloc((unsigned) (sz + 1), sizeof *msgvec);
+		free( msgvec);
+	msgvec = calloc((size_t) (sz + 1), sizeof *msgvec);
 }
 
 /*
@@ -542,15 +538,15 @@ intr(int s)
 		sawcom++;
 	inithdr = 0;
 	while (sourcing)
-		unstack();
+		(void)unstack();
 
 	close_all_files();
 
 	if (image >= 0) {
-		close(image);
+		(void)close(image);
 		image = -1;
 	}
-	fprintf(stderr, "Interrupt\n");
+	(void)fprintf(stderr, "Interrupt\n");
 	reset(0);
 }
 
@@ -563,12 +559,12 @@ stop(int s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
-	sigemptyset(&nset);
-	sigaddset(&nset, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	kill(0, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	signal(s, old_action);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)signal(s, old_action);
 	if (reset_on_stop) {
 		reset_on_stop = 0;
 		reset(0);
@@ -602,7 +598,7 @@ announce(void)
 	dot = &message[mdot - 1];
 	if (msgCount > 0 && value("noheader") == NULL) {
 		inithdr++;
-		headers(vec);
+		(void)headers(vec);
 		inithdr = 0;
 	}
 }
@@ -615,7 +611,8 @@ int
 newfileinfo(int omsgCount)
 {
 	struct message *mp;
-	int u, n, mdot, d, s, l;
+	int u, n, mdot, d, s;
+	size_t l;
 	char fname[PATHSIZE], zname[PATHSIZE], *ename;
 
 	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
@@ -646,27 +643,27 @@ newfileinfo(int omsgCount)
 		if (l < PATHSIZE - 1)
 			fname[l++] = '/';
 		if (strncmp(fname, mailname, l) == 0) {
-			snprintf(zname, PATHSIZE, "+%s",
+			(void)snprintf(zname, PATHSIZE, "+%s",
 			    mailname + l);
 			ename = zname;
 		}
 	}
-	printf("\"%s\": ", ename);
+	(void)printf("\"%s\": ", ename);
 	if (msgCount == 1)
-		printf("1 message");
+		(void)printf("1 message");
 	else
-		printf("%d messages", msgCount);
+		(void)printf("%d messages", msgCount);
 	if (n > 0)
-		printf(" %d new", n);
+		(void)printf(" %d new", n);
 	if (u-n > 0)
-		printf(" %d unread", u);
+		(void)printf(" %d unread", u);
 	if (d > 0)
-		printf(" %d deleted", d);
+		(void)printf(" %d deleted", d);
 	if (s > 0)
-		printf(" %d saved", s);
+		(void)printf(" %d saved", s);
 	if (readonly)
-		printf(" [Read only]");
-	printf("\n");
+		(void)printf(" [Read only]");
+	(void)printf("\n");
 	return(mdot);
 }
 
@@ -678,7 +675,7 @@ newfileinfo(int omsgCount)
 int
 pversion(void *v)
 {
-	printf("Version %s\n", version);
+	(void)printf("Version %s\n", version);
 	return(0);
 }
 
@@ -700,5 +697,5 @@ load(const char *name)
 	loading = 0;
 	sourcing = 0;
 	input = oldin;
-	Fclose(in);
+	(void)Fclose(in);
 }
