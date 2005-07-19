@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.21 2005/06/02 03:19:57 lukem Exp $	*/
+/*	$NetBSD: top.c,v 1.22 2005/07/19 12:24:39 yamt Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.21 2005/06/02 03:19:57 lukem Exp $");
+__RCSID("$NetBSD: top.c,v 1.22 2005/07/19 12:24:39 yamt Exp $");
 #endif
 
 #include "os.h"
@@ -534,16 +534,7 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 	else
 	{
 	    /* we'll do it next time */
-	    if (smart_terminal)
-	    {
-		z_cpustates();
-	    }
-	    else
-	    {
-		int i;
-		for (i = 0; i < statics.ncpu; i++)
-		    putchar('\n');
-	    }
+	    z_cpustates();
 	    dostates = Yes;
 	}
 
