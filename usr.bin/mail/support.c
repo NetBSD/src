@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.14 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ char *
 savestr(const char *str)
 {
 	char *new;
-	int size = strlen(str) + 1;
+	size_t size = strlen(str) + 1;
 
 	if ((new = salloc(size)) != NULL)
-		memmove(new, str, size);
+		(void)memmove(new, str, size);
 	return new;
 }
 
@@ -69,15 +69,15 @@ static char *
 save2str(char *str, char *old)
 {
 	char *new;
-	int newsize = strlen(str) + 1;
-	int oldsize = old ? strlen(old) + 1 : 0;
+	size_t newsize = strlen(str) + 1;
+	size_t oldsize = old ? strlen(old) + 1 : 0;
 
 	if ((new = salloc(newsize + oldsize)) != NULL) {
 		if (oldsize) {
-			memmove(new, old, oldsize);
+			(void)memmove(new, old, oldsize);
 			new[oldsize - 1] = ' ';
 		}
-		memmove(new + oldsize, str, newsize);
+		(void)memmove(new + oldsize, str, newsize);
 	}
 	return new;
 }
@@ -185,7 +185,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 			cp++;
 			if (rem <= 0)
 				break;
-			ungetc(c = getc(f), f);
+			(void)ungetc(c = getc(f), f);
 			if (c != ' ' && c != '\t')
 				break;
 			if ((c = readline(f, line2, LINESIZE)) < 0)
@@ -197,7 +197,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 			if (cp + c >= linebuf + LINESIZE - 2)
 				break;
 			*cp++ = ' ';
-			memmove(cp, cp2, c);
+			(void)memmove(cp, cp2, (size_t)c);
 			cp += c;
 		}
 		*cp = 0;
@@ -271,8 +271,8 @@ source(void *v)
 		return(1);
 	}
 	if (ssp >= NOFILE - 1) {
-		printf("Too much \"sourcing\" going on.\n");
-		Fclose(fi);
+		(void)printf("Too much \"sourcing\" going on.\n");
+		(void)Fclose(fi);
 		return(1);
 	}
 	sstack[ssp].s_file = input;
@@ -294,13 +294,13 @@ int
 unstack(void)
 {
 	if (ssp <= 0) {
-		printf("\"Source\" stack over-pop.\n");
+		(void)printf("\"Source\" stack over-pop.\n");
 		sourcing = 0;
 		return(1);
 	}
-	Fclose(input);
+	(void)Fclose(input);
 	if (cond != CANY)
-		printf("Unmatched \"if\"\n");
+		(void)printf("Unmatched \"if\"\n");
 	ssp--;
 	cond = sstack[ssp].s_cond;
 	loading = sstack[ssp].s_loading;
@@ -473,7 +473,7 @@ skin(char *name)
 				lastsp = 0;
 				break;
 			}
-			/* Fall into . . . */
+			/* FALLTHROUGH */
 
 		default:
 			if (lastsp) {

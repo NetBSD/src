@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.17 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.18 2005/07/19 23:07:10 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.17 2005/07/19 01:38:38 christos Exp $
+ *	$NetBSD: def.h,v 1.18 2005/07/19 23:07:10 christos Exp $
  */
 
 /*
@@ -75,10 +75,10 @@
 
 struct message {
 	short	m_flag;			/* flags, see below */
-	long	m_block;		/* block number of this message */
 	short	m_offset;		/* offset in block of message */
-	long	m_size;			/* Bytes in the message */
+	long	m_block;		/* block number of this message */
 	long	m_lines;		/* Lines in the message */
+	off_t	m_size;			/* Bytes in the message */
 	long	m_blines;		/* Body (non-header) lines */
 };
 
@@ -223,7 +223,7 @@ struct grouphead {
  * Structure of the hash table of ignored header fields
  */
 struct ignoretab {
-	int i_count;			/* Number of entries */
+	size_t i_count;			/* Number of entries */
 	struct ignore {
 		struct ignore *i_link;	/* Next ignored field in bucket */
 		char *i_field;		/* This ignored field */
@@ -264,7 +264,7 @@ struct ignoretab {
  * Kludges to handle the change from setexit / reset to setjmp / longjmp
  */
 
-#define	setexit()	setjmp(srbuf)
+#define	setexit()	(void)setjmp(srbuf)
 #define	reset(x)	longjmp(srbuf, x)
 
 /*
