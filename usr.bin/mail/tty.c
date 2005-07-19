@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,9 +101,9 @@ grabh(struct header *hp, int gflags)
 	ttybuf.c_cc[VERASE] = _POSIX_VDISABLE;
 	ttybuf.c_cc[VKILL] = _POSIX_VDISABLE;
 	if ((saveint = signal(SIGINT, SIG_IGN)) == SIG_DFL)
-		signal(SIGINT, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
 	if ((savequit = signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
-		signal(SIGQUIT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
 #else
 # ifdef		TIOCEXT
 	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
@@ -149,15 +149,15 @@ grabh(struct header *hp, int gflags)
 			extract(readtty("Bcc: ", detract(hp->h_bcc, 0)), GBCC);
 	}
 out:
-	signal(SIGTSTP, savetstp);
-	signal(SIGTTOU, savettou);
-	signal(SIGTTIN, savettin);
+	(void)signal(SIGTSTP, savetstp);
+	(void)signal(SIGTTOU, savettou);
+	(void)signal(SIGTTIN, savettin);
 #ifndef TIOCSTI
 	ttybuf.c_cc[VERASE] = c_erase;
 	ttybuf.c_cc[VKILL] = c_kill;
 	if (ttyset)
 		tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
-	signal(SIGQUIT, savequit);
+	(void)signal(SIGQUIT, savequit);
 #else
 # ifdef		TIOCEXT
 	if (extproc) {
@@ -167,7 +167,7 @@ out:
 	}
 # endif	/* TIOCEXT */
 #endif
-	signal(SIGINT, saveint);
+	(void)signal(SIGINT, saveint);
 	return(errs);
 }
 
@@ -191,10 +191,10 @@ readtty(const char pr[], char src[])
 	(void)&cp2;
 #endif
 
-	fputs(pr, stdout);
-	fflush(stdout);
+	(void)fputs(pr, stdout);
+	(void)fflush(stdout);
 	if (src != NULL && strlen(src) > BUFSIZ - 2) {
-		printf("too long to edit\n");
+		(void)printf("too long to edit\n");
 		return(src);
 	}
 #ifndef TIOCSTI
@@ -202,18 +202,18 @@ readtty(const char pr[], char src[])
 		cp = copy(src, canonb);
 	else
 		cp = copy("", canonb);
-	fputs(canonb, stdout);
-	fflush(stdout);
+	(void)fputs(canonb, stdout);
+	(void)fflush(stdout);
 #else
 	cp = src == NULL ? empty : src;
 	while ((c = *cp++) != '\0') {
 		if ((c_erase != _POSIX_VDISABLE && c == c_erase) ||
 		    (c_kill != _POSIX_VDISABLE && c == c_kill)) {
 			ch = '\\';
-			ioctl(0, TIOCSTI, &ch);
+			(void)ioctl(0, TIOCSTI, &ch);
 		}
 		ch = c;
-		ioctl(0, TIOCSTI, &ch);
+		(void)ioctl(0, TIOCSTI, &ch);
 	}
 	cp = canonb;
 	*cp = 0;
@@ -224,9 +224,9 @@ readtty(const char pr[], char src[])
 	cp2 = cp;
 	if (setjmp(rewrite))
 		goto redo;
-	signal(SIGTSTP, ttystop);
-	signal(SIGTTOU, ttystop);
-	signal(SIGTTIN, ttystop);
+	(void)signal(SIGTSTP, ttystop);
+	(void)signal(SIGTTOU, ttystop);
+	(void)signal(SIGTTIN, ttystop);
 	clearerr(stdin);
 	while (cp2 < canonb + BUFSIZ) {
 		c = getc(stdin);
@@ -235,9 +235,9 @@ readtty(const char pr[], char src[])
 		*cp2++ = c;
 	}
 	*cp2 = 0;
-	signal(SIGTSTP, SIG_DFL);
-	signal(SIGTTOU, SIG_DFL);
-	signal(SIGTTIN, SIG_DFL);
+	(void)signal(SIGTSTP, SIG_DFL);
+	(void)signal(SIGTTOU, SIG_DFL);
+	(void)signal(SIGTTIN, SIG_DFL);
 	if (c == EOF && ferror(stdin)) {
 redo:
 		cp = strlen(canonb) > 0 ? canonb : NULL;
@@ -290,12 +290,12 @@ ttystop(int s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
-	sigemptyset(&nset);
-	sigaddset(&nset, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	kill(0, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	signal(s, old_action);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)signal(s, old_action);
 	longjmp(rewrite, 1);
 }
 
