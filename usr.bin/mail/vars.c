@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: vars.c,v 1.14 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: vars.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,14 +92,14 @@ char *
 vcopy(const char str[])
 {
 	char *new;
-	unsigned len;
+	size_t len;
 
 	if (*str == '\0')
 		return strdup("");
 	len = strlen(str) + 1;
 	if ((new = malloc(len)) == NULL)
 		errx(1, "Out of memory");
-	memmove(new, str, (int) len);
+	(void)memmove(new, str, len);
 	return new;
 }
 
@@ -159,13 +159,13 @@ printgroup(char name[])
 	struct group *gp;
 
 	if ((gh = findgroup(name)) == NULL) {
-		printf("\"%s\": not a group\n", name);
+		(void)printf("\"%s\": not a group\n", name);
 		return;
 	}
-	printf("%s\t", gh->g_name);
+	(void)printf("%s\t", gh->g_name);
 	for (gp = gh->g_list; gp != NULL; gp = gp->ge_link)
-		printf(" %s", gp->ge_name);
-	putchar('\n');
+		(void)printf(" %s", gp->ge_name);
+	(void)putchar('\n');
 }
 
 /*

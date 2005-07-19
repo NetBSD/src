@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.14 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ fail(char linebuf[], const char reason[])
 	/*
 	if (value("debug") == NULL)
 		return;
-	fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf, reason);
+	(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf, reason);
 	*/
 }
 

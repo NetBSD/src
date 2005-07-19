@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.14 2005/07/19 01:38:38 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.15 2005/07/19 23:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.14 2005/07/19 01:38:38 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.15 2005/07/19 23:07:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ markall(char buf[], int f)
 		case TNUMBER:
 number:
 			if (star) {
-				printf("No numbers mixed with *\n");
+				(void)printf("No numbers mixed with *\n");
 				return(-1);
 			}
 			mc++;
@@ -165,14 +165,14 @@ number:
 
 		case TPLUS:
 			if (beg != 0) {
-				printf("Non-numeric second argument\n");
+				(void)printf("Non-numeric second argument\n");
 				return(-1);
 			}
 			i = valdot;
 			do {
 				i++;
 				if (i > msgCount) {
-					printf("Referencing beyond EOF\n");
+					(void)printf("Referencing beyond EOF\n");
 					return(-1);
 				}
 			} while ((message[i - 1].m_flag & MDELETED) != f);
@@ -185,7 +185,7 @@ number:
 				do {
 					i--;
 					if (i <= 0) {
-						printf("Referencing before 1\n");
+						(void)printf("Referencing before 1\n");
 						return(-1);
 					}
 				} while ((message[i - 1].m_flag & MDELETED) != f);
@@ -195,14 +195,14 @@ number:
 
 		case TSTRING:
 			if (beg != 0) {
-				printf("Non-numeric second argument\n");
+				(void)printf("Non-numeric second argument\n");
 				return(-1);
 			}
 			other++;
 			if (lexstring[0] == ':') {
 				colresult = evalcol(lexstring[1]);
 				if (colresult == 0) {
-					printf("Unknown colon modifier \"%s\"\n",
+					(void)printf("Unknown colon modifier \"%s\"\n",
 					    lexstring);
 					return(-1);
 				}
@@ -222,7 +222,7 @@ number:
 
 		case TSTAR:
 			if (other) {
-				printf("Can't mix \"*\" with anything\n");
+				(void)printf("Can't mix \"*\" with anything\n");
 				return(-1);
 			}
 			star++;
@@ -243,7 +243,7 @@ number:
 				mc++;
 			}
 		if (mc == 0) {
-			printf("No applicable messages.\n");
+			(void)printf("No applicable messages.\n");
 			return(-1);
 		}
 		return(0);
@@ -295,11 +295,11 @@ number:
 				break;
 			}
 		if (mc == 0) {
-			printf("No applicable messages from {%s",
+			(void)printf("No applicable messages from {%s",
 				namelist[0]);
 			for (np = &namelist[1]; *np != NULL; np++)
-				printf(", %s", *np);
-			printf("}\n");
+				(void)printf(", %s", *np);
+			(void)printf("}\n");
 			return(-1);
 		}
 	}
@@ -327,11 +327,11 @@ number:
 		if (mp >= &message[msgCount]) {
 			struct coltab *colp;
 
-			printf("No messages satisfy");
+			(void)printf("No messages satisfy");
 			for (colp = &coltab[0]; colp->co_char; colp++)
 				if (colp->co_bit & colmod)
-					printf(" :%c", colp->co_char);
-			printf("\n");
+					(void)printf(" :%c", colp->co_char);
+			(void)printf("\n");
 			return(-1);
 		}
 	}
@@ -366,12 +366,12 @@ check(int mesg, int f)
 	struct message *mp;
 
 	if (mesg < 1 || mesg > msgCount) {
-		printf("%d: Invalid message number\n", mesg);
+		(void)printf("%d: Invalid message number\n", mesg);
 		return(-1);
 	}
 	mp = &message[mesg-1];
 	if (f != MDELETED && (mp->m_flag & MDELETED) != 0) {
-		printf("%d: Inappropriate message\n", mesg);
+		(void)printf("%d: Inappropriate message\n", mesg);
 		return(-1);
 	}
 	return(0);
@@ -397,7 +397,7 @@ getrawlist(const char line[], char **argv, int argc)
 		if (*cp == '\0')
 			break;
 		if (argn >= argc - 1) {
-			printf(
+			(void)printf(
 			"Too many elements in the list; excess discarded.\n");
 			break;
 		}
@@ -503,7 +503,7 @@ scan(char **sp)
 	int quotec;
 
 	if (regretp >= 0) {
-		strcpy(lexstring, string_stack[regretp]);
+		(void)strcpy(lexstring, string_stack[regretp]);
 		lexnumber = numberstack[regretp];
 		return(regretstack[regretp--]);
 	}
@@ -584,7 +584,7 @@ scan(char **sp)
 		c = *cp++;
 	}
 	if (quotec && c == 0) {
-		fprintf(stderr, "Missing %c\n", quotec);
+		(void)fprintf(stderr, "Missing %c\n", quotec);
 		return TERROR;
 	}
 	*sp = --cp;
@@ -721,7 +721,7 @@ matchsubj(char *str, int mesg)
 	if (*str == '\0')
 		str = lastscan;
 	else {
-		strncpy(lastscan, str, STRINGLEN - 1);
+		(void)strncpy(lastscan, str, STRINGLEN - 1);
 		lastscan[STRINGLEN - 1] = '\0' ;
 	}
 	mp = &message[mesg-1];
@@ -803,7 +803,7 @@ metamess(int meta, int f)
 		for (mp = &message[0]; mp < &message[msgCount]; mp++)
 			if ((mp->m_flag & MDELETED) == f)
 				return(mp - &message[0] + 1);
-		printf("No applicable messages\n");
+		(void)printf("No applicable messages\n");
 		return(-1);
 
 	case '$':
@@ -813,7 +813,7 @@ metamess(int meta, int f)
 		for (mp = &message[msgCount-1]; mp >= &message[0]; mp--)
 			if ((mp->m_flag & MDELETED) == f)
 				return(mp - &message[0] + 1);
-		printf("No applicable messages\n");
+		(void)printf("No applicable messages\n");
 		return(-1);
 
 	case '.':
@@ -822,13 +822,13 @@ metamess(int meta, int f)
 		 */
 		m = dot - &message[0] + 1;
 		if ((dot->m_flag & MDELETED) != f) {
-			printf("%d: Inappropriate message\n", m);
+			(void)printf("%d: Inappropriate message\n", m);
 			return(-1);
 		}
 		return(m);
 
 	default:
-		printf("Unknown metachar (%c)\n", c);
+		(void)printf("Unknown metachar (%c)\n", c);
 		return(-1);
 	}
 }
