@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.494 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.495 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -67,3 +67,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		read-only, written by Cliff Wright. [hubertf 20050716]
 	uipaq(4): USB driver for iPAQ devices.  From OpenBSD.
 		[augustss 20050718]
+	netinet: Implement PMTU checks and ignore ICMP Source Quench messages
+		for TCP as described in:
+		http://www.gont.com.ar/drafts/icmp-attacks-against-tcp.html
+		[christos 20050719]
