@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.12 2005/07/17 08:23:43 tls Exp $      */
+/*      $NetBSD: xbdback.c,v 1.13 2005/07/19 09:45:12 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -665,6 +665,7 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			    "operation %d\n", xbdi->domid, req->operation);
 			xbdback_send_reply(xbdi, req->id, req->operation,
 			    BLKIF_RSP_ERROR);
+			xbdi->cont = xbdback_co_main_incr;
 			break;
 		}
 	} else {
