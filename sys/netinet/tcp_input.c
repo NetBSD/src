@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.231 2005/07/19 17:00:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.231 2005/07/19 17:00:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -274,6 +274,26 @@ do { \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
+} while (/*CONSTCOND*/ 0)
+
+#define ICMP_CHECK(tp, th, acked) \
+do { \
+	/* \
+	 * If we had a pending ICMP message that \
+	 * refers to data that have just been  \
+	 * acknowledged, disregard the recorded ICMP \
+	 * message. \
+	 */ \
+	if (((tp)->t_flags & TF_PMTUD_PEND) && \
+	    SEQ_GT((th)->th_ack, (tp)->t_pmtud_th_seq)) \
+		(tp)->t_flags &= ~TF_PMTUD_PEND; \
+\
+	/* \
+	 * Keep track of the largest chunk of data \
+	 * acknowledged since last PMTU update \
+	 */ \
+	if ((tp)->t_pmtud_mss_acked < (acked)) \
+		(tp)->t_pmtud_mss_acked = (acked); \
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -1620,6 +1640,8 @@ after_listen:
 				sbdrop(&so->so_snd, acked);
 				tp->t_lastoff -= acked;
 
+				ICMP_CHECK(tp, th, acked);
+
 				tp->snd_una = th->th_ack;
 				tp->snd_fack = tp->snd_una;
 				if (SEQ_LT(tp->snd_high, tp->snd_una))
@@ -2293,6 +2315,9 @@ after_listen:
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
+
+		ICMP_CHECK(tp, th, acked);
+
 		tp->snd_una = th->th_ack;
 		if (SEQ_GT(tp->snd_una, tp->snd_fack))
 			tp->snd_fack = tp->snd_una;

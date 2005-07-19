@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.191 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.192 2005/07/19 17:00:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.192 2005/07/19 17:00:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -228,7 +228,6 @@ void	tcp_mtudisc_callback(struct in_addr);
 void	tcp6_mtudisc_callback(struct in6_addr *);
 #endif
 
-void	tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6
 void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
@@ -1371,8 +1370,11 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	else if (cmd == PRC_QUENCH) {
-		/* XXX there's no PRC_QUENCH in IPv6 */
-		notify = tcp6_quench;
+		/* 
+		 * Don't honor ICMP Source Quench messages meant for
+		 * TCP connections.
+		 */
+		return;
 	} else if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_MSGSIZE)
@@ -1468,7 +1470,12 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 	void (*notify)(struct inpcb *, int) = tcp_notify;
 	int errno;
 	int nmatch;
+	struct tcpcb *tp;
+	u_int mtu;
+	tcp_seq seq;
+	struct inpcb *inp;
 #ifdef INET6
+	struct in6pcb *in6p;
 	struct in6_addr src6, dst6;
 #endif
 
@@ -1479,7 +1486,11 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		return NULL;
 	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
-		notify = tcp_quench;
+		/* 
+		 * Don't honor ICMP Source Quench messages meant for
+		 * TCP connections.
+		 */
+		return NULL;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
@@ -1498,12 +1509,12 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		memcpy(&src6.s6_addr32[3], &ip->ip_src, sizeof(struct in_addr));
 		memcpy(&dst6.s6_addr32[3], &ip->ip_dst, sizeof(struct in_addr));
 #endif
-		if (in_pcblookup_connect(&tcbtable, ip->ip_dst, th->th_dport,
-		    ip->ip_src, th->th_sport) != NULL)
-			;
+		if ((inp = in_pcblookup_connect(&tcbtable, ip->ip_dst,
+		    th->th_dport, ip->ip_src, th->th_sport)) != NULL)
+			in6p = NULL;
 #ifdef INET6
-		else if (in6_pcblookup_connect(&tcbtable, &dst6,
-		    th->th_dport, &src6, th->th_sport, 0) != NULL)
+		else if ((in6p = in6_pcblookup_connect(&tcbtable, &dst6,
+		    th->th_dport, &src6, th->th_sport, 0)) != NULL)
 			;
 #endif
 		else
@@ -1517,8 +1528,54 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		 */
 		icp = (struct icmp *)((caddr_t)ip -
 		    offsetof(struct icmp, icmp_ip));
-		icmp_mtudisc(icp, ip->ip_dst);
-
+		if (inp) {
+			if ((tp = intotcpcb(inp)) == NULL)
+				return NULL;
+		}
+#ifdef INET6
+		else if (in6p) {
+			if ((tp = in6totcpcb(in6p)) == NULL)
+				return NULL;
+		}
+#endif
+		else
+			return NULL;
+		seq = ntohl(th->th_seq);
+		if (SEQ_LT(seq, tp->snd_una) || SEQ_GT(seq, tp->snd_max))
+			return NULL;
+		/* 
+		 * If the ICMP message advertises a Next-Hop MTU
+		 * equal or larger than the maximum packet size we have
+		 * ever sent, drop the message.
+		 */
+		mtu = (u_int)ntohs(icp->icmp_nextmtu);
+		if (mtu >= tp->t_pmtud_mtu_sent)
+			return NULL;
+		if (mtu >= tcp_hdrsz(tp) + tp->t_pmtud_mss_acked) {
+			/* 
+			 * Calculate new MTU, and create corresponding
+			 * route (traditional PMTUD).
+			 */
+			tp->t_flags &= ~TF_PMTUD_PEND;
+			icmp_mtudisc(icp, ip->ip_dst);
+		} else {
+			/*
+			 * Record the information got in the ICMP
+			 * message; act on it later.
+			 * If we had already recorded an ICMP message,
+			 * replace the old one only if the new message
+			 * refers to an older TCP segment
+			 */
+			if (tp->t_flags & TF_PMTUD_PEND) {
+				if (SEQ_LT(tp->t_pmtud_th_seq, seq))
+					return NULL;
+			} else
+				tp->t_flags |= TF_PMTUD_PEND;
+			tp->t_pmtud_th_seq = seq;
+			tp->t_pmtud_nextmtu = icp->icmp_nextmtu;
+			tp->t_pmtud_ip_len = icp->icmp_ip.ip_len;
+			tp->t_pmtud_ip_hl = icp->icmp_ip.ip_hl;
+		}
 		return NULL;
 	} else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
@@ -2202,4 +2259,34 @@ tcp_optlen(struct tcpcb *tp)
 #endif /* TCP_SIGNATURE */
 
 	return optlen;
+}
+
+u_int
+tcp_hdrsz(struct tcpcb *tp)
+{
+	u_int hlen;
+
+	switch (tp->t_family) {
+#ifdef INET6
+	case AF_INET6:
+		hlen = sizeof(struct ip6_hdr);
+		break;
+#endif
+	case AF_INET:
+		hlen = sizeof(struct ip);
+		break;
+	default:
+		hlen = 0;
+		break;
+	}
+	hlen += sizeof(struct tcphdr);
+
+	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
+		hlen += TCPOLEN_TSTAMP_APPA;
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE)
+		hlen += TCPOLEN_SIGLEN;
+#endif
+	return hlen;
 }
