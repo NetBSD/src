@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.92 2005/04/29 10:39:09 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.93 2005/07/19 17:00:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92 2005/04/29 10:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.93 2005/07/19 17:00:02 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -361,7 +361,7 @@ freeit:
 	m_freem(n);
 }
 
-static struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
+struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
 struct sockaddr_in icmpmask = { 8, 0 };
