@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/07/19 21:14:39 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2005/07/19 23:24:26 lukem Exp $
 
 SUBDIR=	X11 ICE Xau .WAIT \
 	SM Xext .WAIT \
@@ -26,5 +26,5 @@ LIBDPLIBS=	X11	${.CURDIR}/X11/dynamic \
 libinstall::
 
 
-#.include <bsd.lib.mk>
+.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
