@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.159 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.160 2005/07/19 12:58:24 gdt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.159 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.160 2005/07/19 12:58:24 gdt Exp $");
 
 #include "opt_inet.h"
 
@@ -618,6 +618,13 @@ if_detach(ifp)
 			panic("if_detach: no domain for AF %d",
 			    family);
 #endif
+		/*
+		 * XXX These PURGEIF calls are redundant with the
+		 * purge-all-families calls below, but are left in for
+		 * now both to make a smaller change, and to avoid
+		 * unplanned interactions with clearing of
+		 * ifp->if_addrlist.
+		 */
 		purged = 0;
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++) {
@@ -652,6 +659,29 @@ if_detach(ifp)
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
+
+		/*
+		 * One would expect multicast memberships (INET and
+		 * INET6) on UDP sockets to be purged by the PURGEIF
+		 * calls above, but if all addresses were removed from
+		 * the interface prior to destruction, the calls will
+		 * not be made (e.g. ppp, for which pppd(8) generally
+		 * removes addresses before destroying the interface).
+		 * Because there is no invariant that multicast
+		 * memberships only exist for interfaces with IPv4
+		 * addresses, we must call PURGEIF regardless of
+		 * addresses.  (Protocols which might store ifnet
+		 * pointers are marked with PR_PURGEIF.)
+		 */
+		for (pr = dp->dom_protosw;
+		     pr < dp->dom_protoswNPROTOSW; pr++) {
+			so.so_proto = pr;
+			if (pr->pr_usrreq != NULL &&
+			    pr->pr_flags & PR_PURGEIF)
+				(void) (*pr->pr_usrreq)(&so,
+				    PRU_PURGEIF, NULL, NULL,
+				    (struct mbuf *) ifp, curproc);
+		}
 	}
 
 	/* Announce that the interface is gone. */
