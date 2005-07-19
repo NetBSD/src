@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.35 2004/04/22 01:34:17 matt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.36 2005/07/19 12:58:24 gdt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -114,6 +114,9 @@ struct protosw {
 #define	PR_LASTHDR	0x40		/* enforce ipsec policy; last header */
 #define	PR_ABRTACPTDIS	0x80		/* abort on accept(2) to disconnected
 					   socket */
+#define PR_PURGEIF	0x100		/* might store struct ifnet pointer;
+					   PRU_PURGEIF must be called on ifnet
+					   deletion */
 
 /*
  * The arguments to usrreq are:
