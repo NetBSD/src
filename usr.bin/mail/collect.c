@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.30 2003/08/07 11:14:36 agc Exp $	*/
+/*	$NetBSD: collect.c,v 1.31 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.30 2003/08/07 11:14:36 agc Exp $");
+__RCSID("$NetBSD: collect.c,v 1.31 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,8 @@ collect(struct header *hp, int printheaders)
 	FILE *fbuf;
 	int lc, cc, escape, eofcount;
 	int c, fd, t;
-	char linebuf[LINESIZE], *cp;
+	char linebuf[LINESIZE];
+	const char *cp;
 	char getsub;
 	char tempname[PATHSIZE];
 	char mailtempname[PATHSIZE];
@@ -337,7 +338,7 @@ cont:
 				break;
 
 			if (*cp == '!') {	/* insert stdout of command */
-				char *shellcmd;
+				const char *shellcmd;
 				int nullfd;
 				int rc2;
 
@@ -494,7 +495,7 @@ out:
  * Write a file, ex-like if f set.
  */
 int
-exwrite(char name[], FILE *fp, int f)
+exwrite(const char name[], FILE *fp, int f)
 {
 	FILE *of;
 	int c;
@@ -564,7 +565,7 @@ mespipe(FILE *fp, char cmd[])
 {
 	FILE *nf;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shellcmd;
+	const char *shellcmd;
 	int fd;
 	char tempname[PATHSIZE];
 
@@ -617,10 +618,10 @@ forward(char ms[], FILE *fp, char *fn, int f)
 {
 	int *msgvec;
 	struct ignoretab *ig;
-	char *tabst;
+	const char *tabst;
 
-	msgvec = (int *) salloc((msgCount+1) * sizeof *msgvec);
-	if (msgvec == (int *) NULL)
+	msgvec = salloc((msgCount+1) * sizeof *msgvec);
+	if (msgvec == NULL)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
 		return(0);
@@ -720,7 +721,7 @@ savedeadletter(FILE *fp)
 {
 	FILE *dbuf;
 	int c;
-	char *cp;
+	const char *cp;
 
 	if (fsize(fp) == 0)
 		return;

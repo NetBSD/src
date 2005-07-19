@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.16 2003/08/07 11:14:42 agc Exp $	*/
+/*	$NetBSD: temp.c,v 1.17 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.16 2003/08/07 11:14:42 agc Exp $");
+__RCSID("$NetBSD: temp.c,v 1.17 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ tinit(void)
 	const char *cp;
 	char *p;
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
-		tmpdir = _PATH_TMP;
+	if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
+		cp = _PATH_TMP;
 
-	if ((tmpdir = strdup(tmpdir)) == NULL)
+	if ((tmpdir = strdup(cp)) == NULL)
 		errx(1, "Out of memory");
 
 	/* Remove trailing slashes. */
@@ -77,7 +77,7 @@ tinit(void)
 			errx(1, "\"%s\" is not a user of this system", myname);
 	} else {
 		if ((cp = username()) == NULL) {
-			myname = "nobody";
+			myname = savestr("nobody");
 			if (rcvmode)
 				exit(1);
 		} else

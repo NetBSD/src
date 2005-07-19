@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.13 2003/08/07 11:14:39 agc Exp $	*/
+/*	$NetBSD: list.c,v 1.14 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.13 2003/08/07 11:14:39 agc Exp $");
+__RCSID("$NetBSD: list.c,v 1.14 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,9 +382,10 @@ check(int mesg, int f)
  * for a RAWLIST.
  */
 int
-getrawlist(char line[], char **argv, int argc)
+getrawlist(const char line[], char **argv, int argc)
 {
-	char c, *cp, *cp2, quotec;
+	char c, *cp2, quotec;
+	const char *cp;
 	int argn;
 	char linebuf[BUFSIZ];
 
@@ -665,13 +666,14 @@ matchsender(char *str, int mesg)
  * if so.
  */
 
-static char *to_fields[] = { "to", "cc", "bcc", 0 };
+static const char *to_fields[] = { "to", "cc", "bcc", 0 };
 
 int
 matchto(char *str, int mesg)
 {
 	struct message *mp;
-	char *cp, *cp2, *backup, **to;
+	char *cp, *cp2, *backup;
+	const char **to;
 
 	str++;
 

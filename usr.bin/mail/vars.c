@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.12 2003/10/31 01:25:54 ross Exp $	*/
+/*	$NetBSD: vars.c,v 1.13 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.12 2003/10/31 01:25:54 ross Exp $");
+__RCSID("$NetBSD: vars.c,v 1.13 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: vars.c,v 1.12 2003/10/31 01:25:54 ross Exp $");
  * Assign a value to a variable.
  */
 void
-assign(char name[], char values[])
+assign(const char name[], const char values[])
 {
 	struct var *vp;
 	int h;
@@ -89,13 +89,13 @@ v_free(char *cp)
  */
 
 char *
-vcopy(char str[])
+vcopy(const char str[])
 {
 	char *new;
 	unsigned len;
 
 	if (*str == '\0')
-		return "";
+		return strdup("");
 	len = strlen(str) + 1;
 	if ((new = malloc(len)) == NULL)
 		errx(1, "Out of memory");
@@ -109,7 +109,7 @@ vcopy(char str[])
  */
 
 char *
-value(char name[])
+value(const char name[])
 {
 	struct var *vp;
 
@@ -124,7 +124,7 @@ value(char name[])
  */
 
 struct var *
-lookup(char name[])
+lookup(const char name[])
 {
 	struct var *vp;
 
@@ -173,7 +173,7 @@ printgroup(char name[])
  * the variable or group hash table.
  */
 int
-hash(char *name)
+hash(const char *name)
 {
 	int h = 0;
 

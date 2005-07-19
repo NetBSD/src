@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.23 2003/10/31 01:25:54 ross Exp $	*/
+/*	$NetBSD: fio.c,v 1.24 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.23 2003/10/31 01:25:54 ross Exp $");
+__RCSID("$NetBSD: fio.c,v 1.24 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,8 @@ void
 setptr(FILE *ibuf, off_t offset)
 {
 	int c, len;
-	char *cp, *cp2;
+	char *cp;
+	const char *cp2;
 	struct message this;
 	FILE *mestmp;
 	int maybe, inhead;
@@ -179,7 +180,7 @@ setptr(FILE *ibuf, off_t offset)
  * characters written, including the newline if requested.
  */
 int
-putline(FILE *obuf, char *linebuf, int outlf)
+putline(FILE *obuf, const char *linebuf, int outlf)
 {
 	int c;
 
@@ -336,13 +337,14 @@ fsize(FILE *iob)
  *	any shell meta character
  * Return the file name as a dynamic string.
  */
-char *
-expand(char *name)
+const char *
+expand(const char *name)
 {
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
 	int pid, l;
-	char *cp, *shellcmd;
+	char *cp;
+	const char *shellcmd;
 	int pivec[2];
 	struct stat sbuf;
 
@@ -445,10 +447,10 @@ getfold(char *name)
 /*
  * Return the name of the dead.letter file.
  */
-char *
+const char *
 getdeadletter(void)
 {
-	char *cp;
+	const char *cp;
 
 	if ((cp = value("DEAD")) == NULL || (cp = expand(cp)) == NULL)
 		cp = expand("~/dead.letter");

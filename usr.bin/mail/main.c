@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2003/08/07 11:14:40 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2003/08/07 11:14:40 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,10 +67,10 @@ main(int argc, char *argv[])
 	int i;
 	struct name *to, *cc, *bcc, *smopts;
 	char *subject;
-	char *ef;
+	const char *ef;
 	char nosrc = 0;
 	sig_t prevint;
-	char *rc;
+	const char *rc;
 
 	/*
 	 * Set up a reasonable environment.

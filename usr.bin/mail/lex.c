@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.23 2003/08/07 11:14:39 agc Exp $	*/
+/*	$NetBSD: lex.c,v 1.24 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.23 2003/08/07 11:14:39 agc Exp $");
+__RCSID("$NetBSD: lex.c,v 1.24 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ extern char *tmpdir;
 extern char *version;
 extern const struct cmd cmdtab[];
 
-char	*prompt = "& ";
+const char	*prompt = "& ";
 
 /*
  * Set up editing on the given file name.
@@ -60,13 +60,13 @@ char	*prompt = "& ";
  * signficance for mbox and so forth.
  */
 int
-setfile(char *name)
+setfile(const char *name)
 {
 	FILE *ibuf;
 	int i, fd;
 	struct stat stb;
 	char isedit = *name != '%' || getuserid(myname) != getuid();
-	char *who = name[1] ? name + 1 : myname;
+	const char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 	char tempname[PATHSIZE];
 
@@ -509,9 +509,10 @@ lex(char word[])
  * Return true if yep.
  */
 int
-isprefix(char *as1, char *as2)
+isprefix(char *as1, const char *as2)
 {
-	char *s1, *s2;
+	char *s1;
+	const char *s2;
 
 	s1 = as1;
 	s2 = as2;
@@ -685,7 +686,7 @@ pversion(void *v)
  * Load a file of user definitions.
  */
 void
-load(char *name)
+load(const char *name)
 {
 	FILE *in, *oldin;
 
