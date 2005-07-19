@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.13 2005/07/19 09:45:12 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.14 2005/07/19 12:20:29 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -210,6 +210,7 @@ static void *xbdback_co_main(struct xbdback_instance *, void *);
 static void *xbdback_co_main_loop(struct xbdback_instance *, void *);
 static void *xbdback_co_main_incr(struct xbdback_instance *, void *);
 static void *xbdback_co_main_done(struct xbdback_instance *, void *);
+static void *xbdback_co_main_done2(struct xbdback_instance *, void *);
 
 static void *xbdback_co_io(struct xbdback_instance *, void *);
 static void *xbdback_co_io_gotreq(struct xbdback_instance *, void *);
@@ -689,9 +690,21 @@ xbdback_co_main_done(struct xbdback_instance *xbdi, void *obj)
 	(void)obj;
 	if (xbdi->io != NULL) {
 		xbdi->cont = xbdback_co_flush;
-		xbdi->cont_aux = NULL;
+		xbdi->cont_aux = xbdback_co_main_done2;
 	} else {
+		xbdi->cont = xbdback_co_main_done2;
+	}
+	return xbdi;
+}
+
+static void *
+xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
+{
+
+	if (xbdi->req_prod == xbdi->blk_ring->req_prod) {
 		xbdi->cont = NULL;
+	} else {
+		xbdi->cont = xbdback_co_main;
 	}
 	return xbdi;
 }
