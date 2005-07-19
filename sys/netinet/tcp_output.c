@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.137 2005/07/19 17:00:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.137 2005/07/19 17:00:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -550,7 +550,7 @@ tcp_output(struct tcpcb *tp)
 #endif
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
-	unsigned optlen, hdrlen;
+	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
 	int txsegsize_nosack;
@@ -1441,6 +1441,7 @@ timer:
 #ifdef INET
 	case AF_INET:
 		ip->ip_len = htons(m->m_pkthdr.len);
+		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
@@ -1455,6 +1456,7 @@ timer:
 #endif
 #ifdef INET6
 	case AF_INET6:
+		packetlen = m->m_pkthdr.len;
 		ip6->ip6_nxt = IPPROTO_TCP;
 		if (tp->t_in6pcb) {
 			/*
@@ -1470,6 +1472,9 @@ timer:
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
 #endif
+	default:	/*pacify gcc*/
+		packetlen = 0;
+		break;
 	}
 
 	switch (af) {
@@ -1537,6 +1542,10 @@ out:
 
 		return (error);
 	}
+
+	if (packetlen > tp->t_pmtud_mtu_sent)
+		tp->t_pmtud_mtu_sent = packetlen;
+	
 	tcpstat.tcps_sndtotal++;
 	if (tp->t_flags & TF_DELACK)
 		tcpstat.tcps_delack++;
