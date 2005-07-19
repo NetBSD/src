@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.19 2003/08/07 11:14:41 agc Exp $	*/
+/*	$NetBSD: quit.c,v 1.20 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.19 2003/08/07 11:14:41 agc Exp $");
+__RCSID("$NetBSD: quit.c,v 1.20 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ quit(void)
 	struct message *mp;
 	int c, fd;
 	struct stat minfo;
-	char *mbox;
+	const char *mbox;
 	char tempname[PATHSIZE];
 
 #ifdef __GNUC__

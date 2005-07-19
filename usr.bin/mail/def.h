@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.16 2003/08/07 11:14:37 agc Exp $	*/
+/*	$NetBSD: def.h,v 1.17 2005/07/19 01:38:38 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.16 2003/08/07 11:14:37 agc Exp $
+ *	$NetBSD: def.h,v 1.17 2005/07/19 01:38:38 christos Exp $
  */
 
 /*
@@ -111,7 +111,7 @@ struct message {
  * in lex.c
  */
 struct cmd {
-	char	*c_name;		/* Name of command */
+	const char *c_name;		/* Name of command */
 	int	(*c_func)(void *);	/* Implementor of the command */
 	short	c_argtype;		/* Type of arglist (see below) */
 	short	c_msgflag;		/* Required flags of messages */

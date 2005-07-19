@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.18 2003/08/07 11:14:37 agc Exp $	*/
+/*	$NetBSD: edit.c,v 1.19 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.18 2003/08/07 11:14:37 agc Exp $");
+__RCSID("$NetBSD: edit.c,v 1.19 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	FILE *nf = NULL;
 	int t;
 	time_t modtime;
-	char *editcmd;
+	const char *editcmd;
 	char tempname[PATHSIZE];
 	struct stat statb;
 

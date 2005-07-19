@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.21 2003/08/07 11:14:35 agc Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.22 2005/07/19 01:38:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.21 2003/08/07 11:14:35 agc Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.22 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ type1(int *msgvec, int doign, int page)
 {
 	int *ip;
 	struct message *mp;
-	char *cp;
+	const char *cp;
 	int nlines;
 	FILE *obuf;
 #if __GNUC__
@@ -442,7 +442,7 @@ int
 folders(void *v)
 {
 	char dirname[PATHSIZE];
-	char *cmd;
+	const char *cmd;
 
 	if (getfold(dirname) < 0) {
 		printf("No value set for \"folder\"\n");
