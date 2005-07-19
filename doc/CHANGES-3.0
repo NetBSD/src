@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.179 2005/07/18 21:26:56 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.180 2005/07/19 22:06:27 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10716,4 +10716,33 @@ xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.8
 
 	Added keysyms for extra keys on Sun Type 6 USB keyboard.
 	[macallan, ticket #592]
+
+usr.bin/calendar/calendar.c			1.38
+
+	Add missing break. From YOMURA Masanori in PR 30751.
+	[wiz, ticket #596]
+
+usr.bin/audio/play/play.c                       1.45
+usr.bin/audio/record/record.c                   1.39-1.41
+
+        Check that an output file is given before doing any other work;
+        avoids touching the audio device and then printing an error.
+        Change the default encoding to the device's default (PR#30612).
+        Allow playback of empty files to exit gracefully.
+        [mrg, ticket #597]
+
+sys/dev/hpc/hpckbdkeymap.h			1.35
+
+	Keyboard translation for HP 620LX.  Data and testing on an
+	"International English" (#ABB) unit from Christer Andersson.
+	US version (#ABA) uses the same primary layer layout as far as I can
+	figure from keyboard pictures, so this table should work for those
+	machines too.
+	[uwe, ticket #598]
+
+sys/dev/pci/if_tlp_pci.c			1.81
+
+	If the DEC board name is not known, remove the leading whitespace in
+	sc_name.  PR#30458.
+	[rpaulo, ticket #600]
 
