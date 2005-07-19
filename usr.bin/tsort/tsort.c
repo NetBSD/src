@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: tsort.c,v 1.21 2005/07/19 23:18:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.21 2005/07/19 23:18:31 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,7 @@ main(argc, argv)
 
 	/* do the sort */
 	tsort();
-	exit(0);
+	return(0);
 }
 
 /* double the size of oldbuf and return a pointer to the new buffer. */
@@ -260,7 +260,7 @@ get_node(name)
 
 	switch ((*db->get)(db, &key, &data, 0)) {
 	case 0:
-		memmove(&n, data.data, sizeof(n));
+		(void)memmove(&n, data.data, sizeof(n));
 		return (n);
 	case 1:
 		break;
@@ -277,7 +277,7 @@ get_node(name)
 	n->n_arcs = NULL;
 	n->n_refcnt = 0;
 	n->n_flags = 0;
-	memmove(n->n_name, name, key.size);
+	(void)memmove(n->n_name, name, key.size);
 
 	/* Add to linked list. */
 	if ((n->n_next = graph) != NULL)
@@ -409,8 +409,7 @@ find_cycle(from, to, longest_len, depth)
 		if (*np == to) {
 			if (depth + 1 > longest_len) {
 				longest_len = depth + 1;
-				(void)memcpy((char *)longest_cycle,
-				    (char *)cycle_buf,
+				(void)memcpy(longest_cycle, cycle_buf,
 				    longest_len * sizeof(NODE *));
 			}
 		} else {
