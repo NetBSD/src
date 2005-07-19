@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.17 2003/08/07 11:14:42 agc Exp $	*/
+/*	$NetBSD: tty.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.17 2003/08/07 11:14:42 agc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,11 +179,12 @@ out:
  */
 
 char *
-readtty(char pr[], char src[])
+readtty(const char pr[], char src[])
 {
 	char ch, canonb[BUFSIZ];
 	int c;
 	char *cp, *cp2;
+	static char empty[] = "";
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void)&c;
@@ -204,7 +205,7 @@ readtty(char pr[], char src[])
 	fputs(canonb, stdout);
 	fflush(stdout);
 #else
-	cp = src == NULL ? "" : src;
+	cp = src == NULL ? empty : src;
 	while ((c = *cp++) != '\0') {
 		if ((c_erase != _POSIX_VDISABLE && c == c_erase) ||
 		    (c_kill != _POSIX_VDISABLE && c == c_kill)) {

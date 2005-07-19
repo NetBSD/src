@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.17 2003/08/07 11:14:40 agc Exp $	*/
+/*	$NetBSD: popen.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.17 2003/08/07 11:14:40 agc Exp $");
+__RCSID("$NetBSD: popen.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,10 @@ static struct child *child, *child_freelist = NULL;
 static struct child *findchild(pid_t, int);
 static void delchild(struct child *);
 static pid_t file_pid(FILE *);
-static pid_t start_commandv(char *, sigset_t *, int, int, va_list);
+static pid_t start_commandv(const char *, sigset_t *, int, int, va_list);
 
 FILE *
-Fopen(char *fn, char *mode)
+Fopen(const char *fn, const char *mode)
 {
 	FILE *fp;
 
@@ -83,7 +83,7 @@ Fopen(char *fn, char *mode)
 }
 
 FILE *
-Fdopen(int fd, char *mode)
+Fdopen(int fd, const char *mode)
 {
 	FILE *fp;
 
@@ -103,7 +103,7 @@ Fclose(FILE *fp)
 }
 
 FILE *
-Popen(char *cmd, char *mode)
+Popen(const char *cmd, const char *mode)
 {
 	int p[2];
 	int myside, hisside, fd0, fd1;
@@ -214,7 +214,8 @@ file_pid(FILE *fp)
  * SIGINT is enabled unless it's in "nset".
  */
 static pid_t
-start_commandv(char *cmd, sigset_t *nset, int infd, int outfd, va_list args)
+start_commandv(const char *cmd, sigset_t *nset, int infd, int outfd,
+    va_list args)
 {
 	pid_t pid;
 
@@ -238,7 +239,7 @@ start_commandv(char *cmd, sigset_t *nset, int infd, int outfd, va_list args)
 }
 
 int
-run_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+run_command(const char *cmd, sigset_t *nset, int infd, int outfd, ...)
 {
 	pid_t pid;
 	va_list args;
@@ -252,7 +253,7 @@ run_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
 }
 
 int
-start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+start_command(const char *cmd, sigset_t *nset, int infd, int outfd, ...)
 {
 	va_list args;
 	int r;

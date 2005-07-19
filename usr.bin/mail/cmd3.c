@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.25 2003/11/10 21:40:22 ross Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.26 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.25 2003/11/10 21:40:22 ross Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.26 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ shell(void *v)
 {
 	char *str = v;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shellcmd;
+	const char *shellcmd;
 	char cmd[BUFSIZ];
 
 	(void)strcpy(cmd, str);
@@ -79,7 +79,7 @@ int
 dosh(void *v)
 {
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shellcmd;
+	const char *shellcmd;
 
 	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
@@ -170,7 +170,7 @@ int
 schdir(void *v)
 {
 	char **arglist = v;
-	char *cp;
+	const char *cp;
 
 	if (*arglist == NULL)
 		cp = homedir;
@@ -360,7 +360,7 @@ set(void *v)
 {
 	char **arglist = v;
 	struct var *vp;
-	char *cp;
+	const char *cp;
 	char varbuf[BUFSIZ], **ap, **p;
 	int errs, h, s;
 	size_t l;
@@ -369,7 +369,7 @@ set(void *v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				s++;
-		ap = (char **) salloc(s * sizeof *ap);
+		ap = salloc(s * sizeof *ap);
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				*p++ = vp->v_name;
@@ -460,7 +460,7 @@ group(void *v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				s++;
-		ap = (char **) salloc(s * sizeof *ap);
+		ap = salloc(s * sizeof *ap);
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				*p++ = gh->g_name;
@@ -522,7 +522,7 @@ sort(char **list)
 static int
 diction(const void *a, const void *b)
 {
-	return(strcmp(*(char **)a, *(char **)b));
+	return(strcmp(*(const char *const *)a, *(const char *const *)b));
 }
 
 /*
@@ -563,7 +563,7 @@ echo(void *v)
 {
 	char **argv = v;
 	char **ap;
-	char *cp;
+	const char *cp;
 
 	for (ap = argv; *ap != NULL; ap++) {
 		cp = *ap;

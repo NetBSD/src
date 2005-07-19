@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.17 2003/08/07 11:14:36 agc Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.17 2003/08/07 11:14:36 agc Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,15 +171,16 @@ copycmd(void *v)
  * If markmsg is true, mark the message "saved."
  */
 int
-save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
+save1(char str[], int markmsg, const char *cmd, struct ignoretab *ignoretabs)
 {
 	int *ip;
 	struct message *mp;
-	char *fn, *disp;
+	const char *fn;
+	const char *disp;
 	int f, *msgvec;
 	FILE *obuf;
 
-	msgvec = (int *) salloc((msgCount + 2) * sizeof *msgvec);
+	msgvec = salloc((msgCount + 2) * sizeof *msgvec);
 	if ((fn = snarf(str, &f)) == NULL)
 		return(1);
 	if (!f) {
@@ -471,7 +472,7 @@ saveigfield(void *v)
 }
 
 int
-ignore1(char *list[], struct ignoretab *tab, char *which)
+ignore1(char *list[], struct ignoretab *tab, const char *which)
 {
 	char field[LINESIZE];
 	int h;
@@ -500,7 +501,7 @@ ignore1(char *list[], struct ignoretab *tab, char *which)
  * Print out all currently retained fields.
  */
 int
-igshow(struct ignoretab *tab, char *which)
+igshow(struct ignoretab *tab, const char *which)
 {
 	int h;
 	struct ignore *igp;
@@ -510,7 +511,7 @@ igshow(struct ignoretab *tab, char *which)
 		printf("No fields currently being %s.\n", which);
 		return 0;
 	}
-	ring = (char **) salloc((tab->i_count + 1) * sizeof (char *));
+	ring = salloc((tab->i_count + 1) * sizeof (char *));
 	ap = ring;
 	for (h = 0; h < HSHSIZE; h++)
 		for (igp = tab->i_head[h]; igp != 0; igp = igp->i_link)
@@ -528,5 +529,5 @@ igshow(struct ignoretab *tab, char *which)
 static int
 igcomp(const void *l, const void *r)
 {
-	return (strcmp(*(char **)l, *(char **)r));
+	return (strcmp(*(const char *const *)l, *(const char *const *)r));
 }

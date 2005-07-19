@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.17 2003/08/07 11:14:40 agc Exp $	*/
+/*	$NetBSD: names.c,v 1.18 2005/07/19 01:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.17 2003/08/07 11:14:40 agc Exp $");
+__RCSID("$NetBSD: names.c,v 1.18 2005/07/19 01:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ nalloc(char str[], int ntype)
 {
 	struct name *np;
 
-	np = (struct name *) salloc(sizeof *np);
+	np = salloc(sizeof *np);
 	np->n_flink = NULL;
 	np->n_blink = NULL;
 	np->n_type = ntype;
@@ -213,7 +213,8 @@ outof(struct name *names, FILE *fo, struct header *hp)
 	int c, fd;
 	struct name *np, *begin;
 	time_t now;
-	char *date, *fname;
+	char *date;
+	const char *fname;
 	FILE *fout, *fin;
 	int ispipe;
 	char tempname[PATHSIZE];
@@ -282,7 +283,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 
 		if (ispipe) {
 			int pid;
-			char *shellcmd;
+			const char *shellcmd;
 			sigset_t nset;
 
 			/*
@@ -477,10 +478,10 @@ cat(struct name *n1, struct name *n2)
  * Unpack the name list onto a vector of strings.
  * Return an error if the name list won't fit.
  */
-char **
+const char **
 unpack(struct name *np)
 {
-	char **ap, **begin;
+	const char **ap, **begin;
 	struct name *n;
 	int t, extra, metoo, verbose;
 
@@ -501,7 +502,7 @@ unpack(struct name *np)
 	verbose = value("verbose") != NULL;
 	if (verbose)
 		extra++;
-	begin = (char **) salloc((t + extra) * sizeof *begin);
+	begin = salloc((t + extra) * sizeof *begin);
 	ap = begin;
 	*ap++ = "send-mail";
 	*ap++ = "-i";
