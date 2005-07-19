@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.3 2004/09/07 13:55:22 wiz Exp $
+.\"     $NetBSD: m_tag.9,v 1.4 2005/07/19 12:44:02 gdt Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -111,6 +111,11 @@ to the mbuf
 .Fa t
 will become the first tag of the mbuf
 .Fa m .
+When
+.Fa m
+is freed,
+.Fa t
+will also be freed.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_unlink "m" "t"
 Unlink the mbuf tag
