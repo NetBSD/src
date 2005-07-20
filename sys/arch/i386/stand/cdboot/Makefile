@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/06/15 06:38:45 junyoung Exp $
+#	$NetBSD: Makefile,v 1.2 2005/07/20 03:27:51 junyoung Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -27,6 +27,7 @@ LDFLAGS+= -e start
 CPPFLAGS+= -I. -I${.CURDIR}/../lib -I${S}
 CPPFLAGS+= -DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+= -DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
+#CPPFLAGS+= -DDISABLE_KEYPRESS
 
 .if ${MACHINE} == "amd64"
 LDFLAGS+=  -m elf_i386
