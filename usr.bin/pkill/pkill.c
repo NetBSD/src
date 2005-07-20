@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.12 2005/07/16 19:50:32 christos Exp $	*/
+/*	$NetBSD: pkill.c,v 1.13 2005/07/20 12:40:27 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.12 2005/07/16 19:50:32 christos Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.13 2005/07/20 12:40:27 dsainty Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -432,13 +432,15 @@ static int
 killact(struct kinfo_proc2 *kp)
 {
 	if (kill(kp->p_pid, signum) == -1) {
+
+		/*
+		 * Check for ESRCH, which indicates that the process
+		 * disappeared between us matching it and us
+		 * signalling it.  Return 0 to indicate that the
+		 * process should not be considered a match, since we
+		 * didn't actually get to signal it.
+		 */
 		if (errno == ESRCH)
-			/*
-			 * The process disappeared between us matching
-			 * it and us signalling it.  Return 0 to
-			 * indicate that the process should not be
-			 * considered a match.
-			 */
 			return 0;
 
 		err(STATUS_ERROR, "signalling pid %d", (int)kp->p_pid);
@@ -453,12 +455,14 @@ grepact(struct kinfo_proc2 *kp)
 	char **argv;
 
 	if (longfmt && matchargs) {
+
+		/*
+		 * If kvm_getargv2() failed the process has probably
+		 * disappeared.  Return 0 to indicate that the process
+		 * should not be considered a match, since we are no
+		 * longer in a position to output it as a match.
+		 */
 		if ((argv = kvm_getargv2(kd, kp, 0)) == NULL)
-			/*
-			 * The process disappeared?  Return 0 to
-			 * indicate that the process should not be
-			 * considered a match.
-			 */
 			return 0;
 
 		(void)printf("%d ", (int)kp->p_pid);
