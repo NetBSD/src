@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.2 2004/03/19 20:12:07 mhitch Exp $ */
+/*	$NetBSD: lcspx.c,v 1.3 2005/07/20 17:38:13 he Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.2 2004/03/19 20:12:07 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.3 2005/07/20 17:38:13 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,16 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.2 2004/03/19 20:12:07 mhitch Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_callbacks.h>
+#include <dev/wsfont/wsfont.h>
 
 #include "machine/scb.h"
 
 #include "dzkbd.h"
 #include "opt_wsfont.h"
-
-/* Safety guard */
-#ifndef FONT_QVSS8x15
-#include <dev/wsfont/qvss8x15.h>
-#endif
 
 /* Screen hardware defs */
 #define SPX_COLS	160	/* char width of screen */
@@ -126,7 +122,6 @@ const struct wsscreen_list lcspx_screenlist = {
 
 static	char *lcspxaddr;
 
-extern struct wsdisplay_font qvss8x15;
 static  u_char *qf;
 
 #define QCHAR(c) (c < 32 ? 32 : (c > 127 ? c - 66 : c - 32))
@@ -193,6 +188,8 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	struct wsemuldisplaydev_attach_args aa;
+	int fcookie;
+	struct wsdisplay_font *console_font;
 
 	printf("\n");
 	aa.console = lcspxaddr != NULL;
@@ -206,7 +203,17 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 
 	aa.scrdata = &lcspx_screenlist;
 	aa.accessops = &lcspx_accessops;
-	qf = qvss8x15.data;
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0,
+		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0)
+	{
+		printf("%s: could not find 8x15 font\n", self->dv_xname);
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		printf("%s: could not lock 8x15 font\n", self->dv_xname);
+		return;
+	}
+	qf = console_font->data;
 
 	/* enable software cursor */
 	callout_reset(&lcspx_cursor_ch, hz / 2, lcspx_crsr_blink, NULL);
@@ -459,13 +466,26 @@ cons_decl(lcspx);
 void
 lcspxcninit(struct consdev *cndev)
 {
+	int fcookie;
+	struct wsdisplay_font *console_font;
+
 	/* Clear screen */
 	memset(lcspxaddr, 0, SPX_XWIDTH * SPX_YWIDTH);
 
 	curscr = &lcspx_conscreen;
 	wsdisplay_cnattach(&lcspx_stdscreen, &lcspx_conscreen, 0, 0, 0);
 	cn_tab->cn_pri = CN_INTERNAL;
-	qf = qvss8x15.data;
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0,
+		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0)
+	{
+		printf("lcspx: could not find 8x15 font\n");
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		printf("lcspx: could not lock 8x15 font\n");
+		return;
+	}
+	qf = console_font->data;
 
 #if NDZKBD > 0
 	dzkbd_cnattach(0); /* Connect keyboard and screen together */
