@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.19 2005/07/16 14:45:18 rtr Exp $
+.\"     $NetBSD: vfsops.9,v 1.20 2005/07/20 11:35:48 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,7 @@
 .Nm VFS_UNMOUNT ,
 .Nm VFS_ROOT ,
 .Nm VFS_QUOTACTL ,
-.Nm VFS_STATFS ,
-.Nm VFS_STATFS ,
+.Nm VFS_STATVFS ,
 .Nm VFS_SYNC ,
 .Nm VFS_VGET ,
 .Nm VFS_FHTOVP ,
@@ -70,7 +69,7 @@
 .Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" \
 "caddr_t arg" "struct proc *p"
 .Ft int
-.Fn VFS_STATFS "struct mount *mp" "struct statfs *sbp" "struct proc *p"
+.Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct proc *p"
 .Ft int
 .Fn VFS_SYNC "struct mount *mp" "int waitfor" "struct ucred *cred" \
 "struct proc *p"
@@ -117,7 +116,7 @@ int  (*vfs_start)()	VFS_START	Make operational
 int  (*vfs_unmount)()	VFS_UMOUNT	Unmount a file system
 int  (*vfs_root)()	VFS_ROOT	Get the file system root vnode
 int  (*vfs_quotactl)()	VFS_QUOTACTL	Query/modify space quotas
-int  (*vfs_statfs)()	VFS_STATFS	Get file system statistics
+int  (*vfs_statvfs)()	VFS_STATVFS	Get file system statistics
 int  (*vfs_sync)()	VFS_SYNC	Flush file system buffers
 int  (*vfs_vget)()	VFS_VGET	Get vnode from file id
 int  (*vfs_fhtovp)()	VFS_FHTOVP	NFS file handle to vnode lookup
@@ -263,20 +262,20 @@ interface.
 is the file system type specific implementation of the
 .Xr quotactl 2
 system call.
-.It Fn VFS_STATFS "mp" "sbp" "p"
+.It Fn VFS_STATVFS "mp" "sbp" "p"
 Get file system statistics for the file system specified by the mount
 structure
 .Fa mp .
 The argument
 .Fa p
 is the calling process.
-A statfs structure filled with the statistics is returned in
+A statvfs structure filled with the statistics is returned in
 .Fa sbp .
-.Fn VFS_STATFS
+.Fn VFS_STATVFS
 is the file system type specific implementation of the
-.Xr statfs 2
+.Xr statvfs 2
 and
-.Xr fstatfs 2
+.Xr fstatvfs 2
 system calls.
 .It Fn VFS_SYNC "mp" "waitfor" "cred" "p"
 Flush file system I/O buffers for the file system specified by the mount
