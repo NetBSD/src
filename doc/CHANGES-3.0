@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.181 2005/07/20 12:36:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.182 2005/07/20 13:27:04 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10765,7 +10765,7 @@ share/man/man4/rtw.4				1.1-1.2
 
 	Add man page for Realtek RTL8180L IEEE 802.11b wireless network driver
 	rtw(4). This solves part of PR kern/29733.
-	[rpaula, ticket #601]
+	[rpaulo, ticket #601]
 
 sys/dev/raidframe/rf_reconstruct.c		1.89
 
