@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2005/04/06 21:46:30 tron Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2005/07/20 11:52:26 tron Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -19,6 +19,11 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
 
 .if ${MACHINE} == "sparc64"
 SRCS+=	xf86sbusBus.c
+CPPFLAGS+=-DUSE_MODULAR_KBD
+.endif
+
+.if ${MACHINE} == "macppc"
+CPPFLAGS+=-DUSE_MODULAR_KBD
 .endif
 
 # Rebuild xf86Build.h on every make
