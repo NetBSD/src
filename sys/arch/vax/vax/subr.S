@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.11 2005/04/09 20:44:56 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.12 2005/07/20 17:48:17 he Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -403,8 +403,8 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 
 #if defined(MULTIPROCESSOR)
 	.align 2
-	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
-_C_LABEL(tramp):
+	.globl	_C_LABEL(vax_mp_tramp)	# used to kick off multiprocessor systems.
+_C_LABEL(vax_mp_tramp):
 	ldpctx
 	rei
 #endif
