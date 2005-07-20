@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.180 2005/07/19 22:06:27 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.181 2005/07/20 12:36:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10745,4 +10745,31 @@ sys/dev/pci/if_tlp_pci.c			1.81
 	If the DEC board name is not known, remove the leading whitespace in
 	sc_name.  PR#30458.
 	[rpaulo, ticket #600]
+
+x11/Xserver/hw/xfree86/xf86/Makefile		1.8
+
+	Let X -configure default to the 'kbd' driver only on sparc64 and
+	macppc.
+	[macallan, ticket #593]
+
+xfree/xc/programs/Xserver/hw/xfree86/common/Imakefile 1.12
+xfree/xc/programs/Xserver/hw/xfree86/common/xf86Configure.c 1.8
+
+	Default to the modular keyboard driver only on sparc(64) and macppc
+	for now, on i386 it seems to mess up some scancodes.
+	[macallan, ticket #594]
+
+distrib/sets/lists/man/mi			1.806-1.807
+share/man/man4/Makefile				1.364 via patch
+share/man/man4/rtw.4				1.1-1.2
+
+	Add man page for Realtek RTL8180L IEEE 802.11b wireless network driver
+	rtw(4). This solves part of PR kern/29733.
+	[rpaula, ticket #601]
+
+sys/dev/raidframe/rf_reconstruct.c		1.89
+
+	Fix the "raidctl's progress bar spins at 0% until reconstruction
+	finishes" problem.
+	[oster, ticket #602]
 
