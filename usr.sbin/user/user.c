@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.80 2005/06/14 18:29:58 agc Exp $ */
+/* $NetBSD: user.c,v 1.81 2005/07/20 21:42:58 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.80 2005/06/14 18:29:58 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.81 2005/07/20 21:42:58 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -220,7 +220,7 @@ asystem(const char *fmt, ...)
 		(void) printf("Command: %s\n", buf);
 	}
 	if ((ret = system(buf)) != 0) {
-		warnx("[Warning] can't system `%s'", buf);
+		warn("system(`%s')", buf);
 	}
 	return ret;
 }
@@ -258,7 +258,7 @@ removehomedir(const char *user, int uid, const char *dir)
 	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
 	(void) seteuid(0);
 	if (rmdir(dir) < 0) {
-		warnx("Unable to remove all files in `%s'", dir);
+		warn("Unable to remove all files in `%s'", dir);
 		return 0;
 	}
 	return 1;
@@ -352,7 +352,7 @@ err:
 
 /* return 1 if all of `s' is numeric */
 static int
-is_number(char *s)
+is_number(const char *s)
 {
 	for ( ; *s ; s++) {
 		if (!isdigit((unsigned char) *s)) {
@@ -504,7 +504,7 @@ modify_gid(char *group, char *newent)
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
 		if ((colon = strchr(buf, ':')) == NULL) {
-			warn("badly formed entry `%s'", buf);
+			warnx("badly formed entry `%s'", buf);
 			continue;
 		}
 		entc = (int)(colon - buf);
@@ -595,7 +595,7 @@ append_group(char *user, int ngroups, const char **groups)
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
 		if ((colon = strchr(buf, ':')) == NULL) {
-			warn("badly formed entry `%s'", buf);
+			warnx("badly formed entry `%s'", buf);
 			continue;
 		}
 		entc = (int)(colon - buf);
@@ -1466,7 +1466,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 #ifdef EXTENSIONS
 /* see if we can find out the user struct */
 static struct passwd *
-find_user_info(char *name)
+find_user_info(const char *name)
 {
 	struct passwd	*pwp;
 
@@ -1483,7 +1483,7 @@ find_user_info(char *name)
 #ifdef EXTENSIONS
 /* see if we can find out the group struct */
 static struct group *
-find_group_info(char *name)
+find_group_info(const char *name)
 {
 	struct group	*grp;
 
@@ -1996,7 +1996,7 @@ groupdel(int argc, char **argv)
 	checkeuid();
 	openlog("groupdel", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, NULL)) {
-		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
+		errx(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -2054,19 +2054,19 @@ groupmod(int argc, char **argv)
 	}
 	checkeuid();
 	if (gid < 0 && newname == NULL) {
-		err(EXIT_FAILURE, "Nothing to change");
+		errx(EXIT_FAILURE, "Nothing to change");
 	}
 	if (dupgid && gid < 0) {
-		err(EXIT_FAILURE, "Duplicate which gid?");
+		errx(EXIT_FAILURE, "Duplicate which gid?");
 	}
-	if ((grp = getgrnam(*argv)) == NULL) {
+	if ((grp = find_group_info(*argv)) == NULL) {
 		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
 	if (!is_local(*argv, _PATH_GROUP)) {
 		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
-		warn("warning - invalid group name `%s'", newname);
+		warnx("warning - invalid group name `%s'", newname);
 	}
 	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:",
 			(newname) ? newname : grp->gr_name,
@@ -2079,7 +2079,7 @@ groupmod(int argc, char **argv)
 	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
 	openlog("groupmod", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, buf)) {
-		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
+		errx(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -2191,7 +2191,9 @@ groupinfo(int argc, char **argv)
 	(void) printf("gid\t%d\n", grp->gr_gid);
 	(void) printf("members\t");
 	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
-		(void) printf("%s ", *cpp);
+		(void) printf("%s", *cpp);
+		if (*(cpp + 1))
+			(void) printf(", ");
 	}
 	(void) fputc('\n', stdout);
 	return EXIT_SUCCESS;
