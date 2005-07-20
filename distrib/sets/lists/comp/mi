@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.798 2005/07/12 11:40:29 wiz Exp $
+#	$NetBSD: mi,v 1.799 2005/07/20 11:36:39 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4851,7 +4851,8 @@
 ./usr/share/man/cat9/VFS_ROOT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_SNAPSHOT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_START.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VFS_STATFS.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VFS_STATFS.0		comp-obsolete		obsolete
+./usr/share/man/cat9/VFS_STATVFS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_SYNC.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_UNMOUNT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VGET.0			comp-sys-catman		.cat
@@ -8720,7 +8721,8 @@
 ./usr/share/man/man9/VFS_ROOT.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_SNAPSHOT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_START.9		comp-sys-man		.man
-./usr/share/man/man9/VFS_STATFS.9		comp-sys-man		.man
+./usr/share/man/man9/VFS_STATFS.9		comp-obsolete		obsolete
+./usr/share/man/man9/VFS_STATVFS.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_SYNC.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_UNMOUNT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_VGET.9			comp-sys-man		.man
