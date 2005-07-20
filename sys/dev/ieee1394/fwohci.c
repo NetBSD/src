@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.89 2005/07/11 15:37:00 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.90 2005/07/20 15:11:57 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -149,13 +149,14 @@ err:
 }
 #endif
 
-static char dbcode[16][0x10]={"OUTM", "OUTL","INPM","INPL",
-		"STOR","LOAD","NOP ","STOP",};
+static const char * const dbcode[16] = {"OUTM", "OUTL","INPM","INPL",
+		"STOR","LOAD","NOP ","STOP",
+		"", "", "", "", "", "", "", ""};
 
-static char dbkey[8][0x10]={"ST0", "ST1","ST2","ST3",
+static const char * const dbkey[8] = {"ST0", "ST1","ST2","ST3",
 		"UNDEF","REG","SYS","DEV"};
-static char dbcond[4][0x10]={"NEV","C=1", "C=0", "ALL"};
-char fwohcicode[32][0x20]={
+static const char * const dbcond[4] = {"NEV","C=1", "C=0", "ALL"};
+static const char * const fwohcicode[32] = {
 	"No stat","Undef","long","miss Ack err",
 	"underrun","overrun","desc err", "data read err",
 	"data write err","bus reset","timeout","tcode err",
@@ -166,10 +167,10 @@ char fwohcicode[32][0x20]={
 	"Undef","ack data_err","ack type_err",""};
 
 #define MAX_SPEED 3
-extern char *linkspeed[];
-uint32_t tagbit[4] = { 1 << 28, 1 << 29, 1 << 30, 1 << 31};
+extern const char *fw_linkspeed[];
+static uint32_t const tagbit[4] = { 1 << 28, 1 << 29, 1 << 30, 1 << 31};
 
-static struct tcode_info tinfo[] = {
+static const struct tcode_info tinfo[] = {
 /*		hdr_len block 	flag*/
 /* 0 WREQQ  */ {16,	FWTI_REQ | FWTI_TLABEL},
 /* 1 WREQB  */ {16,	FWTI_REQ | FWTI_TLABEL | FWTI_BLOCK_ASY},
@@ -515,7 +516,7 @@ fwohci_probe_phy(struct fwohci_softc *sc, device_t dev)
 		}
 		device_printf(dev,
 			"Phy 1394 only %s, %d ports.\n",
-			linkspeed[sc->fc.speed], sc->fc.nport);
+			fw_linkspeed[sc->fc.speed], sc->fc.nport);
 	}else{
 		reg2 = fwphy_rddata(sc, FW_PHY_ESPD_REG);
 		sc->fc.mode |= FWPHYASYST;
@@ -528,7 +529,7 @@ fwohci_probe_phy(struct fwohci_softc *sc, device_t dev)
 		}
 		device_printf(dev,
 			"Phy 1394a available %s, %d ports.\n",
-			linkspeed[sc->fc.speed], sc->fc.nport);
+			fw_linkspeed[sc->fc.speed], sc->fc.nport);
 
 		/* check programPhyEnable */
 		reg2 = fwphy_rddata(sc, 5);
@@ -606,7 +607,7 @@ fwohci_reset(struct fwohci_softc *sc, device_t dev)
 	max_rec = (reg & 0x0000f000) >> 12;
 	speed = (reg & 0x00000007);
 	device_printf(dev, "Link %s, max_rec %d bytes.\n",
-			linkspeed[speed], MAXREC(max_rec));
+			fw_linkspeed[speed], MAXREC(max_rec));
 	/* XXX fix max_rec */
 	sc->fc.maxrec = sc->fc.speed + 8;
 	if (max_rec != sc->fc.maxrec) {
@@ -930,7 +931,7 @@ fwohci_start(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	struct fwohcidb_tr *db_tr;
 	struct fwohcidb *db;
 	uint32_t *ld;
-	struct tcode_info *info;
+	const struct tcode_info *info;
 	static int maxdesc=0;
 
 	if(&sc->atrq == dbch){
@@ -2811,7 +2812,7 @@ fwohci_arcv_swap(struct fw_pkt *fp, int len)
 static int
 fwohci_get_plen(struct fwohci_softc *sc, struct fwohci_dbch *dbch, struct fw_pkt *fp)
 {
-	struct tcode_info *info;
+	const struct tcode_info *info;
 	int r;
 
 	info = &tinfo[fp->mode.common.tcode];
