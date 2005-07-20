@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.73 2005/07/20 14:38:11 nonaka Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.73 2005/07/20 14:38:11 nonaka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1183,7 +1183,8 @@ set_cpufuncs()
 #endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
 	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
-	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0) {
+	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0 ||
+	    cputype == CPU_ID_80219_400 || cputype == CPU_ID_80219_600) {
 		i80321_icu_init();
 
 		/*
