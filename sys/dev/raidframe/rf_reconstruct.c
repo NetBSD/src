@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.87.2.1 2005/06/09 16:51:09 tron Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.87.2.2 2005/07/20 12:33:43 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.87.2.1 2005/06/09 16:51:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.87.2.2 2005/07/20 12:33:43 tron Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -881,6 +881,8 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 			Dprintf1("RECON: submitblocked=%d\n", submitblocked);
 			if (!submitblocked)
 				retcode = IssueNextReadRequest(raidPtr, event->col);
+			else
+				retcode = 0;
 		}
 		break;
 
