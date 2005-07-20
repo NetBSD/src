@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -232,7 +232,7 @@ static device_method_t firewire_methods[] = {
 CFATTACH_DECL(ieee1394if, sizeof (struct firewire_softc),
     firewirematch, firewireattach, firewiredetach, NULL);
 #endif
-const char *linkspeed[] = {
+const char *fw_linkspeed[] = {
 	"S100", "S200", "S400", "S800",
 	"S1600", "S3200", "undef", "undef"
 };
@@ -306,7 +306,7 @@ fw_asyreq(struct firewire_comm *fc, int sub, struct fw_xfer *xfer)
 	int tl = -1, len;
 	struct fw_pkt *fp;
 	int tcode;
-	struct tcode_info *info;
+	const struct tcode_info *info;
 
 	if(xfer == NULL) return EINVAL;
 	if(xfer->hand == NULL){
@@ -782,7 +782,7 @@ fw_busreset(struct firewire_comm *fc)
 	fw_reset_csr(fc);
 	fw_reset_crom(fc);
 
-	FIREWIRE_CHILDLEN_FOREACH_FUNC(post_busreset, fdc);
+	FIREWIRE_CHILDREN_FOREACH_FUNC(post_busreset, fdc);
 
 	newrom = malloc(CROMSIZE, M_FW, M_NOWAIT | M_ZERO);
 	src = &fc->crom_src_buf->src;
@@ -1568,7 +1568,7 @@ fw_explore_node(struct fw_device *dfwdev)
 			STAILQ_INSERT_AFTER(&fc->devices, pfwdev, fwdev, link);
 
 		device_printf(fc->bdev, "New %s device ID:%08x%08x\n",
-		    linkspeed[spd],
+		    fw_linkspeed[spd],
 		    fwdev->eui.hi, fwdev->eui.lo);
 
 	} else
@@ -1722,7 +1722,7 @@ fw_attach_dev(struct firewire_comm *fc)
 		}
 	}
 
-	FIREWIRE_CHILDLEN_FOREACH_FUNC(post_explore, fdc);
+	FIREWIRE_CHILDREN_FOREACH_FUNC(post_explore, fdc);
 
 	for (fwdev = STAILQ_FIRST(&fc->devices); fwdev != NULL; fwdev = next) {
 		next = STAILQ_NEXT(fwdev, link);
@@ -1779,7 +1779,7 @@ fw_rcv_copy(struct fw_rcv_buf *rb)
 {
 	struct fw_pkt *pkt;
 	u_char *p;
-	struct tcode_info *tinfo;
+	const struct tcode_info *tinfo;
 	u_int res, i, len, plen;
 
 	rb->xfer->recv.spd = rb->spd;

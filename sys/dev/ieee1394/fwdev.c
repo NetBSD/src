@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -334,7 +334,7 @@ fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	struct fw_xfer *xfer;
 	struct fw_bind *fwb;
 	struct fw_pkt *fp;
-	struct tcode_info *tinfo;
+	const struct tcode_info *tinfo;
 
 	while ((xfer = STAILQ_FIRST(&d->rq)) == NULL && err == 0)
 		err = tsleep(&d->rq, FWPRI, "fwra", 0);
@@ -445,7 +445,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 {
 	struct fw_xfer *xfer;
 	struct fw_pkt pkt;
-	struct tcode_info *tinfo;
+	const struct tcode_info *tinfo;
 	int err;
 
 	bzero(&pkt, sizeof(struct fw_pkt));
@@ -679,7 +679,7 @@ FW_IOCTL(fw)
 		break;
 	case FW_ASYREQ:
 	{
-		struct tcode_info *tinfo;
+		const struct tcode_info *tinfo;
 		int pay_len = 0;
 
 		fp = &asyreq->pkt;

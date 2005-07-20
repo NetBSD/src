@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -168,7 +168,7 @@ struct firewire_comm{
 	void (*set_intr) (struct firewire_comm *, int);
 	void (*irx_post) (struct firewire_comm *, uint32_t *);
 	void (*itx_post) (struct firewire_comm *, uint32_t *);
-	struct tcode_info *tcode;
+	const struct tcode_info *tcode;
 	bus_dma_tag_t dmat;
 };
 #define CSRARC(sc, offset) ((sc)->csr_arc[(offset)/4])
