@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.6 2003/07/15 02:15:04 lukem Exp $	*/
+/*	$NetBSD: ka88.c,v 1.7 2005/07/20 17:48:17 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.6 2003/07/15 02:15:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.7 2005/07/20 17:48:17 he Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -74,8 +74,8 @@ static void ka88_clkwrite(void);
 static void ka88_badaddr(void);
 #if defined(MULTIPROCESSOR)
 static void ka88_startslave(struct device *, struct cpu_info *);
-static void ka88_txrx(int, char *, int);
-static void ka88_sendstr(int, char *);
+static void ka88_txrx(int, const char *, int);
+static void ka88_sendstr(int, const char *);
 static void ka88_sergeant(int);
 static int rxchar(void);
 static void ka88_putc(int);
@@ -376,7 +376,7 @@ ka88_startslave(struct device *dev, struct cpu_info *ci)
 	ka88_txrx(id, "D/I 10 %x\r", (int)ci->ci_pcb);	/* PCB for idle proc */
 	ka88_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka88_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
-	ka88_txrx(id, "S %x\r", (int)&tramp); /* Start! */
+	ka88_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
 		if ((volatile)ci->ci_flags & CI_RUNNING)
@@ -387,7 +387,7 @@ ka88_startslave(struct device *dev, struct cpu_info *ci)
 }
 
 void
-ka88_txrx(int id, char *fmt, int arg)
+ka88_txrx(int id, const char *fmt, int arg)
 {
 	char buf[20];
 
@@ -397,7 +397,7 @@ ka88_txrx(int id, char *fmt, int arg)
 }
 
 void
-ka88_sendstr(int id, char *buf)
+ka88_sendstr(int id, const char *buf)
 {
 	register u_int utchr; /* Ends up in R11 with PCC */
 	int ch, i;
