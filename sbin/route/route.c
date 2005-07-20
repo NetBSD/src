@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.83 2005/07/15 21:29:54 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.84 2005/07/20 21:12:40 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.83 2005/07/15 21:29:54 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.84 2005/07/20 21:12:40 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,10 @@ main(int argc, char **argv)
 		usage(NULL);
 
 	while ((ch = getopt(argc, argv, "fnqvdts")) != -1)
-		switch(ch) {
+		switch (ch) {
+		case 'd':
+			debugonly = 1;
+			break;
 		case 'f':
 			doflush = 1;
 			break;
@@ -170,17 +173,14 @@ main(int argc, char **argv)
 		case 'q':
 			qflag = 1;
 			break;
-		case 'v':
-			verbose = 1;
+		case 's':
+			shortoutput = 1;
 			break;
 		case 't':
 			tflag = 1;
 			break;
-		case 'd':
-			debugonly = 1;
-			break;
-		case 's':
-			shortoutput = 1;
+		case 'v':
+			verbose = 1;
 			break;
 		case '?':
 		default:
