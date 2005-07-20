@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.13 2005/07/20 12:40:27 dsainty Exp $	*/
+/*	$NetBSD: pkill.c,v 1.14 2005/07/20 12:54:30 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.13 2005/07/20 12:40:27 dsainty Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.14 2005/07/20 12:54:30 dsainty Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -109,18 +109,19 @@ static struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
 int	main(int, char **);
 static void	usage(void) __attribute__((__noreturn__));
-static int	killact(struct kinfo_proc2 *);
-static int	grepact(struct kinfo_proc2 *);
+static int	killact(const struct kinfo_proc2 *);
+static int	grepact(const struct kinfo_proc2 *);
 static void	makelist(struct listhead *, enum listtype, char *);
 
 int
 main(int argc, char **argv)
 {
-	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
+	char buf[_POSIX2_LINE_MAX], **pargv, *q;
 	int i, j, ch, bestidx, rv, criteria;
-	int (*action)(struct kinfo_proc2 *);
-	struct kinfo_proc2 *kp;
+	int (*action)(const struct kinfo_proc2 *);
+	const struct kinfo_proc2 *kp;
 	struct list *li;
+	const char *mstr, *p;
 	u_int32_t bestsec, bestusec;
 	regex_t reg;
 	regmatch_t regmatch;
@@ -429,7 +430,7 @@ usage(void)
 }
 
 static int
-killact(struct kinfo_proc2 *kp)
+killact(const struct kinfo_proc2 *kp)
 {
 	if (kill(kp->p_pid, signum) == -1) {
 
@@ -450,7 +451,7 @@ killact(struct kinfo_proc2 *kp)
 }
 
 static int
-grepact(struct kinfo_proc2 *kp)
+grepact(const struct kinfo_proc2 *kp)
 {
 	char **argv;
 
