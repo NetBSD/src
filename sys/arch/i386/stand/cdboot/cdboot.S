@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.3 2005/07/06 18:12:31 junyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.4 2005/07/20 03:27:51 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ ENTRY(start)
 real_start:
 	movb	%dl, boot_drive		/* Save boot drive number */
 
+#ifndef DISABLE_KEYPRESS
 	/*
 	 * We can skip boot wait when:
 	 *  - there's no hard disk present.
@@ -193,10 +194,8 @@ boot_hard_disk:
 	movw	%ax, %es
 	movw	$0x0080, %dx		/* %dl = boot drive number */
 	jmp	$0, $BOOT_ADDR		/* Jump to MBR! */
-
-panic:
-	hlt
-	jmp	panic
+	jmp	panic			/* This should be never executed */
+#endif /* !DISABLE_KEYPRESS */
 
 boot_cdrom:
 	movw	$str_banner, %si
@@ -260,6 +259,9 @@ load_loader:
 	movb	boot_drive, %dl
 	xorl	%ebx, %ebx		/* Zero sector number */
 	lcall	$LOADER_ADDR/16, $0
+	/* fall through on load failure */
+panic:
+	hlt
 	jmp	panic
 
 /*
