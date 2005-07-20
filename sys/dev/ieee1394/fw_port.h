@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -271,7 +271,7 @@ typedef struct proc fw_proc;
 		if (device_detach(fwdev->sbp) != 0)	\
 			return;				\
 	} while (0)
-#define FIREWIRE_CHILDLEN_FOREACH_FUNC(func, fdc)			      \
+#define FIREWIRE_CHILDREN_FOREACH_FUNC(func, fdc)			      \
 	do {								      \
 		device_t *devlistp;					      \
 		int i, devcnt;						      \
@@ -876,7 +876,7 @@ struct fwbus_attach_args {
 				return;					      \
 		}							      \
 	} while (0)
-#define FIREWIRE_CHILDLEN_FOREACH_FUNC(func, fdc)			      \
+#define FIREWIRE_CHILDREN_FOREACH_FUNC(func, fdc)			      \
 	do {								      \
 		struct firewire_dev_list *devlist;			      \
 		struct firewire_softc *sc = (struct firewire_softc *)fc->bdev;\
