@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.192 2005/07/19 17:00:02 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.193 2005/07/20 08:05:43 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.192 2005/07/19 17:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.193 2005/07/20 08:05:43 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1511,7 +1511,11 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 #endif
 		if ((inp = in_pcblookup_connect(&tcbtable, ip->ip_dst,
 		    th->th_dport, ip->ip_src, th->th_sport)) != NULL)
+#ifdef INET6
 			in6p = NULL;
+#else
+			;
+#endif
 #ifdef INET6
 		else if ((in6p = in6_pcblookup_connect(&tcbtable, &dst6,
 		    th->th_dport, &src6, th->th_sport, 0)) != NULL)
