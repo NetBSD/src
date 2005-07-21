@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.44 2005/06/02 09:41:12 lukem Exp $       */
+/*      $NetBSD: scanform.c,v 1.45 2005/07/21 21:48:47 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1220,6 +1220,8 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	if (ftp->data == NULL)
 		bailout(catgets(catalog, 1, 22,
 		    "Null filename in escript argument"));
+	else
+		q = strdup(ftp->data);
 
 	l = strlen(q) + 2;
 	comm = malloc(sizeof(char) * l);
