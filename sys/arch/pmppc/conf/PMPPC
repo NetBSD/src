@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.17.2.1 2004/07/15 20:16:43 he Exp $
+#	$NetBSD: PMPPC,v 1.17.2.1.2.1 2005/07/21 19:27:57 riz Exp $
 #
 #	PMPPC
 #
@@ -374,6 +374,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
