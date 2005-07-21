@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.689.2.10.2.3 2005/06/21 22:41:43 riz Exp $
+#	$NetBSD: mi,v 1.689.2.10.2.4 2005/07/21 19:26:56 riz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -447,6 +447,7 @@
 ./usr/include/dev/tc/tcdsvar.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcreg.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcvar.h			comp-obsolete		obsolete
+./usr/include/dev/usb/ukyopon.h			comp-c-include
 ./usr/include/dev/usb/urio.h			comp-c-include
 ./usr/include/dev/usb/usb.h			comp-c-include
 ./usr/include/dev/usb/usbcdc.h			comp-obsolete		obsolete
