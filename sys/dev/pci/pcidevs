@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.17.2.11 2005/07/05 20:56:47 riz Exp $
+$NetBSD: pcidevs,v 1.615.2.17.2.12 2005/07/21 21:09:09 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1590,6 +1590,7 @@ product INTEL 82541ER		0x1078	i82541ER Gigabit Ethernet
 product INTEL 82546GB_COPPER	0x1079	i82546GB Gigabit Ethernet (1000BASE-T)
 product INTEL 82546GB_FIBER	0x107a	i82546GB Gigabit Ethernet (1000BASE-X)
 product INTEL 82546GB_SERDES	0x107b	i82546GB Gigabit Ethernet (SERDES)
+product INTEL 82541PI		0x107c  i82541PI Gigabit Ethernet
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
