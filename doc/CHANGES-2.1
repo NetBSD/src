@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.141 2005/07/21 19:35:36 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.142 2005/07/21 21:12:31 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2955,4 +2955,12 @@ sys/arch/x68k/conf/GENERIC			1.110
 	Add ukyopon(4): Kyocera AIR-EDGE PHONE driver. Includes fixes for
 	PR kern/25954 and PR kern/29754.
 	[itohy, ticket #1430]
+
+sys/dev/pci/pcidevs				1.703
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_wm.c				1.101
+
+	Add support for Intel PRO/1000 GT.
+	[tron, ticket #5507]
 
