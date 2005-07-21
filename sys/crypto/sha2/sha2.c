@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.4 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.5 2005/07/21 15:42:41 tron Exp $	*/
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.4 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.5 2005/07/21 15:42:41 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -606,38 +606,6 @@ void SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
 	usedspace = 0;
 }
 
-char *SHA256_End(SHA256_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA256_DIGEST_LENGTH], *d = digest;
-	int		i;
-
-	/* Sanity check: */
-	assert(context != (SHA256_CTX*)0);
-
-	if (buffer != (char*)0) {
-		SHA256_Final(digest, context);
-
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
-			*buffer++ = hexdigits[*d & 0x0f];
-			d++;
-		}
-		*buffer = (char)0;
-	} else {
-		bzero(context, sizeof(*context));
-	}
-	bzero(digest, SHA256_DIGEST_LENGTH);
-	return buffer;
-}
-
-char* SHA256_Data(const sha2_byte* data, size_t len, char digest[SHA256_DIGEST_STRING_LENGTH]) {
-	SHA256_CTX	context;
-
-	SHA256_Init(&context);
-	SHA256_Update(&context, data, len);
-	return SHA256_End(&context, digest);
-}
-
-
 /*** SHA-512: *********************************************************/
 void SHA512_Init(SHA512_CTX* context) {
 	if (context == (SHA512_CTX*)0) {
@@ -935,38 +903,6 @@ void SHA512_Final(sha2_byte digest[], SHA512_CTX* context) {
 	bzero(context, sizeof(*context));
 }
 
-char *SHA512_End(SHA512_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA512_DIGEST_LENGTH], *d = digest;
-	int		i;
-
-	/* Sanity check: */
-	assert(context != (SHA512_CTX*)0);
-
-	if (buffer != (char*)0) {
-		SHA512_Final(digest, context);
-
-		for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
-			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
-			*buffer++ = hexdigits[*d & 0x0f];
-			d++;
-		}
-		*buffer = (char)0;
-	} else {
-		bzero(context, sizeof(*context));
-	}
-	bzero(digest, SHA512_DIGEST_LENGTH);
-	return buffer;
-}
-
-char* SHA512_Data(const sha2_byte* data, size_t len, char digest[SHA512_DIGEST_STRING_LENGTH]) {
-	SHA512_CTX	context;
-
-	SHA512_Init(&context);
-	SHA512_Update(&context, data, len);
-	return SHA512_End(&context, digest);
-}
-
-
 /*** SHA-384: *********************************************************/
 void SHA384_Init(SHA384_CTX* context) {
 	if (context == (SHA384_CTX*)0) {
@@ -1008,35 +944,4 @@ void SHA384_Final(sha2_byte digest[], SHA384_CTX* context) {
 
 	/* Zero out state data */
 	bzero(context, sizeof(*context));
-}
-
-char *SHA384_End(SHA384_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA384_DIGEST_LENGTH], *d = digest;
-	int		i;
-
-	/* Sanity check: */
-	assert(context != (SHA384_CTX*)0);
-
-	if (buffer != (char*)0) {
-		SHA384_Final(digest, context);
-
-		for (i = 0; i < SHA384_DIGEST_LENGTH; i++) {
-			*buffer++ = hexdigits[(*d & 0xf0) >> 4];
-			*buffer++ = hexdigits[*d & 0x0f];
-			d++;
-		}
-		*buffer = (char)0;
-	} else {
-		bzero(context, sizeof(*context));
-	}
-	bzero(digest, SHA384_DIGEST_LENGTH);
-	return buffer;
-}
-
-char* SHA384_Data(const sha2_byte* data, size_t len, char digest[SHA384_DIGEST_STRING_LENGTH]) {
-	SHA384_CTX	context;
-
-	SHA384_Init(&context);
-	SHA384_Update(&context, data, len);
-	return SHA384_End(&context, digest);
 }

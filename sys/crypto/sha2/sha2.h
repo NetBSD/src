@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.2 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: sha2.h,v 1.3 2005/07/21 15:42:41 tron Exp $	*/
 /*	$KAME: sha2.h,v 1.4 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -118,20 +118,14 @@ typedef SHA512_CTX SHA384_CTX;
 void SHA256_Init __P((SHA256_CTX *));
 void SHA256_Update __P((SHA256_CTX*, const u_int8_t*, size_t));
 void SHA256_Final __P((u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*));
-char* SHA256_End __P((SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]));
-char* SHA256_Data __P((const u_int8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]));
 
 void SHA384_Init __P((SHA384_CTX*));
 void SHA384_Update __P((SHA384_CTX*, const u_int8_t*, size_t));
 void SHA384_Final __P((u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX*));
-char* SHA384_End __P((SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]));
-char* SHA384_Data __P((const u_int8_t*, size_t, char[SHA384_DIGEST_STRING_LENGTH]));
 
 void SHA512_Init __P((SHA512_CTX*));
 void SHA512_Update __P((SHA512_CTX*, const u_int8_t*, size_t));
 void SHA512_Final __P((u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX*));
-char* SHA512_End __P((SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]));
-char* SHA512_Data __P((const u_int8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]));
 
 #ifdef	__cplusplus
 }
