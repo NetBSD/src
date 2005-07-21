@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.36 2004/03/10 03:45:04 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.37 2005/07/21 16:59:20 tron Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.36 2004/03/10 03:45:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.37 2005/07/21 16:59:20 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -722,7 +722,6 @@ ah_hmac_sha2_256_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA256_Init(ctxt);
 		SHA256_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -743,7 +742,6 @@ ah_hmac_sha2_256_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA256_Init(ctxt);
 	SHA256_Update(ctxt, ipad, 64);
 
@@ -785,7 +783,6 @@ ah_hmac_sha2_256_result(state, addr, l)
 
 	SHA256_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA256_Init(ctxt);
 	SHA256_Update(ctxt, opad, 64);
 	SHA256_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -826,7 +823,6 @@ ah_hmac_sha2_384_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA384_Init(ctxt);
 		SHA384_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -847,7 +843,6 @@ ah_hmac_sha2_384_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA384_Init(ctxt);
 	SHA384_Update(ctxt, ipad, 64);
 
@@ -889,7 +884,6 @@ ah_hmac_sha2_384_result(state, addr, l)
 
 	SHA384_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA384_Init(ctxt);
 	SHA384_Update(ctxt, opad, 64);
 	SHA384_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -930,7 +924,6 @@ ah_hmac_sha2_512_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA512_Init(ctxt);
 		SHA512_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -951,7 +944,6 @@ ah_hmac_sha2_512_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA512_Init(ctxt);
 	SHA512_Update(ctxt, ipad, 64);
 
@@ -993,7 +985,6 @@ ah_hmac_sha2_512_result(state, addr, l)
 
 	SHA512_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA512_Init(ctxt);
 	SHA512_Update(ctxt, opad, 64);
 	SHA512_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -1034,7 +1025,6 @@ ah_hmac_ripemd160_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		RMD160Init(ctxt);
 		RMD160Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -1055,7 +1045,6 @@ ah_hmac_ripemd160_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	RMD160Init(ctxt);
 	RMD160Update(ctxt, ipad, 64);
 
@@ -1097,7 +1086,6 @@ ah_hmac_ripemd160_result(state, addr, l)
 
 	RMD160Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	RMD160Init(ctxt);
 	RMD160Update(ctxt, opad, 64);
 	RMD160Update(ctxt, (caddr_t)digest, sizeof(digest));
