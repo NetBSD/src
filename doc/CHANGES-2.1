@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.140 2005/07/18 04:15:28 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.141 2005/07/21 19:35:36 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -2908,4 +2908,51 @@ usr.bin/audio/record/record.c			1.39-1.41
 	Change the default encoding to the device's default (PR#30612).
 	Allow playback of empty files to exit gracefully.
 	[mrg, ticket #5498]
+
+distrib/sets/lists/comp/mi			1.777
+distrib/sets/lists/man/mi			1.779
+share/man/man4/Makefile				1.354
+share/man/man4/ukyopon.4			1.1-1.3 (new)
+share/man/man4/usb.4				1.66-1.67,1.69,1.72-1.73 (via patch)
+sys/dev/usb/files.usb				1.59-1.60
+sys/dev/usb/umodem.c				1.47-1.52
+sys/dev/usb/umodemvar.h				1.1-1.2 (new)
+sys/dev/usb/umodem_common.c			1.1-1.3 (new, via patch)
+sys/dev/DEVNAMES				1.178
+sys/dev/usb/Makefile				1.6
+sys/dev/usb/ukyopon.c				1.1 (new)
+sys/dev/usb/ukyopon.h				1.1 (new)
+sys/arch/algor/conf/P4032			1.30
+sys/arch/algor/conf/P5064			1.36
+sys/arch/algor/conf/P6032			1.30
+sys/arch/alpha/conf/ALPHA			1.204
+sys/arch/alpha/conf/BASIL			1.34
+sys/arch/alpha/conf/FRAU-FARBISSINA		1.39
+sys/arch/alpha/conf/GENERIC			1.263
+sys/arch/amd64/conf/GENERIC			1.46
+sys/arch/amd64/conf/INSTALL			1.31
+sys/arch/amd64/conf/INSTALL_ACPI		1.22
+sys/arch/cats/conf/GENERIC			1.79
+sys/arch/evbarm/conf/SMDK2410			1.19
+sys/arch/evbmips/conf/PB1000			1.19
+sys/arch/hpcmips/conf/GENERIC			1.166
+sys/arch/hpcmips/conf/TX3922			1.63
+sys/arch/hpcmips/conf/VR41XX			1.25
+sys/arch/i386/conf/GENERIC			1.666
+sys/arch/i386/conf/GENERIC_LAPTOP		1.138
+sys/arch/i386/conf/IOPENER			1.60
+sys/arch/i386/conf/SWINGER			1.64
+sys/arch/i386/conf/VIRTUALPC			1.20
+sys/arch/macppc/conf/GENERIC			1.195
+sys/arch/playstation2/conf/DEBUG		1.13
+sys/arch/pmppc/conf/PMPPC			1.26
+sys/arch/prep/conf/GENERIC			1.92
+sys/arch/prep/conf/NATSUMI			1.35
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.24
+sys/arch/sparc64/conf/GENERIC32			1.99
+sys/arch/x68k/conf/GENERIC			1.110
+
+	Add ukyopon(4): Kyocera AIR-EDGE PHONE driver. Includes fixes for
+	PR kern/25954 and PR kern/29754.
+	[itohy, ticket #1430]
 
