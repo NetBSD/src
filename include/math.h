@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.40 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: math.h,v 1.41 2005/07/21 12:56:29 christos Exp $	*/
 
 /*
  * ====================================================
@@ -193,6 +193,7 @@ double	exp(double);
 double	frexp(double, int *);
 double	ldexp(double, int);
 double	log(double);
+double	log2(double);
 double	log10(double);
 double	modf(double, double *);
 
@@ -282,6 +283,7 @@ float	frexpf(float, int *);
 int	ilogbf(float);
 float	ldexpf(float, int);
 float	logf(float);
+float	log2f(float);
 float	log10f(float);
 float	log1pf(float);
 float	logbf(float);
