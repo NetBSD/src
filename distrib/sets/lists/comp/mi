@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.799 2005/07/20 11:36:39 pooka Exp $
+#	$NetBSD: mi,v 1.800 2005/07/21 12:58:47 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3739,6 +3739,8 @@
 ./usr/share/man/cat3/log10f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log1p.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log1pf.0			comp-c-catman		.cat
+./usr/share/man/cat3/log2.0			comp-c-catman		.cat
+./usr/share/man/cat3/log2f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logbf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logf.0			comp-c-catman		.cat
@@ -7612,6 +7614,8 @@
 ./usr/share/man/man3/log.3			comp-c-man		.man
 ./usr/share/man/man3/log10.3			comp-c-man		.man
 ./usr/share/man/man3/log10f.3			comp-c-man		.man
+./usr/share/man/man3/log2.3			comp-c-man		.man
+./usr/share/man/man3/log2f.3			comp-c-man		.man
 ./usr/share/man/man3/log1p.3			comp-c-man		.man
 ./usr/share/man/man3/log1pf.3			comp-c-man		.man
 ./usr/share/man/man3/logb.3			comp-c-man		.man
