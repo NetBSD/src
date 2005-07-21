@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.8.2.1.2.1 2005/04/02 21:31:02 he Exp $
+# $NetBSD: INSTALL_ACPI,v 1.8.2.1.2.2 2005/07/21 19:27:50 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.8.2.1.2.1 $"
+#ident 		"INSTALL-$Revision: 1.8.2.1.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -553,6 +553,10 @@ ucom*	at uvscom? portno ?
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?
