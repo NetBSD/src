@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.156.2.1 2004/08/30 09:46:47 tron Exp $
+#	$NetBSD: DEVNAMES,v 1.156.2.1.2.1 2005/07/21 19:26:52 riz Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1206,11 +1206,13 @@ uk			MI
 ukbd			MI		
 ukphy			MI		
 ukphy_subr		MI		Attribute
+ukyopon			MI
 ulpt			MI		
 umass			MI		
 umct			MI
 umidi			MI
 umodem			MI		
+umodem_common		MI		Attribute
 ums			MI		
 uninorth		macppc
 univ_pci		MI		Attribute
