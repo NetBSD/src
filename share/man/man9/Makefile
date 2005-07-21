@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.169 2005/01/02 17:34:43 thorpej Exp $
+#       $NetBSD: Makefile,v 1.169.2.1 2005/07/21 21:22:37 tron Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -548,7 +548,7 @@ MLINKS+=vfsops.9 VFS_MOUNT.9 \
 	vfsops.9 VFS_UNMOUNT.9 \
 	vfsops.9 VFS_ROOT.9 \
 	vfsops.9 VFS_QUOTACTL.9 \
-	vfsops.9 VFS_STATFS.9 \
+	vfsops.9 VFS_STATVFS.9 \
 	vfsops.9 VFS_SYNC.9 \
 	vfsops.9 VFS_VGET.9 \
 	vfsops.9 VFS_FHTOVP.9 \
