@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.6.8.5 2005/06/09 07:44:56 snj Exp $
+# $NetBSD: md.sparc64,v 1.6.8.6 2005/07/21 21:14:36 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -81,7 +81,7 @@
 ./usr/X11R6/lib/modules/drivers/sunffb_drv.o
 ./usr/X11R6/lib/modules/drivers/sunleo_drv.o
 ./usr/X11R6/lib/modules/drivers/suntcx_drv.o
-./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/vga_drv.o	xserver-obsolete	obsolete
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
