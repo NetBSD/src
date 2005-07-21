@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.11 2001/02/21 18:09:26 bjh21 Exp $
+ * $NetBSD: math_private.h,v 1.12 2005/07/21 12:55:58 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -169,6 +169,7 @@ extern double __ieee754_gamma_r __P((double,int *));
 extern double __ieee754_lgamma __P((double));
 extern double __ieee754_gamma __P((double));
 extern double __ieee754_log10 __P((double));
+extern double __ieee754_log2 __P((double));
 extern double __ieee754_sinh __P((double));
 extern double __ieee754_hypot __P((double,double));
 extern double __ieee754_j0 __P((double));
@@ -206,6 +207,7 @@ extern float __ieee754_gammaf_r __P((float,int *));
 extern float __ieee754_lgammaf __P((float));
 extern float __ieee754_gammaf __P((float));
 extern float __ieee754_log10f __P((float));
+extern float __ieee754_log2f __P((float));
 extern float __ieee754_sinhf __P((float));
 extern float __ieee754_hypotf __P((float,float));
 extern float __ieee754_j0f __P((float));
