@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.223 2005/07/07 02:05:03 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.224 2005/07/21 10:39:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.223 2005/07/07 02:05:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.224 2005/07/21 10:39:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1165,9 +1165,17 @@ nfs_readlink(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np = VTONFS(vp);
 
 	if (vp->v_type != VLNK)
 		return (EPERM);
+
+	if (np->n_rcred != NULL) {
+		crfree(np->n_rcred);
+	}
+	np->n_rcred = ap->a_cred;
+	crhold(np->n_rcred);
+
 	return (nfs_bioread(vp, ap->a_uio, 0, ap->a_cred, 0));
 }
 
