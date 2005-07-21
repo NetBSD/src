@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.1.16.1 2005/07/03 21:10:51 tron Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.1.16.2 2005/07/21 21:21:14 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,6 +44,9 @@
  * Types of RAID configurations we support.  Do not change the order
  * of this list, as it will change the order in which the arrays are
  * sorted.
+ *
+ * If this list is updated, ensure the array in 
+ * ata_raid.c:ata_raid_type_name() is also updated.
  */
 #define	ATA_RAID_TYPE_PROMISE	0
 #define	ATA_RAID_TYPE_ADAPTEC	1
