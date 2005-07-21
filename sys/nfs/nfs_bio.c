@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.131 2005/07/21 10:37:36 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.132 2005/07/21 10:39:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.131 2005/07/21 10:37:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.132 2005/07/21 10:39:46 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -962,7 +962,7 @@ nfs_doio_read(bp, uiop)
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
+		error = nfs_readlinkrpc(vp, uiop, np->n_rcred);
 		break;
 	case VDIR:
 		nfsstats.readdir_bios++;
