@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.29.2.1.2.1 2005/04/02 21:31:51 he Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.29.2.1.2.2 2005/07/21 19:27:40 riz Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.29.2.1.2.1 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.29.2.1.2.2 $"
 
 maxusers 64
 
@@ -402,6 +402,10 @@ fd*	at	fdc? drive ?
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 #uax*	at uhub? port ?		# ASIX AX88172 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?
