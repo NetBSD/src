@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.52 2003/10/08 20:58:00 bouyer Exp $
+#	$NetBSD: files.usb,v 1.52.4.1 2005/07/21 19:26:41 riz Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -181,7 +181,9 @@ file	dev/usb/if_udav.c		udav
 
 # Serial drivers
 # Modems
-device	umodem: ucombus
+define	umodem_common
+file	dev/usb/umodem_common.c		umodem_common
+device	umodem: ucombus, umodem_common
 attach	umodem at uhub
 file	dev/usb/umodem.c		umodem
 
@@ -209,6 +211,11 @@ file	dev/usb/uvscom.c		uvscom
 device	ubsa: ucombus
 attach	ubsa at uhub
 file	dev/usb/ubsa.c			ubsa
+
+# Kyocera AIR-EDGE PHONE
+device	ukyopon: ucombus, umodem_common
+attach	ukyopon at uhub
+file	dev/usb/ukyopon.c		ukyopon
 
 
 # Scanners
