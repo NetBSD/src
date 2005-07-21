@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.19 2005/03/07 09:32:51 yamt Exp $	*/
+/*	$NetBSD: tcp.h,v 1.20 2005/07/21 17:32:11 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,6 +91,7 @@ struct tcphdr {
 
 #define	TCPOPT_SIGNATURE	19		/* Keyed MD5: RFC 2385 */
 #define	   TCPOLEN_SIGNATURE		18
+#define    TCPOLEN_SIGLEN		(TCPOLEN_SIGNATURE+2) /* padding */
 
 #define MAX_TCPOPTLEN	40	/* max # bytes that go in options */
 
