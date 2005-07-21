@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.65 2004/11/13 20:29:47 jmmv Exp $
+#  $NetBSD: Makefile,v 1.66 2005/07/21 12:55:58 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -112,9 +112,9 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
 	e_expf.c e_fmod.c e_fmodf.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
-	e_log10.c e_log10f.c e_logf.c e_pow.c e_powf.c e_rem_pio2.c \
-	e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c e_scalbf.c \
-	e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
+	e_log2.c e_log10.c e_log10f.c e_log2f.c e_logf.c e_pow.c e_powf.c \
+	e_rem_pio2.c e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c \
+	e_scalbf.c e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
@@ -188,7 +188,7 @@ MLINKS+=cosh.3 coshf.3
 MLINKS+=erf.3 erff.3 erf.3 erfc.3 erf.3 erfcf.3
 MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 exp.3 log.3 exp.3 logf.3 \
 	exp.3 log10.3 exp.3 log10f.3 exp.3 log1p.3 exp.3 log1pf.3 \
-	exp.3 pow.3 exp.3 powf.3
+	exp.3 pow.3 exp.3 powf.3 exp.3 log2.3 exp.3 log2f.3
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=floor.3 floorf.3
 MLINKS+=fmod.3 fmodf.3
