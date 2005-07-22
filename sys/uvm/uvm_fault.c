@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.96 2005/07/17 12:27:47 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.97 2005/07/22 14:57:39 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.96 2005/07/17 12:27:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.97 2005/07/22 14:57:39 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -962,11 +962,11 @@ ReFault:
 				 */
 				KASSERT((curpg->flags & PG_PAGEOUT) == 0);
 				KASSERT((curpg->flags & PG_RELEASED) == 0);
-				KASSERT(!UVM_OBJ_IS_CLEAN(uobj) ||
+				KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
 				    (curpg->flags & PG_CLEAN) != 0);
 				readonly = (curpg->flags & PG_RDONLY)
 				    || (curpg->loan_count > 0)
-				    || UVM_OBJ_IS_CLEAN(uobj);
+				    || UVM_OBJ_IS_CLEAN(curpg->uobject);
 
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(curpg),
@@ -1442,7 +1442,7 @@ Case2:
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
-	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobj) ||
+	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 	if (promote == FALSE) {
 
@@ -1460,7 +1460,7 @@ Case2:
 
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi.entry) ||
-		    UVM_OBJ_IS_CLEAN(uobj))
+		    UVM_OBJ_IS_CLEAN(uobjpage->uobject))
 			enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
