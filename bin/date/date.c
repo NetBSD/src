@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.40 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: date.c,v 1.41 2005/07/22 11:06:24 hubertf Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.40 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.41 2005/07/22 11:06:24 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "anr:u")) != -1) {
-		switch((char)ch) {
+		switch(ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
 			nflag = 1;
@@ -228,18 +228,14 @@ setthetime(const char *p)
 		if (aflag) {
 			tv.tv_sec = new_time - tval;
 			tv.tv_usec = 0;
-			if (adjtime(&tv, NULL)) {
-				perror("date: adjtime");
-				exit(1);
-			}
+			if (adjtime(&tv, NULL))
+				err(1, "date: adjtime");
 		} else {
 			tval = new_time;
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;
-			if (settimeofday(&tv, NULL)) {
-				perror("date: settimeofday");
-				exit(1);
-			}
+			if (settimeofday(&tv, NULL))
+				err(1, "date: settimeofday");
 		}
 		logwtmp("{", "date", "");
 	}
@@ -255,6 +251,6 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: %s [-u] [-r seconds] [+format]\n", getprogname());
 	(void)fprintf(stderr, "       %s [-anu] [[[[[cc]yy]mm]dd]hh]mm[.ss]\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
