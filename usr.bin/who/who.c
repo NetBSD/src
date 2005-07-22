@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.15 2005/06/26 17:10:28 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.16 2005/07/22 14:23:05 peter Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.15 2005/06/26 17:10:28 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.16 2005/07/22 14:23:05 peter Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <err.h>
 #include <locale.h>
 #include <pwd.h>
@@ -56,6 +57,7 @@ __RCSID("$NetBSD: who.c,v 1.15 2005/06/26 17:10:28 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "utmpentry.h"
 
 static void output_labels(void);
@@ -63,8 +65,7 @@ static void who_am_i(const char *, int);
 static void usage(void);
 static void process(const char *, int);
 static void print(const char *, const char *, time_t, const char *);
-
-int main(int, char **);
+static void quick(const char *);
 
 static int show_term;			/* show term state */
 static int show_idle;			/* show idle time */
@@ -72,20 +73,28 @@ static int show_idle;			/* show idle time */
 extern int maxname, maxline, maxhost;
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-	int c, only_current_term, show_labels;
+	int c, only_current_term, show_labels, quick_mode, default_mode;
 
 	setlocale(LC_ALL, "");
 
 	only_current_term = show_term = show_idle = show_labels = 0;
-	while ((c = getopt(argc, argv, "HmTu")) != -1) {
+	quick_mode = default_mode = 0;
+
+	while ((c = getopt(argc, argv, "HmqsTu")) != -1) {
 		switch (c) {
 		case 'H':
 			show_labels = 1;
 			break;
 		case 'm':
 			only_current_term = 1;
+			break;
+		case 'q':
+			quick_mode = 1;
+			break;
+		case 's':
+			default_mode = 1;
 			break;
 		case 'T':
 			show_term = 1;
@@ -102,20 +111,27 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (chdir("/dev")) {
-		err(1, "cannot change directory to /dev");
+		err(EXIT_FAILURE, "cannot change directory to /dev");
 		/* NOTREACHED */
 	}
 
+	if (default_mode)
+		only_current_term = show_term = show_idle = 0;
+
 	switch (argc) {
 	case 0:					/* who */
-		if (only_current_term) {
+		if (quick_mode) {
+			quick(NULL);
+		} else if (only_current_term) {
 			who_am_i(NULL, show_labels);
 		} else {
 			process(NULL, show_labels);
 		}
 		break;
 	case 1:					/* who utmp_file */
-		if (only_current_term) {
+		if (quick_mode) {
+			quick(*argv);
+		} else if (only_current_term) {
 			who_am_i(*argv, show_labels);
 		} else {
 			process(*argv, show_labels);
@@ -128,7 +144,8 @@ main(int argc, char **argv)
 		usage();
 		/* NOTREACHED */
 	}
-	exit(0);
+
+	return 0;
 }
 
 static void
@@ -201,9 +218,8 @@ print(const char *name, const char *line, time_t t, const char *host)
 
 	(void)printf("%-*.*s ", maxname, maxname, name);
 
-	if (show_term) {
+	if (show_term)
 		(void)printf("%c ", state);
-	}
 
 	(void)printf("%-*.*s ", maxline, maxline, line);
 	(void)printf("%.12s ", ctime(&t) + 4);
@@ -220,12 +236,12 @@ print(const char *name, const char *line, time_t t, const char *host)
 	}
 	
 	if (*host)
-		printf("\t(%.*s)", maxhost, host);
+		(void)printf("\t(%.*s)", maxhost, host);
 	(void)putchar('\n');
 }
 
 static void
-output_labels()
+output_labels(void)
 {
 	(void)printf("%-*.*s ", maxname, maxname, "USER");
 
@@ -244,9 +260,27 @@ output_labels()
 }
 
 static void
-usage()
+quick(const char *fname)
 {
-	(void)fprintf(stderr, "usage: %s [-HmTu] [file]\n       %s am i\n",
+	struct utmpentry *ehead, *ep;
+	int num = 0;
+
+	(void)getutentries(fname, &ehead);
+	for (ep = ehead; ep != NULL; ep = ep->next) {
+		(void)printf("%-*s ", maxname, ep->name);
+		if ((++num % 8) == 0)
+			(void)putchar('\n');
+	}
+	if (num % 8)
+		(void)putchar('\n');
+
+	(void)printf("# users = %d\n", num);
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr, "usage: %s [-HmqsTu] [file]\n       %s am i\n",
 	    getprogname(), getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }

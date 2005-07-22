@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.15 2004/11/22 17:20:02 peter Exp $
+.\"	$NetBSD: who.1,v 1.16 2005/07/22 14:23:05 peter Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)who.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd December 6, 1994
+.Dd July 22, 2005
 .Dt WHO 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display who is logged in
 .Sh SYNOPSIS
 .Nm
-.Op Fl HmTu
+.Op Fl HmqsTu
 .Op Ar file
 .Nm
 .Ar am i
@@ -60,6 +60,13 @@ This is the
 way of saying
 .Nm
 .Ar am i .
+.It Fl q
+.Dq Quick mode :
+List only the names and the number of users currently logged on.
+When this option is used, all other options are ignored.
+.It Fl s
+List only the name, line and time fields.
+This is the default.
 .It Fl T
 Print a character after the user name indicating the state of the
 terminal line:
@@ -119,7 +126,8 @@ special characters, see
 .Xr mesg 1 ,
 .Xr users 1 ,
 .Xr getuid 2 ,
-.Xr utmp 5
+.Xr utmp 5 ,
+.Xr utmpx 5
 .Sh STANDARDS
 The
 .Nm
