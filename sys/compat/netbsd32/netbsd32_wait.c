@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.7 2005/07/10 11:28:03 cube Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.8 2005/07/22 22:46:29 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.7 2005/07/10 11:28:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.8 2005/07/22 22:46:29 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,60 +58,41 @@ netbsd32_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
-	struct proc *parent = l->l_proc;
-	struct netbsd32_rusage ru32;
-	struct proc *child;
-	int status, error;
+	struct sys_wait4_args ua;
+	caddr_t sg;
+	struct rusage *ruup = NULL;
+	int error;
 
-	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -parent->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
-		return (EINVAL);
+	if (SCARG(uap, rusage)) {
+		sg = stackgap_init(l->l_proc, sizeof(*ruup));
+		ruup = (struct rusage *)stackgap_alloc(l->l_proc, &sg,
+		    sizeof(*ruup));
+		if (ruup == NULL)
+			return ENOMEM;
+	}
 
-	error =  find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
-					&child);
-	if (error != 0)
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TOP_UAP(status, int);
+	NETBSD32TO64_UAP(options);
+	SCARG(&ua, rusage) = ruup;
+
+	error = sys_wait4(l, &ua, retval);
+	if (error)
 		return error;
-	if (child == NULL) {
-		retval[0] = 0;
-		return 0;
+
+	if (ruup != NULL) {
+		struct netbsd32_rusage ru32;
+		struct rusage rus;
+
+		error = copyin(ruup, &rus, sizeof(rus));
+		if (error)
+			return error;
+		netbsd32_from_rusage(&rus, &ru32);
+		error = copyout(&ru32, NETBSD32PTR64(SCARG(uap, rusage)),
+		    sizeof(ru32));
 	}
 
-	/*
-	 * Collect child u-areas.
-	 */
-	uvm_uarea_drain(FALSE);
-
-	retval[0] = child->p_pid;
-
-	if (P_ZOMBIE(child)) {
-		if (SCARG(uap, status)) {
-			status = child->p_xstat;	/* convert to int */
-			error = copyout((caddr_t)&status,
-				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
-				    sizeof(status));
-			if (error)
-				return error;
-		}
-		if (SCARG(uap, rusage)) {
-			netbsd32_from_rusage(child->p_ru, &ru32);
-			error = copyout((caddr_t)&ru32,
-				    (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
-				    sizeof(struct netbsd32_rusage));
-			if (error)
-				return error;
-		}
-		proc_free(child);
-		return 0;
-	}
-
-	if (SCARG(uap, status)) {
-		status = W_STOPCODE(child->p_xstat);
-		return copyout((caddr_t)&status,
-			    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
-			    sizeof(status));
-	}
-	return 0;
+	return error;
 }
 
 int
