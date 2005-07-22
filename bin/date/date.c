@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.41 2005/07/22 11:06:24 hubertf Exp $ */
+/* $NetBSD: date.c,v 1.42 2005/07/22 14:27:08 peter Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.41 2005/07/22 11:06:24 hubertf Exp $");
+__RCSID("$NetBSD: date.c,v 1.42 2005/07/22 14:27:08 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,6 @@ static time_t tval;
 static int aflag, rflag, nflag;
 int retval;
 
-int main(int, char *[]);
 static void badformat(void);
 static void badtime(void);
 static void setthetime(const char *);
@@ -83,7 +82,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "anr:u")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
 			nflag = 1;
@@ -106,7 +105,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (!rflag && time(&tval) == -1)
-		err(1, "time");
+		err(EXIT_FAILURE, "time");
 
 	format = "%a %b %e %H:%M:%S %Z %Y";
 
@@ -229,13 +228,13 @@ setthetime(const char *p)
 			tv.tv_sec = new_time - tval;
 			tv.tv_usec = 0;
 			if (adjtime(&tv, NULL))
-				err(1, "date: adjtime");
+				err(EXIT_FAILURE, "date: adjtime");
 		} else {
 			tval = new_time;
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;
 			if (settimeofday(&tv, NULL))
-				err(1, "date: settimeofday");
+				err(EXIT_FAILURE, "date: settimeofday");
 		}
 		logwtmp("{", "date", "");
 	}
@@ -250,7 +249,8 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-u] [-r seconds] [+format]\n", getprogname());
-	(void)fprintf(stderr, "       %s [-anu] [[[[[cc]yy]mm]dd]hh]mm[.ss]\n", getprogname());
+	(void)fprintf(stderr, "       %s [-anu] [[[[[cc]yy]mm]dd]hh]mm[.ss]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
