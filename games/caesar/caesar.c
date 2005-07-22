@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.15 2005/05/23 23:02:30 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.16 2005/07/22 11:52:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.15 2005/05/23 23:02:30 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.16 2005/07/22 11:52:23 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: caesar.c,v 1.15 2005/05/23 23:02:30 rillig Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #define NCHARS			(1 << CHAR_BIT)
 #define LETTERS			(26)
@@ -85,7 +84,7 @@ init_rottbl(int rot)
 {
 	size_t i;
 
-	rot %= LETTERS;
+	rot %= LETTERS;		/* prevent integer overflow */
 
 	for (i = 0; i < NCHARS; i++)
 		rottbl[i] = (unsigned char)i;
@@ -97,51 +96,56 @@ init_rottbl(int rot)
 		rottbl[lower[i]] = lower[(i + rot) % LETTERS];
 }
 
-static void __attribute__((__noreturn__))
-printrot(const char *arg)
+static void
+print_file(void)
 {
 	int ch;
+
+	while ((ch = getchar()) != EOF) {
+		if (putchar(rottbl[ch]) == EOF) {
+			err(EXIT_FAILURE, "<stdout>");
+			/* NOTREACHED */
+		}
+	}
+}
+
+static void
+print_array(const unsigned char *a, size_t len)
+{
+	size_t i;
+
+	for (i = 0; i < len; i++) {
+		if (putchar(rottbl[a[i]]) == EOF) {
+			err(EXIT_FAILURE, "<stdout>");
+			/* NOTREACHED */
+		}
+	}
+}
+
+static int
+get_rotation(const char *arg)
+{
 	long rot;
 	char *endp;
 
 	errno = 0;
 	rot = strtol(arg, &endp, 10);
-	if (*endp != '\0') {
+	if (!(errno == 0 && *endp == '\0' && 0 <= rot && rot <= INT_MAX)) {
 		errx(EXIT_FAILURE, "bad rotation value: %s", arg);
 		/* NOTREACHED */
 	}
-	if (errno == ERANGE || rot < 0 || rot > INT_MAX) {
-		errx(EXIT_FAILURE, "rotation value out of range: %s", arg);
-		/* NOTREACHED */
-	}
-	init_rottbl((int)rot);
-
-	while ((ch = getchar()) != EOF) {
-		if (putchar(rottbl[ch]) == EOF) {
-			err(EXIT_FAILURE, "writing to stdout");
-			/* NOTREACHED */
-		}
-	}
-	exit(EXIT_SUCCESS);
-	/* NOTREACHED */
+	return (int) rot;
 }
 
-int
-main(int argc, char **argv)
+static void
+guess_and_rotate(void)
 {
-	ssize_t i, nread, ntotal;
-	double dot, winnerdot;
-	int try, winner;
 	unsigned char inbuf[2048];
 	unsigned int obs[NCHARS];
-
-	/* revoke setgid privileges */
-	(void)setgid(getgid());
-
-	if (argc > 1) {
-		printrot(argv[1]);
-		/* NOTREACHED */
-	}
+	size_t i, nread;
+	double dot, winnerdot;
+	int try, winner;
+	int ch;
 
 	/* adjust frequency table to weight low probs REAL low */
 	for (i = 0; i < LETTERS; i++)
@@ -150,18 +154,13 @@ main(int argc, char **argv)
 	/* zero out observation table */
 	(void)memset(obs, 0, sizeof(obs));
 
-	for (ntotal = 0; (size_t) ntotal < sizeof(inbuf); ntotal += nread) {
-		nread = read(STDIN_FILENO, &inbuf[ntotal],
-		             sizeof(inbuf) - ntotal);
-		if (nread < 0) {
-			err(EXIT_FAILURE, "reading from stdin");
-			/* NOTREACHED */
-		}
-		if (nread == 0)
+	for (nread = 0; nread < sizeof(inbuf); nread++) {
+		if ((ch = getchar()) == EOF)
 			break;
+		inbuf[nread] = (unsigned char) ch;
 	}
 
-	for (i = 0; i < ntotal; i++)
+	for (i = 0; i < nread; i++)
 		obs[inbuf[i]]++;
 
 	/*
@@ -182,20 +181,36 @@ main(int argc, char **argv)
 			winnerdot = dot;
 		}
 	}
-	init_rottbl(winner);
 
-	while (ntotal > 0) {
-		for (i = 0; i < ntotal; i++) {
-			if (putchar(rottbl[inbuf[i]]) == EOF) {
-				err(EXIT_FAILURE, "writing to stdout");
-				/* NOTREACHED */
-			}
-		}
-		if ((ntotal = read(STDIN_FILENO, inbuf, sizeof(inbuf))) < 0) {
-			err(EXIT_FAILURE, "reading from stdin");
-			/* NOTREACHED */
-		}
+	init_rottbl(winner);
+	print_array(inbuf, nread);
+	print_file();
+}
+
+int
+main(int argc, char **argv)
+{
+	if (argc == 1) {
+		guess_and_rotate();
+	} else if (argc == 2) {
+		init_rottbl(get_rotation(argv[1]));
+		print_file();
+	} else {
+		(void)fprintf(stderr, "usage: caesar [rot]\n");
+		exit(EXIT_FAILURE);
+		/* NOTREACHED */
 	}
-	exit(EXIT_FAILURE);
-	/* NOTREACHED */
+
+	if (ferror(stdin)) {
+		errx(EXIT_FAILURE, "<stdin>");
+		/* NOTREACHED */
+	}
+
+	(void)fflush(stdout);
+	if (ferror(stdout)) {
+		err(EXIT_FAILURE, "<stdout>");
+		/* NOTREACHED */
+	}
+
+	return 0;
 }
