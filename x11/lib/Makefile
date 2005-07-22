@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/07/19 23:24:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2005/07/22 08:47:20 martin Exp $
 
 SUBDIR=	X11 ICE Xau .WAIT \
 	SM Xext .WAIT \
@@ -6,8 +6,8 @@ SUBDIR=	X11 ICE Xau .WAIT \
 	Xmu dps .WAIT \
 	FS GLU GLw OSmesa XRes XTrap Xaw Xaw6 Xcursor Xdmcp Xft Xft1 \
 	Xfontcache Xi Xinerama Xmuu Xp Xrandr Xss Xtst Xv XvMC \
-	Xxf86dga Xxf86misc Xxf86vm dmx dpstk expat font fontconfig fontenc \
-	freetype2 lbxutil psres oldX xkbfile xkbui xtrans
+	Xxf86dga Xxf86misc Xxf86vm dmx dpstk expat font .WAIT \
+	fontconfig fontenc freetype2 lbxutil psres oldX xkbfile xkbui xtrans
 
 .include <bsd.own.mk>
 
