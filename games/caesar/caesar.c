@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.16 2005/07/22 11:52:23 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.17 2005/07/22 11:56:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.16 2005/07/22 11:52:23 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.17 2005/07/22 11:56:50 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ main(int argc, char **argv)
 		init_rottbl(get_rotation(argv[1]));
 		print_file();
 	} else {
-		(void)fprintf(stderr, "usage: caesar [rot]\n");
+		(void)fprintf(stderr, "usage: caesar [rotation]\n");
 		exit(EXIT_FAILURE);
 		/* NOTREACHED */
 	}
