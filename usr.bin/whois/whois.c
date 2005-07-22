@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.27 2005/06/22 12:17:56 christos Exp $   */
+/*      $NetBSD: whois.c,v 1.28 2005/07/22 16:01:52 christos Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.27 2005/06/22 12:17:56 christos Exp $");
+__RCSID("$NetBSD: whois.c,v 1.28 2005/07/22 16:01:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 	if (strcmp(server, "whois.denic.de") == 0 ||
 	    strcmp(server, "de.whois-servers.net") == 0)
-		fmt = "-T dn %s\r\n";
+		fmt = "-T dn,ace -C ISO-8859-1 %s\r\n";
 	else
 		fmt = "%s\r\n";
 
