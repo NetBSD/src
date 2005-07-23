@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.2 2005/07/23 16:55:13 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -955,7 +955,9 @@ fwip_unicast_input_recycle(struct fwip_softc *fwip, struct fw_xfer *xfer)
 	 * We have finished with a unicast xfer. Allocate a new
 	 * cluster and stick it on the back of the input queue.
 	 */
-	m = m_getcl(M_TRYWAIT, MT_DATA, M_PKTHDR);
+	m = m_getcl(M_DONTWAIT, MT_DATA, M_PKTHDR);
+	if (m == NULL)
+		printf("fwip_unicast_input_recycle: m_getcl failed\n");
 	xfer->mbuf = m;
 	xfer->recv.payload = mtod(m, uint32_t *);
 	xfer->recv.pay_len = MCLBYTES;
