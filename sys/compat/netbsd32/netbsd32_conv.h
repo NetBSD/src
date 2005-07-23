@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.6 2005/07/23 18:56:15 cube Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.7 2005/07/23 21:51:29 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -53,38 +53,38 @@
 
 #include <compat/netbsd32/netbsd32.h>
 
-static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
-static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
-static __inline void netbsd32_from_itimerval __P((struct itimerval *, struct netbsd32_itimerval *));
-static __inline void netbsd32_to_itimerval __P((struct netbsd32_itimerval *, struct itimerval *));
-static __inline void netbsd32_to_timespec __P((struct netbsd32_timespec *, struct timespec *));
-static __inline void netbsd32_from_timespec __P((struct timespec *, struct netbsd32_timespec *));
-static __inline void netbsd32_from_rusage __P((struct rusage *, struct netbsd32_rusage *));
-static __inline void netbsd32_to_rusage __P((struct netbsd32_rusage *, struct rusage *));
-static __inline int netbsd32_to_iovecin __P((struct netbsd32_iovec *, struct iovec *, int));
-static __inline void netbsd32_to_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_statvfs __P((struct statvfs *, struct netbsd32_statvfs *));
-static __inline void netbsd32_from_timex __P((struct timex *, struct netbsd32_timex *));
-static __inline void netbsd32_to_timex __P((struct netbsd32_timex *, struct timex *));
-static __inline void netbsd32_from___stat13 __P((struct stat *, struct netbsd32_stat *));
-static __inline void netbsd32_to_ipc_perm __P((struct netbsd32_ipc_perm *, struct ipc_perm *));
-static __inline void netbsd32_from_ipc_perm __P((struct ipc_perm *, struct netbsd32_ipc_perm *));
-static __inline void netbsd32_to_msg __P((struct netbsd32_msg *, struct msg *));
-static __inline void netbsd32_from_msg __P((struct msg *, struct netbsd32_msg *));
-static __inline void netbsd32_to_msqid_ds __P((struct netbsd32_msqid_ds *, struct msqid_ds *));
-static __inline void netbsd32_from_msqid_ds __P((struct msqid_ds *, struct netbsd32_msqid_ds *));
-static __inline void netbsd32_to_shmid_ds __P((struct netbsd32_shmid_ds *, struct shmid_ds *));
-static __inline void netbsd32_from_shmid_ds __P((struct shmid_ds *, struct netbsd32_shmid_ds *));
-static __inline void netbsd32_to_semid_ds __P((struct  netbsd32_semid_ds *, struct  semid_ds *));
-static __inline void netbsd32_from_semid_ds __P((struct  semid_ds *, struct  netbsd32_semid_ds *));
-static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, struct loadavg *));
-static __inline void netbsd32_to_sigevent(struct netbsd32_sigevent *, struct sigevent *);
+static __inline void netbsd32_from_timeval __P((const struct timeval *, struct netbsd32_timeval *));
+static __inline void netbsd32_to_timeval __P((const struct netbsd32_timeval *, struct timeval *));
+static __inline void netbsd32_from_itimerval __P((const struct itimerval *, struct netbsd32_itimerval *));
+static __inline void netbsd32_to_itimerval __P((const struct netbsd32_itimerval *, struct itimerval *));
+static __inline void netbsd32_to_timespec __P((const struct netbsd32_timespec *, struct timespec *));
+static __inline void netbsd32_from_timespec __P((const struct timespec *, struct netbsd32_timespec *));
+static __inline void netbsd32_from_rusage __P((const struct rusage *, struct netbsd32_rusage *));
+static __inline void netbsd32_to_rusage __P((const struct netbsd32_rusage *, struct rusage *));
+static __inline int netbsd32_to_iovecin __P((const struct netbsd32_iovec *, struct iovec *, int));
+static __inline void netbsd32_to_msghdr __P((const struct netbsd32_msghdr *, struct msghdr *));
+static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, const struct msghdr *));
+static __inline void netbsd32_from_statvfs __P((const struct statvfs *, struct netbsd32_statvfs *));
+static __inline void netbsd32_from_timex __P((const struct timex *, struct netbsd32_timex *));
+static __inline void netbsd32_to_timex __P((const struct netbsd32_timex *, struct timex *));
+static __inline void netbsd32_from___stat13 __P((const struct stat *, struct netbsd32_stat *));
+static __inline void netbsd32_to_ipc_perm __P((const struct netbsd32_ipc_perm *, struct ipc_perm *));
+static __inline void netbsd32_from_ipc_perm __P((const struct ipc_perm *, struct netbsd32_ipc_perm *));
+static __inline void netbsd32_to_msg __P((const struct netbsd32_msg *, struct msg *));
+static __inline void netbsd32_from_msg __P((const struct msg *, struct netbsd32_msg *));
+static __inline void netbsd32_to_msqid_ds __P((const struct netbsd32_msqid_ds *, struct msqid_ds *));
+static __inline void netbsd32_from_msqid_ds __P((const struct msqid_ds *, struct netbsd32_msqid_ds *));
+static __inline void netbsd32_to_shmid_ds __P((const struct netbsd32_shmid_ds *, struct shmid_ds *));
+static __inline void netbsd32_from_shmid_ds __P((const struct shmid_ds *, struct netbsd32_shmid_ds *));
+static __inline void netbsd32_to_semid_ds __P((const struct  netbsd32_semid_ds *, struct  semid_ds *));
+static __inline void netbsd32_from_semid_ds __P((const struct  semid_ds *, struct  netbsd32_semid_ds *));
+static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, const struct loadavg *));
+static __inline void netbsd32_to_sigevent(const struct netbsd32_sigevent *, struct sigevent *);
 
 /* converters for structures that we need */
 static __inline void
 netbsd32_from_timeval(tv, tv32)
-	struct timeval *tv;
+	const struct timeval *tv;
 	struct netbsd32_timeval *tv32;
 {
 
@@ -94,7 +94,7 @@ netbsd32_from_timeval(tv, tv32)
 
 static __inline void
 netbsd32_to_timeval(tv32, tv)
-	struct netbsd32_timeval *tv32;
+	const struct netbsd32_timeval *tv32;
 	struct timeval *tv;
 {
 
@@ -104,7 +104,7 @@ netbsd32_to_timeval(tv32, tv)
 
 static __inline void
 netbsd32_from_itimerval(itv, itv32)
-	struct itimerval *itv;
+	const struct itimerval *itv;
 	struct netbsd32_itimerval *itv32;
 {
 
@@ -116,7 +116,7 @@ netbsd32_from_itimerval(itv, itv32)
 
 static __inline void
 netbsd32_to_itimerval(itv32, itv)
-	struct netbsd32_itimerval *itv32;
+	const struct netbsd32_itimerval *itv32;
 	struct itimerval *itv;
 {
 
@@ -126,7 +126,7 @@ netbsd32_to_itimerval(itv32, itv)
 
 static __inline void
 netbsd32_to_timespec(s32p, p)
-	struct netbsd32_timespec *s32p;
+	const struct netbsd32_timespec *s32p;
 	struct timespec *p;
 {
 
@@ -136,7 +136,7 @@ netbsd32_to_timespec(s32p, p)
 
 static __inline void
 netbsd32_from_timespec(p, s32p)
-	struct timespec *p;
+	const struct timespec *p;
 	struct netbsd32_timespec *s32p;
 {
 
@@ -146,7 +146,7 @@ netbsd32_from_timespec(p, s32p)
 
 static __inline void
 netbsd32_from_rusage(rup, ru32p)
-	struct rusage *rup;
+	const struct rusage *rup;
 	struct netbsd32_rusage *ru32p;
 {
 
@@ -172,7 +172,7 @@ netbsd32_from_rusage(rup, ru32p)
 
 static __inline void
 netbsd32_to_rusage(ru32p, rup)
-	struct netbsd32_rusage *ru32p;
+	const struct netbsd32_rusage *ru32p;
 	struct rusage *rup;
 {
 
@@ -198,7 +198,7 @@ netbsd32_to_rusage(ru32p, rup)
 
 static __inline int
 netbsd32_to_iovecin(iov32p, iovp, len)
-	struct netbsd32_iovec *iov32p;
+	const struct netbsd32_iovec *iov32p;
 	struct iovec *iovp;
 	int len;
 {
@@ -212,9 +212,9 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 	 * the number of MALLOC()s.
 	 */
 	for (i = 0; i < len; i++, iovp++, iov32p++) {
-		if ((error = copyin((caddr_t)&iov32p->iov_base, &iov_base, sizeof(iov_base))))
+		if ((error = copyin(&iov32p->iov_base, &iov_base, sizeof(iov_base))))
 		    return (error);
-		if ((error = copyin((caddr_t)&iov32p->iov_len, &iov_len, sizeof(iov_len))))
+		if ((error = copyin(&iov32p->iov_len, &iov_len, sizeof(iov_len))))
 		    return (error);
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
@@ -225,7 +225,7 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 /* msg_iov must be done separately */
 static __inline void
 netbsd32_to_msghdr(mhp32, mhp)
-	struct netbsd32_msghdr *mhp32;
+	const struct netbsd32_msghdr *mhp32;
 	struct msghdr *mhp;
 {
 
@@ -241,7 +241,7 @@ netbsd32_to_msghdr(mhp32, mhp)
 static __inline void
 netbsd32_from_msghdr(mhp32, mhp)
 	struct netbsd32_msghdr *mhp32;
-	struct msghdr *mhp;
+	const struct msghdr *mhp;
 {
 
 	mhp32->msg_name = mhp32->msg_name;
@@ -254,7 +254,7 @@ netbsd32_from_msghdr(mhp32, mhp)
 
 static __inline void
 netbsd32_from_statvfs(sbp, sb32p)
-	struct statvfs *sbp;
+	const struct statvfs *sbp;
 	struct netbsd32_statvfs *sb32p;
 {
 	sb32p->f_flag = sbp->f_flag;
@@ -296,7 +296,7 @@ netbsd32_from_statvfs(sbp, sb32p)
 
 static __inline void
 netbsd32_from_timex(txp, tx32p)
-	struct timex *txp;
+	const struct timex *txp;
 	struct netbsd32_timex *tx32p;
 {
 
@@ -321,7 +321,7 @@ netbsd32_from_timex(txp, tx32p)
 
 static __inline void
 netbsd32_to_timex(tx32p, txp)
-	struct netbsd32_timex *tx32p;
+	const struct netbsd32_timex *tx32p;
 	struct timex *txp;
 {
 
@@ -346,7 +346,7 @@ netbsd32_to_timex(tx32p, txp)
 
 static __inline void
 netbsd32_from___stat13(sbp, sb32p)
-	struct stat *sbp;
+	const struct stat *sbp;
 	struct netbsd32_stat *sb32p;
 {
 	sb32p->st_dev = sbp->st_dev;
@@ -374,7 +374,7 @@ netbsd32_from___stat13(sbp, sb32p)
 
 static __inline void
 netbsd32_to_ipc_perm(ip32p, ipp)
-	struct netbsd32_ipc_perm *ip32p;
+	const struct netbsd32_ipc_perm *ip32p;
 	struct ipc_perm *ipp;
 {
 
@@ -389,7 +389,7 @@ netbsd32_to_ipc_perm(ip32p, ipp)
 
 static __inline void
 netbsd32_from_ipc_perm(ipp, ip32p)
-	struct ipc_perm *ipp;
+	const struct ipc_perm *ipp;
 	struct netbsd32_ipc_perm *ip32p;
 {
 
@@ -404,7 +404,7 @@ netbsd32_from_ipc_perm(ipp, ip32p)
 
 static __inline void
 netbsd32_to_msg(m32p, mp)
-	struct netbsd32_msg *m32p;
+	const struct netbsd32_msg *m32p;
 	struct msg *mp;
 {
 
@@ -416,7 +416,7 @@ netbsd32_to_msg(m32p, mp)
 
 static __inline void
 netbsd32_from_msg(mp, m32p)
-	struct msg *mp;
+	const struct msg *mp;
 	struct netbsd32_msg *m32p;
 {
 
@@ -428,7 +428,7 @@ netbsd32_from_msg(mp, m32p)
 
 static __inline void
 netbsd32_to_msqid_ds(ds32p, dsp)
-	struct netbsd32_msqid_ds *ds32p;
+	const struct netbsd32_msqid_ds *ds32p;
 	struct msqid_ds *dsp;
 {
 
@@ -447,7 +447,7 @@ netbsd32_to_msqid_ds(ds32p, dsp)
 
 static __inline void
 netbsd32_from_msqid_ds(dsp, ds32p)
-	struct msqid_ds *dsp;
+	const struct msqid_ds *dsp;
 	struct netbsd32_msqid_ds *ds32p;
 {
 
@@ -466,7 +466,7 @@ netbsd32_from_msqid_ds(dsp, ds32p)
 
 static __inline void
 netbsd32_to_shmid_ds(ds32p, dsp)
-	struct netbsd32_shmid_ds *ds32p;
+	const struct netbsd32_shmid_ds *ds32p;
 	struct shmid_ds *dsp;
 {
 
@@ -483,7 +483,7 @@ netbsd32_to_shmid_ds(ds32p, dsp)
 
 static __inline void
 netbsd32_from_shmid_ds(dsp, ds32p)
-	struct shmid_ds *dsp;
+	const struct shmid_ds *dsp;
 	struct netbsd32_shmid_ds *ds32p;
 {
 
@@ -500,11 +500,11 @@ netbsd32_from_shmid_ds(dsp, ds32p)
 
 static __inline void
 netbsd32_to_semid_ds(s32dsp, dsp)
-	struct  netbsd32_semid_ds *s32dsp;
+	const struct  netbsd32_semid_ds *s32dsp;
 	struct  semid_ds *dsp;
 {
 
-	netbsd32_from_ipc_perm(&dsp->sem_perm, &s32dsp->sem_perm);
+	netbsd32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
 	dsp->_sem_base = (struct __sem *)(u_long)s32dsp->_sem_base;
 	dsp->sem_nsems = s32dsp->sem_nsems;
 	dsp->sem_otime = s32dsp->sem_otime;
@@ -513,11 +513,11 @@ netbsd32_to_semid_ds(s32dsp, dsp)
 
 static __inline void
 netbsd32_from_semid_ds(dsp, s32dsp)
-	struct  semid_ds *dsp;
+	const struct  semid_ds *dsp;
 	struct  netbsd32_semid_ds *s32dsp;
 {
 
-	netbsd32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
+	netbsd32_from_ipc_perm(&dsp->sem_perm, &s32dsp->sem_perm);
 	s32dsp->_sem_base = (netbsd32_semp_t)(u_long)dsp->_sem_base;
 	s32dsp->sem_nsems = dsp->sem_nsems;
 	s32dsp->sem_otime = dsp->sem_otime;
@@ -527,7 +527,7 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 static __inline void
 netbsd32_from_loadavg(av32, av)
 	struct netbsd32_loadavg *av32;
-	struct loadavg *av;
+	const struct loadavg *av;
 {
 
 	av32->ldavg[0] = av->ldavg[0];
@@ -537,7 +537,7 @@ netbsd32_from_loadavg(av32, av)
 }
 
 static __inline void
-netbsd32_to_sigevent(struct netbsd32_sigevent *ev32, struct sigevent *ev)
+netbsd32_to_sigevent(const struct netbsd32_sigevent *ev32, struct sigevent *ev)
 {
 	ev->sigev_notify = ev32->sigev_notify;
 	ev->sigev_signo = ev32->sigev_signo;
