@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.45.2.1 2004/05/09 08:22:49 jdc Exp $
+.\"    $NetBSD: pax.1,v 1.45.2.1.2.1 2005/07/23 17:32:16 snj Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd March 31, 2003
+.Dd June 18, 2004
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdjnvzO
+.Op Fl 0cdjnvzO
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -1078,6 +1078,9 @@ This option is the same as the
 .Fl u
 option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
+.It Fl 0
+Use the nul character instead of \en as the file separator when reading
+files from standard input.
 .It Fl -force-local
 Do not interpret filenames that contain a `:' as remote files.
 .It Fl -insecure

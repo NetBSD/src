@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.13.2.2 2004/09/16 03:28:45 jmc Exp $
+.\" $NetBSD: tar.1,v 1.13.2.2.2.1 2005/07/23 17:32:16 snj Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd May 4, 2004
+.Dd May 7, 2005
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHOPSXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -145,6 +145,10 @@ No more than one archive member is matched for each
 .Ar pattern .
 When members of type directory are matched, the file hierarchy rooted at that
 directory is also matched.
+.It Fl S , -sparse
+This flag has no effect as
+.Nm
+always generates sparse files.
 .It Fl s Ar replstr
 Modify the file or archive member names specified by the
 .Ar pattern
@@ -231,6 +235,14 @@ Compress archive using compress.
 Do not enable GNU tar extensions such as long filenames and long link names.
 .It Fl -atime-preserve
 Preserve file access times.
+.It Fl -chroot
+.Fn chroot
+to the current directory before extracting files.
+Use with
+.Fl x
+and
+.Fl h
+to make absolute symlinks relative to the current directory.
 .It Fl -unlink
 Ignored, only accepted for compatibility with other
 .Nm
@@ -252,6 +264,10 @@ as a path component.
 With this option, files that contain
 .Sq ..
 can be processed.
+.It Fl -no-recursion
+Cause files of type directory being copied or archived, or archive members of
+type directory being extracted, to match only the directory file or archive
+member and not the file hierarchy rooted at the directory.
 .El
 .Pp
 The options

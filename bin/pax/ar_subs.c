@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.29.2.2 2004/08/25 02:44:52 jmc Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.29.2.2.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.29.2.2 2004/08/25 02:44:52 jmc Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.29.2.2.2.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,13 @@ __RCSID("$NetBSD: ar_subs.c,v 1.29.2.2 2004/08/25 02:44:52 jmc Exp $");
 #include "pax.h"
 #include "extern.h"
 
+static int path_check(ARCHD *, int);
 static void wr_archive(ARCHD *, int is_app);
 static int get_arc(void);
 static int next_head(ARCHD *);
+#if !HAVE_NBTOOL_CONFIG_H
+static int fdochroot(int);
+#endif
 extern sigset_t s_mask;
 
 /*
@@ -75,6 +79,81 @@ extern sigset_t s_mask;
 static char hdbuf[BLKMULT];		/* space for archive header on read */
 u_long flcnt;				/* number of files processed */
 ARCHD archd;
+
+static char	cwdpath[MAXPATHLEN];	/* current working directory path */
+static size_t	cwdpathlen;		/* current working directory path len */
+
+int
+updatepath(void)
+{
+	if (getcwd(cwdpath, sizeof(cwdpath)) == NULL) {
+		syswarn(1, errno, "Cannot get working directory");
+		return -1;
+	}
+	cwdpathlen = strlen(cwdpath);
+	return 0;
+}
+
+int
+fdochdir(int fcwd)
+{
+	if (fchdir(fcwd) == -1) {
+		syswarn(1, errno, "Cannot chdir to `.'");
+		return -1;
+	}
+	return updatepath();
+}
+
+int
+dochdir(const char *name)
+{
+	if (chdir(name) == -1)
+		syswarn(1, errno, "Cannot chdir to `%s'", name);
+	return updatepath();
+}
+
+#if !HAVE_NBTOOL_CONFIG_H
+static int
+fdochroot(int fcwd)
+{
+	if (fchroot(fcwd) != 0) {
+		syswarn(1, errno, "Can't fchroot to \".\"");
+		return -1;
+	}
+	return updatepath();
+}
+#endif
+
+static int
+path_check(ARCHD *arcn, int level)
+{
+	char buf[MAXPATHLEN];
+	char *p;
+
+	if ((p = strrchr(arcn->name, '/')) == NULL)
+		return 0;
+	*p = '\0';
+
+	if (realpath(arcn->name, buf) == NULL) {
+		int error;
+		error = path_check(arcn, level + 1);
+		*p = '/';
+		if (error == 0)
+			return 0;
+		if (level == 0)
+			syswarn(1, 0, "Cannot resolve `%s'", arcn->name);
+		return -1;
+	}
+	if (strncmp(buf, cwdpath, cwdpathlen) != 0) {
+		*p = '/';
+		syswarn(1, 0, "Attempt to write file `%s' that resolves into "
+		    "`%s/%s' outside current working directory `%s' ignored",
+		    arcn->name, buf, p + 1, cwdpath);
+		return -1;
+	}
+	*p = '/';
+	return 0;
+}
 
 /*
  * list()
@@ -112,15 +191,11 @@ list(void)
 			 * we need to read, to get the real filename
 			 */
 			off_t cnt;
-			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
-			    ? -1 : -2, &cnt))
+			if (!(*frmt->rd_data)(arcn, -arcn->type, &cnt))
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * check for pattern, and user specified options match.
 		 * When all patterns are matched we are done.
@@ -141,8 +216,22 @@ list(void)
 			 */
 			if ((res = mod_name(arcn)) < 0)
 				break;
-			if (res == 0)
+			if (res == 0) {
+				if (arcn->name[0] == '/' && !check_Aflag()) {
+					memmove(arcn->name, arcn->name + 1, 
+					    strlen(arcn->name));
+				}
 				ls_list(arcn, now, stdout);
+			}
+			/*
+			 * if there's an error writing to stdout then we must
+			 * stop now -- we're probably writing to a pipe that
+			 * has been closed by the reader.
+			 */
+			if (ferror(stdout)) {
+				syswarn(1, errno, "Listing incomplete.");
+				break;
+			}
 		}
 		/*
 		 * skip to next archive format header using values calculated
@@ -189,6 +278,10 @@ extract(void)
 		return;
 
 	now = time((time_t *)NULL);
+#if !HAVE_NBTOOL_CONFIG_H
+	if (do_chroot)
+		(void)fdochroot(cwdfd);
+#endif
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
@@ -208,15 +301,11 @@ extract(void)
 			/*
 			 * we need to read, to get the real filename
 			 */
-			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
-			    ? -1 : -2, &cnt))
+			if (!(*frmt->rd_data)(arcn, -arcn->type, &cnt))
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
@@ -276,6 +365,9 @@ extract(void)
 			continue;
 		}
 
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
+		}
 		/*
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip; ignore this for GNU long links.
@@ -312,9 +404,14 @@ extract(void)
 		 */
 		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL) &&
 		    !to_stdout)
-			if (chdir(arcn->pat->chdname) != 0)
-				syswarn(1, errno, "Cannot chdir to %s",
-				    arcn->pat->chdname);
+			dochdir(arcn->pat->chdname);
+
+		if (secure && path_check(arcn, 0) != 0) {
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
+		}
+
+			
 		/*
 		 * all ok, extract this member based on type
 		 */
@@ -375,9 +472,7 @@ extract(void)
 		 * if required, chdir around.
 		 */
 		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
-			if (fchdir(cwdfd) != 0)
-				syswarn(1, errno,
-				    "Can't fchdir to starting directory");
+			fdochdir(cwdfd);
 	}
 
 	/*
@@ -482,9 +577,6 @@ wr_archive(ARCHD *arcn, int is_app)
 			}
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * Now modify the name as requested by the user
 		 */
@@ -496,6 +588,10 @@ wr_archive(ARCHD *arcn, int is_app)
 			rdfile_close(arcn, &fd);
 			purg_lnk(arcn);
 			break;
+		}
+
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
 		}
 
 		if ((res > 0) || (docrc && (set_crc(arcn, fd) < 0))) {

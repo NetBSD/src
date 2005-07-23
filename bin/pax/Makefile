@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2003/07/18 02:18:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.30.4.1 2005/07/23 17:32:16 snj Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -28,14 +28,14 @@
 .include <bsd.own.mk>
 
 PROG=   pax
-SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
+SRCS=	ar_io.c ar_subs.c buf_subs.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
 	tar.c tty_subs.c
 
 .if defined(SMALLPROG)
-CPPFLAGS+=	-DSMALL
+CPPFLAGS+=	-DSMALL -DNO_CPIO
 .else
-SRCS+=		getid.c spec.c misc.c stat_flags.c pack_dev.c
+SRCS+=		getid.c spec.c misc.c stat_flags.c pack_dev.c cpio.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 		-I${NETBSDSRCDIR}/sbin/mknod \
 		-I${NETBSDSRCDIR}/bin/ls
@@ -45,6 +45,9 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 .endif
 
 MAN=	pax.1 tar.1 cpio.1
+
+# XXX: Interix does not have it; we need a conditional for it.
+CPPFLAGS+=	-DHAVE_MTIO_H
 
 .if defined(HOSTPROG)
 CPPFLAGS+=	-DHOSTPROG
