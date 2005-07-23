@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.50 2005/07/17 09:13:35 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.51 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.50 2005/07/17 09:13:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.51 2005/07/23 12:18:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -235,7 +235,8 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
 	memset(pgs, 0, npages * sizeof(struct vm_page *));
 	simple_lock(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
-	    VM_PROT_WRITE, 0, PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC);
+	    VM_PROT_WRITE, 0,
+	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		return error;
 	}

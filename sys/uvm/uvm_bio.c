@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.40 2005/07/17 09:13:35 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.41 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.40 2005/07/17 09:13:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.41 2005/07/23 12:18:41 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -276,7 +276,8 @@ again:
 	    uobj, umap->offset + slot_offset, npages, 0);
 
 	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
-	    &npages, 0, access_type, 0, flags | PGO_NOBLOCKALLOC);
+	    &npages, 0, access_type, 0, flags | PGO_NOBLOCKALLOC |
+	    PGO_NOTIMESTAMP);
 	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
 	    0);
 
@@ -469,7 +470,8 @@ again:
 		int npages = (*lenp + PAGE_SIZE - 1) >> PAGE_SHIFT;
 		struct vm_page *pgs[npages];
 		int gpflags =
-		    PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF|PGO_NOBLOCKALLOC;
+		    PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF|PGO_NOBLOCKALLOC|
+		    PGO_NOTIMESTAMP;
 		int i;
 		KDASSERT(flags & UBC_WRITE);
 

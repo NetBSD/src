@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.92 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.92 2005/07/23 12:18:41 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -1152,8 +1152,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		}
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
-		if ((flags & MAP_SHARED) == 0)
+		if ((flags & MAP_SHARED) == 0) {
 			uvmflag |= UVM_FLAG_COPYONW;
+		} else if ((maxprot & VM_PROT_WRITE) != 0) {
+			simple_lock(&vp->v_interlock);
+			vp->v_flag |= VWRITEMAP;
+			simple_unlock(&vp->v_interlock);
+		}
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

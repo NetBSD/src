@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.128 2005/07/10 01:08:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.129 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.128 2005/07/10 01:08:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.129 2005/07/23 12:18:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2195,4 +2195,26 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 
 out:
         return error;
+}
+
+void
+ufs_gop_markupdate(struct vnode *vp, int flags)
+{
+	u_int32_t mask = 0;
+
+	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
+		mask = IN_ACCESS;
+	}
+	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
+		if (vp->v_type == VREG) {
+			mask |= IN_CHANGE | IN_UPDATE;
+		} else {
+			mask |= IN_MODIFY;
+		}
+	}
+	if (mask) {
+		struct inode *ip = VTOI(vp);
+
+		ip->i_flag |= mask;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.102 2005/07/17 16:07:19 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.103 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.102 2005/07/17 16:07:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.103 2005/07/23 12:18:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -537,10 +537,29 @@ genfs_getpages(void *v)
 
 	/* uobj is locked */
 
+	if ((flags & PGO_NOTIMESTAMP) == 0 &&
+	    (vp->v_type == VREG ||
+	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
+		int updflags = 0;
+
+		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0) {
+			updflags = GOP_UPDATE_ACCESSED;
+		}
+		if (write) {
+			updflags |= GOP_UPDATE_MODIFIED;
+		}
+		if (updflags != 0) {
+			GOP_MARKUPDATE(vp, updflags);
+		}
+	}
+
 	if (write) {
 		gp->g_dirtygen++;
 		if ((vp->v_flag & VONWORKLST) == 0) {
 			vn_syncer_add_to_worklist(vp, filedelay);
+		}
+		if ((vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP) {
+			vp->v_flag |= VWRITEMAPDIRTY;
 		}
 	}
 
@@ -931,7 +950,7 @@ raout:
 				break;
 
 			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
-			    VM_PROT_READ, 0, 0);
+			    VM_PROT_READ, 0, PGO_NOTIMESTAMP);
 			simple_lock(&uobj->vmobjlock);
 			if (err) {
 				if (err != EBUSY ||
@@ -1094,6 +1113,7 @@ genfs_putpages(void *v)
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
+	boolean_t modified = FALSE;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1103,12 +1123,17 @@ genfs_putpages(void *v)
 
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
+
+	KASSERT((vp->v_flag & VONWORKLST) != 0 ||
+	    (vp->v_flag & VWRITEMAPDIRTY) == 0);
 	if (uobj->uo_npages == 0) {
 		s = splbio();
-		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST)) {
-			vp->v_flag &= ~VONWORKLST;
-			LIST_REMOVE(vp, v_synclist);
+		if (vp->v_flag & VONWORKLST) {
+			vp->v_flag &= ~VWRITEMAPDIRTY;
+			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+				vp->v_flag &= ~VONWORKLST;
+				LIST_REMOVE(vp, v_synclist);
+			}
 		}
 		splx(s);
 		simple_unlock(slock);
@@ -1373,6 +1398,7 @@ genfs_putpages(void *v)
 			uvm_unlock_pageq();
 		}
 		if (needs_clean) {
+			modified = TRUE;
 
 			/*
 			 * start the i/o.  if we're traversing by list,
@@ -1421,6 +1447,12 @@ genfs_putpages(void *v)
 		PRELE(l);
 	}
 
+	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
+	    (vp->v_type == VREG ||
+	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
+		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+	}
+
 	/*
 	 * if we're cleaning and there was nothing to clean,
 	 * take us off the syncer list.  if we started any i/o
@@ -1430,10 +1462,12 @@ genfs_putpages(void *v)
 	s = splbio();
 	if ((flags & PGO_CLEANIT) && wasclean && gp->g_dirtygen == dirtygen &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
-	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 	    (vp->v_flag & VONWORKLST)) {
-		vp->v_flag &= ~VONWORKLST;
-		LIST_REMOVE(vp, v_synclist);
+		vp->v_flag &= ~VWRITEMAPDIRTY;
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+			vp->v_flag &= ~VONWORKLST;
+			LIST_REMOVE(vp, v_synclist);
+		}
 	}
 	splx(s);
 

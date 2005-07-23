@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.9 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.9 2005/07/23 12:18:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_alloc = msdosfs_gop_alloc,
 	.gop_write = genfs_gop_write,
+	.gop_markupdate = msdosfs_gop_markupdate,
 };
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
@@ -692,4 +693,22 @@ msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     struct ucred *cred)
 {
 	return 0;
+}
+
+void
+msdosfs_gop_markupdate(struct vnode *vp, int flags)
+{
+	u_long mask = 0;
+
+	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
+		mask = DE_ACCESS;
+	}
+	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
+		mask |= DE_UPDATE;
+	}
+	if (mask) {
+		struct denode *dep = VTODE(vp);
+
+		dep->de_flag |= mask;
+	}
 }
