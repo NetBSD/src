@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.26.2.1 2004/06/07 10:16:58 tron Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.1 2005/07/23 22:43:19 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -477,7 +477,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
-	WINDOW *win, *svwin;
+	WINDOW *win, *svmsg, *sv_win;
 	int maxx, maxy;
 	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
 
@@ -516,13 +516,17 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 			"newwin(%d, %d, %d, %d) failed\n",
 			h, w, y, x);
 	else {
+		/* Save screen contents from under out window */
+		sv_win = dupwin(win);
+		if (sv_win)
+			overwrite(curscr, sv_win);
 		wbkgd(win, getbkgd(msg_win));
 		wattrset(win, getattrs(msg_win));
 		box(win, 0, 0);
 		wrefresh(win);
 
 		/* Change message window to be our little box */
-		svwin = msg_window(subwin(msg_win, h - 2, w - 2, y + 1, x + 1));
+		svmsg = msg_window(subwin(msg_win, h - 2, w - 2, y + 1, x + 1));
 		wbkgd(msg_win, getbkgd(win));
 		wattrset(msg_win, getattrs(win));
 
@@ -535,9 +539,14 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 
 	if (win != NULL) {
 		wclear(win);
-		wrefresh(win);
+		if (sv_win) {
+			/* Restore original screen contents */
+			overwrite(sv_win, win);
+			delwin(sv_win);
+		}
+		wnoutrefresh(win);
 		/* Restore normal message window */
-		delwin(msg_window(svwin));
+		delwin(msg_window(svmsg));
 		delwin(win);
 	}
 }
