@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2005/07/23 18:56:15 cube Exp $
+	$NetBSD: syscalls.master,v 1.37 2005/07/23 22:03:45 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -407,7 +407,9 @@
 241	STD		{ int netbsd32_fdatasync(int fd); }
 242	STD		{ int netbsd32_mlockall(int flags); }
 243	NOARGS		{ int sys_munlockall(void); }
-244	UNIMPL
+244	STD		{ int netbsd32___sigtimedwait(const netbsd32_sigsetp_t set, \
+			    netbsd32_siginfop_t info, \
+			    netbsd32_timespecp_t timeout); }
 245	UNIMPL
 246	UNIMPL
 247	UNIMPL

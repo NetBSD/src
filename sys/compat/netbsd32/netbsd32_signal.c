@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.9 2005/06/02 10:27:43 drochner Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.10 2005/07/23 22:03:45 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.9 2005/06/02 10:27:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.10 2005/07/23 22:03:45 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.9 2005/06/02 10:27:43 drochner
 #include <uvm/uvm_extern.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
@@ -389,4 +390,60 @@ netbsd32_setcontext(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	return (EJUSTRETURN);
+}
+
+static int
+netbsd32_sigtimedwait_put_info(const void *src, void *dst, size_t size)
+{
+	const siginfo_t *info = src;
+	siginfo32_t info32;
+
+	netbsd32_si_to_si32(&info32, info);
+
+	return copyout(&info32, dst, sizeof(info32));
+}
+
+static int
+netbsd32_sigtimedwait_fetch_timeout(const void *src, void *dst, size_t size)
+{
+	struct timespec *ts = dst;
+	struct netbsd32_timespec ts32;
+	int error;
+
+	error = copyin(src, &ts32, sizeof(ts32));
+	if (error)
+		return error;
+
+	netbsd32_to_timespec(&ts32, ts);
+	return 0;
+}
+
+static int
+netbsd32_sigtimedwait_put_timeout(const void *src, void *dst, size_t size)
+{
+	const struct timespec *ts = src;
+	struct netbsd32_timespec ts32;
+
+	netbsd32_from_timespec(ts, &ts32);
+
+	return copyout(&ts32, dst, sizeof(ts32));
+}
+
+int
+netbsd32___sigtimedwait(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32___sigtimedwait_args /* {
+		syscallarg(netbsd32_sigsetp_t) set;
+		syscallarg(netbsd32_siginfop_t) info;
+		syscallarg(netbsd32_timespecp_t) timeout;
+	} */ *uap = v;
+	struct sys___sigtimedwait_args ua;
+
+	NETBSD32TOP_UAP(set, const sigset_t);
+	NETBSD32TOP_UAP(info, siginfo_t);
+	NETBSD32TOP_UAP(timeout, struct timespec);
+
+	return __sigtimedwait1(l, &ua, retval, netbsd32_sigtimedwait_put_info,
+	    netbsd32_sigtimedwait_fetch_timeout,
+	    netbsd32_sigtimedwait_put_timeout);
 }
