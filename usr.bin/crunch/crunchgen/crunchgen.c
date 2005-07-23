@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55 2003/12/28 09:21:36 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.1 2005/07/23 21:50:06 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55 2003/12/28 09:21:36 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.1 2005/07/23 21:50:06 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -887,7 +887,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
     fprintf(outmk, "\t\techo stripping ${PROG}; \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
-    fprintf(outmk, "\t\t${OBJCOPY} -S -R .note -R .ident ${PROG} && \\\n");
+    fprintf(outmk, "\t\t${OBJCOPY} -S -R .note -R .ident -R .comment -R .copyright ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
