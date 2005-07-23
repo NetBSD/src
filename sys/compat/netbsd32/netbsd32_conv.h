@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.5 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.6 2005/07/23 18:56:15 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -79,6 +79,7 @@ static __inline void netbsd32_from_shmid_ds __P((struct shmid_ds *, struct netbs
 static __inline void netbsd32_to_semid_ds __P((struct  netbsd32_semid_ds *, struct  semid_ds *));
 static __inline void netbsd32_from_semid_ds __P((struct  semid_ds *, struct  netbsd32_semid_ds *));
 static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, struct loadavg *));
+static __inline void netbsd32_to_sigevent(struct netbsd32_sigevent *, struct sigevent *);
 
 /* converters for structures that we need */
 static __inline void
@@ -533,6 +534,20 @@ netbsd32_from_loadavg(av32, av)
 	av32->ldavg[1] = av->ldavg[1];
 	av32->ldavg[2] = av->ldavg[2];
 	av32->fscale = (netbsd32_long)av->fscale;
+}
+
+static __inline void
+netbsd32_to_sigevent(struct netbsd32_sigevent *ev32, struct sigevent *ev)
+{
+	ev->sigev_notify = ev32->sigev_notify;
+	ev->sigev_signo = ev32->sigev_signo;
+	/*
+	 * XXX sival_ptr, sigev_notify_function and
+	 *     sigev_notify_attributes are  currently unused
+	 */
+	ev->sigev_value.sival_int = ev32->sigev_value.sival_int;
+	ev->sigev_notify_function = (void *)(intptr_t)ev32->sigev_notify_function;
+	ev->sigev_notify_attributes = (void *)(intptr_t)ev32->sigev_notify_attributes;
 }
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_CONV_H_ */
