@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.10 2000/08/15 02:09:12 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.10.6.1 2005/07/23 23:51:42 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,7 +179,7 @@ menu submenu, title "  submenu test";
 menu upperright, title "upper right", y=2, x=60, no exit;
 	option  "Just Exit!", exit;
 
-menu lowerleft, title "lower left", y=20, x=2, no exit;
+menu lowerleft, title "lower left", y=19, x=2, no exit;
 	option  "Just Exit!", exit;
 
 menu middle, no box;
