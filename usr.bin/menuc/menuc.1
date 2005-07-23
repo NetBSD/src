@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.21 2003/11/11 13:41:37 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.21.4.1 2005/07/23 23:46:47 snj Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 18, 2003
+.Dd August 2, 2004
 .Os
 .Dt MENUC 1
 .Sh NAME
@@ -170,56 +170,74 @@ allowed, whether a standard exit option should be included
 in the menu and text associated with the standard exit option.
 The general format is:
 .Dl default \*[Lt]comma separated option list\*[Gt] ;
-The options appear in three forms:
-.Dl variable = value
-.Dl [no] switch
-.Dl variable Ar string
 .Pp
-The variables for the first form are
-.Va x ,
-.Va y ,
-.Va h ,
-and
-.Va w .
-These specify the upper left (x,y) and the
-height (h) and width (w) of the menu window.
-The upper left is in the curses coordinate system.
+The supported options are:
+.Bl -tag
+.It Ic x = Va startx
+The column number of the upper left corner of the menu window.
 If
-.Va x
-is \-1 the menu window will be centered.
-If not specified, the upper left is the upper left of the screen
-and the height and width of the menu window is computed
-from the menu definition.
-.Pp
-Options of the second form turn on or off (with the
-optional no) features of the menu system.
-The
-.Va box
-option turns on a box around the menu window.
-The
-.Va exit
-option enables the standard exit option in the menus.
-The
-.Va scrollable
-option allows the menu to be scrollable if the
-menu window is smaller than the number of menu options.
-The
-.Va shortcut
-option prints a single character shortcut with each menu option.
-.Pp
-The third sets text variables.
-The
-.Ar string
-can be either a quoted text string or a name #defined to something
-suitable for initialising a const char * field.
-The variable
-.Va title
-sets the text title for the menus.
-The variable
-.Va exitstring
-sets the text for the exit menu option and sets the
+.Va startx
+is -1 the menu will be centered horizontally.
+.It Ic y = Va starty
+The row number of the upper left corner of the menu window.
+If
+.Va starty
+is negative then the menu will be placed below any message text, but
+in at least row
+.Va -starty .
+.It Ic h = Va height
+Specifies the number of menu entries to be displayed.
+If zero, the height will be based on the number of entries.
+.It Ic h = Va width
+Specifies the width of the menu window.
+If zero, the width will be that of the longest menu text line.
+.It Ic title Va text
+The specified
+.Va text
+will be displayed at the top of the menu window (inside any box).
+.It Ic box
+If specified, draw a box around the menu.
+.It Ic clear
+If specified, clear the window before performing the
+.Va action .
+.It Ic exit
+If specified add an addition option to exit the menu.
+.It Ic exitstring Va text
+The menu label for the
 .Va exit
 option.
+If not specified defaults to "exit".
+.It Ic default exit
+If specified, place the cursor on the
+.Va exit
+line of the menu, instead of the top line.
+.It Ic shortcut
+If specified, add alphabetic tags to each menu line.
+.It Ic scrollable
+If specified, and the menu has more lines than will fit in its window, then
+only part of the menu will be displayed and the '<' and '>' keys will
+scroll the displayed menu lines.
+.It Ic always scroll
+If specified, allow for the scroll message line even if the menu doesn't
+appear to have too many lines.
+Useful for dynamic menus, when the number of entries isn't known when the
+menu window is created..
+.It Ic sub menu
+If specified, the screen contents that the menu window overwrites are saved
+and restored when the menu exits.
+.El
+The
+.Ic box, clear, exit, default exit, shortcut, scrollable, always scroll,
+and
+.Ic sub menu
+options can be preceeded by
+.Ic no
+in order to negate a default.
+.Pp
+The
+.Va text
+arguments can be either a quoted text string or a name #defined to something
+suitable for initialising a const char * field.
 .Pp
 The default declaration may appear multiple times.
 Each time, it sets the default values for menu definitions that follow
@@ -235,7 +253,7 @@ menu \*[Lt]name\*[Gt] \*[Lt]options\*[Gt] ;
   \*[Lt]display action\*[Gt]
   \*[Lt]menu items\*[Gt]
   \*[Lt]exit action\*[Gt]
-  \*[Lt]help string\*[Gt]
+  \*[Lt]help text\*[Gt]
 .Ed
 .Pp
 Names are unquoted strings of alpha-numeric and underscore
@@ -325,6 +343,7 @@ The braces are not included in the
 help string, but all other characters between
 them are included.
 Newlines in the code translate to newlines in the help text.
+Alternatively, the name of a const char * variable may be given.
 .Sh DYNAMIC MENUS
 If requested,
 .Nm
@@ -361,10 +380,12 @@ struct menudesc {
         int         topline;
         menu_ent    *opts;
         WINDOW      *mw;
+        WINDOW      *sv_mw;
         const char  *helpstr;
         const char  *exitstr;
         void       (*post_act)(struct menudesc *, void *);
         void       (*exit_act)(struct menudesc *, void *);
+        void       (*draw_line)(struct menudesc *, int, void *);
 } menudesc ;
 
 /* defines for mopt field. */
@@ -375,6 +396,7 @@ struct menudesc {
 #define MC_NOCLEAR 16
 #define MC_DFLTEXIT 32
 #define MC_ALWAYS_SCROLL 64
+#define MC_SUBMENU 128
 
 int new_menu(const char *title, menu_ent *opts, int numopts,
         int x, int y, int h, int w, int mopt,
@@ -412,7 +434,7 @@ and
 are the same as the options in the menu description.
 .Ar mopt
 is the boolean options.
-Note, box, exit and shortcuts are enabled by default.
+Note, box, clear, exit and shortcuts are enabled by default.
 You need to add option flags to turn them off or turn on scrollable menus.
 The options
 .Ar post_act ,
@@ -504,6 +526,18 @@ This is a simple help screen for an example menu definition file.
 menu othermenu, title "Sub/Next Menu", x=5, y=5, no box;
    option "Do Nothing!", action { };
 .Ed
+.Sh SEE ALSO
+.Xr msgc 1
+.Sh BUGS
+Both
+.Nm
+and
+.Nm msgc
+are probably only used by
+.Nm sysinst .
+The features of both have been tailered for
+.Nm sysinst ,
+and further changes are likely to occur.
 .Sh AUTHORS
 .An Philip A. Nelson
 for Piermont Information Systems Inc.
