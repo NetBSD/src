@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.48 2005/07/23 18:54:07 cube Exp $	*/
+/*	$NetBSD: time.h,v 1.49 2005/07/23 19:43:01 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -228,7 +228,6 @@ void	realtimerexpire(void *);
 
 int	dogetitimer(struct proc *, int, struct itimerval *);
 int	dosetitimer(struct proc *, int, struct itimerval *);
-
 
 /*
  * XXX-cube
