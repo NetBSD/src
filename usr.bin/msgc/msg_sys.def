@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.3 2005/07/23 22:45:41 snj Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.4 2005/07/23 22:46:58 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,10 +187,10 @@ _msg_vprintf(int auto_fill, const char *fmt, va_list ap)
 	for (wstart = afterw = cbuffer; *wstart; wstart = afterw) {
 
 		/* eat one space, or a whole word of non-spaces */
-		if (isspace(*afterw))
+		if (isspace((unsigned char)*afterw))
 			afterw++;
 		else
-			while (*afterw && !isspace(*afterw))
+			while (*afterw && !isspace((unsigned char)*afterw))
 				afterw++;
 
 		/* this is an nl: special formatting necessary */
@@ -235,7 +235,7 @@ _msg_vprintf(int auto_fill, const char *fmt, va_list ap)
 
 		/* this is a space: ignore it but set flags */
 		last_i_was_nl = 0;	/* all newlines handled above */
-		last_i_was_space = isspace(*wstart);
+		last_i_was_space = isspace((unsigned char)*wstart);
 		if (last_i_was_space)
 			continue;
 
@@ -399,9 +399,9 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 			 * the 'word' aren't killed.
 			 */
 			npos = pos;
-			while (npos > 0 && isspace(ibuf[npos - 1]))
+			while (npos > 0 && isspace((unsigned char)ibuf[npos - 1]))
 				npos--;
-			while (npos > 0 && !isspace(ibuf[npos - 1]))
+			while (npos > 0 && !isspace((unsigned char)ibuf[npos - 1]))
 				npos--;
 			memmove(ibuf + npos, ibuf + pos, len - pos);
 			len -= pos - npos;
