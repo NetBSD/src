@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2003/06/04 19:07:40 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.5.4.1 2005/07/23 23:52:31 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,9 +58,9 @@ char  ent_text[5][50] = {"name: ", "strt: ", "city: ", "opt 4", "NUM: "};
 
 /* opt processing routines .. */
 
-int opt_1 (struct menudesc *m);
+int opt_1 (struct menudesc *m, void *p);
 
-int opt_1 (struct menudesc *m)
+int opt_1 (struct menudesc *m, void *p)
 {
 	msg_clear();
 	msg_prompt (MSG_name, "", &ent_text[0][6], 40);
@@ -68,9 +68,9 @@ int opt_1 (struct menudesc *m)
 	return 0;
 }
 
-int opt_2 (struct menudesc *m);
+int opt_2 (struct menudesc *m, void *p);
 
-int opt_2 (struct menudesc *m)
+int opt_2 (struct menudesc *m, void *p)
 {
 	msg_clear();
 	msg_prompt (MSG_street, "", &ent_text[1][6], 40);
@@ -78,9 +78,9 @@ int opt_2 (struct menudesc *m)
 	return 0;
 }
 
-int opt_3 (struct menudesc *m);
+int opt_3 (struct menudesc *m, void *p);
 
-int opt_3 (struct menudesc *m)
+int opt_3 (struct menudesc *m, void *p)
 {
 	msg_clear();
 	msg_prompt (MSG_city, "", &ent_text[2][6], 40);
@@ -100,8 +100,8 @@ int num = 0;
 
 
 void do_dynamic(void);
-void dyn_disp (void);
-void dyn_disp (void)
+void dyn_disp (struct menudesc *, void *);
+void dyn_disp (struct menudesc *m, void *p)
 {
     sprintf (&ent_text[4][5], "%d", num++);
 }
@@ -112,9 +112,9 @@ void do_dynamic(void)
 
 	num = 0;
 	menu_no = new_menu ("  A test dynamic menu! ", mymenu, 5, 10, 10,
-		0, 55, MC_SCROLL, dyn_disp, NULL,
+		0, 55, MC_SCROLL, dyn_disp, NULL, NULL,
 		"Make sure you try at least one option before exiting.\n"
-		"Then look at what changes.\n");
+		"Then look at what changes.\n", "Done now!");
 	if (menu_no < 0) {
 		endwin();
 		(void) fprintf (stderr, "Dynamic memu creation failure. \n");
