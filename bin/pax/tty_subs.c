@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.16 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.16.4.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.16 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.16.4.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ static FILE *ttyinf = NULL;		/* input pointing at control tty */
 
 /*
  * tty_init()
- *	try to open the controlling termina (if any) for this process. if the
- *	open fails, future ops that require user input will get an EOF
+ *	Try to open the controlling terminal (if any) for this process. If the
+ *	open fails, future ops that require user input will get an EOF.
  */
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.23.2.2 2004/11/12 05:04:07 jmc Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.23.2.2.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.23.2.2 2004/11/12 05:04:07 jmc Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.23.2.2.2.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -885,10 +885,13 @@ buf_fill(void)
 
 		/*
 		 * errors require resync, EOF goes to next archive
+		 * but in case we have not determined yet the format,
+		 * this means that we have a very short file, so we
+		 * are done again.
 		 */
 		if (cnt < 0)
 			break;
-		if (ar_next() < 0) {
+		if (frmt == NULL || ar_next() < 0) {
 			fini = 1;
 			return(0);
 		}
