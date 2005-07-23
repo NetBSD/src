@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.21.4.1 2005/07/23 23:46:47 snj Exp $
+.\"	$NetBSD: menuc.1,v 1.21.4.2 2005/07/23 23:56:50 snj Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -215,8 +215,11 @@ line of the menu, instead of the top line.
 If specified, add alphabetic tags to each menu line.
 .It Ic scrollable
 If specified, and the menu has more lines than will fit in its window, then
-only part of the menu will be displayed and the '<' and '>' keys will
-scroll the displayed menu lines.
+only part of the menu will be displayed and the
+.Sq \*[Lt]
+and
+.Sq \*[Gt]
+keys will scroll the displayed menu lines.
 .It Ic always scroll
 If specified, allow for the scroll message line even if the menu doesn't
 appear to have too many lines.
@@ -227,7 +230,7 @@ If specified, the screen contents that the menu window overwrites are saved
 and restored when the menu exits.
 .El
 The
-.Ic box, clear, exit, default exit, shortcut, scrollable, always scroll,
+.Ic box , clear , exit , default exit , shortcut , scrollable , always scroll ,
 and
 .Ic sub menu
 options can be preceeded by
@@ -528,6 +531,11 @@ menu othermenu, title "Sub/Next Menu", x=5, y=5, no box;
 .Ed
 .Sh SEE ALSO
 .Xr msgc 1
+.Sh AUTHORS
+.An Philip A. Nelson
+for Piermont Information Systems Inc.
+Initial ideas for this were developed and implemented in Pascal at the
+Leiden University, Netherlands, in the summer of 1980.
 .Sh BUGS
 Both
 .Nm
@@ -538,8 +546,3 @@ are probably only used by
 The features of both have been tailered for
 .Nm sysinst ,
 and further changes are likely to occur.
-.Sh AUTHORS
-.An Philip A. Nelson
-for Piermont Information Systems Inc.
-Initial ideas for this were developed and implemented in Pascal at the
-Leiden University, Netherlands, in the summer of 1980.
