@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.207 2005/07/16 04:06:39 yamt Exp $	*/
+/*	$NetBSD: wi.c,v 1.208 2005/07/23 16:09:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.207 2005/07/16 04:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.208 2005/07/23 16:09:39 drochner Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -279,6 +279,7 @@ wi_card_ident[] = {
 	{ 0,	NULL,	0 },
 };
 
+#ifndef _LKM
 /*
  * Setup sysctl(3) MIB, hw.wi.*
  *
@@ -315,6 +316,7 @@ SYSCTL_SETUP(sysctl_wi, "sysctl wi(4) subtree setup")
 err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
+#endif
 
 #ifdef WI_DEBUG
 static int
