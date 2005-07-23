@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.39.2.1 2004/06/22 07:29:20 tron Exp $	*/
+/*	$NetBSD: mdb.c,v 1.39.2.1.2.1 2005/07/23 23:44:08 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.39.2.1 2004/06/22 07:29:20 tron Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.39.2.1.2.1 2005/07/23 23:44:08 snj Exp $");
 #endif
 
 
@@ -203,6 +203,7 @@ write_menu_file (char *initcode)
 		"	int		topline;\n"
 		"	menu_ent	*opts;\n"
 		"	WINDOW		*mw;\n"
+		"	WINDOW		*sv_mw;\n"
 		"	const char	*helpstr;\n"
 		"	const char	*exitstr;\n"
 		"	void		(*post_act)(menudesc *, void *);\n"
@@ -211,20 +212,22 @@ write_menu_file (char *initcode)
 		"};\n"
 		"\n"
 		"/* defines for mopt field. */\n"
-		"#define MC_NOEXITOPT 1\n"
-		"#define MC_NOBOX 2\n"
-		"#define MC_SCROLL 4\n"
-		"#define MC_NOSHORTCUT 8\n"
-		"#define MC_NOCLEAR 16\n"
-		"#define MC_DFLTEXIT 32\n"
-		"#define MC_ALWAYS_SCROLL 64\n"
-		"#define MC_VALID 256\n"	
+#define STR(x) #x
+#define MC_OPT(x) "#define " #x " " STR(x) "\n"
+		MC_OPT(MC_NOEXITOPT)
+		MC_OPT(MC_NOBOX)
+		MC_OPT(MC_SCROLL)
+		MC_OPT(MC_NOSHORTCUT)
+		MC_OPT(MC_NOCLEAR)
+		MC_OPT(MC_DFLTEXIT)
+		MC_OPT(MC_ALWAYS_SCROLL)
+		MC_OPT(MC_SUBMENU)
+		MC_OPT(MC_VALID)
+#undef MC_OPT
+#undef STR
 	);
 
 	(void) fprintf (out_file, "%s",
-		"\n"
-		"/* initilization flag */\n"
-		"extern int __m_endwin;\n"
 		"\n"
 		"/* Prototypes */\n"
 		"int menu_init(void);\n"
@@ -279,8 +282,7 @@ write_menu_file (char *initcode)
 				"/*ARGSUSED*/\n"
 				"static void menu_%d_postact(menudesc *menu, void *arg)\n{\n", i);
 			if (menus[i]->info->postact.endwin)
-				(void) fprintf (out_file, "\tendwin();\n"
-					"\t__m_endwin = 1;\n");
+				(void) fprintf (out_file, "\tendwin();\n");
 			(void) fprintf (out_file,
 					"\t%s\n}\n\n",
 					menus[i]->info->postact.code);
@@ -290,8 +292,7 @@ write_menu_file (char *initcode)
 				"/*ARGSUSED*/\n"
 				"static void menu_%d_exitact(menudesc *menu, void *arg)\n{\n", i);
 			if (menus[i]->info->exitact.endwin)
-				(void) fprintf (out_file, "\tendwin();\n"
-					"\t__m_endwin = 1;\n");
+				(void) fprintf (out_file, "\tendwin();\n");
 			(void) fprintf (out_file, "\t%s\n}\n\n",
 					menus[i]->info->exitact.code);
 		}
@@ -348,7 +349,7 @@ write_menu_file (char *initcode)
 	(void) fprintf (out_file, "static struct menudesc menu_def[] = {\n");
 	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file,
-			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optent%d,NULL,",
+			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optent%d,NULL,NULL,",
 			menus[i]->info->title, 	menus[i]->info->y,
 			menus[i]->info->x, menus[i]->info->h,
 			menus[i]->info->w, menus[i]->info->mopt,
@@ -357,21 +358,25 @@ write_menu_file (char *initcode)
 			(void) fprintf (out_file, "NULL");
 		else {
 			tmpstr = menus[i]->info->helpstr;
-			/* Skip an initial newline. */
-			if (*tmpstr == '\n')
-				tmpstr++;
-			(void) fprintf (out_file, "\n\"");
-			while (*tmpstr)
-				if (*tmpstr != '\n')
-					fputc (*tmpstr++, out_file);
-				else {
-					(void) fprintf (out_file, "\\n\\\n");
+			if (*tmpstr != '"')
+				(void)fprintf(out_file, "%s", tmpstr);
+			else {
+				/* Skip an initial newline. */
+				if (tmpstr[1] == '\n')
+					*++tmpstr = '"';
+				(void) fprintf (out_file, "\n");
+				while (*tmpstr) {
+					if (*tmpstr != '\n') {
+						fputc (*tmpstr++, out_file);
+						continue;
+					}
+					(void) fprintf (out_file, "\\n\"\n\"");
 					tmpstr++;
 				}
-			(void) fprintf (out_file, "\"");
+			}
 		}
 		(void) fprintf (out_file, ",");
-		if (menus[i]->info->mopt & NOEXITOPT)
+		if (menus[i]->info->mopt & MC_NOEXITOPT)
 			(void) fprintf (out_file, "NULL");
 		else if (menus[i]->info->exitstr != NULL)
 			(void) fprintf (out_file, "%s",
