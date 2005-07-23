@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.53.4.1 2005/07/23 23:46:11 snj Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.53.4.2 2005/07/23 23:49:37 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,7 +132,6 @@ menucmd(WINDOW *w)
 	}
 }
 
-WINDOW *sv_mw;
 static void
 init_menu(menudesc *m)
 {
@@ -264,7 +263,13 @@ init_menu(menudesc *m)
 
 	if (m->mopt & MC_SUBMENU) {
 		/* Keep a copy of what is on the screen under the window */
-		sv_mw = m->sv_mw = newwin(m->h + hadd, w + wadd, y, x);
+		m->sv_mw = newwin(m->h + hadd, w + wadd, y, x);
+		/*
+		 * cursrc contains post-doupdate() data, not post-refresh()
+		 * data so we must call doupdate to ensure we save the
+		 * correct data.  Avoids PR 26660.
+		 */
+		doupdate();
 		if (m->sv_mw)
 			overwrite(curscr, m->sv_mw);
 	}
@@ -400,7 +405,13 @@ process_help(menudesc *m)
 		mbeep();
 		return;
 	}
-	/* Save screen contents so we can restore before returning */
+	/*
+	 * Save screen contents so we can restore before returning.
+	 * cursrc contains post-doupdate() data, not post-refresh()
+	 * data so we must call doupdate to ensure we save the
+	 * correct data.  Avoids PR 26660.
+	 */
+	doupdate();
 	overwrite(curscr, sv_curscr);
 	touchwin(stdscr);
 
