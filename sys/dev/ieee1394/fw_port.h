@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.3 2005/07/23 16:55:13 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1122,7 +1122,8 @@ m_getcl(int how, short type, int flags)
 	struct mbuf *m;
 
 	m = m_gethdr(how, type);
-	m_clget(m, how);
+	if (m != NULL)
+		m_clget(m, how);
 
 	return (m);
 }
