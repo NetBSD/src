@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.184 2005/07/23 23:34:52 peter Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.184 2005/07/23 23:34:52 peter Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1899,7 +1899,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	/*
 	 * what's it called
 	 */
-	if (strlcpy(nnode.sysctl_name, namep, sizeof(nnode.sysctl_name)) >
+	if (strlcpy(nnode.sysctl_name, namep, sizeof(nnode.sysctl_name)) >=
 	    sizeof(nnode.sysctl_name))
 		return (ENAMETOOLONG);
 
