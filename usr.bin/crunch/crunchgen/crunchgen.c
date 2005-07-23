@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55.4.11 2005/07/23 22:04:29 snj Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.12 2005/07/23 22:05:43 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55.4.11 2005/07/23 22:04:29 snj Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.12 2005/07/23 22:05:43 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.55.4.11 2005/07/23 22:04:29 snj Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"20050131"
+#define CRUNCH_VERSION	"20050208"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -993,19 +993,28 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	    output_strlst(outmk, p->objs);
 	}
 	fprintf(outmk, "%s:\n\t mkdir %s\n", p->ident, p->ident);
-	fprintf(outmk, "%s_make: %s\n", p->ident, p->ident);
-	fprintf(outmk, "\tcd %s; printf '.PATH: ${%s_SRCDIR}\\n"
+	fprintf(outmk, "%s_make: %s .PHONY\n", p->ident, p->ident);
+	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
 	    ".include \"$${.CURDIR}/Makefile\"\\n",
 	    p->ident, p->ident, p->ident);
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend ");
+	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend");
+	fprintf(outmk, " )\n");
+	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
+	    ".CURDIR:= ${%s_SRCDIR}\\n"
+	    ".include \"$${.CURDIR}/Makefile\"\\n",
+	    p->ident, p->ident, p->ident);
+	for (lst = vars; lst != NULL; lst = lst->next)
+	    fprintf(outmk, "%s\\n", lst->str);
+	fprintf(outmk, "'\\\n");
+	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" ");
 	if (p->objs)
-	    fprintf(outmk, "${%s_OBJS}\n\n", p->ident);
+	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else
-	    fprintf(outmk, "%s.ro\n\n", p->name);
+	    fprintf(outmk, "%s.ro ) \n\n", p->name);
     } else
         fprintf(outmk, "%s_make:\n\t@echo \"** Using existing objs for %s\"\n\n", 
 		p->ident, p->name);
