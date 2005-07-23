@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.13 2003/11/30 09:22:25 dsl Exp $	*/
+/*	$NetBSD: parse.y,v 1.13.4.1 2005/07/23 23:47:57 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@ static optn_info *cur_optn;
 
 %token <i_value> X Y W H NO BOX SUB HELP MENU NEXT EXIT ACTION ENDWIN OPTION 
 %token <i_value> TITLE DEFAULT DISPLAY ERROR EXITSTRING ALLOW DYNAMIC MENUS
-		 SCROLLABLE SHORTCUT CLEAR MESSAGES
+		 SCROLLABLE SHORTCUT CLEAR MESSAGES ALWAYS SCROLL
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
 %type <s_value> init_code system helpstr text
@@ -134,23 +134,29 @@ opt_list  : "," opt
 
 text	  : NAME | STRING
 
-opt	  : NO EXIT		{ cur_menu->info->mopt |= NOEXITOPT; }
-	  | EXIT		{ cur_menu->info->mopt &= ~NOEXITOPT; }
-	  | NO BOX		{ cur_menu->info->mopt |= NOBOX; }
-	  | BOX			{ cur_menu->info->mopt &= ~NOBOX; }
-	  | NO SCROLLABLE	{ cur_menu->info->mopt &= ~SCROLL; }
-	  | SCROLLABLE		{ cur_menu->info->mopt |= SCROLL; }
-	  | NO SHORTCUT 	{ cur_menu->info->mopt |= NOSHORTCUT; }
-	  | SHORTCUT 		{ cur_menu->info->mopt &= ~NOSHORTCUT; }
-	  | NO CLEAR 		{ cur_menu->info->mopt |= NOCLEAR; }
-	  | CLEAR 		{ cur_menu->info->mopt &= ~NOCLEAR; }
+opt	  : NO EXIT		{ cur_menu->info->mopt |= MC_NOEXITOPT; }
+	  | EXIT		{ cur_menu->info->mopt &= ~MC_NOEXITOPT; }
+	  | NO BOX		{ cur_menu->info->mopt |= MC_NOBOX; }
+	  | BOX			{ cur_menu->info->mopt &= ~MC_NOBOX; }
+	  | NO SCROLLABLE	{ cur_menu->info->mopt &= ~MC_SCROLL; }
+	  | SCROLLABLE		{ cur_menu->info->mopt |= MC_SCROLL; }
+	  | NO SHORTCUT 	{ cur_menu->info->mopt |= MC_NOSHORTCUT; }
+	  | SHORTCUT 		{ cur_menu->info->mopt &= ~MC_NOSHORTCUT; }
+	  | NO CLEAR 		{ cur_menu->info->mopt |= MC_NOCLEAR; }
+	  | CLEAR 		{ cur_menu->info->mopt &= ~MC_NOCLEAR; }
+	  | NO DEFAULT EXIT	{ cur_menu->info->mopt &= ~MC_DFLTEXIT; }
+	  | DEFAULT EXIT 	{ cur_menu->info->mopt |= MC_DFLTEXIT; }
+	  | NO ALWAYS SCROLL	{ cur_menu->info->mopt &= ~MC_ALWAYS_SCROLL; }
+	  | ALWAYS SCROLL 	{ cur_menu->info->mopt |= MC_ALWAYS_SCROLL; }
+	  | NO SUB MENU		{ cur_menu->info->mopt &= ~MC_SUBMENU; }
+	  | SUB MENU 		{ cur_menu->info->mopt |= MC_SUBMENU; }
 	  | X "=" INT_CONST	{ cur_menu->info->x = atoi($3); }
 	  | Y "=" INT_CONST	{ cur_menu->info->y = atoi($3); }
 	  | W "=" INT_CONST	{ cur_menu->info->w = atoi($3); }
 	  | H "=" INT_CONST	{ cur_menu->info->h = atoi($3); }
 	  | TITLE text	 	{ cur_menu->info->title = $2; }
 	  | EXITSTRING text	{ cur_menu->info->exitstr = $2;
-				  cur_menu->info->mopt &= ~NOEXITOPT; }
+				  cur_menu->info->mopt &= ~MC_NOEXITOPT; }
 	  ;
 
 option_list : option
@@ -216,5 +222,6 @@ exitact	  : /* empty */ 	{ cur_menu->info->exitact.code = ""; }
 	  ;
 
 helpstr	  : /* empty */ 	{ cur_menu->info->helpstr = NULL; }
-	  | HELP CODE ";" 	{ cur_menu->info->helpstr = $2; } 
+	  | HELP CODE ";" 	{ asprintf(&cur_menu->info->helpstr, "\"%s\"", $2); } 
+	  | HELP text ";" 	{ cur_menu->info->helpstr = $2; } 
 	  ;
