@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.35 2005/07/13 11:53:57 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.36 2005/07/23 18:56:15 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -126,6 +126,7 @@ struct netbsd32_iovec {
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time_t;
+typedef netbsd32_pointer_t netbsd32_timerp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespecp_t;
 struct netbsd32_timespec {
@@ -149,6 +150,12 @@ typedef netbsd32_pointer_t netbsd32_itimervalp_t;
 struct	netbsd32_itimerval {
 	struct	netbsd32_timeval it_interval;	/* timer interval */
 	struct	netbsd32_timeval it_value;	/* current value */
+};
+
+typedef netbsd32_pointer_t netbsd32_itimerspecp_t;
+struct netbsd32_itimerspec {
+	struct netbsd32_timespec it_interval;
+	struct netbsd32_timespec it_value;
 };
 
 /* from <sys/mount.h> */
@@ -384,6 +391,20 @@ struct	netbsd32_sigvec {
 	netbsd32_voidp sv_handler;	/* signal handler */
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
+};
+
+union netbsd32_sigval {
+	int	sival_int;
+	netbsd32_voidp	sival_ptr;
+};
+
+typedef netbsd32_pointer_t netbsd32_sigeventp_t;
+struct netbsd32_sigevent {
+	int	sigev_notify;
+	int	sigev_signo;
+	union netbsd32_sigval	sigev_value;
+	netbsd32_voidp	sigev_notify_function;
+	netbsd32_voidp	sigev_notify_attributes;
 };
 
 /* from <sys/socket.h> */
