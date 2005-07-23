@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140 2005/06/19 18:22:37 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.141 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -150,6 +150,8 @@ struct vnode {
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
+#define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
@@ -160,7 +162,7 @@ struct vnode {
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 
 #define VNODE_FLAGBITS \
-    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP" \
+    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
     "\10VLOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
     "\15DIROP\16LAYER\17ONWORKLIST\20DIRTY"
 
