@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.183 2005/07/21 21:26:03 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.184 2005/07/23 16:16:43 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10797,4 +10797,23 @@ share/man/man9/vfsops.9				1.20
 
 	Rename manual page VFS_STATFS(9) to VFS_STATVFS(9).
 	[pooka, ticket #605]
+
+sys/dev/pci/piixide.c				1.23
+
+	Add support for PATA and SATA ports in the Intel ICH7
+	southbridge (82801G).  Patch supplied by Marcello Balduccini
+	in PR port-i386/30795.
+	[tron, ticket #609]
+
+sys/crypto/sha2/sha2.c				1.5
+sys/crypto/sha2/sha2.h				1.3
+
+	Remove unused functions SHA*_End() and SHA*_Data().
+	[tron, ticket #610]
+
+sys/netinet6/ah_core.c				1.37
+
+	Remove unnecessary bzero() calls before calling the algorithm
+	specific init function.
+	[tron, ticket #611]
 
