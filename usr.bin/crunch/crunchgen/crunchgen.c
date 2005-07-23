@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55.4.8 2005/07/23 22:01:25 snj Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.9 2005/07/23 22:02:10 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55.4.8 2005/07/23 22:01:25 snj Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.9 2005/07/23 22:02:10 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -320,14 +320,14 @@ parse_line(char *line, int *fc, char **fv, int nf)
     p = line;
     *fc = 0;
     for (;;) {
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	    p++;
 	if (*p == '\0' || *p == '#')
 	    break;
 
 	if (*fc < nf)
 	    fv[(*fc)++] = p;
-	while (*p && !isspace(*p) && *p != '#')
+	while (*p && !isspace((unsigned char)*p) && *p != '#')
 	    p++;
 	if (*p == '\0' || *p == '#')
 	    break;
@@ -718,16 +718,16 @@ fillin_program_objs(prog_t *p, char *dirpath)
 	    continue;
 	}
 	cp = line + 6;
-	while (isspace(*cp))
+	while (isspace((unsigned char)*cp))
 	    cp++;
 	while (*cp) {
 	    obj = cp;
-	    while (*cp && !isspace(*cp))
+	    while (*cp && !isspace((unsigned char)*cp))
 		cp++;
 	    if (*cp)
 		*cp++ = '\0';
 	    add_string(&p->objs, obj);
-	    while (isspace(*cp))
+	    while (isspace((unsigned char)*cp))
 		cp++;
 	}
     }
@@ -889,7 +889,7 @@ genident(char *str)
 	if (*s == '-')
 	    *d++ = '_';
 	else 
-	    if (*s == '_' || isalnum(*s))
+	    if (*s == '_' || isalnum((unsigned char)*s))
 		*d++ = *s;
     }
     *d = '\0';
