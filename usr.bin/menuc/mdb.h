@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.h,v 1.6 2003/11/30 09:22:25 dsl Exp $	*/
+/*	$NetBSD: mdb.h,v 1.6.4.1 2005/07/23 23:45:04 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,10 +88,13 @@ struct menu_info {
 };
 
 /* defines for mopt */
-#define NOEXITOPT 1
-#define NOBOX 2
-#define SCROLL 4
-#define NOSHORTCUT 8
-#define NOCLEAR 16
-
+#define MC_NOEXITOPT 1
+#define MC_NOBOX 2
+#define MC_SCROLL 4
+#define MC_NOSHORTCUT 8
+#define MC_NOCLEAR 16
+#define MC_DFLTEXIT 32
+#define MC_ALWAYS_SCROLL 64
+#define MC_SUBMENU 128
+#define MC_VALID 0x10000
 #endif
