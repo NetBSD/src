@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.21.4.3 2005/07/23 21:58:47 snj Exp $
+.\"	$NetBSD: crunchgen.1,v 1.21.4.4 2005/07/23 22:00:36 snj Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -32,24 +32,24 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl foOq
-.Bk -words
-.Op Fl m Ar makefile-name
-.Ek
+.Op Fl fOoq
 .Bk -words
 .Op Fl c Ar c-file-name
-.Ek
-.Bk -words
-.Op Fl e Ar exec-file-name
-.Ek
-.Bk -words
-.Op Fl d Ar build-options
 .Ek
 .Bk -words
 .Op Fl D Ar src-root
 .Ek
 .Bk -words
+.Op Fl d Ar build-options
+.Ek
+.Bk -words
+.Op Fl e Ar exec-file-name
+.Ek
+.Bk -words
 .Op Fl L Ar lib-dir
+.Ek
+.Bk -words
+.Op Fl m Ar makefile-name
 .Ek
 .Bk -words
 .Op Fl v Ar var-spec
@@ -57,22 +57,25 @@
 .Ar conf-file
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
-together into a single executable.  The crunched binary main()
+together into a single executable.
+The crunched binary
+.Fn main
 function determines which component program to run by the contents of
-argv[0].  The main reason to crunch programs together is for fitting
-as many programs as possible onto an installation or system recovery
-floppy.
+argv[0].
+The main reason to crunch programs together is for fitting as many
+programs as possible onto an installation or system recovery floppy.
 .Pp
 .Nm
 reads in the specifications in
 .Ar conf-file
 for a crunched binary, and generates a Makefile and accompanying
 top-level C source file that when built create the crunched executable
-file from the component programs.  For each component program,
+file from the component programs.
+For each component program,
 .Nm
 can optionally attempt to determine the object (.o) files that make up
-the program from its source directory Makefile.  This information is
-cached between runs.
+the program from its source directory Makefile.
+This information is cached between runs.
 .Nm
 uses the companion program
 .Em crunchide
@@ -81,11 +84,15 @@ hiding all unnecessary symbols.
 .Pp
 After
 .Nm
-is run, the crunched binary can be built by running ``make -f
-\*[Lt]conf-name\*[Gt].mk''.  The component programs' object files must already
-be built.  A ``objs'' target, included in the output makefile, will
+is run, the crunched binary can be built by running
+.Dq make -f Ao conf-name Ac Ns .mk .
+The component programs' object files must already be built.
+An
+.Dq objs
+target, included in the output makefile, will
 run make in each component program's source dir to build the object
-files for the user.  This is not done automatically since in release
+files for the user.
+This is not done automatically since in release
 engineering circumstances it is generally not desirable to be
 modifying objects in other directories.
 .Pp
@@ -94,24 +101,31 @@ The options are as follows:
 .It Fl c Ar c-file-name
 Set output C file name to
 .Ar c-file-name .
-The default name is ``\*[Lt]conf-name\*[Gt].c''.
-.It Fl e Ar exec-file-name
-Set crunched binary executable file name to
-.Ar exec-file-name .
-The default name is ``\*[Lt]conf-name\*[Gt]''.
+The default name is
+.Dq Ao confname Ac Ns .c .
+.It Fl D Ar src-root
+Assume that relative source directory specifications begin with
+.Ar src-root .
 .It Fl d Ar build-options
 Set the DBG variable in the generated makefile to
 .Ar build-options .
 The default flags are -Os.
+.It Fl e Ar exec-file-name
+Set crunched binary executable file name to
+.Ar exec-file-name .
+The default name is
+.Dq Aq conf-name .
 .It Fl f
-Flush cache.  Forces the recalculation of cached parameters.
+Flush cache.
+Forces the recalculation of cached parameters.
+.It Fl L Ar lib-dir
+Try to obtain libraries from
+.Ar lib-dir .
 .It Fl m Ar makefile-name
 Set output Makefile name to
 .Ar makefile-name .
-The default name is ``\*[Lt]conf-name\*[Gt].mk''.
-.It Fl o
-Use existing object files. Rather than rebuilding object files via reach-over
-makefiles, instead search for and use existing object files.
+The default name is
+.Dq Ao conf-name Ac Ns .mk .
 .It Fl O
 Force
 .Nm
@@ -120,14 +134,13 @@ Without this option
 .Nm
 expects the program's Makefile to have a program.ro target that links all
 the program objects into a single relocatable.
+.It Fl o
+Use existing object files.
+Rather than rebuilding object files via reach-over
+makefiles, instead search for and use existing object files.
 .It Fl q
-Quiet operation.  Status messages are suppressed.
-.It Fl D Ar src-root
-Assume that relative source directory specifications begin with
-.Ar src-root .
-.It Fl L Ar lib-dir
-Try to obtain libraries from
-.Ar lib-dir .
+Quiet operation.
+Status messages are suppressed.
 .It Fl v Ar varspec
 Append a variable specification to the on-the fly generated Makefile.
 .El
@@ -135,12 +148,14 @@ Append a variable specification to the on-the fly generated Makefile.
 .Nm
 reads specifications from the
 .Ar conf-file
-that describe the components of the crunched binary.  In its simplest
+that describe the components of the crunched binary.
+In its simplest
 use, the component program names are merely listed along with the
 top-level source directories in which their sources can be found.
 .Nm
 then calculates (via the source makefiles) and caches the
-list of object files and their locations.  For more specialized
+list of object files and their locations.
+For more specialized
 situations, the user can specify by hand all the parameters that
 .Nm
 needs.
@@ -151,14 +166,18 @@ commands are as follows:
 .Bl -tag -width indent
 .It Nm srcdirs Ar dirname ...
 A list of source trees in which the source directories of the
-component programs can be found.  These dirs are searched using the
+component programs can be found.
+These dirs are searched using the
 .Bx
-``\*[Lt]source-dir\*[Gt]/\*[Lt]progname\*[Gt]/'' convention.  Multiple
+.Dq Ao source-dir Ac Ns / Ns Ao progname Ac Ns /
+convention.
+Multiple
 .Em srcdirs
-lines can be specified.  The directories are searched in the order
-they are given.
+lines can be specified.
+The directories are searched in the order they are given.
 .It Nm progs Ar progname ...
-A list of programs that make up the crunched binary.  Multiple
+A list of programs that make up the crunched binary.
+Multiple
 .Em progs
 lines can be specified.
 .It Nm libs Ar libspec ...
@@ -171,7 +190,8 @@ Causes the crunched binary to invoke
 .Ar progname
 whenever
 .Ar linkname
-appears in argv[0].  This allows programs that change their behavior when
+appears in argv[0].
+This allows programs that change their behavior when
 run under different names to operate correctly.
 .El
 .Pp
@@ -244,11 +264,13 @@ The makefile produced by
 contains an optional
 .Ar objs
 target that will build the object files for each component program by
-running make inside that program's source directory.  For this to work the
+running make inside that program's source directory.
+For this to work the
 .Em srcdir
 and
 .Em objs
-parameters must also be valid.  If they are not valid for a particular program, that
+parameters must also be valid.
+If they are not valid for a particular program, that
 program is skipped in the
 .Ar objs
 target.
@@ -267,8 +289,8 @@ specified.
 If the environment variable
 .Ev MACHINE
 is set, it is used as the name of the machine type, when accessing object
-directories of the form obj.MACHINE.  If it is not set, it defaults to
-the machine type returned by
+directories of the form obj.MACHINE.
+If it is not set, it defaults to the machine type returned by
 .Xr uname 3 .
 .br
 .Nm Note :
@@ -279,7 +301,8 @@ If the environment variable
 .Ev MAKE
 is set, it is used as the name of the
 .Xr make 1
-executable to be called.  If this environment variable is not set,
+executable to be called.
+If this environment variable is not set,
 .Nm
 defaults to
 .Dq make .
@@ -303,13 +326,16 @@ libs -lutil -lcrypt
 .Ed
 .Pp
 This conf file specifies a small crunched binary consisting of some
-basic system utilities plus a home-grown install program ``myinstall'',
+basic system utilities plus a home-grown install program
+.Dq myinstall ,
 for which no source directory is specified, but its object file is
 specified directly with the
 .Em special
 line.
 .Pp
-The crunched binary ``kcopy'' can be built as follows:
+The crunched binary
+.Dq kcopy
+can be built as follows:
 .Pp
 .Bd -literal -offset indent
 % crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
@@ -319,7 +345,9 @@ The crunched binary ``kcopy'' can be built as follows:
 $			# it works!
 .Ed
 .Pp
-At this point the binary ``kcopy'' can be copied onto an install floppy
+At this point the binary
+.Dq kcopy
+can be copied onto an install floppy
 and hard-linked to the names of the component programs.
 .Sh SEE ALSO
 .Xr crunchide 1 ,
@@ -328,27 +356,30 @@ and hard-linked to the names of the component programs.
 .Nm
 was written by
 .An James da Silva Aq jds@cs.umd.edu .
-.sp 0
+.Pp
 Copyright (c) 1994 University of Maryland.  All Rights Reserved.
 .Sh BUGS
 While
 .Nm
 takes care to eliminate link conflicts between the component programs
 of a crunched binary, conflicts are still possible between the
-libraries that are linked in.  Some shuffling in the order of
+libraries that are linked in.
+Some shuffling in the order of
 libraries may be required, and in some rare cases two libraries may
 have an unresolvable conflict and thus cannot be crunched together.
 .Pp
 Some versions of the
 .Bx
 build environment do not by default build the
-intermediate object file for single-source file programs.  The ``make
-objs'' target must then be used to get those object files built, or
+intermediate object file for single-source file programs.
+The
+.Dq make objs
+target must then be used to get those object files built, or
 some other arrangements made.
 .Pp
 If a program directory being searched for is found, but contains
-no objects, other directories are not searched.  This causes the
-following directive to fail:
+no objects, other directories are not searched.
+This causes the following directive to fail:
 .Pp
 .Bd -literal -offset indent
 srcdirs /usr/src/usr.bin /usr/src/usr.bin/less
@@ -364,7 +395,8 @@ entry, and as it does not contain the require objects,
 .Nm
 fails to find objects for the
 .Em less
-program.  To avoid this problem, list specific srcdirs first, and
+program.
+To avoid this problem, list specific srcdirs first, and
 the more general ones later, for e.g.:
 .Pp
 .Bd -literal -offset indent
