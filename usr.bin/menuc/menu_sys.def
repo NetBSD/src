@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.53.4.3 2005/07/23 23:50:39 snj Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.53.4.4 2005/07/23 23:53:30 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -645,13 +645,13 @@ process_menu(int num, void *arg)
 
 	menudesc *m;
 
-	m = &MENUS(num);
-
 	/* Initialize? */
 	if (menu_init()) {
 		__menu_initerror();
 		return;
 	}
+
+	m = &MENUS(num);
 
 	/* Default to select option 0 and display from 0 */
 	m->topline = 0;
