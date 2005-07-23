@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.2 2005/07/23 22:44:18 snj Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.3 2005/07/23 22:45:41 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -308,18 +308,6 @@ msg_display_add(msg msg_no, ...)
 	va_start(ap, msg_no);
 	(void)_msg_vprintf(1, msg_string(msg_no), ap);
 	va_end(ap);
-}
-
-static void
-_erase_ch(void)
-{
-	int y, x;
-
-	getyx(msg_win, y, x);
-	x--;
-	wmove(msg_win, y, x);
-	waddch(msg_win, ' ');
-	wmove(msg_win, y, x);
 }
 
 static void
