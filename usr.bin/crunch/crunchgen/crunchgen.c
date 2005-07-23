@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55.4.3 2005/07/23 21:54:46 snj Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.4 2005/07/23 21:55:50 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55.4.3 2005/07/23 21:54:46 snj Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.4 2005/07/23 21:55:50 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -56,12 +56,6 @@ __RCSID("$NetBSD: crunchgen.c,v 1.55.4.3 2005/07/23 21:54:46 snj Exp $");
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
-
-/*
- * Define RENAME_SYMS to rename symbols using objcopy --redefine-syms.
- * Undef RENAME_SYMS to hide globals symbols using objcopy --keep-global-symbol.
- */
-#define	RENAME_SYMS
 
 /* internal representation of conf file: */
 
@@ -948,7 +942,6 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\t${LD} -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
-#ifdef RENAME_SYMS
     fprintf(outmk, "\t${NM} -ng %s.cro | grep -v '^ *U' | ", p->name);
     fprintf(outmk, "grep -v '^[0-9a-fA-F][0-9a-fA-F]* C' | ");
     fprintf(outmk, "grep -wv _crunched_%s_stub | ", p->ident);
@@ -958,12 +951,6 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	"'{ print $$3 \" _$$$$hide$$$$\" ENVIRON[\"CRO\"] \"$$$$\" $$3 }' "
 	"> %s.cro.syms\n", p->name, p->name);
     fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);
-#else
-    fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub ",
-  	    p->ident);
-    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
-	fprintf(outmk, "--keep-global-symbol %s ", lst->str);
-#endif
 #else
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
