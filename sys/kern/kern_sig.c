@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.207 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.208 2005/07/23 22:02:13 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207 2005/06/10 05:10:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.208 2005/07/23 22:02:13 cube Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2330,6 +2330,13 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 int
 sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 {
+	return __sigtimedwait1(l, v, retval, copyout, copyin, copyout);
+}
+
+int
+__sigtimedwait1(struct lwp *l, void *v, register_t *retval,
+    copyinout_t put_info, copyinout_t fetch_timeout, copyinout_t put_timeout)
+{
 	struct sys___sigtimedwait_args /* {
 		syscallarg(const sigset_t *) set;
 		syscallarg(siginfo_t *) info;
@@ -2384,7 +2391,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, timeout)) {
 		uint64_t ms;
 
-		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))))
+		if ((error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts))))
 			return (error);
 
 		ms = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
@@ -2469,7 +2476,8 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 			TIMEVAL_TO_TIMESPEC(&tvtimo, &ts);
 
 			/* copy updated timeout to userland */
-			if ((err = copyout(&ts, SCARG(uap, timeout), sizeof(ts)))) {
+			if ((err = (*put_timeout)(&ts, SCARG(uap, timeout),
+			    sizeof(ts)))) {
 				error = err;
 				goto fail;
 			}
@@ -2484,7 +2492,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
  sig:
-	error = copyout(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
+	return (*put_info)(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
 
  fail:
 	FREE(waitset, M_TEMP);
