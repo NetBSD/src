@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2005/07/12 07:45:34 cube Exp $
+	$NetBSD: syscalls.master,v 1.36 2005/07/23 18:56:15 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -392,11 +392,14 @@
 232	STD		{ int netbsd32_clock_gettime(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
 233	STD		{ int netbsd32_clock_settime(netbsd32_clockid_t clock_id, const netbsd32_timespecp_t tp); }
 234	STD		{ int netbsd32_clock_getres(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
-235	UNIMPL		timer_create
-236	UNIMPL		timer_delete
-237	UNIMPL		timer_settime
-238	UNIMPL		timer_gettime
-239	UNIMPL		timer_getoverrun
+235	STD		{ int netbsd32_timer_create(netbsd32_clockid_t clock_id, netbsd32_sigeventp_t evp, \
+			    netbsd32_timerp_t timerid); }
+236	STD		{ int netbsd32_timer_delete(netbsd32_timer_t timerid); }
+237	STD		{ int netbsd32_timer_settime(netbsd32_timer_t timerid, int flags, \
+			    const netbsd32_itimerspecp_t value, \
+			    netbsd32_itimerspecp_t ovalue); }
+238	STD		{ int netbsd32_timer_gettime(netbsd32_timer_t timerid, netbsd32_itimerspecp_t value); }
+239	STD		{ int netbsd32_timer_getoverrun(netbsd32_timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
