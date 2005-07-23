@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.19 2005/07/17 12:27:47 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.20 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  *
@@ -90,6 +90,19 @@ extern struct uvm_pagerops aobj_pager;
 #define	UVM_OBJ_IS_CLEAN(uobj)						\
 	(UVM_OBJ_IS_VNODE(uobj) && 					\
 	 (((struct vnode *)uobj)->v_flag & VONWORKLST) == 0)
+
+/*
+ * UVM_OBJ_NEEDS_WRITEFAULT: true if the uobj needs to detect modification.
+ * (ie. wants to avoid writable user mappings.)
+ *
+ * XXX bad name
+ */
+
+#define	UVM_OBJ_NEEDS_WRITEFAULT(uobj)					\
+	(UVM_OBJ_IS_VNODE(uobj) && 					\
+	 ((((struct vnode *)uobj)->v_flag & VONWORKLST) == 0 ||		\
+	 (((struct vnode *)uobj)->v_flag & (VWRITEMAP|VWRITEMAPDIRTY))	\
+	 == VWRITEMAP))
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)

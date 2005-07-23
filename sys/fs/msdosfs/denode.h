@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.4 2003/09/07 22:09:11 itojun Exp $	*/
+/*	$NetBSD: denode.h,v 1.5 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -307,4 +307,5 @@ int removede __P((struct denode *, struct denode *));
 int uniqdosname __P((struct denode *, struct componentname *, u_char *));
 int findwin95 __P((struct denode *));
 int msdosfs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
+void msdosfs_gop_markupdate __P((struct vnode *, int));
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.86 2005/06/28 09:30:38 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.87 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86 2005/06/28 09:30:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.87 2005/07/23 12:18:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,6 +147,7 @@ static const struct genfs_ops ext2fs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_alloc = ext2fs_gop_alloc,
 	.gop_write = genfs_gop_write,
+	.gop_markupdate = ufs_gop_markupdate,
 };
 
 /*

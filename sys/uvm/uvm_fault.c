@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.97 2005/07/22 14:57:39 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.98 2005/07/23 12:18:41 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.97 2005/07/22 14:57:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.98 2005/07/23 12:18:41 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -966,7 +966,7 @@ ReFault:
 				    (curpg->flags & PG_CLEAN) != 0);
 				readonly = (curpg->flags & PG_RDONLY)
 				    || (curpg->loan_count > 0)
-				    || UVM_OBJ_IS_CLEAN(curpg->uobject);
+				    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(curpg),
@@ -1460,7 +1460,7 @@ Case2:
 
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi.entry) ||
-		    UVM_OBJ_IS_CLEAN(uobjpage->uobject))
+		    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 			enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
