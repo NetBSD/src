@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55.4.6 2005/07/23 21:57:49 snj Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.7 2005/07/23 21:59:47 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55.4.6 2005/07/23 21:57:49 snj Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.7 2005/07/23 21:59:47 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.55.4.6 2005/07/23 21:57:49 snj Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"0.3"
+#define CRUNCH_VERSION	"0.4"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -99,7 +99,7 @@ int goterror = 0;
 
 char *pname = "crunchgen";
 
-int verbose, readcache, useobjs;	/* options */
+int verbose, readcache, useobjs, oneobj;	/* options */
 int reading_cache;
 char *machine;
 char *makeobjdirprefix;
@@ -147,16 +147,18 @@ main(int argc, char **argv)
     verbose = 1;
     readcache = 1;
     useobjs = 0;
+    oneobj = 1;
     *outmkname = *outcfname = *execfname = '\0';
     
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:d:e:foqD:L:v:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:d:e:foqD:L:Ov:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
-	case 'o':       useobjs = 1; break;
+	case 'O':	oneobj = 0; break;
+	case 'o':       useobjs = 1, oneobj = 0; break;
 
 	case 'm':	strcpy(outmkname, optarg); break;
 	case 'c':	strcpy(outcfname, optarg); break;
@@ -484,6 +486,7 @@ add_special(int argc, char **argv)
     }
 
     if (!strcmp(argv[2], "objs")) {
+	oneobj = 0;
 	p->objs = NULL;
 	for (i = 3; i < argc; i++)
 	    add_string(&p->objs, argv[i]);
@@ -491,6 +494,7 @@ add_special(int argc, char **argv)
     }
 
     if (!strcmp(argv[2], "objpaths")) {
+	oneobj = 0;
 	p->objpaths = NULL;
 	for (i = 3; i < argc; i++)
 	    add_string(&p->objpaths, argv[i]);
@@ -631,6 +635,9 @@ fillin_program(prog_t *p)
 	    p->objdir = p->srcdir;
         }
     }
+
+    if (oneobj)
+	return;
 
     if (p->srcdir)
 	(void)snprintf(path, sizeof(path), "%s/Makefile", p->srcdir);
@@ -781,8 +788,10 @@ gen_specials_cache(void)
 	    fprintf(cachef, "special %s objs", p->name);
 	    output_strlst(cachef, p->objs);
 	}
-	fprintf(cachef, "special %s objpaths", p->name);
-	output_strlst(cachef, p->objpaths);
+	if (p->objpaths) {
+	    fprintf(cachef, "special %s objpaths", p->name);
+	    output_strlst(cachef, p->objpaths);
+	}
     }
     fclose(cachef);
 }
@@ -969,12 +978,20 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\n# -------- %s\n\n", p->name);
 
     fprintf(outmk, "%s_OBJPATHS=", p->ident);
-    output_strlst(outmk, p->objpaths);
+#ifndef NEW_TOOLCHAIN
+    fprintf(outmk, " %s_stub.o", p->name);
+#endif
+    if (p->objs)
+	output_strlst(outmk, p->objpaths);
+    else
+	fprintf(outmk, " %s/%s.ro\n", p->ident, p->name);
 
-    if (p->srcdir && p->objs && !useobjs) {
+    if (p->srcdir && !useobjs) {
 	fprintf(outmk, "%s_SRCDIR=%s\n", p->ident, p->srcdir);
-	fprintf(outmk, "%s_OBJS=", p->ident);
-	output_strlst(outmk, p->objs);
+	if (p->objs) {
+	    fprintf(outmk, "%s_OBJS=", p->ident);
+	    output_strlst(outmk, p->objs);
+	}
 	fprintf(outmk, "%s:\n\t mkdir %s\n", p->ident, p->ident);
 	fprintf(outmk, "%s_make: %s\n", p->ident, p->ident);
 	fprintf(outmk, "\tcd %s; printf '.PATH: ${%s_SRCDIR}\\n"
@@ -984,43 +1001,47 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend ${%s_OBJS}\n\n",
-	    p->ident);
+	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend ");
+	if (p->objs)
+	    fprintf(outmk, "${%s_OBJS}\n\n", p->ident);
+	else
+	    fprintf(outmk, "%s.ro\n\n", p->name);
     } else
         fprintf(outmk, "%s_make:\n\t@echo \"** Using existing objs for %s\"\n\n", 
 		p->ident, p->name);
 
+    fprintf(outmk, "%s.cro: %s .WAIT ${%s_OBJPATHS}\n",
+	p->name, p->ident, p->ident);
+
+#ifdef NEW_TOOLCHAIN
+    if (p->objs)
+	fprintf(outmk, "\t${LD} -r -o %s/%s.ro $(%s_OBJPATHS)\n", 
+		p->ident, p->name, p->ident);
+    /* Use one awk command.... */
+    fprintf(outmk, "\t${NM} -ng %s/%s.ro | awk '/^ *U / { next };",
+	    p->ident, p->name);
+    fprintf(outmk, " /^[0-9a-fA-F]+ C/ { next };");
+    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
+	fprintf(outmk, " / %s$$/ { next };", lst->str);
+    fprintf(outmk, " / main$$/ { print \"main _crunched_%s_stub\"; next };",
+	    p->name);
+    /* gdb thinks these are C++ and ignores everthing after the first $$. */
+    fprintf(outmk, " { print $$3 \" \" $$3 \"$$$$from$$$$%s\" }' "
+	    "> %s.cro.syms\n", p->name, p->name);
+    fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);
+    fprintf(outmk, "%s/%s.ro %s.cro\n", p->ident, p->name, p->name);
+#else
+    fprintf(outmk, "\t${LD} -dc -r -o %s.cro $(%s_OBJPATHS)\n", 
+		p->name, p->ident);
+    fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
+    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
+	fprintf(outmk, "-k %s ", lst->str);
+    fprintf(outmk, "%s.cro\n", p->name);
     fprintf(outmk, "%s_stub.c:\n", p->name);
     fprintf(outmk, "\techo \""
 	           "int _crunched_%s_stub(int argc, char **argv, char **envp)"
 	           "{return main(argc,argv,envp);}\" >%s_stub.c\n",
 	    p->ident, p->name);
-    if (useobjs)
-	    fprintf(outmk, "%s.cro: %s_stub.o\n",
-		p->name, p->name);
-    else
-	    fprintf(outmk, "%s.cro: %s_stub.o ${%s_OBJPATHS}\n",
-		p->name, p->name, p->ident);
-    fprintf(outmk, "\t${LD} -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
-	    p->name, p->name, p->ident);
-#ifdef NEW_TOOLCHAIN
-    /* Use one awk command.... */
-    fprintf(outmk, "\t${NM} -ng %s.cro | awk '/^ *U / { next };",
-	    p->name);
-    fprintf(outmk, " /^[0-9a-fA-F]+ C/ { next };");
-    fprintf(outmk, " / _crunched_%s_stub$$/ { next };", p->ident);
-    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
-	fprintf(outmk, " / %s$$/ { next };", lst->str);
-    /* gdb thinks these are C++ and ignores everthing after the first $$. */
-    fprintf(outmk, " { print $$3 \" \" $$3 \"$$$$from$$$$%s\" }' "
-	    "> %s.cro.syms\n", p->name, p->name);
-    fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);
-    fprintf(outmk, "%s.cro\n", p->name);
-#else
-    fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
-    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
-	fprintf(outmk, "-k %s ", lst->str);
-    fprintf(outmk, "%s.cro\n", p->name);
 #endif
 }
 
