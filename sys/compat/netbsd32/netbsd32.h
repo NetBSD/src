@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.36 2005/07/23 18:56:15 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.37 2005/07/23 22:04:12 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -392,6 +392,8 @@ struct	netbsd32_sigvec {
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
+
+typedef netbsd32_pointer_t netbsd32_siginfop_t;
 
 union netbsd32_sigval {
 	int	sival_int;
