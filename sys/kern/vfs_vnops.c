@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.93 2005/07/16 22:47:18 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.94 2005/07/23 18:19:51 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.93 2005/07/16 22:47:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.94 2005/07/23 18:19:51 erh Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -96,7 +96,7 @@ const struct fileops vnops = {
 int
 vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
-	struct vnode *vp = NULL; /* XXXGCC */
+	struct vnode *vp;
 	struct mount *mp;
 	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred = p->p_ucred;
@@ -125,6 +125,7 @@ restart:
 				       "new file creation in %s.\n",
 				       ndp->ni_dirp);
 
+				vp = ndp->ni_dvp;
 				error = EPERM;
 				goto bad;
 			}
