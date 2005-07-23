@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.55.4.5 2005/07/23 21:56:58 snj Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55.4.6 2005/07/23 21:57:49 snj Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.55.4.5 2005/07/23 21:56:58 snj Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55.4.6 2005/07/23 21:57:49 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -607,6 +607,10 @@ fillin_program(prog_t *p)
 	}
     }
 
+    if (!p->srcdir && verbose)
+	fprintf(stderr, "%s: %s: warning: could not find source directory.\n",
+		infilename, p->name);
+
     if (!p->objdir && p->srcdir && useobjs) {
 	if (makeobjdirprefix) {
 	    (void)snprintf(path, sizeof(path), "%s/%s", makeobjdirprefix, p->srcdir);
@@ -634,22 +638,17 @@ fillin_program(prog_t *p)
 	fillin_program_objs(p, p->srcdir);
 
     if (!p->objpaths && p->objs) {
-	if (p->objdir && useobjs) {
-	    for (s = p->objs; s != NULL; s = s->next) {
-		(void)snprintf(line, sizeof(line), "%s/%s", p->objdir, s->str);
-		add_string(&p->objpaths, line);
-	    }
-	} else {
-	    for (s = p->objs; s != NULL; s = s->next) {
-		(void)snprintf(line, sizeof(line), "%s/%s", p->ident, s->str);
-		add_string(&p->objpaths, line);
-	    }
+	char *objdir;
+	if (p->objdir && useobjs)
+	    objdir = p->objdir;
+	else
+	    objdir = p->ident;
+	for (s = p->objs; s != NULL; s = s->next) {
+	    (void)snprintf(line, sizeof(line), "%s/%s", objdir, s->str);
+	    add_string(&p->objpaths, line);
 	}
     }
 	    
-    if (!p->srcdir && verbose)
-	fprintf(stderr, "%s: %s: warning: could not find source directory.\n",
-		infilename, p->name);
     if (!p->objs && verbose)
 	fprintf(stderr, "%s: %s: warning: could not find any .o files.\n", 
 		infilename, p->name);
@@ -976,12 +975,12 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_SRCDIR=%s\n", p->ident, p->srcdir);
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
-	fprintf(outmk, "%s_make:\n", p->ident);
-	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
-	    p->ident, p->ident, p->ident);
-	fprintf(outmk, "\tprintf '.PATH: ${%s_SRCDIR}\\n"
+	fprintf(outmk, "%s:\n\t mkdir %s\n", p->ident, p->ident);
+	fprintf(outmk, "%s_make: %s\n", p->ident, p->ident);
+	fprintf(outmk, "\tcd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
-	    ".include \"$${.CURDIR}/Makefile\"\\n", p->ident, p->ident);
+	    ".include \"$${.CURDIR}/Makefile\"\\n",
+	    p->ident, p->ident, p->ident);
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
@@ -1005,21 +1004,24 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\t${LD} -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
-    fprintf(outmk, "\t${NM} -ng %s.cro | grep -v '^ *U' | ", p->name);
-    fprintf(outmk, "grep -v '^[0-9a-fA-F][0-9a-fA-F]* C' | ");
-    fprintf(outmk, "grep -wv _crunched_%s_stub | ", p->ident);
+    /* Use one awk command.... */
+    fprintf(outmk, "\t${NM} -ng %s.cro | awk '/^ *U / { next };",
+	    p->name);
+    fprintf(outmk, " /^[0-9a-fA-F]+ C/ { next };");
+    fprintf(outmk, " / _crunched_%s_stub$$/ { next };", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
-	fprintf(outmk, "grep -vw %s | ", lst->str);
-    fprintf(outmk, "env CRO=%s.cro awk "
-	"'{ print $$3 \" _$$$$hide$$$$\" ENVIRON[\"CRO\"] \"$$$$\" $$3 }' "
-	"> %s.cro.syms\n", p->name, p->name);
+	fprintf(outmk, " / %s$$/ { next };", lst->str);
+    /* gdb thinks these are C++ and ignores everthing after the first $$. */
+    fprintf(outmk, " { print $$3 \" \" $$3 \"$$$$from$$$$%s\" }' "
+	    "> %s.cro.syms\n", p->name, p->name);
     fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);
+    fprintf(outmk, "%s.cro\n", p->name);
 #else
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
 	fprintf(outmk, "-k %s ", lst->str);
-#endif
     fprintf(outmk, "%s.cro\n", p->name);
+#endif
 }
 
 void
