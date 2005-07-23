@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.47 2005/07/11 19:50:42 cube Exp $	*/
+/*	$NetBSD: time.h,v 1.48 2005/07/23 18:54:07 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -228,6 +228,23 @@ void	realtimerexpire(void *);
 
 int	dogetitimer(struct proc *, int, struct itimerval *);
 int	dosetitimer(struct proc *, int, struct itimerval *);
+
+
+/*
+ * XXX-cube
+ *
+ * This definition really should be in systm.h, but systm.h cannot be
+ * included before time.h, otherwise it breaks kern/kern_clock.c
+ * because "clockframe" gets redefined by cpu.h (at least on i386 and
+ * amd64).
+ */
+typedef int	(*copyinout_t)(const void *, void *, size_t);
+
+int	timer_create1(timer_t *, clockid_t, struct sigevent *,
+    copyinout_t, struct proc *);
+int	dotimer_settime(int, struct itimerspec *, struct itimerspec *, int,
+    struct proc *);
+int	dotimer_gettime(int, struct proc *, struct itimerspec *);
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE
