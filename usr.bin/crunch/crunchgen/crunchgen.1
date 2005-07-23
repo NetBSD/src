@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.21 2003/03/31 01:46:29 perry Exp $
+.\"	$NetBSD: crunchgen.1,v 1.21.4.1 2005/07/23 21:51:19 snj Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd June 14, 1994
+.Dd August 19, 2004
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -53,6 +53,9 @@
 .Ek
 .Bk -words
 .Op Ar conf-file
+.Ek
+.Bk -words
+.Op Fl v Ar var-spec
 .Ek
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
@@ -119,6 +122,8 @@ Assume that relative source directory specifications begin with
 .It Fl L Ar lib-dir
 Try to obtain libraries from
 .Ar lib-dir .
+.It Fl v Ar varspec
+Append a variable specification to the on-the fly generated Makefile.
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
 .Nm
