@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.1 2005/07/23 22:43:19 snj Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.26.2.1.2.2 2005/07/23 22:44:18 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -516,7 +516,14 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 			"newwin(%d, %d, %d, %d) failed\n",
 			h, w, y, x);
 	else {
-		/* Save screen contents from under out window */
+		/*
+		 * Save screen contents from under our window
+		 * Due to a mis-feature of NetBSD curses, curscr contains
+		 * the data processed by doupdate() not that by wnoutrefresh().
+		 * We must call doupdate() here to ensure we save the correct
+		 * data.  See PR 26660
+		 */
+		doupdate();
 		sv_win = dupwin(win);
 		if (sv_win)
 			overwrite(curscr, sv_win);
