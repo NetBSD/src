@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.91 2005/07/11 19:50:42 cube Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.92 2005/07/23 18:54:07 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.91 2005/07/11 19:50:42 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.92 2005/07/23 18:54:07 cube Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -503,14 +503,19 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct sigevent *) evp;
 		syscallarg(timer_t *) timerid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	clockid_t id;
-	struct sigevent *evp;
-	struct ptimer *pt;
-	timer_t timerid;
-	int error;
 
-	id = SCARG(uap, clock_id);
+	return timer_create1(SCARG(uap, timerid), SCARG(uap, clock_id),
+	    SCARG(uap, evp), copyin, l->l_proc);
+}
+
+int
+timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
+    copyinout_t fetch_event, struct proc *p)
+{
+	int error;
+	timer_t timerid;
+	struct ptimer *pt;
+
 	if (id < CLOCK_REALTIME ||
 	    id > CLOCK_PROF)
 		return (EINVAL);
@@ -527,10 +532,9 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		return EAGAIN;
 
 	pt = pool_get(&ptimer_pool, PR_WAITOK);
-	evp = SCARG(uap, evp);
 	if (evp) {
 		if (((error =
-		    copyin(evp, &pt->pt_ev, sizeof (pt->pt_ev))) != 0) ||
+		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
 		    ((pt->pt_ev.sigev_notify < SIGEV_NONE) ||
 			(pt->pt_ev.sigev_notify > SIGEV_SA))) {
 			pool_put(&ptimer_pool, pt);
@@ -571,9 +575,8 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 
 	p->p_timers->pts_timers[timerid] = pt;
 
-	return copyout(&timerid, SCARG(uap, timerid), sizeof(timerid));
+	return copyout(&timerid, tid, sizeof(timerid));
 }
-
 
 /* Delete a POSIX realtime timer */
 int
@@ -719,25 +722,41 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct itimerspec *) value;
 		syscallarg(struct itimerspec *) ovalue;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, s, timerid;
-	struct itimerval val, oval;
-	struct itimerspec value, ovalue;
-	struct ptimer *pt;
+	int error;
+	struct itimerspec value, ovalue, *ovp = NULL;
 
-	timerid = SCARG(uap, timerid);
+	if ((error = copyin(SCARG(uap, value), &value,
+	    sizeof(struct itimerspec))) != 0)
+		return (error);
+
+	if (SCARG(uap, ovalue))
+		ovp = &ovalue;
+
+	if ((error = dotimer_settime(SCARG(uap, timerid), &value, ovp,
+	    SCARG(uap, flags), l->l_proc)) != 0)
+		return error;
+
+	if (ovp)
+		return copyout(&ovalue, SCARG(uap, ovalue),
+		    sizeof(struct itimerspec));
+	return 0;
+}
+
+int
+dotimer_settime(int timerid, struct itimerspec *value,
+    struct itimerspec *ovalue, int flags, struct proc *p)
+{
+	int s;
+	struct itimerval val, oval;
+	struct ptimer *pt;
 
 	if ((p->p_timers == NULL) ||
 	    (timerid < 2) || (timerid >= TIMER_MAX) ||
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
-	if ((error = copyin(SCARG(uap, value), &value,
-	    sizeof(struct itimerspec))) != 0)
-		return (error);
-
-	TIMESPEC_TO_TIMEVAL(&val.it_value, &value.it_value);
-	TIMESPEC_TO_TIMEVAL(&val.it_interval, &value.it_interval);
+	TIMESPEC_TO_TIMEVAL(&val.it_value, &value->it_value);
+	TIMESPEC_TO_TIMEVAL(&val.it_interval, &value->it_interval);
 	if (itimerfix(&val.it_value) || itimerfix(&val.it_interval))
 		return (EINVAL);
 
@@ -754,11 +773,11 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 	 */
 	if (timerisset(&pt->pt_time.it_value)) {
 		if (pt->pt_type == CLOCK_REALTIME) {
-			if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0)
+			if ((flags & TIMER_ABSTIME) == 0)
 				timeradd(&pt->pt_time.it_value, &time,
 				    &pt->pt_time.it_value);
 		} else {
-			if ((SCARG(uap, flags) & TIMER_ABSTIME) != 0) {
+			if ((flags & TIMER_ABSTIME) != 0) {
 				timersub(&pt->pt_time.it_value, &time,
 				    &pt->pt_time.it_value);
 				if (!timerisset(&pt->pt_time.it_value) ||
@@ -773,11 +792,9 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 	timer_settime(pt);
 	splx(s);
 
-	if (SCARG(uap, ovalue)) {
-		TIMEVAL_TO_TIMESPEC(&oval.it_value, &ovalue.it_value);
-		TIMEVAL_TO_TIMESPEC(&oval.it_interval, &ovalue.it_interval);
-		return copyout(&ovalue, SCARG(uap, ovalue),
-		    sizeof(struct itimerspec));
+	if (ovalue) {
+		TIMEVAL_TO_TIMESPEC(&oval.it_value, &ovalue->it_value);
+		TIMEVAL_TO_TIMESPEC(&oval.it_interval, &ovalue->it_interval);
 	}
 
 	return (0);
@@ -791,13 +808,22 @@ sys_timer_gettime(struct lwp *l, void *v, register_t *retval)
 		syscallarg(timer_t) timerid;
 		syscallarg(struct itimerspec *) value;
 	} */ *uap = v;
-	struct itimerval aitv;
 	struct itimerspec its;
-	struct proc *p = l->l_proc;
-	int s, timerid;
-	struct ptimer *pt;
+	int error;
 
-	timerid = SCARG(uap, timerid);
+	if ((error = dotimer_gettime(SCARG(uap, timerid), l->l_proc,
+	    &its)) != 0)
+		return error;
+
+	return copyout(&its, SCARG(uap, value), sizeof(its));
+}
+
+int
+dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
+{
+	int s;
+	struct ptimer *pt;
+	struct itimerval aitv;
 
 	if ((p->p_timers == NULL) ||
 	    (timerid < 2) || (timerid >= TIMER_MAX) ||
@@ -808,10 +834,10 @@ sys_timer_gettime(struct lwp *l, void *v, register_t *retval)
 	timer_gettime(pt, &aitv);
 	splx(s);
 
-	TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &its.it_interval);
-	TIMEVAL_TO_TIMESPEC(&aitv.it_value, &its.it_value);
+	TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &its->it_interval);
+	TIMEVAL_TO_TIMESPEC(&aitv.it_value, &its->it_value);
 
-	return copyout(&its, SCARG(uap, value), sizeof(its));
+	return 0;
 }
 
 /*
