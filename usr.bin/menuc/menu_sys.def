@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.53.4.2 2005/07/23 23:49:37 snj Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.53.4.3 2005/07/23 23:50:39 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ init_menu(menudesc *m)
 
 	if (m->title && *(title = MSG_XLAT(m->title)) != 0) {
 		/* Allow multiple line titles */
-		for (tp = title; ep = strchr(tp, '\n'); tp = ep + 1) {
+		for (tp = title; (ep = strchr(tp, '\n')); tp = ep + 1) {
 			i = ep - tp;
 			wmax = MAX(wmax, i);
 			hadd++;
