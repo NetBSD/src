@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.53 2004/02/29 23:13:23 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.53.4.1 2005/07/23 23:46:11 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,6 @@
 
 /* Initialization state. */
 static int __menu_init = 0;
-int __m_endwin = 0;
 static int max_lines = 0, max_cols = 0;
 #ifndef scrolltext
 static const char *scrolltext = " <: page up, >: page down";
@@ -133,6 +132,7 @@ menucmd(WINDOW *w)
 	}
 }
 
+WINDOW *sv_mw;
 static void
 init_menu(menudesc *m)
 {
@@ -180,13 +180,29 @@ init_menu(menudesc *m)
 	/* Calculate h? h == number of visible options. */
 	if (m->h == 0)
 		m->h = m->numopts + exithadd;
-	m->h = MIN(m->h, max_lines - y - hadd);
+
+	if (m->h > max_lines - y - hadd) {
+		/* Not enough space for all the options */
+		if (m->h <= 4 || !(m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL))) {
+			/* move menu up screen */
+			y = max_lines - hadd - m->h;
+			if (y < 0)
+				y = 0;
+		}
+		m->h = max_lines - y - hadd;
+	}
 
 	if (m->h < m->numopts + exithadd || m->mopt & MC_ALWAYS_SCROLL) {
-		if (!(m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) || m->h < 3) {
+		/* We need to add the scroll text... 
+		 * The used to be a check for MC_SCROLL here, but it is
+		 * fairly pointless - you just don't want the program
+		 * to exit on this sort of error.
+		 */
+		if (m->h < 3) {
 			endwin();
 			(void)fprintf(stderr,
-				"Window too short for menu \"%s\"\n",
+				"Window too short (m->h %d, m->numopts %d, exithadd %d, y %d, max_lines %d, hadd %d) for menu \"%.30s\"\n",
+				m->h, m->numopts, exithadd, y, max_lines, hadd,
 				title);
 			exit(1);
 		}
@@ -212,14 +228,21 @@ init_menu(menudesc *m)
 	if (w + wadd > max_cols) {
 		endwin();
 		(void)fprintf(stderr,
-			"Screen too narrow for menu \"%s\"\n", title);
+			"Screen too narrow (%d + %d > %d) for menu \"%s\"\n",
+				w, wadd, max_cols, title);
 		exit(1);
 
 	}
+
 	if (x == -1)
 		x = (max_cols - (w + wadd)) / 2;	/* center */
 	else if (x + w + wadd > max_cols)
 		x = max_cols - (w + wadd);	/* right align */
+
+	if (y == 0) {
+		/* Center - rather than top */
+		y = (max_lines - hadd - m->h) / 2;
+	}
 
 	/* Get the windows. */
 	m->mw = newwin(m->h + hadd, w + wadd, y, x);
@@ -237,6 +260,13 @@ init_menu(menudesc *m)
 	if (has_colors()) {
 		wbkgd(m->mw, COLOR_PAIR(1));
 		wattrset(m->mw, COLOR_PAIR(1));
+	}
+
+	if (m->mopt & MC_SUBMENU) {
+		/* Keep a copy of what is on the screen under the window */
+		sv_mw = m->sv_mw = newwin(m->h + hadd, w + wadd, y, x);
+		if (m->sv_mw)
+			overwrite(curscr, m->sv_mw);
 	}
 }
 
@@ -348,11 +378,13 @@ draw_menu(menudesc *m, void *arg)
 	wrefresh(m->mw);
 }
 
+
 static void
 /*ARGSUSED*/
 process_help(menudesc *m)
 {
 	const char *help = m->helpstr;
+	WINDOW *sv_curscr;
 	int lineoff = 0;
 	int curoff = 0;
 	int again;
@@ -363,8 +395,16 @@ process_help(menudesc *m)
 		mbeep();
 		return;
 	}
-	help = MSG_XLAT(help);
+	sv_curscr = newwin(getmaxy(curscr), getmaxx(curscr), 0, 0);
+	if (!sv_curscr) {
+		mbeep();
+		return;
+	}
+	/* Save screen contents so we can restore before returning */
+	overwrite(curscr, sv_curscr);
+	touchwin(stdscr);
 
+	help = MSG_XLAT(help);
 	/* Display the help information. */
 	do {
 		if (lineoff < curoff) {
@@ -422,6 +462,14 @@ process_help(menudesc *m)
 				mbeep();
 		} while (again);
 	} while (winin != 'q');
+
+	/* Restore the original screen contents */
+	touchwin(sv_curscr);
+	wnoutrefresh(sv_curscr);
+	delwin(sv_curscr);
+
+	/* Some code thinks that wrefresh(stdout) is a good idea... */
+	wclear(stdscr);
 }
 
 static void
@@ -471,13 +519,11 @@ process_req(menudesc *m, void *arg, int req)
 
 	case REQ_HELP:
 		process_help(m);
-		/* FALLTHROUGH */
+		break;
 
 	case REQ_REDISPLAY:
-		wclear(stdscr);
-		wrefresh(stdscr);
-		if (m->post_act)
-			(*m->post_act)(m, arg);
+		endwin();
+		doupdate();
 		break;
 
 	case REQ_SCROLLUP:
@@ -596,12 +642,6 @@ process_menu(int num, void *arg)
 		return;
 	}
 
-	if (__m_endwin) {
-     		wclear(stdscr);
-		wrefresh(stdscr);
-		__m_endwin = 0;
-	}
-
 	/* Default to select option 0 and display from 0 */
 	m->topline = 0;
 	if ((m->mopt & (MC_DFLTEXIT | MC_NOEXITOPT)) == MC_DFLTEXIT)
@@ -610,11 +650,9 @@ process_menu(int num, void *arg)
 		m->cursel = 0;
 
 	for (;;) {
-		if (__m_endwin) {
-			wclear(stdscr);
-			wrefresh(stdscr);
-			__m_endwin = 0;
-		}
+		if (isendwin())
+			/* I'm not sure this is needed with netbsd's curses */
+			doupdate();
 		/* Process the display action */
 		if (m->post_act)
 			(*m->post_act)(m, arg);
@@ -628,7 +666,9 @@ process_menu(int num, void *arg)
 		sel = m->cursel;
 		if (!(m->mopt & MC_NOCLEAR)) {
 			wclear(m->mw);
-			wrefresh(m->mw);
+			if (m->sv_mw)
+				overwrite(m->sv_mw, m->mw);
+			wnoutrefresh(m->mw);
 		}
 
 		/* Process the items */
@@ -639,16 +679,21 @@ process_menu(int num, void *arg)
 		opt = &m->opts[sel];
 		if (opt->opt_flags & OPT_IGNORE)
 			continue;
-		if (opt->opt_flags & OPT_ENDWIN) {
+		if (opt->opt_flags & OPT_ENDWIN)
 			endwin();
-			__m_endwin = 1;
-		}
 		if (opt->opt_action && (*opt->opt_action)(m, arg))
 			break;
 
 		if (opt->opt_menu != -1) {
 			if (!(opt->opt_flags & OPT_SUB)) {
 				num = opt->opt_menu;
+				wclear(m->mw);
+				if (m->sv_mw) {
+					overwrite(m->sv_mw, m->mw);
+					delwin(m->sv_mw);
+					m->sv_mw = NULL;
+				}
+				wnoutrefresh(m->mw);
 				delwin(m->mw);
 				m->mw = NULL;
 				m = &MENUS(num);
@@ -662,7 +707,9 @@ process_menu(int num, void *arg)
 
 	if (m->mopt & MC_NOCLEAR) {
 		wclear(m->mw);
-		wrefresh(m->mw);
+		if (m->sv_mw)
+			overwrite(m->sv_mw, m->mw);
+		wnoutrefresh(m->mw);
 	}
 
 	/* Process the exit action */
@@ -670,6 +717,10 @@ process_menu(int num, void *arg)
 		(*m->exit_act)(m, arg);
 	delwin(m->mw);
 	m->mw = NULL;
+	if (m->sv_mw) {
+		delwin(m->sv_mw);
+		m->sv_mw = NULL;
+	}
 }
 
 
