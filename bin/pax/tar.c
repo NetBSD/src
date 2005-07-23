@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47.2.8 2004/11/12 05:02:09 jmc Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.8.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47.2.8 2004/11/12 05:02:09 jmc Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.8.2.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,15 @@ size_t gnu_link_length;			/* ././@LongLink hackery link */
 static int gnu_short_trailer;		/* gnu short trailer */
 
 static const char LONG_LINK[] = "././@LongLink";
+
+#ifdef _PAX_
+char DEV_0[] = "/dev/rst0";
+char DEV_1[] = "/dev/rst1";
+char DEV_4[] = "/dev/rst4";
+char DEV_5[] = "/dev/rst5";
+char DEV_7[] = "/dev/rst7";
+char DEV_8[] = "/dev/rst8";
+#endif
 
 static int
 check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
@@ -364,6 +373,7 @@ tar_id(char *blk, int size)
 {
 	HD_TAR *hd;
 	HD_USTAR *uhd;
+	static int is_ustar = -1;
 
 	if (size < BLKMULT)
 		return(-1);
@@ -379,8 +389,16 @@ tar_id(char *blk, int size)
 	 */
 	if (hd->name[0] == '\0')
 		return(-1);
-	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0)
-		return(-1);
+	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0) {
+		if (is_ustar == -1) {
+			is_ustar = 1;
+			return(-1);
+		} else
+			tty_warn(0,
+			    "Busted tar archive: has both ustar and old tar "
+			    "records");
+	} else
+		is_ustar = 0; 
 	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT, 1);
 }
 
@@ -1002,6 +1020,17 @@ longlink(ARCHD *arcn, int type)
  *	data to write after the header, -1 if archive write failed
  */
 
+static int
+size_err(const char *what, ARCHD *arcn)
+{
+	/*
+	 * header field is out of range
+	 */
+	tty_warn(1, "Ustar %s header field is too small for %s",
+		what, arcn->org_name);
+	return 1;
+}
+
 int
 ustar_wr(ARCHD *arcn)
 {
@@ -1088,7 +1117,7 @@ ustar_wr(ARCHD *arcn)
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
-			goto out;
+			return size_err("DIRTYPE", arcn);
 		break;
 	case PAX_CHR:
 	case PAX_BLK:
@@ -1101,12 +1130,12 @@ ustar_wr(ARCHD *arcn)
 		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
 		   sizeof(hd->devminor), 3) ||
 		   ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
-			goto out;
+			return size_err("DEVTYPE", arcn);
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
-			goto out;
+			return size_err("FIFOTYPE", arcn);
 		break;
 	case PAX_GLL:
 	case PAX_SLK:
@@ -1121,7 +1150,7 @@ ustar_wr(ARCHD *arcn)
 		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)gnu_hack_len, hd->size,
 		    sizeof(hd->size), 3))
-			goto out;
+			return size_err("LINKTYPE", arcn);
 		break;
 	case PAX_GLF:
 	case PAX_REG:
@@ -1165,11 +1194,14 @@ ustar_wr(ARCHD *arcn)
 	 * set the remaining fields. Some versions want all 16 bits of mode
 	 * we better humor them (they really do not meet spec though)....
 	 */
-	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3) ||
-	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)  ||
-	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
-	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
-		goto out;
+	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
+		return size_err("MODE", arcn);
+	if (ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3))
+		return size_err("UID", arcn);
+	if (ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3))
+		return size_err("GID", arcn);
+	if (ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+		return size_err("MTIME", arcn);
 	user = user_from_uid(arcn->sb.st_uid, 1);
 	group = group_from_gid(arcn->sb.st_gid, 1);
 	strncpy(hd->uname, user ? user : "", sizeof(hd->uname));
@@ -1182,7 +1214,7 @@ ustar_wr(ARCHD *arcn)
 	 */
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
 	   sizeof(hd->chksum), 3))
-		goto out;
+		return size_err("CHKSUM", arcn);
 	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
 		return(-1);
 	if (wr_skip((off_t)(BLKMULT - sizeof(HD_USTAR))) < 0)
@@ -1199,13 +1231,6 @@ ustar_wr(ARCHD *arcn)
 	}
 	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG))
 		return(0);
-	return(1);
-
-    out:
-	/*
-	 * header field is out of range
-	 */
-	tty_warn(1, "Ustar header field is too small for %s", arcn->org_name);
 	return(1);
 }
 
@@ -1293,11 +1318,10 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	char sbuf[MAXPATHLEN * 2 + 1];
 	/* + / + // + .*""/\/ + \/.* */
 	char rabuf[MAXPATHLEN * 2 + 1 + 1 + 2 + 4 + 4];
-	int i, j;
+	int i, j = 0;
 
 	if (line[len - 1] == '\n')
 		len--;
-	strncpy(sbuf, ".*" "\\/", j = 4);
 	for (i = 0; i < len; i++) {
 		/*
 		 * convert glob to regexp, escaping everything

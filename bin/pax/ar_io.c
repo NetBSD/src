@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.39.2.1 2004/06/22 07:29:43 tron Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.39.2.1.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,16 +42,18 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.39.2.1 2004/06/22 07:29:43 tron Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.39.2.1.2.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_MTIO_H
 #include <sys/mtio.h>
-#include <sys/param.h>
+#endif
 #include <sys/wait.h>
 #include <signal.h>
 #include <string.h>
@@ -77,8 +79,9 @@ __RCSID("$NetBSD: ar_io.c,v 1.39.2.1 2004/06/22 07:29:43 tron Exp $");
 #define EXT_MODE	O_RDONLY	/* open mode for list/extract */
 #define AR_MODE		(O_WRONLY | O_CREAT | O_TRUNC)	/* mode for archive */
 #define APP_MODE	O_RDWR		/* mode for append */
-#define STDO		"<STDOUT>"	/* pseudo name for stdout */
-#define STDN		"<STDIN>"	/* pseudo name for stdin */
+static char STDO[] =	"<STDOUT>";	/* pseudo name for stdout */
+static char STDN[] =	"<STDIN>";	/* pseudo name for stdin */
+static char NONE[] =	"<NONE>";	/* pseudo name for none */
 static int arfd = -1;			/* archive file descriptor */
 static int artyp = ISREG;		/* archive type: file/FIFO/tape */
 static int arvol = 1;			/* archive volume number */
@@ -96,10 +99,12 @@ static pid_t zpid = -1;			/* pid of child process */
 time_t starttime;			/* time the run started */
 int force_one_volume;			/* 1 if we ignore volume changes */
 
+#ifdef HAVE_MTIO_H
 static int get_phys(void);
+#endif
 extern sigset_t s_mask;
 static void ar_start_gzip(int, const char *, int);
-static const char *timefmt(char *, size_t, off_t, time_t);
+static const char *timefmt(char *, size_t, off_t, time_t, const char *);
 static const char *sizefmt(char *, size_t, off_t);
 
 #ifdef SUPPORT_RMT
@@ -124,7 +129,9 @@ static int rmtwrite_with_restart(int, void *, int);
 int
 ar_open(const char *name)
 {
+#ifdef HAVE_MTIO_H
 	struct mtget mb;
+#endif
 
 	if (arfd != -1)
 		(void)close(arfd);
@@ -183,7 +190,7 @@ ar_open(const char *name)
 		/*
 		 * arfd not used in COPY mode
 		 */
-		arcname = "<NONE>";
+		arcname = NONE;
 		lstrval = 1;
 		return(0);
 	}
@@ -191,8 +198,8 @@ ar_open(const char *name)
 		return(-1);
 
 	if (chdname != NULL)
-		if (chdir(chdname) != 0)
-			syswarn(1, errno, "Failed chdir to %s", chdname);
+		if (dochdir(chdname) == -1)
+			return(-1);
 	/*
 	 * set up is based on device type
 	 */
@@ -212,9 +219,14 @@ ar_open(const char *name)
 		return(-1);
 	}
 
-	if (S_ISCHR(arsb.st_mode))
+	if (S_ISCHR(arsb.st_mode)) {
+#ifdef HAVE_MTIO_H
 		artyp = ioctl(arfd, MTIOCGET, &mb) ? ISCHR : ISTAPE;
-	else if (S_ISBLK(arsb.st_mode))
+#else
+		tty_warn(1, "System does not have tape support");
+		artyp = ISREG;
+#endif
+	} else if (S_ISBLK(arsb.st_mode))
 		artyp = ISBLK;
 	else if ((lseek(arfd, (off_t)0L, SEEK_CUR) == -1) && (errno == ESPIPE))
 		artyp = ISPIPE;
@@ -940,7 +952,9 @@ ar_rdsync(void)
 	long fsbz;
 	off_t cpos;
 	off_t mpos;
+#ifdef HAVE_MTIO_H
 	struct mtop mb;
+#endif
 
 	/*
 	 * Fail resync attempts at user request (done) or if this is going to be
@@ -962,6 +976,7 @@ ar_rdsync(void)
 	case ISRMT:
 #endif /* SUPPORT_RMT */
 	case ISTAPE:
+#ifdef HAVE_MTIO_H
 		/*
 		 * if the last i/o was a successful data transfer, we assume
 		 * the fault is just a bad record on the tape that we are now
@@ -989,6 +1004,9 @@ ar_rdsync(void)
 		}
 #endif /* SUPPORT_RMT */
 		lstrval = 1;
+#else
+		tty_warn(1, "System does not have tape support");
+#endif
 		break;
 	case ISREG:
 	case ISCHR:
@@ -1102,8 +1120,10 @@ int
 ar_rev(off_t sksz)
 {
 	off_t cpos;
-	struct mtop mb;
+#ifdef HAVE_MTIO_H
 	int phyblk;
+	struct mtop mb;
+#endif
 
 	/*
 	 * make sure we do not have try to reverse on a flawed archive
@@ -1171,6 +1191,7 @@ ar_rev(off_t sksz)
 #ifdef SUPPORT_RMT
 	case ISRMT:
 #endif /* SUPPORT_RMT */
+#ifdef HAVE_MTIO_H
 		/*
 		 * Calculate and move the proper number of PHYSICAL tape
 		 * blocks. If the sksz is not an even multiple of the physical
@@ -1223,12 +1244,16 @@ ar_rev(off_t sksz)
 			lstrval = -1;
 			return(-1);
 		}
+#else
+		tty_warn(1, "System does not have tape support");
+#endif
 		break;
 	}
 	lstrval = 1;
 	return(0);
 }
 
+#ifdef HAVE_MTIO_H
 /*
  * get_phys()
  *	Determine the physical block size on a tape drive. We need the physical
@@ -1385,6 +1410,7 @@ get_phys(void)
 	}
 	return(phyblk);
 }
+#endif
 
 /*
  * ar_next()
@@ -1400,7 +1426,7 @@ int
 ar_next(void)
 {
 	char buf[PAXPATHLEN+2];
-	static int freeit = 0;
+	static char *arcfree = NULL;
 	sigset_t o_mask;
 
 	/*
@@ -1529,17 +1555,17 @@ ar_next(void)
 		 * try to open new archive
 		 */
 		if (ar_open(buf) >= 0) {
-			if (freeit) {
-				(void)free((char *)arcname);
-				freeit = 0;
+			if (arcfree) {
+				(void)free(arcfree);
+				arcfree = NULL;
 			}
-			if ((arcname = strdup(buf)) == NULL) {
+			if ((arcfree = strdup(buf)) == NULL) {
 				done = 1;
 				lstrval = -1;
 				tty_warn(0, "Cannot save archive name.");
 				return(-1);
 			}
-			freeit = 1;
+			arcname = arcfree;
 			break;
 		}
 		tty_prnt("Cannot open %s, try again\n", buf);
@@ -1593,14 +1619,15 @@ ar_start_gzip(int fd, const char *gzp, int wr)
 }
 
 static const char *
-timefmt(buf, size, sz, tm)
+timefmt(buf, size, sz, tm, unitstr)
 	char *buf;
 	size_t size;
 	off_t sz;
 	time_t tm;
+	const char *unitstr;
 {
-	(void)snprintf(buf, size, "%lu secs (" OFFT_F " bytes/sec)",
-	    (unsigned long)tm, (OFFT_T)(sz / tm));
+	(void)snprintf(buf, size, "%lu secs (" OFFT_F " %s/sec)",
+	    (unsigned long)tm, (OFFT_T)(sz / tm), unitstr);
 	return buf;
 }
 
@@ -1643,11 +1670,11 @@ ar_summary(int n)
 	 * we have skipped over looking for a header to id. there is no way we
 	 * could have written anything yet.
 	 */
-	if (frmt == NULL) {
+	if (frmt == NULL && act != COPY) {
 		len = snprintf(buf, sizeof(buf),
 		    "unknown format, %s skipped in %s\n",
 		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
-		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs));
+		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs, "bytes"));
 		if (n == 0)
 			(void)fprintf(outf, "%s: %s", argv0, buf);
 		else
@@ -1663,12 +1690,19 @@ ar_summary(int n)
 	}
 
 
-	len = snprintf(buf, sizeof(buf),
-	    "%s vol %d, %lu files, %s read, %s written in %s\n",
-	    frmt->name, arvol-1, (unsigned long)flcnt,
-	    sizefmt(s1buf, sizeof(s1buf), rdcnt),
-	    sizefmt(s2buf, sizeof(s2buf), wrcnt),
-	    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs));
+	if (act == COPY) {
+		len = snprintf(buf, sizeof(buf),
+		    "%lu files in %s\n",
+		    (unsigned long)flcnt,
+		    timefmt(tbuf, sizeof(tbuf), flcnt, secs, "files"));
+	} else {
+		len = snprintf(buf, sizeof(buf),
+		    "%s vol %d, %lu files, %s read, %s written in %s\n",
+		    frmt->name, arvol-1, (unsigned long)flcnt,
+		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
+		    sizefmt(s2buf, sizeof(s2buf), wrcnt),
+		    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs, "bytes"));
+	}
 	if (n == 0)
 		(void)fprintf(outf, "%s: %s", argv0, buf);
 	else
@@ -1695,16 +1729,12 @@ ar_summary(int n)
  */
 
 int
-ar_dochdir(char *name)
+ar_dochdir(const char *name)
 {
-	/* First fchdir() back... */
-	if (fchdir(cwdfd) < 0) {
-		syswarn(1, errno, "Can't fchdir to starting directory");
-		return(-1);
-	}
-	if (chdir(name) < 0) {
-		syswarn(1, errno, "Can't chdir to %s", name);
-		return(-1);
-	}
-	return (0);
+	/* First fdochdir() back... */
+	if (fdochdir(cwdfd) == -1)
+		return -1;
+	if (dochdir(name) == -1)
+		return -1;
+	return 0;
 }

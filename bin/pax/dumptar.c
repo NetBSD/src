@@ -1,4 +1,4 @@
-/*	$NetBSD: dumptar.c,v 1.1 2004/06/16 14:28:21 christos Exp $	*/
+/*	$NetBSD: dumptar.c,v 1.1.4.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

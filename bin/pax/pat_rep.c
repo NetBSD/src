@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.21 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.21.4.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.21 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.21.4.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,9 @@ rep_add(char *str)
 	char *pt1;
 	char *pt2;
 	REPLACE *rep;
-#ifndef NET2_REGEX
+#ifdef NET2_REGEX
+	static const char rebuf[] = "Error";
+#else
 	int res;
 	char rebuf[BUFSIZ];
 #endif
@@ -136,7 +138,7 @@ rep_add(char *str)
 		if (*pt1 == *str)
 			break;
 	}
-	if (pt1 == NULL) {
+	if (*pt1 == 0) {
 		tty_warn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -156,9 +158,9 @@ rep_add(char *str)
 #else
 	if ((res = regcomp(&(rep->rcmp), str+1, 0)) != 0) {
 		regerror(res, &(rep->rcmp), rebuf, sizeof(rebuf));
+#endif
 		tty_warn(1, "%s while compiling regular expression %s", rebuf,
 		    str);
-#endif
 		(void)free((char *)rep);
 		return(-1);
 	}
@@ -177,7 +179,7 @@ rep_add(char *str)
 		if (*pt2 == *str)
 			break;
 	}
-	if (pt2 == NULL) {
+	if (*pt2 == 0) {
 #ifdef NET2_REGEX
 		(void)free((char *)rep->rcmp);
 #else
@@ -651,38 +653,6 @@ mod_name(ARCHD *arcn)
 {
 	int res = 0;
 
-	/*
-	 * Strip off leading '/' if appropriate.
-	 * Currently, this option is only set for the tar format.
-	 */
-	if (rmleadslash && arcn->name[0] == '/') {
-		if (arcn->name[1] == '\0') {
-			arcn->name[0] = '.';
-		} else {
-			(void)memmove(arcn->name, &arcn->name[1],
-			    strlen(arcn->name));
-			arcn->nlen--;
-		}
-		if (rmleadslash < 2) {
-			rmleadslash = 2;
-			tty_warn(0, "Removing leading / from absolute path names in the archive");
-		}
-	}
-	if (rmleadslash && arcn->ln_name[0] == '/' &&
-	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
-		if (arcn->ln_name[1] == '\0') {
-			arcn->ln_name[0] = '.';
-		} else {
-			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
-			    strlen(arcn->ln_name));
-			arcn->ln_nlen--;
-		}
-		if (rmleadslash < 2) {
-			rmleadslash = 2;
-			tty_warn(0, "Removing leading / from absolute path names in the archive");
-		}
-	}
-
 	if (secure) {
 		if (checkdotdot(arcn->name)) {
 			tty_warn(0, "Ignoring file containing `..' (%s)",
@@ -743,6 +713,39 @@ mod_name(ARCHD *arcn)
 		    (arcn->type == PAX_HRG))
 			sub_name(arcn->ln_name, &(arcn->ln_nlen), sizeof(arcn->ln_name));
 	}
+
+	/*
+	 * Strip off leading '/' if appropriate.
+	 * Currently, this option is only set for the tar format.
+	 */
+	if (rmleadslash && arcn->name[0] == '/') {
+		if (arcn->name[1] == '\0') {
+			arcn->name[0] = '.';
+		} else {
+			(void)memmove(arcn->name, &arcn->name[1],
+			    strlen(arcn->name));
+			arcn->nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+	if (rmleadslash && arcn->ln_name[0] == '/' &&
+	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
+		if (arcn->ln_name[1] == '\0') {
+			arcn->ln_name[0] = '.';
+		} else {
+			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
+			    strlen(arcn->ln_name));
+			arcn->ln_nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+
 	return(res);
 }
 

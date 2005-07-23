@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41.2.8 2004/11/12 05:02:13 jmc Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41.2.8.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41.2.8 2004/11/12 05:02:13 jmc Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41.2.8.2.1 2005/07/23 17:32:16 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -977,11 +977,11 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		 * have non-zero data in this file system block, have to write
 		 */
 		switch (fd) {
-		case -1:
+		case -PAX_GLF:
 			strp = &gnu_name_string;
 			lenp = &gnu_name_length;
 			break;
-		case -2:
+		case -PAX_GLL:
 			strp = &gnu_link_string;
 			lenp = &gnu_link_length;
 			break;

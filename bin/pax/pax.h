@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.23 2004/02/12 22:19:18 matt Exp $	*/
+/*	$NetBSD: pax.h,v 1.23.4.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -145,7 +145,7 @@ typedef struct {
  * dependent routines pass pointers to ARCHD structure (described below).
  */
 typedef struct {
-	char *name;		/* name of format, this is the name the user */
+	const char *name;	/* name of format, this is the name the user */
 				/* gives to -x option to select it. */
 	int bsz;		/* default block size. used when the user */
 				/* does not specify a blocksize for writing */

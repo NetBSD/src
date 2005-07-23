@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.41.2.2 2004/11/12 05:02:16 jmc Exp $	*/
+/*	$NetBSD: extern.h,v 1.41.2.2.2.1 2005/07/23 17:32:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,13 +75,16 @@ int ar_fow(off_t, off_t *);
 int ar_rev(off_t );
 int ar_next(void);
 void ar_summary(int);
-int ar_dochdir(char *);
+int ar_dochdir(const char *);
 
 /*
  * ar_subs.c
  */
 extern u_long flcnt;
 extern ARCHD archd;
+int updatepath(void);
+int dochdir(const char *);
+int fdochdir(int);
 void list(void);
 void extract(void);
 void append(void);
@@ -196,12 +199,16 @@ int getoldopt(int, char **, const char *, struct option *, int *);
  */
 extern FSUB fsub[];
 extern int ford[];
+extern int sep;
 void options(int, char **);
 OPLIST * opt_next(void);
 int opt_add(const char *);
 int bad_opt(void);
 int mkpath(char *);
 char *chdname;
+#if !HAVE_NBTOOL_CONFIG_H
+int do_chroot;
+#endif
 
 /*
  * pat_rep.c
@@ -252,7 +259,7 @@ extern int docrc;
 extern int to_stdout;
 extern char *dirptr;
 extern char *ltmfrmt;
-extern char *argv0;
+extern const char *argv0;
 extern FILE *listf;
 extern char *tempfile;
 extern char *tempbase;
