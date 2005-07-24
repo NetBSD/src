@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.2 2005/07/24 21:31:02 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1019,7 +1019,8 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 void
 deldev(const char *name, const char *at)
 {
-	struct devi *firsti, *i, *match;
+	struct devi *firsti, *i, *match, *previ, **ppi;
+	struct deva *iba;
 	struct devbase *d;
 	int unit;
 	char base[NAMESIZE];
@@ -1042,23 +1043,131 @@ deldev(const char *name, const char *at)
 		return;
 	}
 	match = NULL;
-	if (strcmp(at, firsti->i_at) == 0) {
+	previ = NULL;
+	if (at == NULL)
+		/* 'at root' */
 		match = firsti;
-	} else {
-		for (i = firsti; i->i_alias; i = i->i_alias) {
-			if (strcmp(at, i->i_at) == 0) {
-				match = i;
+	else {
+		if (strcmp(at, firsti->i_at) == 0) {
+			match = firsti;
+		} else {
+			for (i = firsti; i != NULL; i = i->i_alias) {
+				if (strcmp(at, i->i_at) == 0) {
+					match = i;
+					break;
+				}
+				previ = i;
+			}
+		}
+		if (match == NULL) {
+			error("`%s' at `%s' not found", name, at);
+			return;
+		}
+	}
+
+	i = match;
+	/*
+	 * We have the device instance, i.
+	 * We have to:
+	 *   - delete the alias
+	 *
+	 *      If the devi was an alias of an already listed devi, all is
+	 *      good we don't have to do more.
+	 *      If it was the first alias, we have to replace i's entry in
+	 *      d's list by its first alias.
+	 *      If it was the only entry, we must remove i's entry from d's
+	 *      list.
+	 */
+	if (previ != NULL)
+		previ->i_alias = i->i_alias;
+	else {
+		if (i->i_alias == NULL)
+			/* No alias, must unlink the entry from devitab */
+			ht_remove(devitab, i->i_name);
+		else
+			/* Or have the first alias replace i in d's list */
+			i->i_alias->i_bsame = i->i_bsame;
+		/*
+		 *   - remove/replace the instance from the devbase's list
+		 *
+		 * A double-linked list would make this much easier.  Oh, well,
+		 * what is done is done.
+		 */
+		ppi = &d->d_ihead;
+		for (ppi = &d->d_ihead;
+		    *ppi != NULL && *ppi != i && (*ppi)->i_bsame != i;
+		    ppi = &(*ppi)->i_bsame);
+		if (*ppi == NULL)
+			panic("deldev: dev (%s) doesn't list the devi (%s at %s)",
+			    d->d_name, i->i_name, i->i_at);
+		if (*ppi == i)
+			*ppi = i->i_bsame;
+		else
+			(*ppi)->i_bsame = i->i_bsame;
+		if (d->d_ipp == &i->i_bsame) {
+			if (d->d_ihead == i)
+				d->d_ipp = &d->d_ihead;
+			else
+				d->d_ipp = &(*ppi)->i_bsame;
+		}
+	}
+	/*
+	 *   - delete the attachment instance
+	 */
+	iba = i->i_atdeva;
+	ppi = &iba->d_ihead;
+	for (ppi = &iba->d_ihead;
+	    *ppi != NULL && *ppi != i && (*ppi)->i_asame != i;
+	    ppi = &(*ppi)->i_asame);
+	if (*ppi == NULL)
+		panic("deldev: deva (%s) doesn't list the devi (%s)",
+		    iba->d_name, i->i_name);
+	if (*ppi == i)
+		*ppi = i->i_asame;
+	else
+		(*ppi)->i_asame = i->i_asame;
+	if (iba->d_ipp == &i->i_asame) {
+		if (iba->d_ihead == i)
+			iba->d_ipp = &iba->d_ihead;
+		else
+			iba->d_ipp = &(*ppi)->i_asame;
+	}
+	/*
+	 *   - delete the pspec
+	 */
+	if (i->i_pspec) {
+		struct pspec *p = i->i_pspec;
+		struct nvlist *nv, *onv;
+
+		/* Double-linked nvlist anyone? */
+		for (nv = p->p_devs; nv->nv_ptr != NULL; nv = nv->nv_next) {
+			if (nv->nv_next && nv->nv_next->nv_ptr == i) {
+				onv = nv->nv_next;
+				nv->nv_next = onv->nv_next;
+				nvfree(onv);
+				break;
+			} if (nv->nv_ptr = i) {
+				/* nv is p->p_devs in that case */
+				p->p_devs = nv->nv_next;
+				nvfree(nv);
 				break;
 			}
 		}
+		if (p->p_devs == NULL)
+			TAILQ_REMOVE(&allpspecs, p, p_list);
 	}
-	if (match == NULL) {
-		error("`%s' at `%s' not found", name, at);
-		return;
-	}
-
-		// XXXLUKEM: actually implement...
-	error("`%s' at `%s': device deletion not implemented", name, at);
+	/*
+	 *   - delete the alldevi entry
+	 */
+	TAILQ_REMOVE(&alldevi, i, i_next);
+	ndevi--;
+	/*
+	 *   - reconstuct d->d_umax
+	 */
+	d->d_umax = 0;
+	for (i = d->d_ihead; i != NULL; i = i->i_bsame)
+		if (i->i_unit >= d->d_umax)
+			d->d_umax = i->i_unit + 1;
 }
 
 void
