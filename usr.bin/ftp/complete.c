@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.38 2000/05/01 10:35:17 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.38.12.1 2005/07/24 10:19:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.38 2000/05/01 10:35:17 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.38.12.1 2005/07/24 10:19:26 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -68,7 +68,7 @@ static unsigned char complete_remote	(char *, int);
 static int
 comparstr(const void *a, const void *b)
 {
-	return (strcmp(*(const char **)a, *(const char **)b));
+	return (strcmp(*(const char * const *)a, *(const char * const *)b));
 }
 
 /*
@@ -304,7 +304,7 @@ complete_remote(char *word, int list)
 
 	if (dirchange || dirlist == NULL ||
 	    strcmp(dir, lastdir) != 0) {		/* dir not cached */
-		char *emesg;
+		const char *emesg;
 
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
