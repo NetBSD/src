@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90.2.4 2005/05/18 04:22:02 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.90.2.5 2005/07/24 10:20:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.90.2.4 2005/05/18 04:22:02 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.90.2.5 2005/07/24 10:20:23 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,8 @@ main(int argc, char *argv[])
 	int ch, rval;
 	struct passwd *pw;
 	char *cp, *ep, *anonuser, *anonpass, *upload_path;
-	int dumbterm, s, len, isupload;
+	int dumbterm, s, isupload;
+	size_t len;
 	socklen_t slen;
 
 	setlocale(LC_ALL, "");
@@ -630,7 +631,8 @@ cmdscanner(void)
 {
 	struct cmd	*c;
 	char		*p;
-	int		 num;
+	int		 ch;
+	size_t		 num;
 
 	for (;;) {
 #ifndef NO_EDITCOMPLETE
@@ -658,7 +660,7 @@ cmdscanner(void)
 			} else if (num == sizeof(line) - 2) {
 				fputs("Sorry, input line is too long.\n",
 				    ttyout);
-				while ((num = getchar()) != '\n' && num != EOF)
+				while ((ch = getchar()) != '\n' && ch != EOF)
 					/* void */;
 				break;
 			} /* else it was a line without a newline */
