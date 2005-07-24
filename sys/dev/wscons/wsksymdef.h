@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.47.8.1 2004/06/07 09:38:04 tron Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47.8.1.2.1 2005/07/24 03:15:49 snj Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -525,6 +525,7 @@
 	{ KB_UK,	"uk" }, \
 	{ KB_JP,	"jp" }, \
 	{ KB_SV,	"sv" }, \
+	{ KB_SV,        "fi" }, \
 	{ KB_NO,	"no" }, \
 	{ KB_ES,	"es" }, \
 	{ KB_HU,	"hu" },	\
