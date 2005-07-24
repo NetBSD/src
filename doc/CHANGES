@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.495 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.496 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -71,3 +71,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		for TCP as described in:
 		http://www.gont.com.ar/drafts/icmp-attacks-against-tcp.html
 		[christos 20050719]
+	config(1): Implement "no <dev> at <attachment>".
