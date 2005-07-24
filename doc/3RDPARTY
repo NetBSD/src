@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.346 2005/07/22 09:13:02 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.347 2005/07/24 06:26:46 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -179,7 +179,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.1rc11
-Current Vers:	3.0.2
+Current Vers:	3.0.3
 Maintainer:	Ted Lemon <mellon@NetBSD.org>
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/sw/dhcp/
