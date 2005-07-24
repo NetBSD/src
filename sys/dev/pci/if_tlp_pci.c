@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.76 2004/03/17 13:54:09 martin Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.76.4.1 2005/07/24 03:56:24 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.76 2004/03/17 13:54:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.76.4.1 2005/07/24 03:56:24 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -1031,6 +1031,8 @@ tlp_pci_dec_quirks(psc, enaddr)
 	if (memcmp(&sc->sc_srom[29], "DE500", 5) == 0 ||
 	    memcmp(&sc->sc_srom[29], "DE450", 5) == 0)
 		memcpy(&sc->sc_name[4], &sc->sc_srom[29], 8);
+	else
+		sc->sc_name[3] = '\0';
 }
 
 void
