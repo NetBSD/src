@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.5 2005/05/18 04:22:06 snj Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.6 2005/07/24 10:17:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.5 2005/05/18 04:22:06 snj Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.6 2005/07/24 10:17:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,11 +164,12 @@ struct sockinet myctladdr, hisctladdr, data_addr;
 char *
 hookup(char *host, char *port)
 {
-	int s = -1, len, error, portnum;
+	int s = -1, error, portnum;
 	struct addrinfo hints, *res, *res0;
 	char hbuf[MAXHOSTNAMELEN];
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
+	socklen_t len;
 	int on = 1;
 
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
@@ -261,7 +262,7 @@ hookup(char *host, char *port)
 	res0 = res = NULL;
 
 	len = hisctladdr.su_len;
-	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) < 0) {
+	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) == -1) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
@@ -570,7 +571,7 @@ void
 abortxfer(int notused)
 {
 	char msgbuf[100];
-	int len;
+	size_t len;
 
 	sigint_raised = 1;
 	alarmtimer(0);
@@ -1270,11 +1271,12 @@ int
 initconn(void)
 {
 	char *p, *a;
-	int result, len, tmpno = 0;
+	int result, tmpno = 0;
 	int on = 1;
 	int error;
 	u_int addr[16], port[2];
 	u_int af, hal, pal;
+	socklen_t len;
 	char *pasvcmd = NULL;
 
 #ifdef INET6
@@ -1574,7 +1576,7 @@ initconn(void)
 	}
 	len = sizeof(data_addr.si_su);
 	memset((char *)&data_addr, 0, sizeof (data_addr));
-	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) < 0) {
+	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) == -1) {
 		warn("getsockname");
 		goto bad;
 	}
@@ -1689,9 +1691,10 @@ FILE *
 dataconn(const char *lmode)
 {
 	struct sockinet	from;
-	int		s, fromlen, flags, rv, timeout;
+	int		s, flags, rv, timeout;
 	struct timeval	endtime, now, td;
 	struct pollfd	pfd[1];
+	socklen_t	fromlen;
 
 	if (passivemode)	/* passive data connection */
 		return (fdopen(data, lmode));
@@ -2081,7 +2084,7 @@ void
 abort_squared(int dummy)
 {
 	char msgbuf[100];
-	int len;
+	size_t len;
 
 	sigint_raised = 1;
 	alarmtimer(0);
@@ -2140,7 +2143,7 @@ ai_unmapped(struct addrinfo *ai)
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in sin;
-	int len;
+	socklen_t len;
 
 	if (ai->ai_family != AF_INET6)
 		return;
