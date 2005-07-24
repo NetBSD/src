@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.7 2005/07/24 10:19:12 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.8 2005/07/24 10:20:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.7 2005/07/24 10:19:12 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.8 2005/07/24 10:20:46 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -427,7 +427,7 @@ ftp_login(const char *host, const char *user, const char *pass)
 
 	if (gatemode) {
 		char *nuser;
-		int len;
+		size_t len;
 
 		len = strlen(user) + 1 + strlen(host) + 1;
 		nuser = xmalloc(len);
@@ -500,8 +500,10 @@ ftp_login(const char *host, const char *user, const char *pass)
 int
 another(int *pargc, char ***pargv, const char *prompt)
 {
-	int len = strlen(line), ret;
+	int	ret;
+	size_t	len;
 
+	len = strlen(line);
 	if (len >= sizeof(line) - 3) {
 		fputs("sorry, arguments too long.\n", ttyout);
 		intr(0);
@@ -530,12 +532,13 @@ another(int *pargc, char ***pargv, const char *prompt)
 char *
 remglob(char *argv[], int doswitch, const char **errbuf)
 {
-        char temp[MAXPATHLEN];
         static char buf[MAXPATHLEN];
         static FILE *ftemp = NULL;
         static char **args;
-        int oldverbose, oldhash, oldprogress, fd, len;
+        char temp[MAXPATHLEN];
+        int oldverbose, oldhash, oldprogress, fd;
         char *cp, *mode;
+	size_t len;
 
         if (!mflag || !connected) {
                 if (!doglob)
@@ -856,9 +859,10 @@ printf("file %s realfile %s dir %s [%d]\n", file, realfile, dir, dirlen);
 void
 list_vertical(StringList *sl)
 {
-	int i, j, w;
-	int columns, width, lines;
+	int i, j;
+	int columns, lines;
 	char *p;
+	size_t w, width;
 
 	width = 0;
 
