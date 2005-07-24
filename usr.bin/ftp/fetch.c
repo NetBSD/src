@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.155.2.6 2005/07/24 10:27:22 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.155.2.7 2005/07/24 10:30:26 tron Exp $	*/
 
 /*-
- * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.155.2.6 2005/07/24 10:27:22 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.155.2.7 2005/07/24 10:30:26 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -146,7 +146,7 @@ static int
 auth_url(const char *challenge, char **response, const char *guser,
 	const char *gpass)
 {
-	const char	*cp, *scheme;
+	const char	*cp, *scheme, *errormsg;
 	char		*ep, *clear, *realm;
 	char		 user[BUFSIZ], *pass;
 	int		 rval;
@@ -193,8 +193,8 @@ auth_url(const char *challenge, char **response, const char *guser,
 		fprintf(ttyout, "%s\n", user);
 	} else {
 		(void)fflush(ttyout);
-		if (fgets(user, sizeof(user) - 1, stdin) == NULL) {
-			clearerr(stdin);
+		if (getline(stdin, user, sizeof(user), &errormsg) < 0) {
+			warnx("%s; can't authenticate", errormsg);
 			goto cleanup_auth_url;
 		}
 		user[strlen(user) - 1] = '\0';
@@ -350,6 +350,8 @@ parse_url(const char *url, const char *desc, url_t *type,
 		warnx("Invalid %s `%s'", desc, url);
  cleanup_parse_url:
 		FREEPTR(*user);
+		if (*pass != NULL)
+			memset(*pass, 0, strlen(*pass));
 		FREEPTR(*pass);
 		FREEPTR(*host);
 		FREEPTR(*port);
@@ -695,7 +697,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_protocol = 0;
 		error = getaddrinfo(host, NULL, &hints, &res0);
 		if (error) {
-			warnx("%s", gai_strerror(error));
+			warnx("%s: %s", host, gai_strerror(error));
 			goto cleanup_fetch_url;
 		}
 		if (res0->ai_canonname)
@@ -1056,9 +1058,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 				fprintf(ttyout,
 				    "Authorization failed. Retry (y/n)? ");
-				if (fgets(reply, sizeof(reply), stdin)
-				    == NULL) {
-					clearerr(stdin);
+				if (getline(stdin, reply, sizeof(reply), NULL)
+				    < 0) {
 					goto cleanup_fetch_url;
 				}
 				if (tolower((unsigned char)reply[0]) != 'y')
@@ -1280,12 +1281,16 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		freeaddrinfo(res0);
 	FREEPTR(savefile);
 	FREEPTR(user);
+	if (pass != NULL)
+		memset(pass, 0, strlen(pass));
 	FREEPTR(pass);
 	FREEPTR(host);
 	FREEPTR(port);
 	FREEPTR(path);
 	FREEPTR(decodedpath);
 	FREEPTR(puser);
+	if (ppass != NULL)
+		memset(ppass, 0, strlen(ppass));
 	FREEPTR(ppass);
 	FREEPTR(buf);
 	FREEPTR(auth);
@@ -1632,6 +1637,8 @@ fetch_ftp(const char *url)
 	FREEPTR(host);
 	FREEPTR(path);
 	FREEPTR(user);
+	if (pass)
+		memset(pass, 0, strlen(pass));
 	FREEPTR(pass);
 	return (rval);
 }
