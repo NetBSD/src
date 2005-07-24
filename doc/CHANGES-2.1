@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.152 2005/07/24 03:29:43 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.153 2005/07/24 04:38:35 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3215,4 +3215,35 @@ sys/dev/wscons/wsksymdef.h			1.48,1.50-1.51
 	data for a single keyboard on one line - including the long name and
 	default modifiers that sysinst needs.
 	[riz, ticket #5524]
+
+sys/dev/pci/if_tlp_pci.c			1.81
+
+	If the DEC board name is not known, remove the leading whitespace in
+	sc_name.  This closes PR#30458.
+	[rpaulo, ticket #5506]
+
+doc/3RDPARTY					1.325
+share/zoneinfo/africa				1.1.1.16
+share/zoneinfo/asia				1.1.1.31
+share/zoneinfo/northamerica			1.1.1.28
+
+	tzdata2005i out and imported.
+	[kleink, ticket #5520]
+
+doc/3RDPARTY					1.345 via patch
+share/zoneinfo/africa				1.1.1.17
+share/zoneinfo/antarctica			1.1.1.13
+share/zoneinfo/asia				1.1.1.32
+share/zoneinfo/europe				1.1.1.30
+share/zoneinfo/iso3166.tab			1.1.1.13
+share/zoneinfo/leapseconds			1.1.1.11
+share/zoneinfo/northamerica			1.1.1.29
+share/zoneinfo/solar87				1.1.1.2
+share/zoneinfo/solar88				1.1.1.2
+share/zoneinfo/solar89				1.1.1.2
+share/zoneinfo/southamerica			1.1.1.28
+share/zoneinfo/zone.tab				1.1.1.22
+
+	tzdata2005k import.
+	[kleink, ticket #5521]
 
