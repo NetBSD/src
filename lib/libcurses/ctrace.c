@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.14 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.14.4.1 2005/07/24 00:50:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.14 2003/08/07 16:44:20 agc Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.14.4.1 2005/07/24 00:50:33 snj Exp $");
 #endif
 #endif				/* not lint */
 
 #ifdef DEBUG
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <sys/time.h>
 #include <string.h>
@@ -66,7 +67,8 @@ __CTRACE(const char *fmt,...)
 		return;
 	if (tracefp == NULL) {
 		char *tf = getenv("CURSES_TRACE_FILE");
-		tracefp = fopen(tf ? tf : TFILE, "w");
+		if (!tf || strcmp( tf, "<none>"))
+			tracefp = fopen(tf ? tf : TFILE, "w");
 	}
 	if (tracefp == NULL) {
 		tracefp = (void *)~0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: overwrite.c,v 1.16 2003/08/07 16:44:23 agc Exp $	*/
+/*	$NetBSD: overwrite.c,v 1.16.4.1 2005/07/24 00:50:34 snj Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)overwrite.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overwrite.c,v 1.16 2003/08/07 16:44:23 agc Exp $");
+__RCSID("$NetBSD: overwrite.c,v 1.16.4.1 2005/07/24 00:50:34 snj Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ overwrite(const WINDOW *win1, WINDOW *win2)
 #ifdef DEBUG
 	__CTRACE("overwrite: (%p, %p);\n", win1, win2);
 #endif
-	return copywin(win1, win2, win1->begy, win1->begx, win2->begy,
-		       win2->begx, win2->begy + win2->maxy,
-		       win2->begx + win2->maxx, FALSE);
+	return copywin(win1, win2,
+			win2->begy - win1->begy, win2->begx - win1->begx,
+			0, 0, win2->maxy - 1, win2->maxx - 1, FALSE);
 }
