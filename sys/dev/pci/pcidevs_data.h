@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.11 2005/06/28 10:32:23 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.12 2005/07/24 21:08:30 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.11 2005/06/28 10:31:51 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.12 2005/07/24 21:07:55 riz Exp
  */
 
 /*
@@ -6236,6 +6236,14 @@ const struct pci_product pci_products[] = {
 	    "6300ESB SMBus Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACA,
+	    "6300ESB AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACM,
+	    "6300ESB AC'97 Modem Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0,
 	    "6300ESB USB UHCI Controller",
 	},
@@ -6308,8 +6316,16 @@ const struct pci_product pci_products[] = {
 	    "82801FB/FR PCI Express Port #1",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_HDA,
+	    "82801FB/FR High Definition Audio Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB,
 	    "82801FB/FR SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACM,
+	    "82801FB/FR AC'97 Modem Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC,
@@ -6322,6 +6338,86 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
 	    "82915G/GL IGD Companion",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC,
+	    "82801GB/GR LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_IDE,
+	    "82801GB/GR IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA,
+	    "82801GB/GR SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_AHCI,
+	    "82801GB/GR AHCI SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_RAID,
+	    "82801GB/GR RAID SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_1,
+	    "82801GB/GR USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_2,
+	    "82801GB/GR USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_3,
+	    "82801GB/GR USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_4,
+	    "82801GB/GR USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EHCI,
+	    "82801GB/GR USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_1,
+	    "82801GB/GR PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_2,
+	    "82801GB/GR PCI Express Port #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_3,
+	    "82801GB/GR PCI Express Port #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_4,
+	    "82801GB/GR PCI Express Port #4",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_HDA,
+	    "82801GB/GR High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SMB,
+	    "82801GB/GR SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACM,
+	    "82801GB/GR AC'97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACA,
+	    "82801GB/GR AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_5,
+	    "82801GB/GR PCI Express Port #5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_6,
+	    "82801GB/GR PCI Express Port #6",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -10168,4 +10264,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1963;
+const int pci_nproducts = 1987;
