@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 14:49:22 wiz Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@ message md_hello
 
 message fullpart
 {NetBSD wird nun auf die Festplatte %s installiert. Sie
-können die gesamte Disk oder nur einen Teil davon für NetBSD
+können die gesamte Festplatte oder nur einen Teil davon für NetBSD
 verwenden.
 Ihre Wahl?
 }
@@ -52,32 +52,32 @@ Ihre Wahl?
 message nodiskmap
 {Die Festplatte %s ist anscheinend nicht für die Verwendung mit MacOS
 initialisiert worden. Dieses Programm benutzt das Disk-Layout aus
-der Disk Partition Map, die vom MacOS Formatierungsprogramm beim
-Initialisieren der Festplatte geschrieben wird.
+der Festplatten Partitions Übersicht, die vom MacOS Formatierungsprogramm
+beim Initialisieren der Festplatte geschrieben wird.
 Sie können nun:
 
-* Die Installation abbrechen. Sie können die Disk mit einem beliebigen
+* Die Installation abbrechen. Sie können die Festplatte mit einem beliebigen
 Formatierungsprogramm initialisieren. Partitionen müssen nicht als
 A/UX definiert sein, das NetBSD Installationsprogramm bietet Ihnen
 später, wenn nötig, die Überarbeitung der Partitionstypen an.
 
-* Sysinst erlauben, die Disk Partition Map auf die Disk zu schreiben.
-Diese Disk wird dann nicht für MacOS bootbar sein und kann eventuell
-gar nicht mit MacOS benutzt werden, solange die MacOS Treiber nicht mit
-einem MacOS-kompatiblem Formatierer installiert werden.
+* Sysinst erlauben, die Festplatten Partitions Übersicht auf die Festplatte
+zu schreiben. Diese Festplatte wird dann nicht für MacOS bootbar sein und kann
+eventuell gar nicht mit MacOS benutzt werden, solange die MacOS Treiber nicht
+mit einem MacOS-kompatiblem Formatierer installiert werden.
 
 }
 
 message okwritediskmap
-{Sysinst wird ihre Disk mit einer neue Disk Partition Map initialisieren,
-deren Werte vom Disk-Treiber geliefert wurden. Diese Standard Map wird
-eine minimale Block0-Definition enthalten, eine Partition Map für bis
-zu 15 Partitionen, sowie vordefinierte Partitionen für den Mac, Disktreiber
-sowie eine minimale MacOS HFS Partition. Der Rest der Festplatte bleibt
-ungenutzt. Die Disktreiber Partition wird nicht initialisiert, sodaß das
-Volume nicht mit MacOS bootbar sein wird. Wenn Sie fortfahren, werden
-Sie aufgefordert diese Partition Map zu editieren, so wie Sie es für die
-NetBSD Installation benötigen. Die Map wird nicht auf die Festplatte
+{Sysinst wird Ihre Festplatte mit einer neuen Festplatten Partitions Übersicht
+initialisieren, deren Werte vom Festplatten-Treiber geliefert wurden. Diese
+Standard Übersicht wird eine minimale Block0-Definition enthalten, eine
+Partitions Übersicht für bis zu 15 Partitionen, sowie vordefinierte Partitionesn
+für den Mac, Festplattentreiber sowie eine minimale MacOS HFS Partition. Der Rest der
+Festplatte bleibt ungenutzt. Die Festplattentreiber Partition wird nicht initialisiert,
+sodass das Volume nicht mit MacOS bootbar sein wird. Wenn Sie fortfahren, werden
+Sie aufgefordert diese Partitions Übersicht zu editieren, so wie Sie es für die
+NetBSD Installation benötigen. Die Übersicht wird nicht auf die Festplatte
 geschrieben, bis Sie die Partitionierung erfolgreich abgeschlossen haben.
 
 Möchten Sie fortfahren?}
@@ -90,21 +90,21 @@ message part_row
 {%3s%c %10d %10d %6s %-9s %s\n}
 
 message ovrwrite
-{Ihr Disk enthält mindestens eine MacOS HFS Partition. Das überschreiben
-der ganzen Festplatte wird die Disk für MacOS unbenutzbar machen. Sie
+{Ihr Festplatte enthält mindestens eine MacOS HFS Partition. Das überschreiben
+der ganzen Festplatte wird die Festplatte für MacOS unbenutzbar machen. Sie
 sollten erwägen, eine kleine MacOS HFS Partition anzulegen, um 
-sicherzustellen, dass die Disk unter MacOS benutzt werden kann. Dies
-wäre ein guter Ort, um eine Kopie der NetBSD/mac68k Booter Applikation
+sicherzustellen, daß die Festplatte unter MacOS benutzt werden kann. Dies
+wäre eine gute Stelle, um eine Kopie der NetBSD/mac68k Booter Applikation
 zu speichern, mit der NetBSD von MacOS aus gestartet wird.
 
-Sind Sie sicher, dass Sie die MacOS HFS Partition(en) überschreiben
+Sind Sie sicher, daß Sie die MacOS HFS Partition(en) überschreiben
 möchten?
 }
 
 message editparttable
-{Disk Partition Map bearbeiten: Die Map auf der Disk wurde nach 
-Benutzerpartition durchsucht, aber nur die für NetBSD nutzbaren werden
-hier angezeigt.
+{Festplatten Partitions Übersicht bearbeiten: Die Übersicht auf der Festplatte
+wurde nach Benutzerpartitionen durchsucht, aber nur die für NetBSD nutzbaren
+werden hier angezeigt.
 
 Die Partitionstabelle sieht jetzt so aus:
 }
@@ -128,16 +128,17 @@ message scratch_size
 
 message diskfull
 {Sie haben versucht, eine existierende Partition in zwei Teile aufzuteilen,
-aber in der Disk Partition Map ist kein Platz für den zweiten Teil.
-Wahrscheinlich hat Ihr Diskformatierer nicht genug zusätzlichen Platz
-in der Original Disk Partition Map für zukünftige Erweiterungen
+aber in der Festplatten Partitions Übersicht ist kein Platz für den zweiten
+Teil.
+Wahrscheinlich hat Ihr Festplattenformatierer nicht genug zusätzlichen Platz
+in der Original Festplatten Partitions Übersicht für zukünftige Erweiterungen
 reserviert. Sie können nun:
 
-* Die Partition nicht aufteilen und mit der aktuellen Disk Partiton Map
-weiterarbeiten, oder
+* Die Partition nicht aufteilen und mit der aktuellen Festplatten Partitions
+Übersicht weiterarbeiten, oder
 
-* Sysinst gestatten, die neue Disk Map zu schreiben. Dadurch werden
-alle auf der Disk existierenden Daten gelöscht. VORSICHT!
+* Sysinst gestatten, die neue Partitions Übersicht zu schreiben. Dadurch werden
+alle auf der Festplatte existierenden Daten gelöscht. VORSICHT!
 
 Möchten Sie die Teilung dieser Partition abbrechen?}
 
@@ -156,27 +157,27 @@ Installation eventuell fehlschlagen. Folgende Probleme wurden festgestellt:
 }
 
 message dodiskmap
-{Erstelle die Disk Partition Map ...
+{Erstelle die Festplatten Partitions Übersicht ...
 }
 
 message label_error
-{Das neu auf der Disk gespeicherte disklabel stimmt nicht mit der aktuell
+{Das neu auf der Festplatte gespeicherte Disklabel stimmt nicht mit der aktuell
 geladenen Version überein. Jeder Versuch fortzufahren wird mit hoher
 Wahrscheinlichkeit zum Verlust der Daten auf allen bereits existierenden
-Partitionen führen. Da Ihre neue Disk Partition Map bereits auf Disk
-geschrieben wurde, wird sie beim nächsten Start verfügbar sein. Bitte
-starten Sie daher jetzt den Computer neu und führen Sie die Installation
+Partitionen führen. Da Ihre neue Partitions Übersicht bereits auf die
+Festplatte geschrieben wurde, wird Sie beim nächsten Start verfügbar sein.
+Bitte starten Sie daher jetzt den Computer neu und führen Sie die Installation
 erneut aus.
 }
  
 .if debug
 message mapdebug
-{Partition Map:
+{Partitions Übersicht:
 HFS count: %d
 Root count: %d
 Swap count: %d
 Usr count: %d
-Usable count: %d
+Benutzbarer count: %d
 }
 
 message dldebug
@@ -189,11 +190,11 @@ dlsize: %d
 }
 
 message newfsdebug
-{Running newfs on partition: %s\n
+{Ausführen von newfs auf Partition: %s\n
 }
 
 message geomdebug
-{Calling: %s %s\n
+{Ausführen von: %s %s\n
 }
 
 message geomdebug2
@@ -204,35 +205,35 @@ message geomdebug2
 message partdebug
 {Partition %s%c:
 Offset: %d
-Size: %d
+Größe: %d
 }
 
 message disksetup_no_root
-{* No Disk Partition defined for Root!\n}
+{* Keine Root Disk Partition definiert!\n}
 
 message disksetup_multiple_roots
-{* Multiple Disk Partitions defined for Root\n}
+{* Mehrere Root Disk Partitionen definiert!\n}
 
 message disksetup_no_swap
-{* No Disk Partition defined for SWAP!\n}
+{* Keine SWAP (Auslagerungsspeicher) Partition definiert!\n}
 
 message disksetup_multiple_swaps
-{* Multiple Disk Partitions defined for SWAP\n}
+{* Mehrere SWAP (Auslagerungsspeicher) Partitionen definiert!\n}
 
 message disksetup_part_beginning
-{* Partition %s%c begins beyond end of disk\n}
+{* Die Partition %s%c beginnt nach dem Ende der Festplatte\n}
 
 message disksetup_part_size
-{* Partition %s%c extends beyond end of disk\n}
+{* Die Partition %s%c erstreckt sich über das Ende der Festplatte hinaus\n}
 
 message disksetup_noerrors
-{** No errors or anomalies found in disk setup.\n}
+{** Es wurden keine Fehler oder Anomalien bei der Einrichtung der Festplatte gefunden.\n}
 
 message parttable_fix_fixing
-{Fixing partition %s%c\n}
+{Korrektur der Partition %s%c\n}
 
 message parttable_fix_fine
-{Partition %s%c is just fine!\n}
+{Partition %s%c ist bereits in Ordnung!\n}
  
 message dump_line
 {%s\n}

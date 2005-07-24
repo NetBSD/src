@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.19.2.1 2004/05/22 16:42:58 he Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.19.2.1.2.1 2005/07/24 02:25:25 snj Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -44,6 +44,9 @@ message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {pl}
 
 message dobad144
 {Instalowanie tablicy zlych blokow ...
@@ -155,15 +158,10 @@ message updatembr	/* XXX translate */
 {Do you want to update the bootcode in the Master Boot Record to
 the latest version of the NetBSD bootcode?}
 
-message set_kernel_1
-{Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC.MP)}
-message set_kernel_3
-{Kernel (GENERIC_TINY)}
-message set_kernel_4
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_6
-{Kernel (GENERIC_PS2TINY)}
+message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC.MP)}
+message set_kernel_3	{Kernel (GENERIC.MPACPI)}
+message set_kernel_4	{Kernel (GENERIC_TINY)}
+message set_kernel_5	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_6	{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_7	{Kernel (GENERIC_PS2TINY)}

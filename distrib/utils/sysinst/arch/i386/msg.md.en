@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.45.2.1 2004/05/22 16:42:20 he Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.45.2.1.2.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@ message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {}
 
 message dobad144
 {Installing the bad block table ...
@@ -160,15 +163,10 @@ message updatembr
 {Do you want to update the bootcode in the Master Boot Record to
 the latest version of the NetBSD bootcode?}
 
-message set_kernel_1
-{Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC.MP)}
-message set_kernel_3
-{Kernel (GENERIC_TINY)}
-message set_kernel_4
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_6
-{Kernel (GENERIC_PS2TINY)}
+message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC.MP)}
+message set_kernel_3	{Kernel (GENERIC.MPACPI)}
+message set_kernel_4	{Kernel (GENERIC_TINY)}
+message set_kernel_5	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_6	{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_7	{Kernel (GENERIC_PS2TINY)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2004/03/26 20:02:22 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.41.4.1 2005/07/24 02:25:25 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,39 @@
 
 int blk_size;
 
+MAP_TYPE map_types[] = {
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER43},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVERATA},
+	{MAP_RESERVED, APPLE_PART_TYPE_FWB_COMPONENT},
+	{MAP_MACOS,    APPLE_PART_TYPE_MAC},
+	{MAP_NETBSD,   APPLE_PART_TYPE_NETBSD},
+	{MAP_RESERVED, APPLE_PART_TYPE_PARTMAP},
+	{MAP_OTHER,    APPLE_PART_TYPE_SCRATCH},
+	{MAP_NETBSD,   APPLE_PART_TYPE_UNIX},
+	{MAP_EOL,      NULL}
+};
+
+MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}};
+
+struct apple_part_map_entry new_map[] =
+{
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0xa5a5, 6, 1, NEW_MAP_SIZE & 0x7e,
+	  "Apple", "Apple_Partition_Map", 0, NEW_MAP_SIZE, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 64, 32,
+	  "Macintosh", "Apple_Driver", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 96, 64,
+	  "Macintosh", "Apple_Driver43", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 160, 64,
+	  "Macintosh", "Apple_Driver_ATA", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 224, 4096,
+	  "untitled", "Apple_HFS", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6,4320, 0,
+	  "untitled", "Apple_Free", 0, 0, 0x37 }
+};
+
+const char *fdtype = "msdos";
+
 /*
  * Compare lexigraphically two strings
  */
@@ -62,8 +95,8 @@ stricmp(s1, s2)
 	char c1, c2;
 
 	while (1) {
-	    c1 = tolower(*s1++);
-	    c2 = tolower(*s2++);
+	    c1 = tolower((unsigned char)*s1++);
+	    c2 = tolower((unsigned char)*s2++);
 	    if (c1 < c2) return -1;
 	    if (c1 > c2) return 1;
 	    if (c1 == 0) return 0;
@@ -1123,11 +1156,4 @@ md_init()
 		 * Running the GENERIC Installation Kernel, so enable GENERIC
 		 */
 		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
 }

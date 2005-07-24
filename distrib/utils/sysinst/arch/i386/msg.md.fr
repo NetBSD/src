@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.35.2.1 2004/05/22 16:42:36 he Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.35.2.1.2.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@ message md_hello
 {Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
 
 }
+
+message Keyboard_type {Type de clavier}
+message kb_default {fr}
 
 message dobad144
 {Installation de la table des block défectueux ...
@@ -152,15 +155,10 @@ message updatembr
 {Voulez-vous mettre a jour le code d'ammorcage dans le secteur de boot
 avec la dernière version du code d'ammorcage de NetBSD ?}
 
-message set_kernel_1
-{Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC.MP)}
-message set_kernel_3
-{Kernel (GENERIC_TINY)}
-message set_kernel_4
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_6
-{Kernel (GENERIC_PS2TINY)}
+message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC.MP)}
+message set_kernel_3	{Kernel (GENERIC.MPACPI)}
+message set_kernel_4	{Kernel (GENERIC_TINY)}
+message set_kernel_5	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_6	{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_7	{Kernel (GENERIC_PS2TINY)}

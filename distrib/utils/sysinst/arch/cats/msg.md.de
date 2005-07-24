@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/03 22:21:05 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,7 @@ message dobootblks
 }
 
 message catsfspart
-{Dies sind die NetBSD Partitionen auf %s (Grösse und Offset in %s):
+{Dies sind die NetBSD Partitionen auf %s (Größe und Offset in %s):
 }
 
 message set_kernel_1

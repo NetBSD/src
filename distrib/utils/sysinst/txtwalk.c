@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.10 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.10.4.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,6 +131,7 @@ process(struct lookfor *item, char *line)
 	struct data found[MAXDATA];
 	size_t numfound = 0;
 	const char *p;
+	char *np;
 	size_t  i, j;
 	int error;
 	
@@ -158,8 +159,11 @@ process(struct lookfor *item, char *line)
 				p++;
 			if (*p)
 				p++;
-			while (*p && isdigit(*p)) {
-				i = atoi(p);
+			for (;;) {
+				i = strtoul(p, &np, 10);
+				if (p == np)
+				    break;
+				p = np;
 				switch (found[i].what) {
 				case INT:
 					*((int *)item->var+j)
@@ -171,8 +175,6 @@ process(struct lookfor *item, char *line)
 						item->size);
 					break;
 				}
-				while (isdigit(*p))
-					p++;
 				while (*p && *p != '$')
 					p++;
 				if (*p)
@@ -204,6 +206,8 @@ finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 {
 	const char *fmt;
 	size_t len;
+	char *np;
+	int i;
 
 	*numfound = 0;
 	for (fmt = item->fmt; *fmt; fmt++) {
@@ -223,23 +227,23 @@ finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 				if (!fmt[1])
 					return 1;
 				if (fmt[1] == ' ')
-					while (*line && !isspace(*line))
+					while (*line && !isspace((unsigned char)*line))
 						line++;
 				else
 					while (*line && *line != fmt[1])
 						line++;
 				break;
 			case 'd':  /* Nextoken should be an integer. */
-				if (!isdigit(*line))
+				i = strtoul(line, &np, 10);
+				if (line == np)
 					return 0;
 				found[*numfound].what = INT;
-				found[(*numfound)++].u.i_val = atoi(line);
-				while (*line && isdigit(*line))
-					line++;
+				found[(*numfound)++].u.i_val = i;
+				line = np;
 				break;
 			case 's':  /* Matches a 'space' separated string. */
 				len = 0;
-				while (line[len] && !isspace(line[len])
+				while (line[len] && !isspace((unsigned char)line[len])
 				    && line[len] != fmt[1])
 					len++;
 				found[*numfound].what = STR;
@@ -254,7 +258,7 @@ finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 
 		}
 		if (*fmt == ' ') {
-			while (*line && isspace(*line))
+			while (isspace((unsigned char)*line))
 				line++;
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,8 +49,7 @@ message dobad144
 }
 
 message getboottype
-{Möchten Sie normale Bootblöcke oder Bootblöcke für serielle Konsolen
-installieren?
+{Möchten Sie normale oder serielle Bootblöcke installieren?
 
 Normale Bootblöcke benutzen die BIOS Konsolenschnittstelle als die Konsole
 (meistens der Montior und die Tastatur). Serielle Bootblöcke benutzen den
@@ -62,7 +61,7 @@ message dobootblks
 }
 
 message onebiosmatch
-{Diese Disk entspricht der folgenden BIOS Disk:
+{Diese Festplatte entspricht der folgenden BIOS Disk:
 
 }
 
@@ -75,7 +74,7 @@ message onebiosmatch_row
 {%-6x %-10d %-7d %d\n}
 
 message biosmultmatch
-{Diese Disk entspricht der folgenden BIOS Disk:
+{Diese Festplatte entspricht der folgenden BIOS Disk:
 
 }
 
@@ -88,15 +87,15 @@ message biosmultmatch_row
 {%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
-{Wählen sie eine Disk: }
+{Wählen Sie eine Festplatte: }
 
 
 message partabovechs
-{Der NetBSD Teil der Disk liegt ausserhalb des vom BIOS dieser Maschine
-adressierbaren Bereichs. Eventuell ist es nicht möglich, von dieser
-Partition zu booten. Sind Sie sicher, dass sie fortfahren möchten?
+{Der NetBSD Teil der Festplatte liegt außerhalb des vom BIOS dieser
+Maschine adressierbaren Bereichs. Eventuell ist es nicht möglich, von
+dieser Partition zu booten. Sind Sie sicher, daß Sie fortfahren möchten?
 
-(Antworten Sie mit 'nein' werden sie zum Menü der Partitioneneditierung
+(Antworten Sie mit 'nein' werden Sie zum Menü der Partitioneneditierung
 zurückbefördert.)}
 
 

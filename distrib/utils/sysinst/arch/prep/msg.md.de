@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- english, prep version */
+/* MD Message catalog -- german, prep version */
 
 message md_hello
 {
@@ -51,14 +51,14 @@ message dobootblks
 }
 
 message pickdisk
-{Disk auswählen: }
+{Festplatte auswählen: }
 
 message partabovechs
-{Der NetBSD Teil der Disk liegt ausserhalb der vom BIOS dieser Maschine
-adressierbaren Bereich. Eventuell könne Sie von dieser Partition nicht
-booten. Sind Sie sicher, dass Sie fortfahren möchten?
+{Der NetBSD Teil der Festplatte liegt außerhalb des vom BIOS dieser Maschine
+adressierbaren Bereichs. Eventuell können Sie von dieser Partition nicht
+booten. Sind Sie sicher, daß Sie fortfahren möchten?
 
-(Antworten sie mit 'nein' um die Partitionen erneut zu editieren.)}
+(Antworten Sie mit 'nein' um die Partitionen erneut zu editieren.)}
 
 message set_kernel_1
 {Kernel (GENERIC)}

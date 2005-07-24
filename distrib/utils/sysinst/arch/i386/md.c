@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.100.2.2 2004/06/17 09:14:19 tron Exp $ */
+/*	$NetBSD: md.c,v 1.100.2.2.2.1 2005/07/24 02:25:25 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,6 +69,8 @@ static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 static char *md_bootxx_name(void);
+
+const char *fdtype = "msdos";
 
 
 int
@@ -283,7 +285,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (rammb <= 32)
+	if (get_ramsize() <= 32)
 		set_swap(diskdev, bsdlabel);
 
 	return 0;
@@ -298,7 +300,7 @@ md_post_newfs(void)
 	char bootxx[8192 + 4];
 	char *bootxx_filename;
 	static struct x86_boot_params boottype =
-		{sizeof boottype, 0, 10, 0, 9600, ""};
+		{sizeof boottype, 0, 10, 0, 9600, { '\0' }};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
@@ -384,7 +386,7 @@ md_make_bsd_partitions(void)
 int
 md_pre_update(void)
 {
-	if (rammb <= 8)
+	if (get_ramsize() <= 8)
 		set_swap(diskdev, NULL);
 	return 1;
 }
@@ -559,11 +561,6 @@ nogeom:
 		bhead = biosdisk->bi_head;
 		bsec = biosdisk->bi_sec;
 	}
-	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
-		bsize = dlsize;
-	else
-		bsize = bcyl * bhead * bsec;
-	bcylsize = bhead * bsec;
 	return 0;
 }
 
@@ -608,13 +605,6 @@ md_init(void)
 	sets_selected = (sets_selected & ~SET_KERNEL) | get_bootmodel();
 }
 
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
-}
-
 static char *
 md_bootxx_name(void)
 {
@@ -629,6 +619,8 @@ md_bootxx_name(void)
 			bootfs = "ffsv2";
 		else
 			bootfs = "ffsv1";
+	else if (fstype == FS_BSDLFS)
+			bootfs = "lfsv2";
 	else
 		bootfs = mountnames[fstype];
 

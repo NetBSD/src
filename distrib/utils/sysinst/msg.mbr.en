@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.11 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.11.4.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@ message fullpart
 
 NetBSD requires a single partition in the disk's MBR partition table,
 this is split further by the NetBSD disklabel.
-NetBSD can also access filesystems in other MBR partitions.
+NetBSD can also access file systems in other MBR partitions.
 
 If you select 'Use the entire disk' then the previous contents of the
 disk will be overwritten and a single MBR partition used to cover the

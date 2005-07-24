@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/03 22:21:05 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,20 +50,20 @@ message dobootblks
 
 message infoahdilabel
 {Sie müssen nun Ihre Rootdisk zur Installation von NetBSD vorbereiten.
-Nachfolgend wird dieer Vorgang 'Labeling' einer Disk genant. 
+Nachfolgend wird dieser Vorgang 'Labeling' einer Festplatte genannt.
 
-Zuvor besteht die Möglichkeit eine AHDI kompatiblen Partitionierung
-auf der Festplatte zu bearbeiten oder neu zu erstellen, auf der NetBSD
+Zuvor besteht die Möglichkeit eine AHDI-kompatible Partitionierung
+auf der Festplatte zu bearbeiten oder neu zu erstellen, auf der dann NetBSD
 installiert werden soll.
-Beachten Sie, dass NetBSD nicht auf AHDI Partitionen angewiesen ist - Details
+Beachten Sie, daß NetBSD nicht auf AHDI Partitionen angewiesen ist - Details
 können Sie der NetBSD Installationsdokumentation entnehmen.
-Wenn Sie eine AHDI kompatible Partitionierung nutzen wollen, müssen Sie
-NetBSD einige Partitionen zuweisen, damit NetBSD fähig ist die Disk zu nutzen.
-Stellen Sie die 'Id' aller jener Partitionen, die Sie nutzen wollen, auf
-'NBD'. Setzen Sie zusätzlich die 'Id' der als Swap zu nutzenden Partition
-auf 'SWP'.
+Wenn Sie eine AHDI-kompatible Partitionierung nutzen wollen, müssen Sie
+NetBSD einige Partitionen zuweisen, damit NetBSD fähig ist die Festplatte
+zu nutzen. Stellen Sie die 'Id' all jener Partitionen, die Sie nutzen
+wollen, auf 'NBD'. Setzen Sie zusätzlich die 'Id' der als Swap zu nutzenden
+Partition auf 'SWP'.
 
-Wünschen Sie eine AHDI kompatible Partitionierung? }
+Wünschen Sie eine AHDI-kompatible Partitionierung? }
 
 message set_kernel_1
 {Kernel (TT030/Falcon)}

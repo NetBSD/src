@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.74.2.5 2004/08/25 03:15:46 jmc Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.74.2.5.2.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,7 @@ message ok {ok}
 message unchanged {non-modifié}
 message On {On}
 message Off {Off}
+message Delete {Supprimer ?}
 
 message install
 {installer}
@@ -175,11 +176,8 @@ L'installation standard requière au moins %d Mo.
 L'installation standard avec X requière au moins %d Mo.
 }
 
-message sizechoice
-{Vous avez choisi de définir vous même vos partitions
-(pour le disklabel BSD ou, pour certains portages, le MBR).
-Vous devez spécifier l'unité que vous voulez utiliser.
-Si vous choisissez par "Mega-octets", la taille sera proche de votre
+message Choose_your_size_specifier
+{Si vous choisissez par "Mega-octets", la taille sera proche de votre
 choix tout en conservant un nombre entier de cylindres.
 Si vous choisissez par "Secteurs", vous pourrez choisir précisément
 les tailles.
@@ -187,7 +185,8 @@ Sur les disques modernes, la taille réelle des cylindres est variable
 et il y a peu d'intéret à aligner les partitions sur les cylindres.
 Pour les disques plus ancien, il est plus efficace de choisir des tailles
 de partitions multiples de la taille d'un cylindre.
-}
+
+Choisissez votre unité d'espace disque}
 
 message defaultunit
 {Tailles et décalages ("offsets") sont en %s, sauf si vous spécifiez une unitée ('M' pour
@@ -364,18 +363,12 @@ message disksetupdone
 {La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel,
 créé (via newfs) et testé (via fsck) vos nouvelles partitions.
-
-L'étape suivant consiste a recopier les différents composants. 
-Appuyer sur <entrée> pour continuer.
 }
 
 message disksetupdoneupdate
 {La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel
 et testé (via fsck) vos nouvelles partitions.
-
-L'étape suivant consiste a recopier les différents composants. 
-Appuyer sur <entrée> pour continuer.
 }
 
 message openfail
@@ -481,7 +474,7 @@ composants optionnels.
 }
 
 message ftpsource
-{Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur
+{Vous trouverez ci dessous le site %s, le répertoire, le code utilisateur
 et le mot de passe prêt à l'emplois actuellement.
 Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
 Le répertoire des composants est relatif au répertoire de base, et
@@ -598,6 +591,9 @@ message net_host
 message net_ip
 {Votre adresse IPv4}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {Votre masque de réseau (IPv4)}
 
@@ -618,11 +614,26 @@ message netok
 
 Domaine (DNS):			 %s 
 Nom de machine:			 %s 
-Adresse IP:			 %s 
-Masque de réseau (Netmask):	 %s 
-Adresse du serveur de noms:	 %s 
-Adresse de la paserelle:	 %s 
+Adapteur de réseau		 %s
+Adresse IPv4			 %s
+Masque de réseau (Netmask):	 %s
+Adresse IPv4 du serveur de noms: %s
+Adresse IPv4 de la passerelle: 	 %s
 Type de réseau (media):		 %s 
+}
+
+message netok_slip
+{Vous avez spécifié les valeurs suivantes. Sont-ils d'accord?
+
+Domaine (DNS):			 %s
+Nom de machine:			 %s
+Adapteur de réseau		 %s
+Adresse IPv4			 %s
+Adresse IPv4 du serveur:	 %s
+Masque de réseau (Netmask):	 %s
+Adresse IPv4 du serveur de noms: %s
+Adresse IPv4 de la passerelle:	 %s
+Type de réseau (media):		 %s
 }
 
 message netokv6
@@ -632,6 +643,10 @@ Adresse du serveur de noms IPv6: %s
 
 message netok_ok
 {Les valeurs sont-elles correctes ?}
+
+message slattach {
+Enter slattach flags
+}
 
 message netagain
 {Veuillez indiquer à nouveau les informations sur votre réseau.
@@ -660,11 +675,14 @@ message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
 message delete_dist_files
-{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ?
+{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ? 
 Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
 
 message verboseextract
-{Pendant la procédure d'extraction des fichiers,
+{
+L'étape suivant consiste a recopier les différents composants. 
+
+Pendant la procédure d'extraction des fichiers,
 voulez-vous voir les noms de fichiers au fur et à mesure ?
 voir pendant qu'ils seront extraits ?
 }
@@ -914,7 +932,7 @@ message upgradeparttype
 NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau ? }
 
 message choose_timezone	
-{Sélectionnez votre zone horaire dans la liste suivante.
+{Sélectionnez votre zone horaire dans la liste suivante. 
 Appuyez sur ENTREE pour confirmer votre choix. 
 Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
 
@@ -1006,12 +1024,12 @@ message Hit_enter_to_continue {Presser entrée pour continuer}
 message Choose_your_installation {Choisissez votre type d'installation}
 message Set_Sizes {Specifier les tailles de partitions NetBSD}
 message Use_Existing {Utiliser les partitions existantes}
-message Choose_your_size_specifier {Choisissez votre unité d'espace disque}
 message Megabytes {Megaoctets}
 message Cylinders {Cylindres}
 message Sectors {Secteurs}
 message Select_medium {Sélection du media d'installation}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Disquette}
