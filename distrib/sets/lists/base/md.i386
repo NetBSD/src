@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.111 2005/07/21 22:50:44 rpaulo Exp $
+# $NetBSD: md.i386,v 1.112 2005/07/24 13:08:29 wiz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -32,11 +32,13 @@
 ./usr/lkm/compat_linux.o			base-sys-lkm
 ./usr/lkm/compat_pecoff.o			base-sys-lkm
 ./usr/lkm/compat_svr4.o				base-sys-lkm
+./usr/lkm/dummy_pci.o				base-sys-lkm
 ./usr/lkm/exec_freebsd_aout.o			base-sys-lkm
 ./usr/lkm/exec_freebsd_elf.o			base-sys-lkm
 ./usr/lkm/exec_linux_elf.o			base-sys-lkm
 ./usr/lkm/exec_pecoff.o				base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o			base-sys-lkm
+./usr/lkm/wi_pcmcia.o				base-sys-lkm
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
 ./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete
