@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.29 2003/08/07 11:13:57 agc Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.29.6.1 2005/07/24 10:29:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.29 2003/08/07 11:13:57 agc Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.29.6.1 2005/07/24 10:29:47 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static	FILE *cfile;
 static char tokval[100];
 
 static struct toktab {
-	char *tokstr;
+	const char *tokstr;
 	int tval;
 } toktab[] = {
 	{ "default",	DEFAULT },
@@ -80,11 +80,11 @@ static struct toktab {
 };
 
 int
-ruserpass(const char *host, const char **aname, const char **apass,
-	const char **aacct)
+ruserpass(const char *host, char **aname, char **apass, char **aacct)
 {
 	char *tmp;
-	char myname[MAXHOSTNAMELEN + 1], *mydomain;
+	const char *mydomain;
+	char myname[MAXHOSTNAMELEN + 1];
 	int t, i, c, usedefault = 0;
 	struct stat stb;
 
