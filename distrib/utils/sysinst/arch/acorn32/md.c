@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.16.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,8 @@ void backtowin(void);
 
 static int
 filecore_checksum(u_char *bootblock);
+
+const char *fdtype = "msdos";
 
 /*
  * static int filecore_checksum(u_char *bootblock)
@@ -346,11 +348,4 @@ md_pre_update(void)
 void
 md_init(void)
 {
-}
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }

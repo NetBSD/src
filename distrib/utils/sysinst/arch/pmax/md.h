@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.29 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.29.4.1 2005/07/24 02:25:26 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,5 +76,5 @@
  * On pmax, we don't support a dedicated floppy-disk driver, only
  * SCSI floppy drives, so we can't recognize floppies by name.
  */
-EXTERN const char *fdtype INIT("");
+const char *fdtype;
 

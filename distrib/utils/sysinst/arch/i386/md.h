@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.49.2.2 2004/06/17 09:14:07 tron Exp $	*/
+/*	$NetBSD: md.h,v 1.49.2.2.2.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,17 +64,19 @@
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 #define SET_KERNEL_MP		SET_KERNEL_2
-#define SET_KERNEL_TINY		SET_KERNEL_3
-#define SET_KERNEL_LAPTOP	SET_KERNEL_4
-#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_5
-#define SET_KERNEL_PS2		SET_KERNEL_6
+#define SET_KERNEL_MPACPI	SET_KERNEL_3
+#define SET_KERNEL_TINY		SET_KERNEL_4
+#define SET_KERNEL_LAPTOP	SET_KERNEL_5
+#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_6
+#define SET_KERNEL_PS2		SET_KERNEL_7
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
-#define SET_KERNEL_3_NAME	"kern-GENERIC_TINY"
-#define SET_KERNEL_4_NAME	"kern-GENERIC_LAPTOP"
-#define SET_KERNEL_5_NAME	"kern-GENERIC_DIAGNOSTIC"
-#define SET_KERNEL_6_NAME	"kern-GENERIC_PS2TINY"
+#define SET_KERNEL_3_NAME	"kern-GENERIC.MPACPI"
+#define SET_KERNEL_4_NAME	"kern-GENERIC_TINY"
+#define SET_KERNEL_5_NAME	"kern-GENERIC_LAPTOP"
+#define SET_KERNEL_6_NAME	"kern-GENERIC_DIAGNOSTIC"
+#define SET_KERNEL_7_NAME	"kern-GENERIC_PS2TINY"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
@@ -82,7 +84,7 @@
  * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
  * disks, "ed" IBM ESDI disks, "raid" raidframe disks
  */
-#define DISK_NAMES "wd", "sd", "ld", "ed", "raid:no_mbr"
+#define DISK_NAMES "wd", "sd", "ld", "ed", "raid:no_mbr", "xbd:no_mbr"
 
 /*
  * Machine-specific command to write a new label to a disk.
@@ -102,7 +104,7 @@
  * Default fileystem type for floppy disks.
  * On i386, that is  msdos.
  */
-EXTERN	const char *fdtype INIT("msdos");
+const char *fdtype;
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE

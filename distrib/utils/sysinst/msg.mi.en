@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.125.2.4 2004/08/25 03:15:43 jmc Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.125.2.4.2.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,7 @@ message ok {ok}
 message On {On}
 message Off {Off}
 message unchanged {unchanged}
+message Delete {Delete?}
 
 message install
 {install}
@@ -89,7 +90,7 @@ before this procedure!  This procedure will do the following things:
 	a) Partition your disk 
 	b) Create new BSD file systems 
 	c) Load and install distribution sets
-	d) Some initial system configuraton
+	d) Some initial system configuration
 
 (After you enter the partition information but before your disk is
 changed, you will have the opportunity to quit this procedure.)
@@ -174,17 +175,16 @@ A full installation requires at least %d Megabytes without X and
 at least %d Megabytes if the X sets are included.
 }
 
-message sizechoice
-{You have elected to specify partition sizes (either for the BSD
-disklabel, or on some ports, for MBR slices). You must first choose a
-size unit to use.  Choosing megabytes will give partition sizes close
-to your choice, but aligned to cylinder boundaries. Choosing sectors
-will allow you to more accurately specify the sizes.  On modern ZBR disks,
-actual cylinder size varies across the disk and there is little real
-gain from cylinder alignment. On older disks, it is most efficient to
+message Choose_your_size_specifier
+{Choosing megabytes will give partition sizes close to your choice,
+but aligned to cylinder boundaries.  Choosing sectors will allow you
+to more accurately specify the sizes.  On modern ZBR disks, actual
+cylinder size varies across the disk and there is little real gain
+from cylinder alignment.  On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
 cylinder size.
-}
+
+Choose your size specifier}
 
 message defaultunit
 {Unless specified with 'M' (megabytes), 'G' (gigabytes), 'c' (cylinders)
@@ -193,7 +193,7 @@ or 's' sector at the end of input, sizes and offsets are in %s.
 
 message ptnsizes
 {You can now change the sizes for the system partitions.  The default is
-to allocate all the space to the root filesystem, however you may wish
+to allocate all the space to the root file system, however you may wish
 to have separate /usr (additional system files), /var (log files etc)
 or /home (users' home directories).
 
@@ -359,18 +359,12 @@ message disksetupdone
 {Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
-
-The next step is to fetch and unpack the distribution filesets. 
-Press <return> to proceed.
 }
 
 message disksetupdoneupdate
 {Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and fsck'ed the new
 partitions you specified for the target disk.
-
-The next step is to fetch and unpack the distribution filesets. 
-Press <return> to proceed.
 }
 
 message openfail
@@ -477,8 +471,8 @@ select from the optional distribution sets.
 }
 
 message ftpsource
-{The following is the ftp site, directory, user, and password currently
-ready to use.  If "user" is "ftp", then the password is not needed.
+{The following are the %s site, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
 
 host:		%s 
 base directory:	%s 
@@ -583,6 +577,9 @@ message net_host
 message net_ip
 {Your IPv4 number}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {IPv4 Netmask}
 
@@ -605,6 +602,20 @@ DNS Domain:		%s
 Host Name:		%s 
 Primary Interface:	%s 
 Host IP:		%s 
+Netmask:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Media type:		%s 
+}
+
+message netok_slip
+{The following are the values you entered.  Are they OK?
+
+DNS Domain:		%s 
+Host Name:		%s 
+Primary Interface:	%s 
+Host IP:		%s 
+Server IP:		%s 
 Netmask:		%s 
 IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
@@ -646,11 +657,14 @@ message distdir
 {What directory shall I use for %s? }
 
 message delete_dist_files
-{Do you want to delete the NetBSD sets from %s?
+{Do you want to delete the NetBSD sets from %s? 
 (You can keep them to install/upgrade a second system.)}
 
 message verboseextract
-{During the extraction process, what do you want to see as
+{
+The next step is to fetch and unpack the distribution filesets. 
+
+During the extraction process, what do you want to see as
 each file is extracted?
 }
 
@@ -750,7 +764,7 @@ message rootmissing
 }
 
 message badroot
-{The completed new root fileystem failed a basic sanity check.
+{The completed new root file system failed a basic sanity check.
  Are you sure you installed all the required sets?
 }
 
@@ -892,7 +906,7 @@ the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
 of this partition to the new NetBSD-only partition type?}
 
 message choose_timezone
-{Please choose the timezone that fits you best from the list below.
+{Please choose the timezone that fits you best from the list below. 
 Press RETURN to select an entry. 
 Press 'x' followed by RETURN to quit the timezone selection. 
 
@@ -953,6 +967,10 @@ one mount point with "/".
 Press <return> to continue.
 }
 
+message slattach {
+Enter slattach flags
+}
+
 message Pick_an_option {Pick an option to turn on or off.}
 message Scripting {Scripting}
 message Logging {Logging}
@@ -983,12 +1001,12 @@ message Hit_enter_to_continue {Hit enter to continue}
 message Choose_your_installation {Choose your installation}
 message Set_Sizes {Set sizes of NetBSD partitions}
 message Use_Existing {Use existing partition sizes}
-message Choose_your_size_specifier {Choose your size specifier}
 message Megabytes {Megabytes}
 message Cylinders {Cylinders}
 message Sectors {Sectors}
 message Select_medium {Select medium}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Floppy}

@@ -1,9 +1,20 @@
-#	$NetBSD: Makefile.inc,v 1.34.2.2 2004/04/28 05:59:06 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.2.2.1 2005/07/24 02:25:24 snj Exp $
 #
 # Makefile for sysinst
 
 PROG=		sysinst
 NOMAN=		# defined
+
+WARNS=		3
+
+SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
+	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
+	label.c target.c md.c sizemultname.c
+
+SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
+SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
+SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
+SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
 
 SYSINSTLANG?=	en
 LANGUAGES?=	de en fr pl
@@ -26,7 +37,7 @@ MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\"
 
-.if defined(SMALLPROG_INET6)
+.if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
@@ -52,8 +63,6 @@ CPPFLAGS+=	-DSYSINST_FTP_DIR=\"${SYSINST_FTP_DIR}\"
 CPPFLAGS+=	-DSYSINST_CDROM_DIR=\"${SYSINST_CDROM_DIR}\"
 .endif
 
-
-WARNS=		3
 
 DPSRCS+=	msg_defs.h menu_defs.h
 

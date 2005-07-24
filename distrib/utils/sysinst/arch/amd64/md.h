@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 2004/01/29 08:48:23 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.16.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,9 +72,6 @@
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 
-/* Bootblock type */
-EXTERN const char *boottype INIT("");
-
 /*
  * Machine-specific command to write a new label to a disk.
  * For example, i386  uses "/sbin/disklabel -w -r", just like i386
@@ -93,7 +90,7 @@ EXTERN const char *boottype INIT("");
  * Default fileystem type for floppy disks.
  * On x86_64, that is  msdos.
  */
-EXTERN	const char *fdtype INIT("msdos");
+const char *fdtype;
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE

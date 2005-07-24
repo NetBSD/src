@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.35.2.5 2004/08/25 03:15:49 jmc Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.35.2.5.2.1 2005/07/24 02:25:24 snj Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -58,6 +58,7 @@ message OK {OK}
 message unchanged {niezmienione}
 message On {Wlaczone}
 message Off {Wylaczone}
+message Delete {Usunac?}
 
 message install
 {zainstalowac}
@@ -171,17 +172,16 @@ Standard wymaga przynajmniej %d Megabajtow.
 Standard z Xami wymaga przynajmniej %d Megabajtow.
 }
 
-message sizechoice
-{Zdecydowales sie podac rozmiary partycji (albo dla BSD disklabel,
-lub na niektorych portach, dla plastrow MBR). Musisz najpierw wybrac
-jednostke rozmiaru. Wybranie Megabajtow nada partycji rozmiar bliski
-twojemu wyborowi, ale dopasowany do granic cylindrow. Wybranie sektorow
-pozwoli ci na bardziej dokladne okreslenie rozmiarow. Na nowych dyskach ZBR
-rozmiar cylindra zmienia sie w zaleznosci od miejsca na dysku, jest wiec
-niewielka korzysc z dopasowania cylindrow. Na starszych dyskach bardziej
-wydajne jest podawanie rozmiaru dysku, ktore sa wielokrotnoscia aktualnego
-rozmiaru cylindra.
-}
+message Choose_your_size_specifier
+{Wybranie Megabajtow nada partycji rozmiar bliski twojemu wyborowi,
+ale dopasowany do granic cylindrow.  Wybranie sektorow pozwoli ci na
+bardziej dokladne okreslenie rozmiarow.  Na nowych dyskach ZBR rozmiar
+cylindra zmienia sie w zaleznosci od miejsca na dysku, jest wiec
+niewielka korzysc z dopasowania cylindrow.  Na starszych dyskach
+bardziej wydajne jest podawanie rozmiaru dysku, ktore sa
+wielokrotnoscia aktualnego rozmiaru cylindra.
+
+Wybierz specyfikator rozmiaru}
 
 message defaultunit
 {Jezeli nie wybrales 'M' (megabajty), 'G' (gigabajty), 'c' (cylindry)
@@ -355,18 +355,12 @@ message disksetupdone
 {Okej, pierwsza czesc procedury zostala zakonczona. Sysinst zapisal
 disklabel na dysk doceloway, oraz utworzyl system plikow i sprawdzil
 nowe partycje, ktore podales jako docelowe.
-
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
-Nacisnij <enter> aby kontynuowac.
 }
 
 message disksetupdoneupdate
 {Okej, pierwsza czesc procedury zostala zakonczona. Sysinst zapisal
 disklabel na dysk docelowy, oraz sprawdzil nowe partycje, ktore
 podales jako docelowe.
-
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
-Nacisnij <enter> aby kontynuowac.
 }
 
 message openfail
@@ -467,7 +461,7 @@ wszystkie (Pelna instalacja) lub wybrac z opcjonalnych pakietow.
 }
 
 message ftpsource
-{Ponizej masz site ftp, katalog, uzytkownika, oraz haslo gotowe do uzycia.
+{Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
 Jesli "uzytkownik" to "ftp", wtedy haslo nie jest wymagane.
 
 host:		%s 
@@ -572,6 +566,9 @@ message net_host
 message net_ip
 {Twoj adres IPv4}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {Maska podsieci IPv4}
 
@@ -600,6 +597,19 @@ Bramka IPv4:		%s
 Medium sieciowe:	%s
 }
 
+message netok_slip
+{The following are the values you entered.  Are they OK?
+
+DNS Domain:		%s
+Host Name:		%s
+Primary Interface:	%s
+Host IP:		%s
+Server IP:		%s
+Netmask:		%s
+IPv4 Nameserver:	%s
+IPv4 Gateway:		%s
+Media type:		%s
+}
 message netokv6
 {Autkonfiguracja IPv6:	%s 
 Serwer nazw IPv6:	%s 
@@ -607,6 +617,10 @@ Serwer nazw IPv6:	%s
 
 message netok_ok
 {Czy sa poprawne?}
+
+message slattach {
+Enter slattach flags
+}
 
 message netagain
 {Wprowadz jeszcze raz informacje o twojej sieci. Twoje ostatnie odpowiedzi
@@ -635,11 +649,14 @@ message distdir
 {Jakiego katalogu powinienem uzyc dla %s? }
 
 message delete_dist_files
-{Czy chcesz usunac pakiety NetBSD z %s?
+{Czy chcesz usunac pakiety NetBSD z %s? 
 (Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
 
 message verboseextract
-{Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
+{
+Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
+
+Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
 wypakowywanego pliku ?
 }
 
@@ -693,7 +710,7 @@ message noetcfstab
 }
 
 message badetcfstab
-{Pomocy! Nie moge przeczytac /etc/fdstab na dysku %s. Przerywamy aktualizacje.
+{Pomocy! Nie moge przeczytac /etc/fstab na dysku %s. Przerywamy aktualizacje.
 }
 
 message X_oldexists
@@ -874,7 +891,7 @@ jest starego typu NetBSD/386BSD/FreeBSD. Czy chcesz zmienic typ tej partycji
 na nowa partycje tylko dla NetBSD?}
 
 message choose_timezone
-{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy.
+{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy. 
 Nacisnij ENTER aby wybrac. 
 Nacisnij 'x' a potem ENTER aby wyjsc.
 
@@ -965,12 +982,12 @@ message Hit_enter_to_continue {Nacisnij enter aby kontynuowac}
 message Choose_your_installation {Wybierz swoja instalacje}
 message Set_Sizes {Ustaw rozmiary partycji NetBSD}
 message Use_Existing {Uzyj istniejacych romiarow partycji}
-message Choose_your_size_specifier {Wybierz specyfikator rozmiaru}
 message Megabytes {Megabajty}
 message Cylinders {Cylindry}
 message Sectors {Sektory}
 message Select_medium {Wybierz medium}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Dyskietka}

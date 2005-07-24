@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/03 22:21:05 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ eines Labels nicht möglich.
 }
 
 message notnetbsd
-{Keine NetBSD Partition gefunden (eine Nur-Filecore Disk?) - erstellen eines
+{Keine NetBSD Partition gefunden (eine Nur-Filecore Platte?) - erstellen eines
 Labels nicht möglich.
 }
 
@@ -85,5 +85,5 @@ message set_kernel_4
 
 
 message arm32fspart
-{Dies sind die NetBSD Partitionen auf %s (Grösse und Offset in %s):
+{Dies sind die NetBSD Partitionen auf %s (Größe und Offset in %s):
 }

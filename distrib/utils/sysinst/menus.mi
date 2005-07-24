@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.16.2.1 2004/06/07 10:20:27 tron Exp $	*/
+/*	$NetBSD: menus.mi,v 1.16.2.1.2.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,16 +79,11 @@ menu selfskind, title MSG_Select_the_type, exitstring MSG_unchanged, y=6, x=30;
 	};
 	option "unused", exit, action 
 	    { memset(arg, 0, sizeof (partinfo)); };
-	option "FFSv1", exit, action 
-	    { set_ptype(arg, FS_BSDFFS, 0, 8192); };
-	option "FFSv2", exit, action 
-	    { set_ptype(arg, FS_BSDFFS, PIF_FFSv2, 8192); };
-	option "swap", exit, action 
-	    { set_ptype(arg, FS_SWAP, 0, 0); };
-	option "msdos", exit, action 
-	    { set_ptype(arg, FS_MSDOS, 0, 0); };
-	option "LFS", exit, action 
-	    { set_ptype(arg, FS_BSDLFS, 0, 8192); };
+	option "FFSv1", exit, action { set_ptype(arg, FS_BSDFFS, 0); };
+	option "FFSv2", exit, action { set_ptype(arg, FS_BSDFFS, PIF_FFSv2); };
+	option "swap",  exit, action { set_ptype(arg, FS_SWAP, 0); };
+	option "msdos", exit, action { set_ptype(arg, FS_MSDOS, 0); };
+	option "LFS",   exit, action { set_ptype(arg, FS_BSDLFS, 0); };
 	option MSG_other_types, action 
 	    { extern int all_fstype_menu;
 	      m->opts[m->cursel].opt_menu = all_fstype_menu; };
@@ -184,11 +179,11 @@ menu ok, no shortcut, y=-10;
 	display action { menu->title = arg; };
 	option MSG_Hit_enter_to_continue, exit;
 
-menu layout, y=-1, title  MSG_Choose_your_installation;
+menu layout, sub menu, y=-1, title  MSG_Choose_your_installation;
 	option MSG_Set_Sizes, 	  exit, action { layoutkind = 1; };
 	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
 
-menu sizechoice, title  MSG_Choose_your_size_specifier;
+menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 	display action {
 		if (sizemult == current_cylsize)
 			menu->cursel = 1;
@@ -210,9 +205,10 @@ menu sizechoice, title  MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium;
 	display action { umount_mnt2(); msg_display(MSG_distmedium); };
-	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(); };
-	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
+	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
+	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
 	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
 	option MSG_local_dir, exit, action { *(int *)arg = get_via_localdir();};
@@ -226,7 +222,7 @@ menu distset, title MSG_Select_your_distribution;
 menu ftpsource, title MSG_Change;
 	display action {
 		msg_clear();
-		msg_table_add(MSG_ftpsource, ftp_host, ftp_dir, set_dir,
+		msg_table_add(MSG_ftpsource, arg, ftp_host, ftp_dir, set_dir,
 		    ftp_user, strcmp(ftp_user, "ftp") == 0 || ftp_pass[0] == 0
 			? ftp_pass : msg_string(MSG_hidden),
 		    ftp_proxy);
@@ -257,10 +253,13 @@ menu ftpsource, title MSG_Change;
 	option MSG_Proxy, action
 		{ msg_prompt_win(MSG_Proxy, -1, 12, 0, 0,
 				ftp_proxy, ftp_proxy, sizeof ftp_proxy);
-		  if (strcmp(ftp_proxy, "") == 0)
+		  if (strcmp(ftp_proxy, "") == 0) {
 			unsetenv("ftp_proxy");
-		  else
+			unsetenv("http_proxy");
+		  } else {
 			setenv("ftp_proxy", ftp_proxy, 1);
+			setenv("http_proxy", ftp_proxy, 1);
+		  }
 		};
 	option MSG_Get_Distribution, exit;
 
@@ -391,9 +390,9 @@ menu namesrv6, title MSG_Select_IPv6_DNS_server;
 		{ yesno = 0; };
 
 menu rootsh, title MSG_Root_shell;
-	option "/bin/csh", exit, action {shellpath = "/bin/csh";};
-	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
-	option "/bin/sh",  exit, action {shellpath = "/bin/sh";}; 
+	option "/bin/sh",  exit, action {*(const char **)arg = "/bin/sh";}; 
+	option "/bin/ksh", exit, action {*(const char **)arg = "/bin/ksh";};
+	option "/bin/csh", exit, action {*(const char **)arg = "/bin/csh";};
 
 menu extract, title MSG_Select_set_extraction_verbosity;
 	display action { menu->cursel = *(int *)arg; };

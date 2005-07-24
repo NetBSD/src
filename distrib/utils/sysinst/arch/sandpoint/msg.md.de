@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,15 +45,15 @@ entfernen.
 }
 
 message diagcyl
-{Einige der älteren BIOS Chips oder Diagnoseprogrammen nutzen den letzten
-Zylinder der Disk für Testzwecke. Dies sollte bei moderneren Systemen nicht
-mehr der Fall sein. Wenn Sie ein altes System haben oder sich nicht sicher
-sind ob es betroffen ist, können Sie den letzten Zylinder Ihrer Festplatte 
+{Einige der älteren BIOS Chips oder Diagnoseprogramme nutzen den letzten
+Zylinder der Festplatte für Testzwecke. Dies sollte bei moderneren Systemen
+nicht mehr der Fall sein. Wenn Sie ein altes System haben oder sich nicht sicher
+sind ob Ihres betroffen ist, können Sie den letzten Zylinder Ihrer Festplatte 
 ausschliessen. Dieser wird dann nicht genutzt.
 
 Wenn Sie den letzten Zylinder ausschliessen, wird sowohl die reale als auch
-die Geometrie des BIOS ihrer Disk angepasst; Sie brauchen diese somit nicht
-manuell einzugeben.
+die Geometrie des BIOS Ihrer Festplatte angepasst; Sie brauchen diese somit 
+nicht maneull einzugeben.
 
 Wollen Sie den letzten Zylinder ausschliessen?  
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17.2.1 2004/05/22 16:29:24 he Exp $	*/
+/*	$NetBSD: md.h,v 1.17.2.1.2.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,6 @@
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
-#define MD_SETS_VALID (SET_KERNEL | SET_SYSTEM | (SET_X11 & ~SET_X11_SERVERS))
-
 /*
  * Machine-specific command to write a new label to a disk.
  * If not defined, we assume the port does not support disklabels and
@@ -71,4 +69,4 @@
 /*
  * Default file system type for floppies.
  */
-EXTERN const char *fdtype INIT("msdos");
+const char *fdtype;

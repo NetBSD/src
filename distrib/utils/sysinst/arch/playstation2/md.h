@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.11.4.1 2005/07/24 02:25:26 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,4 +76,4 @@
  * Default fileystem type for IDE disk.
  * On playstation2, that is msdos.
  */
-EXTERN	const char *fdtype INIT("msdos");
+const char *fdtype;

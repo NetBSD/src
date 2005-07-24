@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.27.2.1 2004/07/14 09:00:12 tron Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.27.2.1.2.1 2005/07/24 02:25:24 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,8 @@ static int
 save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 {
 	static int maxptn;
-	int p;
+	partinfo *p;
+	int pp;
 
 	if (maxptn == 0)
 		maxptn = getmaxpartitions();
@@ -138,23 +139,18 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	if (fstype == FS_UNUSED)
 		return ptn;
 
-	bsdlabel[ptn].pi_fstype = fstype;
-	bsdlabel[ptn].pi_offset = start;
-	bsdlabel[ptn].pi_size = size;
-	if (fstype == FS_BSDFFS) {
-		bsdlabel[ptn].pi_frag = 8;
-		bsdlabel[ptn].pi_fsize = 1024;
-		bsdlabel[ptn].pi_flags |= PIF_NEWFS;
-	}
+	p = bsdlabel + ptn;
+	p->pi_offset = start;
+	p->pi_size = size;
+	set_ptype(p, fstype, PIF_NEWFS);
 
 	if (mountpt != NULL) {
-		for (p = 0; p < maxptn; p++) {
-			if (strcmp(bsdlabel[p].pi_mount, mountpt) == 0)
-				bsdlabel[p].pi_flags &= ~PIF_MOUNT;
+		for (pp = 0; pp < maxptn; pp++) {
+			if (strcmp(bsdlabel[pp].pi_mount, mountpt) == 0)
+				bsdlabel[pp].pi_flags &= ~PIF_MOUNT;
 		}
-		strlcpy(bsdlabel[ptn].pi_mount, mountpt,
-			sizeof bsdlabel[0].pi_mount);
-		bsdlabel[ptn].pi_flags |= PIF_MOUNT;
+		strlcpy(p->pi_mount, mountpt, sizeof p->pi_mount);
+		p->pi_flags |= PIF_MOUNT;
 	}
 
 	return ptn;
@@ -262,6 +258,7 @@ set_ptn_size(menudesc *m, void *arg)
 			if (!pi->ptn_sizes[0].changed) {
 				pi->ptn_sizes[0].size -= p->dflt_size;
 				pi->free_space += p->dflt_size;
+				pi->ptn_sizes[0].changed = 1;
 			}
 			/* hack to add free space to default sized /usr */
 			if (!strcmp(answer, dflt)) {
@@ -366,14 +363,17 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	static struct ptn_info pi = { -1, {
 #define PI_ROOT 0
-		{ PART_ROOT,	"/",	DEFROOTSIZE,	DEFROOTSIZE },
+		{ PART_ROOT,	{ '/', '\0' },
+		  DEFROOTSIZE,	DEFROOTSIZE },
 #define PI_SWAP 1
-		{ PART_SWAP,	"swap",	DEFSWAPSIZE,	DEFSWAPSIZE },
-		{ PART_TMP_MFS,	"tmp (mfs)",	64 },
+		{ PART_SWAP,	{ 's', 'w', 'a', 'p', '\0' },
+	 	  DEFSWAPSIZE,	DEFSWAPSIZE },
+		{ PART_TMP_MFS,	
+		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' }, 64 },
 #define PI_USR 3
-		{ PART_USR,	"/usr",	DEFUSRSIZE },
-		{ PART_ANY,	"/var",	DEFVARSIZE },
-		{ PART_ANY,	"/home",	0 },
+		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE },
+		{ PART_ANY,	{ '/', 'v', 'a', 'r', '\0' },	DEFVARSIZE },
+		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0 },
 	}, {
 		{ NULL, OPT_NOMENU, 0, set_ptn_size },
 		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
@@ -392,20 +392,29 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		if (sets_selected & SET_X11)
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
 
-		if (root_limit != 0 && part_start + sectors > root_limit) {
-			/* root can't have all the space... */
+		/* Start of planning to give free space to / */
+		pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+		/* Make size of root include default size of /usr */
+		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
+
+		if (root_limit != 0) {
+			/* Bah - bios can not read all the disk, limit root */
 			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
-			pi.ptn_sizes[PI_ROOT].changed = 1;
-			/* Give free space to /usr */
-			pi.ptn_sizes[PI_USR].size =
+			/* Allocate a /usr partition if bios can't read
+			 * everything except swap.
+			 */
+			if (pi.ptn_sizes[PI_ROOT].limit
+			    + pi.ptn_sizes[PI_SWAP].size > sectors) {
+				/* Root won't be able to access all the space */
+				/* Claw back space for /usr */
+				pi.ptn_sizes[PI_USR].size =
 						pi.ptn_sizes[PI_USR].dflt_size;
-			pi.pool_part = &pi.ptn_sizes[PI_USR];
-		} else {
-			/* Make size of root include default size of /usr */
-			pi.ptn_sizes[PI_ROOT].size +=
+				pi.ptn_sizes[PI_ROOT].size -=
 						pi.ptn_sizes[PI_USR].dflt_size;
-			/* Give free space to / */
-			pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+				pi.ptn_sizes[PI_ROOT].changed = 1;
+				/* Give free space to /usr */
+				pi.pool_part = &pi.ptn_sizes[PI_USR];
+			}
 		}
 
 		/* Change preset sizes from MB to sectors */
@@ -427,7 +436,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		}
 
 		/* Add space for 2 system dumps to / (traditional) */
-		i = rammb * sm;
+		i = get_ramsize() * sm;
 		i = ROUNDUP(i, dlcylsize);
 		if (pi.free_space > i * 2)
 			i *= 2;
@@ -491,8 +500,11 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
-		if (p == pi.pool_part)
+		if (p == pi.pool_part) {
 			size += ROUNDDOWN(pi.free_space, dlcylsize);
+			if (p->limit != 0 && size > p->limit)
+				size = p->limit;
+		}
 		i = p->ptn_id;
 		if (i == PART_TMP_MFS) {
 			tmp_mfs_size = size;
@@ -544,7 +556,9 @@ make_bsd_partitions(void)
 
 	process_menu(MENU_layout, NULL);
 
-	md_set_sizemultname();
+	/* Set so we use the 'real' geometry for rounding, input in MB */
+	current_cylsize = dlcylsize;
+	set_sizemultname_meg();
 
 	/* Build standard partitions */
 	memset(&bsdlabel, 0, sizeof bsdlabel);

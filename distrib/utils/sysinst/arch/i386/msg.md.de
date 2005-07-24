@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.3.2.1 2004/05/22 16:42:01 he Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.3.2.1.2.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,13 +44,15 @@ entfernen.
 
 }
 
+message Keyboard_type {Tastaturschema}
+message kb_default {de}
+
 message dobad144
 {Installiere die Tabelle der defekten Blöcke ...
 }
 
 message getboottype
-{Möchten Sie normalen Bootblöcke oder Bootblöcke für serielle Konsolen
-installieren?
+{Möchten Sie normale oder serielle Bootblöcke installieren?
 
 Normale Bootblöcke benutzen die BIOS Konsolenschnittstelle als Konsole
 (meistens der Monitor und die Tastatur). Serielle Bootblöcke benutzen den
@@ -79,7 +81,7 @@ message dobootblks
 }
 
 message onebiosmatch
-{Diese Disk entspricht der folgenden BIOS Disk:
+{Diese Festplatte entspricht der folgenden BIOS Disk:
 
 }
 
@@ -96,10 +98,10 @@ message This_is_the_correct_geometry
 message Set_the_geometry_by_hand
 {die Geometrie von Hand setzen}
 message Use_one_of_these_disks
-{Benutzen sie eine dieser Disks}
+{Benutzen Sie eine dieser Festplatten}
 
 message biosmultmatch
-{Diese Disk entspricht der folgenden BIOS Disk:
+{Diese Festplatte entspricht der folgenden BIOS Disk:
 
 }
 
@@ -113,30 +115,30 @@ message biosmultmatch_row
 
 message biosgeom_advise
 {
-Achtung: sysinst hat festgestellt, dass die von Ihnen ausgewählte Disk einer
-anderen - dem BIOS bekannten - entspricht; damit sind obige Werte mit höchster
-Wahrscheinlichkeit korrekt, sollten also nicht verändert werden (die Werte
-für Zylinder, Köpfe und Sektoren sind wahrscheinlich 1023, 255 und 63 - dies
-ist korrekt).
-Sie sollten nur die Geometrie abändern falls sie wissen, dass das BIOS
+Achtung: sysinst hat festgestellt, daß die von Ihnen ausgewählte Festplatte
+einer anderen - dem BIOS bekannten - entspricht; damit sind obige Werte mit
+höchster Wahrscheinlichkeit korrekt, sollten also nicht verändert werden (die
+Werte für Zylinder, Köpfe und Sektoren sind wahrscheinlich 1023, 255 und 63 -
+dies ist korrekt).
+Sie sollten nur die Geometrie abändern falls Sie wissen, daß das BIOS
 falsche Werte liefert.
 }
 
 message pickdisk
-{Disk auswählen: }
+{Festplatte auswählen: }
 
 message partabovechs
-{Der NetBSD Teil der Disk liegt ausserhalb der vom BIOS dieser Maschine
-adressierbaren Bereich. Eventuell könne Sie von dieser Partition nicht
-booten. Sind Sie sicher, dass Sie fortfahren möchten?
+{Der NetBSD Teil der Festplatte liegt außerhalb der vom BIOS dieser Maschine
+adressierbaren Bereich. Eventuell können Sie von dieser Partition nicht
+booten. Sind Sie sicher, daß Sie fortfahren möchten?
 
-(Antworten sie mit 'nein' um die Partitionen erneut zu editieren.)}
+(Antworten Sie mit 'nein' um die Partitionen erneut zu editieren.)}
 
 
 message missing_bootmenu_text
-{Sie haben mehr als ein Betriebssystem auf dieser Disk; allerdings ist kein 
+{Sie haben mehr als ein Betriebssystem auf dieser Festplatte; allerdings ist kein 
 'bootmenu' (Eintrag für den NetBSD Bootloader) für die aktive Partition und/oder
-der Partition vorhanden, auf die NetBSD installiert wird.
+der Partition vorhanden, auf die NetBSD installiert werden soll.
 
 Wollen Sie die Partition zum Hinzufügen eines 'bootmenu' Eintrages
 editieren?}
@@ -146,7 +148,7 @@ message no_extended_bootmenu
 {Sie haben eine erweiterte Partition in das 'bootmenu' eingetragen.
 Doch scheint Ihr BIOS System den 'read' (Lese-) Befehl für diese
 Version des 'bootmenu' Codes nicht zu unterstützen.
-Sind Sie sicher, dass Sie dennoch fortfahren möchten?
+Sind Sie sicher, daß Sie dennoch fortfahren möchten?
 
 (Antworten Sie 'nein' um zum Partitionierungsmenü zurück zu
 gelangen.)}
@@ -166,15 +168,10 @@ message updatembr
 {Wollen Sie den Bootcode im Master Boot Record auf die letzte Version des
 NetBSD Bootcodes updaten?}
 
-message set_kernel_1
-{Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC.MP)}
-message set_kernel_3
-{Kernel (GENERIC_TINY)}
-message set_kernel_4
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_6
-{Kernel (GENERIC_PS2TINY)}
+message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC.MP)}
+message set_kernel_3	{Kernel (GENERIC.MPACPI)}
+message set_kernel_4	{Kernel (GENERIC_TINY)}
+message set_kernel_5	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_6	{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_7	{Kernel (GENERIC_PS2TINY)}

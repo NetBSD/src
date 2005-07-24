@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,7 +53,7 @@ oder nur einen Teil dieser Festplatte für NetBSD verwenden?
 }
 
 message dobootblks
-{Installiere die Bootblocks auf %s ...
+{Installiere die Bootblöcke auf %s ...
 }
 
 message set_kernel_1

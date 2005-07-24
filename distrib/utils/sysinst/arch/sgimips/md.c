@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.14.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+const char *fdtype = "";
 struct utsname instsys;
 
 int
@@ -117,13 +118,18 @@ md_post_disklabel(void)
 		return run_program(RUN_DISPLAY,
 		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 		    diskdev);
-	else
-	run_program(RUN_DISPLAY,
-		"%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
-		diskdev);
-	return run_program(RUN_DISPLAY,
-		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
-		diskdev);
+
+	if (strstr(instsys.version, "(INSTALL32_IP2x)")) {
+		run_program(RUN_DISPLAY,
+		  "%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
+		  diskdev);
+		return run_program(RUN_DISPLAY,
+		  "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
+		  diskdev);
+	}
+
+	/* Presumably an IP12, we add the boot code later... */
+	return 0;
 }
 
 int
@@ -177,6 +183,9 @@ md_cleanup_install(void)
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
 	run_program(0, "rm -f %s", target_expand("/.profile"));
+	if (strstr(instsys.version, "(GENERIC32_IP12)"))
+		run_program(0, "/usr/mdec/sgivol -f -w netbsd %s %s",
+			    target_expand("/netbsd.ecoff"), diskdev);
 }
 
 int
@@ -195,13 +204,8 @@ md_init()
         uname(&instsys);
         if (strstr(instsys.version, "(INSTALL32_IP3x)"))
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
-        else
+        else if (strstr(instsys.version, "(INSTALL32_IP2x)"))
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
+	else if (strstr(instsys.version, "(GENERIC32_IP12)"))
+		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_3;
 }

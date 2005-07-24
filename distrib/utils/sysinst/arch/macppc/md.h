@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.14.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,4 +67,4 @@
 /*
  * Default file system type for floppies.
  */
-EXTERN const char *fdtype INIT("msdos");
+const char *fdtype;

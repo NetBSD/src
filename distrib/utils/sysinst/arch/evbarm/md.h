@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.11.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@
 #define SET_KERNEL_3_NAME	"kern-IQ80310"
 #define SET_KERNEL_4_NAME	"kern-IQ80321"
 #define SET_KERNEL_5_NAME	"kern-TEAMASA_NPWR"
+#define SET_KERNEL_6_NAME	"kern-TS7200"
 
 #define MD_SETS_SELECTED (SET_SYSTEM)
 
@@ -71,7 +72,7 @@
  * Default fileystem type for floppy disks.
  * On evbarm, that is msdos.
  */
-EXTERN const char *fdtype INIT("msdos");
+const char *fdtype;
 
 /*
  *  prototypes for MD code.

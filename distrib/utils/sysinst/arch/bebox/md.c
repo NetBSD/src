@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.44 2003/11/30 14:36:44 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.44.4.1 2005/07/24 02:25:25 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,7 @@
 
 
 /* prototypes */
-
+const char *fdtype = "msdos";
 
 int
 md_get_info(void)
@@ -174,15 +174,5 @@ md_bios_info(char *dev)
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 	set_bios_geom(cyl, head, sec);
-	bsize = bcyl * bhead * bsec;
-	bcylsize = bhead * bsec;
 	return 0;
-}
-
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }

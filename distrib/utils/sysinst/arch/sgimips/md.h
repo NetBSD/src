@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.17.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 #define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
 #define PART_FIRST_FREE	PART_F
 
-#define BOOT_SIZE	MEG	/* Size in bytes, rounded to cylinders later */
+#define BOOT_SIZE	(4 * MEG)	/* Enough for a GENERIC kernel */
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
@@ -77,6 +77,7 @@
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC32_IP2x"
 #define SET_KERNEL_2_NAME	"kern-GENERIC32_IP3x"
+#define SET_KERNEL_3_NAME	"kern-GENERIC32_IP12"
 #define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM)
 
 /*
@@ -85,5 +86,5 @@
  * On sgimips, we don't support a dedicated floppy-disk driver, only
  * SCSI floppy drives, so we can't recognize floppies by name.
  */
-EXTERN const char *fdtype INIT("");
+const char *fdtype;
 

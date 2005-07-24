@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/12 11:20:06 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4.4.1 2005/07/24 02:25:25 snj Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -87,3 +87,5 @@ message set_kernel_4
 {Kernel (IQ80321)}
 message set_kernel_5
 {Kernel (TEAMASA_NPWR)}
+message set_kernel_6
+{Kernel (TS7200)}
