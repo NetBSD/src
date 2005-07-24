@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.64.2.4 2005/07/24 10:19:21 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.64.2.5 2005/07/24 10:29:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ int	ftp_login(const char *, const char *, const char *);
 void	get(int, char **);
 struct cmd *getcmd(const char *);
 int	getit(int, char **, int, const char *);
+int	getline(FILE *, char *, size_t, const char **);
 struct option *getoption(const char *);
 char   *getoptionvalue(const char *);
 void	getremoteinfo(void);
@@ -199,8 +200,7 @@ void	restart(int, char **);
 void	rmthelp(int, char **);
 void	rmtstatus(int, char **);
 char   *rprompt(void);
-int	ruserpass(const char *, const char **, const char **,
-	    const char **);
+int	ruserpass(const char *, char **, char **, char **);
 void	sendrequest(const char *, const char *, const char *, int);
 void	setascii(int, char **);
 void	setbell(int, char **);
