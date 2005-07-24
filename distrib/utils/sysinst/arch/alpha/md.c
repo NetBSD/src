@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.37.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,8 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+const char *fdtype = "msdos";
 
 int
 md_get_info(void)
@@ -132,7 +134,8 @@ md_post_newfs(void)
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/bootxx_ffs",
 	    diskdev))
-		process_menu(MENU_ok, "Warning: disk is probably not bootable");
+		process_menu(MENU_ok,
+			 deconst("Warning: disk is probably not bootable"));
 
 	return 0;
 }
@@ -183,11 +186,4 @@ md_pre_update(void)
 void
 md_init(void)
 {
-}
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }

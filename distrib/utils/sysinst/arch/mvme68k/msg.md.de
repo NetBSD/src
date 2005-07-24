@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:26 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,7 @@ message dobootblks
 }
 
 message newdisk
-{Ihre Disk, %s, hat noch kein mvme68k Disklabel. Sysinst
+{Ihre Festplatte, %s, hat noch kein mvme68k Disklabel. Sysinst
 wird ein neues erstellen.
 }
 
@@ -70,7 +70,7 @@ message set_kernel_1
 .if notyet
 /* XXX: not yet implemented */
 message existing
-{Do you want to preserve existing BSD partition(s)?}
+{Wollen Sie die vorhandene(n) BSD Partition(en) beibehalten?}
 
 
 message nofreepart

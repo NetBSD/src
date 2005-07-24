@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.76.2.4 2004/06/17 09:15:45 tron Exp $ */
+/*	$NetBSD: disks.c,v 1.76.2.4.2.1 2005/07/24 02:25:24 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,7 +81,7 @@ static int fsck_preen(const char *, int, const char *);
 static void fixsb(const char *, const char *, char);
 
 #ifndef DISK_NAMES
-#define DISK_NAMES "wd", "sd", "ld"
+#define DISK_NAMES "wd", "sd", "ld", "raid"
 #endif
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
@@ -624,7 +624,6 @@ mount_disks(void)
 {
 	char *fstab;
 	int   fstabsize;
-	int   i;
 	int   error;
 
 	static struct lookfor fstabbuf[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@
 
 message md_hello
 {Wenn Ihre Maschine nur über 4MB oder weniger Arbeitsspeicher verfügt, wird
-sysinst fehlschlagen, bitte installieren Sie in diesem Fall manuell.
+sysinst fehlschlagen, bitte installieren Sie in diesem Fall das System manuell.
 
 }
 
@@ -51,11 +51,11 @@ message dobootblks
 }
 
 message newdisk
-{Ihre Disk, %s, scheint nicht als X86K Disk markiert zu sein; sysinst
-wird dies nun tun. 
-Falls Sie planen eine Partition der Disk %s mit Human68k zu nutzen,
-sollten Sie hier unbeding abbrechen und die Disk mit dem Human68k
-format.x Werkzeug zu formatieren. 
+{Ihre Festplatte, %s, scheint nicht als x68k Festplatte markiert zu sein; 
+sysinst wird dies nun tun.
+Falls Sie planen eine Partition der Festplatte %s mit Human68k zu nutzen,
+sollten Sie hier unbedingt abbrechen und die Festplatte mit dem Human68k
+format.x Werkzeug formatieren. 
 }
 
 message ordering

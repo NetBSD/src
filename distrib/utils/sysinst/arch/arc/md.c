@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.21.4.1 2005/07/24 02:25:25 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,7 @@
 
 
 /* prototypes */
+const char *fdtype = "msdos";
 
 
 int
@@ -84,7 +85,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (rammb <= 32)
+	if (get_ramsize() <= 32)
 		set_swap(diskdev, bsdlabel);
 
 	/* Sector forwarding / badblocks ... */
@@ -126,7 +127,7 @@ md_check_partitions(void)
 int
 md_pre_update(void)
 {
-	if (rammb <= 8)
+	if (get_ramsize() <= 8)
 		set_swap(diskdev, NULL);
 	return 1;
 }
@@ -167,20 +168,11 @@ md_bios_info(char *dev)
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 	set_bios_geom(cyl, head, sec);
-	bsize = dlsize;
 
-	bcylsize = bhead * bsec;
 	return 0;
 }
 
 void
 md_init(void)
 {
-}
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }

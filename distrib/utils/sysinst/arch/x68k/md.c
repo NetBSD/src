@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2003/11/30 14:36:45 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.27.4.1 2005/07/24 02:25:27 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,6 +66,8 @@ int md_need_newdisk = 0;
 
 /* prototypes */
 static int md_newdisk (void);
+
+const char *fdtype = "msdos";
 
 
 int
@@ -220,7 +222,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (rammb < 6)
+	if (get_ramsize() < 6)
 		set_swap(diskdev, bsdlabel);
 
 	return 0;
@@ -244,7 +246,8 @@ md_post_newfs(void)
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/mdec/installboot.new /usr/mdec/sdboot_ufs /dev/r%sa",
 	    diskdev))
-		process_menu(MENU_ok, "Warning: disk is probably not bootable");
+		process_menu(MENU_ok,
+			deconst("Warning: disk is probably not bootable"));
 	return 0;
 }
 
@@ -328,7 +331,7 @@ md_cleanup_install(void)
 int
 md_pre_update()
 {
-	if (rammb < 6)
+	if (get_ramsize() < 6)
 		set_swap(diskdev, NULL);
 	return 1;
 }
@@ -336,11 +339,4 @@ md_pre_update()
 void
 md_init()
 {
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
 }

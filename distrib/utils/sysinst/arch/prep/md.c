@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.19.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,7 @@
 #include "endian.h"
 
 
+const char *fdtype = "msdos";
 /* prototypes */
 
 
@@ -160,11 +161,4 @@ md_init(void)
 {
 
 	/* Nothing to do */
-}
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.11.4.1 2005/07/24 02:25:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,10 +62,10 @@
 #define DISKLABEL_CMD "disklabel -w -r"
 
 /*
- * Default fileystem type for floppy disks.
+ * Default filesystem type for floppy disks.
  * On shark, that is msdos.
  */
-EXTERN const char *fdtype INIT("msdos");
+const char *fdtype;
 
 /*
  *  prototypes for MD code.
