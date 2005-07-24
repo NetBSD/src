@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.150 2005/07/24 02:12:13 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.151 2005/07/24 02:26:56 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3054,4 +3054,158 @@ distrib/Makefile				1.12
 
 	descend to utils if we are making obj
 	[riz, ticket #5522]
+
+distrib/utils/sysinst/Makefile			1.7
+distrib/utils/sysinst/Makefile.inc		1.37
+distrib/utils/sysinst/TODO			1.22
+distrib/utils/sysinst/bsddisklabel.c		1.28,1.30-1.34
+distrib/utils/sysinst/defs.h			1.115-1.123
+distrib/utils/sysinst/disks.c			1.87-1.88
+distrib/utils/sysinst/install.c			1.41
+distrib/utils/sysinst/label.c			1.44-1.47
+distrib/utils/sysinst/main.c			1.45-1.48
+distrib/utils/sysinst/mbr.c			1.63-1.68
+distrib/utils/sysinst/mbr.h			1.20-1.21
+distrib/utils/sysinst/menus.mi			1.18-1.21
+distrib/utils/sysinst/msg.mbr.de		1.5-1.6
+distrib/utils/sysinst/msg.mbr.en		1.12
+distrib/utils/sysinst/msg.mi.de			1.10,1.13,1.15-1.20
+distrib/utils/sysinst/msg.mi.en			1.129-1.130,1.132-1.137
+distrib/utils/sysinst/msg.mi.fr			1.79-1.80,1.82-1.85
+distrib/utils/sysinst/msg.mi.pl			1.40-1.41,1.43-1.46
+distrib/utils/sysinst/net.c			1.103-1.106
+distrib/utils/sysinst/run.c			1.58-1.59
+distrib/utils/sysinst/target.c			1.47
+distrib/utils/sysinst/txtwalk.c			1.11
+distrib/utils/sysinst/util.c			1.121-1.129,1.131-1.136
+distrib/utils/sysinst/wskbd.c			1.1-1.5 (new file)
+distrib/utils/sysinst/arch/acorn26/Makefile	1.5
+distrib/utils/sysinst/arch/acorn26/md.c		1.16-1.17
+distrib/utils/sysinst/arch/acorn26/md.h		1.12
+distrib/utils/sysinst/arch/acorn26/msg.md.de	1.4
+distrib/utils/sysinst/arch/acorn32/Makefile	1.7
+distrib/utils/sysinst/arch/acorn32/md.c		1.17-1.18
+distrib/utils/sysinst/arch/acorn32/md.h		1.15
+distrib/utils/sysinst/arch/acorn32/msg.md.de	1.3
+distrib/utils/sysinst/arch/alpha/Makefile	1.6
+distrib/utils/sysinst/arch/alpha/md.c		1.38-1.40
+distrib/utils/sysinst/arch/alpha/md.h		1.19-1.20
+distrib/utils/sysinst/arch/amd64/Makefile	1.7
+distrib/utils/sysinst/arch/amd64/md.h		1.17-1.18
+distrib/utils/sysinst/arch/amiga/Makefile	1.7
+distrib/utils/sysinst/arch/amiga/md.c		1.16-1.17
+distrib/utils/sysinst/arch/amiga/md.h		1.14
+distrib/utils/sysinst/arch/arc/Makefile		1.7
+distrib/utils/sysinst/arch/arc/md.c		1.22-1.25
+distrib/utils/sysinst/arch/arc/md.h		1.11
+distrib/utils/sysinst/arch/atari/Makefile	1.9
+distrib/utils/sysinst/arch/atari/md.c		1.17-1.18
+distrib/utils/sysinst/arch/atari/md.h		1.16
+distrib/utils/sysinst/arch/atari/msg.md.de	1.3
+distrib/utils/sysinst/arch/bebox/Makefile	1.8
+distrib/utils/sysinst/arch/bebox/md.c		1.45-1.47
+distrib/utils/sysinst/arch/bebox/md.h		1.14
+distrib/utils/sysinst/arch/bebox/msg.md.de	1.3
+distrib/utils/sysinst/arch/cats/Makefile	1.6
+distrib/utils/sysinst/arch/cats/md.c		1.15-1.16
+distrib/utils/sysinst/arch/cats/md.h		1.11
+distrib/utils/sysinst/arch/cats/msg.md.de	1.3
+distrib/utils/sysinst/arch/evbarm/Makefile	1.5
+distrib/utils/sysinst/arch/evbarm/md.c		1.16-1.17
+distrib/utils/sysinst/arch/evbarm/md.h		1.12-1.13
+distrib/utils/sysinst/arch/evbarm/msg.md.de	1.3-1.4
+distrib/utils/sysinst/arch/evbarm/msg.md.en	1.6
+distrib/utils/sysinst/arch/evbarm/msg.md.fr	1.6
+distrib/utils/sysinst/arch/evbarm/msg.md.pl	1.5
+distrib/utils/sysinst/arch/evbppc/Makefile	1.6
+distrib/utils/sysinst/arch/evbppc/md.c		1.20-1.22
+distrib/utils/sysinst/arch/evbppc/md.h		1.9
+distrib/utils/sysinst/arch/evbppc/msg.md.de	1.3
+distrib/utils/sysinst/arch/hp300/Makefile	1.5
+distrib/utils/sysinst/arch/hp300/md.c		1.14-1.17
+distrib/utils/sysinst/arch/hp300/md.h		1.11
+distrib/utils/sysinst/arch/hp300/msg.md.de	1.3
+distrib/utils/sysinst/arch/hpcmips/Makefile	1.12
+distrib/utils/sysinst/arch/hpcmips/md.c		1.37-1.39
+distrib/utils/sysinst/arch/hpcmips/md.h		1.24
+distrib/utils/sysinst/arch/hpcmips/msg.md.de	1.3
+distrib/utils/sysinst/arch/i386/Makefile	1.16-1.17
+distrib/utils/sysinst/arch/i386/md.c		1.103-1.107
+distrib/utils/sysinst/arch/i386/md.h		1.52-1.54
+distrib/utils/sysinst/arch/i386/msg.md.de	1.5-1.8
+distrib/utils/sysinst/arch/i386/msg.md.en	1.47-1.48
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.36,1.38-1.40
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.21-1.22
+distrib/utils/sysinst/arch/mac68k/Makefile	1.8
+distrib/utils/sysinst/arch/mac68k/md.c		1.42-1.44
+distrib/utils/sysinst/arch/mac68k/md.h		1.20-1.21
+distrib/utils/sysinst/arch/mac68k/menus.md.de	1.2
+distrib/utils/sysinst/arch/mac68k/msg.md.de	1.3
+distrib/utils/sysinst/arch/macppc/Makefile	1.8
+distrib/utils/sysinst/arch/macppc/md.c		1.33-1.34
+distrib/utils/sysinst/arch/macppc/md.h		1.15
+distrib/utils/sysinst/arch/macppc/msg.md.de	1.3
+distrib/utils/sysinst/arch/mipsco/Makefile	1.5
+distrib/utils/sysinst/arch/mipsco/md.c		1.9-1.11
+distrib/utils/sysinst/arch/mipsco/md.h		1.10
+distrib/utils/sysinst/arch/mvme68k/Makefile	1.5
+distrib/utils/sysinst/arch/mvme68k/md.c		1.13-1.16
+distrib/utils/sysinst/arch/mvme68k/md.h		1.11
+distrib/utils/sysinst/arch/mvme68k/msg.md.de	1.3
+distrib/utils/sysinst/arch/news68k/Makefile	1.7
+distrib/utils/sysinst/arch/news68k/md.c		1.22-1.23
+distrib/utils/sysinst/arch/news68k/md.h		1.20
+distrib/utils/sysinst/arch/newsmips/Makefile	1.5
+distrib/utils/sysinst/arch/newsmips/md.c	1.11-1.12
+distrib/utils/sysinst/arch/newsmips/md.h	1.10
+distrib/utils/sysinst/arch/pc532/Makefile	1.11
+distrib/utils/sysinst/arch/pc532/md.c		1.30-1.31
+distrib/utils/sysinst/arch/pc532/md.h		1.17
+distrib/utils/sysinst/arch/pc532/msg.md.de	1.3
+distrib/utils/sysinst/arch/playstation2/Makefile1.7
+distrib/utils/sysinst/arch/playstation2/md.c	1.16-1.18
+distrib/utils/sysinst/arch/playstation2/md.h	1.12
+distrib/utils/sysinst/arch/playstation2/msg.md.de	1.3
+distrib/utils/sysinst/arch/pmax/Makefile	1.8
+distrib/utils/sysinst/arch/pmax/md.c		1.55-1.57
+distrib/utils/sysinst/arch/pmax/md.h		1.30
+distrib/utils/sysinst/arch/pmppc/Makefile	1.2
+distrib/utils/sysinst/arch/pmppc/md.c		1.2-1.4
+distrib/utils/sysinst/arch/pmppc/md.h		1.2
+distrib/utils/sysinst/arch/pmppc/msg.md.de	1.2
+distrib/utils/sysinst/arch/prep/Makefile	1.8
+distrib/utils/sysinst/arch/prep/md.c		1.20-1.21
+distrib/utils/sysinst/arch/prep/md.h		1.12
+distrib/utils/sysinst/arch/prep/msg.md.de	1.3
+distrib/utils/sysinst/arch/sandpoint/Makefile	1.6
+distrib/utils/sysinst/arch/sandpoint/md.c	1.22-1.24
+distrib/utils/sysinst/arch/sandpoint/md.h	1.10
+distrib/utils/sysinst/arch/sandpoint/msg.md.de	1.3
+distrib/utils/sysinst/arch/sgimips/Makefile	1.5
+distrib/utils/sysinst/arch/sgimips/md.c		1.15-1.18
+distrib/utils/sysinst/arch/sgimips/md.h		1.18-1.20
+distrib/utils/sysinst/arch/sgimips/msg.md.de	1.4
+distrib/utils/sysinst/arch/sgimips/msg.md.en	1.6
+distrib/utils/sysinst/arch/sgimips/msg.md.fr	1.6
+distrib/utils/sysinst/arch/sgimips/msg.md.pl	1.7
+distrib/utils/sysinst/arch/shark/Makefile	1.6
+distrib/utils/sysinst/arch/shark/md.c		1.16-1.17
+distrib/utils/sysinst/arch/shark/md.h		1.12
+distrib/utils/sysinst/arch/shark/msg.md.de	1.4
+distrib/utils/sysinst/arch/sparc/Makefile	1.7
+distrib/utils/sysinst/arch/sparc/md.c		1.42-1.43
+distrib/utils/sysinst/arch/sparc/md.h		1.21
+distrib/utils/sysinst/arch/sparc64/Makefile	1.6
+distrib/utils/sysinst/arch/sparc64/md.c		1.17-1.18
+distrib/utils/sysinst/arch/sparc64/md.h		1.12
+distrib/utils/sysinst/arch/vax/Makefile		1.7
+distrib/utils/sysinst/arch/vax/md.c		1.28-1.29
+distrib/utils/sysinst/arch/vax/md.h		1.18
+distrib/utils/sysinst/arch/x68k/Makefile	1.10
+distrib/utils/sysinst/arch/x68k/md.c		1.28-1.31
+distrib/utils/sysinst/arch/x68k/md.h		1.17
+distrib/utils/sysinst/arch/x68k/msg.md.de	1.3 (new file)
+
+	Sync sysinst with HEAD of 2005-07-23.
+	[riz, ticket #5523]
 
