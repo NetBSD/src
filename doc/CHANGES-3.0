@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.185 2005/07/24 10:42:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.186 2005/07/24 11:10:15 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10842,4 +10842,49 @@ usr.bin/ftp/version.h				1.50-1.56
 	- Improve manual page.
 	- Code cleanups.
 	[lukem, ticket #606]
+
+doc/3RDPARTY					1.344 via patch, 1.345
+share/zoneinfo/africa				patch
+share/zoneinfo/antarctica			patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/europe				patch
+share/zoneinfo/iso3166.tab			patch
+share/zoneinfo/leapseconds			patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/solar87				patch
+share/zoneinfo/solar88				patch
+share/zoneinfo/solar89				patch
+share/zoneinfo/southamerica			patch
+share/zoneinfo/zone.tab				patch
+
+	Update to tzdata2005k.
+	[kleink, ticket #607]
+
+usr.bin/make/unit-tests/comment			1.3
+usr.bin/make/unit-tests/test.exp		1.14
+
+	Expected results were not updated for comment testing.
+	[rpaulo, ticket #608]
+
+sys/netinet/Makefile				1.13
+
+	Move ipl.h into the ipfilter block, which is the right place.
+	[peter, ticket #612]
+
+sys/kern/vfs_vnops.c				1.94
+
+	Fix a null vp panic when creating a file at veriexec strict level 3.
+	[elad, ticket #613]
+
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.9
+
+	Fixes in the ADB map:
+	- map the backspace key to KEY_BackSpace
+	- swap LAlt and LMeta to match the keyboard (Alt=Alt/Option,
+	  Meta=Command)
+	- add a keysym for . on the number pad
+	... so killing the Xserver with Ctrl-Alt-BackSpace works now and the
+	default map matches an US keyboard without any xmodmap stunts.
+	[macallan, ticket #614]
 
