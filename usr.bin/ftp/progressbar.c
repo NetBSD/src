@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.6.2.4 2005/07/24 10:28:20 tron Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.6.2.5 2005/07/24 10:36:11 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.6.2.4 2005/07/24 10:28:20 tron Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.6.2.5 2005/07/24 10:36:11 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -121,8 +121,7 @@ progressmeter(int flag)
 	struct timeval td;
 	off_t abbrevsize, bytespersec;
 	double elapsed;
-	int ratio, i, remaining;
-	size_t barlength;
+	int ratio, i, remaining, barlength;
 
 			/*
 			 * Work variables for progress bar.
@@ -216,7 +215,7 @@ progressmeter(int flag)
 			 */
 		barlength = MIN(sizeof(buf) - 1, ttywidth) - BAROVERHEAD;
 		if (prefix)
-			barlength -= strlen(prefix);
+			barlength -= (int)strlen(prefix);
 		if (barlength > 0) {
 			i = barlength * ratio / 100;
 			len += snprintf(buf + len, BUFLEFT,
