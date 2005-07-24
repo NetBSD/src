@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.6 2004/05/28 18:55:20 wrstuden Exp $	*/
+/*	$NetBSD: layer.h,v 1.7 2005/07/24 17:33:24 erh Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -148,13 +148,14 @@ struct layer_node {
 #define	LAYERFS_DO_BYPASS(vp, ap)	\
 	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))
 
-extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
+struct vnode *layer_checkvp __P((struct vnode *vp, const char *fil, int lno));
 
 #define	MOUNTTOLAYERMOUNT(mp) ((struct layer_mount *)((mp)->mnt_data))
 #define	VTOLAYER(vp) ((struct layer_node *)(vp)->v_data)
 #define	LAYERTOV(xp) ((xp)->layer_vnode)
 #ifdef LAYERFS_DIAGNOSTIC
 #define	LAYERVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
+extern int layerfs_debug;
 #else
 #define	LAYERVPTOLOWERVP(vp) (VTOLAYER(vp)->layer_lowervp)
 #endif

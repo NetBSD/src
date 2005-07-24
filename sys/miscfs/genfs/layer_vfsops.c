@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.20 2005/07/24 17:33:24 erh Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.20 2005/07/24 17:33:24 erh Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -111,9 +111,10 @@ layerfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_root(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
-	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
+	if (layerfs_debug)
+		printf("layerfs_root(mp = %p, vp = %p->%p)\n", mp,
+		    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
+		    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
 	/*
@@ -153,9 +154,10 @@ layerfs_statvfs(mp, sbp, p)
 	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
-	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
+	if (layerfs_debug)
+		printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
+		    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
+		    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
 	(void)memset(sbuf, 0, sizeof(*sbuf));
@@ -292,18 +294,30 @@ layerfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 
 SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 {
+	const struct sysctlnode *layerfs_node = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &layerfs_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE);
+
+#ifdef LAYERFS_DIAGNOSTIC
+	sysctl_createv(clog, 0, &layerfs_node, NULL,
+	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	               CTLTYPE_INT,
+	               "debug",
+	               SYSCTL_DESCR("Verbose debugging messages"),
+	               NULL, 0, &layerfs_debug, 0,
+	               CTL_CREATE, CTL_EOL);
+#endif
+
 	/*
 	 * other subtrees should really be aliases to this, but since
 	 * they can't tell if layerfs has been instantiated yet, they
