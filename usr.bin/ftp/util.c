@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.10 2005/07/24 10:23:36 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.11 2005/07/24 10:24:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.10 2005/07/24 10:23:36 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.11 2005/07/24 10:24:07 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1167,7 +1167,7 @@ formatbuf(char *buf, size_t len, const char *src)
 
 		case 'M':
 		case 'm':
-			for (p2 = connected && username ? username : "-";
+			for (p2 = connected && hostname ? hostname : "-";
 			    *p2 ; p2++) {
 				if (op == 'm' && *p2 == '.')
 					break;
