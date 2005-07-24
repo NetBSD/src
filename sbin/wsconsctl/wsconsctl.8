@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.21 2005/07/24 20:54:06 rpaulo Exp $
+.\" $NetBSD: wsconsctl.8,v 1.22 2005/07/24 21:07:52 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd Jul 25, 2005
+.Dd July 25, 2005
 .Dt WSCONSCTL 8
 .Os
 .Sh NAME
@@ -42,25 +42,21 @@
 .Nd get or set wscons state
 .Sh SYNOPSIS
 .Nm
-.Op Fl kdm
+.Op Fl dkmn
 .Op Fl f Ar file
-.Op Fl n
 .Fl a
 .Nm
-.Op Fl kdm
+.Op Fl dkmn
 .Op Fl f Ar file
-.Op Fl n
 .Ar name ...
 .Nm
-.Op Fl kdm
+.Op Fl dkmn
 .Op Fl f Ar file
-.Op Fl n
 .Fl w
 .Ar name Ns Li = Ns Ar value ...
 .Nm
-.Op Fl kdm
+.Op Fl dkmn
 .Op Fl f Ar file
-.Op Fl n
 .Fl w
 .Ar name Ns Li += Ns Ar value ...
 .Sh DESCRIPTION
@@ -72,30 +68,28 @@ If a list of variables is present on the command line, then
 prints the current value of those variables for the specified device.
 .Bl -tag -width Ds
 .It Fl a
-is used to specify all variables for the device.
+Specify all variables for the device.
+.It Fl d
+Select the display portion of the device.
+.It Fl f Ar file
+Specify an alternative control device.
+.It Fl k
+Select the keyboard portion of the device (this is the default).
+.It Fl m
+Select the mouse portion of the device.
+.It Fl n
+Suppress the printing of the variable name in the output -
+only the value will appear.
 .It Fl w
-.Nm
-attempts to set or modify the specified variables to the given values.
+Set or modify the specified variables to the given values.
 The value can be specified as either an absolute value, by using the
 .Ql =
-symbol
-or as a relative value, by using the
+symbol or as a relative value, by using the
 .Ql +=
 symbol.
 See the
-.Ar EXAMPLES
+.Sx EXAMPLES
 section for more details.
-.It Fl f Ar file
-is used to specify an alternative control device.
-.It Fl n
-suppresses the printing of the variable name in the output -
-only the value will appear.
-.It Fl k
-selects the keyboard portion of the device (this is the default).
-.It Fl d
-selects the display portion of the device.
-.It Fl m
-selects the mouse portion of the device.
 .El
 .Pp
 The
@@ -106,9 +100,7 @@ workstation console device driver
 .Xr wscons 4 .
 .Pp
 The keyboard type can be modified, the keyboard bell's pitch,
-period, and duration
-can be modified,
-the
+period, and duration can be modified, the
 .Ar typematic
 value can be changed, and the keyboard encoding can be modified
 to switch keys, should the user find a keyboard's default layout
@@ -122,20 +114,18 @@ The mouse types are defined in the
 .Pa /usr/include/dev/wscons/wsconsio.h
 file.
 .Pp
-The display types, height, width,
-depth (bits per pixel), color map size, and color map
-are defined in the
+The display types, height, width, depth (bits per pixel), color
+map size, and color map are defined in the
 .Pa /usr/include/dev/wscons/wsconsio.h
 file.
-There are also definitions relating to video
-control and cursor control, which are not applicable to
-all display types, and to text emulation and graphics
-(mapped) modes.
+There are also definitions relating to video control and cursor
+control, which are not applicable to all display types, and to text
+emulation and graphics (mapped) modes.
 .Pp
 In addition to British, US, and US-Dvorak keyboard encodings, support
 currently exists for the following languages: Danish, Finnish, French,
 German, Italian, Japanese, Norwegian, Portuguese, Spanish, and Swedish.
-Finally, a user-defined encoding is supported.
+Additionally, a user-defined encoding is supported.
 .Sh FILES
 .Bl -tag -width /dev/wsmouse
 .It Pa /dev/wskbd
@@ -152,23 +142,22 @@ and its functionality.
 .Pp
 .Dl wsconsctl -w encoding=uk
 .Pp
-Sets a UK keyboard encoding.
+Set a UK keyboard encoding.
 .Pp
 .Dl wsconsctl -w map+="keysym Caps_Lock = Control_L"
 .Pp
-Modifies the current keyboard encoding so that when the
+Modify the current keyboard encoding so that when the
 .Ar Caps Lock
 key is pressed, the same encoding sequence as
 .Ar Left Control
 is sent.
-For a full list of keysyms and keycodes, please refer
-to the
+For a full list of keysyms and keycodes, please refer to the
 .Pa /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
 .Dl wsconsctl -w encoding=us.swapctrlcaps
 .Pp
-Sets a US keyboard encoding, with the
+Set a US keyboard encoding, with the
 .Ar Caps Lock
 and
 .Ar Left Control
@@ -176,42 +165,41 @@ keys swapped.
 The
 .Ar .swapctrlcaps
 encoding does not work for all national keyboard encodings.
-For most purposes, the ability to set the value returned
-by the
+For most purposes, the ability to set the value returned by the
 .Ar Caps Lock
 key is enough - see the previous example for details.
 .Pp
 .Dl wsconsctl -w bell.pitch=1200
 .Pp
-Sets the bell pitch to be 1200, whilst
+Set the bell pitch to be 1200.
 .Pp
 .Dl wsconsctl -w bell.pitch+=200
 .Pp
-Adds 200 to the current pitch of the bell.
+Add 200 to the current pitch of the bell.
 .Pp
 .Dl wsconsctl -d -w msg.kernel.attrs=color,hilit msg.kernel.bg=red msg.kernel.fg=brown
 .Pp
-Sets the color of kernel messages to brown on red with the highlighting
+Set the color of kernel messages to brown on red with the highlighting
 flag set (becoming yellow on red).
 .Pp
 .Dl wsconsctl -w repeat.del1=200 repeat.deln=50
 .Pp
-Sets the initial delay for keyboard auto repeat to 200 ms, and subsequent
-delays to 50 ms.
+Set the initial delay for keyboard auto repeat to 200ms, and subsequent
+delays to 50ms.
 .Pp
 .Dl wsconsctl -w repeat.del1=0
 .Pp
-Turns off auto repeat.
+Turn off auto repeat.
 .Pp
 .Dl wsconsctl -d -w scroll.fastlines=50
 .Pp
-If scroll support is enabled in the kernel, sets the number of lines 
+If scroll support is enabled in the kernel, set the number of lines
 used in the fast scroll function to 50.
 .Pp
 .Dl wsconsctl -d -w scroll.slowlines=2
 .Pp
-If scroll support is enabled in the kernel, sets the number of lines 
-used in the slow scroll function to 2. 
+If scroll support is enabled in the kernel, set the number of lines
+used in the slow scroll function to 2.
 In order to use this function, you have to have
 .Dv Cmd_ScrollSlowUp
 and
