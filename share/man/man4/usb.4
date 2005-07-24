@@ -1,6 +1,6 @@
-.\" $NetBSD: usb.4,v 1.74 2005/06/20 13:25:24 peter Exp $
+.\" $NetBSD: usb.4,v 1.75 2005/07/24 08:44:59 augustss Exp $
 .\"
-.\" Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 16, 2005
+.Dd July 24, 2005
 .Dt USB 4
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Cd "ohci*   at cardbus? dev ? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
 .Cd "slhci*  at isa? port ? irq ?"
+.Cd "uhci*   at cardbus? dev ? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
 .Cd "usb*    at ohci? flags X"
