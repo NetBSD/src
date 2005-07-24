@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.11 2005/07/24 10:24:07 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.12 2005/07/24 10:30:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.11 2005/07/24 10:24:07 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.12 2005/07/24 10:30:01 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -373,34 +373,35 @@ lostpeer(int dummy)
  * Return non-zero if successful.
  */
 int
-ftp_login(const char *host, const char *user, const char *pass)
+ftp_login(const char *host, const char *luser, const char *lpass)
 {
 	char tmp[80];
-	const char *acct;
-	int n, aflag, rval, freeuser, freepass, freeacct;
+	char *user, *pass, *acct, *p;
+	const char *errormsg;
+	int n, aflag, rval, nlen;
 
-	acct = NULL;
-	aflag = rval = freeuser = freepass = freeacct = 0;
+	aflag = rval = 0;
+	user = pass = acct = NULL;
+	if (luser)
+		user = xstrdup(luser);
+	if (lpass)
+		pass = xstrdup(lpass);
 
 	if (debug)
 		fprintf(ttyout, "ftp_login: user `%s' pass `%s' host `%s'\n",
 		    user ? user : "<null>", pass ? pass : "<null>",
 		    host ? host : "<null>");
 
-
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.
 	 */
 	if (anonftp) {
-		user = "anonymous";	/* as per RFC 1635 */
-		pass = getoptionvalue("anonpass");
+		FREEPTR(user);
+		user = xstrdup("anonymous");	/* as per RFC 1635 */
+		FREEPTR(pass);
+		pass = xstrdup(getoptionvalue("anonpass"));
 	}
 
-	if (user == NULL)
-		freeuser = 1;
-	if (pass == NULL)
-		freepass = 1;
-	freeacct = 1;
 	if (ruserpass(host, &user, &pass, &acct) < 0) {
 		code = -1;
 		goto cleanup_ftp_login;
@@ -411,19 +412,17 @@ ftp_login(const char *host, const char *user, const char *pass)
 			fprintf(ttyout, "Name (%s:%s): ", host, localname);
 		else
 			fprintf(ttyout, "Name (%s): ", host);
-		*tmp = '\0';
-		if (fgets(tmp, sizeof(tmp) - 1, stdin) == NULL) {
-			fprintf(ttyout, "\nEOF received; login aborted.\n");
-			clearerr(stdin);
+		errormsg = NULL;
+		nlen = getline(stdin, tmp, sizeof(tmp), &errormsg);
+		if (nlen < 0) {
+			fprintf(ttyout, "%s; %s aborted.\n", errormsg, "login");
 			code = -1;
 			goto cleanup_ftp_login;
+		} else if (nlen == 0) {
+			user = xstrdup(localname);
+		} else {
+			user = xstrdup(tmp);
 		}
-		tmp[strlen(tmp) - 1] = '\0';
-		freeuser = 0;
-		if (*tmp == '\0')
-			user = localname;
-		else
-			user = tmp;
 	}
 
 	if (gatemode) {
@@ -435,29 +434,33 @@ ftp_login(const char *host, const char *user, const char *pass)
 		(void)strlcpy(nuser, user, len);
 		(void)strlcat(nuser, "@",  len);
 		(void)strlcat(nuser, host, len);
-		freeuser = 1;
+		FREEPTR(user);
 		user = nuser;
 	}
 
 	n = command("USER %s", user);
 	if (n == CONTINUE) {
 		if (pass == NULL) {
-			freepass = 0;
-			pass = getpass("Password:");
+			p = getpass("Password: ");
+			pass = xstrdup(p);
+			memset(p, 0, strlen(p));
 		}
 		n = command("PASS %s", pass);
+		memset(pass, 0, strlen(pass));
 	}
 	if (n == CONTINUE) {
 		aflag++;
 		if (acct == NULL) {
-			freeacct = 0;
-			acct = getpass("Account:");
+			p = getpass("Account: ");
+			acct = xstrdup(p);
+			memset(p, 0, strlen(p));
 		}
 		if (acct[0] == '\0') {
 			warnx("Login failed.");
 			goto cleanup_ftp_login;
 		}
 		n = command("ACCT %s", acct);
+		memset(acct, 0, strlen(acct));
 	}
 	if ((n != COMPLETE) ||
 	    (!aflag && acct != NULL && command("ACCT %s", acct) != COMPLETE)) {
@@ -483,12 +486,13 @@ ftp_login(const char *host, const char *user, const char *pass)
 	updateremotecwd();
 
  cleanup_ftp_login:
-	if (user != NULL && freeuser)
-		free((char *)user);
-	if (pass != NULL && freepass)
-		free((char *)pass);
-	if (acct != NULL && freeacct)
-		free((char *)acct);
+	FREEPTR(user);
+	if (pass != NULL)
+		memset(pass, 0, strlen(pass));
+	FREEPTR(pass);
+	if (acct != NULL)
+		memset(acct, 0, strlen(pass));
+	FREEPTR(acct);
 	return (rval);
 }
 
@@ -501,23 +505,24 @@ ftp_login(const char *host, const char *user, const char *pass)
 int
 another(int *pargc, char ***pargv, const char *prompt)
 {
-	int	ret;
-	size_t	len;
+	const char	*errormsg;
+	int		ret, nlen;
+	size_t		len;
 
 	len = strlen(line);
 	if (len >= sizeof(line) - 3) {
-		fputs("sorry, arguments too long.\n", ttyout);
+		fputs("Sorry, arguments too long.\n", ttyout);
 		intr(0);
 	}
 	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
-	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL) {
-		clearerr(stdin);
+	errormsg = NULL;
+	nlen = getline(stdin, line + len, sizeof(line)-len, &errormsg);
+	if (nlen < 0) {
+		fprintf(ttyout, "%s; %s aborted.\n", errormsg, "operation");
 		intr(0);
 	}
-	len += strlen(&line[len]);
-	if (len > 0 && line[len - 1] == '\n')
-		line[len - 1] = '\0';
+	len += nlen;
 	makeargv();
 	ret = margc > *pargc;
 	*pargc = margc;
@@ -538,7 +543,8 @@ remglob(char *argv[], int doswitch, const char **errbuf)
 	static char **args;
 	char temp[MAXPATHLEN];
 	int oldverbose, oldhash, oldprogress, fd;
-	char *cp, *mode;
+	char *cp;
+	const char *mode;
 	size_t len;
 
 	if (!mflag || !connected) {
@@ -1087,8 +1093,7 @@ ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 void
 formatbuf(char *buf, size_t len, const char *src)
 {
-	const char	*p;
-	char		*p2, *q;
+	const char	*p, *p2, *q;
 	int		 i, op, updirs, pdirs;
 
 #define ADDBUF(x) do { \
@@ -1253,6 +1258,56 @@ isipv6addr(const char *addr)
 		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
 #endif
 	return (rv == 1) ? 1 : 0;
+}
+
+/*
+ * Read a line from the FILE stream into buf/buflen using fgets(), so up
+ * to buflen-1 chars will be read and the result will be NUL terminated.
+ * If the line has a trailing newline it will be removed.
+ * If the line is too long, excess characters will be read until
+ * newline/EOF/error.
+ * If EOF/error occurs or a too-long line is encountered and errormsg
+ * isn't NULL, it will be changed to a description of the problem.
+ * (The EOF message has a leading \n for cosmetic purposes).
+ * Returns:
+ *	>=0	length of line (excluding trailing newline) if all ok
+ *	-1	error occurred
+ *	-2	EOF encountered
+ *	-3	line was too long
+ */
+int
+getline(FILE *stream, char *buf, size_t buflen, const char **errormsg)
+{
+	int	rv, ch;
+	size_t	len;
+
+	if (fgets(buf, buflen, stream) == NULL) {
+		if (feof(stream)) {	/* EOF */
+			rv = -2;
+			if (errormsg)
+				*errormsg = "\nEOF received";
+		} else  {		/* error */
+			rv = -1;
+			if (errormsg)
+				*errormsg = "Error encountered";
+		}
+		clearerr(stream);
+		return rv;
+	}
+	len = strlen(buf);
+	if (buf[len-1] == '\n') {	/* clear any trailing newline */
+		buf[--len] = '\0';
+	} else if (len == buflen-1) {	/* line too long */
+		while ((ch = getchar()) != '\n' && ch != EOF)
+			continue;
+		if (errormsg)
+			*errormsg = "Input line is too long";
+		clearerr(stream);
+		return -3;
+	}
+	if (errormsg)
+		*errormsg = NULL;
+	return len;
 }
 
 
