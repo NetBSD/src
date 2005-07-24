@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.69.2.2 2005/05/09 17:05:55 tron Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.69.2.3 2005/07/24 10:33:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -334,4 +334,19 @@ extern	struct option	optiontab[];
 # define STRTOLL(x,y,z)	strtol(x,y,z)
 #else
 # define STRTOLL(x,y,z)	strtoll(x,y,z)
+#endif
+
+#ifdef NO_DEBUG
+#define DPRINTF(...)
+#define DWARN(...)
+#else
+#define DPRINTF(...)	if (debug) (void)fprintf(ttyout, __VA_ARGS__)
+#define DWARN(...) if (debug) warn(__VA_ARGS__)
+#endif
+
+#ifdef NO_USAGE
+void xusage(void);
+#define UPRINTF(...)	xusage()
+#else
+#define UPRINTF(...)	(void)fprintf(ttyout, __VA_ARGS__)
 #endif
