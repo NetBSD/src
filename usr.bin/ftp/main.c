@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.90.2.6 2005/07/24 10:22:41 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.90.2.7 2005/07/24 10:29:36 tron Exp $	*/
 
 /*-
- * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.90.2.6 2005/07/24 10:22:41 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.90.2.7 2005/07/24 10:29:36 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -645,25 +645,23 @@ cmdscanner(void)
 					fprintf(ttyout, "%s ", p);
 				(void)fflush(ttyout);
 			}
-			if (fgets(line, sizeof(line), stdin) == NULL) {
+			num = getline(stdin, line, sizeof(line), NULL);
+			switch (num) {
+			case -1:	/* EOF */
+			case -2:	/* error */
 				if (fromatty)
 					putc('\n', ttyout);
 				quit(0, NULL);
-			}
-			num = strlen(line);
-			if (num == 0)
-				break;
-			if (line[--num] == '\n') {
-				if (num == 0)
-					break;
-				line[num] = '\0';
-			} else if (num == sizeof(line) - 2) {
+				/* NOTREACHED */
+			case -3:	/* too long; try again */
 				fputs("Sorry, input line is too long.\n",
 				    ttyout);
-				while ((ch = getchar()) != '\n' && ch != EOF)
-					/* void */;
+				continue;
+			case 0:		/* empty; try again */
+				continue;
+			default:	/* all ok */
 				break;
-			} /* else it was a line without a newline */
+			}
 #ifndef NO_EDITCOMPLETE
 		} else {
 			const char *buf;
