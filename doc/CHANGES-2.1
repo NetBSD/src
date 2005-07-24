@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.151 2005/07/24 02:26:56 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.152 2005/07/24 03:29:43 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3208,4 +3208,11 @@ distrib/utils/sysinst/arch/x68k/msg.md.de	1.3 (new file)
 
 	Sync sysinst with HEAD of 2005-07-23.
 	[riz, ticket #5523]
+
+sys/dev/wscons/wsksymdef.h			1.48,1.50-1.51
+
+	Change the way the KB_xxx and  KB_ENCTAB are defined so we have all the
+	data for a single keyboard on one line - including the long name and
+	default modifiers that sysinst needs.
+	[riz, ticket #5524]
 
