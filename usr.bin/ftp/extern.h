@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.64.2.2 2005/05/09 17:05:09 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.64.2.3 2005/07/24 10:17:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ void	updatelocalcwd(void);
 void	updateremotecwd(void);
 void	usage(void);
 void	user(int, char **);
-int	xconnect(int, const struct sockaddr *, int);
+int	xconnect(int, const struct sockaddr *, socklen_t);
 int	xlisten(int, int);
 int	xpoll(struct pollfd *, int, int);
 void   *xmalloc(size_t);
