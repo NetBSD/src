@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.5 2005/05/18 04:22:04 snj Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.6 2005/07/24 10:18:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.5 2005/05/18 04:22:04 snj Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.6 2005/07/24 10:18:16 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1250,7 +1250,7 @@ isipv6addr(const char *addr)
  * Returns -1 upon failure (with errno set to the problem), or 0 on success.
  */
 int
-xconnect(int sock, const struct sockaddr *name, int namelen)
+xconnect(int sock, const struct sockaddr *name, socklen_t namelen)
 {
 	int		flags, rv, timeout, error;
 	socklen_t	slen;
