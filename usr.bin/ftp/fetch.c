@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.155.2.3 2005/07/24 10:17:25 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.155.2.4 2005/07/24 10:20:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.155.2.3 2005/07/24 10:17:25 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.155.2.4 2005/07/24 10:20:37 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1300,7 +1300,7 @@ void
 aborthttp(int notused)
 {
 	char msgbuf[100];
-	int len;
+	size_t len;
 
 	sigint_raised = 1;
 	alarmtimer(0);
@@ -1760,7 +1760,8 @@ int
 auto_put(int argc, char **argv, const char *uploadserver)
 {
 	char	*uargv[4], *path, *pathsep;
-	int	 uargc, rval, len;
+	int	 uargc, rval;
+	size_t	 len;
 
 	uargc = 0;
 	uargv[uargc++] = "mput";
@@ -1779,8 +1780,6 @@ auto_put(int argc, char **argv, const char *uploadserver)
 			 * make sure we always pass a directory to auto_fetch
 			 */
 		if (argc > 1) {		/* more than one file to upload */
-			int len;
-
 			len = strlen(uploadserver) + 2;	/* path + "/" + "\0" */
 			free(path);
 			path = (char *)xmalloc(len);
