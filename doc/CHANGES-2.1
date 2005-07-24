@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.149 2005/07/24 02:06:17 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.150 2005/07/24 02:12:13 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3049,4 +3049,9 @@ sbin/ifconfig/ifconfig.c			1.147
 	Move functions for converting media types to/from text
 	to libutil.
 	[riz, ticket #5518]
+
+distrib/Makefile				1.12
+
+	descend to utils if we are making obj
+	[riz, ticket #5522]
 
