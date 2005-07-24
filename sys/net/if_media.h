@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.38 2004/03/10 14:42:10 keihan Exp $	*/
+/*	$NetBSD: if_media.h,v 1.38.4.1 2005/07/24 01:52:51 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ void	ifmedia_delete_instance __P((struct ifmedia *, u_int));
 
 /* Compute baudrate for a given media. */
 u_quad_t	ifmedia_baudrate(int);
+
 #endif /*_KERNEL */
 
 /*
@@ -570,5 +571,17 @@ struct ifmedia_status_description {
 	{ 0,			0,		0,			\
 	  { NULL, NULL } },						\
 }
+
+#ifndef _KERNEL
+/* Functions for converting media to/from strings, in libutil/if_media.c */
+const char *get_media_type_string(int);
+const char *get_media_subtype_string(int);
+const char *get_media_mode_string(int);
+const char *get_media_option_string(int *);
+int get_media_mode(int, const char *);
+int get_media_subtype(int, const char *);
+int get_media_options(int, const char *, char **);
+int lookup_media_word(struct ifmedia_description *, int, const char *);
+#endif /* _KERNEL */
 
 #endif	/* _NET_IF_MEDIA_H_ */
