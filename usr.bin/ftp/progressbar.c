@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.6.2.2 2005/07/24 10:20:30 tron Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.6.2.3 2005/07/24 10:22:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.6.2.2 2005/07/24 10:20:30 tron Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.6.2.3 2005/07/24 10:22:59 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -220,7 +220,7 @@ progressmeter(int flag)
 		if (barlength > 0) {
 			i = barlength * ratio / 100;
 			len += snprintf(buf + len, BUFLEFT,
-			    "|%.*s%*s|", i, stars, barlength - i, "");
+			    "|%.*s%*s|", i, stars, (int)(barlength - i), "");
 		}
 	}
 
