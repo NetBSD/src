@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.155.2.4 2005/07/24 10:20:37 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.155.2.5 2005/07/24 10:26:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.155.2.4 2005/07/24 10:20:37 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.155.2.5 2005/07/24 10:26:40 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1320,7 +1320,8 @@ fetch_ftp(const char *url)
 	char		*cp, *xargv[5], rempath[MAXPATHLEN];
 	char		*host, *path, *dir, *file, *user, *pass;
 	char		*port;
-	int		 dirhasglob, filehasglob, oautologin, rval, type, xargc;
+	int		 dirhasglob, filehasglob, rval, type, xargc;
+	int		 oanonftp, oautologin;
 	in_port_t	 portnum;
 	url_t		 urltype;
 
@@ -1438,8 +1439,10 @@ fetch_ftp(const char *url)
 	}
 
 			/* Set up the connection */
+	oanonftp = anonftp;
 	if (connected)
 		disconnect(0, NULL);
+	anonftp = oanonftp;
 	xargv[0] = (char *)getprogname();	/* XXX discards const */
 	xargv[1] = host;
 	xargv[2] = NULL;
@@ -1718,10 +1721,9 @@ go_fetch(const char *url)
 int
 auto_fetch(int argc, char *argv[])
 {
-	volatile int	argpos;
-	int		rval;
+	volatile int	argpos, rval;
 
-	argpos = 0;
+	argpos = rval = 0;
 
 	if (sigsetjmp(toplevel, 1)) {
 		if (connected)
@@ -1736,7 +1738,7 @@ auto_fetch(int argc, char *argv[])
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
-	for (rval = 0; (rval == 0) && (argpos < argc); argpos++) {
+	for (; (rval == 0) && (argpos < argc); argpos++) {
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
 		redirect_loop = 0;
