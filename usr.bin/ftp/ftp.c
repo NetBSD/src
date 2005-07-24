@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.6 2005/07/24 10:17:43 tron Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.7 2005/07/24 10:27:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.6 2005/07/24 10:17:43 tron Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.7 2005/07/24 10:27:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,12 +214,8 @@ hookup(char *host, char *port)
 		 * we use it as native.  What a mess!
 		 */
 		ai_unmapped(res);
-#if 0	/*old behavior*/
-		if (res != res0)	/* not on the first address */
-#else
-		if (res0->ai_next)	/* if we have multiple possibilities */
-#endif
-		{
+		if (verbose && res0->ai_next) {
+				/* if we have multiple possibilities */
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 				strlcpy(hbuf, "?", sizeof(hbuf));
@@ -1274,8 +1270,8 @@ initconn(void)
 	int result, tmpno = 0;
 	int on = 1;
 	int error;
-	u_int addr[16], port[2];
-	u_int af, hal, pal;
+	unsigned int addr[16], port[2];
+	unsigned int af, hal, pal;
 	socklen_t len;
 	char *pasvcmd = NULL;
 
