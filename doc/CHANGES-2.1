@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.148 2005/07/24 01:37:15 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.149 2005/07/24 02:06:17 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3040,4 +3040,13 @@ sbin/ifconfig/ifconfig.c			1.142
 	then we should move that code into ifconfig(8) and out of the kernel,
 	not cycle the interface up and down.  Fixes PR#9400
 	[riz, ticket #5517]
+
+sys/net/if_media.h				1.42
+lib/libutil/Makefile				1.44
+lib/libutil/if_media.c				1.1
+sbin/ifconfig/ifconfig.c			1.147
+
+	Move functions for converting media types to/from text
+	to libutil.
+	[riz, ticket #5518]
 
