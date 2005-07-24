@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.186 2005/07/24 11:10:15 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.187 2005/07/24 21:15:48 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10887,4 +10887,21 @@ xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.9
 	... so killing the Xserver with Ctrl-Alt-BackSpace works now and the
 	default map matches an US keyboard without any xmodmap stunts.
 	[macallan, ticket #614]
+
+sys/crypto/sha2/sha2.c				patch
+
+	Fix build problem caused by ticket #610.
+	[tron, ticket #616]
+
+sys/dev/pci/pcidevs				1.713
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add the followings:
+	 - 6300ESB AC'97 Audio
+	 - 6300ESB AC'97 Modem
+	 - ICH6 HD-Audio
+	 - ICH6 AC'97 Modem
+	 - All of ICH7 devices
+	[tron, ticket #617]
 
