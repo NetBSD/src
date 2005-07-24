@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.6 2005/07/24 10:18:16 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.7 2005/07/24 10:19:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.6 2005/07/24 10:18:16 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.7 2005/07/24 10:19:12 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -528,7 +528,7 @@ another(int *pargc, char ***pargv, const char *prompt)
  * of writing to the screen.
  */
 char *
-remglob(char *argv[], int doswitch, char **errbuf)
+remglob(char *argv[], int doswitch, const char **errbuf)
 {
         char temp[MAXPATHLEN];
         static char buf[MAXPATHLEN];
