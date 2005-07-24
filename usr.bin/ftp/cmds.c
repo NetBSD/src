@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.111.2.3 2005/07/24 10:20:53 tron Exp $	*/
+/*	$NetBSD: cmds.c,v 1.111.2.4 2005/07/24 10:30:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.111.2.3 2005/07/24 10:20:53 tron Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.111.2.4 2005/07/24 10:30:17 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ static const char *dotrans(char *, size_t, const char *);
 static int
 confirm(const char *cmd, const char *file)
 {
+	const char *errormsg;
 	char line[BUFSIZ];
 
 	if (!interactive || confirmrest)
@@ -165,10 +166,9 @@ confirm(const char *cmd, const char *file)
 	while (1) {
 		fprintf(ttyout, "%s %s [anpqy?]? ", cmd, file);
 		(void)fflush(ttyout);
-		if (fgets(line, sizeof(line), stdin) == NULL) {
+		if (getline(stdin, line, sizeof(line), &errormsg) < 0) {
 			mflag = 0;
-			fprintf(ttyout, "\nEOF received; %s aborted\n", mname);
-			clearerr(stdin);
+			fprintf(ttyout, "%s; %s aborted\n", errormsg, mname);
 			return (0);
 		}
 		switch (tolower((unsigned char)*line)) {
@@ -1472,7 +1472,7 @@ shell(int argc, char *argv[])
 void
 user(int argc, char *argv[])
 {
-	char acct[80];
+	char *password;
 	int n, aflag = 0;
 
 	if (argc == 0)
@@ -1489,34 +1489,31 @@ user(int argc, char *argv[])
 	n = command("USER %s", argv[1]);
 	if (n == CONTINUE) {
 		if (argc < 3) {
-			argv[2] = getpass("Password: ");
-			argc++;
+			password = getpass("Password: ");
+		} else {
+			password = argv[2];
 		}
-		n = command("PASS %s", argv[2]);
+		n = command("PASS %s", password);
+		memset(password, 0, strlen(password));
 	}
 	if (n == CONTINUE) {
-		if (argc < 4) {
-			(void)fputs("Account: ", ttyout);
-			(void)fflush(ttyout);
-			if (fgets(acct, sizeof(acct) - 1, stdin) == NULL) {
-				fprintf(ttyout,
-				    "\nEOF received; login aborted.\n");
-				clearerr(stdin);
-				code = -1;
-				return;
-			}
-			acct[strlen(acct) - 1] = '\0';
-			argv[3] = acct; argc++;
-		}
-		n = command("ACCT %s", argv[3]);
 		aflag++;
+		if (argc < 4) {
+			password = getpass("Account: ");
+		} else {
+			password = argv[3];
+		}
+		n = command("ACCT %s", password);
+		memset(password, 0, strlen(password));
 	}
 	if (n != COMPLETE) {
 		fputs("Login failed.\n", ttyout);
 		return;
 	}
 	if (!aflag && argc == 4) {
-		(void)command("ACCT %s", argv[3]);
+		password = argv[3];
+		(void)command("ACCT %s", password);
+		memset(password, 0, strlen(password));
 	}
 	connected = -1;
 	getremoteinfo();
