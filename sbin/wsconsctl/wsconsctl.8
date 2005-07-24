@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.20 2005/05/03 13:26:25 augustss Exp $
+.\" $NetBSD: wsconsctl.8,v 1.21 2005/07/24 20:54:06 rpaulo Exp $
 .\"
 .\" Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd May 2, 2005
+.Dd Jul 25, 2005
 .Dt WSCONSCTL 8
 .Os
 .Sh NAME
@@ -202,6 +202,21 @@ delays to 50 ms.
 .Dl wsconsctl -w repeat.del1=0
 .Pp
 Turns off auto repeat.
+.Pp
+.Dl wsconsctl -d -w scroll.fastlines=50
+.Pp
+If scroll support is enabled in the kernel, sets the number of lines 
+used in the fast scroll function to 50.
+.Pp
+.Dl wsconsctl -d -w scroll.slowlines=2
+.Pp
+If scroll support is enabled in the kernel, sets the number of lines 
+used in the slow scroll function to 2. 
+In order to use this function, you have to have
+.Dv Cmd_ScrollSlowUp
+and
+.Dv Cmd_ScrollSlowUp
+defined in your keyboard map.
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
