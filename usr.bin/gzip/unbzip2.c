@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.1.2.4 2004/05/30 14:48:32 tron Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.1.2.4.2.1 2005/07/24 21:21:17 tron Exp $	*/
 
 /* This file is #included by gzip.c */
 
@@ -6,14 +6,16 @@ static off_t
 unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
 	int		ret, end_of_file;
-	size_t		n;
+	size_t		n = 0;
 	off_t		bytes_out = 0;
 	bz_stream	bzs;
 	static char	*inbuf, *outbuf;
 
-	if (inbuf == NULL && (inbuf = malloc(BUFLEN)) == NULL)
-	        maybe_err("malloc");
-	if (outbuf == NULL && (outbuf = malloc(BUFLEN)) == NULL)
+	if (inbuf == NULL)
+		inbuf = malloc(BUFLEN);
+	if (outbuf == NULL)
+		outbuf = malloc(BUFLEN);
+	if (inbuf == NULL || outbuf == NULL)
 	        maybe_err("malloc");
 
 	bzs.bzalloc = NULL;
@@ -63,15 +65,15 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	                break;
 
 	        case BZ_DATA_ERROR:
-	                maybe_warn("bzip2 data integrity error");
+	                maybe_warnx("bzip2 data integrity error");
 			break;
 
 	        case BZ_DATA_ERROR_MAGIC:
-	                maybe_warn("bzip2 magic number error");
+	                maybe_warnx("bzip2 magic number error");
 			break;
 
 	        case BZ_MEM_ERROR:
-	                maybe_warn("bzip2 out of memory");
+	                maybe_warnx("bzip2 out of memory");
 			break;
 
 	        }
