@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.47.8.1.2.2 2005/07/24 03:18:58 snj Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47.8.1.2.3 2005/07/24 03:20:50 snj Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -486,26 +486,6 @@
 #define KB_ENCODING(e)		((e) & 0x0000ff00)
 #define KB_VARIANT(e)		((e) & 0xffff00ff)
 
-#define KB_USER			0x0100
-#define KB_US			0x0200
-#define KB_DE			0x0300
-#define KB_DK			0x0400
-#define KB_IT			0x0500
-#define KB_FR			0x0600
-#define KB_UK			0x0700
-#define KB_JP			0x0800
-#define KB_SV			0x0900
-#define KB_NO			0x0a00
-#define KB_ES			0x0b00
-#define KB_HU			0x0c00
-#define	KB_PL			0x0d00
-#define KB_RU			0x0e00
-#define KB_SG			0x0f00
-#define KB_SF			0x1000
-#define KB_PT			0x1100
-#define KB_UA			0x1200
-#define KB_BE			0x1300
-
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
@@ -515,27 +495,40 @@
 #define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
 #define KB_MACHDEP		0x0080	/* machine dependent */
 
-#define KB_ENCTAB \
-	{ KB_USER,	"user" }, /* User-defined*/ \
-	{ KB_US,	"us" },   /* US-English */ \
-	{ KB_DE,	"de" },   /* German */ \
-	{ KB_DK,	"dk" },   /* Danish */ \
-	{ KB_IT,	"it" },   /* Italian */ \
-	{ KB_FR,	"fr" },   /* French */ \
-	{ KB_UK,	"uk" },   /* UK-English */ \
-	{ KB_JP,	"jp" },   /* Japanese */ \
-	{ KB_SV,	"sv" },   /* Swedish */ \
-	{ KB_SV,        "fi" },   /* Finish */ \
-	{ KB_NO,	"no" },   /* Norwegian */ \
-	{ KB_ES,	"es" },   /* Spanish */ \
-	{ KB_HU,	"hu" },	  /* Hungarian */ \
-	{ KB_PL,	"pl" },   /* Polish */ \
-	{ KB_RU,        "ru" },   /* Russian */ \
-	{ KB_SG,        "sg" },   /* Swiss German */ \
-	{ KB_SF,        "sf" },   /* Swiss French */ \
-	{ KB_PT,        "pt" },   /* Portugese */ \
-	{ KB_UA,        "ua" },   /* Ukrainian */ \
-	{ KB_BE,        "be" }    /* Belgian */
+/*
+ * Define keyboard type and texts all in one table.
+ * Include default variants (and their text form) for sysinst.
+ * Sort (loosely) by country name.
+ */
+#define KB_ENC_FUN(action) \
+action(KB_USER,	0,	0x0100,	"user",	,	"User-defined")	\
+action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
+action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
+action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
+action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
+action(KB_FI,	0,	0x0900,	"fi",	,	"Finish")	\
+action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
+action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
+action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")	\
+action(KB_IT,	0,	0x0500,	"it",	,	"Italian")	\
+action(KB_JP,	0,	0x0800,	"jp",	,	"Japanese")	\
+action(KB_NO,	0,	0x0a00,	"no",	,	"Norwegian")	\
+action(KB_PL,	0,	0x0d00,	"pl",	,	"Polish")	\
+action(KB_PT,	0,	0x1100,	"pt",	,	"Portugese")	\
+action(KB_RU,	0,	0x0e00,	"ru",	,	"Russian")	\
+action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")	\
+action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")	\
+action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")	\
+action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")	\
+action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
+
+/* Define all the KB_xx numeric values using above table */
+#define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1400 };
+
+/* Define list of KB_xxx and country codes for array initialisation */
+#define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },
+#define KB_ENCTAB KB_ENC_FUN(KBF_ENCTAB)
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
