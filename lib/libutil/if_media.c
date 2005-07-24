@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.1 2004/11/11 20:36:28 dsl Exp $	*/
+/*	$NetBSD: if_media.c,v 1.1.4.1 2005/07/24 01:55:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_media.c,v 1.1 2004/11/11 20:36:28 dsl Exp $");
+__RCSID("$NetBSD: if_media.c,v 1.1.4.1 2005/07/24 01:55:36 snj Exp $");
 #endif 
 
 #include <stdio.h>
