@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.64.2.3 2005/07/24 10:17:31 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.64.2.4 2005/07/24 10:19:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ void	mls(int, char **);
 void	mlst(int, char **);
 void	modtime(int, char **);
 void	mput(int, char **);
-char   *onoff(int);
+const char *onoff(int);
 void	opts(int, char **);
 void	newer(int, char **);
 void	page(int, char **);
@@ -189,7 +189,7 @@ void	quote1(const char *, int, char **);
 void	recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
 void	reget(int, char **);
-char   *remglob(char **, int, char **);
+char   *remglob(char **, int, const char **);
 time_t	remotemodtime(const char *, int);
 off_t	remotesize(const char *, int);
 void	removedir(int, char **);
