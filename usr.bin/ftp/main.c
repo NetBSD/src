@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90.2.7 2005/07/24 10:29:36 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.90.2.8 2005/07/24 10:31:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.90.2.7 2005/07/24 10:29:36 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.90.2.8 2005/07/24 10:31:06 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -631,7 +631,9 @@ cmdscanner(void)
 {
 	struct cmd	*c;
 	char		*p;
+#ifndef NO_EDITCOMPLETE
 	int		 ch;
+#endif
 	size_t		 num;
 
 	for (;;) {
