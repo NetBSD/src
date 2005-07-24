@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.126.2.7 2005/07/24 10:27:31 tron Exp $	*/
+/*	$NetBSD: ftp.c,v 1.126.2.8 2005/07/24 10:30:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.126.2.7 2005/07/24 10:27:31 tron Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.126.2.8 2005/07/24 10:30:37 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ hookup(char *host, char *port)
 	hints.ai_protocol = 0;
 	error = getaddrinfo(host, NULL, &hints, &res0);
 	if (error) {
-		warnx("%s", gai_strerror(error));
+		warnx("%s: %s", host, gai_strerror(error));
 		code = -1;
 		return (0);
 	}
