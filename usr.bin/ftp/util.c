@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.9 2005/07/24 10:21:35 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.10 2005/07/24 10:23:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.9 2005/07/24 10:21:35 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.10 2005/07/24 10:23:36 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -90,6 +90,7 @@ __RCSID("$NetBSD: util.c,v 1.117.2.9 2005/07/24 10:21:35 tron Exp $");
 #include <fcntl.h>
 #include <glob.h>
 #include <signal.h>
+#include <libgen.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -835,20 +836,30 @@ updateremotecwd(void)
 int
 fileindir(const char *file, const char *dir)
 {
-	char	realfile[PATH_MAX+1];
+	char	parentdirbuf[PATH_MAX+1], *parentdir;
+	char	realdir[PATH_MAX+1];
 	size_t	dirlen;
 
-	if (realpath(file, realfile) == NULL) {
-		warn("Unable to determine real path of `%s'", file);
+		 			/* determine parent directory of file */
+	(void)strlcpy(parentdirbuf, file, sizeof(parentdirbuf));
+	parentdir = dirname(parentdirbuf);
+	if (strcmp(parentdir, ".") == 0)
+		return 1;		/* current directory is ok */
+
+					/* find the directory */
+	if (realpath(parentdir, realdir) == NULL) {
+		warn("Unable to determine real path of `%s'", parentdir);
 		return 0;
 	}
-	if (realfile[0] != '/')		/* relative result */
+	if (realdir[0] != '/')		/* relative result is ok */
 		return 1;
 	dirlen = strlen(dir);
 #if 0
-printf("file %s realfile %s dir %s [%d]\n", file, realfile, dir, dirlen);
+printf("file %s parent %s realdir %s dir %s [%d]\n",
+    file, parentdir, realdir, dir, dirlen);
 #endif
-	if (strncmp(realfile, dir, dirlen) == 0 && realfile[dirlen] == '/')
+	if (strncmp(realdir, dir, dirlen) == 0 &&
+	    (realdir[dirlen] == '/' || realdir[dirlen] == '\0'))
 		return 1;
 	return 0;
 }
