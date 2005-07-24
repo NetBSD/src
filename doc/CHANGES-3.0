@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.184 2005/07/23 16:16:43 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.185 2005/07/24 10:42:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10816,4 +10816,30 @@ sys/netinet6/ah_core.c				1.37
 	Remove unnecessary bzero() calls before calling the algorithm
 	specific init function.
 	[tron, ticket #611]
+
+usr.bin/ftp/Makefile				1.31
+usr.bin/ftp/cmds.c				1.113-1.116
+usr.bin/ftp/cmdtab.c				1.45
+usr.bin/ftp/complete.c				1.39-1.40
+usr.bin/ftp/domacro.c				1.21
+usr.bin/ftp/extern.h				1.67-1.69
+usr.bin/ftp/fetch.c				1.158-1.163
+usr.bin/ftp/ftp.1				1.110-1.112
+usr.bin/ftp/ftp.c				1.132-1.135
+usr.bin/ftp/ftp_var.h				1.72
+usr.bin/ftp/main.c				1.95-1.99
+usr.bin/ftp/progressbar.c			1.8-1.11
+usr.bin/ftp/ruserpass.c				1.30
+usr.bin/ftp/util.c				1.123-1.131
+usr.bin/ftp/version.h				1.50-1.56
+
+	Sync ftp(1) with NetBSD-current. Notable changes: 
+	- Improve method used to prevent remote exploits 'mget *'.
+	- Fix '%m' and '%M' in the prompt.           
+	- Fix multiple auto-fetchs on the one command line. 
+	- Improve consistency in verbose messages.   
+	- Prevent long input lines confusing the parser.
+	- Improve manual page.
+	- Code cleanups.
+	[lukem, ticket #606]
 
