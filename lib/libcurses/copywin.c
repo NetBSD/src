@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.9 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.9.6.1 2005/07/24 00:50:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.9 2002/01/02 10:38:27 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.9.6.1 2005/07/24 00:50:33 snj Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -44,49 +44,78 @@ __RCSID("$NetBSD: copywin.c,v 1.9 2002/01/02 10:38:27 blymn Exp $");
  *     Copy the box starting at (sminrow, smincol) with a size that
  *     matches the destination box (dminrow, dmincol) by (dmaxrow, dmaxcol)
  *     from the source window srcwin to the destination window dstwin.
+ *     All these coordindinates are relative to the relevant window.
  *     If dooverlay is true then the copy is nondestructive otherwise the
  *     copy is destructive.
  */
-int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
-            int smincol, int dminrow, int dmincol, int dmaxrow, 
-            int dmaxcol, int dooverlay)
+int copywin(const WINDOW *srcwin, WINDOW *dstwin,
+	    int sminrow, int smincol,
+	    int dminrow, int dmincol, int dmaxrow, int dmaxcol, int dooverlay)
 {
-	int starty, startx, endy, endx, x, y, y1, y2, smaxrow, smaxcol;
+	int dcol;
 	__LDATA *sp, *end;
 
-	smaxrow = min(sminrow + dmaxrow - dminrow, srcwin->maxy);
-	smaxcol = min(smincol + dmaxcol - dmincol, srcwin->maxx);
-	starty = max(sminrow, dminrow);
-	startx = max(smincol, dmincol);
-	endy = min(sminrow + smaxrow, dminrow + dmaxrow);
-	endx = min(smincol + smaxcol, dmincol + dmaxcol);
-	if (starty >= endy || startx >= endx)
-		return (OK);
+	/* overwrite() and overlay() can come here with -ve srcwin coords */
+	if (sminrow < 0) {
+		dminrow -= sminrow;
+		sminrow = 0;
+	}
+	if (smincol < 0) {
+		dmincol -= smincol;
+		smincol = 0;
+	}
+
+	/* for symmetry allow dstwin coords to be -ve as well */
+	if (dminrow < 0) {
+		sminrow -= dminrow;
+		dminrow = 0;
+	}
+	if (dmincol < 0) {
+		smincol -= dmincol;
+		dmincol = 0;
+	}
+
+	/* Bound dmaxcol for both windows (should be ok for dstwin) */
+	if (dmaxcol >= dstwin->maxx)
+		dmaxcol = dstwin->maxx - 1;
+	if (smincol + (dmaxcol - dmincol) >= srcwin->maxx)
+		dmaxcol = srcwin->maxx + dmincol - smincol - 1;
+	if (dmaxcol < dmincol)
+		/* nothing in the intersection */
+		return OK;
+
+	/* Bound dmaxrow for both windows (should be ok for dstwin) */
+	if (dmaxrow >= dstwin->maxy)
+		dmaxrow = dstwin->maxy - 1;
+	if (sminrow + (dmaxrow - dminrow) >= srcwin->maxy)
+		dmaxrow = srcwin->maxy + dminrow - sminrow - 1;
 
 #ifdef DEBUG
-	if (dooverlay == TRUE) {
-		__CTRACE("copywin overlay mode: from (%d,%d) to (%d,%d)\n",
-			 starty, startx, endy, endx);
-	} else {
-		__CTRACE("copywin overwrite mode: from (%d,%d) to (%d,%d)\n",
-			 starty, startx, endy, endx);
-	}
-
+	__CTRACE("copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
+		 dooverlay ? "overlay" : "overwrite",
+		 sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
 #endif
-	y1 = starty - sminrow;
-	y2 = starty - dminrow;
-	for (y = starty; y < endy; y++, y1++, y2++) {
-		end = &srcwin->lines[y1]->line[endx - srcwin->begx];
-		x = startx - dstwin->begx;
-		for (sp = &srcwin->lines[y1]->line[startx - srcwin->begx];
-		     sp < end; sp++) {
-			if ((!isspace(sp->ch)) || (dooverlay == FALSE)){
-				wmove(dstwin, y2, x);
+
+	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {
+		sp = &srcwin->lines[sminrow]->line[smincol];
+		end = sp + dmaxcol - dmincol;
+		if (dooverlay) {
+			for (dcol = dmincol; sp <= end; dcol++, sp++) {
+				/* XXX: Perhaps this should check for the
+				 * background character
+				 */
+				if (!isspace(sp->ch)) {
+					wmove(dstwin, dminrow, dcol);
+					__waddch(dstwin, sp);
+				}
+			}
+		} else {
+			wmove(dstwin, dminrow, dmincol);
+			for (; sp <= end; sp++) {
 				__waddch(dstwin, sp);
 			}
-			x++;
 		}
 	}
-	return (OK);
+	return OK;
 }
 

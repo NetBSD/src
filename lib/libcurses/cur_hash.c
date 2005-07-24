@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.11 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.11.4.1 2005/07/24 00:50:33 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.11 2003/08/07 16:44:20 agc Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.11.4.1 2005/07/24 00:50:33 snj Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,10 +47,11 @@ __RCSID("$NetBSD: cur_hash.c,v 1.11 2003/08/07 16:44:20 agc Exp $");
  * __hash_more() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
  */
 u_int
-__hash_more(char *s, size_t len, u_int h)
+__hash_more(const void  *v_s, size_t len, u_int h)
 {
 	u_int g;
 	size_t i = 0;
+	const char *s = v_s;
 
 	while (i < len) {
 		h = (h << 4) + s[i];
