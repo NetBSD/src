@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.86.2.4 2005/07/02 15:53:33 tron Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.86.2.5 2005/07/24 11:06:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.4 2005/07/02 15:53:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.5 2005/07/24 11:06:27 tron Exp $");
 
 #include "fs_union.h"
 
@@ -96,7 +96,7 @@ vn_open(ndp, fmode, cmode)
 	struct nameidata *ndp;
 	int fmode, cmode;
 {
-	struct vnode *vp = NULL; /* XXXGCC */
+	struct vnode *vp;
 	struct mount *mp;
 	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred = p->p_ucred;
@@ -125,6 +125,7 @@ restart:
 				       "new file creation in %s.\n",
 				       ndp->ni_dirp);
 
+				vp = ndp->ni_dvp;
 				error = EPERM;
 				goto bad;
 			}
