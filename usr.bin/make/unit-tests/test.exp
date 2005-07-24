@@ -1,3 +1,7 @@
+comment testing start
+this is foo
+This is how a comment looks: # comment
+comment testing done
 make: "cond1" line 75: warning: extra else
 make: "cond1" line 85: warning: extra else
 2 is  prime
