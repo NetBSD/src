@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.29 2005/07/01 20:11:20 drochner Exp $
+#	$NetBSD: files.cardbus,v 1.30 2005/07/24 08:48:03 augustss Exp $
 #
 # files.cardbus
 #
@@ -63,6 +63,12 @@ file	dev/cardbus/if_tlp_cardbus.c	tlp_cardbus
 #
 attach	ohci at cardbus with ohci_cardbus
 file	dev/cardbus/ohci_cardbus.c	ohci_cardbus
+
+#
+# UHCI USB controller
+#
+attach	uhci at cardbus with uhci_cardbus
+file	dev/cardbus/uhci_cardbus.c	uhci_cardbus
 
 #
 # EHCI USB controller
