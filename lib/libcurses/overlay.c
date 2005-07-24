@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.15 2003/08/07 16:44:23 agc Exp $	*/
+/*	$NetBSD: overlay.c,v 1.15.4.1 2005/07/24 00:50:34 snj Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overlay.c,v 1.15 2003/08/07 16:44:23 agc Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.15.4.1 2005/07/24 00:50:34 snj Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,6 +54,7 @@ overlay(const WINDOW *win1, WINDOW *win2)
 #ifdef DEBUG
 	__CTRACE("overlay: (%p, %p);\n", win1, win2);
 #endif
-	return copywin(win1, win2, win1->begy, win1->begx, win2->begy,
-		       win2->begx, win2->maxy, win2->maxx, TRUE);
+	return copywin(win1, win2,
+			win2->begy - win1->begy, win2->begx - win1->begx,
+			0, 0, win2->maxy - 1, win2->maxx - 1, TRUE);
 }
