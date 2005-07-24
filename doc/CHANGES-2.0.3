@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.28 2005/07/18 04:04:04 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.29 2005/07/24 10:10:06 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -308,4 +308,9 @@ sys/kern/uipc_usrreq.c				1.83
 
 	uipc_usrreq: plug mbuf leak.
 	[yamt, ticket #2940]
+
+sys/arch/macppc/pci/pci_machdep.c		1.26
+
+	Make PCI cards work on NetBSD-mappc systems with a "Grackle" bridge.
+	[briggs, ticket #1329]
 
