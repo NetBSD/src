@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.3.2.1 2005/07/24 17:48:04 riz Exp $	*/
+/*	$NetBSD: sha2.c,v 1.3.2.2 2005/07/24 21:00:12 riz Exp $	*/
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.3.2.1 2005/07/24 17:48:04 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.3.2.2 2005/07/24 21:00:12 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -309,13 +309,6 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
 };
-
-/*
- * Constant used by SHA256/384/512_End() functions for converting the
- * digest to a readable hexadecimal character string:
- */
-static const char *sha2_hex_digits = "0123456789abcdef";
-
 
 /*** SHA-256: *********************************************************/
 void SHA256_Init(SHA256_CTX* context) {
