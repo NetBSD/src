@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.8 2005/07/24 10:20:46 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.9 2005/07/24 10:21:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.117.2.8 2005/07/24 10:20:46 tron Exp $");
+__RCSID("$NetBSD: util.c,v 1.117.2.9 2005/07/24 10:21:35 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -532,64 +532,64 @@ another(int *pargc, char ***pargv, const char *prompt)
 char *
 remglob(char *argv[], int doswitch, const char **errbuf)
 {
-        static char buf[MAXPATHLEN];
-        static FILE *ftemp = NULL;
-        static char **args;
-        char temp[MAXPATHLEN];
-        int oldverbose, oldhash, oldprogress, fd;
-        char *cp, *mode;
+	static char buf[MAXPATHLEN];
+	static FILE *ftemp = NULL;
+	static char **args;
+	char temp[MAXPATHLEN];
+	int oldverbose, oldhash, oldprogress, fd;
+	char *cp, *mode;
 	size_t len;
 
-        if (!mflag || !connected) {
-                if (!doglob)
-                        args = NULL;
-                else {
-                        if (ftemp) {
-                                (void)fclose(ftemp);
-                                ftemp = NULL;
-                        }
-                }
-                return (NULL);
-        }
-        if (!doglob) {
-                if (args == NULL)
-                        args = argv;
-                if ((cp = *++args) == NULL)
-                        args = NULL;
-                return (cp);
-        }
-        if (ftemp == NULL) {
+	if (!mflag || !connected) {
+		if (!doglob)
+			args = NULL;
+		else {
+			if (ftemp) {
+				(void)fclose(ftemp);
+				ftemp = NULL;
+			}
+		}
+		return (NULL);
+	}
+	if (!doglob) {
+		if (args == NULL)
+			args = argv;
+		if ((cp = *++args) == NULL)
+			args = NULL;
+		return (cp);
+	}
+	if (ftemp == NULL) {
 		len = strlcpy(temp, tmpdir, sizeof(temp));
 		if (temp[len - 1] != '/')
 			(void)strlcat(temp, "/", sizeof(temp));
 		(void)strlcat(temp, TMPFILE, sizeof(temp));
-                if ((fd = mkstemp(temp)) < 0) {
-                        warn("unable to create temporary file %s", temp);
-                        return (NULL);
-                }
-                close(fd);
-                oldverbose = verbose;
+		if ((fd = mkstemp(temp)) < 0) {
+			warn("unable to create temporary file %s", temp);
+			return (NULL);
+		}
+		close(fd);
+		oldverbose = verbose;
 		verbose = (errbuf != NULL) ? -1 : 0;
-                oldhash = hash;
+		oldhash = hash;
 		oldprogress = progress;
-                hash = 0;
+		hash = 0;
 		progress = 0;
-                if (doswitch)
-                        pswitch(!proxy);
-                for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest("NLST", temp, *argv, mode, 0, 0);
+		if (doswitch)
+			pswitch(!proxy);
+		for (mode = "w"; *++argv != NULL; mode = "a")
+			recvrequest("NLST", temp, *argv, mode, 0, 0);
 		if ((code / 100) != COMPLETE) {
 			if (errbuf != NULL)
 				*errbuf = reply_string;
 		}
-                if (doswitch)
-                        pswitch(!proxy);
-                verbose = oldverbose;
+		if (doswitch)
+			pswitch(!proxy);
+		verbose = oldverbose;
 		hash = oldhash;
 		progress = oldprogress;
-                ftemp = fopen(temp, "r");
-                (void)unlink(temp);
-                if (ftemp == NULL) {
+		ftemp = fopen(temp, "r");
+		(void)unlink(temp);
+		if (ftemp == NULL) {
 			if (errbuf == NULL)
 				fputs(
 				    "can't find list of remote files, oops.\n",
@@ -597,17 +597,17 @@ remglob(char *argv[], int doswitch, const char **errbuf)
 			else
 				*errbuf =
 				    "can't find list of remote files, oops.";
-                        return (NULL);
-                }
-        }
-        if (fgets(buf, sizeof(buf), ftemp) == NULL) {
-                (void)fclose(ftemp);
+			return (NULL);
+		}
+	}
+	if (fgets(buf, sizeof(buf), ftemp) == NULL) {
+		(void)fclose(ftemp);
 		ftemp = NULL;
-                return (NULL);
-        }
-        if ((cp = strchr(buf, '\n')) != NULL)
-                *cp = '\0';
-        return (buf);
+		return (NULL);
+	}
+	if ((cp = strchr(buf, '\n')) != NULL)
+		*cp = '\0';
+	return (buf);
 }
 
 /*
