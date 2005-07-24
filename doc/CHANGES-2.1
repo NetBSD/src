@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.154 2005/07/24 14:39:49 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.155 2005/07/24 21:29:42 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3247,4 +3247,13 @@ share/zoneinfo/zone.tab				1.1.1.22
 
 	tzdata2005k import.
 	[kleink, ticket #5521]
+
+usr.bin/gzip/gzexe				1.3
+usr.bin/gzip/gzip.c				1.63-1.66,1.68,1.70-1.72
+usr.bin/gzip/unbzip2.c				1.6-1.7
+usr.bin/gzip/zuncompress.c			1.5
+
+	Synchronize gzip(1) with NetBSD-current. This fixes PRs bin/25403,
+	bin/26812, bin/27153, bin/28779 and bin/29484.
+	[riz, ticket #1111]
 
