@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.141 2004/03/01 00:11:33 perry Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.141.4.1 2005/07/24 01:36:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.141 2004/03/01 00:11:33 perry Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.141.4.1 2005/07/24 01:36:26 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,6 @@ int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 #ifdef INET6
 int	Lflag;
 #endif
-int	reset_if_flags;
 int	explicit_prefix = 0;
 u_int	vlan_tag = (u_int)-1;
 
@@ -417,7 +416,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct ifreq ifreq;
 	int ch;
 
 	/* Parse command-line options */
@@ -686,12 +684,6 @@ main(argc, argv)
 			err(EXIT_FAILURE, "SIOCSIFCAP");
 	}
 
-	if (reset_if_flags) {
-		(void) strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
-		ifreq.ifr_flags = flags;
-		if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifreq) == -1)
-			err(EXIT_FAILURE, "SIOCSIFFLAGS");
-	}
 	exit(0);
 }
 
@@ -1163,8 +1155,6 @@ setifflags(vname, value)
 	ifreq.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifreq) == -1)
 		err(EXIT_FAILURE, "SIOCSIFFLAGS");
-
-	reset_if_flags = 1;
 }
 
 void
