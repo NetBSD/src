@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.725 2005/07/01 19:39:13 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.726 2005/07/25 00:41:48 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.725 2005/07/01 19:37:59 drochner Exp
+ *	NetBSD: pcidevs,v 1.726 2005/07/25 00:41:12 christos Exp
  */
 
 /*
@@ -9108,6 +9108,10 @@ static const struct pci_product pci_products[] = {
 	    "ST201 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST1023,
+	    "ST1023 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST2021,
 	    "ST2021 Gigabit Ethernet",
 	},
@@ -10428,4 +10432,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2025;
+const int pci_nproducts = 2026;
