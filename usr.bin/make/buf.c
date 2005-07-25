@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.17 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.17 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.17 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -105,7 +105,7 @@ __RCSID("$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $");
 #define BufExpand(bp,nb) \
  	while (bp->left < (nb)+1) {\
 	    int newSize = (bp)->size * 2; \
-	    Byte  *newBuf = (Byte *) erealloc((bp)->buffer, newSize); \
+	    Byte  *newBuf = (Byte *)erealloc((bp)->buffer, newSize); \
 	    \
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); \
 	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer);\
@@ -134,7 +134,7 @@ Buf_OvAddByte(Buffer bp, int byte)
 {
     int nbytes = 1;
     bp->left = 0;
-    BufExpand (bp, nbytes);
+    BufExpand(bp, nbytes);
 
     *bp->inPtr++ = byte;
     bp->left--;
@@ -162,9 +162,9 @@ void
 Buf_AddBytes(Buffer bp, int numBytes, const Byte *bytesPtr)
 {
 
-    BufExpand (bp, numBytes);
+    BufExpand(bp, numBytes);
 
-    memcpy (bp->inPtr, bytesPtr, numBytes);
+    memcpy(bp->inPtr, bytesPtr, numBytes);
     bp->inPtr += numBytes;
     bp->left -= numBytes;
 
@@ -302,9 +302,9 @@ Buf_Destroy(Buffer buf, Boolean freeData)
 {
 
     if (freeData) {
-	free ((char *)buf->buffer);
+	free((char *)buf->buffer);
     }
-    free ((char *)buf);
+    free((char *)buf);
 }
 
 /*-

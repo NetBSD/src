@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $	*/
+/*	$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $");
+__RCSID("$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1075,7 +1075,7 @@ CondF(Boolean doEval)
 	    if (l == True) {
 		l = CondF(doEval);
 	    } else {
-		(void) CondF(FALSE);
+		(void)CondF(FALSE);
 	    }
 	} else {
 	    /*
@@ -1122,7 +1122,7 @@ CondE(Boolean doEval)
 	    if (l == False) {
 		l = CondE(doEval);
 	    } else {
-		(void) CondE(FALSE);
+		(void)CondE(FALSE);
 	    }
 	} else {
 	    /*

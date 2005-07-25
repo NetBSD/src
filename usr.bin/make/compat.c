@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -180,7 +180,7 @@ CompatInterrupt(int signo)
 	}
 
     }
-    exit (signo);
+    exit(signo);
 }
 
 /*-
@@ -296,7 +296,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
      * this one. We also print the command if -n given.
      */
     if (!silent || NoExecute(gn)) {
-	printf ("%s\n", cmd);
+	printf("%s\n", cmd);
 	fflush(stdout);
     }
 
@@ -390,13 +390,13 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 			        cp++;
 			    }
 		        }
-			printf ("\n");
+			printf("\n");
 		    }
-		    printf ("*** Error code %d", status);
+		    printf("*** Error code %d", status);
 		}
 	    } else {
 		status = WTERMSIG(reason);		/* signaled */
-		printf ("*** Signal %d", status);
+		printf("*** Signal %d", status);
 	    }
 
 
@@ -408,14 +408,14 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 			 * Abort the current target, but let others
 			 * continue.
 			 */
-			printf (" (continuing)\n");
+			printf(" (continuing)\n");
 		    }
 		} else {
 		    /*
 		     * Continue executing commands for this target.
 		     * If we return 0, this will happen...
 		     */
-		    printf (" (ignored)\n");
+		    printf(" (ignored)\n");
 		    status = 0;
 		}
 	    }
@@ -506,7 +506,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	 * to tell him/her "yes".
 	 */
 	if (queryFlag) {
-	    exit (1);
+	    exit(1);
 	}
 
 	/*
@@ -560,7 +560,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	    pgn->flags &= ~REMAKE;
 	} else {
 	    PrintOnError("\n\nStop.");
-	    exit (1);
+	    exit(1);
 	}
     } else if (gn->made == ERROR) {
 	/*
@@ -674,13 +674,13 @@ Compat_Run(Lst targs)
      */
     errors = 0;
     while (!Lst_IsEmpty (targs)) {
-	gn = (GNode *) Lst_DeQueue(targs);
+	gn = (GNode *)Lst_DeQueue(targs);
 	Compat_Make(gn, gn);
 
 	if (gn->made == UPTODATE) {
-	    printf ("`%s' is up to date.\n", gn->name);
+	    printf("`%s' is up to date.\n", gn->name);
 	} else if (gn->made == ABORTED) {
-	    printf ("`%s' not remade because of errors.\n", gn->name);
+	    printf("`%s' not remade because of errors.\n", gn->name);
 	    errors += 1;
 	}
     }

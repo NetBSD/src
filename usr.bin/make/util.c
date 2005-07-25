@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif
 
@@ -229,7 +229,7 @@ getwd(char *pathname)
 
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
-	(void) sprintf(pathname,
+	(void)sprintf(pathname,
 			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
 	return (NULL);
     }
@@ -240,7 +240,7 @@ getwd(char *pathname)
 
     /* find the inode of the current directory */
     if (lstat(".", &st_cur) == -1) {
-	(void) sprintf(pathname,
+	(void)sprintf(pathname,
 			"getwd: Cannot stat \".\" (%s)", strerror(errno));
 	return (NULL);
     }
@@ -252,19 +252,19 @@ getwd(char *pathname)
 	/* look if we found root yet */
 	if (st_cur.st_ino == st_root.st_ino &&
 	    DEV_DEV_COMPARE(st_cur.st_dev, st_root.st_dev)) {
-	    (void) strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
+	    (void)strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
 	    return (pathname);
 	}
 
 	/* open the parent directory */
 	if (stat(nextpathptr, &st_dotdot) == -1) {
-	    (void) sprintf(pathname,
+	    (void)sprintf(pathname,
 			    "getwd: Cannot stat directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
 	    return (NULL);
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
-	    (void) sprintf(pathname,
+	    (void)sprintf(pathname,
 			    "getwd: Cannot open directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
 	    return (NULL);
@@ -285,12 +285,12 @@ getwd(char *pathname)
 	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
 		    continue;
-		(void) strcpy(cur_name_add, d->d_name);
+		(void)strcpy(cur_name_add, d->d_name);
 		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void) sprintf(pathname,
+		    (void)sprintf(pathname,
 			"getwd: Cannot stat \"%s\" (%s)",
 			d->d_name, strerror(errno));
-		    (void) closedir(dp);
+		    (void)closedir(dp);
 		    return (NULL);
 		}
 		/* check if we found it yet */
@@ -300,16 +300,16 @@ getwd(char *pathname)
 	    }
 	}
 	if (d == NULL) {
-	    (void) sprintf(pathname,
+	    (void)sprintf(pathname,
 		"getwd: Cannot find \".\" in \"..\"");
-	    (void) closedir(dp);
+	    (void)closedir(dp);
 	    return (NULL);
 	}
 	st_cur = st_dotdot;
 	pathptr = strrcpy(pathptr, d->d_name);
 	pathptr = strrcpy(pathptr, "/");
 	nextpathptr = strrcpy(nextpathptr, "../");
-	(void) closedir(dp);
+	(void)closedir(dp);
 	*cur_name_add = '\0';
     }
 } /* end getwd */
@@ -369,7 +369,7 @@ vsnprintf(char *s, size_t n, const char *fmt, va_list args)
 	    fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
 #else
-	(void) vsprintf(s, fmt, args);
+	(void)vsprintf(s, fmt, args);
 	return strlen(s);
 #endif
 }
