@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.29 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.30 2005/07/25 12:52:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -63,9 +63,7 @@ struct wd_softc {
 #define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
 	u_int64_t sc_capacity;
-	int cyl; /* actual drive parameters */
-	int heads;
-	int sectors;
+
 	int retries; /* number of xfer retry */
 
 	void *sc_sdhook;		/* our shutdown hook */
