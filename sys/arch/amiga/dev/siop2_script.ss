@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.4 2001/10/08 21:18:58 is Exp $
+;	$NetBSD: siop2_script.ss,v 1.5 2005/07/25 19:27:42 is Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch
@@ -111,12 +111,12 @@ ext_msg:
 	MOVE FROM ds_ExtMsg, WHEN MSG_IN
 	JUMP REL(neg_msg), IF 0x03	; extended message might be SDTR
 	JUMP REL(neg_msg), IF 0x02	; extended message might be WDTR
-	int err7			; extended message not SDTR
+	INT err7			; extended message not SDTR
 
 neg_msg:
 	CLEAR ACK
 	MOVE FROM ds_NegMsg, WHEN MSG_IN
-	int err11			; Let host handle the message
+	INT err11			; Let host handle the message
 ; If we continue from the interrupt, the host has set up a response
 ; message to be sent.  Set ATN, clear ACK, and continue.
 	SET ATN
@@ -129,7 +129,7 @@ disc:
 	CLEAR ACK
 	WAIT DISCONNECT
 
-	int err2			; signal disconnect w/o save DP
+	INT err2			; signal disconnect w/o save DP
 
 msg_sdp:
 	CLEAR ACK			; acknowledge message
@@ -212,7 +212,7 @@ datain:
 
 end:
 	MOVE FROM ds_Status, WHEN STATUS
-	int err10, WHEN NOT MSG_IN	; status not followed by msg
+	INT err10, WHEN NOT MSG_IN	; status not followed by msg
 	MOVE FROM ds_Msg, WHEN MSG_IN
 	MOVE SCNTL2 & 0x7f TO SCNTL2
 	CLEAR ACK
