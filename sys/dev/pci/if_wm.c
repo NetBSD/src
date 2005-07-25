@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.103 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.104 2005/07/25 18:26:24 ross Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.104 2005/07/25 18:26:24 ross Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1727,7 +1727,7 @@ wm_start(struct ifnet *ifp)
 			 * layer that there are no more slots left.
 			 */
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: need %d (%) descriptors, have %d\n",
+			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed,
 			    sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
@@ -1833,10 +1833,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08x, "
+				    ("%s: TX: desc %d: low 0x%08lx, "
 				     "len 0x%04x\n",
 				    sc->sc_dev.dv_xname, nexttx,
-				    curaddr & 0xffffffffU, curlen, curlen));
+				    curaddr & 0xffffffffUL, (unsigned)curlen));
 			}
 		}
 
