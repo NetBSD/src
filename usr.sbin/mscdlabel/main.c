@@ -1,7 +1,7 @@
-/* $NetBSD: main.c,v 1.2 2004/07/04 14:11:44 drochner Exp $ */
+/* $NetBSD: main.c,v 1.3 2005/07/25 11:26:40 drochner Exp $ */
 
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2005
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,9 +48,76 @@
 #include "dkcksum.h"
 #include "mscdlabel.h"
 
+static int getcdtoc(int);
+static int getfaketoc(int);
 int main(int, char **);
 
-char *disk = "cd0";
+const char *disk = "cd0";
+int ntracks;
+struct cd_toc_entry *tocbuf;
+
+static int
+getcdtoc(int fd)
+{
+	int res;
+	struct ioc_toc_header th;
+	struct ioc_read_toc_entry te;
+	size_t tocbufsize;
+
+	memset(&th, 0, sizeof(th));
+	res = ioctl(fd, CDIOREADTOCHEADER, &th);
+	if (res < 0) {
+		warn("CDIOREADTOCHEADER");
+		return (-1);
+	}
+
+	ntracks = th.ending_track - th.starting_track + 1;
+	/* one more for leadout track, for tracklen calculation */
+	tocbufsize = (ntracks + 1) * sizeof(struct cd_toc_entry);
+	tocbuf = malloc(tocbufsize);
+	if (!tocbuf)
+		err(3, "alloc TOC buffer");
+	memset(&te, 0, sizeof(te));
+	te.address_format = CD_LBA_FORMAT;
+	te.starting_track = th.starting_track; /* always 1 ??? */
+	te.data_len = tocbufsize;
+	te.data = tocbuf;
+	res = ioctl(fd, CDIOREADTOCENTRIES, &te);
+	if (res < 0)
+		err(4, "CDIOREADTOCENTRIES");
+	return (0);
+}
+
+static int
+getfaketoc(int fd)
+{
+	int res;
+	struct stat st;
+
+	res = fstat(fd, &st);
+	if (res < 0)
+		err(4, "fstat");
+
+	if (st.st_size % 2048) {
+		warnx("size not multiple of 2048");
+		return (-1);
+	}
+
+	tocbuf = malloc(2 * sizeof(struct cd_toc_entry));
+	if (!tocbuf)
+		err(3, "alloc TOC buffer");
+
+	/*
+	 * fake up a data track spanning the whole file and a leadout track,
+	 * just as much as necessary for the scan below
+	 */
+	tocbuf[0].addr.lba = 0;
+	tocbuf[0].control = 4;
+	tocbuf[1].addr.lba = st.st_size / 2048;
+	tocbuf[1].control = 0;
+	ntracks = 1;
+	return (0);
+}
 
 int
 main(argc, argv)
@@ -59,11 +126,7 @@ main(argc, argv)
 {
 	int fd, res, i, j, rawpart;
 	char fullname[MAXPATHLEN];
-	struct ioc_toc_header th;
-	struct ioc_read_toc_entry te;
-	int ntracks;
-	size_t tocbufsize;
-	struct cd_toc_entry *tocbuf, *track;
+	struct cd_toc_entry *track;
 	struct disklabel label;
 	struct partition *p;
 	int readonly = 0;
@@ -81,31 +144,23 @@ main(argc, argv)
 	}
 
 	/*
-	 * get the TOC
+	 * Get the TOC: first try to read a real one from a CD drive.
+	 * If this fails we might have something else keeping an ISO image
+	 * (eg. vnd(4) or plain file).
 	 */
-	memset(&th, 0, sizeof(th));
-	res = ioctl(fd, CDIOREADTOCHEADER, &th);
-	if (res < 0)
-		err(2, "CDIOREADTOCHEADER");
-	ntracks = th.ending_track - th.starting_track + 1;
-	/* one more for leadout track, for tracklen calculation */
-	tocbufsize = (ntracks + 1) * sizeof(struct cd_toc_entry);
-	tocbuf = malloc(tocbufsize);
-	if (!tocbuf)
-		err(3, "alloc TOC buffer");
-	memset(&te, 0, sizeof(te));
-	te.address_format = CD_LBA_FORMAT;
-	te.starting_track = th.starting_track; /* always 1 ??? */
-	te.data_len = tocbufsize;
-	te.data = tocbuf;
-	res = ioctl(fd, CDIOREADTOCENTRIES, &te);
-	if (res < 0)
-		err(4, "CDIOREADTOCENTRIES");
+	if (getcdtoc(fd) < 0 && getfaketoc(fd) < 0)
+		exit(2);
 
-	/* get label template */
+	/*
+	 * Get label template. If this fails we might have a plain file.
+	 * Proceed to print out possible ISO label information, but
+	 * don't try to write a label back.
+	 */
 	res = ioctl(fd, DIOCGDINFO, &label);
-	if (res < 0)
-		err(5, "DIOCGDINFO");
+	if (res < 0) {
+		warn("DIOCGDINFO");
+		readonly = 1;
+	}
 
 	/*
 	 * We want entries for the sessions beginning with the most recent
@@ -134,12 +189,14 @@ main(argc, argv)
 				j++;
 		}
 	}
-	if (label.d_npartitions < j)
-		label.d_npartitions = j;
-	strncpy(label.d_packname, "mscdlabel's", 16);
+	if (!j) /* no ISO track, let the label alone */
+		readonly = 1;
 
 	if (!readonly) {
 		/* write back label */
+		if (label.d_npartitions < j)
+			label.d_npartitions = j;
+		strncpy(label.d_packname, "mscdlabel's", 16);
 		label.d_checksum = 0;
 		label.d_checksum = dkcksum(&label);
 		res = ioctl(fd, DIOCSDINFO, &label);
