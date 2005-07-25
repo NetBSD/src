@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.29 2005/07/25 00:41:12 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.30 2005/07/25 05:44:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.29 2005/07/25 00:41:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.30 2005/07/25 05:44:36 kleink Exp $");
 
 #include "bpfilter.h"
 
@@ -583,7 +583,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		    STGE_StationAddress2) & 0xff;
 		enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
 		    STGE_StationAddress2) >> 8;
-	else {
+	} else {
 		uint16_t myaddr[ETHER_ADDR_LEN / 2];
 		for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
 			stge_read_eeprom(sc, STGE_EEPROM_StationAddress0 + i, 
