@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.167 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.168 2005/07/25 11:42:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.167 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.168 2005/07/25 11:42:38 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -743,8 +743,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		}
 		error = bread(devvp, sblock_try[i] / size, SBLOCKSIZE, cred,
 			      &bp);
-		if (error)
+		if (error) {
+			fs = NULL;
 			goto out;
+		}
 		fs = (struct fs*)bp->b_data;
 		fsblockloc = sblockloc = sblock_try[i];
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
