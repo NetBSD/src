@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.561 2005/07/25 12:19:36 hubertf Exp $
+# $NetBSD: mi,v 1.562 2005/07/25 18:34:38 hubertf Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -658,6 +658,8 @@
 ./usr/bin/view					base-util-bin
 ./usr/bin/vis					base-util-bin
 ./usr/bin/vmstat				base-util-bin
+./usr/bin/vndcompress				base-util-bin
+./usr/bin/vnduncompress				base-util-bin
 ./usr/bin/w					base-util-bin
 ./usr/bin/wall					base-util-bin
 ./usr/bin/wc					base-util-bin
@@ -1173,8 +1175,6 @@
 ./usr/sbin/uuchk				base-uucp-bin		uucp
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
-./usr/sbin/vndcompress				base-util-bin
-./usr/sbin/vnduncompress			base-util-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
 ./usr/sbin/wlanctl				base-sysutil-bin
