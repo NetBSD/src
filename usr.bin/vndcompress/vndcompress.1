@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.1.1.1 2005/07/25 12:17:59 hubertf Exp $
+.\"	$NetBSD: vndcompress.1,v 1.2 2005/07/25 12:24:40 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Florian Stoehr <netbsd@wolfnode.de>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nm vnduncompress
 .Nd compress/uncompress file system images to/from cloop2 format
 .Sh SYNOPSIS
-.Nm vndcompress
+.Nm
 .Op Fl cd
 .Ar disk/fs-image
 .Ar compressed-image
@@ -50,7 +50,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-program compresses an existing file system image 
+program compresses an existing file system image
 into a cloop2 compatible compressed file system image.
 An optional blocksize can be given.
 If omitted, the default of 64kB is used.
@@ -63,31 +63,27 @@ regular image.
 The
 file system images that can be handled are not limited to any specific
 file system, i.e. it is possible to handle images e.g. in ISO 9660 or
-UFS/FFS format. 
-File system images in the cloop2 format are intended to be used with
+UFS/FFS format.
+File system images in the cloop2 format are intended to be used with the
 .Xr vnd 4
 driver in compressed mode as configured by the
 .Fl z
 option of the
 .Xr vnconfig 8
-program,
-and later mounted with the appropriate
+program, and later mounted with the appropriate
 .Fl t
 option to
 .Xr mount 8 .
-.Pp
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width indent
 .It Fl c
-Always compresses, even if the programm was ran as
+Always compress, even if the programm was started as
 .Nm vnduncompress .
 .It Fl d
-Always uncompresses (decompresses), even if the program
-was ran as
-.Nm vndcompress.
+Always uncompress (decompress), even if the program was started as
+.Nm .
 .El
-.Pp
 .Sh EXIT STATUS
 The
 .Nm
@@ -108,11 +104,13 @@ commands:
 .Ed
 .Pp
 Note that the resulting compressed image cannot be mounted directly
-via NetBSD's
+via
+.Nx Ap s
 .Xr vnd 4
 and
 .Xr mount_cd9660 8
-command any longer. Instead, you will have to use the
+commands any longer.
+Instead, you will have to use the
 .Fl z
 option of
 .Xr vnconfig 8 .
@@ -139,9 +137,11 @@ boot      etc       initrd    none      root      tmp       vmlinuz
 .Pp
 As an alternative, if your
 .Xr vnd 4
-was compiled with VND_COMPRESSION, you can use
+was compiled with
+.Dv VND_COMPRESSION ,
+you can use
 .Xr vnconfig 8
-to access the cloop-compressed image directly, e.g.
+to access the cloop-compressed image directly, e.g.,
 .Bd -literal -offset indent
 # vnconfig vnd0 KNOPPIX.iso
 # mount -t cd9660 -o ro /dev/vnd0d /mnt
@@ -161,10 +161,10 @@ Filesystem    Size      Used     Avail Capacity  Mounted on
 # vnconfig -u vnd0
 .Ed
 .Pp
-Note how the 1.9GB big filesystem on 
+Note how the 1.9GB big filesystem on
 .Pa /mnt2
 is mounted from the compressed file stored on the 692MB CD mounted
-on 
+on
 .Pa /mnt .
 To create a compressed file system image of an existing
 directory and mount it, run:
@@ -190,6 +190,7 @@ To undo the steps, run:
 .Xr mount_cd9660 8 ,
 .Xr vnconfig 8
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 utility was written by
