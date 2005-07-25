@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.1.1.1 2005/07/25 12:17:59 hubertf Exp $ */
+/* $Id: vndcompress.c,v 1.2 2005/07/25 12:25:54 wiz Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -70,9 +70,9 @@ void
 usage(void)
 {
 	if (opmode == OM_COMPRESS) {
-		printf("usage: vndcompress disk/fs-image compressed-image [blocksize]\n");
+		printf("usage: vndcompress [-cd] disk/fs-image compressed-image [blocksize]\n");
 	} else {
-		printf("usage: vnduncompress compressed-image disk/fs-image\n");
+		printf("usage: vnduncompress [-cd] compressed-image disk/fs-image\n");
 	}
 			   
 	exit(EXIT_FAILURE);
