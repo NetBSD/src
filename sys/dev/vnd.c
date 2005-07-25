@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.117 2005/07/18 16:36:29 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.118 2005/07/25 13:25:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.117 2005/07/18 16:36:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.118 2005/07/25 13:25:08 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -327,7 +327,7 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	 * If we're initialized, check to see if there are any other
 	 * open partitions.  If not, then it's safe to update the
 	 * in-core disklabel.  Only read the disklabel if it is
-	 * not realdy valid.
+	 * not already valid.
 	 */
 	if ((sc->sc_flags & (VNF_INITED|VNF_VLABEL)) == VNF_INITED &&
 	    sc->sc_dkdev.dk_openmask == 0)
@@ -394,11 +394,6 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 	}
 	sc->sc_dkdev.dk_openmask =
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
-
-	if (sc->sc_dkdev.dk_openmask == 0) {
-		if ((sc->sc_flags & VNF_KLABEL) == 0)
-			sc->sc_flags &= ~VNF_VLABEL;
-	}
 
 	vndunlock(sc);
 	return (0);
@@ -1041,20 +1036,20 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = EINVAL;
 				goto close_and_exit;
 			}
-		} else {
+		} else if (vnd->sc_size >= (32 * 64)) {
 			/*
 			 * Size must be at least 2048 DEV_BSIZE blocks
 			 * (1M) in order to use this geometry.
 			 */
-			if (vnd->sc_size < (32 * 64)) {
-				error = EINVAL;
-				goto close_and_exit;
-			}
-
 			vnd->sc_geom.vng_secsize = DEV_BSIZE;
 			vnd->sc_geom.vng_nsectors = 32;
 			vnd->sc_geom.vng_ntracks = 64;
 			vnd->sc_geom.vng_ncylinders = vnd->sc_size / (64 * 32);
+		} else {
+			vnd->sc_geom.vng_secsize = DEV_BSIZE;
+			vnd->sc_geom.vng_nsectors = 1;
+			vnd->sc_geom.vng_ntracks = 1;
+			vnd->sc_geom.vng_ncylinders = vnd->sc_size;
 		}
 
 		if (vio->vnd_flags & VNDIOF_READONLY) {
