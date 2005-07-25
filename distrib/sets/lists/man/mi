@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.810 2005/07/25 12:19:37 hubertf Exp $
+# $NetBSD: mi,v 1.811 2005/07/25 18:34:38 hubertf Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -466,6 +466,8 @@
 ./usr/share/man/cat1/view.0			man-util-catman		.cat
 ./usr/share/man/cat1/vis.0			man-util-catman		.cat
 ./usr/share/man/cat1/vmstat.0			man-util-catman		.cat
+./usr/share/man/cat1/vndcompress.0		man-util-catman		.cat
+./usr/share/man/cat1/vnduncompress.0		man-util-catman		.cat
 ./usr/share/man/cat1/w.0			man-util-catman		.cat
 ./usr/share/man/cat1/wait.0			man-util-catman		.cat
 ./usr/share/man/cat1/wall.0			man-util-catman		.cat
@@ -2239,8 +2241,6 @@
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/vndcompress.0		man-util-catman		.cat
-./usr/share/man/cat8/vnduncompress.0		man-util-catman		.cat
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/walnut/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman	.cat
@@ -2713,6 +2713,8 @@
 ./usr/share/man/man1/view.1			man-util-man		.man
 ./usr/share/man/man1/vis.1			man-util-man		.man
 ./usr/share/man/man1/vmstat.1			man-util-man		.man
+./usr/share/man/man1/vndcompress.1		man-util-man		.man
+./usr/share/man/man1/vnduncompress.1		man-util-man		.man
 ./usr/share/man/man1/w.1			man-util-man		.man
 ./usr/share/man/man1/wait.1			man-util-man		.man
 ./usr/share/man/man1/wall.1			man-util-man		.man
@@ -4490,8 +4492,6 @@
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
-./usr/share/man/man8/vndcompress.8		man-util-man		.man
-./usr/share/man/man8/vnduncompress.8		man-util-man		.man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/walnut/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man		.man
