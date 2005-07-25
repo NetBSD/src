@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.2 2005/07/24 21:31:02 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.3 2005/07/25 06:22:09 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1146,7 +1146,7 @@ deldev(const char *name, const char *at)
 				nv->nv_next = onv->nv_next;
 				nvfree(onv);
 				break;
-			} if (nv->nv_ptr = i) {
+			} if (nv->nv_ptr == i) {
 				/* nv is p->p_devs in that case */
 				p->p_devs = nv->nv_next;
 				nvfree(nv);
