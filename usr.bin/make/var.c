@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -374,7 +374,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
     if ((var == NULL) && (flags & FIND_ENV)) {
 	char *env;
 
-	if ((env = getenv (name)) != NULL) {
+	if ((env = getenv(name)) != NULL) {
 	    int	  	len;
 
 	    v = emalloc(sizeof(Var));
@@ -402,7 +402,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
     } else if (var == NULL) {
 	return ((Var *) NIL);
     } else {
-	return ((Var *) Hash_GetValue(var));
+	return ((Var *)Hash_GetValue(var));
     }
 }
 
@@ -604,7 +604,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name,
-		   (char *) Buf_GetAll(v->val, (int *)NULL));
+		   (char *)Buf_GetAll(v->val, (int *)NULL));
 	}
 
 	if (v->flags & VAR_FROM_ENV) {
@@ -722,13 +722,13 @@ VarHead(GNode *ctx __unused, Var_Parse_State *vpstate,
 {
     char *slash;
 
-    slash = strrchr (word, '/');
+    slash = strrchr(word, '/');
     if (slash != (char *)NULL) {
 	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte (buf, vpstate->varSpace);
+	    Buf_AddByte(buf, vpstate->varSpace);
 	}
 	*slash = '\0';
-	Buf_AddBytes(buf, strlen (word), (Byte *)word);
+	Buf_AddBytes(buf, strlen(word), (Byte *)word);
 	*slash = '/';
 	return (TRUE);
     } else {
@@ -771,10 +771,10 @@ VarTail(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *slash;
 
     if (addSpace && vpstate->varSpace) {
-	Buf_AddByte (buf, vpstate->varSpace);
+	Buf_AddByte(buf, vpstate->varSpace);
     }
 
-    slash = strrchr (word, '/');
+    slash = strrchr(word, '/');
     if (slash != (char *)NULL) {
 	*slash++ = '\0';
 	Buf_AddBytes(buf, strlen(slash), (Byte *)slash);
@@ -812,13 +812,13 @@ VarSuffix(GNode *ctx __unused, Var_Parse_State *vpstate,
 {
     char *dot;
 
-    dot = strrchr (word, '.');
+    dot = strrchr(word, '.');
     if (dot != (char *)NULL) {
 	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte (buf, vpstate->varSpace);
+	    Buf_AddByte(buf, vpstate->varSpace);
 	}
 	*dot++ = '\0';
-	Buf_AddBytes(buf, strlen (dot), (Byte *)dot);
+	Buf_AddBytes(buf, strlen(dot), (Byte *)dot);
 	dot[-1] = '.';
 	addSpace = TRUE;
     }
@@ -854,13 +854,13 @@ VarRoot(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *dot;
 
     if (addSpace && vpstate->varSpace) {
-	Buf_AddByte (buf, vpstate->varSpace);
+	Buf_AddByte(buf, vpstate->varSpace);
     }
 
-    dot = strrchr (word, '.');
+    dot = strrchr(word, '.');
     if (dot != (char *)NULL) {
 	*dot = '\0';
-	Buf_AddBytes(buf, strlen (word), (Byte *)word);
+	Buf_AddBytes(buf, strlen(word), (Byte *)word);
 	*dot = '.';
     } else {
 	Buf_AddBytes(buf, strlen(word), (Byte *)word);
@@ -1465,8 +1465,8 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     free(as);
     free(av);
 
-    Buf_AddByte (buf, '\0');
-    as = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_AddByte(buf, '\0');
+    as = (char *)Buf_GetAll(buf, (int *)NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1526,8 +1526,8 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
     free(as);
     free(av);
 
-    Buf_AddByte (buf, '\0');
-    as = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_AddByte(buf, '\0');
+    as = (char *)Buf_GetAll(buf, (int *)NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1599,14 +1599,14 @@ VarOrder(const char *str, const char otype)
     for (i = 0; i < ac; i++) {
 	Buf_AddBytes(buf, strlen(av[i]), (Byte *) av[i]);
 	if (i != ac - 1)
-	    Buf_AddByte (buf, ' ');
+	    Buf_AddByte(buf, ' ');
     }
 
     free(as);
     free(av);
 
-    Buf_AddByte (buf, '\0');
-    as = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_AddByte(buf, '\0');
+    as = (char *)Buf_GetAll(buf, (int *)NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1779,7 +1779,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
     else {
 	char *rstr;
 	*tstr = ++cp;
-	rstr = (char *) Buf_GetAll(buf, length);
+	rstr = (char *)Buf_GetAll(buf, length);
 	*length -= 1;	/* Don't count the NULL */
 	Buf_Destroy(buf, FALSE);
 	return rstr;
@@ -1814,7 +1814,7 @@ VarQuote(char *str)
 	Buf_AddByte(buf, (Byte)*str);
     }
     Buf_AddByte(buf, (Byte) '\0');
-    str = (char *)Buf_GetAll (buf, (int *)NULL);
+    str = (char *)Buf_GetAll(buf, (int *)NULL);
     Buf_Destroy(buf, FALSE);
     return str;
 }
@@ -1848,7 +1848,7 @@ VarChangeCase(char *str, int upper)
        Buf_AddByte(buf, (Byte) modProc(*str));
    }
    Buf_AddByte(buf, (Byte) '\0');
-   str = (char *) Buf_GetAll(buf, (int *) NULL);
+   str = (char *)Buf_GetAll(buf, (int *) NULL);
    Buf_Destroy(buf, FALSE);
    return str;
 }
@@ -2150,7 +2150,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      * return.
      */
     nstr = (char *)Buf_GetAll(v->val, (int *)NULL);
-    if (strchr (nstr, '$') != (char *)NULL) {
+    if (strchr(nstr, '$') != (char *)NULL) {
 	nstr = Var_Subst(NULL, nstr, ctxt, err);
 	*freePtr = TRUE;
     }
@@ -3152,7 +3152,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 
 	    if (newStr != nstr) {
 		if (*freePtr) {
-		    free (nstr);
+		    free(nstr);
 		}
 		nstr = newStr;
 		if (nstr != var_Error && nstr != varNoError) {
@@ -3379,7 +3379,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		    str += length;
 		    errorReported = TRUE;
 		} else {
-		    Buf_AddByte (buf, (Byte)*str);
+		    Buf_AddByte(buf, (Byte)*str);
 		    str += 1;
 		}
 	    } else {
@@ -3397,14 +3397,14 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		Buf_AddBytes(buf, length, (Byte *)val);
 		trailingBslash = length > 0 && val[length - 1] == '\\';
 		if (doFree) {
-		    free ((Address)val);
+		    free((Address)val);
 		}
 	    }
 	}
     }
 
-    Buf_AddByte (buf, '\0');
-    val = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_AddByte(buf, '\0');
+    val = (char *)Buf_GetAll(buf, (int *)NULL);
     Buf_Destroy(buf, FALSE);
     return (val);
 }
@@ -3490,7 +3490,7 @@ static void
 VarPrintVar(ClientData vp)
 {
     Var    *v = (Var *) vp;
-    printf ("%-16s = %s\n", v->name, (char *) Buf_GetAll(v->val, (int *)NULL));
+    printf("%-16s = %s\n", v->name, (char *)Buf_GetAll(v->val, (int *)NULL));
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -313,7 +313,7 @@ rearg:
 		case 'L':
 			maxLocal = strtol(optarg, &p, 0);
 			if (*p != '\0' || maxLocal < 1) {
-			    (void) fprintf(stderr, "%s: illegal argument to -L -- must be positive integer!\n",
+			    (void)fprintf(stderr, "%s: illegal argument to -L -- must be positive integer!\n",
 				progname);
 			    exit(1);
 			}
@@ -435,7 +435,7 @@ rearg:
 			forceJobs = TRUE;
 			maxJobs = strtol(optarg, &p, 0);
 			if (*p != '\0' || maxJobs < 1) {
-				(void) fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
+				(void)fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
 				    progname);
 				exit(1);
 			}
@@ -455,10 +455,10 @@ rearg:
 				if (!Dir_FindHereOrAbove(curdir, optarg+4,
 				    found_path, sizeof(found_path)))
 					break;		/* nothing doing */
-				(void) Dir_AddDir(sysIncPath, found_path);
+				(void)Dir_AddDir(sysIncPath, found_path);
 				
 			} else {
-				(void) Dir_AddDir(sysIncPath, optarg);
+				(void)Dir_AddDir(sysIncPath, optarg);
 			}
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
@@ -656,7 +656,7 @@ main(int argc, char **argv)
 		if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
 		    rl.rlim_cur != rl.rlim_max) {
 			rl.rlim_cur = rl.rlim_max;
-			(void) setrlimit(RLIMIT_NOFILE, &rl);
+			(void)setrlimit(RLIMIT_NOFILE, &rl);
 		}
 	}
 #endif
@@ -691,7 +691,7 @@ main(int argc, char **argv)
 		if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
 			if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
 			    sa.st_dev == sb.st_dev)
-				(void) strncpy(curdir, pwd, MAXPATHLEN);
+				(void)strncpy(curdir, pwd, MAXPATHLEN);
 		}
 	}
 
@@ -757,19 +757,19 @@ main(int argc, char **argv)
 	 * of these paths exist, just use .CURDIR.
 	 */
 	Dir_Init(curdir);
-	(void) Main_SetObjdir(curdir);
+	(void)Main_SetObjdir(curdir);
 
 	if ((path = getenv("MAKEOBJDIRPREFIX")) != NULL) {
-		(void) snprintf(mdpath, MAXPATHLEN, "%s%s", path, curdir);
-		(void) Main_SetObjdir(mdpath);
+		(void)snprintf(mdpath, MAXPATHLEN, "%s%s", path, curdir);
+		(void)Main_SetObjdir(mdpath);
 	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
-		(void) Main_SetObjdir(path);
+		(void)Main_SetObjdir(path);
 	} else {
-		(void) snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
+		(void)snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
 		if (!Main_SetObjdir(mdpath) && !Main_SetObjdir(_PATH_OBJDIR)) {
-			(void) snprintf(mdpath, MAXPATHLEN, "%s%s", 
+			(void)snprintf(mdpath, MAXPATHLEN, "%s%s", 
 					_PATH_OBJDIRPREFIX, curdir);
-			(void) Main_SetObjdir(mdpath);
+			(void)Main_SetObjdir(mdpath);
 		}
 	}
 
@@ -890,11 +890,11 @@ main(int argc, char **argv)
 		}
 		/* look for magic parent directory search string */
 		if (strncmp(".../", start, 4) != 0) {
-			(void) Dir_AddDir(defIncPath, start);
+			(void)Dir_AddDir(defIncPath, start);
 		} else {
 			if (Dir_FindHereOrAbove(curdir, start+4, 
 			    found_path, sizeof(found_path))) {
-				(void) Dir_AddDir(defIncPath, found_path);
+				(void)Dir_AddDir(defIncPath, found_path);
 			}
 		}
 	}
@@ -974,7 +974,7 @@ main(int argc, char **argv)
 			savec = *cp;
 			*cp = '\0';
 			/* Add directory to search path */
-			(void) Dir_AddDir(dirSearchPath, path);
+			(void)Dir_AddDir(dirSearchPath, path);
 			*cp = savec;
 			path = cp + 1;
 		} while (savec == ':');
@@ -1385,17 +1385,17 @@ Cmd_Exec(const char *cmd, const char **err)
 	/*
 	 * Close input side of pipe
 	 */
-	(void) close(fds[0]);
+	(void)close(fds[0]);
 
 	/*
 	 * Duplicate the output stream to the shell's output, then
 	 * shut the extra thing down. Note we don't fetch the error
 	 * stream...why not? Why?
 	 */
-	(void) dup2(fds[1], 1);
-	(void) close(fds[1]);
+	(void)dup2(fds[1], 1);
+	(void)close(fds[1]);
 
-	(void) execv(shellPath, UNCONST(args));
+	(void)execv(shellPath, UNCONST(args));
 	_exit(1);
 	/*NOTREACHED*/
 
@@ -1407,7 +1407,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	/*
 	 * No need for the writing half
 	 */
-	(void) close(fds[1]);
+	(void)close(fds[1]);
 
 	buf = Buf_Init(MAKE_BSIZE);
 
@@ -1422,7 +1422,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	/*
 	 * Close the input side of the pipe.
 	 */
-	(void) close(fds[0]);
+	(void)close(fds[0]);
 
 	/*
 	 * Wait for the process to exit.
@@ -1430,7 +1430,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	while(((pid = wait(&status)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = (char *)Buf_GetAll (buf, &cc);
+	res = (char *)Buf_GetAll(buf, &cc);
 	Buf_Destroy(buf, FALSE);
 
 	if (cc == 0)
@@ -1679,7 +1679,7 @@ execError(const char *af, const char *av)
 	    iov[i].iov_len = strlen(iov[i].iov_base), \
 	    i++)
 #else
-#define	IOADD (void)write(2, s, strlen(s))
+#define	IOADD(void)write(2, s, strlen(s))
 #endif
 
 	IOADD(progname);

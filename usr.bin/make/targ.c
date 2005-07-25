@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.34 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.34 2005/02/16 15:11:53 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.34 2005/02/16 15:11:53 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -338,9 +338,9 @@ Targ_FindNode(const char *name, int flags)
 	he = Hash_CreateEntry(&targets, name, &isNew);
 	if (isNew) {
 	    gn = Targ_NewGN(name);
-	    Hash_SetValue (he, gn);
+	    Hash_SetValue(he, gn);
 	    Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
-	    (void) Lst_AtEnd(allTargets, (ClientData)gn);
+	    (void)Lst_AtEnd(allTargets, (ClientData)gn);
 	}
     } else {
 	he = Hash_FindEntry(&targets, name);
@@ -349,7 +349,7 @@ Targ_FindNode(const char *name, int flags)
     if (he == (Hash_Entry *) NULL) {
 	return (NILGNODE);
     } else {
-	return ((GNode *) Hash_GetValue (he));
+	return ((GNode *)Hash_GetValue(he));
     }
 }
 
@@ -394,7 +394,7 @@ Targ_FindList(Lst names, int flags)
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.
 	     */
-	    (void) Lst_AtEnd(nodes, (ClientData)gn);
+	    (void)Lst_AtEnd(nodes, (ClientData)gn);
 	} else if (flags == TARG_NOCREATE) {
 	    Error("\"%s\" -- target unknown.", name);
 	}
@@ -507,14 +507,14 @@ static int
 TargPrintName(ClientData gnp, ClientData ppath)
 {
     GNode *gn = (GNode *) gnp;
-    printf ("%s ", gn->name);
+    printf("%s ", gn->name);
 #ifdef notdef
     if (ppath) {
 	if (gn->path) {
-	    printf ("[%s]  ", gn->path);
+	    printf("[%s]  ", gn->path);
 	}
 	if (gn == mainTarg) {
-	    printf ("(MAIN NAME)  ");
+	    printf("(MAIN NAME)  ");
 	}
     }
 #endif /* notdef */
@@ -525,7 +525,7 @@ TargPrintName(ClientData gnp, ClientData ppath)
 int
 Targ_PrintCmd(ClientData cmd, ClientData dummy)
 {
-    printf ("\t%s\n", (char *) cmd);
+    printf("\t%s\n", (char *) cmd);
     return (dummy ? 0 : 0);
 }
 
@@ -572,7 +572,7 @@ Targ_PrintType(int type)
     int    tbit;
 
 #define PRINTBIT(attr)	case CONCAT(OP_,attr): printf("." #attr " "); break
-#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG)) printf("." #attr " "); break
+#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))printf("." #attr " "); break
 
     type &= ~OP_OPMASK;
 
@@ -593,7 +593,7 @@ Targ_PrintType(int type)
 	    PRINTBIT(NOTMAIN);
 	    PRINTDBIT(LIB);
 	    /*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-	    case OP_MEMBER: if (DEBUG(TARG)) printf(".MEMBER "); break;
+	    case OP_MEMBER: if (DEBUG(TARG))printf(".MEMBER "); break;
 	    PRINTDBIT(ARCHV);
 	    PRINTDBIT(MADE);
 	    PRINTDBIT(PHONY);
@@ -644,13 +644,13 @@ TargPrintNode(ClientData gnp, ClientData passp)
 	    if (!Lst_IsEmpty (gn->iParents)) {
 		printf("# implicit parents: ");
 		Lst_ForEach(gn->iParents, TargPrintName, (ClientData)0);
-		fputc ('\n', stdout);
+		fputc('\n', stdout);
 	    }
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
 	    Lst_ForEach(gn->parents, TargPrintName, (ClientData)0);
-	    fputc ('\n', stdout);
+	    fputc('\n', stdout);
 	}
 
 	printf("%-16s", gn->name);
@@ -664,7 +664,7 @@ TargPrintNode(ClientData gnp, ClientData passp)
 	}
 	Targ_PrintType(gn->type);
 	Lst_ForEach(gn->children, TargPrintName, (ClientData)0);
-	fputc ('\n', stdout);
+	fputc('\n', stdout);
 	Lst_ForEach(gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
