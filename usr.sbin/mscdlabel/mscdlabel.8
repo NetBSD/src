@@ -1,6 +1,6 @@
-.\" $NetBSD: mscdlabel.8,v 1.3 2004/07/04 14:11:44 drochner Exp $
+.\" $NetBSD: mscdlabel.8,v 1.4 2005/07/25 11:26:40 drochner Exp $
 .\"
-.Dd June 30, 2004
+.Dd July 25, 2005
 .Dt MSCDLABEL 8
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nd generate disk label from CD track information
 .Sh SYNOPSIS
 .Nm
-.Op Ar device
+.Op Ar device | file
 .Sh DESCRIPTION
 .Nm
 is used to generate a
@@ -27,6 +27,14 @@ The raw partition (typically partition
 but
 .Em d
 on i386 and some other platforms) is left alone during this process.
+.Pp
+The
+.Nm
+utility can also be used on files or non-CD devices.
+In this case a single track is assumed.
+If the device supports disk labels, a label will be written
+as described above. Otherwise, just the ISO volume label
+information will be printed.
 .Sh SEE ALSO
 .Xr cdplay 1 ,
 .Xr disklabel 8 ,
