@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.562 2005/07/25 18:34:38 hubertf Exp $
+# $NetBSD: mi,v 1.563 2005/07/25 19:58:32 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2862,6 +2862,7 @@
 ./usr/share/wscons/keymaps			base-util-share
 ./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
+./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-util-share		share
