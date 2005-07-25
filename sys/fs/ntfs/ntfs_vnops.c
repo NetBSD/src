@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.21 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.22 2005/07/25 00:48:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.21 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.22 2005/07/25 00:48:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,9 +156,9 @@ ntfs_read(ap)
 	u_int64_t toread;
 	int error;
 
-	dprintf(("ntfs_read: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
+	dprintf(("ntfs_read: ino: %d, off: %qd resid: %qd, segflg: %d\n",ip->i_number,(long long)uio->uio_offset,(long long)uio->uio_resid,uio->uio_segflg));
 
-	dprintf(("ntfs_read: filesize: %d",(u_int32_t)fp->f_size));
+	dprintf(("ntfs_read: filesize: %qu",(long long)fp->f_size));
 
 	/* don't allow reading after end of file */
 	if (uio->uio_offset > fp->f_size)
@@ -166,7 +166,7 @@ ntfs_read(ap)
 	else
 		toread = MIN(uio->uio_resid, fp->f_size - uio->uio_offset );
 
-	dprintf((", toread: %d\n",(u_int32_t)toread));
+	dprintf((", toread: %qu\n",(long long)toread));
 
 	if (toread == 0)
 		return (0);
@@ -416,8 +416,8 @@ ntfs_write(ap)
 	size_t written;
 	int error;
 
-	dprintf(("ntfs_write: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
-	dprintf(("ntfs_write: filesize: %d",(u_int32_t)fp->f_size));
+	dprintf(("ntfs_write: ino: %d, off: %qd resid: %qd, segflg: %d\n",ip->i_number,(long long)uio->uio_offset,(long long)uio->uio_resid,uio->uio_segflg));
+	dprintf(("ntfs_write: filesize: %qu",(long long)fp->f_size));
 
 	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
 		printf("ntfs_write: CAN'T WRITE BEYOND END OF FILE\n");
@@ -426,7 +426,7 @@ ntfs_write(ap)
 
 	towrite = MIN(uio->uio_resid, fp->f_size - uio->uio_offset);
 
-	dprintf((", towrite: %d\n",(u_int32_t)towrite));
+	dprintf((", towrite: %qu\n",(long long)towrite));
 
 	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
 		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
@@ -586,7 +586,7 @@ ntfs_readdir(ap)
 	struct dirent *cde;
 	off_t off;
 
-	dprintf(("ntfs_readdir %d off: %d resid: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid));
+	dprintf(("ntfs_readdir %d off: %qd resid: %qd\n",ip->i_number,(long long)uio->uio_offset,(long long)uio->uio_resid));
 
 	off = uio->uio_offset;
 
@@ -673,8 +673,8 @@ ntfs_readdir(ap)
 
 	dprintf(("ntfs_readdir: %d entries (%d bytes) read\n",
 		ncookies,(u_int)(uio->uio_offset - off)));
-	dprintf(("ntfs_readdir: off: %d resid: %d\n",
-		(u_int32_t)uio->uio_offset,uio->uio_resid));
+	dprintf(("ntfs_readdir: off: %qd resid: %qu\n",
+		(long long)uio->uio_offset,(long long)uio->uio_resid));
 
 	if (!error && ap->a_ncookies != NULL) {
 		struct dirent* dpStart;
