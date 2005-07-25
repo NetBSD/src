@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.174 2005/07/07 00:01:32 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.175 2005/07/25 17:32:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.174 2005/07/07 00:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.175 2005/07/25 17:32:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2270,7 +2270,7 @@ ttwakeup(struct tty *tp)
 
 	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
-		pgsignal(tp->t_pgrp, SIGIO, 1);
+		pgsignal(tp->t_pgrp, SIGIO, tp->t_session != NULL);
 	wakeup((caddr_t)&tp->t_rawq);
 }
 
