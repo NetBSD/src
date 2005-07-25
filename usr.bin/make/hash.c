@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.14 2005/02/16 15:11:52 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.15 2005/07/25 22:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.14 2005/02/16 15:11:52 christos Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.15 2005/07/25 22:55:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.14 2005/02/16 15:11:52 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.15 2005/07/25 22:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -293,7 +293,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	*hp = e;
 	e->clientData = NULL;
 	e->namehash = h;
-	(void) strcpy(e->name, p);
+	(void)strcpy(e->name, p);
 	t->numEntries++;
 
 	if (newPtr != NULL)
@@ -334,7 +334,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 			return;
 		}
 	}
-	(void) write(2, "bad call to Hash_DeleteEntry\n", 29);
+	(void)write(2, "bad call to Hash_DeleteEntry\n", 29);
 	abort();
 }
 
@@ -448,7 +448,7 @@ RebuildTable(Hash_Table *t)
 	i <<= 1;
 	t->size = i;
 	t->mask = mask = i - 1;
-	t->bucketPtr = hp = (struct Hash_Entry **) emalloc(sizeof(*hp) * i);
+	t->bucketPtr = hp = (struct Hash_Entry **)emalloc(sizeof(*hp) * i);
 	while (--i >= 0)
 		*hp++ = NULL;
 	for (hp = oldhp, i = oldsize; --i >= 0;) {
