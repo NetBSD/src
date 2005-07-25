@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.727 2005/07/01 19:39:13 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.728 2005/07/25 00:41:48 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.725 2005/07/01 19:37:59 drochner Exp
+ *	NetBSD: pcidevs,v 1.726 2005/07/25 00:41:12 christos Exp
  */
 
 /*
@@ -2724,6 +2724,7 @@
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */
+#define	PCI_PRODUCT_SUNDANCETI_ST1023	0x1023		/* ST1023 Gigabit Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST2021	0x2021		/* ST2021 Gigabit Ethernet */
 
 /* Surecom Technology products */
