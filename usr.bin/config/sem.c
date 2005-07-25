@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.3 2005/07/25 06:22:09 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.4 2005/07/25 22:31:07 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1093,44 +1093,46 @@ deldev(const char *name, const char *at)
 		 * A double-linked list would make this much easier.  Oh, well,
 		 * what is done is done.
 		 */
-		ppi = &d->d_ihead;
 		for (ppi = &d->d_ihead;
 		    *ppi != NULL && *ppi != i && (*ppi)->i_bsame != i;
 		    ppi = &(*ppi)->i_bsame);
 		if (*ppi == NULL)
-			panic("deldev: dev (%s) doesn't list the devi (%s at %s)",
-			    d->d_name, i->i_name, i->i_at);
-		if (*ppi == i)
+			panic("deldev: dev (%s) doesn't list the devi"
+			    " (%s at %s)", d->d_name, i->i_name, i->i_at);
+		previ = *ppi;
+		if (previ == i)
+			/* That implies d->d_ihead == i */
 			*ppi = i->i_bsame;
 		else
 			(*ppi)->i_bsame = i->i_bsame;
 		if (d->d_ipp == &i->i_bsame) {
-			if (d->d_ihead == i)
+			if (previ == i)
 				d->d_ipp = &d->d_ihead;
 			else
-				d->d_ipp = &(*ppi)->i_bsame;
+				d->d_ipp = &previ->i_bsame;
 		}
 	}
 	/*
 	 *   - delete the attachment instance
 	 */
 	iba = i->i_atdeva;
-	ppi = &iba->d_ihead;
 	for (ppi = &iba->d_ihead;
 	    *ppi != NULL && *ppi != i && (*ppi)->i_asame != i;
 	    ppi = &(*ppi)->i_asame);
 	if (*ppi == NULL)
 		panic("deldev: deva (%s) doesn't list the devi (%s)",
 		    iba->d_name, i->i_name);
-	if (*ppi == i)
+	previ = *ppi;
+	if (previ == i)
+		/* That implies iba->d_ihead == i */
 		*ppi = i->i_asame;
 	else
 		(*ppi)->i_asame = i->i_asame;
 	if (iba->d_ipp == &i->i_asame) {
-		if (iba->d_ihead == i)
+		if (previ == i)
 			iba->d_ipp = &iba->d_ihead;
 		else
-			iba->d_ipp = &(*ppi)->i_asame;
+			iba->d_ipp = &previ->i_asame;
 	}
 	/*
 	 *   - delete the pspec
