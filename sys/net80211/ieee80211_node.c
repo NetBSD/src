@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.41 2005/07/05 19:56:04 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.42 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.43 2005/02/10 16:59:04 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.48 2005/07/06 01:51:44 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.41 2005/07/05 19:56:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.42 2005/07/26 22:52:48 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -69,6 +69,16 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.41 2005/07/05 19:56:04 dyoung E
 #include <netinet/in.h> 
 #include <net/if_ether.h>
 #endif
+
+/*
+ * Association id's are managed with a bit vector.
+ */
+#define	IEEE80211_AID_SET(b, w) \
+	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
+#define	IEEE80211_AID_CLR(b, w) \
+	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
+#define	IEEE80211_AID_ISSET(b, w) \
+	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
 static struct ieee80211_node *node_alloc(struct ieee80211_node_table *);
 static void node_cleanup(struct ieee80211_node *);
@@ -885,6 +895,13 @@ node_cleanup(struct ieee80211_node *ni)
 		    "[%s] power save mode off, %u sta's in ps mode\n",
 		    ether_sprintf(ni->ni_macaddr), ic->ic_ps_sta);
 	}
+	/*
+	 * Clear AREF flag that marks the authorization refcnt bump
+	 * has happened.  This is probably not needed as the node
+	 * should always be removed from the table so not found but
+	 * do it just in case.
+	 */
+	ni->ni_flags &= ~IEEE80211_NODE_AREF;
 
 	/*
 	 * Drain power save queue and, if needed, clear TIM.
@@ -1269,31 +1286,46 @@ ieee80211_find_node_with_ssid(struct ieee80211_node_table *nt,
 	const u_int8_t *macaddr, u_int ssidlen, const u_int8_t *ssid)
 #endif
 {
+#define	MATCH_SSID(ni, ssid, ssidlen) \
+	(ni->ni_esslen == ssidlen && memcmp(ni->ni_essid, ssid, ssidlen) == 0)
+	static const u_int8_t zeromac[IEEE80211_ADDR_LEN];
 	struct ieee80211com *ic = nt->nt_ic;
 	struct ieee80211_node *ni;
 	int hash;
 
-	hash = IEEE80211_NODE_HASH(macaddr);
 	IEEE80211_NODE_LOCK(nt);
-	LIST_FOREACH(ni, &nt->nt_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
-		    ni->ni_esslen == ic->ic_des_esslen &&
-		    memcmp(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen) == 0) {
-			ieee80211_ref_node(ni);		/* mark referenced */
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
-#ifdef IEEE80211_DEBUG_REFCNT
-			    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
-			    func, line,
-#else
-			    "%s %p<%s> refcnt %d\n", __func__,
-#endif
-			     ni, ether_sprintf(ni->ni_macaddr),
-			     ieee80211_node_refcnt(ni));
-			break;
+	/*
+	 * A mac address that is all zero means match only the ssid;
+	 * otherwise we must match both.
+	 */
+	if (IEEE80211_ADDR_EQ(macaddr, zeromac)) {
+		TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
+			if (MATCH_SSID(ni, ssid, ssidlen))
+				break;
 		}
+	} else {
+		hash = IEEE80211_NODE_HASH(macaddr);
+		LIST_FOREACH(ni, &nt->nt_hash[hash], ni_hash) {
+			if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
+			    MATCH_SSID(ni, ssid, ssidlen))
+				break;
+		}
+	}
+	if (ni != NULL) {
+		ieee80211_ref_node(ni);	/* mark referenced */
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+#ifdef IEEE80211_DEBUG_REFCNT
+		    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
+		    func, line,
+#else
+		    "%s %p<%s> refcnt %d\n", __func__,
+#endif
+		     ni, ether_sprintf(ni->ni_macaddr),
+		     ieee80211_node_refcnt(ni));
 	}
 	IEEE80211_NODE_UNLOCK(nt);
 	return ni;
+#undef MATCH_SSID
 }
 
 static void
@@ -1458,6 +1490,14 @@ restart:
 		if (ni->ni_scangen == gen)	/* previously handled */
 			continue;
 		ni->ni_scangen = gen;
+		/*
+		 * Ignore entries for which have yet to receive an
+		 * authentication frame.  These are transient and
+		 * will be reclaimed when the last reference to them
+		 * goes away (when frame xmits complete).
+		 */
+		if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0)
+			continue;
 		/*
 		 * Free fragment if not needed anymore
 		 * (last fragment older than 1s).

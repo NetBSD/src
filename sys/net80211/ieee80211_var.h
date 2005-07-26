@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.19 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.20 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.20 2005/01/24 19:39:07 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.22 2005/07/06 15:38:27 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_VAR_H_
 #define _NET80211_IEEE80211_VAR_H_
@@ -132,7 +132,8 @@ struct ieee80211com {
 	u_int16_t		ic_ps_pending;	/* ps sta's w/ pending frames */
 	u_int8_t		*ic_tim_bitmap;	/* power-save stations w/ data*/
 	u_int16_t		ic_tim_len;	/* ic_tim_bitmap size (bytes) */
-	u_int16_t		ic_dtim_period;	/* DTIM period */
+	u_int8_t		ic_dtim_period;	/* DTIM period */
+	u_int8_t		ic_dtim_count;	/* DTIM count for last bcn */
 	struct ifmedia		ic_media;	/* interface media config */
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
@@ -206,9 +207,10 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
 
 /* ic_flags */
-/* NB: bits 0x6f available */
+/* NB: bits 0x4f available */
 /* NB: this is intentionally setup to be IEEE80211_CAPINFO_PRIVACY */
 #define	IEEE80211_F_PRIVACY	0x00000010	/* CONF: privacy enabled */
+#define	IEEE80211_F_PUREG	0x00000020	/* CONF: 11g w/o 11b sta's */
 #define	IEEE80211_F_SCAN	0x00000080	/* STATUS: scanning */
 #define	IEEE80211_F_ASCAN	0x00000100	/* STATUS: active scan */
 #define	IEEE80211_F_SIBSS	0x00000200	/* STATUS: start IBSS */

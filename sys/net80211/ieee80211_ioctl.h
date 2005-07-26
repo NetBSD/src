@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.9 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.10 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.8 2004/12/31 22:42:38 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.10 2005/07/06 15:38:27 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_IOCTL_H_
 #define _NET80211_IEEE80211_IOCTL_H_
@@ -229,8 +229,10 @@ struct ieee80211req_mlme {
 #define	IEEE80211_MLME_DEAUTH		3	/* deauthenticate station */
 #define	IEEE80211_MLME_AUTHORIZE	4	/* authorize station */
 #define	IEEE80211_MLME_UNAUTHORIZE	5	/* unauthorize station */
+	u_int8_t	im_ssid_len;	/* length of optional ssid */
 	u_int16_t	im_reason;	/* 802.11 reason code */
 	u_int8_t	im_macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t	im_ssid[IEEE80211_NWID_LEN];
 };
 
 /* 
@@ -428,6 +430,7 @@ struct ieee80211req {
 #define	IEEE80211_IOC_BEACON_INTERVAL	53	/* beacon interval (ms) */
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
+#define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */
 
 /*
  * Scan result data returned for IEEE80211_IOC_SCAN_RESULTS.
