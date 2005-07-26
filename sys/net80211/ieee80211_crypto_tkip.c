@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.7 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.9 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.3 2005/07/26 22:52:48 dyoung Exp $");
 #endif
 
 /*
@@ -62,9 +62,9 @@ static	void *tkip_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void tkip_detach(struct ieee80211_key *);
 static	int tkip_setkey(struct ieee80211_key *);
 static	int tkip_encap(struct ieee80211_key *, struct mbuf *m, u_int8_t keyid);
-static	int tkip_enmic(struct ieee80211_key *, struct mbuf *);
-static	int tkip_decap(struct ieee80211_key *, struct mbuf *);
-static	int tkip_demic(struct ieee80211_key *, struct mbuf *);
+static	int tkip_enmic(struct ieee80211_key *, struct mbuf *, int);
+static	int tkip_decap(struct ieee80211_key *, struct mbuf *, int);
+static	int tkip_demic(struct ieee80211_key *, struct mbuf *, int);
 
 const struct ieee80211_cipher ieee80211_cipher_tkip  = {
 	.ic_name	= "TKIP",
@@ -213,11 +213,11 @@ tkip_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
  * Add MIC to the frame as needed.
  */
 static int
-tkip_enmic(struct ieee80211_key *k, struct mbuf *m)
+tkip_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	struct tkip_ctx *ctx = k->wk_private;
 
-	if (k->wk_flags & IEEE80211_KEY_SWMIC) {
+	if (force || (k->wk_flags & IEEE80211_KEY_SWMIC)) {
 		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
 		struct ieee80211com *ic = ctx->tc_ic;
 		int hdrlen;
@@ -248,20 +248,18 @@ READ_6(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5)
  * the specified key.
  */
 static int
-tkip_decap(struct ieee80211_key *k, struct mbuf *m)
+tkip_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 {
 	struct tkip_ctx *ctx = k->wk_private;
 	struct ieee80211com *ic = ctx->tc_ic;
 	struct ieee80211_frame *wh;
 	uint8_t *ivp;
-	int hdrlen;
 
 	/*
 	 * Header should have extended IV and sequence number;
 	 * verify the former and validate the latter.
 	 */
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen = ieee80211_hdrsize(wh);
 	ivp = mtod(m, uint8_t *) + hdrlen;
 	if ((ivp[IEEE80211_WEP_IVLEN] & IEEE80211_WEP_EXTIV) == 0) {
 		/*
@@ -325,17 +323,18 @@ tkip_decap(struct ieee80211_key *k, struct mbuf *m)
  * Verify and strip MIC from the frame.
  */
 static int
-tkip_demic(struct ieee80211_key *k, struct mbuf *m)
+tkip_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	struct tkip_ctx *ctx = k->wk_private;
 
-	if (k->wk_flags & IEEE80211_KEY_SWMIC) {
+	if (force || (k->wk_flags & IEEE80211_KEY_SWMIC)) {
 		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
-		int hdrlen = ieee80211_hdrsize(wh);
+		struct ieee80211com *ic = ctx->tc_ic;
+		int hdrlen = ieee80211_hdrspace(ic, wh);
 		u8 mic[IEEE80211_WEP_MICLEN];
 		u8 mic0[IEEE80211_WEP_MICLEN];
 
-		ctx->tc_ic->ic_stats.is_crypto_tkipdemic++;
+		ic->ic_stats.is_crypto_tkipdemic++;
 
 		michael_mic(ctx, k->wk_rxmic, 
 			m, hdrlen, m->m_pkthdr.len - (hdrlen + tkip.ic_miclen),
@@ -344,8 +343,7 @@ tkip_demic(struct ieee80211_key *k, struct mbuf *m)
 			tkip.ic_miclen, mic0);
 		if (memcmp(mic, mic0, tkip.ic_miclen)) {
 			/* NB: 802.11 layer handles statistic and debug msg */
-			ieee80211_notify_michael_failure(ctx->tc_ic, wh,
-				k->wk_keyix);
+			ieee80211_notify_michael_failure(ic, wh, k->wk_keyix);
 			return 0;
 		}
 	}

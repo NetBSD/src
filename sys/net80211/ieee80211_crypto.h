@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.4 2005/06/26 21:51:37 erh Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.5 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -31,6 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.5 2004/12/31 22:44:26 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.9 2005/06/10 16:11:24 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_CRYPTO_H_
 #define _NET80211_IEEE80211_CRYPTO_H_
@@ -162,9 +163,9 @@ struct ieee80211_cipher {
 	int	(*ic_setkey)(struct ieee80211_key *);
 	int	(*ic_encap)(struct ieee80211_key *, struct mbuf *,
 			u_int8_t keyid);
-	int	(*ic_decap)(struct ieee80211_key *, struct mbuf *);
-	int	(*ic_enmic)(struct ieee80211_key *, struct mbuf *);
-	int	(*ic_demic)(struct ieee80211_key *, struct mbuf *);
+	int	(*ic_decap)(struct ieee80211_key *, struct mbuf *, int);
+	int	(*ic_enmic)(struct ieee80211_key *, struct mbuf *, int);
+	int	(*ic_demic)(struct ieee80211_key *, struct mbuf *, int);
 };
 extern	const struct ieee80211_cipher ieee80211_cipher_none;
 extern	const struct ieee80211_cipher ieee80211_cipher_wep;
@@ -178,17 +179,17 @@ int	ieee80211_crypto_available(u_int cipher);
 struct ieee80211_key *ieee80211_crypto_encap(struct ieee80211com *,
 		struct ieee80211_node *, struct mbuf *);
 struct ieee80211_key *ieee80211_crypto_decap(struct ieee80211com *,
-		struct ieee80211_node *, struct mbuf *);
+		struct ieee80211_node *, struct mbuf *, int);
 
 /*
  * Check and remove any MIC.
  */
 static __inline int
 ieee80211_crypto_demic(struct ieee80211com *ic, struct ieee80211_key *k,
-	struct mbuf *m)
+	struct mbuf *m, int force)
 {
 	const struct ieee80211_cipher *cip = k->wk_cipher;
-	return (cip->ic_miclen > 0 ? cip->ic_demic(k, m) : 1);
+	return (cip->ic_miclen > 0 ? cip->ic_demic(k, m, force) : 1);
 }
 
 /*
@@ -196,10 +197,10 @@ ieee80211_crypto_demic(struct ieee80211com *ic, struct ieee80211_key *k,
  */
 static __inline int
 ieee80211_crypto_enmic(struct ieee80211com *ic,
-	struct ieee80211_key *k, struct mbuf *m)
+	struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	const struct ieee80211_cipher *cip = k->wk_cipher;
-	return (cip->ic_miclen > 0 ? cip->ic_enmic(k, m) : 1);
+	return (cip->ic_miclen > 0 ? cip->ic_enmic(k, m, force) : 1);
 }
 
 /* 

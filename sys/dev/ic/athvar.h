@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.12 2005/06/30 00:52:56 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.13 2005/07/26 22:52:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.23 2005/04/12 17:56:43 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.27 2005/07/07 00:04:50 sam Exp $
  */
 
 /*
@@ -57,6 +57,21 @@
 #define	ATH_TXDESC	10		/* number of descriptors per buffer */
 #define	ATH_TXMAXTRY	11		/* max number of transmit attempts */
 #define	ATH_TXINTR_PERIOD 5		/* max number of batched tx descriptors */
+
+#define	ATH_BEACON_AIFS_DEFAULT	 0	/* default aifs for ap beacon q */
+#define	ATH_BEACON_CWMIN_DEFAULT 0	/* default cwmin for ap beacon q */
+#define	ATH_BEACON_CWMAX_DEFAULT 0	/* default cwmax for ap beacon q */
+
+/*
+ * The key cache is used for h/w cipher state and also for
+ * tracking station state such as the current tx antenna.
+ * We also setup a mapping table between key cache slot indices
+ * and station state to short-circuit node lookups on rx.
+ * Different parts have different size key caches.  We handle
+ * up to ATH_KEYMAX entries (could dynamically allocate state).
+ */
+#define	ATH_KEYMAX	128		/* max key cache size we handle */
+#define	ATH_KEYBYTES	(ATH_KEYMAX/NBBY)	/* storage space in bytes */
 
 /* driver-specific node state */
 struct ath_node {
@@ -84,6 +99,7 @@ struct ath_node {
 struct ath_buf {
 	STAILQ_ENTRY(ath_buf)	bf_list;
 #define bf_nseg		bf_dmamap->dm_nsegs
+	int			bf_flags;	/* tx descriptor flags */
 	struct ath_desc		*bf_desc;	/* virtual addr of desc */
 	bus_addr_t		bf_daddr;	/* physical addr of desc */
 	bus_dmamap_t		bf_dmamap;	/* DMA map for mbuf chain */
@@ -176,7 +192,7 @@ struct ath_softc {
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	struct ath_ratectrl	*sc_rc;		/* tx rate control support */
 	void			(*sc_setdefantenna)(struct ath_softc *, u_int);
-	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
+	unsigned int		sc_invalid : 1,	/* disable hardware accesses */
 				sc_mrretry : 1,	/* multi-rate retry support */
 				sc_softled : 1,	/* enable LED gpio status */
 				sc_splitmic: 1,	/* split TKIP MIC keys */
@@ -187,7 +203,8 @@ struct ath_softc {
 				sc_hastpc  : 1,	/* per-packet TPC support */
 				sc_ledstate: 1,	/* LED on/off state */
 				sc_blinking: 1,	/* LED blink operation active */
-				sc_mcastkey: 1;	/* mcast key cache search */
+				sc_mcastkey: 1,	/* mcast key cache search */
+				sc_hasclrkey:1;	/* CLR key supported */
 						/* rate tables */
 	const HAL_RATE_TABLE	*sc_rates[IEEE80211_MODE_MAX];
 	const HAL_RATE_TABLE	*sc_currates;	/* current rate table */
@@ -206,7 +223,8 @@ struct ath_softc {
 	u_int			sc_txantenna;	/* tx antenna (fixed or auto) */
 	HAL_INT			sc_imask;	/* interrupt mask copy */
 	u_int			sc_keymax;	/* size of key cache */
-	u_int8_t		sc_keymap[16];	/* bit map of key cache use */
+	u_int8_t		sc_keymap[ATH_KEYBYTES];/* key use bit map */
+	struct ieee80211_node	*sc_keyixmap[ATH_KEYMAX];/* key ix->node map */
 
 	u_int			sc_ledpin;	/* GPIO pin for driving LED */
 	u_int			sc_ledon;	/* pin setting for LED on */
@@ -472,6 +490,14 @@ extern int ath_debug;
 	ath_hal_setcapability(_ah, HAL_CAP_TPC, 1, _v, NULL)
 #define	ath_hal_hasbursting(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_BURST, 0, NULL) == HAL_OK)
+#ifdef notyet
+#define	ath_hal_hasmcastkeysearch(_ah) \
+	(ath_hal_getcapability(_ah, HAL_CAP_MCAST_KEYSRCH, 0, NULL) == HAL_OK)
+#define	ath_hal_getmcastkeysearch(_ah) \
+	(ath_hal_getcapability(_ah, HAL_CAP_MCAST_KEYSRCH, 1, NULL) == HAL_OK)
+#else
+#define	ath_hal_getmcastkeysearch(_ah)	0
+#endif
 
 #define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
