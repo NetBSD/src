@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.4 2005/07/10 08:12:50 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.5 2005/07/26 22:52:48 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.2 2004/12/31 22:42:38 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.5 2005/07/06 01:55:17 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NETBSD_H_
 #define _NET80211_IEEE80211_NETBSD_H_
@@ -177,6 +177,7 @@ int ieee80211_node_dectestref(struct ieee80211_node *ni);
 
 struct mbuf *ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen);
 #define	M_PWR_SAV	M_PROTO1		/* bypass PS handling */
+#define	M_MORE_DATA	M_LINK3			/* more data frames to follow */
 /*
  * Encode WME access control bits in the PROTO flags.
  * This is safe since it's passed directly in to the

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.113 2005/07/26 22:52:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -298,6 +298,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
+#define	M_LINK3		0x8000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000

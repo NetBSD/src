@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.17 2005/07/05 23:04:14 he Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.18 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.14 2005/01/24 19:32:09 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.17 2005/07/06 01:51:44 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
@@ -102,6 +102,7 @@ struct ieee80211_node {
 #define	IEEE80211_NODE_ERP	0x0004		/* ERP enabled */
 /* NB: this must have the same value as IEEE80211_FC1_PWR_MGT */
 #define	IEEE80211_NODE_PWR_MGT	0x0010		/* power save mode enabled */
+#define	IEEE80211_NODE_AREF	0x0020		/* authentication ref held */
 	u_int16_t		ni_associd;	/* assoc response */
 	u_int16_t		ni_txpower;	/* current transmit power */
 	u_int16_t		ni_vlan;	/* vlan tag */
@@ -138,6 +139,8 @@ struct ieee80211_node {
 	u_int8_t		ni_fhindex;	/* FH only */
 	u_int8_t		ni_erp;		/* ERP from beacon/probe resp */
 	u_int16_t		ni_timoff;	/* byte offset to TIM ie */
+	u_int8_t		ni_dtim_period;	/* DTIM period */
+	u_int8_t		ni_dtim_count;	/* DTIM count for last bcn */
 
 	/* others */
 	int			ni_fails;	/* failure count to associate */
