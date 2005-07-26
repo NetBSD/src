@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.17 2003/08/07 16:43:33 agc Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.18 2005/07/26 16:12:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.17 2003/08/07 16:43:33 agc Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.18 2005/07/26 16:12:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,42 +52,48 @@ __RCSID("$NetBSD: tempnam.c,v 1.17 2003/08/07 16:43:33 agc Exp $");
 __warn_references(tempnam,
     "warning: tempnam() possibly used unsafely, use mkstemp() or mkdtemp()")
 
+static const char *
+trailsl(const char *f)
+{
+	const char *s = f;
+	while (*s)
+		s++;
+	return (f != s && s[-1] == '/') ? "/" : "";
+}
+
+static char *
+gentemp(char *name, size_t len, const char *tmp, const char  *pfx)
+{
+	(void)snprintf(name, len, "%s%s%sXXXXXXXXXX", tmp, trailsl(tmp), pfx);
+	return _mktemp(name);
+}
+
 char *
-tempnam(dir, pfx)
-	const char *dir, *pfx;
+tempnam(const char *dir, const char *pfx)
 {
 	int sverrno;
-	char *f, *name;
+	char *name, *f;
+	const char *tmp;
 
 	if (!(name = malloc((size_t)MAXPATHLEN)))
-		return(NULL);
+		return NULL;
 
 	if (!pfx)
 		pfx = "tmp.";
 
-	if ((f = getenv("TMPDIR")) != NULL) {
-		(void)snprintf(name, (size_t)MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
-		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
-		if ((f = _mktemp(name)) != NULL)
-			return(f);
-	}
+	if ((tmp = getenv("TMPDIR")) != NULL &&
+	    (f = gentemp(name, (size_t)MAXPATHLEN, tmp, pfx)) != NULL)
+		return f;
 
-	if ((/* LINTED */f = (char *)dir) != NULL) {
-		(void)snprintf(name, (size_t)MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
-		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
-		if ((f = _mktemp(name)) != NULL)
-			return(f);
-	}
+	if (dir != NULL &&
+	    (f = gentemp(name, (size_t)MAXPATHLEN, dir, pfx)) != NULL)
+		return f;
 
-	f = P_tmpdir;
-	(void)snprintf(name, (size_t)MAXPATHLEN, "%s%sXXXXXXXXXX", f, pfx);
-	if ((f = _mktemp(name)) != NULL)
-		return(f);
+	if ((f = gentemp(name, (size_t)MAXPATHLEN, P_tmpdir, pfx)) != NULL)
+		return f;
 
-	f = _PATH_TMP;
-	(void)snprintf(name, (size_t)MAXPATHLEN, "%s%sXXXXXXXXXX", f, pfx);
-	if ((f = _mktemp(name)) != NULL)
-		return(f);
+	if ((f = gentemp(name, (size_t)MAXPATHLEN, _PATH_TMP, pfx)) != NULL)
+		return f;
 
 	sverrno = errno;
 	free(name);
