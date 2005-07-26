@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.210 2005/06/01 16:09:45 drochner Exp $ */
+/* $NetBSD: pmap.c,v 1.211 2005/07/26 04:11:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2005/06/01 16:09:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2005/07/26 04:11:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,6 +523,17 @@ boolean_t pmap_physpage_alloc(int, paddr_t *);
 void	pmap_physpage_free(paddr_t);
 int	pmap_physpage_addref(void *);
 int	pmap_physpage_delref(void *);
+
+/*
+ * Define PMAP_NO_LAZY_LEV1MAP in order to have a lev1map allocated
+ * in pmap_create(), rather than when the first mapping is entered.
+ * This causes pmaps to use an extra page of memory if no mappings
+ * are entered in them, but in practice this is probably not going
+ * to be a problem, and it allows us to avoid locking pmaps in
+ * pmap_activate(), which in turn allows us to avoid a deadlock with
+ * sched_lock via cpu_switch().
+ */
+#define	PMAP_NO_LAZY_LEV1MAP
 
 /*
  * PMAP_ISACTIVE{,_TEST}:
@@ -1207,6 +1218,11 @@ pmap_create(void)
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
+#ifdef PMAP_NO_LAZY_LEV1MAP
+	i = pmap_lev1map_create(pmap, cpu_number());
+	KASSERT(i == 0);
+#endif
+
 	return (pmap);
 }
 
@@ -1240,14 +1256,16 @@ pmap_destroy(pmap_t pmap)
 	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
-#ifdef DIAGNOSTIC
+#ifdef PMAP_NO_LAZY_LEV1MAP
+	pmap_lev1map_destroy(pmap, cpu_number());
+#endif
+
 	/*
 	 * Since the pmap is supposed to contain no valid
-	 * mappings at this point, this should never happen.
+	 * mappings at this point, we should always see
+	 * kernel_lev1map here.
 	 */
-	if (pmap->pm_lev1map != kernel_lev1map)
-		panic("pmap_destroy: pmap still contains valid mappings");
-#endif
+	KASSERT(pmap->pm_lev1map == kernel_lev1map);
 
 	pool_put(&pmap_pmap_pool, pmap);
 }
@@ -1685,6 +1703,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			panic("pmap_enter: user pmap, invalid va 0x%lx", va);
 #endif
 
+#ifdef PMAP_NO_LAZY_LEV1MAP
+		KASSERT(pmap->pm_lev1map != kernel_lev1map);
+#else
 		/*
 		 * If we're still referencing the kernel kernel_lev1map,
 		 * create a new level 1 page table.  A reference will be
@@ -1715,6 +1736,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				panic("pmap_enter: unable to create lev1map");
 			}
 		}
+#endif /* PMAP_NO_LAZY_LEV1MAP */
 
 		/*
 		 * Check to see if the level 1 PTE is valid, and
@@ -2128,6 +2150,22 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
+
+	/*
+	 * Take a faster path for the kernel pmap.  Avoids locking,
+	 * handles K0SEG.
+	 */
+	if (pmap == pmap_kernel()) {
+		pa = vtophys(va);
+		if (pap != NULL)
+			*pap = pa;
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("0x%lx (kernel vtophys)\n", pa);
+#endif
+		return (pa != 0);	/* XXX */
+	}
+
 	PMAP_LOCK(pmap);
 
 	l1pte = pmap_l1pte(pmap, va);
@@ -2238,21 +2276,21 @@ pmap_activate(struct lwp *l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
+#ifndef PMAP_NO_LAZY_LEV1MAP
 	PMAP_LOCK(pmap);
+#endif
 
-	/*
-	 * Mark the pmap in use by this processor.
-	 */
+	/* Mark the pmap in use by this processor. */
 	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
-	/*
-	 * Allocate an ASN.
-	 */
+	/* Allocate an ASN. */
 	pmap_asn_alloc(pmap, cpu_id);
 
 	PMAP_ACTIVATE(pmap, l, cpu_id);
 
+#ifndef PMAP_NO_LAZY_LEV1MAP
 	PMAP_UNLOCK(pmap);
+#endif
 }
 
 /*
@@ -3254,12 +3292,18 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
+#ifdef PMAP_NO_LAZY_LEV1MAP
+	/* Being called from pmap_create() in this case; we can sleep. */
+	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_WAITOK);
+#else
 	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
+#endif
 	if (l1pt == NULL)
 		return (ENOMEM);
 
 	pmap->pm_lev1map = l1pt;
 
+#ifndef PMAP_NO_LAZY_LEV1MAP	/* guaranteed not to be active */
 	/*
 	 * The page table base has changed; if the pmap was active,
 	 * reactivate it.
@@ -3269,6 +3313,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	}
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
+#endif /* ! PMAP_NO_LAZY_LEV1MAP */
 	return (0);
 }
 
@@ -3294,6 +3339,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	 */
 	pmap->pm_lev1map = kernel_lev1map;
 
+#ifndef PMAP_NO_LAZY_LEV1MAP	/* pmap is being destroyed */
 	/*
 	 * The page table base has changed; if the pmap was active,
 	 * reactivate it.  Note that allocation of a new ASN is
@@ -3316,6 +3362,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	if (PMAP_ISACTIVE(pmap, cpu_id))
 		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
+#endif /* ! PMAP_NO_LAZY_LEV1MAP */
 
 	/*
 	 * Free the old level 1 page table page.
@@ -3554,11 +3601,13 @@ pmap_l1pt_delref(pmap_t pmap, pt_entry_t *l1pte, long cpu_id)
 #endif
 
 	if (pmap_physpage_delref(l1pte) == 0) {
+#ifndef PMAP_NO_LAZY_LEV1MAP
 		/*
 		 * No more level 2 tables left, go back to the global
 		 * kernel_lev1map.
 		 */
 		pmap_lev1map_destroy(pmap, cpu_id);
+#endif /* ! PMAP_NO_LAZY_LEV1MAP */
 	}
 }
 
@@ -3590,6 +3639,13 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 	 * kernel mappings exist in that map, and all kernel mappings
 	 * have PG_ASM set.  If the pmap eventually gets its own
 	 * lev1map, an ASN will be allocated at that time.
+	 *
+	 * #ifdef PMAP_NO_LAZY_LEV1MAP
+	 * Only the kernel pmap will reference kernel_lev1map.  Do the
+	 * same old fixups, but note that we no longer need the pmap
+	 * to be locked if we're in this mode, since pm_lev1map will
+	 * never change.
+	 * #endif
 	 */
 	if (pmap->pm_lev1map == kernel_lev1map) {
 #ifdef DEBUG
@@ -3610,11 +3666,7 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 		 */
 		pma->pma_asn = PMAP_ASN_RESERVED;
 #else
-#ifdef DIAGNOSTIC
-		if (pma->pma_asn != PMAP_ASN_RESERVED)
-			panic("pmap_asn_alloc: kernel_lev1map without "
-			    "PMAP_ASN_RESERVED");
-#endif
+		KASSERT(pma->pma_asn == PMAP_ASN_RESERVED);
 #endif /* MULTIPROCESSOR */
 		return;
 	}
