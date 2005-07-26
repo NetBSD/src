@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.4 2005/04/04 04:27:20 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.5 2005/07/06 01:55:17 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_FREEBSD_H_
 #define _NET80211_IEEE80211_FREEBSD_H_
@@ -148,6 +148,7 @@ int	ieee80211_node_dectestref(struct ieee80211_node *ni);
 struct mbuf *ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen);
 #define	M_LINK0		M_PROTO1		/* WEP requested */
 #define	M_PWR_SAV	M_PROTO4		/* bypass PS handling */
+#define	M_MORE_DATA	M_PROTO5		/* more data frames to follow */
 /*
  * Encode WME access control bits in the PROTO flags.
  * This is safe since it's passed directly in to the

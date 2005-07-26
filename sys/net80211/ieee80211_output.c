@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.22 2005/03/26 07:11:31 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -534,6 +534,8 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	case IEEE80211_M_MONITOR:
 		goto bad;
 	}
+	if (m->m_flags & M_MORE_DATA)
+		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
 	if (addqos) {
 		struct ieee80211_qosframe *qwh =
 			(struct ieee80211_qosframe *) wh;
@@ -567,7 +569,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		      !KEY_UNDEFINED(*key) : !KEY_UNDEFINED(ni->ni_ucastkey)))) {
 			wh->i_fc[1] |= IEEE80211_FC1_WEP;
 			/* XXX do fragmentation */
-			if (!ieee80211_crypto_enmic(ic, key, m)) {
+			if (!ieee80211_crypto_enmic(ic, key, m, 0)) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_OUTPUT,
 				    "[%s] enmic failed, discard frame\n",
 				    ether_sprintf(eh.ether_dhost));
@@ -728,7 +730,7 @@ ieee80211_setup_wpa_ie(struct ieee80211com *ic, u_int8_t *ie)
 	}
 
 	/* optional capabilities */
-	if (rsn->rsn_caps != 0)
+	if (rsn->rsn_caps != 0 && rsn->rsn_caps != RSN_CAP_PREAUTH)
 		ADDSHORT(frm, rsn->rsn_caps);
 
 	/* calculate element length */
@@ -811,8 +813,7 @@ ieee80211_setup_rsn_ie(struct ieee80211com *ic, u_int8_t *ie)
 	}
 
 	/* optional capabilities */
-	if (rsn->rsn_caps != 0)
-		ADDSHORT(frm, rsn->rsn_caps);
+	ADDSHORT(frm, rsn->rsn_caps);
 	/* XXX PMKID */
 
 	/* calculate element length */
@@ -1112,14 +1113,6 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		else
 			IEEE80211_NODE_STAT(ni, tx_auth_fail);
 
-		/*
-		 * When 802.1x is not in use mark the port
-		 * authorized at this point so traffic can flow.
-		 */
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
-		    status == IEEE80211_STATUS_SUCCESS &&
-		    ni->ni_authmode != IEEE80211_AUTH_8021X)
-			ieee80211_node_authorize(ic, ni);
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			timer = IEEE80211_TRANS_WAIT;
 		break;

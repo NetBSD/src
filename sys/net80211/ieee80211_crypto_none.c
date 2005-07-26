@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.3 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
 
 /*
  * IEEE 802.11 NULL crypto support.
@@ -52,9 +52,9 @@ static	void *none_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void none_detach(struct ieee80211_key *);
 static	int none_setkey(struct ieee80211_key *);
 static	int none_encap(struct ieee80211_key *, struct mbuf *, u_int8_t);
-static	int none_decap(struct ieee80211_key *, struct mbuf *);
-static	int none_enmic(struct ieee80211_key *, struct mbuf *);
-static	int none_demic(struct ieee80211_key *, struct mbuf *);
+static	int none_decap(struct ieee80211_key *, struct mbuf *, int);
+static	int none_enmic(struct ieee80211_key *, struct mbuf *, int);
+static	int none_demic(struct ieee80211_key *, struct mbuf *, int);
 
 const struct ieee80211_cipher ieee80211_cipher_none = {
 	.ic_name	= "NONE",
@@ -110,7 +110,7 @@ none_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 }
 
 static int
-none_decap(struct ieee80211_key *k, struct mbuf *m)
+none_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 {
 	struct ieee80211com *ic = k->wk_private;
 #ifdef IEEE80211_DEBUG
@@ -131,7 +131,7 @@ none_decap(struct ieee80211_key *k, struct mbuf *m)
 }
 
 static int
-none_enmic(struct ieee80211_key *k, struct mbuf *m)
+none_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	struct ieee80211com *ic = k->wk_private;
 
@@ -140,7 +140,7 @@ none_enmic(struct ieee80211_key *k, struct mbuf *m)
 }
 
 static int
-none_demic(struct ieee80211_key *k, struct mbuf *m)
+none_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	struct ieee80211com *ic = k->wk_private;
 

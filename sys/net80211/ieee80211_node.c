@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.45 2005/03/16 20:40:48 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.48 2005/07/06 01:51:44 sam Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -48,6 +48,16 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.45 2005/03/16 20:40:48
 #include <net80211/ieee80211_var.h>
 
 #include <net/bpf.h>
+
+/*
+ * Association id's are managed with a bit vector.
+ */
+#define	IEEE80211_AID_SET(b, w) \
+	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
+#define	IEEE80211_AID_CLR(b, w) \
+	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
+#define	IEEE80211_AID_ISSET(b, w) \
+	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
 static struct ieee80211_node *node_alloc(struct ieee80211_node_table *);
 static void node_cleanup(struct ieee80211_node *);
@@ -840,6 +850,13 @@ node_cleanup(struct ieee80211_node *ni)
 		    "[%s] power save mode off, %u sta's in ps mode\n",
 		    ether_sprintf(ni->ni_macaddr), ic->ic_ps_sta);
 	}
+	/*
+	 * Clear AREF flag that marks the authorization refcnt bump
+	 * has happened.  This is probably not needed as the node
+	 * should always be removed from the table so not found but
+	 * do it just in case.
+	 */
+	ni->ni_flags &= ~IEEE80211_NODE_AREF;
 
 	/*
 	 * Drain power save queue and, if needed, clear TIM.
@@ -1182,31 +1199,46 @@ ieee80211_find_node_with_ssid(struct ieee80211_node_table *nt,
 	const u_int8_t *macaddr, u_int ssidlen, const u_int8_t *ssid)
 #endif
 {
+#define	MATCH_SSID(ni, ssid, ssidlen) \
+	(ni->ni_esslen == ssidlen && memcmp(ni->ni_essid, ssid, ssidlen) == 0)
+	static const u_int8_t zeromac[IEEE80211_ADDR_LEN];
 	struct ieee80211com *ic = nt->nt_ic;
 	struct ieee80211_node *ni;
 	int hash;
 
-	hash = IEEE80211_NODE_HASH(macaddr);
 	IEEE80211_NODE_LOCK(nt);
-	LIST_FOREACH(ni, &nt->nt_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
-		    ni->ni_esslen == ic->ic_des_esslen &&
-		    memcmp(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen) == 0) {
-			ieee80211_ref_node(ni);		/* mark referenced */
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
-#ifdef IEEE80211_DEBUG_REFCNT
-			    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
-			    func, line,
-#else
-			    "%s %p<%s> refcnt %d\n", __func__,
-#endif
-			     ni, ether_sprintf(ni->ni_macaddr),
-			     ieee80211_node_refcnt(ni));
-			break;
+	/*
+	 * A mac address that is all zero means match only the ssid;
+	 * otherwise we must match both.
+	 */
+	if (IEEE80211_ADDR_EQ(macaddr, zeromac)) {
+		TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
+			if (MATCH_SSID(ni, ssid, ssidlen))
+				break;
 		}
+	} else {
+		hash = IEEE80211_NODE_HASH(macaddr);
+		LIST_FOREACH(ni, &nt->nt_hash[hash], ni_hash) {
+			if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
+			    MATCH_SSID(ni, ssid, ssidlen))
+				break;
+		}
+	}
+	if (ni != NULL) {
+		ieee80211_ref_node(ni);	/* mark referenced */
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+#ifdef IEEE80211_DEBUG_REFCNT
+		    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
+		    func, line,
+#else
+		    "%s %p<%s> refcnt %d\n", __func__,
+#endif
+		     ni, ether_sprintf(ni->ni_macaddr),
+		     ieee80211_node_refcnt(ni));
 	}
 	IEEE80211_NODE_UNLOCK(nt);
 	return ni;
+#undef MATCH_SSID
 }
 
 static void
@@ -1371,6 +1403,14 @@ restart:
 		if (ni->ni_scangen == gen)	/* previously handled */
 			continue;
 		ni->ni_scangen = gen;
+		/*
+		 * Ignore entries for which have yet to receive an
+		 * authentication frame.  These are transient and
+		 * will be reclaimed when the last reference to them
+		 * goes away (when frame xmits complete).
+		 */
+		if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0)
+			continue;
 		/*
 		 * Free fragment if not needed anymore
 		 * (last fragment older than 1s).
