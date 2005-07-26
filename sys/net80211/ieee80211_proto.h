@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.11 2005/06/27 05:49:13 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.12 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
