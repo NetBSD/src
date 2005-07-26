@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.34 2005/03/30 16:34:54 is Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.35 2005/07/26 21:26:48 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.34 2005/03/30 16:34:54 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.35 2005/07/26 21:26:48 christos Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -151,6 +151,9 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_int16_t flags;
+#if NBPFILTER > 0
+	u_int32_t af = AF_INET;		/* af passed to BPF tap */
+#endif
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
@@ -194,12 +197,18 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		case ETHERTYPE_NS:
 			ifq = &nsintrq;
 			isr = NETISR_NS;
+#if NBPFILTER > 0
+			af = AF_NS;
+#endif
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
 			ifq = &atintrq1;
 			isr = NETISR_ATALK;
+#if NBPFILTER > 0
+			af = AF_APPLETALK;
+#endif
 			break;
 #endif
 #ifdef INET6
@@ -209,6 +218,9 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 #endif
 			ifq = &ip6intrq;
 			isr = NETISR_IPV6;
+#if NBPFILTER > 0
+			af = AF_INET6;
+#endif
 			break;
 #endif
 		default:	   /* others not yet supported */
@@ -230,7 +242,6 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf) {
 		struct mbuf m0;
-		u_int32_t af = AF_INET;
 
 		m0.m_flags = 0;
 		m0.m_next = m;
