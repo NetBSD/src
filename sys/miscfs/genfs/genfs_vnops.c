@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.103 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.104 2005/07/26 08:06:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.103 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.104 2005/07/26 08:06:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1114,6 +1114,7 @@ genfs_putpages(void *v)
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
 	boolean_t modified = FALSE;
+	boolean_t cleanall;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1178,6 +1179,9 @@ genfs_putpages(void *v)
 	 * current last page.
 	 */
 
+	cleanall = (flags & PGO_CLEANIT) != 0 && wasclean &&
+	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
+	    (vp->v_flag & VONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	curmp.uobject = uobj;
@@ -1282,10 +1286,20 @@ genfs_putpages(void *v)
 			 * from the syncer queue, write-protect the page.
 			 */
 
-			if (wasclean && gp->g_dirtygen == dirtygen &&
-			    startoff == 0 && endoff == trunc_page(LLONG_MAX)) {
-				pmap_page_protect(pg,
-				    VM_PROT_READ|VM_PROT_EXECUTE);
+			if (cleanall && wasclean &&
+			    gp->g_dirtygen == dirtygen) {
+
+				/*
+				 * uobj pages get wired only by uvm_fault
+				 * where uobj is locked.
+				 */
+
+				if (pg->wire_count == 0) {
+					pmap_page_protect(pg,
+					    VM_PROT_READ|VM_PROT_EXECUTE);
+				} else {
+					cleanall = FALSE;
+				}
 			}
 		}
 
@@ -1460,9 +1474,8 @@ genfs_putpages(void *v)
 	 */
 
 	s = splbio();
-	if ((flags & PGO_CLEANIT) && wasclean && gp->g_dirtygen == dirtygen &&
-	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
-	    (vp->v_flag & VONWORKLST)) {
+	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
+	    (vp->v_flag & VONWORKLST) != 0) {
 		vp->v_flag &= ~VWRITEMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 			vp->v_flag &= ~VONWORKLST;
