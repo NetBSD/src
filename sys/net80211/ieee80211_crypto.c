@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.8 2005/07/06 23:44:15 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.9 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.7 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.10 2005/07/09 23:15:30 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.8 2005/07/06 23:44:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.9 2005/07/26 22:52:48 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -83,7 +83,24 @@ static	int _ieee80211_crypto_delkey(struct ieee80211com *,
 static int
 null_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
-	return IEEE80211_KEYIX_NONE;
+	if (!(&ic->ic_nw_keys[0] <= k &&
+	     k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])) {
+		/*
+		 * Not in the global key table, the driver should handle this
+		 * by allocating a slot in the h/w key table/cache.  In
+		 * lieu of that return key slot 0 for any unicast key
+		 * request.  We disallow the request if this is a group key.
+		 * This default policy does the right thing for legacy hardware
+		 * with a 4 key table.  It also handles devices that pass
+		 * packets through untouched when marked with the WEP bit
+		 * and key index 0.
+		 */
+		if ((k->wk_flags & IEEE80211_KEY_GROUP) == 0)
+			return 0;	/* NB: use key index 0 for ucast key */
+		else
+			return IEEE80211_KEYIX_NONE;
+	}
+	return k - ic->ic_nw_keys;
 }
 static int
 null_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
@@ -551,7 +568,7 @@ bad:
  */
 struct ieee80211_key *
 ieee80211_crypto_decap(struct ieee80211com *ic,
-	struct ieee80211_node *ni, struct mbuf *m)
+	struct ieee80211_node *ni, struct mbuf *m, int hdrlen)
 {
 #define	IEEE80211_WEP_HDRLEN	(IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN)
 #define	IEEE80211_WEP_MINLEN \
@@ -562,7 +579,6 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	const struct ieee80211_cipher *cip;
 	const u_int8_t *ivp;
 	u_int8_t keyid;
-	int hdrlen;
 
 	/* NB: this minimum size data frame could be bigger */
 	if (m->m_pkthdr.len < IEEE80211_WEP_MINLEN) {
@@ -580,7 +596,6 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	 * the key id in the header is meaningless (typically 0).
 	 */
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen = ieee80211_hdrsize(wh);
 	ivp = mtod(m, const u_int8_t *) + hdrlen;	/* XXX contig */
 	keyid = ivp[IEEE80211_WEP_IVLEN];
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -602,7 +617,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		return 0;
 	}
 
-	return (cip->ic_decap(k, m) ? k : NULL);
+	return (cip->ic_decap(k, m, hdrlen) ? k : NULL);
 #undef IEEE80211_WEP_MINLEN
 #undef IEEE80211_WEP_HDRLEN
 }

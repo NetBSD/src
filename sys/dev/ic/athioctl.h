@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.8 2005/06/30 00:52:56 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.9 2005/07/26 22:52:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
