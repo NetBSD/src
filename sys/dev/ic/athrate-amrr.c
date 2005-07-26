@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.7 2005/04/02 18:54:30 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.8 2005/06/10 16:49:04 brooks Exp $");
 
 /*
  * AMRR rate control. See:

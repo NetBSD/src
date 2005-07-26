@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.13 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.14 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.8 2004/12/31 22:44:26 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.9 2005/06/10 04:42:34 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
@@ -623,12 +623,6 @@ enum {
 #define	IEEE80211_AID_DEF		128
 
 #define	IEEE80211_AID(b)	((b) &~ 0xc000)
-#define	IEEE80211_AID_SET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_CLR(b, w) \
-	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_ISSET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
 /* 
  * RTS frame length parameters.  The default is specified in
