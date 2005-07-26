@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.21 2005/07/26 22:52:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.18 2005/01/24 19:32:09 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.25 2005/07/06 15:38:27 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.21 2005/07/26 22:52:48 dyoung Exp $");
 #endif
 
 /*
@@ -1466,6 +1466,9 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		/* NB: get from ic_bss for station mode */
 		ireq->i_val = ic->ic_bss->ni_intval;
 		break;
+	case IEEE80211_IOC_PUREG:
+		ireq->i_val = (ic->ic_flags & IEEE80211_F_PUREG) != 0;
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -1526,9 +1529,11 @@ ieee80211_ioctl_setkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 		if (ik.ik_flags != (IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV))
 			return EINVAL;
 		if (ic->ic_opmode == IEEE80211_M_STA) {
-			ni = ic->ic_bss;
-			if (!IEEE80211_ADDR_EQ(ik.ik_macaddr, ni->ni_bssid))
+			ni = ieee80211_ref_node(ic->ic_bss);
+			if (!IEEE80211_ADDR_EQ(ik.ik_macaddr, ni->ni_bssid)) {
+				ieee80211_free_node(ni);
 				return EADDRNOTAVAIL;
+			}
 		} else {
 			ni = ieee80211_find_node(&ic->ic_sta, ik.ik_macaddr);
 			if (ni == NULL)
@@ -1540,9 +1545,6 @@ ieee80211_ioctl_setkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 			return EINVAL;
 		wk = &ic->ic_nw_keys[kid];
 		ni = NULL;
-		/* XXX auto-add group key flag until applications are updated */
-		if ((ik.ik_flags & IEEE80211_KEY_XMIT) == 0)	/* XXX */
-			ik.ik_flags |= IEEE80211_KEY_GROUP;	/* XXX */
 	}
 	error = 0;
 	ieee80211_key_update_begin(ic);
@@ -1584,9 +1586,17 @@ ieee80211_ioctl_delkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	if (dk.idk_keyix == (u_int8_t) IEEE80211_KEYIX_NONE) {
 		struct ieee80211_node *ni;
 
-		ni = ieee80211_find_node(&ic->ic_sta, dk.idk_macaddr);
-		if (ni == NULL)
-			return EINVAL;		/* XXX */
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			ni = ieee80211_ref_node(ic->ic_bss);
+			if (!IEEE80211_ADDR_EQ(dk.idk_macaddr, ni->ni_bssid)) {
+				ieee80211_free_node(ni);
+				return EADDRNOTAVAIL;
+			}
+		} else {
+			ni = ieee80211_find_node(&ic->ic_sta, dk.idk_macaddr);
+			if (ni == NULL)
+				return ENOENT;
+		}
 		/* XXX error return */
 		ieee80211_crypto_delkey(ic, &ni->ni_ucastkey);
 		ieee80211_free_node(ni);
@@ -1635,14 +1645,14 @@ ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
 			return EINVAL;
 		/* XXX must be in S_SCAN state? */
 
-		if (ic->ic_des_esslen != 0) {
+		if (mlme.im_ssid_len != 0) {
 			/*
 			 * Desired ssid specified; must match both bssid and
 			 * ssid to distinguish ap advertising multiple ssid's.
 			 */
 			ni = ieee80211_find_node_with_ssid(&ic->ic_scan,
 				mlme.im_macaddr,
-				ic->ic_des_esslen, ic->ic_des_essid);
+				mlme.im_ssid_len, mlme.im_ssid);
 		} else {
 			/*
 			 * Normal case; just match bssid.
@@ -1988,6 +1998,8 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		} else
 			error = EINVAL;
 		ieee80211_key_update_end(ic);
+		if (!error)			/* NB: for compatibility */
+			error = ENETRESET;
 		break;
 	case IEEE80211_IOC_WEPTXKEY:
 		kid = (u_int) ireq->i_val;
@@ -2326,6 +2338,15 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		} else
 			error = EINVAL;
 		break;
+	case IEEE80211_IOC_PUREG:
+		if (ireq->i_val)
+			ic->ic_flags |= IEEE80211_F_PUREG;
+		else
+			ic->ic_flags &= ~IEEE80211_F_PUREG;
+		/* NB: reset only if we're operating on an 11g channel */
+		if (ic->ic_curmode == IEEE80211_MODE_11G)
+			error = ENETRESET;
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -2407,14 +2428,14 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		 */
 		case AF_IPX: {
 			struct ipx_addr *ina = &(IA_SIPX(ifa)->sipx_addr);
-			struct arpcom *ac = (struct arpcom *)ifp;
 
 			if (ipx_nullhost(*ina))
-				ina->x_host = *(union ipx_host *) ac->ac_enaddr;
+				ina->x_host = *(union ipx_host *)
+				    IFP2ENADDR(ifp);
 			else
 				bcopy((caddr_t) ina->x_host.c_host,
-				      (caddr_t) ac->ac_enaddr,
-				      sizeof(ac->ac_enaddr));
+				      (caddr_t) IFP2ENADDR(ifp),
+				      ETHER_ADDR_LEN);
 			/* fall thru... */
 		}
 #endif
