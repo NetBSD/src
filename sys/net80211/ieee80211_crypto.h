@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.5 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.6 2005/07/26 22:57:26 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.5 2004/12/31 22:44:26 sam Exp $
  * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.9 2005/06/10 16:11:24 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_CRYPTO_H_
