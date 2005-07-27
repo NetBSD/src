@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.18 2005/07/26 16:12:49 christos Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.19 2005/07/27 13:23:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.18 2005/07/26 16:12:49 christos Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.19 2005/07/27 13:23:07 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ trailsl(const char *f)
 	const char *s = f;
 	while (*s)
 		s++;
-	return (f != s && s[-1] == '/') ? "/" : "";
+	return (f != s && s[-1] == '/') ? "" : "/";
 }
 
 static char *
