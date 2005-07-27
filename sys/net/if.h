@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.110 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.111 2005/07/27 06:36:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -534,6 +534,10 @@ struct	ifreq {
 		int	ifru_dlt;
 		u_int	ifru_value;
 		caddr_t	ifru_data;
+		struct {
+			uint32_t	b_buflen;
+			void		*b_buf;
+		} ifru_b;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -544,7 +548,11 @@ struct	ifreq {
 #define	ifr_dlt		ifr_ifru.ifru_dlt	/* data link type (DLT_*) */
 #define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
-#define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
+#define	ifr_data	ifr_ifru.ifru_data	/* for use by interface
+						 * XXX deprecated
+						 */
+#define	ifr_buf		ifr_ifru.ifru_b.b_buf	/* new interface ioctls */
+#define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
 };
 
 struct ifcapreq {
