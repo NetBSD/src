@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.17 2003/08/07 16:44:21 agc Exp $	*/
+/*	$NetBSD: erase.c,v 1.18 2005/07/27 20:17:42 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.17 2003/08/07 16:44:21 agc Exp $");
+__RCSID("$NetBSD: erase.c,v 1.18 2005/07/27 20:17:42 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -63,33 +63,29 @@ int
 werase(WINDOW *win)
 {
 
-	int     minx, y;
-	__LDATA *sp, *end, *start, *maxx;
+	int     y;
+	__LDATA *sp, *end, *start;
 
 #ifdef DEBUG
 	__CTRACE("werase: (%p)\n", win);
 #endif
-#ifdef __GNUC__
-	maxx = NULL;		/* XXX gcc -Wuninitialized */
-#endif
 	for (y = 0; y < win->maxy; y++) {
-		minx = -1;
 		start = win->lines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
 			if (sp->ch != ' ' || sp->attr != 0 ||
 			    sp->bch != win->bch || sp->battr != win->battr) {
-				maxx = sp;
-				if (minx == -1)
-					minx = sp - start;
 				sp->ch = ' ';
 				sp->bch = win->bch;
 				sp->attr = 0;
 				sp->battr = win->battr;
 			}
-		if (minx != -1)
-			__touchline(win, y, minx, maxx - win->lines[y]->line);
 	}
+	/*
+	 * Mark the whole window as changed in case we have overlapping
+	 * windows - this will result in the (intended) clearing of the
+	 * screen over the area covered by the window. */
+	__touchwin(win);
 	wmove(win, 0, 0);
 	return (OK);
 }
