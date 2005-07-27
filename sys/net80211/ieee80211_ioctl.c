@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.24 2005/07/27 20:18:59 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.25 2005/07/27 20:31:24 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.25 2005/07/06 15:38:27 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.24 2005/07/27 20:18:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.25 2005/07/27 20:31:24 dyoung Exp $");
 #endif
 
 /*
@@ -841,7 +841,7 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	return error;
 }
 
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 static struct ieee80211_channel *
 getcurchan(struct ieee80211com *ic)
 {
@@ -853,7 +853,7 @@ getcurchan(struct ieee80211com *ic)
 		return ic->ic_ibss_chan;
 	}
 }
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 
 static int
 cap2cipher(int flag)
@@ -1265,15 +1265,15 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 {
 	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
 	int error = 0;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	u_int kid, len;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	u_int m;
 
 	switch (ireq->i_type) {
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_SSID:
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
@@ -1320,14 +1320,14 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_WEPTXKEY:
 		ireq->i_val = ic->ic_def_txkey;
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_AUTHMODE:
 		if (ic->ic_flags & IEEE80211_F_WPA)
 			ireq->i_val = IEEE80211_AUTH_WPA;
 		else
 			ireq->i_val = ic->ic_bss->ni_authmode;
 		break;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_CHANNEL:
 		ireq->i_val = ieee80211_chan2ieee(ic, getcurchan(ic));
 		break;
@@ -1340,7 +1340,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_POWERSAVESLEEP:
 		ireq->i_val = ic->ic_lintval;
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_RTSTHRESHOLD:
 		ireq->i_val = ic->ic_rtsthreshold;
 		break;
@@ -1434,7 +1434,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_CHANINFO:
 		error = ieee80211_ioctl_getchaninfo(ic, ireq);
 		break;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_BSSID:
 		if (ireq->i_len != IEEE80211_ADDR_LEN)
 			return EINVAL;
@@ -1443,7 +1443,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 					ic->ic_des_bssid,
 				ireq->i_data, ireq->i_len);
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_WPAIE:
 		error = ieee80211_ioctl_getwpaie(ic, ireq);
 		break;
@@ -1940,14 +1940,14 @@ cipher2cap(int cipher)
 static int
 ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211req *ireq)
 {
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
 	u_int8_t tmpbssid[IEEE80211_ADDR_LEN];
 	struct ieee80211_key *k;
 	u_int kid;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
 	int error;
 	const struct ieee80211_authenticator *auth;
@@ -1955,7 +1955,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 
 	error = 0;
 	switch (ireq->i_type) {
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_SSID:
 		if (ireq->i_val != 0 ||
 		    ireq->i_len > IEEE80211_NWID_LEN)
@@ -1968,7 +1968,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		memcpy(ic->ic_des_essid, tmpssid, ireq->i_len);
 		error = ENETRESET;
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_WEP:
 		switch (ireq->i_val) {
 		case IEEE80211_WEP_OFF:
@@ -1986,7 +1986,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		}
 		error = ENETRESET;
 		break;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_WEPKEY:
 		kid = (u_int) ireq->i_val;
 		if (kid >= IEEE80211_WEP_NKID)
@@ -2025,7 +2025,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_def_txkey = kid;
 		error = ENETRESET;	/* push to hardware */
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_AUTHMODE:
 		switch (ireq->i_val) {
 		case IEEE80211_AUTH_WPA:
@@ -2066,7 +2066,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_auth = auth;
 		error = ENETRESET;
 		break;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_CHANNEL:
 		/* XXX 0xffff overflows 16-bit signed */
 		if (ireq->i_val == 0 ||
@@ -2125,7 +2125,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_lintval = ireq->i_val;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_RTSTHRESHOLD:
 		if (!(IEEE80211_RTS_MIN < ireq->i_val &&
 		      ireq->i_val < IEEE80211_RTS_MAX))
@@ -2291,7 +2291,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		rsn->rsn_caps = ireq->i_val;
 		error = (ic->ic_flags & IEEE80211_F_WPA) ? ENETRESET : 0;
 		break;
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 	case IEEE80211_IOC_BSSID:
 		/* NB: should only be set when in STA mode */
 		if (ic->ic_opmode != IEEE80211_M_STA)
@@ -2308,7 +2308,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			ic->ic_flags |= IEEE80211_F_DESBSSID;
 		error = ENETRESET;
 		break;
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 	case IEEE80211_IOC_CHANLIST:
 		error = ieee80211_ioctl_setchanlist(ic, ireq);
 		break;
