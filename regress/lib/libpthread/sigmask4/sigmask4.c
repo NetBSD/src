@@ -24,12 +24,13 @@ static void *
 sleeper(void* arg)
 {
     int i;
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 10; i++)
 	    sleep(1);
     exit(1);
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
 	pthread_t id;
 	struct sigaction act;
@@ -39,7 +40,6 @@ int main(int argc, char** argv)
 	act.sa_flags = 0;
 	act.sa_handler = handler;
 
-	/* set to handle SIGALRM */
 	if (sigaction(SIGALRM, &act, NULL) == -1)
 		err(1, "sigaction");
 
