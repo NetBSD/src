@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.9 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.10 2005/07/27 12:42:51 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -87,7 +87,8 @@ getcachelinesize(void)
 	_cache_info.icache_size = _cachelinesize;
 	_cache_info.icache_line_size = _cachelinesize;
 	/* If there is no cache, indicate we have issued the sysctl. */
-	if (!_cachelinesize) _cachelinesize = 1;
+	if (!_cachelinesize)
+		_cachelinesize = 1;
 }
 #endif
 
