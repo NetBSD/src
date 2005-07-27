@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.82 2005/07/27 19:08:42 christos Exp $ */
+/* $NetBSD: user.c,v 1.83 2005/07/27 23:32:02 peter Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.82 2005/07/27 19:08:42 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.83 2005/07/27 23:32:02 peter Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1665,13 +1665,13 @@ usermgmt_usage(const char *prog)
 		(void)fprintf(stderr, "usage: %s [-G group] [-b basedir] "
 		    "[-c comment] [-d homedir] [-e expiry]\n\t[-f inactive] "
 		    "[-g group] [-k skeletondir] [-m] [-o] [-p password]\n"
-		    "\t[-r lowuid..highuid] [-s shell]\n\t[-u uid] [-v] user\n",
+		    "\t[-r lowuid..highuid] [-s shell] [-u uid] [-v] user\n",
 		    prog);
 	} else if (strcmp(prog, "usermod") == 0) {
 		(void)fprintf(stderr, "usage: %s [-G group] [-c comment] "
 		    "[-C yes/no] [-d homedir] [-e expire] \n\t[-f inactive] "
-		    "[-g group] [-l newname] [-m] [-o] [-p password] [-s shell]\n"
-		    "\t[- uid] [-L class] [-v] user\n", prog);
+		    "[-g group] [-l newname] [-m] [-o] [-p password]\n"
+		    "\t[-s shell] [-u uid] [-L class] [-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void)fprintf(stderr, "usage: %s -D [-p preserve]\n", prog);
 		(void)fprintf(stderr,
