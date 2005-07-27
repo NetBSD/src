@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.11 2005/07/27 06:52:27 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.12 2005/07/27 07:01:25 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -408,19 +408,27 @@ struct ieee80211req {
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
 #endif /* __FreeBSD__ */
 
+#ifdef COMPAT_FREEBSD
 #define IEEE80211_IOC_SSID		1
+#endif /* COMPAT_FREEBSD */
 #define IEEE80211_IOC_NUMSSIDS		2
 #define IEEE80211_IOC_WEP		3
 #define 	IEEE80211_WEP_NOSUP	-1
 #define 	IEEE80211_WEP_OFF	0
 #define 	IEEE80211_WEP_ON	1
 #define 	IEEE80211_WEP_MIXED	2
+#ifdef COMPAT_FREEBSD
 #define IEEE80211_IOC_WEPKEY		4
+#endif /* COMPAT_FREEBSD */
 #define IEEE80211_IOC_NUMWEPKEYS	5
+#ifdef COMPAT_FREEBSD
 #define IEEE80211_IOC_WEPTXKEY		6
+#endif /* COMPAT_FREEBSD */
 #define IEEE80211_IOC_AUTHMODE		7
 #define IEEE80211_IOC_STATIONNAME	8
+#ifdef COMPAT_FREEBSD
 #define IEEE80211_IOC_CHANNEL		9
+#endif /* COMPAT_FREEBSD */
 #define IEEE80211_IOC_POWERSAVE		10
 #define 	IEEE80211_POWERSAVE_NOSUP	-1
 #define 	IEEE80211_POWERSAVE_OFF		0
@@ -435,10 +443,14 @@ struct ieee80211req {
 #define 	IEEE80211_PROTMODE_CTS		1
 #define 	IEEE80211_PROTMODE_RTSCTS	2
 #define	IEEE80211_IOC_TXPOWER		14	/* global tx power limit */
+#ifdef COMPAT_FREEBSD
 #define	IEEE80211_IOC_BSSID		15
+#endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_ROAMING		16	/* roaming mode */
+#ifdef COMPAT_FREEBSD
 #define	IEEE80211_IOC_PRIVACY		17	/* privacy invoked */
 #define	IEEE80211_IOC_DROPUNENCRYPTED	18	/* discard unencrypted frames */
+#endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_WPAKEY		19
 #define	IEEE80211_IOC_DELKEY		20
 #define	IEEE80211_IOC_MLME		21
@@ -473,7 +485,9 @@ struct ieee80211req {
 #define	IEEE80211_IOC_WME_ACM		50	/* WME: ACM (bss only) */
 #define	IEEE80211_IOC_WME_ACKPOLICY	51	/* WME: ACK policy (!bss only)*/
 #define	IEEE80211_IOC_DTIM_PERIOD	52	/* DTIM period (beacons) */
+#ifdef COMPAT_FREEBSD
 #define	IEEE80211_IOC_BEACON_INTERVAL	53	/* beacon interval (ms) */
+#endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
 #define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */
