@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.12 2005/07/27 07:01:25 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.13 2005/07/27 20:18:59 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -447,10 +447,8 @@ struct ieee80211req {
 #define	IEEE80211_IOC_BSSID		15
 #endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_ROAMING		16	/* roaming mode */
-#ifdef COMPAT_FREEBSD
 #define	IEEE80211_IOC_PRIVACY		17	/* privacy invoked */
 #define	IEEE80211_IOC_DROPUNENCRYPTED	18	/* discard unencrypted frames */
-#endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_WPAKEY		19
 #define	IEEE80211_IOC_DELKEY		20
 #define	IEEE80211_IOC_MLME		21
@@ -485,9 +483,7 @@ struct ieee80211req {
 #define	IEEE80211_IOC_WME_ACM		50	/* WME: ACM (bss only) */
 #define	IEEE80211_IOC_WME_ACKPOLICY	51	/* WME: ACK policy (!bss only)*/
 #define	IEEE80211_IOC_DTIM_PERIOD	52	/* DTIM period (beacons) */
-#ifdef COMPAT_FREEBSD
 #define	IEEE80211_IOC_BEACON_INTERVAL	53	/* beacon interval (ms) */
-#endif /* COMPAT_FREEBSD */
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
 #define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */

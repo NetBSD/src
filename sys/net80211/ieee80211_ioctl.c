@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.23 2005/07/27 07:01:25 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.24 2005/07/27 20:18:59 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.25 2005/07/06 15:38:27 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.23 2005/07/27 07:01:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.24 2005/07/27 20:18:59 dyoung Exp $");
 #endif
 
 /*
@@ -1398,14 +1398,12 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_ROAMING:
 		ireq->i_val = ic->ic_roaming;
 		break;
-#ifdef COMPAT_FREEBSD
 	case IEEE80211_IOC_PRIVACY:
 		ireq->i_val = (ic->ic_flags & IEEE80211_F_PRIVACY) != 0;
 		break;
 	case IEEE80211_IOC_DROPUNENCRYPTED:
 		ireq->i_val = (ic->ic_flags & IEEE80211_F_DROPUNENC) != 0;
 		break;
-#endif /* COMPAT_FREEBSD */
 	case IEEE80211_IOC_COUNTERMEASURES:
 		ireq->i_val = (ic->ic_flags & IEEE80211_F_COUNTERM) != 0;
 		break;
@@ -1475,12 +1473,10 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_DTIM_PERIOD:
 		ireq->i_val = ic->ic_dtim_period;
 		break;
-#ifdef COMPAT_FREEBSD
 	case IEEE80211_IOC_BEACON_INTERVAL:
 		/* NB: get from ic_bss for station mode */
 		ireq->i_val = ic->ic_bss->ni_intval;
 		break;
-#endif /* COMPAT_FREEBSD */
 	case IEEE80211_IOC_PUREG:
 		ireq->i_val = (ic->ic_flags & IEEE80211_F_PUREG) != 0;
 		break;
@@ -2161,7 +2157,6 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_roaming = ireq->i_val;
 		/* XXXX reset? */
 		break;
-#ifdef COMPAT_FREEBSD
 	case IEEE80211_IOC_PRIVACY:
 		if (ireq->i_val) {
 			/* XXX check for key state? */
@@ -2175,7 +2170,6 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		else
 			ic->ic_flags &= ~IEEE80211_F_DROPUNENC;
 		break;
-#endif /* COMPAT_FREEBSD */
 	case IEEE80211_IOC_WPAKEY:
 		error = ieee80211_ioctl_setkey(ic, ireq);
 		break;
@@ -2354,7 +2348,6 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		} else
 			error = EINVAL;
 		break;
-#ifdef COMPAT_FREEBSD
 	case IEEE80211_IOC_BEACON_INTERVAL:
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
 		    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -2366,7 +2359,6 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		} else
 			error = EINVAL;
 		break;
-#endif /* COMPAT_FREEBSD */
 	case IEEE80211_IOC_PUREG:
 		if (ireq->i_val)
 			ic->ic_flags |= IEEE80211_F_PUREG;
