@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.10 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.11 2005/07/27 06:52:27 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -89,6 +89,52 @@ struct ieee80211_nodestats {
 	u_int32_t	ns_tx_disassoc;		/* disassociations */
 	u_int32_t	ns_tx_disassoc_code;	/* last disassociation reason */
 };
+
+#ifdef COMPAT_20
+struct ieee80211_ostats {
+	u_int32_t	is_rx_badversion;	/* rx frame with bad version */
+	u_int32_t	is_rx_tooshort;		/* rx frame too short */
+	u_int32_t	is_rx_wrongbss;		/* rx from wrong bssid */
+	u_int32_t	is_rx_dup;		/* rx discard 'cuz dup */
+	u_int32_t	is_rx_wrongdir;		/* rx w/ wrong direction */
+	u_int32_t	is_rx_mcastecho;	/* rx discard 'cuz mcast echo */
+	u_int32_t	is_rx_notassoc;		/* rx discard 'cuz sta !assoc */
+	u_int32_t	is_rx_nowep;		/* rx w/ wep but wep !config */
+	u_int32_t	is_rx_wepfail;		/* rx wep processing failed */
+	u_int32_t	is_rx_decap;		/* rx decapsulation failed */
+	u_int32_t	is_rx_mgtdiscard;	/* rx discard mgt frames */
+	u_int32_t	is_rx_ctl;		/* rx discard ctrl frames */
+	u_int32_t	is_rx_rstoobig;		/* rx rate set truncated */
+	u_int32_t	is_rx_elem_missing;	/* rx required element missing*/
+	u_int32_t	is_rx_elem_toobig;	/* rx element too big */
+	u_int32_t	is_rx_elem_toosmall;	/* rx element too small */
+	u_int32_t	is_rx_elem_unknown;	/* rx element unknown */
+	u_int32_t	is_rx_badchan;		/* rx frame w/ invalid chan */
+	u_int32_t	is_rx_chanmismatch;	/* rx frame chan mismatch */
+	u_int32_t	is_rx_nodealloc;	/* rx frame dropped */
+	u_int32_t	is_rx_ssidmismatch;	/* rx frame ssid mismatch  */
+	u_int32_t	is_rx_auth_unsupported;	/* rx w/ unsupported auth alg */
+	u_int32_t	is_rx_auth_fail;	/* rx sta auth failure */
+	u_int32_t	is_rx_assoc_bss;	/* rx assoc from wrong bssid */
+	u_int32_t	is_rx_assoc_notauth;	/* rx assoc w/o auth */
+	u_int32_t	is_rx_assoc_capmismatch;/* rx assoc w/ cap mismatch */
+	u_int32_t	is_rx_assoc_norate;	/* rx assoc w/ no rate match */
+	u_int32_t	is_rx_deauth;		/* rx deauthentication */
+	u_int32_t	is_rx_disassoc;		/* rx disassociation */
+	u_int32_t	is_rx_badsubtype;	/* rx frame w/ unknown subtype*/
+	u_int32_t	is_rx_nombuf;		/* rx failed for lack of mbuf */
+	u_int32_t	is_rx_decryptcrc;	/* rx decrypt failed on crc */
+	u_int32_t	is_rx_ahdemo_mgt;	/* rx discard ahdemo mgt frame*/
+	u_int32_t	is_rx_bad_auth;		/* rx bad auth request */
+	u_int32_t	is_tx_nombuf;		/* tx failed for lack of mbuf */
+	u_int32_t	is_tx_nonode;		/* tx failed for no node */
+	u_int32_t	is_tx_unknownmgt;	/* tx of unknown mgt frame */
+	u_int32_t	is_scan_active;		/* active scans started */
+	u_int32_t	is_scan_passive;	/* passive scans started */
+	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
+	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
+};
+#endif /* COMPAT_20 */
 
 /*
  * Summary statistics.
@@ -522,10 +568,14 @@ struct ieee80211_bssid {
 #define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
-#define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
-#define	SIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
+#ifdef COMPAT_20
+#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
+#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
+#endif /* COMPAT_20 */
 #define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
 #define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
+#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
+#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
 #endif
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */
