@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.56 2005/07/27 21:13:32 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.57 2005/07/27 21:22:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.56 2005/07/27 21:13:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.57 2005/07/27 21:22:57 dyoung Exp $");
 #endif
 
 /*
@@ -381,8 +381,27 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if (error != 0)
 		goto bad;
 	/*
-	 * Setup dynamic sysctl's now that country code and
-	 * regdomain are available from the hal.
+	 * TPC support can be done either with a global cap or
+	 * per-packet support.  The latter is not available on
+	 * all parts.  We're a bit pedantic here as all parts
+	 * support a global cap.
+	 */
+	sc->sc_hastpc = ath_hal_hastpc(ah);
+	if (sc->sc_hastpc || ath_hal_hastxpowlimit(ah))
+		ic->ic_caps |= IEEE80211_C_TXPMGT;
+	/*
+	 * Query the hal about antenna support.
+	 */
+	if (ath_hal_hasdiversity(ah)) {
+		sc->sc_hasdiversity = 1;
+		sc->sc_diversity = ath_hal_getdiversity(ah);
+	}
+	sc->sc_defant = ath_hal_getdefantenna(ah);
+
+	/*
+	 * Setup dynamic sysctl's now that country code and regdomain
+	 * are available from the hal, and both TPC and diversity
+	 * capabilities are known.
 	 */
 	ath_sysctlattach(sc);
 
@@ -557,15 +576,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	}
 	sc->sc_hasclrkey = ath_hal_ciphersupported(ah, HAL_CIPHER_CLR);
 	sc->sc_mcastkey = ath_hal_getmcastkeysearch(ah);
-	/*
-	 * TPC support can be done either with a global cap or
-	 * per-packet support.  The latter is not available on
-	 * all parts.  We're a bit pedantic here as all parts
-	 * support a global cap.
-	 */
-	sc->sc_hastpc = ath_hal_hastpc(ah);
-	if (sc->sc_hastpc || ath_hal_hastxpowlimit(ah))
-		ic->ic_caps |= IEEE80211_C_TXPMGT;
 
 	/*
 	 * Mark WME capability only if we have sufficient
@@ -584,15 +594,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * 32-bit boundary for 4-address and QoS frames.
 	 */
 	ic->ic_flags |= IEEE80211_F_DATAPAD;
-
-	/*
-	 * Query the hal about antenna support.
-	 */
-	if (ath_hal_hasdiversity(ah)) {
-		sc->sc_hasdiversity = 1;
-		sc->sc_diversity = ath_hal_getdiversity(ah);
-	}
-	sc->sc_defant = ath_hal_getdefantenna(ah);
 
 	/*
 	 * Not all chips have the VEOL support we want to
@@ -1983,16 +1984,24 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 		ds->ds_link = bf->bf_daddr;	/* self-linked */
 		flags |= HAL_TXDESC_VEOL;
 		/*
-		 * Let hardware handle antenna switching.
+		 * Let hardware handle antenna switching unless
+		 * the user has selected a transmit antenna
+		 * (sc_txantenna is not 0).
 		 */
-		antenna = 0;
+		antenna = sc->sc_txantenna;
 	} else {
 		ds->ds_link = 0;
 		/*
-		 * Switch antenna every 4 beacons.
+		 * Switch antenna every 4 beacons, unless the user
+		 * has selected a transmit antenna (sc_txantenna
+		 * is not 0).
+		 *
 		 * XXX assumes two antenna
 		 */
-		antenna = (sc->sc_stats.ast_be_xmit & 4 ? 2 : 1);
+		if (sc->sc_txantenna == 0)
+			antenna = (sc->sc_stats.ast_be_xmit & 4 ? 2 : 1);
+		else
+			antenna = sc->sc_txantenna;
 	}
 
 	KASSERT(bf->bf_nseg == 1,
