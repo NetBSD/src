@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.2 2005/07/25 12:25:54 wiz Exp $ */
+/* $Id: vndcompress.c,v 1.3 2005/07/27 09:29:02 he Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -354,7 +354,7 @@ int
 main(int argc, char **argv)
 {
 	char *ep, *p;
-	char ch;
+	int ch;
 	
 	setprogname(argv[0]);
 	
