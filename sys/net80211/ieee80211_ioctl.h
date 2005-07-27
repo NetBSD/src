@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.13 2005/07/27 20:18:59 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.14 2005/07/27 20:31:25 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -408,27 +408,27 @@ struct ieee80211req {
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
 #endif /* __FreeBSD__ */
 
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 #define IEEE80211_IOC_SSID		1
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 #define IEEE80211_IOC_NUMSSIDS		2
 #define IEEE80211_IOC_WEP		3
 #define 	IEEE80211_WEP_NOSUP	-1
 #define 	IEEE80211_WEP_OFF	0
 #define 	IEEE80211_WEP_ON	1
 #define 	IEEE80211_WEP_MIXED	2
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 #define IEEE80211_IOC_WEPKEY		4
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 #define IEEE80211_IOC_NUMWEPKEYS	5
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 #define IEEE80211_IOC_WEPTXKEY		6
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 #define IEEE80211_IOC_AUTHMODE		7
 #define IEEE80211_IOC_STATIONNAME	8
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 #define IEEE80211_IOC_CHANNEL		9
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 #define IEEE80211_IOC_POWERSAVE		10
 #define 	IEEE80211_POWERSAVE_NOSUP	-1
 #define 	IEEE80211_POWERSAVE_OFF		0
@@ -443,9 +443,9 @@ struct ieee80211req {
 #define 	IEEE80211_PROTMODE_CTS		1
 #define 	IEEE80211_PROTMODE_RTSCTS	2
 #define	IEEE80211_IOC_TXPOWER		14	/* global tx power limit */
-#ifdef COMPAT_FREEBSD
+#ifdef __FreeBSD__
 #define	IEEE80211_IOC_BSSID		15
-#endif /* COMPAT_FREEBSD */
+#endif /* __FreeBSD__ */
 #define	IEEE80211_IOC_ROAMING		16	/* roaming mode */
 #define	IEEE80211_IOC_PRIVACY		17	/* privacy invoked */
 #define	IEEE80211_IOC_DROPUNENCRYPTED	18	/* discard unencrypted frames */
