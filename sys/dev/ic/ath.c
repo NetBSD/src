@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.55 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.56 2005/07/27 21:13:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.55 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.56 2005/07/27 21:13:32 dyoung Exp $");
 #endif
 
 /*
@@ -2025,7 +2025,6 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 		, AH_TRUE			/* last segment */
 		, ds				/* first descriptor */
 	);
-	/* XXX bus_dmamap_sync? -dcy */
 #undef USE_SHPREAMBLE
 }
 
