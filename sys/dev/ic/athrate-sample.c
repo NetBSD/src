@@ -35,7 +35,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.8 2005/04/02 18:56:50 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.3 2005/07/28 02:08:04 dyoung Exp $");
+#endif
+
 
 /*
  * John Bicket's SampleRate control algorithm.
@@ -50,15 +56,13 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.8 2005/04/02 18
 #include <sys/errno.h>
 
 #include <machine/bus.h>
-#include <machine/resource.h>
-#include <sys/bus.h>
 
 #include <sys/socket.h>
  
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/ethernet.h>		/* XXX for ether_sprintf */
+#include <net/if_ether.h>		/* XXX for ether_sprintf */
 
 #include <net80211/ieee80211_var.h>
 
@@ -174,7 +178,7 @@ static __inline int best_rate_ndx(struct sample_node *sn, int size_bin,
 				  int require_acked_before)
 {
 	int x = 0;
-        int best_rate_ndx = 0;
+        int best_ndx = 0;
         int best_rate_tt = 0;
         for (x = 0; x < sn->num_rates; x++) {
 		int tt = sn->stats[size_bin][x].average_tx_time;
@@ -184,10 +188,10 @@ static __inline int best_rate_ndx(struct sample_node *sn, int size_bin,
 		}
 		if (!best_rate_tt || best_rate_tt > tt) {
 			best_rate_tt = tt;
-			best_rate_ndx = x;
+			best_ndx = x;
 		}
         }
-        return (best_rate_tt) ? best_rate_ndx : -1;
+        return (best_rate_tt) ? best_ndx : -1;
 }
 
 /*
@@ -775,17 +779,26 @@ ath_rate_newstate(struct ath_softc *sc, enum ieee80211_state state)
 static void
 ath_rate_sysctlattach(struct ath_softc *sc, struct sample_softc *osc)
 {
-	struct sysctl_ctx_list *ctx = device_get_sysctl_ctx(sc->sc_dev);
-	struct sysctl_oid *tree = device_get_sysctl_tree(sc->sc_dev);
+	int rc;
+	struct sysctllog **log = &sc->sc_sysctllog;
+	const struct sysctlnode *cnode, *rnode;
+
+	if ((rnode = ath_sysctl_instance(sc->sc_dev.dv_xname, log)) == NULL)
+		return;
 
 	/* XXX bounds check [0..100] */
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
-		"smoothing_rate", CTLFLAG_RW, &osc->ath_smoothing_rate, 0,
-		"rate control: retry threshold to credit rate raise (%%)");
+	if ((rc = SYSCTL_PFX_INT(osc->ath_, CTLFLAG_READWRITE, smoothing_rate,
+	    "rate control: retry threshold to credit rate raise (%%)")) != 0)
+		goto err;
+
 	/* XXX bounds check [2..100] */
-	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
-		"sample_rate", CTLFLAG_RW, &osc->ath_sample_rate,0,
-		"rate control: # good periods before raising rate");
+	if ((rc = SYSCTL_PFX_INT(osc->ath_, CTLFLAG_READWRITE, sample_rate,
+	    "rate control: # good periods before raising rate")) != 0)
+		goto err;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 }
 
 struct ath_ratectrl *
