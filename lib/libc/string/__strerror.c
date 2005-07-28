@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.21 2003/08/07 16:43:46 agc Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.22 2005/07/28 16:26:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.21 2003/08/07 16:43:46 agc Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.22 2005/07/28 16:26:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,48 +51,12 @@ __RCSID("$NetBSD: __strerror.c,v 1.21 2003/08/07 16:43:46 agc Exp $");
 #include "extern.h"
 
 /*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to the
- * internal function __strerror().
+ * Compatibility. Can it be removed?
  */
 
 const char *
-__strerror(num, buf, buflen)
-	int num;
-	char *buf;
-	size_t buflen;
+__strerror(int num, char *buf, size_t buflen)
 {
-#define	UPREFIX	"Unknown error: %u"
-	unsigned int errnum;
-
-#ifdef NLS
-	int saved_errno = errno;
-	nl_catd catd ;
-	catd = catopen("libc", NL_CAT_LOCALE);
-#endif
-	_DIAGASSERT(buf != NULL);
-
-	errnum = num;				/* convert to unsigned */
-	if (errnum < (unsigned int) sys_nerr) {
-#ifdef NLS
-		(void)strlcpy(buf, catgets(catd, 1, (int)errnum,
-		    sys_errlist[errnum]), buflen); 
-#else
-		return(sys_errlist[errnum]);
-#endif
-	} else {
-#ifdef NLS
-		snprintf(buf, buflen, 
-		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
-#else
-		snprintf(buf, buflen, UPREFIX, errnum);
-#endif
-	}
-
-#ifdef NLS
-	catclose(catd);
-	errno = saved_errno;
-#endif
-
+	(void)strerror_r(num, buf, buflen);
 	return buf;
 }
