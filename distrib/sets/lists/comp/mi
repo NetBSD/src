@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.800 2005/07/21 12:58:47 christos Exp $
+#	$NetBSD: mi,v 1.801 2005/07/28 16:28:51 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4392,6 +4392,7 @@
 ./usr/share/man/cat3/strcspn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strdup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strerror.0			comp-c-catman		.cat
+./usr/share/man/cat3/strerror_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
@@ -4481,7 +4482,8 @@
 ./usr/share/man/cat3/swapon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swscanf.0			comp-c-catman		.cat
-./usr/share/man/cat3/sys_siglist.0		comp-c-catman		.cat
+./usr/share/man/cat3/sys_errlist.0		comp-c-catman		.cat
+./usr/share/man/cat3/sys_nerr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_signame.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysconf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sysctl.0			comp-c-catman		.cat
@@ -8265,6 +8267,7 @@
 ./usr/share/man/man3/strcspn.3			comp-c-man		.man
 ./usr/share/man/man3/strdup.3			comp-c-man		.man
 ./usr/share/man/man3/strerror.3			comp-c-man		.man
+./usr/share/man/man3/strerror_r.3		comp-c-man		.man
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
@@ -8354,6 +8357,8 @@
 ./usr/share/man/man3/swapon.3			comp-c-man		.man
 ./usr/share/man/man3/swprintf.3			comp-c-man		.man
 ./usr/share/man/man3/swscanf.3			comp-c-man		.man
+./usr/share/man/man3/sys_errlist.3		comp-c-man		.man
+./usr/share/man/man3/sys_nerr.3			comp-c-man		.man
 ./usr/share/man/man3/sys_siglist.3		comp-c-man		.man
 ./usr/share/man/man3/sys_signame.3		comp-c-man		.man
 ./usr/share/man/man3/sysconf.3			comp-c-man		.man
