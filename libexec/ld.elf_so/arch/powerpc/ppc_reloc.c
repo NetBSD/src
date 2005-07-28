@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.35 2003/07/24 10:12:29 skrll Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.36 2005/07/28 10:54:30 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -49,6 +49,8 @@ void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *,
+    const Elf_Rela *, int, Elf_Addr *);
 
 /*
  * Setup the plt glue routines.
@@ -217,10 +219,9 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	return 0;
 }
 
-caddr_t
-_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff, Elf_Addr *tp)
 {
-	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	Elf_Addr value;
 	const Elf_Sym *def;
@@ -231,7 +232,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		_rtld_die();
+		return -1;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	distance = value - (Elf_Addr)where;
@@ -270,5 +271,34 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		__syncicache(where - 12, 12);
 	}
 
-	return (caddr_t)value;
+	if (tp)
+		*tp = value;
+	return 0;
+}
+
+caddr_t
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+{
+	const Elf_Rela *rela = obj->pltrela + reloff;
+	Elf_Addr new_value;
+	int err;
+
+	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
+	if (err)
+		_rtld_die();
+
+	return (caddr_t)new_value;
+}
+
+int
+_rtld_relocate_plt_objects(const Obj_Entry *obj)
+{
+	const Elf_Rela *rela;
+	int reloff;
+	
+	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
+		if (_rtld_relocate_plt_object(obj, rela, reloff, NULL) < 0)
+			return -1;
+	}
+	return 0;
 }
