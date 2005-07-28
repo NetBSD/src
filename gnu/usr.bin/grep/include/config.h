@@ -39,7 +39,7 @@
 #define HAVE_DCGETTEXT 1
 
 /* Define to 1 if strerror_r is declared. */
-#define HAVE_DECL_STRERROR_R 0
+#define HAVE_DECL_STRERROR_R 1
 
 /* Define if <stdlib.h> declares strtoul. */
 #define HAVE_DECL_STRTOUL 1
@@ -191,7 +191,7 @@
 #define HAVE_STRERROR 1
 
 /* Define to 1 if you have the `strerror_r' function. */
-/* #undef HAVE_STRERROR_R */
+#define HAVE_STRERROR_R 1
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
