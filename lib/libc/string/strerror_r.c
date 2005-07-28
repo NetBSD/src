@@ -1,8 +1,8 @@
-/*	$NetBSD: perror.c,v 1.23 2005/07/28 16:26:29 christos Exp $	*/
+/*	$NetBSD: strerror_r.c,v 1.1 2005/07/28 16:26:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1988 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,36 +32,62 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
+static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: perror.c,v 1.23 2005/07/28 16:26:29 christos Exp $");
+__RCSID("$NetBSD: strerror_r.c,v 1.1 2005/07/28 16:26:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <errno.h>
+#include "namespace.h"
+#ifdef NLS
 #include <limits.h>
+#include <nl_types.h>
+#endif
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include "extern.h"
 
-/*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to strerror_r().
- */
-
-void
-perror(const char *s)
+int
+strerror_r(int num, char *buf, size_t buflen)
 {
-	const char *separator;
-	char buf[NL_TEXTMAX];
+#define	UPREFIX	"Unknown error: %u"
+	unsigned int errnum = num;
+	int retval = 0;
+	size_t slen;
+#ifdef NLS
+	int saved_errno = errno;
+	nl_catd catd;
+	catd = catopen("libc", NL_CAT_LOCALE);
+#endif
+	_DIAGASSERT(buf != NULL);
 
-	if (s == NULL)
-		s = "";
-	if (*s == '\0')
-		separator = "";
-	else
-		separator = ": ";
+	if (errnum < (unsigned int) sys_nerr) {
+#ifdef NLS
+		slen = strlcpy(buf, catgets(catd, 1, (int)errnum,
+		    sys_errlist[errnum]), buflen); 
+#else
+		slen = strlcpy(buf, sys_errlist[errnum], buflen); 
+#endif
+	} else {
+#ifdef NLS
+		slen = snprintf(buf, buflen, 
+		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
+#else
+		slen = snprintf(buf, buflen, UPREFIX, errnum);
+#endif
+		retval = EINVAL;
+	}
 
-	(void)strerror_r(errno, buf, sizeof(buf));
-	(void)fprintf(stderr, "%s%s%s\n", s, separator, buf);
+	if (slen >= buflen)
+		retval = ERANGE;
+
+#ifdef NLS
+	catclose(catd);
+	errno = saved_errno;
+#endif
+
+	return retval;
 }
