@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.155 2005/07/24 21:29:42 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.156 2005/07/28 20:26:35 jdc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3256,4 +3256,10 @@ usr.bin/gzip/zuncompress.c			1.5
 	Synchronize gzip(1) with NetBSD-current. This fixes PRs bin/25403,
 	bin/26812, bin/27153, bin/28779 and bin/29484.
 	[riz, ticket #1111]
+
+sys/netinet6/ah_aesxcbcmac.c			1.2
+
+	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
+	same key in AES-XCBC-MAC.  PR#30821
+	[elad, ticket 5538]
 
