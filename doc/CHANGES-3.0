@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.187 2005/07/24 21:15:48 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.188 2005/07/28 20:16:24 jdc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10904,4 +10904,9 @@ sys/dev/pci/pcidevs_data.h			regen
 	 - ICH6 AC'97 Modem
 	 - All of ICH7 devices
 	[tron, ticket #617]
+
+sys/netinet6/ah_aesxcbcmac.c			1.2
+	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
+	same key in AES-XCBC-MAC.  PR#30821
+	[elad, ticket #630]
 
