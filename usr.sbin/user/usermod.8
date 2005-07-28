@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.21 2005/07/27 19:09:21 christos Exp $ */
+.\" $NetBSD: usermod.8,v 1.22 2005/07/28 20:23:31 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,16 +39,14 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm
-.Op Fl Smov
+.Op Fl moSv
 .Op Fl C Ar yes/no
-.Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Oo
-.Fl g Ar gid | name | Li =uid
-.Oc
+.Op Fl G Ar secondary-group
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password
@@ -69,31 +67,29 @@ After setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl G Ar secondary-group
-is the secondary group to which the user will be added in the
-.Pa /etc/group
-file.
 .It Fl C Ar yes/no
-this enables user accounts to be temporary locked/closed. The
+Enable user accounts to be temporary locked/closed.
+The
 .Ar yes/no
-operand can be given as 'yes' to lock the account or 'no' to
-unlock the account.
-.It Fl S
-allows samba user names with a trailing dollar sign to be
-modified.
+operand can be given as
+.Dq Ar yes
+to lock the account or
+.Dq Ar no
+to unlock the account.
 .It Fl c Ar comment
-is the comment field (also, for historical reasons known as the
-GECOS field) which will be added for the user, and typically will include
-the user's full name, and, perhaps, contact information for the user.
+Set the comment field (also, for historical reasons known as the
+GECOS field) for the user.
+The comment field will typically include
+the user's full name and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-Sets the home directory to
+Set the home directory to
 .Ar home-directory
 without populating it; if the
 .Fl m
 option is specified, tries to move the old home directory to
 .Ar home-directory .
 .It Fl e Ar expiry-time
-sets the time at which the current password expires.
+Set the time at which the current password expires.
 This can be used to implement password aging.
 It should be entered in the form
 .Dq month day year ,
@@ -110,22 +106,23 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl f Ar inactive-time
-sets the time at which the account expires.
+Set the time at which the account expires.
 See the
 .Fl e
 option.
-.It Xo
-.Fl g Ar gid | name | Li =uid
-.Xc
-gives the group name or identifier to be used for the user's primary group.
+.It Fl G Ar secondary-group
+Specify a secondary group to which the user will be added in the
+.Pa /etc/group
+file.
+.It Fl g Ar gid | name | Li =uid
+Give the group name or identifier to be used for the user's primary group.
 If this is
 .Ql =uid ,
 then a uid and gid will be picked which are both unique
-and the same, and a line added to
+and the same, and a line will be added to
 .Pa /etc/group
 to describe the new group.
-This value can be preset for all users
-by using the
+This value can be preset for all users by using the
 .Ar gid
 field in the
 .Pa /etc/usermgmt.conf
@@ -134,7 +131,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl L Ar login-class
-This option sets the login class for the user.
+Set the login class for the user.
 See
 .Xr login.conf 5
 for more information on user login classes.
@@ -147,14 +144,14 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl l Ar new-user
-gives the new user name.
-It must consist of alphanumeric characters, or the characters
+Give the new user name.
+It can consist of alphanumeric characters and the characters
 .Ql \&. ,
-.Ql \&-
-or
+.Ql \&- ,
+and
 .Ql \&_ .
 .It Fl m
-moves the home directory from its old position to the new one.
+Move the home directory from its old position to the new one.
 If
 .Fl d
 is not specified, the
@@ -167,14 +164,13 @@ and
 .Fl l
 is needed.
 .It Fl o
-allows duplicate uids to be given.
+Allow duplicate uids to be given.
 .It Fl p Ar password
-specifies an already-encrypted password for the user.
+Specify an already-encrypted password for the user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
-This value can be preset for all users
-by using the
+This value can be preset for all users by using the
 .Ar password
 field in the
 .Pa /etc/usermgmt.conf
@@ -182,10 +178,11 @@ file.
 See
 .Xr usermgmt.conf 5
 for more details.
+.It Fl S
+Allow samba user names with a trailing dollar sign to be modified.
 .It Fl s Ar shell
-specifies the login shell for the user.
-This value can be preset for all users
-by using the
+Specify the login shell for the user.
+This value can be preset for all users by using the
 .Ar shell
 field in the
 .Pa /etc/usermgmt.conf
@@ -194,9 +191,8 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl u Ar uid
-specifies a new uid for the user.
-Boundaries for this value can be preset for all users
-by using the
+Specify a new uid for the user.
+Boundaries for this value can be preset for all users by using the
 .Ar range
 field in the
 .Pa /etc/usermgmt.conf
@@ -205,7 +201,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl v
-enables verbose mode - explain the commands as they are executed.
+Enable verbose mode - explain the commands as they are executed.
 .El
 .Pp
 Once the information has been verified,
@@ -213,15 +209,13 @@ Once the information has been verified,
 uses
 .Xr pwd_mkdb 8
 to update the user database.
-This is run in the background, and,
-at very large sites could take several minutes.
+This is run in the background.
+At very large sites this can take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std usermod
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
