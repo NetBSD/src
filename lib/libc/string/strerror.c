@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.12 2003/08/07 16:43:51 agc Exp $	*/
+/*	$NetBSD: strerror.c,v 1.13 2005/07/28 16:26:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,26 +34,26 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strerror.c,v 1.12 2003/08/07 16:43:51 agc Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.13 2005/07/28 16:26:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 #include "extern.h"
 
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to the
- * internal function __strerror().
+ * static buffer, both functions supply their own buffers to strerror_r()
  */
 
 __aconst char *
-strerror(num)
-	int num;
+strerror(int num)
 {
 	static char buf[NL_TEXTMAX];
-
-	/* LINTED const castaway */
-	return (__aconst char *)__strerror(num, buf, sizeof(buf));
+	int error = strerror_r(num, buf, sizeof(buf));
+	if (error)
+		errno = error;
+	return buf;
 }
