@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.44 2003/01/17 22:11:16 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.45 2005/07/28 00:24:34 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -288,13 +288,14 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_AMASK_CIX		0x0004		/* count extension */
 #define	ALPHA_AMASK_MVI		0x0100		/* multimedia extension */
 #define	ALPHA_AMASK_PAT		0x0200		/* precise arith. traps */
+#define	ALPHA_AMASK_PMI		0x1000		/* prefetch w/ modify intent */
 
 #define	ALPHA_AMASK_ALL		(ALPHA_AMASK_BWX|ALPHA_AMASK_FIX|	\
 				 ALPHA_AMASK_CIX|ALPHA_AMASK_MVI|	\
-				 ALPHA_AMASK_PAT)
+				 ALPHA_AMASK_PAT|ALPHA_AMASK_PMI)
 
 #define	ALPHA_AMASK_BITS						\
-    "\20\12PAT\11MVI\3CIX\2FIX\1BWX"
+    "\20\17PMI\12PAT\11MVI\3CIX\2FIX\1BWX"
 
 /*
  * Chip family IDs returned by implver instruction
@@ -303,6 +304,7 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_IMPLVER_EV4	0		/* LCA/EV4/EV45 */
 #define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
 #define	ALPHA_IMPLVER_EV6	2		/* EV6 */
+#define	ALPHA_IMPLVER_EV7	3		/* EV7/EV79 */
 
 #ifdef _KERNEL
 
