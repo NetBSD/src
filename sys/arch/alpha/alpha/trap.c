@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.97 2005/06/01 16:09:01 drochner Exp $ */
+/* $NetBSD: trap.c,v 1.98 2005/07/28 13:57:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2005/06/01 16:09:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/07/28 13:57:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,12 +634,18 @@ alpha_enable_fp(struct lwp *l, int check)
 	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #endif
 
-	FPCPU_LOCK(&l->l_addr->u_pcb, s);
+#if defined(MULTIPROCESSOR)
+	s = splhigh();		/* block IPIs */
+#endif
+	FPCPU_LOCK(&l->l_addr->u_pcb);
 
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	ci->ci_fpcurlwp = l;
 
-	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
+	FPCPU_UNLOCK(&l->l_addr->u_pcb);
+#if defined(MULTIPROCESSOR)
+	splx(s);
+#endif
 
 	/*
 	 * Instrument FP usage -- if a process had not previously
