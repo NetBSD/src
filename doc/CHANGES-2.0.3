@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.29 2005/07/24 10:10:06 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.30 2005/07/28 20:28:58 jdc Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -313,4 +313,10 @@ sys/arch/macppc/pci/pci_machdep.c		1.26
 
 	Make PCI cards work on NetBSD-mappc systems with a "Grackle" bridge.
 	[briggs, ticket #1329]
+
+sys/netinet6/ah_aesxcbcmac.c			1.2
+
+	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
+	same key in AES-XCBC-MAC.  PR#30821
+	[elad, ticket 5538]
 
