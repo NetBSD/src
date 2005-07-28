@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.801 2005/07/28 16:28:51 christos Exp $
+#	$NetBSD: mi,v 1.802 2005/07/28 23:16:39 agc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4484,6 +4484,7 @@
 ./usr/share/man/cat3/swscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_errlist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sys_nerr.0			comp-c-catman		.cat
+./usr/share/man/cat3/sys_siglist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sys_signame.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysconf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sysctl.0			comp-c-catman		.cat
