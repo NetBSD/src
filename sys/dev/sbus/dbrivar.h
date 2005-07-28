@@ -1,8 +1,15 @@
-/*	$NetBSD: dbrivar.h,v 1.1 2005/07/16 18:58:50 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.2 2005/07/28 21:36:48 macallan Exp $	*/
 
 /*
- * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
+ * Copyright (c) 1998, 1999 Brent Baccala (baccala@freesoft.org)
+ * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@netbsd.org>
+ * Copyright (c) 2005 Michael Lorenz <macallan@netbsd.org>
  * All rights reserved.
+ *
+ * This driver is losely based on a Linux driver written by Rudolf Koenig and 
+ * Brent Baccala who kindly gave their permission to use their code in a 
+ * BSD-licensed driver.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +21,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Jared D. McNeill.
+ *	This product includes software developed by Rudolf Koenig, Brent 
+ *      Baccala, Jared D. McNeill.
  * 4. Neither the name of the author nor the names of any contributors may
  *    be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -32,6 +40,7 @@
  * SUCH DAMAGE.
  *
  */
+
 
 #define	DBRI_NUM_COMMANDS	64
 #define	DBRI_NUM_DESCRIPTORS	64
