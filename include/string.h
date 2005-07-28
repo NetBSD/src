@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.29 2005/03/13 15:09:50 perry Exp $	*/
+/*	$NetBSD: string.h,v 1.30 2005/07/28 16:26:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -70,6 +70,7 @@ char	*strtok(char * __restrict, const char * __restrict);
 #if (_POSIX_C_SOURCE - 0 >= 199506L) || (_XOPEN_SOURCE - 0 >= 500) || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 char	*strtok_r(char *, const char *, char **);
+int	 strerror_r(int, char *, size_t);
 #endif /* _POSIX_C_SOURCE >= 199506 || XOPEN_SOURCE >= 500 || ... */
 size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
 
