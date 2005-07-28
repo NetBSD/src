@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.12 2003/06/29 22:28:05 fvdl Exp $ */
+/* $NetBSD: pcb.h,v 1.13 2005/07/28 13:57:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -64,25 +64,13 @@ struct pcb {
 	struct simplelock pcb_fpcpu_slock;	/* simple lock on fpcpu [SW] */
 };
 
-#if defined(MULTIPROCESSOR)
 /*
- * Need to block IPIs while holding the fpcpu_slock.
+ * MULTIPROCESSOR:
+ * Need to block IPIs while holding the fpcpu_slock.  That is the
+ * responsibility of the CALLER!
  */
-#define	FPCPU_LOCK(pcb, s)						\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&(pcb)->pcb_fpcpu_slock);				\
-} while (/*CONSTCOND*/0)
-
-#define	FPCPU_UNLOCK(pcb, s)						\
-do {									\
-	simple_unlock(&(pcb)->pcb_fpcpu_slock);				\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
-#else
-#define	FPCPU_LOCK(pcb, s)	simple_lock(&(pcb)->pcb_fpcpu_slock)
-#define	FPCPU_UNLOCK(pcb, s)	simple_unlock(&(pcb)->pcb_fpcpu_slock)
-#endif /* MULTIPROCESSOR */
+#define	FPCPU_LOCK(pcb)		simple_lock(&(pcb)->pcb_fpcpu_slock)
+#define	FPCPU_UNLOCK(pcb)	simple_unlock(&(pcb)->pcb_fpcpu_slock)
 
 /*
  * The pcb is augmented with machine-dependent additional data for
