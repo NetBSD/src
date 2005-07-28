@@ -104,10 +104,15 @@ typedef struct ath_lock ath_txbuf_lock_t;
 	    CTLTYPE_INT, #__name, SYSCTL_DESCR(__descr), ath_sysctl_##__name,\
 	    0, sc, 0, CTL_CREATE, CTL_EOL)
 
-#define	SYSCTL_INT(__rw, __name, __descr)				\
+#define	__PFX(__pfx, __name)	__pfx##__name
+
+#define	SYSCTL_PFX_INT(__pfx, __rw, __name, __descr)			\
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_PERMANENT|(__rw),\
 	    CTLTYPE_INT, #__name, SYSCTL_DESCR(__descr), NULL, 0,	\
-	    &sc->sc_##__name, 0, CTL_CREATE, CTL_EOL)
+	    __PFX(&__pfx, __name), 0, CTL_CREATE, CTL_EOL)
+
+#define	SYSCTL_INT(__rw, __name, __descr)				\
+	SYSCTL_PFX_INT(sc->sc_, __rw, __name, __descr)
 
 #define	SYSCTL_GLOBAL_INT(__rw, __name, __descr, __var)			\
 	sysctl_createv(clog, 0, &rnode, &cnode,				\
@@ -119,5 +124,6 @@ extern void device_printf(struct device, const char *fmt, ...);
 struct mbuf *m_defrag(struct mbuf *, int);
 struct mbuf *m_getcl(int, int, int);
 const struct sysctlnode *ath_sysctl_treetop(struct sysctllog **);
+const struct sysctlnode *ath_sysctl_instance(const char *, struct sysctllog **);
 
 #endif /* _ATH_NETBSD_H */

@@ -54,9 +54,6 @@
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
 
-static const struct sysctlnode *ath_sysctl_instance(const char *,
-    struct sysctllog **);
-
 void
 device_printf(struct device dv, const char *fmt, ...)
 {
@@ -312,7 +309,7 @@ ath_sysctl_tpc(SYSCTLFN_ARGS)
 	return !ath_hal_settpc(sc->sc_ah, tpc) ? EINVAL : 0;
 }
 
-static const struct sysctlnode *
+const struct sysctlnode *
 ath_sysctl_instance(const char *dvname, struct sysctllog **log)
 {
 	int rc;
