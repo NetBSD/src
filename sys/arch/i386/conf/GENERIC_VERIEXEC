@@ -14,6 +14,4 @@ options VERIFIED_EXEC_FP_SHA512
 options VERIFIED_EXEC_FP_SHA1
 options VERIFIED_EXEC_FP_MD5
 #
-#options VERIFIED_EXEC_DEBUG
-#options VERIFIED_EXEC_DEBUG_VERBOSE
 pseudo-device veriexec        1

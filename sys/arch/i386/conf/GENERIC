@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.689 2005/07/18 12:02:21 augustss Exp $
+# $NetBSD: GENERIC,v 1.690 2005/07/29 14:57:30 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.689 $"
+#ident 		"GENERIC-$Revision: 1.690 $"
 
 maxusers	32		# estimated number of users
 
@@ -223,9 +223,6 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-#
-#options VERIFIED_EXEC_DEBUG
-#options VERIFIED_EXEC_DEBUG_VERBOSE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
