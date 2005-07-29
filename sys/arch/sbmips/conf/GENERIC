@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.39 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.40 2005/07/29 12:25:51 simonb Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -40,7 +40,7 @@ options 	SYMTAB_SPACE=200000	# size for embedded symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
-#options 	COMPAT_10	# NetBSD 0.9 binary compatibility
+#options 	COMPAT_09	# NetBSD 0.9 binary compatibility
 #options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 #options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
