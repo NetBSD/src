@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.83 2005/07/27 23:32:02 peter Exp $ */
+/* $NetBSD: user.c,v 1.84 2005/07/29 18:16:21 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.83 2005/07/27 23:32:02 peter Exp $");
+__RCSID("$NetBSD: user.c,v 1.84 2005/07/29 18:16:21 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -981,8 +981,11 @@ valid_class(char *class)
 	 * user the actual login class does not exist.
 	 */
 
-	if (access(PATH_LOGINCONF, R_OK) == -1)
-		err(EXIT_FAILURE, "access failed `%s'", PATH_LOGINCONF);
+	if (access(PATH_LOGINCONF, R_OK) == -1) {
+		warn("Access failed for `%s'; will not validate class `%s'",
+		    PATH_LOGINCONF, class);
+		return 1;
+	}
 
 	if ((lc = login_getclass(class)) != NULL)
 		login_close(lc);
