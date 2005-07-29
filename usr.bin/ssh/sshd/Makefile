@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.26 2005/07/29 01:19:20 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,12 @@ CPPFLAGS+=-DUSE_PAM
 SRCS+= auth-pam.c
 LDADD+=	-lpam ${PAM_STATIC_LDADD}
 DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
+
+.if ${USE_YP} != "no"
+LDADD+= -lrpcsvc
+DPADD+= ${LIBRPCSVC}
+.endif
+
 .endif
 
 .if (${USE_KERBEROS} != "no")
