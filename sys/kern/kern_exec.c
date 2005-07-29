@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.206 2005/07/29 22:37:11 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.207 2005/07/29 22:57:34 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.206 2005/07/29 22:37:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.207 2005/07/29 22:57:34 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -270,9 +270,7 @@ check_exec(struct proc *p, struct exec_package *epp, int flag)
 
 
 #ifdef VERIFIED_EXEC
-        if ((error = veriexec_verify(p, vp, epp->ep_vap,
-				     (flag == VERIEXEC_INDIRECT) ?
-				     epp->ep_ndp->ni_dirp : epp->ep_name,
+        if ((error = veriexec_verify(p, vp, epp->ep_vap, epp->ep_ndp->ni_dirp,
 				     flag, NULL)) != 0)
                 goto bad2;
 #endif
