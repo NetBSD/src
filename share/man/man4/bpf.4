@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.28 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: bpf.4,v 1.29 2005/07/30 16:37:36 rpaulo Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd August 29, 2002
+.Dd July 30, 2005
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -40,9 +40,7 @@ All packets on the network, even those destined for other hosts,
 are accessible through this mechanism.
 .Pp
 The packet filter appears as a character special device,
-.Pa /dev/bpf0 ,
-.Pa /dev/bpf1 ,
-etc.
+.Pa /dev/bpf .
 After opening the device, the file descriptor must be bound to a
 specific network interface with the
 .Dv BIOSETIF
@@ -159,7 +157,7 @@ of the array returned.
 If
 .Va bfl_list
 is
-Dv NULL ,
+.Dv NULL ,
 the
 .Va bfl_len
 field is returned to indicate the required length of an array in u_int.
@@ -209,8 +207,10 @@ indicating no timeout.
 Returns the following structure of packet statistics:
 .Bd -literal -offset indent
 struct bpf_stat {
-	u_int bs_recv;
-	u_int bs_drop;
+	u_int64_t bs_recv;
+	u_int64_t bs_drop;
+	u_int64_t bs_capt;
+	u_int64_t bs_padding[13];
 };
 .Ed
 .Pp
@@ -219,11 +219,13 @@ The fields are:
 .It Va bs_recv
 the number of packets received by the descriptor since opened or reset
 (including any buffered since the last read call);
-and
 .It Va bs_drop
 the number of packets which were accepted by the filter but dropped by the
 kernel because of buffer overflows
-(i.e., the application's reads aren't keeping up with the packet traffic).
+(i.e., the application's reads aren't keeping up with the packet 
+traffic); and 
+.It Va bs_capt
+the number of packets accepted by the filter.
 .El
 .It Dv BIOCIMMEDIATE (u_int)
 Enable or disable
@@ -242,7 +244,7 @@ packets.  An array of instructions and its length is passed in using
 the following structure:
 .Bd -literal -offset indent
 struct bpf_program {
-	int bf_len;
+	u_int bf_len;
 	struct bpf_insn *bf_insns;
 };
 .Ed
@@ -331,9 +333,9 @@ The following structure is prepended to each packet returned by
 .Bd -literal -offset indent
 struct bpf_hdr {
 	struct timeval bh_tstamp;
-	u_long bh_caplen;
-	u_long bh_datalen;
-	u_short bh_hdrlen;
+	u_int32_t bh_caplen;
+	u_int32_t bh_datalen;
+	u_int16_t bh_hdrlen;
 };
 .Ed
 .Pp
@@ -405,10 +407,10 @@ and implicit program counter.
 The following structure defines the instruction format:
 .Bd -literal -offset indent
 struct bpf_insn {
-	u_short	code;
+	u_int16_t code;
 	u_char 	jt;
 	u_char 	jf;
-	long k;
+	int32_t k;
 };
 .Ed
 .Pp
@@ -588,9 +590,7 @@ array initializers:
 .Sy BPF_JUMP No (opcode, operand, true_offset, false_offset)
 .Ed
 .Sh FILES
-.Pa /dev/bpf0 ,
-.Pa /dev/bpf1 ,
-.Pa ...
+.Pa /dev/bpf
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP Daemon.  It accepts
 only Reverse ARP requests.
