@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.20 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: PB1000,v 1.21 2005/07/30 06:35:35 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.20 $"
+#ident 		"PB1000-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -255,3 +255,5 @@ pseudo-device	rnd				# /dev/random & kernel generator
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+
+options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.24 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: SALMON,v 1.25 2005/07/30 06:35:38 yamt Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -80,3 +80,5 @@ pseudo-device	vnd		4	# Vnode devices
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ether			#
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

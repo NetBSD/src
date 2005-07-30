@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.15 2005/02/18 21:05:53 dsl Exp $
+# 	$NetBSD: DEJIKO,v 1.16 2005/07/30 06:35:38 yamt Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -81,3 +81,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss		4	# file system snapshot device
+
+options	VMSWAP			# Swap device/file support

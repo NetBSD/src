@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.23 2005/07/07 17:05:47 tron Exp $
+# $NetBSD: VIRTUALPC,v 1.24 2005/07/30 06:35:36 yamt Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.23 $"
+#ident 		"VIRTUALPC-$Revision: 1.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -636,3 +636,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

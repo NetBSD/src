@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.32 2005/07/17 00:08:27 hubertf Exp $
+# $NetBSD: GENERIC,v 1.33 2005/07/30 06:35:34 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -263,3 +263,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.44 2005/07/07 17:05:46 tron Exp $
+#	$NetBSD: PCCONS,v 1.45 2005/07/30 06:35:35 yamt Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -370,3 +370,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
+
+options	VMSWAP			# Swap device/file support
