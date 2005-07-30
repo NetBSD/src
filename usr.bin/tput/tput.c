@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.16 2004/07/23 13:33:22 wiz Exp $	*/
+/*	$NetBSD: tput.c,v 1.17 2005/07/30 14:43:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.16 2004/07/23 13:33:22 wiz Exp $");
+__RCSID("$NetBSD: tput.c,v 1.17 2005/07/30 14:43:13 christos Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -51,20 +51,18 @@ __RCSID("$NetBSD: tput.c,v 1.16 2004/07/23 13:33:22 wiz Exp $");
 #include <termcap.h>
 #include <unistd.h>
 
-	int   main __P((int, char **));
-static int    outc __P((int));
-static void   prlongname __P((char *));
-static void   setospeed __P((void));
-static void   usage __P((void));
-static char **process __P((char *, char *, char **));
+static int    outc(int);
+static void   prlongname(char *);
+static void   setospeed(void);
+static void   usage(void) __attribute__((__noreturn__));
+static char **process(const char *, char *, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, exitval, n;
-	char *cptr, *p, *term, buf[1024], tbuf[1024];
+	char *cptr, *term, buf[1024], tbuf[1024];
+	const char *p;
 
 	term = NULL;
 	while ((ch = getopt(argc, argv, "T:")) != -1)
@@ -80,7 +78,8 @@ main(argc, argv)
 	argv += optind;
 
 	if (!term && !(term = getenv("TERM")))
-errx(2, "no terminal type specified and no TERM environmental variable.");
+		errx(2, "No terminal type specified and no TERM "
+		    "variable set in the environment.");
 	if (tgetent(tbuf, term) != 1)
 		err(2, "tgetent failure");
 	setospeed();
@@ -116,12 +115,11 @@ errx(2, "no terminal type specified and no TERM environmental variable.");
 		if (argv == NULL)
 			break;
 	}
-	exit(argv ? exitval : 2);
+	return argv ? exitval : 2;
 }
 
 static void
-prlongname(buf)
-	char *buf;
+prlongname(char *buf)
 {
 	int savech;
 	char *p, *savep;
@@ -136,15 +134,14 @@ prlongname(buf)
 }
 
 static char **
-process(cap, str, argv)
-	char *cap, *str, **argv;
+process(const char *cap, char *str, char **argv)
 {
 	static const char errfew[] =
-	    "not enough arguments (%d) for capability `%s'";
+	    "Not enough arguments (%d) for capability `%s'";
 	static const char errmany[] =
-	    "too many arguments (%d) for capability `%s'";
+	    "Too many arguments (%d) for capability `%s'";
 	static const char erresc[] =
-	    "unknown %% escape `%c' for capability `%s'";
+	    "Unknown %% escape `%c' for capability `%s'";
 	char *cp;
 	int arg_need, arg_rows, arg_cols;
 
@@ -197,17 +194,17 @@ process(cap, str, argv)
 			errx(2, errfew, 2, cap);
 		arg_cols = atoi(*argv);
 
-		(void) tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
+		(void)tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
 		break;
 
 	default:
 		errx(2, errmany, arg_need, cap);
 	}
-	return (argv);
+	return argv;
 }
 
 static void
-setospeed()
+setospeed(void)
 {
 #undef ospeed
 	extern short ospeed;
@@ -223,14 +220,14 @@ static int
 outc(c)
 	int c;
 {
-	return (putchar(c));
+	return putchar(c);
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-T term] attribute [attribute-args] ...\n",
+	    "Usage: %s [-T term] attribute [attribute-args] ...\n",
 	    getprogname());
-	exit(1);
+	exit(2);
 }
