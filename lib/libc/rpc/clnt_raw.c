@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.26 2005/06/09 22:13:17 yamt Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.27 2005/07/30 11:11:46 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.26 2005/06/09 22:13:17 yamt Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.27 2005/07/30 11:11:46 wiz Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.26 2005/06/09 22:13:17 yamt Exp $");
  * Memory based rpc for simple testing and timing.
  * Interface to create an rpc client and server in the same process.
  * This lets us similate rpc and get round trip overhead, without
- * any interference from the kernal.
+ * any interference from the kernel.
  */
 
 #include "namespace.h"
