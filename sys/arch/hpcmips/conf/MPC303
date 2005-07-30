@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.34 2005/07/07 17:05:47 tron Exp $
+# 	$NetBSD: MPC303,v 1.35 2005/07/30 06:35:35 yamt Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	16
 
@@ -497,3 +497,5 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan
+
+options	VMSWAP			# Swap device/file support

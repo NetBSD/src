@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.5 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: TWINTAIL,v 1.6 2005/07/30 06:35:35 yamt Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -392,3 +392,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

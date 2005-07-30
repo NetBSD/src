@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.15 2005/07/30 06:35:38 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -172,3 +172,5 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	fss	4		# file system snapshot device
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
+
+options	VMSWAP			# Swap device/file support

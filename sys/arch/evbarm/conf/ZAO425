@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.19 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: ZAO425,v 1.20 2005/07/30 06:35:35 yamt Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -266,3 +266,5 @@ pseudo-device	ksyms			# /dev/ksyms
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+options	VMSWAP			# Swap device/file support

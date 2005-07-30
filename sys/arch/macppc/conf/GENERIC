@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.205 2005/07/30 06:35:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
 maxusers	32
 
@@ -520,3 +520,5 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+options	VMSWAP			# Swap device/file support

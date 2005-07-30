@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.18 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: OFWGENCFG,v 1.19 2005/07/30 06:35:39 yamt Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -151,3 +151,5 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	openfirm		# /dev/openfirm
+
+options	VMSWAP			# Swap device/file support

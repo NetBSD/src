@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 2005/07/17 00:08:28 hubertf Exp $
+# $NetBSD: GENERIC,v 1.52 2005/07/30 06:35:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -318,3 +318,5 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont			# dynamic font loading support
 #pseudo-device	hpf1275a		# HP F1275A external keyboard
 #wskbd* at hpf1275a? mux 1
+
+options	VMSWAP			# Swap device/file support

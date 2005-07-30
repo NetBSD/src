@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.39 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: INTEGRATOR,v 1.40 2005/07/30 06:35:35 yamt Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -254,3 +254,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

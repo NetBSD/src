@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.20 2005/07/07 17:05:58 tron Exp $
+#	$NetBSD: BULLBOX,v 1.21 2005/07/30 06:35:38 yamt Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -93,3 +93,5 @@ pseudo-device	rnd			# kernel random number generator
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support
