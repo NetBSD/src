@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.729 2005/07/29 13:11:59 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.730 2005/07/30 01:13:23 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.727 2005/07/29 13:11:09 cube Exp
+ *	NetBSD: pcidevs,v 1.728 2005/07/30 01:12:59 grant Exp
  */
 
 /*
@@ -1087,6 +1087,8 @@
 #define	PCI_PRODUCT_ATI_RS300_HB	0x5833		/* RS300 Host Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_9100_IGP	0x5834		/* Radeon 9100 IGP */
 #define	PCI_PRODUCT_ATI_RS300_AGP	0x5838		/* RS300 AGP Interface */
+#define	PCI_PRODUCT_ATI_RADEON_9200_PRO_S	0x5940		/* Radeon 9200 Pro - Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9200_PRO	0x5960		/* Radeon 9200 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_9200	0x5961		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_9200_2	0x5962		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_9200_3	0x5963		/* Radeon 9200 */
