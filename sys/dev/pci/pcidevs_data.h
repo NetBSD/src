@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.728 2005/07/30 01:13:23 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.729 2005/07/30 01:14:51 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.728 2005/07/30 01:12:59 grant Exp
+ *	NetBSD: pcidevs,v 1.729 2005/07/30 01:14:38 grant Exp
  */
 
 /*
@@ -3917,7 +3917,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_PRO_S,
-	    "Radeon 9200 Pro - Secondary",
+	    "Radeon 9200 Pro Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_PRO,
