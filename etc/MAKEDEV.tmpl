@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.46 2005/07/11 15:37:03 kiyohara Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.47 2005/07/30 06:14:49 skrll Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -186,6 +186,7 @@
 #	urio*	USB Diamond Rio 500 devices
 #	uscanner*	USB scanners
 #	ttyU*	USB modems
+#	ttyY*	USB serial adapters
 #
 # ISDN devices:
 #	isdn	communication between userland isdnd and kernel
@@ -495,6 +496,7 @@ usbs)
 	makedev uhid0 uhid1 uhid2 uhid3
 	makedev ulpt0 ulpt1
 	makedev ttyU0 ttyU1
+	makedev ttyY0 ttyY1
 	makedev urio0
 	makedev uscanner0 uscanner1
 	makedev ugen0
@@ -551,6 +553,13 @@ urio*)
 uscanner*)
 	unit=${i#uscanner}
 	mkdev uscanner$unit c %uscanner_chr% $unit
+	;;
+
+ttyY*)
+	unit=${i#ttyY}
+	mkdev ttyY$unit c %ucycom_chr% $(($unit + $dialin  )) "" "" $u_uucp
+	mkdev dtyY$unit c %ucycom_chr% $(($unit + $dialout )) "" "" $u_uucp
+	mkdev ctyY$unit c %ucycom_chr% $(($unit + $callunit)) "" "" $u_uucp
 	;;
 
 ttyU*)
