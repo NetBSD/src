@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.83 2004/02/13 11:36:08 wiz Exp $	*/
+/*	$NetBSD: kvm.c,v 1.84 2005/07/30 16:32:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.83 2004/02/13 11:36:08 wiz Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.84 2005/07/30 16:32:29 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -323,8 +323,11 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		}
 		kd->alive = KVM_ALIVE_FILES;
 		if ((kd->swfd = open_cloexec(sf, flag, 0)) < 0) {
-			_kvm_syserr(kd, kd->program, "%s", sf);
-			goto failed;
+			if (errno != ENXIO) {
+				_kvm_syserr(kd, kd->program, "%s", sf);
+				goto failed;
+			}
+			/* swap is not configured?  not fatal */
 		}
 		/*
 		 * Open the kernel namelist.  If /dev/ksyms doesn't 
