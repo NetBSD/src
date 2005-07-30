@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.35 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.36 2005/07/30 22:40:33 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.35 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.36 2005/07/30 22:40:33 nakayama Exp $");
 
 #undef PLUMVIDEODEBUG
 
@@ -96,6 +96,10 @@ struct plumvideo_softc {
 	void *sc_powerhook;	/* power management hook */
 	int sc_console;
 
+	int sc_backlight;
+	int sc_brightness;
+	int sc_max_brightness;
+
 	/* control register */
 	bus_space_tag_t sc_regt;
 	bus_space_handle_t sc_regh;
@@ -138,6 +142,9 @@ void	plumvideo_clut_get(struct plumvideo_softc *, u_int32_t *, int, int);
 void	__plumvideo_clut_access(struct plumvideo_softc *, u_int32_t *, int, int,
 	    void (*)(bus_space_tag_t, bus_space_handle_t, u_int32_t *, int, int));
 static void _flush_cache(void) __attribute__((__unused__)); /* !!! */
+static void plumvideo_init_backlight(struct plumvideo_softc *);
+static void plumvideo_backlight(struct plumvideo_softc *, int);
+static void plumvideo_brightness(struct plumvideo_softc *, int);
 
 #ifdef PLUMVIDEODEBUG
 void	plumvideo_dump(struct plumvideo_softc*);
@@ -176,6 +183,9 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 		printf("register map failed\n");
 		return;
 	}
+
+	/* initialize backlight and brightness values */
+	plumvideo_init_backlight(sc);
 
 	/* power control */
 	plumvideo_power(sc, 0, 0,
@@ -426,6 +436,7 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
+	struct wsdisplay_param *dispparam;
 	u_int8_t *r, *g, *b;
 	u_int32_t *rgb;
 	int idx, error;
@@ -489,6 +500,59 @@ out:
 		rgb24_compose(rgb, r, g, b, cnt);
 		plumvideo_clut_set(sc, rgb, idx, cnt);
 		goto out;
+
+	case WSDISPLAYIO_SVIDEO:
+		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
+			plumvideo_backlight(sc, 0);
+		else
+			plumvideo_backlight(sc, 1);
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = sc->sc_backlight ?
+			WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+		return 0;
+
+	case WSDISPLAYIO_GETPARAM:
+		dispparam = (struct wsdisplay_param *)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			dispparam->min = 0;
+			dispparam->max = 1;
+			dispparam->curval = sc->sc_backlight;
+			break;
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			if (sc->sc_max_brightness <= 0)
+				return EINVAL;
+			dispparam->min = 0;
+			dispparam->max = sc->sc_max_brightness;
+			dispparam->curval = sc->sc_brightness;
+			break;
+		default:
+			return EINVAL;
+		}
+		return 0;
+
+	case WSDISPLAYIO_SETPARAM:
+		dispparam = (struct wsdisplay_param * )data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (dispparam->curval < 0 || 1 < dispparam->curval)
+				return EINVAL;
+			plumvideo_backlight(sc, dispparam->curval);
+			break;
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			if (sc->sc_max_brightness <= 0)
+				return EINVAL;
+			if (dispparam->curval < 0 ||
+			    sc->sc_max_brightness < dispparam->curval)
+				return EINVAL;
+			plumvideo_brightness(sc, dispparam->curval);
+			break;
+		default:
+			return EINVAL;
+		}
+		return 0;
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
@@ -701,9 +765,6 @@ int
 plumvideo_power(void *ctx, int type, long id, void *msg)
 {
 	struct plumvideo_softc *sc = ctx;
-	plum_chipset_tag_t pc = sc->sc_pc;
-	bus_space_tag_t regt = sc->sc_regt;
-	bus_space_handle_t regh = sc->sc_regh;
 	int why = (int)msg;
 
 	switch (why) {
@@ -713,27 +774,86 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 
 		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
 		/* power on */
-		/* LCD power on and display on */
-		plum_power_establish(pc, PLUM_PWR_LCD);
-		/* back-light on */
-		plum_power_establish(pc, PLUM_PWR_BKL);
-		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
-		    PLUM_VIDEO_PLLUM_MAX);
+		plumvideo_backlight(sc, 1);
 		break;
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */
 	case PWR_STANDBY:
 		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
-		/* back-light off */
-		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
-		    PLUM_VIDEO_PLLUM_MIN);
-		plum_power_disestablish(pc, PLUM_PWR_BKL);
-		/* power down */
-		plum_power_disestablish(pc, PLUM_PWR_LCD);
+		/* power off */
+		plumvideo_backlight(sc, 0);
 		break;
 	}
 
 	return (0);
+}
+
+static void
+plumvideo_init_backlight(struct plumvideo_softc *sc)
+{
+	int val;
+
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	    CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		/* we can get real backlight state */
+		sc->sc_backlight = val;
+	}
+
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+		/* we can get real brightness max */
+		sc->sc_max_brightness = val;
+
+		val = -1;
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+			/* we can get real brightness */
+			sc->sc_brightness = val;
+		} else {
+			sc->sc_brightness = sc->sc_max_brightness;
+		}
+	}
+}
+
+static void
+plumvideo_backlight(struct plumvideo_softc *sc, int on)
+{
+	plum_chipset_tag_t pc = sc->sc_pc;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+
+	sc->sc_backlight = on;
+	if (on) {
+		/* LCD on */
+		plum_power_establish(pc, PLUM_PWR_LCD);
+		/* backlight on */
+		plum_power_establish(pc, PLUM_PWR_BKL);
+		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
+				PLUM_VIDEO_PLLUM_MAX);
+	} else {
+		/* backlight off */
+		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
+				PLUM_VIDEO_PLLUM_MIN);
+		plum_power_disestablish(pc, PLUM_PWR_BKL);
+		/* LCD off */
+		plum_power_disestablish(pc, PLUM_PWR_LCD);
+	}
+	/* call machine dependent backlight control */
+	config_hook_call(CONFIG_HOOK_SET,
+			 CONFIG_HOOK_POWER_LCDLIGHT, (void *)on);
+}
+
+static void
+plumvideo_brightness(struct plumvideo_softc *sc, int val)
+{
+
+	sc->sc_brightness = val;
+	/* call machine dependent brightness control */
+	if (sc->sc_backlight)
+		config_hook_call(CONFIG_HOOK_SET,
+				 CONFIG_HOOK_BRIGHTNESS, &val);
 }
 
 #ifdef PLUMVIDEODEBUG
