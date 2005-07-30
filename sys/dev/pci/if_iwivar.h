@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.3 2005/06/22 06:16:02 dyoung Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.4 2005/07/30 21:15:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -77,6 +77,8 @@ struct iwi_softc {
 	u_int32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
+#define IWI_FLAG_FW_WARNED	(1 << 2)
+#define IWI_FLAG_SCANNING	(1 << 3)
 
 	bus_dma_tag_t		sc_dmat;
 
@@ -136,6 +138,10 @@ struct iwi_softc {
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 #endif
+
+	int			antenna;
+ 	int			dwelltime;
+ 	int			bluetooth;
 };
 
 #define	sc_if	sc_ec.ec_if
