@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.15 2005/07/11 15:37:04 kiyohara Exp $
+# $NetBSD: majors,v 1.16 2005/07/30 06:14:50 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -21,3 +21,4 @@ device-major	dk		char 168 block 168
 device-major	tap		char 169		tap
 device-major	veriexec	char 170		veriexec
 device-major	fw		char 171		ieee1394if
+device-major	ucycom		char 172		ucycom

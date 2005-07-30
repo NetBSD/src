@@ -1,10 +1,10 @@
-.\" $NetBSD: uhidev.4,v 1.3 2005/07/30 06:14:49 skrll Exp $
+.\" $NetBSD: ucycom.4,v 1.1 2005/07/30 06:14:49 skrll Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Lennart Augustsson.
+.\" by Nick Hudson
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,39 +34,47 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 30, 2005
-.Dt UHIDEV 4
+.Dd July 16, 2005
+.Dt UCYCOM 4
 .Os
 .Sh NAME
-.Nm uhidev
-.Nd USB Human Interface Device support
+.Nm ucycom
+.Nd USB support for Cypress microcontroller based serial adapters
 .Sh SYNOPSIS
-.Cd "uhidev* at uhub?"
-.Cd "ucycom* at uhidev? reportid ?"
-.Cd "uhid*   at uhidev? reportid ?"
-.Cd "ukbd*   at uhidev? reportid ?"
-.Cd "ums*    at uhidev? reportid ?"
+.Cd "ucycom   at uhidev? reportid ?"
+.Sh HARDWARE
+The
+.Nm
+driver supports the following adapters:
+.Pp
+.Bl -tag -width Dv -offset indent -compact
+.It Various low-cost USB-RS232 adapters
+.It Delmore Earthmate GPS receiver
+.El
 .Sh DESCRIPTION
 The
 .Nm
-driver handles all Human Interface Devices.  Each HID device
-can have several components, e.g., a keyboard and a mouse.
-These components use different report identifiers (a byte) to
-distinguish which one data is coming from.  The
+driver provides support for Cypress microcontroller based USB-to-RS-232
+adapter.
+The
 .Nm
-driver has other drivers attached that handle particular
-kinds of devices and
-.Nm
-only dispatches data to them based on the report id.
+driver shows a behaviour like a
+.Xr tty 4 .
+This means that normal programs such as
+.Xr tip 1
+or
+.Xr pppd 8
+can be used to access the device.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ttyY?
+.El
 .Sh SEE ALSO
-.Xr ucycom 4 ,
-.Xr uhid 4 ,
-.Xr ukbd 4 ,
-.Xr ums 4 ,
-.Xr usb 4 
+.Xr uhidev 4 ,
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm
 driver
 appeared in
-.Nx 1.6 .
+.Nx 4.0 .
