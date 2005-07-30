@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.2 2005/07/30 06:40:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -217,11 +217,11 @@ emitdev(FILE *fp)
 		return (1);
 
 	(void)strlcpy(mstr, "swap", sizeof(mstr));
-	if ((dm = ht_lookup(bdevmtab, intern(mstr))) == NULL)
-		panic("swap device is not configured");
-	if (fprintf(fp, "const dev_t swapdev = makedev(%d, 0);\n",
-		    dm->dm_bmajor) < 0)
-		return (1);
+	if ((dm = ht_lookup(bdevmtab, intern(mstr))) != NULL) {
+		if (fprintf(fp, "const dev_t swapdev = makedev(%d, 0);\n",
+			    dm->dm_bmajor) < 0)
+			return (1);
+	}
 
 	(void)strlcpy(mstr, "mem", sizeof(mstr));
 	if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL)
