@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.726 2005/07/17 00:08:27 hubertf Exp $
+#	$NetBSD: files,v 1.727 2005/07/30 06:33:36 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -164,6 +164,7 @@ defparam			SB_MAX
 #
 defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
 defflag	opt_uvm.h		USE_TOPDOWN_VM UVMMAP_NOCOUNTERS
+defflag opt_vmswap.h		VMSWAP
 
 # file system options
 #
@@ -1248,7 +1249,7 @@ file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
-file	kern/subr_blist.c
+file	kern/subr_blist.c		vmswap
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_evcnt.c
@@ -1388,7 +1389,8 @@ file	uvm/uvm_pager.c
 file	uvm/uvm_pdaemon.c
 file	uvm/uvm_pglist.c
 file	uvm/uvm_stat.c
-file	uvm/uvm_swap.c
+file	uvm/uvm_swap.c			vmswap
+file	uvm/uvm_swapstub.c		!vmswap
 file	uvm/uvm_unix.c
 file	uvm/uvm_user.c
 file	uvm/uvm_vnode.c

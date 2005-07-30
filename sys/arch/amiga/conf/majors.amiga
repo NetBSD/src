@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.14 2005/02/20 17:49:49 jdolecek Exp $
+#	$NetBSD: majors.amiga,v 1.15 2005/07/30 06:33:33 yamt Exp $
 #
 # Device majors for amiga
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 3
+device-major	swap		char 3   block 3	vmswap
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6

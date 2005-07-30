@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pdp10,v 1.5 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.pdp10,v 1.6 2005/07/30 06:33:35 yamt Exp $
 #
 # Device majors for pdp10
 #
@@ -7,7 +7,7 @@ device-major	ctty		char 1
 device-major	mem		char 2
 device-major	hp		char 3	block 0		hp
 device-major	ht		char 4	block 1		ht
-device-major	swap		char 5	block 3
+device-major	swap		char 5	block 3		vmswap
 device-major	log		char 6
 device-major	filedesc	char 7
 device-major	ksyms		char 8
