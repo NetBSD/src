@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 2005/05/29 22:12:37 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.59 2005/07/30 14:49:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2005/05/29 22:12:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2005/07/30 14:49:35 christos Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -613,8 +613,9 @@ fdstrategy(bp)
 	    bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
-	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
+	printf("fdstrategy: b_blkno %llu b_bcount %d blkno %llu cylin %d "
+	    "sz %d\n", (unsigned long long)bp->b_blkno, bp->b_bcount,
+	    (unsigned long long)fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1162,8 +1163,8 @@ loop:
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
-			    fd->sc_blkno, fd->sc_nblks);
+			printf("blkno %llu nblks %d\n",
+			    (unsigned long long)fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
 			goto loop;
