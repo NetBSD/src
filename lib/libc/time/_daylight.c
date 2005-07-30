@@ -1,4 +1,4 @@
-/*	$NetBSD: _daylight.c,v 1.2 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: _daylight.c,v 1.3 2005/07/30 15:21:21 christos Exp $	*/
 
 /*
  * Written by Klaus Klein, December 27, 2000.
@@ -7,10 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _daylight.c,v 1.2 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: _daylight.c,v 1.3 2005/07/30 15:21:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __indr_reference
+#if defined(__indr_reference) && !defined(__lint__)
 __indr_reference(_daylight, daylight)
 #endif
 /* LINTED empty translation unit */
