@@ -1,4 +1,4 @@
-/*	$NetBSD: mesg.c,v 1.6 2003/08/07 11:15:12 agc Exp $	*/
+/*	$NetBSD: mesg.c,v 1.7 2005/07/30 16:14:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
 #endif
-__RCSID("$NetBSD: mesg.c,v 1.6 2003/08/07 11:15:12 agc Exp $");
+__RCSID("$NetBSD: mesg.c,v 1.7 2005/07/30 16:14:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,16 +58,14 @@ __RCSID("$NetBSD: mesg.c,v 1.6 2003/08/07 11:15:12 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	char *tty;
 	int ch;
+
+	setprogname(*argv);
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
@@ -78,31 +76,33 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((tty = ttyname(STDERR_FILENO)) == NULL)
+	if ((tty = ttyname(STDIN_FILENO)) == NULL &&
+	    (tty = ttyname(STDOUT_FILENO)) == NULL &&
+	    (tty = ttyname(STDERR_FILENO)) == NULL)
 		err(2, "ttyname");
-	if (stat(tty, &sb) < 0)
+	if (stat(tty, &sb) == -1)
 		err(2, "%s", tty);
 
 	if (*argv == NULL) {
 		if (sb.st_mode & S_IWGRP) {
 			(void)fprintf(stderr, "is y\n");
-			exit(0);
+			return 0;
 		}
 		(void)fprintf(stderr, "is n\n");
-		exit(1);
+		return 1;
 	}
 
 	switch (*argv[0]) {
 	case 'y':
-		if (chmod(tty, sb.st_mode | S_IWGRP) < 0)
+		if (chmod(tty, sb.st_mode | S_IWGRP) == -1)
 			err(2, "%s", tty);
-		exit(0);
+		return 0;
 	case 'n':
-		if (chmod(tty, sb.st_mode & ~S_IWGRP) < 0)
+		if (chmod(tty, sb.st_mode & ~S_IWGRP) == -1)
 			err(2, "%s", tty);
-		exit(1);
+		return 1;
 	}
 
-usage:	(void)fprintf(stderr, "usage: mesg [y | n]\n");
-	exit(2);
+usage:	(void)fprintf(stderr, "Usage: %s [y | n]\n", getprogname());
+	return 2;
 }
