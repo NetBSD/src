@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror_r.c,v 1.1 2005/07/28 16:26:29 christos Exp $	*/
+/*	$NetBSD: strerror_r.c,v 1.2 2005/07/30 15:21:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strerror_r.c,v 1.1 2005/07/28 16:26:29 christos Exp $");
+__RCSID("$NetBSD: strerror_r.c,v 1.2 2005/07/30 15:21:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,18 @@ __RCSID("$NetBSD: strerror_r.c,v 1.1 2005/07/28 16:26:29 christos Exp $");
 #include <string.h>
 #include "extern.h"
 
+#ifdef _LIBC
+# ifdef __weak_alias
+__weak_alias(strerror_r, _strerror_r)
+# endif
+#endif
+
 int
+#ifdef _LIBC
+_strerror_r(int num, char *buf, size_t buflen)
+#else
 strerror_r(int num, char *buf, size_t buflen)
+#endif
 {
 #define	UPREFIX	"Unknown error: %u"
 	unsigned int errnum = num;
