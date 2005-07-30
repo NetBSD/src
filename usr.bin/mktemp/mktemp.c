@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.6 2003/10/27 00:12:43 lukem Exp $ */
+/* $NetBSD: mktemp.c,v 1.7 2005/07/30 16:19:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -49,19 +49,21 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.6 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.7 2005/07/30 16:19:09 christos Exp $");
 #endif /* !__lint */
 
-static void usage __P((void));
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char **argv)
 {
 	int c, fd, ret;
-	char *tmpdir, *prefix;
+	char *tmpdir;
+	const char *prefix;
 	char *name;
 	int dflag, qflag, tflag, uflag;
 
+	setprogname(*argv);
 	ret = dflag = qflag = tflag = uflag = 0;
 	prefix = "mktemp";
 	name = NULL;
@@ -95,15 +97,16 @@ main(int argc, char **argv)
 	if (tflag) {
 		tmpdir = getenv("TMPDIR");
 		if (tmpdir == NULL)
-			asprintf(&name, "%s%s.XXXXXXXX", _PATH_TMP, prefix);
+			(void)asprintf(&name, "%s%s.XXXXXXXX", _PATH_TMP,
+			    prefix);
 		else
-			asprintf(&name, "%s/%s.XXXXXXXX", tmpdir, prefix);
+			(void)asprintf(&name, "%s/%s.XXXXXXXX", tmpdir, prefix);
 		/* if this fails, the program is in big trouble already */
 		if (name == NULL) {
 			if (qflag)
-				return (1);
+				return 1;
 			else
-				errx(1, "cannot generate template");
+				errx(1, "Cannot generate template");
 		}
 	} else if (argc < 1) {
 		usage();
@@ -123,9 +126,9 @@ main(int argc, char **argv)
 				if (!qflag)
 					warn("mkdtemp failed on %s", name);
 			} else {
-				printf("%s\n", name);
+				(void)printf("%s\n", name);
 				if (uflag)
-					rmdir(name);
+					(void)rmdir(name);
 			}
 		} else {
 			fd = mkstemp(name);
@@ -134,23 +137,24 @@ main(int argc, char **argv)
 				if (!qflag)
 					warn("mkstemp failed on %s", name);
 			} else {
-				close(fd);
+				(void)close(fd);
 				if (uflag)
-					unlink(name);
-				printf("%s\n", name);
+					(void)unlink(name);
+				(void)printf("%s\n", name);
 			}
 		}
 		if (name)
 			free(name);
 		name = NULL;
 	}
-	return (ret);
+	return ret;
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr,
-		"usage: mktemp [-d] [-q] [-t prefix] [-u] [template ...]\n");
+	(void)fprintf(stderr,
+		"Usage: %s [-d] [-q] [-t prefix] [-u] [template ...]\n",
+		getprogname());
 	exit (1);
 }
