@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2005/07/30 06:35:35 yamt Exp $
+# $NetBSD: GENERIC,v 1.172 2005/07/30 22:40:33 nakayama Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.172 $"
 
 maxusers	16
 
@@ -409,6 +409,7 @@ hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 # Sharp Telios HC-AJ1/AJ2/AJ3, HC-VJ1C
 #
 txcsbus1	at tx39biu? platform SHARP_TELIOS
+teliosio*	at txcsbus1 regcs 13 regcswidth 16
 #optpoint*	at tx39spi? slot 0
 #wsmouse*	at optpoint? mux 0
 
