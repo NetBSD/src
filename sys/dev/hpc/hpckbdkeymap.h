@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.35 2005/07/14 19:50:29 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.36 2005/07/30 22:45:13 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -102,16 +102,24 @@ const uint8_t tc5165_telios_jp_keymap[] = {
 /* 3 */	33,  19,  5,   61,  IGN, 46,  123, 60,
 /* 4 */	35,  21,  8,   64,  IGN, 48,  49,  63,
 /* 5 */	17,  16,  3,   IGN, 2,   30,  44,  41,
-/* 6 */	IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/* 6 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN,
 /* 7 */	IGN, IGN, IGN, IGN, IGN, IGN, 56,  IGN,
 /* 8 */	34,  20,  7,   IGN, 6,   47,  57,  62,
 /* 9 */	IGN, IGN, IGN, IGN, IGN, IGN, 29,  IGN,
 /*10 */	27,  125, 13,  203, 208, 40,  115, 68,
-/*11 */	39,  26,  25,  IGN, 12,  52,  53,  67,
-/*12 */	37,  24,  11,  IGN, 10,  38,  51,  66,
+/*11 */	39,  26,  25,  112, 12,  52,  53,  67,
+/*12 */	37,  24,  11,  121, 10,  38,  51,  66,
 /*13 */	23,  22,  9,   IGN, IGN, 36,  50,  65,
-/*14 */	28,  43,  14,  200, 205,  IGN, IGN, 211,
-/*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
+/*14 */	28,  43,  14,  200, 205, IGN, IGN, 211,
+/*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 184, IGN
+};
+
+static const keysym_t tc5165_telios_jp_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
+	KC(205), KS_Cmd_BrightnessUp,	KS_Right,
+	KC(203), KS_Cmd_BrightnessDown,	KS_Left,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 const uint8_t tc5165_compaq_c_jp_keymap[] = {
@@ -909,7 +917,7 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_SHARP_TELIOS,
 		tc5165_telios_jp_keymap,
 		default_special_keymap,
-		NULLCMDMAP,
+		CMDMAP(tc5165_telios_jp_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_SHARP_MOBILON,
 		tc5165_mobilon_keymap,
