@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.207 2005/07/07 17:05:46 tron Exp $
+# $NetBSD: ALPHA,v 1.208 2005/07/30 06:35:35 yamt Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.207 $"
+ident		"ALPHA-$Revision: 1.208 $"
 
 maxusers 32
 
@@ -615,3 +615,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

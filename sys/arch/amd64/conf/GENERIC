@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2005/07/17 14:53:56 augustss Exp $
+# $NetBSD: GENERIC,v 1.62 2005/07/30 06:35:35 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -852,3 +852,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+options	VMSWAP			# Swap device/file support

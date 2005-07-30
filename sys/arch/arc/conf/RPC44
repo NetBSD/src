@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.16 2005/07/07 17:05:46 tron Exp $
+# $NetBSD: RPC44,v 1.17 2005/07/30 06:35:35 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.16 $"
+#ident		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -304,3 +304,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
+
+options	VMSWAP			# Swap device/file support

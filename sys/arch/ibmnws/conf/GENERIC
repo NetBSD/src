@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 2005/06/25 12:05:17 rpaulo Exp $
+#	$NetBSD: GENERIC,v 1.14 2005/07/30 06:35:36 yamt Exp $
 #
 #
 
@@ -276,3 +276,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	ksyms
 pseudo-device	clockctl
+
+options	VMSWAP			# Swap device/file support

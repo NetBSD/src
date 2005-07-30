@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.44 2005/07/17 00:08:29 hubertf Exp $
+#	$NetBSD: GENERICSBC,v 1.45 2005/07/30 06:35:36 yamt Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.44 $"
+#ident 		"GENERICSBC-$Revision: 1.45 $"
 
 maxusers	16		# estimated number of users
 
@@ -320,3 +320,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+options	VMSWAP			# Swap device/file support

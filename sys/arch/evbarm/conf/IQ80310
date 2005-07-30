@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.45 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: IQ80310,v 1.46 2005/07/30 06:35:35 yamt Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -236,3 +236,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support
