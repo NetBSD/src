@@ -1,10 +1,10 @@
-#	$NetBSD: majors.pmax,v 1.12 2005/05/10 00:02:37 jdolecek Exp $
+#	$NetBSD: majors.pmax,v 1.13 2005/07/30 06:33:35 yamt Exp $
 #
 # Device majors for pmax
 #
 
 device-major	cons		char 0
-device-major	swap		char 1   block 4
+device-major	swap		char 1   block 4	vmswap
 device-major	ctty		char 2
 device-major	mem		char 3
 device-major	pts		char 4			pty
