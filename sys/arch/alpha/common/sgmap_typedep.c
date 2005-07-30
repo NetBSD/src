@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.30 2005/07/28 04:58:03 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.31 2005/07/30 17:25:51 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.30 2005/07/28 04:58:03 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.31 2005/07/30 17:25:51 mhitch Exp $");
 
 #include "opt_ddb.h"
 
@@ -213,6 +213,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
@@ -265,6 +266,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
@@ -322,6 +324,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
@@ -388,6 +391,7 @@ __C(SGMAP_TYPE,_load_raw)(bus_dma_tag_t t, bus_dmamap_t map,
     struct alpha_sgmap *sgmap)
 {
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
