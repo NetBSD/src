@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.188 2005/07/28 20:16:24 jdc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.189 2005/07/30 18:02:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10909,4 +10909,92 @@ sys/netinet6/ah_aesxcbcmac.c			1.2
 	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
 	same key in AES-XCBC-MAC.  PR#30821
 	[elad, ticket #630]
+
+lib/libc/gen/sigset.3				1.5
+
+	Fix another sigignore -> sigset typo.
+	[rpaulo, ticket #618]
+
+bin/mv/mv.c					1.35
+
+	The case of waitpid() returning an error was already tested, and errno
+	printed for that case. the tests for the return code don't have errno
+	set, so don't try to print it.
+	[hubertf, ticket #619]
+
+sbin/mount_cd9660/mount_cd9660.8		1.25
+
+	It is iso8859, not 8869.
+	[hubertf, ticket #620]
+
+usr.sbin/pkg_install/add/extract.c		1.35
+
+	Fix 'pkg_add -R' handling - not registering really means not touching
+	the pkgdb too - useful for pkg_add as non-root!
+	[hubertf, ticket #621]
+
+usr.sbin/pkg_install/add/perform.c		1.110
+
+	Preserve errno. Needed so err() functions ran after running
+ 	cleanup(0) print the correct error message.
+	[hubertf, ticket #622]
+
+usr.sbin/pkg_install/add/perform.c		1.111
+usr.sbin/pkg_install/add/pkg_add.1		1.60
+
+	Fix PR pkg/30658: don't fail for pkgs that were built with
+	IGNORE_RECOMMENDED, just issue a warning.
+	[hubertf, ticket #623]
+
+usr.sbin/pkg_install/lib/version.h		1.68
+
+	Bump version to 20050718 for fixed IGNORE_RECOMMENDS handling.
+	[hubertf, ticket #624]
+
+sys/arch/alpha/alpha/pmap.c			1.211
+
+	1. Disable the lazy allocation of lev1map in pmap_enter(), instead
+	   doing it in pmap_create(), and freeing the lev1map in
+	   pmap_destroy(). This means that pm_lev1map is consistent for the
+	   life of the pmap.
+	2. pmap_extract() now uses vtophys() for the kernel pmap. This avoids
+	   having to lock the kernel pmap, since kernel PT pages are never
+	   freed.
+	3. Because of (1), pmap_asn_alloc() no longer needs to operate on a
+	   locked pmap; pm_lev1map will never change over the life of the pmap,
+	   and all other access to the pmap is done in per-CPU fields or with
+	   atomic operations.
+	4. Because of (3), pmap_activate() no longer needs to lock the pmap
+	   to do its work, thus eliminating the deadlock with sched_lock
+	   described in PR port-alpha/25599.  This is safe because we are
+	   guaranteed that the pmap is still alive, since by definition an LWP
+	   that uses that it is about to run.
+	[thorpej, ticket #626]
+
+sys/arch/alpha/common/sgmap_typedep.c		1.30
+
+	load_mbuf: Don't increase the segment index if we skipped a zero-length
+	mbuf.
+	[thorpej, ticket #627]
+
+lib/libcurses/erase.c				1.18
+
+	Make sure that werase() always marks the window as dirty.  This fixes a
+	problem (reported by David Bariod on netbsd-help), where erasing an
+	already blank window would not clear the screen contents of overlapping
+	windows.
+	[jdc, ticket #628]
+
+sys/arch/alpha/alpha/machdep.c			1.287
+sys/arch/alpha/alpha/trap.c			1.98
+sys/arch/alpha/include/pcb.h			1.13
+
+	- Change FPCPU_LOCK() such that the caller is responsible for blocking
+	  IPIs in the MULTIPROCESSOR case.  Adjust all callers.
+	- In fpusave_cpu(), block IPIs for the entire duration (while we have
+	  CPUF_FPUSAVE set in ci_flags) to fix the deadlock that leads to
+	  "panic: fpsave ipi didn't", as described in PR port-alpha/26383.
+	  Many thanks to Michael Hitch for the analysis and initial patch which
+	  this one is derived from.
+	[thorpej, ticket #629]
 
