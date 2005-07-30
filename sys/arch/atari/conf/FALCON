@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.67 2005/07/17 00:08:28 hubertf Exp $
+# $NetBSD: FALCON,v 1.68 2005/07/30 06:39:44 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.50 2005/07/07 17:05:47 tron Exp $
+#		NetBSD: GENERIC.in,v 1.52 2005/07/30 06:35:35 yamt Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -133,6 +133,8 @@ pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
+options VMSWAP # Swap device/file support
+
 pseudo-device view 4 # View (graphics mapping)
 
 pseudo-device mouse 1 # mouse
