@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2005/07/30 11:11:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
  * the kernel stack.
  *
  * Immediately after the user structure is the page table map, and then
- * kernal address space.
+ * kernel address space.
  */
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 

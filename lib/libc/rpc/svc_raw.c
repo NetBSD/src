@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.18 2005/06/09 22:13:17 yamt Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.19 2005/07/30 11:11:46 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.18 2005/06/09 22:13:17 yamt Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.19 2005/07/30 11:11:46 wiz Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: svc_raw.c,v 1.18 2005/06/09 22:13:17 yamt Exp $");
  * svc_raw.c,   This a toy for simple testing and timing.
  * Interface to create an rpc client and server in the same UNIX process.
  * This lets us similate rpc and get rpc (round trip) overhead, without
- * any interference from the kernal.
+ * any interference from the kernel.
  *
  */
 
