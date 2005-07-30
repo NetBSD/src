@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.34 2004/01/04 16:04:18 jschauma Exp $ */
+/* $NetBSD: mv.c,v 1.34.6.1 2005/07/30 17:31:21 tron Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.34 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: mv.c,v 1.34.6.1 2005/07/30 17:31:21 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,11 +338,11 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!WIFEXITED(status)) {
-		warn("%s: did not terminate normally", _PATH_CP);
+		warnx("%s: did not terminate normally", _PATH_CP);
 		return (1);
 	}
 	if (WEXITSTATUS(status)) {
-		warn("%s: terminated with %d (non-zero) status",
+		warnx("%s: terminated with %d (non-zero) status",
 		    _PATH_CP, WEXITSTATUS(status));
 		return (1);
 	}
@@ -356,11 +356,11 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!WIFEXITED(status)) {
-		warn("%s: did not terminate normally", _PATH_RM);
+		warnx("%s: did not terminate normally", _PATH_RM);
 		return (1);
 	}
 	if (WEXITSTATUS(status)) {
-		warn("%s: terminated with %d (non-zero) status",
+		warnx("%s: terminated with %d (non-zero) status",
 		    _PATH_RM, WEXITSTATUS(status));
 		return (1);
 	}
