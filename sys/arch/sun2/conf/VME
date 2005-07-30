@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.16 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: VME,v 1.17 2005/07/30 06:35:39 yamt Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.16 $"
+#ident 		"VME-$Revision: 1.17 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -240,3 +240,5 @@ pseudo-device	pty		32	# pseudo-terminals
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2005/07/17 00:08:28 hubertf Exp $
+# $NetBSD: GENERIC,v 1.78 2005/07/30 06:35:35 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	32
 
@@ -350,3 +350,5 @@ pseudo-device	nullcons			# no-op console
 pseudo-device	ksyms				# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+options	VMSWAP			# Swap device/file support

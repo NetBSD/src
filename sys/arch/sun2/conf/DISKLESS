@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.21 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: DISKLESS,v 1.22 2005/07/30 06:35:39 yamt Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.21 $"
+#ident 		"DISKLESS-$Revision: 1.22 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -235,3 +235,5 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

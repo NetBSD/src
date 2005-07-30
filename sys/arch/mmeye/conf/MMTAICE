@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.29 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: MMTAICE,v 1.30 2005/07/30 06:35:36 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -250,3 +250,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.70 2005/07/30 06:35:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	16		# estimated number of users
 
@@ -235,3 +235,5 @@ pseudo-device	ksyms			# /dev/ksyms
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+
+options	VMSWAP			# Swap device/file support

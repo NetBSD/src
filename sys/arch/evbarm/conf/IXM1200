@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.15 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: IXM1200,v 1.16 2005/07/30 06:35:35 yamt Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -185,3 +185,5 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

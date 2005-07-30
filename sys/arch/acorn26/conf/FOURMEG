@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.20 2005/07/07 17:05:46 tron Exp $
+# $NetBSD: FOURMEG,v 1.21 2005/07/30 06:35:34 yamt Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -213,3 +213,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
+
+options	VMSWAP			# Swap device/file support

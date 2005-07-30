@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2005/07/17 00:08:30 hubertf Exp $
+# $NetBSD: GENERIC,v 1.115 2005/07/30 06:35:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	8
 
@@ -514,3 +514,5 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
+
+options	VMSWAP			# Swap device/file support

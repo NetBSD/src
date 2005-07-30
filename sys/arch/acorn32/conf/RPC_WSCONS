@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.37 2005/07/07 17:05:46 tron Exp $
+#	$NetBSD: RPC_WSCONS,v 1.38 2005/07/30 06:35:35 yamt Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.38 $"
 
 # estimated number of users
 maxusers	32
@@ -347,3 +347,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
 makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+
+options	VMSWAP			# Swap device/file support

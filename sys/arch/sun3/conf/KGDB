@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.41 2005/02/18 21:05:54 dsl Exp $
+#	$NetBSD: KGDB,v 1.42 2005/07/30 06:35:39 yamt Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -211,3 +211,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

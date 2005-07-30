@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.48 2005/07/30 06:35:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -197,3 +197,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+options	VMSWAP			# Swap device/file support

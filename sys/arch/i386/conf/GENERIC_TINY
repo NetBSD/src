@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.87 2005/07/17 00:08:28 hubertf Exp $
+#	$NetBSD: GENERIC_TINY,v 1.88 2005/07/30 06:35:36 yamt Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -584,3 +584,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

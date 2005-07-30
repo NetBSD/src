@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.36 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: IPAQ,v 1.37 2005/07/30 06:35:35 yamt Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -215,3 +215,5 @@ pseudo-device	biconsdev 1		# build-in console device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+
+options	VMSWAP			# Swap device/file support

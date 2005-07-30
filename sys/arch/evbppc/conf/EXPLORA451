@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.14 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: EXPLORA451,v 1.15 2005/07/30 06:35:35 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -208,3 +208,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

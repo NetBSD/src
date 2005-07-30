@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.16 2005/07/07 17:05:46 tron Exp $
+#	$NetBSD: EB7500ATX,v 1.17 2005/07/30 06:35:35 yamt Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.16 $"
+#ident		"EB7500ATX-$Revision: 1.17 $"
 
 # estimated number of users
 maxusers	32
@@ -307,3 +307,5 @@ makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+options	VMSWAP			# Swap device/file support

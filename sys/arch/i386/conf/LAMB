@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.52 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: LAMB,v 1.53 2005/07/30 06:35:36 yamt Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -403,3 +403,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
+
+options	VMSWAP			# Swap device/file support

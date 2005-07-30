@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.34 2005/07/17 00:08:29 hubertf Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.35 2005/07/30 06:35:39 yamt Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.34 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.35 $"
 
 maxusers	32
 
@@ -309,3 +309,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # pseudo devices used for IRIX binary compatibility
 pseudo-device	irix_kmem		# IRIX /dev/kmem
 pseudo-device	irix_usema		# IRIX /dev/usema
+
+options	VMSWAP			# Swap device/file support

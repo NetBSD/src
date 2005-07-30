@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.20 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: SMDK2410,v 1.21 2005/07/30 06:35:35 yamt Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -365,3 +365,5 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 #pseudo-device	ksyms			# /dev/ksyms
+
+options	VMSWAP			# Swap device/file support

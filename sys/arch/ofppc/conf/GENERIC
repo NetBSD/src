@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.79 2005/07/17 00:08:29 hubertf Exp $
+# $NetBSD: GENERIC,v 1.80 2005/07/30 06:35:38 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 maxusers	32
 
@@ -214,3 +214,5 @@ pseudo-device	ksyms			# /dev/ksyms
 options	FIREPOWER_ES			# Firepower ES
 options	FIREPOWER_MX			# Firepower MX
 options	FIREPOWER_LX			# Firepower LX
+
+options	VMSWAP			# Swap device/file support

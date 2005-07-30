@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.31 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: MALTA,v 1.32 2005/07/30 06:35:35 yamt Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.31 $"
+#ident 		"MALTA-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -326,3 +326,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+
+options	VMSWAP			# Swap device/file support

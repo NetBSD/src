@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.19 2005/07/07 17:05:47 tron Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.20 2005/07/30 06:35:35 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -235,3 +235,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	kttcp			# kernel ttcp
+
+options	VMSWAP			# Swap device/file support
