@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.85 2005/07/30 14:35:23 christos Exp $ */
+/* $NetBSD: user.c,v 1.86 2005/07/30 15:06:43 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.85 2005/07/30 14:35:23 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.86 2005/07/30 15:06:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -976,7 +976,7 @@ valid_class(char *class)
 	login_cap_t *lc;
 	
 	if (class == NULL || *class == '\0')
-		return 0;
+		return 1;
 	/*
 	 * Check if /etc/login.conf exists. login_getclass() will
 	 * return 1 due to it not existing, so not informing the
@@ -989,10 +989,11 @@ valid_class(char *class)
 		return 1;
 	}
 
-	if ((lc = login_getclass(class)) != NULL)
+	if ((lc = login_getclass(class)) != NULL) {
 		login_close(lc);
-
-	return lc != NULL;
+		return 1;
+	}
+	return 0;
 }
 #endif
 
