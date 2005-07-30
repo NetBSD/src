@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.67 2005/07/18 11:42:28 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.68 2005/07/30 06:14:50 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ MALLOC_DECLARE(M_USBHC);
 #define UBT_DEBUG 1
 #define AXE_DEBUG 1
 #define UIPAQ_DEBUG 1
+#define UCYCOM_DEBUG 1
 #define Static
 #else
 #define Static static
