@@ -1,10 +1,10 @@
-#	$NetBSD: majors.arc,v 1.14 2005/05/10 00:02:36 jdolecek Exp $
+#	$NetBSD: majors.arc,v 1.15 2005/07/30 06:33:34 yamt Exp $
 #
 # Device majors for arc
 #
 
 device-major	cons		char 0
-device-major	swap		char 1   block 1
+device-major	swap		char 1   block 1	vmswap
 device-major	ctty		char 2
 device-major	mem		char 3
 device-major	pts		char 4			pty

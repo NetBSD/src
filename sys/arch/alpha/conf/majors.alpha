@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.15 2004/09/13 17:26:28 drochner Exp $
+#	$NetBSD: majors.alpha,v 1.16 2005/07/30 06:33:33 yamt Exp $
 #
 # Device majors for alpha
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 1
+device-major	swap		char 3   block 1	vmswap
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6

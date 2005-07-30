@@ -1,10 +1,10 @@
-#	$NetBSD: majors.hpcsh,v 1.15 2005/05/10 00:02:36 jdolecek Exp $
+#	$NetBSD: majors.hpcsh,v 1.16 2005/07/30 06:33:34 yamt Exp $
 #
 # Device majors for hpcsh
 #
 
 device-major	mem		char 0
-device-major	swap		char 1   block 0
+device-major	swap		char 1   block 0	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	filedesc	char 4

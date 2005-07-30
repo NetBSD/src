@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.18 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.19 2005/07/30 06:33:36 yamt Exp $	*/
 
 /*
  *
@@ -39,6 +39,10 @@
  * uvm_anon.h
  */
 
+#if defined(_KERNEL_OPT)
+#include "opt_vmswap.h"
+#endif
+
 /*
  * anonymous memory management
  *
@@ -51,9 +55,11 @@ struct vm_anon {
 	int an_ref;			/* reference count [an_lock] */
 	struct simplelock an_lock;	/* lock for an_ref */
 	struct vm_page *an_page;/* if in RAM [an_lock] */
+#if defined(VMSWAP) || 1 /* XXX libkvm */
 	int an_swslot;		/* drum swap slot # (if != 0)
 				   [an_lock.  also, it is ok to read
 				   an_swslot if we hold an_page PG_BUSY] */
+#endif /* defined(VMSWAP) */
 };
 
 /*
@@ -97,7 +103,11 @@ struct vm_anon *uvm_analloc(void);
 void uvm_anfree(struct vm_anon *);
 void uvm_anon_init(void);
 struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
+#if defined(VMSWAP)
 void uvm_anon_dropswap(struct vm_anon *);
+#else /* defined(VMSWAP) */
+#define	uvm_anon_dropswap(a)	/* nothing */
+#endif /* defined(VMSWAP) */
 void uvm_anon_release(struct vm_anon *);
 boolean_t uvm_anon_pagein(struct vm_anon *);
 #endif /* _KERNEL */

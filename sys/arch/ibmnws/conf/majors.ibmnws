@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.5 2005/05/10 00:02:36 jdolecek Exp $
+#	$NetBSD: majors.ibmnws,v 1.6 2005/07/30 06:33:34 yamt Exp $
 #
 # Device majors for ibmnws
 #
@@ -7,7 +7,7 @@ device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
 
-device-major	swap		char 4   block 1
+device-major	swap		char 4   block 1	vmswap
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7

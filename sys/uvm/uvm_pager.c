@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.69 2005/07/30 06:33:36 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.69 2005/07/30 06:33:36 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -321,20 +321,27 @@ uvm_aio_aiodone(struct buf *bp)
 		slock = &uobj->vmobjlock;
 		simple_lock(slock);
 		uvm_lock_pageq();
-	} else if (error) {
-		if (pg->uobject != NULL) {
-			swslot = uao_find_swslot(pg->uobject,
-			    pg->offset >> PAGE_SHIFT);
-		} else {
-			swslot = pg->uanon->an_swslot;
+	} else {
+#if defined(VMSWAP)
+		if (error) {
+			if (pg->uobject != NULL) {
+				swslot = uao_find_swslot(pg->uobject,
+				    pg->offset >> PAGE_SHIFT);
+			} else {
+				swslot = pg->uanon->an_swslot;
+			}
+			KASSERT(swslot);
 		}
-		KASSERT(swslot);
+#else /* defined(VMSWAP) */
+		panic("%s: swap", __func__);
+#endif /* defined(VMSWAP) */
 	}
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
 		UVMHIST_LOG(ubchist, "pg %p", pg, 0,0,0);
 
+#if defined(VMSWAP)
 		/*
 		 * for swap i/os, lock each page's object (or anon)
 		 * individually since each page may need a different lock.
@@ -349,6 +356,7 @@ uvm_aio_aiodone(struct buf *bp)
 			simple_lock(slock);
 			uvm_lock_pageq();
 		}
+#endif /* defined(VMSWAP) */
 
 		/*
 		 * process errors.  for reads, just mark the page to be freed.
@@ -375,6 +383,7 @@ uvm_aio_aiodone(struct buf *bp)
 			} else
 				slot = SWSLOT_BAD;
 
+#if defined(VMSWAP)
 			if (swap) {
 				if (pg->uobject != NULL) {
 					int oldslot;
@@ -387,6 +396,7 @@ uvm_aio_aiodone(struct buf *bp)
 					pg->uanon->an_swslot = slot;
 				}
 			}
+#endif /* defined(VMSWAP) */
 		}
 
 		/*
@@ -415,6 +425,7 @@ uvm_aio_aiodone(struct buf *bp)
 			pg->flags |= PG_RELEASED;
 		}
 
+#if defined(VMSWAP)
 		/*
 		 * for swap pages, unlock everything for this page now.
 		 */
@@ -430,12 +441,14 @@ uvm_aio_aiodone(struct buf *bp)
 				simple_unlock(slock);
 			}
 		}
+#endif /* defined(VMSWAP) */
 	}
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
 		uvm_unlock_pageq();
 		simple_unlock(slock);
 	} else {
+#if defined(VMSWAP)
 		KASSERT(write);
 
 		/* these pages are now only in swap. */
@@ -451,6 +464,7 @@ uvm_aio_aiodone(struct buf *bp)
 				uvm_swap_free(swslot, npages);
 		}
 		uvmexp.pdpending--;
+#endif /* defined(VMSWAP) */
 	}
 	s = splbio();
 	if (write && (bp->b_flags & B_AGE) != 0) {

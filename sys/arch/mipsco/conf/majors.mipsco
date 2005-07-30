@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.12 2005/05/10 00:02:36 jdolecek Exp $
+#	$NetBSD: majors.mipsco,v 1.13 2005/07/30 06:33:34 yamt Exp $
 #
 # Device majors for mipsco
 #
@@ -9,7 +9,7 @@ device-major	ctty		char 2
 device-major	mem		char 3
 device-major	sd		char 4   block 0	sd
 
-device-major	swap		char 7   block 4
+device-major	swap		char 7   block 4	vmswap
 device-major	pts		char 8			pty
 device-major	ptc		char 9			pty
 device-major	md		char 10  block 2	md
