@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.2 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.3 2005/07/30 22:51:42 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.2 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.3 2005/07/30 22:51:42 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -370,12 +370,25 @@ static int
 hpcapm_get_powstat(void *scx, struct apm_power_info *pinfo)
 {
 	struct apmhpc_softc *sc;
+	int val;
 
 	sc = scx;
 
-	pinfo->ac_state = sc->ac_state;
-	pinfo->battery_state = sc->battery_state;
-	pinfo->battery_life = sc->battery_life;
+	if (config_hook_call(CONFIG_HOOK_GET,
+			     CONFIG_HOOK_ACADAPTER, &val) != -1)
+		pinfo->ac_state = val;
+	else
+		pinfo->ac_state = sc->ac_state;
+	if (config_hook_call(CONFIG_HOOK_GET,
+			     CONFIG_HOOK_CHARGE, &val) != -1)
+		pinfo->battery_state = val;
+	else
+		pinfo->battery_state = sc->battery_state;
+	if (config_hook_call(CONFIG_HOOK_GET,
+			     CONFIG_HOOK_BATTERYVAL, &val) != -1)
+		pinfo->battery_life = val;
+	else
+		pinfo->battery_life = sc->battery_life;
 	return (0);
 }
 
