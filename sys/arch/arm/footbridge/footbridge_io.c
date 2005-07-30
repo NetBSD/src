@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.10 2005/04/01 11:59:24 yamt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.11 2005/07/30 15:14:29 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.10 2005/04/01 11:59:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.11 2005/07/30 15:14:29 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,14 +178,14 @@ footbridge_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
+footbridge_mem_bs_map(t, bpa, size, flags, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
-	bus_addr_t startpa, endpa;
+	bus_addr_t startpa, endpa, pa;
 	vaddr_t va;
 
 	/* Round the allocation to page boundries */
@@ -217,12 +217,17 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 
 	/* Now map the pages */
 	/* The cookie is the physical base address for the I/O area */
-	while (startpa < endpa) {
-		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + startpa,
-		    VM_PROT_READ | VM_PROT_WRITE, 0);
-		va += PAGE_SIZE;
-		startpa += PAGE_SIZE;
-	}
+        for (pa = startpa; pa < endpa; pa+=PAGE_SIZE, va += PAGE_SIZE) 
+        {
+                pmap_enter(pmap_kernel(), va, (bus_addr_t)t + pa, VM_PROT_READ | VM_PROT_WRITE,
+                                VM_PROT_READ | VM_PROT_WRITE| PMAP_WIRED);
+                if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
+                        pt_entry_t *pte;	
+                        pte = vtopte(va);
+                        *pte &= ~L2_S_CACHE_MASK;
+                        PTE_SYNC(pte);
+                }
+        }
 	pmap_update(pmap_kernel());
 
 /*	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
