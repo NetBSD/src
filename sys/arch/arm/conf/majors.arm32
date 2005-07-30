@@ -1,10 +1,10 @@
-#	$NetBSD: majors.arm32,v 1.21 2005/05/10 00:02:36 jdolecek Exp $
+#	$NetBSD: majors.arm32,v 1.22 2005/07/30 06:33:34 yamt Exp $
 #
 # Device majors for arm32
 #
 
 device-major	mem		char 0
-device-major	swap		char 1   block 1
+device-major	swap		char 1   block 1	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	physcon		char 4			vt
