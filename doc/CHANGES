@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.500 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.501 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -80,3 +80,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Useful for creation of Live CDs/DVDs. [hubertf 20050725]
 	hpcmips: Add teliosio(4) driver for the Sharp Telios LCD screen and
 		Battery unit. [nakayama 20050731]
+	scan_lfs(8): Program to find LFS partitions on disks [xtraeme 20050731]
