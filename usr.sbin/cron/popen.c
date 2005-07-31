@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.9 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: popen.c,v 1.10 2005/07/31 17:52:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -36,7 +36,7 @@
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.9 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: popen.c,v 1.10 2005/07/31 17:52:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,29 +84,27 @@ cron_popen(char *program, const char *type)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
 
-	iop = NULL;
 	switch(pid = vfork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
-		goto pfree;
-		/* NOTREACHED */
+		return NULL;
 	case 0:				/* child */
 		if (*type == 'r') {
 			if (pdes[1] != 1) {
-				dup2(pdes[1], 1);
-				dup2(pdes[1], 2);	/* stderr, too! */
+				(void)dup2(pdes[1], 1);
+				(void)dup2(pdes[1], 2);	/* stderr, too! */
 				(void)close(pdes[1]);
 			}
 			(void)close(pdes[0]);
 		} else {
 			if (pdes[0] != 0) {
-				dup2(pdes[0], 0);
+				(void)dup2(pdes[0], 0);
 				(void)close(pdes[0]);
 			}
 			(void)close(pdes[1]);
 		}
-		execvp(argv[0], argv);
+		(void)execvp(argv[0], argv);
 		_exit(1);
 	}
 	/* parent; assume fdopen can't fail...  */
@@ -118,8 +116,6 @@ cron_popen(char *program, const char *type)
 		(void)close(pdes[0]);
 	}
 	pids[fileno(iop)] = pid;
-
-pfree:
 	return(iop);
 }
 
@@ -128,7 +124,7 @@ cron_pclose(FILE *iop)
 {
 	int fdes;
 	sigset_t oset, nset;
-	WAIT_T stat_loc;
+	WAIT_T status;
 	PID_T pid;
 
 	/*
@@ -136,7 +132,7 @@ cron_pclose(FILE *iop)
 	 * `popened' command, or, if already `pclosed'.
 	 */
 	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
-		return(-1);
+		return -1;
 	(void)fclose(iop);
 	
 	sigemptyset(&nset);
@@ -144,9 +140,10 @@ cron_pclose(FILE *iop)
 	sigaddset(&nset, SIGQUIT);
 	sigaddset(&nset, SIGHUP);
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
-	while ((pid = wait(&stat_loc)) != pids[fdes] && pid != -1)
-		;
+	pid = waitpid(pids[fdes], &status, 0);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	pids[fdes] = 0;
-	return (pid == -1 ? -1 : WEXITSTATUS(stat_loc));
+	if (pid == -1)
+		return -1;
+	return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
 }
