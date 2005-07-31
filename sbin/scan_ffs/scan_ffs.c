@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.5 2005/07/31 19:26:06 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.6 2005/07/31 20:19:40 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.5 2005/07/31 19:26:06 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.6 2005/07/31 20:19:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,14 +138,14 @@ static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2", "LFS" };
 enum { NADA, VERBOSE, LABELS };
 
 /* FFS functions */
-static void	ffs_printpart(int, int, int);
+static void	ffs_printpart(int, size_t, int);
 static void	ffs_scan(int);
 static int	ffs_checkver(void);
 /* LFS functions */
 static void	lfs_printpart(int, int, struct sblockinfo *);
 static void	lfs_scan(int);
 /* common functions */
-static void	usage(const char *);
+static void	usage(void) __attribute__((__noreturn__));
 static int	scan_disk(int, daddr_t, daddr_t, int);
 
 static int
@@ -165,7 +165,7 @@ ffs_checkver(void)
 }
 
 static void
-ffs_printpart(int flag, int ffsize, int n)
+ffs_printpart(int flag, size_t ffsize, int n)
 {
 	
 	int fstype = ffs_checkver();
@@ -200,7 +200,7 @@ ffs_printpart(int flag, int ffsize, int n)
 			sbinfo.ffs_path, fstypes[fstype]);
 		break;
 	default:
-		printf("%s ", fstypes[fstype]);
+		(void)printf("%s ", fstypes[fstype]);
 		switch (fstype) {
 		case FSTYPE_FFSV1:
 			(void)printf("at %" PRIu64,
@@ -385,10 +385,10 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 
 
 static void
-usage(const char *p)
+usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: scan_%s [-lv] [-s start] [-e end] device\n", p);
+		"Usage: %s [-lv] [-s start] [-e end] device\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -400,13 +400,7 @@ main(int argc, char **argv)
 	daddr_t end = -1, beg = 0;
 	struct disklabel dl;
 
-	const char *prog;
-
-	if (strstr(argv[0], "lfs"))
-		prog = "lfs";
-	else
-		prog = "ffs";
-
+	setprogname(*argv);
 	while ((ch = getopt(argc, argv, "e:ls:v")) != -1)
 		switch(ch) {
 		case 'e':
@@ -423,7 +417,7 @@ main(int argc, char **argv)
 			flags |= VERBOSE;
 			break;
 		default:
-			usage(prog);
+			usage();
 			/* NOTREACHED */
 		}
 
@@ -431,7 +425,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (argc != 1)
-		usage(prog);
+		usage();
 
 	fd = opendisk(argv[0], O_RDONLY, device, sizeof(device), 0);
 
