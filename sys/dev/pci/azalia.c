@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.8 2005/07/29 16:20:53 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.8 2005/07/29 16:20:53 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -333,6 +333,10 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.8 2005/07/29 16:20:53 kent Exp $");
 #define CORB_SET_DIGITAL_CONVERTER_CONTROL_H	0x70e
 #define CORB_GET_POWER_STATE		0xf05
 #define CORB_SET_POWER_STATE		0x705
+#define		CORB_PS_D0		0x0
+#define		CORB_PS_D1		0x1
+#define		CORB_PS_D2		0x2
+#define		CORB_PS_D3		0x3
 #define CORB_GET_CONVERTER_STREAM_CHANNEL	0xf06
 #define CORB_SET_CONVERTER_STREAM_CHANNEL	0x706
 #define CORB_GET_INPUT_CONVERTER_SDI_SELECT	0xf04
@@ -455,6 +459,7 @@ typedef uint32_t corb_entry_t;
 typedef struct {
 	uint32_t resp;
 	uint32_t resp_ex;
+#define RIRB_UNSOLICITED_RESPONSE	(1 << 4)
 } __packed rirb_entry_t;
 
 
@@ -471,13 +476,13 @@ typedef struct {
 #define		ICH_PCI_HDCTL_CLKDETINV		0x02
 #define		ICH_PCI_HDCTL_SIGNALMODE	0x01
 
-#define AZALIA_DEBUG
+/* #define AZALIA_DEBUG */
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else
 # define DPRINTF(x)	do {} while (0/*CONSTCOND*/)
 #endif
-#define PTR_UPPER32(x)	((uint64_t)(uintptr_t)x >> 32)
+#define PTR_UPPER32(x)	((uint64_t)(uintptr_t)(x) >> 32)
 #define FLAGBUFLEN	256
 #define MAX_VOLUME_255	1
 
@@ -1285,8 +1290,14 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 		return ETIMEDOUT;
 	}
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
-	if (++az->rirb_rp >= az->rirb_size)
-		az->rirb_rp = 0;
+	for (;;) {
+		if (++az->rirb_rp >= az->rirb_size)
+			az->rirb_rp = 0;
+		if (rirb[az->rirb_rp].resp_ex & RIRB_UNSOLICITED_RESPONSE) {
+			DPRINTF(("%s: unsolicited response\n", __func__));
+		} else
+			break;
+	}
 	if (result != NULL)
 		*result = rirb[az->rirb_rp].resp;
 #if 0
@@ -1415,6 +1426,10 @@ azalia_codec_init(codec_t *this)
 		    XNAME(this->az), addr);
 		return -1;
 	}
+
+	/* power the audio function */
+	this->comresp(this, this->audiofunc, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
+	DELAY(100);
 
 	/* check widgets in the audio function */
 	err = this->comresp(this, this->audiofunc,
@@ -2706,6 +2721,10 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	    "\011CONNLIST\010UNSOL\07PROC\06STRIPE\05FORMATOV\04AMPOV\03OUTAMP"
 	    "\02INAMP\01STEREO", flagbuf, FLAGBUFLEN);
 	DPRINTF(("%s: ", XNAME(codec->az)));
+	if (this->widgetcap & COP_AWCAP_POWER) {
+		codec->comresp(codec, nid, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
+		DELAY(100);
+	}
 	switch (this->type) {
 	case COP_AWTYPE_AUDIO_OUTPUT:
 		snprintf(this->name, sizeof(this->name), "dac%2.2x", nid);
