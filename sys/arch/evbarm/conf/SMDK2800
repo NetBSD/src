@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.25 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: SMDK2800,v 1.26 2005/07/31 04:04:31 yamt Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -256,5 +256,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
-
-options	VMSWAP			# Swap device/file support

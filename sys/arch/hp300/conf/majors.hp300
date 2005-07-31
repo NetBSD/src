@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.16 2005/07/30 06:33:34 yamt Exp $
+#	$NetBSD: majors.hp300,v 1.17 2005/07/31 04:04:31 yamt Exp $
 #
 # Device majors for hp300
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 3	vmswap
+device-major	swap		char 3   block 3
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6

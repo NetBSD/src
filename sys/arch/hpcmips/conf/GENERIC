@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.172 2005/07/30 22:40:33 nakayama Exp $
+# $NetBSD: GENERIC,v 1.173 2005/07/31 04:04:31 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.173 $"
 
 maxusers	16
 
@@ -683,5 +683,3 @@ pseudo-device	bridge
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	VMSWAP			# Swap device/file support
