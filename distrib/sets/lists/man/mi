@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.813 2005/07/31 18:55:08 skrll Exp $
+# $NetBSD: mi,v 1.814 2005/07/31 19:26:06 xtraeme Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2127,6 +2127,7 @@
 ./usr/share/man/cat8/sbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sbmips/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/scan_ffs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sendmail.0			man-sendmail-catman	sendmail,.cat
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
@@ -4380,6 +4381,7 @@
 ./usr/share/man/man8/sbmips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sbmips/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/scan_ffs.8			man-sysutil-man		.man
+./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/sendmail.8			man-sendmail-man	sendmail,.man
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
