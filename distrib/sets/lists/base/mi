@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.563 2005/07/25 19:58:32 rpaulo Exp $
+# $NetBSD: mi,v 1.564 2005/07/31 00:22:55 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2115,6 +2115,7 @@
 ./usr/share/man/cat4/evbarm			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-man-share
+./usr/share/man/cat4/hpcmips			base-man-share
 ./usr/share/man/cat4/hpcsh			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
 ./usr/share/man/cat4/mac68k			base-man-share
@@ -2228,6 +2229,7 @@
 ./usr/share/man/html4/evbarm			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
 ./usr/share/man/html4/hp700			base-man-share
+./usr/share/man/html4/hpcmips			base-man-share
 ./usr/share/man/html4/hpcsh			base-man-share
 ./usr/share/man/html4/i386			base-man-share
 ./usr/share/man/html4/mac68k			base-man-share
@@ -2342,6 +2344,7 @@
 ./usr/share/man/man4/evbarm			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
 ./usr/share/man/man4/hp700			base-man-share
+./usr/share/man/man4/hpcmips			base-man-share
 ./usr/share/man/man4/hpcsh			base-man-share
 ./usr/share/man/man4/i386			base-man-share
 ./usr/share/man/man4/mac68k			base-man-share
