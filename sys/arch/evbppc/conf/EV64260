@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.24 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: EV64260,v 1.25 2005/07/31 04:04:31 yamt Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -274,5 +274,3 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.63 2005/07/30 06:35:36 yamt Exp $
+#	$NetBSD: IOPENER,v 1.64 2005/07/31 04:04:32 yamt Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.63 $"
+#ident 		"IOPENER-$Revision: 1.64 $"
 
 maxusers	32		# estimated number of users
 
@@ -447,5 +447,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-options	VMSWAP			# Swap device/file support

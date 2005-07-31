@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.19 2005/07/30 06:35:36 yamt Exp $
+#	$NetBSD: SMALLRAM,v 1.20 2005/07/31 04:04:43 yamt Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.19 $"
+#ident 		"SMALLRAM-$Revision: 1.20 $"
 
 maxusers	8
 
@@ -308,5 +308,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
-
-options	VMSWAP			# Swap device/file support

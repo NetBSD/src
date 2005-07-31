@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.99 2005/07/30 06:33:36 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.100 2005/07/31 04:04:47 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.99 2005/07/30 06:33:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.100 2005/07/31 04:04:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -359,7 +359,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				    "anonget2",0);
 			}
 		} else {
-#if defined(VMSWAP)
 
 			/*
 			 * no page, we must try and bring it in.
@@ -396,9 +395,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * "we_own" case
 				 */
 			}
-#else /* defined(VMSWAP) */
-			panic("%s: no page", __func__);
-#endif /* defined(VMSWAP) */
 		}
 
 		/*
@@ -424,7 +420,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 */
 
 		if (we_own) {
-#if defined(VMSWAP)
 			if (pg->flags & PG_WANTED) {
 				wakeup(pg);
 			}
@@ -498,9 +493,6 @@ released:
 			UVM_PAGE_OWN(pg, NULL);
 			if (!locked)
 				simple_unlock(&anon->an_lock);
-#else /* defined(VMSWAP) */
-			panic("%s: we_own", __func__);
-#endif /* defined(VMSWAP) */
 		}
 
 		/*

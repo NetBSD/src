@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.6 2005/07/30 06:35:35 yamt Exp $
+# 	$NetBSD: LCARD,v 1.7 2005/07/31 04:04:31 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -77,5 +77,3 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # network pseudo-devices
 pseudo-device	bpfilter	2	# Berkeley packet filter
 pseudo-device	loop			# network loopback
-
-options	VMSWAP			# Swap device/file support

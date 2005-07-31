@@ -1,10 +1,10 @@
-#	$NetBSD: majors.playstation2,v 1.14 2005/07/30 06:33:35 yamt Exp $
+#	$NetBSD: majors.playstation2,v 1.15 2005/07/31 04:04:43 yamt Exp $
 #
 # Device majors for playstation2
 #
 
 device-major	mem		char 0
-device-major	swap		char 1   block 0	vmswap
+device-major	swap		char 1   block 0
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	filedesc	char 4

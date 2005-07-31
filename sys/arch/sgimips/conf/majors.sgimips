@@ -1,10 +1,10 @@
-#	$NetBSD: majors.sgimips,v 1.15 2005/07/30 06:33:35 yamt Exp $
+#	$NetBSD: majors.sgimips,v 1.16 2005/07/31 04:04:44 yamt Exp $
 #
 # Device majors for sgimips
 #
 
 device-major	cons		char 0
-device-major	swap		char 1   block 1	vmswap
+device-major	swap		char 1   block 1
 device-major	md		char 2   block 2	md
 device-major	ccd		char 3   block 3	ccd
 device-major	vnd		char 4   block 4	vnd

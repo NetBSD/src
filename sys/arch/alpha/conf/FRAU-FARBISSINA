@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.42 2005/07/30 06:35:35 yamt Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.43 2005/07/31 04:04:30 yamt Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.42 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.43 $"
 
 maxusers 64
 
@@ -445,5 +445,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
-
-options	VMSWAP			# Swap device/file support

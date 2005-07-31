@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.68 2005/07/30 06:35:36 yamt Exp $
+#	$NetBSD: SWINGER,v 1.69 2005/07/31 04:04:32 yamt Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.68 $"
+#ident 		"SWINGER-$Revision: 1.69 $"
 
 maxusers	64		# estimated number of users
 
@@ -806,5 +806,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-options	VMSWAP			# Swap device/file support

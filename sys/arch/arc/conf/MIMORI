@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.37 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: MIMORI,v 1.38 2005/07/31 04:04:31 yamt Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -288,5 +288,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
-
-options	VMSWAP			# Swap device/file support

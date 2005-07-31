@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2005/07/30 06:35:38 yamt Exp $
+# $NetBSD: GENERIC,v 1.66 2005/07/31 04:04:43 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -311,5 +311,3 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
-
-options	VMSWAP			# Swap device/file support

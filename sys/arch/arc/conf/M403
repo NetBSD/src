@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.32 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: M403,v 1.33 2005/07/31 04:04:31 yamt Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -224,5 +224,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
-
-options	VMSWAP			# Swap device/file support
