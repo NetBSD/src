@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2005/07/30 06:35:36 yamt Exp $
+# $NetBSD: GENERIC,v 1.162 2005/07/31 04:04:42 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.162 $"
 
 maxusers	16		# estimated number of users
 
@@ -346,5 +346,3 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	VMSWAP			# Swap device/file support

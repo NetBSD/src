@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.36 2005/07/30 06:35:39 yamt Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.37 2005/07/31 04:04:46 yamt Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -461,5 +461,3 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

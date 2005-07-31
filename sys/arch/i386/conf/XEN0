@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.7 2005/07/30 06:35:36 yamt Exp $
+# $NetBSD: XEN0,v 1.8 2005/07/31 04:04:32 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -597,5 +597,3 @@ pseudo-device	ksyms			# /dev/ksyms
 
 #xen pseudo-devices
 pseudo-device	xenevt
-
-options	VMSWAP			# Swap device/file support

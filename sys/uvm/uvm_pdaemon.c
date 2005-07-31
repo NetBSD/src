@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.66 2005/07/30 06:33:36 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.67 2005/07/31 04:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.66 2005/07/30 06:33:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.67 2005/07/31 04:04:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -382,18 +382,15 @@ uvm_aiodone_daemon(void *arg)
 static void
 uvmpd_scan_inactive(struct pglist *pglst)
 {
+	int error;
 	struct vm_page *p, *nextpg = NULL; /* Quell compiler warning */
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
-#if defined(VMSWAP)
 	struct vm_page *swpps[round_page(MAXPHYS) >> PAGE_SHIFT];
-	int error;
-	int result;
-#endif /* defined(VMSWAP) */
 	struct simplelock *slock;
 	int swnpages, swcpages;
 	int swslot;
-	int dirtyreacts, t;
+	int dirtyreacts, t, result;
 	boolean_t anonunder, fileunder, execunder;
 	boolean_t anonover, fileover, execover;
 	boolean_t anonreact, filereact, execreact;
@@ -427,13 +424,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 	if (filereact && execreact && (anonreact || uvm_swapisfull())) {
 		anonreact = filereact = execreact = FALSE;
 	}
-#if !defined(VMSWAP)
-	/*
-	 * XXX no point to put swap-backed pages on the page queue.
-	 */
-
-	anonreact = TRUE;
-#endif /* !defined(VMSWAP) */
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 		uobj = NULL;
 		anon = NULL;
@@ -535,7 +525,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 				}
 				uvmexp.pdobscan++;
 			} else {
-#if defined(VMSWAP)
 				KASSERT(anon != NULL);
 				slock = &anon->an_lock;
 				if (!simple_lock_try(slock)) {
@@ -558,9 +547,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 					continue;
 				}
 				uvmexp.pdanscan++;
-#else /* defined(VMSWAP) */
-				panic("%s: anon", __func__);
-#endif /* defined(VMSWAP) */
 			}
 
 
@@ -583,7 +569,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 				continue;
 			}
 
-#if defined(VMSWAP)
 			/*
 			 * the page is swap-backed.  remove all the permissions
 			 * from the page so we can sync the modified info
@@ -731,13 +716,8 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if (swcpages < swnpages) {
 				continue;
 			}
-#else /* defined(VMSWAP) */
-			panic("%s: swap-backed", __func__);
-#endif /* defined(VMSWAP) */
-
 		}
 
-#if defined(VMSWAP)
 		/*
 		 * if this is the final pageout we could have a few
 		 * unused swap blocks.  if so, free them now.
@@ -773,7 +753,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 		if (nextpg && (nextpg->pqflags & PQ_INACTIVE) == 0) {
 			nextpg = TAILQ_FIRST(pglst);
 		}
-#endif /* defined(VMSWAP) */
 	}
 }
 
@@ -893,7 +872,6 @@ uvmpd_scan(void)
 			continue;
 		}
 
-#if defined(VMSWAP)
 		/*
 		 * if there's a shortage of swap, free any swap allocated
 		 * to this page so that other pages can be paged out.
@@ -915,7 +893,6 @@ uvmpd_scan(void)
 				}
 			}
 		}
-#endif /* defined(VMSWAP) */
 
 		/*
 		 * if there's a shortage of inactive pages, deactivate.

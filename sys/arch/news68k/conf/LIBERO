@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.32 2005/07/30 06:35:38 yamt Exp $
+# 	$NetBSD: LIBERO,v 1.33 2005/07/31 04:04:43 yamt Exp $
 
 #	NEWS1750 config file;
 #
@@ -172,5 +172,3 @@ pseudo-device	rnd			# /dev/random and in-kernle generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux
 pseudo-device	ksyms
-
-options	VMSWAP			# Swap device/file support

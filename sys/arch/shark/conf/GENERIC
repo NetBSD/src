@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 2005/07/30 06:35:39 yamt Exp $
+#	$NetBSD: GENERIC,v 1.49 2005/07/31 04:04:46 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.48 $"
+#ident		"GENERIC-$Revision: 1.49 $"
 
 # estimated number of users
 maxusers	32
@@ -314,5 +314,3 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	VMSWAP			# Swap device/file support

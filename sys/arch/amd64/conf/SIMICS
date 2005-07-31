@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.19 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: SIMICS,v 1.20 2005/07/31 04:04:30 yamt Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -520,5 +520,3 @@ pseudo-device	pty			# pseudo-terminals (Sysinst needs two)
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
-
-options	VMSWAP			# Swap device/file support

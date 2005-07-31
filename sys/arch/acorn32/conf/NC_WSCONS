@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.38 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: NC_WSCONS,v 1.39 2005/07/31 04:04:30 yamt Exp $
 #
 #	NC - with wscons
 #
@@ -313,5 +313,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
 makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
-
-options	VMSWAP			# Swap device/file support

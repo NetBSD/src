@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.25 2005/07/30 06:35:39 yamt Exp $
+# $NetBSD: FOURMEG,v 1.26 2005/07/31 04:04:46 yamt Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.25 $"
+#ident 		"FOURMEG-$Revision: 1.26 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -235,5 +235,3 @@ pseudo-device	pty		32	# pseudo-terminals
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.35 2005/07/30 06:33:36 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.36 2005/07/31 04:04:47 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.35 2005/07/30 06:33:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.36 2005/07/31 04:04:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -76,9 +76,7 @@ uvm_anon_ctor(void *arg, void *object, int flags)
 	anon->an_ref = 0;
 	simple_lock_init(&anon->an_lock);
 	anon->an_page = NULL;
-#if defined(VMSWAP)
 	anon->an_swslot = 0;
-#endif /* defined(VMSWAP) */
 
 	return 0;
 }
@@ -98,9 +96,7 @@ uvm_analloc(void)
 		KASSERT(anon->an_ref == 0);
 		LOCK_ASSERT(simple_lock_held(&anon->an_lock) == 0);
 		KASSERT(anon->an_page == NULL);
-#if defined(VMSWAP)
 		KASSERT(anon->an_swslot == 0);
-#endif /* defined(VMSWAP) */
 		anon->an_ref = 1;
 		simple_lock(&anon->an_lock);
 	}
@@ -191,7 +187,6 @@ uvm_anfree(struct vm_anon *anon)
 				    "freed now!", anon, pg, 0, 0);
 		}
 	}
-#if defined(VMSWAP)
 	if (pg == NULL && anon->an_swslot > 0) {
 		/* this page is no longer only in swap. */
 		simple_lock(&uvm.swap_data_lock);
@@ -199,7 +194,6 @@ uvm_anfree(struct vm_anon *anon)
 		uvmexp.swpgonly--;
 		simple_unlock(&uvm.swap_data_lock);
 	}
-#endif /* defined(VMSWAP) */
 
 	/*
 	 * free any swap resources.
@@ -213,15 +207,11 @@ uvm_anfree(struct vm_anon *anon)
 	 */
 
 	KASSERT(anon->an_page == NULL);
-#if defined(VMSWAP)
 	KASSERT(anon->an_swslot == 0);
-#endif /* defined(VMSWAP) */
 
 	pool_cache_put(&uvm_anon_pool_cache, anon);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 }
-
-#if defined(VMSWAP)
 
 /*
  * uvm_anon_dropswap:  release any swap resources from this anon.
@@ -241,8 +231,6 @@ uvm_anon_dropswap(struct vm_anon *anon)
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
 }
-
-#endif /* defined(VMSWAP) */
 
 /*
  * uvm_anon_lockloanpg: given a locked anon, lock its resident page
@@ -332,8 +320,6 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 	return(pg);
 }
 
-#if defined(VMSWAP)
-
 /*
  * fetch an anon's page.
  *
@@ -414,8 +400,6 @@ uvm_anon_pagein(struct vm_anon *anon)
 	}
 	return FALSE;
 }
-
-#endif /* defined(VMSWAP) */
 
 /*
  * uvm_anon_release: release an anon and its page.

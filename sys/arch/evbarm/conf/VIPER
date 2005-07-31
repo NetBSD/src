@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.4 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: VIPER,v 1.5 2005/07/31 04:04:31 yamt Exp $
 #
 #	Arcom Viper
 #
@@ -194,5 +194,3 @@ pseudo-device	ksyms			# /dev/ksyms
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
-
-options	VMSWAP			# Swap device/file support

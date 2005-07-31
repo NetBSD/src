@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.14 2005/07/30 06:33:35 yamt Exp $
+#	$NetBSD: majors.newsmips,v 1.15 2005/07/31 04:04:43 yamt Exp $
 #
 # Device majors for newsmips
 #
@@ -9,7 +9,7 @@ device-major	ctty		char 2
 device-major	mem		char 3
 device-major	sd		char 4   block 0	sd
 
-device-major	swap		char 7   block 4	vmswap
+device-major	swap		char 7   block 4
 device-major	pts		char 8			pty
 device-major	ptc		char 9			pty
 device-major	md		char 10  block 2	md

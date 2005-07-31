@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.14 2005/07/30 06:35:38 yamt Exp $
+# $NetBSD: WSCONS,v 1.15 2005/07/31 04:04:43 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 maxusers	64
 
@@ -305,5 +305,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
-
-options	VMSWAP			# Swap device/file support

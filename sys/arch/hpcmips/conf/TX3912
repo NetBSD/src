@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.59 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: TX3912,v 1.60 2005/07/31 04:04:31 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -288,5 +288,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-
-options	VMSWAP			# Swap device/file support

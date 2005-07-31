@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.12 2005/07/30 06:35:38 yamt Exp $
+# 	$NetBSD: config.playstation2,v 1.13 2005/07/31 04:04:43 yamt Exp $
 #
 
 maxusers	16
@@ -86,5 +86,3 @@ pseudo-device	gif		2	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	ksyms			# /dev/ksyms
-
-options	VMSWAP			# Swap device/file support

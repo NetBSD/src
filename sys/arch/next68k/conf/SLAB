@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.27 2005/07/30 06:35:38 yamt Exp $
+# $NetBSD: SLAB,v 1.28 2005/07/31 04:04:43 yamt Exp $
 #
 # deberg's development machine
 #
@@ -210,5 +210,3 @@ pseudo-device	vnd		4	# paging to files
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	ccd		4	# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52 2005/07/30 06:35:38 yamt Exp $
+# $NetBSD: GENERIC,v 1.53 2005/07/31 04:04:43 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	8			# estimated number of users
 
@@ -135,5 +135,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	VMSWAP			# Swap device/file support

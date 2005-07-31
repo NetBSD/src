@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.32 2005/07/30 06:35:39 yamt Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.33 2005/07/31 04:04:46 yamt Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -546,5 +546,3 @@ pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem
 
 #pseudo-device	fss		4	# file system snapshot device
-
-options	VMSWAP			# Swap device/file support

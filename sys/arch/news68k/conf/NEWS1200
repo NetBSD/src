@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.31 2005/07/30 06:35:38 yamt Exp $
+# 	$NetBSD: NEWS1200,v 1.32 2005/07/31 04:04:43 yamt Exp $
 
 #	news1200 config file
 #
@@ -153,5 +153,3 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

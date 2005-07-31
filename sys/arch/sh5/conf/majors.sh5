@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.14 2005/07/30 06:33:35 yamt Exp $
+#	$NetBSD: majors.sh5,v 1.15 2005/07/31 04:04:46 yamt Exp $
 #
 # Device majors for sh5
 #
@@ -7,7 +7,7 @@ device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
 device-major	wd		char 3   block 0	wd
-device-major	swap		char 4   block 1	vmswap
+device-major	swap		char 4   block 1
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7
