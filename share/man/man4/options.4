@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.285 2005/07/18 14:03:40 wiz Exp $
+.\"	$NetBSD: options.4,v 1.286 2005/07/31 01:07:02 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 16, 2005
+.Dd July 31, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2102,6 +2102,8 @@ See the files
 for some implementation details, and
 .Pa /usr/include/machine/vmparam.h
 for port specific details including availability.
+.It Cd options VMSWAP
+Enable paging device/file support.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
