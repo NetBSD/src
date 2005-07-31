@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.59 2005/07/30 06:37:15 yamt Exp $
+# $NetBSD: INSTALL,v 1.60 2005/07/31 04:05:45 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.40 2005/07/30 06:35:35 yamt Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.41 2005/07/31 04:04:31 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 makeoptions	COPTS="-Os"
 
@@ -448,5 +448,3 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 
 config	netbsd root on ? type ?
-
-options	VMSWAP			# Swap device/file support
