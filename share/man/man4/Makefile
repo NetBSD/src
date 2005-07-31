@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.365 2005/07/18 11:36:46 augustss Exp $
+#	$NetBSD: Makefile,v 1.366 2005/07/31 00:12:17 nakayama Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -141,8 +141,8 @@ MLINKS+=edc.4 i386/ed.4
 
 SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
 	man4.cobalt \
-	man4.dreamcast man4.evbarm man4.hp300 man4.hp700 man4.hpcsh \
-	man4.i386 man4.mac68k \
+	man4.dreamcast man4.evbarm man4.hp300 man4.hp700 man4.hpcmips \
+	man4.hpcsh man4.i386 man4.mac68k \
 	man4.macppc man4.mvme68k man4.pc532 man4.pmax man4.pmppc man4.sgimips \
 	man4.sparc man4.sparc64 man4.sun2 man4.sun3 man4.vax man4.x68k
 
