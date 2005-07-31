@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.40 2005/07/30 06:35:35 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.41 2005/07/31 04:04:31 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -632,5 +632,3 @@ pseudo-device	nsmb			# experimental - SMB requester
 ')m4_dnl
 
 config	netbsd root on ? type ?
-
-options	VMSWAP			# Swap device/file support

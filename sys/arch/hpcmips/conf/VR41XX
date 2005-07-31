@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.27 2005/07/30 06:35:35 yamt Exp $
+# $NetBSD: VR41XX,v 1.28 2005/07/31 04:04:32 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -532,5 +532,3 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
-
-options	VMSWAP			# Swap device/file support

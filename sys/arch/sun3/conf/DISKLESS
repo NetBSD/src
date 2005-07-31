@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.46 2005/07/30 06:35:39 yamt Exp $
+# $NetBSD: DISKLESS,v 1.47 2005/07/31 04:04:46 yamt Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -150,5 +150,3 @@ pseudo-device	tun		2	# network tunneling over tty
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

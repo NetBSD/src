@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.35 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: ARCTIC,v 1.36 2005/07/31 04:04:31 yamt Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -275,5 +275,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
-
-options	VMSWAP			# Swap device/file support

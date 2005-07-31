@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.63 2005/07/30 06:33:36 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.64 2005/07/31 04:04:46 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.63 2005/07/30 06:33:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.64 2005/07/31 04:04:46 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -1236,8 +1236,6 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 
 #endif
 
-#if defined(VMSWAP)
-
 /*
  * amap_swap_off: pagein anonymous pages in amaps and drop swap slots.
  *
@@ -1344,5 +1342,3 @@ next:
 
 	return rv;
 }
-
-#endif /* defined(VMSWAP) */

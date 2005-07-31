@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.28 2005/07/30 06:35:39 yamt Exp $
+# $NetBSD: KRUPS,v 1.29 2005/07/31 04:04:46 yamt Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.28 $"
+#ident 		"KRUPS-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -346,5 +346,3 @@ pseudo-device	wsfont
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-
-options	VMSWAP			# Swap device/file support

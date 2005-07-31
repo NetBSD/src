@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.16 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: TS7200,v 1.17 2005/07/31 04:04:31 yamt Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -479,5 +479,3 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
-
-options	VMSWAP			# Swap device/file support

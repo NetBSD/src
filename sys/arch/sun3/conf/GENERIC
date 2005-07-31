@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2005/07/30 06:35:39 yamt Exp $
+# $NetBSD: GENERIC,v 1.120 2005/07/31 04:04:46 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -293,5 +293,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	VMSWAP			# Swap device/file support

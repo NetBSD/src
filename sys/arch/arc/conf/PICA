@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.48 2005/07/30 06:35:35 yamt Exp $
+#	$NetBSD: PICA,v 1.49 2005/07/31 04:04:31 yamt Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -227,5 +227,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
-
-options	VMSWAP			# Swap device/file support

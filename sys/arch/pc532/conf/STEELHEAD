@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.40 2005/07/30 06:35:38 yamt Exp $
+#	$NetBSD: STEELHEAD,v 1.41 2005/07/31 04:04:43 yamt Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -80,5 +80,3 @@ pseudo-device	vnd		4	# Vnode devices
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ether			#
 pseudo-device	clockctl		# user control of clock subsystem
-
-options	VMSWAP			# Swap device/file support

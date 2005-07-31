@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.16 2005/07/30 06:33:35 yamt Exp $
+#	$NetBSD: majors.vax,v 1.17 2005/07/31 04:04:46 yamt Exp $
 #
 # Device majors for vax
 #
@@ -10,7 +10,7 @@ device-major	mem		char 3
 device-major	hp		char 4   block 0	hp
 
 device-major	vp		char 6			vp
-device-major	swap		char 7   block 4	vmswap
+device-major	swap		char 7   block 4
 device-major	cfl		char 8			vax780 | vaxany
 device-major	ra		char 9   block 9	ra
 device-major	va		char 10			va

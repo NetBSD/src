@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.24 2005/07/30 06:35:39 yamt Exp $
+# $NetBSD: RAMDISK,v 1.25 2005/07/31 04:04:46 yamt Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -241,5 +241,3 @@ pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
-
-options	VMSWAP			# Swap device/file support

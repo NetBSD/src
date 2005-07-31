@@ -1,11 +1,11 @@
-# $NetBSD: MVME1600,v 1.18 2005/07/30 06:35:38 yamt Exp $
+# $NetBSD: MVME1600,v 1.19 2005/07/31 04:04:43 yamt Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.18 $"
+#ident		"MVME1600-$Revision: 1.19 $"
 
 maxusers	8
 
@@ -253,5 +253,3 @@ pseudo-device	clockctl		# user control of clock subsystem
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
-
-options	VMSWAP			# Swap device/file support
