@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.14 2004/08/13 12:10:39 mycroft Exp $	*/
+/*	$NetBSD: chared.h,v 1.15 2005/08/01 23:00:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ protected int	 c_gets(EditLine *, char *, const char *);
 protected int	 c_hpos(EditLine *);
 
 protected int	 ch_init(EditLine *);
-protected void	 ch_reset(EditLine *);
+protected void	 ch_reset(EditLine *, int);
 protected int	 ch_enlargebufs(EditLine *, size_t);
 protected void	 ch_end(EditLine *);
 
