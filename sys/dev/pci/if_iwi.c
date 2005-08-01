@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.12 2005/07/30 21:15:51 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.13 2005/08/01 15:14:54 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,10 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.12 2005/07/30 21:15:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.13 2005/08/01 15:14:54 skrll Exp $");
 
 /*-
- * Intel(R) PRO/Wireless 2200BG/2915ABG driver
+ * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
  * http://www.intel.com/network/connectivity/products/wireless/prowireless_mobile.htm
  */
 
@@ -157,7 +157,9 @@ iwi_match(struct device *parent, struct cfdata *match, void *aux)
 		return 0;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2200BG ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2225BG ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2)
 		return 1;
 
 	return 0;
@@ -247,9 +249,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ic->ic_ifp = ifp;
-	ic->ic_phytype = IEEE80211_T_OFDM;
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
+	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_WPA | IEEE80211_C_PMGT | IEEE80211_C_TXPMGT |
@@ -269,8 +271,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
 
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PRO_WL_2200BG) {
-		/* set supported .11a rates */
+
+	if (PCI_PRODUCT(pa->pa_id) >= PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1) {
+		/* set supported .11a rates (2915ABG only) */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
 
 		/* set supported .11a channels */
@@ -328,6 +331,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
+	ieee80211_announce(ic);
 	/*
 	 * Add a few sysctl knobs.
 	 * XXX: Not yet.
@@ -1038,6 +1042,7 @@ iwi_intr(void *arg)
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
+		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
 	}
 
@@ -1048,6 +1053,7 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_RADIO_OFF) {
 		DPRINTF(("radio transmitter off\n"));
+		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
 	}
 
