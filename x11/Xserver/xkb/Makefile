@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/03/06 03:31:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.7.8.1 2005/08/01 09:45:06 tron Exp $
 
 .include "../Makefile.serverlib"
 
@@ -27,7 +27,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common
 
-CPPFLAGS+=	-DXKB_IN_SERVER
+CPPFLAGS+=	-DXKB_IN_SERVER -DXKB_ALWAYS_USES_SOFT_REPEAT
 
 CPPFLAGS.xkbInit.c=	-DXKB_BASE_DIRECTORY=\"${X11LIBDIR}/xkb\" \
 			-DXKB_DFLT_DISABLED=0
