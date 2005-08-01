@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.190 2005/08/01 09:46:40 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.191 2005/08/01 11:37:41 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11004,4 +11004,10 @@ x11/Xserver/xkb/Makefile			1.8
 	the same here so that auto-repeat works in, e.g., Xsun.
 	This fixes PR port-sparc/28908.
 	[bjh21, ticket #639]
+
+sys/dist/pf/net/pf_ioctl.c			1.18
+
+	pf_test() can set *mp to NULL, check for this before de-referencing it.
+	This fixes PR kern/30835.
+	[peter, ticket #641]
 
