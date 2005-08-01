@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.36 2005/06/01 11:37:52 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.37 2005/08/01 23:00:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.36 2005/06/01 11:37:52 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.37 2005/08/01 23:00:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -364,7 +364,7 @@ read_prepare(EditLine *el)
 	   we have the wrong size. */
 	el_resize(el);
 	re_clear_display(el);	/* reset the display stuff */
-	ch_reset(el);
+	ch_reset(el, 0);
 	re_refresh(el);		/* print the prompt */
 
 	if (el->el_flags & UNBUFFERED)
