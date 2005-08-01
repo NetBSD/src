@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.14 2000/06/03 20:37:37 fvdl Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.15 2005/08/01 21:08:34 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusersd.c,v 1.14 2000/06/03 20:37:37 fvdl Exp $");
+__RCSID("$NetBSD: rusersd.c,v 1.15 2005/08/01 21:08:34 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,10 +47,10 @@ __RCSID("$NetBSD: rusersd.c,v 1.14 2000/06/03 20:37:37 fvdl Exp $");
 
 int from_inetd = 1;
 
-static void cleanup(int);
-int main(int, char *[]);
+static void cleanup(int) __attribute__((__noreturn__));
 
 static void
+/*ARGSUSED*/
 cleanup(int n)
 {
 
@@ -60,6 +60,7 @@ cleanup(int n)
 }
 
 int
+/*ARGSUSED*/
 main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
@@ -70,18 +71,18 @@ main(int argc, char *argv[])
 	 * See if inetd started us
 	 */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)
+	if (getsockname(0, (struct sockaddr *)(void *)&from, &fromlen) == -1)
 		from_inetd = 0;
 	
 	if (!from_inetd) {
-		daemon(0, 0);
+		(void)daemon(0, 0);
 
-		(void) rpcb_unset(RUSERSPROG, RUSERSVERS_3, NULL);
-		(void) rpcb_unset(RUSERSPROG, RUSERSVERS_IDLE, NULL);
+		(void)rpcb_unset(RUSERSPROG, RUSERSVERS_3, NULL);
+		(void)rpcb_unset(RUSERSPROG, RUSERSVERS_IDLE, NULL);
 
-		(void) signal(SIGINT, cleanup);
-		(void) signal(SIGTERM, cleanup);
-		(void) signal(SIGHUP, cleanup);
+		(void)signal(SIGINT, cleanup);
+		(void)signal(SIGTERM, cleanup);
+		(void)signal(SIGHUP, cleanup);
 	}
 
 	openlog("rpc.rusersd", LOG_PID, LOG_DAEMON);
@@ -90,36 +91,36 @@ main(int argc, char *argv[])
 		transp = svc_dg_create(0, 0, 0);
 		if (transp == NULL) {
 			syslog(LOG_ERR, "cannot create udp service.");
-			exit(1);
+			return 1;
 		}
 		if (!svc_reg(transp, RUSERSPROG, RUSERSVERS_3, rusers_service,
 		    NULL)) {
 			syslog(LOG_ERR, "unable to register "
 			    "(RUSERSPROG, RUSERSVERS_3).");
-			exit(1);
+			return 1;
 		}
 		if (!svc_reg(transp, RUSERSPROG, RUSERSVERS_IDLE,
 		    rusers_service, NULL)) {
 			syslog(LOG_ERR, "unable to register "
 			    "(RUSERSPROG, RUSERSVERS_IDLE).");
-			exit(1);
+			return 1;
 		}
 	} else {
 		if (!svc_create(rusers_service, RUSERSPROG, RUSERSVERS_3,
 		    "udp")) {
 			syslog(LOG_ERR, "unable to create "
 			    "(RUSERSPROG, RUSERSVERS_3).");
-			exit(1);
+			return 1;
 		}
 		if (!svc_create(rusers_service, RUSERSPROG, RUSERSVERS_IDLE,
 		    "udp")) {
 			syslog(LOG_ERR, "unable to create "
 			    "(RUSERSPROG, RUSERSVERS_IDLE).");
-			exit(1);
+			return 1;
 		}
 	}
 
 	svc_run();
 	syslog(LOG_ERR, "svc_run returned");
-	exit(1);
+	return 1;
 }

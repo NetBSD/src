@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.h,v 1.1 1997/09/17 16:36:25 christos Exp $	*/
+/*	$NetBSD: rusers_proc.h,v 1.2 2005/08/01 21:08:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,4 +29,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void rusers_service __P((struct svc_req *, SVCXPRT *));
+void rusers_service(struct svc_req *, SVCXPRT *);
