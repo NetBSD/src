@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.89 2005/07/28 13:08:09 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.90 2005/08/01 11:38:30 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd July 28, 2005
+.Dd August 1, 2005
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -271,10 +271,6 @@ Says that the package uses
 Says that the package uses the Mesa library.
 This will include all Mesa components that are not included in the
 installed X11 distribution.
-.It USE_SSL
-Says that the package uses a SSL library.
-The location of the SSL installation can be found in
-.Dv ${SSLBASE} .
 .It USE_X11BASE
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
