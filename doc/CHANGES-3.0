@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.189 2005/07/30 18:02:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.190 2005/08/01 09:46:40 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -10997,4 +10997,11 @@ sys/arch/alpha/include/pcb.h			1.13
 	  Many thanks to Michael Hitch for the analysis and initial patch which
 	  this one is derived from.
 	[thorpej, ticket #629]
+
+x11/Xserver/xkb/Makefile			1.8
+
+	NetBSD.cf unconditionally turns on XKB_ALWAYS_USES_SOFT_REPEAT. Do
+	the same here so that auto-repeat works in, e.g., Xsun.
+	This fixes PR port-sparc/28908.
+	[bjh21, ticket #639]
 
