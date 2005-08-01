@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.1 2005/07/30 06:14:50 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.2 2005/08/01 15:00:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.1 2005/07/30 06:14:50 skrll Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.2 2005/08/01 15:00:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ __RCSID("$NetBSD: ucycom.c,v 1.1 2005/07/30 06:14:50 skrll Exp $");
 
 #include "ioconf.h"
 
-#undef UCYCOM_DEBUG
-#define UCYCOM_DEBUG
 #ifdef UCYCOM_DEBUG
 #define DPRINTF(x)	if (ucycomdebug) logprintf x
 #define DPRINTFN(n, x)	if (ucycomdebug > (n)) logprintf x
@@ -215,9 +213,6 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ilen = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
-
-	printf(": input=%d, output=%d, feature=%d\n",
-	    sc->sc_ilen, sc->sc_olen, sc->sc_flen);
 
 	DPRINTF(("ucycom attach: report_id = %d\n", uha->reportid));
 
@@ -525,6 +520,7 @@ ucycomstart(struct tty *tp)
 		sc->sc_obuf[0] = len | sc->sc_mcr;
 
 		DPRINTF(("ucycomstart(8): sc->sc_obuf[0] = %d | %d = %d\n", len, sc->sc_mcr, sc->sc_obuf[0]));
+#ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
 			u_int32_t i;
 			u_int8_t *d = data;
@@ -534,6 +530,7 @@ ucycomstart(struct tty *tp)
 				DPRINTF((" %02x", d[i]));
 			DPRINTF(("\n"));
 		}
+#endif
 		break;
 	
 	case 32:
@@ -546,6 +543,7 @@ ucycomstart(struct tty *tp)
 		sc->sc_obuf[0] = sc->sc_mcr;
 		sc->sc_obuf[1] = len;
 		DPRINTF(("ucycomstart(32): sc->sc_obuf[0] = %d\nsc->sc_obuf[1] = %d\n", sc->sc_obuf[0], sc->sc_obuf[1]));
+#ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
 			u_int32_t i;
 			u_int8_t *d = data;
@@ -555,10 +553,11 @@ ucycomstart(struct tty *tp)
 				DPRINTF((" %02x", d[i]));
 			DPRINTF(("\n"));
 		}
+#endif
 		break;
 	
 	default:
-		DPRINTFN(2,("ucycomstart: unknown output report size (%d)\n",
+        	DPRINTFN(2,("ucycomstart: unknown output report size (%zd)\n",
 		    sc->sc_olen));
 		goto out;
 	}
@@ -569,7 +568,7 @@ ucycomstart(struct tty *tp)
 		int i;
 
 		if (len != 0) {
-			DPRINTF(("ucycomstart: sc->sc_obuf[0..%d) =", sc->sc_olen));
+			DPRINTF(("ucycomstart: sc->sc_obuf[0..%zd) =", sc->sc_olen));
 			for (i = 0; i < sc->sc_olen; i++)
 				DPRINTF((" %02x", sc->sc_obuf[i]));
 			DPRINTF(("\n"));
@@ -1028,7 +1027,7 @@ ucycom_set_status(struct ucycom_softc *sc)
 	int err;
 
 	if (sc->sc_olen != 8 && sc->sc_olen != 32) {
-		DPRINTFN(2,("ucycom_set_status: unknown output report size (%d)\n",
+		DPRINTFN(2,("ucycom_set_status: unknown output report size (%zd)\n",
 		    sc->sc_olen));
 		return;
 	}
