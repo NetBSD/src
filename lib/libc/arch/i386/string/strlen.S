@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.10 2005/02/09 18:15:16 christos Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.11 2005/08/02 14:25:40 rpaulo Exp $")
 #endif
 
 ENTRY(strlen)
@@ -35,10 +35,10 @@ ENTRY(strlen)
 	 * original word is zero.
 	 *
 	 * It also has the useful property that bytes in the result word
-	 * that coorespond to non-zero bytes in the original word have
-	 * the value 0x00, while bytes cooresponding to zero bytes have
+	 * that correspond to non-zero bytes in the original word have
+	 * the value 0x00, while bytes corresponding to zero bytes have
 	 * the value 0x80. This allows calculation of the first (and
-	 * last) occurance of a zero byte within the word (useful for C's
+	 * last) occurrence of a zero byte within the word (useful for C's
 	 * str* primitives) by counting the number of leading (or
 	 * trailing) zeros and dividing the result by 8.  On machines
 	 * without (or with slow) clz() / ctz() instructions, testing
@@ -56,10 +56,10 @@ ENTRY(strlen)
 	 * original word is zero.
 	 *
 	 * On little endian machines, the first byte in the result word
-	 * that cooresponds to a zero byte in the original byte is 0x80,
+	 * that corresponds to a zero byte in the original byte is 0x80,
 	 * so clz() can be used as above.  On big endian machines, and
 	 * little endian machines without (or with a slow) clz() insn,
-	 * testing each byte in the original for zero is necessary
+	 * testing each byte in the original for zero is necessary.
 	 *
 	 * This typically takes 3 instructions (4 on machines without
 	 * "and with complement") not including those needed to load
