@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.10 2005/08/02 11:17:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,14 +37,19 @@
  */
 
 /*
+ * High Definition Audio Specification
+ *	ftp://download.intel.com/standards/hdaudio/pdf/HDAudio_03.pdf
+ *
+ *
  * TO DO:
  *  - S/PDIF
- *  - Volume Knob widget
  *  - power hook
+ *  - multiple codecs (needed?)
+ *  - multiple streams (needed?)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.10 2005/08/02 11:17:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -295,6 +300,8 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $");
 #define		COP_GPIO_COUNT			0x11
 #define		COP_OUTPUT_AMPCAP		0x12
 #define		COP_VOLUME_KNOB_CAPABILITIES	0x13
+#define			COP_VKCAP_DELTA		0x00000080
+#define			COP_VKCAP_NUMSTEPS(x)	(x & 0x7f)
 #define CORB_GET_CONNECTION_SELECT_CONTROL	0xf01
 #define		CORB_CSC_INDEX(x)		(x & 0xff)
 #define CORB_SET_CONNECTION_SELECT_CONTROL	0x701
@@ -383,6 +390,8 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.9 2005/07/31 06:48:15 kent Exp $");
 #define CORB_SET_BEEP_GENERATION	0x70a
 #define CORB_GET_VOLUME_KNOB		0xf0f
 #define CORB_SET_VOLUME_KNOB		0x70f
+#define		CORB_VKNOB_DIRECT	0x80
+#define		CORB_VKNOB_VOLUME(x)	(x & 0x7f)
 #define CORB_GET_SUBSYSTEM_ID		0xf20
 #define CORB_SET_SUBSYSTEM_ID_1		0x720
 #define CORB_SET_SUBSYSTEM_ID_2		0x721
@@ -556,7 +565,7 @@ typedef struct {
 typedef struct {
 	mixer_devinfo_t devinfo;
 	nid_t nid;		/* target NID; 0 is invalid. */
-	int target;		/* 0-15: inamp index, 0x100: outamp */
+	int target;		/* 0-15: inamp index, 0x100: outamp, ... */
 #define IS_MI_TARGET_INAMP(x)	((x) <= 15)
 #define MI_TARGET_INAMP(x)	(x)
 #define MI_TARGET_OUTAMP	0x100
@@ -565,6 +574,7 @@ typedef struct {
 #define MI_TARGET_PINBOOST	0x103 /* for headphone pin */
 #define MI_TARGET_DAC		0x104
 #define MI_TARGET_ADC		0x105
+#define MI_TARGET_VOLUME	0x106
 } mixer_item_t;
 
 typedef struct {
@@ -1450,6 +1460,32 @@ azalia_codec_init(codec_t *this)
 		aprint_error("%s: out of memory\n", XNAME(this->az));
 		return ENOMEM;
 	}
+
+	/* query the base parameters */
+	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
+	    COP_STREAM_FORMATS, &result);
+	this->w[this->audiofunc].d.audio.encodings = result;
+	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
+	    COP_PCM, &result);
+	this->w[this->audiofunc].d.audio.bits_rates = result;
+	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
+	    COP_INPUT_AMPCAP, &result);
+	this->w[this->audiofunc].inamp_cap = result;
+	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
+	    COP_OUTPUT_AMPCAP, &result);
+	this->w[this->audiofunc].outamp_cap = result;
+#ifdef AZALIA_DEBUG
+	azalia_widget_print_audio(&this->w[this->audiofunc], "\t");
+	result = this->w[this->audiofunc].inamp_cap;
+	DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
+	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
+	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
+	result = this->w[this->audiofunc].outamp_cap;
+	DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
+	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
+	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
+#endif
+
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -2162,6 +2198,27 @@ azalia_mixer_init(codec_t *this)
 			    MAX_AUDIO_DEV_LEN);
 			this->nmixers++;
 		}
+
+		/* volume knob */
+		if (w->type == COP_AWTYPE_VOLUME_KNOB &&
+		    w->d.volume.cap & COP_VKCAP_DELTA) {
+			MIXER_REG_PROLOG;
+			strlcpy(d->label.name, w->name, sizeof(d->label.name));
+			d->type = AUDIO_MIXER_VALUE;
+			d->mixer_class = AZ_CLASS_OUTPUT;
+			d->next = AUDIO_MIXER_LAST;
+			d->prev = AUDIO_MIXER_LAST;
+			m->target = MI_TARGET_VOLUME;
+			d->un.v.num_channels = 1;
+			d->un.v.units.name[0] = 0;
+#ifdef MAX_VOLUME_255
+			d->un.v.delta = AUDIO_MAX_GAIN /
+			    COP_VKCAP_NUMSTEPS(w->d.volume.cap);
+#else
+			d->un.v.delta = 1;
+#endif
+			this->nmixers++;
+		}
 	}
 
 	/* if the codec has multiple DAC groups, create "inputs.usingdac" */
@@ -2372,6 +2429,17 @@ azalia_mixer_get(const codec_t *this, mixer_ctrl_t *mc)
 	/* ADC selection */
 	else if (m->target == MI_TARGET_ADC) {
 		mc->un.ord = this->cur_adc;
+	}
+
+	/* Volume knob */
+	else if (m->target == MI_TARGET_VOLUME) {
+		err = this->comresp(this, m->nid, CORB_GET_VOLUME_KNOB,
+		    0, &result);
+		if (err)
+			return err;
+		mc->un.value.level[0] = azalia_mixer_from_device_value(this, m,
+		    CORB_VKNOB_VOLUME(result));
+		mc->un.value.num_channels = 1;
 	}
 
 	else {
@@ -2620,6 +2688,20 @@ azalia_mixer_set(codec_t *this, const mixer_ctrl_t *mc)
 		return azalia_codec_construct_format(this);
 	}
 
+	/* Volume knob */
+	else if (m->target == MI_TARGET_VOLUME) {
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		if (!azalia_mixer_validate_value(this, m, mc->un.value.level[0]))
+			return EINVAL;
+		value = azalia_mixer_to_device_value(this, m,
+		     mc->un.value.level[0]) | CORB_VKNOB_DIRECT;
+		err = this->comresp(this, m->nid, CORB_SET_VOLUME_KNOB,
+		   value, &result);
+		if (err)
+			return err;
+	}
+
 	else {
 		aprint_error("%s: internal error in %s: %x\n", XNAME(this->az),
 		    __func__, m->target);
@@ -2658,9 +2740,16 @@ azalia_mixer_from_device_value(const codec_t *this, const mixer_item_t *m,
 #ifdef MAX_VOLUME_255
 	uint32_t dmax;
 
-	dmax = IS_MI_TARGET_INAMP(m->target)
-	    ? COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap)
-	    : COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	if (IS_MI_TARGET_INAMP(m->target))
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap);
+	else if (m->target == MI_TARGET_OUTAMP)
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	else if (m->target == MI_TARGET_VOLUME)
+		dmax = COP_VKCAP_NUMSTEPS(this->w[m->nid].d.volume.cap);
+	else {
+		printf("unknown target: %d\n", m->target);
+		dmax = 255;
+	}
 	return dv * AUDIO_MAX_GAIN / dmax;
 #else
 	return dv;
@@ -2674,9 +2763,16 @@ azalia_mixer_to_device_value(const codec_t *this, const mixer_item_t *m,
 #ifdef MAX_VOLUME_255
 	uint32_t dmax;
 
-	dmax = IS_MI_TARGET_INAMP(m->target)
-	    ? COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap)
-	    : COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	if (IS_MI_TARGET_INAMP(m->target))
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap);
+	else if (m->target == MI_TARGET_OUTAMP)
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	else if (m->target == MI_TARGET_VOLUME)
+		dmax = COP_VKCAP_NUMSTEPS(this->w[m->nid].d.volume.cap);
+	else {
+		printf("unknown target: %d\n", m->target);
+		dmax = 255;
+	}
 	return uv * dmax / AUDIO_MAX_GAIN;
 #else
 	return uv;
@@ -2692,9 +2788,12 @@ azalia_mixer_validate_value(const codec_t *this, const mixer_item_t *m,
 #else
 	uint32_t dmax;
 
-	dmax = IS_MI_TARGET_INAMP(m->target)
-	    ? COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap)
-	    : COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	if (IS_MI_TARGET_INAMP(m->target))
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].inamp_cap);
+	else if (m->target == MI_TARGET_OUTAMP)
+		dmax = COP_AMPCAP_NUMSTEPS(this->w[m->nid].outamp_cap);
+	else if (m->target == MI_TARGET_VOLUME)
+		dmax = COP_VKCAP_NUMSTEPS(this->w[m->nid].d.volume.cap);
 	return uv <= dmax;
 #endif
 }
@@ -2756,15 +2855,23 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
 		break;
 	case COP_AWTYPE_VOLUME_KNOB:
-		snprintf(this->name, sizeof(this->name), "knob%2.2x", nid);
+		snprintf(this->name, sizeof(this->name), "volume%2.2x", nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
+		err = codec->comresp(codec, nid, CORB_GET_PARAMETER,
+		    COP_VOLUME_KNOB_CAPABILITIES, &result);
+		if (!err) {
+			this->d.volume.cap = result;
+			DPRINTF(("\tdelta=%d steps=%d\n",
+			    !!(result & COP_VKCAP_DELTA),
+			    COP_VKCAP_NUMSTEPS(result)));
+		}
 		break;
 	case COP_AWTYPE_BEEP_GENERATOR:
 		snprintf(this->name, sizeof(this->name), "beep%2.2x", nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
 		break;
 	default:
-		snprintf(this->name, sizeof(this->name), "o%2.2x", nid);
+		snprintf(this->name, sizeof(this->name), "widget%2.2x", nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
 		break;
 	}
@@ -2772,8 +2879,11 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 
 	/* amplifier information */
 	if (this->widgetcap & COP_AWCAP_INAMP) {
-		codec->comresp(codec, nid, CORB_GET_PARAMETER,
-		    COP_INPUT_AMPCAP, &this->inamp_cap);
+		if (this->widgetcap & COP_AWCAP_AMPOV)
+			codec->comresp(codec, nid, CORB_GET_PARAMETER,
+			    COP_INPUT_AMPCAP, &this->inamp_cap);
+		else
+			this->inamp_cap = codec->w[codec->audiofunc].inamp_cap;
 		DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
 		    (this->inamp_cap & COP_AMPCAP_MUTE) != 0,
 		    COP_AMPCAP_STEPSIZE(this->inamp_cap),
@@ -2781,8 +2891,11 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		    COP_AMPCAP_OFFSET(this->inamp_cap)));
 	}
 	if (this->widgetcap & COP_AWCAP_OUTAMP) {
-		codec->comresp(codec, nid, CORB_GET_PARAMETER,
-		    COP_OUTPUT_AMPCAP, &this->outamp_cap);
+		if (this->widgetcap & COP_AWCAP_AMPOV)
+			codec->comresp(codec, nid, CORB_GET_PARAMETER,
+			    COP_OUTPUT_AMPCAP, &this->outamp_cap);
+		else
+			this->outamp_cap = codec->w[codec->audiofunc].outamp_cap;
 		DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
 		    (this->outamp_cap & COP_AMPCAP_MUTE) != 0,
 		    COP_AMPCAP_STEPSIZE(this->outamp_cap),
@@ -2799,20 +2912,28 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 	int err;
 
 	/* check audio format */
-	err = codec->comresp(codec, this->nid,
-	    CORB_GET_PARAMETER, COP_STREAM_FORMATS, &result);
-	if (err)
-		return err;
-	this->d.audio.encodings = result;
-	if ((result & COP_STREAM_FORMAT_PCM) == 0) {
-		aprint_error("%s: No PCM support\n", XNAME(codec->az));
-		return -1;
+	if (this->widgetcap & COP_AWCAP_FORMATOV) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PARAMETER, COP_STREAM_FORMATS, &result);
+		if (err)
+			return err;
+		this->d.audio.encodings = result;
+		if ((result & COP_STREAM_FORMAT_PCM) == 0) {
+			aprint_error("%s: %s: No PCM support: %x\n",
+			    XNAME(codec->az), this->name, result);
+			return -1;
+		}
+		err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
+		    COP_PCM, &result);
+		if (err)
+			return err;
+		this->d.audio.bits_rates = result;
+	} else {
+		this->d.audio.encodings =
+		    codec->w[codec->audiofunc].d.audio.encodings;
+		this->d.audio.bits_rates =
+		    codec->w[codec->audiofunc].d.audio.bits_rates;
 	}
-	err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER, COP_PCM,
-	    &result);
-	if (err)
-		return err;
-	this->d.audio.bits_rates = result;
 #ifdef AZALIA_DEBUG
 	azalia_widget_print_audio(this, "\t");
 #endif
