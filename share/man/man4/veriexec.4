@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.6 2005/05/20 19:52:52 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.7 2005/08/02 18:54:53 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexec.4,v 1.6 2005/05/20 19:52:52 elad Exp $
+.\"	$Id: veriexec.4,v 1.7 2005/08/02 18:54:53 elad Exp $
 .\"
-.Dd March 24, 2005
+.Dd August 2, 2005
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -78,7 +78,7 @@ struct veriexec_params  {
 };
 .Ed
 .Pp
-Where type contains the type of access allowed, which may be one of:
+Where type is a bitfield that can be binary-OR'd with one or more of:
 .Bl -tag -width VERIEXEC_INDIRECT
 .It Dv VERIEXEC_DIRECT
 Allow execution of the file if fingerprint matches.
@@ -104,12 +104,13 @@ Note that the requests
 .Dv VERIEXEC_TABLESIZE
 and
 .Dv VERIEXEC_LOAD
-are not permitted once the kernel security level has been raised past 0
+are not permitted once the veriexec strict level has been raised past 0
 by setting
-.Dv kern.securelevel
+.Dv kern.veriexec.strict
 using
 .Xr sysctl 8 .
 .Sh SEE ALSO
+.Xr sysctl 3 ,
 .Xr sysctl 8 ,
 .Xr veriexecctl 8
 .Sh NOTES
