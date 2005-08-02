@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.30 2005/07/07 18:43:47 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.31 2005/08/02 01:32:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.30 2005/07/07 18:43:47 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.31 2005/08/02 01:32:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1696,12 +1696,21 @@ mach64_mmap(void *v, off_t offset, int prot)
 	struct mach64_softc *sc = v;
 	paddr_t pa;
 	
-	/* 'regular' framebuffer mmap()ing */
+#ifndef __sparc64
+	/* 
+	 *'regular' framebuffer mmap()ing 
+	 * disabled on sparc64 because some ATI firmware likes to map some PCI
+	 * resources to addresses that would collide with this ( like some Rage 
+	 * IIc which uses 0x2000 for the 2nd register block )
+	 * Other 64bit architectures might run into similar problems.
+	 */
 	if (offset<sc->sc_apersize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase+offset, 0, 
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
+#endif
+
 #if 0
 	/* evil hack to allow mmap()ing other devices as well */
 	if ((offset > 0x80000000) && (offset <= 0xffffffff)) {
