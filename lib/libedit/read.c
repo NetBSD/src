@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.38 2005/08/02 10:20:33 tron Exp $	*/
+/*	$NetBSD: read.c,v 1.39 2005/08/02 12:11:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.38 2005/08/02 10:20:33 tron Exp $");
+__RCSID("$NetBSD: read.c,v 1.39 2005/08/02 12:11:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -577,7 +577,7 @@ el_gets(EditLine *el, int *nread)
 #endif /* DEBUG_READ */
 			/* put (real) cursor in a known place */
 			re_clear_display(el);	/* reset the display stuff */
-			ch_reset(el, 0);	/* reset the input pointers */
+			ch_reset(el, 1);	/* reset the input pointers */
 			re_refresh(el);	/* print the prompt again */
 			break;
 
