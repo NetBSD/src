@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.15 2005/07/01 19:50:04 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.16 2005/08/02 16:14:10 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <sys/hash.h>
 
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.15 2005/07/01 19:50:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.16 2005/08/02 16:14:10 elad Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
@@ -63,9 +63,9 @@ struct veriexec_sizing_params {
  * Types of veriexec inodes we can have. Ordered from less strict to
  * most strict -- this is enforced if a duplicate entry is loaded.
  */
-#define VERIEXEC_DIRECT		0 /* Allow direct execution */
-#define VERIEXEC_INDIRECT	1 /* Only allow indirect execution */
-#define VERIEXEC_FILE		2 /* Fingerprint of a plain file */
+#define VERIEXEC_DIRECT		0x01 /* Direct execution (exec) */
+#define VERIEXEC_INDIRECT	0x02 /* Indirect execution (#!) */
+#define VERIEXEC_FILE		0x04 /* Plain file (open) */
 
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
