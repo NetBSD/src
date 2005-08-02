@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.3 2004/07/19 20:04:41 drochner Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.4 2005/08/02 14:20:49 rpaulo Exp $")
 #endif
 
 ENTRY(strcmp)
@@ -28,7 +28,7 @@ ENTRY(strcmp)
 	jmp	.Ldone
 
 	/*
-	 * Check whether s2 is aligned to a word boundry.  If it is, we
+	 * Check whether s2 is aligned to a word boundary.  If it is, we
 	 * can compare by words.  Otherwise we have to compare by bytes.
 	 */
 .Ls1aligned:
