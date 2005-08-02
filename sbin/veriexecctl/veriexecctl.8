@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.14 2005/06/13 13:07:56 wiz Exp $
+.\" $NetBSD: veriexecctl.8,v 1.15 2005/08/02 18:06:14 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,38 +29,37 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.14 2005/06/13 13:07:56 wiz Exp $
+.\"	$Id: veriexecctl.8,v 1.15 2005/08/02 18:06:14 elad Exp $
 .\"
-.Dd June 13, 2005
+.Dd August 2, 2005
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
 .Nm veriexecctl
-.Nd load or report verified exec fingerprints
+.Nd load or report veriexec fingerprints
 .Sh SYNOPSIS
 .Nm
-.Cm load Ar veriexec.conf
+.Cm load Ar signatures
 .Sh DESCRIPTION
 The
 .Nm
-command is used to manipulate the Verified Exec feature.
-Verified Exec must have been configured into the booted kernel for this
+command is used to manipulate the Veriexec feature.
+Veriexec must have been configured into the booted kernel for this
 commaned to work.
 .Sh COMMANDS
 .Bl -tag -width 25n
-.It Cm load Ar veriexec.conf
+.It Cm load Ar signatures
 Load the fingerprint entries contained in
-.Ar veriexec.conf
+.Ar signatures
 into the in kernel tables.
-This operation is only available if kern.securelevel is less than or
-equal to zero.
+This operation is only available if kern.veriexec.strict is zero.
 Once loaded the kernel can then validate executed programs
 or files against the loaded fingerprints and report when fingerprints
 do not match.
 .El
-.Sh VERIEXEC.CONF
+.Sh SIGNATURES
 The
-.Pa veriexec.conf
+.Pa signatures
 file contains lines of fields (separated by one or more whitespace
 characters) of the form:
 .Pp
@@ -79,9 +78,11 @@ the file.
 The field
 .Em options
 contains the associated options for the file.
-Currently there are two valid options:
+Currently there are three valid options:
 .Pp
 .Bl -tag -width INDIRECT -compact
+.It Dv DIRECT
+Allow direct execution only.
 .It Dv INDIRECT
 If this option is set then the executable cannot be invoked directly, it
 can only be used as an interpreter in shell scripts.
@@ -99,10 +100,17 @@ There must be only one executable/fingerprint pair per line.
 Comments are indicated by the first character of a line being a
 .Sq \&#
 character.
+Multiple options can be combined using a
+.Sq \&,
+character.
+If no options are specified, both direct and indirect execution
+are implied.
 .Sh FILES
-.Bl -tag -width /dev/veriexec -compact
+.Bl -tag -width /etc/signatures -compact
 .It Pa /dev/veriexec
-verified executable device node
+veriexec device node
+.It Pa /etc/signatures
+default signatures file
 .El
 .Sh SEE ALSO
 .Xr veriexec 4 ,
@@ -117,6 +125,6 @@ first appeared in
 .Nm
 requires the kernel to have been configured with the
 .Dv VERIFIED_EXEC
-option and the verifiedexec pseudo-device.
+option and the veriexec pseudo-device.
 .Sh BUGS
 There must be no whitespace in the path field of a fingerprint entry.
