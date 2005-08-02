@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.31 2005/08/02 01:32:13 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.32 2005/08/02 01:35:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.31 2005/08/02 01:32:13 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.32 2005/08/02 01:35:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1696,7 +1696,7 @@ mach64_mmap(void *v, off_t offset, int prot)
 	struct mach64_softc *sc = v;
 	paddr_t pa;
 	
-#ifndef __sparc64
+#ifndef __sparc64__
 	/* 
 	 *'regular' framebuffer mmap()ing 
 	 * disabled on sparc64 because some ATI firmware likes to map some PCI
