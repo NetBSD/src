@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.14 2005/02/09 18:15:16 christos Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.15 2005/08/02 14:25:40 rpaulo Exp $")
 #endif
 
 ENTRY(memchr)
@@ -16,7 +16,7 @@ ENTRY(memchr)
 	movl	16(%esp),%esi
 
 	/*
-	 * Align to word boundry
+	 * Align to word boundary. 
 	 * Consider unrolling loop?
 	 */
 	testl	%esi,%esi	/* nbytes == 0? */
