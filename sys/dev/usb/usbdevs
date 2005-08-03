@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.407 2005/07/12 12:10:18 drochner Exp $
+$NetBSD: usbdevs,v 1.408 2005/08/03 21:17:50 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -403,6 +403,7 @@ vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
+vendor TARGUS		0x1267	Targus
 vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
@@ -1775,6 +1776,9 @@ product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
+
+/* Targus products */
+product TARGUS PAUM004		0x0201	PAUM004 Mouse
 
 /* Taugagreining products */
 product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
