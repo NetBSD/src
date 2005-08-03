@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.94 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.95 2005/08/03 18:20:11 gdt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.94 2005/06/06 06:06:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.95 2005/08/03 18:20:11 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -380,13 +380,6 @@ static vifi_t reg_vif_num = VIFI_INVALID;
 static vifi_t	   numvifs = 0;
 
 static struct callout expire_upcalls_ch;
-
-/*
- * one-back cache used by vif_encapcheck to locate a tunnel's vif
- * given a datagram's src ip address.
- */
-static struct in_addr last_encap_src;
-static struct vif *last_encap_vif;
 
 /*
  * whether or not special PIM assert processing is enabled.
@@ -926,6 +919,13 @@ add_vif(struct mbuf *m)
 		}
 
 		/* attach this vif to decapsulator dispatch table */
+		/*
+		 * XXX Use addresses in registration so that matching
+		 * can be done with radix tree in decapsulator.  But,
+		 * we need to check inner header for multicast, so
+		 * this requires both radix tree lookup and then a
+		 * function to check, and this is not supported yet.
+		 */
 		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
 		    vif_encapcheck, &vif_protosw, vifp);
 		if (!vifp->v_encap_cookie)
@@ -1037,13 +1037,9 @@ reset_vif(struct vif *vifp)
 		m_freem(m);
 	}
 
-	if (vifp->v_flags & VIFF_TUNNEL) {
+	if (vifp->v_flags & VIFF_TUNNEL)
 		free(vifp->v_ifp, M_MRTABLE);
-		if (vifp == last_encap_vif) {
-			last_encap_vif = NULL;
-			last_encap_src = zeroin_addr;
-		}
-	} else if (vifp->v_flags & VIFF_REGISTER) {
+	else if (vifp->v_flags & VIFF_REGISTER) {
 #ifdef PIM
 		reg_vif_num = VIFI_INVALID;
 #endif
@@ -1984,7 +1980,7 @@ vif_input(struct mbuf *m, ...)
 	va_end(ap);
 
 	vifp = (struct vif *)encap_getarg(m);
-	if (!vifp || proto != AF_INET) {
+	if (!vifp || proto != ENCAP_PROTO) {
 		m_freem(m);
 		mrtstat.mrts_bad_tunnel++;
 		return;
@@ -2011,7 +2007,9 @@ vif_input(struct mbuf *m, ...)
 }
 
 /*
- * Check if the packet should be grabbed by us.
+ * Check if the packet should be received on the vif denoted by arg.
+ * (The encap selection code will call this once per vif since each is
+ * registered separately.)
  */
 static int
 vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
@@ -2025,32 +2023,47 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 #endif
 
 	/*
-	 * do not grab the packet if it's not to a multicast destination or if
-	 * we don't have an encapsulating tunnel with the source.
-	 * Note:  This code assumes that the remote site IP address
-	 * uniquely identifies the tunnel (i.e., that this site has
-	 * at most one tunnel with the remote site).
+	 * Accept the packet only if the inner heaader is multicast
+	 * and the outer header matches a tunnel-mode vif.  Order
+	 * checks in the hope that common non-matching packets will be
+	 * rejected quickly.  Assume that unicast IPv4 traffic in a
+	 * parallel tunnel (e.g. gif(4)) is unlikely.
 	 */
 
-	m_copydata(m, off, sizeof(ip), (caddr_t)&ip);
+	/* Obtain the outer IP header and the vif pointer. */
+	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	vifp = (struct vif *)arg;
+
+	/*
+	 * The outer source must match the vif's remote peer address.
+	 * For a multicast router with several tunnels, this is the
+	 * only check that will fail on packets in other tunnels,
+	 * assuming the local address is the same.	   
+	 */
+	if (!in_hosteq(vifp->v_rmt_addr, ip.ip_src))
+		return 0;
+
+	/* The outer destination must match the vif's local address. */
+	if (!in_hosteq(vifp->v_lcl_addr, ip.ip_dst))
+		return 0;
+
+	/* The vif must be of tunnel type. */
+	if ((vifp->v_flags & VIFF_TUNNEL) == 0)
+		return 0;
+
+	/* Check that the inner destination is multicast. */
+	m_copydata((struct mbuf *)m, off, sizeof(ip), (caddr_t)&ip);
 	if (!IN_MULTICAST(ip.ip_dst.s_addr))
 		return 0;
 
-	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
-	if (!in_hosteq(ip.ip_src, last_encap_src)) {
-		vifp = (struct vif *)arg;
-		if (vifp->v_flags & VIFF_TUNNEL &&
-		    in_hosteq(vifp->v_rmt_addr, ip.ip_src))
-			;
-		else
-			return 0;
-		last_encap_vif = vifp;
-		last_encap_src = ip.ip_src;
-	} else
-		vifp = last_encap_vif;
-
-	/* 32bit match, since we have checked ip_src only */
-	return 32;
+	/*
+	 * We have checked that both the outer src and dst addresses
+	 * match the vif, and that the inner destination is multicast
+	 * (224/5).  By claiming more than 64, we intend to
+	 * preferentially take packets that also match a parallel
+	 * gif(4).
+	 */
+	return 32 + 32 + 5;
 }
 
 /*
