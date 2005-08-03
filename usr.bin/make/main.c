@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.112 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -158,7 +158,7 @@ static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
-Boolean			debug;		/* -d flag */
+int			debug;		/* -d argument */
 Boolean			noExecute;	/* -n flag */
 Boolean			noRecursiveExecute;	/* -N flag */
 Boolean			keepgoing;	/* -k flag */
