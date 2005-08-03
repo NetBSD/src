@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.79 2005/07/07 02:05:03 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.80 2005/08/03 06:25:11 onoe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.79 2005/07/07 02:05:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.80 2005/08/03 06:25:11 onoe Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -693,6 +693,7 @@ nfssvc_nfsd(nsd, argp, l)
 				 */
 				lockcount = l->l_locks;
 #endif
+				mreq = NULL;
 				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
@@ -721,8 +722,15 @@ nfssvc_nfsd(nsd, argp, l)
 					    lockcount, l->l_locks);
 				}
 #endif
-				if (mreq == NULL)
+				if (mreq == NULL) {
+					if (nd != NULL) {
+						if (nd->nd_nam2)
+							m_free(nd->nd_nam2);
+						if (nd->nd_mrep)
+							m_freem(nd->nd_mrep);
+					}
 					break;
+				}
 				if (error) {
 					if (nd->nd_procnum != NQNFSPROC_VACATED)
 						nfsstats.srv_errs++;
