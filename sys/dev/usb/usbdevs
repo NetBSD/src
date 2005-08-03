@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.408 2005/08/03 21:17:50 augustss Exp $
+$NetBSD: usbdevs,v 1.409 2005/08/03 23:07:08 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -768,6 +768,7 @@ product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 
 /* Dell products */
 product DELL PORT		0x0058	Port Replicator
+product DELL SK8125		0x2002	SK-8125 keyboard
 product DELL X3			0x4002	Dell Axim X3 PDA
 product DELL X30		0x4003	Dell Axim X30 PDA
 product DELL BC02		0x8000	Dell BC02 Bluetooth USB Adapter
