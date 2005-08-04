@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.29 2005/07/30 16:37:36 rpaulo Exp $
+.\"	$NetBSD: bpf.4,v 1.30 2005/08/04 20:13:29 rpaulo Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd July 30, 2005
+.Dd August 4, 2005
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -589,6 +589,31 @@ array initializers:
 .Sy BPF_STMT No (opcode, operand)
 .Sy BPF_JUMP No (opcode, operand, true_offset, false_offset)
 .Ed
+.Sh SYSCTLS
+The following sysctls are available when
+.Nm
+is enabled:
+.Pp
+.Bl -tag -width "XnetXbpfXmaxbufsizeXX"
+.It Li net.bpf.maxbufsize
+Sets the maximum buffer size available for
+.Nm
+peers.
+.It Li net.bpf.stats
+Shows
+.Nm
+statistics. 
+They can be retrieved with the
+.Xr netstat 1
+utility.
+.It Li net.bpf.peers
+Shows the current
+.Nm
+peers. 
+This is only available to the super user and can also be retrieved with the
+.Xr netstat 1
+utility.
+.El
 .Sh FILES
 .Pa /dev/bpf
 .Sh EXAMPLES
