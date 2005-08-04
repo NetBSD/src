@@ -1,4 +1,4 @@
-.\"	$NetBSD: teliosio.4,v 1.2.2.2 2005/08/04 18:40:30 tron Exp $
+.\"	$NetBSD: teliosio.4,v 1.2.2.3 2005/08/04 18:41:48 tron Exp $
 .\"
 .\" Copyright (c) 2005 Takeshi Nakayama.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm teliosio
-.Nd driver for Sharp Telios LCD screen and Battery unit
+.Nd driver for the Sharp Telios LCD screen and Battery unit
 .Sh SYNOPSIS
 .Cd "teliosio* at txcsbus1 regcs 13 regcswidth 16"
 .Sh DESCRIPTION
@@ -39,15 +39,14 @@ The
 driver provides support for controlling brightness and power of the
 LCD screen in Sharp Telios series machines.
 .Pp
-Default keymap binds
+The default keymap binds
 .Li Ao Ctrl Ac + Ao Alt Ac + Ao Ar arrowkey Ac
 to control brightness with left and right arrow keys, and
 .Li Ao Ctrl Ac + Ao Alt Ac + Ao Space Ac
 to toggle power of the LCD screen.
 .Pp
-The current status of battery unit can display via
-.Xr apm 8
-command.
+The current status of the battery unit can be displayed via
+.Xr apm 8 .
 .Sh SEE ALSO
 .Xr screenblank 1 ,
 .Xr apm 8
