@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.58 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.59 2005/08/04 19:41:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.58 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.59 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: if.c,v 1.58 2004/11/16 05:59:32 itojun Exp $");
 #include <netiso/iso_var.h>
 #include <arpa/inet.h>
 
+#include <kvm.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

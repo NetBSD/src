@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.10 2003/08/07 11:15:19 agc Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.11 2005/08/04 19:41:28 rpaulo Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.10 2003/08/07 11:15:19 agc Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.11 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: ipsec.c,v 1.10 2003/08/07 11:15:19 agc Exp $");
 #include <netkey/keysock.h>
 #endif
 
+#include <kvm.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
