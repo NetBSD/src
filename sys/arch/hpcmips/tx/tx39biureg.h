@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biureg.h,v 1.3 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39biureg.h,v 1.3.38.1 2005/08/04 18:29:53 tron Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
 #define TX39_SYSADDR_KUSEG_CS1		0x58000000
 #define TX39_SYSADDR_KUSEG_CS2		0x5c000000
 #define TX39_SYSADDR_KUSEG_CS3		0x60000000
+/* 64MByte */
+#define TX39_SYSADDR_KUCS_SIZE		0x04000000
+
 #define TX39_SYSADDR_CARD1MEM		0x64000000
 #define TX39_SYSADDR_CARD2MEM		0x68000000
 #define TX39_SYSADDR_MCS0		0x6c000000
