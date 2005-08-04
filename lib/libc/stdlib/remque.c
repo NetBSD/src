@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: remque.c,v 1.2.2.2 2005/08/04 17:33:23 tron Exp $");
+__RCSID("$NetBSD: remque.c,v 1.2.2.3 2005/08/04 17:41:35 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -47,6 +47,8 @@ remque(element)
 
 	_DIAGASSERT(e != 0);
 
-	e->q_forw->q_back = e->q_back;
-	e->q_back->q_forw = e->q_forw;
+	if (e->q_forw)
+		e->q_forw->q_back = e->q_back;
+	if (e->q_back)
+		e->q_back->q_forw = e->q_forw;
 }
