@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.191 2005/08/01 11:37:41 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.192 2005/08/04 17:48:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11010,4 +11010,29 @@ sys/dist/pf/net/pf_ioctl.c			1.18
 	pf_test() can set *mp to NULL, check for this before de-referencing it.
 	This fixes PR kern/30835.
 	[peter, ticket #641]
+
+sys/sys/termios.h				1.28
+
+	Add definitions for B460800 and B921600. This fixes PR kern/29478.
+	[drochner, ticket #631]
+
+distrib/sets/lists/base/shl.mi			1.312-1.313 both via patch
+include/search.h				1.18
+lib/libc/shlib_version				1.165 via patch
+lib/libc/stdlib/Makefile.inc			1.59
+lib/libc/stdlib/insque.3			1.1-1.2
+lib/libc/stdlib/insque.c			1.1-1.2
+lib/libc/stdlib/lsearch.3			1.1-1.2
+lib/libc/stdlib/lsearch.c			1.1-1.2
+lib/libc/stdlib/remque.c			1.1-1.2
+lib/libcompat/4.3/insque.3			delete
+lib/libcompat/4.3/insque.c			delete
+lib/libcompat/4.3/lsearch.3			delete
+lib/libcompat/4.3/lsearch.c			delete
+lib/libcompat/4.3/remque.c			delete
+lib/libcompat/Makefile				1.28
+
+	Move insque/remque/lsearch/lfind from libcompat to libc,
+	they are in XPG4-UNIX, XSH5.0, mentioned in SUSv3 etc..
+	[drochner, ticket #632]
 
