@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2005/08/04 07:51:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2005/08/04 07:51:09 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -140,6 +140,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $");
 #include <hp700/hp700/pim.h>
 #include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
+
+#ifdef PMAPDEBUG
+#include <hppa/hppa/hpt.h>
+#endif
 
 #include "ksyms.h"
 
@@ -514,19 +518,19 @@ hppa_init(paddr_t start)
 
 	/* calculate HPT size */
 	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
-hptsize=256;	/* XXX one page for now */
+	hptsize = 256;	/* XXX one page for now */
 	hptsize *= 16;	/* sizeof(hpt_entry) */
 
 	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
-#ifdef DEBUG
-	printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
-	printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
-#endif
 	if (error) {
 		hptsize = PAGE_SIZE;
 		printf("WARNING: PDC_TLB_INFO failed: %d, using HPT size %d\n",
 		       error, hptsize);
 	} else {
+#ifdef DEBUG
+		printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
+		printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
+#endif
 		if (hptsize > pdc_hwtlb.max_size)
 			hptsize = pdc_hwtlb.max_size;
 		else if (hptsize < pdc_hwtlb.min_size)
@@ -773,7 +777,7 @@ do {									\
 #endif
 		} else {
 #ifdef PMAPDEBUG
-			printf("HPT: %d entries @ 0x%x\n",
+			printf("HPT: %zd entries @ 0x%x\n",
 			    hptsize / sizeof(struct hpt_entry), hpt);
 #endif
 		}
