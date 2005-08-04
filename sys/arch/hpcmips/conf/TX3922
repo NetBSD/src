@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.62.4.2 2005/07/18 21:13:24 riz Exp $
+#	$NetBSD: TX3922,v 1.62.4.3 2005/08/04 18:30:12 tron Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -158,6 +158,10 @@ hpckbd*		at tc5165buf?
 # chip select: CARD1 IRQ ???
 m38813c*	at txcsbus2 iocs 8 iocswidth 16 iocsbase 0 iocssize 8
 hpckbd*		at m38813c?
+
+# Sharp Telios LCD and battery control driver
+#  register space: KUCS3
+teliosio*	at txcsbus1 regcs 13 regcswidth 16
 
 # TC6358TB(Plum2)
 #  register space: CS3,
