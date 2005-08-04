@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.19 2004/09/06 14:51:32 martin Exp $	*/
+/*	$NetBSD: mroute.c,v 1.20 2005/08/04 19:41:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.19 2004/09/06 14:51:32 martin Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.20 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ __RCSID("$NetBSD: mroute.c,v 1.19 2004/09/06 14:51:32 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <kvm.h>
 #include "netstat.h"
 
 static char *pktscale __P((u_long));
