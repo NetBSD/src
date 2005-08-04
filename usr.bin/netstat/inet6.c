@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.33 2005/02/13 03:15:18 atatat Exp $	*/
+/*	$NetBSD: inet6.c,v 1.34 2005/08/04 19:41:28 rpaulo Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.33 2005/02/13 03:15:18 atatat Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.34 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ extern char *tcpstates[];
 #endif
 #include <netdb.h>
 
+#include <kvm.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

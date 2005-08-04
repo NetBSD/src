@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.63 2004/09/06 14:51:32 martin Exp $	*/
+/*	$NetBSD: inet.c,v 1.64 2005/08/04 19:41:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.63 2004/09/06 14:51:32 martin Exp $");
+__RCSID("$NetBSD: inet.c,v 1.64 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: inet.c,v 1.63 2004/09/06 14:51:32 martin Exp $");
 #include <netinet/udp_var.h>
 
 #include <arpa/inet.h>
+#include <kvm.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>

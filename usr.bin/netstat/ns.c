@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.14 2003/08/07 11:15:21 agc Exp $	*/
+/*	$NetBSD: ns.c,v 1.15 2005/08/04 19:41:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ns.c,v 1.14 2003/08/07 11:15:21 agc Exp $");
+__RCSID("$NetBSD: ns.c,v 1.15 2005/08/04 19:41:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: ns.c,v 1.14 2003/08/07 11:15:21 agc Exp $");
 #include <netns/spp_debug.h>
 
 #include <nlist.h>
+#include <kvm.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
