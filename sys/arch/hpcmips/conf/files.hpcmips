@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.96.10.1 2005/05/07 11:34:41 tron Exp $
+#	$NetBSD: files.hpcmips,v 1.96.10.2 2005/08/04 18:29:59 tron Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -366,6 +366,11 @@ file	arch/hpcmips/dev/plumohci.c	plumohci	needs-flag
 #file arch/hpcmips/isa/txisa_machdep.c	txisab
 
 file	dev/hpc/video_subr.c		tx3912video | plumvideo
+
+# Sharp Telios LCD and battery control driver
+device	teliosio
+attach	teliosio at txcsbus
+file	arch/hpcmips/dev/teliosio.c	teliosio
 
 #
 #	Real-time clock (not optional)
