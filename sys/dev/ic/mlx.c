@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.32 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: mlx.c,v 1.32.2.1 2005/08/04 18:25:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.32 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.32.2.1 2005/08/04 18:25:16 tron Exp $");
 
 #include "ld.h"
 
@@ -1121,6 +1121,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 	u_int lsn;
 
 	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx_ccb_unmap(mlx, mc);
 
 	/*
 	 * Command completed OK?
