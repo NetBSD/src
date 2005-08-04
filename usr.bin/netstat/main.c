@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2004/10/30 20:56:20 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2005/08/04 19:39:40 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 2004/10/30 20:56:20 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2005/08/04 19:39:40 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,7 +379,7 @@ main(argc, argv)
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "Aabdf:ghI:LliM:mN:nP:p:qrsStuvw:")) != -1)
+	    "AabBdf:ghI:LliM:mN:nP:p:qrsStuvw:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -389,6 +389,9 @@ main(argc, argv)
 			break;
 		case 'b':
 			bflag = 1;
+			break;
+		case 'B':
+			Bflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -529,6 +532,14 @@ main(argc, argv)
 	/* do this now anyway */
 	if (nlistf == NULL && memf == NULL)
 		(void)setgid(getgid());
+
+	if (Bflag) {
+		if (sflag)
+			bpf_stats();
+		else
+			bpf_dump(kvmd, interface);
+		exit(0);
+	}
 
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
@@ -828,5 +839,7 @@ usage()
 "       %s [-p protocol] [-i] [-I Interface] \n", progname);
 	(void)fprintf(stderr,
 "       %s [-s] [-f address_family] [-i] [-I Interface]\n", progname);
+	(void)fprintf(stderr,
+"       %s [-s] [-B] [-I interface]\n", progname);
 	exit(1);
 }
