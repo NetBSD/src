@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.166 2005/06/23 04:20:41 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.167 2005/08/04 17:41:35 peter Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.166 2005/06/23 04:20:41 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.167 2005/08/04 17:41:35 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,6 +140,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.166 2005/06/23 04:20:41 christos Exp $");
 #include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -181,6 +182,7 @@ volatile sig_atomic_t	transflag;
 volatile sig_atomic_t	urgflag;
 
 int	data;
+int	Dflag;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
@@ -292,11 +294,13 @@ main(int argc, char *argv[])
 	const char	*xferlogname = NULL;
 	long		l;
 	struct sigaction sa;
+	sa_family_t	af = AF_UNSPEC;
 
 	connections = 1;
 	debug = 0;
 	logging = 0;
 	pdata = -1;
+	Dflag = 0;
 	sflag = 0;
 	dataport = 0;
 	dopidfile = 1;		/* default: DO use a pid file to count users */
@@ -320,9 +324,17 @@ main(int argc, char *argv[])
 	 */
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
-	while ((ch = getopt(argc, argv, "a:c:C:de:h:HlL:P:qQrst:T:uUvV:wWX"))
-	    != -1) {
+	while ((ch = getopt(argc, argv,
+	    "46a:c:C:Dde:h:HlL:P:qQrst:T:uUvV:wWX")) != -1) {
 		switch (ch) {
+		case '4':
+			af = AF_INET;
+			break;
+
+		case '6':
+			af = AF_INET6;
+			break;
+
 		case 'a':
 			anondir = optarg;
 			break;
@@ -335,6 +347,10 @@ main(int argc, char *argv[])
 			pw = sgetpwnam(optarg);
 			exit(checkaccess(optarg) ? 0 : 1);
 			/* NOTREACHED */
+
+		case 'D':
+			Dflag = 1;
+			break;
 
 		case 'd':
 		case 'v':		/* deprecated */
@@ -461,6 +477,108 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	curname[0] = '\0';
+
+	if (Dflag) {
+		int error, fd, i, n, *socks;
+		struct pollfd *fds;
+		struct addrinfo hints, *res, *res0;
+
+		if (daemon(1, 0) == -1) {
+			syslog(LOG_ERR, "failed to daemonize: %m");
+			exit(1);
+		}
+		(void)memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_IGN;
+		sa.sa_flags = SA_NOCLDWAIT;
+		sigemptyset(&sa.sa_mask);
+		(void)sigaction(SIGCHLD, &sa, NULL);
+
+		(void)memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_family = af;
+		hints.ai_socktype = SOCK_STREAM;
+		error = getaddrinfo(NULL, "ftp", &hints, &res0);
+		if (error) {
+			syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(error));
+			exit(1);
+		}
+
+		for (n = 0, res = res0; res != NULL; res = res->ai_next)
+			n++;
+		if (n == 0) {
+			syslog(LOG_ERR, "no addresses available");
+			exit(1);
+		}
+		socks = malloc(n * sizeof(int));
+		fds = malloc(n * sizeof(struct pollfd));
+		if (socks == NULL || fds == NULL) {
+			syslog(LOG_ERR, "malloc: %m");
+			exit(1);
+		}
+
+		for (n = 0, res = res0; res != NULL; res = res->ai_next) {
+			socks[n] = socket(res->ai_family, res->ai_socktype,
+			    res->ai_protocol);
+			if (socks[n] == -1)
+				continue;
+			(void)setsockopt(socks[n], SOL_SOCKET, SO_REUSEADDR,
+			    &on, sizeof(on));
+			if (bind(socks[n], res->ai_addr, res->ai_addrlen)
+			    == -1) {
+				(void)close(socks[n]);
+				continue;
+			}
+			if (listen(socks[n], 12) == -1) {
+				(void)close(socks[n]);
+				continue;
+			}
+
+			fds[n].fd = socks[n];
+			fds[n].events = POLLIN;
+			n++;
+		}
+		if (n == 0) {
+			syslog(LOG_ERR, "%m");
+			exit(1);
+		}
+		freeaddrinfo(res0);
+
+		if (pidfile(NULL) == -1)
+			syslog(LOG_ERR, "failed to write a pid file: %m");
+
+		for (;;) {
+			if (poll(fds, n, INFTIM) == -1) {
+				if (errno == EINTR)
+					continue;
+				syslog(LOG_ERR, "poll: %m");
+				exit(1);
+			}
+			for (i = 0; i < n; i++) {
+				if (fds[i].revents & POLLIN) {
+					fd = accept(fds[i].fd, NULL, NULL);
+					if (fd == -1) {
+						syslog(LOG_ERR, "accept: %m");
+						continue;
+					}
+					switch (fork()) {
+					case -1:
+						syslog(LOG_ERR, "fork: %m");
+						break;
+					case 0:
+						goto child;
+						/* NOTREACHED */
+					}
+					(void)close(fd);
+				}
+			}
+		}
+ child:
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		for (i = 0; i < n; i++)
+			(void)close(socks[i]);
+	}
 
 	memset((char *)&his_addr, 0, sizeof(his_addr));
 	addrlen = sizeof(his_addr.si_su);

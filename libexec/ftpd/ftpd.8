@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.74 2003/08/07 09:46:39 agc Exp $
+.\"	$NetBSD: ftpd.8,v 1.75 2005/08/04 17:41:35 peter Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd February 26, 2003
+.Dd August 4, 2005
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl dHlqQrsuUwWX
+.Op Fl 46DdHlqQrsuUwWX
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
@@ -93,6 +93,14 @@ service specification; see
 .Pp
 Available options:
 .Bl -tag -width Ds
+.It Fl 4
+When
+.Fl D
+is specified, bind to IPv4 addresses only.
+.It Fl 6
+When
+.Fl D
+is specified, bind to IPv6 addresses only.
 .It Fl a Ar anondir
 Define
 .Ar anondir
@@ -128,6 +136,16 @@ and exit without attempting a connection.
 .Nm
 exits with an exit code of 0 if access would be granted, or 1 otherwise.
 This can be useful for testing configurations.
+.It Fl D
+Run as daemon.
+.Nm
+will listen on the default FTP port for incoming connections
+and fork a child for each connection.
+This is lower overhead than starting
+.Nm
+from
+.Xr inetd 8
+and thus might be useful on busy servers to reduce load.
 .It Fl d
 Debugging information is written to the syslog using a facility of
 .Dv LOG_FTP .
