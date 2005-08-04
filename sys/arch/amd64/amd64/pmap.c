@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2005/08/04 19:29:26 fvdl Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2005/08/04 19:29:26 fvdl Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2250,9 +2250,10 @@ pmap_virtual_space(startp, endp)
 }
 
 /*
- * pmap_map: map a range of PAs into kvm
+ * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
+ * => does not do TLB shootdowns
  * => XXX: pmap_map() should be phased out?
  */
 
@@ -2262,8 +2263,16 @@ pmap_map(va, spa, epa, prot)
 	paddr_t spa, epa;
 	vm_prot_t prot;
 {
+	pt_entry_t *pte, opte, npte;
+
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pte = kvtopte(va);
+
+		npte = spa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
+		    PG_V | pmap_pg_g;
+		opte = pmap_pte_set(pte, npte);
+		if (pmap_valid_entry(opte))
+			pmap_update_pg(va);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
