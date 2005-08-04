@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.30 2004/09/04 23:35:43 manu Exp $	*/
+/*	$NetBSD: netstat.h,v 1.31 2005/08/04 19:39:40 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,6 +35,7 @@
 
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */
+int	Bflag;		/* show Berkeley Packet Filter information */
 int	bflag;		/* show i/f byte stats */
 int	dflag;		/* show i/f dropped packets */
 #ifndef SMALL
@@ -152,3 +153,6 @@ void	tp_stats __P((u_long, caddr_t));
 
 void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));
+
+void	bpf_stats(void);
+void	bpf_dump(kvm_t *, char *);
