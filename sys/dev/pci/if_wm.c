@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.104 2005/07/25 18:26:24 ross Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.105 2005/08/04 06:17:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.104 2005/07/25 18:26:24 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.105 2005/08/04 06:17:26 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -152,7 +152,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 
 /*
  * Control structures are DMA'd to the i82542 chip.  We allocate them in
- * a single clump that maps to a single DMA segment to make serveral things
+ * a single clump that maps to a single DMA segment to make several things
  * easier.
  */
 struct wm_control_data_82544 {
