@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.17 2005/07/20 12:14:28 tron Exp $
+# $NetBSD: mi,v 1.768.2.18 2005/08/04 18:40:12 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -844,6 +844,7 @@
 ./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcmips/teliosio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
@@ -3054,6 +3055,7 @@
 ./usr/share/man/man4/hp700/mongoose.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/phantomas.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/wax.4		man-sys-man		.man
+./usr/share/man/man4/hpcmips/teliosio.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
