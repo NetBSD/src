@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.122 2005/05/24 16:00:11 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.123 2005/08/04 20:10:24 rpaulo Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 24, 2005
+.Dd August 4, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -370,6 +370,8 @@ privilege can change the value.
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
 .It net.bpf.maxbufsize	integer	yes
+.It net.bpf.stats	struct	no
+.It net.bpf.peers	struct	no
 .It net.inet.arp.prune	integer	yes
 .It net.inet.arp.keep	integer	yes
 .It net.inet.arp.down	integer	yes
