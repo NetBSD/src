@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.276.2.8 2005/07/02 23:37:58 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.276.2.9 2005/08/04 18:40:24 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -634,6 +634,7 @@
 ./usr/share/man/cat4/evbarm
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp700
+./usr/share/man/cat4/hpcmips
 ./usr/share/man/cat4/hpcsh
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
@@ -737,6 +738,7 @@
 ./usr/share/man/man4/evbarm
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hp700
+./usr/share/man/man4/hpcmips
 ./usr/share/man/man4/hpcsh
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
@@ -840,6 +842,7 @@
 ./usr/share/man/html4/evbarm
 ./usr/share/man/html4/hp300
 ./usr/share/man/html4/hp700
+./usr/share/man/html4/hpcmips
 ./usr/share/man/html4/hpcsh
 ./usr/share/man/html4/i386
 ./usr/share/man/html4/mac68k
