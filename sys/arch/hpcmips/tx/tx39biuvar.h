@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biuvar.h,v 1.2 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39biuvar.h,v 1.2.38.1 2005/08/04 18:29:47 tron Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define TX39_MAXCS	12
+#define TX39_MAXCS	16
 
 #define	TX39_CS0	0
 #define	TX39_CS1	1
@@ -52,6 +52,10 @@
 #define TX39_CARD2	9
 #define TX39_CARD1MEM	10
 #define TX39_CARD2MEM	11
+#define	TX39_KUCS0	12
+#define	TX39_KUCS1	13
+#define	TX39_KUCS2	14
+#define	TX39_KUCS3	15
 
 #define TX39_ISCS(x)	((x) >= TX39_CS0 && (x) <= TX39_CS3)
 #define TX39_ISCARD(x)	((x) >= TX39_CARD1 && (x) <= TX39_CARD2MEM)
@@ -61,3 +65,5 @@
 #elif defined TX392X
 #define TX39_ISMCS(x)	((x) >= TX39_MCS0 && (x) <= TX39_MCS1)
 #endif
+
+#define TX39_ISKUCS(x)	((x) >= TX39_KUCS0 && (x) <= TX39_KUCS3)
