@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 2005/08/04 19:31:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2005/08/04 19:31:53 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -211,6 +211,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		sf->sf_rip = (u_int64_t)proc_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
+
+	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
+	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_fs;
 }
 
 void
