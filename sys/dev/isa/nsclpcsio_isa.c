@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.8.2.1 2005/08/04 18:43:38 tron Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.8.2.2 2005/08/04 18:44:32 tron Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.2.1 2005/08/04 18:43:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.2.2 2005/08/04 18:44:32 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ nsclpcsio_isa_attach(parent, self, aux)
 
 	if (bus_space_read_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08) & 1) {
 		printf("%s: TMS in standby mode\n", sc->sc_dev.dv_xname);
+
 		/* Wake up the TMS and enable all temperature sensors. */
 		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08, 0x00);
 		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x09, 0x00);
@@ -197,12 +198,13 @@ nsclpcsio_isa_attach(parent, self, aux)
 		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x0a, 0x01);
 		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x09, 0x02);
 		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x0a, 0x01);
-		if (!(bus_space_read_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08) & 1)) {
+
+		if (!(bus_space_read_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08)
+		      & 1)) {
 			printf("%s: TMS awoken\n", sc->sc_dev.dv_xname);
 		} else {
 			return;
 		}
-		return;
 	}
 
 	/* Initialize sensor meta data */
