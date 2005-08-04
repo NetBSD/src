@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.22 2005/03/17 20:39:17 kleink Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.23 2005/08/04 19:30:47 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,6 +43,7 @@
 
 #include <sys/callout.h>
 #include <sys/selinfo.h>		/* for struct selinfo */
+#include <net/if.h>			/* for IFNAMSIZ */
 
 /*
  * Descriptor associated with each open bpf file.
@@ -89,6 +90,7 @@ struct bpf_d {
 	struct selinfo	bd_sel;		/* bsd select info */
 #endif
 	struct callout	bd_callout;	/* for BPF timeouts with select */
+	pid_t		bd_pid;		/* corresponding PID */
 	LIST_ENTRY(bpf_d) bd_list;	/* list of all BPF's */
 };
 
@@ -97,6 +99,25 @@ struct bpf_d {
 #define BPF_IDLE	0		/* no select in progress */
 #define BPF_WAITING	1		/* waiting for read timeout in select */
 #define BPF_TIMED_OUT	2		/* read timeout has expired in select */
+
+/*
+ * Description associated with the external representation of each
+ * open bpf file.
+ */
+struct bpf_d_ext {
+	int32_t		bde_bufsize;
+	u_int8_t	bde_promisc;
+	u_int8_t	bde_state;
+	u_int8_t	bde_immediate;
+	int32_t		bde_hdrcmplt;
+	int32_t		bde_seesent;
+	pid_t		bde_pid;
+	u_int64_t	bde_rcount;		/* number of packets received */
+	u_int64_t	bde_dcount;		/* number of packets dropped */
+	u_int64_t	bde_ccount;		/* number of packets captured */
+	char		bde_ifname[IFNAMSIZ];
+};
+
 
 /*
  * Descriptor associated with each attached hardware interface.
