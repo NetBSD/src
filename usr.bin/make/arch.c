@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.45 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.45 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.45 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -688,7 +688,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 #endif
 
 	    he = Hash_CreateEntry(&ar->members, memName, (Boolean *)NULL);
-	    Hash_SetValue(he, (ClientData)emalloc(sizeof(struct ar_hdr)));
+	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
 	    memcpy((Address)Hash_GetValue(he), (Address)&arh,
 		sizeof(struct ar_hdr));
 	}
