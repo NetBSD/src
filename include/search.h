@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.16.2.1 2005/03/23 00:17:16 tron Exp $	*/
+/*	$NetBSD: search.h,v 1.16.2.2 2005/08/04 17:35:05 tron Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -52,7 +52,7 @@ ENTRY	*hsearch(ENTRY, ACTION);
 
 void	*lfind(const void *, const void *, size_t *, size_t,
 		      int (*)(const void *, const void *));
-void	*lsearch(const void *, const void *, size_t *, size_t,
+void	*lsearch(const void *, void *, size_t *, size_t,
 		      int (*)(const void *, const void *));
 void	 insque(void *, void *);
 void	 remque(void *);
