@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.42 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: bpf.h,v 1.43 2005/08/04 19:30:47 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -69,7 +69,7 @@ struct bpf_program {
 };
 
 /*
- * Struct returned by BIOCGSTATS.
+ * Struct returned by BIOCGSTATS and net.bpf.stats sysctl.
  */
 struct bpf_stat {
 	u_int64_t bs_recv;	/* number of packets received */
