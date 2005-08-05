@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.103 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.103 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.103 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2279,17 +2279,17 @@ ParseEOF(int opened)
     ifile = (IFile *)Lst_DeQueue(includes);
 
     /* XXX dispose of curFile info */
-    free((Address) curFile.fname);
+    free( curFile.fname);
     if (opened && curFile.F)
 	(void)fclose(curFile.F);
     if (curFile.P) {
-	free((Address) curFile.P->str);
-	free((Address) curFile.P);
+	free(curFile.P->str);
+	free(curFile.P);
     }
 
     memcpy(&curFile, ifile, sizeof(IFile));
 
-    free((Address)ifile);
+    free(ifile);
 
     /* pop the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile.fname);
@@ -2633,7 +2633,7 @@ test_char:
 		    break;
 		/*FALLTHRU*/
 	    case COND_PARSE:
-		free((Address) line);
+		free(line);
 		line = ParseReadLine();
 		break;
 	    case COND_INVALID:

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.46 2005/08/04 00:20:12 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -201,13 +201,13 @@ ArchFree(ClientData ap)
     for (entry = Hash_EnumFirst(&a->members, &search);
 	 entry != (Hash_Entry *)NULL;
 	 entry = Hash_EnumNext(&search))
-	free((Address)Hash_GetValue(entry));
+	free(Hash_GetValue(entry));
 
     free(a->name);
     if (a->fnametab)
 	free(a->fnametab);
     Hash_DeleteTable(&a->members);
-    free((Address) a);
+    free(a);
 }
 #endif
 
@@ -689,8 +689,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 
 	    he = Hash_CreateEntry(&ar->members, memName, (Boolean *)NULL);
 	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
-	    memcpy((Address)Hash_GetValue(he), (Address)&arh,
-		sizeof(struct ar_hdr));
+	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
 	fseek(arch, (size + 1) & ~1, SEEK_CUR);
     }
@@ -716,7 +715,7 @@ badarch:
     Hash_DeleteTable(&ar->members);
     if (ar->fnametab)
 	free(ar->fnametab);
-    free((Address)ar);
+    free(ar);
     return ((struct ar_hdr *) NULL);
 }
 

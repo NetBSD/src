@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.97 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -478,7 +478,7 @@ Var_Delete(const char *name, GNode *ctxt)
 		free(v->name);
 	Hash_DeleteEntry(&ctxt->context, ln);
 	Buf_Destroy(v->val, TRUE);
-	free((Address) v);
+	free(v);
     }
 }
 
@@ -652,7 +652,7 @@ Var_Exists(const char *name, GNode *ctxt)
     } else if (v->flags & VAR_FROM_ENV) {
 	free(v->name);
 	Buf_Destroy(v->val, TRUE);
-	free((char *)v);
+	free(v);
     }
     return(TRUE);
 }
@@ -685,7 +685,7 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 	if (v->flags & VAR_FROM_ENV) {
 	    free(v->name);
 	    Buf_Destroy(v->val, FALSE);
-	    free((Address) v);
+	    free(v);
 	    *frp = p;
 	}
 	return p;
@@ -3191,8 +3191,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	}
 	if (nstr != (char *)Buf_GetAll(v->val, (int *)NULL))
 	    Buf_Destroy(v->val, destroy);
-	free((Address)v->name);
-	free((Address)v);
+	free(v->name);
+	free(v);
     } else if (v->flags & VAR_JUNK) {
 	/*
 	 * Perform any free'ing needed and set *freePtr to FALSE so the caller
@@ -3215,8 +3215,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	}
 	if (nstr != (char *)Buf_GetAll(v->val, (int *)NULL))
 	    Buf_Destroy(v->val, TRUE);
-	free((Address)v->name);
-	free((Address)v);
+	free(v->name);
+	free(v);
     }
     return (nstr);
 
@@ -3397,7 +3397,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		Buf_AddBytes(buf, length, (Byte *)val);
 		trailingBslash = length > 0 && val[length - 1] == '\\';
 		if (doFree) {
-		    free((Address)val);
+		    free(val);
 		}
 	    }
 	}

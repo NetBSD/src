@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.35 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -301,7 +301,7 @@ TargFreeGN(ClientData gnp)
     Lst_Destroy(gn->preds, NOFREE);
     Hash_DeleteTable(&gn->context);
     Lst_Destroy(gn->commands, NOFREE);
-    free((Address)gn);
+    free(gn);
 }
 #endif
 

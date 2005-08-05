@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.46 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.46 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.46 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1651,8 +1651,8 @@ Dir_Destroy(ClientData pp)
 	(void)Lst_Remove(openDirectories, ln);
 
 	Hash_DeleteTable(&p->files);
-	free((Address)p->name);
-	free((Address)p);
+	free(p->name);
+	free(p);
     }
 }
 

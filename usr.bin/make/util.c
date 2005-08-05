@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.37 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif
 
@@ -182,7 +182,7 @@ signal(int s, void (*a)(int)))(int)
 {
     struct sigvec osv, sv;
 
-    (void) sigvector(s, (struct sigvec *) 0, &osv);
+    (void)sigvector(s, (struct sigvec *) 0, &osv);
     sv = osv;
     sv.sv_handler = a;
 #ifdef SV_BSDSIG
