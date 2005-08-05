@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.81 2005/08/05 11:03:18 junyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.82 2005/08/05 11:05:44 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.81 2005/08/05 11:03:18 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.82 2005/08/05 11:05:44 junyoung Exp $");
 
 #include "opt_kstack.h"
 
@@ -428,7 +428,7 @@ proclist_lock_write(void)
 	if (__predict_false(error != 0))
 		panic("proclist_lock: failed to acquire lock");
 #endif
-	return (s);
+	return s;
 }
 
 /*
@@ -477,8 +477,8 @@ inferior(struct proc *p, struct proc *q)
 
 	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
-			return (0);
-	return (1);
+			return 0;
+	return 1;
 }
 
 /*
