@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.27 2005/08/05 13:28:50 jmmv Exp $
+.\"     $NetBSD: vnode.9,v 1.28 2005/08/05 13:37:25 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@
 .Ft void
 .Fn vgone "struct vnode *vp"
 .Ft void
-.Fn vgonel "struct vnode *vp"
+.Fn vgonel "struct vnode *vp" "struct proc *p"
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Ft int
@@ -438,6 +438,8 @@ overlay file system
 SMB file system
 .It VT_PTYFS
 pseudo-terminal device file system
+.It VT_TMPFS
+efficient memory file system
 .El
 .Pp
 All vnode locking operations use
@@ -650,7 +652,7 @@ is a null operation if the reference count is greater than zero.
 Eliminate all activity associated with the unlocked vnode
 .Fa vp
 in preparation for recycling.
-.It Fn vgonel "vp"
+.It Fn vgonel "vp" "p"
 Eliminate all activity associated with the locked vnode
 .Fa vp
 in preparation for recycling.
