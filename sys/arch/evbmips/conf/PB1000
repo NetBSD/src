@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.22 2005/07/31 04:04:31 yamt Exp $
+#	$NetBSD: PB1000,v 1.23 2005/08/05 09:23:16 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.22 $"
+#ident 		"PB1000-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -162,6 +162,9 @@ wsmouse* at ums? mux 0
 # USB Keyboards
 ukbd*   at uhidev? reportid ? 
 wskbd*  at ukbd? console ? mux 1
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*   at uhidev? reportid ?

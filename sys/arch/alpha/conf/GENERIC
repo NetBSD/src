@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271 $"
+#ident 		"GENERIC-$Revision: 1.272 $"
 
 maxusers 32
 
@@ -518,6 +518,9 @@ wsmouse*	at ums?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 options         WSDISPLAY_COMPAT_RAWKBD
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
