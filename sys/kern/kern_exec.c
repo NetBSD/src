@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.207 2005/07/29 22:57:34 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.208 2005/08/05 11:14:32 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.207 2005/07/29 22:57:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.208 2005/08/05 11:14:32 junyoung Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -485,7 +485,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
 	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
 #ifdef DIAGNOSTIC
-	if (argp == (vaddr_t) 0)
+	if (argp == NULL)
 		panic("execve: argp == NULL");
 #endif
 	dp = argp;
