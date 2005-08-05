@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.39 2005/07/31 04:04:32 yamt Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.40 2005/08/05 09:23:16 skrll Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 maxusers	32		# estimated number of users
 
@@ -911,6 +911,9 @@ wsmouse* at uep? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?

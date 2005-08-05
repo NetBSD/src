@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2005/07/31 04:04:46 yamt Exp $
+# $NetBSD: GENERIC,v 1.117 2005/08/05 09:23:17 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 maxusers	8
 
@@ -337,6 +337,9 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 # USB Keyboards; not supported wscons yet
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
