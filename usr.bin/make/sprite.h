@@ -1,4 +1,4 @@
-/*	$NetBSD: sprite.h,v 1.8 2003/08/07 11:14:57 agc Exp $	*/
+/*	$NetBSD: sprite.h,v 1.9 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,21 +121,13 @@ typedef int  ReturnStatus;
  */
 
 #define NIL 		~0
-#define USER_NIL 	0
 #ifndef NULL
 #define NULL	 	0
 #endif /* NULL */
 
 /*
- * An address is just a pointer in C.  It is defined as a character pointer
- * so that address arithmetic will work properly, a byte at a time.
- */
-
-typedef char *Address;
-
-/*
  * ClientData is an uninterpreted word.  It is defined as an int so that
- * kdbx will not interpret client data as a string.  Unlike an "Address",
+ * kdbx will not interpret client data as a string. The
  * client data will generally not be used in arithmetic.
  * But we don't have kdbx anymore so we define it as void (christos)
  */

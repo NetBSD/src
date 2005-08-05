@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.49 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.49 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.49 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -444,8 +444,8 @@ SuffFree(ClientData sp)
     Lst_Destroy(s->parents, NOFREE);
     Lst_Destroy(s->searchPath, Dir_Destroy);
 
-    free((Address)s->name);
-    free((Address)s);
+    free(s->name);
+    free(s);
 }
 
 /*-
@@ -1286,9 +1286,9 @@ SuffRemoveSrc(Lst l)
     while ((ln = Lst_Next(l)) != NILLNODE) {
 	s = (Src *)Lst_Datum(ln);
 	if (s->children == 0) {
-	    free((Address)s->file);
+	    free(s->file);
 	    if (!s->parent)
-		free((Address)s->pref);
+		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
 		LstNode ln = Lst_Member(s->parent->cp, (ClientData)s);
@@ -1302,7 +1302,7 @@ SuffRemoveSrc(Lst l)
 	    Lst_Destroy(s->cp, NOFREE);
 #endif
 	    Lst_Remove(l, ln);
-	    free((Address)s);
+	    free(s);
 	    t |= 1;
 	    Lst_Close(l);
 	    return TRUE;
@@ -1622,7 +1622,7 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
 	    /*
 	     * Free the result
 	     */
-	    free((char *)cp);
+	    free(cp);
 	}
 	/*
 	 * Now the source is expanded, remove it from the list of children to
