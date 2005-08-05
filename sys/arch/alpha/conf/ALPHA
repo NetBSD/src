@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.209 2005/07/31 04:04:30 yamt Exp $
+# $NetBSD: ALPHA,v 1.210 2005/08/05 09:23:16 skrll Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.209 $"
+ident		"ALPHA-$Revision: 1.210 $"
 
 maxusers 32
 
@@ -509,6 +509,9 @@ wsmouse*	at ums?
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
