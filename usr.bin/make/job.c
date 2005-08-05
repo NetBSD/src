@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.96 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.96 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.96 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -424,7 +424,7 @@ JobCondPassSig(ClientData jobp, ClientData signop)
     int	signo = *(int *) signop;
 #ifdef RMT_WANTS_SIGNALS
     if (job->flags & JOB_REMOTE) {
-	(void) Rmt_Signal(job, signo);
+	(void)Rmt_Signal(job, signo);
     } else {
 	KILL(job->pid, signo);
     }
@@ -1212,10 +1212,10 @@ JobFinish(Job *job, int *status)
 	if (!(job->flags & JOB_SPECIAL))
 	    Job_TokenReturn();
 	Make_Update(job->node);
-	free((Address)job);
+	free(job);
     } else if (*status != 0) {
 	errors += 1;
-	free((Address)job);
+	free(job);
     }
     JobRestartJobs();
 
@@ -1541,7 +1541,7 @@ JobExec(Job *job, char **argv)
 	 * by killing its process family, but not commit suicide.
 	 */
 # if defined(SYSV)
-	(void) setsid();
+	(void)setsid();
 # else
 	(void)setpgid(0, getpid());
 # endif
@@ -2128,10 +2128,10 @@ JobStart(GNode *gn, int flags, Job *previous)
 		job->node->made = MADE;
 		Make_Update(job->node);
 	    }
-	    free((Address)job);
+	    free(job);
 	    return(JOB_FINISHED);
 	} else {
-	    free((Address)job);
+	    free(job);
 	    return(JOB_ERROR);
 	}
     } else {
@@ -2947,7 +2947,7 @@ Job_ParseShell(char *line)
     if (shellArgv)
 	free(UNCONST(shellArgv));
 
-    memset((Address)&newShell, 0, sizeof(newShell));
+    memset(&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword
@@ -3334,8 +3334,8 @@ Job_AbortAll(void)
 	     */
 #ifdef RMT_WANTS_SIGNALS
 	    if (job->flags & JOB_REMOTE) {
-		Rmt_Signal(job, SIGINT);
-		Rmt_Signal(job, SIGKILL);
+		(void)Rmt_Signal(job, SIGINT);
+		(void)Rmt_Signal(job, SIGKILL);
 	    } else {
 		KILL(job->pid, SIGINT);
 		KILL(job->pid, SIGKILL);

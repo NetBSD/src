@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.113 2005/08/03 20:55:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -978,7 +978,7 @@ main(int argc, char **argv)
 			*cp = savec;
 			path = cp + 1;
 		} while (savec == ':');
-		(void)free((Address)vpath);
+		free(vpath);
 	}
 
 	/*
