@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.226 2005/07/16 22:47:18 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.227 2005/08/05 13:22:23 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.226 2005/07/16 22:47:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.227 2005/08/05 13:22:23 jmmv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -268,7 +268,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
 		/*
-		 * Historically filesystem types were identified by number.
+		 * Historically, filesystem types were identified by numbers.
 		 * If we get an integer for the filesystem type instead of a
 		 * string, we check to see if it matches one of the historic
 		 * filesystem types.
@@ -522,7 +522,7 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	/*
 	 * XXX Syncer must be frozen when we get here.  This should really
 	 * be done on a per-mountpoint basis, but especially the softdep
-	 * code possibly called from the syncer doens't exactly work on a
+	 * code possibly called from the syncer doesn't exactly work on a
 	 * per-mountpoint basis, so the softdep code would become a maze
 	 * of vfs_busy() calls.
 	 *
