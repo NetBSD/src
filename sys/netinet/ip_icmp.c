@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.93 2005/07/19 17:00:02 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.94 2005/08/05 09:21:25 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.93 2005/07/19 17:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.94 2005/08/05 09:21:25 elad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1007,6 +1007,13 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       &icmp_redirtimeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_REDIRTIMEOUT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("ICMP statistics"), 
+		       NULL, 0, &icmpstat, sizeof(icmpstat),
+		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
+		       CTL_EOL);
 }
 
 /* Table of common MTUs: */
