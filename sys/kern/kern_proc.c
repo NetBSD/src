@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.81 2005/08/05 11:03:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.81 2005/08/05 11:03:18 junyoung Exp $");
 
 #include "opt_kstack.h"
 
@@ -93,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/filedesc.h>
+
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 /*
@@ -154,6 +157,27 @@ static uint pid_alloc_cnt;	/* number of allocated pids */
 /* links through free slots - never empty! */
 static uint next_free_pt, last_free_pt;
 static pid_t pid_max = PID_MAX;		/* largest value we allocate */
+
+/* Components of the first process -- never freed. */
+struct session session0;
+struct pgrp pgrp0;
+struct proc proc0;
+struct lwp lwp0;
+struct pcred cred0;
+struct filedesc0 filedesc0;
+struct cwdinfo cwdi0;
+struct plimit limit0;
+struct pstats pstat0;
+struct vmspace vmspace0;
+struct sigacts sigacts0;
+
+extern struct user *proc0paddr;
+
+extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
+
+int nofile = NOFILE;
+int maxuprc = MAXUPRC;
+int cmask = CMASK;
 
 POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
     &pool_allocator_nointr);
@@ -240,6 +264,129 @@ procinit(void)
 
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
+}
+
+/*
+ * Initialize process 0.
+ */
+void
+proc0_init(void)
+{
+	struct proc *p;
+	struct pgrp *pg;
+	struct session *sess;
+	struct lwp *l;
+	int s;
+	u_int i;
+	rlim_t lim;
+
+	p = &proc0;
+	pg = &pgrp0;
+	sess = &session0;
+	l = &lwp0;
+
+	simple_lock_init(&p->p_lock);
+	LIST_INIT(&p->p_lwps);
+	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	p->p_nlwps = 1;
+	simple_lock_init(&p->p_sigctx.ps_silock);
+	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
+
+	s = proclist_lock_write();
+
+	pid_table[0].pt_proc = p;
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(&alllwp, l, l_list);
+
+	p->p_pgrp = pg;
+	pid_table[0].pt_pgrp = pg;
+	LIST_INIT(&pg->pg_members);
+	LIST_INSERT_HEAD(&pg->pg_members, p, p_pglist);
+
+	pg->pg_session = sess;
+	sess->s_count = 1;
+	sess->s_sid = 0;
+	sess->s_leader = p;
+
+	proclist_unlock_write(s);
+
+	/*
+	 * Set P_NOCLDWAIT so that kernel threads are reparented to
+	 * init(8) when they exit.  init(8) can easily wait them out
+	 * for us.
+	 */
+	p->p_flag = P_SYSTEM | P_NOCLDWAIT;
+	p->p_stat = SACTIVE;
+	p->p_nice = NZERO;
+	p->p_emul = &emul_netbsd;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
+	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+
+	l->l_flag = L_INMEM;
+	l->l_stat = LSONPROC;
+	p->p_nrlwps = 1;
+
+	callout_init(&l->l_tsleep_ch);
+
+	/* Create credentials. */
+	cred0.p_refcnt = 1;
+	p->p_cred = &cred0;
+	p->p_ucred = crget();
+	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+
+	/* Create the CWD info. */
+	p->p_cwdi = &cwdi0;
+	cwdi0.cwdi_cmask = cmask;
+	cwdi0.cwdi_refcnt = 1;
+	simple_lock_init(&cwdi0.cwdi_slock);
+
+	/* Create the limits structures. */
+	p->p_limit = &limit0;
+	simple_lock_init(&limit0.p_slock);
+	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
+		limit0.pl_rlimit[i].rlim_cur =
+		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
+
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
+	    maxfiles < nofile ? maxfiles : nofile;
+
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
+	    maxproc < maxuprc ? maxproc : maxuprc;
+
+	lim = ptoa(uvmexp.free);
+	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+	limit0.pl_corename = defcorename;
+	limit0.p_refcnt = 1;
+
+	/* Configure virtual memory system, set vm rlimits. */
+	uvm_init_limits(p);
+
+	/* Initialize file descriptor table for proc0. */
+	p->p_fd = &filedesc0.fd_fd;
+	fdinit1(&filedesc0);
+
+	/*
+	 * Initialize proc0's vmspace, which uses the kernel pmap.
+	 * All kernel processes (which never have user space mappings)
+	 * share proc0's vmspace, and thus, the kernel pmap.
+	 */
+	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
+	    trunc_page(VM_MAX_ADDRESS));
+	p->p_vmspace = &vmspace0;
+
+	l->l_addr = proc0paddr;				/* XXX */
+
+	p->p_stats = &pstat0;
+
+	/* Initialize signal state for proc0. */
+	p->p_sigacts = &sigacts0;
+	siginit(p);
 }
 
 /*
@@ -384,41 +531,6 @@ pg_find(pid_t pgid, uint flags)
 	if (flags & PFIND_UNLOCK_OK)
 		proclist_unlock_read();
 	return pg;
-}
-
-/*
- * Set entry for process 0
- */
-void
-proc0_insert(struct proc *p, struct lwp *l, struct pgrp *pgrp,
-	struct session *sess)
-{
-	int s;
-
-	simple_lock_init(&p->p_lock);
-	LIST_INIT(&p->p_lwps);
-	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-	p->p_nlwps = 1;
-	simple_lock_init(&p->p_sigctx.ps_silock);
-	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
-
-	s = proclist_lock_write();
-
-	pid_table[0].pt_proc = p;
-	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
-
-	p->p_pgrp = pgrp;
-	pid_table[0].pt_pgrp = pgrp;
-	LIST_INIT(&pgrp->pg_members);
-	LIST_INSERT_HEAD(&pgrp->pg_members, p, p_pglist);
-
-	pgrp->pg_session = sess;
-	sess->s_count = 1;
-	sess->s_sid = 0;
-	sess->s_leader = p;
-
-	proclist_unlock_write(s);
 }
 
 static void

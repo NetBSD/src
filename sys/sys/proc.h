@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.203 2005/07/10 04:19:14 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.204 2005/08/05 11:03:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -450,7 +450,7 @@ void	wakeup_one(__volatile const void *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
-void	proc0_insert(struct proc *, struct lwp *, struct pgrp *, struct session *);
+void	proc0_init(void);
 void	proc_free(struct proc *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
