@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.15 2003/01/18 11:29:07 thorpej Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.16 2005/08/05 10:39:05 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,12 +35,12 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.15 2003/01/18 11:29:07 thorpej Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.16 2005/08/05 10:39:05 wiz Exp $");
 #endif
 #endif
 
 /*
- * xdr_array.c, Generic XDR routines impelmentation.
+ * xdr_array.c, Generic XDR routines implementation.
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
