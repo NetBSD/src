@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2005/05/12 02:56:59 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2005/08/05 09:16:54 skrll Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -43,8 +43,10 @@ proginstall: ${SA_PROG}.bin
 .endif	# defined(SA_PROG)
 
 CLEANFILES+= machine m68k sun68k
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN: machine m68k sun68k
 .NOPATH: machine m68k sun68k
+.endif
 
 machine :
 	-rm -f $@
