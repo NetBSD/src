@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.24 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.25 2005/08/05 11:00:31 jmmv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.25 2005/08/05 11:00:31 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -826,8 +826,8 @@ msdosfs_unmount(mp, mntflags, p)
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
 		printf("flag %08x, usecount %d, writecount %ld, holdcnt %ld\n",
 		    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-		printf("id %lu, mount %p, op %p\n",
-		    vp->v_id, vp->v_mount, vp->v_op);
+		printf("mount %p, op %p\n",
+		    vp->v_mount, vp->v_op);
 		printf("freef %p, freeb %p, mount %p\n",
 		    vp->v_freelist.tqe_next, vp->v_freelist.tqe_prev,
 		    vp->v_mount);
