@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.267 2005/06/29 01:40:17 christos Exp $
+#	$NetBSD: INSTALL,v 1.268 2005/08/05 09:23:16 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -651,6 +651,9 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?

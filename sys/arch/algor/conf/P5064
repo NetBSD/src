@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.40 2005/07/31 04:04:30 yamt Exp $
+#	$NetBSD: P5064,v 1.41 2005/08/05 09:23:16 skrll Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.40 $"
+#ident 		"P5064-$Revision: 1.41 $"
 
 maxusers 32
 
@@ -320,6 +320,9 @@ fd*	at	fdc? drive ?
 # USB Keyboards
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?

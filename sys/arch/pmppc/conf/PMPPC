@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.29 2005/07/31 04:04:43 yamt Exp $
+#	$NetBSD: PMPPC,v 1.30 2005/08/05 09:23:17 skrll Exp $
 #
 #	PMPPC
 #
@@ -321,6 +321,9 @@ ums*	at uhidev? reportid ?
 
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
