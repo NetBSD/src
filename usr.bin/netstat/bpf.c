@@ -1,4 +1,4 @@
-/* $NetBSD: bpf.c,v 1.1 2005/08/04 19:39:40 rpaulo Exp $ */
+/* $NetBSD: bpf.c,v 1.2 2005/08/05 12:16:51 elad Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -62,9 +62,9 @@ bpf_stats(void)
 		err(1, "net.bpf.stats");
 	
 	printf("bpf:\n");
-	printf("\t%lld total packets received\n", bpf_s.bs_recv);
-	printf("\t%lld total packets captured\n", bpf_s.bs_capt);
-	printf("\t%lld total packets dropped\n", bpf_s.bs_drop);
+	printf("\t%" PRIu64 " total packets received\n", bpf_s.bs_recv);
+	printf("\t%" PRIu64 " total packets captured\n", bpf_s.bs_capt);
+	printf("\t%" PRIu64 " total packets dropped\n", bpf_s.bs_drop);
 }
 
 void
@@ -122,7 +122,7 @@ bpf_dump(kvm_t *kd, char *interface)
 		       (BPFEXT(bde_ifname)[0] == '\0') ? "-" : 
 		       BPFEXT(bde_ifname));
 
-		printf("%-8lld %-8lld %-8lld ", 
+		printf("%-8" PRIu64 " %-8" PRIu64 " %-8" PRIu64 " ", 
 			BPFEXT(bde_rcount), BPFEXT(bde_dcount), 
 			BPFEXT(bde_ccount));
 		
