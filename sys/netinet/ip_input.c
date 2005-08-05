@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.219 2005/08/05 09:21:26 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.219 2005/08/05 09:21:26 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2342,4 +2342,11 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       NULL, 0, &ip_do_loopback_cksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOOPBACKCKSUM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IP statistics"),
+		       NULL, 0, &ipstat, sizeof(ipstat),
+		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
+		       CTL_EOL);
 }

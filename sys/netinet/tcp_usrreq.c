@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.106 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.107 2005/08/05 09:21:26 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.107 2005/08/05 09:21:26 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1605,6 +1605,14 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Global number of TCP SACK holes"),
 		       NULL, 0, &tcp_sack_globalholes, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("TCP statistics"),
+		       NULL, 0, &tcpstat, sizeof(tcpstat),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
+		       CTL_EOL);
 }
 
 /*
