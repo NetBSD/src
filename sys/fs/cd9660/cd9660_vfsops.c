@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.24 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.25 2005/08/05 13:24:18 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.24 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.25 2005/08/05 13:24:18 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -630,7 +630,7 @@ cd9660_statvfs(mp, sbp, p)
 	sbp->f_bresvd = 0; /* total reserved blocks */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	sbp->f_favail = 0; /* free file nodes */
+	sbp->f_favail = 0; /* free file nodes for non superuser */
 	sbp->f_fresvd = 0; /* reserved file nodes */
 	copy_statvfs_info(sbp, mp);
 	/* Use the first spare for flags: */
