@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.30 2005/07/28 20:28:58 jdc Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.31 2005/08/05 20:23:06 snj Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -319,4 +319,10 @@ sys/netinet6/ah_aesxcbcmac.c			1.2
 	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
 	same key in AES-XCBC-MAC.  PR#30821
 	[elad, ticket 5538]
+
+lib/libz/inftrees.c				1.10
+sys/lib/libz/inftrees.c				1.10    
+
+	Return correct error on all zero length codes.
+	[tron, ticket #5550]
 
