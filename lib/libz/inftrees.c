@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.c,v 1.9 2003/03/18 19:53:16 mycroft Exp $ */
+/* $NetBSD: inftrees.c,v 1.9.4.1 2005/08/05 20:19:00 snj Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inftrees.c,v 1.9 2003/03/18 19:53:16 mycroft Exp $");
+__RCSID("$NetBSD: inftrees.c,v 1.9.4.1 2005/08/05 20:19:00 snj Exp $");
 
 #include "zutil.h"
 #include "inftrees.h"
@@ -147,7 +147,7 @@ uIntf *v;               /* working area: values in order of bit length */
   {
     *t = (inflate_huft *)Z_NULL;
     *m = 0;
-    return Z_OK;
+    return Z_NEED_DICT;
   }
 
 
