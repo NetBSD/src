@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.193 2005/08/04 18:46:08 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.194 2005/08/05 20:14:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11095,4 +11095,10 @@ sys/dev/isa/nsclpcsio_isa.c			1.9-1.10
 	Activate the temperature sensors if the device is in standby mode
 	on attach (as on Soekris boards). This fixes PR kern/23598
 	[drochner, ticket #640]
+
+lib/libz/inftrees.c				1.10
+sys/lib/libz/inftrees.c				1.10
+
+	Return correct error on all zero length codes.
+	[tron, ticket #649]
 
