@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.26 2005/01/01 04:06:48 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.27 2005/08/05 13:28:50 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 31, 2004
+.Dd August 5, 2005
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -200,7 +200,7 @@ contains the data maintained by the virtual memory system.
 For compatibility with code written before the integration of
 .Xr uvm 9
 into
-.Nx
+.Nx ,
 C-preprocessor directives are used to alias the members of
 .Em v_uobj .
 .Pp
@@ -216,7 +216,7 @@ This vnode is a pure text prototype.
 .It VEXECMAP
 This vnode has executable mappings.
 .It VSYSTEM
-This vnode being used by kernel; only used to skip quota files in
+This vnode is being used by the kernel; only used to skip quota files in
 .Fn vflush .
 .It VISTTY
 This vnode represents a tty; used when reading dead vnodes.
@@ -343,7 +343,7 @@ When a valid vnode which is on the freelist is used again, the user
 must call
 .Fn vget
 to increment the reference count and retrieve it from the freelist.
-When a user wants a new vnode for another file
+When a user wants a new vnode for another file,
 .Fn getnewvnode
 is invoked to remove a vnode from the freelist and initialize it for
 the new file.
@@ -436,6 +436,8 @@ virtual file system
 overlay file system
 .It VT_SMBFS
 SMB file system
+.It VT_PTYFS
+pseudo-terminal device file system
 .El
 .Pp
 All vnode locking operations use
