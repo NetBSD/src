@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.2 2005/08/01 15:00:24 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,18 +45,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.2 2005/08/01 15:00:24 skrll Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
-
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
