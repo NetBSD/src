@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.150 2005/07/12 03:36:15 snj Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.151 2005/08/05 20:33:00 snj Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1884,4 +1884,10 @@ gnu/usr.bin/cvs/rcs2log/Makefile		patch
 
 	Update CVS to version 1.11.20.
 	[tron, ticket #5822]
+
+lib/libz/inftrees.c				1.10
+sys/lib/libz/inftrees.c				1.10    
+
+	Return correct error on all zero length codes.
+	[tron, ticket #5385]
 
