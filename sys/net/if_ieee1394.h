@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.4 2005/07/11 15:37:04 kiyohara Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.5 2005/08/06 14:09:54 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,15 @@ struct ieee1394_hwaddr {
 	u_int8_t	iha_maxrec;		/* max_rec in the config ROM */
 	u_int8_t	iha_speed;		/* min of link/PHY speed */
 	u_int8_t	iha_offset[6];		/* unicast FIFO address */
+};
+
+/*
+ * BPF wants to see one of these.
+ */
+struct ieee1394_bpfhdr {
+	uint8_t		ibh_dhost[8];
+	uint8_t		ibh_shost[8];
+	uint16_t	ibh_type;
 };
 
 #ifdef _KERNEL
