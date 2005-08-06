@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.348 2005/08/05 16:23:36 drochner Exp $
+#	$NetBSD: 3RDPARTY,v 1.349 2005/08/06 14:34:12 junyoung Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -138,7 +138,7 @@ Version:	3.0
 Current Vers:	3.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.vix.com/pub/vixie/cron-3.0/
-Home Page:	
+Home Page:
 Mailing List:
 Responsible:
 Notes:
@@ -222,7 +222,7 @@ Version:	4.13
 Current Vers:	4.14
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
-Home Page:	
+Home Page:
 Mailing List:	file@mx.gw.com
 Responsible:	christos, pooka
 Notes:
@@ -243,7 +243,7 @@ Newer flex will be found in:
 
 Package:	gcc
 Version:	2.95.3/3.3.3
-Current Vers:	3.3.6/4.0.0
+Current Vers:	3.3.6/3.4.4/4.0.1
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -502,7 +502,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 Package:	OpenPAM
 Version:	20050201
 Current Vers:	20050201
-Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
+Maintainer:	Dag-Erling Smrgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
 Mailing List:
@@ -609,7 +609,7 @@ Version:	2.4.3
 Current Vers:	2.4.3
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
-Home Page:	
+Home Page:
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
 Mailing List:
 Responsible:	christos@NetBSD.org
@@ -773,7 +773,7 @@ Version:	tzcode2004a / tzdata2005k
 Current Vers:	tzcode2005k / tzdata2005k
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
-Home Page:	
+Home Page:
 Mailing List:	tz@elsie.nci.nih.gov
 Responsible:	kleink
 Notes:
@@ -794,7 +794,7 @@ Package:	Vinum
 Version:	2003-10-10
 Current Vers:	2003-10-10
 Maintainer:	Greg Lehy <grog@lemis.com>
-Archive Site:	
+Archive Site:
 Home page:	http://www.vinumvm.org/
 Mailing List:	vinum-devel@auug.org.au
 Responsible:	grog
@@ -806,10 +806,10 @@ Notes:
 Package:	XFree86
 Version:	4.5.0
 Current Vers:	4.5.0
-Maintainer:	XFree86 consortium
+Maintainer:	XFree86 Project, Inc.
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Home Page:	http://www.xfree86.org/
-Mailing List:
+Mailing List:	devel@xfree86.org
 Responsible:	tron
 Notes:
 4.x:
@@ -820,7 +820,7 @@ Notes:
 
 Package:	zlib
 Version:	1.1.4
-Current Vers:	1.2.2
+Current Vers:	1.2.3
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.gzip.org/zlib/
 Home Page:	http://www.gzip.org/zlib/
