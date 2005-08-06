@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.18 2005/07/26 13:09:23 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.19 2005/08/06 11:22:39 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -2953,6 +2953,7 @@ fail:
 }
 
 #ifdef __NetBSD__
+#ifdef INET
 int
 pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
@@ -3001,6 +3002,7 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 	return (0);
 }
+#endif /* INET */
 
 #ifdef INET6
 int
