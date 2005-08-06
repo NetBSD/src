@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.16 2005/08/06 22:07:24 bouyer Exp $	*/
+/*	$NetBSD: aceride.c,v 1.17 2005/08/06 22:25:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.16 2005/08/06 22:07:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.17 2005/08/06 22:25:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,6 @@ acer_do_reset(struct ata_channel *chp, int poll)
 	wdc_do_reset(chp, poll);
 	reg = pciide_pci_read(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
 	    ACER_PCIB_CTRL);
-	printf("acer_do_reset reg 0x%x\n", reg);
 	pciide_pci_write(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
 	    ACER_PCIB_CTRL, reg & ACER_PCIB_CTRL_ENCHAN(chp->ch_channel));
 	delay(1000);
