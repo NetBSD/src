@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.11 2005/08/02 16:14:10 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.12 2005/08/06 09:00:20 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -159,6 +159,14 @@ flag_spec	:	STRING {
 		} else if (strcasecmp($1, "indirect") == 0) {
 			params.type |= VERIEXEC_INDIRECT;
 		} else if (strcasecmp($1, "file") == 0) {
+			params.type |= VERIEXEC_FILE;
+		} else if (strcasecmp($1, "program") == 0) {
+			params.type |= VERIEXEC_DIRECT;
+		} else if (strcasecmp($1, "interpreter") == 0) {
+			params.type |= VERIEXEC_INDIRECT;
+		} else if (strcasecmp($1, "script") == 0) {
+			params.type |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
+		} else if (strcasecmp($1, "library") == 0) {
 			params.type |= VERIEXEC_FILE;
 		} else {
 			yyerror("Bad flag");

@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.15 2005/08/02 18:06:14 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.16 2005/08/06 09:00:20 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.15 2005/08/02 18:06:14 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.16 2005/08/06 09:00:20 blymn Exp $
 .\"
 .Dd August 2, 2005
 .Dt VERIEXECCTL 8
@@ -78,9 +78,9 @@ the file.
 The field
 .Em options
 contains the associated options for the file.
-Currently there are three valid options:
+Currently there are seven valid options:
 .Pp
-.Bl -tag -width INDIRECT -compact
+.Bl -tag -width INTERPRETER -compact
 .It Dv DIRECT
 Allow direct execution only.
 .It Dv INDIRECT
@@ -94,6 +94,19 @@ Files have their fingerprints verified during
 and are automatically made read only.
 This option may be used to verify shared libraries have not been
 tampered with.
+.It Dv PROGRAM
+An alias for DIRECT, allow direct execution only.
+.It Dv INTERPRETER
+An alias for INDIRECT, the executable may only be used as an interpreter
+for shell scripts.
+.It Dv SCRIPT
+The file is a shell script.
+For correct operation of veriexec, a script must have both FILE and
+DIRECT attributes set.
+This option is a shorthand way of setting the options for correct
+operation of shell scripts.
+.It Dv LIBRARY
+The file is a library, this option is an alias of the FILE option.
 .El
 .Pp
 There must be only one executable/fingerprint pair per line.
