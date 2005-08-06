@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.29 2005/07/11 15:37:05 kiyohara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.30 2005/08/06 14:09:54 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.29 2005/07/11 15:37:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.30 2005/08/06 14:09:54 kiyohara Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -215,12 +215,21 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	if (mcopy)
 		looutput(ifp, mcopy, dst, rt);
-#if NBPFILTER > 0
-	/* XXX: emulate DLT_EN10MB */
-	if (ifp->if_bpf)
-		bpf_mtap_et(ifp->if_bpf, etype, m0);
-#endif
 	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
+		struct ieee1394_bpfhdr h;
+		if (unicast)
+			memcpy(h.ibh_dhost, hwdst->iha_uid, 8);
+		else
+			memcpy(h.ibh_dhost,
+			    ((const struct ieee1394_hwaddr *)
+			    ifp->if_broadcastaddr)->iha_uid, 8);
+		memcpy(h.ibh_shost, myaddr->iha_uid, 8);
+		h.ibh_type = etype;
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
+	}
+#endif
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
 	    unicast &&
 	    memcmp(hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
@@ -383,9 +392,28 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
 	/* strip off the ieee1394 header */
 	m_adj(m, sizeof(*iuh));
 #if NBPFILTER > 0
-	/* XXX: emulate DLT_EN10MB */
-	if (ifp->if_bpf)
-		bpf_mtap_et(ifp->if_bpf, iuh->iuh_etype, m);
+	if (ifp->if_bpf) {
+		struct ieee1394_bpfhdr h;
+		struct m_tag *mtag;
+		struct ieee1394_hwaddr *myaddr;
+
+		mtag = m_tag_locate(m,
+		    MTAG_FIREWIRE, MTAG_FIREWIRE_SENDER_EUID, 0);
+		if (mtag)
+			memcpy(h.ibh_shost, mtag + 1, 8);
+		else
+			memset(h.ibh_shost, 0, 8);
+		if (m->m_flags & M_BCAST)
+			memcpy(h.ibh_dhost,
+			    ((const struct ieee1394_hwaddr *)
+			    ifp->if_broadcastaddr)->iha_uid, 8);
+		else {
+			myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
+			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
+		}
+		h.ibh_type = htons(etype);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
+	}
 #endif
 
 	switch (etype) {
@@ -674,7 +702,8 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_broadcastaddr = (uint8_t *)baddr;
 	LIST_INIT(&ic->ic_reassq);
 #if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, 14);	/* XXX */
+	bpfattach(ifp,
+	    DLT_APPLE_IP_OVER_IEEE1394, sizeof(struct ieee1394_hwaddr));
 #endif
 }
 
