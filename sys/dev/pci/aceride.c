@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.15 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: aceride.c,v 1.16 2005/08/06 22:07:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.15 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.16 2005/08/06 22:07:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.15 2005/05/24 05:25:15 lukem Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_acer_reg.h>
 
+static int acer_pcib_match(struct pci_attach_args *);
+static void acer_do_reset(struct ata_channel *, int);
 static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
@@ -48,7 +50,12 @@ static int  acer_pci_intr(void *);
 static int  aceride_match(struct device *, struct cfdata *, void *);
 static void aceride_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(aceride, sizeof(struct pciide_softc),
+struct aceride_softc {
+	struct pciide_softc pciide_sc;
+	struct pci_attach_args pcib_pa;
+};
+
+CFATTACH_DECL(aceride, sizeof(struct aceride_softc),
     aceride_match, aceride_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_acer_products[] =  {
@@ -89,6 +96,21 @@ aceride_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
+static int
+acer_pcib_match(struct pci_attach_args *pa)
+{
+	/*
+	 * we need to access the PCI config space of the pcib, see
+	 * acer_do_reset()
+	 */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
+		return 1;
+	return 0;
+}
+
 static void
 acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
@@ -97,6 +119,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t cr, interface;
 	bus_size_t cmdsize, ctlsize;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
+	struct aceride_softc *acer_sc = (struct aceride_softc *)sc;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -154,6 +177,14 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
+	if (rev == 0xC3) {
+		/* install reset bug workaround */
+		if (pci_find_device(&acer_sc->pcib_pa, acer_pcib_match) == 0) {
+			printf("%s: WARNING: can't find pci-isa bridge\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		} else
+			sc->sc_wdcdev.reset = acer_do_reset;
+	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
@@ -170,6 +201,30 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		     (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
 	}
+}
+
+static void
+acer_do_reset(struct ata_channel *chp, int poll)
+{
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
+	struct aceride_softc *acer_sc = (struct aceride_softc *)sc;
+	u_int8_t reg;
+
+	/*
+	 * From OpenSolaris: after a reset we need to disable/enable the
+	 * corresponding channel, or data corruption will occur in
+	 * UltraDMA modes
+	 */
+
+	wdc_do_reset(chp, poll);
+	reg = pciide_pci_read(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
+	    ACER_PCIB_CTRL);
+	printf("acer_do_reset reg 0x%x\n", reg);
+	pciide_pci_write(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
+	    ACER_PCIB_CTRL, reg & ACER_PCIB_CTRL_ENCHAN(chp->ch_channel));
+	delay(1000);
+	pciide_pci_write(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
+	    ACER_PCIB_CTRL, reg);
 }
 
 static void

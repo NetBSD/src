@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.82 2005/03/02 12:25:28 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.83 2005/08/06 22:07:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -101,6 +101,9 @@ struct wdc_softc {
 	/* Optional callback to ack IRQ. */
 	void		(*irqack)(struct ata_channel *);
 
+	/* Optional callback to perform a bus reset */
+	void		(*reset)(struct ata_channel *, int);
+
 	/* overridden if the backend has a different data transfer method */
 	void	(*datain_pio)(struct ata_channel *, int, void *, size_t);
 	void	(*dataout_pio)(struct ata_channel *, int, void *, size_t);
@@ -144,6 +147,7 @@ void	wdccommandshort(struct ata_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_drive(struct ata_drive_datas *, int);
 void	wdc_reset_channel(struct ata_channel *, int);
+void	wdc_do_reset(struct ata_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
 
