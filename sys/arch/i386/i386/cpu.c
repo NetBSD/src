@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.4.1 2005/08/07 15:33:32 riz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.4.1 2005/08/07 15:33:32 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -411,6 +411,19 @@ cpu_init(ci)
 	 */
 	if (ci->ci_cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
+#endif
+#if defined(I586_CPU) || defined(I686_CPU)
+#ifndef NO_TSC_TIME
+	/*
+	 * On systems with a cycle counter, use that for
+	 * interval timing inbetween hz ticks in microtime(9)
+	 * N.B. this is not a good idea on processors whose
+	 * frequency varies a lot over time (e.g. modern laptops)
+	 */
+	if (cpu_feature & TSC) {
+		microtime_func = cc_microtime;
+	}
+#endif
 #endif
 #if defined(I686_CPU)
 	/*
