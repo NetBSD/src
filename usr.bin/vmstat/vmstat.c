@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.135 2005/06/02 04:34:57 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.136 2005/08/07 12:23:20 blymn Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.135 2005/06/02 04:34:57 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.136 2005/08/07 12:23:20 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.135 2005/06/02 04:34:57 lukem Exp $");
 #include <util.h>
 
 #include "dkstats.h"
+#include "tpstats.h"
 
 /*
  * General namelist
@@ -252,6 +253,7 @@ kvm_t *kd;
 void	cpustats(void);
 void	deref_kptr(const void *, void *, size_t, const char *);
 void	dkstats(void);
+void	tpstats(void);
 void	doevcnt(int verbose);
 void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
@@ -404,6 +406,7 @@ main(int argc, char *argv[])
 		struct winsize winsize;
 
 		dkinit(0);	/* Initialize disk stats, no disks selected. */
+		tpinit(0);
 
 		(void)setgid(getgid()); /* don't need privs anymore */
 
@@ -515,6 +518,13 @@ choosedrives(char **argv)
 			++ndrives;
 			break;
 		}
+		for (i = 0; i < tp_ndrive; i++) {
+			if (strcmp(tp_name[i], *argv))
+				continue;
+			tp_select[i] = 1;
+			++ndrives;
+			break;
+		}
 	}
 	for (i = 0; i < dk_ndrive && ndrives < 3; i++) {
 		if (dk_select[i])
@@ -522,6 +532,14 @@ choosedrives(char **argv)
 		dk_select[i] = 1;
 		++ndrives;
 	}
+	
+	for (i = 0; i < tp_ndrive && ndrives < 3; i++) {
+		if (tp_select[i])
+			continue;
+		tp_select[i] = 1;
+		++ndrives;
+	}
+	
 	return (argv);
 }
 
@@ -660,6 +678,7 @@ dovmstat(struct timespec *interval, int reps)
 		(void)printf("%4lu ", rate(uvmexp.pdfreed - ouvmexp.pdfreed));
 		(void)printf("%4lu ", rate(uvmexp.pdscans - ouvmexp.pdscans));
 		dkstats();
+		tpstats();
 		(void)printf("%4lu %4lu %3lu ",
 		    rate(uvmexp.intrs - ouvmexp.intrs),
 		    rate(uvmexp.syscalls - ouvmexp.syscalls),
@@ -877,6 +896,24 @@ dkstats(void)
 			continue;
 		(void)printf("%2.0f ",
 		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
+	}
+}
+
+void
+tpstats(void)
+{
+	int dn;
+	double etime;
+
+	/* Calculate tape stat deltas. */
+	tpswap();
+	etime = cur.cp_etime;
+
+	for (dn = 0; dn < tp_ndrive; ++dn) {
+		if (!tp_select[dn])
+			continue;
+		(void)printf("%2.0f ",
+		    (cur_tape.rxfer[dn] + cur_tape.wxfer[dn]) / etime);
 	}
 }
 
