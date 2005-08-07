@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470.2.2.2.1 2005/05/09 21:34:36 riz Exp $
+# $NetBSD: mi,v 1.470.2.2.2.2 2005/08/07 15:23:02 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2850,6 +2850,18 @@
 ./usr/share/zoneinfo/America/Anguilla		base-sys-share		share
 ./usr/share/zoneinfo/America/Antigua		base-sys-share		share
 ./usr/share/zoneinfo/America/Araguaina		base-sys-share		share
+./usr/share/zoneinfo/America/Argentina		base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Buenos_Aires	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Catamarca	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/ComodRivadavia	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Cordoba	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Jujuy	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/La_Rioja	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share		share
 ./usr/share/zoneinfo/America/Atka		base-sys-share		share
