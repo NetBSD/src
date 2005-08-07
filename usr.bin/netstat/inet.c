@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.65 2005/08/06 17:58:13 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.66 2005/08/07 17:10:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.65 2005/08/06 17:58:13 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.66 2005/08/07 17:10:36 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: inet.c,v 1.65 2005/08/06 17:58:13 elad Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <err.h>
 #include "netstat.h"
 
@@ -97,6 +98,63 @@ void	inetprint __P((struct in_addr *, u_int16_t, const char *, int));
  * -a (all) flag is specified.
  */
 static int width;
+static int compact;
+
+static void
+protoprhdr(void)
+{
+	printf("Active Internet connections");
+	if (aflag)
+		printf(" (including servers)");
+	putchar('\n');
+	if (Aflag)
+		printf("%-8.8s ", "PCB");
+	printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
+		"Proto", "Recv-Q", "Send-Q", compact ? "" : " ",
+		width, width, "Local Address",
+		width, width, "Foreign Address",
+		"State");
+}
+
+static void
+protopr0(caddr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
+	 struct in_addr *laddr, u_int16_t lport,
+	 struct in_addr *faddr, u_int16_t fport,
+	 short t_state, char *name)
+{
+	static char *shorttcpstates[] = {
+		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
+		"ESTABL",	"CLWAIT",	"FWAIT1",	"CLOSNG",
+		"LASTAK",	"FWAIT2",	"TMWAIT",
+	};
+	int istcp;
+
+	istcp = strcmp(name, "tcp") == 0;
+
+	if (Aflag) {
+		printf("%8lx ", (u_long) ppcb);
+	}
+	printf("%-5.5s %6ld %6ld%s", name, rcv_sb_cc, snd_sb_cc,
+	       compact ? "" : " ");
+	if (numeric_port) {
+		inetprint(laddr, lport, name, 1);
+		inetprint(faddr, fport, name, 1);
+	} else if (inpcb.inp_flags & INP_ANONPORT) {
+		inetprint(laddr, lport, name, 1);
+		inetprint(faddr, fport, name, 0);
+	} else {
+		inetprint(laddr, lport, name, 0);
+		inetprint(faddr, fport, name, 0);
+	}
+	if (istcp) {
+		if (t_state < 0 || t_state >= TCP_NSTATES)
+			printf(" %d", t_state);
+		else
+			printf(" %s", compact ? shorttcpstates[t_state] :
+			       tcpstates[t_state]);
+	}
+	putchar('\n');
+}
 
 void
 protopr(off, name)
@@ -106,13 +164,8 @@ protopr(off, name)
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
-	int istcp, compact;
+	int istcp;
 	static int first = 1;
-	static char *shorttcpstates[] = {
-		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
-		"ESTABL",	"CLWAIT",	"FWAIT1",	"CLOSNG",
-		"LASTAK",	"FWAIT2",	"TMWAIT",
-	};
 
 	if (off == 0)
 		return;
@@ -132,6 +185,58 @@ protopr(off, name)
 		}
 	} else
 		width = 22;
+
+	if (use_sysctl) {
+		struct kinfo_pcb *pcblist;
+		int mib[8];
+		size_t namelen = 0, size = 0, i;
+		char *mibname = NULL;
+
+		memset(mib, 0, sizeof(mib));
+
+		if (asprintf(&mibname, "net.inet.%s.pcblist", name) == -1)
+			err(1, "asprintf");
+
+		/* get dynamic pcblist node */
+		if (sysctlnametomib(mibname, mib, &namelen) == -1)
+			err(1, "sysctlnametomib");
+
+		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
+			   NULL, 0) == -1)
+			err(1, "sysctl (query)");
+
+		pcblist = malloc(size);
+		memset(pcblist, 0, size);
+
+	        mib[6] = sizeof(*pcblist);
+        	mib[7] = size / sizeof(*pcblist);
+
+		if (sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
+			   &size, NULL, 0) == -1)
+			err(1, "sysctl (copy)");
+
+		for (i = 0; i < size / sizeof(*pcblist); i++) {
+			struct sockaddr_in src, dst;
+
+			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
+			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
+
+			if (first) {
+				protoprhdr();
+				first = 0;
+			}
+
+	                protopr0((caddr_t) pcblist[i].ki_ppcbaddr,
+				 pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
+				 &src.sin_addr, src.sin_port,
+				 &dst.sin_addr, dst.sin_port,
+				 pcblist[i].ki_tstate, name);
+		}
+
+		free(pcblist);
+		return;
+	}
+
 	while (next != head) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
 		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
@@ -152,47 +257,17 @@ protopr(off, name)
 			kread((u_long)inpcb.inp_ppcb,
 			    (char *)&tcpcb, sizeof (tcpcb));
 		}
+
 		if (first) {
-			printf("Active Internet connections");
-			if (aflag)
-				printf(" (including servers)");
-			putchar('\n');
-			if (Aflag)
-				printf("%-8.8s ", "PCB");
-			printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				compact ? "" : " ",
-				width, width, "Local Address",
-				width, width, "Foreign Address", "State");
+			protoprhdr();
 			first = 0;
 		}
-		if (Aflag) {
-			if (istcp)
-				printf("%8lx ", (u_long) inpcb.inp_ppcb);
-			else
-				printf("%8lx ", (u_long) prev);
-		}
-		printf("%-5.5s %6ld %6ld%s", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc, compact ? "" : " ");
-		if (numeric_port) {
-			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
-			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 1);
-		} else if (inpcb.inp_flags & INP_ANONPORT) {
-			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
-			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 0);
-		} else {
-			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 0);
-			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 0);
-		}
-		if (istcp) {
-			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
-				printf(" %d", tcpcb.t_state);
-			else
-				printf(" %s", compact ?
-				    shorttcpstates[tcpcb.t_state] :
-				    tcpstates[tcpcb.t_state]);
-		}
-		putchar('\n');
+
+		protopr0(istcp ? (caddr_t) inpcb.inp_ppcb : (caddr_t) prev,
+			 sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
+			 &inpcb.inp_laddr, inpcb.inp_lport,
+			 &inpcb.inp_faddr, inpcb.inp_fport,
+			 tcpcb.t_state, name);
 	}
 }
 
