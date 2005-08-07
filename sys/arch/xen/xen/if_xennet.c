@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.28 2005/07/07 12:01:25 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.29 2005/08/07 04:54:58 yamt Exp $	*/
 
 /*
  *
@@ -33,9 +33,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.28 2005/07/07 12:01:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.29 2005/08/07 04:54:58 yamt Exp $");
 
 #include "opt_inet.h"
+#include "opt_nfs_boot.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -69,12 +70,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.28 2005/07/07 12:01:25 yamt Exp $");
 #include <netinet/ip.h>
 #endif
 
+#if defined(NFS_BOOT_BOOTSTATIC)
 #include <nfs/rpcv2.h>
 
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
+#endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -1216,6 +1219,7 @@ xennet_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 #endif
 
+#if defined(NFS_BOOT_BOOTSTATIC)
 int
 xennet_bootstatic_callback(struct nfs_diskless *nd)
 {
@@ -1243,6 +1247,7 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
 	    NFS_BOOTSTATIC_HAS_SERVER);
 }
+#endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
 
 #ifdef XENNET_DEBUG_DUMP
