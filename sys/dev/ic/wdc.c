@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.3 2005/07/05 21:04:08 riz Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.4 2005/08/07 15:51:36 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.3 2005/07/05 21:04:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.4 2005/08/07 15:51:36 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -710,23 +710,13 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	delay(5000);
 #endif
 
-	if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
-		wdc->select(chp,0);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0, WDSD_IBM);
-	delay(10);	/* 400ns delay */
-	/* assert SRST, wait for reset to complete */
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_RST | WDCTL_IDS | WDCTL_4BIT); 
-	DELAY(1000);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_IDS | WDCTL_4BIT);
+	if (wdc != NULL)
+		wdc->reset(chp, RESET_POLL);
+	else
+		wdc_do_reset(chp, RESET_POLL);
 	DELAY(2000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_error], 0);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
-	delay(10);	/* 400ns delay */
-	/* ACK interrupt in case there is one pending left (Promise ATA100) */
-	if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_IRQACK))
-		wdc->irqack(chp);
 	splx(s);
 
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
@@ -795,6 +785,8 @@ wdcattach(struct wdc_channel *chp)
 	callout_init(&chp->ch_callout);
 	if (wdc->drv_probe == NULL)
 		wdc->drv_probe = wdc_drvprobe;
+	if (wdc->reset == NULL)
+		wdc->reset = wdc_do_reset;
 	if (inited == 0) {
 		/* Initialize the ata_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct ata_xfer), 0,
@@ -1046,27 +1038,8 @@ wdcreset(struct wdc_channel *chp, int poll)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int drv_mask1, drv_mask2;
-	int s = 0;
 
-	if (wdc->cap & WDC_CAPABILITY_SELECT)
-		wdc->select(chp,0);
-	if (poll != RESET_SLEEP)
-		s = splbio();
-	/* master */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0, WDSD_IBM);
-	delay(10);	/* 400ns delay */
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_RST | WDCTL_IDS | WDCTL_4BIT);
-	delay(2000);
-	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_error], 0);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_4BIT | WDCTL_IDS);
-	delay(10);	/* 400ns delay */
-	if (poll != RESET_SLEEP) {
-		if (wdc->cap & WDC_CAPABILITY_IRQACK)
-			wdc->irqack(chp);
-		splx(s);
-	}
+	wdc->reset(chp, poll);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -1083,6 +1056,37 @@ wdcreset(struct wdc_channel *chp, int poll)
 	}
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
 	return  (drv_mask1 != drv_mask2) ? 1 : 0;
+}
+
+void
+wdc_do_reset(struct wdc_channel *chp, int poll)
+{
+	struct wdc_softc *wdc = chp->ch_wdc;
+	int s = 0;
+
+	if (wdc && wdc->cap & WDC_CAPABILITY_SELECT)
+		wdc->select(chp,0);
+	if (poll != RESET_SLEEP)
+		s = splbio();
+	/* master */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0, WDSD_IBM);
+	delay(10);	/* 400ns delay */
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+	    WDCTL_IDS | WDCTL_4BIT);
+	delay(10);	/* 400ns delay */
+	/* assert SRST, wait for reset to complete */
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+	    WDCTL_RST | WDCTL_IDS | WDCTL_4BIT);
+	delay(2000);
+	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_error], 0);
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+	    WDCTL_4BIT | WDCTL_IDS);
+	delay(10);	/* 400ns delay */
+	if (poll != RESET_SLEEP) {
+		if (wdc && wdc->cap & WDC_CAPABILITY_IRQACK)
+			wdc->irqack(chp);
+		splx(s);
+	}
 }
 
 static int
