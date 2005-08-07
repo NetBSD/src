@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.13 2005/05/29 22:00:50 christos Exp $ */
+/*	$NetBSD: stvar.h,v 1.14 2005/08/07 12:25:08 blymn Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,6 +150,9 @@ struct st_softc {
 					/* operations */
 	struct callout sc_callout;	/* restarting the queue after */
 					/* transient error */
+	
+	struct tape *stats;		/* statistics for the drive */
+	
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
