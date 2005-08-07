@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.802 2005/07/28 23:16:39 agc Exp $
+#	$NetBSD: mi,v 1.803 2005/08/07 16:57:12 xtraeme Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1425,6 +1425,7 @@
 ./usr/include/sys/syslog.h			comp-c-include
 ./usr/include/sys/systm.h			comp-c-include
 ./usr/include/sys/tablet.h			comp-c-include
+./usr/include/sys/tape.h			comp-c-include
 ./usr/include/sys/termios.h			comp-c-include
 ./usr/include/sys/time.h			comp-c-include
 ./usr/include/sys/timeb.h			comp-c-include
