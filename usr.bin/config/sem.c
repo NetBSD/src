@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.4 2005/07/25 22:31:07 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.5 2005/08/07 15:11:12 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1078,15 +1078,23 @@ deldev(const char *name, const char *at)
 	 *      If it was the only entry, we must remove i's entry from d's
 	 *      list.
 	 */
-	if (previ != NULL)
+	if (previ != NULL) {
 		previ->i_alias = i->i_alias;
-	else {
-		if (i->i_alias == NULL)
+		if (i == firsti)
+			ht_replace(devitab, name, previ);
+	} else {
+		if (i->i_alias == NULL) {
 			/* No alias, must unlink the entry from devitab */
-			ht_remove(devitab, i->i_name);
-		else
+			ht_remove(devitab, name);
+			match = i->i_bsame;
+		} else {
 			/* Or have the first alias replace i in d's list */
 			i->i_alias->i_bsame = i->i_bsame;
+			match = i->i_alias;
+			if (i == firsti)
+				ht_replace(devitab, name, i->i_alias);
+		}
+
 		/*
 		 *   - remove/replace the instance from the devbase's list
 		 *
@@ -1102,14 +1110,17 @@ deldev(const char *name, const char *at)
 		previ = *ppi;
 		if (previ == i)
 			/* That implies d->d_ihead == i */
-			*ppi = i->i_bsame;
+			*ppi = match;
 		else
-			(*ppi)->i_bsame = i->i_bsame;
+			(*ppi)->i_bsame = match;
 		if (d->d_ipp == &i->i_bsame) {
-			if (previ == i)
-				d->d_ipp = &d->d_ihead;
-			else
-				d->d_ipp = &previ->i_bsame;
+			if (i->i_alias == NULL) {
+				if (previ == i)
+					d->d_ipp = &d->d_ihead;
+				else
+					d->d_ipp = &previ->i_bsame;
+			} else
+				d->d_ipp = &i->i_alias->i_bsame;
 		}
 	}
 	/*
