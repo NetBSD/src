@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/10/25 04:39:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2005/08/07 00:21:38 chris Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,8 @@
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		INSTALL ${RAMDISK} netbsd.aout-INSTALL
+MDSETTARGETS=		INSTALL ${RAMDISK} netbsd.aout-INSTALL \
+			INSTALL.ABLE ${RAMDISK} netbsd.able-INSTALL
 MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_NOSTRIP=		# defined

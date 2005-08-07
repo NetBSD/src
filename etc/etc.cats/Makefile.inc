@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.13 2003/03/22 00:13:35 chris Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2005/08/07 00:21:38 chris Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC
+KERNEL_SETS=		GENERIC GENERIC.ABLE
 KERNEL_SUFFIXES=	aout
 
-BUILD_KERNELS=		INSTALL
+BUILD_KERNELS=		INSTALL INSTALL.ABLE
 
 INSTALLATION_DIRS+=	installation/kernel
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.3 2004/10/21 12:14:22 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.4 2005/08/07 00:21:39 chris Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,3 +53,6 @@ message catsfspart
 
 message set_kernel_1
 {Kernel (GENERIC)}
+
+message set_kernel_2
+{Kernel (GENERIC.ABLE)}
