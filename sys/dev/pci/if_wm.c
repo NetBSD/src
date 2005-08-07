@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.105 2005/08/04 06:17:26 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.106 2005/08/07 05:18:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.105 2005/08/04 06:17:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.106 2005/08/07 05:18:42 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2305,22 +2305,27 @@ wm_rxintr(struct wm_softc *sc)
 		/*
 		 * Set up checksum info for this packet.
 		 */
-		if (status & WRX_ST_IPCS) {
-			WM_EVCNT_INCR(&sc->sc_ev_rxipsum);
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (errors & WRX_ER_IPE)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
-		if (status & WRX_ST_TCPCS) {
-			/*
-			 * Note: we don't know if this was TCP or UDP,
-			 * so we just set both bits, and expect the
-			 * upper layers to deal.
-			 */
-			WM_EVCNT_INCR(&sc->sc_ev_rxtusum);
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4|M_CSUM_UDPv4;
-			if (errors & WRX_ER_TCPE)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+		if ((status & WRX_ST_IXSM) == 0) {
+			if (status & WRX_ST_IPCS) {
+				WM_EVCNT_INCR(&sc->sc_ev_rxipsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (errors & WRX_ER_IPE)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
+			}
+			if (status & WRX_ST_TCPCS) {
+				/*
+				 * Note: we don't know if this was TCP or UDP,
+				 * so we just set both bits, and expect the
+				 * upper layers to deal.
+				 */
+				WM_EVCNT_INCR(&sc->sc_ev_rxtusum);
+				m->m_pkthdr.csum_flags |=
+				    M_CSUM_TCPv4|M_CSUM_UDPv4;
+				if (errors & WRX_ER_TCPE)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
 		}
 
 		ifp->if_ipackets++;
