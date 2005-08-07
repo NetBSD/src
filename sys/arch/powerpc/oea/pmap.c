@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23.2.1 2004/08/22 14:16:16 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23.2.1.2.1 2005/08/07 14:35:06 riz Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23.2.1 2004/08/22 14:16:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23.2.1.2.1 2005/08/07 14:35:06 riz Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -2005,13 +2005,35 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
-		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
-		if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
-			register_t batl = battable[va >> ADDR_SR_SHFT].batl;
-			register_t mask = (~(batu & BAT_BL) << 15) & ~0x1ffffL;
-			*pap = (batl & mask) | (va & ~mask);
-			return TRUE;
+		if ((MFPVR() >> 16) != MPC601) {
+			register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
+				register_t batl =
+				    battable[va >> ADDR_SR_SHFT].batl;
+				register_t mask =
+				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			}
+		} else {
+			register_t batu = battable[va >> 23].batu;
+			register_t batl = battable[va >> 23].batl;
+			register_t sr = iosrtable[va >> ADDR_SR_SHFT];
+			if (BAT601_VALID_P(batl) &&
+			    BAT601_VA_MATCH_P(batu, batl, va)) {
+				register_t mask =
+				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			} else if (SR601_VALID_P(sr) &&
+				   SR601_PA_MATCH_P(sr, va)) {
+				if (pap)
+					*pap = va;
+				return TRUE;
+			}
 		}
 		return FALSE;
 	}
@@ -2020,7 +2042,9 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
-		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
+		if (pap)
+			*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN)
+			    | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
 	return pvo != NULL;
