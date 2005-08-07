@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.55.2.1 2004/04/18 02:23:41 jmc Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.55.2.1.2.1 2005/08/07 15:51:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ struct wdc_softc {
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack)(struct wdc_channel *);
+	/* Optional callback to perform a bus reset */
+	void		(*reset)(struct wdc_channel *, int);
 };
 
 /*
@@ -205,6 +207,7 @@ void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,
 void	wdccommandshort(struct wdc_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_channel(struct ata_drive_datas *, int);
+void	wdc_do_reset(struct wdc_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 #define WDC_COMPLETE 0x01
