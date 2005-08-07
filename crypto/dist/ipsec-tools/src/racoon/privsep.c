@@ -1,6 +1,6 @@
-/*	$NetBSD: privsep.c,v 1.2 2005/06/04 22:09:27 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.3 2005/08/07 09:38:46 manu Exp $	*/
 
-/* Id: privsep.c,v 1.6.2.4 2005/03/16 23:18:43 manubsd Exp */
+/* Id: privsep.c,v 1.6.2.6 2005/06/04 22:08:15 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -69,7 +69,9 @@ static int privsep_sock[2] = { -1, -1 };
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
 static int safety_check(struct privsep_com_msg *, int i);
+#ifdef HAVE_LIBPAM
 static int port_check(int);
+#endif
 static int unsafe_env(char *const *);
 static int unknown_name(int);
 static int unknown_script(int);
@@ -905,6 +907,7 @@ privsep_xauth_login_system(usr, pwd)
 }
 #endif /* ENABLE_HYBRID */
 
+#ifdef HAVE_LIBPAM
 static int
 port_check(port)
 	int port;
@@ -918,6 +921,7 @@ port_check(port)
 
 	return 0;
 }
+#endif
 
 static int 
 safety_check(msg, index)

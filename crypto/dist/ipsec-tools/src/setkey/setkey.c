@@ -1,4 +1,4 @@
-/* $NetBSD: setkey.c,v 1.6 2005/06/26 23:49:31 christos Exp $ */
+/*	$NetBSD: setkey.c,v 1.7 2005/08/07 09:38:46 manu Exp $	*/
 
 /*	KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp	*/
 
@@ -70,7 +70,7 @@
 #include "config.h"
 #include "libpfkey.h"
 #include "package_version.h"
-#define extern
+#define extern /* so that variables in extern.h are not extern... */
 #include "extern.h"
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
@@ -162,6 +162,10 @@ main(argc, argv)
 		switch (c) {
 		case 'c':
 			f_mode = MODE_STDIN;
+#ifdef HAVE_READLINE
+			/* disable filename completion */
+			rl_bind_key('\t', rl_insert);
+#endif
 			break;
 		case 'f':
 			f_mode = MODE_SCRIPT;
@@ -307,15 +311,15 @@ stdin_loop()
 	parse_init();
 	while (1) {
 #ifdef HAVE_READLINE
-		char *read;
-		read = readline ("");
-		if (! read)
+		char *rbuf;
+		rbuf = readline ("");
+		if (! rbuf)
 			break;
 #else
 		char rbuf[1024];
 		rbuf[0] = '\0';
 		fgets (rbuf, sizeof(rbuf), stdin);
-		if (! rbuf[0])
+		if (!rbuf[0])
 			break;
 		if (rbuf[strlen(rbuf)-1] == '\n')
 			rbuf[strlen(rbuf)-1] = '\0';
@@ -324,7 +328,7 @@ stdin_loop()
 		if (comment)
 			*comment = '\0';
 
-		if (! rbuf[0])
+		if (!rbuf[0])
 			continue;
 
 		linelen += snprintf (&line[linelen], sizeof(line) - linelen,

@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.c,v 1.3 2005/05/20 00:54:55 manu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.4 2005/08/07 09:38:46 manu Exp $	*/
 
-/* Id: remoteconf.c,v 1.26.2.2 2005/03/16 23:18:43 manubsd Exp */
+/* Id: remoteconf.c,v 1.26.2.4 2005/05/20 00:37:41 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

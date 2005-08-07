@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.7 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.8 2005/08/07 09:38:45 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -91,7 +91,7 @@ do { \
 		printf("%u ", (num)); \
 	else \
 		printf("%s ", (str)[(num)]); \
-} while (/*CONSTCOND*/0)
+} while (0/*CONSTCOND*/)
 
 #define GETMSGV2S(v2s, num) \
 do { \
@@ -104,7 +104,7 @@ do { \
 		printf("%s ", p->str); \
 	else \
 		printf("%u ", (num)); \
-} while (/*CONSTCOND*/0)
+} while (0/*CONSTCOND*/)
 
 static char *str_ipaddr __P((struct sockaddr *));
 static char *str_prefport __P((u_int, u_int, u_int, u_int));
@@ -490,7 +490,7 @@ pfkey_spdump1(m, withports)
 				sport = atoi(pbuf);
 			printf("%s%s ", str_ipaddr(sa),
 				str_prefport((u_int)sa->sa_family,
-				    (u_int)m_saddr->sadb_address_prefixlen,
+				    (u_int)m_saddr->sadb_address_prefixlen, 
 				    (u_int)sport,
 				    (u_int)m_saddr->sadb_address_proto));
 			break;
@@ -511,7 +511,8 @@ pfkey_spdump1(m, withports)
 				dport = atoi(pbuf);
 			printf("%s%s ", str_ipaddr(sa),
 				str_prefport((u_int)sa->sa_family,
-				    (u_int)m_daddr->sadb_address_prefixlen, (u_int)dport,
+				    (u_int)m_daddr->sadb_address_prefixlen, 
+				    (u_int)dport,
 				    (u_int)m_saddr->sadb_address_proto));
 			break;
 		default:
@@ -546,7 +547,7 @@ pfkey_spdump1(m, withports)
 	if (withports)
 		d_xpl = ipsec_dump_policy_withports(m_xpl, "\n\t");
 	else
-		d_xpl = ipsec_dump_policy(m_xpl, "\n\t");
+		d_xpl = ipsec_dump_policy((ipsec_policy_t)m_xpl, "\n\t");
 		
 	if (!d_xpl)
 		printf("\n\tPolicy:[%s]\n", ipsec_strerror());
@@ -596,7 +597,7 @@ str_ipaddr(sa)
 	if (sa == NULL)
 		return "";
 
-	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), buf, sizeof(buf),
+	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), buf, sizeof(buf), 
 	    NULL, 0, niflag) == 0)
 		return buf;
 	return NULL;
