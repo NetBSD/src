@@ -1,7 +1,7 @@
-/*	$NetBSD: sr_601.h,v 1.1 2003/02/03 17:10:06 matt Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.1.6.1 2005/08/07 14:35:08 riz Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,11 +59,18 @@
 #define	SR601_BUID_MEMFORCED	0x07f	/* Translate to memory access, taking
 					   PA[0:3] from the PACKET1 field */
 
-#define	SR601(key, buid, csi, p1)			\
-	(SR601_T |					\
-	 (key) |					\
-	 (buid) << SR601_BUID_SHFT |			\
+#define	SR601(key, buid, csi, p1)				\
+	(SR601_T |						\
+	 (key) |						\
+	 (buid) << SR601_BUID_SHFT |				\
 	 (csi) << SR601_CSI_SHFT | (p1))
+
+#define	SR601_VALID_P(sr)					\
+	(((sr) & (SR601_T | SR601_BUID | SR601_CSI)) ==		\
+	 (SR601_T | (SR601_BUID_MEMFORCED << SR601_BUID_SHFT)))
+
+#define	SR601_PA_MATCH_P(sr, pa) 				\
+	 (((sr) & SR601_PACKET1) == ((pa) >> ADDR_SR_SHFT))
 
 #ifdef _KERNEL
 void mpc601_ioseg_add(paddr_t, register_t);
