@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2003/07/07 12:30:23 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2005/08/07 00:21:39 chris Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -54,3 +54,6 @@ message catsfspart	/* XXX translate */
 
 message set_kernel_1
 {Kernel (GENERIC)}
+
+message set_kernel_2
+{Kernel (GENERIC.ABLE)}
