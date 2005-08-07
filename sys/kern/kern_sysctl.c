@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.184 2005/07/23 23:34:52 peter Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.185 2005/08/07 04:54:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.184 2005/07/23 23:34:52 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.185 2005/08/07 04:54:07 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -690,7 +690,7 @@ int
 sysctl_create(SYSCTLFN_ARGS)
 {
 	struct sysctlnode nnode, *node, *pnode;
-	int error, ni, at, nm, type, sz, flags, rw, anum, v;
+	int error, ni, at, nm, type, sz, flags, anum, v;
 	void *own;
 
 	error = 0;
@@ -805,7 +805,6 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	type = SYSCTL_TYPE(nnode.sysctl_flags);
 	flags = SYSCTL_FLAGS(nnode.sysctl_flags);
-	rw = (flags & CTLFLAG_READWRITE) ? B_WRITE : B_READ;
 	sz = nnode.sysctl_size;
 
 	/*
