@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.4 2005/03/16 23:52:10 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.5 2005/08/07 08:46:25 manu Exp $	*/
 
-/* Id: cftoken.l,v 1.31.2.2 2005/03/16 23:18:43 manubsd Exp */
+/* Id: cftoken.l,v 1.31.2.5 2005/06/28 22:38:02 manubsd Exp */
 
 %{
 /*
@@ -230,6 +230,8 @@ hexstring	0x{hexdigit}+
 <S_CFG>pool_size	{ YYD; return(CFG_POOL_SIZE); }
 <S_CFG>banner		{ YYD; return(CFG_MOTD); }
 <S_CFG>auth_throttle	{ YYD; return(CFG_AUTH_THROTTLE); }
+<S_CFG>pfs_group	{ YYD; return(CFG_PFS_GROUP); }
+<S_CFG>save_passwd	{ YYD; return(CFG_SAVE_PASSWD); }
 <S_CFG>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* timer */
@@ -398,16 +400,22 @@ non_auth	{ YYD; yylval.num = algtype_non_auth;	return(ALGORITHMTYPE); }
 hmac_md5	{ YYD; yylval.num = algtype_hmac_md5;	return(ALGORITHMTYPE); }
 hmac_sha1	{ YYD; yylval.num = algtype_hmac_sha1;	return(ALGORITHMTYPE); }
 hmac_sha2_256	{ YYD; yylval.num = algtype_hmac_sha2_256;	return(ALGORITHMTYPE); }
+hmac_sha256	{ YYD; yylval.num = algtype_hmac_sha2_256;	return(ALGORITHMTYPE); }
 hmac_sha2_384	{ YYD; yylval.num = algtype_hmac_sha2_384;	return(ALGORITHMTYPE); }
+hmac_sha384	{ YYD; yylval.num = algtype_hmac_sha2_384;	return(ALGORITHMTYPE); }
 hmac_sha2_512	{ YYD; yylval.num = algtype_hmac_sha2_512;	return(ALGORITHMTYPE); }
+hmac_sha512	{ YYD; yylval.num = algtype_hmac_sha2_512;	return(ALGORITHMTYPE); }
 des_mac		{ YYD; yylval.num = algtype_des_mac;	return(ALGORITHMTYPE); }
 kpdk		{ YYD; yylval.num = algtype_kpdk;	return(ALGORITHMTYPE); }
 md5		{ YYD; yylval.num = algtype_md5;	return(ALGORITHMTYPE); }
 sha1		{ YYD; yylval.num = algtype_sha1;	return(ALGORITHMTYPE); }
 tiger		{ YYD; yylval.num = algtype_tiger;	return(ALGORITHMTYPE); }
 sha2_256	{ YYD; yylval.num = algtype_sha2_256;	return(ALGORITHMTYPE); }
+sha256		{ YYD; yylval.num = algtype_sha2_256;	return(ALGORITHMTYPE); }
 sha2_384	{ YYD; yylval.num = algtype_sha2_384;	return(ALGORITHMTYPE); }
+sha384		{ YYD; yylval.num = algtype_sha2_384;	return(ALGORITHMTYPE); }
 sha2_512	{ YYD; yylval.num = algtype_sha2_512;	return(ALGORITHMTYPE); }
+sha512		{ YYD; yylval.num = algtype_sha2_512;	return(ALGORITHMTYPE); }
 oui		{ YYD; yylval.num = algtype_oui;	return(ALGORITHMTYPE); }
 deflate		{ YYD; yylval.num = algtype_deflate;	return(ALGORITHMTYPE); }
 lzs		{ YYD; yylval.num = algtype_lzs;	return(ALGORITHMTYPE); }
@@ -510,7 +518,7 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 		}
 
 {quotedstring}	{
-			u_char *p = yytext;
+			char *p = yytext;
 
 			YYD;
 			while (*++p != '"') ;

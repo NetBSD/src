@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.8,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $
+.\"	$NetBSD: racoon.8,v 1.1.1.3 2005/08/07 08:47:51 manu Exp $
 .\"
-.\" Id: racoon.8,v 1.3 2004/07/12 20:35:58 ludvigm Exp
+.\" Id: racoon.8,v 1.3.10.1 2005/04/18 11:10:55 manubsd Exp
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .Dd November 20, 2000
 .Dt RACOON 8
-.Os KAME
+.Os
 .\"
 .Sh NAME
 .Nm racoon
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm racoon
 .Bk -words
-.Op Fl BFvdL46
+.Op Fl 46BdFLv
 .Ek
 .Bk -words
 .Op Fl f Ar configfile
@@ -49,90 +49,89 @@
 .Op Fl l Ar logfile
 .Ek
 .Bk -words
-.Op Fl p Ar isakmp-port
+.Op Fl P Ar isakmp-natt-port
 .Ek
 .Bk -words
-.Op Fl P Ar isakmp-natt-port
+.Op Fl p Ar isakmp-port
 .Ek
 .\"
 .Sh DESCRIPTION
 .Nm
-speaks IKE
+speaks the IKE
 .Pq ISAKMP/Oakley
 key management protocol,
-to establish security association with other hosts.
-SPD
+to establish security associations with other hosts.
+The SPD
 .Pq Security Policy Database
-in the kernel usually triggers to start
-.Nm racoon .
-.Nm racoon
-usually sends all of informational messages, warnings and error messages to
+in the kernel usually triggers
+.Nm .
+.Nm
+usually sends all informational messages, warnings and error messages to
 .Xr syslogd 8
-with the facility LOG_DAEMON, the priority LOG_INFO.
-Debugging messages are sent with the priority LOG_DEBUG.
+with the facility
+.Dv LOG_DAEMON
+and the priority
+.Dv LOG_INFO .
+Debugging messages are sent with the priority
+.Dv LOG_DEBUG .
 You should configure
 .Xr syslog.conf 5
 appropriately to see these messages.
 .Bl -tag -width Ds
+.It Fl 4
+.It Fl 6
+Specify the default address family for the sockets.
 .It Fl B
 Install SA(s) from the file which is specified in
 .Xr racoon.conf 5 .
+.It Fl d
+Increase the debug level.
+Multiple
+.Fl d
+arguments will increase the debug level even more.
 .It Fl F
 Run
-.Nm racoon
+.Nm
 in the foreground.
 .It Fl f Ar configfile
 Use
 .Ar configfile
 as the configuration file instead of the default.
+.It Fl L
+Include
+.Ar file_name:line_number:function_name
+in all messages.
 .It Fl l Ar logfile
 Use
 .Ar logfile
 as the logging file instead of
 .Xr syslogd 8 .
+.It Fl P Ar isakmp-natt-port
+Use
+.Ar isakmp-natt-port
+for NAT-Traversal port-floating.
+The default is 4500.
 .It Fl p Ar isakmp-port
-Listen to ISAKMP key exchange on port
+Listen to the ISAKMP key exchange on port
 .Ar isakmp-port
 instead of the default port number, 500.
-.It Fl P Ar isakmp-natt-port
-Use 
-.Ar isakmp-natt-port
-for NAT-Traversal port-floating. The default is 4500.
 .It Fl v
-The flag causes the packet dump be more verbose, with higher debugging level.
-.It Fl d
-Increase the debug level.
-Multiple
-.Fl d
-will increase the debug level even more.
-.It Fl L
-Include
-.Ar file_name:line_number:fuction_name
-location in all messages.
-.It Fl 4
-.It Fl 6
-Specifies the default address family for the sockets.
+This flag causes the packet dump be more verbose, with higher
+debugging level.
 .El
 .Pp
 .Nm
-assumes the presence of kernel random number device
+assumes the presence of the kernel random number device
 .Xr rnd 4
 at
 .Pa /dev/urandom .
-Informational messages are labeled
-.Em info ,
-and debugging messages are labeled
-.Em debug .
-You have to configure
-.Xr syslog.conf 5
-if you want to see them in a logging file.
 .\"
 .Sh RETURN VALUES
 The command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh FILES
-.Bl -tag -width /usr/local/v6/etc/racoon.conf -compact
-.It Pa /usr/local/v6/etc/racoon.conf
+.Bl -tag -width /etc/racoon.conf -compact
+.It Pa /etc/racoon.conf
 default configuration file.
 .El
 .\"
@@ -146,11 +145,11 @@ default configuration file.
 .Sh HISTORY
 The
 .Nm
-command first appeared in
+command first appeared in the
 .Dq YIPS
 Yokogawa IPsec implementation.
 .\"
 .Sh SECURITY CONSIDERATIONS
 The use of IKE phase 1 aggressive mode is not recommended,
-as describved in
-.Li http://www.kb.cert.org/vuls/id/886601 .
+as described in
+.Pa http://www.kb.cert.org/vuls/id/886601 .

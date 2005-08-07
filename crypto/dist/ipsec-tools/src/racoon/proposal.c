@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.1.1.3 2005/08/07 08:47:50 manu Exp $	*/
 
-/* Id: proposal.c,v 1.13 2004/09/13 14:09:19 ludvigm Exp */
+/* Id: proposal.c,v 1.13.8.5 2005/07/28 05:05:52 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,6 +222,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		newpp->lifebyte = pp1->lifebyte;
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	case PROP_CHECK_STRICT:
 		if (pp1->lifetime > pp2->lifetime) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -250,6 +251,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		}
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	case PROP_CHECK_CLAIM:
 		/* lifetime */
 		if (pp1->lifetime <= pp2->lifetime) {
@@ -276,6 +278,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 
     		goto prop_pfs_check;
 		break;
+
 	case PROP_CHECK_EXACT:
 		if (pp1->lifetime != pp2->lifetime) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -284,6 +287,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 				(int)pp2->lifetime, (int)pp1->lifetime);
 			goto err;
 		}
+
 		if (pp1->lifebyte != pp2->lifebyte) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"lifebyte mismatched: "
@@ -302,6 +306,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		newpp->lifebyte = pp1->lifebyte;
 		newpp->pfs_group = pp1->pfs_group;
 		break;
+
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid pcheck_level why?.\n");
@@ -367,8 +372,8 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 			if (pr1->spisize == sizeof(u_int16_t) &&
 			    pr2->spisize == sizeof(u_int32_t)) {
 				spisizematch = 1;
-			} else if (pr1->spisize == sizeof(u_int16_t) &&
-				 pr2->spisize == sizeof(u_int32_t)) {
+			} else if (pr2->spisize == sizeof(u_int16_t) &&
+				 pr1->spisize == sizeof(u_int32_t)) {
 				spisizematch = 1;
 			}
 			if (spisizematch) {
@@ -1022,12 +1027,15 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 		}
 
 		newpr->proto_id = ipproto2doi(req->saidx.proto);
-		newpr->spisize = 4;
+		if (newpr->proto_id == IPSECDOI_PROTO_IPCOMP)
+			newpr->spisize = 2;
+		else
+			newpr->spisize = 4;
 		if (lcconf->complex_bundle) {
 			newpr->encmode = pfkey2ipsecdoi_mode(req->saidx.mode);
 #ifdef ENABLE_NATT
 			if (iph2->ph1 && (iph2->ph1->natt_flags & NAT_DETECTED))
-				encmodesv += iph2->ph1->natt_options->mode_udp_diff;
+				newpr->encmode += iph2->ph1->natt_options->mode_udp_diff;
 #endif
 		}
 		else
@@ -1168,4 +1176,16 @@ end:
 		flushsaprop(pp_peer);
 	free_proppair(pair);
 	return error;
+}
+
+int
+tunnel_mode_prop(p)
+	struct saprop *p;
+{
+	struct saproto *pr;
+
+	for (pr = p->head; pr; pr = pr->next)
+		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL)
+			return 1;
+	return 0;
 }

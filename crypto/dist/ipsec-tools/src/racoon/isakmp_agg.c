@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_agg.c,v 1.1.1.2 2005/02/23 14:54:18 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.1.1.3 2005/08/07 08:47:00 manu Exp $	*/
 
-/* Id: isakmp_agg.c,v 1.20 2005/01/29 16:34:25 vanhu Exp */
+/* Id: isakmp_agg.c,v 1.20.2.1 2005/04/09 22:32:06 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -305,6 +305,12 @@ end:
 #ifdef ENABLE_DPD
 	if (vid_dpd != NULL)
 		vfree(vid_dpd);
+#endif
+#ifdef ENABLE_HYBRID
+	if (vid_xauth != NULL)
+		vfree(vid_xauth);
+	if (vid_unity != NULL)
+		vfree(vid_unity);
 #endif
 
 	return error;

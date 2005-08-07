@@ -1,4 +1,4 @@
-# Id: racoon.conf.sample-natt,v 1.3 2004/07/12 18:32:12 ludvigm Exp
+# Id: racoon.conf.sample-natt,v 1.3.10.1 2005/04/18 11:10:55 manubsd Exp
 # Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
 
 # This file can be used as a template for NAT-Traversal setups.
@@ -13,10 +13,10 @@ path certificate "/etc/racoon/cert";
 listen
 {
 	# First define an address where racoon will listen 
-	# for a "normal" IKE traffic. IANA allocated port 500.
+	# for "normal" IKE traffic. IANA allocated port 500.
 	isakmp 172.16.0.1[500];
 
-	# To use NAT-T you must also open the port 4500 of 
+	# To use NAT-T you must also open port 4500 of 
 	# the same address so that peers can do 'Port floating'.
 	# The same port will also be used for the UDP-Encapsulated 
 	# ESP traffic.
@@ -27,28 +27,28 @@ listen
 timer
 {
 	# To keep the NAT-mappings on your NAT gateway, there must be
-	# a traffic between the peers. Noramlly the UDP-Encap traffic
+	# traffic between the peers. Normally the UDP-Encap traffic
 	# (i.e. the real data transported over the tunnel) would be
-	# enough, but to be safe racoon will send the a short
+	# enough, but to be safe racoon will send a short
 	# "Keep-alive packet" every few seconds to every peer with
 	# whom it does NAT-Traversal.
-	# The default is 20s. Set it to 0 to disable sending completely.
+	# The default is 20s. Set it to 0s to disable sending completely.
 	natt_keepalive 10 sec;
 }
 
 # To trigger the SA negotiation there must be an appropriate 
 # policy in the kernel SPD. For example for traffic between 
 # networks 192.168.0.0/24 and 192.168.1.0/24 with gateways 
-# 172.16.0.1 and 172.16.1.1, where the first gw is behind 
-# a NAT which translates its address to 172.16.1.3 you need the 
+# 172.16.0.1 and 172.16.1.1, where the first gateway is behind 
+# a NAT which translates its address to 172.16.1.3, you need the 
 # following rules:
 # On 172.16.0.1 (e.g. behind the NAT):
 #     spdadd 192.168.0.0/24 192.168.1.0/24 any -P out ipsec \
 #            esp/tunnel/172.16.0.1-172.16.1.1/require;
 #     spdadd 192.168.1.0/24 192.168.0.0/24 any -P in ipsec \
 #            esp/tunnel/172.16.1.1-172.16.0.1/require;
-# On the other side (172.16.1.1) either use "generate_policy on"
-# statement in the remote block, or in the case that you know 
+# On the other side (172.16.1.1) either use a "generate_policy on"
+# statement in the remote block, or in case that you know 
 # the translated address, use the following policy:
 #     spdadd 192.168.1.0/24 192.168.0.0/24 any -P out ipsec \
 #            esp/tunnel/172.16.1.1-172.16.1.3/require;
@@ -70,9 +70,9 @@ remote anonymous
 	#   off - NAT-T support is disabled, i.e. neither offered,
 	#         nor accepted. This is the default.
 	#    on - normal NAT-T support, i.e. if NAT is detected 
-	#         along the way NAT-T is used.
+	#         along the way, NAT-T is used.
 	# force - if NAT-T is supported by both peers, it is used
-	#         regardless whether there is NAT gateway in between 
+	#         regardless of whether there is a NAT gateway between them
 	#         or not. This is useful for traversing some firewalls.
 	nat_traversal on;
 	

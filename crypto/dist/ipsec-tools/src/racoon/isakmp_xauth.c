@@ -1,9 +1,9 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4 2005/03/16 23:52:55 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.5 2005/08/07 08:47:28 manu Exp $	*/
 
-/* Id: isakmp_xauth.c,v 1.17.2.3 2005/03/16 00:13:38 manubsd Exp */
+/* Id: isakmp_xauth.c,v 1.17.2.5 2005/05/20 07:31:09 manubsd Exp */
 
 /*
- * Copyright (C) 2004 Emmanuel Dreyfus
+ * Copyright (C) 2004-2005 Emmanuel Dreyfus
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,9 @@
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
+#ifdef HAVE_SHADOW_H
+#include <shadow.h>
+#endif
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
@@ -689,18 +692,31 @@ xauth_login_system(usr, pwd)
 {
 	struct passwd *pw;
 	char *cryptpwd;
+	char *syscryptpwd;
+#ifdef HAVE_SHADOW_H
+	struct spwd *spw;
+
+	if ((spw = getspnam(usr)) == NULL)
+		return -1;
+
+	syscryptpwd = spw->sp_pwdp;
+#endif
 
 	if ((pw = getpwnam(usr)) == NULL)
 		return -1;
+
+#ifndef HAVE_SHADOW_H
+	syscryptpwd = pw->pw_passwd;
+#endif
 
 	/* No root login. Ever. */
 	if (pw->pw_uid == 0)
 		return -1;
 
-	if ((cryptpwd = crypt(pwd, pw->pw_passwd)) == NULL)
+	if ((cryptpwd = crypt(pwd, syscryptpwd)) == NULL)
 		return -1;
 
-	if (strcmp(cryptpwd, pw->pw_passwd) == 0)
+	if (strcmp(cryptpwd, syscryptpwd) == 0)
 		return 0;
 
 	return -1;
@@ -915,7 +931,7 @@ isakmp_xauth_set(iph1, attr)
 			EVT_PUSH(iph1->local, iph1->remote, 
 			    EVTT_XAUTH_FAILED, NULL);
 
-			iph1->mode_cfg->flags &= ISAKMP_CFG_DELETE_PH1;
+			iph1->mode_cfg->flags |= ISAKMP_CFG_DELETE_PH1;
 		} else {
 			EVT_PUSH(iph1->local, 
 			    iph1->remote, EVTT_XAUTH_SUCCESS, NULL);

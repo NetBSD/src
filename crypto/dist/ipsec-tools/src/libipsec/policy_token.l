@@ -1,6 +1,6 @@
-/*	$NetBSD: policy_token.l,v 1.1.1.2 2005/02/23 14:54:09 manu Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.1.1.3 2005/08/07 08:49:25 manu Exp $	*/
 
-/* Id: policy_token.l,v 1.10 2004/11/14 20:15:43 monas Exp */
+/* Id: policy_token.l,v 1.10.4.1 2005/05/07 14:30:38 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -155,6 +155,14 @@ unique		{ yylval.num = IPSEC_LEVEL_UNIQUE; return(LEVEL); }
 		}
 
 {hyphen}	{ return(HYPHEN); }
+
+{blcl}{decstring}{elcl} {
+			/* Remove leading '[' and trailing ']' */
+			yylval.val.buf = yytext + 1;
+			yylval.val.len = strlen(yytext) - 2;
+
+			return(PORT);
+		}
 
 {ws}		{ ; }
 {nl}		{ ; }

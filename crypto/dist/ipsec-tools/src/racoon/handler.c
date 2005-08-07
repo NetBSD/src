@@ -1,6 +1,6 @@
-/*	$NetBSD: handler.c,v 1.1.1.2 2005/02/23 14:54:15 manu Exp $	*/
+/*	$NetBSD: handler.c,v 1.1.1.3 2005/08/07 08:46:39 manu Exp $	*/
 
-/* Id: handler.c,v 1.13 2004/11/21 19:36:26 manubsd Exp */
+/* Id: handler.c,v 1.13.4.4 2005/07/14 12:00:36 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,6 +143,23 @@ getph1byaddr(local, remote)
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (p->status == PHASE1ST_EXPIRED)
 			continue;
+		if (CMPSADDR(local, p->local) == 0
+		 && CMPSADDR(remote, p->remote) == 0)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph1handle *
+getph1byaddrwop(local, remote)
+	struct sockaddr *local, *remote;
+{
+	struct ph1handle *p;
+
+	LIST_FOREACH(p, &ph1tree, chain) {
+		if (p->status == PHASE1ST_EXPIRED)
+			continue;
 		if (cmpsaddrwop(local, p->local) == 0
 		 && cmpsaddrwop(remote, p->remote) == 0)
 			return p;
@@ -157,7 +174,7 @@ getph1byaddr(local, remote)
  * with phase 2's destinaion.
  */
 struct ph1handle *
-getph1bydstaddr(remote)
+getph1bydstaddrwop(remote)
 	struct sockaddr *remote;
 {
 	struct ph1handle *p;
@@ -260,6 +277,11 @@ delph1(iph1)
 	}
 #endif
 
+#ifdef ENABLE_DPD
+	if (iph1->dpd_r_u != NULL)
+		SCHED_KILL(iph1->dpd_r_u);
+#endif
+
 	if (iph1->remote) {
 		racoon_free(iph1->remote);
 		iph1->remote = NULL;
@@ -267,6 +289,11 @@ delph1(iph1)
 	if (iph1->local) {
 		racoon_free(iph1->local);
 		iph1->local = NULL;
+	}
+
+	if (iph1->approval) {
+		delisakmpsa(iph1->approval);
+		iph1->approval = NULL;
 	}
 
 #ifdef ENABLE_HYBRID
@@ -427,6 +454,38 @@ getph2bymsgid(iph1, msgid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (p->msgid == msgid)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph2handle *
+getph2byid(src, dst, spid)
+	struct sockaddr *src, *dst;
+	u_int32_t spid;
+{
+	struct ph2handle *p;
+
+	LIST_FOREACH(p, &ph2tree, chain) {
+		if (spid == p->spid &&
+		    CMPSADDR(src, p->src) == 0 &&
+		    CMPSADDR(dst, p->dst) == 0)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph2handle *
+getph2bysaddr(src, dst)
+	struct sockaddr *src, *dst;
+{
+	struct ph2handle *p;
+
+	LIST_FOREACH(p, &ph2tree, chain) {
+		if (cmpsaddrstrict(src, p->src) == 0 &&
+		    cmpsaddrstrict(dst, p->dst) == 0)
 			return p;
 	}
 
@@ -617,6 +676,7 @@ flushph2()
 		if (p->status == PHASE2ST_ESTABLISHED) 
 			isakmp_info_send_d2(p);
 
+		delete_spd(p);
 		unbindph12(p);
 		remph2(p);
 		delph2(p);

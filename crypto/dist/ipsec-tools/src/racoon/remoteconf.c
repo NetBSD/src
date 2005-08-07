@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.c,v 1.1.1.3 2005/03/16 23:53:20 manu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.1.1.4 2005/08/07 08:47:58 manu Exp $	*/
 
-/* Id: remoteconf.c,v 1.26.2.2 2005/03/16 23:18:43 manubsd Exp */
+/* Id: remoteconf.c,v 1.26.2.4 2005/05/20 00:37:41 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,6 +106,16 @@ getrmconf_strict(remote, allow_anon)
 
 	withport = 0;
 
+#ifndef ENABLE_NATT
+	/* 
+	 * We never have ports set in our remote configurations, but when
+	 * NAT-T is enabled, the kernel can have policies with ports and
+	 * send us an acquire message for a destination that has a port set.
+	 * If we do this port check here, we don't find the remote config.
+	 *
+	 * In an ideal world, we would be able to have remote conf with
+	 * port, and the port could be a wildcard. That test could be used.
+	 */
 	switch (remote->sa_family) {
 	case AF_INET:
 		if (((struct sockaddr_in *)remote)->sin_port != IPSEC_PORT_ANY)
@@ -125,6 +135,7 @@ getrmconf_strict(remote, allow_anon)
 			"invalid family: %d\n", remote->sa_family);
 		exit(1);
 	}
+#endif /* ENABLE_NATT */
 
 	if (remote->sa_family == AF_UNSPEC)
 		snprintf (buf, sizeof(buf), "%s", "anonymous");
@@ -656,4 +667,32 @@ script_path_add(path)
 	sp[size - 2] = path;
 
 	return (size - 2);
+}
+
+struct isakmpsa *
+dupisakmpsa(sa)
+	struct isakmpsa *sa;
+{
+	struct isakmpsa *res = NULL;
+
+	if (sa == NULL)
+		return NULL;
+
+	res = newisakmpsa();
+	if(res == NULL)
+		return NULL;
+
+	*res = *sa;
+#ifdef HAVE_GSSAPI
+	/* 
+	 * XXX gssid
+	 */
+#endif
+	res->next=NULL;
+
+	if (sa->dhgrp != NULL)
+		oakley_setdhgroup(sa->dh_group, &(res->dhgrp));
+
+	return res;
+
 }

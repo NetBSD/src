@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_set_policy.3,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $
+.\"	$NetBSD: ipsec_set_policy.3,v 1.1.1.3 2005/08/07 08:49:18 manu Exp $
 .\"
 .\"	$KAME: ipsec_set_policy.3,v 1.16 2003/01/06 21:59:03 sumikawa Exp $
 .\"
@@ -31,17 +31,17 @@
 .\"
 .Dd May 5, 1998
 .Dt IPSEC_SET_POLICY 3
-.Os KAME
+.Os
 .Sh NAME
 .Nm ipsec_set_policy ,
 .Nm ipsec_get_policylen ,
 .Nm ipsec_dump_policy
-.Nd manipulate IPsec policy specification structure from readable string
+.Nd manipulate IPsec policy specification structure from human-readable policy string
 .\"
 .Sh LIBRARY
 .Lb libipsec
 .Sh SYNOPSIS
-.Fd #include <netinet6/ipsec.h>
+.In netinet6/ipsec.h
 .Ft "char *"
 .Fn ipsec_set_policy "char *policy" "int len"
 .Ft int
@@ -50,32 +50,31 @@
 .Fn ipsec_dump_policy "char *buf" "char *delim"
 .Sh DESCRIPTION
 .Fn ipsec_set_policy
-generates IPsec policy specification structure, namely
+generates an IPsec policy specification structure, namely
 .Li struct sadb_x_policy
 and/or
 .Li struct sadb_x_ipsecrequest
-from human-readable policy specification.
-policy specification must be given as C string
+from a human-readable policy specification.
+The policy specification must be given as a C string
 .Fa policy
-and length
-.Fa len
-of
-.Fa policy .
+and its length
+.Fa len .
 .Fn ipsec_set_policy
-will return the buffer of IPsec policy specification structure.
-The buffer is dynamically allocated, and must be freed by the caller by calling
-.Xr free 3 .
+will return a buffer with the corresponding IPsec policy specification structure.
+The buffer is dynamically allocated, and must be
+.Xr free 3 Ap d
+by the caller.
 .Pp
-You may want the length of the generated buffer such when calling
-.Xr setsockopt 2 .
+You can get the length of the generated buffer with
 .Fn ipsec_get_policylen
-will return the length.
+(i.e. for calling
+.Xr setsockopt 2 ) .
 .Pp
 .Fn ipsec_dump_policy
-converts IPsec policy structure into readable form.
+converts an IPsec policy structure into human-readable form.
 Therefore,
 .Fn ipsec_dump_policy
-can be regarded as inverse conversion of
+can be regarded as the inverse function to
 .Fn ipsec_set_policy .
 .Fa buf
 points to an IPsec policy structure,
@@ -86,11 +85,12 @@ If you set
 .Fa delim
 to
 .Dv NULL ,
-single whitespace is assumed.
+a single whitespace is assumed.
 .Fn ipsec_dump_policy
-returns pointer to dynamically allocated string.
-It is caller's responsibility to reclaim the region, by using
-.Xr free 3 .
+returns a pointer to a dynamically allocated string.
+It is the caller's responsibility to
+.Xr free 3
+it.
 .Pp
 .Fa policy
 is formatted as either of the following:
@@ -98,53 +98,56 @@ is formatted as either of the following:
 .It Ar direction [priority specification] Li discard
 .Ar direction
 must be
-.Li in
-,
-.Li out 
+.Li in ,
+.Li out ,
 or
 .Li fwd .
 .Ar direction
-specifies which direction the policy needs to be applied. Nonstandard 
-direction 
-.Ar fwd
-is substituted with 
-.Ar in
+specifies in which direction the policy needs to be applied.
+The non-standard direction
+.Li fwd
+is substituted with
+.Li in
 on platforms which do not support forward policies.
 .Pp
 .Ar priority specification
-is used to control the placement of the policy within the SPD. Policy position
-is determined by 
-a signed integer where higher priorities indicate the policy is placed 
-closer to the beginning of the list and lower priorities indicate the 
-policy is placed closer to the end of the list. Policies with equal
+is used to control the placement of the policy within the SPD.
+The policy position is determined by
+a signed integer where higher priorities indicate the policy is placed
+closer to the beginning of the list and lower priorities indicate the
+policy is placed closer to the end of the list.
+Policies with equal
 priorities are added at the end of the group of such policies.
 .Pp
 Priority can only
 be specified when libipsec has been compiled against kernel headers that
-support policy priorities (>= 2.6.6). It takes one of the following formats:
+support policy priorities (Linux \*[Gt]= 2.6.6).
+It takes one of the following formats:
 .Bl -tag  -width "discard"
 .It Xo
 .Ar {priority,prio} offset
 .Xc
 .Ar offset
-is an integer in ranges -2147483647 .. 214783648.
+is an integer in the range -2147483647..214783648.
 .It Xo
 .Ar {priority,prio} base {+,-} offset
 .Xc
 .Ar base
 is either
-.Li low (-1073741824),
-.Li def (0),
+.Li low (-1073741824) ,
+.Li def (0) ,
 or
-.Li high (1073741824)
+.Li high (1073741824) .
 .Pp
 .Ar offset
-is an unsigned integer. It can be up to 1073741824 for 
+is an unsigned integer.
+It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
-The interpretation of policy priority in these functions and the kernel DOES
-differ. The relationship between the two can be described as
+The interpretation of policy priority in these functions and the
+kernel DOES differ.
+The relationship between the two can be described as
 p(kernel) = 0x80000000 - p(func)
 .Pp
 With
@@ -152,16 +155,16 @@ With
 policy, packets will be dropped if they match the policy.
 .It Ar direction [priority specification] Li entrust
 .Li entrust
-means to consult to SPD defined by
+means to consult the SPD defined by
 .Xr setkey 8 .
 .It Ar direction [priority specification] Li bypass
 .Li bypass
-means to be bypassed the IPsec processing.
-.Pq packet will be transmitted in clear .
-This is for privileged socket.
+means to bypass the IPsec processing.
+.Pq the packet will be transmitted in clear .
+This is for privileged sockets.
 .It Xo
 .Ar direction
-.Ar [priority specification]
+.Bq Ar priority specification
 .Li ipsec
 .Ar request ...
 .Xc
@@ -170,7 +173,7 @@ means that the matching packets are subject to IPsec processing.
 .Li ipsec
 can be followed by one or more
 .Ar request
-string, which is formatted as below:
+strings, which are formatted as below:
 .Bl -tag  -width "discard"
 .It Xo
 .Ar protocol
@@ -185,7 +188,7 @@ string, which is formatted as below:
 .Ar protocol
 is either
 .Li ah ,
-.Li esp
+.Li esp ,
 or
 .Li ipcomp .
 .Pp
@@ -198,13 +201,13 @@ or
 .Ar src
 and
 .Ar dst
-specifies IPsec endpoint.
+specifies the IPsec endpoint.
 .Ar src
-always means
+always means the
 .Dq sending node
 and
 .Ar dst
-always means
+always means the
 .Dq receiving node .
 Therefore, when
 .Ar direction
@@ -224,11 +227,11 @@ Both
 .Ar src
 and
 .Ar dst
-can be omited. 
+can be omitted.
 .Pp
 .Ar level
 must be set to one of the following:
-.Li default , use , require
+.Li default , use , require ,
 or
 .Li unique .
 .Li default
@@ -271,21 +274,25 @@ and slash prior to
 .Ar level
 can be omitted.
 However, it is encouraged to specify them explicitly
-to avoid unintended behaviors.
+to avoid unintended behavior.
 If
 .Ar level
 is omitted, it will be interpreted as
 .Li default .
 .El
 .Pp
-Note that there is a bit difference of specification from
+Note that there are slight differences to the specification of
 .Xr setkey 8 .
-In specification by
+In the specification of
 .Xr setkey 8 ,
-both entrust and bypass are not used.
+both
+.Li entrust
+and
+.Li bypass
+are not used.
 Refer to
 .Xr setkey 8
-for detail.
+for details.
 .Pp
 Here are several examples
 .Pq long lines are wrapped for readability :
@@ -300,13 +307,16 @@ in ipsec ipcomp/transport//use
 .El
 .Sh RETURN VALUES
 .Fn ipsec_set_policy
-returns a pointer to the allocated buffer of policy specification if successful; otherwise a NULL pointer is returned.
+returns a pointer to the allocated buffer with the policy specification
+if successful; otherwise a
+.Dv NULL
+pointer is returned.
 .Fn ipsec_get_policylen
-returns with positive value
+returns a positive value
 .Pq meaning the buffer size
-on success, and negative value on errors.
+on success, and a negative value on errors.
 .Fn ipsec_dump_policy
-returns a pointer to dynamically allocated region on success,
+returns a pointer to a dynamically allocated region on success,
 and
 .Dv NULL
 on errors.
@@ -315,4 +325,4 @@ on errors.
 .Xr ipsec 4 ,
 .Xr setkey 8
 .Sh HISTORY
-The functions first appeared in WIDE/KAME IPv6 protocol stack kit.
+The functions first appeared in the WIDE/KAME IPv6 protocol stack kit.

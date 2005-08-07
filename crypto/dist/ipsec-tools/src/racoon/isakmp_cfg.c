@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3 2005/03/16 23:52:42 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.1.1.4 2005/08/07 08:47:06 manu Exp $	*/
 
-/* Id: isakmp_cfg.c,v 1.26.2.1 2005/03/16 00:13:38 manubsd Exp */
+/* Id: isakmp_cfg.c,v 1.26.2.5 2005/05/10 09:45:46 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -101,6 +101,8 @@ struct isakmp_cfg_config isakmp_cfg_config = {
 	ISAKMP_CFG_MAX_CNX,		/* pool_size */
 	THROTTLE_PENALTY,		/* auth_throttle */
 	ISAKMP_CFG_MOTD,		/* motd */
+	0,				/* pfs_group */
+	0,				/* save_passwd */
 };
 
 static vchar_t *buffer_cat(vchar_t *s, vchar_t *append);
@@ -130,7 +132,7 @@ isakmp_cfg_r(iph1, msg)
 {
 	struct isakmp *packet;
 	struct isakmp_gen *ph;
-	size_t tlen;
+	int tlen;
 	char *npp;
 	int np;
 	vchar_t *dmsg;
@@ -303,7 +305,7 @@ isakmp_cfg_reply(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	int type;
@@ -440,7 +442,7 @@ isakmp_cfg_request(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	vchar_t *payload;
@@ -586,7 +588,7 @@ isakmp_cfg_set(iph1, attrpl)
 	struct isakmp_pl_attr *attrpl;
 {
 	struct isakmp_data *attr;
-	size_t tlen;
+	int tlen;
 	size_t alen;
 	char *npp;
 	vchar_t *payload;
@@ -637,7 +639,7 @@ isakmp_cfg_set(iph1, attrpl)
 			attr++;
 		} else {
 			alen = ntohs(attr->lorv);
-			tlen -= alen;
+			tlen -= (sizeof(*attr) + alen);
 			npp = (char *)attr;
 			attr = (struct isakmp_data *)
 			    (npp + sizeof(*attr) + alen);
@@ -971,8 +973,10 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 	iph2->src = dupsaddr(iph1->local);
 	switch (iph1->remote->sa_family) {
 	case AF_INET:
+#ifndef ENABLE_NATT
 		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
 		((struct sockaddr_in *)iph2->src)->sin_port = 0;
+#endif
 		break;
 #ifdef INET6
 	case AF_INET6:

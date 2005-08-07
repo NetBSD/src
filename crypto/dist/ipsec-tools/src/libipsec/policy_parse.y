@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.1.1.2 2005/02/23 14:54:09 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.1.1.3 2005/08/07 08:49:25 manu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -112,15 +112,16 @@ static struct sockaddr *p_dst = NULL;
 
 struct _val;
 extern void yyerror __P((char *msg));
-static struct sockaddr *parse_sockaddr __P((struct _val *buf));
+static struct sockaddr *parse_sockaddr __P((struct _val *addrbuf,
+    struct _val *portbuf));
 static int rule_check __P((void));
 static int init_x_policy __P((void));
-static int set_x_request __P((struct sockaddr *src, struct sockaddr *dst));
-static int set_sockaddr __P((struct sockaddr *addr));
+static int set_x_request __P((struct sockaddr *, struct sockaddr *));
+static int set_sockaddr __P((struct sockaddr *));
 static void policy_parse_request_init __P((void));
-static caddr_t policy_parse __P((char *msg, int msglen));
+static void *policy_parse __P((const char *, int));
 
-extern void __policy__strbuffer__init__ __P((char *msg));
+extern void __policy__strbuffer__init__ __P((const char *));
 extern void __policy__strbuffer__free__ __P((void));
 extern int yyparse __P((void));
 extern int yylex __P((void));
@@ -142,11 +143,11 @@ extern char *__libipsectext;	/*XXX*/
 %token PRIORITY PLUS
 %token <num32> PRIO_BASE 
 %token <val> PRIO_OFFSET 
-%token ACTION PROTOCOL MODE LEVEL LEVEL_SPECIFY IPADDRESS
+%token ACTION PROTOCOL MODE LEVEL LEVEL_SPECIFY IPADDRESS PORT
 %token ME ANY
 %token SLASH HYPHEN
 %type <num> DIR PRIORITY ACTION PROTOCOL MODE LEVEL
-%type <val> IPADDRESS LEVEL_SPECIFY
+%type <val> IPADDRESS LEVEL_SPECIFY PORT
 
 %%
 policy_spec
@@ -341,13 +342,24 @@ level
 
 addresses
 	:	IPADDRESS {
-			p_src = parse_sockaddr(&$1);
+			p_src = parse_sockaddr(&$1, NULL);
 			if (p_src == NULL)
 				return -1;
 		}
 		HYPHEN
 		IPADDRESS {
-			p_dst = parse_sockaddr(&$4);
+			p_dst = parse_sockaddr(&$4, NULL);
+			if (p_dst == NULL)
+				return -1;
+		}
+	|	IPADDRESS PORT {
+			p_src = parse_sockaddr(&$1, &$2);
+			if (p_src == NULL)
+				return -1;
+		}
+		HYPHEN
+		IPADDRESS PORT {
+			p_dst = parse_sockaddr(&$5, &$6);
 			if (p_dst == NULL)
 				return -1;
 		}
@@ -381,18 +393,45 @@ yyerror(msg)
 }
 
 static struct sockaddr *
-parse_sockaddr(buf)
-	struct _val *buf;
+parse_sockaddr(addrbuf, portbuf)
+	struct _val *addrbuf;
+	struct _val *portbuf;
 {
 	struct addrinfo hints, *res;
+	char *addr;
 	char *serv = NULL;
 	int error;
 	struct sockaddr *newaddr = NULL;
 
+	if ((addr = malloc(addrbuf->len + 1)) == NULL) {
+		yyerror("malloc failed");
+		__ipsec_set_strerror(strerror(errno));
+		return NULL;
+	}
+
+	if (portbuf && ((serv = malloc(portbuf->len + 1)) == NULL)) {
+		free(addr);
+		yyerror("malloc failed");
+		__ipsec_set_strerror(strerror(errno));
+		return NULL;
+	}
+
+	strncpy(addr, addrbuf->buf, addrbuf->len);
+	addr[addrbuf->len] = '\0';
+
+	if (portbuf) {
+		strncpy(serv, portbuf->buf, portbuf->len);
+		serv[portbuf->len] = '\0';
+	}
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
-	error = getaddrinfo(buf->buf, serv, &hints, &res);
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(addr, serv, &hints, &res);
+	free(addr);
+	if (serv != NULL)
+		free(serv);
 	if (error != 0) {
 		yyerror("invalid IP address");
 		__ipsec_set_strerror(gai_strerror(error));
@@ -510,6 +549,7 @@ set_x_request(src, dst)
 		return -1;
 	}
 	pbuf = n;
+
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;
@@ -563,9 +603,9 @@ policy_parse_request_init()
 	return;
 }
 
-static caddr_t
+static void *
 policy_parse(msg, msglen)
-	char *msg;
+	const char *msg;
 	int msglen;
 {
 	int error;
@@ -596,9 +636,9 @@ policy_parse(msg, msglen)
 	return pbuf;
 }
 
-caddr_t
+ipsec_policy_t
 ipsec_set_policy(msg, msglen)
-	char *msg;
+	__ipsec_const char *msg;
 	int msglen;
 {
 	caddr_t policy;
@@ -613,4 +653,3 @@ ipsec_set_policy(msg, msglen)
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return policy;
 }
-

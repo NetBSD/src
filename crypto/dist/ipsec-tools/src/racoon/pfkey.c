@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.3 2005/08/07 08:47:44 manu Exp $	*/
 
-/* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
+/* Id: pfkey.c,v 1.31.2.9 2005/07/28 05:05:52 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -447,6 +447,24 @@ ipsecdoi2pfkey_aalg(hashtype)
 		return SADB_AALG_MD5HMAC;
 	case IPSECDOI_ATTR_AUTH_HMAC_SHA1:
 		return SADB_AALG_SHA1HMAC;
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_256:
+#if (defined SADB_X_AALG_SHA2_256) && !defined(SADB_X_AALG_SHA2_256HMAC)
+		return SADB_X_AALG_SHA2_256;
+#else
+		return SADB_X_AALG_SHA2_256HMAC;
+#endif
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_384:
+#if (defined SADB_X_AALG_SHA2_384) && !defined(SADB_X_AALG_SHA2_384HMAC)
+		return SADB_X_AALG_SHA2_384;
+#else
+		return SADB_X_AALG_SHA2_384HMAC;
+#endif
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_512:
+#if (defined SADB_X_AALG_SHA2_512) && !defined(SADB_X_AALG_SHA2_512HMAC)
+		return SADB_X_AALG_SHA2_512;
+#else
+		return SADB_X_AALG_SHA2_512HMAC;
+#endif
 	case IPSECDOI_ATTR_AUTH_KPDK:		/* need special care */
 		return SADB_AALG_NONE;
 
@@ -840,8 +858,8 @@ pk_sendgetspi(iph2)
 		/* this works around a bug in Linux kernel where it allocates 4 byte
 		   spi's for IPCOMP */
 		else if (satype == SADB_X_SATYPE_IPCOMP) {
-			minspi = ntohl (0x100);
-			maxspi = ntohl (0xffff);
+			minspi = 0x100;
+			maxspi = 0xffff;
 		}
 		else {
 			minspi = 0;
@@ -983,7 +1001,7 @@ pk_sendupdate(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4;  /* XXX static size of window */ 
@@ -1059,9 +1077,9 @@ pk_sendupdate(iph2)
 			natt.dport = extract_port (iph2->ph1->local);
 			natt.oa = NULL;		// FIXME: Here comes OA!!!
 			natt.frag = iph2->ph1->rmconf->esp_frag;
-		}
-		else
+		} else {
 			memset (&natt, 0, sizeof (natt));
+		}
 
 		if (pfkey_send_update_nat(
 				lcconf->sock_pfkey,
@@ -1257,9 +1275,7 @@ pk_recvupdate(mhp)
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
 	 */
-	/* XXX ???
-	  */
-/*	unbindph12(iph2);*/
+	unbindph12(iph2);
 
 	iph2->sce = sched_new(iph2->approval->lifetime,
 	    isakmp_ph2expire_stub, iph2);
@@ -1277,7 +1293,7 @@ pk_sendadd(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4; /* XXX static size of window */ 
@@ -1354,9 +1370,13 @@ pk_sendadd(iph2)
 			natt.dport = extract_port (iph2->ph1->remote);
 			natt.oa = NULL;		// FIXME: Here comes OA!!!
 			natt.frag = iph2->ph1->rmconf->esp_frag;
-		}
-		else
+		} else {
 			memset (&natt, 0, sizeof (natt));
+
+			/* Remove port information, that SA doesn't use it */
+			set_port(src, 0);
+			set_port(dst, 0);
+		}
 
 		if (pfkey_send_add_nat(
 				lcconf->sock_pfkey,
@@ -1380,6 +1400,10 @@ pk_sendadd(iph2)
 		}
 #else
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add\n");
+
+		/* Remove port information, it is not used without NAT-T */
+		set_port(src, 0);
+		set_port(dst, 0);
 
 		if (pfkey_send_add(
 				lcconf->sock_pfkey,
@@ -1615,6 +1639,7 @@ pk_recvacquire(mhp)
 	struct secpolicy *sp_out = NULL, *sp_in = NULL;
 #define MAXNESTEDSA	5	/* XXX */
 	struct ph2handle *iph2[MAXNESTEDSA];
+	struct sockaddr *src, *dst;
 	int n;	/* # of phase 2 handler */
 
 	/* ignore this message because of local test mode. */
@@ -1632,6 +1657,8 @@ pk_recvacquire(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
+	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
 	/* ignore if type is not IPSEC_POLICY_IPSEC */
 	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
@@ -1696,7 +1723,7 @@ pk_recvacquire(mhp)
 	 *       has to prcesss such a acquire message because racoon may
 	 *       lost the expire message.
 	 */
-	iph2[0] = getph2byspid(xpl->sadb_x_policy_id);
+	iph2[0] = getph2byid(src, dst, xpl->sadb_x_policy_id);
 	if (iph2[0] != NULL) {
 		if (iph2[0]->status < PHASE2ST_ESTABLISHED) {
 			plog(LLV_DEBUG, LOCATION, NULL,
@@ -2122,7 +2149,7 @@ pk_recvspdupdate(mhp)
 	sp = getsp(&spidx);
 	if (sp == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"such policy does not already exist: %s\n",
+			"such policy does not already exist: \"%s\"\n",
 			spidx2str(&spidx));
 	} else {
 		remsp(sp);
@@ -2842,13 +2869,13 @@ sadbsecas2str(src, dst, proto, spi, mode)
 	p += i;
 	blen -= i;
 
-	i = snprintf(p, blen, "%s->", saddrwop2str(src));
+	i = snprintf(p, blen, "%s->", saddr2str(src));
 	if (i < 0 || i >= blen)
 		return NULL;
 	p += i;
 	blen -= i;
 
-	i = snprintf(p, blen, "%s ", saddrwop2str(dst));
+	i = snprintf(p, blen, "%s ", saddr2str(dst));
 	if (i < 0 || i >= blen)
 		return NULL;
 	p += i;

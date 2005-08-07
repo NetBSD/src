@@ -1,6 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.1.1.2 2005/02/23 14:54:39 manu Exp $
-.\"
-.\"	$KAME: setkey.8,v 1.93 2003/09/24 23:44:46 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.1.1.3 2005/08/07 08:49:30 manu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -31,7 +29,7 @@
 .\"
 .Dd March 19, 2004
 .Dt SETKEY 8
-.Os KAME
+.Os
 .\"
 .Sh NAME
 .Nm setkey
@@ -39,26 +37,25 @@
 .\"
 .Sh SYNOPSIS
 .Nm setkey
-.Op Fl nvrk
+.Op Fl knrv
 .Ar file ...
 .Nm setkey
-.Op Fl nvrk
+.Op Fl knrv
 .Fl c
 .Nm setkey
-.Op Fl vrk
+.Op Fl krv
 .Fl f Ar filename
 .Nm setkey
-.Op Fl aPlvrk
+.Op Fl aklPrv
 .Fl D
 .Nm setkey
-.Op Fl Pv
+.Op Fl Pvp
 .Fl F
 .Nm setkey
 .Op Fl H
 .Fl x
 .Nm setkey
-.Op Fl ?
-.Op Fl V
+.Op Fl ?V
 .\"
 .Sh DESCRIPTION
 .Nm
@@ -67,7 +64,7 @@ Security Association Database (SAD) entries
 as well as Security Policy Database (SPD) entries in the kernel.
 .Pp
 .Nm
-takes a series of operations from the standard input
+takes a series of operations from standard input
 .Po
 if invoked with
 .Fl c
@@ -82,63 +79,76 @@ if invoked with
 .It (no flag)
 Dump the SAD entries or SPD entries contained in the specified
 .Ar file .
-.It Fl D
-Dump the SAD entries.
-If with
-.Fl P ,
-the SPD entries are dumped.
-.It Fl F
-Flush the SAD entries.
-If with
-.Fl P ,
-the SPD entries are flushed.
+.It Fl ?
+Print short help.
 .It Fl a
 .Nm
 usually does not display dead SAD entries with
 .Fl D .
-If with
-.Fl a ,
-the dead SAD entries will be displayed as well.
-A dead SAD entry means that
-it has been expired but remains in the system
-because it is referenced by some SPD entries.
+If
+.Fl a
+is also specified, the dead SAD entries will be displayed as well.
+A dead SAD entry is one that has expired but remains in the
+system because it is referenced by some SPD entries.
+.It Fl D
+Dump the SAD entries.
+If
+.Fl P
+is also specified, the SPD entries are dumped. 
+If
+.Fl p
+is specified with 
+.FL P ,
+the ports that can be used for ESP over UDP are displayed.
+.It Fl F
+Flush the SAD entries.
+If
+.Fl P
+is also specified, the SPD entries are flushed.
 .It Fl H
-Add hexadecimal dump on
+Add hexadecimal dump in
 .Fl x
 mode.
 .It Fl h
-On NetBSD, synonym for
+On
+.Nx ,
+synonym for
 .Fl H .
 On other systems, synonym for
 .Fl ? .
+.It Fl k
+Use semantics used in kernel.
+Available only in Linux.
+See also
+.Fl r .
 .It Fl l
 Loop forever with short output on
 .Fl D .
-.It Fl v
-Be verbose.
-The program will dump messages exchanged on
-.Dv PF_KEY
-socket, including messages sent from other processes to the kernel.
 .It Fl n
 No action.
-The program will check validity of input, but no changes to the SPD will
-be made.
+The program will check validity of the input, but no changes to
+the SPD will be made.
 .It Fl r
-Use semantics described in IPSec RFCs. This mode is default. For details see section 
-.Xr RFC vs Linux kernel semantics.
+Use semantics described in IPsec RFCs.
+This mode is default.
+For details see section
+.Sx RFC vs Linux kernel semantics .
 Available only in Linux.
-.It Fl k
-Use semantics used in kernel. Available only in Linux.
+See also
+.Fl k .
 .It Fl x
-Loop forever and dump all the messages transmitted to
+Loop forever and dump all the messages transmitted to the
 .Dv PF_KEY
 socket.
 .Fl xx
-makes each timestamps unformatted.
-.It Fl ?
-Print short help.
+prints the unformatted timestamps.
 .It Fl V
 Print version string.
+.It Fl v
+Be verbose.
+The program will dump messages exchanged on the
+.Dv PF_KEY
+socket, including messages sent from other processes to the kernel.
 .El
 .Ss Configuration syntax
 With
@@ -148,7 +158,9 @@ or
 on the command line,
 .Nm
 accepts the following configuration syntax.
-Lines starting with hash signs ('#') are treated as comment lines.
+Lines starting with hash signs
+.Pq Sq #
+are treated as comment lines.
 .Bl -tag -width Ds
 .It Xo
 .Li add
@@ -160,8 +172,8 @@ Lines starting with hash signs ('#') are treated as comment lines.
 .Xc
 Add an SAD entry.
 .Li add
-can fail with multiple reasons,
-including when the key length does not match the specified algorithm.
+can fail for multiple reasons, including when the key length does
+not match the specified algorithm.
 .\"
 .It Xo
 .Li get
@@ -218,9 +230,9 @@ Add an SPD entry.
 .Ar tag Ar policy
 .Li ;
 .Xc
-Add an SPD entry based on PF tag.
+Add an SPD entry based on a PF tag.
 .Ar tag
-must be a string surrounded by doublequote.
+must be a string surrounded by double quotes.
 .\"
 .It Xo
 .Li spddelete
@@ -254,7 +266,7 @@ Meta-arguments are as follows:
 .It Ar src
 .It Ar dst
 Source/destination of the secure communication is specified as
-IPv4/v6 address.
+an IPv4/v6 address.
 .Nm
 can resolve a FQDN into numeric addresses.
 If the FQDN resolves into multiple addresses,
@@ -262,10 +274,10 @@ If the FQDN resolves into multiple addresses,
 will install multiple SAD/SPD entries into the kernel
 by trying all possible combinations.
 .Fl 4 ,
-.Fl 6
+.Fl 6 ,
 and
 .Fl n
-restricts the address resolution of FQDN in certain ways.
+restrict the address resolution of FQDN in certain ways.
 .Fl 4
 and
 .Fl 6
@@ -288,6 +300,8 @@ AH based on rfc2402
 AH based on rfc1826
 .It Li ipcomp
 IPComp
+.It Li tcp
+TCP-MD5 based on rfc2385
 .El
 .\"
 .Pp
@@ -296,11 +310,13 @@ Security Parameter Index
 .Pq SPI
 for the SAD and the SPD.
 .Ar spi
-must be a decimal number, or a hexadecimal number with
+must be a decimal number, or a hexadecimal number with a
 .Dq Li 0x
 prefix.
 SPI values between 0 and 255 are reserved for future use by IANA
-and they cannot be used.
+and cannot be used.
+TCP-MD5 associations must use 0x1000 and therefore only have per-host
+granularity at this time.
 .\"
 .Pp
 .It Ar extensions
@@ -311,7 +327,7 @@ take some of the following:
 Specify a security protocol mode for use.
 .Ar mode
 is one of following:
-.Li transport , tunnel
+.Li transport , tunnel ,
 or
 .Li any .
 The default value is
@@ -323,10 +339,10 @@ Specify window size of bytes for replay prevention.
 must be decimal number in 32-bit word.
 If
 .Ar size
-is zero or not specified, replay check don't take place.
+is zero or not specified, replay checks don't take place.
 .\"
 .It Fl u Ar id
-Specify the identifier of the policy entry in SPD.
+Specify the identifier of the policy entry in the SPD.
 See
 .Ar policy .
 .\"
@@ -336,15 +352,15 @@ defines the content of the ESP padding.
 is one of following:
 .Bl -tag -width random-pad -compact
 .It Li zero-pad
-All of the padding are zero.
+All the paddings are zero.
 .It Li random-pad
-A series of randomized values are set.
+A series of randomized values are used.
 .It Li seq-pad
-A series of sequential increasing numbers started from 1 are set.
+A series of sequential increasing numbers started from 1 are used.
 .El
 .\"
 .It Fl f Li nocyclic-seq
-Don't allow cyclic sequence number.
+Don't allow cyclic sequence numbers.
 .\"
 .It Fl lh Ar time
 .It Fl ls Ar time
@@ -359,14 +375,14 @@ Specify hard/soft life time duration of the SA measured in bytes transported.
 .It Ar algorithm
 .Bl -tag -width Fl -compact
 .It Fl E Ar ealgo Ar key
-Specify a encryption algorithm
+Specify an encryption algorithm
 .Ar ealgo
 for ESP.
 .It Xo
 .Fl E Ar ealgo Ar key
 .Fl A Ar aalgo Ar key
 .Xc
-Specify a encryption algorithm
+Specify an encryption algorithm
 .Ar ealgo ,
 as well as a payload authentication algorithm
 .Ar aalgo ,
@@ -377,11 +393,11 @@ Specify an authentication algorithm for AH.
 Specify a compression algorithm for IPComp.
 If
 .Fl R
-is specified,
+is specified, the
 .Ar spi
 field value will be used as the IPComp CPI
 .Pq compression parameter index
-on wire as is.
+on wire as-is.
 If
 .Fl R
 is not specified,
@@ -391,23 +407,25 @@ field will be used only as an index for kernel internal usage.
 .El
 .Pp
 .Ar key
-must be double-quoted character string, or a series of hexadecimal digits
-preceded by
+must be a double-quoted character string, or a series of hexadecimal
+digits preceded by
 .Dq Li 0x .
 .Pp
 Possible values for
 .Ar ealgo ,
-.Ar aalgo
+.Ar aalgo ,
 and
 .Ar calgo
-are specified in separate section.
+are specified in the
+.Sx Algorithms
+sections.
 .\"
 .Pp
 .It Ar src_range
 .It Ar dst_range
-These are selections of the secure communication specified as
-IPv4/v6 address or IPv4/v6 address range, and it may accompany
-TCP/UDP port specification.
+These select the communications that should be secured by IPsec.
+They can be an IPv4/v6 address or an IPv4/v6 address range, and
+may be accompanied by a TCP/UDP port specification.
 This takes the following form:
 .Bd -literal -offset
 .Ar address
@@ -419,11 +437,11 @@ This takes the following form:
 .Ar prefixlen
 and
 .Ar port
-must be decimal number.
-The square bracket around
+must be decimal numbers.
+The square brackets around
 .Ar port
-is really necessary.
-They are not manpage metacharacters.
+are really necessary,
+they are not man page meta-characters.
 For FQDN resolution, the rules applicable to
 .Ar src
 and
@@ -433,47 +451,47 @@ apply here as well.
 .Pp
 .It Ar upperspec
 Upper-layer protocol to be used.
-You can use one of words in
+You can use one of the words in
 .Pa /etc/protocols
 as
-.Ar upperspec .
-Or
+.Ar upperspec ,
+or
 .Li icmp6 ,
 .Li ip4 ,
-and
-.Li any
-can be specified.
+or
+.Li any .
 .Li any
 stands for
 .Dq any protocol .
-Also you can use the protocol number.
-You can specify a type and/or a code of ICMPv6 when
-Upper-layer protocol is ICMPv6.
-the specification can be placed after
+You can also use the protocol number.
+You can specify a type and/or a code of ICMPv6 when the
+upper-layer protocol is ICMPv6.
+The specification can be placed after
 .Li icmp6 .
-A type is separated with a code by single comma.
-A code must be specified anytime.
+A type is separated from a code by single comma.
+A code must always be specified.
 When a zero is specified, the kernel deals with it as a wildcard.
-Note that the kernel can not distinguish a wildcard from that a type
-of ICMPv6 is zero.
-For example, the following means the policy doesn't require IPsec
+Note that the kernel can not distinguish a wildcard from an ICPMv6
+type of zero.
+For example, the following means that the policy doesn't require IPsec
 for any inbound Neighbor Solicitation.
 .Dl spdadd ::/0 ::/0 icmp6 135,0 -P in none ;
 .Pp
-NOTE:
+.Em Note :
 .Ar upperspec
 does not work against forwarding case at this moment,
-as it requires extra reassembly at forwarding node
+as it requires extra reassembly at the forwarding node
 .Pq not implemented at this moment .
-We have many protocols in
+There are many protocols in
 .Pa /etc/protocols ,
-but protocols except of TCP, UDP and ICMP may not be suitable to use with IPsec.
-You have to consider and be careful to use them.
+but all protocols except of TCP, UDP, and ICMP may not be suitable
+to use with IPsec.
+You have to consider carefully what to use.
 .\"
 .Pp
 .It Ar policy
 .Ar policy
-is the one of the following three formats:
+is in one of the following three formats:
 .Bd -literal -offset indent
 .It Fl P Ar direction [priority specification] Li discard
 .It Fl P Ar direction [priority specification] Li none
@@ -485,46 +503,46 @@ is the one of the following three formats:
 You must specify the direction of its policy as
 .Ar direction .
 Either
-.Ar out
-,
-.Ar in
+.Ar out ,
+.Ar in ,
 or
 .Ar fwd
-are used.
+can be used.
 .Pp
 .Ar priority specification
-is used to control the placement of the policy within the SPD. Policy position
-is determined by 
-a signed integer where higher priorities indicate the policy is placed 
-closer to the beginning of the list and lower priorities indicate the 
-policy is placed closer to the end of the list. Policies with equal 
-priorities are added at the end of the group of such policies.
+is used to control the placement of the policy within the SPD.
+Policy position is determined by
+a signed integer where higher priorities indicate the policy is placed
+closer to the beginning of the list and lower priorities indicate the
+policy is placed closer to the end of the list.
+Policies with equal priorities are added at the end of groups
+of such policies.
 .Pp
 Priority can only
 be specified when setkey has been compiled against kernel headers that
-support policy priorities (>= 2.6.6). 
-If the kernel does not support priorities,
-a warning message will be printed the first time a priority specification is
-used.
+support policy priorities (Linux \*[Gt]= 2.6.6).
+If the kernel does not support priorities, a warning message will
+be printed the first time a priority specification is used.
 Policy priority takes one of the following formats:
 .Bl -tag  -width "discard"
 .It Xo
 .Ar {priority,prio} offset
 .Xc
 .Ar offset
-is an integer in ranges -2147483647 .. 214783648.
+is an integer in the range from \-2147483647 to 214783648.
 .It Xo
-.Ar {priority,prio} base {+,-} offset
+.Ar {priority,prio} base {+,\-} offset
 .Xc
 .Ar base
 is either
-.Li low (-1073741824),
-.Li def (0),
+.Li low (\-1073741824) ,
+.Li def (0) ,
 or
 .Li high (1073741824)
 .Pp
 .Ar offset
-is an unsigned integer. It can be up to 1073741824 for 
+is an unsigned integer.
+It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
@@ -534,15 +552,16 @@ means the packet matching indexes will be discarded.
 means that IPsec operation will not take place onto the packet.
 .Li ipsec
 means that IPsec operation will take place onto the packet.
-The part of
+.Pp
+The
 .Ar protocol/mode/src-dst/level
-specifies the rule how to process the packet.
+part specifies the rule how to process the packet.
 Either
 .Li ah ,
-.Li esp
+.Li esp ,
 or
 .Li ipcomp
-is to be set as
+must be used as
 .Ar protocol .
 .Ar mode
 is either
@@ -553,13 +572,13 @@ If
 .Ar mode
 is
 .Li tunnel ,
-you must specify the end-points addresses of the SA as
+you must specify the end-point addresses of the SA as
 .Ar src
 and
 .Ar dst
 with
 .Sq -
-between these addresses which is used to specify the SA to use.
+between these addresses, which is used to specify the SA to use.
 If
 .Ar mode
 is
@@ -571,36 +590,37 @@ and
 can be omitted.
 .Ar level
 is to be one of the following:
-.Li default , use , require
+.Li default , use , require ,
 or
 .Li unique .
-If the SA is not available in every level, the kernel will request
-getting SA to the key exchange daemon.
+If the SA is not available in every level, the kernel will
+ask the key exchange daemon to establish a suitable SA.
 .Li default
-means the kernel consults to the system wide default against protocol you
-specified, e.g.
+means the kernel consults the system wide default for the protocol
+you specified, e.g. the
 .Li esp_trans_deflev
 sysctl variable, when the kernel processes the packet.
 .Li use
-means that the kernel use a SA if it's available,
+means that the kernel uses an SA if it's available,
 otherwise the kernel keeps normal operation.
 .Li require
 means SA is required whenever the kernel sends a packet matched
 with the policy.
 .Li unique
-is the same to require,
-in addition, it allows the policy to bind with the unique out-bound SA.
+is the same as
+.Li require ;
+in addition, it allows the policy to match the unique out-bound SA.
 You just specify the policy level
 .Li unique ,
 .Xr racoon 8
 will configure the SA for the policy.
 If you configure the SA by manual keying for that policy,
-you can put the decimal number as the policy identifier after
+you can put a decimal number as the policy identifier after
 .Li unique
-separated by colon
+separated by a colon
 .Sq \&:
-like the following;
-.Li unique:number .
+like:
+.Li unique:number
 in order to bind this policy to the SA.
 .Li number
 must be between 1 and 32767.
@@ -608,11 +628,30 @@ It corresponds to
 .Ar extensions Fl u
 of the manual SA configuration.
 When you want to use SA bundle, you can define multiple rules.
-For example, if an IP header was followed by AH header followed by ESP header
-followed by an upper layer protocol header, the rule
-would be:
+For example, if an IP header was followed by an AH header followed
+by an ESP header followed by an upper layer protocol header, the
+rule would be:
 .Dl esp/transport//require ah/transport//require ;
 The rule order is very important.
+.Pp
+When NAT-T is enabled in the kernel, policy matching for ESP over
+UDP packets may be done on endpoint addresses and port
+(this depends on the system.
+System that do not perform the port check cannot support
+multiple endpoints behind the same NAT).
+When using ESP over UDP, you can specify port numbers in the endpoint
+addresses to get the correct matching.
+Here is an example:
+.Bd -literal -offset
+spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any -P out ipsec
+    esp/tunnel/192.168.0.1[4500]-192.168.1.2[30000]/require ;
+
+.Ed
+These ports must be left unspecified (which defaults to 0) for
+anything other than ESP over UDP.
+They can be displayed in SPD dump using
+.Nm
+.Fl DPp .
 .Pp
 Note that
 .Dq Li discard
@@ -620,13 +659,11 @@ and
 .Dq Li none
 are not in the syntax described in
 .Xr ipsec_set_policy 3 .
-There are little differences in the syntax.
+There are a few differences in the syntax.
 See
 .Xr ipsec_set_policy 3
 for detail.
-.Pp
 .El
-.Pp
 .\"
 .Ss Algorithms
 The following list shows the supported algorithms.
@@ -634,11 +671,11 @@ The following list shows the supported algorithms.
 and
 .Sy algorithm
 are almost orthogonal.
-Followings are the list of authentication algorithms that can be used as
+These authentication algorithms can be used as
 .Ar aalgo
 in
 .Fl A Ar aalgo
-of
+of the
 .Ar protocol
 parameter:
 .Pp
@@ -653,24 +690,25 @@ keyed-md5	128		ah: 96bit ICV (no document)
 keyed-sha1	160		ah: 96bit ICV (no document)
 		160		ah-old: 128bit ICV (no document)
 null		0 to 2048	for debugging
-hmac-sha2-256	256		ah: 96bit ICV
+hmac-sha256	256		ah: 96bit ICV
 				(draft-ietf-ipsec-ciph-sha-256-00)
 		256		ah-old: 128bit ICV (no document)
-hmac-sha2-384	384		ah: 96bit ICV (no document)
+hmac-sha384	384		ah: 96bit ICV (no document)
 		384		ah-old: 128bit ICV (no document)
-hmac-sha2-512	512		ah: 96bit ICV (no document)
+hmac-sha512	512		ah: 96bit ICV (no document)
 		512		ah-old: 128bit ICV (no document)
 hmac-ripemd160	160		ah: 96bit ICV (RFC2857)
 				ah-old: 128bit ICV (no document)
 aes-xcbc-mac	128		ah: 96bit ICV (RFC3566)
 		128		ah-old: 128bit ICV (no document)
+tcp-md5		8 to 640	tcp: rfc2385
 .Ed
 .Pp
-Followings are the list of encryption algorithms that can be used as
+These encryption algorithms can be used as
 .Ar ealgo
 in
 .Fl E Ar ealgo
-of
+of the
 .Ar protocol
 parameter:
 .Pp
@@ -690,13 +728,13 @@ aes-ctr		160/224/288	draft-ietf-ipsec-ciph-aes-ctr-03
 .Pp
 Note that the first 128 bits of a key for
 .Li aes-ctr
-will be used as AES key, and remaining 32 bits will be used as nonce.
+will be used as AES key, and the remaining 32 bits will be used as nonce.
 .Pp
-Followings are the list of compression algorithms that can be used as
+These compression algorithms can be used as
 .Ar calgo
 in
 .Fl C Ar calgo
-of
+of the
 .Ar protocol
 parameter:
 .Pp
@@ -706,24 +744,34 @@ deflate		rfc2394
 .Ed
 .\"
 .Ss RFC vs Linux kernel semantics
-Linux kernel uses 
-.Ar fwd 
-policy instead of 
+The Linux kernel uses the
+.Ar fwd
+policy instead of the
 .Ar in
 policy for packets what are forwarded through that particular box.
 .Pp
-In 
+In
 .Ar kernel
-mode setkey manages and shows policies and SAs exactly as they are stored in the kernel.
+mode,
+.Nm
+manages and shows policies and SAs exactly as they are stored in the kernel.
 .Pp
-In 
+In
 .Ar RFC
-mode 
-.Ar setkey
-.Bd -literal
-creates fwd policies for every in policy inserted.
-(not implemented yet) filters out all fwd policies
-.Ed
+mode,
+.Nm
+.Bl -item
+.It
+creates
+.Ar fwd
+policies for every
+.Ar in
+policy inserted
+.It
+(not implemented yet) filters out all
+.Ar fwd
+policies
+.El
 .Sh RETURN VALUES
 The command exits with 0 on success, and non-zero on errors.
 .\"
@@ -748,6 +796,7 @@ dump esp ;
 spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 	-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
+add 10.1.10.34 10.1.10.36 tcp 0x1000 -A tcp-md5 "TCP-MD5 BGP secret" ;
 .Ed
 .\"
 .Sh SEE ALSO
@@ -763,7 +812,8 @@ spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 .Sh HISTORY
 The
 .Nm
-command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+command first appeared in the WIDE Hydrangea IPv6 protocol stack
+kit.
 The command was completely re-designed in June 1998.
 .\"
 .Sh BUGS
@@ -774,6 +824,6 @@ For IPsec gateway configuration,
 .Ar src_range
 and
 .Ar dst_range
-with TCP/UDP port number do not work, as the gateway does not reassemble
-packets
-.Pq cannot inspect upper-layer headers .
+with TCP/UDP port numbers does not work, as the gateway does not
+reassemble packets
+.Pq it cannot inspect upper-layer headers .

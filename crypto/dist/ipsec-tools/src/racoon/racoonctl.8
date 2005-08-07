@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoonctl.8,v 1.1.1.3 2005/02/24 20:53:56 manu Exp $
+.\"	$NetBSD: racoonctl.8,v 1.1.1.4 2005/08/07 08:47:55 manu Exp $
 .\"
-.\" Id: racoonctl.8,v 1.2.4.1 2005/02/24 18:04:42 manubsd Exp
+.\" Id: racoonctl.8,v 1.2.4.2 2005/04/18 11:10:55 manubsd Exp
 .\"
 .\" Copyright (C) 2004 Emmanuel Dreyfus
 .\" All rights reserved.
@@ -31,36 +31,37 @@
 .\"
 .Dd November 16, 2004
 .Dt RACOONCTL 8
+.Os
 .\"
 .Sh NAME
 .Nm racoonctl
 .Nd racoon administrative control tool
 .\"
 .Sh SYNOPSIS
-.Nm 
+.Nm
 reload-config
-.Nm 
+.Nm
 show-schedule
-.Nm 
+.Nm
 .Op Fl l Op Fl l
-show-sa 
+show-sa
 .Op isakmp|esp|ah|ipsec
-.Nm 
+.Nm
 flush-sa
 .Op isakmp|esp|ah|ipsec
-.Nm 
+.Nm
 delete-sa
 .Ar saopts
-.Nm 
+.Nm
 establish-sa
 .Op Fl u Ar identity
 .Ar saopts
-.Nm 
-vpn-connect 
+.Nm
+vpn-connect
 .Op Fl u identity
 .Ar vpn_gateway
-.Nm 
-vpn-disconnect 
+.Nm
+vpn-disconnect
 .Ar vpn_gateway
 .Nm
 show-event
@@ -69,111 +70,123 @@ show-event
 .Sh DESCRIPTION
 .Nm
 is used to control
-.Xr racoon 8 
+.Xr racoon 8
 operation, if ipsec-tools was configured with adminport support.
 Communication between
 .Nm
-and 
+and
 .Xr racoon 8
-is done through a UNIX socket. By changing the default mode and ownership 
-of the socket, you can allow non root users to alter 
+is done through a UNIX socket.
+By changing the default mode and ownership
+of the socket, you can allow non-root users to alter
 .Xr racoon 8
 behavior, so do that with caution.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
 .It reload-config
-This should cause 
+This should cause
 .Xr racoon 8
-to reload its configuration file. This seems completely broken at the time
-this man page is written. 
+to reload its configuration file.
+This seems completely broken at the time this man page is written.
 .It show-schedule
 Unknown command.
 .It show-sa Op isakmp|esp|ah|ipsec
-Dump the SA: All the SA if no SA class is provided, or either ISAKMP SA, 
-IPsec ESP SA, or IPsec AH SA, or all IPsec SA. 
+Dump the SA: All the SAs if no SA class is provided, or either ISAKMP SAs,
+IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
 Use
-.Fl l 
+.Fl l
 to increase verbosity.
 .It flush-sa Op isakmp|esp|ah|ipsec
-is used to flush all SA if no SA class is provided, or a class of SA, 
-either ISAKMP SA, IPsec ESP SA, or IPsec AH SA, or all IPsec SA.
-.It Xo establish-sa 
-.Oo Fl u Ar username 
+is used to flush all SAs if no SA class is provided, or a class of SAs,
+either ISAKMP SAs, IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
+.It Xo establish-sa
+.Oo Fl u Ar username
 .Oc Ar saopts
 .Xc
-Establish a SA, either a ISAKMP SA, IPsec ESP SA, or IPsec AH SA. The 
-optionnal 
+Establish an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
+The optional
 .Fl u Ar username
-can be used when establishing an ISAKMP SA while hybrid auth is in use. 
+can be used when establishing an ISAKMP SA while hybrid auth is in use.
 .Nm
-will prompt you for the password associated with 
+will prompt you for the password associated with
 .Ar username
-and theses credentials will be used in the Xauth exchange.
+and these credentials will be used in the Xauth exchange.
 .Pp
-.Ar saopts 
-can have the following formats:
+.Ar saopts
+has the following format:
 .Bl -tag -width Bl
 .It isakmp {inet|inet6} Ar src Ar dst
 .It {esp|ah} {inet|inet6} Ar src/prefixlen/port Ar dst/prefixlen/port
 {icmp|tcp|udp|any}
 .El
-.It Xo vpn-connect 
-.Oo Fl u Ar username 
+.It Xo vpn-connect
+.Oo Fl u Ar username
 .Oc Ar vpn_gateway
 .Xc
-This is a particular case of the previous command. It will establish an ISAKMP
-SA with
+This is a particular case of the previous command.
+It will establish an ISAKMP SA with
 .Ar vpn_gateway .
 .It delete-sa Ar saopts
-Delete a SA, either a ISAKMP SA, IPsec ESP SA, or IPsec AH SA. 
+Delete an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 .It vpn-disconnect Ar vpn_gateway
-This is a particular case of the previous command. It will kill all SA
-associated with 
+This is a particular case of the previous command.
+It will kill all SAs associated with
 .Ar vpn_gateway .
 .It show-event Op Fl l
-Dump all events reported by 
+Dump all events reported by
 .Xr racoon 8 ,
 then quit.
 The
 .Fl l
-causes
+flag causes
 .Nm
-to not stop once all the events have been readen, but rather to loop
-awaiting and reporting new events. 
+to not stop once all the events have been read, but rather to loop
+awaiting and reporting new events.
 .El
 .Pp
 Command shortcuts are available:
-.Bl -tag -width Bl
-.It rc reload-config 
-.It ss show-sa 
-.It sc show-schedule
-.It fs flush-sa
-.It ds delete-sa
-.It es establish-sa
-.It vc vpn-connect
-.It vd vpn-disconnect
-.It se show-event
+.Bl -tag -width XXX -compact -offset indent
+.It rc
+reload-config
+.It ss
+show-sa
+.It sc
+show-schedule
+.It fs
+flush-sa
+.It ds
+delete-sa
+.It es
+establish-sa
+.It vc
+vpn-connect
+.It vd
+vpn-disconnect
+.It se
+show-event
 .El
 .\"
 .Sh RETURN VALUES
 The command should exit with 0 on success, and non-zero on errors.
 .\"
 .Sh FILES
-.Bl -tag -width Bl
-.It Pa /var/racoon/racoon.sock or Pa /var/run/racoon.sock 
+.Bl -tag -width 30n -compact
+.It Pa /var/racoon/racoon.sock No or
+.It Pa /var/run/racoon.sock
 .Xr racoon 8
-control socket. 
+control socket.
 .El
 .\"
 .Sh SEE ALSO
 .Xr ipsec 4 ,
-.Xr racoon 8 .
+.Xr racoon 8
 .Sh HISTORY
-Once was 
-.Xr kmpstat 8 
-in the KAME project. It turned into 
-.Xr racoonctl 8 
-but remained undocumented for a while. 
-.An Emmanuel Dreyfus Aq manu@netbsd.org
+Once was
+.Ic kmpstat
+in the KAME project.
+It turned into
+.Nm
+but remained undocumented for a while.
+.An Emmanuel Dreyfus Aq manu@NetBSD.org
 wrote this man page.

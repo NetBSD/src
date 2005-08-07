@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.1.1.2 2005/02/23 14:54:40 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.1.1.3 2005/08/07 08:49:36 manu Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -62,18 +62,7 @@
 #include "y.tab.h"
 #endif
 
-int lineno = 1;
-
-extern u_char m_buf[BUFSIZ];
-extern u_int m_len;
-extern int f_debug;
-
-int yylex __P((void));
-void yyfatal __P((const char *s));
-void yyerror __P((const char *s));
-extern void parse_init __P((void));
-int parse __P((FILE **));
-int yyparse __P((void));
+#include "extern.h"
 
 /* make the code compile on *BSD-current */
 #ifndef SADB_X_AALG_SHA2_256
@@ -141,7 +130,7 @@ spddump		{ return(SPDDUMP); }
 spdflush	{ return(SPDFLUSH); }
 tagged		{ return(TAGGED); }
 {hyphen}P	{ BEGIN S_PL; return(F_POLICY); }
-<S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.%\-+_/ \n\t]* {
+<S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.%\-+_/ \n\t\]\[]* {
 			yymore();
 
 			/* count up for nl */
@@ -177,6 +166,9 @@ ah-old		{ yylval.num = 1; return(PR_AH); }
 esp-old		{ yylval.num = 1; return(PR_ESP); }
 esp-udp		{ yylval.num = 0; return(PR_ESPUDP); }
 ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
+tcp		{ 
+			yylval.num = 0; return(PR_TCP); 
+		}
 
 	/* authentication alogorithm */
 {hyphen}A	{ BEGIN S_AUTHALG; return(F_AUTH); }
@@ -185,8 +177,11 @@ ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
 <S_AUTHALG>keyed-md5	{ yylval.num = SADB_X_AALG_MD5; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>keyed-sha1	{ yylval.num = SADB_X_AALG_SHA; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>hmac-sha2-256 { yylval.num = SADB_X_AALG_SHA2_256; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha256 { yylval.num = SADB_X_AALG_SHA2_256; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>hmac-sha2-384 { yylval.num = SADB_X_AALG_SHA2_384; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha384 { yylval.num = SADB_X_AALG_SHA2_384; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>hmac-sha2-512 { yylval.num = SADB_X_AALG_SHA2_512; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha512 { yylval.num = SADB_X_AALG_SHA2_512; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>hmac-ripemd160 { yylval.num = SADB_X_AALG_RIPEMD160HMAC; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>aes-xcbc-mac { yylval.num = SADB_X_AALG_AES_XCBC_MAC; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>tcp-md5	{ 
@@ -330,6 +325,7 @@ parse(fp)
 {
 	yyin = *fp;
 
+	lineno = 1;
 	parse_init();
 
 	if (yyparse()) {

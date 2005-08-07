@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.1.1.3 2005/08/07 08:47:34 manu Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -292,7 +292,7 @@ natt_float_ports (struct ph1handle *iph1)
 	
 	set_port (iph1->local, iph1->natt_options->float_port);
 	set_port (iph1->remote, iph1->natt_options->float_port);
-	iph1->natt_flags |= NAT_PORTS_CHANGED;
+	iph1->natt_flags |= NAT_PORTS_CHANGED | NAT_ADD_NON_ESP_MARKER;
 	
 	natt_keepalive_add_ph1 (iph1);
 }
@@ -393,7 +393,7 @@ natt_keepalive_add_ph1 (struct ph1handle *iph1)
   /* Should only the NATed host send keepalives?
      If yes, add '(iph1->natt_flags & NAT_DETECTED_ME)'
      to the following condition. */
-  if (iph1->natt_flags & NAT_PORTS_CHANGED &&
+  if (iph1->natt_flags & NAT_DETECTED &&
       ! (iph1->natt_flags & NAT_KA_QUEUED)) {
     ret = natt_keepalive_add (iph1->local, iph1->remote);
     if (ret == 0)

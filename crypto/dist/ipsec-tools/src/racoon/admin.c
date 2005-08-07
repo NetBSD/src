@@ -1,6 +1,6 @@
-/*	$NetBSD: admin.c,v 1.1.1.2 2005/02/23 14:54:10 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.1.1.3 2005/08/07 08:46:18 manu Exp $	*/
 
-/* Id: admin.c,v 1.17 2005/01/02 08:39:09 manubsd Exp */
+/* Id: admin.c,v 1.17.2.4 2005/07/12 11:49:44 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,14 +92,13 @@ mode_t adminsock_mode = 0600;
 static struct sockaddr_un sunaddr;
 static int admin_process __P((int, char *));
 static int admin_reply __P((int, struct admin_com *, vchar_t *));
-static void isakmp_flush_sa __P((struct ph1handle *, char *, char *));
 
 int
 admin_handler()
 {
 	int so2;
 	struct sockaddr_storage from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct admin_com com;
 	char *combuf = NULL;
 	pid_t pid = -1;
@@ -292,11 +291,13 @@ admin_process(so2, combuf)
 			break;
 		}
 
-		if ((iph1 = getph1byaddr(src, dst)) == NULL) {
+		if ((iph1 = getph1byaddrwop(src, dst)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "phase 1 for %s -> %s not found\n", loc, rem);
 		} else {
-			isakmp_flush_sa(iph1, loc, rem);
+			if (iph1->status == PHASE1ST_ESTABLISHED)
+				isakmp_info_send_d1(iph1);
+			purge_remote(iph1);
 		}
 
 		racoon_free(loc);
@@ -321,16 +322,18 @@ admin_process(so2, combuf)
 		}
 
 		plog(LLV_INFO, LOCATION, NULL, 
-		    "Flushing all SA for peer %s\n", rem);
+		    "Flushing all SAs for peer %s\n", rem);
 
-		while ((iph1 = getph1bydstaddr(dst)) != NULL) {
+		while ((iph1 = getph1bydstaddrwop(dst)) != NULL) {
 			if ((loc = strdup(saddrwop2str(iph1->local))) == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL, 
 				    "cannot allocate memory\n");
 				break;
 			}
 
-			isakmp_flush_sa(iph1, loc, rem);
+			if (iph1->status == PHASE1ST_ESTABLISHED)
+				isakmp_info_send_d1(iph1);
+			purge_remote(iph1);
 
 			racoon_free(loc);
 		}
@@ -569,8 +572,10 @@ admin2pfkey_proto(proto)
 int
 admin_init()
 {
-	if (adminsock_path == NULL)
+	if (adminsock_path == NULL) {
+		lcconf->sock_admin = -1;
 		return 0;
+	}
 
 	memset(&sunaddr, 0, sizeof(sunaddr));
 	sunaddr.sun_family = AF_UNIX;
@@ -631,21 +636,3 @@ admin_close()
 	return 0;
 }
 #endif
-
-static void
-isakmp_flush_sa(iph1, loc, rem)
-	struct ph1handle *iph1;
-	char *loc;
-	char *rem;
-{
-	plog(LLV_INFO, LOCATION, NULL, 
-	    "Flushing SA for %s -> %s\n", loc, rem);
-
-	if (iph1->status == PHASE1ST_ESTABLISHED)
-		isakmp_info_send_d1(iph1);
-
-	remph1(iph1);
-	delph1(iph1);
-
-	return;
-}

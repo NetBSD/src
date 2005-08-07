@@ -16,7 +16,9 @@ esac
 
 echo $@
 echo "LOCAL_ADDR = ${LOCAL_ADDR}"
+echo "LOCAL_PORT = ${LOCAL_PORT}"
 echo "REMOTE_ADDR = ${REMOTE_ADDR}"
+echo "REMOTE_PORT = ${REMOTE_PORT}"
 echo "DEFAULT_GW = ${DEFAULT_GW}"
 echo "INTERNAL_ADDR4 = ${INTERNAL_ADDR4}"
 echo "INTERNAL_DNS4 = ${INTERNAL_DNS4}"
@@ -44,11 +46,20 @@ Linux)
 	;;
 esac
 
+# Use this for a NAT-T setup
+LOCAL="${LOCAL_ADDR}[${LOCAL_PORT}]"
+REMOTE="${REMOTE_ADDR}[${REMOTE_PORT}]"
+
+# Use this for a non NAT-T setup
+#LOCAL="${LOCAL_ADDR}"
+#REMOTE="${REMOTE_ADDR}"
+
+
 echo "
 spdadd ${INTERNAL_ADDR4}/32[any] 0.0.0.0/0[any] any
-       -P out ipsec esp/tunnel/${LOCAL_ADDR}-${REMOTE_ADDR}/require;
+       -P out ipsec esp/tunnel/${LOCAL}-${REMOTE}/require;
 spdadd 0.0.0.0/0[any] ${INTERNAL_ADDR4}[any] any
-       -P in ipsec esp/tunnel/${REMOTE_ADDR}-${LOCAL_ADDR}/require;
+       -P in ipsec esp/tunnel/${REMOTE}-${LOCAL}/require;
 " | setkey -c
 
 #
@@ -59,7 +70,7 @@ case `uname -s` in
 Linux)
 	echo "
 	spddelete 0.0.0.0/0[any] ${INTERNAL_ADDR4}[any] any
-		-P fwd ipsec esp/tunnel/${REMOTE_ADDR}-${LOCAL_ADDR}/require;
+		-P fwd ipsec esp/tunnel/${REMOTE}-${LOCAL}/require;
 	" | setkey -c
 	;;
 esac

@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_unity.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.1.1.3 2005/08/07 08:47:23 manu Exp $	*/
 
-/* Id: isakmp_unity.c,v 1.5 2004/11/09 15:56:00 ludvigm Exp */
+/* Id: isakmp_unity.c,v 1.5.4.1 2005/05/10 09:45:46 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -142,8 +142,13 @@ isakmp_unity_req(iph1, attr)
 	}
 
 	case UNITY_PFS:
+		reply_attr = isakmp_cfg_short(iph1, attr, 
+		    isakmp_cfg_config.pfs_group);
+		break;
+
 	case UNITY_SAVE_PASSWD:
-		reply_attr = isakmp_cfg_short(iph1, attr, 0);
+		reply_attr = isakmp_cfg_short(iph1, attr, 
+		    isakmp_cfg_config.save_passwd);
 		break;
 
 	case UNITY_DDNS_HOSTNAME:
