@@ -1,15 +1,1 @@
-EXTRA_DIST = ipsec-tools.spec.in racoon.init sysconfig.racoon
-
-all-local: ipsec-tools.spec
-
-## We borrow guile's convention and use @-...-@ as the substitution
-## brackets here, instead of the usual @...@.  This prevents autoconf
-## from substituting the values directly into the left-hand sides of
-## the sed substitutions.  *sigh*
-ipsec-tools.spec: ipsec-tools.spec.in Makefile
-	rm -f $@.tmp
-	sed < $< > $@.tmp \
-	    -e 's:@-VERSION-@:${VERSION}:'
-	mv $@.tmp $@
-
-CLEANFILES = ipsec-tools.spec
+EXTRA_DIST = ipsec-tools.spec.in ipsec-tools.spec racoon.init sysconfig.racoon

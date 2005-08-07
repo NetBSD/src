@@ -1,4 +1,4 @@
-/*	$NetBSD: getcertsbyname.c,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+/*	$NetBSD: getcertsbyname.c,v 1.1.1.3 2005/08/07 08:46:35 manu Exp $	*/
 
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 
@@ -60,12 +60,13 @@
 /* XXX should it use ci_errno to hold errno instead of h_errno ? */
 extern int h_errno;
 
-static struct certinfo *getnewci __P((int, int, int, int, int, char *));
+static struct certinfo *getnewci __P((int, int, int, int, int, 
+			unsigned char *));
 
 static struct certinfo *
 getnewci(qtype, keytag, algorithm, flags, certlen, cert)
 	int qtype, keytag, algorithm, flags, certlen;
-	char *cert;
+	unsigned char *cert;
 {
 	struct certinfo *res;
 
@@ -201,11 +202,11 @@ getcertsbyname(name, res)
 	char *name;
 	struct certinfo **res;
 {
-	caddr_t answer = NULL, p;
+	unsigned char *answer = NULL, *p;
 	int buflen, anslen, len;
 	HEADER *hp;
 	int qdcount, ancount, rdlength;
-	char *cp, *eom;
+	unsigned char *cp, *eom;
 	char hostbuf[1024];	/* XXX */
 	int qtype, qclass, keytag, algorithm;
 	struct certinfo head, *cur;
@@ -257,7 +258,7 @@ getcertsbyname(name, res)
 		h_errno = NO_RECOVERY;
 		goto end;
 	}
-	cp = (char *)(hp + 1);
+	cp = (unsigned char *)(hp + 1);
 	len = dn_expand(answer, eom, cp, hostbuf, sizeof(hostbuf));
 	if (len < 0) {
 #ifdef DNSSEC_DEBUG
