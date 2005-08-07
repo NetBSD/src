@@ -1,3 +1,6 @@
+/*	$NetBSD: extern.h,v 1.1.1.1 2005/08/07 08:49:26 manu Exp $	*/
+
+
 
 void parse_init __P((void));
 int parse __P((FILE **));
