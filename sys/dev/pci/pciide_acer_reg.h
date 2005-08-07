@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acer_reg.h,v 1.7 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: pciide_acer_reg.h,v 1.7.6.1 2005/08/07 15:51:32 riz Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -89,6 +89,10 @@
 #define ACER_0x79	0x79
 #define ACER_0x79_REVC2_EN	0x4
 #define ACER_0x79_EN		0x2
+
+/* OpenSolaris: channel enable/disable in the PCI-ISA bridge */
+#define ACER_PCIB_CTRL	0x58
+#define ACER_PCIB_CTRL_ENCHAN(chan) (0x4 << (chan))
 
 /*
  * IDE bus frequency (1 byte)
