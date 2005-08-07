@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.31 2005/08/05 20:23:06 snj Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.32 2005/08/07 15:57:54 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -325,4 +325,24 @@ sys/lib/libz/inftrees.c				1.10
 
 	Return correct error on all zero length codes.
 	[tron, ticket #5550]
+
+sys/arch/alpha/alpha/pmap.c			1.211
+
+	1. Disable the lazy allocation of lev1map in pmap_enter(), instead
+	   doing it in pmap_create(), and freeing the lev1map in
+	   pmap_destroy(). This means that pm_lev1map is consistent for the
+	   life of the pmap.
+	2. pmap_extract() now uses vtophys() for the kernel pmap. This avoids
+	   having to lock the kernel pmap, since kernel PT pages are never
+	   freed.
+	3. Because of (1), pmap_asn_alloc() no longer needs to operate on a
+	   locked pmap; pm_lev1map will never change over the life of the pmap,
+	   and all other access to the pmap is done in per-CPU fields or with
+	   atomic operations.
+	4. Because of (3), pmap_activate() no longer needs to lock the pmap
+	   to do its work, thus eliminating the deadlock with sched_lock
+	   described in PR port-alpha/25599.  This is safe because we are
+	   guaranteed that the pmap is still alive, since by definition an LWP
+	   that uses that it is about to run.
+	[thorpej, ticket #5528]
 
