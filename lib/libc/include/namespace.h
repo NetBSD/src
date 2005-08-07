@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.104 2005/07/30 15:21:20 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.105 2005/08/07 16:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@
 #define in6addr_linklocal_allnodes	_in6addr_linklocal_allnodes
 #define in6addr_loopback	_in6addr_loopback
 #define in6addr_nodelocal_allnodes	_in6addr_nodelocal_allnodes
+#define in6addr_nodelocal_allrouters	_in6addr_nodelocal_allrouters
 #define inet6_option_alloc	_inet6_option_alloc
 #define inet6_option_append	_inet6_option_append
 #define inet6_option_find	_inet6_option_find
