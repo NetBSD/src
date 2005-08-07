@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.19.2.1 2005/02/22 23:56:08 manubsd Exp
+# Id: Makefile.am,v 1.19.2.4 2005/07/01 09:11:59 manubsd Exp
 
 sbin_PROGRAMS = racoon racoonctl plainrsa-gen
 noinst_PROGRAMS = eaytest
@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libracoon.la
 adminsockdir=${localstatedir}/racoon
 
 INCLUDES = -I${srcdir}/../libipsec 
-AM_CFLAGS = @GLIBC_BUGS@ -DSYSCONFDIR=\"${sysconfdir}\" \
+AM_CFLAGS = -D_GNU_SOURCE @GLIBC_BUGS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DADMINPORTDIR=\"${adminsockdir}\"
 AM_LDFLAGS = @EXTRA_CRYPTO@ -lcrypto
 
@@ -93,7 +93,6 @@ EXTRA_DIST = \
    samples/roadwarrior/client/phase1-down.sh \
    samples/roadwarrior/client/phase1-up.sh \
    samples/roadwarrior/client/racoon.conf \
-   samples/roadwarrior/server/phase1-down.sh \
    samples/roadwarrior/server/racoon.conf \
    samples/roadwarrior/server/racoon.conf-radius
 
@@ -115,8 +114,8 @@ cftoken.c: cftoken.l
 	$(LEX) -ocftoken.c $(srcdir)/cftoken.l
 
 cfparse.h cfparse.c: $(srcdir)/cfparse.y
-	$(YACC) -d $(srcdir)/cfparse.y
-	mv y.tab.c cfparse.c
+	$(YACC) -d $(srcdir)/cfparse.y && \
+	mv y.tab.c cfparse.c && \
 	mv y.tab.h cfparse.h
 
 # Plain-RSA parser
@@ -130,8 +129,8 @@ prsa_tok.c: $(srcdir)/prsa_tok.l
 	$(LEX) -Pprsa -oprsa_tok.c $(srcdir)/prsa_tok.l
 
 prsa_par.h prsa_par.c: $(srcdir)/prsa_par.y
-	$(YACC) -pprsa -d $(srcdir)/prsa_par.y
-	mv y.tab.c prsa_par.c
+	$(YACC) -pprsa -d $(srcdir)/prsa_par.y && \
+	mv y.tab.c prsa_par.c && \
 	mv y.tab.h prsa_par.h
 
 # special object rules

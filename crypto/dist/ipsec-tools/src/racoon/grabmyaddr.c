@@ -1,6 +1,6 @@
-/*	$NetBSD: grabmyaddr.c,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.1.1.3 2005/08/07 08:46:36 manu Exp $	*/
 
-/* Id: grabmyaddr.c,v 1.23 2004/11/20 15:53:27 monas Exp */
+/* Id: grabmyaddr.c,v 1.23.4.2 2005/07/16 04:41:01 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -254,6 +254,7 @@ static int getifaddrs(struct ifaddrs **ifa0)
 		ioctl(fd, SIOCGIFNAME, (void*)&ifr);
 		memcpy(i->ifa_name, ifr.ifr_name, 16);
 	}
+	close(fd);
 
 	return 0;
 }
@@ -842,7 +843,7 @@ initmyaddr()
 #ifdef __linux__
    {
 	struct sockaddr_nl nl;
-	int addr_len;
+	u_int addr_len;
 
 	memset(&nl, 0, sizeof(nl));
 	nl.nl_family = AF_NETLINK;
