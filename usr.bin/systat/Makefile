@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2005/02/26 22:12:33 dsl Exp $
+#	$NetBSD: Makefile,v 1.31 2005/08/07 12:32:38 blymn Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ WARNS=3
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/vmstat -DSUPPORT_UTMP -DSUPPORT_UTMPX \
 	-I${NETBSDSRCDIR}/usr.bin/who
 CWARNFLAGS+=    -Wno-format-y2k
-SRCS=	bufcache.c cmds.c cmdtab.c disks.c df.c dkstats.c fetch.c \
+SRCS=	bufcache.c cmds.c cmdtab.c disks.c df.c dkstats.c tpstats.c fetch.c \
 	globalcmds.c icmp.c iostat.c ip.c keyboard.c main.c mbufs.c \
 	netcmds.c netstat.c pigs.c ps.c swap.c tcp.c vmstat.c utmpentry.c
 DPADD=	${LIBCURSES} ${LIBM} ${LIBKVM}

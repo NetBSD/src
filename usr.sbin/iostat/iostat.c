@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.44 2005/07/07 22:31:45 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.45 2005/08/07 12:34:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.44 2005/07/07 22:31:45 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.45 2005/08/07 12:34:21 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: iostat.c,v 1.44 2005/07/07 22:31:45 mrg Exp $");
 #include <unistd.h>
 
 #include "dkstats.h"
+#include "tpstats.h"
 
 /* Namelist and memory files. */
 char	*nlistf, *memf;
@@ -194,7 +195,9 @@ main(int argc, char *argv[])
 	defdrives /= 18;		/* XXX magic number */
 
 	dkinit(0);
+	tpinit(0);
 	dkreadstats();
+	tpreadstats();
 	ndrives = selectdrives(argc, argv);
 	if (ndrives == 0) {
 		/* No drives are selected.  No need to show disk stats. */
@@ -223,14 +226,18 @@ main(int argc, char *argv[])
 				hdrcnt = winlines - 4;
 		}
 
-		if (!ISSET(todo, SHOW_TOTALS))
+		if (!ISSET(todo, SHOW_TOTALS)) {
 			dkswap();
+			tpswap();
+		}
+		
 		display();
 
 		if (reps >= 0 && --reps <= 0)
 			break;
 		nanosleep(&tv, NULL);
 		dkreadstats();
+		tpreadstats();
 	}
 	exit(0);
 }
@@ -263,16 +270,26 @@ header()
 	if (ISSET(todo, SHOW_TTY))
 		(void)printf("      tty");
 
-	if (ISSET(todo, SHOW_STATS_1))
+	if (ISSET(todo, SHOW_STATS_1)) {
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
 				(void)printf("        %9.9s ", cur.dk_name[i]);
+		for (i = 0; i < tp_ndrive; i++)
+			if (cur_tape.select[i])
+				(void)printf("        %9.9s ",
+					     cur_tape.name[i]);
+	}
 
-	if (ISSET(todo, SHOW_STATS_2))
+	if (ISSET(todo, SHOW_STATS_2)) {
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
 				(void)printf("        %9.9s ", cur.dk_name[i]);
-
+		for (i = 0; i < tp_ndrive; i++)
+			if (cur_tape.select[i])
+				(void)printf("        %9.9s ",
+					     cur_tape.name[i]);
+	}
+	
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf("            CPU");
 
@@ -290,12 +307,23 @@ header()
 				else
 					(void)printf("  KB/t  t/s  MB/s ");
 			}
+		for (i = 0; i < tp_ndrive; i++)
+			if (cur_tape.select[i]) {
+				if (ISSET(todo, SHOW_TOTALS))
+					(void)printf("  KB/t  xfr  MB   ");
+				else
+					(void)printf("  KB/t  t/s  MB/s ");
+			}
 	}
 
-	if (ISSET(todo, SHOW_STATS_2))
+	if (ISSET(todo, SHOW_STATS_2)) {
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
 				(void)printf("    KB   xfr time ");
+		for (i = 0; i < tp_ndrive; i++)
+			if (cur_tape.select[i])
+				(void)printf("    KB   xfr time ");
+	}
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
@@ -420,6 +448,123 @@ disk_statsx(double etime)
 }
 
 static void
+tape_stats(double etime)
+{
+	int dn;
+	double atime, mbps;
+
+	for (dn = 0; dn < tp_ndrive; ++dn) {
+		if (!cur_tape.select[dn])
+			continue;
+					/* average Kbytes per transfer. */
+		if (cur_tape.rxfer[dn] + cur_tape.wxfer[dn])
+			mbps = ((cur_tape.rbytes[dn] + cur_tape.wbytes[dn]) /
+			    1024.0) / (cur_tape.rxfer[dn] + cur_tape.wxfer[dn]);
+		else
+			mbps = 0.0;
+		(void)printf(" %5.2f", mbps);
+
+					/* average transfers per second. */
+		(void)printf(" %4.0f",
+		    (cur_tape.rxfer[dn] + cur_tape.wxfer[dn]) / etime);
+
+					/* time busy in disk activity */
+		atime = (double)cur_tape.time[dn].tv_sec +
+		    ((double)cur_tape.time[dn].tv_usec / (double)1000000);
+
+					/* Megabytes per second. */
+		if (atime != 0.0)
+			mbps = (cur_tape.rbytes[dn] + cur_tape.wbytes[dn]) /
+			    (double)(1024 * 1024);
+		else
+			mbps = 0;
+		(void)printf(" %5.2f ", mbps / etime);
+	}
+}
+
+static void
+tape_stats2(double etime)
+{
+	int dn;
+	double atime;
+
+	for (dn = 0; dn < tp_ndrive; ++dn) {
+		if (!cur_tape.select[dn])
+			continue;
+
+					/* average kbytes per second. */
+		(void)printf(" %5.0f",
+		    (cur_tape.rbytes[dn] + cur_tape.wbytes[dn]) / 1024.0 / etime);
+
+					/* average transfers per second. */
+		(void)printf(" %5.0f",
+		    (cur_tape.rxfer[dn] + cur_tape.wxfer[dn]) / etime);
+
+					/* average time busy in disk activity */
+		atime = (double)cur_tape.time[dn].tv_sec +
+		    ((double)cur_tape.time[dn].tv_usec / (double)1000000);
+		(void)printf(" %4.2f ", atime / etime);
+	}
+}
+
+static void
+tape_statsx(double etime)
+{
+	int dn;
+	double atime, kbps;
+
+	for (dn = 0; dn < tp_ndrive; ++dn) {
+		if (!cur_tape.select[dn])
+			continue;
+
+		(void)printf("%-8.8s", cur_tape.name[dn]);
+
+					/* average read Kbytes per transfer */
+		if (cur.dk_rxfer[dn])
+			kbps = (cur_tape.rbytes[dn] / 1024.0) / cur_tape.rxfer[dn];
+		else
+			kbps = 0.0;
+		(void)printf(" %8.2f", kbps);
+
+					/* average read transfers
+					   (per second) */
+		(void)printf(" %6.0f", cur_tape.rxfer[dn] / etime);
+
+					/* time read busy in disk activity */
+		atime = (double)cur_tape.time[dn].tv_sec +
+		    ((double)cur_tape.time[dn].tv_usec / (double)1000000);
+		(void)printf(" %6.2f", atime / etime);
+
+					/* average read megabytes
+					   (per second) */
+		(void)printf(" %8.2f",
+		    cur_tape.rbytes[dn] / (1024.0 * 1024) / etime);
+
+
+					/* average write Kbytes per transfer */
+		if (cur_tape.wxfer[dn])
+			kbps = (cur_tape.wbytes[dn] / 1024.0) / cur_tape.wxfer[dn];
+		else
+			kbps = 0.0;
+		(void)printf("   %8.2f", kbps);
+
+					/* average write transfers
+					   (per second) */
+		(void)printf(" %6.0f", cur_tape.wxfer[dn] / etime);
+
+					/* time write busy in disk activity */
+		atime = (double)cur_tape.time[dn].tv_sec +
+		    ((double)cur_tape.time[dn].tv_usec / (double)1000000);
+		(void)printf(" %6.2f", atime / etime);
+
+					/* average write megabytes
+					   (per second) */
+		(void)printf(" %8.2f\n",
+		    cur_tape.wbytes[dn] / (1024.0 * 1024) / etime);
+	}
+}
+
+static void
 cpustats(void)
 {
 	int state;
@@ -461,17 +606,24 @@ display(void)
 
 	if (ISSET(todo, SHOW_STATS_X)) {
 		disk_statsx(etime);
+		tape_statsx(etime);
 		goto out;
 	}
 
 	if (ISSET(todo, SHOW_TTY))
 		printf("%4.0f %4.0f", cur.tk_nin / etime, cur.tk_nout / etime);
 
-	if (ISSET(todo, SHOW_STATS_1))
+	if (ISSET(todo, SHOW_STATS_1)) {
 		disk_stats(etime);
+		tape_stats(etime);
+	}
+	
 
-	if (ISSET(todo, SHOW_STATS_2))
+	if (ISSET(todo, SHOW_STATS_2)) {
 		disk_stats2(etime);
+		tape_stats2(etime);
+	}
+	
 
 	if (ISSET(todo, SHOW_CPU))
 		cpustats();
@@ -510,6 +662,13 @@ selectdrives(int argc, char *argv[])
 			cur.dk_select[i] = 1;
 			++ndrives;
 		}
+		
+		for (i = 0; i < tp_ndrive; i++) {
+			if (strcmp(cur_tape.name[i], *argv))
+				continue;
+			cur_tape.select[i] = 1;
+			++ndrives;
+		}
 	}
 
 	if (ndrives == 0 && tried == 0) {
@@ -518,9 +677,15 @@ selectdrives(int argc, char *argv[])
 		 * if none specified.
 		 */
 		maxdrives = (ISSET(todo, SHOW_STATS_X) ||
-			     dk_ndrive < defdrives) ? dk_ndrive : defdrives;
+			     (dk_ndrive + tp_ndrive) < defdrives)
+			? (dk_ndrive + tp_ndrive) : defdrives;
 		for (i = 0; i < maxdrives; i++) {
-			cur.dk_select[i] = 1;
+			if (i >= dk_ndrive) {
+				cur_tape.select[i - dk_ndrive] = 1;
+			} else {
+				cur.dk_select[i] = 1;
+			}
+			
 			++ndrives;
 			if (!ISSET(todo, SHOW_STATS_X) && ndrives == defdrives)
 				break;
