@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.h,v 1.2 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: ipsec_doi.h,v 1.9 2005/01/29 16:34:24 vanhu Exp */
+/* Id: ipsec_doi.h,v 1.9.2.1 2005/06/28 22:38:03 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

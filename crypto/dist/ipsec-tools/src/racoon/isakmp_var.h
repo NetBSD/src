@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_var.h,v 1.2 2005/05/08 08:57:26 manu Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: isakmp_var.h,v 1.9 2004/12/29 23:11:11 manubsd Exp */
+/* Id: isakmp_var.h,v 1.9.2.1 2005/05/07 17:26:06 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.2 2005/06/26 21:14:08 christos Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
 
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
@@ -37,6 +37,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
 #ifdef HAVE_NETINET6_IPSEC
 #  include <netinet6/ipsec.h>
@@ -44,14 +45,14 @@
 #  include <netinet/ipsec.h>
 #endif
 
-
 #include <net/pfkeyv2.h>
 
+#include "libpfkey.h"
 #include "ipsec_strerror.h"
 
 int
 ipsec_get_policylen(policy)
-	void *policy;
+	ipsec_policy_t policy;
 {
 	return policy ? PFKEY_EXTLEN(policy) : -1;
 }

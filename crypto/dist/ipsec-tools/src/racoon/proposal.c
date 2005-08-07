@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.3 2005/05/20 01:28:13 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.4 2005/08/07 09:38:46 manu Exp $	*/
 
-/* Id: proposal.c,v 1.13 2004/09/13 14:09:19 ludvigm Exp */
+/* Id: proposal.c,v 1.13.8.5 2005/07/28 05:05:52 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1027,12 +1027,15 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 		}
 
 		newpr->proto_id = ipproto2doi(req->saidx.proto);
-		newpr->spisize = 4;
+		if (newpr->proto_id == IPSECDOI_PROTO_IPCOMP)
+			newpr->spisize = 2;
+		else
+			newpr->spisize = 4;
 		if (lcconf->complex_bundle) {
 			newpr->encmode = pfkey2ipsecdoi_mode(req->saidx.mode);
 #ifdef ENABLE_NATT
 			if (iph2->ph1 && (iph2->ph1->natt_flags & NAT_DETECTED))
-				encmodesv += iph2->ph1->natt_options->mode_udp_diff;
+				newpr->encmode += iph2->ph1->natt_options->mode_udp_diff;
 #endif
 		}
 		else
@@ -1173,4 +1176,16 @@ end:
 		flushsaprop(pp_peer);
 	free_proppair(pair);
 	return error;
+}
+
+int
+tunnel_mode_prop(p)
+	struct saprop *p;
+{
+	struct saproto *pr;
+
+	for (pr = p->head; pr; pr = pr->next)
+		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL)
+			return 1;
+	return 0;
 }

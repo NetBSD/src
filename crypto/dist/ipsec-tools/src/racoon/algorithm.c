@@ -1,6 +1,6 @@
-/*	$NetBSD: algorithm.c,v 1.2 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: algorithm.c,v 1.11 2004/10/24 17:36:46 manubsd Exp */
+/* Id: algorithm.c,v 1.11.4.1 2005/06/28 22:38:02 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

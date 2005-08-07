@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.4 2005/06/27 03:19:45 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.5 2005/08/07 09:38:46 manu Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -75,7 +75,8 @@ u_int32_t p_spi;
 u_int p_ext, p_alg_enc, p_alg_auth, p_replay, p_mode;
 u_int32_t p_reqid;
 u_int p_key_enc_len, p_key_auth_len;
-const char *p_key_enc, *p_key_auth;
+const char *p_key_enc;
+const char *p_key_auth;
 time_t p_lt_hard, p_lt_soft;
 size_t p_lb_hard, p_lb_soft;
 
@@ -86,8 +87,9 @@ static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 
 static struct addrinfo *parse_addr __P((char *, char *));
 static int fix_portstr __P((vchar_t *, vchar_t *, vchar_t *));
-static int setvarbuf __P((char *, int *, struct sadb_ext *, int, const void *,
-    int));
+static int setvarbuf __P((char *, int *, struct sadb_ext *, int, 
+    const void *, int));
+void parse_init __P((void));
 void free_buffer __P((void));
 
 int setkeymsg0 __P((struct sadb_msg *, unsigned int, unsigned int, size_t));
@@ -98,7 +100,6 @@ static int setkeymsg_addr __P((unsigned int, unsigned int,
 	struct addrinfo *, struct addrinfo *, int));
 static int setkeymsg_add __P((unsigned int, unsigned int,
 	struct addrinfo *, struct addrinfo *));
-
 %}
 
 %union {
@@ -754,9 +755,7 @@ upper_spec
 	:	DECSTRING { $$ = $1; }
 	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
 	|	PR_TCP { 
-#ifdef SADB_X_SATYPE_TCPSIGNATURE
 				$$ = IPPROTO_TCP; 
-#endif
 			}
 	|	STRING
 		{
@@ -928,7 +927,7 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 			m_addr.sadb_address_reserved = 0;
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
-			    sizeof(m_addr), sa, salen);
+			    sizeof(m_addr), (caddr_t)sa, salen);
 
 			/* set dst */
 			sa = d->ai_addr;
