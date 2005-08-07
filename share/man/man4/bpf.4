@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.30 2005/08/04 20:13:29 rpaulo Exp $
+.\"	$NetBSD: bpf.4,v 1.31 2005/08/07 11:15:38 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -222,8 +222,8 @@ the number of packets received by the descriptor since opened or reset
 .It Va bs_drop
 the number of packets which were accepted by the filter but dropped by the
 kernel because of buffer overflows
-(i.e., the application's reads aren't keeping up with the packet 
-traffic); and 
+(i.e., the application's reads aren't keeping up with the packet
+traffic); and
 .It Va bs_capt
 the number of packets accepted by the filter.
 .El
@@ -602,14 +602,14 @@ peers.
 .It Li net.bpf.stats
 Shows
 .Nm
-statistics. 
+statistics.
 They can be retrieved with the
 .Xr netstat 1
 utility.
 .It Li net.bpf.peers
 Shows the current
 .Nm
-peers. 
+peers.
 This is only available to the super user and can also be retrieved with the
 .Xr netstat 1
 utility.
