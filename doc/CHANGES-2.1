@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.157 2005/08/05 20:20:19 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.158 2005/08/07 15:57:13 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3268,4 +3268,70 @@ sys/lib/libz/inftrees.c				1.10
 
 	Return correct error on all zero length codes.
 	[tron, ticket #5550]
+
+sys/arch/powerpc/include/oea/sr_601.h		1.2
+sys/arch/powerpc/oea/pmap.c			1.23,1.29
+
+	Consider the MPC601's different battable layout and its use of
+	I/O segments. Ensure that pap is non-NULL before use in
+	pmap_extract(). PR#29507
+	[briggs, ticket #1238]
+
+sys/arch/alpha/alpha/pmap.c			1.211
+
+	1. Disable the lazy allocation of lev1map in pmap_enter(), instead
+	   doing it in pmap_create(), and freeing the lev1map in
+	   pmap_destroy(). This means that pm_lev1map is consistent for the
+	   life of the pmap.
+	2. pmap_extract() now uses vtophys() for the kernel pmap. This avoids
+	   having to lock the kernel pmap, since kernel PT pages are never
+	   freed.
+	3. Because of (1), pmap_asn_alloc() no longer needs to operate on a
+	   locked pmap; pm_lev1map will never change over the life of the pmap,
+	   and all other access to the pmap is done in per-CPU fields or with
+	   atomic operations.
+	4. Because of (3), pmap_activate() no longer needs to lock the pmap
+	   to do its work, thus eliminating the deadlock with sched_lock
+	   described in PR port-alpha/25599.  This is safe because we are
+	   guaranteed that the pmap is still alive, since by definition an LWP
+	   that uses that it is about to run.
+	[thorpej, ticket #5528]
+
+distrib/sets/lists/base/mi			1.543
+etc/mtree/NetBSD.dist				1.283
+
+	Adjust for the Argentina directory that came with tzdata2004b;
+	noted by Geoff C. Wing in PR bin/29954.
+	[kleink, ticket #5529]
+
+lib/libcurses/erase.c				1.18
+
+	Make sure that werase() always marks the window as dirty.  This
+	fixes a problem (reported by David Bariod on netbsd-help), where
+	erasing an already blank window would not clear the screen
+	contents of overlapping windows.
+	[jdc, ticket #5537]
+
+sys/arch/i386/i386/cpu.c			1.23-1.24
+sys/arch/i386/i386/identcpu.c			1.20-1.21
+
+	Move "microtime_func = cc_microtime;" to a point after the
+	CPU-specific setup routine is called because some of them
+	"turn off" the TSC because it's broken on those platforms,
+	or not suitable for use as an interval timer. Disable the
+	use of TSC on Cyrix CPUs and document why.
+	[reed, ticket #5551]
+
+sys/dev/ic/wdc.c				1.225 via patch
+sys/dev/ic/wdcvar.h				1.83 via patch
+sys/dev/pci/aceride.c				1.16-1.18 via patch
+sys/dev/pci/pciide_acer_reg.h			1.9 via patch
+
+	Add an optionnal controller callback for channel reset. If the callback
+	is set to NULL, use the generic reset code.
+	Use this to work around a bug in some Acer IDE controllers (like the
+	one found in some sparc systems) where a controller disable/enable
+	is required after a reset to avoid data corruption when Ultra-DMA is
+	used. Workaround from opensolaris, thanks to Hiroki Sato for testing.
+	[bouyer, ticket #5555]
 
