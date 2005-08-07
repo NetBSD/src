@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.138 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.139 2005/08/07 12:30:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -705,7 +705,9 @@ struct kinfo_file {
 #define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
 #define	HW_PHYSMEM64	13		/* quad: total memory (bytes) */
 #define	HW_USERMEM64	14		/* quad: non-kernel memory (bytes) */
-#define	HW_MAXID	15		/* number of valid hw ids */
+#define	HW_TAPENAMES	15		/* string: tape drive names */
+#define	HW_TAPESTATS	16		/* struct: tapestats[] */
+#define	HW_MAXID	16		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -1065,6 +1067,8 @@ int	old_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
  */
 int	sysctl_hw_disknames(SYSCTLFN_PROTO);
 int	sysctl_hw_diskstats(SYSCTLFN_PROTO);
+int	sysctl_hw_tapenames(SYSCTLFN_PROTO);
+int	sysctl_hw_tapestats(SYSCTLFN_PROTO);
 int	sysctl_kern_vnode(SYSCTLFN_PROTO);
 int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
 int	sysctl_consdev(SYSCTLFN_PROTO);
