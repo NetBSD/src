@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.3 2005/06/26 21:14:08 christos Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.4 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: ipsec_dump_policy.c,v 1.7 2004/10/29 16:37:03 ludvigm Exp */
+/* Id: ipsec_dump_policy.c,v 1.7.4.2 2005/06/29 13:01:27 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -78,8 +78,8 @@ static char *set_address __P((char *, size_t, struct sockaddr *, int));
  */
 char *
 ipsec_dump_policy(policy, delimiter)
-	void *policy;
-	const char *delimiter;
+	ipsec_policy_t policy;
+	__ipsec_const char *delimiter;
 {
 	return ipsec_dump_policy1(policy, delimiter, 0);
 }
@@ -93,7 +93,10 @@ ipsec_dump_policy_withports(policy, delimiter)
 }
 
 static char *
-ipsec_dump_policy1(void *policy, const char *delimiter, int withports)
+ipsec_dump_policy1(policy, delimiter, withports)
+	void *policy;
+	const char *delimiter;
+	int withports;
 {
 	struct sadb_x_policy *xpl = policy;
 	struct sadb_x_ipsecrequest *xisr;
@@ -404,7 +407,7 @@ set_address(buf, len, sa, withports)
 	if (len < 1)
 		return NULL;
 	buf[0] = '\0';
-	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), host, sizeof(host),
+	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), host, sizeof(host), 
 	    serv, sizeof(serv), niflags) != 0)
 		return NULL;
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: oakley.c,v 1.3 2005/07/14 11:26:57 he Exp $	*/
+/*	$NetBSD: oakley.c,v 1.4 2005/08/07 09:38:46 manu Exp $	*/
 
-/* Id: oakley.c,v 1.17.2.1 2005/03/01 09:51:48 vanhu Exp */
+/* Id: oakley.c,v 1.17.2.4 2005/07/12 11:50:15 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,8 +38,8 @@
 #include <sys/socket.h>	/* XXX for subjectaltname */
 #include <netinet/in.h>	/* XXX for subjectaltname */
 
-#include <openssl/pkcs7.h>
 #include <openssl/x509.h>
+#include <openssl/pkcs7.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1974,6 +1974,8 @@ oakley_savecert(iph1, gen)
 {
 	cert_t **c;
 	u_int8_t type;
+	STACK_OF(X509) *certs=NULL;
+	PKCS7 *p7;
 
 	type = *(u_int8_t *)(gen + 1) & 0xff;
 
@@ -2013,143 +2015,144 @@ oakley_savecert(iph1, gen)
 		return 0;
 	}
 
-        if (type == ISAKMP_CERT_PKCS7) {
-                 PKCS7 *p7;
-                 u_char *bp;
-                 int i;
-		 STACK_OF(X509) *certs=NULL;
+	if (type == ISAKMP_CERT_PKCS7) {
+		u_char *bp;
+		int i;
 
-                 /* Skip the header */
-                 bp = (u_char *)(gen + 1);
-                 /* And the first byte is the certificate type, 
-		    we know that already
+		/* Skip the header */
+		bp = (u_char *)(gen + 1);
+		/* And the first byte is the certificate type, 
+		 * we know that already
 		 */
-                 bp++;
-                 p7 = d2i_PKCS7(NULL, &bp, ntohs(gen->len) - sizeof(*gen) - 1);
-		 
-                 if (!p7) {
-		   plog(LLV_ERROR, LOCATION, NULL,
-			"Failed to parse PKCS#7 CERT.\n");
-		   return -1;
-                 }
+		bp++;
+		p7 = d2i_PKCS7(NULL, (void *)&bp, 
+		    ntohs(gen->len) - sizeof(*gen) - 1);
 
-                 /* Copied this from the openssl pkcs7 application;
-                  * there"s little by way of documentation for any of
-                  * it. I can only presume it"s correct.
-                  */
-		 
-		 i = OBJ_obj2nid(p7->type);
-		 switch (i) {
-		 case NID_pkcs7_signed:
-		   certs=p7->d.sign->cert;
-		   break;
-                 case NID_pkcs7_signedAndEnveloped:
-		   certs=p7->d.signed_and_enveloped->cert;
-		   break;
-                 default:
-                         break;
-                 }
+		if (!p7) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Failed to parse PKCS#7 CERT.\n");
+			return -1;
+		}
 
-                 if (!certs) {
-                         plog(LLV_ERROR, LOCATION, NULL,
-                              "CERT PKCS#7 bundle contains no certs.\n");
-                         PKCS7_free(p7);
-                         return -1;
-                 }
+		/* Copied this from the openssl pkcs7 application;
+		 * there"s little by way of documentation for any of
+		 * it. I can only presume it"s correct.
+		 */
+		
+		i = OBJ_obj2nid(p7->type);
+		switch (i) {
+		case NID_pkcs7_signed:
+			certs=p7->d.sign->cert;
+			break;
+		case NID_pkcs7_signedAndEnveloped:
+			certs=p7->d.signed_and_enveloped->cert;
+			break;
+		default:
+			 break;
+		}
 
-                 for (i = 0; i < sk_X509_num(certs); i++) {
-                         int len;
-                         u_char *bp;
-                         X509 *cert = sk_X509_value(certs,i);
+		if (!certs) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "CERT PKCS#7 bundle contains no certs.\n");
+			PKCS7_free(p7);
+			return -1;
+		}
 
-                         plog(LLV_DEBUG, LOCATION, NULL, 
-			      "Trying PKCS#7 cert %d.\n", i);
+		for (i = 0; i < sk_X509_num(certs); i++) {
+			int len;
+			u_char *bp;
+			X509 *cert = sk_X509_value(certs,i);
 
-                         /* We"ll just try each cert in turn */
-                         *c = save_certx509(cert);
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			     "Trying PKCS#7 cert %d.\n", i);
 
-                         if (!*c) {
-                                 plog(LLV_ERROR, LOCATION, NULL,
-                                      "Failed to get CERT buffer.\n");
-                                 continue;
-                         }
+			/* We'll just try each cert in turn */
+			*c = save_certx509(cert);
 
-                         /* Ignore cert if it doesn't match identity
-                          * XXX If verify cert is disabled, we still just take
-                          * the first certificate....
-                          */
-                         if(iph1->rmconf->verify_cert &&
-                            oakley_check_certid(iph1)){
-                                 plog(LLV_DEBUG, LOCATION, NULL,
-                                      "Discarding CERT: does not match ID.\n");
-                                 oakley_delcert((*c));
-                                 *c = NULL;
-                                 continue;
-                         }
-                         plog(LLV_DEBUG, LOCATION, NULL, "CERT saved:\n");
-                         plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
-                         {
-                                 char *p = eay_get_x509text(&(*c)->cert);
-                                 plog(LLV_DEBUG, LOCATION, NULL, "%s", 
-				      p ? p : "\n");
-                                 racoon_free(p);
-                         }
-                         break;
-                 }
+			if (!*c) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				     "Failed to get CERT buffer.\n");
+				continue;
+			}
 
-                 PKCS7_free(p7);
-         } else {
-	   *c = save_certbuf(gen);
-	   if (!*c) {
-	     plog(LLV_ERROR, LOCATION, NULL,
-		  "Failed to get CERT buffer.\n");
-	     return -1;
-	   }
-	   
-	   switch ((*c)->type) {
-	   case ISAKMP_CERT_DNS:
-	     plog(LLV_WARNING, LOCATION, NULL,
-		  "CERT payload is unnecessary in DNSSEC. "
-		  "ignore it.\n");
-	     return 0;
-	   case ISAKMP_CERT_PGP:
-	   case ISAKMP_CERT_X509SIGN:
-	   case ISAKMP_CERT_KERBEROS:
-	   case ISAKMP_CERT_SPKI:
-	     /* Ignore cert if it doesn't match identity
-	      * XXX If verify cert is disabled, we still just take
-	      * the first certificate....
-	      */
-	     if(iph1->rmconf->verify_cert &&
-		oakley_check_certid(iph1)){
-	       plog(LLV_DEBUG, LOCATION, NULL,
-		    "Discarding CERT: does not match ID.\n");
-	       oakley_delcert((*c));
-	       *c = NULL;
-	       return 0;
-	     }
-	     plog(LLV_DEBUG, LOCATION, NULL, "CERT saved:\n");
-	     plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
-	     {
-	       char *p = eay_get_x509text(&(*c)->cert);
-	       plog(LLV_DEBUG, LOCATION, NULL, "%s", p ? p : "\n");
-	       racoon_free(p);
-	     }
-	     break;
-	   case ISAKMP_CERT_CRL:
-	     plog(LLV_DEBUG, LOCATION, NULL, "CRL saved:\n");
-	     plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
-	     break;
-	   case ISAKMP_CERT_X509KE:
-	   case ISAKMP_CERT_X509ATTR:
-	   case ISAKMP_CERT_ARL:
-	   default:
-	     /* XXX */
-	     oakley_delcert((*c));
-	     *c = NULL;
-	     return 0;
-	   }
-	 }
+			/* Ignore cert if it doesn't match identity
+			 * XXX If verify cert is disabled, we still just take
+			 * the first certificate....
+			 */
+			if(iph1->rmconf->verify_cert &&
+			   oakley_check_certid(iph1)) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+				     "Discarding CERT: does not match ID.\n");
+				oakley_delcert((*c));
+				*c = NULL;
+				continue;
+			}
+
+			{
+				char *p = eay_get_x509text(&(*c)->cert);
+				plog(LLV_DEBUG, LOCATION, NULL, "CERT saved:\n");
+				plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
+				plog(LLV_DEBUG, LOCATION, NULL, "%s", 
+				     p ? p : "\n");
+				racoon_free(p);
+			}
+			break;
+		}
+		PKCS7_free(p7);
+
+	} else {
+		*c = save_certbuf(gen);
+		if (!*c) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Failed to get CERT buffer.\n");
+			return -1;
+		}
+
+		switch ((*c)->type) {
+		case ISAKMP_CERT_DNS:
+			plog(LLV_WARNING, LOCATION, NULL,
+			     "CERT payload is unnecessary in DNSSEC. "
+			     "ignore it.\n");
+			return 0;
+		case ISAKMP_CERT_PGP:
+		case ISAKMP_CERT_X509SIGN:
+		case ISAKMP_CERT_KERBEROS:
+		case ISAKMP_CERT_SPKI:
+			/* Ignore cert if it doesn't match identity
+			 * XXX If verify cert is disabled, we still just take
+			 * the first certificate....
+			 */
+			if(iph1->rmconf->verify_cert &&
+			   oakley_check_certid(iph1)){
+				plog(LLV_DEBUG, LOCATION, NULL,
+				     "Discarding CERT: does not match ID.\n");
+				oakley_delcert((*c));
+				*c = NULL;
+				return 0;
+			}
+
+			{
+				char *p = eay_get_x509text(&(*c)->cert);
+				plog(LLV_DEBUG, LOCATION, NULL, "CERT saved:\n");
+				plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
+				plog(LLV_DEBUG, LOCATION, NULL, "%s", p ? p : "\n");
+				racoon_free(p);
+			}
+			break;
+		case ISAKMP_CERT_CRL:
+			plog(LLV_DEBUG, LOCATION, NULL, "CRL saved:\n");
+			plogdump(LLV_DEBUG, (*c)->cert.v, (*c)->cert.l);
+			break;
+		case ISAKMP_CERT_X509KE:
+		case ISAKMP_CERT_X509ATTR:
+		case ISAKMP_CERT_ARL:
+		default:
+			/* XXX */
+			oakley_delcert((*c));
+			*c = NULL;
+			return 0;
+		}
+	}
 	
 	return 0;
 }

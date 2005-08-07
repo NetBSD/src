@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.7 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.8 2005/08/07 09:38:46 manu Exp $	*/
 
-/* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
+/* Id: pfkey.c,v 1.31.2.9 2005/07/28 05:05:52 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -858,8 +858,8 @@ pk_sendgetspi(iph2)
 		/* this works around a bug in Linux kernel where it allocates 4 byte
 		   spi's for IPCOMP */
 		else if (satype == SADB_X_SATYPE_IPCOMP) {
-			minspi = ntohl (0x100);
-			maxspi = ntohl (0xffff);
+			minspi = 0x100;
+			maxspi = 0xffff;
 		}
 		else {
 			minspi = 0;
@@ -1001,7 +1001,7 @@ pk_sendupdate(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4;  /* XXX static size of window */ 
@@ -1293,7 +1293,7 @@ pk_sendadd(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4; /* XXX static size of window */ 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.2 2005/05/10 09:54:43 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
 
 /*	$KAME$ */
 

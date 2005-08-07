@@ -1,6 +1,6 @@
-/*	$NetBSD: libpfkey.h,v 1.5 2005/06/26 21:14:08 christos Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.6 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: libpfkey.h,v 1.8.2.1 2005/02/24 13:33:54 manubsd Exp */
+/* Id: libpfkey.h,v 1.8.2.3 2005/06/29 13:01:28 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -52,19 +52,33 @@ extern void pfkey_spdump_withports __P((struct sadb_msg *));
 struct sockaddr;
 struct sadb_alg;
 
+/* Accomodate different prototypes in <netinet6/ipsec.h> */
+#include <sys/types.h>
+#ifdef HAVE_NETINET6_IPSEC
+#  include <netinet6/ipsec.h>
+#else 
+#  include <netinet/ipsec.h>
+#endif
+
+#ifndef HAVE_IPSEC_POLICY_T
+typedef caddr_t ipsec_policy_t;
+#define __ipsec_const
+#else
+#define __ipsec_const const
+#endif
+
 /* IPsec Library Routines */
 
 int ipsec_check_keylen __P((u_int, u_int, u_int));
 int ipsec_check_keylen2 __P((u_int, u_int, u_int));
 int ipsec_get_keylen __P((u_int, u_int, struct sadb_alg *));
-char *ipsec_dump_policy __P((void *, const char *));
 char *ipsec_dump_policy_withports __P((void *, const char *));
 void ipsec_hexdump __P((const void *, int));
-int  ipsec_get_policylen __P((void *));
-void *ipsec_set_policy __P((const char *, int));
 const char *ipsec_strerror __P((void));
 void kdebug_sadb __P((struct sadb_msg *));
-
+ipsec_policy_t ipsec_set_policy __P((__ipsec_const char *, int));
+int  ipsec_get_policylen __P((ipsec_policy_t));
+char *ipsec_dump_policy __P((ipsec_policy_t, __ipsec_const char *));
 
 /* PFKey Routines */
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.c,v 1.8 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.9 2005/08/07 09:38:45 manu Exp $	*/
 
-/* Id: ipsec_doi.c,v 1.38 2005/05/31 16:07:55 monas Exp */
+/* Id: ipsec_doi.c,v 1.26.2.12 2005/07/12 11:50:15 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,6 +94,11 @@ static int switch_authmethod(int);
 #ifdef HAVE_GSSAPI
 #include <iconv.h>
 #include "gssapi.h"
+#ifdef HAVE_ICONV_2ND_CONST
+#define __iconv_const const
+#else
+#define __iconv_const
+#endif
 #endif
 
 int verbose_proposal_check = 1;
@@ -739,7 +744,7 @@ t2isakmpsa(trns, sa)
 		{
 			iconv_t cd;
 			size_t srcleft, dstleft, rv;
-			const char *src;
+			__iconv_const char *src;
 			char *dst;
 			int len = ntohs(d->lorv);
 
@@ -783,7 +788,8 @@ t2isakmpsa(trns, sa)
 			dst = sa->gssid->v;
 			dstleft = len / 2;
 
-			rv = iconv(cd, &src, &srcleft, &dst, &dstleft);
+			rv = iconv(cd, (__iconv_const char **)&src, &srcleft, 
+				   &dst, &dstleft);
 			if (rv != 0) {
 				if (rv == -1) {
 					plog(LLV_ERROR, LOCATION, NULL,
@@ -2826,8 +2832,8 @@ setph1attr(sa, buf)
 					goto gssid_done;
 				}
 				odst = dst;
-				rv = iconv(cd, &src, &srcleft,
-				    &dst, &dstleft);
+				rv = iconv(cd, (__iconv_const char **)&src, 
+				    &srcleft, &dst, &dstleft);
 				if (rv != 0) {
 					if (rv == -1) {
 						plog(LLV_ERROR, LOCATION, NULL,
@@ -3631,11 +3637,11 @@ set_identifier(vpp, type, value)
 		if (loglevel >= LLV_DEBUG) {
 			X509_NAME *xn;
 			BIO *bio;
-			unsigned char *ptr = new->v, *buf;
+			unsigned char *ptr = (unsigned char *) new->v, *buf;
 			size_t len;
 			char save;
 
-			xn = d2i_X509_NAME(NULL, &ptr, new->l);
+			xn = d2i_X509_NAME(NULL, (void *)&ptr, new->l);
 			bio = BIO_new(BIO_s_mem());
 			
 			X509_NAME_print_ex(bio, xn, 0, 0);
@@ -3785,7 +3791,8 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 
 	/* set prefix */
 	if (len2) {
-		u_char *p = new->v + sizeof(struct ipsecdoi_id_b) + len1;
+		u_char *p = (unsigned char *) new->v + 
+			sizeof(struct ipsecdoi_id_b) + len1;
 		u_int bits = prefixlen;
 
 		while (bits >= 8) {
@@ -3895,7 +3902,7 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 		plen = 0;
 		max = alen <<3;
 
-		p = buf->v
+		p = (unsigned char *) buf->v
 			+ sizeof(struct ipsecdoi_id_b)
 			+ alen;
 
@@ -4193,11 +4200,11 @@ fixup_initiator_sa(match, received)
 #endif
 
 static int rm_idtype2doi[] = {
-	255,				/* IDTYPE_UNDEFINED, 0	*/
+	255,				/* IDTYPE_UNDEFINED, 0 */
 	IPSECDOI_ID_FQDN,		/* IDTYPE_FQDN, 1 */
 	IPSECDOI_ID_USER_FQDN,		/* IDTYPE_USERFQDN, 2 */
-	IPSECDOI_ID_KEY_ID,		/* IDTYPE_KEYID, 3 */ 
-	255,	/* 			   IDTYPE_ADDRESS, 4
+	IPSECDOI_ID_KEY_ID,		/* IDTYPE_KEYID, 3 */
+	255,    /*			   IDTYPE_ADDRESS, 4 
 		 * it expands into 4 types by another function. */
 	IPSECDOI_ID_DER_ASN1_DN,	/* IDTYPE_ASN1DN, 5 */
 #ifdef ENABLE_HYBRID

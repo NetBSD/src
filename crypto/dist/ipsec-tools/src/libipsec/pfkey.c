@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.4 2005/06/28 16:12:41 christos Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.5 2005/08/07 09:38:45 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -511,9 +511,8 @@ pfkey_send_update(so, satype, mode, src, dst, spi, reqid, wsize,
 	if ((len = pfkey_send_x1(so, SADB_UPDATE, satype, mode, src, dst, spi,
 			reqid, wsize,
 			keymat, e_type, e_keylen, a_type, a_keylen, flags,
-			l_alloc, (u_int)l_bytes, (u_int)l_addtime,
-			(u_int)l_usetime, seq,
-			0, 0, 0, NULL, 0)) < 0)
+			l_alloc, (u_int)l_bytes, (u_int)l_addtime, 
+			(u_int)l_usetime, seq, 0, 0, 0, NULL, 0)) < 0)
 		return -1;
 
 	return len;
@@ -544,10 +543,9 @@ pfkey_send_update_nat(so, satype, mode, src, dst, spi, reqid, wsize,
 	if ((len = pfkey_send_x1(so, SADB_UPDATE, satype, mode, src, dst, spi,
 			reqid, wsize,
 			keymat, e_type, e_keylen, a_type, a_keylen, flags,
-			l_alloc, (u_int)l_bytes, (u_int)l_addtime,
-			(u_int)l_usetime, seq,
-			l_natt_type, l_natt_sport, l_natt_dport, l_natt_oa,
-			l_natt_frag)) < 0)
+			l_alloc, (u_int)l_bytes, (u_int)l_addtime, 
+			(u_int)l_usetime, seq, l_natt_type, l_natt_sport, 
+			l_natt_dport, l_natt_oa, l_natt_frag)) < 0)
 		return -1;
 
 	return len;
@@ -579,9 +577,8 @@ pfkey_send_add(so, satype, mode, src, dst, spi, reqid, wsize,
 	if ((len = pfkey_send_x1(so, SADB_ADD, satype, mode, src, dst, spi,
 			reqid, wsize,
 			keymat, e_type, e_keylen, a_type, a_keylen, flags,
-			l_alloc, (u_int)l_bytes, (u_int)l_addtime,
-			(u_int)l_usetime, seq,
-			0, 0, 0, NULL, 0)) < 0)
+			l_alloc, (u_int)l_bytes, (u_int)l_addtime, 
+			(u_int)l_usetime, seq, 0, 0, 0, NULL, 0)) < 0)
 		return -1;
 
 	return len;
@@ -612,10 +609,9 @@ pfkey_send_add_nat(so, satype, mode, src, dst, spi, reqid, wsize,
 	if ((len = pfkey_send_x1(so, SADB_ADD, satype, mode, src, dst, spi,
 			reqid, wsize,
 			keymat, e_type, e_keylen, a_type, a_keylen, flags,
-			l_alloc, (u_int)l_bytes, (u_int)l_addtime,
-			(u_int)l_usetime, seq,
-			l_natt_type, l_natt_sport, l_natt_dport, l_natt_oa,
-			l_natt_frag)) < 0)
+			l_alloc, (u_int)l_bytes, (u_int)l_addtime, 
+			(u_int)l_usetime, seq, l_natt_type, l_natt_sport, 
+			l_natt_dport, l_natt_oa, l_natt_frag)) < 0)
 		return -1;
 
 	return len;
@@ -696,9 +692,9 @@ pfkey_send_delete_all(so, satype, mode, src, dst)
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
-	ep = ((caddr_t)(void *)newmsg) + len;
+	ep = ((void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, SADB_DELETE, (u_int)len,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, SADB_DELETE, (u_int)len, 
 	    satype, 0, getpid());
 	if (!p) {
 		free(newmsg);
@@ -951,7 +947,7 @@ pfkey_send_promisc_toggle(so, flag)
 {
 	int len;
 
-	if ((len = pfkey_send_x3(so, SADB_X_PROMISC,
+	if ((len = pfkey_send_x3(so, SADB_X_PROMISC, 
 	    (u_int)(flag ? 1 : 0))) < 0)
 		return -1;
 
@@ -1339,7 +1335,7 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len,
 	                     satype, seq, getpid());
 	if (!p) {
 		free(newmsg);
@@ -1512,7 +1508,7 @@ pfkey_send_x2(so, type, satype, mode, src, dst, spi)
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len, satype, 0,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len, satype, 0,
 	    getpid());
 	if (!p) {
 		free(newmsg);
@@ -1594,7 +1590,7 @@ pfkey_send_x3(so, type, satype)
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len, satype, 0,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len, satype, 0,
 	    getpid());
 	if (!p || p != ep) {
 		free(newmsg);
@@ -1671,7 +1667,7 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len,
+	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, type, (u_int)len,
 	    SADB_SATYPE_UNSPEC, seq, getpid());
 	if (!p) {
 		free(newmsg);
@@ -1920,7 +1916,7 @@ pfkey_align(msg, mhp)
 	mhp[0] = (void *)msg;
 
 	/* initialize */
-	p = (void *)msg;
+	p = (void *) msg;
 	ep = p + PFKEY_UNUNIT64(msg->sadb_msg_len);
 
 	/* skip base header */

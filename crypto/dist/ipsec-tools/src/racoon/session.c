@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.2 2005/07/12 14:15:39 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.3 2005/08/07 09:38:46 manu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 

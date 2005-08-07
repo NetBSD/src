@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.5 2005/07/12 16:49:52 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.6 2005/08/07 09:38:46 manu Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -61,6 +61,7 @@
 #else
 #include "y.tab.h"
 #endif
+
 #include "extern.h"
 
 /* make the code compile on *BSD-current */
@@ -166,9 +167,7 @@ esp-old		{ yylval.num = 1; return(PR_ESP); }
 esp-udp		{ yylval.num = 0; return(PR_ESPUDP); }
 ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
 tcp		{ 
-#ifdef SADB_X_SATYPE_TCPSIGNATURE
 			yylval.num = 0; return(PR_TCP); 
-#endif
 		}
 
 	/* authentication alogorithm */

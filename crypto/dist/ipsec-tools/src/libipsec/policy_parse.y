@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.4 2005/06/26 21:14:08 christos Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.5 2005/08/07 09:38:45 manu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -116,12 +116,12 @@ static struct sockaddr *parse_sockaddr __P((struct _val *addrbuf,
     struct _val *portbuf));
 static int rule_check __P((void));
 static int init_x_policy __P((void));
-static int set_x_request __P((struct sockaddr *src, struct sockaddr *dst));
-static int set_sockaddr __P((struct sockaddr *addr));
+static int set_x_request __P((struct sockaddr *, struct sockaddr *));
+static int set_sockaddr __P((struct sockaddr *));
 static void policy_parse_request_init __P((void));
-static void *policy_parse __P((const char *msg, int msglen));
+static void *policy_parse __P((const char *, int));
 
-extern void __policy__strbuffer__init__ __P((const char *msg));
+extern void __policy__strbuffer__init__ __P((const char *));
 extern void __policy__strbuffer__free__ __P((void));
 extern int yyparse __P((void));
 extern int yylex __P((void));
@@ -636,9 +636,9 @@ policy_parse(msg, msglen)
 	return pbuf;
 }
 
-void *
+ipsec_policy_t
 ipsec_set_policy(msg, msglen)
-	const char *msg;
+	__ipsec_const char *msg;
 	int msglen;
 {
 	void *policy;
@@ -653,4 +653,3 @@ ipsec_set_policy(msg, msglen)
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return policy;
 }
-
