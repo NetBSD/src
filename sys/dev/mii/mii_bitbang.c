@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.7 2005/08/06 23:40:39 chris Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.8 2005/08/07 17:47:22 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.7 2005/08/06 23:40:39 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.8 2005/08/07 17:47:22 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,17 +75,12 @@ mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 	int i;
 	u_int32_t v;
 
-#ifdef cats
-	/* 
-	 * XXX: for some reason older de cards need this extra clocking to
-	 * work as a tlp device.
-	 */
+	/* First clock out the change in direction */
 	v = MDIRPHY;
 	WRITE(v);
-	/* clock in the change in direction */
 	WRITE(v | MDC);
-#endif
-	/* send 32bits of 1 */
+
+	/* send 32bits of 1 to synchronize the MII */
 	v = MDIRPHY | MDO;
 
 	WRITE(v);
