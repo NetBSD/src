@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.115 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.115 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.114 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.115 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -903,7 +903,7 @@ main(int argc, char **argv)
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
-	 * makefile, if it was (makefile != (char *) NULL), or the default
+	 * makefile, if it was (makefile != NULL), or the default
 	 * makefile and Makefile, in that order, if it wasn't.
 	 */
 	if (!noBuiltins) {
@@ -1415,7 +1415,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddBytes(buf, cc, (Byte *) result);
+		Buf_AddBytes(buf, cc, (Byte *)result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 

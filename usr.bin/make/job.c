@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.97 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.98 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -250,10 +250,10 @@ static Shell    shells[] = {
      * UNKNOWN.
      */
 {
-    (char *) 0,
-    FALSE, (char *) 0, (char *) 0, (char *) 0, 0,
-    FALSE, (char *) 0, (char *) 0, (char *) 0, 0,
-    (char *) 0, (char *) 0,
+    NULL,
+    FALSE, NULL, NULL, NULL, 0,
+    FALSE, NULL, NULL, NULL, 0,
+    NULL, NULL,
 }
 };
 static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
@@ -420,8 +420,8 @@ static void JobSigUnlock(sigset_t *omaskp)
 static int
 JobCondPassSig(ClientData jobp, ClientData signop)
 {
-    Job	*job = (Job *) jobp;
-    int	signo = *(int *) signop;
+    Job	*job = (Job *)jobp;
+    int	signo = *(int *)signop;
 #ifdef RMT_WANTS_SIGNALS
     if (job->flags & JOB_REMOTE) {
 	(void)Rmt_Signal(job, signo);
@@ -597,7 +597,7 @@ JobPassSig(int signo)
 static int
 JobCmpPid(ClientData job, ClientData pid)
 {
-    return *(int *) pid - ((Job *) job)->pid;
+    return *(int *)pid - ((Job *)job)->pid;
 }
 
 #ifdef REMOTE
@@ -621,7 +621,7 @@ JobCmpPid(ClientData job, ClientData pid)
 static int
 JobCmpRmtID(ClientData job, ClientData rmtID)
 {
-    return(*(int *) rmtID - ((Job *) job)->rmtID);
+    return(*(int *)rmtID - ((Job *)job)->rmtID);
 }
 #endif
 
@@ -671,8 +671,8 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 				     * command */
     char    	  *cmdStart;	    /* Start of expanded command */
     char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
-    char     	  *cmd = (char *) cmdp;
-    Job           *job = (Job *) jobp;
+    char     	  *cmd = (char *)cmdp;
+    Job           *job = (Job *)jobp;
     char	  *cp, *tmp;
     int           i, j;
 
@@ -893,7 +893,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 static int
 JobSaveCommand(ClientData cmd, ClientData gn)
 {
-    cmd = (ClientData)Var_Subst(NULL, (char *) cmd, (GNode *) gn, FALSE);
+    cmd = (ClientData)Var_Subst(NULL, (char *)cmd, (GNode *)gn, FALSE);
     (void)Lst_AtEnd(postCommands->commands, cmd);
     return(0);
 }
@@ -2471,7 +2471,7 @@ JobRun(GNode *targ)
     Lst_AtEnd(lst, targ);
     (void)Make_Run(lst);
     Lst_Destroy(lst, NOFREE);
-    JobStart(targ, JOB_SPECIAL, (Job *)0);
+    JobStart(targ, JOB_SPECIAL, NULL);
     while (nJobs) {
 	Job_CatchOutput();
 #ifndef RMT_WILL_WATCH
