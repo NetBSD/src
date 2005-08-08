@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.49 2005/08/07 12:28:34 blymn Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.50 2005/08/08 12:12:30 blymn Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.49 2005/08/07 12:28:34 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.50 2005/08/08 12:12:30 blymn Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.49 2005/08/07 12:28:34 blymn Exp $
 #include "opt_verified_exec.h"
 #include "pty.h"
 #include "rnd.h"
+#include "st.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -891,6 +892,7 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Statistics on disk operation"),
 		       sysctl_hw_diskstats, 0, NULL, 0,
 		       CTL_HW, HW_DISKSTATS, CTL_EOL);
+#if NST > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "tapenames",
@@ -903,6 +905,7 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Statistics on tape drive operation"),
 		       sysctl_hw_tapestats, 0, NULL, 0,
 		       CTL_HW, HW_TAPESTATS, CTL_EOL);
+#endif /* NST > 0 */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch",
