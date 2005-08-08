@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.9 2005/05/16 13:14:43 lukem Exp $
+#	$NetBSD: makelist,v 1.10 2005/08/08 14:04:49 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -118,7 +118,6 @@ case $FLAG in
 	    }
 	}
 	END {
-	    printf("    { NULL, 0, NULL }\n");
 	    printf("};\n");
 	    printf("\nprotected const el_bindings_t* help__get()");
 	    printf("{ return el_func_help; }\n");
