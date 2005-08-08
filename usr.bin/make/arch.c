@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.47 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -193,13 +193,13 @@ static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
 static void
 ArchFree(ClientData ap)
 {
-    Arch *a = (Arch *) ap;
+    Arch *a = (Arch *)ap;
     Hash_Search	  search;
     Hash_Entry	  *entry;
 
     /* Free memory from hash entries */
     for (entry = Hash_EnumFirst(&a->members, &search);
-	 entry != (Hash_Entry *)NULL;
+	 entry != NULL;
 	 entry = Hash_EnumNext(&search))
 	free(Hash_GetValue(entry));
 
@@ -497,7 +497,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 static int
 ArchFindArchive(ClientData ar, ClientData archName)
 {
-    return (strcmp((char *) archName, ((Arch *) ar)->name));
+    return (strcmp((char *)archName, ((Arch *)ar)->name));
 }
 
 /*-
@@ -545,7 +545,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
      * the comparisons easier...
      */
     cp = strrchr(member, '/');
-    if (cp != (char *) NULL) {
+    if (cp != NULL) {
 	member = cp + 1;
     }
 
@@ -555,7 +555,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 
 	he = Hash_FindEntry(&ar->members, member);
 
-	if (he != (Hash_Entry *) NULL) {
+	if (he != NULL) {
 	    return ((struct ar_hdr *)Hash_GetValue(he));
 	} else {
 	    /* Try truncated name */
@@ -569,7 +569,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    }
 	    if ((he = Hash_FindEntry(&ar->members, copy)) != NULL)
 		return ((struct ar_hdr *)Hash_GetValue(he));
-	    return ((struct ar_hdr *) NULL);
+	    return (NULL);
 	}
     }
 
@@ -585,8 +585,8 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 
 	 arch = ArchFindMember(archive, member, &sarh, "r");
 
-	 if (arch == (FILE *)NULL) {
-	    return ((struct ar_hdr *)NULL);
+	 if (arch == NULL) {
+	    return (NULL);
 	} else {
 	    fclose(arch);
 	    return (&sarh);
@@ -598,8 +598,8 @@ ArchStatMember(char *archive, char *member, Boolean hash)
      * everything that's in it and cache it so we can get at it quickly.
      */
     arch = fopen(archive, "r");
-    if (arch == (FILE *) NULL) {
-	return ((struct ar_hdr *) NULL);
+    if (arch == NULL) {
+	return (NULL);
     }
 
     /*
@@ -609,7 +609,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
     	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
-	    return ((struct ar_hdr *) NULL);
+	    return (NULL);
     }
 
     ar = emalloc(sizeof(Arch));
@@ -687,7 +687,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    }
 #endif
 
-	    he = Hash_CreateEntry(&ar->members, memName, (Boolean *)NULL);
+	    he = Hash_CreateEntry(&ar->members, memName, NULL);
 	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
 	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
@@ -704,10 +704,10 @@ ArchStatMember(char *archive, char *member, Boolean hash)
      */
     he = Hash_FindEntry(&ar->members, member);
 
-    if (he != (Hash_Entry *) NULL) {
+    if (he != NULL) {
 	return ((struct ar_hdr *)Hash_GetValue(he));
     } else {
-	return ((struct ar_hdr *) NULL);
+	return (NULL);
     }
 
 badarch:
@@ -716,7 +716,7 @@ badarch:
     if (ar->fnametab)
 	free(ar->fnametab);
     free(ar);
-    return ((struct ar_hdr *) NULL);
+    return (NULL);
 }
 
 #ifdef SVR4ARCHIVES
@@ -856,8 +856,8 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
     int		  len, tlen;
 
     arch = fopen(archive, mode);
-    if (arch == (FILE *) NULL) {
-	return ((FILE *) NULL);
+    if (arch == NULL) {
+	return (NULL);
     }
 
     /*
@@ -867,7 +867,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
     	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
-	    return ((FILE *) NULL);
+	    return (NULL);
     }
 
     /*
@@ -877,7 +877,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
      * the comparisons easier...
      */
     cp = strrchr(member, '/');
-    if (cp != (char *) NULL) {
+    if (cp != NULL) {
 	member = cp + 1;
     }
     len = tlen = strlen(member);
@@ -892,7 +892,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 	      * and there's no way we can recover...
 	      */
 	     fclose(arch);
-	     return ((FILE *) NULL);
+	     return (NULL);
 	} else if (strncmp(member, arhPtr->ar_name, tlen) == 0) {
 	    /*
 	     * If the member's name doesn't take up the entire 'name' field,
@@ -968,7 +968,7 @@ skip:
      * archive and return NULL -- an error.
      */
     fclose(arch);
-    return ((FILE *) NULL);
+    return (NULL);
 }
 
 /*-
@@ -1005,7 +1005,7 @@ Arch_Touch(GNode *gn)
 	free(p2);
     snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
-    if (arch != (FILE *) NULL) {
+    if (arch != NULL) {
 	(void)fwrite((char *)&arh, sizeof(struct ar_hdr), 1, arch);
 	fclose(arch);
     }
@@ -1044,7 +1044,7 @@ Arch_TouchLib(GNode *gn)
     arch = ArchFindMember(gn->path, UNCONST(RANLIBMAG), &arh, "r+");
     snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
-    if (arch != (FILE *) NULL) {
+    if (arch != NULL) {
 	(void)fwrite((char *)&arh, sizeof(struct ar_hdr), 1, arch);
 	fclose(arch);
 
@@ -1086,7 +1086,7 @@ Arch_MTime(GNode *gn)
     if (p2)
 	free(p2);
 
-    if (arhPtr != (struct ar_hdr *) NULL) {
+    if (arhPtr != NULL) {
 	modTime = (time_t)strtol(arhPtr->ar_date, NULL, 10);
     } else {
 	modTime = 0;
@@ -1195,7 +1195,7 @@ Arch_FindLib(GNode *gn, Lst path)
 #ifdef LIBRARIES
     Var_Set(TARGET, gn->name, gn, 0);
 #else
-    Var_Set(TARGET, gn->path == (char *) NULL ? gn->name : gn->path, gn, 0);
+    Var_Set(TARGET, gn->path == NULL ? gn->name : gn->path, gn, 0);
 #endif /* LIBRARIES */
 }
 
@@ -1257,7 +1257,7 @@ Arch_LibOODate(GNode *gn)
 
 	arhPtr = ArchStatMember(gn->path, UNCONST(RANLIBMAG), FALSE);
 
-	if (arhPtr != (struct ar_hdr *)NULL) {
+	if (arhPtr != NULL) {
 	    modTimeTOC = (int)strtol(arhPtr->ar_date, NULL, 10);
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {

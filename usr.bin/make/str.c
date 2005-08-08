@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.24 2005/08/08 16:42:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.24 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.24 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -202,7 +202,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 				    (argmax + 1) * sizeof(char *));
 			}
 			argv[argc++] = start;
-			start = (char *)NULL;
+			start = NULL;
 			if (ch == '\n' || ch == '\0')
 				goto done;
 			continue;
@@ -244,7 +244,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 			start = t;
 		*t++ = (char) ch;
 	}
-done:	argv[argc] = (char *)NULL;
+done:	argv[argc] = NULL;
 	*store_argc = argc;
 	return(argv);
 }
@@ -472,14 +472,14 @@ Str_SYSVSubst(Buffer buf, char *pat, char *src, int len)
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix */
-	Buf_AddBytes(buf, m - pat, (Byte *) pat);
+	Buf_AddBytes(buf, m - pat, (Byte *)pat);
 	/* skip the % */
 	pat = m + 1;
     }
 
     /* Copy the pattern */
-    Buf_AddBytes(buf, len, (Byte *) src);
+    Buf_AddBytes(buf, len, (Byte *)src);
 
     /* append the rest */
-    Buf_AddBytes(buf, strlen(pat), (Byte *) pat);
+    Buf_AddBytes(buf, strlen(pat), (Byte *)pat);
 }

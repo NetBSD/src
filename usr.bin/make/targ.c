@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.36 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.37 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -282,7 +282,7 @@ Targ_NewGN(const char *name)
 static void
 TargFreeGN(ClientData gnp)
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
 
 
     free(gn->name);
@@ -346,7 +346,7 @@ Targ_FindNode(const char *name, int flags)
 	he = Hash_FindEntry(&targets, name);
     }
 
-    if (he == (Hash_Entry *) NULL) {
+    if (he == NULL) {
 	return (NILGNODE);
     } else {
 	return ((GNode *)Hash_GetValue(he));
@@ -506,7 +506,7 @@ Targ_SetMain(GNode *gn)
 static int
 TargPrintName(ClientData gnp, ClientData ppath)
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
     printf("%s ", gn->name);
 #ifdef notdef
     if (ppath) {
@@ -525,7 +525,7 @@ TargPrintName(ClientData gnp, ClientData ppath)
 int
 Targ_PrintCmd(ClientData cmd, ClientData dummy)
 {
-    printf("\t%s\n", (char *) cmd);
+    printf("\t%s\n", (char *)cmd);
     return (dummy ? 0 : 0);
 }
 
@@ -610,8 +610,8 @@ Targ_PrintType(int type)
 static int
 TargPrintNode(ClientData gnp, ClientData passp)
 {
-    GNode         *gn = (GNode *) gnp;
-    int	    	  pass = *(int *) passp;
+    GNode         *gn = (GNode *)gnp;
+    int	    	  pass = *(int *)passp;
     if (!OP_NOP(gn->type)) {
 	printf("#\n");
 	if (gn == mainTarg) {
@@ -690,7 +690,7 @@ TargPrintNode(ClientData gnp, ClientData passp)
 static int
 TargPrintOnlySrc(ClientData gnp, ClientData dummy)
 {
-    GNode   	  *gn = (GNode *) gnp;
+    GNode   	  *gn = (GNode *)gnp;
     if (OP_NOP(gn->type))
 	printf("#\t%s [%s]\n", gn->name, gn->path ? gn->path : gn->name);
 
@@ -734,8 +734,8 @@ Targ_PrintGraph(int pass)
 static int
 TargPropagateCohort(ClientData cgnp, ClientData pgnp)
 {
-    GNode	  *cgn = (GNode *) cgnp;
-    GNode	  *pgn = (GNode *) pgnp;
+    GNode	  *cgn = (GNode *)cgnp;
+    GNode	  *pgn = (GNode *)pgnp;
 
     cgn->type |= pgn->type & ~OP_OPMASK;
     return (0);
@@ -744,7 +744,7 @@ TargPropagateCohort(ClientData cgnp, ClientData pgnp)
 static int
 TargPropagateNode(ClientData gnp, ClientData junk __unused)
 {
-    GNode	  *gn = (GNode *) gnp;
+    GNode	  *gn = (GNode *)gnp;
     if (gn->type & OP_DOUBLEDEP)
 	Lst_ForEach(gn->cohorts, TargPropagateCohort, gnp);
     return (0);

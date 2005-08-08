@@ -1,4 +1,4 @@
-/*	$NetBSD: lstConcat.c,v 1.13 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: lstConcat.c,v 1.14 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstConcat.c,v 1.13 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: lstConcat.c,v 1.14 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstConcat.c,v 1.13 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: lstConcat.c,v 1.14 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -125,7 +125,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	    list1->firstPtr->prevPtr = list1->lastPtr;
 	    list1->lastPtr->nextPtr = list1->firstPtr;
 	}
-	free (l2);
+	free(l2);
     } else if (list2->firstPtr != NilListNode) {
 	/*
 	 * We set the nextPtr of the last element of list 2 to be nil to make
