@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.66 2005/08/07 17:10:36 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.67 2005/08/08 12:11:52 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.66 2005/08/07 17:10:36 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.67 2005/08/08 12:11:52 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ protoprhdr(void)
 }
 
 static void
-protopr0(caddr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
+protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	 struct in_addr *laddr, u_int16_t lport,
 	 struct in_addr *faddr, u_int16_t fport,
 	 short t_state, char *name)
@@ -226,7 +226,7 @@ protopr(off, name)
 				first = 0;
 			}
 
-	                protopr0((caddr_t) pcblist[i].ki_ppcbaddr,
+	                protopr0((intptr_t) pcblist[i].ki_ppcbaddr,
 				 pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
 				 &src.sin_addr, src.sin_port,
 				 &dst.sin_addr, dst.sin_port,
@@ -263,7 +263,7 @@ protopr(off, name)
 			first = 0;
 		}
 
-		protopr0(istcp ? (caddr_t) inpcb.inp_ppcb : (caddr_t) prev,
+		protopr0(istcp ? (intptr_t) inpcb.inp_ppcb : (intptr_t) prev,
 			 sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
 			 &inpcb.inp_laddr, inpcb.inp_lport,
 			 &inpcb.inp_faddr, inpcb.inp_fport,
