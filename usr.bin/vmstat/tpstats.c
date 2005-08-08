@@ -1,4 +1,4 @@
-/*	$NetBSD: tpstats.c,v 1.1 2005/08/07 12:21:46 blymn Exp $	*/
+/*	$NetBSD: tpstats.c,v 1.2 2005/08/08 11:31:48 blymn Exp $	*/
 
 /*
  * Copyright 2005 Brett Lymn
@@ -163,7 +163,7 @@ tpreadstats(void)
 
 		size = tp_ndrive * sizeof(struct tape_sysctl);
 		if (sysctl(mib, 3, tapes, &size, NULL, 0) < 0)
-			err(1, "sysctl hw.tapestats failed");
+			tp_ndrive = 0;
 		for (i = 0; i < tp_ndrive; i++) {
 			cur_tape.rxfer[i] = tapes[i].rxfer;
 			cur_tape.wxfer[i] = tapes[i].wxfer;
@@ -206,7 +206,8 @@ tpinit(int selected)
 		mib[1] = HW_TAPESTATS;
 		mib[2] = sizeof(struct tape_sysctl);
 		if (sysctl(mib, 3, NULL, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.tapestats failed");
+			size = 0;
+
 		tp_ndrive = size / sizeof(struct tape_sysctl);
 
 		if (size == 0) {
@@ -274,7 +275,7 @@ tpinit(int selected)
 		mib[1] = HW_TAPESTATS;		/* ... above, but be safe... */
 		mib[2] = sizeof(struct tape_sysctl);
 		if (sysctl(mib, 3, tapes, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.tapestats failed");
+			tp_ndrive = 0;
 		for (i = 0; i < tp_ndrive; i++) {
 			cur_tape.name[i] = tapes[i].name;
 			cur_tape.select[i] = selected;
