@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82 2004/08/26 10:12:33 junyoung Exp $	*/
+/*	$NetBSD: pmap.h,v 1.83 2005/08/08 05:54:07 junyoung Exp $	*/
 
 /*
  *
@@ -105,7 +105,7 @@
  *   |    |
  *   |    |
  *   | 767| -> points back to PDP (%cr3) mapping VA 0xbfc00000 -> 0xc0000000
- *   | 768| -> first kernel PTP (maps 0xc0000000 -> 0xf0400000)
+ *   | 768| -> first kernel PTP (maps 0xc0000000 -> 0xc0400000)
  *   |    |
  *   |1023| -> points to alternate pmap's PDP (maps 0xffc00000 -> end)
  *   +----+
@@ -501,7 +501,7 @@ void	pmap_ldt_cleanup(struct lwp *);
 #define	PMAP_FORK
 #endif /* USER_LDT */
 
-/* 
+/*
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
