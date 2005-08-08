@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.30 2005/02/05 15:28:46 wiz Exp $ */
+.\" $NetBSD: useradd.8,v 1.31 2005/08/08 21:53:17 christos Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 14, 2004
+.Dd August 8, 2005
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -124,8 +124,7 @@ option is specified and no
 .Fl d
 option is specified.
 .It Fl e Ar expiry-time
-sets the default time at which the current password will expire for new
-users.
+sets the time at which the new user accounts will expire.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
@@ -133,7 +132,7 @@ sufficient), day is the day of the month, and year is the year.
 Time in seconds since the epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
 .It Fl f Ar inactive-time
-sets the default time at which new user accounts will expire.
+sets the time at which passwords for the new user accounts will expire.
 Also see the
 .Fl e
 option above.
