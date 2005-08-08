@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.98 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -392,7 +392,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	{
 	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
 	    if (var == NULL) {
-		return ((Var *) NIL);
+		return ((Var *)NIL);
 	    } else {
 		return ((Var *)Hash_GetValue(var));
 	    }
@@ -400,7 +400,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	    return((Var *)NIL);
 	}
     } else if (var == NULL) {
-	return ((Var *) NIL);
+	return ((Var *)NIL);
     } else {
 	return ((Var *)Hash_GetValue(var));
     }
@@ -524,7 +524,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
     } else
 	name = cp;
     v = VarFind(name, ctxt, 0);
-    if (v == (Var *) NIL) {
+    if (v == (Var *)NIL) {
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_Discard(v->val, Buf_Size(v->val));
@@ -596,7 +596,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
-    if (v == (Var *) NIL) {
+    if (v == (Var *)NIL) {
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_AddByte(v->val, (Byte)' ');
@@ -604,7 +604,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name,
-		   (char *)Buf_GetAll(v->val, (int *)NULL));
+		   (char *)Buf_GetAll(v->val, NULL));
 	}
 
 	if (v->flags & VAR_FROM_ENV) {
@@ -680,8 +680,8 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 
     v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
     *frp = NULL;
-    if (v != (Var *) NIL) {
-	char *p = ((char *)Buf_GetAll(v->val, (int *)NULL));
+    if (v != (Var *)NIL) {
+	char *p = ((char *)Buf_GetAll(v->val, NULL));
 	if (v->flags & VAR_FROM_ENV) {
 	    free(v->name);
 	    Buf_Destroy(v->val, FALSE);
@@ -690,7 +690,7 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 	}
 	return p;
     } else {
-	return ((char *) NULL);
+	return (NULL);
     }
 }
 
@@ -723,7 +723,7 @@ VarHead(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *slash;
 
     slash = strrchr(word, '/');
-    if (slash != (char *)NULL) {
+    if (slash != NULL) {
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
 	}
@@ -775,7 +775,7 @@ VarTail(GNode *ctx __unused, Var_Parse_State *vpstate,
     }
 
     slash = strrchr(word, '/');
-    if (slash != (char *)NULL) {
+    if (slash != NULL) {
 	*slash++ = '\0';
 	Buf_AddBytes(buf, strlen(slash), (Byte *)slash);
 	slash[-1] = '/';
@@ -813,7 +813,7 @@ VarSuffix(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *dot;
 
     dot = strrchr(word, '.');
-    if (dot != (char *)NULL) {
+    if (dot != NULL) {
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
 	}
@@ -858,7 +858,7 @@ VarRoot(GNode *ctx __unused, Var_Parse_State *vpstate,
     }
 
     dot = strrchr(word, '.');
-    if (dot != (char *)NULL) {
+    if (dot != NULL) {
 	*dot = '\0';
 	Buf_AddBytes(buf, strlen(word), (Byte *)word);
 	*dot = '.';
@@ -895,7 +895,7 @@ VarMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	 char *word, Boolean addSpace, Buffer buf,
 	 ClientData pattern)
 {
-    if (Str_Match(word, (char *) pattern)) {
+    if (Str_Match(word, (char *)pattern)) {
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
 	}
@@ -936,7 +936,7 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 {
     int len;
     char *ptr;
-    VarPattern 	  *pat = (VarPattern *) patp;
+    VarPattern 	  *pat = (VarPattern *)patp;
     char *varexp;
 
     if (addSpace && vpstate->varSpace)
@@ -949,7 +949,7 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 	Str_SYSVSubst(buf, varexp, ptr, len);
 	free(varexp);
     } else {
-	Buf_AddBytes(buf, strlen(word), (Byte *) word);
+	Buf_AddBytes(buf, strlen(word), (Byte *)word);
     }
 
     return(addSpace);
@@ -984,7 +984,7 @@ VarNoMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	   char *word, Boolean addSpace, Buffer buf,
 	   ClientData pattern)
 {
-    if (!Str_Match(word, (char *) pattern)) {
+    if (!Str_Match(word, (char *)pattern)) {
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
 	}
@@ -1023,7 +1023,7 @@ VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
 {
     int  	wordLen;    /* Length of word */
     char 	*cp;	    /* General pointer */
-    VarPattern	*pattern = (VarPattern *) patternp;
+    VarPattern	*pattern = (VarPattern *)patternp;
 
     wordLen = strlen(word);
     if ((pattern->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) !=
@@ -1130,7 +1130,7 @@ VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
 	    origSize = Buf_Size(buf);
 	    while (!done) {
 		cp = Str_FindSubstring(word, pattern->lhs);
-		if (cp != (char *)NULL) {
+		if (cp != NULL) {
 		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)){
 			Buf_AddByte(buf, vpstate->varSpace);
 			addSpace = FALSE;
@@ -1361,7 +1361,7 @@ VarLoopExpand(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 	      char *word, Boolean addSpace, Buffer buf,
 	      ClientData loopp)
 {
-    VarLoop_t	*loop = (VarLoop_t *) loopp;
+    VarLoop_t	*loop = (VarLoop_t *)loopp;
     char *s;
     int slen;
 
@@ -1466,7 +1466,7 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     free(av);
 
     Buf_AddByte(buf, '\0');
-    as = (char *)Buf_GetAll(buf, (int *)NULL);
+    as = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1527,7 +1527,7 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
     free(av);
 
     Buf_AddByte(buf, '\0');
-    as = (char *)Buf_GetAll(buf, (int *)NULL);
+    as = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1597,7 +1597,7 @@ VarOrder(const char *str, const char otype)
 	} /* end of switch */
 
     for (i = 0; i < ac; i++) {
-	Buf_AddBytes(buf, strlen(av[i]), (Byte *) av[i]);
+	Buf_AddBytes(buf, strlen(av[i]), (Byte *)av[i]);
 	if (i != ac - 1)
 	    Buf_AddByte(buf, ' ');
     }
@@ -1606,7 +1606,7 @@ VarOrder(const char *str, const char otype)
     free(av);
 
     Buf_AddByte(buf, '\0');
-    as = (char *)Buf_GetAll(buf, (int *)NULL);
+    as = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return (as);
 }
@@ -1656,7 +1656,7 @@ VarUniq(const char *str)
     free(av);
 
     Buf_AddByte(buf, '\0');
-    as = (char *)Buf_GetAll(buf, (int *)NULL);
+    as = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return as;
 }
@@ -1707,12 +1707,12 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
      */
     for (cp = *tstr; *cp && (*cp != delim); cp++) {
 	if (IS_A_MATCH(cp, delim)) {
-	    Buf_AddByte(buf, (Byte) cp[1]);
+	    Buf_AddByte(buf, (Byte)cp[1]);
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {
 		if (flags == NULL)
-		    Buf_AddByte(buf, (Byte) *cp);
+		    Buf_AddByte(buf, (Byte)*cp);
 		else
 		    /*
 		     * Unescaped $ at end of pattern => anchor
@@ -1731,7 +1731,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 		     * substitution and recurse.
 		     */
 		    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
-		    Buf_AddBytes(buf, strlen(cp2), (Byte *) cp2);
+		    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 		    if (freeIt)
 			free(cp2);
 		    cp += len - 1;
@@ -1759,17 +1759,17 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 			Buf_AddBytes(buf, cp2 - cp, (const Byte *)cp);
 			cp = --cp2;
 		    } else
-			Buf_AddByte(buf, (Byte) *cp);
+			Buf_AddByte(buf, (Byte)*cp);
 		}
 	    }
 	}
 	else if (pattern && *cp == '&')
 	    Buf_AddBytes(buf, pattern->leftLen, (const Byte *)pattern->lhs);
 	else
-	    Buf_AddByte(buf, (Byte) *cp);
+	    Buf_AddByte(buf, (Byte)*cp);
     }
 
-    Buf_AddByte(buf, (Byte) '\0');
+    Buf_AddByte(buf, (Byte)'\0');
 
     if (*cp != delim) {
 	*tstr = cp;
@@ -1813,8 +1813,8 @@ VarQuote(char *str)
 	    Buf_AddByte(buf, (Byte)'\\');
 	Buf_AddByte(buf, (Byte)*str);
     }
-    Buf_AddByte(buf, (Byte) '\0');
-    str = (char *)Buf_GetAll(buf, (int *)NULL);
+    Buf_AddByte(buf, (Byte)'\0');
+    str = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return str;
 }
@@ -1845,10 +1845,10 @@ VarChangeCase(char *str, int upper)
    modProc = (upper ? toupper : tolower);
    buf = Buf_Init(MAKE_BSIZE);
    for (; *str ; str++) {
-       Buf_AddByte(buf, (Byte) modProc(*str));
+       Buf_AddByte(buf, (Byte)modProc(*str));
    }
-   Buf_AddByte(buf, (Byte) '\0');
-   str = (char *)Buf_GetAll(buf, (int *) NULL);
+   Buf_AddByte(buf, (Byte)'\0');
+   str = (char *)Buf_GetAll(buf, NULL);
    Buf_Destroy(buf, FALSE);
    return str;
 }
@@ -1978,14 +1978,14 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		Boolean rfree;
 		char *rval = Var_Parse(tstr, ctxt, err, &rlen, &rfree);
 		if (rval != NULL) {
-		    Buf_AddBytes(buf, strlen(rval), (Byte *) rval);
+		    Buf_AddBytes(buf, strlen(rval), (Byte *)rval);
 		    if (rfree)
 			free(rval);
 		}
 		tstr += rlen - 1;
 	    }
 	    else
-		Buf_AddByte(buf, (Byte) *tstr);
+		Buf_AddByte(buf, (Byte)*tstr);
 	}
 	if (*tstr == ':') {
 	    haveModifier = TRUE;
@@ -2001,8 +2001,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    return (var_Error);
 	}
 	*WR(tstr) = '\0';
-	Buf_AddByte(buf, (Byte) '\0');
-	str = Buf_GetAll(buf, (int *) NULL);
+	Buf_AddByte(buf, (Byte)'\0');
+	str = Buf_GetAll(buf, NULL);
 	vlen = strlen(str);
 
 	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
@@ -2037,7 +2037,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 * the only one who sets these things and we sure don't
 			 * but nested invocations in them...
 			 */
-			val = (char *)Buf_GetAll(v->val, (int *)NULL);
+			val = (char *)Buf_GetAll(v->val, NULL);
 
 			if (str[1] == 'D') {
 			    val = VarModify(ctxt, &parsestate, val, VarHead,
@@ -2149,8 +2149,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      * been dynamically-allocated, so it will need freeing when we
      * return.
      */
-    nstr = (char *)Buf_GetAll(v->val, (int *)NULL);
-    if (strchr(nstr, '$') != (char *)NULL) {
+    nstr = (char *)Buf_GetAll(v->val, NULL);
+    if (strchr(nstr, '$') != NULL) {
 	nstr = Var_Subst(NULL, nstr, ctxt, err);
 	*freePtr = TRUE;
     }
@@ -2241,7 +2241,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      *		  ::!=<cmd>	Assigns output of <cmd> as the new value of
      *				variable.
      */
-    if ((nstr != (char *)NULL) && haveModifier) {
+    if ((nstr != NULL) && haveModifier) {
 	/*
 	 * Skip initial colon while putting it back.
 	 */
@@ -2396,7 +2396,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			     (cp[1] == endc) ||
 			     (cp[1] == '\\')))
 			{
-			    Buf_AddByte(buf, (Byte) cp[1]);
+			    Buf_AddByte(buf, (Byte)cp[1]);
 			    cp++;
 			} else if (*cp == '$') {
 			    /*
@@ -2408,15 +2408,15 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			    Boolean freeIt;
 
 			    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
-			    Buf_AddBytes(buf, strlen(cp2), (Byte *) cp2);
+			    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 			    if (freeIt)
 				free(cp2);
 			    cp += len - 1;
 			} else {
-			    Buf_AddByte(buf, (Byte) *cp);
+			    Buf_AddByte(buf, (Byte)*cp);
 			}
 		    }
-		    Buf_AddByte(buf, (Byte) '\0');
+		    Buf_AddByte(buf, (Byte)'\0');
 
 		    termc = *cp;
 
@@ -2427,7 +2427,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
 		    if (wantit) {
-			newStr = (char *)Buf_GetAll(buf, (int *)NULL);
+			newStr = (char *)Buf_GetAll(buf, NULL);
 			Buf_Destroy(buf, FALSE);
 		    } else {
 			newStr = nstr;
@@ -3180,7 +3180,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
     if (v->flags & VAR_FROM_ENV) {
 	Boolean	  destroy = FALSE;
 
-	if (nstr != (char *)Buf_GetAll(v->val, (int *)NULL)) {
+	if (nstr != (char *)Buf_GetAll(v->val, NULL)) {
 	    destroy = TRUE;
 	} else {
 	    /*
@@ -3189,7 +3189,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	     */
 	    *freePtr = TRUE;
 	}
-	if (nstr != (char *)Buf_GetAll(v->val, (int *)NULL))
+	if (nstr != (char *)Buf_GetAll(v->val, NULL))
 	    Buf_Destroy(v->val, destroy);
 	free(v->name);
 	free(v);
@@ -3213,7 +3213,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		nstr = var_Error;
 	    }
 	}
-	if (nstr != (char *)Buf_GetAll(v->val, (int *)NULL))
+	if (nstr != (char *)Buf_GetAll(v->val, NULL))
 	    Buf_Destroy(v->val, TRUE);
 	free(v->name);
 	free(v);
@@ -3404,7 +3404,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
     }
 
     Buf_AddByte(buf, '\0');
-    val = (char *)Buf_GetAll(buf, (int *)NULL);
+    val = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
     return (val);
 }
@@ -3489,8 +3489,8 @@ Var_End(void)
 static void
 VarPrintVar(ClientData vp)
 {
-    Var    *v = (Var *) vp;
-    printf("%-16s = %s\n", v->name, (char *)Buf_GetAll(v->val, (int *)NULL));
+    Var    *v = (Var *)vp;
+    printf("%-16s = %s\n", v->name, (char *)Buf_GetAll(v->val, NULL));
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.47 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -450,7 +450,7 @@ Dir_SetPATH(void)
 static int
 DirFindName(ClientData p, ClientData dname)
 {
-    return (strcmp(((Path *)p)->name, (char *) dname));
+    return (strcmp(((Path *)p)->name, (char *)dname));
 }
 
 /*-
@@ -538,7 +538,7 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
     isDot = (*p->name == '.' && p->name[1] == '\0');
 
     for (entry = Hash_EnumFirst(&p->files, &search);
-	 entry != (Hash_Entry *)NULL;
+	 entry != NULL;
 	 entry = Hash_EnumNext(&search))
     {
 	/*
@@ -726,7 +726,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
 static int
 DirPrintWord(ClientData word, ClientData dummy)
 {
-    printf("%s ", (char *) word);
+    printf("%s ", (char *)word);
 
     return(dummy ? 0 : 0);
 }
@@ -807,7 +807,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 		     * looking for Etc, it won't be found. Ah well.
 		     * Probably not important.
 		     */
-		    if (dirpath != (char *)NULL) {
+		    if (dirpath != NULL) {
 			char *dp = &dirpath[strlen(dirpath) - 1];
 			if (*dp == '/')
 			    *dp = '\0';
@@ -869,7 +869,7 @@ DirLookup(Path *p, const char *name __unused, const char *cp,
 	printf("   %s ...\n", p->name);
     }
 
-    if (Hash_FindEntry(&p->files, cp) == (Hash_Entry *)NULL)
+    if (Hash_FindEntry(&p->files, cp) == NULL)
 	return NULL;
 
     file = str_concat(p->name, cp, STR_ADDSLASH);
@@ -925,8 +925,7 @@ DirLookupSubdir(Path *p, const char *name)
 	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    file);
 	}
-	entry = Hash_CreateEntry(&mtimes, (char *) file,
-				 (Boolean *)NULL);
+	entry = Hash_CreateEntry(&mtimes, (char *)file, NULL);
 	Hash_SetValue(entry, (long)stb.st_mtime);
 	nearmisses += 1;
 	return (file);
@@ -973,7 +972,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 		return NULL;
 	}
 
-	if (Hash_FindEntry(&p->files, cp) == (Hash_Entry *)NULL) {
+	if (Hash_FindEntry(&p->files, cp) == NULL) {
 		if (DEBUG(DIR)) {
 			printf("   must be here but isn't -- returning\n");
 		}
@@ -1006,7 +1005,7 @@ static char *
 DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 {
 
-	if (Hash_FindEntry(&dot->files, cp) != (Hash_Entry *)NULL) {
+	if (Hash_FindEntry(&dot->files, cp) != NULL) {
 	    if (DEBUG(DIR)) {
 		printf("   in '.'\n");
 	    }
@@ -1015,7 +1014,7 @@ DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 	    return (estrdup(name));
 	}
 	if (cur &&
-	    Hash_FindEntry(&cur->files, cp) != (Hash_Entry *)NULL) {
+	    Hash_FindEntry(&cur->files, cp) != NULL) {
 	    if (DEBUG(DIR)) {
 		printf("   in ${.CURDIR} = %s\n", cur->name);
 	    }
@@ -1083,7 +1082,7 @@ Dir_FindFile(const char *name, Lst path)
 	    printf("couldn't open path, file not found\n");
 	}
 	misses += 1;
-	return ((char *) NULL);
+	return (NULL);
     }
 
     if ((ln = Lst_First(path)) != NILLNODE) {
@@ -1161,7 +1160,7 @@ Dir_FindFile(const char *name, Lst path)
 	    printf("   failed.\n");
 	}
 	misses += 1;
-	return ((char *) NULL);
+	return (NULL);
     }
 
     if (name[0] != '/') {
@@ -1278,15 +1277,15 @@ Dir_FindFile(const char *name, Lst path)
     bigmisses += 1;
     ln = Lst_Last(path);
     if (ln == NILLNODE) {
-	return ((char *) NULL);
+	return (NULL);
     } else {
 	p = (Path *)Lst_Datum(ln);
     }
 
-    if (Hash_FindEntry(&p->files, cp) != (Hash_Entry *)NULL) {
+    if (Hash_FindEntry(&p->files, cp) != NULL) {
 	return (estrdup(name));
     } else {
-	return ((char *) NULL);
+	return (NULL);
     }
 #else /* !notdef */
     if (DEBUG(DIR)) {
@@ -1295,13 +1294,13 @@ Dir_FindFile(const char *name, Lst path)
 
     bigmisses += 1;
     entry = Hash_FindEntry(&mtimes, name);
-    if (entry != (Hash_Entry *)NULL) {
+    if (entry != NULL) {
 	if (DEBUG(DIR)) {
 	    printf("   got it (in mtime cache)\n");
 	}
 	return(estrdup(name));
     } else if (stat(name, &stb) == 0) {
-	entry = Hash_CreateEntry(&mtimes, name, (Boolean *)NULL);
+	entry = Hash_CreateEntry(&mtimes, name, NULL);
 	if (DEBUG(DIR)) {
 	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
@@ -1312,7 +1311,7 @@ Dir_FindFile(const char *name, Lst path)
 	if (DEBUG(DIR)) {
 	    printf("   failed. Returning NULL\n");
 	}
-	return ((char *)NULL);
+	return (NULL);
     }
 #endif /* notdef */
 }
@@ -1426,7 +1425,7 @@ Dir_MTime(GNode *gn)
     } else if (gn->type & OP_PHONY) {
 	gn->mtime = 0;
 	return 0;
-    } else if (gn->path == (char *)NULL) {
+    } else if (gn->path == NULL) {
 	if (gn->type & OP_NOPATH)
 	    fullName = NULL;
 	else
@@ -1435,12 +1434,12 @@ Dir_MTime(GNode *gn)
 	fullName = gn->path;
     }
 
-    if (fullName == (char *)NULL) {
+    if (fullName == NULL) {
 	fullName = estrdup(gn->name);
     }
 
     entry = Hash_FindEntry(&mtimes, fullName);
-    if (entry != (Hash_Entry *)NULL) {
+    if (entry != NULL) {
 	/*
 	 * Only do this once -- the second time folks are checking to
 	 * see if the file was actually updated, so we need to actually go
@@ -1461,7 +1460,7 @@ Dir_MTime(GNode *gn)
 	    stb.st_mtime = 0;
 	}
     }
-    if (fullName && gn->path == (char *)NULL) {
+    if (fullName && gn->path == NULL) {
 	gn->path = fullName;
     }
 
@@ -1521,14 +1520,14 @@ Dir_AddDir(Lst path, const char *name)
 	    fflush(stdout);
 	}
 
-	if ((d = opendir(name)) != (DIR *) NULL) {
+	if ((d = opendir(name)) != NULL) {
 	    p = emalloc(sizeof(Path));
 	    p->name = estrdup(name);
 	    p->hits = 0;
 	    p->refCount = 1;
 	    Hash_InitTable(&p->files, -1);
 
-	    while ((dp = readdir(d)) != (struct dirent *) NULL) {
+	    while ((dp = readdir(d)) != NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
 		/*
 		 * The sun directory library doesn't check for a 0 inode
@@ -1539,7 +1538,7 @@ Dir_AddDir(Lst path, const char *name)
 		    continue;
 		}
 #endif /* sun && d_ino */
-		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
+		(void)Hash_CreateEntry(&p->files, dp->d_name, NULL);
 	    }
 	    (void)closedir(d);
 	    (void)Lst_AtEnd(openDirectories, (ClientData)p);
@@ -1570,7 +1569,7 @@ Dir_AddDir(Lst path, const char *name)
 ClientData
 Dir_CopyDir(ClientData p)
 {
-    ((Path *) p)->refCount += 1;
+    ((Path *)p)->refCount += 1;
 
     return ((ClientData)p);
 }
@@ -1641,7 +1640,7 @@ Dir_MakeFlags(const char *flag, Lst path)
 void
 Dir_Destroy(ClientData pp)
 {
-    Path    	  *p = (Path *) pp;
+    Path    	  *p = (Path *)pp;
     p->refCount -= 1;
 
     if (p->refCount == 0) {
@@ -1742,7 +1741,7 @@ Dir_PrintDirectories(void)
 static int
 DirPrintDir(ClientData p, ClientData dummy)
 {
-    printf("%s ", ((Path *) p)->name);
+    printf("%s ", ((Path *)p)->name);
     return (dummy ? 0 : 0);
 }
 
