@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.21 2005/04/25 01:06:03 matt Exp $	*/
+/*	$NetBSD: vi.c,v 1.22 2005/08/08 14:05:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.21 2005/04/25 01:06:03 matt Exp $");
+__RCSID("$NetBSD: vi.c,v 1.22 2005/08/08 14:05:37 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -895,7 +895,7 @@ vi_yank(EditLine *el, int c)
 
 /* vi_comment_out():
  *	Vi comment out current command
- *	[c]
+ *	[#]
  */
 protected el_action_t
 /*ARGSUSED*/
@@ -912,7 +912,7 @@ vi_comment_out(EditLine *el, int c)
 /* vi_alias():
  *	Vi include shell alias
  *	[@]
- * NB: posix impiles that we should enter insert mode, however
+ * NB: posix implies that we should enter insert mode, however
  * this is against historical precedent...
  */
 protected el_action_t
