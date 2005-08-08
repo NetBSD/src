@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.51 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.51 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.50 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.51 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -322,7 +322,7 @@ SuffSuffIsSuffix(Suff *s, SuffixCmpData *sd)
 static int
 SuffSuffIsSuffixP(ClientData s, ClientData sd)
 {
-    return(!SuffSuffIsSuffix((Suff *) s, (SuffixCmpData *) sd));
+    return(!SuffSuffIsSuffix((Suff *)s, (SuffixCmpData *)sd));
 }
 
 /*-
@@ -345,7 +345,7 @@ SuffSuffIsSuffixP(ClientData s, ClientData sd)
 static int
 SuffSuffHasNameP(ClientData s, ClientData sname)
 {
-    return (strcmp((char *) sname, ((Suff *) s)->name));
+    return (strcmp((char *)sname, ((Suff *)s)->name));
 }
 
 /*-
@@ -370,7 +370,7 @@ SuffSuffHasNameP(ClientData s, ClientData sname)
 static int
 SuffSuffIsPrefix(ClientData s, ClientData str)
 {
-    return (SuffStrIsPrefix(((Suff *) s)->name, (char *) str) == NULL ? 1 : 0);
+    return (SuffStrIsPrefix(((Suff *)s)->name, (char *)str) == NULL ? 1 : 0);
 }
 
 /*-
@@ -392,7 +392,7 @@ SuffSuffIsPrefix(ClientData s, ClientData str)
 static int
 SuffGNHasNameP(ClientData gn, ClientData name)
 {
-    return (strcmp((char *) name, ((GNode *) gn)->name));
+    return (strcmp((char *)name, ((GNode *)gn)->name));
 }
 
  	    /*********** Maintenance Functions ************/
@@ -405,7 +405,7 @@ SuffUnRef(ClientData lp, ClientData sp)
     LstNode ln = Lst_Member(l, sp);
     if (ln != NILLNODE) {
 	Lst_Remove(l, ln);
-	((Suff *) sp)->refCount--;
+	((Suff *)sp)->refCount--;
     }
 }
 
@@ -424,7 +424,7 @@ SuffUnRef(ClientData lp, ClientData sp)
 static void
 SuffFree(ClientData sp)
 {
-    Suff           *s = (Suff *) sp;
+    Suff           *s = (Suff *)sp;
 
     if (s == suffNull)
 	suffNull = NULL;
@@ -750,7 +750,7 @@ Suff_AddTransform(char *line)
 int
 Suff_EndTransform(ClientData gnp, ClientData dummy)
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
 
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
@@ -824,8 +824,8 @@ Suff_EndTransform(ClientData gnp, ClientData dummy)
 static int
 SuffRebuildGraph(ClientData transformp, ClientData sp)
 {
-    GNode   	*transform = (GNode *) transformp;
-    Suff    	*s = (Suff *) sp;
+    GNode   	*transform = (GNode *)transformp;
+    Suff    	*s = (Suff *)sp;
     char 	*cp;
     LstNode	ln;
     Suff  	*s2;
@@ -835,7 +835,7 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
      * First see if it is a transformation from this suffix.
      */
     cp = SuffStrIsPrefix(s->name, transform->name);
-    if (cp != (char *)NULL) {
+    if (cp != NULL) {
 	ln = Lst_Find(sufflist, (ClientData)cp, SuffSuffHasNameP);
 	if (ln != NILLNODE) {
 	    /*
@@ -855,7 +855,7 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
     sd.len = strlen(transform->name);
     sd.ename = transform->name + sd.len;
     cp = SuffSuffIsSuffix(s, &sd);
-    if (cp != (char *)NULL) {
+    if (cp != NULL) {
 	/*
 	 * Null-terminate the source suffix in order to find it.
 	 */
@@ -897,8 +897,8 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
 static int
 SuffScanTargets(ClientData targetp, ClientData gsp)
 {
-    GNode   	*target = (GNode *) targetp;
-    GNodeSuff	*gs = (GNodeSuff *) gsp;
+    GNode   	*target = (GNode *)targetp;
+    GNodeSuff	*gs = (GNodeSuff *)gsp;
     Suff	*s, *t;
     char 	*ptr;
 
@@ -1175,8 +1175,8 @@ Suff_AddLib(char *sname)
 static int
 SuffAddSrc(ClientData sp, ClientData lsp)
 {
-    Suff	*s = (Suff *) sp;
-    LstSrc      *ls = (LstSrc *) lsp;
+    Suff	*s = (Suff *)sp;
+    LstSrc      *ls = (LstSrc *)lsp;
     Src         *s2;	    /* new Src structure */
     Src    	*targ; 	    /* Target structure */
 
@@ -1343,7 +1343,7 @@ SuffFindThem(Lst srcs, Lst slst)
     Src		   *rs;		/* returned Src */
     char	   *ptr;
 
-    rs = (Src *) NULL;
+    rs = NULL;
 
     while (!Lst_IsEmpty (srcs)) {
 	s = (Src *)Lst_DeQueue(srcs);
@@ -1429,7 +1429,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	s = (GNode *)Lst_Datum(ln);
 
 	cp = strrchr(s->name, '/');
-	if (cp == (char *)NULL) {
+	if (cp == NULL) {
 	    cp = s->name;
 	} else {
 	    cp++;
@@ -1516,13 +1516,13 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
      * to later since the resulting words are tacked on to the end of
      * the children list.
      */
-    if (strchr(cgn->name, '$') != (char *)NULL) {
+    if (strchr(cgn->name, '$') != NULL) {
 	if (DEBUG(SUFF)) {
 	    printf("Expanding \"%s\"...", cgn->name);
 	}
 	cp = Var_Subst(NULL, cgn->name, pgn, TRUE);
 
-	if (cp != (char *)NULL) {
+	if (cp != NULL) {
 	    Lst	    members = Lst_Init(FALSE);
 
 	    if (cgn->type & OP_ARCHV) {
@@ -2051,7 +2051,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    targ->suff = (Suff *)Lst_Datum(ln);
 	    targ->suff->refCount++;
 	    targ->node = gn;
-	    targ->parent = (Src *)NULL;
+	    targ->parent = NULL;
 	    targ->children = 0;
 #ifdef DEBUG_SRC
 	    targ->cp = Lst_Init(FALSE);
@@ -2096,7 +2096,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	targ->suff = suffNull;
 	targ->suff->refCount++;
 	targ->node = gn;
-	targ->parent = (Src *)NULL;
+	targ->parent = NULL;
 	targ->children = 0;
 	targ->pref = estrdup(sopref);
 #ifdef DEBUG_SRC
@@ -2128,7 +2128,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
      */
     bottom = SuffFindThem(srcs, slst);
 
-    if (bottom == (Src *)NULL) {
+    if (bottom == NULL) {
 	/*
 	 * No known transformations -- use the first suffix found for setting
 	 * the local variables.
@@ -2136,7 +2136,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	if (!Lst_IsEmpty(targs)) {
 	    targ = (Src *)Lst_Datum(Lst_First(targs));
 	} else {
-	    targ = (Src *)NULL;
+	    targ = NULL;
 	}
     } else {
 	/*
@@ -2248,7 +2248,7 @@ sfnd_abort:
     if (!Lst_IsEmpty(gn->children)) {
 	src = SuffFindCmds(targ, slst);
 
-	if (src != (Src *)NULL) {
+	if (src != NULL) {
 	    /*
 	     * Free up all the Src structures in the transformation path
 	     * up to, but not including, the parent node.
@@ -2286,7 +2286,7 @@ sfnd_abort:
 	bottom->node = Targ_FindNode(bottom->file, TARG_CREATE);
     }
 
-    for (src = bottom; src->parent != (Src *)NULL; src = src->parent) {
+    for (src = bottom; src->parent != NULL; src = src->parent) {
 	targ = src->parent;
 
 	if (src->node->suffix)
@@ -2467,7 +2467,7 @@ Suff_SetNull(char *name)
     ln = Lst_Find(sufflist, (ClientData)name, SuffSuffHasNameP);
     if (ln != NILLNODE) {
 	s = (Suff *)Lst_Datum(ln);
-	if (suffNull != (Suff *)NULL) {
+	if (suffNull != NULL) {
 	    suffNull->flags &= ~SUFF_NULL;
 	}
 	s->flags |= SUFF_NULL;
@@ -2556,14 +2556,14 @@ Suff_End(void)
 
 static int SuffPrintName(ClientData s, ClientData dummy)
 {
-    printf("%s ", ((Suff *) s)->name);
+    printf("%s ", ((Suff *)s)->name);
     return (dummy ? 0 : 0);
 }
 
 static int
 SuffPrintSuff(ClientData sp, ClientData dummy)
 {
-    Suff    *s = (Suff *) sp;
+    Suff    *s = (Suff *)sp;
     int	    flags;
     int	    flag;
 
@@ -2605,7 +2605,7 @@ SuffPrintSuff(ClientData sp, ClientData dummy)
 static int
 SuffPrintTrans(ClientData tp, ClientData dummy)
 {
-    GNode   *t = (GNode *) tp;
+    GNode   *t = (GNode *)tp;
 
     printf("%-16s: ", t->name);
     Targ_PrintType(t->type);

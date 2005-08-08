@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.57 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.57 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.57 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.58 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -174,7 +174,7 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
 static int
 MakeTimeStamp(ClientData pgn, ClientData cgn)
 {
-    return Make_TimeStamp((GNode *) pgn, (GNode *) cgn);
+    return Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
 
 /*-
@@ -351,7 +351,7 @@ Make_OODate(GNode *gn)
 static int
 MakeAddChild(ClientData gnp, ClientData lp)
 {
-    GNode          *gn = (GNode *) gnp;
+    GNode          *gn = (GNode *)gnp;
     Lst            l = (Lst) lp;
 
     if ((gn->flags & REMAKE) == 0 && !(gn->type & (OP_USE|OP_USEBEFORE))) {
@@ -380,8 +380,8 @@ MakeAddChild(ClientData gnp, ClientData lp)
 static int
 MakeFindChild(ClientData gnp, ClientData pgnp)
 {
-    GNode          *gn = (GNode *) gnp;
-    GNode          *pgn = (GNode *) pgnp;
+    GNode          *gn = (GNode *)gnp;
+    GNode          *pgn = (GNode *)pgnp;
 
     (void)Dir_MTime(gn);
     Make_TimeStamp(pgn, gn);
@@ -504,8 +504,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 static int
 MakeHandleUse(ClientData cgnp, ClientData pgnp)
 {
-    GNode	*cgn = (GNode *) cgnp;
-    GNode	*pgn = (GNode *) pgnp;
+    GNode	*cgn = (GNode *)cgnp;
+    GNode	*pgn = (GNode *)pgnp;
     LstNode	ln; 	/* An element in the children list */
     int		unmarked;
 
@@ -797,7 +797,7 @@ Make_Update(GNode *cgn)
 static int
 MakeUnmark(ClientData cgnp, ClientData pgnp __unused)
 {
-    GNode	*cgn = (GNode *) cgnp;
+    GNode	*cgn = (GNode *)cgnp;
 
     cgn->type &= ~OP_MARK;
     return (0);
@@ -813,8 +813,8 @@ MakeUnmark(ClientData cgnp, ClientData pgnp __unused)
 static int
 MakeAddAllSrc(ClientData cgnp, ClientData pgnp)
 {
-    GNode	*cgn = (GNode *) cgnp;
-    GNode	*pgn = (GNode *) pgnp;
+    GNode	*cgn = (GNode *)cgnp;
+    GNode	*pgn = (GNode *)pgnp;
 
     if (cgn->type & OP_MARK)
 	return (0);
@@ -1026,8 +1026,8 @@ MakeStartJobs(void)
 static int
 MakePrintStatus(ClientData gnp, ClientData cyclep)
 {
-    GNode   	*gn = (GNode *) gnp;
-    Boolean 	cycle = *(Boolean *) cyclep;
+    GNode   	*gn = (GNode *)gnp;
+    Boolean 	cycle = *(Boolean *)cyclep;
     if (gn->made == UPTODATE) {
 	printf("`%s' is up to date.\n", gn->name);
     } else if (gn->unmade != 0) {

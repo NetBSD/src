@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.39 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.39 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.38 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.39 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif
 
@@ -182,14 +182,14 @@ signal(int s, void (*a)(int)))(int)
 {
     struct sigvec osv, sv;
 
-    (void)sigvector(s, (struct sigvec *) 0, &osv);
+    (void)sigvector(s, NULL, &osv);
     sv = osv;
     sv.sv_handler = a;
 #ifdef SV_BSDSIG
     sv.sv_flags = SV_BSDSIG;
 #endif
 
-    if (sigvector(s, &sv, (struct sigvec *) 0) == -1)
+    if (sigvector(s, &sv, NULL) == -1)
         return (BADSIG);
     return (osv.sv_handler);
 }
@@ -359,7 +359,7 @@ vsnprintf(char *s, size_t n, const char *fmt, va_list args)
 	 * Some os's are char * _ptr, others are unsigned char *_ptr...
 	 * We cast to void * to make everyone happy.
 	 */
-	fakebuf._ptr = (void *) s;
+	fakebuf._ptr = (void *)s;
 	fakebuf._cnt = n-1;
 	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);

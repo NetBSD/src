@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.59 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -219,8 +219,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
-    char	  *cmd = (char *) cmdp;
-    GNode	  *gn = (GNode *) gnp;
+    char	  *cmd = (char *)cmdp;
+    GNode	  *gn = (GNode *)gnp;
 
     /*
      * Avoid clobbered variable warnings by forcing the compiler
@@ -324,7 +324,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	else
 		shargv[1] = "-c";
 	shargv[2] = cmd;
-	shargv[3] = (char *)NULL;
+	shargv[3] = NULL;
 	av = shargv;
 	argc = 0;
 	bp = NULL;
@@ -450,8 +450,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 int
 Compat_Make(ClientData gnp, ClientData pgnp)
 {
-    GNode *gn = (GNode *) gnp;
-    GNode *pgn = (GNode *) pgnp;
+    GNode *gn = (GNode *)gnp;
+    GNode *pgn = (GNode *)pgnp;
 
     if (!meta[0])		/* we came here from jobs */
 	Compat_Init();

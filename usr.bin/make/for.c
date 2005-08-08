@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.20 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.20 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.20 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -226,8 +226,8 @@ For_Eval(char *line)
 	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
 #define ADDWORD() \
-	Buf_AddBytes(buf, ptr - wrd, (Byte *) wrd), \
-	Buf_AddByte(buf, (Byte) '\0'), \
+	Buf_AddBytes(buf, ptr - wrd, (Byte *)wrd), \
+	Buf_AddByte(buf, (Byte)'\0'), \
 	Lst_AtFront(accumFor.lst, (ClientData)Buf_GetAll(buf, &varlen)), \
 	Buf_Destroy(buf, FALSE)
 
@@ -282,8 +282,8 @@ For_Eval(char *line)
     }
 
     if (forLevel != 0) {
-	Buf_AddBytes(accumFor.buf, strlen(line), (Byte *) line);
-	Buf_AddByte(accumFor.buf, (Byte) '\n');
+	Buf_AddBytes(accumFor.buf, strlen(line), (Byte *)line);
+	Buf_AddByte(accumFor.buf, (Byte)'\n');
 	return 1;
     }
     else {

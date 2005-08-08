@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.29 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.29 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.28 2005/07/25 22:55:58 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.29 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -265,7 +265,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
      */
     buf = Buf_Init(16);
 
-    while ((strchr(" \t)&|", *cp) == (char *)NULL) && (*cp != '\0')) {
+    while ((strchr(" \t)&|", *cp) == NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
 	    /*
 	     * Parse the variable spec and install it as part of the argument
@@ -333,7 +333,7 @@ CondDoDefined(int argLen, char *arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Var_Value(arg, VAR_CMD, &p1) != (char *)NULL) {
+    if (Var_Value(arg, VAR_CMD, &p1) != NULL) {
 	result = TRUE;
     } else {
 	result = FALSE;
@@ -361,7 +361,7 @@ CondDoDefined(int argLen, char *arg)
 static int
 CondStrMatch(ClientData string, ClientData pattern)
 {
-    return(!Str_Match((char *) string,(char *) pattern));
+    return(!Str_Match((char *)string,(char *)pattern));
 }
 
 /*-
@@ -415,7 +415,7 @@ CondDoExists(int argLen, char *arg)
 
     arg[argLen] = '\0';
     path = Dir_FindFile(arg, dirSearchPath);
-    if (path != (char *)NULL) {
+    if (path != NULL) {
 	result = TRUE;
 	free(path);
     } else {
@@ -1270,13 +1270,13 @@ Cond_Eval(char *line)
      * Figure out what sort of conditional it is -- what its default
      * function is, etc. -- by looking in the table of valid "ifs"
      */
-    for (ifp = ifs; ifp->form != (char *)0; ifp++) {
+    for (ifp = ifs; ifp->form != NULL; ifp++) {
 	if (istoken(ifp->form, line, ifp->formlen)) {
 	    break;
 	}
     }
 
-    if (ifp->form == (char *) 0) {
+    if (ifp->form == NULL) {
 	/*
 	 * Nothing fit. If the first word on the line is actually
 	 * "else", it's a valid conditional whose value is the inverse

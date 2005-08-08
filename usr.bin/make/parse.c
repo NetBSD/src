@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.104 2005/08/05 00:53:18 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -506,8 +506,8 @@ Parse_Error(int type, const char *fmt, ...)
 static int
 ParseLinkSrc(ClientData pgnp, ClientData cgnp)
 {
-    GNode          *pgn = (GNode *) pgnp;
-    GNode          *cgn = (GNode *) cgnp;
+    GNode          *pgn = (GNode *)pgnp;
+    GNode          *cgn = (GNode *)cgnp;
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *)Lst_Datum(Lst_Last(pgn->cohorts));
@@ -541,8 +541,8 @@ ParseLinkSrc(ClientData pgnp, ClientData cgnp)
 static int
 ParseDoOp(ClientData gnp, ClientData opp)
 {
-    GNode          *gn = (GNode *) gnp;
-    int             op = *(int *) opp;
+    GNode          *gn = (GNode *)gnp;
+    int             op = *(int *)opp;
     /*
      * If the dependency mask of the operator and the node don't match and
      * the node has actually had an operator applied to it before, and
@@ -614,8 +614,8 @@ ParseDoOp(ClientData gnp, ClientData opp)
 static int
 ParseAddDep(ClientData pp, ClientData sp)
 {
-    GNode *p = (GNode *) pp;
-    GNode *s = (GNode *) sp;
+    GNode *p = (GNode *)pp;
+    GNode *s = (GNode *)sp;
 
     if (p->order < s->order) {
 	/*
@@ -654,9 +654,9 @@ ParseAddDep(ClientData pp, ClientData sp)
 static int
 ParseDoSpecialSrc(ClientData tp, ClientData sp)
 {
-    GNode *tn = (GNode *) tp;
+    GNode *tn = (GNode *)tp;
     GNode *gn;
-    SpecialSrc *ss = (SpecialSrc *) sp;
+    SpecialSrc *ss = (SpecialSrc *)sp;
     char *cp;
     char *cp2;
     char *pref;
@@ -846,7 +846,7 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 static int
 ParseFindMain(ClientData gnp, ClientData dummy)
 {
-    GNode   	  *gn = (GNode *) gnp;
+    GNode   	  *gn = (GNode *)gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
@@ -872,7 +872,7 @@ ParseFindMain(ClientData gnp, ClientData dummy)
 static int
 ParseAddDir(ClientData path, ClientData name)
 {
-    (void)Dir_AddDir((Lst) path, (char *) name);
+    (void)Dir_AddDir((Lst) path, (char *)name);
     return(0);
 }
 
@@ -1763,7 +1763,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 static int
 ParseAddCmd(ClientData gnp, ClientData cmd)
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
     /* if target already supplied, ignore commands */
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
@@ -1812,7 +1812,7 @@ ParseAddCmd(ClientData gnp, ClientData cmd)
 static void
 ParseHasCommands(ClientData gnp)
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
     if (!Lst_IsEmpty(gn->commands)) {
 	gn->type |= OP_HAS_COMMANDS;
     }
@@ -1922,7 +1922,7 @@ ParseDoInclude(char *line)
      * find the durn thing. A return of NULL indicates the file don't
      * exist.
      */
-    fullname = (char *)NULL;
+    fullname = NULL;
 
     if (!isSystem) {
 	/*
@@ -1938,7 +1938,7 @@ ParseDoInclude(char *line)
 	Fname = estrdup(curFile.fname);
 
 	prefEnd = strrchr(Fname, '/');
-	if (prefEnd != (char *)NULL) {
+	if (prefEnd != NULL) {
 	    char  	*newName;
 
 	    *prefEnd = '\0';
@@ -1947,16 +1947,16 @@ ParseDoInclude(char *line)
 	    else
 		newName = str_concat(Fname, file, STR_ADDSLASH);
 	    fullname = Dir_FindFile(newName, parseIncPath);
-	    if (fullname == (char *)NULL) {
+	    if (fullname == NULL) {
 		fullname = Dir_FindFile(newName, dirSearchPath);
 	    }
 	    free(newName);
 	    *prefEnd = '/';
 	} else {
-	    fullname = (char *)NULL;
+	    fullname = NULL;
 	}
 	free(Fname);
-        if (fullname == (char *)NULL) {
+        if (fullname == NULL) {
 	    /*
     	     * Makefile wasn't found in same directory as included makefile.
 	     * Search for it first on the -I search path,
@@ -1964,21 +1964,21 @@ ParseDoInclude(char *line)
 	     * XXX: Suffix specific?
 	     */
 	    fullname = Dir_FindFile(file, parseIncPath);
-	    if (fullname == (char *)NULL) {
+	    if (fullname == NULL) {
 	        fullname = Dir_FindFile(file, dirSearchPath);
 	    }
         }
     }
 
     /* Looking for a system file or file still not found */
-    if (fullname == (char *)NULL) {
+    if (fullname == NULL) {
 	/*
 	 * Look for it on the system path
 	 */
 	fullname = Dir_FindFile(file, Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
     }
 
-    if (fullname == (char *) NULL) {
+    if (fullname == NULL) {
 	*cp = endc;
 	if (!silent)
 	    Parse_Error(PARSE_FATAL, "Could not find %s", file);
@@ -2387,7 +2387,7 @@ ParseSkipLine(int skip, int keep_newline)
         if (c == EOF) {
             Parse_Error(PARSE_FATAL, "Unclosed conditional/for loop");
             Buf_Destroy(buf, TRUE);
-            return((char *)NULL);
+            return(NULL);
         }
 
         curFile.lineno++;
@@ -2668,7 +2668,7 @@ test_char:
 	/*
 	 * Hit end-of-file, so return a NULL line to indicate this.
 	 */
-	return((char *)NULL);
+	return(NULL);
     }
 }
 
