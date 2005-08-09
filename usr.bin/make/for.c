@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.21 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -387,6 +387,6 @@ For_Run(int lineno)
     }
     free(arg.vars);
 
-    Lst_Destroy(arg.lst, (void (*)(ClientData)) free);
+    Lst_Destroy(arg.lst, (FreeProc *)free);
     Buf_Destroy(arg.buf, TRUE);
 }
