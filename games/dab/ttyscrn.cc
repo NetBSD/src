@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.cc,v 1.2 2003/12/27 18:24:51 martin Exp $	*/
+/*	$NetBSD: ttyscrn.cc,v 1.3 2005/08/09 02:38:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include "defs.h"
-RCSID("$NetBSD: ttyscrn.cc,v 1.2 2003/12/27 18:24:51 martin Exp $")
+RCSID("$NetBSD: ttyscrn.cc,v 1.3 2005/08/09 02:38:32 christos Exp $")
 
 #include <stdio.h>
 #include <curses.h>
@@ -207,8 +207,9 @@ TTYSCRN* TTYSCRN::create(int acs, size_t y, size_t x)
     tx = getmaxx(stdscr);
     ty = getmaxy(stdscr);
 
-    if (tx == ERR || ty == ERR || (size_t)tx < x * 2 + TTYSCRN::offsx + 12
-	|| (size_t)ty < y * 2 + TTYSCRN::offsy) {
+    if (tx == ERR || ty == ERR
+	|| static_cast<size_t>(tx) < x * 2 + TTYSCRN::offsx + 12
+	|| static_cast<size_t>(ty) < y * 2 + TTYSCRN::offsy) {
 	endwin();
 	return NULL;
     }

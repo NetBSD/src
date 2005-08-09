@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.h,v 1.1.1.1 2003/12/26 17:57:03 christos Exp $	*/
+/*	$NetBSD: algor.h,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -57,10 +57,10 @@ class ALGOR : public PLAYER {
   private:
     // Closure searches
     int find_closure(size_t& y, size_t& x, int& dir, BOARD& b);
-    int find_max_closure(size_t& y, size_t& x, int& dir, const BOARD& b);
-    int find_min_closure1(size_t& y, size_t& x, int& dir, const BOARD& b,
-			  int last);
-    int find_min_closure(size_t& y, size_t& x, int& dir, const BOARD& b);
+    size_t find_max_closure(size_t& y, size_t& x, int& dir, const BOARD& b);
+    size_t find_min_closure1(size_t& y, size_t& x, int& dir, const BOARD& b,
+	int last);
+    size_t find_min_closure(size_t& y, size_t& x, int& dir, const BOARD& b);
 
     // Move searches
     int find_good_turn(size_t& y, size_t& x, int& dir, const BOARD& b);

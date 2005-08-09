@@ -1,4 +1,4 @@
-/*	$NetBSD: box.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
+/*	$NetBSD: box.cc,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * box.C: Box computations
  */
 #include "defs.h"
-RCSID("$NetBSD: box.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
+RCSID("$NetBSD: box.cc,v 1.2 2005/08/09 02:38:32 christos Exp $")
 
 #include "box.h"
 #include "board.h"
@@ -103,7 +103,7 @@ void BOX::paint(void)
     for (e = BOX::first; e < BOX::last; e++) {
 	addcorner(_centery + corners[e].y, _centerx + corners[e].x);
 	_b.getScrn()->moveto(_centery + edges[e].y, _centerx + edges[e].x);
-	_b.getScrn()->addedge(edge((EDGE) e));
+	_b.getScrn()->addedge(edge(static_cast<EDGE>(e)));
     }
     _b.getScrn()->redraw();
 }
@@ -144,7 +144,7 @@ int BOX::count(void) const
     int cnt = 0;
 
     for (int e = BOX::first; e < BOX::last; e++)
-	cnt += isset((EDGE) e);
+	cnt += isset(static_cast<EDGE>(e));
     return cnt;
 }
 
@@ -152,6 +152,6 @@ int BOX::count(void) const
 void BOX::reset(void)
 {
     for (int e = BOX::first; e < BOX::last; e++)
-	clr((EDGE) e);
+	clr(static_cast<EDGE>(e));
     name() = ' ';
 } 
