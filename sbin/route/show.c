@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.25 2005/08/09 19:43:24 ginsbach Exp $	*/
+/*	$NetBSD: show.c,v 1.26 2005/08/09 21:25:42 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.25 2005/08/09 19:43:24 ginsbach Exp $");
+__RCSID("$NetBSD: show.c,v 1.26 2005/08/09 21:25:42 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: show.c,v 1.25 2005/08/09 19:43:24 ginsbach Exp $");
 #include <unistd.h>
 #include <err.h>
 
+#include "keywords.h"
 #include "extern.h"
 
 #define ROUNDUP(a) \
@@ -105,10 +106,51 @@ void
 show(int argc, char **argv)
 {
 	size_t needed;
-	int mib[6];
+	int af, mib[6];
 	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
+	struct sockaddr *sa;
 
+	af = AF_UNSPEC;
+	if (argc > 1) {
+		argv++;
+		if (argc == 2 && **argv == '-')
+		    switch (keyword(*argv + 1)) {
+			case K_INET:
+				af = AF_INET;
+				break;
+#ifdef INET6
+			case K_INET6:
+				af = AF_INET6;
+				break;
+#endif
+#ifndef SMALL
+			case K_ATALK:
+				af = AF_APPLETALK;
+				break;
+			case K_XNS:
+				af = AF_NS;
+				break;
+#endif /* SMALL */
+#if 0
+			/* XXX Links are never destinations */
+			case K_LINK:
+				af = AF_LINK;
+				break;
+#endif
+#ifndef SMALL
+			case K_ISO:
+			case K_OSI:
+				af = AF_ISO;
+				break;
+			case K_X25:
+				af = AF_CCITT;
+#endif /* SMALL */
+			default:
+				goto bad;
+		} else
+bad:			usage(*argv);
+	}
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
@@ -123,13 +165,15 @@ show(int argc, char **argv)
 		err(1, "sysctl of routing table");
 	lim  = buf + needed;
 
-	printf("Routing tables\n");
+	printf("Routing table%s\n", (af == AF_UNSPEC)? "s" : "");
 
 	/* for (i = 0; i <= AF_MAX; i++) ??? */
 	{
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
-			p_rtentry(rtm);
+			sa = (struct sockaddr *)(rtm + 1);
+			if (af == AF_UNSPEC || af == sa->sa_family)
+				p_rtentry(rtm);
 		}
 	}
 }

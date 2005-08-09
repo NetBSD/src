@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.86 2005/08/09 20:33:06 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.87 2005/08/09 21:25:42 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.86 2005/08/09 20:33:06 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.87 2005/08/09 21:25:42 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,6 @@ __RCSID("$NetBSD: route.c,v 1.86 2005/08/09 20:33:06 ginsbach Exp $");
 
 typedef union sockunion *sup;
 
-static void usage(const char *)__attribute__((__noreturn__));
 static char *any_ntoa(const struct sockaddr *);
 static void set_metric(char *, int);
 static int newroute(int, char **);
@@ -101,7 +100,6 @@ static void print_rtmsg(struct rt_msghdr *, int);
 static void pmsg_common(struct rt_msghdr *);
 static void pmsg_addrs(char *, int);
 static void bprintf(FILE *, int, u_char *);
-static int keyword(char *);
 static void sodump(sup, const char *);
 static void sockaddr(char *, struct sockaddr *);
 
@@ -131,7 +129,7 @@ short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
 
-static void
+void
 usage(const char *cp)
 {
 
@@ -2001,7 +1999,7 @@ bprintf(FILE *fp, int b, u_char *s)
 		(void)putc('>', fp);
 }
 
-static int
+int
 keyword(char *cp)
 {
 	struct keytab *kt = keywords;
@@ -2051,8 +2049,8 @@ sodump(sup su, const char *which)
 		break;
 #endif /* SMALL */
 	default:
-		(void)printf("af %s: (%d) %s; ",
-			which, su->sa.sa_family, any_ntoa(&su->sa));
+		(void)printf("%s: (%d) %s; ",
+		    which, su->sa.sa_family, any_ntoa(&su->sa));
 	}
 	(void)fflush(stdout);
 }
