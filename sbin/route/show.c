@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.24 2005/06/26 21:28:15 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.25 2005/08/09 19:43:24 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.24 2005/06/26 21:28:15 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.25 2005/08/09 19:43:24 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,12 +115,10 @@ show(int argc, char **argv)
 	mib[3] = 0;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)	{
-		perror("route-sysctl-estimate");
-		exit(1);
-	}
+	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+		err(1, "route-sysctl-estimate");
 	if ((buf = malloc(needed)) == 0)
-		err(1, NULL);
+		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 		err(1, "sysctl of routing table");
 	lim  = buf + needed;
@@ -306,7 +304,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 		u_char *s = (u_char *)sa->sa_data, *slim;
 		char *wp = workbuf, *wplim;
 
-		slim = sa->sa_len + (u_char *) sa;
+		slim = sa->sa_len + (u_char *)sa;
 		wplim = wp + sizeof(workbuf) - 6;
 		wp += snprintf(wp, wplim - wp, "(%d)", sa->sa_family);
 		while (s < slim && wp < wplim) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_addr.c,v 1.14 2005/02/05 14:05:23 xtraeme Exp $	*/
+/*	$NetBSD: ccitt_addr.c,v 1.15 2005/08/09 19:43:24 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@ ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 	char *p, *ap, *limit;
 	int havenet = 0;
 
-	memset(xp, 0, sizeof (*xp));
+	memset(xp, 0, sizeof(*xp));
 	xp->x25_family = AF_CCITT;
 	xp->x25_len = sizeof(*xp);
 	p = addr;
@@ -93,7 +93,7 @@ ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 	 */
 
 	ap = xp->x25_addr;
-	limit = ap + sizeof (xp->x25_addr) - 1;
+	limit = ap + sizeof(xp->x25_addr) - 1;
 	while (*p) {
 		if (*p == ',')
 			break;
@@ -101,7 +101,7 @@ ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 			if (havenet)
 				return (0);
 			havenet++;
-			xp->x25_net = atoi (xp->x25_addr);
+			xp->x25_net = atoi(xp->x25_addr);
 			p++;
 			ap = xp->x25_addr;
 			*ap = '\0';
@@ -121,7 +121,7 @@ ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 
 	p++;
 	ap = xp->x25_udata + 4;		/* first four bytes are protocol id */
-	limit = ap + sizeof (xp->x25_udata) - 4;
+	limit = ap + sizeof(xp->x25_udata) - 4;
 	xp->x25_udlen = 4;
 	while (*p) {
 		if (*p == ',')
