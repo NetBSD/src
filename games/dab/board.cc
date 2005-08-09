@@ -1,4 +1,4 @@
-/*	$NetBSD: board.cc,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
+/*	$NetBSD: board.cc,v 1.3 2005/08/09 15:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * board.C: Board manipulations
  */
 #include "defs.h"
-RCSID("$NetBSD: board.cc,v 1.2 2005/08/09 02:38:32 christos Exp $")
+RCSID("$NetBSD: board.cc,v 1.3 2005/08/09 15:17:41 christos Exp $")
 
 #include <stdio.h>
 #include <string.h>
@@ -77,7 +77,7 @@ BOARD::BOARD(const BOARD& b) :
 
     for (size_t y = 0; y < _ty; y++) {
 	_b[y] = new int[_tx];
-	(void) memcpy(_b[y], b._b[y], _tx * sizeof(int));
+	static_cast<void>(memcpy(_b[y], b._b[y], _tx * sizeof(int)));
     }
 }
 
