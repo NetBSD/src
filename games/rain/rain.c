@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.17 2004/05/02 21:31:23 christos Exp $	*/
+/*	$NetBSD: rain.c,v 1.18 2005/08/09 09:15:23 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.17 2004/05/02 21:31:23 christos Exp $");
+__RCSID("$NetBSD: rain.c,v 1.18 2005/08/09 09:15:23 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-	initscr();
+	(void)initscr();
 	cols = COLS - 4;
 	lines = LINES - 4;
 
@@ -101,49 +101,50 @@ main(int argc, char **argv)
 	(void)signal(SIGINT, onsig);
 	(void)signal(SIGTERM, onsig);
 
-	curs_set(0);
+	(void)curs_set(0);
 	for (j = 4; j >= 0; --j) {
 		xpos[j] = random() % cols + 2;
 		ypos[j] = random() % lines + 2;
 	}
 	for (j = 0;;) {
 		if (sig_caught) {
-			endwin();
+			(void)endwin();
 			exit(0);
 		}
 		x = random() % cols + 2;
 		y = random() % lines + 2;
-		mvaddch(y, x, '.');
-		mvaddch(ypos[j], xpos[j], 'o');
+		(void)mvaddch(y, x, '.');
+		(void)mvaddch(ypos[j], xpos[j], 'o');
 		if (!j--)
 			j = 4;
-		mvaddch(ypos[j], xpos[j], 'O');
+		(void)mvaddch(ypos[j], xpos[j], 'O');
 		if (!j--)
 			j = 4;
-		mvaddch(ypos[j] - 1, xpos[j], '-');
-		mvaddstr(ypos[j], xpos[j] - 1, "|.|");
-		mvaddch(ypos[j] + 1, xpos[j], '-');
+		(void)mvaddch(ypos[j] - 1, xpos[j], '-');
+		(void)mvaddstr(ypos[j], xpos[j] - 1, "|.|");
+		(void)mvaddch(ypos[j] + 1, xpos[j], '-');
 		if (!j--)
 			j = 4;
-		mvaddch(ypos[j] - 2, xpos[j], '-');
-		mvaddstr(ypos[j] - 1, xpos[j] - 1, "/ \\");
-		mvaddstr(ypos[j], xpos[j] - 2, "| O |");
-		mvaddstr(ypos[j] + 1, xpos[j] - 1, "\\ /");
-		mvaddch(ypos[j] + 2, xpos[j], '-');
+		(void)mvaddch(ypos[j] - 2, xpos[j], '-');
+		(void)mvaddstr(ypos[j] - 1, xpos[j] - 1, "/ \\");
+		(void)mvaddstr(ypos[j], xpos[j] - 2, "| O |");
+		(void)mvaddstr(ypos[j] + 1, xpos[j] - 1, "\\ /");
+		(void)mvaddch(ypos[j] + 2, xpos[j], '-');
 		if (!j--)
 			j = 4;
-		mvaddch(ypos[j] - 2, xpos[j], ' ');
-		mvaddstr(ypos[j] - 1, xpos[j] - 1, "   ");
-		mvaddstr(ypos[j], xpos[j] - 2, "     ");
-		mvaddstr(ypos[j] + 1, xpos[j] - 1, "   ");
-		mvaddch(ypos[j] + 2, xpos[j], ' ');
+		(void)mvaddch(ypos[j] - 2, xpos[j], ' ');
+		(void)mvaddstr(ypos[j] - 1, xpos[j] - 1, "   ");
+		(void)mvaddstr(ypos[j], xpos[j] - 2, "     ");
+		(void)mvaddstr(ypos[j] + 1, xpos[j] - 1, "   ");
+		(void)mvaddch(ypos[j] + 2, xpos[j], ' ');
 		xpos[j] = x;
 		ypos[j] = y;
-		refresh();
-		if (delay) usleep(delay);
+		(void)refresh();
+		if (delay) (void)usleep(delay);
 	}
 }
 
+/* ARGSUSED */
 static void
 onsig(int dummy __attribute__((__unused__)))
 {
