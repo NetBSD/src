@@ -1,4 +1,4 @@
-/*	$NetBSD: board.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
+/*	$NetBSD: board.cc,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * board.C: Board manipulations
  */
 #include "defs.h"
-RCSID("$NetBSD: board.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
+RCSID("$NetBSD: board.cc,v 1.2 2005/08/09 02:38:32 christos Exp $")
 
 #include <stdio.h>
 #include <string.h>
@@ -154,7 +154,7 @@ int BOARD::full(void) const
 {
     for (size_t y = 0; y < _ny; y++)
 	for (size_t x = 0; x < _nx; x++) {
-	    BOX box(y, x, (BOARD&) *this);
+	    BOX box(y, x, const_cast<BOARD&>(*this));
 	    if (box.count() != 4)
 		return 0;
 	}
@@ -173,7 +173,7 @@ void BOARD::paint(void) const
 {
     for (size_t y = 0; y < _ny; y++)
 	for (size_t x = 0; x < _nx; x++) {
-	    BOX box(y, x, (BOARD&) *this);
+	    BOX box(y, x, const_cast<BOARD&>(*this));
 	    box.paint();
 	}
 }
