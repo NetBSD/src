@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.7 2005/08/09 01:49:23 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.8 2005/08/09 12:59:29 he Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.7 2005/08/09 01:49:23 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.8 2005/08/09 12:59:29 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,47 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.7 2005/08/09 01:49:23 xtraeme Exp $");
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
+
+/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
+#undef fsbtodb
+#undef dbtofsb
+#undef blkoff
+#undef fragoff
+#undef lblktosize
+#undef lblkno
+#undef numfrags
+#undef blkroundup
+#undef fragroundup
+#undef fragstoblks
+#undef blkstofrags
+#undef fragnum
+#undef blknum
+#undef blksize
+#undef INOPB
+#undef INOPF
+#undef NINDIR
+
 #include <ufs/ffs/fs.h>
+
+/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
+/* ...to make sure we don't later depend on their (ambigious) definition */
+#undef fsbtodb
+#undef dbtofsb
+#undef blkoff
+#undef fragoff
+#undef lblktosize
+#undef lblkno
+#undef numfrags
+#undef blkroundup
+#undef fragroundup
+#undef fragstoblks
+#undef blkstofrags
+#undef fragnum
+#undef blknum
+#undef blksize
+#undef INOPB
+#undef INOPF
+#undef NINDIR
 
 #include <unistd.h>
 #include <stdlib.h>
