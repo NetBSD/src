@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.85 2005/08/09 19:43:24 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.86 2005/08/09 20:33:06 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.85 2005/08/09 19:43:24 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.86 2005/08/09 20:33:06 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ any_ntoa(const struct sockaddr *sa)
 #if __GNUC__ > 2
 	len = sa->sa_len - offsetof(struct sockaddr, sa_data);
 #else
-	len = sa->sa_len;
+	len = sa->sa_len - ((caddr_t)&sa->sa_data - (caddr_t)sa);
 #endif
 	in  = sa->sa_data;
 	out = obuf;
@@ -2051,8 +2051,8 @@ sodump(sup su, const char *which)
 		break;
 #endif /* SMALL */
 	default:
-		(void)printf("af %p: %s; ",
-			which, any_ntoa(&su->sa));
+		(void)printf("af %s: (%d) %s; ",
+			which, su->sa.sa_family, any_ntoa(&su->sa));
 	}
 	(void)fflush(stdout);
 }
