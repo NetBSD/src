@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.21 2005/08/08 14:04:49 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.22 2005/08/09 13:58:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.21 2005/08/08 14:04:49 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.22 2005/08/09 13:58:44 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1147,7 +1147,7 @@ map_print_key(EditLine *el, el_action_t *map, const char *in)
 private void
 map_print_some_keys(EditLine *el, el_action_t *map, int first, int last)
 {
-	el_bindings_t *bp;
+	el_bindings_t *bp, *ep;
 	char firstbuf[2], lastbuf[2];
 	char unparsbuf[EL_BUFSIZ], extrabuf[EL_BUFSIZ];
 
@@ -1162,7 +1162,8 @@ map_print_some_keys(EditLine *el, el_action_t *map, int first, int last)
 			    key__decode_str(firstbuf, unparsbuf, STRQQ));
 		return;
 	}
-	for (bp = el->el_map.help; bp->name != NULL; bp++) {
+	ep = &el->el_map.help[el->el_map.nfunc];
+	for (bp = el->el_map.help; bp < ep; bp++) {
 		if (bp->func == map[first]) {
 			if (first == last) {
 				(void) fprintf(el->el_outfile, "%-15s->  %s\n",
@@ -1245,7 +1246,7 @@ map_bind(EditLine *el, int argc, const char **argv)
 	char outbuf[EL_BUFSIZ];
 	const char *in = NULL;
 	char *out = NULL;
-	el_bindings_t *bp;
+	el_bindings_t *bp, *ep;
 	int cmd;
 	int key;
 
@@ -1287,8 +1288,8 @@ map_bind(EditLine *el, int argc, const char **argv)
 				return (0);
 
 			case 'l':
-				for (bp = el->el_map.help; bp->name != NULL;
-				    bp++)
+				ep = &el->el_map.help[el->el_map.nfunc];
+				for (bp = el->el_map.help; bp < ep; bp++)
 					(void) fprintf(el->el_outfile,
 					    "%s\n\t%s\n",
 					    bp->name, bp->description);
