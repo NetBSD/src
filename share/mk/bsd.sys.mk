@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.121 2005/08/09 02:38:06 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.122 2005/08/09 15:24:26 he Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -25,8 +25,11 @@ CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
-CXXFLAGS+=	-Wabi -Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
-		-Wno-deprecated -Wno-non-template-friend -Wold-style-cast \
+.if defined(HAVE_GCC3) && (${HAVE_GCC3} != "no")
+CXXFLAGS+=	-Wabi -Wold-style-cast
+.endif
+CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
+		-Wno-deprecated -Wno-non-template-friend \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
 .endif
 .if ${WARNS} > 3 && ${MACHINE_ARCH} != "vax"
