@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.10 2003/08/07 11:14:53 agc Exp $	*/
+/*	$NetBSD: lst.h,v 1.11 2005/08/09 21:36:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,16 +92,19 @@
 typedef	struct	Lst	*Lst;
 typedef	struct	LstNode	*LstNode;
 
-#define	NILLST		((Lst) NIL)
-#define	NILLNODE	((LstNode) NIL)
+typedef ClientData	DuplicateProc(ClientData);
+typedef void		FreeProc(ClientData);
+
+#define	NILLST		((Lst)NIL)
+#define	NILLNODE	((LstNode)NIL)
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
  *	not to be freed.
  * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
  */
-#define NOFREE		((void (*)(ClientData)) 0)
-#define NOCOPY		((ClientData (*)(ClientData)) 0)
+#define NOFREE		((FreeProc *)NULL)
+#define NOCOPY		((DuplicateProc *)NULL)
 
 #define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
 #define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
@@ -112,9 +115,9 @@ typedef	struct	LstNode	*LstNode;
 /* Create a new list */
 Lst		Lst_Init(Boolean);
 /* Duplicate an existing list */
-Lst		Lst_Duplicate(Lst, ClientData (*)(ClientData));
+Lst		Lst_Duplicate(Lst, DuplicateProc *);
 /* Destroy an old one */
-void		Lst_Destroy(Lst, void (*)(ClientData));
+void		Lst_Destroy(Lst, FreeProc *);
 /* True if list is empty */
 Boolean		Lst_IsEmpty(Lst);
 

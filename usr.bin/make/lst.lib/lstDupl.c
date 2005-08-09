@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDupl.c,v 1.12 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: lstDupl.c,v 1.13 2005/08/09 21:36:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDupl.c,v 1.12 2005/02/16 15:11:53 christos Exp $";
+static char rcsid[] = "$NetBSD: lstDupl.c,v 1.13 2005/08/09 21:36:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDupl.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
+__RCSID("$NetBSD: lstDupl.c,v 1.13 2005/08/09 21:36:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: lstDupl.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
  *-----------------------------------------------------------------------
  */
 Lst
-Lst_Duplicate(Lst l, ClientData (*copyProc)(ClientData))
+Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 {
     Lst 	nl;
     ListNode  	ln;
@@ -89,7 +89,7 @@ Lst_Duplicate(Lst l, ClientData (*copyProc)(ClientData))
     ln = list->firstPtr;
     while (ln != NilListNode) {
 	if (copyProc != NOCOPY) {
-	    if (Lst_AtEnd(nl, (*copyProc) (ln->datum)) == FAILURE) {
+	    if (Lst_AtEnd(nl, copyProc(ln->datum)) == FAILURE) {
 		return (NILLST);
 	    }
 	} else if (Lst_AtEnd(nl, ln->datum) == FAILURE) {
