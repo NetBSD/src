@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.105 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.106 2005/08/09 21:36:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2929,7 +2929,7 @@ void
 Parse_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(targCmds, (void (*)(ClientData))) free;
+    Lst_Destroy(targCmds, (FreeProc *)free);
     if (targets)
 	Lst_Destroy(targets, NOFREE);
     Lst_Destroy(defIncPath, Dir_Destroy);
