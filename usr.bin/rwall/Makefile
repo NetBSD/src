@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1997/01/09 20:21:20 tls Exp $
+#	$NetBSD: Makefile,v 1.8 2005/08/09 23:41:38 christos Exp $
 
 PROG = rwall
+WARNS=3
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

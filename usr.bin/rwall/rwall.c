@@ -1,4 +1,4 @@
-/* $NetBSD: rwall.c,v 1.15 2003/08/07 11:15:46 agc Exp $ */
+/* $NetBSD: rwall.c,v 1.16 2005/08/09 23:41:38 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.15 2003/08/07 11:15:46 agc Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.16 2005/08/09 23:41:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,29 +94,26 @@ __RCSID("$NetBSD: rwall.c,v 1.15 2003/08/07 11:15:46 agc Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/rwall.h>
 
-struct timeval timeout = { 25, 0 };
-int mbufsize;
-char *mbuf;
+static struct timeval timeout = { 25, 0 };
 
-int	main __P((int, char **));
-void	makemsg __P((char *));
+static char *makemsg(const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *wallhost, res;
 	CLIENT *cl;
+	char *mbuf;
+
+	setprogname(*argv);
 
 	if ((argc < 2) || (argc > 3)) {
-		fprintf(stderr, "usage: %s hostname [file]\n", argv[0]);
-		exit(1);
+		(void)fprintf(stderr,
+		    "Usage: %s hostname <file>\n", getprogname());
+		return 1;
 	}
 
 	wallhost = argv[1];
-
-	makemsg(argv[2]);
 
 	/*
 	 * Create client "handle" used for calling MESSAGEPROG on the
@@ -130,38 +127,43 @@ main(argc, argv)
 		 * Print error message and die.
 		 */
 		clnt_pcreateerror(wallhost);
-		exit(1);
+		return 1;
 	}
 
-	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, (caddr_t)&mbuf, xdr_void, &res, timeout) != RPC_SUCCESS) {
+	mbuf = makemsg(argv[2]);
+
+	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, (void *)&mbuf,
+	    xdr_void, &res, timeout) != RPC_SUCCESS) {
+		free(mbuf);
 		/*
 		 * An error occurred while calling the server. 
 		 * Print error message and die.
 		 */
 		clnt_perror(cl, wallhost);
-		exit(1);
+		return 1;
 	}
-
-	exit(0);
+	free(mbuf);
+	return 0;
 }
 
-void
-makemsg(fname)
-	char *fname;
+static char *
+makemsg(const char *fname)
 {
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
 	time_t now;
+	size_t mbufsize;
+	char *mbuf;
 	FILE *fp;
 	int fd;
 	const char *whom;
-	char *tty, tmpname[32], lbuf[100], hostname[MAXHOSTNAMELEN + 1];
+	const char *tty;
+	char tmpname[MAXPATHLEN], lbuf[BUFSIZ], hostname[MAXHOSTNAMELEN + 1];
 
-	(void)strcpy(tmpname, _PATH_TMP);
-	(void)strcat(tmpname, "/wall.XXXXXX");
+	(void)snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) == -1 || (fp = fdopen(fd, "r+")) == NULL)
-		err(1, "can't open temporary file.");
+		err(1, "Can't open temporary file");
 	(void)unlink(tmpname);
 
 	if (!(whom = getlogin()))
@@ -186,20 +188,21 @@ makemsg(fname)
 	(void)fprintf(fp, "        (%s) at %d:%02d ...\n", tty, lt->tm_hour,
 	    lt->tm_min);
 
-	putc('\n', fp);
+	(void)putc('\n', fp);
 
 	if (fname && !(freopen(fname, "r", stdin)))
-		err(1, "can't read %s.", fname);
+		err(1, "Can't open `%s'", fname);
 	while (fgets(lbuf, sizeof(lbuf), stdin))
-		fputs(lbuf, fp);
+		(void)fputs(lbuf, fp);
 	rewind(fp);
 
-	if (fstat(fd, &sbuf))
-		err(1, "can't stat temporary file.");
-	mbufsize = sbuf.st_size;
+	if (fstat(fd, &sbuf) == -1)
+		err(1, "Can't stat temporary file.");
+	mbufsize = (size_t)sbuf.st_size;
 	if (!(mbuf = malloc((u_int)mbufsize)))
 		err(1, "malloc");
 	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
-		err(1, "can't read temporary file.");
+		err(1, "Can't read temporary file.");
 	(void)close(fd);
+	return mbuf;
 }
