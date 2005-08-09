@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.22 2005/08/08 14:05:37 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.23 2005/08/09 16:40:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.22 2005/08/08 14:05:37 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.23 2005/08/09 16:40:12 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -71,8 +71,10 @@ cv_action(EditLine *el, int c)
 			    el->el_line.lastchar - el->el_line.buffer);
 		el->el_chared.c_vcmd.action = NOP;
 		el->el_chared.c_vcmd.pos = 0;
-		el->el_line.lastchar = el->el_line.buffer;
-		el->el_line.cursor = el->el_line.buffer;
+		if (!(c & YANK)) {
+			el->el_line.lastchar = el->el_line.buffer;
+			el->el_line.cursor = el->el_line.buffer;
+		}
 		if (c & INSERT)
 			el->el_map.current = el->el_map.key;
 
