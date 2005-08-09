@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.225 2005/08/06 22:07:24 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.226 2005/08/09 22:08:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.225 2005/08/06 22:07:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.226 2005/08/09 22:08:16 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1379,6 +1379,24 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	int bcount = ata_c->bcount;
 	char *data = ata_c->data;
 	int wflags;
+	int drive_flags;
+
+	if (ata_c->r_command == WDCC_IDENTIFY ||
+	    ata_c->r_command == ATAPI_IDENTIFY_DEVICE) {
+		/*
+		 * The IDENTIFY data has been designed as an array of
+		 * u_int16_t, so we can byteswap it on the fly.
+		 * Historically it's what we have always done so keeping it
+		 * here ensure binary backward compatibility.
+		 */
+		 drive_flags = DRIVE_NOSTREAM;
+	} else {
+		/*
+		 * Other data structure are opaque and should be transfered
+		 * as is.
+		 */
+		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
+	}
 
 	if ((ata_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
@@ -1427,14 +1445,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			ata_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
-			bus_space_read_multi_4(wdr->data32iot, wdr->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
-		}
-		if (bcount > 0)
-			wdc->datain_pio(chp, DRIVE_NOSTREAM, data, bcount);
+		wdc->datain_pio(chp, drive_flags, data, bcount);
 		/* at this point the drive should be in its initial state */
 		ata_c->flags |= AT_XFDONE;
 		/* XXX should read status register here ? */
@@ -1443,14 +1454,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			ata_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_4(wdr->data32iot, wdr->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
-		}
-		if (bcount > 0)
-			wdc->dataout_pio(chp, DRIVE_NOSTREAM, data, bcount);
+		wdc->dataout_pio(chp, drive_flags, data, bcount);
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
