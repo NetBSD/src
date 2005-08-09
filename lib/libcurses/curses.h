@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.86 2004/03/28 08:58:37 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.87 2005/08/09 02:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -236,32 +236,36 @@ typedef struct __screen SCREEN;
 #define	NUM_ACS	128
 
 extern chtype _acs_char[NUM_ACS];
-
-#define	ACS_RARROW	_acs_char[(unsigned char)'+']
-#define	ACS_LARROW	_acs_char[(unsigned char)',']
-#define	ACS_UARROW	_acs_char[(unsigned char)'-']
-#define	ACS_DARROW	_acs_char[(unsigned char)'.']
-#define	ACS_BLOCK	_acs_char[(unsigned char)'0']
-#define	ACS_DIAMOND	_acs_char[(unsigned char)'`']
-#define	ACS_CKBOARD	_acs_char[(unsigned char)'a']
-#define	ACS_DEGREE	_acs_char[(unsigned char)'f']
-#define	ACS_PLMINUS	_acs_char[(unsigned char)'g']
-#define	ACS_BOARD	_acs_char[(unsigned char)'h']
-#define	ACS_LANTERN	_acs_char[(unsigned char)'i']
-#define	ACS_LRCORNER	_acs_char[(unsigned char)'j']
-#define	ACS_URCORNER	_acs_char[(unsigned char)'k']
-#define	ACS_ULCORNER	_acs_char[(unsigned char)'l']
-#define	ACS_LLCORNER	_acs_char[(unsigned char)'m']
-#define	ACS_PLUS	_acs_char[(unsigned char)'n']
-#define	ACS_HLINE	_acs_char[(unsigned char)'q']
-#define	ACS_S1		_acs_char[(unsigned char)'o']
-#define	ACS_S9		_acs_char[(unsigned char)'s']
-#define	ACS_LTEE	_acs_char[(unsigned char)'t']
-#define	ACS_RTEE	_acs_char[(unsigned char)'u']
-#define	ACS_BTEE	_acs_char[(unsigned char)'v']
-#define	ACS_TTEE	_acs_char[(unsigned char)'w']
-#define	ACS_VLINE	_acs_char[(unsigned char)'x']
-#define	ACS_BULLET	_acs_char[(unsigned char)'~']
+#ifdef __cplusplus
+#define __UC_CAST(a)	static_cast<unsigned char>(a)
+#else
+#define __UC_CAST(a)	(unsigned char)(a)
+#endif
+#define	ACS_RARROW	_acs_char[__UC_CAST('+')]
+#define	ACS_LARROW	_acs_char[__UC_CAST(',')]
+#define	ACS_UARROW	_acs_char[__UC_CAST('-')]
+#define	ACS_DARROW	_acs_char[__UC_CAST('.')]
+#define	ACS_BLOCK	_acs_char[__UC_CAST('0')]
+#define	ACS_DIAMOND	_acs_char[__UC_CAST('`')]
+#define	ACS_CKBOARD	_acs_char[__UC_CAST('a')]
+#define	ACS_DEGREE	_acs_char[__UC_CAST('f')]
+#define	ACS_PLMINUS	_acs_char[__UC_CAST('g')]
+#define	ACS_BOARD	_acs_char[__UC_CAST('h')]
+#define	ACS_LANTERN	_acs_char[__UC_CAST('i')]
+#define	ACS_LRCORNER	_acs_char[__UC_CAST('j')]
+#define	ACS_URCORNER	_acs_char[__UC_CAST('k')]
+#define	ACS_ULCORNER	_acs_char[__UC_CAST('l')]
+#define	ACS_LLCORNER	_acs_char[__UC_CAST('m')]
+#define	ACS_PLUS	_acs_char[__UC_CAST('n')]
+#define	ACS_HLINE	_acs_char[__UC_CAST('q')]
+#define	ACS_S1		_acs_char[__UC_CAST('o')]
+#define	ACS_S9		_acs_char[__UC_CAST('s')]
+#define	ACS_LTEE	_acs_char[__UC_CAST('t')]
+#define	ACS_RTEE	_acs_char[__UC_CAST('u')]
+#define	ACS_BTEE	_acs_char[__UC_CAST('v')]
+#define	ACS_TTEE	_acs_char[__UC_CAST('w')]
+#define	ACS_VLINE	_acs_char[__UC_CAST('x')]
+#define	ACS_BULLET	_acs_char[__UC_CAST('~')]
 
 /* System V compatibility */
 #define	ACS_SBBS	ACS_LRCORNER
@@ -290,8 +294,13 @@ extern chtype _acs_char[NUM_ACS];
 #define	COLOR_CYAN	0x06
 #define	COLOR_WHITE	0x07
 
-#define	COLOR_PAIR(n)	((((u_int32_t)n) << 17) & A_COLOR)
-#define	PAIR_NUMBER(n)	((((u_int32_t)n) & A_COLOR) >> 17)
+#ifdef __cplusplus
+#define __UINT32_CAST(a)	static_cast<u_int32_t>(a)
+#else
+#define __UINT32_CAST(a)	(u_int32_t)(a)
+#endif
+#define	COLOR_PAIR(n)	(((__UINT32_CAST(n)) << 17) & A_COLOR)
+#define	PAIR_NUMBER(n)	(((__UINT32_CAST(n)) & A_COLOR) >> 17)
 
 /* Curses external declarations. */
 extern WINDOW	*curscr;		/* Current screen. */
