@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.8 2005/08/07 17:47:22 chris Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.9 2005/08/09 19:26:24 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.8 2005/08/07 17:47:22 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.9 2005/08/09 19:26:24 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,12 +75,6 @@ mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 	int i;
 	u_int32_t v;
 
-	/* First clock out the change in direction */
-	v = MDIRPHY;
-	WRITE(v);
-	WRITE(v | MDC);
-
-	/* send 32bits of 1 to synchronize the MII */
 	v = MDIRPHY | MDO;
 
 	WRITE(v);
