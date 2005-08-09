@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.6 2005/07/31 20:19:40 christos Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.7 2005/08/09 01:49:23 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.6 2005/07/31 20:19:40 christos Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.7 2005/08/09 01:49:23 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -194,7 +194,7 @@ ffs_printpart(int flag, size_t ffsize, int n)
 		default:
 			break;
 		}
-		(void)printf(" 4.2BSD %6d %5d %8d # %s [%s]\n",
+		(void)printf(" 4.2BSD %6d %5d %7d # %s [%s]\n",
 			sbinfo.ffs->fs_fsize, sbinfo.ffs->fs_bsize,
 			sbinfo.ffs->fs_old_cpg, 
 			sbinfo.ffs_path, fstypes[fstype]);
@@ -274,7 +274,7 @@ lfs_printpart(int flag, int n, struct sblockinfo *sbi)
                		(uint64_t)((off_t)sbi->lfs->lfs_size *
                		sbi->lfs->lfs_fsize / 512));
 		(void)printf(" %9" PRIu64, sbi->lfs_off); 
-		(void)printf(" 4.4LFS %6d %5d %8d # %s [LFSv%d]\n",
+		(void)printf(" 4.4LFS %6d %5d %7d # %s [LFSv%d]\n",
 			sbi->lfs->lfs_fsize, sbi->lfs->lfs_bsize,
 			sbi->lfs->lfs_nseg, sbi->lfs_path, 
 			sbi->lfs->lfs_version);
@@ -350,11 +350,8 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 	for (blk = beg; blk <= ((end < 0) ? blk: end); blk += SBPASS) {
 		(void)memset(buf, 0, sizeof(buf));
 
-		if (lseek(fd, (off_t)blk * 512, SEEK_SET) == (off_t)-1)
-			err(1, "lseek");
-
-		if (read(fd, buf, sizeof(buf)) == -1)
-			err(1, "read");
+		if (pread(fd, buf, sizeof(buf), (off_t)blk * 512) == (off_t)-1)
+			err(1, "pread");
 
 		for (n = 0; n < (SBLOCKSIZE * SBCOUNT); n += 512) {
 			sbinfo.ffs = (struct fs *)(void *)&buf[n];
