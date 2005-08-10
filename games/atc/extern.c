@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.8 2005/07/01 00:48:34 jmc Exp $	*/
+/*	$NetBSD: extern.c,v 1.9 2005/08/10 17:53:28 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.8 2005/07/01 00:48:34 jmc Exp $");
+__RCSID("$NetBSD: extern.c,v 1.9 2005/08/10 17:53:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,9 @@ int		clck, safe_planes, start_time, test_mode;
 
 const char	*filename;
 
+#if 0
 FILE		*filein, *fileout;
+#endif
 
 C_SCREEN		screen, *sp = &screen;
 

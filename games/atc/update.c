@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.13 2005/07/01 00:48:34 jmc Exp $	*/
+/*	$NetBSD: update.c,v 1.14 2005/08/10 17:53:28 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,12 +46,13 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.13 2005/07/01 00:48:34 jmc Exp $");
+__RCSID("$NetBSD: update.c,v 1.14 2005/08/10 17:53:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
 #include "include.h"
 
+/* ARGSUSED */
 void
 update(int dummy __attribute__((__unused__)))
 {
@@ -210,7 +211,7 @@ update(int dummy __attribute__((__unused__)))
 	 * we don't update props on odd updates.
 	 */
 	if ((rand() % sp->newplane_time) == 0)
-		addplane();
+		(void)addplane();
 
 #ifdef SYSV
 	alarm(sp->update_secs);
@@ -232,7 +233,7 @@ command(const PLANE *pp)
 	if (pp->altitude == 0)
 		(void)sprintf(bp, "Holding @ A%d", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
-		strcpy(bp, "Circle");
+		(void)strcpy(bp, "Circle");
 	else if (pp->new_dir != pp->dir)
 		(void)sprintf(bp, "%d", dir_deg(pp->new_dir));
 
@@ -243,7 +244,7 @@ command(const PLANE *pp)
 	bp = strchr(buf, '\0');
 	if (*comm_start == '\0' && 
 	    (pp->status == S_UNMARKED || pp->status == S_IGNORED))
-		strcpy(bp, "---------");
+		(void)strcpy(bp, "---------");
 	return (buf);
 }
 
@@ -302,7 +303,7 @@ addplane(void)
 	PLANE	p, *pp, *p1;
 	int	i, num_starts, isclose, rnd, rnd2, pnum;
 
-	memset(&p, 0, sizeof (p));
+	(void)memset(&p, 0, sizeof (p));
 
 	p.status = S_MARKED;
 	p.plane_type = random() % 2;
@@ -359,7 +360,7 @@ addplane(void)
 	pp = newplane();
 	if (pp == NULL)
 		loser(NULL, "Out of memory!");
-	memcpy(pp, &p, sizeof (p));
+	(void)memcpy(pp, &p, sizeof (p));
 
 	if (pp->orig_type == T_AIRPORT)
 		append(&ground, pp);
