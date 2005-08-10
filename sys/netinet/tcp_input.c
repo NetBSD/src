@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.232 2005/08/10 13:05:16 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.233 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.232 2005/08/10 13:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.233 2005/08/10 13:06:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -183,6 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.232 2005/08/10 13:05:16 yamt Exp $")
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/in_offload.h>
 
 #ifdef INET6
 #ifndef INET
