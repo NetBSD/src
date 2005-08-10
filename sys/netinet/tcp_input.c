@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.231 2005/07/19 17:00:02 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.232 2005/08/10 13:05:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.231 2005/07/19 17:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.232 2005/08/10 13:05:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -321,10 +321,18 @@ do {									\
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
 
+#if defined(INET)
 extern struct evcnt tcp_hwcsum_ok;
 extern struct evcnt tcp_hwcsum_bad;
 extern struct evcnt tcp_hwcsum_data;
 extern struct evcnt tcp_swcsum;
+#endif /* defined(INET) */
+#if defined(INET6)
+extern struct evcnt tcp6_hwcsum_ok;
+extern struct evcnt tcp6_hwcsum_bad;
+extern struct evcnt tcp6_hwcsum_data;
+extern struct evcnt tcp6_swcsum;
+#endif /* defined(INET6) */
 
 #define	TCP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
@@ -895,10 +903,34 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th, int toff,
 
 #ifdef INET6
 	case AF_INET6:
-		if (__predict_true((m->m_flags & M_LOOP) == 0 ||
-		    tcp_do_loopback_cksum)) {
-			if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
-				goto badcsum;
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_TCPv6) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_TCPv6|M_CSUM_TCP_UDP_BAD:
+			TCP_CSUM_COUNTER_INCR(&tcp6_hwcsum_bad);
+			goto badcsum;
+
+#if 0 /* notyet */
+		case M_CSUM_TCPv6|M_CSUM_DATA:
+#endif
+
+		case M_CSUM_TCPv6:
+			/* Checksum was okay. */
+			TCP_CSUM_COUNTER_INCR(&tcp6_hwcsum_ok);
+			break;
+
+		default:
+			/*
+			 * Must compute it ourselves.  Maybe skip checksum
+			 * on loopback interfaces.
+			 */
+			if (__predict_true((m->m_flags & M_LOOP) == 0 ||
+			    tcp_do_loopback_cksum)) {
+				TCP_CSUM_COUNTER_INCR(&tcp6_swcsum);
+				if (in6_cksum(m, IPPROTO_TCP, toff,
+				    tlen + off) != 0)
+					goto badcsum;
+			}
 		}
 		break;
 #endif /* INET6 */
