@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.208 2005/07/23 16:09:39 drochner Exp $	*/
+/*	$NetBSD: wi.c,v 1.209 2005/08/10 13:20:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.208 2005/07/23 16:09:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.209 2005/08/10 13:20:42 christos Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2305,6 +2305,13 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return error;
 	len = (wreq.wi_len - 1) * 2;
 	switch (wreq.wi_type) {
+        case WI_RID_MAC_NODE:
+		(void)memcpy(ic->ic_myaddr, wreq.wi_val, ETHER_ADDR_LEN);
+		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl),ic->ic_myaddr);
+		wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
+		    IEEE80211_ADDR_LEN);
+		break;
+
 	case WI_RID_DBM_ADJUST:
 		return ENODEV;
 
