@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.89 2005/08/10 12:58:37 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.90 2005/08/10 13:08:11 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.89 2005/08/10 12:58:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.90 2005/08/10 13:08:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.89 2005/08/10 12:58:37 yamt Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
+#include <netinet/in_offload.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
@@ -123,6 +124,11 @@ static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
 static int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
 	struct ifnet *, struct in6_addr *, u_long *, int *));
+
+#define	IN6_NEED_CHECKSUM(ifp, csum_flags) \
+	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
+	(((csum_flags) & M_CSUM_UDPv6) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv6) != 0 && tcp_do_loopback_cksum)))
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -895,7 +901,10 @@ skip_ipsec2:;
 
 		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
-			in6_delayed_cksum(m);
+			if (IN6_NEED_CHECKSUM(ifp,
+			    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
+				in6_delayed_cksum(m);
+			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
 
@@ -969,7 +978,11 @@ skip_ipsec2:;
 
 		if ((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6))
 		    != 0) {
-			in6_delayed_cksum(m);
+			if (IN6_NEED_CHECKSUM(ifp,
+			    m->m_pkthdr.csum_flags &
+			    (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
+				in6_delayed_cksum(m);
+			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
 
