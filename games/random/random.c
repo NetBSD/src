@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.9 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: random.c,v 1.10 2005/08/10 14:02:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.9 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: random.c,v 1.10 2005/08/10 14:02:26 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(argc, argv)
 	}
 
 	(void)gettimeofday(&tp, NULL);
-	srandom((u_int)(tp.tv_usec + tp.tv_sec + getpid()));
+	srandom((unsigned long)tp.tv_usec + tp.tv_sec + getpid());
 
 	/* Compute a random exit status between 0 and denom - 1. */
 	if (random_exit)
@@ -144,6 +144,8 @@ main(argc, argv)
 	if (ferror(stdin))
 		err(2, "stdin");
 	exit (0);
+
+	return 0;
 }
 
 void
