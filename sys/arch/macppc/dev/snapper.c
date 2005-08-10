@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.5 2005/01/25 19:05:22 briggs Exp $	*/
+/*	$NetBSD: snapper.c,v 1.6 2005/08/10 14:32:08 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -44,9 +44,12 @@
 #include <macppc/dev/dbdma.h>
 
 #include <uvm/uvm_extern.h>
+#include <dev/i2c/i2cvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
+
+#include <macppc/dev/deqvar.h>
 
 #ifdef SNAPPER_DEBUG
 # define DPRINTF printf
@@ -70,10 +73,14 @@ struct snapper_softc {
 	u_int sc_output_mask;		/* output source mask */
 
 	u_char *sc_reg;
-	struct device *sc_i2c;
+	i2c_addr_t sc_deqaddr;
+	i2c_tag_t sc_i2c;
 
 	u_int sc_vol_l;
 	u_int sc_vol_r;
+	u_int sc_treble;
+	u_int sc_bass;
+	u_int mixer[6]; /* s1_l, s2_l, an_l, s1_r, s2_r, an_r */
 
 	dbdma_regmap_t *sc_odma;
 	dbdma_regmap_t *sc_idma;
@@ -106,6 +113,9 @@ int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
 void snapper_set_volume(struct snapper_softc *, int, int);
 int snapper_set_rate(struct snapper_softc *, u_int);
+void snapper_set_treble(struct snapper_softc *, int);
+void snapper_set_bass(struct snapper_softc *, int);
+void snapper_write_mixers(struct snapper_softc *);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 static int gpio_read(char *);
@@ -115,12 +125,6 @@ void snapper_mute_headphone(struct snapper_softc *, int);
 int snapper_cint(void *);
 int tas3004_init(struct snapper_softc *);
 void snapper_init(struct snapper_softc *, int);
-
-/* XXX */
-int ki2c_setmode(struct device *, int);
-int ki2c_write(struct device *, int, int, const void *, int);
-void ki2c_writereg(struct device *, int, u_int);
-
 
 struct cfattach snapper_ca = {
 	"snapper", {}, sizeof(struct snapper_softc),
@@ -161,6 +165,46 @@ struct audio_device snapper_device = {
 	"SNAPPER",
 	"",
 	"snapper"
+};
+
+const uint8_t snapper_basstab[] = {
+	0x96,	/* -18dB */
+	0x94,	/* -17dB */
+	0x92,	/* -16dB */
+	0x90,	/* -15dB */
+	0x8e,	/* -14dB */
+	0x8c,	/* -13dB */
+	0x8a,	/* -12dB */
+	0x88,	/* -11dB */
+	0x86,	/* -10dB */
+	0x84,	/* -9dB */
+	0x82,	/* -8dB */
+	0x80,	/* -7dB */
+	0x7e,	/* -6dB */
+	0x7c,	/* -5dB */
+	0x7a,	/* -4dB */
+	0x78,	/* -3dB */
+	0x76,	/* -2dB */
+	0x74,	/* -1dB */
+	0x72,	/* 0dB */
+	0x6f,	/* 1dB */
+	0x6d,	/* 2dB */
+	0x6a,	/* 3dB */
+	0x67,	/* 4dB */
+	0x65,	/* 5dB */
+	0x62,	/* 6dB */
+	0x5f,	/* 7dB */
+	0x5b,	/* 8dB */
+	0x55,	/* 9dB */
+	0x4f,	/* 10dB */
+	0x49,	/* 11dB */
+	0x43,	/* 12dB */
+	0x3b,	/* 13dB */
+	0x33,	/* 14dB */
+	0x29,	/* 15dB */
+	0x1e,	/* 16dB */
+	0x11,	/* 17dB */
+	0x01,	/* 18dB */
 };
 
 #define SNAPPER_NFORMATS	1
@@ -366,12 +410,23 @@ snapper_defer(struct device *dev)
 {
 	struct snapper_softc *sc;
 	struct device *dv;
-
+	struct deq_softc *deq;
+	
 	sc = (struct snapper_softc *)dev;
+	/*
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
 		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "obio", 4) == 0)
 			sc->sc_i2c = dv;
+	*/
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
+		if (strncmp(dv->dv_xname, "deq", 3) == 0 &&
+		    strncmp(dv->dv_parent->dv_xname, "ki2c", 4) == 0) {
+		    	deq=(struct deq_softc *)dv;
+			sc->sc_i2c = deq->sc_i2c;
+			sc->sc_deqaddr=deq->sc_address;
+		}
+
 	if (sc->sc_i2c == NULL) {
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
 		return;
@@ -573,8 +628,13 @@ enum {
 	SNAPPER_RECORD_CLASS,
 	SNAPPER_OUTPUT_SELECT,
 	SNAPPER_VOL_OUTPUT,
+	SNAPPER_DIGI1,
+	SNAPPER_DIGI2,
+	SNAPPER_ANALOG,
 	SNAPPER_INPUT_SELECT,
 	SNAPPER_VOL_INPUT,
+	SNAPPER_TREBLE,
+	SNAPPER_BASS,
 	SNAPPER_ENUM_LAST
 };
 
@@ -628,8 +688,29 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 	case SNAPPER_VOL_INPUT:
 		/* XXX TO BE DONE */
 		return 0;
-	}
 
+	case SNAPPER_BASS:
+		snapper_set_bass(sc,l);
+		return 0;
+	case SNAPPER_TREBLE:
+		snapper_set_treble(sc,l);
+		return 0;
+	case SNAPPER_DIGI1:
+		sc->mixer[0]=l;
+		sc->mixer[3]=r;
+		snapper_write_mixers(sc);
+		return 0;
+	case SNAPPER_DIGI2:
+		sc->mixer[1]=l;
+		sc->mixer[4]=r;
+		snapper_write_mixers(sc);
+		return 0;
+	case SNAPPER_ANALOG:
+		sc->mixer[2]=l;
+		sc->mixer[5]=r;
+		snapper_write_mixers(sc);
+		return 0;
+	}	
 	return ENXIO;
 }
 
@@ -659,7 +740,24 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 0;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 0;
 		return 0;
-
+	case SNAPPER_TREBLE:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]=sc->sc_treble;
+		return 0;
+	case SNAPPER_BASS:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]=sc->sc_bass;
+		return 0;
+	case SNAPPER_DIGI1:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->mixer[0];
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->mixer[3];
+		return 0;
+	case SNAPPER_DIGI2:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->mixer[1];
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->mixer[4];
+		return 0;
+	case SNAPPER_ANALOG:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->mixer[2];
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->mixer[5];
+		return 0;
 	default:
 		return ENXIO;
 	}
@@ -735,6 +833,44 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		strcpy(dip->label.name, AudioCrecord);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case SNAPPER_TREBLE:
+		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNtreble);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		return 0;
+
+	case SNAPPER_BASS:
+		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNbass);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		return 0;
+
+	case SNAPPER_DIGI1:
+		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNdac);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 2;
+		return 0;
+	case SNAPPER_DIGI2:
+		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		strcpy(dip->label.name, "Digi2");
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 2;
+		return 0;
+	case SNAPPER_ANALOG:
+		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		strcpy(dip->label.name, "Analog");
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 2;
 		return 0;
 	}
 
@@ -833,6 +969,7 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 	sc->sc_vol_l = left;
 	sc->sc_vol_r = right;
 
+#if 0
 	left <<= 8;	/* XXX for now */
 	right <<= 8;
 
@@ -842,8 +979,55 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 	vol[3] = right >> 16;
 	vol[4] = right >> 8;
 	vol[5] = right;
-
+#else
+	/* 0x07ffff is LOUD, 0x000000 is mute */
+	vol[0]=0/*(left>>5)&0xff*/;		/* upper 3 bits */
+	vol[1]=(left/*<<3*/)&0xff;	/* lower 5 bits */
+	vol[2]=0;
+	vol[3]=0/*(right>>5)&0xff*/;		/* upper 3 bits */
+	vol[4]=(right/*<<3*/)&0xff;	/* lower 5 bits */
+	vol[5]=0;
+#endif
 	tas3004_write(sc, DEQ_VOLUME, vol);
+}
+
+void snapper_set_treble(struct snapper_softc *sc, int stuff)
+{
+	uint8_t reg;
+	if((stuff>=0) && (stuff<=255) && (sc->sc_treble!=stuff)) {
+		reg=snapper_basstab[(stuff>>3)+2];
+		sc->sc_treble=stuff;
+		tas3004_write(sc, DEQ_TREBLE,&reg);
+	}
+}
+
+void snapper_set_bass(struct snapper_softc *sc, int stuff)
+{
+	uint8_t reg;
+	if((stuff>=0) && (stuff<=255) && (stuff!=sc->sc_bass)) {
+		reg=snapper_basstab[(stuff>>3)+2];
+		sc->sc_bass=stuff;
+		tas3004_write(sc, DEQ_BASS,&reg);
+	}
+}
+
+void snapper_write_mixers(struct snapper_softc *sc)
+{
+	uint8_t regs[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+	regs[0] = (sc->mixer[0] >> 4) & 0xff;
+	regs[1] = (sc->mixer[0] << 4) & 0xff;
+	regs[3] = (sc->mixer[1] >> 4) & 0xff;
+	regs[4] = (sc->mixer[1] << 4) & 0xff;
+	regs[5] = (sc->mixer[2] >> 4) & 0xff;
+	regs[7] = (sc->mixer[2] << 4) & 0xff;
+	tas3004_write(sc, DEQ_MIXER_L, regs);
+	regs[0] = (sc->mixer[3] >> 4) & 0xff;
+	regs[1] = (sc->mixer[3] << 4) & 0xff;
+	regs[3] = (sc->mixer[4] >> 4) & 0xff;
+	regs[4] = (sc->mixer[4] << 4) & 0xff;
+	regs[5] = (sc->mixer[5] >> 4) & 0xff;
+	regs[7] = (sc->mixer[5] << 4) & 0xff;
+	tas3004_write(sc, DEQ_MIXER_R, regs);
 }
 
 #define CLKSRC_49MHz	0x80000000	/* Use 49152000Hz Osc. */
@@ -952,7 +1136,7 @@ snapper_set_rate(struct snapper_softc *sc, u_int rate)
 	return 0;
 }
 
-#define DEQaddr 0x6a
+/*#define DEQaddr 0x6a*/
 
 const struct tas3004_reg tas3004_initdata = {
 	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_20 },	/* MCR1 */
@@ -980,8 +1164,8 @@ const struct tas3004_reg tas3004_initdata = {
 	{ 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* BIQUAD */
 	{ 0, 0, 0 },						/* LLB_GAIN */
 	{ 0, 0, 0 },						/* RLB_GAIN */
-	{ 0 },							/* ACR */
-	{ 0 }							/* MCR2 */
+	{ 0xc0 },							/* ACR - right channel of input B is the microphone */
+	{ 2 }							/* MCR2 - AllPass mode since we don't use the equalizer anyway */
 };
 
 const char tas3004_regsize[] = {
@@ -1029,14 +1213,29 @@ int
 tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
-
+	static char regblock[sizeof(struct tas3004_reg)+1];
+	
 	KASSERT(reg < sizeof tas3004_regsize);
 	size = tas3004_regsize[reg];
 	KASSERT(size > 0);
 
+#ifdef DEBUG_SNAPPER
+	printf("reg: %x, %d %d\n",reg,size,((char*)data)[0]);
+#endif
+#if 0
+	ki2c_setmode(sc->sc_i2c, 8); /* std+sub mode */
+	
 	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
 		return -1;
-
+#endif
+	/* ugly, but for now... */
+	regblock[0] = reg;
+	memcpy(&regblock[1], data, size);
+	iic_acquire_bus(sc->sc_i2c, 0);
+	iic_exec(sc->sc_i2c, I2C_OP_WRITE, sc->sc_deqaddr, &regblock, size + 1,
+	    NULL, 0, 0);
+	iic_release_bus(sc->sc_i2c, 0);
+	
 	return 0;
 }
 
@@ -1258,7 +1457,7 @@ snapper_init(struct snapper_softc *sc, int node)
 
 	/* i2c_set_port(port); */
 
-#if 1
+#if 0
 	/* Enable I2C interrupts. */
 #define IER 4
 #define I2C_INT_DATA 0x01
@@ -1274,4 +1473,16 @@ snapper_init(struct snapper_softc *sc, int node)
 	snapper_cint(sc);
 
 	snapper_set_volume(sc, 80, 80);
+	
+	sc->sc_bass = 128;
+	sc->sc_treble = 128;
+	
+	/* We mute the analog input for now */
+	sc->mixer[0] = 80;
+	sc->mixer[1] = 80;
+	sc->mixer[2] = 0;
+	sc->mixer[3] = 80;
+	sc->mixer[4] = 80;
+	sc->mixer[5] = 0;
+	snapper_write_mixers(sc);
 }
