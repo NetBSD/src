@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.106 2005/08/07 05:18:42 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.107 2005/08/10 12:59:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.106 2005/08/07 05:18:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.107 2005/08/10 12:59:43 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -276,6 +276,7 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
+	struct evcnt sc_ev_txtusum6;	/* TCP/UDP v6 cksums comp. out-bound */
 	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound */
 	struct evcnt sc_ev_txtsopain;	/* painful header manip. for TSO */
 
@@ -1220,7 +1221,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |=
 		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+		    IFCAP_CSUM_TCPv6_Tx |
+		    IFCAP_CSUM_UDPv6_Tx;
 
 	/* 
 	 * If we're a i82544 or greater (except i82547), we can do
@@ -1264,6 +1267,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
+	evcnt_attach_dynamic(&sc->sc_ev_txtusum6, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtusum6");
 
 	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtso");
@@ -1369,6 +1374,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
 		offset = ETHER_HDR_LEN;
 		break;
 
@@ -1385,7 +1391,12 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) != 0) {
+		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	} else {
+		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+	}
 
 	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
 	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
@@ -1467,8 +1478,17 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
-		   WTX_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
-		   WTX_TCPIP_TUCSE(0) /* rest of packet */;
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+	} else if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) != 0) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
+		fields |= WTX_TXSM;
+		tucs = WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv6_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1779,7 +1799,8 @@ wm_start(struct ifnet *ifp)
 
 		/* Set up offload parameters for this packet. */
 		if (m0->m_pkthdr.csum_flags &
-		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
+		    M_CSUM_TCPv6|M_CSUM_UDPv6)) {
 			if (wm_tx_offload(sc, txs, &cksumcmd,
 					  &cksumfields) != 0) {
 				/* Error message already displayed. */
