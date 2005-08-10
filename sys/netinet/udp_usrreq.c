@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.140 2005/08/10 13:05:17 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.141 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.140 2005/08/10 13:05:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.141 2005/08/10 13:06:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,6 +146,7 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
+int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;

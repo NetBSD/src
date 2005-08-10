@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.1 2005/04/18 21:55:06 yamt Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.2 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,13 +26,23 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(_NETINET_IN_OFFLOAD_H_)
+#define	_NETINET_IN_OFFLOAD_H_
+
 /*
  * subroutines to do software-only equivalent of h/w offloading.
  */
 
-#if !defined(_NETINET_IN_OFFLOAD_H_)
-#define	_NETINET_IN_OFFLOAD_H_
-
 int tcp4_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
+
+/*
+ * offloading related sysctl variables.
+ *
+ * they are here because it violates protocol layering in unusual way.
+ * ie. while they are TCP/UDP sysctls, they are used by IP layer.
+ */
+
+extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
+extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
 
 #endif /* !defined(_NETINET_IN_OFFLOAD_H_) */

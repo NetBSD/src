@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.68 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.69 2005/08/10 13:06:49 yamt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.68 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.69 2005/08/10 13:06:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.68 2005/05/29 21:43:51 christos Ex
 #include <netinet/icmp6.h>
 #include <netinet6/udp6_var.h>
 #include <netinet6/ip6protosw.h>
+#include <netinet/in_offload.h>
 
 #include "faith.h"
 #if defined(NFAITH) && NFAITH > 0
