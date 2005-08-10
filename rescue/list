@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2005/06/18 06:59:23 lukem Exp $
+#	$NetBSD: list,v 1.20 2005/08/10 20:04:40 xtraeme Exp $
 
 SRCDIRS	bin
 
@@ -136,6 +136,7 @@ SRCDIRS	usr.sbin
 PROG	chown		chgrp
 PROG	chroot
 PROG	installboot
+PROG	vnconfig
 
 SRCDIRS	games
 
