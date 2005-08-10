@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2005/08/05 09:23:17 skrll Exp $
+# $NetBSD: GENERIC,v 1.208 2005/08/10 15:57:32 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 maxusers	32
 
@@ -199,6 +199,7 @@ cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
 uninorth* at mainbus?
+uni_n*	at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
@@ -329,9 +330,17 @@ wdc*	at mediabay? flags 0
 # up. ONLY enable this if your machine is never under heavy load, or
 # you'd rather have audio than worry about occasional lockups.
 #awacs*	at obio?			# Apple audio device
-#ki2c*	at obio?			# Keywest I2C
+ki2c*	at obio?			# Keywest I2C
+ki2c*	at uni_n?			# Keywest I2C
+iic*	at ki2c?
+adt7467c*	at ki2c? 		# Analog Devices ADT7467 thermal 
+					# monitor, iBook G4
+adm1030c*	at ki2c? 		# Analog Devices ADM1030 thermal 
+					# monitor, iBook G3
+
+deq*	at ki2c?			# mixer/equalizer, needed by snapper
 wi*	at obio?			# AirMac
-#snapper* at obio?			# Snapper audio device
+snapper* at obio?			# Snapper audio device
 
 cardslot* at cbb?
 cardbus* at cardslot?
