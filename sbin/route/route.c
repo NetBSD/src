@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87 2005/08/09 21:25:42 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.88 2005/08/10 11:48:17 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.87 2005/08/09 21:25:42 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.88 2005/08/10 11:48:17 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,7 +361,7 @@ any_ntoa(const struct sockaddr *sa)
 #if __GNUC__ > 2
 	len = sa->sa_len - offsetof(struct sockaddr, sa_data);
 #else
-	len = sa->sa_len - ((caddr_t)&sa->sa_data - (caddr_t)sa);
+	len = sa->sa_len - ((struct sockaddr*)&sa->sa_data - sa);
 #endif
 	in  = sa->sa_data;
 	out = obuf;
