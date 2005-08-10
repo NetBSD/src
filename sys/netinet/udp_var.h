@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.28 2005/08/05 09:21:26 elad Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.29 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,7 +87,6 @@ struct	udpstat {
 #ifdef _KERNEL
 extern	struct	inpcbtable udbtable;
 extern	struct	udpstat udpstat;
-extern	int	udp_do_loopback_cksum;
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1
