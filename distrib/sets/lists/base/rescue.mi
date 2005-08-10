@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.13 2005/06/18 06:59:23 lukem Exp $
+# $NetBSD: rescue.mi,v 1.14 2005/08/10 20:04:40 xtraeme Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -135,6 +135,7 @@
 ./rescue/tunefs					base-rescue-root
 ./rescue/umount					base-rescue-root
 ./rescue/veriexecctl				base-rescue-root
+./rescue/vnconfig				base-rescue-root
 ./rescue/vi					base-rescue-root
 ./rescue/wdogctl				base-rescue-root
 ./rescue/wsconsctl				base-rescue-root
