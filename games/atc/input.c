@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.18 2005/07/01 00:48:34 jmc Exp $	*/
+/*	$NetBSD: input.c,v 1.19 2005/08/10 17:53:28 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.18 2005/07/01 00:48:34 jmc Exp $");
+__RCSID("$NetBSD: input.c,v 1.19 2005/08/10 17:53:28 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ pop(void)
 
 	ioclrtoeol(T_POS);
 
-	strcpy(T_STR, "");
+	(void)strcpy(T_STR, "");
 	T_RULE = -1;
 	T_CH = -1;
 	return (0);
@@ -199,7 +199,7 @@ rezero(void)
 	T_RULE = -1;
 	T_CH = -1;
 	T_POS = 0;
-	strcpy(T_STR, "");
+	(void)strcpy(T_STR, "");
 }
 
 void
@@ -221,7 +221,7 @@ push(int ruleno, int ch)
 	T_STATE = newstate;
 	T_POS = newpos;
 	T_RULE = -1;
-	strcpy(T_STR, "");
+	(void)strcpy(T_STR, "");
 }
 
 int
@@ -265,7 +265,8 @@ getcommand(void)
 		func = st[stack[i].state].rule[stack[i].rule].func;
 		if (func != NULL)
 			if ((s = (*func)(stack[i].ch)) != NULL) {
-				ioerror(stack[i].pos, strlen(stack[i].str), s);
+				ioerror(stack[i].pos, 
+				    (int)strlen(stack[i].str), s);
 				return (-1);
 			}
 	}
@@ -286,8 +287,8 @@ getcommand(void)
 void
 noise(void)
 {
-	putchar('\07');
-	fflush(stdout);
+	(void)putchar('\07');
+	(void)fflush(stdout);
 }
 
 int
@@ -301,7 +302,7 @@ gettoken(void)
 			struct itimerval	itv;
 			itv.it_value.tv_sec = 0;
 			itv.it_value.tv_usec = 0;
-			setitimer(ITIMER_REAL, &itv, NULL);
+			(void)setitimer(ITIMER_REAL, &itv, NULL);
 #endif
 #ifdef SYSV
 			int aval;
@@ -321,28 +322,29 @@ gettoken(void)
 						base = shell;
 					else
 						base++;
-					execl(shell, base, (char *) 0);
+					(void)execl(shell, base, (char *) 0);
 				}
 				else
-					execl(_PATH_BSHELL, "sh", (char *) 0);
+					(void)execl(_PATH_BSHELL, "sh", 
+					    (char *) 0);
 
 				exit(0);	/* oops */
 			}
 
-			wait(0);
-			tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
+			(void)wait(0);
+			(void)tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
 #ifdef BSD
 			itv.it_value.tv_sec = 0;
 			itv.it_value.tv_usec = 1;
 			itv.it_interval.tv_sec = sp->update_secs;
 			itv.it_interval.tv_usec = 0;
-			setitimer(ITIMER_REAL, &itv, NULL);
+			(void)setitimer(ITIMER_REAL, &itv, NULL);
 #endif
 #ifdef SYSV
 			alarm(aval);
 #endif
 		}
-		redraw();
+		(void)redraw();
 	}
 
 	if (isdigit(tval))
@@ -361,11 +363,12 @@ setplane(int c)
 	pp = findplane(number(c));
 	if (pp == NULL)
 		return ("Unknown Plane");
-	memcpy(&p, pp, sizeof (p));
+	(void)memcpy(&p, pp, sizeof (p));
 	p.delayd = 0;
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 turn(int c __attribute__((__unused__)))
 {
@@ -374,6 +377,7 @@ turn(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 circle(int c __attribute__((__unused__)))
 {
@@ -383,6 +387,7 @@ circle(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 left(int c __attribute__((__unused__)))
 {
@@ -393,6 +398,7 @@ left(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 right(int c __attribute__((__unused__)))
 {
@@ -403,6 +409,7 @@ right(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 Left(int c __attribute__((__unused__)))
 {
@@ -412,6 +419,7 @@ Left(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 Right(int c __attribute__((__unused__)))
 {
@@ -455,7 +463,6 @@ delayb(int c)
 			break;
 		default:
 			return ("Bad case in delayb!  Get help!");
-			break;
 		}
 		if (xdiff == 0 && ydiff == 0)
 			return ("Would already be there");
@@ -466,6 +473,7 @@ delayb(int c)
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 beacon(int c __attribute__((__unused__)))
 {
@@ -473,6 +481,7 @@ beacon(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 ex_it(int c __attribute__((__unused__)))
 {
@@ -480,6 +489,7 @@ ex_it(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 airport(int c __attribute__((__unused__)))
 {
@@ -487,6 +497,7 @@ airport(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 climb(int c __attribute__((__unused__)))
 {
@@ -494,6 +505,7 @@ climb(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 descend(int c __attribute__((__unused__)))
 {
@@ -525,7 +537,6 @@ setrelalt(int c)
 		break;
 	default:
 		return ("Unknown case in setrelalt!  Get help!");
-		break;
 	}
 	if (p.new_altitude < 0)
 		return ("Altitude would be too low");
@@ -560,7 +571,6 @@ benum(int c)
 		break;
 	default:
 		return ("Unknown case in benum!  Get help!");
-		break;
 	}
 	return (NULL);
 }
@@ -591,11 +601,11 @@ rel_dir(int c)
 		break;
 	default:
 		return ("Bizarre direction in rel_dir!  Get help!");
-		break;
 	}
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 mark(int c __attribute__((__unused__)))
 {
@@ -607,6 +617,7 @@ mark(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 unmark(int c __attribute__((__unused__)))
 {
@@ -618,6 +629,7 @@ unmark(int c __attribute__((__unused__)))
 	return (NULL);
 }
 
+/* ARGSUSED */
 const char *
 ignore(int c __attribute__((__unused__)))
 {
@@ -645,7 +657,7 @@ dir_no(int ch)
 	case 'a':	dirno = 6;	break;
 	case 'q':	dirno = 7;	break;
 	default:
-		fprintf(stderr, "bad character in dir_no\n");
+		(void)fprintf(stderr, "bad character in dir_no\n");
 		break;
 	}
 	return (dirno);
