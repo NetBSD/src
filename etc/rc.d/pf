@@ -1,21 +1,39 @@
 #!/bin/sh
 #
-# $NetBSD: pf,v 1.4 2005/08/07 01:03:39 peter Exp $
+# $NetBSD: pf,v 1.5 2005/08/10 13:52:05 peter Exp $
 #
 
 # PROVIDE: pf
-# REQUIRE: NETWORKING
-# BEFORE: SERVERS
+# REQUIRE: root beforenetlkm mountcritlocal tty
+# BEFORE: network
 
 $_rc_subr_loaded . /etc/rc.subr
 
 name="pf"
 rcvar=$name
+start_precmd="pf_prestart"
 start_cmd="pf_start"
 stop_cmd="pf_stop"
 reload_cmd="pf_reload"
 status_cmd="pf_status"
 extra_commands="reload status"
+
+pf_prestart()
+{
+	if [ ! -f ${pf_rules} ]; then
+		warn "${pf_rules} not readable; pf start aborted."
+
+		# If booting directly to multiuser, send SIGTERM to
+		# the parent (/etc/rc) to abort the boot
+		if [ "$autoboot" = yes ]; then
+			echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
+			kill -TERM $$
+			exit 1
+		fi
+		return 1
+	fi
+	return 0
+}
 
 pf_start()
 {
