@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.148 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.149 2005/08/10 09:42:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.149 2005/08/10 09:42:03 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -595,14 +595,14 @@ exit_lwps(struct lwp *l)
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
 
+		SCHED_LOCK(s);
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
-			SCHED_LOCK(s);
 			setrunnable(l2);
-			SCHED_UNLOCK(s);
 			DPRINTF(("exit_lwps: Made %d.%d runnable\n",
 			    p->p_pid, l2->l_lid));
 		}
+		SCHED_UNLOCK(s);
 	}
 
 
