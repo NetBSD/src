@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.138 2005/08/10 12:58:37 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.139 2005/08/10 13:07:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.138 2005/08/10 12:58:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.139 2005/08/10 13:07:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1577,6 +1577,7 @@ tcp_setpersist(struct tcpcb *tp)
 		tp->t_rxtshift++;
 }
 
+#if defined(INET)
 /*
  * tcp4_segment: handle M_CSUM_TSOv4 by software.
  *
@@ -1702,3 +1703,4 @@ quit:
 
 	return error;
 }
+#endif /* defined(INET) */
