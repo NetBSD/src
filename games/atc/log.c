@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.16 2005/08/10 17:53:28 rpaulo Exp $	*/
+/*	$NetBSD: log.c,v 1.17 2005/08/10 19:21:21 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.16 2005/08/10 17:53:28 rpaulo Exp $");
+__RCSID("$NetBSD: log.c,v 1.17 2005/08/10 19:21:21 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ log_score(int list_em)
 	(void)printf("%2s:  %-8s  %-8s  %-18s  %4s  %9s  %4s\n", "#", "name",
 	    "host", "game", "time", "real time", "planes safe");
 	(void)printf("-------------------------------------------------------");
-	(void)printf("------------------------\n");
+	(void)printf("-------------------------\n");
 	for (i = 0; i < num_scores; i++) {
 		cp = strchr(score[i].host, '.');
 		if (cp != NULL)
