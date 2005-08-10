@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.64 2005/06/25 22:08:54 dyoung Exp $
+#	$NetBSD: files.macppc,v 1.65 2005/08/10 14:39:25 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -71,6 +71,12 @@ file arch/macppc/pci/grackle.c			grackle
 device uninorth: pcibus
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
+
+# pseudo for the UniNorth host controller
+define uni_n {}
+device uni_n: uni_n
+attach uni_n at mainbus
+file arch/macppc/dev/uni-n.c			uni_n
 
 # PCI bus support
 include "dev/pci/files.pci"
@@ -195,8 +201,9 @@ include "dev/pcmcia/files.pcmcia"
 file arch/macppc/macppc/rbus_machdep.c		cardbus
 
 # Keywest I2C
-device ki2c {}
-attach ki2c at obio
+define ki2c {}
+device ki2c: i2cbus, ki2c
+attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
 
 # snapper audio
@@ -208,3 +215,15 @@ file arch/macppc/dev/snapper.c			snapper
 object	/athhal-powerpc-be-eabi.hal.o	ath
 
 include "arch/macppc/conf/majors.macppc"
+
+attach adt7467c at ki2c with adt7467_ki2c
+file arch/macppc/dev/adt7467_ki2c.c		adt7467c
+
+attach adm1030c at ki2c with adm1030_ki2c
+file arch/macppc/dev/adm1030_ki2c.c		adm1030c
+
+define deq {}
+device deq
+attach deq at ki2c
+file arch/macppc/dev/deq.c				deq
+
