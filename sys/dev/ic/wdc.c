@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.226 2005/08/09 22:08:16 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.227 2005/08/10 11:16:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.226 2005/08/09 22:08:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.227 2005/08/10 11:16:53 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -397,6 +397,9 @@ wdc_drvprobe(struct ata_channel *chp)
 int
 wdcprobe(struct ata_channel *chp)
 {
+	/* default reset method */
+	if (wdc->reset == NULL)
+		wdc->reset = wdc_do_reset;
 
 	return (wdcprobe1(chp, 1));
 }
