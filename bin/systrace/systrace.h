@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.20 2005/06/25 12:22:43 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.21 2005/08/10 18:19:21 elad Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -146,6 +146,7 @@ struct policy *systrace_findpolicy(const char *);
 struct policy *systrace_findpolnr(int);
 int systrace_dumppolicy(void);
 int systrace_readpolicy(char *);
+char *systrace_getpolicyfilename(const char *);
 int systrace_addpolicy(const char *);
 struct filterq *systrace_policyflq(struct policy *, const char *, const char *);
 
