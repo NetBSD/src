@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.193 2005/07/20 08:05:43 he Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.194 2005/08/10 13:05:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.193 2005/07/20 08:05:43 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.194 2005/08/10 13:05:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -237,6 +237,7 @@ POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL);
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
 
+#if defined(INET)
 struct evcnt tcp_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "hwcsum bad");
 struct evcnt tcp_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
@@ -250,6 +251,23 @@ EVCNT_ATTACH_STATIC(tcp_hwcsum_bad);
 EVCNT_ATTACH_STATIC(tcp_hwcsum_ok);
 EVCNT_ATTACH_STATIC(tcp_hwcsum_data);
 EVCNT_ATTACH_STATIC(tcp_swcsum);
+#endif /* defined(INET) */
+
+#if defined(INET6)
+struct evcnt tcp6_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp6", "hwcsum bad");
+struct evcnt tcp6_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp6", "hwcsum ok");
+struct evcnt tcp6_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp6", "hwcsum data");
+struct evcnt tcp6_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp6", "swcsum");
+
+EVCNT_ATTACH_STATIC(tcp6_hwcsum_bad);
+EVCNT_ATTACH_STATIC(tcp6_hwcsum_ok);
+EVCNT_ATTACH_STATIC(tcp6_hwcsum_data);
+EVCNT_ATTACH_STATIC(tcp6_swcsum);
+#endif /* defined(INET6) */
 #endif /* TCP_CSUM_COUNTERS */
 
 
