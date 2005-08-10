@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.17 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: policy.c,v 1.18 2005/08/10 18:19:21 elad Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.17 2005/06/24 23:21:09 christos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.18 2005/08/10 18:19:21 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,24 +327,30 @@ systrace_policyfilename(const char *dirname, const char *name)
 	return (file);
 }
 
-int
-systrace_addpolicy(const char *name)
+char *
+systrace_getpolicyfilename(const char *name)
 {
 	char *file = NULL;
 
 	if (userpolicy) {
 		file = systrace_policyfilename(policydir, name);
-		/* Check if the user policy file exists */
 		if (file != NULL && access(file, R_OK) == -1)
 			file = NULL;
 	}
 
-	/* Read global policy */
-	if (file == NULL) {
+	if (file == NULL)
 		file = systrace_policyfilename(POLICY_PATH, name);
-		if (file == NULL)
-			return (-1);
-	}
+
+	return (file);
+}
+
+int
+systrace_addpolicy(const char *name)
+{
+	char *file = NULL;
+
+	if ((file = systrace_getpolicyfilename(name)) == NULL)
+		return (-1);
 
 	return (systrace_readpolicy(file));
 }
