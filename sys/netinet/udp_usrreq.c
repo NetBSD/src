@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.139 2005/08/05 09:21:26 elad Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.140 2005/08/10 13:05:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.139 2005/08/05 09:21:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.140 2005/08/10 13:05:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -186,6 +186,7 @@ struct mowner udp_tx_mowner = { "udp", "tx" };
 #ifdef UDP_CSUM_COUNTERS
 #include <sys/device.h>
 
+#if defined(INET)
 struct evcnt udp_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "udp", "hwcsum bad");
 struct evcnt udp_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
@@ -195,12 +196,29 @@ struct evcnt udp_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 struct evcnt udp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "udp", "swcsum");
 
-#define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
-
 EVCNT_ATTACH_STATIC(udp_hwcsum_bad);
 EVCNT_ATTACH_STATIC(udp_hwcsum_ok);
 EVCNT_ATTACH_STATIC(udp_hwcsum_data);
 EVCNT_ATTACH_STATIC(udp_swcsum);
+#endif /* defined(INET) */
+
+#if defined(INET6)
+struct evcnt udp6_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum bad");
+struct evcnt udp6_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum ok");
+struct evcnt udp6_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum data");
+struct evcnt udp6_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "swcsum");
+
+EVCNT_ATTACH_STATIC(udp6_hwcsum_bad);
+EVCNT_ATTACH_STATIC(udp6_hwcsum_ok);
+EVCNT_ATTACH_STATIC(udp6_hwcsum_data);
+EVCNT_ATTACH_STATIC(udp6_swcsum);
+#endif /* defined(INET6) */
+
+#define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
 #else
 
@@ -442,6 +460,11 @@ static int
 udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 {
 
+	/*
+	 * XXX it's better to record and check if this mbuf is
+	 * already checked.
+	 */
+
 	if (__predict_false((m->m_flags & M_LOOP) && !udp_do_loopback_cksum)) {
 		goto good;
 	}
@@ -449,9 +472,34 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 		udp6stat.udp6s_nosum++;
 		goto bad;
 	}
-	if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
+
+	switch (m->m_pkthdr.csum_flags &
+	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv6) |
+	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+	case M_CSUM_UDPv6|M_CSUM_TCP_UDP_BAD:
+		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_bad);
 		udp6stat.udp6s_badsum++;
 		goto bad;
+
+#if 0 /* notyet */
+	case M_CSUM_UDPv6|M_CSUM_DATA:
+#endif
+
+	case M_CSUM_UDPv6:
+		/* Checksum was okay. */
+		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_ok);
+		break;
+
+	default:
+		/*
+		 * Need to compute it ourselves.  Maybe skip checksum
+		 * on loopback interfaces.
+		 */
+		UDP_CSUM_COUNTER_INCR(&udp6_swcsum);
+		if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
+			udp6stat.udp6s_badsum++;
+			goto bad;
+		}
 	}
 
 good:
