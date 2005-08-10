@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.20 2005/04/22 11:56:33 yamt Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.21 2005/08/10 12:58:37 yamt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.20 2005/04/22 11:56:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.21 2005/08/10 12:58:37 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -330,10 +330,10 @@ udp6_output(in6p, m, addr6, control, p)
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
 
-		if ((udp6->uh_sum = in6_cksum(m, IPPROTO_UDP,
-		    sizeof(struct ip6_hdr), plen)) == 0) {
-			udp6->uh_sum = 0xffff;
-		}
+		udp6->uh_sum = in6_cksum_phdr(laddr, faddr,
+		    htonl(plen), htonl(IPPROTO_UDP));
+		m->m_pkthdr.csum_flags = M_CSUM_UDPv6;
+		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 
 		if (in6p->in6p_flags & IN6P_MINMTU)
 			flags |= IPV6_MINMTU;

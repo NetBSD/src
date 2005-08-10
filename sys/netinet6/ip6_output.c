@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.88 2005/02/28 09:27:07 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.89 2005/08/10 12:58:37 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.88 2005/02/28 09:27:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.89 2005/08/10 12:58:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -167,6 +167,8 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
 
+	M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
+
 #define MAKE_EXTHDR(hp, mp)						\
     do {								\
 	if (hp) {							\
@@ -248,6 +250,12 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
   skippolicycheck:;
 #endif /* IPSEC */
 
+	if (needipsec &&
+	    (m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
+		in6_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
+	}
+
 	/*
 	 * Calculate the total length of the extension header chain.
 	 * Keep the length of the unfragmentable part for fragmentation.
@@ -294,6 +302,7 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 		ip6 = mtod(m, struct ip6_hdr *);
 		if ((error = ip6_insert_jumboopt(&exthdrs, plen)) != 0)
 			goto freehdrs;
+		optlen += 8; /* XXX JUMBOOPTLEN */
 		ip6->ip6_plen = 0;
 	} else
 		ip6->ip6_plen = htons(plen);
@@ -352,6 +361,9 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 		    IPPROTO_DSTOPTS);
 		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev, nexthdrp,
 		    IPPROTO_ROUTING);
+
+		M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data,
+		    sizeof(struct ip6_hdr) + optlen);
 
 #ifdef IPSEC
 		if (!needipsec)
@@ -868,6 +880,7 @@ skip_ipsec2:;
 	 */
 	if (dontfrag || (!alwaysfrag && tlen <= mtu)) {	/* case 1-a and 2-a */
 		struct in6_ifaddr *ia6;
+		int sw_csum;
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
@@ -879,6 +892,13 @@ skip_ipsec2:;
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
+
+		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
+		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
+			in6_delayed_cksum(m);
+			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
+		}
+
 		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
 		goto done;
 	}
@@ -945,6 +965,12 @@ skip_ipsec2:;
 		} else {
 			nextproto = ip6->ip6_nxt;
 			ip6->ip6_nxt = IPPROTO_FRAGMENT;
+		}
+
+		if ((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6))
+		    != 0) {
+			in6_delayed_cksum(m);
+			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
 
 		/*
@@ -1089,6 +1115,33 @@ ip6_copyexthdr(mp, hdr, hlen)
 
 	*mp = m;
 	return (0);
+}
+
+/*
+ * Process a delayed payload checksum calculation.
+ */
+void
+in6_delayed_cksum(struct mbuf *m)
+{
+	uint16_t csum, offset;
+
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
+	KASSERT((~m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
+	KASSERT((m->m_pkthdr.csum_flags
+	    & (M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_TSOv4)) == 0);
+
+	offset = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+	csum = in6_cksum(m, 0, offset, m->m_pkthdr.len - offset);
+	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv6) != 0) {
+		csum = 0xffff;
+	}
+
+	offset += M_CSUM_DATA_IPv6_OFFSET(m->m_pkthdr.csum_data);
+	if ((offset + sizeof(csum)) > m->m_len) {
+		m_copyback(m, offset, sizeof(csum), &csum);
+	} else {
+		*(uint16_t *)(mtod(m, caddr_t) + offset) = csum;
+	}
 }
 
 /*
