@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.29 2005/07/04 16:32:30 elad Exp $	*/
+/*	$NetBSD: filter.c,v 1.30 2005/08/10 21:53:01 elad Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.29 2005/07/04 16:32:30 elad Exp $");
+__RCSID("$NetBSD: filter.c,v 1.30 2005/08/10 21:53:01 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -805,29 +805,27 @@ int
 filter_inpath(struct intercept_translate *tl, struct logic *logic)
 {
 	const char *line;
-	size_t len, baselen;
+	char c;
+	int len;
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
 
 	len = strlen(line);
-	baselen = strlen(logic->filterdata);
-
-	/* XXXEE */
-	if (baselen && ((char *)logic->filterdata)[baselen - 1] == '/')
-		baselen--;
-
-	if (baselen <= 1)
-		return (1);
-
-	/* must be sub-dir */
-	if (len < baselen)
+	if (len == 0 || len > strlen(logic->filterdata))
 		return (0);
 
-	if (line[baselen] != '/')
+	/* Root is always in path */
+	if (len == 1)
+		return (line[0] == '/');
+
+	/* Complete filename needs to fit */
+	if (strncmp(line, logic->filterdata, len))
 		return (0);
 
-	if (strncmp(logic->filterdata, line, baselen))
+	/* Termination has to be \0 or / */
+	c = ((char *)logic->filterdata)[len];
+	if (c != '/' && c != '\0')
 		return (0);
 
 	return (1);
