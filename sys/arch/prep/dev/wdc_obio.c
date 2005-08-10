@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.19 2005/08/09 16:42:05 nonaka Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.20 2005/08/10 11:19:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.19 2005/08/09 16:42:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.20 2005/08/10 11:19:31 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,6 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 	    WDC_OBIO_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 		goto outunmap;
 
-	wdc.reset = wdc_do_reset;
 	result = wdcprobe(&ch);
 	if (result) {
 		oa->oa_iosize = WDC_OBIO_REG_NPORTS;
