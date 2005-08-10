@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.18 2005/08/10 18:19:21 elad Exp $	*/
+/*	$NetBSD: policy.c,v 1.19 2005/08/10 21:33:36 elad Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.18 2005/08/10 18:19:21 elad Exp $");
+__RCSID("$NetBSD: policy.c,v 1.19 2005/08/10 21:33:36 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -334,10 +334,12 @@ systrace_getpolicyfilename(const char *name)
 
 	if (userpolicy) {
 		file = systrace_policyfilename(policydir, name);
+		/* Check if the user policy file exists */
 		if (file != NULL && access(file, R_OK) == -1)
 			file = NULL;
 	}
 
+	/* Read global policy */
 	if (file == NULL)
 		file = systrace_policyfilename(POLICY_PATH, name);
 
