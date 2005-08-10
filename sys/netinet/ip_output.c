@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.154 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.154 2005/08/10 13:06:49 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -159,8 +159,6 @@ static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 extern struct pfil_head inet_pfil_hook;			/* XXX */
 #endif
 
-int	udp_do_loopback_cksum = 0;
-int	tcp_do_loopback_cksum = 0;
 int	ip_do_loopback_cksum = 0;
 
 #define	IN_NEED_CHECKSUM(ifp, csum_flags) \

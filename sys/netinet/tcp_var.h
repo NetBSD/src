@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.128 2005/08/05 09:21:26 elad Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.129 2005/08/10 13:06:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -729,7 +729,6 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
-extern	int tcp_do_loopback_cksum;/* do TCP checksum on loopback? */
 extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
 extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */
