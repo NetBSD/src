@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.137 2005/07/19 17:00:02 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.138 2005/08/10 12:58:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.137 2005/07/19 17:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.138 2005/08/10 12:58:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1344,27 +1344,14 @@ send:
 #endif
 #ifdef INET6
 	case AF_INET6:
-		/*
-		 * XXX Actually delaying the checksum is Hard
-		 * XXX (well, maybe not for Itojun, but it is
-		 * XXX for me), but we can still take advantage
-		 * XXX of the cached pseudo-header checksum.
-		 */
-		/* equals to hdrlen + len */
-		m->m_pkthdr.len = sizeof(struct ip6_hdr)
-			+ sizeof(struct tcphdr) + optlen + len;
-#ifdef notyet
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
-#endif
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		if (len + optlen) {
 			/* Fixup the pseudo-header checksum. */
 			/* XXXJRT: Not IPv6 Jumbogram safe. */
 			th->th_sum = in_cksum_addword(th->th_sum,
 			    htons((u_int16_t) (len + optlen)));
 		}
-		th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
-		    sizeof(struct tcphdr) + optlen + len);
 		break;
 #endif
 	}

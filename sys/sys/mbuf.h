@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.113 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.114 2005/08/10 12:58:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -187,6 +187,19 @@ struct	pkthdr {
  */
 #define	M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
 #define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
+
+/*
+ * Macros for M_CSUM_TCPv6 and M_CSUM_UDPv6
+ *
+ * M_CSUM_DATA_IPv6_HL: length of ip6_hdr + ext header.
+ * ie. offset of UDP/TCP header in the packet.
+ *
+ * M_CSUM_DATA_IPv6_OFFSET: offset of the checksum field in UDP/TCP header. 
+ */
+
+#define	M_CSUM_DATA_IPv6_HL(x)		((x) >> 16)
+#define	M_CSUM_DATA_IPv6_HL_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
+#define	M_CSUM_DATA_IPv6_OFFSET(x)	((x) & 0xffff)
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
