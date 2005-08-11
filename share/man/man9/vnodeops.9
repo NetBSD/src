@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.33 2005/01/11 01:51:12 chs Exp $
+.\"     $NetBSD: vnodeops.9,v 1.34 2005/08/11 10:06:38 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 2, 2005
+.Dd August 11, 2005
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -679,19 +679,25 @@ read-ahead hint (in unit of file system blocks) that the file system
 should attempt.
 The low 16 bits are a bit mask which can contain the following flags:
 .Pp
-.Bl -tag -offset indent -width IO_NODELOCKED -compact
+.Bl -tag -offset indent -width IO_ALTSEMANTICS -compact
 .It IO_UNIT
 do I/O as atomic unit
 .It IO_APPEND
 append write to end
 .It IO_SYNC
-do I/O synchronously
+sync I/O file integrity completion
 .It IO_NODELOCKED
 underlying node already locked
 .It IO_NDELAY
 FNDELAY flag set in file table
-.It IO_VMIO
-data already in VMIO space
+.It IO_DSYNC
+sync I/O data integrity completion
+.It IO_ALTSEMANTICS
+use alternate i/o semantics
+.It IO_NORMAL
+operate on regular data
+.It IO_EXT
+operate on extended attributes
 .El
 .Pp
 Zero is returned on success, otherwise an error is returned.
