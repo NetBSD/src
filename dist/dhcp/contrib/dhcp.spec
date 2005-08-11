@@ -1,6 +1,6 @@
-Summary: The Internet Software Consortium (ISC) DHCP server
+Summary: The Internet Systems Consortium (ISC) DHCP server
 Name: dhcp
-%define version 3.1
+%define version 3.0.2
 Version: %{version}
 Release: 2tac
 Group: System Environment/Daemons

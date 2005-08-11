@@ -5,7 +5,7 @@
 #
 # Author: Shu-Min Chang
 #
-# Copyright(c) 2002 Intel Corporation.  All rights reserved
+# Copyright(c) 2003 Intel Corporation.  All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -93,6 +93,8 @@ Acknowledgement:
 Pressley for being the DHCP reference book :).
 
 Usage: $ARGV -s <Srv> -o <Out> [-p <Pri> [-k <key>]] [-f <Fo>]
+
+Version: 1.0.1
 
 ENDOFHELP
 
@@ -349,10 +351,20 @@ sub GetScopes ($) {
 
 		if (!Registry::GetRegKeyVal ("\\\\$Server\\HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\DHCPServer\\Configuration\\Subnets\\$Subnets[$i]\\ExcludedIpRanges", \$RegVal)) {
 			@SExclusionRanges = Registry::ExtractExclusionRanges($RegVal);
+
+#			for (my $j=2; $j<=$#SExclusionRanges; $j+=2) {
+#				if (unpack("L",$SExclusionRanges[$j]) < unpack("L",$SExclusionRanges[$j-2])) {
+#					print ("\n******** Subnet exclusion ranges out of order ********\n");
+#				}
+#			}
+
+			@SExclusionRanges = sort(@SExclusionRanges);
+
 #		print "\n\tExclusion Ranges: ";
 #		for (my $j=0; $j<=$#SExclusionRanges; $j+=2) {
-#			print "\n\t\t$SExclusionRanges[$j] - $SExclusionRanges[$j+1]";
+#			print "\n\t\t",Registry::ExtractIp($SExclusionRanges[$j])," - ",Registry::ExtractIp($SExclusionRanges[$j+1]);
 #		}
+
 		}
 		@InclusionRanges = FindInclusionRanges ($SStartAddress, $SEndAddress, @SExclusionRanges);
 

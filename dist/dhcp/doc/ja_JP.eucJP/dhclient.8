@@ -1,20 +1,25 @@
-.\"	dhclient.8
+.\"	$Id: dhclient.8,v 1.1.1.2 2005/08/11 16:54:35 drochner Exp $
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
 .\"
 .\" Portions copyright (c) 2000 David E. O'Brien.
 .\" All rights reserved.
@@ -91,7 +96,7 @@ relay
 ]
 ]
 .SH 解説
-Internet Software Consortium の DHCP クライアントである dhclient
+Internet Systems Consortium の DHCP クライアントである dhclient
 は動的ホスト設定プロトコル (DHCP: Dynamic Host Configuration Protocol)
 または BOOTP プロトコルを用いて、あるいは
 これらのプロトコルが失敗した場合にはアドレスを静的に割り当てて、
@@ -334,9 +339,9 @@ dhclient.conf(5), dhclient.leases(5), dhclient-script(8)
 .SH 作者
 .B dhclient(8)
 は Ted Lemon が
-Vixie Enterprises と協力して Internet Software Consortium のために
+Vixie Enterprises と協力して Internet Systems Consortium のために
 書きました。
-Internet Software Consortium についてより詳しくは、
+Internet Systems Consortium についてより詳しくは、
 .B http://www.isc.org
 をご覧ください。
 Vixie Enterprises についてより詳しくは、
@@ -348,7 +353,7 @@ Stanford 大学の MosquitoNet プロジェクトに参加している間に、
 Linux での利用に際し大幅に修正、改良を行いました。
 .PP
 現在のバージョンは、Elliot による Linux での改良に負うところが大きいですが、
-Internet Software Consortium の DHCP サーバが使うものと同じ
+Internet Systems Consortium の DHCP サーバが使うものと同じ
 ネットワーキングフレームワークを用いるように、Ted Lemon が
 大幅な再編成や部分的な書き換えを行いました。
 システム特有の設定コードの大部分はシェルスクリプトに移されたので、
