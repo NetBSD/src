@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.19 2005/08/06 11:22:39 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.20 2005/08/11 13:01:24 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -3020,6 +3020,19 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		m_freem(*mp);
 		*mp = NULL;
 		return error;
+	}
+
+	/*
+	 * If the packet is out-bound, we can't delay checksums
+	 * here.  For in-bound, the checksum has already been
+	 * validated.
+	 */
+	if (dir == PFIL_OUT) {
+		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+			in6_delayed_cksum(*mp);
+			(*mp)->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv6|M_CSUM_UDPv6);
+		}
 	}
 
 	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp, NULL)
