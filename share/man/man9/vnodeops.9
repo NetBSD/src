@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.34 2005/08/11 10:06:38 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.35 2005/08/11 10:49:47 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,10 +163,10 @@
 "struct componentname *fcnp" "struct componentname *tdvp" \
 "struct vnode *tvp" "struct componentname *tcnp"
 .Ft int
-.Fn VOP_MKDIR "struct vnode *vp" "struct vnode **vpp" \
+.Fn VOP_MKDIR "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp" "struct vattr *vap"
 .Ft int
-.Fn VOP_RMDIR "struct vnode *vp" "struct vnode *vp" \
+.Fn VOP_RMDIR "struct vnode *dvp" "struct vnode *vp" \
 "struct componentname *cnp"
 .Ft int
 .Fn VOP_SYMLINK "struct vnode *dvp" "struct vnode **vpp" \
