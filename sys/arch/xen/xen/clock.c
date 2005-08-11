@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2005/06/25 18:44:59 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2005/08/11 20:32:56 cube Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/06/25 18:44:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2005/08/11 20:32:56 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 				cc_microset(ci);
 			}
 		}
-		hardclock(regs);
+		hardclock((struct clockframe *)regs);
 		delta -= NS_PER_TICK;
 		processed_system_time += NS_PER_TICK;
 	}

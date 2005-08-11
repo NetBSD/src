@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2004/09/25 11:08:47 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2005/08/11 20:32:55 cube Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -203,11 +203,13 @@ extern u_int32_t cpus_attached;
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
  */
-#define clockframe intrframe
+struct clockframe {
+	struct intrframe cf_if;
+};
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
 #define CLKF_BASEPRI(frame)	(0)
-#define CLKF_PC(frame)		((frame)->if_rip)
+#define CLKF_PC(frame)		((frame)->cf_if.if_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
 /*
