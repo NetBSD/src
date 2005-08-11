@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.14 2005/05/29 21:57:49 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.15 2005/08/11 13:01:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -206,6 +206,22 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
+#if defined(INET6)
+#if defined(M_CSUM_TCPv6)
+	/*
+	 * If the packet is out-bound, we can't delay checksums
+	 * here.  For in-bound, the checksum has already been
+	 * validated.
+	 */
+	if (dir == PFIL_OUT) {
+		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+			in6_delayed_cksum(*mp);
+			(*mp)->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv6|M_CSUM_UDPv6);
+		}
+	}
+#endif /* M_CSUM_TCPv6 */
+#endif /* INET6 */
 
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
