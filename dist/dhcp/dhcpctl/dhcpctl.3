@@ -2,9 +2,29 @@
 .\"
 .\" Project:      DHCP
 .\" File:         dhcpctl.3
-.\" RCSId:        $Id: dhcpctl.3,v 1.2 2003/03/17 07:28:59 wiz Exp $
+.\" RCSId:        $Id: dhcpctl.3,v 1.3 2005/08/11 17:13:21 drochner Exp $
 .\" 
-.\"     Copyright (C) 2000  Nominum, Inc.
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2000-2003 by Internet Software Consortium
+.\" Copyright (c) 2000 Nominum, Inc.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
 .\"     
 .\" Description:	dhcpctl man page.
 .\" 
@@ -24,7 +44,6 @@
 .\"
 .Sh SYNOPSIS
 .Fd #include <dhcpctl/dhcpctl.h>
-.Fd
 .Ft dhcpctl_status
 .Fo dhcpctl_initialize
 .Fa void
@@ -325,6 +344,8 @@ values must all match what the server uses and are defined in its
 configuration file. The created object is returned through the first parameter
 and must be used as the 4th parameter to 
 .Fn dhcpctl_connect .
+Note that the 'secret' value must not be base64 encoded, which is different
+from how the value appears in the dhcpd.conf file.
 .\"
 .\"
 .\"
@@ -468,7 +489,5 @@ int main (int argc, char **argv) {
 .Xr dhcpd 8
 .Sh AUTHORS
 .Nm
-was written by Ted Lemon of Nominum, Inc.  Information about Nominum
-and support contracts for DHCP and BIND can be found at
-http://www.nominum.com.   This preliminary documentation was
-written by James Brister of Nominum, Inc.
+was written by Ted Lemon of Nominum, Inc.
+This preliminary documentation was written by James Brister of Nominum, Inc.

@@ -1,7 +1,6 @@
-	    Internet Software Consortium DHCP Distribution
-			     Version 3.0.1
-			  Release Candidate 9
-			     April 28, 2002
+	       Internet Systems Consortium DHCP Distribution
+			      Version 3.0.3
+			      July 22, 2005
 
 			      README FILE
 
@@ -97,15 +96,15 @@ system.
 
 			    RELEASE STATUS
 
-This is the tenth release candidate of version 3.0.1 of the ISC DHCP
-Distribution.  Development of this release is approaching the point at
-which it will be frozen, and no significant new features will be
-added.
+This is the first beta release of ISC DHCP 3.0.3.  This is a maintenance
+release which seeks only to fix bugs present in versions 3.0.2 and
+earlier.  No new features have or will be added in subsequent
+release candidates of this release.
 
 In this release, the server and relay agent are currently fully
 functional on NetBSD, Linux systems with kernel version 2.2 or later,
-FreeBSD, OpenBSD, BSD/OS, Digital Tru64 Unix and Solaris.  The
-software will also run on HP-UX, but only supports a single network
+FreeBSD, OpenBSD, BSD/OS, Digital Tru64 Unix and Solaris.  The software
+will also run on AIX and HP-UX, but only supports a single network
 interface.  Ports also exist for QNX, SCO, NeXTStep, and MacOS X, but
 are not in wide use, with all that implies.   We are not aware of an
 easy way to get this software running on HP-UX.
@@ -143,17 +142,17 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	zcat dhcp-3.0.1rc11.tar.gz |tar xvf -
+	zcat dhcp-3.0.3.tar.gz |tar xvf -
 
 On BSD/OS, you have to type gzcat, not zcat, and you may run into
 similar problems on other operating systems.
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-3.0.1rc11 subdirectory that you've just
-created and configure the source tree by typing:
+Now, cd to the dhcp-3.0.3 subdirectory that you've just created and
+configure the source tree by typing:
 
-		./configure
+	./configure
 
 If the configure utility can figure out what sort of system you're
 running on, it will create a custom Makefile for you for that
@@ -466,22 +465,46 @@ rather than using the ISC DHCP client.  The feature set of the Solaris
 client is different (not necessarily better or worse) than that of the
 ISC client, but in most cases it will be a lot easier for you to just
 use that.  Please do not ask for help in using the Solaris DHCP client
-on Internet Software Consortium mailing lists - that's why you're
+on Internet Systems Consortium mailing lists - that's why you're
 paying Sun the big bucks.   If you're having a problem with the
 Solaris client interoperating with the ISC dhcp server, that's another
 matter, but please check with Sun first.
 
+				AIX
+
+The AIX support uses the BSD socket API, which cannot differentiate on
+which network interface a broadcast packet was received; thus the DHCP
+server and relay will work only on a single interface.  (They do work
+on multi-interface machines if configured to listen on only one of the
+interfaces.)
+
+The ISC DHCP distribution does not include a dhclient-script for AIX--
+AIX comes with a DHCP client.  Contribution of a working dhclient-script
+for AIX would be welcome.
+
 			       SUPPORT
 
-The Internet Software Consortium DHCP server is not a commercial
-product, and is not supported by the ISC.  However, it has attracted a
-fairly sizable following on the Internet, which means that there are a
-lot of knowledgable users who may be able to help you if you get
-stuck.  These people generally read the dhcp-server@isc.org mailing
-list.
+The Internet Systems Consortium DHCP server is developed and distributed
+by ISC in the public trust, thanks to the generous donations of its
+sponsors.  ISC now also fofers commercial quality support contracts for
+ISC DHCP, more information about ISC Support Contracts can be found at
+the following URL:
+
+	http://www.isc.org/ops/support/
+
+No donators, as yet, have asked for their dollars to be spent providing
+free support to all who ask.  Please understand that we may not respond
+to support inquiries unless you have a support contract.  ISC will
+continue its practice of always responding to critical items that effect
+the entire community.
+
+However, ISC DHCP has attracted a fairly sizable following on the
+Internet, which means that there are a lot of knowledgable users who
+may be able to help you if you get stuck.  These people generally read
+the dhcp-server@isc.org mailing list.
 
 If you are going to use dhcpd, you should probably subscribe to the
-dhcp-server and dhcp-announce mailing lists.  If you will be using
+dhcp-server or dhcp-announce mailing lists.  If you will be using
 dhclient, you should subscribe to the dhcp-client mailing list.
 
 If you need help, you should ask on the dhcp-server or dhcp-client
@@ -492,6 +515,12 @@ If you are having trouble with a combination of the client and server,
 send the request to dhcp-server@isc.org.  Please do not cross-post to
 both lists under any circumstances.
 
+WHERE TO SEND FEATURE REQUESTS: We like to hear your feedback.  We may
+not respond to it all the time, but we do read it.  If ISC DHCP doesn't
+work well for you, or you have an idea that would improve it for your
+use, please send your suggestion to dhcp-suggest@isc.org.  This is also
+an excellent place to send patches that add new features.
+
 WHERE TO REPORT BUGS: If you want the act of sending in a bug report
 to result in you getting help in the form of a fixed piece of
 software, you are asking for help.  Your bug report is helpful to us,
@@ -499,7 +528,7 @@ but fundamentally you are making a support request, so please use the
 addresses described in the previous paragraphs.  If you are _sure_ that
 your problem is a bug, and not user error, or if your bug report
 includes a patch, you can send it to dhcp-bugs@isc.org without
-subscribing.   This mailing list goes into a bug tracking system, so
+subscribing.   This e-mail address goes into a bug tracking system, so
 you don't need to check periodically to see if we still remember the
 bug - if you haven't been notified that the bug has been closed, we
 still consider it a bug, and still have it in the system.
@@ -508,8 +537,9 @@ PLEASE DO NOT REPORT BUGS IN OLD SOFTWARE RELEASES!  Fetch the latest
 release and see if the bug is still in that version of the software,
 and if it's not, _then_ report it.  It's okay to report bugs in the
 latest patchlevel of a major version that's not the most recent major
-version, though - for example, if you're running 2.0, you don't have
-to upgrade to 3.0 before you can report bugs.
+version, though - for example, if you're running 3.0.2, you don't have
+to upgrade to a 3.0.3rc (release candidate) or even a 3.1.x release
+before you can report bugs.
 
 PLEASE DO NOT REPORT BUGS IF YOU ARE RUNNING A VERSION OF THE ISC
 DHCP DISTRIBUTION THAT YOU DIDN'T GET FROM THE ISC!   Free operating
@@ -639,7 +669,6 @@ If you are having problems with a client whose executable is called
 dhcpcd, this is _not_ the ISC DHCP client, and we probably can't help
 you with it.
 
-Please see http://www.isc.org/services/public/lists/dhcp-lists.html
-for details on how to subscribe to the ISC DHCP mailing lists.
-
+Please see http://www.isc.org/sw/dhcp/ for details on how to subscribe
+to the ISC DHCP mailing lists.
 

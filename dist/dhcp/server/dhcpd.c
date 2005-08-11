@@ -3,39 +3,30 @@
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 1996-2003 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,22 +34,20 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.5 2004/10/29 21:19:32 dsl Exp $ Copyright 1995-2003 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.6 2005/08/11 17:13:30 drochner Exp $ Copyright 2004-2005 Internet Systems Consortium.";
 #endif
 
   static char copyright[] =
-"Copyright 1995-2003 Internet Software Consortium.";
+"Copyright 2004-2005 Internet Systems Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server";
-static char url [] = "For info, please visit http://www.isc.org/products/DHCP";
+static char message [] = "Internet Systems Consortium DHCP Server";
+static char url [] = "For info, please visit http://www.isc.org/sw/dhcp/";
 
 #include "dhcpd.h"
 #include "version.h"
 #include <omapip/omapip_p.h>
 
 static void usage PROTO ((void));
-
-TIME cur_time;
 
 struct iaddr server_identifier;
 int server_identifier_matched;
@@ -385,8 +374,12 @@ int main (argc, argv, envp)
 
 #if defined (TRACING)
 	trace_init (set_time, MDL);
-	if (traceoutfile)
-		trace_begin (traceoutfile, MDL);
+	if (traceoutfile) {
+		result = trace_begin (traceoutfile, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Unable to begin trace: %s",
+				isc_result_totext (result));
+	}
 	interface_trace_setup ();
 	parse_trace_setup ();
 	trace_srandom = trace_type_register ("random-seed", (void *)0,
@@ -544,22 +537,24 @@ int main (argc, argv, envp)
 	if ((i = open (path_dhcpd_pid, O_RDONLY)) >= 0) {
 		status = read (i, pbuf, (sizeof pbuf) - 1);
 		close (i);
-		pbuf [status] = 0;
-		pid = atoi (pbuf);
+		if (status > 0) {
+			pbuf [status] = 0;
+			pid = atoi (pbuf);
 
-		/* If the previous server process is not still running,
-		   write a new pid file immediately. */
-		if (pid && (pid == getpid() || kill (pid, 0) < 0)) {
-			unlink (path_dhcpd_pid);
-			if ((i = open (path_dhcpd_pid,
-				       O_WRONLY | O_CREAT, 0644)) >= 0) {
-				sprintf (pbuf, "%d\n", (int)getpid ());
-				write (i, pbuf, strlen (pbuf));
-				close (i);
-				pidfilewritten = 1;
-			}
-		} else
-			log_fatal ("There's already a DHCP server running.");
+			/* If the previous server process is not still running,
+			   write a new pid file immediately. */
+			if (pid && (pid == getpid() || kill (pid, 0) < 0)) {
+				unlink (path_dhcpd_pid);
+				if ((i = open (path_dhcpd_pid,
+					O_WRONLY | O_CREAT, 0644)) >= 0) {
+				    sprintf (pbuf, "%d\n", (int)getpid ());
+				    write (i, pbuf, strlen (pbuf));
+				    close (i);
+				    pidfilewritten = 1;
+				}
+			} else
+				log_fatal ("There's already a DHCP server running.");
+		}
 	}
 
 	/* If we were requested to log to stdout on the command line,
@@ -771,7 +766,7 @@ void postconf_initialization (int quiet)
 		}
 	} else {
 		log_info ("%s", "");
-		log_error ("** You must add a ddns-update-style %s%s.",
+		log_error ("** You must add a global ddns-update-style %s%s.",
 			   "statement to ", path_dhcpd_conf);
 		log_error ("   To get the same behaviour as in 3.0b2pl11 %s",
 			   "and previous");
