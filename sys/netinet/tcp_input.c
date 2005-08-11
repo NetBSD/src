@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.233 2005/08/10 13:06:49 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.234 2005/08/11 22:25:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.233 2005/08/10 13:06:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.234 2005/08/11 22:25:18 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2899,6 +2899,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			if (!(th->th_flags & TH_SYN))
 				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			bcopy(cp + 2, &mss, sizeof(mss));
 			oi->maxseg = ntohs(mss);
 			break;
@@ -2907,6 +2909,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			if (optlen != TCPOLEN_WINDOW)
 				continue;
 			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			tp->t_flags |= TF_RCVD_SCALE;
 			tp->requested_s_scale = cp[2];
@@ -2945,21 +2949,25 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
 			NTOHL(oi->ts_ecr);
 
+			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			/*
 			 * A timestamp received in a SYN makes
 			 * it ok to send timestamp requests and replies.
 			 */
-			if (th->th_flags & TH_SYN) {
-				tp->t_flags |= TF_RCVD_TSTMP;
-				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = tcp_now;
-			}
+			tp->t_flags |= TF_RCVD_TSTMP;
+			tp->ts_recent = oi->ts_val;
+			tp->ts_recent_age = tcp_now;
                         break;
 
 		case TCPOPT_SACK_PERMITTED:
 			if (optlen != TCPOLEN_SACK_PERMITTED)
 				continue;
 			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			if (tcp_do_sack) {
 				tp->t_flags |= TF_SACK_PERMIT;
