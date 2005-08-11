@@ -1,41 +1,34 @@
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 1996-2002 Internet Software Consortium.
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" This software has been written for the Internet Software Consortium
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about the Internet Software Consortium, see
+.\" To learn more about Internet Systems Consortium, see
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.8,v 1.1.1.3 2003/02/18 16:38:02 drochner Exp $
+.\" $Id: dhcpd.8,v 1.1.1.4 2005/08/11 16:54:50 drochner Exp $
 .\"
 .TH dhcpd 8
 .SH NAME
@@ -83,7 +76,7 @@ dhcpd - Dynamic Host Configuration Protocol Server
 ]
 ]
 .SH DESCRIPTION
-The Internet Software Consortium DHCP Server, dhcpd, implements the
+The Internet Systems Consortium DHCP Server, dhcpd, implements the
 Dynamic Host Configuration Protocol (DHCP) and the Internet Bootstrap
 Protocol (BOOTP).  DHCP allows hosts on a TCP/IP network to request
 and be assigned IP addresses, and also to discover information about
@@ -156,7 +149,7 @@ BOOTP client, permanently assigning an address to each client.
 Whenever changes are made to the dhcpd.conf file, dhcpd must be
 restarted.   To restart dhcpd, send a SIGTERM (signal 15) to the
 process ID contained in
-.IR RUNDIR/dhcpd.pid ,
+.IR /var/run/dhcpd.pid ,
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
@@ -175,7 +168,7 @@ broadcasts may be specified on the command line.  This should be done
 on systems where dhcpd is unable to identify non-broadcast interfaces,
 but should not be required on other systems.  If no interface names
 are specified on the command line dhcpd will identify all network
-interfaces which are up, elimininating non-broadcast interfaces if
+interfaces which are up, eliminating non-broadcast interfaces if
 possible, and listen for DHCP broadcasts on each interface.
 .PP
 If dhcpd should listen on a port other than the standard (port 67),
@@ -256,7 +249,7 @@ support might look like this:
 .sp 1
 	subnet 239.252.197.0 netmask 255.255.255.0 {
 	  range 239.252.197.10 239.252.197.250;
-        }
+	}
 .fi
 .PP
 Multiple address ranges may be specified like this:
@@ -435,7 +428,7 @@ currently supported).
 .PP
 .B pool \fIhandle\fR examine
 .RS 0.5i
-the pool object associted with this lease (the pool object is not
+the pool object associated with this lease (the pool object is not
 currently supported).
 .RE
 .PP
@@ -727,16 +720,15 @@ Indicates the number of update messages that have been received from
 the failover partner but not yet processed.
 .RE
 .SH FILES
-.B ETCDIR/dhcpd.conf, DBDIR/dhcpd.leases, RUNDIR/dhcpd.pid,
-.B DBDIR/dhcpd.leases~.
+.B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
+.B /var/db/dhcpd.leases~.
 .SH SEE ALSO
 dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .SH AUTHOR
 .B dhcpd(8)
 was originally written by Ted Lemon under a contract with Vixie Labs.
-Funding for this project was provided by the Internet Software
+Funding for this project was provided by Internet Systems
 Consortium.   Version 3 of the DHCP server was funded by Nominum, Inc.
-Information about the Internet Software Consortium is available at
-.B http://www.isc.org/isc\fR.
-Information about Nominum and support contracts for DHCP and BIND can
-be found at \fBhttp://www.nominum.com\fR.
+Information about Internet Systems Consortium is available at
+.B http://www.isc.org/\fR.
+Information about Nominum can be found at \fBhttp://www.nominum.com/\fR.

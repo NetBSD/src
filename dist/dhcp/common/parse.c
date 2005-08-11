@@ -3,39 +3,30 @@
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.3 2003/02/18 16:37:57 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.4 2005/08/11 16:54:26 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -284,8 +275,11 @@ int parse_ip_addr_or_hostname (expr, cfile, uniform)
 		name = parse_host_name (cfile);
 		if (!name)
 			return 0;
-		if (!make_host_lookup (expr, name))
+		if (!make_host_lookup (expr, name)) {
+			dfree(name, MDL);
 			return 0;
+		}
+		dfree(name, MDL);
 		if (!uniform) {
 			if (!make_limit (&x, *expr, 4))
 				return 0;
@@ -317,8 +311,6 @@ int parse_ip_addr (cfile, addr)
 	struct parse *cfile;
 	struct iaddr *addr;
 {
-	const char *val;
-	enum dhcp_token token;
 
 	addr -> len = 4;
 	if (parse_numeric_aggregate (cfile, addr -> iabuf,
@@ -544,7 +536,7 @@ void convert_num (cfile, buf, str, base, size)
 			if (ptr [1] == 'x') {
 				base = 16;
 				ptr += 2;
-			} else if (isascii (ptr [1]) && isdigit (ptr [1])) {
+			} else if (isdigit ((unsigned char)ptr [1])) {
 				base = 8;
 				ptr += 1;
 			} else {
@@ -655,7 +647,6 @@ void convert_num (cfile, buf, str, base, size)
 TIME parse_date (cfile)
 	struct parse *cfile;
 {
-	struct tm tm;
 	int guess;
 	int tzoff, wday, year, mon, mday, hour, min, sec;
 	const char *val;
@@ -726,7 +717,7 @@ TIME parse_date (cfile)
 		return (TIME)0;
 	}
 
-	/* Month... */
+	/* Day of month... */
 	token = next_token (&val, (unsigned *)0, cfile);
 	if (token != NUMBER) {
 		parse_warn (cfile, "numeric day of month expected.");
@@ -1027,7 +1018,6 @@ int parse_option_code_definition (cfile, option)
 	char tokbuf [128];
 	unsigned tokix = 0;
 	char type;
-	int code;
 	int is_signed;
 	char *s;
 	int has_encapsulation = 0;
@@ -1516,7 +1506,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 {
 	enum dhcp_token token;
 	const char *val;
-	struct executable_statement base;
 	struct class *cta;
 	struct option *option;
 	struct option_cache *cache;
@@ -1819,7 +1808,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		if (token != NAME && token != NUMBER_OR_NAME) {
 			parse_warn (cfile,
 				    "%s can't be a variable name", val);
-		      badunset:
 			skip_to_semi (cfile);
 			*lose = 1;
 			return 0;
@@ -1997,6 +1985,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		return 1;
 		
 		/* Also not really a statement, but same idea as above. */
+#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (!parse_key (cfile)) {
@@ -2004,6 +1993,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			return 0;
 		}
 		return 1;
+#endif
 
 	      default:
 		if (config_universe && is_identifier (token)) {
@@ -2140,6 +2130,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    }
 		    break;
 
+#if !defined (SMALL)
 		  case KEY:
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    token = peek_token (&val, (unsigned *)0, cfile);
@@ -2163,7 +2154,8 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    if (!parse_semi (cfile))
 			    return 0;
 		    break;
-		    
+#endif
+
 		  default:
 		    done = 1;
 		    break;
@@ -2186,6 +2178,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
    secret-definition :== SECRET base64val |
 			 SECRET STRING */
 
+#if !defined (SMALL)
 int parse_key (struct parse *cfile)
 {
 	int token;
@@ -2325,6 +2318,7 @@ int parse_key (struct parse *cfile)
 	omapi_auth_key_dereference (&key, MDL);
 	return 0;
 }
+#endif
 
 /*
  * on-statement :== event-types LBRACE executable-statements RBRACE
@@ -2713,6 +2707,7 @@ int parse_data_expression (expr, cfile, lose)
 	if (!is_data_expression (*expr) &&
 	    (*expr) -> op != expr_variable_reference &&
 	    (*expr) -> op != expr_funcall) {
+		expression_dereference (expr, MDL);
 		parse_warn (cfile, "Expecting a data expression.");
 		*lose = 1;
 		return 0;
@@ -2739,6 +2734,7 @@ int parse_numeric_expression (expr, cfile, lose)
 	if (!is_numeric_expression (*expr) &&
 	    (*expr) -> op != expr_variable_reference &&
 	    (*expr) -> op != expr_funcall) {
+		expression_dereference (expr, MDL);
 		parse_warn (cfile, "Expecting a numeric expression.");
 		*lose = 1;
 		return 0;
@@ -2773,6 +2769,7 @@ int parse_dns_expression (expr, cfile, lose)
 	if (!is_dns_expression (*expr) &&
 	    (*expr) -> op != expr_variable_reference &&
 	    (*expr) -> op != expr_funcall) {
+		expression_dereference (expr, MDL);
 		parse_warn (cfile, "Expecting a dns update subexpression.");
 		*lose = 1;
 		return 0;
@@ -2791,16 +2788,12 @@ int parse_non_binary (expr, cfile, lose, context)
 	enum dhcp_token token;
 	const char *val;
 	struct collection *col;
-	struct option *option;
 	struct expression *nexp, **ep;
 	int known;
 	enum expr_op opcode;
 	const char *s;
 	char *cptr;
-	struct executable_statement *stmt;
-	int i;
 	unsigned long u;
-	isc_result_t status, code;
 	unsigned len;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
@@ -3288,7 +3281,6 @@ int parse_non_binary (expr, cfile, lose, context)
 					parse_warn
 						(cfile,
 						 "expecting dns expression.");
-			      badnstrans:
 				expression_dereference (expr, MDL);
 				*lose = 1;
 				return 0;
@@ -4039,8 +4031,40 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 		goto new_rhs;
 	}
 
+	/* If the next binary operator is of greater precedence than the
+	 * current operator, then rhs we have parsed so far is actually
+	 * the lhs of the next operator.  To get this value, we have to
+	 * recurse.
+	 */
+	if (binop != expr_none && next_op != expr_none &&
+	    op_precedence (binop, next_op) < 0) {
+
+		/* Eat the subexpression operator token, which we pass to
+		 * parse_expression...we only peek()'d earlier.
+		 */
+		token = next_token (&val, (unsigned *)0, cfile);
+
+		/* Continue parsing of the right hand side with that token. */
+		tmp = rhs;
+		rhs = (struct expression *)0;
+		if (!parse_expression (&rhs, cfile, lose, op_context (next_op),
+				       &tmp, next_op)) {
+			if (!*lose) {
+				parse_warn (cfile,
+					    "expecting a subexpression");
+				*lose = 1;
+			}
+			return 0;
+		}
+		next_op = expr_none;
+	}
+
 	if (binop != expr_none) {
-	  if (expression_context (rhs) != expression_context (lhs)) {
+	  rhs_context = expression_context(rhs);
+	  lhs_context = expression_context(lhs);
+
+	  if ((rhs_context != context_any) && (lhs_context != context_any) &&
+			(rhs_context != lhs_context)) {
 	    parse_warn (cfile, "illegal expression relating different types");
 	    skip_to_semi (cfile);
 	    expression_dereference (&rhs, MDL);
@@ -4052,9 +4076,10 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 	  switch(binop) {
 	    case expr_not_equal:
 	    case expr_equal:
-		if ((expression_context(rhs) != context_data_or_numeric) &&
-		    (expression_context(rhs) != context_data) &&
-		    (expression_context(rhs) != context_numeric)) {
+		if ((rhs_context != context_data_or_numeric) &&
+		    (rhs_context != context_data) &&
+		    (rhs_context != context_numeric) &&
+		    (rhs_context != context_any)) {
 			parse_warn (cfile, "expecting data/numeric expression");
 			skip_to_semi (cfile);
 			expression_dereference (&rhs, MDL);
@@ -4065,7 +4090,8 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 
 	    case expr_and:
 	    case expr_or:
-		if (expression_context(rhs) != context_boolean) {
+		if ((rhs_context != context_boolean) &&
+		    (rhs_context != context_any)) {
 			parse_warn (cfile, "expecting boolean expressions");
 			skip_to_semi (cfile);
 			expression_dereference (&rhs, MDL);
@@ -4082,7 +4108,8 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 	    case expr_binary_and:
 	    case expr_binary_or:
 	    case expr_binary_xor:
-		if (expression_context(rhs) != context_numeric) {
+		if ((rhs_context != context_numeric) &&
+		    (rhs_context != context_any)) {
 			parse_warn (cfile, "expecting numeric expressions");
                         skip_to_semi (cfile);
                         expression_dereference (&rhs, MDL);
@@ -4114,27 +4141,6 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 
 	/* Eat the operator token - we now know it was a binary operator... */
 	token = next_token (&val, (unsigned *)0, cfile);
-
-	/* If the binary operator we saw previously has a lower precedence
-	   than the next operator, then the rhs we just parsed for that
-	   operator is actually the lhs of the operator with the higher
-	   precedence - to get the real rhs, we need to recurse on the
-	   new operator. */
- 	if (binop != expr_none &&
-	    op_precedence (binop, next_op) < 0) {
-		tmp = rhs;
-		rhs = (struct expression *)0;
-		if (!parse_expression (&rhs, cfile, lose, op_context (next_op),
-				       &tmp, next_op)) {
-			if (!*lose) {
-				parse_warn (cfile,
-					    "expecting a subexpression");
-				*lose = 1;
-			}
-			return 0;
-		}
-		next_op = expr_none;
-	}
 
 	/* Now combine the LHS and the RHS using binop. */
 	tmp = (struct expression *)0;
@@ -4182,8 +4188,6 @@ int parse_option_statement (result, cfile, lookups, option, op)
 	struct expression *expr = (struct expression *)0;
 	struct expression *tmp;
 	int lose;
-	struct executable_statement *stmt;
-	int ftt = 1;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == SEMI) {
@@ -4301,23 +4305,21 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 	struct expression *t = (struct expression *)0;
 	unsigned char buf [4];
 	unsigned len;
-	unsigned char *ob;
 	struct iaddr addr;
-	int num;
 	const char *f, *g;
 	struct enumeration_value *e;
 
 	switch (**fmt) {
 	      case 'U':
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, &len, cfile);
 		if (!is_identifier (token)) {
 			if ((*fmt) [1] != 'o') {
 				parse_warn (cfile, "expecting identifier.");
-				skip_to_semi (cfile);
+				if (token != SEMI)
+					skip_to_semi (cfile);
 			}
 			return 0;
 		}
-		token = next_token (&val, &len, cfile);
 		if (!make_const_data (&t, (const unsigned char *)val,
 				      len, 1, 1, MDL))
 			log_fatal ("No memory for %s", val);
@@ -4342,18 +4344,21 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 				return 0;
 			}
 			t -> op = expr_const_data;
-		} else if (token == STRING) {
-			token = next_token (&val, &len, cfile);
-			if (!make_const_data (&t, (const unsigned char *)val,
-					      len, 1, 1, MDL))
-				log_fatal ("No memory for \"%s\"", val);
 		} else {
-			if ((*fmt) [1] != 'o') {
+			token = next_token (&val, &len, cfile);
+
+			if(token == STRING) {
+				if (!make_const_data (&t,
+						(const unsigned char *)val,
+							len, 1, 1, MDL))
+					log_fatal ("No memory for \"%s\"", val);
+			} else if ((*fmt) [1] != 'o') {
 				parse_warn (cfile, "expecting string %s.",
 					    "or hexadecimal data");
 				skip_to_semi (cfile);
+			} else {
+				return 0;
 			}
-			return 0;
 		}
 		break;
 		
@@ -4368,7 +4373,7 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 		goto make_string;
 
 	      case 't': /* Text string... */
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, &len, cfile);
 		if (token != STRING && !is_identifier (token)) {
 			if ((*fmt) [1] != 'o') {
 				parse_warn (cfile, "expecting string.");
@@ -4377,7 +4382,6 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 			}
 			return 0;
 		}
-		token = next_token (&val, &len, cfile);
 	      make_string:
 		if (!make_const_data (&t, (const unsigned char *)val,
 				      len, 1, 1, MDL))
@@ -4424,10 +4428,9 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 		break;
 		
 	      case 'T':	/* Lease interval. */
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != INFINITE)
 			goto check_number;
-		token = next_token (&val, (unsigned *)0, cfile);
 		putLong (buf, -1);
 		if (!make_const_data (&t, buf, 4, 0, 1, MDL))
 			return 0;
@@ -4435,9 +4438,9 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 
 	      case 'L': /* Unsigned 32-bit integer... */
 	      case 'l':	/* Signed 32-bit integer... */
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, (unsigned *)0, cfile);
 	      check_number:
-		if (token != NUMBER) {
+		if ((token != NUMBER) && (token != NUMBER_OR_NAME)) {
 		      need_number:
 			if ((*fmt) [1] != 'o') {
 				parse_warn (cfile, "expecting number.");
@@ -4446,7 +4449,6 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 			}
 			return 0;
 		}
-		token = next_token (&val, (unsigned *)0, cfile);
 		convert_num (cfile, buf, val, 0, 32);
 		if (!make_const_data (&t, buf, 4, 0, 1, MDL))
 			return 0;
@@ -4454,10 +4456,9 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 
 	      case 's':	/* Signed 16-bit integer. */
 	      case 'S':	/* Unsigned 16-bit integer. */
-		token = peek_token (&val, (unsigned *)0, cfile);
-		if (token != NUMBER)
-			goto need_number;
 		token = next_token (&val, (unsigned *)0, cfile);
+		if ((token != NUMBER) && (token != NUMBER_OR_NAME))
+			goto need_number;
 		convert_num (cfile, buf, val, 0, 16);
 		if (!make_const_data (&t, buf, 2, 0, 1, MDL))
 			return 0;
@@ -4465,17 +4466,16 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 
 	      case 'b':	/* Signed 8-bit integer. */
 	      case 'B':	/* Unsigned 8-bit integer. */
-		token = peek_token (&val, (unsigned *)0, cfile);
-		if (token != NUMBER)
-			goto need_number;
 		token = next_token (&val, (unsigned *)0, cfile);
+		if ((token != NUMBER) && (token != NUMBER_OR_NAME))
+			goto need_number;
 		convert_num (cfile, buf, val, 0, 8);
 		if (!make_const_data (&t, buf, 1, 0, 1, MDL))
 			return 0;
 		break;
 
 	      case 'f': /* Boolean flag. */
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, (unsigned *)0, cfile);
 		if (!is_identifier (token)) {
 			if ((*fmt) [1] != 'o')
 				parse_warn (cfile, "expecting identifier.");
@@ -4499,7 +4499,6 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 				parse_warn (cfile, "expecting boolean.");
 			goto bad_flag;
 		}
-		token = next_token (&val, (unsigned *)0, cfile);
 		if (!make_const_data (&t, buf, 1, 0, 1, MDL))
 			return 0;
 		break;
@@ -4547,7 +4546,6 @@ int parse_option_decl (oc, cfile)
 		/* Set a flag if this is an array of a simple type (i.e.,
 		   not an array of pairs of IP addresses, or something
 		   like that. */
-		int uniform = option -> format [1] == 'A';
 
 		for (fmt = option -> format; *fmt; fmt++) {
 			if (*fmt == 'A')
@@ -4639,7 +4637,8 @@ int parse_option_decl (oc, cfile)
 			      case 'l':	/* Signed 32-bit integer... */
 				token = next_token (&val,
 						    (unsigned *)0, cfile);
-				if (token != NUMBER) {
+				if ((token != NUMBER) &&
+				    (token != NUMBER_OR_NAME)) {
 				      need_number:
 					parse_warn (cfile,
 						    "expecting number.");
@@ -4656,7 +4655,8 @@ int parse_option_decl (oc, cfile)
 			      case 'S':	/* Unsigned 16-bit integer. */
 				token = next_token (&val,
 						    (unsigned *)0, cfile);
-				if (token != NUMBER)
+				if ((token != NUMBER) &&
+				    (token != NUMBER_OR_NAME))
 					goto need_number;
 				convert_num (cfile, buf, val, 0, 16);
 				len = 2;
@@ -4667,7 +4667,8 @@ int parse_option_decl (oc, cfile)
 			      case 'B':	/* Unsigned 8-bit integer. */
 				token = next_token (&val,
 						    (unsigned *)0, cfile);
-				if (token != NUMBER)
+				if ((token != NUMBER) &&
+				    (token != NUMBER_OR_NAME))
 					goto need_number;
 				convert_num (cfile, buf, val, 0, 8);
 				len = 1;
@@ -4744,7 +4745,6 @@ int parse_X (cfile, buf, max)
 	int token;
 	const char *val;
 	unsigned len;
-	u_int8_t *s;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -4795,16 +4795,17 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 	unsigned i, lix;
 	
 	do_percentm (mbuf, fmt);
-#ifndef NO_SNPRINTF
+	/* %Audit% This is log output. %2004.06.17,Safe%
+	 * If we truncate we hope the user can get a hint from the log.
+	 */
 	snprintf (fbuf, sizeof fbuf, "%s line %d: %s",
 		  cfile -> tlname, cfile -> lexline, mbuf);
-#else
-	sprintf (fbuf, "%s line %d: %s",
-		 cfile -> tlname, cfile -> lexline, mbuf);
-#endif
 	
 	va_start (list, fmt);
-	vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+
+	fmt = fbuf;
+	vsnprintf (mbuf, sizeof mbuf, fmt, list);
+
 	va_end (list);
 
 	lix = 0;
@@ -4813,7 +4814,7 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 		if (lix < (sizeof lexbuf) - 1)
 			lexbuf [lix++] = ' ';
 		if (cfile -> token_line [i] == '\t') {
-			for (lix;
+			for (/*lix*/;
 			     lix < (sizeof lexbuf) - 1 && (lix & 7); lix++)
 				lexbuf [lix] = ' ';
 		}
@@ -4828,13 +4829,14 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write (2, mbuf, strlen (mbuf));
-		write (2, "\n", 1);
-		write (2, cfile -> token_line, strlen (cfile -> token_line));
-		write (2, "\n", 1);
+		write (STDERR_FILENO, mbuf, strlen (mbuf));
+		write (STDERR_FILENO, "\n", 1);
+		write (STDERR_FILENO, cfile -> token_line,
+		       strlen (cfile -> token_line));
+		write (STDERR_FILENO, "\n", 1);
 		if (cfile -> lexchar < 81)
-			write (2, lexbuf, lix);
-		write (2, "^\n", 2);
+			write (STDERR_FILENO, lexbuf, lix);
+		write (STDERR_FILENO, "^\n", 2);
 	}
 
 	cfile -> warnings_occurred = 1;

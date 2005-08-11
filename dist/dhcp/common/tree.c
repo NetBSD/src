@@ -3,39 +3,30 @@
    Routines for manipulating parse trees... */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.3 2003/02/18 16:37:57 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.4 2005/08/11 16:54:29 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -258,7 +249,6 @@ int make_limit (new, expr, limit)
 	struct expression *expr;
 	int limit;
 {
-	struct expression *rv;
 
 	/* Allocate a node to enforce a limit on evaluation. */
 	if (!expression_allocate (new, MDL))
@@ -653,11 +643,12 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 	struct binding_scope **scope;
 	struct expression *expr;
 {
-	ns_updrec *foo;
 	unsigned long ttl = 0;
 	char *tname;
 	struct data_string name, data;
-	int r0, r1, r2, r3;
+	int r0, r1, r2;
+
+	tname = NULL;	/* XXXGCC -Wuninitialized */
 
 	if (!result || *result) {
 		log_error ("evaluate_dns_expression called with non-null %s",
@@ -711,8 +702,10 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 					 in_options, cfg_options, scope,
 					 expr -> data.ns_add.rrdata, MDL);
 			}
-		} else
+		} else {
 			r2 = 0;
+			tname = NULL;
+		}
 		if (r0 && r1 && (r2 || expr -> op != expr_ns_add)) {
 		    *result = minires_mkupdrec (((expr -> op == expr_ns_add ||
 						  expr -> op == expr_ns_delete)
@@ -744,10 +737,13 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 					goto dpngood;
 				    (*result) -> r_data =
 					    (*result) -> r_data_ephem;
+				    /*%Audit% 16 bytes max. %2004.06.17,Safe%*/
 				    sprintf ((char *)(*result) -> r_data_ephem,
-					     "%d.%d.%d.%d",
-					     data.data [0], data.data [1],
-					     data.data [2], data.data [3]);
+					     "%u.%u.%u.%u",
+					     data.data [0] & 0xff,
+					     data.data [1] & 0xff,
+					     data.data [2] & 0xff,
+					     data.data [3] & 0xff);
 				    (*result) -> r_size = 
 					    strlen ((const char *)
 						    (*result) -> r_data);
@@ -907,10 +903,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 	struct binding_scope **scope;
 	struct expression *expr;
 {
-	struct data_string left, right;
-	struct data_string rrtype, rrname, rrdata;
-	unsigned long ttl;
-	int srrtype, srrname, srrdata, sttl;
+	struct data_string left;
 	int bleft, bright;
 	int sleft, sright;
 	struct binding *binding;
@@ -1279,12 +1272,13 @@ int evaluate_data_expression (result, packet, lease, client_state,
 	int line;
 {
 	struct data_string data, other;
-	unsigned long offset, len, i;
+	unsigned long offset, len;
 	int s0, s1, s2, s3;
 	int status;
 	struct binding *binding;
-	char *s;
 	struct binding_value *bv;
+
+	status = 0;	/* XXXGCC -Wuninitialized */
 
 	switch (expr -> op) {
 		/* Extract N bytes starting at byte M of a data string. */
@@ -1719,6 +1713,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 			if (len != 8 && len != 16 && len != 32) {
 				log_info ("binary_to_ascii: %s %ld!",
 					  "invalid width", len);
+				status = 0;
 				goto b2a_out;
 			}
 			len /= 8;
@@ -1829,7 +1824,6 @@ int evaluate_data_expression (result, packet, lease, client_state,
 					       MDL);
 
 		if (s0 && s1) {
-			char *upper;
 			int i;
 
 			/* The buffer must be a multiple of the number's
@@ -3107,18 +3101,20 @@ static int op_val (op)
 
 	      case expr_equal:
 	      case expr_not_equal:
+		return 4;
+
+	      case expr_or:
+	      case expr_and:
 		return 3;
 
-	      case expr_and:
+	      case expr_add:
+	      case expr_subtract:
+		return 2;
+
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
 		return 1;
-
-	      case expr_or:
-	      case expr_add:
-	      case expr_subtract:
-		return 2;
 	}
 	return 100;
 }
@@ -3126,7 +3122,6 @@ static int op_val (op)
 int op_precedence (op1, op2)
 	enum expr_op op1, op2;
 {
-	int ov1, ov2;
 
 	return op_val (op1) - op_val (op2);
 }
@@ -3741,7 +3736,6 @@ int binding_scope_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct binding_scope *binding_scope;
 
 	if (!ptr || !*ptr) {

@@ -3,39 +3,30 @@
    Lexical scanner for dhcpd config file... */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -312,9 +303,12 @@ static enum dhcp_token read_string (cfile)
 	int i;
 	int bs = 0;
 	int c;
-	int value;
-	int hex;
+	int value = 0;
+	int hex = 0;
 
+	value = 0;	/* XXXGCC -Wuninitialized */
+	hex = 0;	/* XXXGCC -Wuninitialized */
+					
 	for (i = 0; i < sizeof cfile -> tokbuf; i++) {
 	      again:
 		c = get_char (cfile);
@@ -419,22 +413,62 @@ static enum dhcp_token read_number (c, cfile)
 	int c;
 	struct parse *cfile;
 {
+#ifdef OLD_LEXER
 	int seenx = 0;
+#endif
 	int i = 0;
 	int token = NUMBER;
 
 	cfile -> tokbuf [i++] = c;
 	for (; i < sizeof cfile -> tokbuf; i++) {
 		c = get_char (cfile);
-		if (!seenx && c == 'x') {
-			seenx = 1;
+
 #ifndef OLD_LEXER
-		} else if (isascii (c) && !isxdigit (c) &&
-			   (c == '-' || c == '_' || isalpha (c))) {
-			token = NAME;
-		} else if (isascii (c) && !isdigit (c) && isxdigit (c)) {
-			token = NUMBER_OR_NAME;
-#endif
+		/* Promote NUMBER -> NUMBER_OR_NAME -> NAME, never demote.
+		 * Except in the case of '0x' syntax hex, which gets called
+		 * a NAME at '0x', and returned to NUMBER_OR_NAME once it's
+		 * verified to be at least 0xf or less.
+		 */
+		switch(isascii(c) ? token : BREAK) {
+		    case NUMBER:
+			if(isdigit(c))
+				break;
+			/* FALLTHROUGH */
+		    case NUMBER_OR_NAME:
+			if(isxdigit(c)) {
+				token = NUMBER_OR_NAME;
+				break;
+			}
+			/* FALLTHROUGH */
+		    case NAME:
+			if((i == 2) && isxdigit(c) &&
+				(cfile->tokbuf[0] == '0') &&
+				((cfile->tokbuf[1] == 'x') ||
+				 (cfile->tokbuf[1] == 'X'))) {
+				token = NUMBER_OR_NAME;
+				break;
+			} else if(((c == '-') || (c == '_') || isalnum(c))) {
+				token = NAME;
+				break;
+			}
+			/* FALLTHROUGH */
+		    case BREAK:
+			/* At this point c is either EOF or part of the next
+			 * token.  If not EOF, rewind the file one byte so
+			 * the next token is read from there.
+			 */
+			if(c != EOF) {
+				cfile->bufix--;
+				cfile->ugflag = 1;
+			}
+			goto end_read;
+
+		    default:
+			log_fatal("read_number():%s:%d: impossible case", MDL);
+		}
+#else /* OLD_LEXER */
+		if (!seenx && (c == 'x') {
+			seenx = 1;
 		} else if (!isascii (c) || !isxdigit (c)) {
 			if (c != EOF) {
 				cfile -> bufix--;
@@ -442,16 +476,22 @@ static enum dhcp_token read_number (c, cfile)
 			}
 			break;
 		}
+#endif /* OLD_LEXER */
+
 		cfile -> tokbuf [i] = c;
 	}
+
 	if (i == sizeof cfile -> tokbuf) {
 		parse_warn (cfile,
 			    "numeric token larger than internal buffer");
 		--i;
 	}
+
+  end_read:
 	cfile -> tokbuf [i] = 0;
 	cfile -> tlen = i;
 	cfile -> tval = cfile -> tokbuf;
+
 	return token;
 }
 
@@ -493,7 +533,7 @@ static enum dhcp_token intern (atom, dfv)
 	if (!isascii (atom [0]))
 		return dfv;
 
-	switch (tolower (atom [0])) {
+	switch (tolower ((unsigned char)atom [0])) {
 	      case '-':
 		if (atom [1] == 0)
 			return MINUS;
@@ -654,7 +694,7 @@ static enum dhcp_token intern (atom, dfv)
 		}
 		break;
 	      case 'e':
-		if (isascii (atom [1]) && tolower (atom [1]) == 'x') {
+		if (tolower ((unsigned char)atom [1]) == 'x') {
 			if (!strcasecmp (atom + 2, "tract-int"))
 				return EXTRACT_INT;
 			if (!strcasecmp (atom + 2, "ists"))
@@ -751,8 +791,13 @@ static enum dhcp_token intern (atom, dfv)
 			return IGNORE;
 		break;
 	      case 'k':
-		if (!strcasecmp (atom + 1, "nown"))
-			return KNOWN;
+		if (!strncasecmp (atom + 1, "nown", 4)) {
+			if (!strcasecmp (atom + 5, "-clients"))
+				return KNOWN_CLIENTS;
+			if (!atom[5])
+				return KNOWN;
+			break;
+		}
 		if (!strcasecmp (atom + 1, "ey"))
 			return KEY;
 		break;

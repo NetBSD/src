@@ -1,22 +1,28 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.2 2003/02/18 16:37:59 drochner Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.3 2005/08/11 16:54:43 drochner Exp $";
 #endif /* not lint */
 
 /*
- * Copyright (c) 1999-2003 by Internet Software Consortium.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  */
 
 /* Import. */
@@ -290,7 +296,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			int rdlen;
 			ns_rr rr;
 
-			rcode = ns_parserr(&msg, sect, i, &rr) < 0;
+			rcode = ns_parserr(&msg, sect, i, &rr);
 			if (rcode != ISC_R_SUCCESS) {
 				DPRINTF(("get_soa: ns_parserr(%s, %d) failed",
 					 p_section(sect, ns_o_query), i));
@@ -585,7 +591,7 @@ do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
 		DPRINTF(("do_query: res_nsend returned 0"));
 		return ISC_R_NOTFOUND;
 	}
-	if (ns_initparse((u_char *)resp, n, msg) < 0) {
+	if (ns_initparse((u_char *)resp, n, msg) != ISC_R_SUCCESS) {
 		DPRINTF(("do_query: ns_initparse failed"));
 		return ISC_R_NOSPACE;
 	}

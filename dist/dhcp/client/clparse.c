@@ -3,39 +3,30 @@
    Parser for dhclient config and lease files... */
 
 /*
- * Copyright (c) 1996-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.3 2003/02/18 16:37:54 drochner Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.4 2005/08/11 16:54:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,7 +62,6 @@ u_int32_t default_requested_options [] = {
 isc_result_t read_client_conf ()
 {
 	struct client_config *config;
-	struct client_state *state;
 	struct interface_info *ip;
 	isc_result_t status;
 
@@ -166,8 +156,13 @@ int read_client_conf_file (const char *name, struct interface_info *ip,
 	int token;
 	isc_result_t status;
 	
-	if ((file = open (name, O_RDONLY)) < 0)
+	if ((file = open (name, O_RDONLY)) < 0) {
+#ifndef SMALL
 		return uerr2isc (errno);
+#else
+		return errno == ENOENT ? ISC_R_NOTFOUND : ISC_R_NOPERM;
+#endif
+	}
 
 	cfile = (struct parse *)0;
 	new_parse (&cfile, file, (char *)0, 0, path_dhclient_conf, 0);
@@ -251,11 +246,9 @@ void parse_client_statement (cfile, ip, config)
 	int token;
 	const char *val;
 	struct option *option;
-	struct executable_statement *stmt, **p;
-	enum statement_op op;
+	struct executable_statement *stmt;
 	int lose;
 	char *name;
-	struct data_string key_id;
 	enum policy policy;
 	int known;
 	int tmp, i;
@@ -276,6 +269,7 @@ void parse_client_statement (cfile, ip, config)
 		}
 		return;
 		
+#if !defined (SMALL)
 	      case KEY:
 		next_token (&val, (unsigned *)0, cfile);
 		if (ip) {
@@ -297,6 +291,7 @@ void parse_client_statement (cfile, ip, config)
 		}
 		parse_key (cfile);
 		return;
+#endif
 
 		/* REQUIRE can either start a policy statement or a
 		   comma-seperated list of names of required options. */
@@ -438,27 +433,44 @@ void parse_client_statement (cfile, ip, config)
 	      case OMAPI:
 		token = next_token (&val, (unsigned *)0, cfile);
 		token = next_token (&val, (unsigned *)0, cfile);
-		if (token != PORT) {
+		if (config != &top_level_config) {
+			parse_warn (cfile,
+				    "omapi info must be at top level.");
+			skip_to_semi (cfile);
+			return;
+		}
+		if (token == PORT) {
+			token = next_token (&val, (unsigned *)0, cfile);
+			if (token != NUMBER) {
+				parse_warn (cfile,
+					    "invalid port number: `%s'", val);
+				skip_to_semi (cfile);
+				return;
+			}
+			tmp = atoi (val);
+			if (tmp < 0 || tmp > 65535)
+				parse_warn (cfile,
+					    "invalid omapi port %d.", tmp);
+			config -> omapi_port = tmp;
+			parse_semi (cfile);
+#if !defined (SMALL)
+		} else if (token == KEY) {
+			token = next_token (&val, (unsigned *)0, cfile);
+			if (token != STRING && !is_identifier (token)) {
+				parse_warn (cfile, "expecting key name.");
+				skip_to_semi (cfile);
+				break;
+			}
+			if (omapi_auth_key_lookup_name (&config -> omapi_key,
+							val) != ISC_R_SUCCESS)
+				parse_warn (cfile, "unknown key %s", val);
+			parse_semi (cfile);
+#endif
+		} else {
 			parse_warn (cfile,
 				    "unexpected omapi subtype: %s", val);
 			skip_to_semi (cfile);
-			return;
 		}
-		token = next_token (&val, (unsigned *)0, cfile);
-		if (token != NUMBER) {
-			parse_warn (cfile, "invalid port number: `%s'", val);
-			skip_to_semi (cfile);
-			return;
-		}
-		tmp = atoi (val);
-		if (tmp < 0 || tmp > 65535)
-			parse_warn (cfile, "invalid omapi port %d.", tmp);
-		else if (config != &top_level_config)
-			parse_warn (cfile,
-				    "omapi port only works at top level.");
-		else
-			config -> omapi_port = tmp;
-		parse_semi (cfile);
 		return;
 		
 	      case DO_FORWARD_UPDATE:
@@ -617,34 +629,41 @@ void parse_option_list (cfile, list)
 	struct parse *cfile;
 	u_int32_t **list;
 {
-	int ix, i;
+	int ix;
 	int token;
 	const char *val;
-	pair p = (pair)0, q, r;
+	pair p = (pair)0, q = (pair)0, r;
+	struct option *option;
 
 	ix = 0;
 	do {
-		token = next_token (&val, (unsigned *)0, cfile);
-		if (token == SEMI)
+		token = peek_token (&val, (unsigned *)0, cfile);
+		if (token == SEMI) {
+			token = next_token (&val, (unsigned *)0, cfile);
 			break;
+		}
 		if (!is_identifier (token)) {
 			parse_warn (cfile, "%s: expected option name.", val);
+			token = next_token (&val, (unsigned *)0, cfile);
 			skip_to_semi (cfile);
 			return;
 		}
-		for (i = 0; i < 256; i++) {
-			if (!strcasecmp (dhcp_options [i].name, val))
-				break;
-		}
-		if (i == 256) {
+		option = parse_option_name (cfile, 0, NULL);
+		if (!option) {
 			parse_warn (cfile, "%s: expected option name.", val);
+			return;
+		}
+		if (option -> universe != &dhcp_universe) {
+			parse_warn (cfile,
+				"%s.%s: Only global options allowed.",
+				option -> universe -> name, option->name );
 			skip_to_semi (cfile);
 			return;
 		}
 		r = new_pair (MDL);
 		if (!r)
 			log_fatal ("can't allocate pair for option code.");
-		r -> car = (caddr_t)(long)i;
+		r -> car = (caddr_t)(long)option -> code;
 		r -> cdr = (pair)0;
 		if (p)
 			q -> cdr = r;
@@ -752,6 +771,8 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 	struct interface_info *ip = (struct interface_info *)0;
 	isc_result_t status;
 
+	status = ISC_R_FAILURE;		/* XXXGCC -Wuninitialized */
+
 	/* Find the interface (if any) that matches the name. */
 	for (i = interfaces; i; i = i -> next) {
 		if (!strcmp (i -> name, name)) {
@@ -773,9 +794,7 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 	/* If we didn't find an interface, make a dummy interface as
 	   a placeholder. */
 	if (!ip) {
-		isc_result_t status;
-		status = interface_allocate (&ip, MDL);
-		if (status != ISC_R_SUCCESS)
+		if ((status = interface_allocate (&ip, MDL)) != ISC_R_SUCCESS)
 			log_fatal ("Can't record interface %s: %s",
 				   name, isc_result_totext (status));
 		strcpy (ip -> name, name);
@@ -788,6 +807,8 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 	}
 	if (pi)
 		status = interface_reference (pi, ip, MDL);
+	else
+		status = ISC_R_FAILURE;
 	interface_dereference (&ip, MDL);
 	if (status != ISC_R_SUCCESS)
 		return 0;
@@ -832,7 +853,7 @@ void parse_client_lease_statement (cfile, is_static)
 	struct parse *cfile;
 	int is_static;
 {
-	struct client_lease *lease, *lp, *pl;
+	struct client_lease *lease, *lp, *pl, *next;
 	struct interface_info *ip = (struct interface_info *)0;
 	int token;
 	const char *val;
@@ -892,17 +913,26 @@ void parse_client_lease_statement (cfile, is_static)
 	   lease list looking for a lease with the same address, and
 	   if we find it, toss it. */
 	pl = (struct client_lease *)0;
-	for (lp = client -> leases; lp; lp = lp -> next) {
+	for (lp = client -> leases; lp; lp = next) {
+		next = lp -> next;
 		if (lp -> address.len == lease -> address.len &&
 		    !memcmp (lp -> address.iabuf, lease -> address.iabuf,
 			     lease -> address.len)) {
+			/* If the lease we found is a static lease, and
+			   this one expires earlier, discard this one. */
+			if (lp->is_static &&
+			    lp->expiry > lease->expiry) {
+				destroy_client_lease(lease);
+				return;
+			}
 			if (pl)
-				pl -> next = lp -> next;
+				pl -> next = next;
 			else
-				client -> leases = lp -> next;
+				client -> leases = next;
 			destroy_client_lease (lp);
 			break;
-		}
+		} else
+			pl = lp;
 	}
 
 	/* If this is a preloaded lease, just put it on the list of recorded
@@ -963,13 +993,12 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 {
 	int token;
 	const char *val;
-	char *t, *n;
 	struct interface_info *ip;
 	struct option_cache *oc;
 	struct client_state *client = (struct client_state *)0;
-	struct data_string key_id;
 
 	switch (next_token (&val, (unsigned *)0, cfile)) {
+#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != STRING && !is_identifier (token)) {
@@ -982,6 +1011,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;
+#endif
 	      case TOKEN_BOOTP:
 		lease -> is_bootp = 1;
 		break;
@@ -1157,11 +1187,6 @@ int parse_allow_deny (oc, cfile, flag)
 	struct parse *cfile;
 	int flag;
 {
-	enum dhcp_token token;
-	const char *val;
-	unsigned char rf = flag;
-	struct expression *data = (struct expression *)0;
-	int status;
 
 	parse_warn (cfile, "allow/deny/ignore not permitted here.");
 	skip_to_semi (cfile);

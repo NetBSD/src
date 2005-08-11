@@ -1,5 +1,5 @@
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.1.1.2 2003/02/18 16:37:58 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.1.1.3 2005/08/11 16:54:38 drochner Exp $";
 #endif
 
 /*
@@ -562,7 +562,7 @@ dst_s_read_public_key(const char *in_name, const unsigned in_id, int in_alg)
 	enckey[--len] = '\0';
 
 	/* remove leading spaces */
-	for (notspace = (char *) enckey; isspace(*notspace); len--)
+	for (notspace = enckey; isspace((unsigned char)*notspace); len--)
 		notspace++;
 
 	dlen = b64_pton(notspace, deckey, sizeof(deckey));
@@ -866,7 +866,7 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, unsigned in_id,
 	len = cnt;
 	p = in_buff;
 
-	if (!dst_s_verify_str((const char **) &p, "Private-key-format: v")) {
+	if (!dst_s_verify_str((void *) &p, "Private-key-format: v")) {
 		EREPORT(("dst_s_read_private_key_file(): Not a Key file/Decrypt failed %s\n", name));
 		goto fail;
 	}
@@ -884,7 +884,7 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, unsigned in_id,
 
 	while (*p++ != '\n') ;	/* skip to end of line */
 
-	if (!dst_s_verify_str((const char **) &p, "Algorithm: "))
+	if (!dst_s_verify_str((void *) &p, "Algorithm: "))
 		goto fail;
 
 	if (sscanf((char *)p, "%d", &alg) != 1)

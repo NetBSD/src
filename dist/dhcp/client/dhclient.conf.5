@@ -1,49 +1,39 @@
-.\"	dhclient.conf.5
+.\"	$Id: dhclient.conf.5,v 1.1.1.4 2005/08/11 16:54:23 drochner Exp $
 .\"
-.\" Copyright (c) 1996-2002 Internet Software Consortium.
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" This software has been written for the Internet Software Consortium
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
+.\"
+.\" This software has been written for Internet Software Consortium
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about the Internet Software Consortium, see
+.\" To learn more about Internet Software Consortium, see
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
-.\"
-.\" $Id: dhclient.conf.5,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $
-.\"
 .TH dhclient.conf 5
 .SH NAME
 dhclient.conf - DHCP client configuration file
 .SH DESCRIPTION
 The dhclient.conf file contains configuration information for
 .IR dhclient,
-the Internet Software Consortium DHCP Client.
+the Internet Systems Consortium DHCP Client.
 .PP
 The dhclient.conf file is a free-form ASCII text file.   It is parsed by
 the recursive-descent parser built into dhclient.   The file may contain
@@ -52,7 +42,7 @@ are case-insensitive.   Comments may be placed anywhere within the
 file (except within quotes).   Comments begin with the # character and
 end at the end of the line.
 .PP
-The dhclient.conf file can be used to configure the behaviour of the
+The dhclient.conf file can be used to configure the behavior of the
 client in a wide variety of ways: protocol timing, information
 requested from the server, information required of the server,
 defaults to use if the server does not provide certain information,
@@ -61,13 +51,13 @@ values to prepend or append to information provided by the server.
 The configuration file can also be preinitialized with addresses to
 use on networks that don't have DHCP servers.
 .SH PROTOCOL TIMING
-The timing behaviour of the client need not be configured by the user.
+The timing behavior of the client need not be configured by the user.
 If no timing configuration is provided by the user, a fairly
-reasonable timing behaviour will be used by default - one which
+reasonable timing behavior will be used by default - one which
 results in fairly timely updates without placing an inordinate load on
 the server.
 .PP
-The following statements can be used to adjust the timing behaviour of
+The following statements can be used to adjust the timing behavior of
 the DHCP client if required, however:
 .PP
 .I The
@@ -152,10 +142,11 @@ a new address.   By default, the reboot timeout is ten seconds.
 .PP
 The client uses an exponential backoff algorithm with some randomness,
 so that if many clients try to configure themselves at the same time,
-they will not make their requests in lockstep.   The
+they will not make their requests in lock-step.   The
 .I backoff-cutoff
 statement determines the maximum amount of time that the client is
-allowed to back off.   It defaults to two minutes.
+allowed to back off, the actual value will be evaluated randomly between
+1/2 to 1 1/2 times the \fItime\fR specified.   It defaults to two minutes.
 .PP
 .I The
 .B initial-interval
@@ -187,7 +178,7 @@ are called \fIDHCP Options\fR.  DHCP Options are defined in
 .B request
 .I statement
 .PP
- \fBrequest [ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
+ \fBrequest \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
 .PP
 The request statement causes the client to request that any server
 responding to the client send the client its values for the specified
@@ -208,7 +199,7 @@ no parameters:
 .B require
 .I statement
 .PP
- \fBrequire [ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
+ \fBrequire \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
 .PP
 The require statement lists options that must be sent in order for an
 offer to be accepted.   Offers that do not contain all the listed
@@ -218,7 +209,7 @@ options will be ignored.
 .B send
 .I statement
 .PP
- \fBsend { [ \fIoption declaration\fR ]
+ \fBsend { \fR[ \fIoption declaration\fR ]
 [\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
 .PP
 The send statement causes the client to send the specified options to
@@ -255,7 +246,7 @@ updated.   The \fIfqdn.encoded\fR option may need to be set to
 .B do-forward-updates
 .I statement
 .PP
- \fBdo-forward-updates [ \fIflag\fR ] \fB;\fR
+ \fBdo-forward-updates \fR[ \fIflag\fR ] \fB;\fR
 .PP
 If you want to do DNS updates in the DHCP client
 script (see \fBdhclient-script(8)\fR) rather than having the
@@ -266,6 +257,29 @@ the \fBdo-forward-updates\fR statement.   \fIFlag\fR should be \fBtrue\fR
 if you want the DHCP client to do the update, and \fBfalse\fR if
 you don't want the DHCP client to do the update.   By default, the DHCP
 client will do the DNS update.
+.PP
+.I The
+.B omapi port
+.I statement
+.PP
+ \fBomapi port \fR[ \fIport\fR ] \fB;\fR
+.PP
+The \fBomapi port\fR statement causes the DHCP client to set up an OMAPI
+listener on the specified port.   Only one such port should be specified.
+The OMAPI listener will be sensitive to connections from any IP address, so
+it is important to also set up an OMAPI key to protect the client from
+unauthorized changes.
+.PP
+.I The
+.B omapi key
+.I statement
+.PP
+ \fBomapi key \fR[ \fI key-id \fR ] \fB;\fR
+.PP
+The \fBomapi key\fR statement causes the DHCP client to check any incoming
+OMAPI messages to make sure that they are signed by the specified key.   If
+a message is not signed by this key, it is rejected with an "invalid key"
+error.
 .SH OPTION MODIFIERS
 In some cases, a client may receive option data from the server which
 is not really appropriate for that client, or may not receive
@@ -278,7 +292,7 @@ needs, several option modifiers are available.
 .B default
 .I statement
 .PP
- \fBdefault [ \fIoption declaration\fR ] \fB;\fR
+ \fBdefault \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should use the value supplied by
 the server, but needs to use some default value if no value was supplied
@@ -290,7 +304,7 @@ statement.
 .B supersede
 .I statement
 .PP
- \fBsupersede [ \fIoption declaration\fR ] \fB;\fR
+ \fBsupersede \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should always use a locally-configured
 value or values rather than whatever is supplied by the server, these
@@ -302,7 +316,7 @@ statement.
 .B prepend
 .I statement
 .PP
- \fBprepend [ \fIoption declaration\fR ] \fB;\fR
+ \fBprepend \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should use a value you
 supply, and then use the values supplied by
@@ -312,13 +326,13 @@ statement.   The
 .B prepend
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behaviour will be unpredictable.
+enforced - if you ignore it, the behavior will be unpredictable.
 .PP
 .I The
 .B append
 .I statement
 .PP
- \fBappend [ \fIoption declaration\fR ] \fB;\fR
+ \fBappend \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should first use the values
 supplied by the server, if any, and then use values you supply, these
@@ -328,14 +342,14 @@ statement.   The
 .B append
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behaviour will be unpredictable.
+enforced - if you ignore it, the behavior will be unpredictable.
 .SH LEASE DECLARATIONS
 .PP
 .I The
 .B lease
 .I declaration
 .PP
- \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
+ \fBlease {\fR \fIlease-declaration\fR \fR[ ... \fIlease-declaration ] \fB}\fR
 .PP
 The DHCP client may decide after some period of time (see \fBPROTOCOL
 TIMING\fR) that it is not going to succeed in contacting a
@@ -446,7 +460,7 @@ automatically determine the type of network to which they are
 connected.  The media setup string is a system-dependent parameter
 which is passed to the dhcp client configuration script when
 initializing the interface.  On Unix and Unix-like systems, the
-argument is passed on the ifconfig command line when configuring te
+argument is passed on the ifconfig command line when configuring the
 interface.
 .PP
 The dhcp client automatically declares this parameter if it uses a
@@ -495,7 +509,7 @@ second also a number between 0 and 59.
 Some DHCP clients running TCP/IP roaming protocols may require that in
 addition to the lease they may acquire via DHCP, their interface also
 be configured with a predefined IP alias so that they can have a
-permanent IP address even while roaming.   The Internet Software
+permanent IP address even while roaming.   The Internet Systems
 Consortium DHCP client doesn't support roaming with fixed addresses
 directly, but in order to facilitate such experimentation, the dhcp
 client can be set up to configure an IP alias using the
@@ -523,13 +537,22 @@ the bad DHCP server and fix it.
  \fBinterface "\fIname\fB" { \fIdeclarations ... \fB }
 .PP
 A client with more than one network interface may require different
-behaviour depending on which interface is being configured.   All
+behavior depending on which interface is being configured.   All
 timing parameters and declarations other than lease and alias
 declarations can be enclosed in an interface declaration, and those
 parameters will then be used only for the interface that matches the
 specified name.   Interfaces for which there is no interface
 declaration will use the parameters declared outside of any interface
 declaration, or the default settings.
+.PP
+.B Note well:
+ISC dhclient only maintains one list of interfaces, which is either
+determined at startup from command line arguments, or otherwise is
+autodetected.  If you supplied the list of interfaces on the command
+line, this configuration clause will add the named interface to the
+list in such a way that will cause it to be configured by DHCP.  Which
+may not be the result you had intended.  This is an undesirable side
+effect that will be addressed in a future release.
 .PP
  \fBpseudo "\fIname\fR" "\fIreal-name\fB" { \fIdeclarations ... \fB }
 .PP
@@ -561,7 +584,7 @@ states where a lease has been acquired or renewed, and the states
 where a lease has expired.   See \fBdhclient-script(8)\fR for more
 information.
 .PP
- \fBmedia "\fImedia setup\fB"\fI [ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
+ \fBmedia "\fImedia setup\fB"\fI \fR[ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
 .PP
 The
 .B media
@@ -584,7 +607,7 @@ cycling through media types.
 .SH SAMPLE
 The following configuration file is used on a laptop running NetBSD
 1.3.   The laptop has an IP alias of 192.5.5.213, and has one
-interface, ep0 (a 3com 3C589C).   Booting intervals have been
+interface, ep0 (a 3Com 3C589C).   Booting intervals have been
 shortened somewhat from the default, because the client is known to
 spend most of its time on networks with little DHCP activity.   The
 laptop does roam to multiple networks.
@@ -627,6 +650,6 @@ RFC2131.
 .B dhclient(8)
 was written by Ted Lemon
 under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Consortium.
-Information about the Internet Software Consortium can be found at
+for this project was provided by Internet Systems Consortium.
+Information about Internet Systems Consortium can be found at
 .B http://www.isc.org.

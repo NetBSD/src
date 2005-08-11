@@ -2,29 +2,48 @@
 .\"
 .\" Project:      DHCP
 .\" File:         dhcpctl.3
-.\" RCSId:        $Id: dhcpctl.3,v 1.1.1.1 2001/08/03 11:35:34 drochner Exp $
+.\" RCSId:        $Id: dhcpctl.3,v 1.1.1.2 2005/08/11 16:54:30 drochner Exp $
 .\" 
-.\"     Copyright (C) 2000  Nominum, Inc.
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2000-2003 by Internet Software Consortium
+.\" Copyright (c) 2000 Nominum, Inc.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
 .\"     
 .\" Description:	dhcpctl man page.
 .\" 
 .\"
-.Dd Nov 15, 2000
+.Dd November 15, 2000
 .Dt DHCPCTL 3
-.Os DHCP 3
+.Os
 .ds vT DHCP Programmer's Manual
 .\"
 .\"
 .\"
 .Sh NAME
 .Nm dhcpctl_initialize
-.Nd dhcpctl library initialization.
+.Nd dhcpctl library initialization
 .\"
 .\"
 .\"
 .Sh SYNOPSIS
 .Fd #include <dhcpctl/dhcpctl.h>
-.Fd
 .Ft dhcpctl_status
 .Fo dhcpctl_initialize
 .Fa void
@@ -325,6 +344,8 @@ values must all match what the server uses and are defined in its
 configuration file. The created object is returned through the first parameter
 and must be used as the 4th parameter to 
 .Fn dhcpctl_connect .
+Note that the 'secret' value must not be base64 encoded, which is different
+from how the value appears in the dhcpd.conf file.
 .\"
 .\"
 .\"
@@ -460,11 +481,13 @@ int main (int argc, char **argv) {
 }
 .Ed
 .Sh SEE ALSO
-.SH SEE ALSO
-omapi(3), omshell(3), dhcpd(8), dhclient(8), dhcpd.conf(5), dhclient.conf(5).
-.SH AUTHOR
-.B dhcpctl
-was written by Ted Lemon of Nominum, Inc.  Information about Nominum
-and support contracts for DHCP and BIND can be found at
-.B http://www.nominum.com.   This preliminary documentation was
-written by James Brister of Nominum, Inc.
+.Xr omshell 1 ,
+.\" .Xr omapi 3 ,
+.Xr dhclient.conf 5 ,
+.Xr dhcpd.conf 5 ,
+.Xr dhclient 8 ,
+.Xr dhcpd 8
+.Sh AUTHORS
+.Nm
+was written by Ted Lemon of Nominum, Inc.
+This preliminary documentation was written by James Brister of Nominum, Inc.

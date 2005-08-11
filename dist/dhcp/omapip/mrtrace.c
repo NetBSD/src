@@ -3,39 +3,30 @@
    Subroutines that support minires tracing... */
 
 /*
- * Copyright (c) 2001 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon, as part of a project for Nominum, Inc.   To learn more
- * about the Internet Software Consortium, see http://www.isc.org/.  To
+ * about Internet Systems Consortium, see http://www.isc.org/.  To
  * learn more about Nominum, Inc., see ``http://www.nominum.com''.
  */
 
@@ -70,7 +61,7 @@ time_t trace_mr_time (time_t *);
 int trace_mr_select (int, fd_set *, fd_set *, fd_set *, struct timeval *);
 unsigned int trace_mr_res_randomid (unsigned int);
 
-extern time_t cur_time;
+extern TIME cur_time;
 
 #if defined (TRACING)
 void trace_mr_init ()
@@ -94,7 +85,6 @@ void trace_mr_statp_setup (res_state statp)
 	unsigned buflen = 0;
 	char *buf = (char *)0;
 	isc_result_t status;
-	u_int32_t id;
 	int i;
 
 	if (trace_playback ()) {
@@ -118,8 +108,8 @@ void trace_mr_statp_setup (res_state statp)
 			statp -> nsaddr_list [i].sin_len =
 				sizeof (struct sockaddr_in);
 #endif
-			memset (&statp -> nsaddr_list [i].sin_zero, 0,
-				sizeof statp -> nsaddr_list [i].sin_zero);
+			memset (&statp -> nsaddr_list [i], 0,
+				sizeof statp -> nsaddr_list [i]);
 			statp -> nsaddr_list [i].sin_port = htons (53); /*XXX*/
 			statp -> nsaddr_list [i].sin_family = AF_INET;
 			memcpy (&statp -> nsaddr_list [i].sin_addr,
@@ -190,7 +180,7 @@ ssize_t trace_mr_send (int fd, void *msg, size_t len, int flags)
 		iov [1].buf = (char *)&flags;
 		iov [2].len = len;
 		iov [2].buf = msg;
-		trace_write_packet_iov (trace_mr_output, 2, iov, MDL);
+		trace_write_packet_iov (trace_mr_output, 3, iov, MDL);
 	}
 #endif
 	return rv;
@@ -233,6 +223,8 @@ ssize_t trace_mr_read_playback (struct sockaddr_in *from,
 			return -1;
 		}
 		if (from)
+			memset (from, 0, sizeof *from);
+		if (from)
 			memcpy (&from -> sin_addr, bufp,
 				sizeof from -> sin_addr);
 		bufp += sizeof from -> sin_addr;
@@ -247,7 +239,6 @@ ssize_t trace_mr_read_playback (struct sockaddr_in *from,
 #if defined(HAVE_SA_LEN)
 			from -> sin_len = sizeof (struct sockaddr_in);
 #endif
-			memset (from -> sin_zero, 0, sizeof from -> sin_zero);
 		}
 		if (left > nbytes) {
 			log_error ("trace_mr_recvfrom: too much%s",
@@ -421,7 +412,6 @@ unsigned int trace_mr_res_randomid (unsigned int oldid)
 	isc_result_t status;
 
 	if (trace_playback ()) {
-		int nscount;
 		status = trace_get_packet (&trace_mr_randomid, &buflen, &buf);
 		if (status != ISC_R_SUCCESS) {
 			log_error ("trace_mr_statp: no statp packet found.");

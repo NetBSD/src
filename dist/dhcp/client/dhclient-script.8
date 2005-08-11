@@ -1,41 +1,34 @@
 .\"	dhclient-script.8
 .\"
-.\" Copyright (c) 1996-2002 Internet Software Consortium.
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" This software has been written for the Internet Software Consortium
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about the Internet Software Consortium, see
+.\" To learn more about Internet Systems Consortium, see
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhclient-script.8,v 1.1.1.3 2003/02/18 16:37:54 drochner Exp $
+.\" $Id: dhclient-script.8,v 1.1.1.4 2005/08/11 16:54:20 drochner Exp $
 .\"
 .TH dhclient-script 8
 .SH NAME
@@ -60,10 +53,10 @@ No standard client script exists for some operating systems, even though
 the actual client may work, so a pioneering user may well need to create
 a new script or modify an existing one.  In general, customizations specific
 to a particular computer should be done in the
-.B ETCDIR/dhclient.conf
+.B /etc/dhclient.conf
 file.   If you find that you can't make such a customization without
 customizing
-.B ETCDIR/dhclient.conf
+.B /etc/dhclient.conf
 or using the enter and exit hooks, please submit a bug report.
 .SH HOOKS
 When it starts, the client script first defines a shell function,
@@ -75,27 +68,27 @@ the enter hook script.
 .PP
 On after defining the make_resolv_conf function, the client script checks
 for the presence of an executable
-.B ETCDIR/dhclient-enter-hooks
+.B /etc/dhclient-enter-hooks
 script, and if present, it invokes the script inline, using the Bourne
 shell '.' command.   The entire environment documented under OPERATION
 is available to this script, which may modify the environment if needed
 to change the behaviour of the script.   If an error occurs during the
 execution of the script, it can set the exit_status variable to a nonzero
 value, and
-.B CLIENTBINDIR/dhclient-script
+.B /sbin/dhclient-script
 will exit with that error code immediately after the client script exits.
 .PP
 After all processing has completed,
-.B CLIENTBINDIR/dhclient-script
+.B /sbin/dhclient-script
 checks for the presence of an executable
-.B ETCDIR/dhclient-exit-hooks
+.B /etc/dhclient-exit-hooks
 script, which if present is invoked using the '.' command.  The exit
 status of dhclient-script will be passed to dhclient-exit-hooks in the
 exit_status shell variable, and will always be zero if the script
 succeeded at the task for which it was invoked.   The rest of the
 environment as described previously for dhclient-enter-hooks is also
 present.   The
-.B ETCDIR/dhclient-exit-hooks
+.B /etc/dhclient-exit-hooks
 script can modify the valid of exit_status to change the exit status
 of dhclient-script.
 .SH OPERATION
@@ -200,8 +193,8 @@ $new_static_routes, but current scripts do not do this.
 .SH FILES
 Each operating system should generally have its own script file,
 although the script files for similar operating systems may be similar
-or even identical.   The script files included in the Internet
-Software Consortium DHCP distribution appear in the distribution tree
+or even identical.   The script files included in Internet
+Systems Consortium DHCP distribution appear in the distribution tree
 under client/scripts, and bear the names of the operating systems on
 which they are intended to work.
 .SH BUGS
@@ -218,9 +211,9 @@ dhclient(8), dhcpd(8), dhcrelay(8), dhclient.conf(5) and
 dhclient.leases(5).
 .SH AUTHOR
 .B dhclient-script(8)
-has been written for the Internet Software Consortium
+has been written for Internet Systems Consortium
 by Ted Lemon in cooperation with Vixie
-Enterprises.  To learn more about the Internet Software Consortium,
+Enterprises.  To learn more about Internet Systems Consortium,
 see
 .B http://www.isc.org.
 To learn more about Vixie

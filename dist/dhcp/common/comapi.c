@@ -3,39 +3,30 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -50,7 +41,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -152,7 +143,6 @@ isc_result_t dhcp_group_set_value  (omapi_object_t *h,
 {
 	struct group_object *group;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -226,7 +216,6 @@ isc_result_t dhcp_group_get_value (omapi_object_t *h, omapi_object_t *id,
 {
 	struct group_object *group;
 	isc_result_t status;
-	struct data_string ip_addrs;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -249,7 +238,6 @@ isc_result_t dhcp_group_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_group_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct group_object *group, *t;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -280,7 +268,7 @@ isc_result_t dhcp_group_destroy (omapi_object_t *h, const char *file, int line)
 isc_result_t dhcp_group_signal_handler (omapi_object_t *h,
 					const char *name, va_list ap)
 {
-	struct group_object *group, *t;
+	struct group_object *group;
 	isc_result_t status;
 	int updatep = 0;
 
@@ -333,6 +321,7 @@ isc_result_t dhcp_group_stuff_values (omapi_object_t *c,
 		return ISC_R_INVALIDARG;
 	group = (struct group_object *)h;
 
+#if !defined (SMALL)
 	/* Write out all the values. */
 	if (group -> name) {
 		status = omapi_connection_put_name (c, "name");
@@ -342,6 +331,7 @@ isc_result_t dhcp_group_stuff_values (omapi_object_t *c,
 		if (status != ISC_R_SUCCESS)
 			return status;
 	}
+#endif
 
 	/* Write out the inner object, if any. */
 	if (h -> inner && h -> inner -> type -> stuff_values) {
@@ -462,7 +452,6 @@ isc_result_t dhcp_control_set_value  (omapi_object_t *h,
 {
 	dhcp_control_object_t *control;
 	isc_result_t status;
-	int foo;
 	unsigned long newstate;
 
 	if (h -> type != dhcp_type_control)
@@ -497,7 +486,6 @@ isc_result_t dhcp_control_get_value (omapi_object_t *h, omapi_object_t *id,
 {
 	dhcp_control_object_t *control;
 	isc_result_t status;
-	struct data_string ip_addrs;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -520,8 +508,6 @@ isc_result_t dhcp_control_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_control_destroy (omapi_object_t *h,
 				   const char *file, int line)
 {
-	dhcp_control_object_t *control, *t;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -533,9 +519,8 @@ isc_result_t dhcp_control_destroy (omapi_object_t *h,
 isc_result_t dhcp_control_signal_handler (omapi_object_t *h,
 					const char *name, va_list ap)
 {
-	dhcp_control_object_t *control, *t;
+	dhcp_control_object_t *control;
 	isc_result_t status;
-	int updatep = 0;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -562,6 +547,7 @@ isc_result_t dhcp_control_stuff_values (omapi_object_t *c,
 		return ISC_R_INVALIDARG;
 	control = (dhcp_control_object_t *)h;
 
+#ifndef SMALL
 	/* Write out all the values. */
 	status = omapi_connection_put_name (c, "state");
 	if (status != ISC_R_SUCCESS)
@@ -572,6 +558,7 @@ isc_result_t dhcp_control_stuff_values (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, control -> state);
 	if (status != ISC_R_SUCCESS)
 		return status;
+#endif
 
 	/* Write out the inner object, if any. */
 	if (h -> inner && h -> inner -> type -> stuff_values) {
@@ -589,7 +576,6 @@ isc_result_t dhcp_control_lookup (omapi_object_t **lp,
 {
 	omapi_value_t *tv = (omapi_value_t *)0;
 	isc_result_t status;
-	dhcp_control_object_t *control;
 
 	/* First see if we were sent a handle. */
 	if (ref) {
@@ -638,7 +624,6 @@ isc_result_t dhcp_subnet_set_value  (omapi_object_t *h,
 {
 	struct subnet *subnet;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_subnet)
 		return ISC_R_INVALIDARG;
@@ -684,7 +669,6 @@ isc_result_t dhcp_subnet_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_subnet_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct subnet *subnet;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_subnet)
 		return ISC_R_INVALIDARG;
@@ -761,9 +745,6 @@ isc_result_t dhcp_subnet_lookup (omapi_object_t **lp,
 				 omapi_object_t *id,
 				 omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct subnet *subnet;
 
 	/* Can't look up subnets yet. */
 
@@ -793,7 +774,6 @@ isc_result_t dhcp_shared_network_set_value  (omapi_object_t *h,
 {
 	struct shared_network *shared_network;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_shared_network)
 		return ISC_R_INVALIDARG;
@@ -841,7 +821,6 @@ isc_result_t dhcp_shared_network_destroy (omapi_object_t *h,
 					  const char *file, int line)
 {
 	struct shared_network *shared_network;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_shared_network)
 		return ISC_R_INVALIDARG;
@@ -931,9 +910,6 @@ isc_result_t dhcp_shared_network_lookup (omapi_object_t **lp,
 					 omapi_object_t *id,
 					 omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct shared_network *shared_network;
 
 	/* Can't look up shared_networks yet. */
 

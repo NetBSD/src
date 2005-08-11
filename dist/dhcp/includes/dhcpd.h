@@ -3,39 +3,30 @@
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 1996-2001 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -44,6 +35,9 @@
 #ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>
+#ifndef SMALL
+#include <netinet6/ipsec.h>
+#endif
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
@@ -264,15 +258,14 @@ typedef struct {
 } dhcp_control_object_t;
 
 /* Lease states: */
-typedef enum {
-	FTS_FREE = 1,
-	FTS_ACTIVE = 2,
-	FTS_EXPIRED = 3,
-	FTS_RELEASED = 4,
-	FTS_ABANDONED = 5,
-	FTS_RESET = 6,
-	FTS_BACKUP = 7
-} binding_state_t;
+#define	FTS_FREE	1
+#define	FTS_ACTIVE	2
+#define	FTS_EXPIRED	3
+#define	FTS_RELEASED	4
+#define	FTS_ABANDONED	5
+#define	FTS_RESET	6
+#define	FTS_BACKUP	7
+typedef u_int8_t binding_state_t;
 
 /* FTS_LAST is the highest value that is valid for a lease binding state. */
 #define FTS_LAST FTS_BACKUP
@@ -315,9 +308,9 @@ struct lease {
 #	define EPHEMERAL_FLAGS		(MS_NULL_TERMINATION | \
 					 UNICAST_BROADCAST_HACK)
 
-	binding_state_t __attribute__ ((mode (__byte__))) binding_state;
-	binding_state_t __attribute__ ((mode (__byte__))) next_binding_state;
-	binding_state_t __attribute__ ((mode (__byte__))) desired_binding_state;
+	binding_state_t binding_state;
+	binding_state_t next_binding_state;
+	binding_state_t desired_binding_state;
 	
 	struct lease_state *state;
 
@@ -420,6 +413,11 @@ struct lease_state {
 #define SV_UPDATE_STATIC_LEASES		43
 #define SV_LOG_FACILITY			44
 #define SV_DO_FORWARD_UPDATES		45
+#define SV_PING_TIMEOUT         46
+
+#if !defined (DEFAULT_PING_TIMEOUT)
+# define DEFAULT_PING_TIMEOUT 1
+#endif
 
 #if !defined (DEFAULT_DEFAULT_LEASE_TIME)
 # define DEFAULT_DEFAULT_LEASE_TIME 43200
@@ -719,12 +717,15 @@ struct client_config {
 
 	struct iaddrlist *reject_list;	/* Servers to reject. */
 
-	int omapi_port;			/* port on which to accept OMAPI
-					   connections, or -1 for no
-					   listener. */
 	int do_forward_update;		/* If nonzero, and if we have the
 					   information we need, update the
 					   A record for the address we get. */
+
+	omapi_auth_key_t *omapi_key;	/* Key to use for authenticating
+					   OMAPI connections. */
+	int omapi_port;			/* Port on which to listen for OMAPI
+					   connections. */
+
 };
 
 /* Per-interface state used in the dhcp client... */
@@ -977,7 +978,7 @@ int cons_options PROTO ((struct packet *, struct dhcp_packet *, struct lease *,
 			 int, int, int, struct data_string *, const char *));
 int fqdn_universe_decode (struct option_state *,
 			  const unsigned char *, unsigned, struct universe *);
-int store_options PROTO ((unsigned char *, unsigned, struct packet *,
+int store_options PROTO ((int *, unsigned char *, unsigned, struct packet *,
 			  struct lease *, struct client_state *,
 			  struct option_state *,
 			  struct option_state *, struct binding_scope **,
@@ -1372,7 +1373,7 @@ void dhcpdecline PROTO ((struct packet *, int));
 void dhcpinform PROTO ((struct packet *, int));
 void nak_lease PROTO ((struct packet *, struct iaddr *cip));
 void ack_lease PROTO ((struct packet *, struct lease *,
-		       unsigned int, TIME, char *, int));
+		       unsigned int, TIME, char *, int, struct host_decl *));
 void dhcp_reply PROTO ((struct lease *));
 int find_lease PROTO ((struct lease **, struct packet *,
 		       struct shared_network *, int *, int *, struct lease *,
@@ -1832,7 +1833,6 @@ u_int32_t host_addr PROTO ((struct iaddr, struct iaddr));
 int addr_eq PROTO ((struct iaddr, struct iaddr));
 char *piaddr PROTO ((struct iaddr));
 char *piaddrmask (struct iaddr, struct iaddr, const char *, int);
-char *piaddr1 PROTO ((struct iaddr));
 
 /* dhclient.c */
 extern const char *path_dhclient_conf;
@@ -1934,7 +1934,7 @@ ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
 				 unsigned, struct hardware *));
 ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				     unsigned, struct sockaddr_in *,
-				     unsigned char *, unsigned));
+				     unsigned, unsigned *));
 
 /* ethernet.c */
 void assemble_ethernet_header PROTO ((struct interface_info *, unsigned char *,
@@ -2034,6 +2034,14 @@ void icmp_startup PROTO ((int, void (*) PROTO ((struct iaddr,
 int icmp_readsocket PROTO ((omapi_object_t *));
 int icmp_echorequest PROTO ((struct iaddr *));
 isc_result_t icmp_echoreply PROTO ((omapi_object_t *));
+
+/* fddi.c */
+#if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
+void assemble_fddi_header (struct interface_info *,
+	unsigned char *, unsigned *, struct hardware *);
+ssize_t decode_fddi_header (struct interface_info *,
+     unsigned char *, unsigned, struct hardware *);
+#endif /* PACKET_ASSEMBLY || PACKET_DECODING */
 
 /* dns.c */
 #if defined (NSUPDATE)

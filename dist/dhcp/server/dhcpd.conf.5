@@ -1,41 +1,34 @@
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 1996-2002 Internet Software Consortium.
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" This software has been written for the Internet Software Consortium
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about the Internet Software Consortium, see
+.\" To learn more about Internet Systems Consortium, see
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.conf.5,v 1.1.1.3 2003/02/18 16:38:02 drochner Exp $
+.\" $Id: dhcpd.conf.5,v 1.1.1.4 2005/08/11 16:54:52 drochner Exp $
 .\"
 .TH dhcpd.conf 5
 .SH NAME
@@ -43,7 +36,7 @@ dhcpd.conf - dhcpd configuration file
 .SH DESCRIPTION
 The dhcpd.conf file contains configuration information for
 .IR dhcpd,
-the Internet Software Consortium DHCP Server.
+the Internet Systems Consortium DHCP Server.
 .PP
 The dhcpd.conf file is a free-form ASCII text file.   It is parsed by
 the recursive-descent parser built into dhcpd.   The file may contain
@@ -289,7 +282,7 @@ subnet 10.0.0.0 netmask 255.255.255.0 {
     option domain-name-servers bogus.example.com;
     max-lease-time 300;
     range 10.0.0.200 10.0.0.253;
-    allow unknown clients;
+    allow unknown-clients;
   }
 
   # Known clients get this pool.
@@ -297,7 +290,7 @@ subnet 10.0.0.0 netmask 255.255.255.0 {
     option domain-name-servers ns1.example.com, ns2.example.com;
     max-lease-time 28800;
     range 10.0.0.5 10.0.0.199;
-    deny unknown clients;
+    deny unknown-clients;
   }
 }
 .fi
@@ -511,7 +504,7 @@ failover.   You do not have to do failover for all pools on a given
 network segment.    You must not tell one server it's doing failover
 on a particular address pool and tell the other it is not.   You must
 not have any common address pools on which you are not doing
-failover.  A pool declaration that utilizes failover would look like this:
+failover.  A pool declaration that uses failover would look like this:
 .PP
 .nf
 pool {
@@ -897,7 +890,7 @@ class "jr-cable-modems" {
 }
 
 class "dv-dsl-modems" {
-  match if opton dhcp-vendor-identifier = "dvdsl";
+  match if option dhcp-vendor-identifier = "dvdsl";
   spawn with option agent.circuit-id;
   lease limit 16;
 }
@@ -1047,14 +1040,22 @@ IP address, it can update its own A record, assuming that the
 .PP
 If the server is configured not to allow client updates, or if the
 client doesn't want to do its own update, the server will simply
-choose a name for the client, possibly using the hostname supplied by
-the client ("jschmoe" in the previous example).   It will use its own
+choose a name for the client from either the fqdn option (if present)
+or the hostname option (if present).  It will use its own
 domain name for the client, just as in the ad-hoc update scheme.
 It will then update both the A and PTR record, using the name that it
 chose for the client.   If the client sends a fully-qualified domain
 name in the fqdn option, the server uses only the leftmost part of the
 domain name - in the example above, "jschmoe" instead of
 "jschmoe.radish.org".
+.PP
+Also, if the
+.I use-host-decl-names
+configuration option is enabled, then the host declaration's
+.I hostname
+will be used in place of the
+.I hostname
+option, and the same rules will apply as described above.
 .PP
 The other difference between the ad-hoc scheme and the interim
 scheme is that with the interim scheme, a method is used that
@@ -1170,7 +1171,7 @@ server whose zone information is to be updated.
 Note that the zone declarations have to correspond to authority
 records in your name server - in the above example, there must be an
 SOA record for "example.org." and for "17.10.10.in-addr.arpa.".   For
-example, if there were a subdoman "foo.example.org" with no separate
+example, if there were a subdomain "foo.example.org" with no separate
 SOA, you could not write a zone declaration for "foo.example.org."  
 Also keep in mind that zone names in your DHCP configuration should end in a
 "."; this is the preferred syntax.  If you do not end your zone name in a
@@ -1247,6 +1248,18 @@ for things other than DNS updates, and you also want DNS updates, you
 will have to start out by copying this code into your dhcpd.conf file
 and modifying it.
 .SH REFERENCE: DECLARATIONS
+.PP
+.B The
+.I include
+.B statement
+.PP
+.nf
+ \fBinclude\fR \fI"filename"\fR\fB;\fR
+.fi
+.PP
+The \fIinclude\fR statement is used to read in a named file, and process
+the contents of that file as though it were entered in place of the
+include statement.
 .PP
 .B The 
 .I shared-network
@@ -1347,26 +1360,32 @@ a specific client, and also provides a way to assign a client a fixed address.
 The host declaration provides a way for the DHCP server to identify a DHCP or
 BOOTP client, and also a way to assign the client a static IP address.
 .PP
-If it is desirable to be able to boot a DHCP or BOOTP
-client on more than one subnet with fixed addresses, more than one
-address may be specified in the
+If it is desirable to be able to boot a DHCP or BOOTP client on more than one
+subnet with fixed addresses, more than one address may be specified in the
 .I fixed-address
 declaration, or more than one
 .B host
-statement may be specified.
+statement may be specified matching the same client.
 .PP
 If client-specific boot parameters must change based on the network
 to which the client is attached, then multiple 
 .B host
-declaration should
-be used.
-.PP
-If a client is to be booted using a fixed address if it's
-possible, but should be allocated a dynamic address otherwise, then a
+declarations should be used.  The
 .B host
-declaration must be specified without a
-.B fixed-address
-declaration.
+declarations will only match a client if one of their
+.I fixed-address
+statements is viable on the subnet (or shared network) where the client is
+attached.  Conversely, for a
+.B host
+declaration to match a client being allocated a dynamic address, it must not
+have any
+.I fixed-address
+statements.  You may therefore need a mixture of
+.B host
+declarations for any given client...some having
+.I fixed-address
+statements, others without.
+.PP
 .I hostname
 should be a name identifying the host.  If a \fIhostname\fR option is
 not specified for the host, \fIhostname\fR is used.
@@ -1441,7 +1460,7 @@ An unknown client is simply a client that has no host declaration.
 .PP
 The use of this option is now \fIdeprecated\fR.  If you are trying to
 restrict access on your network to known clients, you should use \fBdeny
-unknown clients;\fR inside of your address pool, as described under the
+unknown-clients;\fR inside of your address pool, as described under the
 heading ALLOW AND DENY WITHIN POOL DECLARAIONS.
 .PP
 .B The
@@ -1473,7 +1492,7 @@ The \fBbooting\fR flag is used to tell dhcpd whether or not to respond
 to queries from a particular client.  This keyword only has meaning
 when it appears in a host declaration.   By default, booting is
 \fBallow\fRed, but if it is disabled for a particular client, then
-that client will not be able to get and address from the DHCP server.
+that client will not be able to get an address from the DHCP server.
 .PP
 .B The
 .I duplicates
@@ -1483,7 +1502,7 @@ that client will not be able to get and address from the DHCP server.
  \fBdeny duplicates;\fR
 .PP
 Host declarations can match client messages based on the DHCP Client
-Identifer option or based on the client's network hardware type and
+Identifier option or based on the client's network hardware type and
 MAC address.   If the MAC address is used, the host declaration will
 match any client with that MAC address - even clients with different
 client identifiers.   This doesn't normally happen, but is possible
@@ -1565,14 +1584,14 @@ ALLOCATION section.
 When declaring permit lists for address allocation pools, the
 following syntaxes are recognized following the allow or deny keywords:
 .PP
- \fBknown clients;\fR
+ \fBknown-clients;\fR
 .PP
 If specified, this statement either allows or prevents allocation from
 this pool to any client that has a host declaration (i.e., is known).
 A client is known if it has a host declaration in \fIany\fR scope, not
 just the current scope.
 .PP
- \fBunknown clients;\fR
+ \fBunknown-clients;\fR
 .PP
 If specified, this statement either allows or prevents allocation from
 this pool to any client that has no host declaration (i.e., is not
@@ -1805,6 +1824,7 @@ attempt to update the client's PTR record if the client supplies an
 FQDN that should be placed in the PTR record using the fqdn option.
 If forward updates are enabled, the DHCP server will still honor the
 setting of the \fBclient-updates\fR flag.
+.RE
 .PP
 The
 .I dynamic-bootp-lease-cutoff
@@ -1816,7 +1836,7 @@ statement
 The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
 for all leases assigned dynamically to BOOTP clients.  Because BOOTP
 clients do not have any way of renewing leases, and don't know that
-their leases could expire, by default dhcpd assignes infinite leases
+their leases could expire, by default dhcpd assigns infinite leases
 to all BOOTP clients.  However, it may make sense in some situations
 to set a cutoff date for all BOOTP leases - for example, the end of a
 school term, or the time at night when a facility is closed and all
@@ -1954,6 +1974,34 @@ statement
 .PP
 This statement causes the DHCP server to listen for DHCP requests on
 the UDP port specified in \fIport\fR, rather than on port 67.
+.RE
+.PP
+The
+.I local-address
+statement
+.RS 0.25i
+.PP
+.B local-address \fIaddress\fB;\fR
+.PP
+This statement causes the DHCP server to listen for DHCP requests sent
+to the specified \fIaddress\fR, rather than requests sent to all addresses.
+Since serving directly attached DHCP clients implies that the server must
+respond to requests sent to the all-ones IP address, this option cannot be
+used if clients are on directly attached networks...it is only realistically
+useful for a server whose only clients are reached via unicasts, such as via
+DHCP relay agents.
+.PP
+Note:  This statement is only effective if the server was compiled using
+the USE_SOCKETS #define statement, which is default on a small number of
+operating systems, and must be explicitly chosen at compile-time for all
+others.  You can be sure if your server is compiled with USE_SOCKETS if
+you see lines of this format at startup:
+.PP
+ Listening on Socket/eth0
+.PP
+Note also that since this bind()s all DHCP sockets to the specified
+address, that only one address may be supported in a daemon at a given
+time.
 .RE
 .PP
 The
@@ -2127,10 +2175,28 @@ ICMP Echo response has been heard, it assigns the address.   If a
 response \fIis\fR heard, the lease is abandoned, and the server does
 not respond to the client.
 .PP
-This \fIping check\fR introduces a one-second delay in responding to
-DHCPDISCOVER messages, which can be a problem for some clients.   The
-ping-check configuration parameter can be used to control checking -
-if its value is false, no ping check is done.
+This \fIping check\fR introduces a default one-second delay in responding
+to DHCPDISCOVER messages, which can be a problem for some clients.   The
+default delay of one second may be configured using the ping-timeout
+parameter.  The ping-check configuration parameter can be used to control
+checking - if its value is false, no ping check is done.
+.RE
+.PP
+The
+.I ping-timeout
+statement
+.RS 0.25i
+.PP
+.B ping-timeout
+.I seconds\fR\fB;\fR
+.PP
+If the DHCP server determined it should send an ICMP echo request (a
+\fIping\fR) because the ping-check statement is true, ping-timeout allows
+you to configure how many seconds the DHCP server should wait for an
+ICMP Echo response to be heard, if no ICMP Echo response has been received
+before the timeout expires, it assigns the address.  If a response \fIis\fR
+heard, the lease is abandoned, and the server does not respond to the client.
+If no value is set, ping-timeout defaults to 1 second.
 .RE
 .PP
 The
@@ -2358,6 +2424,6 @@ dhcpd(8), dhcpd.leases(5), dhcp-options(5), dhcp-eval(5), RFC2132, RFC2131.
 .B dhcpd.conf(5)
 was written by Ted Lemon
 under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Consortium.
-Information about the Internet Software Consortium can be found at
+for this project was provided by Internet Systems Consortium.
+Information about Internet Systems Consortium can be found at
 .B http://www.isc.org.

@@ -3,46 +3,37 @@
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2001-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.3 2003/02/18 16:37:56 drochner Exp $ Copyright (c) 2001-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.4 2005/08/11 16:54:27 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -136,7 +127,6 @@ dns_zone_hash_t *dns_zone_hash;
 isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 			    struct dns_zone *zone)
 {
-	isc_result_t status;
 	ns_tsig_key *tkey;
 
 	if (!zone)
@@ -210,7 +200,6 @@ isc_result_t enter_dns_zone (struct dns_zone *zone)
 
 isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 {
-	struct dns_zone *tz = (struct dns_zone *)0;
 	int len;
 	char *tname = (char *)0;
 	isc_result_t status;
@@ -219,6 +208,9 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 		return ISC_R_NOTFOUND;
 
 	len = strlen (name);
+	if (len == 0)
+		return ISC_R_NOTFOUND;
+
 	if (name [len - 1] != '.') {
 		tname = dmalloc ((unsigned)len + 2, MDL);
 		if (!tname)
@@ -243,7 +235,6 @@ int dns_zone_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct dns_zone *dns_zone;
 
 	if (!ptr || !*ptr) {
@@ -276,8 +267,10 @@ int dns_zone_dereference (ptr, file, line)
 
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
+#if !defined (SMALL)
 	if (dns_zone -> key)
 		omapi_auth_key_dereference (&dns_zone -> key, file, line);
+#endif
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
@@ -406,9 +399,7 @@ void repudiate_zone (struct dns_zone **zone)
 void cache_found_zone (ns_class class,
 		       char *zname, struct in_addr *addrs, int naddrs)
 {
-	isc_result_t status = ISC_R_NOTFOUND;
 	struct dns_zone *zone = (struct dns_zone *)0;
-	struct data_string nsaddrs;
 	int ix = strlen (zname);
 
 	if (zname [ix - 1] == '.')
@@ -539,15 +530,11 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 
 	if (ddns_addr.len != 4)
 		return ISC_R_INVALIDARG;
-#ifndef NO_SNPRINTF
-	snprintf (ddns_address, 16, "%d.%d.%d.%d",
+
+	/* %Audit% Cannot exceed 16 bytes. %2004.06.17,Safe% */
+	sprintf (ddns_address, "%u.%u.%u.%u",
 		  ddns_addr.iabuf[0], ddns_addr.iabuf[1],
 		  ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#else
-	sprintf (ddns_address, "%d.%d.%d.%d",
-		 ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		 ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#endif
 
 	/*
 	 * When a DHCP client or server intends to update an A RR, it first
@@ -793,16 +780,10 @@ isc_result_t ddns_remove_a (struct data_string *ddns_fwd_name,
 	if (ddns_addr.len != 4)
 		return ISC_R_INVALIDARG;
 
-#ifndef NO_SNPRINTF
-	snprintf (ddns_address, 16, "%d.%d.%d.%d",
+	/* %Audit% Cannot exceed 16 bytes. %2004.06.17,Safe% */
+	sprintf (ddns_address, "%u.%u.%u.%u",
 		  ddns_addr.iabuf[0], ddns_addr.iabuf[1],
 		  ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#else
-	sprintf (ddns_address, "%d.%d.%d.%d",
-		 ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		 ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#endif
-
 
 	/*
 	 * The entity chosen to handle the A record for this client (either the

@@ -3,39 +3,30 @@
    Network input dispatcher... */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.1.1.4 2005/08/11 16:54:26 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -84,6 +75,16 @@ isc_result_t interface_setup ()
 	isc_result_t status;
 	status = omapi_object_type_register (&dhcp_type_interface,
 					     "interface",
+#ifdef SMALL
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+#else
 					     dhcp_interface_set_value,
 					     dhcp_interface_get_value,
 					     dhcp_interface_destroy,
@@ -92,6 +93,7 @@ isc_result_t interface_setup ()
 					     dhcp_interface_lookup, 
 					     dhcp_interface_create,
 					     dhcp_interface_remove,
+#endif
 					     0, 0, 0,
 					     sizeof (struct interface_info),
 					     interface_initialize, RC_MISC);
@@ -133,16 +135,14 @@ isc_result_t interface_initialize (omapi_object_t *ipo,
 void discover_interfaces (state)
 	int state;
 {
-	struct interface_info *tmp, *ip;
+	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	char buf [2048];
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
 	int sock;
-	int address_count = 0;
 	struct subnet *subnet;
-	struct shared_network *share;
 	struct sockaddr_in foo;
 	int ir;
 	struct ifreq *tif;
@@ -258,10 +258,12 @@ void discover_interfaces (state)
 			if (!strcmp (tmp -> name, ifp -> ifr_name))
 				break;
 
-		/* Skip loopback, point-to-point and down interfaces,
-		   except don't skip down interfaces if we're trying to
-		   get a list of configurable interfaces. */
-		if (((ifr.ifr_flags & IFF_LOOPBACK ||
+		/* Skip non broadcast interfaces (plus loopback and
+		   point-to-point in case an OS incorrectly marks them
+		   as broadcast). Also skip down interfaces unless we're
+		   trying to get a list of configurable interfaces. */
+		if (((!(ifr.ifr_flags & IFF_BROADCAST) ||
+		      ifr.ifr_flags & IFF_LOOPBACK ||
 		      ifr.ifr_flags & IFF_POINTOPOINT) && !tmp) ||
 		    (!(ifr.ifr_flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
@@ -296,7 +298,15 @@ void discover_interfaces (state)
 #else
 			tmp -> hw_address.hlen = 6; /* XXX!!! */
 #endif
-			tmp -> hw_address.hbuf [0] = HTYPE_ETHER; /* XXX */
+			if (foo -> sdl_type == IFT_ETHER) {
+				tmp -> hw_address.hbuf [0] = HTYPE_ETHER;
+#if defined (DEC_FDDI) || defined(NETBSD_FDDI)
+			} else if (foo -> sdl_type == IFT_FDDI) {
+				tmp -> hw_address.hbuf [0] = HTYPE_FDDI;
+#endif
+			} else {
+				continue;
+			}
 			memcpy (&tmp -> hw_address.hbuf [1],
 				LLADDR (foo), tmp -> hw_address.hlen);
 			tmp -> hw_address.hlen++;	/* for type. */
@@ -305,10 +315,11 @@ void discover_interfaces (state)
 
 		if (ifp -> ifr_addr.sa_family == AF_INET) {
 			struct iaddr addr;
+			void *ptr;
 
 			/* Get a pointer to the address... */
-			memcpy (&foo, &ifp -> ifr_addr,
-				sizeof ifp -> ifr_addr);
+			ptr = &ifp -> ifr_addr;
+			memcpy (&foo, ptr, sizeof ifp -> ifr_addr);
 
 			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl (INADDR_LOOPBACK) &&
@@ -397,6 +408,18 @@ void discover_interfaces (state)
 
 			/* If we found one, nothing more to do.. */
 			if (tmp)
+				continue;
+
+			strncpy (ifr.ifr_name, name, IFNAMSIZ);
+
+			/* Skip non broadcast interfaces (plus loopback and
+			 * point-to-point in case an OS incorrectly marks them
+			 * as broadcast).
+			 */
+			if ((ioctl (sock, SIOCGIFFLAGS, &ifr) < 0) ||
+			    (!(ifr.ifr_flags & IFF_BROADCAST)) ||
+			    (ifr.ifr_flags & IFF_LOOPBACK ) ||
+			    (ifr.ifr_flags & IFF_POINTOPOINT))
 				continue;
 
 			/* Otherwise, allocate one. */
@@ -768,14 +791,6 @@ isc_result_t got_one (h)
 	if (result == 0)
 		return ISC_R_UNEXPECTED;
 
-	/* If we didn't at least get the fixed portion of the BOOTP
-	   packet, drop the packet.  We're allowing packets with no
-	   sname or filename, because we're aware of at least one
-	   client that sends such packets, but this definitely falls
-	   into the category of being forgiving. */
-	if (result < DHCP_FIXED_NON_UDP - DHCP_SNAME_LEN - DHCP_FILE_LEN)
-		return ISC_R_UNEXPECTED;
-
 	if (bootp_packet_handler) {
 		ifrom.len = 4;
 		memcpy (ifrom.iabuf, &from.sin_addr, ifrom.len);
@@ -791,6 +806,7 @@ isc_result_t got_one (h)
 	return ISC_R_SUCCESS;
 }
 
+#if !defined (SMALL)
 isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 					omapi_object_t *id,
 					omapi_data_string_t *name,
@@ -798,7 +814,6 @@ isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 {
 	struct interface_info *interface;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -841,7 +856,6 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 					 const char *file, int line)
 {
 	struct interface_info *interface;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -871,8 +885,6 @@ isc_result_t dhcp_interface_signal_handler (omapi_object_t *h,
 					    const char *name, va_list ap)
 {
 	struct interface_info *ip, *interface;
-	struct client_config *config;
-	struct client_state *client;
 	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)
@@ -1038,6 +1050,7 @@ isc_result_t dhcp_interface_create (omapi_object_t **lp,
 	interface_dereference (&hp, MDL);
 	return status;
 }
+#endif
 
 isc_result_t dhcp_interface_remove (omapi_object_t *lp,
 				    omapi_object_t *id)

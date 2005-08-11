@@ -3,39 +3,30 @@
    Subroutines for dealing with message objects. */
 
 /*
- * Copyright (c) 1999-2003 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -67,7 +58,7 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 	}
 	status = omapi_object_reference (&m -> inner, g, file, line);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, file, line);
+		omapi_object_dereference ((void *)&m, file, line);
 		omapi_object_dereference (&g, file, line);
 		return status;
 	}
@@ -75,7 +66,7 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 					 (omapi_object_t *)m, file, line);
 
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, file, line);
+		omapi_object_dereference ((void *)&m, file, line);
 		omapi_object_dereference (&g, file, line);
 		return status;
 	}
@@ -218,7 +209,6 @@ isc_result_t omapi_message_get_value (omapi_object_t *h,
 isc_result_t omapi_message_destroy (omapi_object_t *h,
 				    const char *file, int line)
 {
-	int i;
 
 	omapi_message_object_t *m;
 	if (h -> type != omapi_type_message)
@@ -270,7 +260,6 @@ isc_result_t omapi_message_stuff_values (omapi_object_t *c,
 					 omapi_object_t *id,
 					 omapi_object_t *m)
 {
-	int i;
 
 	if (m -> type != omapi_type_message)
 		return ISC_R_INVALIDARG;
@@ -301,10 +290,10 @@ isc_result_t omapi_message_register (omapi_object_t *mo)
 			((omapi_object_t **)&omapi_registered_messages -> prev,
 			 (omapi_object_t *)m, MDL);
 		omapi_object_dereference
-			((omapi_object_t **)&omapi_registered_messages, MDL);
+			((void *)&omapi_registered_messages, MDL);
 	}
 	omapi_object_reference
-		((omapi_object_t **)&omapi_registered_messages,
+		((void *)&omapi_registered_messages,
 		 (omapi_object_t *)m, MDL);
 	return ISC_R_SUCCESS;;
 }
@@ -324,14 +313,14 @@ isc_result_t omapi_message_unregister (omapi_object_t *mo)
 
 	n = (omapi_message_object_t *)0;
 	if (m -> next) {
-		omapi_object_reference ((omapi_object_t **)&n,
+		omapi_object_reference ((void *)&n,
 					(omapi_object_t *)m -> next, MDL);
 		omapi_object_dereference ((omapi_object_t **)&m -> next, MDL);
 		omapi_object_dereference ((omapi_object_t **)&n -> prev, MDL);
 	}
 	if (m -> prev) {
 		omapi_message_object_t *tmp = (omapi_message_object_t *)0;
-		omapi_object_reference ((omapi_object_t **)&tmp,
+		omapi_object_reference ((void *)&tmp,
 					(omapi_object_t *)m -> prev, MDL);
 		omapi_object_dereference ((omapi_object_t **)&m -> prev, MDL);
 		if (tmp -> next)
@@ -341,17 +330,17 @@ isc_result_t omapi_message_unregister (omapi_object_t *mo)
 			omapi_object_reference
 				((omapi_object_t **)&tmp -> next,
 				 (omapi_object_t *)n, MDL);
-		omapi_object_dereference ((omapi_object_t **)&tmp, MDL);
+		omapi_object_dereference ((void *)&tmp, MDL);
 	} else {
 		omapi_object_dereference
-			((omapi_object_t **)&omapi_registered_messages, MDL);
+			((void *)&omapi_registered_messages, MDL);
 		if (n)
 			omapi_object_reference
-				((omapi_object_t **)&omapi_registered_messages,
+				((void *)&omapi_registered_messages,
 				 (omapi_object_t *)n, MDL);
 	}
 	if (n)
-		omapi_object_dereference ((omapi_object_t **)&n, MDL);
+		omapi_object_dereference ((void *)&n, MDL);
 	return ISC_R_SUCCESS;
 }
 
@@ -661,7 +650,8 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 
 	      case OMAPI_OP_UPDATE:
 		if (m && m -> object) {
-			omapi_object_reference (&object, m -> object, MDL);
+			status = omapi_object_reference (&object, m -> object,
+									MDL);
 		} else {
 			status = omapi_handle_lookup (&object, message -> h);
 			if (status != ISC_R_SUCCESS) {

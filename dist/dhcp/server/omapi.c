@@ -3,39 +3,30 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -50,7 +41,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.1.1.3 2003/02/18 16:38:03 drochner Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.1.1.4 2005/08/11 16:54:54 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -217,7 +208,6 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -248,8 +238,8 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 				  piaddr(lease->ip_addr), ols, nls);
 			return ISC_R_SUCCESS;
 		}
-		log_info ("lease state change from %s to %s failed.",
-			  ols, nls);
+		log_info ("lease %s state change from %s to %s failed.",
+			  piaddr (lease -> ip_addr), ols, nls);
 		return ISC_R_IOERROR;
 	    }
 	    return ISC_R_UNCHANGED;
@@ -387,7 +377,6 @@ isc_result_t dhcp_lease_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct lease *lease;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -464,7 +453,6 @@ isc_result_t dhcp_lease_signal_handler (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
-	int updatep = 0;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -774,12 +762,54 @@ isc_result_t dhcp_lease_lookup (omapi_object_t **lp,
 	/* Now look for a hardware address. */
 	status = omapi_get_value_str (ref, id, "hardware-address", &tv);
 	if (status == ISC_R_SUCCESS) {
-		lease = (struct lease *)0;
-		lease_hash_lookup (&lease, lease_hw_addr_hash,
-				   tv -> value -> u.buffer.value,
-				   tv -> value -> u.buffer.len, MDL);
+		unsigned char *haddr;
+		unsigned int len;
+
+		len = tv -> value -> u.buffer.len + 1;
+		haddr = dmalloc (len, MDL);
+		if (!haddr) {
+			omapi_value_dereference (&tv, MDL);
+			return ISC_R_NOMEMORY;
+		}
+
+		memcpy (haddr + 1, tv -> value -> u.buffer.value, len - 1);
 		omapi_value_dereference (&tv, MDL);
-			
+
+		status = omapi_get_value_str (ref, id, "hardware-type", &tv);
+		if (status == ISC_R_SUCCESS) {
+			if (tv -> value -> type == omapi_datatype_data) {
+				if ((tv -> value -> u.buffer.len != 4) ||
+				    (tv -> value -> u.buffer.value[0] != 0) ||
+				    (tv -> value -> u.buffer.value[1] != 0) ||
+				    (tv -> value -> u.buffer.value[2] != 0)) {
+					omapi_value_dereference (&tv, MDL);
+					dfree (haddr, MDL);
+					return ISC_R_INVALIDARG;
+				}
+
+				haddr[0] = tv -> value -> u.buffer.value[3];
+			} else if (tv -> value -> type == omapi_datatype_int) {
+				haddr[0] = (unsigned char)
+					tv -> value -> u.integer;
+			} else {
+				omapi_value_dereference (&tv, MDL);
+				dfree (haddr, MDL);
+				return ISC_R_INVALIDARG;
+			}
+
+			omapi_value_dereference (&tv, MDL);
+		} else {
+			/* If no hardware-type is specified, default to
+			   ethernet.  This may or may not be a good idea,
+			   but Telus is currently relying on this behavior.
+			   - DPN */
+			haddr[0] = HTYPE_ETHER;
+		}
+
+		lease = (struct lease *)0;
+		lease_hash_lookup (&lease, lease_hw_addr_hash, haddr, len, MDL);
+		dfree (haddr, MDL);
+
 		if (*lp && *lp != (omapi_object_t *)lease) {
 			omapi_object_dereference (lp, MDL);
 			lease_dereference (&lease, MDL);
@@ -826,9 +856,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 				   omapi_data_string_t *name,
 				   omapi_typed_data_t *value)
 {
-	struct host_decl *host, *hp;
+	struct host_decl *host;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -1087,7 +1116,6 @@ isc_result_t dhcp_host_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_host_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct host_decl *host;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -1508,7 +1536,6 @@ isc_result_t dhcp_pool_set_value  (omapi_object_t *h,
 {
 	struct pool *pool;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1554,8 +1581,10 @@ isc_result_t dhcp_pool_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct pool *pool;
-	isc_result_t status;
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct permit *pc, *pn;
+#endif
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1652,9 +1681,6 @@ isc_result_t dhcp_pool_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_pool_lookup (omapi_object_t **lp,
 			       omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct pool *pool;
 
 	/* Can't look up pools yet. */
 
@@ -1684,7 +1710,6 @@ isc_result_t dhcp_class_set_value  (omapi_object_t *h,
 {
 	struct class *class;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_class)
 		return ISC_R_INVALIDARG;
@@ -1730,8 +1755,10 @@ isc_result_t dhcp_class_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_class_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct class *class;
-	isc_result_t status;
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	int i;
+#endif
 
 	if (h -> type != dhcp_type_class && h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1831,9 +1858,6 @@ isc_result_t dhcp_class_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_class_lookup (omapi_object_t **lp,
 				omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct class *class;
 
 	/* Can't look up classs yet. */
 
@@ -1863,7 +1887,6 @@ isc_result_t dhcp_subclass_set_value  (omapi_object_t *h,
 {
 	struct subclass *subclass;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1958,9 +1981,6 @@ isc_result_t dhcp_subclass_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_subclass_lookup (omapi_object_t **lp,
 				   omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct subclass *subclass;
 
 	/* Can't look up subclasss yet. */
 
@@ -2068,6 +2088,9 @@ isc_result_t binding_scope_get_value (omapi_value_t **value,
 	omapi_typed_data_t *td;
 	isc_result_t status;
 	char *nname;
+
+	status = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
+
 	nname = dmalloc (name -> len + 1, MDL);
 	if (!nname)
 		return ISC_R_NOMEMORY;
@@ -2109,6 +2132,10 @@ isc_result_t binding_scope_get_value (omapi_value_t **value,
 	      case binding_dns:
 	      case binding_function:
 		return ISC_R_INVALIDARG;
+
+	      default:
+		log_fatal ("Impossible case at %s:%d.", MDL);
+		return ISC_R_FAILURE;
 	}
 
 	if (status != ISC_R_SUCCESS)

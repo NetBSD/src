@@ -4,45 +4,36 @@
 
 /*
  * Copyright (c) 1995 RadioMail Corporation.
- * Copyright (c) 1996-2000 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
  * This software was written for RadioMail Corporation by Ted Lemon
  * under a contract with Vixie Enterprises.   Further modifications have
- * been made for the Internet Software Consortium under a contract
+ * been made for Internet Systems Consortium under a contract
  * with Vixie Laboratories.
  */
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.1 2001/08/03 11:35:37 drochner Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.1.1.2 2005/08/11 16:54:45 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -68,8 +59,12 @@ void log_fatal (const char * fmt, ... )
 
   do_percentm (fbuf, fmt);
 
+  /* %Audit% This is log output. %2004.06.17,Safe%
+   * If we truncate we hope the user can get a hint from the log.
+   */
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -78,8 +73,8 @@ void log_fatal (const char * fmt, ... )
 
   /* Also log it to stderr? */
   if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
+	  write (STDERR_FILENO, mbuf, strlen (mbuf));
+	  write (STDERR_FILENO, "\n", 1);
   }
 
 #if !defined (NOMINUM)
@@ -114,8 +109,12 @@ int log_error (const char * fmt, ...)
 
   do_percentm (fbuf, fmt);
 
+  /* %Audit% This is log output. %2004.06.17,Safe%
+   * If we truncate we hope the user can get a hint from the log.
+   */
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -123,8 +122,8 @@ int log_error (const char * fmt, ...)
 #endif
 
   if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
+	  write (STDERR_FILENO, mbuf, strlen (mbuf));
+	  write (STDERR_FILENO, "\n", 1);
   }
 
   return 0;
@@ -138,8 +137,12 @@ int log_info (const char *fmt, ...)
 
   do_percentm (fbuf, fmt);
 
+  /* %Audit% This is log output. %2004.06.17,Safe%
+   * If we truncate we hope the user can get a hint from the log.
+   */
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -147,8 +150,8 @@ int log_info (const char *fmt, ...)
 #endif
 
   if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
+	  write (STDERR_FILENO, mbuf, strlen (mbuf));
+	  write (STDERR_FILENO, "\n", 1);
   }
 
   return 0;
@@ -162,8 +165,12 @@ int log_debug (const char *fmt, ...)
 
   do_percentm (fbuf, fmt);
 
+  /* %Audit% This is log output. %2004.06.17,Safe%
+   * If we truncate we hope the user can get a hint from the log.
+   */
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -171,8 +178,8 @@ int log_debug (const char *fmt, ...)
 #endif
 
   if (log_perror) {
-	  write (2, mbuf, strlen (mbuf));
-	  write (2, "\n", 1);
+	  write (STDERR_FILENO, mbuf, strlen (mbuf));
+	  write (STDERR_FILENO, "\n", 1);
   }
 
   return 0;

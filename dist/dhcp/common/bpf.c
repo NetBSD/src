@@ -3,42 +3,29 @@
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software was contributed to the Internet Software Consortium
- * by Archie Cobbs, and is now maintained by Ted Lemon in cooperation
- * with Nominum, Inc.  To learn more about the Internet Software
- * Consortium, see ``http://www.isc.org/''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.  To learn more about
- * Nominum, Inc., see ``http://www.nominum.com''.
+ * This software was contributed to Internet Systems Consortium
+ * by Archie Cobbs.
  *
  * Patches for FDDI support on Digital Unix were written by Bill
  * Stapleton, and maintained for a while by Mike Meredith before he
@@ -47,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -66,6 +53,7 @@ static char copyright[] =
 #  endif
 # endif
 
+#include <paths.h>
 #include <netinet/in_systm.h>
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
@@ -98,16 +86,24 @@ int if_register_bpf (info)
 	struct interface_info *info;
 {
 	int sock;
-	char filename[50];
-	int b;
+	u_int bufsize;
 
 	/* Open a BPF device */
-	for (b = 0; 1; b++) {
-#ifndef NO_SNPRINTF
-		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
+#ifdef _PATH_BPF
+	const char *filename = _PATH_BPF;
+	sock = open (filename, O_RDWR, 0);
+	if (sock < 0)
+		log_fatal ("No bpf devices.%s%s%s",
+		       "   Please read the README",
+		       " section for your operating",
+		       " system.");
+
 #else
+	char filename[50];
+	int b;
+	for (b = 0; 1; b++) {
+		/* %Audit% 31 bytes max. %2004.06.17,Safe% */
 		sprintf(filename, BPF_FORMAT, b);
-#endif
 		sock = open (filename, O_RDWR, 0);
 		if (sock < 0) {
 			if (errno == EBUSY) {
@@ -124,6 +120,12 @@ int if_register_bpf (info)
 			break;
 		}
 	}
+#endif
+
+	/* Set the BPF buffer size to 32k */
+	bufsize = 32768;
+	if (ioctl (sock, BIOCSBLEN, &bufsize) < 0)
+		log_error ("Can't set bpf buffer to %d: %m", bufsize);
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl (sock, BIOCSETIF, info -> ifp) < 0)
@@ -210,7 +212,7 @@ struct bpf_insn dhcp_bpf_filter [] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
-#if defined (DEC_FDDI)
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 struct bpf_insn *bpf_fddi_filter;
 #endif
 
@@ -238,12 +240,14 @@ void if_register_receive (info)
 {
 	int flag = 1;
 	struct bpf_version v;
-	u_int32_t addr;
 	struct bpf_program p;
+#ifdef NEED_OSF_PFILT_HACKS
 	u_int32_t bits;
-#ifdef DEC_FDDI
+#endif
+	u_int32_t len;
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	int link_layer;
-#endif /* DEC_FDDI */
+#endif /* DEC_FDDI || NETBSD_FDDI */
 
 	/* Open a BPF device and hang it on this interface... */
 	info -> rfdesc = if_register_bpf (info);
@@ -278,8 +282,9 @@ void if_register_receive (info)
 		log_fatal ("Can't set ENBATCH|ENCOPYALL|ENBPFHDR: %m");
 #endif
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl (info -> rfdesc, BIOCGBLEN, &info -> rbuf_max) < 0)
+	if (ioctl (info -> rfdesc, BIOCGBLEN, &len) < 0)
 		log_fatal ("Can't get bpf buffer length: %m");
+	info -> rbuf_max = len;
 	info -> rbuf = dmalloc (info -> rbuf_max, MDL);
 	if (!info -> rbuf)
 		log_fatal ("Can't allocate %ld bytes for bpf input buffer.",
@@ -290,7 +295,7 @@ void if_register_receive (info)
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
 
-#ifdef DEC_FDDI
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	/* See if this is an FDDI interface, flag it for later. */
 	if (ioctl(info -> rfdesc, BIOCGDLT, &link_layer) >= 0 &&
 	    link_layer == DLT_FDDI) {
@@ -314,7 +319,7 @@ void if_register_receive (info)
 		}
 		p.bf_insns = bpf_fddi_filter;
 	} else
-#endif /* DEC_FDDI */
+#endif /* DEC_FDDI || NETBSD_FDDI */
 	p.bf_insns = dhcp_bpf_filter;
 
         /* Patch the server port into the BPF  program...
@@ -368,7 +373,6 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	double ip [32];
 	struct iovec iov [3];
 	int result;
-	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
@@ -407,6 +411,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int length = 0;
 	int offset = 0;
 	struct bpf_hdr hdr;
+	unsigned paylen;
 
 	/* All this complexity is because BPF doesn't guarantee
 	   that only one packet will be returned at a time.   We're
@@ -445,6 +450,10 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 			interface -> rbuf_offset = interface -> rbuf_len;
 			continue;
 		}
+
+		/* Adjust for any padding BPF inserted between the packets. */
+		interface -> rbuf_offset =
+		    BPF_WORDALIGN (interface -> rbuf_offset);
 
 		/* Copy out a bpf header... */
 		memcpy (&hdr, &interface -> rbuf [interface -> rbuf_offset],
@@ -494,8 +503,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 					       interface -> rbuf,
 					       interface -> rbuf_offset,
 					       from,
-					       (unsigned char *)0,
-					       hdr.bh_caplen);
+					       hdr.bh_caplen, &paylen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
@@ -519,11 +527,11 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* Copy out the data in the packet... */
 		memcpy (buf, interface -> rbuf + interface -> rbuf_offset,
-			hdr.bh_caplen);
+			paylen);
 		interface -> rbuf_offset =
 			BPF_WORDALIGN (interface -> rbuf_offset +
 				       hdr.bh_caplen);
-		return hdr.bh_caplen;
+		return paylen;
 	} while (!length);
 	return 0;
 }

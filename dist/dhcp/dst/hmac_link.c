@@ -1,6 +1,6 @@
 #ifdef HMAC_MD5
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/hmac_link.c,v 1.1.1.2 2003/02/18 16:37:58 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/hmac_link.c,v 1.1.1.3 2005/08/11 16:54:38 drochner Exp $";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.

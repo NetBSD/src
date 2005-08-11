@@ -3,39 +3,30 @@
    Parser for dhcpd config file... */
 
 /*
- * Copyright (c) 1995-2003 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.3 2003/02/18 16:38:01 drochner Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.4 2005/08/11 16:54:47 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -87,6 +78,7 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	unsigned tflen, ulen;
 	trace_type_t *ttype;
 
+	file = -1;
 	if (leasep)
 		ttype = trace_readleases_type;
 	else
@@ -163,6 +155,7 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	if (result != ulen)
 		log_fatal ("%s: short read of %d bytes instead of %d.",
 			   filename, ulen, result);
+	close (file);
       memfile:
 	/* If we're recording, write out the filename and file contents. */
 	if (trace_record ())
@@ -170,6 +163,7 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	new_parse (&cfile, -1, fbuf, ulen, filename, 0); /* XXX */
 #else
 	new_parse (&cfile, file, (char *)0, 0, filename, 0);
+	close (file);
 #endif
 	if (leasep)
 		status = lease_file_subparse (cfile);
@@ -179,7 +173,6 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 #if defined (TRACING)
 	dfree (dbuf, MDL);
 #endif
-	close (file);
 	return status;
 }
 
@@ -337,15 +330,12 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 	enum dhcp_token token;
 	const char *val;
 	struct shared_network *share;
-	char *t, *n;
-	struct expression *expr;
-	struct data_string data;
+	char *n;
 	struct hardware hardware;
 	struct executable_statement *et, *ep;
 	struct option *option;
 	struct option_cache *cache;
 	int lose;
-	struct data_string key_id;
 	int known;
 	isc_result_t status;
 
@@ -648,7 +638,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		break;
 
 	      case FAILOVER:
-		if (type != ROOT_GROUP && type != SHARED_NETWORK) {
+		if (type != ROOT_GROUP && type != SHARED_NET_DECL) {
 			parse_warn (cfile, "failover peers may only be %s",
 				    "defined in shared-network");
 			log_error ("declarations and the outer scope.");
@@ -920,7 +910,6 @@ void parse_failover_peer (cfile, group, type)
 					    "load balance settings.");
 			if (token != NUMBER) {
 				parse_warn (cfile, "expecting number");
-			      badsplit:
 				skip_to_rbrace (cfile, 1);
 				dhcp_failover_state_dereference (&peer, MDL);
 				return;
@@ -1377,6 +1366,10 @@ void parse_pool_statement (cfile, group, type)
 				}
 				break;
 				
+			      case KNOWN_CLIENTS:
+				permit -> type = permit_known_clients;
+				break;
+
 			      case UNKNOWN_CLIENTS:
 				permit -> type = permit_unknown_clients;
 				break;
@@ -1469,44 +1462,57 @@ void parse_pool_statement (cfile, group, type)
 	   because BOOTP doesn't support leases, and failover absolutely
 	   depends on lease timing. */
 	if (pool -> failover_peer) {
-		for (permit = pool -> permit_list;
-		     permit; permit = permit -> next) {
+		/* This search order matches the search orders later in
+		 * execution - deny first, if not denied, check permit
+		 * list.  A dynamic bootp client may be known or unknown,
+		 * it may belong to a member of a class, but it definitely
+		 * will not be authenticated since that requires DHCP
+		 * to work.  So a dynamic bootp client is definitely not
+		 * an authenticated client, and we can't say for sure about
+		 * anything else.
+		 *
+		 * So we nag the user.
+		 */
+		for (permit = pool -> prohibit_list; permit;
+		     permit = permit -> next) {
 			if (permit -> type == permit_dynamic_bootp_clients ||
-			    permit -> type == permit_all_clients) {
-				  dynamic_bootp_clash:
-				parse_warn (cfile,
-					    "pools with failover peers %s",
-					    "may not permit dynamic bootp.");
-				log_error ("Either write a \"no failover\" %s",
-					   "statement and use disjoint");
-				log_error ("pools, or don't permit dynamic%s",
-					   " bootp.");
-				log_error ("This is a protocol limitation,%s",
-					   " not an ISC DHCP limitation, so");
-				log_error ("please don't request an %s",
-					   "enhancement or ask why this is.");
-				goto clash_testing_done;
-			}
+			    permit -> type == permit_unauthenticated_clients ||
+			    permit -> type == permit_all_clients)
+				break;
 		}
-		if (!pool -> permit_list) {
-			if (!pool -> prohibit_list)
-				goto dynamic_bootp_clash;
+		if (!permit) {
+			permit = pool -> permit_list;
+			do {
+				if (!permit ||
+				    permit -> type !=
+					permit_authenticated_clients) {
+					parse_warn (cfile,
+					  "pools with failover peers %s",
+					  "may not permit dynamic bootp.");
+					log_error ("Either write a \"%s\" %s",
+					  "no failover",
+					  "statement and use disjoint");
+					log_error ("pools, or%s (%s) %s",
+					  " don't permit dynamic bootp",
+					  "\"deny dynamic bootp clients;\"",
+					  "in this pool.");
+					log_error ("This is a protocol,%s %s",
+					   " limitation, not an ISC DHCP",
+					   "limitation, so");
+					log_error ("please don't request an %s",
+					   "enhancement or ask why this is.");
 
-			for (permit = pool -> prohibit_list; permit;
-			     permit = permit -> next) {
-				if (permit -> type ==
-				    permit_dynamic_bootp_clients ||
-				    permit -> type == permit_all_clients)
-					goto clash_testing_done;
-			}
+					break;
+				}
+
+				permit = permit -> next;
+			} while (permit);
 		}
 	}
-      clash_testing_done:				
 #endif /* FAILOVER_PROTOCOL */
 
 	/* See if there's already a pool into which we can merge this one. */
 	for (pp = pool -> shared_network -> pools; pp; pp = pp -> next) {
-		struct lease *l;
 
 		if (pp -> group -> statements != pool -> group -> statements)
 			continue;
@@ -1813,7 +1819,7 @@ int parse_class_declaration (cp, cfile, group, type)
 	struct executable_statement *stmt = (struct executable_statement *)0;
 	struct expression *expr;
 	int new = 1;
-	isc_result_t status;
+	isc_result_t status = ISC_R_FAILURE;
 
 	token = next_token (&val, (unsigned *)0, cfile);
 	if (token != STRING) {
@@ -2220,7 +2226,6 @@ void parse_subnet_declaration (cfile, share)
 	unsigned char addr [4];
 	unsigned len = sizeof addr;
 	int declaration = 0;
-	struct interface_info *ip;
 	isc_result_t status;
 
 	subnet = (struct subnet *)0;
@@ -2514,8 +2519,6 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	char tbuf [32];
 	struct lease *lease;
 	struct executable_statement *on;
-	struct expression *exp;
-	struct data_string ds;
 	int lose;
 	TIME t;
 	char *s;
@@ -2527,6 +2530,10 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	binding_state_t new_state;
 	unsigned buflen = 0;
 	struct class *class;
+
+	seenbit = 0;	/* XXXGCC -Wuninitialized */
+	newbinding = 0;	/* XXXGCC -Wuninitialized */
+	new_state = 0;	/* XXXGCC -Wuninitialized */
 
 	lease = (struct lease *)0;
 	status = lease_allocate (&lease, MDL);
@@ -2598,7 +2605,8 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 				break;
 				
 			      default: /* for gcc, we'll never get here. */
-				break;
+				log_fatal ("Impossible error at %s:%d.", MDL);
+				return 0;
 			}
 			break;
 
@@ -2739,7 +2747,7 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 					    "%s: expecting a binding state.",
 					    val);
 				skip_to_semi (cfile);
-				break;
+				return 0;
 			}
 
 			if (seenbit == 256) {
@@ -2913,11 +2921,13 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 					       "name");
 			    strcpy (binding -> name, val);
 			    newbinding = 1;
-			} else if (binding -> value) {
-				binding_value_dereference (&binding -> value,
+			} else  {
+				if (binding -> value)
+				  binding_value_dereference (&binding -> value,
 							   MDL);
 				newbinding = 0;
 			}
+
 			if (!binding_value_allocate (&binding -> value, MDL))
 				log_fatal ("no memory for binding value.");
 
@@ -2932,7 +2942,6 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 
 			token = peek_token (&val, (unsigned *)0, cfile);
 			if (token == STRING) {
-			    unsigned char *tuid;
 			    token = next_token (&val, &buflen, cfile);
 			    binding -> value -> type = binding_data;
 			    binding -> value -> value.data.len = buflen;
@@ -3089,7 +3098,6 @@ void parse_address_range (cfile, group, type, inpool, lpchain)
 	int dynamic = 0;
 	struct subnet *subnet;
 	struct shared_network *share;
-	struct pool *p;
 	struct pool *pool;
 	isc_result_t status;
 

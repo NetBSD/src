@@ -3,39 +3,30 @@
    Subroutines for dealing with connections. */
 
 /*
- * Copyright (c) 1999-2001 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -120,10 +111,6 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 	omapi_connection_object_t *obj;
 	int flag;
 	struct sockaddr_in local_sin;
-#if defined (TRACING)
-	trace_addr_t *addrs;
-	u_int16_t naddrs;
-#endif
 
 	obj = (omapi_connection_object_t *)0;
 	status = omapi_connection_allocate (&obj, MDL);
@@ -170,6 +157,7 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 				omapi_connection_dereference (&obj, MDL);
 				return ISC_R_INVALIDARG;
 			}
+			memset (&local_sin, 0, sizeof local_sin);
 			local_sin.sin_port = htons (local_addr -> port);
 			memcpy (&local_sin.sin_addr,
 				local_addr -> address,
@@ -178,13 +166,10 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 			local_sin.sin_len = sizeof local_addr;
 #endif
 			local_sin.sin_family = AF_INET;
-			memset (&local_sin.sin_zero, 0,
-				sizeof local_sin.sin_zero);
 			
 			if (bind (obj -> socket, (struct sockaddr *)&local_sin,
 				  sizeof local_sin) < 0) {
-				omapi_object_dereference ((omapi_object_t **)
-							  &obj, MDL);
+				omapi_object_dereference ((void *) &obj, MDL);
 				if (errno == EADDRINUSE)
 					return ISC_R_ADDRINUSE;
 				if (errno == EADDRNOTAVAIL)
@@ -618,6 +603,7 @@ static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 			return ISC_R_INVALIDARG;
 		}
 
+		memset (&c->remote_addr, 0, sizeof c->remote_addr);
 		memcpy (&c -> remote_addr.sin_addr,
 			&c -> connect_list -> addresses [c -> cptr].address,
 			sizeof c -> remote_addr.sin_addr);
@@ -627,8 +613,6 @@ static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 #if defined (HAVE_SA_LEN)
 		c -> remote_addr.sin_len = sizeof c -> remote_addr;
 #endif
-		memset (&c -> remote_addr.sin_zero, 0,
-			sizeof c -> remote_addr.sin_zero);
 		++c -> cptr;
 
 		error = connect (c -> socket,
@@ -717,8 +701,8 @@ static isc_result_t make_dst_key (DST_KEY **dst_key, omapi_object_t *a) {
 	omapi_value_t *name      = (omapi_value_t *)0;
 	omapi_value_t *algorithm = (omapi_value_t *)0;
 	omapi_value_t *key       = (omapi_value_t *)0;
-	int algorithm_id;
-	char *name_str;
+	int algorithm_id = UNKNOWN_KEYALG;
+	char *name_str = NULL;
 	isc_result_t status = ISC_R_SUCCESS;
 
 	if (status == ISC_R_SUCCESS)
@@ -1014,7 +998,6 @@ isc_result_t omapi_connection_stuff_values (omapi_object_t *c,
 					    omapi_object_t *id,
 					    omapi_object_t *m)
 {
-	int i;
 
 	if (m -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
