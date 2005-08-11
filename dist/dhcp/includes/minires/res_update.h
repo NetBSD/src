@@ -22,7 +22,7 @@
  */
 
 /*
- *	$Id: res_update.h,v 1.1.1.2 2005/08/11 16:54:42 drochner Exp $
+ *	$Id: res_update.h,v 1.2 2005/08/11 17:13:26 drochner Exp $
  */
 
 #ifndef __RES_UPDATE_H

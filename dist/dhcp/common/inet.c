@@ -4,39 +4,30 @@
    way... */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -44,7 +35,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: inet.c,v 1.3 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: inet.c,v 1.4 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,6 +48,12 @@ struct iaddr subnet_number (addr, mask)
 {
 	int i;
 	struct iaddr rv;
+
+	if (addr.len > sizeof(addr.iabuf))
+		log_fatal("subnet_number():%s:%d: Invalid addr length.", MDL);
+	if (addr.len != mask.len)
+		log_fatal("subnet_number():%s:%d: Addr/mask length mismatch.",
+			  MDL);
 
 	rv.len = 0;
 
@@ -83,6 +80,12 @@ struct iaddr ip_addr (subnet, mask, host_address)
 	u_int32_t swaddr;
 	struct iaddr rv;
 	unsigned char habuf [sizeof swaddr];
+
+	if (subnet.len > sizeof(subnet.iabuf))
+		log_fatal("ip_addr():%s:%d: Invalid addr length.", MDL);
+	if (subnet.len != mask.len)
+		log_fatal("ip_addr():%s:%d: Addr/mask length mismatch.",
+			  MDL);
 
 	swaddr = htonl (host_address);
 	memcpy (habuf, &swaddr, sizeof swaddr);
@@ -124,6 +127,12 @@ struct iaddr broadcast_addr (subnet, mask)
 	int i;
 	struct iaddr rv;
 
+	if (subnet.len > sizeof(subnet.iabuf))
+		log_fatal("broadcast_addr():%s:%d: Invalid addr length.", MDL);
+	if (subnet.len != mask.len)
+		log_fatal("broadcast_addr():%s:%d: Addr/mask length mismatch.",
+			  MDL);
+
 	if (subnet.len != mask.len) {
 		rv.len = 0;
 		return rv;
@@ -145,6 +154,12 @@ u_int32_t host_addr (addr, mask)
 	u_int32_t swaddr;
 	struct iaddr rv;
 
+	if (addr.len > sizeof(addr.iabuf))
+		log_fatal("host_addr():%s:%d: Invalid addr length.", MDL);
+	if (addr.len != mask.len)
+		log_fatal("host_addr():%s:%d: Addr/mask length mismatch.",
+			  MDL);
+
 	rv.len = 0;
 
 	/* Mask out the network bits... */
@@ -162,6 +177,9 @@ u_int32_t host_addr (addr, mask)
 int addr_eq (addr1, addr2)
 	struct iaddr addr1, addr2;
 {
+	if (addr1.len > sizeof(addr1.iabuf))
+		log_fatal("addr_eq():%s:%d: Invalid addr length.", MDL);
+
 	if (addr1.len != addr2.len)
 		return 0;
 	return memcmp (addr1.iabuf, addr2.iabuf, addr1.len) == 0;
@@ -174,22 +192,8 @@ char *piaddr (addr)
 	char *s = pbuf;
 	int i;
 
-	if (addr.len == 0) {
-		strcpy (s, "<null address>");
-	}
-	for (i = 0; i < addr.len; i++) {
-		sprintf (s, "%s%d", i ? "." : "", addr.iabuf [i]);
-		s += strlen (s);
-	}
-	return pbuf;
-}
-
-char *piaddr1 (addr)
-	struct iaddr addr;
-{
-	static char pbuf [4 * 16];
-	char *s = pbuf;
-	int i;
+	if (addr.len > sizeof(addr.iabuf))
+		log_fatal("piaddr():%s:%d: Address length too long.", MDL);
 
 	if (addr.len == 0) {
 		strcpy (s, "<null address>");
@@ -204,39 +208,40 @@ char *piaddr1 (addr)
 char *piaddrmask (struct iaddr addr, struct iaddr mask,
 		  const char *file, int line)
 {
-	char *s, *t;
-	int i, mw;
-	unsigned len;
+	char *s, tbuf[sizeof("255.255.255.255/32")];
+	int mw;
+	unsigned i, oct, bit;
 
-	for (i = 0; i < 32; i++) {
-		if (!mask.iabuf [3 - i / 8])
-			i += 7;
-		else if (mask.iabuf [3 - i / 8] & (1 << (i % 8)))
+	if (addr.len != 4)
+		log_fatal("piaddrmask():%s:%d: Address length %d invalid",
+			  MDL, addr.len);
+	if (addr.len != mask.len)
+		log_fatal("piaddrmask():%s:%d: Address and mask size mismatch",
+			  MDL);
+
+	/* Determine netmask width in bits. */
+	for (mw = 32; mw > 0; ) {
+		oct = (mw - 1) / 8;
+		bit = 0x80 >> ((mw - 1) % 8);
+		if (!mask.iabuf [oct])
+			mw -= 8;
+		else if (mask.iabuf [oct] & bit)
 			break;
-	}
-	mw = 32 - i;
-	len = mw > 9 ? 2 : 1;
-	len += 4;	/* three dots and a slash. */
-	for (i = 0; i < (mw / 8) + 1; i++) {
-		if (addr.iabuf [i] > 99)
-			len += 3;
-		else if (addr.iabuf [i] > 9)
-			len += 2;
 		else
-			len++;
+			mw--;
 	}
-	s = dmalloc (len + 1, file, line);
+
+	s = tbuf;
+	for (i = 0 ; i <= oct ; i++) {
+		sprintf(s, "%s%d", i ? "." : "", addr.iabuf[i]);
+		s += strlen(s);
+	}
+	sprintf(s, "/%d", mw);
+
+	s = dmalloc (strlen(tbuf) + 1, file, line);
 	if (!s)
 		return s;
-	t = s;
-	sprintf (t, "%d", addr.iabuf [0]);
-	t += strlen (t);
-	for (i = 1; i < (mw / 8) + 1; i++) {
-		sprintf (t, ".%d", addr.iabuf [i]);
-		t += strlen (t);
-	}
-	*t++ = '/';
-	sprintf (t, "%d", mw);
+	strcpy(s, tbuf);
 	return s;
 }
 

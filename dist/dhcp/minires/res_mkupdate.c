@@ -1,18 +1,24 @@
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  */
 
 /*
@@ -21,7 +27,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_mkupdate.c,v 1.3 2003/01/02 10:04:32 tron Exp $";
+static const char rcsid[] = "$Id: res_mkupdate.c,v 1.4 2005/08/11 17:13:26 drochner Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,12 +54,11 @@ static const char rcsid[] = "$Id: res_mkupdate.c,v 1.3 2003/01/02 10:04:32 tron 
 #define MAXPORT 1024
 
 static int getnum_str(const u_char **, const u_char *);
-#if 0
 static int gethexnum_str(const u_char **, const u_char *);
-#endif
 static int getword_str(char *, int,
 		       const unsigned char **,
 		       const unsigned char *);
+static int getphrase_str(char *, int, const u_char **, const u_char *);
 static int getstr_str(char *, int, const u_char **, const u_char *);
 
 struct valuelist {
@@ -98,16 +103,13 @@ res_nmkupdate(res_state statp,
 	ns_updrec *rrecp;
 	struct in_addr ina;
         char buf2[MAXDNAME];
-#if 0
 	u_char buf3[MAXDNAME];
-#endif
 	int section, numrrs = 0, counts[ns_s_max];
 	u_int16_t rtype, rclass;
 	u_int32_t n1, rttl;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
-#if 0
-	unsigned siglen, keylen, certlen;
-#endif
+	unsigned certlen;
+	int keylen;
 	unsigned buflen = *blp;
 	u_char *buf = (unsigned char *)bp;
 
@@ -240,7 +242,7 @@ res_nmkupdate(res_state statp,
 		case T_MR:
 		case T_NS:
 		case T_PTR:
-			if (!getword_str(buf2, sizeof buf2, &startp, endp))
+			if (!getphrase_str(buf2, sizeof buf2, &startp, endp))
 				return (-1);
 			n = dn_comp(buf2, cp, buflen, dnptrs, lastdnptr);
 			if (n < 0)
@@ -555,36 +557,6 @@ res_nmkupdate(res_state statp,
 			cp += siglen;
 			break;
 		    }
-		case ns_t_key:
-			/* flags */
-			n = gethexnum_str(&startp, endp);
-			if (n < 0)
-				return (-1);
-			ShrinkBuffer(INT16SZ);
-			PUTSHORT(n, cp);
-			/* proto */
-			n = getnum_str(&startp, endp);
-			if (n < 0)
-				return (-1);
-			ShrinkBuffer(1);
-			*cp++ = n;
-			/* alg */
-			n = getnum_str(&startp, endp);
-			if (n < 0)
-				return (-1);
-			ShrinkBuffer(1);
-			*cp++ = n;
-			/* key */
-			if ((n = getword_str(buf2, sizeof buf2,
-					     &startp, endp)) < 0)
-				return (-1);
-			keylen = b64_pton(buf2, buf3, sizeof(buf3));
-			if (keylen < 0)
-				return (-1);
-			ShrinkBuffer(keylen);
-			memcpy(cp, buf3, keylen);
-			cp += keylen;
-			break;
 		case ns_t_nxt:
 		    {
 			int success, nxt_type;
@@ -619,6 +591,38 @@ res_nmkupdate(res_state statp,
 			cp += n;
 			break;
 		    }
+#endif
+#if 1
+		case ns_t_key:
+			/* flags */
+			n = gethexnum_str(&startp, endp);
+			if (n < 0)
+				return (-1);
+			ShrinkBuffer(INT16SZ);
+			PUTSHORT(n, cp);
+			/* proto */
+			n = getnum_str(&startp, endp);
+			if (n < 0)
+				return (-1);
+			ShrinkBuffer(1);
+			*cp++ = n;
+			/* alg */
+			n = getnum_str(&startp, endp);
+			if (n < 0)
+				return (-1);
+			ShrinkBuffer(1);
+			*cp++ = n;
+			/* key */
+			if ((n = getword_str(buf2, sizeof buf2,
+					     &startp, endp)) < 0)
+				return (-1);
+			keylen = b64_pton(buf2, buf3, sizeof(buf3));
+			if (keylen < 0)
+				return (-1);
+			ShrinkBuffer(keylen);
+			memcpy(cp, buf3, keylen);
+			cp += keylen;
+			break;
 		case ns_t_cert:
 			/* type */
 			n = getnum_str(&startp, endp);
@@ -651,6 +655,8 @@ res_nmkupdate(res_state statp,
 			break;
 #endif
 		default:
+		  fprintf(stderr, "NSupdate of RR type: %d not implemented\n",
+			  rrecp->r_type);
 			return (-1);
 		} /*switch*/
 		n = (u_int16_t)((cp - sp2) - INT16SZ);
@@ -685,6 +691,35 @@ getword_str(char *buf, int size, const u_char **startpp, const u_char *endp) {
                                 continue;
                         }
                 }
+                (*startpp)++;
+                if (cp >= buf+size-1)
+                        break;
+                *cp++ = (u_char)c;
+        }
+        *cp = '\0';
+        return (cp != buf);
+}
+
+/*
+ * Get a phrase - possibly containing blanks - from a string (not file)
+ * into buf. modify the start pointer to point after the
+ * phrase in the string.
+ */
+static int
+getphrase_str(char *buf, int size, const u_char **startpp, const u_char *endp) {
+        char *cp;
+        int c;
+ 
+        for (cp = buf; *startpp <= endp; ) {
+                c = **startpp;
+                if (isspace(c) && cp == buf ) {
+			/* leading whitespace */
+			(*startpp)++;
+			continue;
+		}
+		else if ( c == '\0' ) {
+			break;
+		}
                 (*startpp)++;
                 if (cp >= buf+size-1)
                         break;
@@ -773,7 +808,6 @@ getstr_str(char *buf, int size, const u_char **startpp, const u_char *endp) {
 	*cp = '\0';
 	return ((cp == buf)?  (seen_quote? 0: -1): (cp - buf));
 }
-#if 0
 /*
  * Get a whitespace delimited base 16 number from a string (not file) into buf
  * update the start pointer to point after the number in the string.
@@ -822,7 +856,6 @@ gethexnum_str(const u_char **startpp, const u_char *endp) {
         }
         return (n + m);
 }
-#endif
 
 /*
  * Get a whitespace delimited base 16 number from a string (not file) into buf
