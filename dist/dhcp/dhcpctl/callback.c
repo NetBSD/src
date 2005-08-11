@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: callback.c,v 1.1.1.3 2005/08/11 16:54:30 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: callback.c,v 1.1.1.4 2005/08/11 17:03:06 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -59,6 +59,7 @@ dhcpctl_status dhcpctl_set_callback (dhcpctl_handle h, void *data,
 {
 	dhcpctl_callback_object_t *callback;
 	omapi_object_t *inner;
+	isc_result_t status;
 
 	callback = dmalloc (sizeof *callback, MDL);
 	if (!callback)
@@ -161,6 +162,7 @@ isc_result_t dhcpctl_callback_stuff_values (omapi_object_t *c,
 					    omapi_object_t *id,
 					    omapi_object_t *p)
 {
+	int i;
 
 	if (p -> type != dhcpctl_callback_type)
 		return ISC_R_INVALIDARG;

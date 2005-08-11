@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: convert.c,v 1.1.1.3 2005/08/11 16:54:45 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: convert.c,v 1.1.1.4 2005/08/11 17:03:16 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -165,7 +165,7 @@ int binary_to_ascii (outbuf, inbuf, base, width)
 	u_int32_t number;
 	static char h2a [] = "0123456789abcdef";
 	int power = converted_length (inbuf, base, width);
-	int i;
+	int i, j;
 
 	if (base > 16)
 		return 0;

@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.1.1.4 2005/08/11 16:54:54 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.1.1.5 2005/08/11 17:03:26 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -208,6 +208,7 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
+	int foo;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -377,6 +378,7 @@ isc_result_t dhcp_lease_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct lease *lease;
+	isc_result_t status;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -453,6 +455,7 @@ isc_result_t dhcp_lease_signal_handler (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
+	int updatep = 0;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -856,8 +859,9 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 				   omapi_data_string_t *name,
 				   omapi_typed_data_t *value)
 {
-	struct host_decl *host;
+	struct host_decl *host, *hp;
 	isc_result_t status;
+	int foo;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -1116,6 +1120,7 @@ isc_result_t dhcp_host_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_host_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct host_decl *host;
+	isc_result_t status;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -1536,6 +1541,7 @@ isc_result_t dhcp_pool_set_value  (omapi_object_t *h,
 {
 	struct pool *pool;
 	isc_result_t status;
+	int foo;
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1581,10 +1587,8 @@ isc_result_t dhcp_pool_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct pool *pool;
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
+	isc_result_t status;
 	struct permit *pc, *pn;
-#endif
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1681,6 +1685,9 @@ isc_result_t dhcp_pool_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_pool_lookup (omapi_object_t **lp,
 			       omapi_object_t *id, omapi_object_t *ref)
 {
+	omapi_value_t *tv = (omapi_value_t *)0;
+	isc_result_t status;
+	struct pool *pool;
 
 	/* Can't look up pools yet. */
 
@@ -1710,6 +1717,7 @@ isc_result_t dhcp_class_set_value  (omapi_object_t *h,
 {
 	struct class *class;
 	isc_result_t status;
+	int foo;
 
 	if (h -> type != dhcp_type_class)
 		return ISC_R_INVALIDARG;
@@ -1755,10 +1763,8 @@ isc_result_t dhcp_class_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_class_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct class *class;
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
+	isc_result_t status;
 	int i;
-#endif
 
 	if (h -> type != dhcp_type_class && h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1858,6 +1864,9 @@ isc_result_t dhcp_class_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_class_lookup (omapi_object_t **lp,
 				omapi_object_t *id, omapi_object_t *ref)
 {
+	omapi_value_t *tv = (omapi_value_t *)0;
+	isc_result_t status;
+	struct class *class;
 
 	/* Can't look up classs yet. */
 
@@ -1887,6 +1896,7 @@ isc_result_t dhcp_subclass_set_value  (omapi_object_t *h,
 {
 	struct subclass *subclass;
 	isc_result_t status;
+	int foo;
 
 	if (h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1981,6 +1991,9 @@ isc_result_t dhcp_subclass_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_subclass_lookup (omapi_object_t **lp,
 				   omapi_object_t *id, omapi_object_t *ref)
 {
+	omapi_value_t *tv = (omapi_value_t *)0;
+	isc_result_t status;
+	struct subclass *subclass;
 
 	/* Can't look up subclasss yet. */
 
@@ -2088,9 +2101,6 @@ isc_result_t binding_scope_get_value (omapi_value_t **value,
 	omapi_typed_data_t *td;
 	isc_result_t status;
 	char *nname;
-
-	status = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
-
 	nname = dmalloc (name -> len + 1, MDL);
 	if (!nname)
 		return ISC_R_NOMEMORY;

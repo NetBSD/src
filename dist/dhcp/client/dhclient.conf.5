@@ -1,4 +1,4 @@
-.\"	$Id: dhclient.conf.5,v 1.1.1.4 2005/08/11 16:54:23 drochner Exp $
+.\"	$Id: dhclient.conf.5,v 1.1.1.5 2005/08/11 17:03:00 drochner Exp $
 .\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
@@ -42,7 +42,7 @@ are case-insensitive.   Comments may be placed anywhere within the
 file (except within quotes).   Comments begin with the # character and
 end at the end of the line.
 .PP
-The dhclient.conf file can be used to configure the behavior of the
+The dhclient.conf file can be used to configure the behaviour of the
 client in a wide variety of ways: protocol timing, information
 requested from the server, information required of the server,
 defaults to use if the server does not provide certain information,
@@ -51,13 +51,13 @@ values to prepend or append to information provided by the server.
 The configuration file can also be preinitialized with addresses to
 use on networks that don't have DHCP servers.
 .SH PROTOCOL TIMING
-The timing behavior of the client need not be configured by the user.
+The timing behaviour of the client need not be configured by the user.
 If no timing configuration is provided by the user, a fairly
-reasonable timing behavior will be used by default - one which
+reasonable timing behaviour will be used by default - one which
 results in fairly timely updates without placing an inordinate load on
 the server.
 .PP
-The following statements can be used to adjust the timing behavior of
+The following statements can be used to adjust the timing behaviour of
 the DHCP client if required, however:
 .PP
 .I The
@@ -142,7 +142,7 @@ a new address.   By default, the reboot timeout is ten seconds.
 .PP
 The client uses an exponential backoff algorithm with some randomness,
 so that if many clients try to configure themselves at the same time,
-they will not make their requests in lock-step.   The
+they will not make their requests in lockstep.   The
 .I backoff-cutoff
 statement determines the maximum amount of time that the client is
 allowed to back off, the actual value will be evaluated randomly between
@@ -178,7 +178,7 @@ are called \fIDHCP Options\fR.  DHCP Options are defined in
 .B request
 .I statement
 .PP
- \fBrequest \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
+ \fBrequest [ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
 .PP
 The request statement causes the client to request that any server
 responding to the client send the client its values for the specified
@@ -199,7 +199,7 @@ no parameters:
 .B require
 .I statement
 .PP
- \fBrequire \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
+ \fBrequire [ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
 .PP
 The require statement lists options that must be sent in order for an
 offer to be accepted.   Offers that do not contain all the listed
@@ -209,7 +209,7 @@ options will be ignored.
 .B send
 .I statement
 .PP
- \fBsend { \fR[ \fIoption declaration\fR ]
+ \fBsend { [ \fIoption declaration\fR ]
 [\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
 .PP
 The send statement causes the client to send the specified options to
@@ -246,7 +246,7 @@ updated.   The \fIfqdn.encoded\fR option may need to be set to
 .B do-forward-updates
 .I statement
 .PP
- \fBdo-forward-updates \fR[ \fIflag\fR ] \fB;\fR
+ \fBdo-forward-updates [ \fIflag\fR ] \fB;\fR
 .PP
 If you want to do DNS updates in the DHCP client
 script (see \fBdhclient-script(8)\fR) rather than having the
@@ -257,29 +257,6 @@ the \fBdo-forward-updates\fR statement.   \fIFlag\fR should be \fBtrue\fR
 if you want the DHCP client to do the update, and \fBfalse\fR if
 you don't want the DHCP client to do the update.   By default, the DHCP
 client will do the DNS update.
-.PP
-.I The
-.B omapi port
-.I statement
-.PP
- \fBomapi port \fR[ \fIport\fR ] \fB;\fR
-.PP
-The \fBomapi port\fR statement causes the DHCP client to set up an OMAPI
-listener on the specified port.   Only one such port should be specified.
-The OMAPI listener will be sensitive to connections from any IP address, so
-it is important to also set up an OMAPI key to protect the client from
-unauthorized changes.
-.PP
-.I The
-.B omapi key
-.I statement
-.PP
- \fBomapi key \fR[ \fI key-id \fR ] \fB;\fR
-.PP
-The \fBomapi key\fR statement causes the DHCP client to check any incoming
-OMAPI messages to make sure that they are signed by the specified key.   If
-a message is not signed by this key, it is rejected with an "invalid key"
-error.
 .SH OPTION MODIFIERS
 In some cases, a client may receive option data from the server which
 is not really appropriate for that client, or may not receive
@@ -292,7 +269,7 @@ needs, several option modifiers are available.
 .B default
 .I statement
 .PP
- \fBdefault \fR[ \fIoption declaration\fR ] \fB;\fR
+ \fBdefault [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should use the value supplied by
 the server, but needs to use some default value if no value was supplied
@@ -304,7 +281,7 @@ statement.
 .B supersede
 .I statement
 .PP
- \fBsupersede \fR[ \fIoption declaration\fR ] \fB;\fR
+ \fBsupersede [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should always use a locally-configured
 value or values rather than whatever is supplied by the server, these
@@ -316,7 +293,7 @@ statement.
 .B prepend
 .I statement
 .PP
- \fBprepend \fR[ \fIoption declaration\fR ] \fB;\fR
+ \fBprepend [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should use a value you
 supply, and then use the values supplied by
@@ -326,13 +303,13 @@ statement.   The
 .B prepend
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behavior will be unpredictable.
+enforced - if you ignore it, the behaviour will be unpredictable.
 .PP
 .I The
 .B append
 .I statement
 .PP
- \fBappend \fR[ \fIoption declaration\fR ] \fB;\fR
+ \fBappend [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should first use the values
 supplied by the server, if any, and then use values you supply, these
@@ -342,14 +319,14 @@ statement.   The
 .B append
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behavior will be unpredictable.
+enforced - if you ignore it, the behaviour will be unpredictable.
 .SH LEASE DECLARATIONS
 .PP
 .I The
 .B lease
 .I declaration
 .PP
- \fBlease {\fR \fIlease-declaration\fR \fR[ ... \fIlease-declaration ] \fB}\fR
+ \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
 .PP
 The DHCP client may decide after some period of time (see \fBPROTOCOL
 TIMING\fR) that it is not going to succeed in contacting a
@@ -537,7 +514,7 @@ the bad DHCP server and fix it.
  \fBinterface "\fIname\fB" { \fIdeclarations ... \fB }
 .PP
 A client with more than one network interface may require different
-behavior depending on which interface is being configured.   All
+behaviour depending on which interface is being configured.   All
 timing parameters and declarations other than lease and alias
 declarations can be enclosed in an interface declaration, and those
 parameters will then be used only for the interface that matches the
@@ -584,7 +561,7 @@ states where a lease has been acquired or renewed, and the states
 where a lease has expired.   See \fBdhclient-script(8)\fR for more
 information.
 .PP
- \fBmedia "\fImedia setup\fB"\fI \fR[ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
+ \fBmedia "\fImedia setup\fB"\fI [ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
 .PP
 The
 .B media
@@ -607,7 +584,7 @@ cycling through media types.
 .SH SAMPLE
 The following configuration file is used on a laptop running NetBSD
 1.3.   The laptop has an IP alias of 192.5.5.213, and has one
-interface, ep0 (a 3Com 3C589C).   Booting intervals have been
+interface, ep0 (a 3com 3C589C).   Booting intervals have been
 shortened somewhat from the default, because the client is known to
 spend most of its time on networks with little DHCP activity.   The
 laptop does roam to multiple networks.

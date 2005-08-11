@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.4 2005/08/11 16:54:27 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.5 2005/08/11 17:03:02 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -127,6 +127,7 @@ dns_zone_hash_t *dns_zone_hash;
 isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 			    struct dns_zone *zone)
 {
+	isc_result_t status;
 	ns_tsig_key *tkey;
 
 	if (!zone)
@@ -200,6 +201,7 @@ isc_result_t enter_dns_zone (struct dns_zone *zone)
 
 isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 {
+	struct dns_zone *tz = (struct dns_zone *)0;
 	int len;
 	char *tname = (char *)0;
 	isc_result_t status;
@@ -208,9 +210,6 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 		return ISC_R_NOTFOUND;
 
 	len = strlen (name);
-	if (len == 0)
-		return ISC_R_NOTFOUND;
-
 	if (name [len - 1] != '.') {
 		tname = dmalloc ((unsigned)len + 2, MDL);
 		if (!tname)
@@ -235,6 +234,7 @@ int dns_zone_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int i;
 	struct dns_zone *dns_zone;
 
 	if (!ptr || !*ptr) {
@@ -267,10 +267,8 @@ int dns_zone_dereference (ptr, file, line)
 
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
-#if !defined (SMALL)
 	if (dns_zone -> key)
 		omapi_auth_key_dereference (&dns_zone -> key, file, line);
-#endif
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
@@ -399,7 +397,9 @@ void repudiate_zone (struct dns_zone **zone)
 void cache_found_zone (ns_class class,
 		       char *zname, struct in_addr *addrs, int naddrs)
 {
+	isc_result_t status = ISC_R_NOTFOUND;
 	struct dns_zone *zone = (struct dns_zone *)0;
+	struct data_string nsaddrs;
 	int ix = strlen (zname);
 
 	if (zname [ix - 1] == '.')

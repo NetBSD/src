@@ -1,5 +1,5 @@
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.1.1.3 2005/08/11 16:54:39 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.1.1.4 2005/08/11 17:03:12 drochner Exp $";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -335,7 +335,7 @@ unix_cmd(dst_work *work)
 		cnt += do_time(work);
 	}
 	while ((n = fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0)
-		; /* drain the pipe */
+		NULL; /* drain the pipe */
 	pclose(pipe);
 	return (cnt);		/* read how many bytes where read in */
 }

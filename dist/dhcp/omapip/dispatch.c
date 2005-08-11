@@ -139,7 +139,7 @@ isc_result_t omapi_unregister_io_object (omapi_object_t *h)
 
 isc_result_t omapi_dispatch (struct timeval *t)
 {
-	return omapi_wait_for_completion ((void *)&omapi_io_states,
+	return omapi_wait_for_completion ((omapi_object_t *)&omapi_io_states,
 					  t);
 }
 
@@ -449,7 +449,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 						     tmp, MDL);
 					else
 						omapi_signal_in
-							((void *)
+							((omapi_object_t *)
 							 &omapi_io_states,
 							 "ready");
 				}
@@ -507,7 +507,6 @@ isc_result_t omapi_io_destroy (omapi_object_t *h, const char *file, int line)
 		return ISC_R_INVALIDARG;
 	
 	/* remove from the list of I/O states */
-	last = &omapi_io_states;
 	for (p = omapi_io_states.next; p; p = p -> next) {
 		if (p == (omapi_io_object_t *)h) {
 			omapi_io_reference (&obj, p, MDL);

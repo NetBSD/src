@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: raw.c,v 1.1.1.3 2005/08/11 16:54:28 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: raw.c,v 1.1.1.4 2005/08/11 17:03:04 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -65,10 +65,10 @@ void if_register_send (info)
 	int flag;
 
 	/* Set up the address we're going to connect to. */
-	memset (&name, 0, sizeof (name));
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr.s_addr = htonl (INADDR_BROADCAST);
+	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 
 	/* List addresses on which we're listening. */
         if (!quiet_interface_discovery)

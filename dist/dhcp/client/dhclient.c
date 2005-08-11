@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.4 2005/08/11 16:54:22 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.5 2005/08/11 17:03:00 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -72,29 +72,12 @@ int no_daemon=0;
 struct string_list *client_env=NULL;
 int client_env_count=0;
 int onetry=0;
-int fixed = 0;
 int quiet=0;
 int nowait=0;
 
 static void usage PROTO ((void));
 
 void do_release(struct client_state *);
-
-#if !defined (SMALL)
-static isc_result_t
-verify_addr (omapi_object_t *l, omapi_addr_t *addr)
-{
-	return ISC_R_SUCCESS;
-}
-
-static isc_result_t
-verify_auth (omapi_object_t *p, omapi_auth_key_t *a)
-{
-	if (a != top_level_config.omapi_key)
-		return ISC_R_INVALIDKEY;
-	return ISC_R_SUCCESS;
-}
-#endif
 
 int main (argc, argv, envp)
 	int argc;
@@ -112,6 +95,7 @@ int main (argc, argv, envp)
 	omapi_object_t *listener;
 	isc_result_t result;
 	int persist = 0;
+	int omapi_port;
 	int no_dhclient_conf = 0;
 	int no_dhclient_db = 0;
 	int no_dhclient_pid = 0;
@@ -185,8 +169,6 @@ int main (argc, argv, envp)
 				usage ();
                         path_dhclient_script = argv [i];
 			no_dhclient_script = 1;
-		} else if (!strcmp (argv [i], "-o")) {
-			fixed = 1;
 		} else if (!strcmp (argv [i], "-1")) {
 			onetry = 1;
 		} else if (!strcmp (argv [i], "-q")) {
@@ -231,9 +213,8 @@ int main (argc, argv, envp)
  			log_fatal ("Can't record interface %s:%s",
 				   argv [i], isc_result_totext (status));
 		    if (strlen (argv [i]) > sizeof tmp -> name)
-			    log_fatal ("%s: interface name too long (max %lu)",
-				       argv [i],
-				       (unsigned long)sizeof tmp -> name);
+			    log_fatal ("%s: interface name too long (max %ld)",
+				       argv [i], (long)strlen (argv [i]));
  		    strcpy (tmp -> name, argv [i]);
 		    if (interfaces) {
 			    interface_reference (&tmp -> next,
@@ -280,12 +261,6 @@ int main (argc, argv, envp)
 			fclose(pidfd);
 		}
 	}
-
-	/* This isn't the final pid, but it may be needed so that
-	 * /etc/rc.d/dhclient can kill the client before it's done with
-	 * initially configuring an interface.
-	 */
-	write_client_pid_file();
 
 	if (!quiet) {
 		log_info ("%s %s", message, DHCP_VERSION);
@@ -339,7 +314,6 @@ int main (argc, argv, envp)
 	/* Get the current time... */
 	GET_TIME (&cur_time);
 
-	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
 	sockaddr_broadcast.sin_family = AF_INET;
 	sockaddr_broadcast.sin_port = remote_port;
 	if (server) {
@@ -452,7 +426,6 @@ int main (argc, argv, envp)
 	if (release_mode)
 		return 0;
 
-#if !defined (SMALL)
 	/* Start up a listener for the object management API protocol. */
 	if (top_level_config.omapi_port != -1) {
 		listener = (omapi_object_t *)0;
@@ -460,17 +433,14 @@ int main (argc, argv, envp)
 		if (result != ISC_R_SUCCESS)
 			log_fatal ("Can't allocate new generic object: %s\n",
 				   isc_result_totext (result));
-		result = (omapi_protocol_listen
-			  (listener,
-			   (unsigned)top_level_config.omapi_port, 1));
-		if (result == ISC_R_SUCCESS && top_level_config.omapi_key)
-			result = (omapi_protocol_configure_security
-				  (listener, verify_addr, verify_auth));
+		result = omapi_protocol_listen (listener,
+						(unsigned)
+						top_level_config.omapi_port,
+						1);
 		if (result != ISC_R_SUCCESS)
 			log_fatal ("Can't start OMAPI protocol: %s",
 				   isc_result_totext (result));
 	}
-#endif
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
@@ -664,6 +634,7 @@ void state_selecting (cpp)
 			picked = lp;
 			picked -> next = (struct client_lease *)0;
 		} else {
+		      freeit:
 			destroy_client_lease (lp);
 		}
 	}
@@ -722,6 +693,7 @@ void dhcpack (packet)
 	struct client_lease *lease;
 	struct option_cache *oc;
 	struct data_string ds;
+	int i;
 	
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
@@ -875,6 +847,7 @@ void dhcpack (packet)
 void bind_lease (client)
 	struct client_state *client;
 {
+	struct interface_info *ip = client -> interface;
 
 	/* Remember the medium. */
 	client -> new -> medium = client -> medium;
@@ -923,10 +896,6 @@ void bind_lease (client)
 	      (long)(client -> active -> renewal - cur_time));
 	client -> state = S_BOUND;
 	reinitialize_interfaces ();
-	if (fixed) {
-		unlink(_PATH_DHCLIENT_PID);
-		exit(0);
-	}
 	go_daemon ();
 	if (client -> config -> do_forward_update) {
 		client -> dns_update_timeout = 1;
@@ -944,6 +913,7 @@ void state_bound (cpp)
 	void *cpp;
 {
 	struct client_state *client = cpp;
+	int i;
 	struct option_cache *oc;
 	struct data_string ds;
 
@@ -986,6 +956,7 @@ void state_stop (cpp)
 	void *cpp;
 {
 	struct client_state *client = cpp;
+	int i;
 
 	/* Cancel all timeouts. */
 	cancel_timeout (state_selecting, client);
@@ -1098,6 +1069,8 @@ void dhcpoffer (packet)
 	int i;
 	int stop_selecting;
 	const char *name = packet -> packet_type ? "DHCPOFFER" : "BOOTREPLY";
+	struct iaddrlist *ap;
+	struct option_cache *oc;
 	char obuf [1024];
 	
 #ifdef DEBUG_PACKET
@@ -1685,7 +1658,6 @@ void send_request (cpp)
 
 	/* If the lease T2 time has elapsed, or if we're not yet bound,
 	   broadcast the DHCPREQUEST rather than unicasting. */
-	memset(&destination, 0, sizeof(destination));
 	if (client -> state == S_REQUESTING ||
 	    client -> state == S_REBOOTING ||
 	    cur_time > client -> active -> rebind)
@@ -1771,7 +1743,6 @@ void send_release (cpp)
 	struct sockaddr_in destination;
 	struct in_addr from;
 
-	memset(&destination, 0, sizeof(destination));
 	memcpy (&from, client -> active -> address.iabuf,
 		sizeof from);
 	memcpy (&destination.sin_addr.s_addr,
@@ -1901,6 +1872,7 @@ void make_discover (client, lease)
 	struct client_lease *lease;
 {
 	unsigned char discover = DHCPDISCOVER;
+	int i;
 	struct option_state *options = (struct option_state *)0;
 
 	memset (&client -> packet, 0, sizeof (client -> packet));
@@ -1964,6 +1936,9 @@ void make_request (client, lease)
 	struct client_lease *lease;
 {
 	unsigned char request = DHCPREQUEST;
+	int i, j;
+	unsigned char *tmp, *digest;
+	unsigned char *old_digest_loc;
 	struct option_cache *oc;
 
 	memset (&client -> packet, 0, sizeof (client -> packet));
@@ -2051,6 +2026,7 @@ void make_decline (client, lease)
 	struct client_lease *lease;
 {
 	unsigned char decline = DHCPDECLINE;
+	int i;
 	struct option_cache *oc;
 
 	struct option_state *options = (struct option_state *)0;
@@ -2106,6 +2082,7 @@ void make_release (client, lease)
 	struct client_lease *lease;
 {
 	unsigned char request = DHCPRELEASE;
+	int i;
 	struct option_cache *oc;
 
 	struct option_state *options = (struct option_state *)0;
@@ -2162,6 +2139,7 @@ void make_release (client, lease)
 void destroy_client_lease (lease)
 	struct client_lease *lease;
 {
+	int i;
 
 	if (lease -> server_name)
 		dfree (lease -> server_name, MDL);
@@ -2178,14 +2156,11 @@ void rewrite_client_leases ()
 	struct interface_info *ip;
 	struct client_state *client;
 	struct client_lease *lp;
-	int fd;
 
 	if (leaseFile)
 		fclose (leaseFile);
-	fd = open (path_dhclient_db, O_WRONLY|O_CREAT|O_TRUNC, 0600);
-	if (fd != -1)
-		leaseFile = fdopen (fd, "w");
-	if (fd == -1 || !leaseFile) {
+	leaseFile = fopen (path_dhclient_db, "w");
+	if (!leaseFile) {
 		log_error ("can't create %s: %m", path_dhclient_db);
 		return;
 	}
@@ -2228,6 +2203,8 @@ void write_lease_option (struct option_cache *oc,
 {
 	const char *name, *dot;
 	struct data_string ds;
+	int status;
+	struct client_state *client;
 
 	memset (&ds, 0, sizeof ds);
 
@@ -2258,7 +2235,9 @@ int write_client_lease (client, lease, rewrite, makesure)
 	int i;
 	struct tm *t;
 	static int leases_written;
+	struct option_cache *oc;
 	struct data_string ds;
+	pair *hash;
 	int errors = 0;
 	char *s;
 
@@ -2275,12 +2254,8 @@ int write_client_lease (client, lease, rewrite, makesure)
 		return 1;
 
 	if (!leaseFile) {	/* XXX */
-		int fd;
-
-		fd = open (path_dhclient_db, O_WRONLY|O_CREAT|O_TRUNC, 0600);
-		if (fd != -1)
-			leaseFile = fdopen (fd, "w");
-		if (fd == -1 || !leaseFile) {
+		leaseFile = fopen (path_dhclient_db, "w");
+		if (!leaseFile) {
 			log_error ("can't create %s: %m", path_dhclient_db);
 			return 0;
 		}
@@ -2498,6 +2473,8 @@ void script_write_params (client, prefix, lease)
 	int i;
 	struct data_string data;
 	struct option_cache *oc;
+	pair *hash;
+	char *s, *t;
 	struct envadd_state es;
 
 	es.client = client;
@@ -2574,9 +2551,11 @@ void script_write_params (client, prefix, lease)
 int script_go (client)
 	struct client_state *client;
 {
+	int rval;
 	char *scriptName;
 	char *argv [2];
 	char **envp;
+	char *epp [3];
 	char reason [] = "REASON=NBI";
 	static char client_path [] = CLIENT_PATH;
 	int i;
@@ -2652,7 +2631,7 @@ void client_envadd (struct client_state *client,
 {
 	char spbuf [1024];
 	char *s;
-	unsigned len;
+	unsigned len, i;
 	struct string_list *val;
 	va_list list;
 
@@ -3078,14 +3057,12 @@ void client_dns_update_timeout (void *cp)
 
 isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 {
-	struct data_string ddns_fwd_name,
+	struct data_string ddns_fqdn, ddns_fwd_name,
 	       ddns_dhcid, client_identifier;
 	struct option_cache *oc;
 	int ignorep;
 	int result;
 	isc_result_t rcode;
-
-	rcode = ISC_R_FAILURE;	/* XXXGCC -Wuninitialized */
 
 	/* If we didn't send an FQDN option, we certainly aren't going to
 	   be doing an update. */
@@ -3128,7 +3105,6 @@ isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 				    &global_scope, oc, MDL))
 		return ISC_R_SUCCESS;
 
-#ifndef SMALL
 	/* Make a dhcid string out of either the client identifier,
 	   if we are sending one, or the interface's MAC address,
 	   otherwise. */
@@ -3182,6 +3158,5 @@ isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 	
 	data_string_forget (&ddns_fwd_name, MDL);
 	data_string_forget (&ddns_dhcid, MDL);
-#endif
 	return rcode;
 }

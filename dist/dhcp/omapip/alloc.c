@@ -60,10 +60,10 @@ VOIDPTR dmalloc (size, file, line)
 	int line;
 {
 	unsigned char *foo = malloc (size + DMDSIZE);
+	int i;
 	VOIDPTR *bar;
 #if defined (DEBUG_MEMORY_LEAKAGE) || defined (DEBUG_MALLOC_POOL) || \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
-	int i;
 	struct dmalloc_preamble *dp;
 #endif
 	if (!foo)
@@ -508,8 +508,6 @@ isc_result_t omapi_object_allocate (omapi_object_t **o,
 	omapi_object_t *foo;
 	isc_result_t status;
 
-	tsize = 0;	/* XXXGCC -Wuninitialized */
-
 	if (type -> allocator) {
 		foo = (omapi_object_t *)0;
 		status = (*type -> allocator) (&foo, file, line);
@@ -796,11 +794,6 @@ isc_result_t omapi_typed_data_new (const char *file, int line,
 	omapi_object_t *obj = NULL;
 
 	va_start (l, type);
-
-	val = 0;	/* XXXGCC -Wuninitialized */
-	intval = 0;	/* XXXGCC -Wuninitialized */
-	s = NULL;	/* XXXGCC -Wuninitialized */
-	obj = NULL;	/* XXXGCC -Wuninitialized */
 
 	switch (type) {
 	      case omapi_datatype_int:

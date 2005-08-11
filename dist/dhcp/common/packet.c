@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.3 2005/08/11 16:54:28 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.1.1.4 2005/08/11 17:03:03 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -115,7 +115,7 @@ void assemble_hw_header (interface, buf, bufix, to)
 		assemble_tr_header (interface, buf, bufix, to);
 	else
 #endif
-#if defined (DEC_FDDI) || defined (NETBSD_FDDI)
+#if defined (DEC_FDDI)
 	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
 		     assemble_fddi_header (interface, buf, bufix, to);
 	else
@@ -147,7 +147,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	ip.ip_len = htons(sizeof(ip) + sizeof(udp) + len);
 	ip.ip_id = 0;
 	ip.ip_off = 0;
-	ip.ip_ttl = 32;
+	ip.ip_ttl = 16;
 	ip.ip_p = IPPROTO_UDP;
 	ip.ip_sum = 0;
 	ip.ip_src.s_addr = from;
@@ -200,7 +200,7 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 		return decode_tr_header (interface, buf, bufix, from);
 	else
 #endif
-#if defined (DEC_FDDI) || defined (NETBSD_FDDI)
+#if defined (DEC_FDDI)
 	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
 		     return decode_fddi_header (interface, buf, bufix, from);
 	else
@@ -210,13 +210,12 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 
 /* UDP header and IP header decoded together for convenience. */
 
-ssize_t decode_udp_ip_header (interface, buf, bufix, from, buflen, rbuflen)
+ssize_t decode_udp_ip_header (interface, buf, bufix, from, buflen)
 	struct interface_info *interface;
 	unsigned char *buf;
 	unsigned bufix;
 	struct sockaddr_in *from;
 	unsigned buflen;
-	unsigned *rbuflen;
 {
   unsigned char *data;
   struct ip ip;
@@ -235,7 +234,6 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, buflen, rbuflen)
 
   memcpy(&ip, buf + bufix, sizeof (struct ip));
   udp = (struct udphdr *)(buf + bufix + ip_len);
-  len = 0;	/* XXXGCC -Wuninitialized */
 
 #ifdef USERLAND_FILTER
   /* Is it a UDP packet? */
@@ -334,7 +332,6 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, buflen, rbuflen)
   /* Copy out the port... */
   memcpy (&from -> sin_port, &udp -> uh_sport, sizeof udp -> uh_sport);
 
-  *rbuflen = ntohs (ip.ip_len) - ip_len - sizeof *udp;
   return ip_len + sizeof *udp;
 }
 #endif /* PACKET_DECODING */

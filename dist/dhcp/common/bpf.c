@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.1.1.5 2005/08/11 17:03:01 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -53,7 +53,6 @@ static char copyright[] =
 #  endif
 # endif
 
-#include <paths.h>
 #include <netinet/in_systm.h>
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
@@ -86,21 +85,10 @@ int if_register_bpf (info)
 	struct interface_info *info;
 {
 	int sock;
-	u_int bufsize;
-
-	/* Open a BPF device */
-#ifdef _PATH_BPF
-	const char *filename = _PATH_BPF;
-	sock = open (filename, O_RDWR, 0);
-	if (sock < 0)
-		log_fatal ("No bpf devices.%s%s%s",
-		       "   Please read the README",
-		       " section for your operating",
-		       " system.");
-
-#else
 	char filename[50];
 	int b;
+
+	/* Open a BPF device */
 	for (b = 0; 1; b++) {
 		/* %Audit% 31 bytes max. %2004.06.17,Safe% */
 		sprintf(filename, BPF_FORMAT, b);
@@ -120,12 +108,6 @@ int if_register_bpf (info)
 			break;
 		}
 	}
-#endif
-
-	/* Set the BPF buffer size to 32k */
-	bufsize = 32768;
-	if (ioctl (sock, BIOCSBLEN, &bufsize) < 0)
-		log_error ("Can't set bpf buffer to %d: %m", bufsize);
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl (sock, BIOCSETIF, info -> ifp) < 0)
@@ -212,7 +194,7 @@ struct bpf_insn dhcp_bpf_filter [] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
-#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
+#if defined (DEC_FDDI)
 struct bpf_insn *bpf_fddi_filter;
 #endif
 
@@ -240,14 +222,12 @@ void if_register_receive (info)
 {
 	int flag = 1;
 	struct bpf_version v;
+	u_int32_t addr;
 	struct bpf_program p;
-#ifdef NEED_OSF_PFILT_HACKS
 	u_int32_t bits;
-#endif
-	u_int32_t len;
-#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
+#ifdef DEC_FDDI
 	int link_layer;
-#endif /* DEC_FDDI || NETBSD_FDDI */
+#endif /* DEC_FDDI */
 
 	/* Open a BPF device and hang it on this interface... */
 	info -> rfdesc = if_register_bpf (info);
@@ -282,9 +262,8 @@ void if_register_receive (info)
 		log_fatal ("Can't set ENBATCH|ENCOPYALL|ENBPFHDR: %m");
 #endif
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl (info -> rfdesc, BIOCGBLEN, &len) < 0)
+	if (ioctl (info -> rfdesc, BIOCGBLEN, &info -> rbuf_max) < 0)
 		log_fatal ("Can't get bpf buffer length: %m");
-	info -> rbuf_max = len;
 	info -> rbuf = dmalloc (info -> rbuf_max, MDL);
 	if (!info -> rbuf)
 		log_fatal ("Can't allocate %ld bytes for bpf input buffer.",
@@ -295,7 +274,7 @@ void if_register_receive (info)
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
 
-#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
+#ifdef DEC_FDDI
 	/* See if this is an FDDI interface, flag it for later. */
 	if (ioctl(info -> rfdesc, BIOCGDLT, &link_layer) >= 0 &&
 	    link_layer == DLT_FDDI) {
@@ -319,7 +298,7 @@ void if_register_receive (info)
 		}
 		p.bf_insns = bpf_fddi_filter;
 	} else
-#endif /* DEC_FDDI || NETBSD_FDDI */
+#endif /* DEC_FDDI */
 	p.bf_insns = dhcp_bpf_filter;
 
         /* Patch the server port into the BPF  program...
@@ -373,6 +352,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	double ip [32];
 	struct iovec iov [3];
 	int result;
+	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
@@ -411,7 +391,6 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int length = 0;
 	int offset = 0;
 	struct bpf_hdr hdr;
-	unsigned paylen;
 
 	/* All this complexity is because BPF doesn't guarantee
 	   that only one packet will be returned at a time.   We're
@@ -450,10 +429,6 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 			interface -> rbuf_offset = interface -> rbuf_len;
 			continue;
 		}
-
-		/* Adjust for any padding BPF inserted between the packets. */
-		interface -> rbuf_offset =
-		    BPF_WORDALIGN (interface -> rbuf_offset);
 
 		/* Copy out a bpf header... */
 		memcpy (&hdr, &interface -> rbuf [interface -> rbuf_offset],
@@ -503,7 +478,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 					       interface -> rbuf,
 					       interface -> rbuf_offset,
 					       from,
-					       hdr.bh_caplen, &paylen);
+					       hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
@@ -527,11 +502,11 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* Copy out the data in the packet... */
 		memcpy (buf, interface -> rbuf + interface -> rbuf_offset,
-			paylen);
+			hdr.bh_caplen);
 		interface -> rbuf_offset =
 			BPF_WORDALIGN (interface -> rbuf_offset +
 				       hdr.bh_caplen);
-		return paylen;
+		return hdr.bh_caplen;
 	} while (!length);
 	return 0;
 }

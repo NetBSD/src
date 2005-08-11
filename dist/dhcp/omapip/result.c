@@ -110,10 +110,9 @@ static const char *text[ISC_R_NRESULTS] = {
 
 const char *isc_result_totext (isc_result_t result)
 {
-	int tmp; /* XXX used to force a signed comparison below */
 	static char ebuf[40];
 
-	if ((tmp = result) >= ISC_R_SUCCESS && result < ISC_R_NRESULTS)
+	if (result >= ISC_R_SUCCESS && result < ISC_R_NRESULTS)
 		return text [result];
 	sprintf(ebuf, "unknown error: %d", result);
 	return ebuf;

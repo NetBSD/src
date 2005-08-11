@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.4 2005/08/11 16:54:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.5 2005/08/11 17:03:00 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -62,6 +62,7 @@ u_int32_t default_requested_options [] = {
 isc_result_t read_client_conf ()
 {
 	struct client_config *config;
+	struct client_state *state;
 	struct interface_info *ip;
 	isc_result_t status;
 
@@ -156,13 +157,8 @@ int read_client_conf_file (const char *name, struct interface_info *ip,
 	int token;
 	isc_result_t status;
 	
-	if ((file = open (name, O_RDONLY)) < 0) {
-#ifndef SMALL
+	if ((file = open (name, O_RDONLY)) < 0)
 		return uerr2isc (errno);
-#else
-		return errno == ENOENT ? ISC_R_NOTFOUND : ISC_R_NOPERM;
-#endif
-	}
 
 	cfile = (struct parse *)0;
 	new_parse (&cfile, file, (char *)0, 0, path_dhclient_conf, 0);
@@ -246,9 +242,11 @@ void parse_client_statement (cfile, ip, config)
 	int token;
 	const char *val;
 	struct option *option;
-	struct executable_statement *stmt;
+	struct executable_statement *stmt, **p;
+	enum statement_op op;
 	int lose;
 	char *name;
+	struct data_string key_id;
 	enum policy policy;
 	int known;
 	int tmp, i;
@@ -269,7 +267,6 @@ void parse_client_statement (cfile, ip, config)
 		}
 		return;
 		
-#if !defined (SMALL)
 	      case KEY:
 		next_token (&val, (unsigned *)0, cfile);
 		if (ip) {
@@ -291,7 +288,6 @@ void parse_client_statement (cfile, ip, config)
 		}
 		parse_key (cfile);
 		return;
-#endif
 
 		/* REQUIRE can either start a policy statement or a
 		   comma-seperated list of names of required options. */
@@ -433,44 +429,27 @@ void parse_client_statement (cfile, ip, config)
 	      case OMAPI:
 		token = next_token (&val, (unsigned *)0, cfile);
 		token = next_token (&val, (unsigned *)0, cfile);
-		if (config != &top_level_config) {
-			parse_warn (cfile,
-				    "omapi info must be at top level.");
-			skip_to_semi (cfile);
-			return;
-		}
-		if (token == PORT) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			if (token != NUMBER) {
-				parse_warn (cfile,
-					    "invalid port number: `%s'", val);
-				skip_to_semi (cfile);
-				return;
-			}
-			tmp = atoi (val);
-			if (tmp < 0 || tmp > 65535)
-				parse_warn (cfile,
-					    "invalid omapi port %d.", tmp);
-			config -> omapi_port = tmp;
-			parse_semi (cfile);
-#if !defined (SMALL)
-		} else if (token == KEY) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			if (token != STRING && !is_identifier (token)) {
-				parse_warn (cfile, "expecting key name.");
-				skip_to_semi (cfile);
-				break;
-			}
-			if (omapi_auth_key_lookup_name (&config -> omapi_key,
-							val) != ISC_R_SUCCESS)
-				parse_warn (cfile, "unknown key %s", val);
-			parse_semi (cfile);
-#endif
-		} else {
+		if (token != PORT) {
 			parse_warn (cfile,
 				    "unexpected omapi subtype: %s", val);
 			skip_to_semi (cfile);
+			return;
 		}
+		token = next_token (&val, (unsigned *)0, cfile);
+		if (token != NUMBER) {
+			parse_warn (cfile, "invalid port number: `%s'", val);
+			skip_to_semi (cfile);
+			return;
+		}
+		tmp = atoi (val);
+		if (tmp < 0 || tmp > 65535)
+			parse_warn (cfile, "invalid omapi port %d.", tmp);
+		else if (config != &top_level_config)
+			parse_warn (cfile,
+				    "omapi port only works at top level.");
+		else
+			config -> omapi_port = tmp;
+		parse_semi (cfile);
 		return;
 		
 	      case DO_FORWARD_UPDATE:
@@ -771,8 +750,6 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 	struct interface_info *ip = (struct interface_info *)0;
 	isc_result_t status;
 
-	status = ISC_R_FAILURE;		/* XXXGCC -Wuninitialized */
-
 	/* Find the interface (if any) that matches the name. */
 	for (i = interfaces; i; i = i -> next) {
 		if (!strcmp (i -> name, name)) {
@@ -918,13 +895,6 @@ void parse_client_lease_statement (cfile, is_static)
 		if (lp -> address.len == lease -> address.len &&
 		    !memcmp (lp -> address.iabuf, lease -> address.iabuf,
 			     lease -> address.len)) {
-			/* If the lease we found is a static lease, and
-			   this one expires earlier, discard this one. */
-			if (lp->is_static &&
-			    lp->expiry > lease->expiry) {
-				destroy_client_lease(lease);
-				return;
-			}
 			if (pl)
 				pl -> next = next;
 			else
@@ -993,12 +963,13 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 {
 	int token;
 	const char *val;
+	char *t, *n;
 	struct interface_info *ip;
 	struct option_cache *oc;
 	struct client_state *client = (struct client_state *)0;
+	struct data_string key_id;
 
 	switch (next_token (&val, (unsigned *)0, cfile)) {
-#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != STRING && !is_identifier (token)) {
@@ -1011,7 +982,6 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;
-#endif
 	      case TOKEN_BOOTP:
 		lease -> is_bootp = 1;
 		break;
@@ -1187,6 +1157,11 @@ int parse_allow_deny (oc, cfile, flag)
 	struct parse *cfile;
 	int flag;
 {
+	enum dhcp_token token;
+	const char *val;
+	unsigned char rf = flag;
+	struct expression *data = (struct expression *)0;
+	int status;
 
 	parse_warn (cfile, "allow/deny/ignore not permitted here.");
 	skip_to_semi (cfile);

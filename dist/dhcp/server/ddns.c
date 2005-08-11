@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.1.1.4 2005/08/11 16:54:48 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.1.1.5 2005/08/11 17:03:19 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -224,6 +224,7 @@ int ddns_updates (struct packet *packet,
 	struct data_string ddns_fwd_name;
 	struct data_string ddns_rev_name;
 	struct data_string ddns_dhcid;
+	unsigned len;
 	struct data_string d1;
 	struct option_cache *oc;
 	int s1, s2;
@@ -232,8 +233,6 @@ int ddns_updates (struct packet *packet,
 	int server_updates_a = 1;
 	struct buffer *bp = (struct buffer *)0;
 	int ignorep = 0;
-
-	s1 = 0;		/* XXXGCC -Wuninitialized [arm / sparc64] */
 
 	if (ddns_update_style != 2)
 		return 0;
@@ -660,6 +659,7 @@ int ddns_removals (struct lease *lease)
 	struct data_string ddns_rev_name;
 	struct data_string ddns_dhcid;
 	isc_result_t rcode;
+	struct binding *binding;
 	int result = 0;
 	int client_updated = 0;
 

@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: hash.c,v 1.1.1.3 2005/08/11 16:54:46 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: hash.c,v 1.1.1.4 2005/08/11 17:03:17 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -81,12 +81,12 @@ void free_hash_table (tp, file, line)
 	const char *file;
 	int line;
 {
-	struct hash_table *ptr = *tp;
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	int i;
 	struct hash_bucket *hbc, *hbn = (struct hash_bucket *)0;
+	struct hash_table *ptr = *tp;
 
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	for (i = 0; i < ptr -> hash_count; i++) {
 	    for (hbc = ptr -> buckets [i]; hbc; hbc = hbn) {
 		hbn = hbc -> next;
@@ -175,9 +175,8 @@ void free_hash_bucket (ptr, file, line)
 	const char *file;
 	int line;
 {
-#if defined (DEBUG_MALLOC_POOL)
 	struct hash_bucket *hp;
-
+#if defined (DEBUG_MALLOC_POOL)
 	for (hp = free_hash_buckets; hp; hp = hp -> next) {
 		if (hp == ptr) {
 			log_error ("hash bucket freed twice!");
@@ -398,13 +397,13 @@ int casecmp (const void *v1, const void *v2, unsigned long len)
 	for (i = 0; i < len; i++)
 	{
 		int c1, c2;
-		if (isupper ((unsigned char)s [i]))
-			c1 = tolower ((unsigned char)s [i]);
+		if (isascii (s [i]) && isupper (s [i]))
+			c1 = tolower (s [i]);
 		else
 			c1 = s [i];
 		
-		if (isupper ((unsigned char)t [i]))
-			c2 = tolower ((unsigned char)t [i]);
+		if (isascii (t [i]) && isupper (t [i]))
+			c2 = tolower (t [i]);
 		else
 			c2 = t [i];
 		

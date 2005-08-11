@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.1.1.4 2005/08/11 16:54:47 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.5 2005/08/11 17:03:18 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -97,10 +97,10 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static const char copyright [] = "Copyright 2004-2005 Internet Systems Consortium.";
-static const char arr [] = "All rights reserved.";
-static const char message [] = "Internet Systems Consortium DHCP Relay Agent";
-static const char url [] = "For info, please visit http://www.isc.org/sw/dhcp/";
+static char copyright [] = "Copyright 2004-2005 Internet Systems Consortium.";
+static char arr [] = "All rights reserved.";
+static char message [] = "Internet Systems Consortium DHCP Relay Agent";
+static char url [] = "For info, please visit http://www.isc.org/sw/dhcp/";
 
 int main (argc, argv, envp)
 	int argc;
@@ -717,7 +717,7 @@ int add_relay_agent_options (ip, packet, length, giaddr)
 	unsigned length;
 	struct in_addr giaddr;
 {
-	int is_dhcp = 0;
+	int is_dhcp = 0, agent_options_present = 0;
 	u_int8_t *op, *sp, *max, *end_pad = 0;
 
 	/* If we're not adding agent options to packets, we can skip

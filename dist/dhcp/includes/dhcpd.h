@@ -35,9 +35,6 @@
 #ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>
-#ifndef SMALL
-#include <netinet6/ipsec.h>
-#endif
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
@@ -717,15 +714,12 @@ struct client_config {
 
 	struct iaddrlist *reject_list;	/* Servers to reject. */
 
+	int omapi_port;			/* port on which to accept OMAPI
+					   connections, or -1 for no
+					   listener. */
 	int do_forward_update;		/* If nonzero, and if we have the
 					   information we need, update the
 					   A record for the address we get. */
-
-	omapi_auth_key_t *omapi_key;	/* Key to use for authenticating
-					   OMAPI connections. */
-	int omapi_port;			/* Port on which to listen for OMAPI
-					   connections. */
-
 };
 
 /* Per-interface state used in the dhcp client... */
@@ -1934,7 +1928,7 @@ ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
 				 unsigned, struct hardware *));
 ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				     unsigned, struct sockaddr_in *,
-				     unsigned, unsigned *));
+				     unsigned));
 
 /* ethernet.c */
 void assemble_ethernet_header PROTO ((struct interface_info *, unsigned char *,
@@ -2034,14 +2028,6 @@ void icmp_startup PROTO ((int, void (*) PROTO ((struct iaddr,
 int icmp_readsocket PROTO ((omapi_object_t *));
 int icmp_echorequest PROTO ((struct iaddr *));
 isc_result_t icmp_echoreply PROTO ((omapi_object_t *));
-
-/* fddi.c */
-#if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
-void assemble_fddi_header (struct interface_info *,
-	unsigned char *, unsigned *, struct hardware *);
-ssize_t decode_fddi_header (struct interface_info *,
-     unsigned char *, unsigned, struct hardware *);
-#endif /* PACKET_ASSEMBLY || PACKET_DECODING */
 
 /* dns.c */
 #if defined (NSUPDATE)

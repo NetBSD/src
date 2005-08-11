@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.2 2005/08/11 16:54:45 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.1.1.3 2005/08/11 17:03:16 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -63,8 +63,7 @@ void log_fatal (const char * fmt, ... )
    * If we truncate we hope the user can get a hint from the log.
    */
   va_start (list, fmt);
-  fmt = fbuf;
-  vsnprintf (mbuf, sizeof mbuf, fmt, list);
+  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -113,8 +112,7 @@ int log_error (const char * fmt, ...)
    * If we truncate we hope the user can get a hint from the log.
    */
   va_start (list, fmt);
-  fmt = fbuf;
-  vsnprintf (mbuf, sizeof mbuf, fmt, list);
+  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -141,8 +139,7 @@ int log_info (const char *fmt, ...)
    * If we truncate we hope the user can get a hint from the log.
    */
   va_start (list, fmt);
-  fmt = fbuf;
-  vsnprintf (mbuf, sizeof mbuf, fmt, list);
+  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -169,8 +166,7 @@ int log_debug (const char *fmt, ...)
    * If we truncate we hope the user can get a hint from the log.
    */
   va_start (list, fmt);
-  fmt = fbuf;
-  vsnprintf (mbuf, sizeof mbuf, fmt, list);
+  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
   va_end (list);
 
 #ifndef DEBUG

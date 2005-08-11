@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omshell.c,v 1.1.1.4 2005/08/11 16:54:30 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: omshell.c,v 1.1.1.5 2005/08/11 17:03:06 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <time.h>
@@ -82,9 +82,11 @@ int main (int argc, char **argv, char **envp)
 	dhcpctl_handle connection;
 	dhcpctl_handle authenticator;
 	dhcpctl_handle oh;
+	dhcpctl_data_string cid, ip_addr;
+	dhcpctl_data_string result, groupname, identifier;
 	struct data_string secret;
 	const char *name = 0, *algorithm = "hmac-md5";
-	int i;
+	int i, j;
 	int port = 7911;
 	const char *server = "127.0.0.1";
 	struct parse *cfile;

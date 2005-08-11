@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.1.1.4 2005/08/11 16:54:27 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.1.1.5 2005/08/11 17:03:03 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -54,6 +54,8 @@ int execute_statements (result, packet, lease, client_state,
 	struct executable_statement *r, *e, *next;
 	int rc;
 	int status;
+	unsigned long num;
+	struct binding_scope *outer;
 	struct binding *binding;
 	struct data_string ds;
 	struct binding_scope *ns;
@@ -281,6 +283,7 @@ int execute_statements (result, packet, lease, client_state,
 					binding -> next = (*scope) -> bindings;
 					(*scope) -> bindings = binding;
 				    } else {
+				       badalloc:
 					dfree (binding, MDL);
 					binding = (struct binding *)0;
 				    }
@@ -343,7 +346,6 @@ int execute_statements (result, packet, lease, client_state,
 			log_debug ("exec: let %s", r -> data.let.name);
 #endif
 			ns = (struct binding_scope *)0;
-			binding = (struct binding *)0;
 			binding_scope_allocate (&ns, MDL);
 			e = r;
 
@@ -524,6 +526,7 @@ int executable_statement_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	struct executable_statement *bp;
 
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -647,13 +650,13 @@ void write_statements (file, statements, indent)
 	int indent;
 {
 	struct executable_statement *r, *x;
+	int result;
+	int status;
 	const char *s, *t, *dot;
 	int col;
 
 	if (!statements)
 		return;
-
-	col = 0;	/* XXXGCC -Wuninitialized */
 
 	for (r = statements; r; r = r -> next) {
 		switch (r -> op) {
@@ -903,8 +906,10 @@ int find_matching_case (struct executable_statement **ep,
 {
 	int status, sub;
 	struct executable_statement *s;
+	unsigned long foo;
 
 	if (is_data_expression (expr)) {
+		struct executable_statement *e;
 		struct data_string cd, ds;
 		memset (&ds, 0, sizeof ds);
 		memset (&cd, 0, sizeof cd);
@@ -978,6 +983,7 @@ int executable_statement_foreach (struct executable_statement *stmt,
 {
 	struct executable_statement *foo;
 	int ok = 0;
+	int result;
 
 	for (foo = stmt; foo; foo = foo -> next) {
 	    if ((*callback) (foo, vp, condp) != 0)

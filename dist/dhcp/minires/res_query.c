@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -72,7 +76,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_query.c,v 1.1.1.2 2005/08/11 16:54:44 drochner Exp $";
+static const char rcsid[] = "$Id: res_query.c,v 1.1.1.3 2005/08/11 17:03:16 drochner Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -391,17 +395,17 @@ res_hostalias(const res_state statp, const char *name, char *dst, size_t siz) {
 	setbuf(fp, NULL);
 	buf[sizeof(buf) - 1] = '\0';
 	while (fgets(buf, sizeof(buf), fp)) {
-		for (cp1 = buf; *cp1 && !isspace((unsigned char)*cp1); ++cp1)
+		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1)
 			;
 		if (!*cp1)
 			break;
 		*cp1 = '\0';
 		if (ns_samename(buf, name) == 1) {
-			while (isspace((unsigned char)*++cp1))
+			while (isspace(*++cp1))
 				;
 			if (!*cp1)
 				break;
-			for (cp2 = cp1 + 1; *cp2 && !isspace((unsigned char)*cp2); ++cp2)
+			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
 				;
 			*cp2 = '\0';
 			strncpy(dst, cp1, siz - 1);

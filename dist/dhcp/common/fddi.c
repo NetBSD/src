@@ -34,22 +34,14 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: fddi.c,v 1.1.1.3 2005/08/11 16:54:27 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: fddi.c,v 1.1.1.4 2005/08/11 17:03:03 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
-#if defined (DEC_FDDI) || defined (NETBSD_FDDI)
 #if defined (DEC_FDDI)
 #include <netinet/if_fddi.h>
 #include <net/if_llc.h>
-#endif /* DEC_FDDI */
-
-#if defined (NETBSD_FDDI)
-#include <net/if_fddi.h>
-#include <net/if_llc.h>
-#define LLC_SNAP_LEN LLC_SNAPFRAMELEN
-#endif /* NETBSD_FDDI */
 
 #if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
 #include "includes/netinet/if_ether.h"
@@ -58,8 +50,11 @@ static char copyright[] =
 #if defined (PACKET_ASSEMBLY)
 /* Assemble an hardware header... */
 
-void assemble_fddi_header (struct interface_info *interface,
-	unsigned char *buf, unsigned *bufix, struct hardware *to)
+void assemble_fddi_header (interface, buf, bufix, to)
+	struct interface_info *interface;
+	unsigned char *buf;
+	unsigned *bufix;
+	struct hardware *to;
 {
 	struct fddi_header   fh;
 	struct llc     lh;
@@ -73,7 +68,6 @@ void assemble_fddi_header (struct interface_info *interface,
 	memcpy (&buf [*bufix], &fh, sizeof fh);
 	*bufix += sizeof fh;
 
-	memset (&lh, 0, sizeof lh);
 	lh.llc_dsap = LLC_SNAP_LSAP;
 	lh.llc_ssap = LLC_SNAP_LSAP;
 	lh.llc_un.type_snap.control = LLC_UI;
@@ -86,17 +80,18 @@ void assemble_fddi_header (struct interface_info *interface,
 #ifdef PACKET_DECODING
 /* Decode a hardware header... */
 
-ssize_t decode_fddi_header (struct interface_info *interface,
-     unsigned char *buf, unsigned bufix, struct hardware *from)
+ssize_t decode_fddi_header (interface, buf, bufix, from)
+     struct interface_info *interface;
+     unsigned char *buf;
+     unsigned bufix;
+     struct hardware *from;
 {
 	struct fddi_header   fh;
-
-	memcpy(&fh, buf + bufix, FDDI_HEADER_SIZE);
-
+	struct llc     lh;
+	
 	from -> hbuf [0] = HTYPE_FDDI;
-	from -> hlen = (sizeof fh.fddi_shost) + 1;
 	memcpy (&from -> hbuf [1], fh.fddi_shost, sizeof fh.fddi_shost);
 	return FDDI_HEADER_SIZE + LLC_SNAP_LEN;
 }
 #endif /* PACKET_DECODING */
-#endif /* DEC_FDDI || NETBSD_FDDI */
+#endif /* DEC_FDDI */

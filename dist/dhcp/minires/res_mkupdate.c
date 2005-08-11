@@ -27,7 +27,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.2 2005/08/11 16:54:44 drochner Exp $";
+static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.3 2005/08/11 17:03:15 drochner Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ res_nmkupdate(res_state statp,
 	u_int16_t rtype, rclass;
 	u_int32_t n1, rttl;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
-	unsigned certlen;
+	unsigned siglen, certlen;
 	int keylen;
 	unsigned buflen = *blp;
 	u_char *buf = (unsigned char *)bp;

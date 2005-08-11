@@ -21,11 +21,11 @@
 .\"   <info@isc.org>
 .\"   http://www.isc.org/
 .\"
-.\" $Id: dhclient.8,v 1.1.1.4 2005/08/11 16:54:21 drochner Exp $
+.\" $Id: dhclient.8,v 1.1.1.5 2005/08/11 17:03:00 drochner Exp $
 .\"
 .TH dhclient 8
 .SH NAME
-dhclient - Dynamic Host Configuration Protocol (DHCP) Client
+dhclient - Dynamic Host Configuration Protocol Client
 .SH SYNOPSIS
 .B dhclient
 [
@@ -40,9 +40,6 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 ]
 [
 .B -1
-]
-[
-.B -o
 ]
 [
 .B -r
@@ -91,8 +88,6 @@ The Internet Systems Consortium DHCP Client, dhclient, provides a
 means for configuring one or more network interfaces using the Dynamic
 Host Configuration Protocol, BOOTP protocol, or if these protocols
 fail, by statically assigning an address.
-.SH SYSTEM REQUIREMENTS
-You must have the Berkeley Packet Filter (bpf) configured in your NetBSD kernel.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host to contact a central server which
@@ -212,21 +207,14 @@ The
 flag cause dhclient to try once to get a lease.  If it fails, dhclient exits
 with exit code two.
 .PP
-The
-.B -o
-flag cause dhclient to assume that it's been given a fixed lease, so once it
-installs the lease, it exits.   This is really only useful on very small
-systems, and only works on a single interface at a time - if you want it to
-support multiple interfaces, run dhclient on each interface in succession.
-.PP
 The DHCP client normally gets its configuration information from
-.B /etc/dhclient.conf,
+.B ETCDIR/dhclient.conf,
 its lease database from
-.B /var/db/dhclient.leases,
+.B DBDIR/dhclient.leases,
 stores its process ID in a file called
-.B /var/run/dhclient.pid,
+.B RUNDIR/dhclient.pid,
 and configures the network interface using
-.B /sbin/dhclient-script
+.B CLIENTBINDIR/dhclient-script
 To specify different names and/or locations for these files, use the
 .B -cf,
 .B -lf,
@@ -235,9 +223,9 @@ and
 .B -sf
 flags, respectively, followed by the name of the file.   This can be
 particularly useful if, for example,
-.B /var/db
+.B DBDIR
 or
-.B /var/run
+.B RUNDIR
 has not yet been mounted when the DHCP client is started.
 .PP
 The DHCP client normally exits if it isn't able to identify any
@@ -247,7 +235,7 @@ broadcast interface may be added after system startup.   The
 .B -w
 flag can be used to cause the client not to exit when it doesn't find
 any such interfaces.   The
-.B omshell (1)
+.B omshell (8)
 program can then be used to notify the client when a network interface
 has been added or removed, so that the client can attempt to configure an IP
 address on that interface.
@@ -298,9 +286,9 @@ do a DHCPRELEASE.   To pause it, set its state attribute to 3.   To
 resume it, set its state attribute to 4.
 .PP
 .SH FILES
-.B /sbin/dhclient-script,
-.B /etc/dhclient.conf, /var/db/dhclient.leases, /var/run/dhclient.pid,
-.B /var/db/dhclient.leases~.
+.B CLIENTBINDIR/dhclient-script,
+.B ETCDIR/dhclient.conf, DBDIR/dhclient.leases, RUNDIR/dhclient.pid,
+.B DBDIR/dhclient.leases~.
 .SH SEE ALSO
 dhcpd(8), dhcrelay(8), dhclient-script(8), dhclient.conf(5),
 dhclient.leases(5).

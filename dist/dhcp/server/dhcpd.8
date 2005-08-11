@@ -28,7 +28,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.8,v 1.1.1.4 2005/08/11 16:54:50 drochner Exp $
+.\" $Id: dhcpd.8,v 1.1.1.5 2005/08/11 17:03:20 drochner Exp $
 .\"
 .TH dhcpd 8
 .SH NAME
@@ -149,7 +149,7 @@ BOOTP client, permanently assigning an address to each client.
 Whenever changes are made to the dhcpd.conf file, dhcpd must be
 restarted.   To restart dhcpd, send a SIGTERM (signal 15) to the
 process ID contained in
-.IR /var/run/dhcpd.pid ,
+.IR RUNDIR/dhcpd.pid ,
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
@@ -428,7 +428,7 @@ currently supported).
 .PP
 .B pool \fIhandle\fR examine
 .RS 0.5i
-the pool object associated with this lease (the pool object is not
+the pool object associted with this lease (the pool object is not
 currently supported).
 .RE
 .PP
@@ -720,8 +720,8 @@ Indicates the number of update messages that have been received from
 the failover partner but not yet processed.
 .RE
 .SH FILES
-.B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
-.B /var/db/dhcpd.leases~.
+.B ETCDIR/dhcpd.conf, DBDIR/dhcpd.leases, RUNDIR/dhcpd.pid,
+.B DBDIR/dhcpd.leases~.
 .SH SEE ALSO
 dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .SH AUTHOR

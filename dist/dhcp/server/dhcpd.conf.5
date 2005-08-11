@@ -28,7 +28,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.conf.5,v 1.1.1.4 2005/08/11 16:54:52 drochner Exp $
+.\" $Id: dhcpd.conf.5,v 1.1.1.5 2005/08/11 17:03:21 drochner Exp $
 .\"
 .TH dhcpd.conf 5
 .SH NAME
@@ -504,7 +504,7 @@ failover.   You do not have to do failover for all pools on a given
 network segment.    You must not tell one server it's doing failover
 on a particular address pool and tell the other it is not.   You must
 not have any common address pools on which you are not doing
-failover.  A pool declaration that uses failover would look like this:
+failover.  A pool declaration that utilizes failover would look like this:
 .PP
 .nf
 pool {
@@ -890,7 +890,7 @@ class "jr-cable-modems" {
 }
 
 class "dv-dsl-modems" {
-  match if option dhcp-vendor-identifier = "dvdsl";
+  match if opton dhcp-vendor-identifier = "dvdsl";
   spawn with option agent.circuit-id;
   lease limit 16;
 }
@@ -1502,7 +1502,7 @@ that client will not be able to get an address from the DHCP server.
  \fBdeny duplicates;\fR
 .PP
 Host declarations can match client messages based on the DHCP Client
-Identifier option or based on the client's network hardware type and
+Identifer option or based on the client's network hardware type and
 MAC address.   If the MAC address is used, the host declaration will
 match any client with that MAC address - even clients with different
 client identifiers.   This doesn't normally happen, but is possible
@@ -1836,7 +1836,7 @@ statement
 The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
 for all leases assigned dynamically to BOOTP clients.  Because BOOTP
 clients do not have any way of renewing leases, and don't know that
-their leases could expire, by default dhcpd assigns infinite leases
+their leases could expire, by default dhcpd assignes infinite leases
 to all BOOTP clients.  However, it may make sense in some situations
 to set a cutoff date for all BOOTP leases - for example, the end of a
 school term, or the time at night when a facility is closed and all

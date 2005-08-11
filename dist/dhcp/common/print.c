@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.4 2005/08/11 16:54:28 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.5 2005/08/11 17:03:04 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -48,7 +48,7 @@ char *quotify_string (const char *s, const char *file, int line)
 	for (sp = s; sp && *sp; sp++) {
 		if (*sp == ' ')
 			len++;
-		else if (!isascii (*sp) || !isprint ((unsigned char)*sp))
+		else if (!isascii (*sp) || !isprint (*sp))
 			len += 4;
 		else if (*sp == '"' || *sp == '\\')
 			len += 2;
@@ -62,7 +62,7 @@ char *quotify_string (const char *s, const char *file, int line)
 		for (sp = s; sp && *sp; sp++) {
 			if (*sp == ' ')
 				*nsp++ = ' ';
-			else if (!isascii (*sp) || !isprint ((unsigned char)*sp)) {
+			else if (!isascii (*sp) || !isprint (*sp)) {
 				sprintf (nsp, "\\%03o",
 					 *(const unsigned char *)sp);
 				nsp += 4;
@@ -311,7 +311,7 @@ void dump_raw (buf, len)
 			lbuf[54]=' ';
 			lbuf[55]=' ';
 			lbuf[73]='\0';
-			log_info ("%s", lbuf);
+			log_info (lbuf);
 		  }
 		  memset(lbuf, ' ', 79);
 		  lbuf [79] = 0;
@@ -335,7 +335,7 @@ void dump_raw (buf, len)
 	lbuf[54]=' ';
 	lbuf[55]=' ';
 	lbuf[73]='\0';
-	log_info ("%s", lbuf);
+	log_info (lbuf);
 }
 
 void hash_dump (table)
@@ -1043,6 +1043,7 @@ int token_print_indent_concat (FILE *file, int col,  int indent,
 			       const char *suffix, ...)
 {
 	va_list list;
+	char *buf;
 	unsigned len;
 	char *s, *t, *u;
 
@@ -1080,6 +1081,7 @@ int token_indent_data_string (FILE *file, int col, int indent,
 			      struct data_string *data)
 {
 	int i;
+	char *buf;
 	char obuf [3];
 
 	/* See if this is just ASCII. */

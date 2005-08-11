@@ -85,6 +85,7 @@ void trace_mr_statp_setup (res_state statp)
 	unsigned buflen = 0;
 	char *buf = (char *)0;
 	isc_result_t status;
+	u_int32_t id;
 	int i;
 
 	if (trace_playback ()) {
@@ -108,8 +109,8 @@ void trace_mr_statp_setup (res_state statp)
 			statp -> nsaddr_list [i].sin_len =
 				sizeof (struct sockaddr_in);
 #endif
-			memset (&statp -> nsaddr_list [i], 0,
-				sizeof statp -> nsaddr_list [i]);
+			memset (&statp -> nsaddr_list [i].sin_zero, 0,
+				sizeof statp -> nsaddr_list [i].sin_zero);
 			statp -> nsaddr_list [i].sin_port = htons (53); /*XXX*/
 			statp -> nsaddr_list [i].sin_family = AF_INET;
 			memcpy (&statp -> nsaddr_list [i].sin_addr,
@@ -223,8 +224,6 @@ ssize_t trace_mr_read_playback (struct sockaddr_in *from,
 			return -1;
 		}
 		if (from)
-			memset (from, 0, sizeof *from);
-		if (from)
 			memcpy (&from -> sin_addr, bufp,
 				sizeof from -> sin_addr);
 		bufp += sizeof from -> sin_addr;
@@ -239,6 +238,7 @@ ssize_t trace_mr_read_playback (struct sockaddr_in *from,
 #if defined(HAVE_SA_LEN)
 			from -> sin_len = sizeof (struct sockaddr_in);
 #endif
+			memset (from -> sin_zero, 0, sizeof from -> sin_zero);
 		}
 		if (left > nbytes) {
 			log_error ("trace_mr_recvfrom: too much%s",
@@ -412,6 +412,7 @@ unsigned int trace_mr_res_randomid (unsigned int oldid)
 	isc_result_t status;
 
 	if (trace_playback ()) {
+		int nscount;
 		status = trace_get_packet (&trace_mr_randomid, &buflen, &buf);
 		if (status != ISC_R_SUCCESS) {
 			log_error ("trace_mr_statp: no statp packet found.");

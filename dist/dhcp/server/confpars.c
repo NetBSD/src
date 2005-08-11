@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.4 2005/08/11 16:54:47 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.5 2005/08/11 17:03:19 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -78,7 +78,6 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	unsigned tflen, ulen;
 	trace_type_t *ttype;
 
-	file = -1;
 	if (leasep)
 		ttype = trace_readleases_type;
 	else
@@ -330,12 +329,15 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 	enum dhcp_token token;
 	const char *val;
 	struct shared_network *share;
-	char *n;
+	char *t, *n;
+	struct expression *expr;
+	struct data_string data;
 	struct hardware hardware;
 	struct executable_statement *et, *ep;
 	struct option *option;
 	struct option_cache *cache;
 	int lose;
+	struct data_string key_id;
 	int known;
 	isc_result_t status;
 
@@ -910,6 +912,7 @@ void parse_failover_peer (cfile, group, type)
 					    "load balance settings.");
 			if (token != NUMBER) {
 				parse_warn (cfile, "expecting number");
+			      badsplit:
 				skip_to_rbrace (cfile, 1);
 				dhcp_failover_state_dereference (&peer, MDL);
 				return;
@@ -1513,6 +1516,7 @@ void parse_pool_statement (cfile, group, type)
 
 	/* See if there's already a pool into which we can merge this one. */
 	for (pp = pool -> shared_network -> pools; pp; pp = pp -> next) {
+		struct lease *l;
 
 		if (pp -> group -> statements != pool -> group -> statements)
 			continue;
@@ -2226,6 +2230,7 @@ void parse_subnet_declaration (cfile, share)
 	unsigned char addr [4];
 	unsigned len = sizeof addr;
 	int declaration = 0;
+	struct interface_info *ip;
 	isc_result_t status;
 
 	subnet = (struct subnet *)0;
@@ -2519,6 +2524,8 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	char tbuf [32];
 	struct lease *lease;
 	struct executable_statement *on;
+	struct expression *exp;
+	struct data_string ds;
 	int lose;
 	TIME t;
 	char *s;
@@ -2530,10 +2537,6 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	binding_state_t new_state;
 	unsigned buflen = 0;
 	struct class *class;
-
-	seenbit = 0;	/* XXXGCC -Wuninitialized */
-	newbinding = 0;	/* XXXGCC -Wuninitialized */
-	new_state = 0;	/* XXXGCC -Wuninitialized */
 
 	lease = (struct lease *)0;
 	status = lease_allocate (&lease, MDL);
@@ -2942,6 +2945,7 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 
 			token = peek_token (&val, (unsigned *)0, cfile);
 			if (token == STRING) {
+			    unsigned char *tuid;
 			    token = next_token (&val, &buflen, cfile);
 			    binding -> value -> type = binding_data;
 			    binding -> value -> value.data.len = buflen;
@@ -3098,6 +3102,7 @@ void parse_address_range (cfile, group, type, inpool, lpchain)
 	int dynamic = 0;
 	struct subnet *subnet;
 	struct shared_network *share;
+	struct pool *p;
 	struct pool *pool;
 	isc_result_t status;
 

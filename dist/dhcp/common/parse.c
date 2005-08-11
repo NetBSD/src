@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.4 2005/08/11 16:54:26 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.5 2005/08/11 17:03:04 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -311,6 +311,8 @@ int parse_ip_addr (cfile, addr)
 	struct parse *cfile;
 	struct iaddr *addr;
 {
+	const char *val;
+	enum dhcp_token token;
 
 	addr -> len = 4;
 	if (parse_numeric_aggregate (cfile, addr -> iabuf,
@@ -536,7 +538,7 @@ void convert_num (cfile, buf, str, base, size)
 			if (ptr [1] == 'x') {
 				base = 16;
 				ptr += 2;
-			} else if (isdigit ((unsigned char)ptr [1])) {
+			} else if (isascii (ptr [1]) && isdigit (ptr [1])) {
 				base = 8;
 				ptr += 1;
 			} else {
@@ -647,6 +649,7 @@ void convert_num (cfile, buf, str, base, size)
 TIME parse_date (cfile)
 	struct parse *cfile;
 {
+	struct tm tm;
 	int guess;
 	int tzoff, wday, year, mon, mday, hour, min, sec;
 	const char *val;
@@ -1018,6 +1021,7 @@ int parse_option_code_definition (cfile, option)
 	char tokbuf [128];
 	unsigned tokix = 0;
 	char type;
+	int code;
 	int is_signed;
 	char *s;
 	int has_encapsulation = 0;
@@ -1506,6 +1510,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 {
 	enum dhcp_token token;
 	const char *val;
+	struct executable_statement base;
 	struct class *cta;
 	struct option *option;
 	struct option_cache *cache;
@@ -1808,6 +1813,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		if (token != NAME && token != NUMBER_OR_NAME) {
 			parse_warn (cfile,
 				    "%s can't be a variable name", val);
+		      badunset:
 			skip_to_semi (cfile);
 			*lose = 1;
 			return 0;
@@ -1985,7 +1991,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		return 1;
 		
 		/* Also not really a statement, but same idea as above. */
-#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (!parse_key (cfile)) {
@@ -1993,7 +1998,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			return 0;
 		}
 		return 1;
-#endif
 
 	      default:
 		if (config_universe && is_identifier (token)) {
@@ -2130,7 +2134,6 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    }
 		    break;
 
-#if !defined (SMALL)
 		  case KEY:
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    token = peek_token (&val, (unsigned *)0, cfile);
@@ -2154,8 +2157,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    if (!parse_semi (cfile))
 			    return 0;
 		    break;
-#endif
-
+		    
 		  default:
 		    done = 1;
 		    break;
@@ -2178,7 +2180,6 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
    secret-definition :== SECRET base64val |
 			 SECRET STRING */
 
-#if !defined (SMALL)
 int parse_key (struct parse *cfile)
 {
 	int token;
@@ -2318,7 +2319,6 @@ int parse_key (struct parse *cfile)
 	omapi_auth_key_dereference (&key, MDL);
 	return 0;
 }
-#endif
 
 /*
  * on-statement :== event-types LBRACE executable-statements RBRACE
@@ -2788,12 +2788,16 @@ int parse_non_binary (expr, cfile, lose, context)
 	enum dhcp_token token;
 	const char *val;
 	struct collection *col;
+	struct option *option;
 	struct expression *nexp, **ep;
 	int known;
 	enum expr_op opcode;
 	const char *s;
 	char *cptr;
+	struct executable_statement *stmt;
+	int i;
 	unsigned long u;
+	isc_result_t status, code;
 	unsigned len;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
@@ -3281,6 +3285,7 @@ int parse_non_binary (expr, cfile, lose, context)
 					parse_warn
 						(cfile,
 						 "expecting dns expression.");
+			      badnstrans:
 				expression_dereference (expr, MDL);
 				*lose = 1;
 				return 0;
@@ -4188,6 +4193,8 @@ int parse_option_statement (result, cfile, lookups, option, op)
 	struct expression *expr = (struct expression *)0;
 	struct expression *tmp;
 	int lose;
+	struct executable_statement *stmt;
+	int ftt = 1;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == SEMI) {
@@ -4305,7 +4312,9 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 	struct expression *t = (struct expression *)0;
 	unsigned char buf [4];
 	unsigned len;
+	unsigned char *ob;
 	struct iaddr addr;
+	int num;
 	const char *f, *g;
 	struct enumeration_value *e;
 
@@ -4546,6 +4555,7 @@ int parse_option_decl (oc, cfile)
 		/* Set a flag if this is an array of a simple type (i.e.,
 		   not an array of pairs of IP addresses, or something
 		   like that. */
+		int uniform = option -> format [1] == 'A';
 
 		for (fmt = option -> format; *fmt; fmt++) {
 			if (*fmt == 'A')
@@ -4745,6 +4755,7 @@ int parse_X (cfile, buf, max)
 	int token;
 	const char *val;
 	unsigned len;
+	u_int8_t *s;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -4802,10 +4813,7 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 		  cfile -> tlname, cfile -> lexline, mbuf);
 	
 	va_start (list, fmt);
-
-	fmt = fbuf;
-	vsnprintf (mbuf, sizeof mbuf, fmt, list);
-
+	vsnprintf (mbuf, sizeof mbuf, fbuf, list);
 	va_end (list);
 
 	lix = 0;
@@ -4814,7 +4822,7 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 		if (lix < (sizeof lexbuf) - 1)
 			lexbuf [lix++] = ' ';
 		if (cfile -> token_line [i] == '\t') {
-			for (/*lix*/;
+			for (lix;
 			     lix < (sizeof lexbuf) - 1 && (lix & 7); lix++)
 				lexbuf [lix] = ' ';
 		}

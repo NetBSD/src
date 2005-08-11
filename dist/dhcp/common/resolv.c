@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: resolv.c,v 1.1.1.3 2005/08/11 16:54:28 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: resolv.c,v 1.1.1.4 2005/08/11 17:03:04 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -50,8 +50,10 @@ void read_resolv_conf (parse_time)
 	struct parse *cfile;
 	const char *val;
 	int token;
+	int declaration = 0;
 	struct name_server *sp, *sl, *ns;
 	struct domain_search_list *dp, *dl, *nd;
+	struct iaddr *iaddr;
 
 	if ((file = open (path_resolv_conf, O_RDONLY)) < 0) {
 		log_error ("Can't open %s: %m", path_resolv_conf);
@@ -123,7 +125,6 @@ void read_resolv_conf (parse_time)
 					       piaddr (iaddr));
 				ns -> next = (struct name_server *)0;
 				*sp = ns;
-				memset (&ns->addr, 0, sizeof ns->addr);
 				memcpy (&ns -> addr.sin_addr,
 					iaddr.iabuf, iaddr.len);
 #ifdef HAVE_SA_LEN
@@ -131,6 +132,8 @@ void read_resolv_conf (parse_time)
 #endif
 				ns -> addr.sin_family = AF_INET;
 				ns -> addr.sin_port = htons (53);
+				memset (ns -> addr.sin_zero, 0,
+					sizeof ns -> addr.sin_zero);
 			}
 			ns -> rcdate = parse_time;
 			skip_to_semi (cfile);
@@ -177,6 +180,7 @@ void read_resolv_conf (parse_time)
 
 struct name_server *first_name_server ()
 {
+	FILE *rc;
 	static TIME rcdate;
 	struct stat st;
 
@@ -187,6 +191,8 @@ struct name_server *first_name_server ()
 			return (struct name_server *)0;
 		}
 		if (st.st_mtime > rcdate) {
+			char rcbuf [512];
+			char *s, *t, *u;
 			rcdate = cur_time + 1;
 			
 			read_resolv_conf (rcdate);

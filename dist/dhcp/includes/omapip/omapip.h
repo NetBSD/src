@@ -251,12 +251,12 @@ isc_result_t name##_array_lookup (stype **,				      \
 		     omapi_array_foreach_index++) {			      \
 			if ((array) -> data [omapi_array_foreach_index]) {    \
 				((*(array) -> ref)			      \
-				 ((void *)&var,				      \
+				 ((char **)&var,			      \
 				  (array) -> data [omapi_array_foreach_index],\
 				  MDL));
 
 #define	omapi_array_foreach_end(array, stype, var)			      \
-				(*(array) -> deref) ((void *)&var, MDL);      \
+				(*(array) -> deref) ((char **)&var, MDL);     \
 			}						      \
 		}							      \
 	}

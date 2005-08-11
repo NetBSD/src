@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.4 2005/08/11 16:54:51 drochner Exp $ Copyright 2004-2005 Internet Systems Consortium.";
+"$Id: dhcpd.c,v 1.1.1.5 2005/08/11 17:03:20 drochner Exp $ Copyright 2004-2005 Internet Systems Consortium.";
 #endif
 
   static char copyright[] =
@@ -215,6 +215,9 @@ int main (argc, argv, envp)
 	struct interface_info *ip;
 	struct parse *parse;
 	int lose;
+	omapi_object_t *auth;
+	struct tsig_key *key;
+	omapi_typed_data_t *td;
 	int no_dhcpd_conf = 0;
 	int no_dhcpd_db = 0;
 	int no_dhcpd_pid = 0;
@@ -261,7 +264,7 @@ int main (argc, argv, envp)
 			if (++i == argc)
 				usage ();
 			for (s = argv [i]; *s; s++)
-				if (!isdigit ((unsigned char)*s))
+				if (!isdigit (*s))
 					log_fatal ("%s: not a valid UDP port",
 					       argv [i]);
 			status = atoi (argv [i]);
@@ -971,6 +974,7 @@ int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia)
 	   necessary. */
 	if (!ia) {
 		const char *fnn = "fallback-net";
+		char *s;
 		status = shared_network_allocate (&ip -> shared_network, MDL);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("No memory for shared subnet: %s",

@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.4 2005/08/11 16:54:50 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.5 2005/08/11 17:03:20 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -320,11 +320,6 @@ void dhcpdiscover (packet, ms_nulltp)
 
 	/* If we didn't find a lease, try to allocate one... */
 	if (!lease) {
-		if (!packet -> shared_network -> pools) {
-			log_info ("%s: network %s: no address pool",
-				  msgbuf, packet -> shared_network -> name);
-			return;
-		}
 		if (!allocate_lease (&lease, packet,
 				     packet -> shared_network -> pools, 
 				     &peer_has_leases)) {
@@ -411,6 +406,7 @@ void dhcprequest (packet, ms_nulltp, ip_lease)
 	int ours = 0;
 	struct option_cache *oc;
 	struct data_string data;
+	int status;
 	char msgbuf [1024]; /* XXX */
 	const char *s;
 	char smbuf [19];
@@ -951,13 +947,14 @@ void dhcpinform (packet, ms_nulltp)
 	char msgbuf [1024];
 	struct data_string d1, prl;
 	struct option_cache *oc;
+	struct expression *expr;
 	struct option_state *options = (struct option_state *)0;
 	struct dhcp_packet raw;
 	struct packet outgoing;
 	unsigned char dhcpack = DHCPACK;
 	struct subnet *subnet = (struct subnet *)0;
 	struct iaddr cip;
-	unsigned i;
+	unsigned i, j;
 	int nulltp;
 	struct sockaddr_in to;
 	struct in_addr from;
@@ -1262,11 +1259,11 @@ void dhcpinform (packet, ms_nulltp)
 #endif
 
 	/* Set up the common stuff... */
-	memset (&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 	/* Use the IP address we derived for the client. */
 	memcpy (&to.sin_addr, cip.iabuf, 4);
@@ -1295,6 +1292,7 @@ void nak_lease (packet, cip)
 	unsigned i;
 	struct data_string data;
 	struct option_state *options = (struct option_state *)0;
+	struct expression *expr;
 	struct option_cache *oc = (struct option_cache *)0;
 	struct iaddr myfrom;
 
@@ -1441,11 +1439,11 @@ void nak_lease (packet, cip)
 #endif
 
 	/* Set up the common stuff... */
-	memset (&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 	memcpy (&from, myfrom.iabuf, sizeof from);
 
@@ -1500,14 +1498,16 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 	TIME max_lease_time;
 	TIME default_lease_time;
 	struct option_cache *oc;
+	struct expression *expr;
+	int status;
 	isc_result_t result;
+	int did_ping = 0;
 	TIME ping_timeout;
 
 	unsigned i, j;
-	int s1;
+	int s1, s2;
+	int val;
 	int ignorep;
-
-	s1 = 0;		/* XXXGCC -Wuninitialized [arm / sparc64] */
 
 	/* If we're already acking this lease, don't do it again. */
 	if (lease -> state)
@@ -2723,9 +2723,12 @@ void dhcp_reply (lease)
 	struct in_addr from;
 	struct hardware hto;
 	int result;
+	int i;
 	struct lease_state *state = lease -> state;
 	int nulltp, bootpp, unicastp = 1;
+	struct option_tag *ot, *not;
 	struct data_string d1;
+	struct option_cache *oc;
 	const char *s;
 
 	if (!state)
@@ -2830,11 +2833,11 @@ void dhcp_reply (lease)
 	hto.hlen = lease -> hardware_addr.hlen;
 	memcpy (hto.hbuf, lease -> hardware_addr.hbuf, hto.hlen);
 
-	memset(&to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
+	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 #ifdef DEBUG_PACKET
 	dump_raw ((unsigned char *)&raw, packet_length);
@@ -2946,6 +2949,7 @@ int find_lease (struct lease **lp,
 	struct data_string d1;
 	int have_client_identifier = 0;
 	struct data_string client_identifier;
+	int status;
 	struct hardware h;
 
 	if (packet -> raw -> ciaddr.s_addr) {

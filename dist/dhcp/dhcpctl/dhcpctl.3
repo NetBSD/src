@@ -2,7 +2,7 @@
 .\"
 .\" Project:      DHCP
 .\" File:         dhcpctl.3
-.\" RCSId:        $Id: dhcpctl.3,v 1.1.1.2 2005/08/11 16:54:30 drochner Exp $
+.\" RCSId:        $Id: dhcpctl.3,v 1.1.1.3 2005/08/11 17:03:06 drochner Exp $
 .\" 
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2000-2003 by Internet Software Consortium
@@ -29,16 +29,16 @@
 .\" Description:	dhcpctl man page.
 .\" 
 .\"
-.Dd November 15, 2000
+.Dd Nov 15, 2000
 .Dt DHCPCTL 3
-.Os
+.Os DHCP 3
 .ds vT DHCP Programmer's Manual
 .\"
 .\"
 .\"
 .Sh NAME
 .Nm dhcpctl_initialize
-.Nd dhcpctl library initialization
+.Nd dhcpctl library initialization.
 .\"
 .\"
 .\"
@@ -481,13 +481,8 @@ int main (int argc, char **argv) {
 }
 .Ed
 .Sh SEE ALSO
-.Xr omshell 1 ,
-.\" .Xr omapi 3 ,
-.Xr dhclient.conf 5 ,
-.Xr dhcpd.conf 5 ,
-.Xr dhclient 8 ,
-.Xr dhcpd 8
-.Sh AUTHORS
-.Nm
+omapi(3), omshell(3), dhcpd(8), dhclient(8), dhcpd.conf(5), dhclient.conf(5).
+.Sh AUTHOR
+.Em dhcpctl
 was written by Ted Lemon of Nominum, Inc.
 This preliminary documentation was written by James Brister of Nominum, Inc.

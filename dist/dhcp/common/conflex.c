@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.5 2005/08/11 17:03:01 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -306,9 +306,6 @@ static enum dhcp_token read_string (cfile)
 	int value = 0;
 	int hex = 0;
 
-	value = 0;	/* XXXGCC -Wuninitialized */
-	hex = 0;	/* XXXGCC -Wuninitialized */
-					
 	for (i = 0; i < sizeof cfile -> tokbuf; i++) {
 	      again:
 		c = get_char (cfile);
@@ -533,7 +530,7 @@ static enum dhcp_token intern (atom, dfv)
 	if (!isascii (atom [0]))
 		return dfv;
 
-	switch (tolower ((unsigned char)atom [0])) {
+	switch (tolower (atom [0])) {
 	      case '-':
 		if (atom [1] == 0)
 			return MINUS;
@@ -694,7 +691,7 @@ static enum dhcp_token intern (atom, dfv)
 		}
 		break;
 	      case 'e':
-		if (tolower ((unsigned char)atom [1]) == 'x') {
+		if (isascii (atom [1]) && tolower (atom [1]) == 'x') {
 			if (!strcasecmp (atom + 2, "tract-int"))
 				return EXTRACT_INT;
 			if (!strcasecmp (atom + 2, "ists"))

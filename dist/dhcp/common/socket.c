@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.4 2005/08/11 16:54:28 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.5 2005/08/11 17:03:04 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -55,13 +55,7 @@ static char copyright[] =
 # endif
 #endif
 
-#if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_FALLBACK)
-#if 0
-#ifndef USE_SOCKET_RECEIVE
 static int once = 0;
-#endif
-#endif
-#endif
 
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */
@@ -102,10 +96,6 @@ int if_register_socket (info)
 	struct sockaddr_in name;
 	int sock;
 	int flag;
-#ifndef SMALL
-	char *buf;
-	char *policy = "out bypass";
-#endif
 
 #if !defined (HAVE_SO_BINDTODEVICE) && !defined (USE_FALLBACK)
 	/* Make sure only one interface is registered. */
@@ -131,15 +121,6 @@ int if_register_socket (info)
 	if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof flag) < 0)
 		log_fatal ("Can't set SO_REUSEADDR option on dhcp socket: %m");
-
-#ifndef SMALL
-	/* Set a per-socket IPsec policy to prevent encryption. */
-	buf = ipsec_set_policy(policy, strlen(policy));
-	if (setsockopt (sock, IPPROTO_IP, IP_IPSEC_POLICY, buf,
-	    ipsec_get_policylen(buf)) < 0 && errno != ENOPROTOOPT)
-		log_fatal ("Can't set IPsec policy on dhcp socket: %m");
-	free (buf);
-#endif
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses.
 	   We shouldn't do this for fallback devices, and we can detect that

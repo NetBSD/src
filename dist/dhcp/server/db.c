@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.4 2005/08/11 16:54:48 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.5 2005/08/11 17:03:19 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -56,6 +56,7 @@ int write_lease (lease)
 	struct tm *t;
 	char tbuf [64];
 	int errors = 0;
+	int i;
 	struct binding *b;
 	char *s;
 
@@ -190,6 +191,7 @@ int write_lease (lease)
 		}
 	}
 	if (lease -> uid_len) {
+		int i;
 		s = quotify_buf (lease -> uid, lease -> uid_len, MDL);
 		if (s) {
 			fprintf (db_file, "\n  uid \"%s\";", s);
@@ -457,6 +459,7 @@ int write_group (group)
 	struct group_object *group;
 {
 	int errors = 0;
+	int i;
 
 	/* If the lease file is corrupt, don't try to write any more leases
 	   until we've written a good lease file. */
@@ -585,7 +588,7 @@ int db_printable (s)
 {
 	int i;
 	for (i = 0; s [i]; i++)
-		if (!isascii (s [i]) || !isprint ((unsigned char)s [i])
+		if (!isascii (s [i]) || !isprint (s [i])
 		    || s [i] == '"' || s [i] == '\\')
 			return 0;
 	return 1;
@@ -614,6 +617,8 @@ void write_billing_classes ()
 {
 	struct collection *lp;
 	struct class *cp;
+	struct hash_bucket *bp;
+	int i;
 
 	for (lp = collections; lp; lp = lp -> next) {
 	    for (cp = lp -> classes; cp; cp = cp -> nic) {

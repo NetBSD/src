@@ -1,4 +1,4 @@
-.\"	$Id: dhclient.leases.5,v 1.1.1.4 2005/08/11 16:54:23 drochner Exp $
+.\"	$Id: dhclient.leases.5,v 1.1.1.5 2005/08/11 17:03:00 drochner Exp $
 .\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1997-2003 by Internet Software Consortium
@@ -35,12 +35,12 @@ database of leases that it has acquired that are still valid.   The
 database is a free-form ASCII file containing one valid declaration
 per lease.   If more than one declaration appears for a given lease,
 the last one in the file is used.   The file is written as a log, so
-this is not an unusual occurrence.
+this is not an unusual occurrance.
 .PP
 The format of the lease declarations is described in
 .B dhclient.conf(5).
 .SH FILES
-.B /var/db/dhclient.leases
+.B DBDIR/dhclient.leases
 .SH SEE ALSO
 dhclient(8), dhcp-options(5), dhclient.conf(5), dhcpd(8),
 dhcpd.conf(5), RFC2132, RFC2131.

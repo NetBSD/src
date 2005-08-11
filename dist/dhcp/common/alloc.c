@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.4 2005/08/11 16:54:24 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.5 2005/08/11 17:03:01 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -48,6 +48,7 @@ int option_chain_head_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int size;
 	struct option_chain_head *h;
 
 	if (!ptr) {
@@ -108,6 +109,7 @@ int option_chain_head_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int i;
 	struct option_chain_head *option_chain_head;
 	pair car, cdr;
 
@@ -159,6 +161,7 @@ int group_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int size;
 	struct group *g;
 
 	if (!ptr) {
@@ -219,6 +222,7 @@ int group_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int i;
 	struct group *group;
 
 	if (!ptr || !*ptr) {
@@ -741,6 +745,7 @@ int buffer_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	struct buffer *bp;
 
 	if (!ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -829,6 +834,7 @@ int dns_host_entry_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	struct dns_host_entry *bp;
 
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -1031,6 +1037,7 @@ int packet_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int size;
 	struct packet *p;
 
 	if (!ptr) {
@@ -1150,6 +1157,7 @@ int dns_zone_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int size;
 	struct dns_zone *d;
 
 	if (!ptr) {
