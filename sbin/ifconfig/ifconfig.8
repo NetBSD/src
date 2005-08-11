@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.78 2005/05/02 15:37:06 yamt Exp $
+.\"	$NetBSD: ifconfig.8,v 1.79 2005/08/11 20:56:57 rpaulo Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd May 3, 2005
+.Dd August 11, 2005
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -44,12 +44,12 @@
 .Oc
 .Op Ar parameters
 .Nm
-.Op Fl Lmvz
+.Op Fl hLmvz
 .Ar interface
 .Op Ar protocol_family
 .Nm
 .Fl a
-.Op Fl bdLmsuvz
+.Op Fl bdhLmsuvz
 .Op Ar protocol_family
 .Nm
 .Fl l
@@ -667,6 +667,11 @@ The
 .Fl v
 flag prints statistics on packets sent and received on the given
 interface.
+If
+.Fl h
+is used in conjunction with
+.Fl v ,
+the byte statistics will be printed in "human-readable" format.
 The
 .Fl z
 flag is identical to the
