@@ -3,39 +3,30 @@
    I/O dispatcher. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -44,7 +35,7 @@
 #include <omapip/omapip_p.h>
 
 static omapi_io_object_t omapi_io_states;
-u_int32_t cur_time;
+TIME cur_time;
 
 OMAPI_OBJECT_ALLOC (omapi_io,
 		    omapi_io_object_t, omapi_type_io_object)
@@ -220,11 +211,8 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	int desc;
 	struct timeval now, to;
 	omapi_io_object_t *io, *prev;
-	isc_result_t status;
 	omapi_waiter_object_t *waiter;
 	omapi_object_t *tmp = (omapi_object_t *)0;
-
-	status = ISC_R_FAILURE;		/* XXXGCC -Wuninitialized */
 
 	if (!wo || wo -> type != omapi_type_waiter)
 		waiter = (omapi_waiter_object_t *)0;
@@ -365,7 +353,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 				    if (len)
 					omapi_value_dereference (&ov, MDL);
 				}
-				status = (*(io -> reaper)) (io -> inner);
+				(*(io -> reaper)) (io -> inner);
 				if (prev) {
 				    omapi_io_dereference (&prev -> next, MDL);
 				    if (io -> next)
@@ -417,8 +405,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 		if (io -> readfd &&
 		    (desc = (*(io -> readfd)) (tmp)) >= 0) {
 			if (FD_ISSET (desc, &r))
-				status = ((*(io -> reader)) (tmp));
-				/* XXX what to do with status? */
+				((*(io -> reader)) (tmp));
 		}
 		
 		/* Same deal for write descriptors. */
@@ -426,8 +413,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 		    (desc = (*(io -> writefd)) (tmp)) >= 0)
 		{
 			if (FD_ISSET (desc, &w))
-				status = ((*(io -> writer)) (tmp));
-				/* XXX what to do with status? */
+				((*(io -> writer)) (tmp));
 		}
 		omapi_object_dereference (&tmp, MDL);
 	}
@@ -437,9 +423,9 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	prev = (omapi_io_object_t *)0;
 	for (io = omapi_io_states.next; io; io = io -> next) {
 		if (io -> reaper) {
-			if (io -> inner)
-				status = (*(io -> reaper)) (io -> inner);
-			if (!io -> inner || status != ISC_R_SUCCESS) {
+			if (!io -> inner ||
+			    ((*(io -> reaper)) (io -> inner) !=
+							ISC_R_SUCCESS)) {
 				omapi_io_object_t *tmp =
 					(omapi_io_object_t *)0;
 				/* Save a reference to the next
@@ -505,28 +491,45 @@ isc_result_t omapi_io_get_value (omapi_object_t *h,
 	return ISC_R_NOTFOUND;
 }
 
+/* omapi_io_destroy (object, MDL);
+ *
+ *	Find the requsted IO [object] and remove it from the list of io
+ * states, causing the cleanup functions to destroy it.  Note that we must
+ * hold a reference on the object while moving its ->next reference and
+ * removing the reference in the chain to the target object...otherwise it
+ * may be cleaned up from under us.
+ */
 isc_result_t omapi_io_destroy (omapi_object_t *h, const char *file, int line)
 {
-	omapi_io_object_t *obj, *p, *last;
+	omapi_io_object_t *obj = NULL, *p, *last = NULL, **holder;
 
 	if (h -> type != omapi_type_io_object)
 		return ISC_R_INVALIDARG;
 	
-	obj = (omapi_io_object_t *)h;
-
 	/* remove from the list of I/O states */
 	last = &omapi_io_states;
 	for (p = omapi_io_states.next; p; p = p -> next) {
-		if (p == obj) {
-			omapi_io_dereference (&last -> next, MDL);
-			omapi_io_reference (&last -> next, p -> next, MDL);
-			omapi_io_dereference (&p, MDL);
-			break;
+		if (p == (omapi_io_object_t *)h) {
+			omapi_io_reference (&obj, p, MDL);
+
+			if (last)
+				holder = &last -> next;
+			else
+				holder = &omapi_io_states.next;
+
+			omapi_io_dereference (holder, MDL);
+
+			if (obj -> next) {
+				omapi_io_reference (holder, obj -> next, MDL);
+				omapi_io_dereference (&obj -> next, MDL);
+			}
+
+			return omapi_io_dereference (&obj, MDL);
 		}
 		last = p;
 	}
-		
-	return ISC_R_SUCCESS;
+
+	return ISC_R_NOTFOUND;
 }
 
 isc_result_t omapi_io_signal_handler (omapi_object_t *h,
