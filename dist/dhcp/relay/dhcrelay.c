@@ -3,39 +3,30 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1997-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
- * This software has been written for the Internet Software Consortium
+ * This software has been written for Internet Systems Consortium
  * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about the Internet Software Consortium, see
+ * To learn more about Internet Systems Consortium, see
  * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
@@ -43,7 +34,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.6 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1997-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.7 2005/08/11 17:13:30 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -51,7 +42,6 @@ static char ocopyright[] =
 
 static void usage PROTO ((void));
 
-TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options [256];
@@ -77,9 +67,7 @@ int client_packet_errors = 0;	/* Errors sending packets to clients. */
 
 int add_agent_options = 0;	/* If nonzero, add relay agent options. */
 int drop_agent_mismatches = 0;	/* If nonzero, drop server replies that
-				   don't contain a Relay Agent Information
-				   option whose Agent ID suboption matches
-				   our giaddr. */
+				   don't have matching circuit-id's. */
 int corrupt_agent_options = 0;	/* Number of packets dropped because
 				   relay agent information option was bad. */
 int missing_agent_option = 0;	/* Number of packets dropped because no
@@ -88,6 +76,8 @@ int bad_circuit_id = 0;		/* Circuit ID option in matching RAI option
 				   did not match any known circuit ID. */
 int missing_circuit_id = 0;	/* Circuit ID option in matching RAI option
 				   was missing. */
+int max_hop_count = 10;		/* Maximum hop count */
+
 
 	/* Maximum size of a packet with agent options added. */
 int dhcp_max_agent_option_packet_length = 576;
@@ -107,10 +97,10 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static const char copyright [] = "Copyright 1997-2002 Internet Software Consortium.";
+static const char copyright [] = "Copyright 2004-2005 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
-static const char message [] = "Internet Software Consortium DHCP Relay Agent";
-static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
+static const char message [] = "Internet Systems Consortium DHCP Relay Agent";
+static const char url [] = "For info, please visit http://www.isc.org/sw/dhcp/";
 
 int main (argc, argv, envp)
 	int argc;
@@ -182,6 +172,15 @@ int main (argc, argv, envp)
 			quiet_interface_discovery = 1;
 		} else if (!strcmp (argv [i], "-a")) {
 			add_agent_options = 1;
+		} else if (!strcmp (argv [i], "-c")) {
+			int hcount;
+			if (++i == argc)
+				usage ();
+			hcount = atoi(argv[i]);
+			if (hcount <= 255)
+				max_hop_count= hcount;
+			else
+				usage ();
 		} else if (!strcmp (argv [i], "-A")) {
 			if (++i == argc)
 				usage ();
@@ -335,7 +334,7 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	struct server_list *sp;
 	struct sockaddr_in to;
 	struct interface_info *out;
-	struct hardware hto;
+	struct hardware hto, *htop;
 
 	if (packet -> hlen > sizeof packet -> chaddr) {
 		log_info ("Discarding packet with invalid hlen.");
@@ -361,9 +360,15 @@ void relay (ip, packet, length, from_port, from, hfrom)
 			can_unicast_without_arp (out)) {
 			to.sin_addr = packet -> yiaddr;
 			to.sin_port = remote_port;
+
+			/* and hardware address is not broadcast */
+			htop = &hto;
 		} else {
 			to.sin_addr.s_addr = htonl (INADDR_BROADCAST);
 			to.sin_port = remote_port;
+
+			/* hardware address is broadcast */
+			htop = NULL;
 		}
 		to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
@@ -392,7 +397,7 @@ void relay (ip, packet, length, from_port, from, hfrom)
 		if (send_packet (out,
 				 (struct packet *)0,
 				 packet, length, out -> primary_address,
-				 &to, &hto) < 0) {
+				 &to, htop) < 0) {
 			++server_packet_errors;
 		} else {
 			log_debug ("forwarded BOOTREPLY for %s to %s",
@@ -423,8 +428,10 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	   that set giaddr, so we won't see it. */
 	if (!packet -> giaddr.s_addr)
 		packet -> giaddr = ip -> primary_address;
-	if (packet -> hops != 255)
+	if (packet -> hops < max_hop_count)
 		packet -> hops = packet -> hops + 1;
+	else
+		return;
 
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
@@ -448,10 +455,11 @@ void relay (ip, packet, length, from_port, from, hfrom)
 
 static void usage ()
 {
-	log_fatal ("Usage: dhcrelay [-p <port>] [-d] [-D] [-i %s%s%s",
-	       "interface]\n                ",
-	       "[-q] [-a] [-A length] [-m append|replace|forward|discard]\n",
-	       "                [server1 [... serverN]]");
+	log_fatal ("Usage: dhcrelay [-p <port>] [-d] [-D] [-i %s%s%s%s",
+		"interface] [-q] [-a]\n                ",
+		"[-c count] [-A length] ",
+		"[-m append|replace|forward|discard]\n",
+		"                [server1 [... serverN]]");
 }
 
 int write_lease (lease)
@@ -520,9 +528,8 @@ isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 #endif
 
 /* Strip any Relay Agent Information options from the DHCP packet
-   option buffer.   If an RAI option is found whose Agent ID matches
-   the giaddr (i.e., ours), try to look up the outgoing interface
-   based on the circuit ID suboption. */
+   option buffer.   If there is a circuit ID suboption, look up the
+   outgoing interface based upon it. */
 
 int strip_relay_agent_options (in, out, packet, length)
 	struct interface_info *in, **out;

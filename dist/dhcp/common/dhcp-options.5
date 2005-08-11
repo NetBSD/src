@@ -1,42 +1,32 @@
-.\"	dhcp-options.5
+.\"	$Id: dhcp-options.5,v 1.6 2005/08/11 17:13:21 drochner Exp $
 .\"
-.\" Copyright (c) 1996-2002 Internet Software Consortium.
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" This software has been written for the Internet Software Consortium
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   http://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about the Internet Software Consortium, see
+.\" To learn more about Internet Systems Consortium, see
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
-.\"
-.\" $Id: dhcp-options.5,v 1.5 2003/02/18 17:08:40 drochner Exp $
-.\"
 .TH dhcpd-options 5
 .SH NAME
 dhcp-options - Dynamic Host Configuration Protocol options
@@ -221,7 +211,7 @@ sending TCP segments.  The minimum value is 1.
 .B option \fBdhcp-client-identifier\fR \fIstring\fR\fB;\fR
 .RS 0.25i
 .PP
-This option can be used to specify the a DHCP client identifier in a
+This option can be used to specify a DHCP client identifier in a
 host declaration, so that dhcpd can find the host record by matching
 against the client identifier.
 .PP
@@ -411,8 +401,8 @@ RFC2132.
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The Finger server option specifies a list of Finger available to the
-client.  Servers should be listed in order of preference.
+The Finger server option specifies a list of Finger servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBfont-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
@@ -481,8 +471,8 @@ forwarding, and a value of true means enable IP forwarding.
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The IRC server option specifies a list of IRC available to the
-client.  Servers should be listed in order of preference.
+The IRC server option specifies a list of IRC servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBlog-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
@@ -589,7 +579,7 @@ Possible node types are:
 B-node: Broadcast - no WINS
 .TP
 .I 2
-P-node: Peer - WINS only.
+P-node: Peer - WINS only
 .TP
 .I 4
 M-node: Mixed - broadcast, then WINS
@@ -644,8 +634,8 @@ preference.
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The NNTP server option specifies a list of NNTP available to the
-client.  Servers should be listed in order of preference.
+The NNTP server option specifies a list of NNTP servesr available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBnon-local-source-routing\fR \fIflag\fR\fB;\fR
@@ -729,8 +719,8 @@ See STD 3 (RFC1122) for further information.
 .B option \fBpop-server\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The POP3 server option specifies a list of POP3 available to the
-client.  Servers should be listed in order of preference.
+The POP3 server option specifies a list of POP3 servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBresource-location-servers\fR \fIip-address\fR
@@ -901,8 +891,8 @@ This specifies the IP address of the client's swap server.
 .B option \fBtcp-keepalive-garbage\fR \fIflag\fR\fB;\fR
 .RS 0.25i
 .PP
-This option specifies the whether or not the client should send TCP
-keepalive messages with a octet of garbage for compatibility with
+This option specifies whether or not the client should send TCP
+keepalive messages with an octet of garbage for compatibility with
 older implementations.  A value of false indicates that a garbage octet
 should not be sent. A value of true indicates that a garbage octet
 should be sent.
@@ -982,12 +972,12 @@ this identifier, usually as a text string.
 This option is used by some DHCP clients to identify the vendor
 type and possibly the configuration of a DHCP client.  The information
 is a string of bytes whose contents are specific to the vendor and are
-not specified in a standard.   To see what vendor class identifier a
+not specified in a standard.   To see what vendor class identifier
 clients are sending, you can write the following in your DHCP server
 configuration file:
 .nf
 .PP
-set vendor-class option vendor-class-identifier;
+set vendor-string = option vendor-class-identifier;
 .fi
 .PP
 This will result in all entries in the DHCP server lease database file
@@ -995,14 +985,14 @@ for clients that sent vendor-class-identifier options having a set
 statement that looks something like this:
 .nf
 .PP
-set vendor-class "SUNW.Ultra-5_10";
+set vendor-string = "SUNW.Ultra-5_10";
 .fi
 .PP
 The vendor-class-identifier option is normally used by the DHCP server
 to determine the options that are returned in the
 .B vendor-encapsulated-options
-option.   Please see the VENDOR ENCAPSULATED OPTIONS section of the
-dhcpd.conf manual page for further information.
+option.   Please see the VENDOR ENCAPSULATED OPTIONS section later in this
+manual page for further information.
 .RE
 .PP
 .B option \fBvendor-encapsulated-options\fR \fIstring\fR\fB;\fR
@@ -1019,16 +1009,15 @@ that basis.
 Some default behaviours for well-known DHCP client vendors (currently,
 the Microsoft Windows 2000 DHCP client) are configured automatically,
 but otherwise this must be configured manually - see the VENDOR
-ENCAPSULATED OPTIONS section of the \fIdhcpd.conf\fI manual page for
-details.
+ENCAPSULATED OPTIONS section later in this manual page for details.
 .RE
 .PP
 .B option \fBwww-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The WWW server option specifies a list of WWW available to the
-client.  Servers should be listed in order of preference.
+The WWW server option specifies a list of WWW servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBx-display-manager\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
@@ -1223,7 +1212,7 @@ utility uses this value as Primary DSS server when configuring a
 secondary DSS server.
 .RE
 .SH DEFINING NEW OPTIONS
-The Internet Software Consortium DHCP client and server provide the
+The Internet Systems Consortium DHCP client and server provide the
 capability to define new options.   Each DHCP option has a name, a
 code, and a structure.   The name is used by you to refer to the
 option.   The code is a number, used by the DHCP server and client to
@@ -1519,8 +1508,8 @@ option.
 dhcpd.conf(5), dhcpd.leases(5), dhclient.conf(5), dhcp-eval(5), dhcpd(8),
 dhclient(8), RFC2132, RFC2131, draft-ietf-dhc-agent-options-??.txt.
 .SH AUTHOR
-The Internet Software Consortium DHCP Distribution was written by Ted
+The Internet Systems Consortium DHCP Distribution was written by Ted
 Lemon under a contract with Vixie Labs.  Funding for
-this project was provided through the Internet Software Consortium.
-Information about the Internet Software Consortium can be found at
+this project was provided through Internet Systems Consortium.
+Information about Internet Systems Consortium can be found at
 .B http://www.isc.org.

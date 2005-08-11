@@ -3,35 +3,26 @@
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2002 Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
- *    of its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Internet Systems Consortium, Inc.
+ *   950 Charter Street
+ *   Redwood City, CA 94063
+ *   <info@isc.org>
+ *   http://www.isc.org/
  *
  * This code was originally contributed by Archie Cobbs, and is still
  * very similar to that contribution, although the packet checksum code
@@ -42,7 +33,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.6 2005/06/02 11:10:01 lukem Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.7 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -219,16 +210,16 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 
 /* UDP header and IP header decoded together for convenience. */
 
-ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen)
+ssize_t decode_udp_ip_header (interface, buf, bufix, from, buflen, rbuflen)
 	struct interface_info *interface;
 	unsigned char *buf;
 	unsigned bufix;
 	struct sockaddr_in *from;
-	unsigned char *data;
 	unsigned buflen;
 	unsigned *rbuflen;
 {
-  struct ip *ip;
+  unsigned char *data;
+  struct ip ip;
   struct udphdr *udp;
   u_int32_t ip_len = (buf [bufix] & 0xf) << 2;
   u_int32_t sum, usum;
@@ -242,13 +233,13 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen
   unsigned ulen;
   int ignore = 0;
 
-  ip = (struct ip *)(buf + bufix);
+  memcpy(&ip, buf + bufix, sizeof (struct ip));
   udp = (struct udphdr *)(buf + bufix + ip_len);
   len = 0;	/* XXXGCC -Wuninitialized */
 
 #ifdef USERLAND_FILTER
   /* Is it a UDP packet? */
-  if (ip -> ip_p != IPPROTO_UDP)
+  if (ip.ip_p != IPPROTO_UDP)
 	  return -1;
 
   /* Is it to the port we're serving? */
@@ -277,46 +268,44 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen
   }
 
   /* Check the IP packet length. */
-  if (ntohs (ip -> ip_len) != buflen) {
-	  if ((ntohs (ip -> ip_len + 2) & ~1) == buflen)
+  if (ntohs (ip.ip_len) != buflen) {
+	  if ((ntohs (ip.ip_len + 2) & ~1) == buflen)
 		  ignore = 1;
 	  else
 		  log_debug ("ip length %d disagrees with bytes received %d.",
-			     ntohs (ip -> ip_len), buflen);
+			     ntohs (ip.ip_len), buflen);
   }
 
   /* Copy out the IP source address... */
-  memcpy (&from -> sin_addr, &ip -> ip_src, 4);
+  memcpy (&from -> sin_addr, &ip.ip_src, 4);
 
   /* Compute UDP checksums, including the ``pseudo-header'', the UDP
      header and the data.   If the UDP checksum field is zero, we're
      not supposed to do a checksum. */
 
-  if (!data) {
-	  data = buf + bufix + ip_len + sizeof *udp;
-	  len = ulen - sizeof *udp;
-	  ++udp_packets_length_checked;
-	  if (len + data > buf + bufix + buflen) {
-		  ++udp_packets_length_overflow;
-		  if (udp_packets_length_checked > 4 &&
-		      (udp_packets_length_checked /
-		       udp_packets_length_overflow) < 2) {
-			  log_info ("%d udp packets in %d too long - dropped",
-				    udp_packets_length_overflow,
-				    udp_packets_length_checked);
-			  udp_packets_length_overflow =
-				  udp_packets_length_checked = 0;
-		  }
-		  return -1;
+  data = buf + bufix + ip_len + sizeof *udp;
+  len = ulen - sizeof *udp;
+  ++udp_packets_length_checked;
+  if (len + data > buf + bufix + buflen) {
+	  ++udp_packets_length_overflow;
+	  if (udp_packets_length_checked > 4 &&
+	      (udp_packets_length_checked /
+	       udp_packets_length_overflow) < 2) {
+		  log_info ("%d udp packets in %d too long - dropped",
+			    udp_packets_length_overflow,
+			    udp_packets_length_checked);
+		  udp_packets_length_overflow =
+			  udp_packets_length_checked = 0;
 	  }
-	  if (len + data < buf + bufix + buflen &&
-	      len + data != buf + bufix + buflen && !ignore)
-		  log_debug ("accepting packet with data after udp payload.");
-	  if (len + data > buf + bufix + buflen) {
-		  log_debug ("dropping packet with bogus uh_ulen %ld",
-			     (long)(len + sizeof *udp));
-		  return -1;
-	  }
+	  return -1;
+  }
+  if (len + data < buf + bufix + buflen &&
+      len + data != buf + bufix + buflen && !ignore)
+	  log_debug ("accepting packet with data after udp payload.");
+  if (len + data > buf + bufix + buflen) {
+	  log_debug ("dropping packet with bogus uh_ulen %ld",
+		     (long)(len + sizeof *udp));
+	  return -1;
   }
 
   usum = udp -> uh_sum;
@@ -325,8 +314,8 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen
   sum = wrapsum (checksum ((unsigned char *)udp, sizeof *udp,
 			   checksum (data, len,
 				     checksum ((unsigned char *)
-					       &ip -> ip_src,
-					       2 * sizeof ip -> ip_src,
+					       &ip.ip_src,
+					       2 * sizeof ip.ip_src,
 					       IPPROTO_UDP +
 					       (u_int32_t)ulen))));
 
@@ -345,7 +334,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen
   /* Copy out the port... */
   memcpy (&from -> sin_port, &udp -> uh_sport, sizeof udp -> uh_sport);
 
-  *rbuflen = ntohs (ip->ip_len) - ip_len - sizeof *udp;
+  *rbuflen = ntohs (ip.ip_len) - ip_len - sizeof *udp;
   return ip_len + sizeof *udp;
 }
 #endif /* PACKET_DECODING */
