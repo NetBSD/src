@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2004/09/22 11:32:02 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2005/08/11 20:32:55 cube Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -127,9 +127,9 @@ extern int cpu_do_powersave;
  * frame came from USR mode or not.
  */
 #ifdef __PROG32
-#define CLKF_USERMODE(frame)	((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
+#define CLKF_USERMODE(frame)	((frame->cf_if.if_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
-#define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
+#define CLKF_USERMODE(frame)	((frame->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
 #endif
 
 /*
@@ -150,7 +150,7 @@ extern int current_intr_depth;
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
 	((current_intr_depth > 1) ||					\
-	    (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
+	    (frame->cf_if.if_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
 #define CLKF_INTR(frame)	(current_intr_depth > 1) 
 #endif
@@ -159,9 +159,9 @@ extern int current_intr_depth;
  * CLKF_PC: Extract the program counter from a clockframe
  */
 #ifdef __PROG32
-#define CLKF_PC(frame)		(frame->if_pc)
+#define CLKF_PC(frame)		(frame->cf_if.if_pc)
 #else
-#define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
+#define CLKF_PC(frame)		(frame->cf_if.if_r15 & R15_PC)
 #endif
 
 /*

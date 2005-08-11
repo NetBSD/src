@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2005/08/11 20:32:55 cube Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,11 +74,13 @@ extern struct cpu_info cpu_info_store;
  * clockframe; for now, use generic intrframe.
  */
 
-#define	clockframe intrframe
+struct clockframe {
+	struct intrframe cf_if;
+};
 
-#define	CLKF_USERMODE(framep)	USERMODE((framep)->if_regs.r_psr)
-#define	CLKF_BASEPRI(framep)	((framep)->if_pl == imask[IPL_ZERO])
-#define	CLKF_PC(framep)		((framep)->if_regs.r_pc)
+#define	CLKF_USERMODE(framep)	USERMODE((framep)->cf_if.if_regs.r_psr)
+#define	CLKF_BASEPRI(framep)	((framep)->cf_if.if_pl == imask[IPL_ZERO])
+#define	CLKF_PC(framep)		((framep)->cf_if.if_regs.r_pc)
 #define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 
 /*
