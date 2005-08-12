@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.20 2005/07/02 15:58:29 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.21 2005/08/12 06:45:44 snj Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.20 2005/07/02 15:58:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.21 2005/08/12 06:45:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -389,7 +389,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		free(digest, M_TEMP);
 	}
 
-	if (flag != vhe->type) {
+	if (!(vhe->type & flag)) {
 		veriexec_report("Incorrect access type.", name, va, p,
 				REPORT_NOVERBOSE, REPORT_ALARM,
 				REPORT_NOPANIC);
