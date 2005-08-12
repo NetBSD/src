@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.31 2005/08/08 21:53:17 christos Exp $ */
+.\" $NetBSD: useradd.8,v 1.32 2005/08/12 16:22:05 christos Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nd add a user to the system
 .Sh SYNOPSIS
 .Nm
-.Fl D
+.Fl DF
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
@@ -115,6 +115,8 @@ will set the default to be the new value.
 See
 .Xr usermgmt.conf 5
 for more information.
+.It Fl F
+Force the user to change their password upon next login.
 .It Fl b Ar base-dir
 sets the default base directory.
 This is the directory to which the

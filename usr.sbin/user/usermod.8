@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.22 2005/07/28 20:23:31 wiz Exp $ */
+.\" $NetBSD: usermod.8,v 1.23 2005/08/12 16:22:05 christos Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm
-.Op Fl moSv
+.Op Fl FmoSv
 .Op Fl C Ar yes/no
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
@@ -89,7 +89,7 @@ without populating it; if the
 option is specified, tries to move the old home directory to
 .Ar home-directory .
 .It Fl e Ar expiry-time
-Set the time at which the current password expires.
+Set the time at which the account expires.
 This can be used to implement password aging.
 It should be entered in the form
 .Dq month day year ,
@@ -106,10 +106,12 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl f Ar inactive-time
-Set the time at which the account expires.
+Set the time at which the password expires.
 See the
 .Fl e
 option.
+.It Fl F
+Force the user to change their password upon next login.
 .It Fl G Ar secondary-group
 Specify a secondary group to which the user will be added in the
 .Pa /etc/group

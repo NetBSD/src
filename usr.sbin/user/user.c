@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.86 2005/07/30 15:06:43 christos Exp $ */
+/* $NetBSD: user.c,v 1.87 2005/08/12 16:22:05 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.86 2005/07/30 15:06:43 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.87 2005/08/12 16:22:05 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1002,18 +1002,23 @@ static int
 scantime(time_t *tp, char *s)
 {
 	struct tm	tm;
+	char *ep;
 
 	*tp = 0;
 	if (s != NULL) {
 		(void)memset(&tm, 0, sizeof(tm));
 		if (strptime(s, "%c", &tm) != NULL) {
 			*tp = mktime(&tm);
+			return 1;
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
-		} else if (isdigit((unsigned char) *s)) {
-			*tp = atoi(s);
+			return 1;
 		} else {
-			return 0;
+			*tp = strtol(s, &ep, 10);
+			if (*ep != '\0' || *tp < -1 || *tp > LONG_MAX) {
+				*tp = 0;
+				return 0;
+			}
 		}
 	}
 	return 1;
@@ -1137,12 +1142,13 @@ adduser(char *login_name, user_t *up)
 		    login_name);
 	}
 	if (!scantime(&inactive, up->u_inactive)) {
-		warnx("Warning: inactive time `%s' invalid, account expiry off",
+		warnx("Warning: inactive time `%s' invalid, password expiry off",
 				up->u_inactive);
 	}
-	if (!scantime(&expire, up->u_expire)) {
-		warnx("Warning: expire time `%s' invalid, password expiry off",
+	if (!scantime(&expire, up->u_expire) || expire == -1) {
+		warnx("Warning: expire time `%s' invalid, account expiry off",
 				up->u_expire);
+		expire = 0; /* Just in case. */
 	}
 	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR)) {
 		warnx("Warning: home directory `%s' doesn't exist, "
@@ -1504,10 +1510,12 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 			}
 		}
 		if (up->u_flags & F_EXPIRE) {
-			if (!scantime(&pwp->pw_expire, up->u_expire)) {
+			if (!scantime(&pwp->pw_expire, up->u_expire) ||
+			      pwp->pw_expire == -1) {
 				warnx("Warning: expire time `%s' invalid, "
-				    "password expiry off",
+				    "account expiry off",
 					up->u_expire);
+				pwp->pw_expire = 0;
 			}
 		}
 		if (up->u_flags & F_COMMENT)
@@ -1665,7 +1673,7 @@ void
 usermgmt_usage(const char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void)fprintf(stderr, "usage: %s -D [-b basedir] [-e expiry] "
+		(void)fprintf(stderr, "usage: %s -DF [-b basedir] [-e expiry] "
 		    "[-f inactive] [-g group]\n\t[-r lowuid..highuid] "
 		    "[-s shell] [-L class]\n", prog);
 		(void)fprintf(stderr, "usage: %s [-G group] [-b basedir] "
@@ -1674,7 +1682,7 @@ usermgmt_usage(const char *prog)
 		    "\t[-r lowuid..highuid] [-s shell] [-u uid] [-v] user\n",
 		    prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void)fprintf(stderr, "usage: %s [-G group] [-c comment] "
+		(void)fprintf(stderr, "usage: %s -F [-G group] [-c comment] "
 		    "[-C yes/no] [-d homedir] [-e expire] \n\t[-f inactive] "
 		    "[-g group] [-l newname] [-m] [-o] [-p password]\n"
 		    "\t[-s shell] [-u uid] [-L class] [-v] user\n", prog);
@@ -1727,11 +1735,20 @@ useradd(int argc, char **argv)
 	read_defaults(&u);
 	u.u_uid = -1;
 	defaultfield = bigD = 0;
-	while ((c = getopt(argc, argv, "DG:b:c:d:e:f:g:k:mou:s:"
+	while ((c = getopt(argc, argv, "DFG:b:c:d:e:f:g:k:mou:s:"
 	    ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'D':
 			bigD = 1;
+			break;
+		case 'F':
+			/*
+			 * Setting -1 will force the new user to
+			 * change their password as soon as they
+			 * next login - passwd(5).
+			 */
+			defaultfield = 1;
+			memsave(&u.u_inactive, "-1", strlen("-1"));
 			break;
 		case 'G':
 			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
@@ -1869,7 +1886,7 @@ usermod(int argc, char **argv)
 	read_defaults(&u);
 	have_new_user = 0;
 	u.u_locked = -1;
-	while ((c = getopt(argc, argv, "G:C:c:d:e:f:g:l:mos:u:"
+	while ((c = getopt(argc, argv, "C:FG:c:d:e:f:g:l:mos:u:"
 	    MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
@@ -1905,6 +1922,10 @@ usermod(int argc, char **argv)
 				errx(1, "Please type 'yes' or 'no'");
 				
 			break;	
+		case 'F':
+			memsave(&u.u_inactive, "-1", strlen("-1"));
+			u.u_flags |= F_INACTIVE;
+			break;
 		case 'd':
 			memsave(&u.u_home, optarg, strlen(optarg));
 			u.u_flags |= F_HOMEDIR;
