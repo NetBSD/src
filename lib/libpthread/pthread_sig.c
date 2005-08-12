@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.39.2.1 2005/08/12 06:36:27 snj Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.39.2.2 2005/08/12 06:38:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.39.2.1 2005/08/12 06:36:27 snj Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.39.2.2 2005/08/12 06:38:14 snj Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -771,6 +771,7 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 	SDPRINTF(("(pthread__kill_self %p) sig %d\n", self, si->si_signo));
 
 	oldmask = self->pt_sigmask;
+	 __sigplusset(&act.sa_mask, &self->pt_sigmask);
 	if ((act.sa_flags & SA_NODEFER) == 0)
 		__sigaddset14(&self->pt_sigmask, si->si_signo);
 
@@ -889,6 +890,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	 * Prevent anyone else from considering this thread for handling
 	 * more instances of this signal.
 	 */
+	 __sigplusset(&act.sa_mask, &target->pt_sigmask);
 	if ((act.sa_flags & SA_NODEFER) == 0)
 		__sigaddset14(&target->pt_sigmask, si->si_signo);
 
