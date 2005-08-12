@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.36 2005/07/10 00:18:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.37 2005/08/12 22:31:51 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.36 2005/07/10 00:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.37 2005/08/12 22:31:51 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)
 }
 
 /*
- * Bmap converts a the logical block number of a file to its physical block
+ * Bmap converts the logical block number of a file to its physical block
  * number on the disk. The conversion is done by using the logical block
  * number to index into the array of block pointers described by the dinode.
  */
