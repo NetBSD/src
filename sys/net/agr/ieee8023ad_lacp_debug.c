@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.2 2005/06/01 11:25:01 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.3 2005/08/12 10:02:31 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.2 2005/06/01 11:25:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.3 2005/08/12 10:02:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <machine/stdarg.h>
 
