@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.194 2005/08/05 20:14:44 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.195 2005/08/12 07:05:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11101,4 +11101,28 @@ sys/lib/libz/inftrees.c				1.10
 
 	Return correct error on all zero length codes.
 	[tron, ticket #649]
+
+lib/libpthread/pthread_sig.c			1.40-1.41
+
+	unblock the signal we are currently delivering, because it might have
+	been blocked if we are woken up by another thread.
+	[christos, ticket #642]
+
+sbin/veriexecctl/veriexecctl_parse.y		1.11
+sys/kern/kern_verifiedexec.c			1.33
+sys/sys/verified_exec.h				1.16
+
+	Support multiple entry types. Direct, indirect, and file can now be
+	combined in the signatures file using commas.
+	[elad, ticket #644]
+
+sbin/veriexecctl/veriexecctl.8			1.15
+
+	Sync with reality.
+	[elad, ticket #645]
+
+share/man/man4/veriexec.4			1.7
+
+	Sync with reality.
+	[elad, ticket #646]
 
