@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.235 2005/08/12 04:19:22 hubertf Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.236 2005/08/12 14:41:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.235 2005/08/12 04:19:22 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.236 2005/08/12 14:41:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4000,6 +4000,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #ifdef TCP_SIGNATURE
 		tb.t_flags |= (tp->t_flags & TF_SIGNATURE);
 #endif
+		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
 		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
 			return (0);
