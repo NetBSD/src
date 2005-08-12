@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.88 2005/08/10 11:48:17 he Exp $	*/
+/*	$NetBSD: route.c,v 1.89 2005/08/12 16:29:06 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.88 2005/08/10 11:48:17 he Exp $");
+__RCSID("$NetBSD: route.c,v 1.89 2005/08/12 16:29:06 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "fnqvdts")) != -1)
+	while ((ch = getopt(argc, argv, "dfnqstv")) != -1)
 		switch (ch) {
 		case 'd':
 			debugonly = 1;
@@ -304,7 +304,8 @@ bad:			usage(*argv);
 	lim = buf + needed;
 	if (verbose) {
 		(void)printf("Examining routing table from sysctl\n");
-		if (af) printf("(address family %s)\n", (*argv + 1));
+		if (af)
+			printf("(address family %s)\n", (*argv + 1));
 	}
 	seqno = 0;		/* ??? */
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -533,6 +534,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 	    {
 		struct sockaddr_in6 sin6;
 		int niflags;
+		char nihost[NI_MAXHOST];
 
 		niflags = 0;
 		if (nflag)
@@ -560,10 +562,16 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 				/* noncontiguous never happens in ipv6 */
 				snprintf(line, sizeof(line), "::/%d", nml);
 		}
-
 		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-		    line, sizeof(line), NULL, 0, niflags) != 0)
+		    nihost, sizeof(nihost), NULL, 0, niflags) != 0)
 			strlcpy(line, "invalid", sizeof(line));
+		else {
+			char *ccp;
+			if (!nflag && (ccp = strchr(nihost, '.')) &&
+			    strcmp(ccp + 1, domain) == 0)
+				*ccp = 0;
+			strlcpy(line, nihost, sizeof(line));
+		}
 		break;
 	    }
 #endif
