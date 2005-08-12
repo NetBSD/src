@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.67 2005/08/08 12:11:52 he Exp $	*/
+/*	$NetBSD: inet.c,v 1.68 2005/08/12 14:08:16 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.67 2005/08/08 12:11:52 he Exp $");
+__RCSID("$NetBSD: inet.c,v 1.68 2005/08/12 14:08:16 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	istcp = strcmp(name, "tcp") == 0;
 
 	if (Aflag) {
-		printf("%8lx ", (u_long) ppcb);
+		printf("%8" PRIxPTR " ", ppcb);
 	}
 	printf("%-5.5s %6ld %6ld%s", name, rcv_sb_cc, snd_sb_cc,
 	       compact ? "" : " ");
