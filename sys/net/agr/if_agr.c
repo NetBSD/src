@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.2 2005/08/12 10:02:31 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.1 2005/03/18 11:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.2 2005/08/12 10:02:31 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
