@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.19 2005/08/12 12:46:17 macallan Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.19 2005/08/12 12:46:17 macallan Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -243,6 +243,15 @@ ebus_attach(parent, self, aux)
 	bus_dma_tag_t dmatag;
 	int node, error;
 	char devinfo[256];
+#ifdef MSIIEP
+	/*
+	 * some Krups OF doesn't have a node for the audio chip, so we
+	 * just check if there's a 'sound' node and if not we fill in the 
+	 * ebus_attach_args by hand and hope nobody cares about the invalid
+	 * node number
+	 */
+	int found_sound=0;
+#endif
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s, revision 0x%02x\n",
@@ -287,6 +296,10 @@ ebus_attach(parent, self, aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		char *name = prom_getpropstring(node, "name");
 
+#ifdef MSIIEP
+		if (strcmp(name, "sound") == 0)
+			found_sound = 1;
+#endif
 		if (ebus_setup_attach_args(sc, sbt, dmatag, node, &ea) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
 			continue;
@@ -296,6 +309,34 @@ ebus_attach(parent, self, aux)
 		(void)config_found(self, &ea, ebus_print);
 		ebus_destroy_attach_args(&ea);
 	}
+#ifdef MSIIEP
+	if (found_sound == 0) {
+		/* no sound node - make up an attachment */
+
+		char name[8] = "sound";
+		struct ebus_regs reg;
+		uint32_t vaddr;
+		uint32_t intr;
+		
+		memset(&ea, 0, sizeof(struct ebus_attach_args));
+		ea.ea_name = name;
+		ea.ea_node = ~0;
+		ea.ea_bustag = sbt;
+		ea.ea_dmatag = dmatag;
+		ea.ea_reg = &reg;
+		ea.ea_nreg = 1;
+		ea.ea_intr = &intr;
+		ea.ea_nintr = 1;
+		ea.ea_vaddr = &vaddr;
+		ea.ea_nvaddr = 0;
+		/* we Just Know(tm) thesa values ;) */
+		ea.ea_reg[0].hi = 0x14;
+		ea.ea_reg[0].lo = 0x200000;
+		ea.ea_reg[0].size = 0x1000;	/* XXX */
+		ea.ea_intr[0] = 3;
+		config_found(self, &ea, ebus_print);
+	}
+#endif
 }
 
 int
@@ -330,12 +371,12 @@ ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 	 * _number_ of the BAR - e.g. BAR1 is represented by 1 in
 	 * Krups PROM, while on Ultra it's 0x14.  Fix it here.
 	 */
-	for (n = 0; n < ea->ea_nreg; ++n)
+	for (n = 0; n < ea->ea_nreg; ++n) {
 	    if (ea->ea_reg[n].hi < PCI_MAPREG_START) {
 		ea->ea_reg[n].hi = PCI_MAPREG_START
 		    + ea->ea_reg[n].hi * sizeof(pcireg_t);
 	    }
-
+	}
 
 	err = prom_getprop(node, "address", sizeof(u_int32_t),
 			   &ea->ea_nvaddr, &ea->ea_vaddr);
