@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.87 2005/08/12 16:22:05 christos Exp $ */
+/* $NetBSD: user.c,v 1.88 2005/08/12 21:40:35 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.87 2005/08/12 16:22:05 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.88 2005/08/12 21:40:35 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1003,22 +1003,30 @@ scantime(time_t *tp, char *s)
 {
 	struct tm	tm;
 	char *ep;
+	long val;
 
 	*tp = 0;
 	if (s != NULL) {
 		(void)memset(&tm, 0, sizeof(tm));
 		if (strptime(s, "%c", &tm) != NULL) {
 			*tp = mktime(&tm);
+			if (*tp == -1)
+				return 0;
 			return 1;
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
+			if (*tp == -1)
+				return 0;
 			return 1;
 		} else {
-			*tp = strtol(s, &ep, 10);
-			if (*ep != '\0' || *tp < -1 || *tp > LONG_MAX) {
+			errno = 0;
+			*tp = val = strtol(s, &ep, 10);
+			if (*ep != '\0' || *tp < -1 || errno == ERANGE) {
 				*tp = 0;
 				return 0;
 			}
+			if (*tp != val)
+				return 0;
 		}
 	}
 	return 1;
