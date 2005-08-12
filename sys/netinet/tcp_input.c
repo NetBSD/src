@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.234 2005/08/11 22:25:18 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.235 2005/08/12 04:19:22 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.234 2005/08/11 22:25:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.235 2005/08/12 04:19:22 hubertf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -945,8 +945,7 @@ badcsum:
 }
 
 /*
- * TCP input routine, follows pages 65-76 of the
- * protocol specification dated September, 1981 very closely.
+ * TCP input routine, follows pages 65-76 of RFC 793 very closely.
  */
 void
 tcp_input(struct mbuf *m, ...)
