@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.6 2005/07/02 15:46:13 tron Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.4.2.7 2005/08/12 06:45:39 snj Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -48,9 +48,6 @@
 struct veriexec_params params;
 static int convert(u_char *, u_char *);
 
-int have_type = 0;
-
-#define	FIELD_TYPE	1
 %}
 
 %union {
@@ -103,7 +100,6 @@ statement	:	/* empty */
 	dev_add(sb.st_dev);
 phase_2_end:
 	(void)memset(&params, 0, sizeof(params));
-	have_type = 0;
 }
 		|	statement eol
 		|	statement error eol {
@@ -158,38 +154,15 @@ flags_spec	:	flag_spec
 
 flag_spec	:	STRING {
 	if (phase == 2) {
-		int field;
-		int value;
-
-		/*
-		 * XXXEE: It might be a good idea to change this into
-		 * XXXEE: something less hard-coded. Perhaps loop on
-		 * XXXEE: tuples of (name, field, value)?
-		 */
 		if (strcasecmp($1, "direct") == 0) {
-			field = FIELD_TYPE;
-			value = VERIEXEC_DIRECT;
+			params.type |= VERIEXEC_DIRECT;
 		} else if (strcasecmp($1, "indirect") == 0) {
-			field = FIELD_TYPE;
-			value = VERIEXEC_INDIRECT;
+			params.type |= VERIEXEC_INDIRECT;
 		} else if (strcasecmp($1, "file") == 0) {
-			field = FIELD_TYPE;
-			value = VERIEXEC_FILE;
+			params.type |= VERIEXEC_FILE;
 		} else {
 			yyerror("Bad flag");
 			YYERROR;
-		}
-
-		switch (field) {
-		case FIELD_TYPE:
-			if (have_type) {
-				yyerror("Mulitple type definitions");
-				YYERROR;
-			}
-
-			params.type = value;
-			have_type = 1;
-			break;
 		}
 	}
 
