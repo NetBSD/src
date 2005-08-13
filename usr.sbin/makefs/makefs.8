@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.15 2005/08/13 01:53:01 fvdl Exp $
+.\"	$NetBSD: makefs.8,v 1.16 2005/08/13 02:03:48 fvdl Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -286,20 +286,20 @@ The following keywords are supported:
 .Bl -tag -width omit-trailing-period -offset indent -compact
 .It Sy allow-deep-trees
 Allow the directory structure to exceed the maximum specified in the spec.
-.It Sy allow-illegal-chars
-Unknown
-.It Sy allow-lowercase
-Unknown
+.\" .It Sy allow-illegal-chars
+.\" Unknown
+.\" .It Sy allow-lowercase
+.\" Unknown
 .It Sy allow-max-name
-Unknown
+Allow 37 instead of 33 characters for filenames by omitting the version id.
 .It Sy allow-multidot
-Unknown
+Allow multiple dots in a filename.
 .It Sy applicationid
 Application ID of the image
 .It Sy boot-load-segment
-Unknown
+Set load segment for the boot image.
 .It Sy boot-load-size
-Unknown
+Set numbers of load sectors for the booot image.
 .It Sy bootimage
 Filename of a boot image in the format sysid;filename, where sysid is one
 of
@@ -309,20 +309,20 @@ of
 or
 .Ql ppc
 .It Sy hard-disk-boot
-Unknown (HD image boot? That requires a HD image, though).
+Boot image is a hard disk image.
 .It Sy keep-bad-images
 Don't throw away images whose write was aborted due to an error. For debugging
 purposes.
 .It Sy label
 Label name of the image
 .It Sy no-boot
-Unknown
+Boot image is not bootable.
 .It Sy no-emul-boot
-Use the "no emulation" ElTorito boot option.
+Boot image is a "no emulation" ElTorito image.
 .It Sy no-trailing-padding
-Unknown
-.It Sy omit-trailing-period
-Unknown
+Do not pad the image (apparently Linux needs the padding).
+.\" .It Sy omit-trailing-period
+.\" Unknown
 .It Sy preparer
 Preparer ID of the image
 .It Sy publisher
