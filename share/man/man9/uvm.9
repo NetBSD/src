@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.65 2005/05/11 05:40:46 skrll Exp $
+.\"	$NetBSD: uvm.9,v 1.66 2005/08/13 09:49:58 jmmv Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -114,7 +114,7 @@ initialises the swap sub-system.
 .br
 .Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "vsize_t align" "uvm_flag_t flags" ;
 .Pp
-.Ft int
+.Ft void
 .br
 .Fn uvm_unmap "struct vm_map *map" "vaddr_t start" "vaddr_t end" ;
 .Pp
@@ -524,7 +524,7 @@ on the memory described in
 .Pp
 .Ft struct vm_map *
 .br
-.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "boolean_t pageable" "boolean_t fixed" "struct vm_map *submap" ;
+.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" "vsize_t size" "boolean_t pageable" "boolean_t fixed" "struct vm_map *submap" ;
 .Pp
 .Fn uvm_km_alloc
 allocates
@@ -806,7 +806,7 @@ swaps in the named process.
 .Fn uvm_loan
 loans pages in a map out to anons or to the kernel.
 .Fa map
-should be unlocked ,
+should be unlocked,
 .Fa start
 and
 .Fa len
