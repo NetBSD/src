@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.2 2005/08/13 17:46:07 fvdl Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.3 2005/08/13 17:50:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -131,17 +131,17 @@ typedef struct {
 
 /* Slight modification of the ISO structure in iso.h */
 typedef struct _iso_directory_record_cd9660 {
-	u_char length					[ISODCL (1, 1)];	/* 711 */
+	u_char length			[ISODCL (1, 1)];	/* 711 */
 	u_char ext_attr_length		[ISODCL (2, 2)];	/* 711 */
-	u_char extent				[ISODCL (3, 10)];	/* 733 */
-	u_char size					[ISODCL (11, 18)];	/* 733 */
-	u_char date					[ISODCL (19, 25)];	/* 7 by 711 */
-	u_char flags					[ISODCL (26, 26)];
-	u_char file_unit_size			[ISODCL (27, 27)];	/* 711 */
-	u_char interleave				[ISODCL (28, 28)];	/* 711 */
+	u_char extent			[ISODCL (3, 10)];	/* 733 */
+	u_char size			[ISODCL (11, 18)];	/* 733 */
+	u_char date			[ISODCL (19, 25)];	/* 7 by 711 */
+	u_char flags			[ISODCL (26, 26)];
+	u_char file_unit_size		[ISODCL (27, 27)];	/* 711 */
+	u_char interleave		[ISODCL (28, 28)];	/* 711 */
 	u_char volume_sequence_number	[ISODCL (29, 32)];	/* 723 */
-	u_char name_len				[ISODCL (33, 33)];	/* 711 */
-	char name					[ISO_FILENAME_MAXLENGTH_WITH_PADDING];
+	u_char name_len			[ISODCL (33, 33)];	/* 711 */
+	char name			[ISO_FILENAME_MAXLENGTH_WITH_PADDING];
 } iso_directory_record_cd9660;
 
 /* TODO: Lots of optimization of this structure */
