@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $	*/
+/*	$NetBSD: makefs.c,v 1.22 2005/08/13 01:53:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.22 2005/08/13 01:53:01 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: makefs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $");
 
 #include "makefs.h"
 #include "mtree.h"
+#include "cd9660.h"
 
 /*
  * list of supported file systems and dispatch functions
@@ -70,6 +71,8 @@ typedef struct {
 
 static fstype_t fstypes[] = {
 	{ "ffs", ffs_prep_opts,	ffs_parse_opts,	ffs_cleanup_opts, ffs_makefs },
+	{ "cd9660", cd9660_prep_opts, cd9660_parse_opts, cd9660_cleanup_opts,
+	  cd9660_makefs},
 	{ NULL	},
 };
 

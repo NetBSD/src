@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.14 2005/07/11 00:25:08 lukem Exp $
+.\"	$NetBSD: makefs.8,v 1.15 2005/08/13 01:53:01 fvdl Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -96,9 +96,11 @@ Create an
 .Ar fs-type
 file system image.
 The following file system types are supported:
-.Bl -tag -width ffs -offset indent
+.Bl -tag -width cd9660 -offset indent
 .It Sy ffs
 BSD fast file system (default).
+.It Sy cd9660
+ISO 9660 file system.
 .El
 .It Fl o Ar fs-options
 Set file system specific options.
@@ -273,6 +275,63 @@ Maximum total number of blocks in a cylinder group
 .It Sy version
 UFS version. 1 for FFS (default), 2 for UFS2
 .El
+.Ss CD9660-specific options
+.Sy cd9660
+images have ISO9660-specific optional parameters that may be provided.
+The arguments consist of a keyword and, optionally, an equals sign
+.Pq Ql = ,
+and a value.
+The following keywords are supported:
+.Pp
+.Bl -tag -width omit-trailing-period -offset indent -compact
+.It Sy allow-deep-trees
+Allow the directory structure to exceed the maximum specified in the spec.
+.It Sy allow-illegal-chars
+Unknown
+.It Sy allow-lowercase
+Unknown
+.It Sy allow-max-name
+Unknown
+.It Sy allow-multidot
+Unknown
+.It Sy applicationid
+Application ID of the image
+.It Sy boot-load-segment
+Unknown
+.It Sy boot-load-size
+Unknown
+.It Sy bootimage
+Filename of a boot image in the format sysid;filename, where sysid is one
+of
+.Ql x86
+,
+.Ql mac
+or
+.Ql ppc
+.It Sy hard-disk-boot
+Unknown (HD image boot? That requires a HD image, though).
+.It Sy keep-bad-images
+Don't throw away images whose write was aborted due to an error. For debugging
+purposes.
+.It Sy label
+Label name of the image
+.It Sy no-boot
+Unknown
+.It Sy no-emul-boot
+Use the "no emulation" ElTorito boot option.
+.It Sy no-trailing-padding
+Unknown
+.It Sy omit-trailing-period
+Unknown
+.It Sy preparer
+Preparer ID of the image
+.It Sy publisher
+Publisher ID of the image
+.It Sy rockridge
+Use RockRidge extensions (for longer filenames, etc).
+.It Sy volumeid
+Volume set identifier of the image
+.El
 .Sh SEE ALSO
 .Xr mtree 8 ,
 .Xr newfs 8
@@ -283,4 +342,6 @@ utility appeared in
 .Nx 1.6 .
 .Sh AUTHORS
 .An Luke Mewburn
-.Aq lukem@NetBSD.org .
+.Aq lukem@NetBSD.org
+.An Daniel Watt, Walter Deignan, Ryan Gabrys, Alan Perez-Rathke and Ram Vedam
+(cd9660 support)
