@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.2 2005/08/13 17:46:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -34,6 +34,10 @@
 
 #ifndef _MAKEFS_CD9660_H
 #define _MAKEFS_CD9660_H
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <assert.h>
 #include <errno.h>
