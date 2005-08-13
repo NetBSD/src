@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.158 2005/08/07 15:57:13 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.159 2005/08/13 23:38:44 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3334,4 +3334,17 @@ sys/dev/pci/pciide_acer_reg.h			1.9 via patch
 	is required after a reset to avoid data corruption when Ultra-DMA is
 	used. Workaround from opensolaris, thanks to Hiroki Sato for testing.
 	[bouyer, ticket #5555]
+
+usr.sbin/amd/libamu/mkconf			1.4
+
+	Embed machine and cpu architecture correctly from target host
+	environment, not from build host.
+	[nakayama, ticket #5560]
+
+sys/dev/ic/wdc.c				1.227-1.228 via patch
+
+	Also initialize wdc->reset in wdcprobe() if the bus back-end
+	didn't provide one. Prevent NULL pointer dereference when
+	wdcprobe() is called.  Add missing declaration/initialisation of wdc.
+	[bouyer, ticket #5561]
 
