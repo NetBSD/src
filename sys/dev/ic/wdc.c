@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.4 2005/08/07 15:51:36 riz Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.5 2005/08/13 23:26:04 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.4 2005/08/07 15:51:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.5 2005/08/13 23:26:04 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -484,6 +484,9 @@ atabusconfig(struct atabus_softc *atabus_sc)
 int
 wdcprobe(struct wdc_channel *chp)
 {
+	/* default reset method */
+	if (wdc->reset == NULL)
+		wdc->reset = wdc_do_reset;
 
 	return (wdcprobe1(chp, 1));
 }
