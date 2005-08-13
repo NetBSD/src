@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.32 2005/08/07 15:57:54 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.33 2005/08/13 23:39:10 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -345,4 +345,10 @@ sys/arch/alpha/alpha/pmap.c			1.211
 	   guaranteed that the pmap is still alive, since by definition an LWP
 	   that uses that it is about to run.
 	[thorpej, ticket #5528]
+
+usr.sbin/amd/libamu/mkconf			1.4
+
+	Embed machine and cpu architecture correctly from target host
+	environment, not from build host.
+	[nakayama, ticket #5560]
 
