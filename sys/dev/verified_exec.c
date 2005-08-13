@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.20 2005/08/13 12:08:34 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.21 2005/08/13 12:56:44 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.20 2005/08/13 12:08:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.21 2005/08/13 12:56:44 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.20 2005/08/13 12:08:34 elad Exp $\n$NetBSD: verified_exec.c,v 1.20 2005/08/13 12:08:34 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.21 2005/08/13 12:56:44 elad Exp $\n$NetBSD: verified_exec.c,v 1.21 2005/08/13 12:56:44 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -229,12 +229,20 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		vrele(nid.ni_vp);
 
 		/* Get table for the device. */
-		tbl = veriexec_tblfind(va.va_fsid);
+		/*
+		 * XXX: va_fsid is long (32/64 bits) and veriexec_tblfind()
+		 * XXX: is passed a dev_t - uint32_t.
+		 */
+		tbl = veriexec_tblfind((dev_t)va.va_fsid);
 		if (tbl == NULL) {
 			return (EINVAL);
 		}
 
-		hh = veriexec_lookup(va.va_fsid, va.va_fileid);
+		/*
+		 * XXX: Both va_fsid and va_fileid are long (32/64 bits), while
+		 * XXX: veriexec_lookup() is passed dev_t and ino_t - uint32_t.
+		 */
+		hh = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
 		if (hh != NULL) {
 			/*
 			 * Duplicate entry means something is wrong in
@@ -257,7 +265,8 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		}
 
 		e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
-		e->inode = va.va_fileid;
+		/* XXX: va_fileid is long (32/64 bits), ino_t is uint32_t. */
+		e->inode = (ino_t)va.va_fileid;
 		e->type = params->type;
 		e->status = FINGERPRINT_NOTEVAL;
 		if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
