@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.183 2005/08/07 12:24:30 blymn Exp $ */
+/*	$NetBSD: st.c,v 1.184 2005/08/13 10:50:50 blymn Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.183 2005/08/07 12:24:30 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.184 2005/08/13 10:50:50 blymn Exp $");
 
 #include "opt_scsi.h"
 
@@ -106,6 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.183 2005/08/07 12:24:30 blymn Exp $");
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
 #endif
+
+struct tape *
+drive_attach(char *name);
 
 static dev_type_open(stopen);
 static dev_type_close(stclose);
@@ -372,7 +375,6 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
-	int s;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("stattach: "));
 
@@ -389,28 +391,6 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 
 	st->flags = ST_INIT_FLAGS;
 
-	  /* Allocate and initialise statistics */
-	st->stats = (struct tape *) malloc(sizeof(struct tape), M_DEVBUF,
-					   M_WAITOK);
-	st->stats->rxfer = st->stats->wxfer = st->stats->rbytes = 0;
-	st->stats->wbytes = st->stats->busy = 0;
-
-	/*
-	 * Set the attached timestamp.
-	 */
-	s = splclock();
-	st->stats->attachtime = mono_time;
-	splx(s);
-
-	  /* and clear the utilisation time */
-	timerclear(&st->stats->time);
-
-	  /* link the tape drive to the tapelist */
-	simple_lock(&tapelist_slock);
-	TAILQ_INSERT_TAIL(&tapelist, st->stats, link);
-	tape_count++;
-	simple_unlock(&tapelist_slock);
-	
 	/*
 	 * Set up the buf queue for this device
 	 */
@@ -443,7 +423,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 
-	st->stats->name = st->sc_dev.dv_xname;
+	st->stats = drive_attach(st->sc_dev.dv_xname);
 	
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
@@ -2577,4 +2557,52 @@ sysctl_hw_tapestats(SYSCTLFN_ARGS)
 	}
 	simple_unlock(&tapelist_slock);
 	return (error);
+}
+
+struct tape *
+drive_attach(char *name) 
+{
+	struct tape *stats;
+	int s;
+	
+	/* Allocate and initialise statistics */
+	stats = (struct tape *) malloc(sizeof(struct tape), M_DEVBUF,
+					   M_WAITOK);
+	stats->rxfer = stats->wxfer = stats->rbytes = 0;
+	stats->wbytes = stats->busy = 0;
+
+	/*
+	 * Set the attached timestamp.
+	 */
+	s = splclock();
+	stats->attachtime = mono_time;
+	splx(s);
+
+	  /* and clear the utilisation time */
+	timerclear(&stats->time);
+
+	  /* link the tape drive to the tapelist */
+	simple_lock(&tapelist_slock);
+	TAILQ_INSERT_TAIL(&tapelist, stats, link);
+	tape_count++;
+	simple_unlock(&tapelist_slock);
+	stats->name = name;
+
+	return stats;
+}
+
+SYSCTL_SETUP(sysctl_tape_stats_setup, "sysctl tape stats setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "tapenames",
+		       SYSCTL_DESCR("List of tape devices present"),
+		       sysctl_hw_tapenames, 0, NULL, 0,
+		       CTL_HW, HW_TAPENAMES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "tapestats",
+		       SYSCTL_DESCR("Statistics on tape drive operation"),
+		       sysctl_hw_tapestats, 0, NULL, 0,
+		       CTL_HW, HW_TAPESTATS, CTL_EOL);
 }
