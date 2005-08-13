@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.34 2005/06/02 05:58:24 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.35 2005/08/13 01:49:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.34 2005/06/02 05:58:24 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.35 2005/08/13 01:49:35 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -983,7 +983,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 {
 	struct direct	de, *dp;
 	uint16_t	llen, reclen;
-	char		*newbuf;
+	u_char		*newbuf;
 
 	assert (dbuf != NULL);
 	assert (name != NULL);
