@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.4 2005/02/04 06:02:36 joff Exp $ */
+/* $NetBSD: tslcd.c,v 1.5 2005/08/14 02:58:40 joff Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.4 2005/02/04 06:02:36 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.5 2005/08/14 02:58:40 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ struct tslcd_softc {
 static int	tslcd_match(struct device *, struct cfdata *, void *);
 static void	tslcd_attach(struct device *, struct device *, void *);
 
-static void	tslcd_writereg(struct hd44780_chip *, u_int32_t, u_int8_t);
-static u_int8_t	tslcd_readreg(struct hd44780_chip *, u_int32_t);
+static void	tslcd_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
+static u_int8_t	tslcd_readreg(struct hd44780_chip *, u_int32_t, u_int32_t);
 
 dev_type_open(tslcdopen);
 dev_type_close(tslcdclose);
@@ -173,9 +173,9 @@ tslcd_attach(parent, self, aux)
 }
 
 static void
-tslcd_writereg(hd, rs, cmd)
+tslcd_writereg(hd, en, rs, cmd)
 	struct hd44780_chip *hd;
-	u_int32_t rs;
+	u_int32_t en, rs;
 	u_int8_t cmd;
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
@@ -222,9 +222,9 @@ tslcd_writereg(hd, rs, cmd)
 }
 
 static u_int8_t
-tslcd_readreg(hd, rs)
+tslcd_readreg(hd, en, rs)
 	struct hd44780_chip *hd;
-	u_int32_t rs;
+	u_int32_t en, rs;
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
 	u_int8_t ret, ctrl;
@@ -316,7 +316,7 @@ tslcdwrite(dev, uio, flag)
 	if ((error = uiomove((void*)io.buf, io.len, uio)) != 0)
 		return error;
 
-	hd44780_ddram_redraw(&sc->sc_hlcd, &io);
+	hd44780_ddram_redraw(&sc->sc_hlcd, sc->sc_hlcd.sc_curchip, &io);
 	return 0;
 }
 
