@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.1 2005/07/18 21:13:36 riz Exp $
+# $NetBSD: GENERIC,v 1.66.2.2 2005/08/14 21:13:59 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.66.2.1 $"
+#ident 		"GENERIC-$Revision: 1.66.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -203,6 +203,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
