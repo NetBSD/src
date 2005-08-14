@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.31 2004/04/21 01:05:48 christos Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.31.2.1 2005/08/14 21:14:03 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@
 int	verbose = 0;
 int	readonly = 0;
 int	force = 0;
+int	compressed = 0;
 char	*tabname;
 
 int	config __P((char *, char *, char *, int));
@@ -154,7 +155,7 @@ main(argc, argv)
 {
 	int ch, rv, action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "Fcf:lrt:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "Fcf:lrt:uvz")) != -1) {
 		switch (ch) {
 		case 'F':
 			force = 1;
@@ -180,6 +181,10 @@ main(argc, argv)
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'z':
+			compressed = 1;
+			readonly = 1;
 			break;
 		default:
 		case '?':
@@ -314,6 +319,9 @@ config(dev, file, geom, action)
 	if (readonly)
 		vndio.vnd_flags |= VNDIOF_READONLY;
 
+	if (compressed)
+		vndio.vnd_flags |= VNF_COMP;
+
 	/*
 	 * Clear (un-configure) the device
 	 */
@@ -409,7 +417,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-crv] [-f disktab] [-t typename] vnode_disk"
+	    "usage: vnconfig [-crvz] [-f disktab] [-t typename] vnode_disk"
 		" regular-file [geomspec]\n",
 	    "       vnconfig -u [-Fv] vnode_disk\n"
 	    "       vnconfig -l [vnode_disk]\n");
