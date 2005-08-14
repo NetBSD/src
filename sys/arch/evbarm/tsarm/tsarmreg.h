@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarmreg.h,v 1.3 2005/03/09 21:19:59 joff Exp $	*/
+/*	$NetBSD: tsarmreg.h,v 1.4 2005/08/14 03:05:00 joff Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -45,6 +45,7 @@
 #define TS7XXX_IO8_SIZE		0x04000000UL
 #define  TS7XXX_STATUS1		0x00800000UL
 #define  TS7XXX_RTCIDX		0x00b00000UL
+#define  TS7XXX_MAX197ADC	0x00c00000UL
 #define  TS7XXX_CFREGS1		0x01000001UL
 #define  TS7XXX_CFREGS2		0x01040006UL
 #define  TS7XXX_RTCDAT		0x01700000UL
