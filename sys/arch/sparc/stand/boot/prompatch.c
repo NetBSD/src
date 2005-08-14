@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.9 2004/03/18 12:26:51 hannken Exp $ */
+/*	$NetBSD: prompatch.c,v 1.10 2005/08/14 16:05:56 macallan Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -188,10 +188,33 @@ static struct patch_entry patch_c5ip[] = {
 { NULL, NULL }
 }; /* patch_c5ip */
 
+static struct patch_entry patch_krups[] = {
+
+/*
+ * check if there's a node for the audio chip, if not create it
+ */
+{ "sound device node: ",
+	"\" /pci/ebus/sound\" ' find-device catch"
+	" 0= if"
+		" device-end"
+		" \" ok\""
+	" else"
+		" 0 0 0 0 \" /pci/ebus\" begin-package"
+			" \" sound\" name" 
+			" 200000 1 600 reg"
+		" end-package"
+		" \" created\""
+	" then type"
+},
+
+{ NULL, NULL }
+}; /* patch_krups */
+
 static struct prom_patch prom_patch_tab[] = {
 	{ "SUNW,JavaStation-1",  PROM_OBP_V3,   NULL,	    patch_js1_obp },
 	{ "SUNW,JDM1",		 PROM_OPENFIRM, NULL,	    patch_js1_ofw },
 	{ "SUNW,SPARCstation-5", PROM_OBP_V3,   match_c5ip, patch_c5ip	  },
+	{ "SUNW,JSIIep",	 PROM_OPENFIRM,	NULL,	    patch_krups   },
 	{ NULL, 0, NULL }
 };
 
