@@ -1,7 +1,7 @@
-/*	$NetBSD: j6x0lcd.c,v 1.6 2005/02/28 16:57:56 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.6.2.1 2005/08/14 22:23:29 riz Exp $ */
 
 /*
- * Copyright (c) 2004 Valeriy E. Ushakov
+ * Copyright (c) 2004, 2005 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.6 2005/02/28 16:57:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.6.2.1 2005/08/14 22:23:29 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,16 +48,18 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.6 2005/02/28 16:57:56 uwe Exp $");
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
 
+#define arraysize(ary) (sizeof(ary) / sizeof(ary[0]))
+
 
 /*
  * LCD power: controlled by pin 0 in HD64461 GPIO port B.
  *   0 - power on
  *   1 - power off
  */
-#define HD64461_GPBDR_J6X0LCD_OFF	0x01
+#define HD64461_GPBDR_J6X0_LCD_OFF	0x01
 
-#define HD64461_GPBCR_J6X0LCD_OFF_MASK	0xfffc
-#define HD64461_GPBCR_J6X0LCD_OFF_BITS	0x0001
+#define HD64461_GPBCR_J6X0_LCD_OFF_MASK	0xfffc
+#define HD64461_GPBCR_J6X0_LCD_OFF_BITS	0x0001
 
 
 /*
@@ -82,55 +84,60 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.6 2005/02/28 16:57:56 uwe Exp $");
 
 
 /*
- * LCD contrast: controlled by pins 6,5,4,3 HD64461 GPIO port B.
- * 6th is the least significant bit, 3rd is the most significant.
- * The bits are inverted: .1111... = 0, .0111... = 1, etc.
+ * LCD contrast in 680 is controlled by pins 6..3 of HD64461 GPIO
+ * port B.  6th pin is the least significant bit, 3rd pin is the most
+ * significant.  The bits are inverted: 0 = .1111...; 1 = .0111...;
+ * etc.  Larger values mean "blacker".
  *
- * We control the contrast value by setting bits in the data register
- * to all ones, and changing the mode of the bits in the control
- * register, keeping "ones" in gpio output mode (1), and switching
- * "zeros" to input mode (3).  This is what WinCE also does.
- *
- * Alternative method is to set the mode of all bits to gpio output
- * mode and then change the bits in the data register.  This method
- * results in significantly less contrast screen for the same values.
- * E.g., WinCE default contrast value is 11 (in our numbering, 23 in
- * WinCE's) - which is fine in the "tweak the control register"
- * method, but is very blurry in the "tweak the data register" method.
- * Subjectively, 15 in the "tweak control" method looks like 7 in the
- * "tweak data" method.
- *
- * May be it's possible to control a wider range of contrast by
- * combining the two methods, but values above 7 in the "tweak data"
- * method are so blurry that they are next to unusable in practice.
+ * The contrast value is programmed by setting bits in the data
+ * register to all ones, and changing the mode of the pins in the
+ * control register, setting logical "ones" to GPIO output mode (1),
+ * and switching "zeroes" to input mode (3).
  */
-#define J6X0LCD_CONTRAST_MAX	15
+#define HD64461_GPBDR_J680_CONTRAST_BITS	0x78	/* set */
+#define HD64461_GPBCR_J680_CONTRAST_MASK	0xc03f
 
-#define HD64461_GPBDR_J6X0LCD_CONTRAST_MASK	0x87
-#define HD64461_GPBDR_J6X0LCD_CONTRAST_BITS	0x78
+static const uint8_t j6x0lcd_contrast680_pins[] = { 6, 5, 4, 3 };
 
-#if 0
-/* "tweak data" */
-static uint8_t j6x0lcd_contrast_data_bits[] = {
-	0x78, 0x38, 0x58, 0x18, 0x68, 0x28, 0x48, 0x08,
-	0x70, 0x30, 0x50, 0x10, 0x60, 0x20, 0x40, 0x00
-};
-#endif
-
-#define HD64461_GPBCR_J6X0LCD_CONTRAST_MASK	0xc03f
-#define HD64461_GPBCR_J6X0LCD_CONTRAST_BITS	0x1540
-
-/* "tweak control" */
-static uint16_t j6x0lcd_contrast_control_bits[] = {
+static const uint16_t j6x0lcd_contrast680_control_bits[] = {
 	0x1540, 0x3540, 0x1d40, 0x3d40, 0x1740, 0x3740, 0x1f40, 0x3f40,
 	0x15c0, 0x35c0, 0x1dc0, 0x3dc0, 0x17c0, 0x37c0, 0x1fc0, 0x3fc0
 };
+
+
+/*
+ * LCD contrast in 620lx is controlled by pins 7,6,3,4,5 of HD64461
+ * GPIO port B (in the order from the least significant to the most
+ * significant).  The bits are inverted: 0 = 11111...; 5 = 01110...;
+ * etc.  Larger values mean "whiter".
+ *
+ * The contrast value is programmed by setting bits in the data
+ * register to all zeroes, and changing the mode of the pins in the
+ * control register, setting logical "ones" to GPIO output mode (1),
+ * and switching "zeroes" to input mode (3).
+ */
+#define HD64461_GPBDR_J620LX_CONTRAST_BITS	0xf8	/* clear */
+#define HD64461_GPBCR_J620LX_CONTRAST_MASK	0x003f
+
+static const uint8_t j6x0lcd_contrast620lx_pins[] = { 7, 6, 3, 4, 5 };
+
+static const uint16_t j6x0lcd_contrast620lx_control_bits[] = {
+	0xffc0, 0x7fc0, 0xdfc0, 0x5fc0, 0xff40, 0x7f40, 0xdf40, 0x5f40,
+	0xfdc0, 0x7dc0, 0xddc0, 0x5dc0, 0xfd40, 0x7d40, 0xdd40, 0x5d40,
+	0xf7c0, 0x77c0, 0xd7c0, 0x57c0, 0xf740, 0x7740, 0xd740, 0x5740,
+	0xf5c0, 0x75c0, 0xd5c0, 0x55c0, 0xf540, 0x7540, 0xd540, 0x5540
+};
+
 
 
 struct j6x0lcd_softc {
 	struct device sc_dev;
 	int sc_brightness;
 	int sc_contrast;
+
+	int sc_contrast_max;
+	uint16_t sc_contrast_mask;
+	const uint16_t *sc_contrast_control_bits;
 };
 
 static int	j6x0lcd_match(struct device *, struct cfdata *, void *);
@@ -143,16 +150,22 @@ CFATTACH_DECL(j6x0lcd, sizeof(struct j6x0lcd_softc),
 static int	j6x0lcd_param(void *, int, long, void *);
 static int	j6x0lcd_power(void *, int, long, void *);
 
+static int	j6x0lcd_contrast_raw(uint16_t, int, const uint8_t *);
+static void	j6x0lcd_contrast_set(struct j6x0lcd_softc *, int);
+
+
 
 static int
 j6x0lcd_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
 	/*
-	 * XXX: does platid_mask_MACH_HP_LX matches _JORNADA_6XX too?
-	 * Is 620 wired similarly?
+	 * XXX: platid_mask_MACH_HP_LX also matches 360LX.  It's not
+	 * confirmed whether touch panel in 360LX is connected this
+	 * way.  We may need to regroup platid masks.
 	 */
-	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX))
+	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX)
+	    && !platid_match(&platid, &platid_mask_MACH_HP_LX))
 		return (0);
 
 	if (strcmp(cfp->cf_name, "j6x0lcd") != 0)
@@ -166,7 +179,6 @@ static void
 j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct j6x0lcd_softc *sc = (struct j6x0lcd_softc *)self;
-	int contrast, i;
 	uint16_t bcr, bdr;
 	uint8_t dcr, ddr;
 
@@ -181,35 +193,55 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 	ddr = DAC_(DR0);
 	sc->sc_brightness = J6X0LCD_DA_TO_BRIGHTNESS(ddr);
 
-
 	/*
 	 * Contrast and power are controlled by HD64461 GPIO port B.
 	 */
 	bcr = hd64461_reg_read_2(HD64461_GPBCR_REG16);
 	bdr = hd64461_reg_read_2(HD64461_GPBDR_REG16);
 
-	contrast = 0xf;		/* bits are inverted */
-	for (i = 0; i < 4; ++i) {
-		unsigned int c, v;
-		c = (bcr >> ((6 - i) << 1)) & 0x3;
-		if (c == 1)	/* gpio mode? */
-			v = 1;
-		else
-			v = 0;
-		contrast &= ~(v << i);
+	/*
+	 * Make sure LCD is turned on.
+	 */
+	bcr &= HD64461_GPBCR_J6X0_LCD_OFF_MASK;
+	bcr |= HD64461_GPBCR_J6X0_LCD_OFF_BITS; /* output mode */
+
+	bdr &= ~HD64461_GPBDR_J6X0_LCD_OFF;
+
+	/*
+	 * 620LX and 680 have different contrast control.
+	 */
+	if (platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX)) {
+		bdr |= HD64461_GPBDR_J680_CONTRAST_BITS;
+
+		sc->sc_contrast_mask =
+			HD64461_GPBCR_J680_CONTRAST_MASK;
+		sc->sc_contrast_control_bits =
+			j6x0lcd_contrast680_control_bits;
+		sc->sc_contrast_max =
+			arraysize(j6x0lcd_contrast680_control_bits) - 1;
+
+		sc->sc_contrast = sc->sc_contrast_max
+			- j6x0lcd_contrast_raw(bcr,
+				arraysize(j6x0lcd_contrast680_pins),
+				j6x0lcd_contrast680_pins);
+	} else {
+		bdr &= ~HD64461_GPBDR_J620LX_CONTRAST_BITS;
+
+		sc->sc_contrast_mask =
+			HD64461_GPBCR_J620LX_CONTRAST_MASK;
+		sc->sc_contrast_control_bits =
+			j6x0lcd_contrast620lx_control_bits;
+		sc->sc_contrast_max =
+			arraysize(j6x0lcd_contrast620lx_control_bits) - 1;
+
+		sc->sc_contrast =
+			j6x0lcd_contrast_raw(bcr,
+				arraysize(j6x0lcd_contrast620lx_pins),
+				j6x0lcd_contrast620lx_pins);
 	}
 
-	sc->sc_contrast = contrast;
-
-	bdr &= ~HD64461_GPBDR_J6X0LCD_OFF;
-	bdr |= HD64461_GPBDR_J6X0LCD_CONTRAST_BITS;
-	hd64461_reg_write_2(HD64461_GPBDR_REG16, bdr);
-
-	bcr &= HD64461_GPBCR_J6X0LCD_OFF_MASK
-		& HD64461_GPBCR_J6X0LCD_CONTRAST_MASK;
-	bcr |= HD64461_GPBCR_J6X0LCD_OFF_BITS
-		| j6x0lcd_contrast_control_bits[contrast];
 	hd64461_reg_write_2(HD64461_GPBCR_REG16, bcr);
+	hd64461_reg_write_2(HD64461_GPBDR_REG16, bdr);
 
 	printf(": brightness %d, contrast %d\n",
 	       sc->sc_brightness, sc->sc_contrast);
@@ -245,6 +277,52 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 
+/*
+ * Get raw contrast value programmed in GPIO port B control register.
+ * Used only at attach time to get initial contrast.
+ */
+static int
+j6x0lcd_contrast_raw(uint16_t bcr, int width, const uint8_t *pin)
+{
+	int contrast;
+	int bit;
+
+	contrast = 0;
+	for (bit = 0; bit < width; ++bit) {
+		unsigned int c, v;
+
+		c = (bcr >> (pin[bit] << 1)) & 0x3;
+		if (c == 1)	/* output mode? */
+			v = 1;
+		else
+			v = 0;
+		contrast |= (v << bit);
+	}
+
+	return contrast;
+}
+
+
+/*
+ * Set contrast by programming GPIO port B control register.
+ * Data register has been initialized at attach time.
+ */
+static void
+j6x0lcd_contrast_set(struct j6x0lcd_softc *sc, int contrast)
+{
+	uint16_t bcr;
+
+	sc->sc_contrast = contrast;
+
+	bcr = hd64461_reg_read_2(HD64461_GPBCR_REG16);
+
+	bcr &= sc->sc_contrast_mask;
+	bcr |= sc->sc_contrast_control_bits[contrast];
+
+	hd64461_reg_write_2(HD64461_GPBCR_REG16, bcr);
+}
+
+
 static int
 j6x0lcd_param(ctx, type, id, msg)
 	void *ctx;
@@ -254,7 +332,6 @@ j6x0lcd_param(ctx, type, id, msg)
 {
 	struct j6x0lcd_softc *sc = ctx;
 	int value;
-	uint16_t bcr;
 	uint8_t dr;
 
 	switch (type) {
@@ -265,7 +342,7 @@ j6x0lcd_param(ctx, type, id, msg)
 			return (0);
 
 		case CONFIG_HOOK_CONTRAST_MAX:
-			*(int *)msg = J6X0LCD_CONTRAST_MAX;
+			*(int *)msg = sc->sc_contrast_max;
 			return (0);
 
 		case CONFIG_HOOK_BRIGHTNESS:
@@ -285,14 +362,9 @@ j6x0lcd_param(ctx, type, id, msg)
 
 		switch (id) {
 		case CONFIG_HOOK_CONTRAST:
-			if (value > J6X0LCD_CONTRAST_MAX)
-				value = J6X0LCD_CONTRAST_MAX;
-			sc->sc_contrast = value;
-
-			bcr = hd64461_reg_read_2(HD64461_GPBCR_REG16);
-			bcr &= HD64461_GPBCR_J6X0LCD_CONTRAST_MASK;
-			bcr |= j6x0lcd_contrast_control_bits[value];
-			hd64461_reg_write_2(HD64461_GPBCR_REG16, bcr);
+			if (value > sc->sc_contrast_max)
+				value = sc->sc_contrast_max;
+			j6x0lcd_contrast_set(sc, value);
 			return (0);
 
 		case CONFIG_HOOK_BRIGHTNESS:
@@ -329,9 +401,9 @@ j6x0lcd_power(ctx, type, id, msg)
 
 	r = hd64461_reg_read_2(HD64461_GPBDR_REG16);
 	if (on)
-		r &= ~HD64461_GPBDR_J6X0LCD_OFF;
+		r &= ~HD64461_GPBDR_J6X0_LCD_OFF;
 	else
-		r |= HD64461_GPBDR_J6X0LCD_OFF;
+		r |= HD64461_GPBDR_J6X0_LCD_OFF;
 	hd64461_reg_write_2(HD64461_GPBDR_REG16, r);
 
 	return (0);
