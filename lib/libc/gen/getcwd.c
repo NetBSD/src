@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.36.2.1 2005/08/14 22:08:44 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.36.2.1 2005/08/14 22:08:44 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ char *
 realpath(const char *path, char *resolved)
 {
 	struct stat sb;
-	int idx = 0, n, nlnk = 0, serrno = errno;
+	int idx = 0, n, nlnk = 0;
 	const char *q;
 	char *p, wbuf[2][MAXPATHLEN];
 	size_t len;
@@ -159,11 +159,6 @@ loop:
 	 * target to unresolved path.
 	 */
 	if (lstat(resolved, &sb) == -1) {
-		/* Allow nonexistent component if this is the last one. */
-		if (*q == 0 && errno == ENOENT) {
-			errno = serrno;
-			return (resolved);
-		}
 		return (NULL);
 	}
 	if (S_ISLNK(sb.st_mode)) {
@@ -192,6 +187,10 @@ loop:
 		if (*path == '/')
 			p = resolved;
 		goto loop;
+	}
+	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
+		errno = ENOTDIR;
+		return (NULL);
 	}
 
 	/* Advance both resolved and unresolved path. */
