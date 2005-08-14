@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.18 2005/08/05 09:23:16 skrll Exp $
+#	$NetBSD: TS7200,v 1.19 2005/08/14 04:30:08 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -169,12 +169,14 @@ isa0		at tspld?
 wdc0		at tspld?
 # TS-5620 battery-backed real-time clock
 tsrtc*		at tspld?
+
 # HD44780 LCD on LCD header
-tslcd*		at tspld?
-wsdisplay*	at tslcd? console ?
+#tslcd*		at tspld?
+#wsdisplay*	at tslcd? console ?
+
 # 4x4 Matrix Keypad on DIO header
-tskp*		at tspld?
-wskbd*	at tskp? console ? mux 1
+#tskp*		at tspld?
+#wskbd*	at tskp? console ? mux 1
 
 # TS-SER[1,2,4] multiport serial PC/104 cards
 com0		at isa? port 0x3f8 irq 6        # Standard PC serial ports
@@ -184,10 +186,16 @@ com3		at isa? port 0x2e8 irq 6
 
 wdc1	at isa? port 0x1f0 irq 7 flags 0x00
 wdc2	at isa? port 0x170 irq 7 flags 0x00
+
 tscs0	at isa? port 0x300 iomem ? irq ? drq ?  # TS-ETH10 PC/104 ethernet
 tscs1	at isa? port 0x310 iomem ? irq ? drq ?
 tscs2	at isa? port 0x320 iomem ? irq ? drq ?
 tscs3	at isa? port 0x330 iomem ? irq ? drq ?
+
+tsdio0  at isa? port 0x100 # TS-DIO24 general-purpose I/O
+tsdio1  at isa? port 0x108
+tsdio2  at isa? port 0x110
+tsdio3  at isa? port 0x118
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
