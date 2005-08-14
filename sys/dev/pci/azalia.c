@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.11 2005/08/14 21:43:53 riz Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.11 2005/08/14 21:43:53 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.12 2005/08/14 21:44:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2298,6 +2298,28 @@ azalia_mixer_init(codec_t *this)
 			break;
 		default:
 			mc.un.ord = 0;
+		}
+		azalia_mixer_set(this, &mc);
+	}
+
+	/* set unextreme volume */
+	for (i = 0; i < this->nmixers; i++) {
+		mixer_ctrl_t mc;
+
+		if (!IS_MI_TARGET_INAMP(this->mixers[i].target) &&
+		    this->mixers[i].target != MI_TARGET_OUTAMP &&
+		    this->mixers[i].target != MI_TARGET_VOLUME)
+			continue;
+		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
+			continue;
+		mc.dev = i;
+		mc.type = AUDIO_MIXER_VALUE;
+		mc.un.value.num_channels = 1;
+		mc.un.value.level[0] = AUDIO_MAX_GAIN / 2;
+		if (this->mixers[i].target != MI_TARGET_VOLUME &&
+		    this->w[this->mixers[i].nid].widgetcap & COP_AWCAP_STEREO) {
+			mc.un.value.num_channels = 2;
+			mc.un.value.level[1] = AUDIO_MAX_GAIN / 2;
 		}
 		azalia_mixer_set(this, &mc);
 	}
