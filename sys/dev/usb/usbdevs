@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.410 2005/08/03 23:08:08 augustss Exp $
+$NetBSD: usbdevs,v 1.411 2005/08/14 21:08:18 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1597,8 +1597,15 @@ product ROLAND UM550		0x0023	UM-550 MIDI I/F
 product ROLAND SD20		0x0027	SD-20 MIDI Synth.
 product ROLAND SD80		0x0029	SD-80 MIDI Synth.
 product ROLAND UA700		0x002b	UA-700 USB Audio I/F
+product ROLAND PCRA		0x0033	EDIROL PCR MIDI keyboard (advanced)
+product ROLAND PCR		0x0034	EDIROL PCR MIDI keyboard
+product ROLAND M1000		0x0035	M-1000 audio I/F
+product ROLAND UA1000		0x0044	EDIROL UA-1000 USB audio I/F
 product ROLAND UA3FXA		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
 product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
+product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
+product ROLAND UA101		0x007d	EDIROL UA-101
+product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
