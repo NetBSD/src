@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.6 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.7 2005/08/14 02:56:06 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.6 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.7 2005/08/14 02:56:06 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.6 2005/02/27 00:27:01 perry Exp $
 
 #define COORD_TO_IDX(x, y)	((y) * sc->sc_cols + (x))
 #define COORD_TO_DADDR(x, y)	((y) * HD_ROW2_ADDR + (x))
-#define IDX_TO_ROW(idx)		(((idx) >= sc->sc_cols) ? 1 : 0)
-#define IDX_TO_COL(idx)		(((idx) >= sc->sc_cols) ? \
-				((idx) - sc->sc_cols) : (idx))
-#define IDX_TO_DDADDR(idx)	((IDX_TO_ROW((idx)) == 1) ? \
-				(HD_ROW2_ADDR + IDX_TO_COL((idx))) : \
-				(IDX_TO_COL((idx))))
-#define DADDR_TO_ROW(daddr)	(((daddr) >= HD_ROW2_ADDR) ? 1 : 0)
-#define DADDR_TO_COL(daddr)	((DADDR_TO_ROW((daddr)) == 1) ? \
-				((daddr) - HD_ROW2_ADDR) : (daddr))
+#define IDX_TO_ROW(idx)		((idx) / sc->sc_cols)
+#define IDX_TO_COL(idx)		((idx) % sc->sc_cols)
+#define IDX_TO_DADDR(idx)	(IDX_TO_ROW((idx)) * HD_ROW2_ADDR + \
+				IDX_TO_COL((idx)))
+#define DADDR_TO_ROW(daddr)	((daddr) / HD_ROW2_ADDR)
+#define DADDR_TO_COL(daddr)	((daddr) % HD_ROW2_ADDR)
+#define DADDR_TO_CHIPDADDR(daddr)	((daddr) % (HD_ROW2_ADDR * 2))
+#define DADDR_TO_CHIPNO(daddr)	((daddr) / (HD_ROW2_ADDR * 2))
 
 static void	hlcd_cursor(void *, int, int, int);
 static int	hlcd_mapchar(void *, int, unsigned int *);
@@ -142,7 +141,7 @@ hlcd_putchar(id, row, col, c, attr)
 	struct hlcd_screen *hdscr = id;
 
 	c &= 0xff;
-	if (row > 0 && (hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
+	if (row > 0 && (hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
 		hdscr->image[hdscr->hlcd_sc->sc_cols * row + col] = c;
 	else
 		hdscr->image[col] = c;
@@ -161,7 +160,7 @@ hlcd_copycols(id, row, srccol, dstcol, ncols)
 	if ((dstcol + ncols - 1) > hdscr->hlcd_sc->sc_cols)
 		ncols = hdscr->hlcd_sc->sc_cols - srccol;
 
-	if (row > 0 && (hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
+	if (row > 0 && (hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
 		bcopy(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + srccol],
 		    &hdscr->image[hdscr->hlcd_sc->sc_cols * row + dstcol], ncols);
 	else
@@ -183,7 +182,7 @@ hlcd_erasecols(id, row, startcol, ncols, fillattr)
 	if ((startcol + ncols) > hdscr->hlcd_sc->sc_cols)
 		ncols = hdscr->hlcd_sc->sc_cols - startcol;
 
-	if (row > 0 && (hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
+	if (row > 0 && (hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
 		memset(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + startcol],
 		    ' ', ncols);
 	else
@@ -199,7 +198,7 @@ hlcd_copyrows(id, srcrow, dstrow, nrows)
 	struct hlcd_screen *hdscr = id;
 	int ncols = hdscr->hlcd_sc->sc_cols;
 
-	if (!(hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
+	if (!(hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
 		return;
 	bcopy(&hdscr->image[srcrow * ncols], &hdscr->image[dstrow * ncols],
 	    nrows * ncols);
@@ -307,14 +306,16 @@ hlcd_updatechar(sc, daddr, c)
 	struct hd44780_chip *sc;
 	int daddr, c;
 {
-	int curdaddr;
+	int curdaddr, en, chipdaddr;
 
 	curdaddr = COORD_TO_DADDR(sc->sc_screen.hlcd_curx,
 	    sc->sc_screen.hlcd_cury);
+	en = DADDR_TO_CHIPNO(daddr);
+	chipdaddr = DADDR_TO_CHIPDADDR(daddr);
 	if (daddr != curdaddr)
-		hd44780_ir_write(sc, cmd_ddramset(daddr));
+		hd44780_ir_write(sc, en, cmd_ddramset(chipdaddr));
 
-	hd44780_dr_write(sc, c);
+	hd44780_dr_write(sc, en, c);
 
 	daddr++;
 	sc->sc_screen.hlcd_curx = DADDR_TO_COL(daddr);
@@ -327,6 +328,7 @@ hlcd_redraw(arg)
 {
 	struct hd44780_chip *sc = arg;
 	int len, crsridx, startidx, x, y;
+	int old_en, new_en;
 	u_char *img, *curimg;
 
 	if (sc->sc_curscr == NULL)
@@ -337,13 +339,20 @@ hlcd_redraw(arg)
 	else
 		len = sc->sc_cols;
 
+	if (sc->sc_flags & HD_MULTICHIP)
+		len = len * 2;
+
+	x = sc->sc_screen.hlcd_curx;
+	y = sc->sc_screen.hlcd_cury;
+	old_en = DADDR_TO_CHIPNO(COORD_TO_DADDR(x, y));
+
 	img = sc->sc_screen.image;
 	curimg = sc->sc_curscr->image;
 	startidx = crsridx =
 	    COORD_TO_IDX(sc->sc_screen.hlcd_curx, sc->sc_screen.hlcd_cury);
 	do {
 		if (img[crsridx] != curimg[crsridx]) {
-			hlcd_updatechar(sc, IDX_TO_DDADDR(crsridx),
+			hlcd_updatechar(sc, IDX_TO_DADDR(crsridx),
 			    curimg[crsridx]);
 			img[crsridx] = curimg[crsridx];
 		}
@@ -352,19 +361,33 @@ hlcd_redraw(arg)
 			crsridx = 0;
 	} while (crsridx != startidx);
 
+	x = sc->sc_curscr->hlcd_curx;
+	y = sc->sc_curscr->hlcd_cury;
+	new_en = DADDR_TO_CHIPNO(COORD_TO_DADDR(x, y));
+
 	if (sc->sc_screen.hlcd_curx != sc->sc_curscr->hlcd_curx ||
 	    sc->sc_screen.hlcd_cury != sc->sc_curscr->hlcd_cury) {
+
 		x = sc->sc_screen.hlcd_curx = sc->sc_curscr->hlcd_curx;
 		y = sc->sc_screen.hlcd_cury = sc->sc_curscr->hlcd_cury;
-		hd44780_ir_write(sc, cmd_ddramset(COORD_TO_DADDR(x, y)));
+
+		hd44780_ir_write(sc, new_en, cmd_ddramset(
+		    DADDR_TO_CHIPDADDR(COORD_TO_DADDR(x, y))));
+
+	}
+
+	/* visible cursor switched to other chip */
+	if (old_en != new_en && sc->sc_screen.hlcd_curon) {
+		hd44780_ir_write(sc, old_en, cmd_dispctl(1, 0, 0));
+		hd44780_ir_write(sc, new_en, cmd_dispctl(1, 1, 1));
 	}
 
 	if (sc->sc_screen.hlcd_curon != sc->sc_curscr->hlcd_curon) {
 		sc->sc_screen.hlcd_curon = sc->sc_curscr->hlcd_curon;
 		if (sc->sc_screen.hlcd_curon)
-			hd44780_ir_write(sc, cmd_dispctl(1, 1, 1));
+			hd44780_ir_write(sc, new_en, cmd_dispctl(1, 1, 1));
 		else
-			hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
+			hd44780_ir_write(sc, new_en, cmd_dispctl(1, 0, 0));
 	}
 
 	callout_schedule(&sc->redraw, 1);
@@ -403,26 +426,39 @@ hd44780_attach_subr(sc)
 	sc->sc_screen.image = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	memset(sc->sc_screen.image, ' ', PAGE_SIZE);
 	sc->sc_curscr = NULL;
+	sc->sc_curchip = 0;
 	callout_init(&sc->redraw);
 	callout_setfunc(&sc->redraw, hlcd_redraw, sc);
+}
+
+int hd44780_init(sc)
+	struct hd44780_chip *sc;
+{
+	int ret;
+
+	ret = hd44780_chipinit(sc, 0);
+	if (ret != 0 || !(sc->sc_flags & HD_MULTICHIP)) return ret;
+	else return hd44780_chipinit(sc, 1);
 }
 
 /*
  * Initialize 4-bit or 8-bit connected device.
  */
 int
-hd44780_init(sc)
+hd44780_chipinit(sc, en)
 	struct hd44780_chip *sc;
+	u_int32_t en;
 {
 	u_int8_t cmd, dat;
 
 	sc->sc_flags &= ~(HD_TIMEDOUT|HD_UP);
 	sc->sc_dev_ok = 1;
+
 	cmd = cmd_init(sc->sc_flags & HD_8BIT);
-	hd44780_ir_write(sc, cmd);
+	hd44780_ir_write(sc, en, cmd);
 	delay(HD_TIMEOUT_LONG);
-	hd44780_ir_write(sc, cmd);
-	hd44780_ir_write(sc, cmd);
+	hd44780_ir_write(sc, en, cmd);
+	hd44780_ir_write(sc, en, cmd);
 
 	cmd = cmd_funcset(
 			sc->sc_flags & HD_8BIT,
@@ -430,14 +466,14 @@ hd44780_init(sc)
 			sc->sc_flags & HD_BIGFONT);
 
 	if ((sc->sc_flags & HD_8BIT) == 0)
-		hd44780_ir_write(sc, cmd);
+		hd44780_ir_write(sc, en, cmd);
 
 	sc->sc_flags |= HD_UP;
 
-	hd44780_ir_write(sc, cmd);
-	hd44780_ir_write(sc, cmd_dispctl(0, 0, 0));
-	hd44780_ir_write(sc, cmd_clear());
-	hd44780_ir_write(sc, cmd_modset(1, 0));
+	hd44780_ir_write(sc, en, cmd);
+	hd44780_ir_write(sc, en, cmd_dispctl(0, 0, 0));
+	hd44780_ir_write(sc, en, cmd_clear());
+	hd44780_ir_write(sc, en, cmd_modset(1, 0));
 
 	if (sc->sc_flags & HD_TIMEDOUT) {
 		sc->sc_flags &= ~HD_UP;
@@ -445,19 +481,19 @@ hd44780_init(sc)
 	}
 
 	/* Turn display on and clear it. */
-	hd44780_ir_write(sc, cmd_clear());
-	hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
+	hd44780_ir_write(sc, en, cmd_clear());
+	hd44780_ir_write(sc, en, cmd_dispctl(1, 0, 0));
 
 	/* Attempt a simple probe for presence */
-	hd44780_ir_write(sc, cmd_ddramset(0x5));
-	hd44780_ir_write(sc, cmd_shift(0, 1));
-	hd44780_busy_wait(sc);
-	if ((dat = hd44780_ir_read(sc) & 0x7f) != 0x6) {
+	hd44780_ir_write(sc, en, cmd_ddramset(0x5));
+	hd44780_ir_write(sc, en, cmd_shift(0, 1));
+	hd44780_busy_wait(sc, en);
+	if ((dat = hd44780_ir_read(sc, en) & 0x7f) != 0x6) {
 		sc->sc_dev_ok = 0;
 		sc->sc_flags &= ~HD_UP;
 		return EIO;
 	}
-	hd44780_ir_write(sc, cmd_ddramset(0));
+	hd44780_ir_write(sc, en, cmd_ddramset(0));
 
 	return 0;
 }
@@ -473,6 +509,7 @@ hd44780_ioctl_subr(sc, cmd, data)
 {
 	u_int8_t tmp;
 	int error = 0;
+	u_int32_t en = sc->sc_curchip;
 
 #define hd44780_io()	((struct hd44780_io *)data)
 #define hd44780_info()	((struct hd44780_info*)data)
@@ -481,22 +518,22 @@ hd44780_ioctl_subr(sc, cmd, data)
 	switch (cmd) {
 		/* Clear the LCD. */
 		case HLCD_CLEAR:
-			hd44780_ir_write(sc, cmd_clear());
+			hd44780_ir_write(sc, en, cmd_clear());
 			break;
 
 		/* Move the cursor one position to the left. */
 		case HLCD_CURSOR_LEFT:
-			hd44780_ir_write(sc, cmd_shift(0, 0));
+			hd44780_ir_write(sc, en, cmd_shift(0, 0));
 			break;
 
 		/* Move the cursor one position to the right. */
 		case HLCD_CURSOR_RIGHT:
-			hd44780_ir_write(sc, cmd_shift(0, 1));
+			hd44780_ir_write(sc, en, cmd_shift(0, 1));
 			break;
 
 		/* Control the LCD. */
 		case HLCD_DISPCTL:
-			hd44780_ir_write(sc, cmd_dispctl(
+			hd44780_ir_write(sc, en, cmd_dispctl(
 						hd44780_ctrl()->display_on,
 						hd44780_ctrl()->cursor_on,
 						hd44780_ctrl()->blink_on));
@@ -506,6 +543,8 @@ hd44780_ioctl_subr(sc, cmd, data)
 		case HLCD_GET_INFO:
 			hd44780_info()->lines
 				= (sc->sc_flags & HD_MULTILINE) ? 2 : 1;
+			if (sc->sc_flags & HD_MULTICHIP)
+				hd44780_info()->lines *= 2;
 			hd44780_info()->phys_rows = sc->sc_cols;
 			hd44780_info()->virt_rows = sc->sc_vcols;
 			hd44780_info()->is_wide = sc->sc_flags & HD_8BIT;
@@ -521,64 +560,74 @@ hd44780_ioctl_subr(sc, cmd, data)
 
 		/* Get the current cursor position. */
 		case HLCD_GET_CURSOR_POS:
-			hd44780_io()->dat = (hd44780_ir_read(sc) & 0x7f);
+			hd44780_io()->dat = (hd44780_ir_read(sc, en) & 0x7f);
 			break;
 
 		/* Set the cursor position. */
 		case HLCD_SET_CURSOR_POS:
-			hd44780_ir_write(sc, cmd_ddramset(hd44780_io()->dat));
+			hd44780_ir_write(sc, en, cmd_ddramset(hd44780_io()->dat));
 			break;
 
 		/* Get the value at the current cursor position. */
 		case HLCD_GETC:
-			tmp = (hd44780_ir_read(sc) & 0x7f);
-			hd44780_ir_write(sc, cmd_ddramset(tmp));
-			hd44780_io()->dat = hd44780_dr_read(sc);
+			tmp = (hd44780_ir_read(sc, en) & 0x7f);
+			hd44780_ir_write(sc, en, cmd_ddramset(tmp));
+			hd44780_io()->dat = hd44780_dr_read(sc, en);
 			break;
 
 		/* Set the character at the cursor position + advance cursor. */
 		case HLCD_PUTC:
-			hd44780_dr_write(sc, hd44780_io()->dat);
+			hd44780_dr_write(sc, en, hd44780_io()->dat);
 			break;
 
 		/* Shift display left. */
 		case HLCD_SHIFT_LEFT:
-			hd44780_ir_write(sc, cmd_shift(1, 0));
+			hd44780_ir_write(sc, en, cmd_shift(1, 0));
 			break;
 
 		/* Shift display right. */
 		case HLCD_SHIFT_RIGHT:
-			hd44780_ir_write(sc, cmd_shift(1, 1));
+			hd44780_ir_write(sc, en, cmd_shift(1, 1));
 			break;
 
 		/* Return home. */
 		case HLCD_HOME:
-			hd44780_ir_write(sc, cmd_rethome());
+			hd44780_ir_write(sc, en, cmd_rethome());
 			break;
 
 		/* Write a string to the LCD virtual area. */
 		case HLCD_WRITE:
-			error = hd44780_ddram_io(sc, hd44780_io(), HD_DDRAM_WRITE);
+			error = hd44780_ddram_io(sc, en, hd44780_io(), HD_DDRAM_WRITE);
 			break;
 
 		/* Read LCD virtual area. */
 		case HLCD_READ:
-			error = hd44780_ddram_io(sc, hd44780_io(), HD_DDRAM_READ);
+			error = hd44780_ddram_io(sc, en, hd44780_io(), HD_DDRAM_READ);
 			break;
 
 		/* Write to the LCD visible area. */
 		case HLCD_REDRAW:
-			hd44780_ddram_redraw(sc, hd44780_io());
+			hd44780_ddram_redraw(sc, en, hd44780_io());
 			break;
 
 		/* Write raw instruction. */
 		case HLCD_WRITE_INST:
-			hd44780_ir_write(sc, hd44780_io()->dat);
+			hd44780_ir_write(sc, en, hd44780_io()->dat);
 			break;
 
 		/* Write raw data. */
 		case HLCD_WRITE_DATA:
-			hd44780_dr_write(sc, hd44780_io()->dat);
+			hd44780_dr_write(sc, en, hd44780_io()->dat);
+			break;
+
+		/* Get current chip 0 or 1 (top or bottom) */
+		case HLCD_GET_CHIPNO:
+			*(u_int8_t *)data = sc->sc_curchip;
+			break;
+
+		/* Set current chip 0 or 1 (top or bottom) */
+		case HLCD_SET_CHIPNO:
+			sc->sc_curchip = *(u_int8_t *)data;
 			break;
 
 		default:
@@ -595,8 +644,9 @@ hd44780_ioctl_subr(sc, cmd, data)
  * Read/write particular area of the LCD screen.
  */
 int
-hd44780_ddram_io(sc, io, dir)
+hd44780_ddram_io(sc, en, io, dir)
 	struct hd44780_chip *sc;
+	u_int32_t en;
 	struct hd44780_io *io;
 	u_char dir;
 {
@@ -610,11 +660,11 @@ hd44780_ddram_io(sc, io, dir)
 		hi = HD_ROW1_ADDR + sc->sc_vcols;
 		addr = HD_ROW1_ADDR + io->dat;
 		for (; (addr < hi) && (i < io->len); addr++, i++) {
-			hd44780_ir_write(sc, cmd_ddramset(addr));
+			hd44780_ir_write(sc, en, cmd_ddramset(addr));
 			if (dir == HD_DDRAM_READ)
-				io->buf[i] = hd44780_dr_read(sc);
+				io->buf[i] = hd44780_dr_read(sc, en);
 			else
-				hd44780_dr_write(sc, io->buf[i]);
+				hd44780_dr_write(sc, en, io->buf[i]);
 		}
 	}
 	if (io->dat < 2 * sc->sc_vcols) {
@@ -624,11 +674,11 @@ hd44780_ddram_io(sc, io, dir)
 		else
 			addr = HD_ROW2_ADDR;
 		for (; (addr < hi) && (i < io->len); addr++, i++) {
-			hd44780_ir_write(sc, cmd_ddramset(addr));
+			hd44780_ir_write(sc, en, cmd_ddramset(addr));
 			if (dir == HD_DDRAM_READ)
-				io->buf[i] = hd44780_dr_read(sc);
+				io->buf[i] = hd44780_dr_read(sc, en);
 			else
-				hd44780_dr_write(sc, io->buf[i]);
+				hd44780_dr_write(sc, en, io->buf[i]);
 		}
 		if (i < io->len)
 			io->len = i;
@@ -642,32 +692,34 @@ hd44780_ddram_io(sc, io, dir)
  * Write to the visible area of the display.
  */
 void
-hd44780_ddram_redraw(sc, io)
+hd44780_ddram_redraw(sc, en, io)
 	struct hd44780_chip *sc;
+	u_int32_t en;
 	struct hd44780_io *io;
 {
 	u_int8_t i;
 
-	hd44780_ir_write(sc, cmd_clear());
-	hd44780_ir_write(sc, cmd_rethome());
+	hd44780_ir_write(sc, en, cmd_clear());
+	hd44780_ir_write(sc, en, cmd_rethome());
 	for (i = 0; (i < io->len) && (i < sc->sc_cols); i++) {
-		hd44780_dr_write(sc, io->buf[i]);
+		hd44780_dr_write(sc, en, io->buf[i]);
 	}
-	hd44780_ir_write(sc, cmd_ddramset(HD_ROW2_ADDR));
+	hd44780_ir_write(sc, en, cmd_ddramset(HD_ROW2_ADDR));
 	for (; (i < io->len); i++)
-		hd44780_dr_write(sc, io->buf[i]);
+		hd44780_dr_write(sc, en, io->buf[i]);
 }
 
 void
-hd44780_busy_wait(sc)
+hd44780_busy_wait(sc, en)
 	struct hd44780_chip *sc;
+	u_int32_t en;
 {
 	int nloops = 100;
 
 	if (sc->sc_flags & HD_TIMEDOUT)
 		return;
 
-	while(nloops-- && (hd44780_ir_read(sc) & BUSY_FLAG) == BUSY_FLAG);
+	while(nloops-- && (hd44780_ir_read(sc, en) & BUSY_FLAG) == BUSY_FLAG);
 
 	if (nloops == 0) {
 		sc->sc_flags |= HD_TIMEDOUT;
@@ -680,9 +732,9 @@ hd44780_busy_wait(sc)
  * Standard 8-bit version of 'sc_writereg' (8-bit port, 8-bit access)
  */
 void
-hd44780_writereg(sc, reg, cmd)
+hd44780_writereg(sc, en, reg, cmd)
 	struct hd44780_chip *sc;
-	u_int32_t reg;
+	u_int32_t en, reg;
 	u_int8_t cmd;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -704,9 +756,9 @@ hd44780_writereg(sc, reg, cmd)
  * Standard 8-bit version of 'sc_readreg' (8-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_readreg(sc, reg)
+hd44780_readreg(sc, en, reg)
 	struct hd44780_chip *sc;
-	u_int32_t reg;
+	u_int32_t en, reg;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
@@ -727,9 +779,9 @@ hd44780_readreg(sc, reg)
  * Standard 4-bit version of 'sc_writereg' (4-bit port, 8-bit access)
  */
 void
-hd44780_writereg(sc, reg, cmd)
+hd44780_writereg(sc, en, reg, cmd)
 	struct hd44780_chip *sc;
-	u_int32_t reg;
+	u_int32_t en, reg;
 	u_int8_t cmd;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -753,9 +805,9 @@ hd44780_writereg(sc, reg, cmd)
  * Standard 4-bit version of 'sc_readreg' (4-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_readreg(sc, reg)
+hd44780_readreg(sc, en, reg)
 	struct hd44780_chip *sc;
-	u_int32_t reg;
+	u_int32_t en, reg;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
