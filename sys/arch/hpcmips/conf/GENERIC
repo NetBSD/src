@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165.2.4 2005/08/04 18:30:18 tron Exp $
+# $NetBSD: GENERIC,v 1.165.2.5 2005/08/14 21:13:54 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165.2.4 $"
+#ident 		"GENERIC-$Revision: 1.165.2.5 $"
 
 maxusers	16
 
@@ -646,6 +646,7 @@ pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disks
