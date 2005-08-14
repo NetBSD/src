@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.52.4.1 2005/07/18 21:14:09 riz Exp $
+# 	$NetBSD: GENERIC,v 1.52.4.2 2005/08/14 21:14:35 riz Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.52.4.1 $"
+#ident		"GENERIC-$Revision: 1.52.4.2 $"
 
 # estimated number of users
 maxusers	32
@@ -350,6 +350,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	raid	8		# RAIDframe disk driver
