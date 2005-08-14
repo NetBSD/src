@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.8 2005/07/02 16:41:49 tron Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.9 2005/08/14 21:36:13 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.8 2005/07/02 16:41:49 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.9 2005/08/14 21:36:13 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -471,7 +471,7 @@ typedef struct {
 #define		ICH_PCI_HDCTL_CLKDETINV		0x02
 #define		ICH_PCI_HDCTL_SIGNALMODE	0x01
 
-/*#define AZALIA_DEBUG*/
+#define AZALIA_DEBUG
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else
@@ -1551,7 +1551,7 @@ azalia_codec_add_dacgroup(codec_t *this, int assoc, uint32_t digital)
 			continue;
 		this->dacgroups[this->ndacgroups].conv[n++] = dac;
 		DPRINTF(("%s: assoc=%d seq=%d ==> g=%d n=%d\n",
-			 __func__, assoc, seq, group, n-1));
+			 __func__, assoc, seq, this->ndacgroups, n-1));
 	}
 	if (n <= 0)		/* no such DACs */
 		return 0;
