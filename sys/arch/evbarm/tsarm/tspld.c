@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.8 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: tspld.c,v 1.9 2005/08/14 03:03:48 joff Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,9 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.8 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.9 2005/08/14 03:03:48 joff Exp $");
 
 #include <sys/param.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -55,17 +57,18 @@ __KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.8 2005/06/30 17:03:53 drochner Exp $");
 #include <evbarm/tsarm/tsarmreg.h>
 #include <evbarm/tsarm/tspldvar.h>
 #include <arm/ep93xx/ep93xxvar.h>
+#include <arm/ep93xx/ep93xxreg.h>
 #include <arm/arm32/machdep.h>
 #include <arm/cpufunc.h>
 #include <dev/sysmon/sysmonvar.h>
 
-int	tspldmatch __P((struct device *, struct cfdata *, void *));
-void	tspldattach __P((struct device *, struct device *, void *));
-static int	tspld_wdog_setmode __P((struct sysmon_wdog *));
-static int	tspld_wdog_tickle __P((struct sysmon_wdog *));
-int tspld_search __P((struct device *, struct cfdata *,
-		      const locdesc_t *, void *));
-int tspld_print __P((void *, const char *));
+int	tspldmatch (struct device *, struct cfdata *, void *);
+void	tspldattach (struct device *, struct device *, void *);
+static int	tspld_wdog_setmode (struct sysmon_wdog *);
+static int	tspld_wdog_tickle (struct sysmon_wdog *);
+int tspld_search (struct device *, struct cfdata *, const locdesc_t *, void *);
+int tspld_print (void *, const char *);
+void boardtemp_poll (void *);
 
 struct tspld_softc {
         struct device           sc_dev;
@@ -73,6 +76,8 @@ struct tspld_softc {
 	bus_space_handle_t	sc_wdogfeed_ioh;	
 	bus_space_handle_t	sc_wdogctrl_ioh;	
 	struct sysmon_wdog	sc_wdog;
+	bus_space_handle_t	sc_ssph;
+	bus_space_handle_t	sc_gpioh;
 	unsigned const char *	sc_com2mode;
 	unsigned const char *	sc_model;
 	unsigned char		sc_pldrev[4];
@@ -81,12 +86,40 @@ struct tspld_softc {
 	uint32_t		sc_jp[6];
 	uint32_t		sc_blaster_present;
 	uint32_t		sc_blaster_boot;
+	uint32_t		boardtemp;
+	uint32_t		boardtemp_5s;
+	uint32_t		boardtemp_30s;
+	struct callout		boardtemp_callout;
 };
 
 CFATTACH_DECL(tspld, sizeof(struct tspld_softc),
     tspldmatch, tspldattach, NULL, NULL);
 
 void	tspld_callback __P((struct device *));
+
+#define GPIO_GET(x)	bus_space_read_4(sc->sc_iot, sc->sc_gpioh, \
+	(EP93XX_GPIO_ ## x))
+
+#define GPIO_SET(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, \
+	(EP93XX_GPIO_ ## x), (y))
+
+#define GPIO_SETBITS(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, \
+	(EP93XX_GPIO_ ## x), GPIO_GET(x) | (y))
+
+#define GPIO_CLEARBITS(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, \
+	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
+
+#define SSP_GET(x)	bus_space_read_4(sc->sc_iot, sc->sc_ssph, \
+	(EP93XX_SSP_ ## x))
+
+#define SSP_SET(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_ssph, \
+	(EP93XX_SSP_ ## x), (y))
+
+#define SSP_SETBITS(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_ssph, \
+	(EP93XX_SSP_ ## x), SSP_GET(x) | (y))
+
+#define SSP_CLEARBITS(x, y)	bus_space_write_4(sc->sc_iot, sc->sc_ssph, \
+	(EP93XX_SSP_ ## x), SSP_GET(x) & (~(y)))
 
 int
 tspldmatch(parent, match, aux)
@@ -96,6 +129,30 @@ tspldmatch(parent, match, aux)
 {
 
 	return 1;
+}
+
+void
+boardtemp_poll(arg)
+	void *arg;
+{
+	struct tspld_softc *sc = arg;
+	u_int16_t val;
+
+	/* Disable chip select */
+	GPIO_SET(PFDDR, 0x0);
+
+	val = SSP_GET(SSPDR) & 0xffff;
+	sc->boardtemp = ((int16_t)val >> 3) * 62500;
+	sc->boardtemp_5s = sc->boardtemp_5s / 20 * 19 + sc->boardtemp / 20;
+	sc->boardtemp_30s = sc->boardtemp_30s / 120 * 119 + sc->boardtemp / 120;
+
+	callout_schedule(&sc->boardtemp_callout, hz / 4);
+
+	/* Enable chip select */
+	GPIO_SET(PFDDR, 0x4);
+
+	/* Send read command */
+	SSP_SET(SSPDR, 0x8000);
 }
 
 void
@@ -117,7 +174,7 @@ tspldattach(parent, self, aux)
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, "tspld",
+        			0, CTLTYPE_NODE, sc->sc_dev.dv_xname,
         			NULL,
         			NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
@@ -127,7 +184,7 @@ tspldattach(parent, self, aux)
 	}
 
 	sc->sc_iot = &ep93xx_bs_tag;
-        bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_MODEL, 2, 0, 
+	bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_MODEL, 2, 0, 
 		&ioh);
 	model = bus_space_read_2(sc->sc_iot, ioh, 0) & 0x7;
 	sc->sc_model = (model ? "TS-7250" : "TS-7200");
@@ -143,7 +200,7 @@ tspldattach(parent, self, aux)
 	}
 	bus_space_unmap(sc->sc_iot, ioh, 2);
 
-        bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_PLDREV, 2, 0, 
+	bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_PLDREV, 2, 0, 
 		&ioh);
 	rev = bus_space_read_2(sc->sc_iot, ioh, 0) & 0x7;
 	rev = 'A' + rev - 1;
@@ -161,7 +218,7 @@ tspldattach(parent, self, aux)
 	}
 	bus_space_unmap(sc->sc_iot, ioh, 2);
 
-        bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_FEATURES, 2, 0, 
+	bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_FEATURES, 2, 0, 
 		&ioh);
 	features = bus_space_read_2(sc->sc_iot, ioh, 0) & 0x7;
 	bus_space_unmap(sc->sc_iot, ioh, 2);
@@ -194,7 +251,7 @@ tspldattach(parent, self, aux)
 	}
         bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_STATUS2, 2, 0, 
 		&ioh);
-	i = bus_space_read_2(sc->sc_iot, ioh, 0) & 0x1;
+	i = bus_space_read_2(sc->sc_iot, ioh, 0) & 0x6;
 	sc->sc_blaster_boot = sc->sc_blaster_present = 0;
 	if (i & 0x2)
 		sc->sc_blaster_boot = 1;
@@ -325,6 +382,62 @@ tspldattach(parent, self, aux)
 	}
 	printf("\n");
 
+
+        bus_space_map(sc->sc_iot, EP93XX_APB_HWBASE + EP93XX_APB_SSP, 
+		EP93XX_APB_SSP_SIZE, 0, &sc->sc_ssph);
+        bus_space_map(sc->sc_iot, EP93XX_APB_HWBASE + EP93XX_APB_GPIO, 
+		EP93XX_APB_GPIO_SIZE, 0, &sc->sc_gpioh);
+	SSP_SETBITS(SSPCR1, 0x10);
+	SSP_SET(SSPCR0, 0xf);
+	SSP_SET(SSPCPSR, 0xfe);
+	SSP_CLEARBITS(SSPCR1, 0x10);
+	SSP_SETBITS(SSPCR1, 0x10);
+	GPIO_SET(PFDR, 0x0);
+	callout_init(&sc->boardtemp_callout);
+	callout_setfunc(&sc->boardtemp_callout, boardtemp_poll, sc);
+	boardtemp_poll(sc);
+	delay(1000);
+	boardtemp_poll(sc);
+	sc->boardtemp_5s = sc->boardtemp_30s = sc->boardtemp;
+#define DEGF(c)	((c) * 9 / 5 + 32000000)
+	printf("%s: board temperature %d.%02d degC (%d.%02d degF)\n",
+		sc->sc_dev.dv_xname, 
+		sc->boardtemp / 1000000, sc->boardtemp / 10000 % 100, 
+		DEGF(sc->boardtemp) / 1000000, DEGF(sc->boardtemp) / 10000 % 100);
+#undef DEGF
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_INT, "board_temp",
+        			SYSCTL_DESCR("board temperature in micro degrees Celsius"),
+        			NULL, 0, &sc->boardtemp, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create sysctl\n", 
+			sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_INT, "board_temp_5s",
+        			SYSCTL_DESCR("5 second average board temperature in micro degrees Celsius"),
+        			NULL, 0, &sc->boardtemp_5s, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create sysctl\n", 
+			sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_INT, "board_temp_30s",
+        			SYSCTL_DESCR("30 second average board temperature in micro degrees Celsius"),
+        			NULL, 0, &sc->boardtemp_30s, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create sysctl\n", 
+			sc->sc_dev.dv_xname);
+		return;
+	}
+
         bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_WDOGCTRL, 2, 0, 
 		&sc->sc_wdogctrl_ioh);
         bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_WDOGFEED, 2, 0, 
@@ -337,7 +450,6 @@ tspldattach(parent, self, aux)
 	sc->sc_wdog.smw_period = 8;
 	sysmon_wdog_register(&sc->sc_wdog);
 	tspld_wdog_setmode(&sc->sc_wdog);
-
 
 	/* Set the on board peripherals bus callback */
 	config_defer(self, tspld_callback);
