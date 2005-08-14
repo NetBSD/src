@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.5.12.1 2005/08/14 22:29:56 riz Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.5.12.1 2005/08/14 22:29:56 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,10 +133,6 @@ struct j6x0tp_softc {
 /* config machinery */
 static int	j6x0tp_match(struct device *, struct cfdata *, void *);
 static void	j6x0tp_attach(struct device *, struct device *, void *);
-static int	j6x0tp_wsmouse_submatch(struct device *, struct cfdata *,
-					void *);
-static int	j6x0tp_wskbd_submatch(struct device *, struct cfdata *,
-				      void *);
 
 /* wsmouse accessops */
 static int	j6x0tp_wsmouse_enable(void *);
@@ -228,10 +224,12 @@ j6x0tp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/*
-	 * XXX: does platid_mask_MACH_HP_LX matches _JORNADA_6XX too?
-	 * Is 620 wired similarly?
+	 * XXX: platid_mask_MACH_HP_LX also matches 360LX.  It's not
+	 * confirmed whether touch panel in 360LX is connected this
+	 * way.  We may need to regroup platid masks.
 	 */
-	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX))
+	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_6XX)
+	    && !platid_match(&platid, &platid_mask_MACH_HP_LX))
 		return (0);
 
 	if (strcmp(cf->cf_name, "j6x0tp") != 0)
@@ -263,8 +261,8 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	wsma.accessops = &j6x0tp_accessops;
 	wsma.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm(self, &wsma, wsmousedevprint,
-					    j6x0tp_wsmouse_submatch);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &wsma,
+					    wsmousedevprint);
 	if (sc->sc_wsmousedev == NULL)
 		return;
 
@@ -274,13 +272,13 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	wska.accessops = &j6x0tp_wskbd_accessops;
 	wska.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found_sm(self, &wska, wskbddevprint,
-					  j6x0tp_wskbd_submatch);
+	sc->sc_wskbddev = config_found_ia(self,"wskbddev",  &wska,
+					  wskbddevprint);
 
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		      (caddr_t)&j6x0tp_default_calib, 0, 0);
+		      (caddr_t)__UNCONST(&j6x0tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
 	callout_init(&sc->sc_touch_ch);
@@ -289,22 +287,6 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH7709_INTEVT2_IRQ3, IST_EDGE, IPL_TTY,
 			    j6x0tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ3);
-}
-
-
-static int
-j6x0tp_wsmouse_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (!strcmp(cf->cf_name, "wsmouse"));
-}
-
-
-static int
-j6x0tp_wskbd_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (!strcmp(cf->cf_name, "wskbd"));
 }
 
 
