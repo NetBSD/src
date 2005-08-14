@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.712.2.1 2005/06/10 14:49:18 tron Exp $
+#	$NetBSD: files,v 1.712.2.2 2005/08/14 21:14:29 riz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1050,6 +1050,7 @@ file	dev/ic/iavc.c			iavc
 # legitimate pseudo-devices
 #
 defpseudo vnd:		disk
+defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudo md:		disk
@@ -1327,7 +1328,7 @@ file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto
+file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
 file	net80211/ieee80211.c		wlan
 file	net80211/ieee80211_compat.c	wlan
 file	net80211/ieee80211_crypto.c	wlan
