@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.72.4.1 2005/07/18 21:14:45 riz Exp $
+# $NetBSD: GENERIC3X,v 1.72.4.2 2005/08/14 21:14:48 riz Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -259,6 +259,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
