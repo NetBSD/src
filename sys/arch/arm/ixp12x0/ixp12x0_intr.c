@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.12 2005/08/14 21:08:32 he Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.12 2005/08/14 21:08:32 he Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -522,7 +522,7 @@ ixp12x0_intr_disestablish(void *cookie)
 }
 
 void
-ixp12x0_intr_dispatch(struct clockframe *frame)
+ixp12x0_intr_dispatch(struct irqframe *frame)
 {
 	struct intrq*		iq;
 	struct intrhand*	ih;
