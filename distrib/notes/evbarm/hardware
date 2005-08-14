@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8 2005/06/08 05:33:46 pooka Exp $
+.\"	$NetBSD: hardware,v 1.9 2005/08/14 18:14:52 joff Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,6 +34,8 @@
 .Nx \*V
 runs on the following ARM architecture evaluation boards:
 .(bullet -offset indent
+Technologic Systems TS-7200
+.It
 ARM, Ltd. Integrator
 .It
 Intel IQ80310
@@ -49,6 +51,43 @@ Samsung SMDK2800
 ADI Engineering, Inc. BRH ("Big Red Head")
 .It
 Arcom Viper
+.bullet)
+.
+.Ss2 Supported devices (Technologic Systems TS-7200)
+For devices that have machine-independent drivers,
+this is not an exhaustive list, but merely reflects the
+devices that have been tested on this platform.
+.(bullet -offset indent
+.Te 2 "TS-5620 Real Time Clock"
+.It
+.Te 2 "Serial ports"
+.(bullet -compact
+On-chip EP9302 UARTs
+.It
+TS-SER1, TS-SER2, TS-SER4 PC/104 serial adapters
+.It
+TS-MODEM, TS-MODEM2 PC/104 land-line/cellular modems
+.bullet)
+.It
+.Te 2 "Ethernet adapters"
+.(bullet -compact
+On-chip EP9302 10/100 ethernet
+.It
+TS-ETH10 PC/104 expansion ethernet adapters
+.bullet)
+.It
+.Te 2 "Other on-board functions"
+.(bullet -compact
+CompactFlash socket
+.It
+USB OHCI host
+.It
+Text-mode HD44780 LCD display header
+.It
+Matrix keypad/GPIO header
+.It
+Board temperature sensor and watchdog timer
+.bullet)
 .bullet)
 .
 .Ss2 Supported devices (ARM, Ltd. Integrator)
