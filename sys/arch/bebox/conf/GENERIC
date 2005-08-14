@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80.2.1 2005/07/18 21:13:59 riz Exp $
+# $NetBSD: GENERIC,v 1.80.2.2 2005/08/14 21:14:20 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80.2.1 $"
+#ident 		"GENERIC-$Revision: 1.80.2.2 $"
 
 maxusers	32
 
@@ -110,6 +110,7 @@ config		netbsd	root on ? type ?
 #pseudo-device 	crypto			# opencrypto framework
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	vnd		4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
