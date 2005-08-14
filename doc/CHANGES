@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.5 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.6 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -61,6 +61,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	XFree86: support absolute mouse positioning events on i386
 		and other platforms using the same mouse code
 		[tsarna 20040603]
+	vnd(4): Add support for configuring cloop2-compressed images
+		read-only, written by Cliff Wright. [hubertf 20050716]
 	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
 	racoon(8): upgraded to 20040617 [itojun 20040617]
 	pf(4): PF from OpenBSD 3.5 imported [itojun 20040622]
