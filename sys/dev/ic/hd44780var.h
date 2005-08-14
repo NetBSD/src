@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.2 2005/02/04 05:58:44 joff Exp $ */
+/* $NetBSD: hd44780var.h,v 1.3 2005/08/14 02:56:06 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -49,14 +49,18 @@
 #define	HLCD_WRITE_INST		_IOW('h',  16, struct hd44780_io)
 #define	HLCD_WRITE_DATA		_IOW('h',  17, struct hd44780_io)
 #define HLCD_GET_INFO		_IOR('h',  18, struct hd44780_info)
+#define HLCD_GET_CHIPNO		_IOR('h',  19, u_int8_t)
+#define HLCD_SET_CHIPNO		_IOW('h',  20, u_int8_t)
 
 struct hd44780_dispctl {
+	u_int8_t chip;
 	u_char	display_on:1,
 		blink_on:1,
 		cursor_on:1;
 };
 
 struct hd44780_io {
+	u_int8_t chip;
 	u_int8_t dat;
 	u_int8_t len;
 	u_int8_t buf[HD_MAX_CHARS];
@@ -90,11 +94,13 @@ struct hd44780_chip {
 #define HD_KEYPAD		0x08	/* if set, keypad is connected */
 #define HD_UP			0x10	/* if set, lcd has been initialized */
 #define HD_TIMEDOUT		0x20	/* lcd has recently stopped talking */
+#define HD_MULTICHIP		0x40	/* two HD44780 controllers (4-line) */
 	u_char sc_flags;
 
 	u_char sc_cols;			/* visible columns */
 	u_char sc_vcols;		/* virtual columns (normally 40) */
 	u_char sc_dev_ok;
+	u_char sc_curchip;
 
 	bus_space_tag_t sc_iot;
 
@@ -107,38 +113,40 @@ struct hd44780_chip {
 	struct callout redraw;		/* wsdisplay refresh/redraw timer */
 
 	/* Generic write/read byte entries. */
-	void     (* sc_writereg)(struct hd44780_chip *, u_int32_t, u_int8_t);
-	u_int8_t (* sc_readreg)(struct hd44780_chip *, u_int32_t);
+	void     (* sc_writereg)(struct hd44780_chip *, u_int32_t, u_int32_t,
+	  u_int8_t);
+	u_int8_t (* sc_readreg)(struct hd44780_chip *, u_int32_t, u_int32_t);
 };
 
-#define hd44780_ir_write(sc, dat) \
+#define hd44780_ir_write(sc, en, dat) \
 	do {								\
-		hd44780_busy_wait(sc);					\
-		(sc)->sc_writereg((sc), 0, (dat));			\
+		hd44780_busy_wait(sc, (en));					\
+		(sc)->sc_writereg((sc), (en), 0, (dat));		\
 	} while(0)
 
-#define hd44780_ir_read(sc) \
-	(sc)->sc_readreg((sc), 0)
+#define hd44780_ir_read(sc, en) \
+	(sc)->sc_readreg((sc), (en), 0)
 
-#define hd44780_dr_write(sc, dat) \
-	(sc)->sc_writereg((sc), 1, (dat))
+#define hd44780_dr_write(sc, en, dat) \
+	(sc)->sc_writereg((sc), (en), 1, (dat))
 
-#define hd44780_dr_read(sc) \
-	(sc)->sc_readreg((sc), 1)
+#define hd44780_dr_read(sc, en) \
+	(sc)->sc_readreg((sc), (en), 1)
 
 void hd44780_attach_subr(struct hd44780_chip *);
-void hd44780_busy_wait(struct hd44780_chip *);
+void hd44780_busy_wait(struct hd44780_chip *, u_int32_t);
 int  hd44780_init(struct hd44780_chip *);
+int  hd44780_chipinit(struct hd44780_chip *, u_int32_t);
 int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, caddr_t);
-void hd44780_ddram_redraw(struct hd44780_chip *, struct hd44780_io *);
+void hd44780_ddram_redraw(struct hd44780_chip *, u_int32_t, struct hd44780_io *);
 
 #define HD_DDRAM_READ	0x0
 #define HD_DDRAM_WRITE	0x1
-int  hd44780_ddram_io(struct hd44780_chip *, struct hd44780_io *, u_char);
+int  hd44780_ddram_io(struct hd44780_chip *, u_int32_t, struct hd44780_io *, u_char);
 
 #if defined(HD44780_STD_WIDE) || defined(HD44780_STD_SHORT)
-void     hd44780_writereg(struct hd44780_chip *, u_int32_t, u_int8_t);
-u_int8_t hd44780_readreg(struct hd44780_chip *, u_int32_t);
+void     hd44780_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
+u_int8_t hd44780_readreg(struct hd44780_chip *, u_int32_t, u_int32_t);
 #endif
 
 #endif /* _KERNEL */
