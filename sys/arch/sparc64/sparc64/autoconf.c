@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.104 2005/08/14 19:12:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104 2005/08/14 19:12:02 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -857,6 +857,7 @@ static struct {
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
 	{ "ppb",	BUSCLASS_PCI },
+	{ "isp",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "cmdide",	BUSCLASS_PCI },
 	{ "aceride",	BUSCLASS_PCI },
@@ -874,7 +875,8 @@ static struct {
 	const char *compat[6];
 } dev_compat_tab[] = {
 	{ "dma",	{ "espdma", NULL }},
-	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi", NULL }},
+	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi",
+			  "SUNW,isptwo", NULL }},
 	{ "fdc",	{ "SUNW,fdtwo",	NULL }},
 	{ "psycho",	{ "pci", NULL }},
 	{ "wd",		{ "disk", "ide-disk", NULL }},
