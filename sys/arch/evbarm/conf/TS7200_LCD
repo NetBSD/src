@@ -1,0 +1,16 @@
+#	$NetBSD: TS7200_LCD,v 1.1 2005/08/14 04:34:41 joff Exp $
+#
+#	TS7200_LCD - standard TS7200, but with a 2x24 LCD attached
+#       to the LCD header and a 4x4 matrix keypad attached to the DIO 
+#       header.
+#
+
+include	"arch/evbarm/conf/TS7200"
+
+# HD44780 LCD on LCD header
+tslcd*		at tspld?
+wsdisplay*	at tslcd? console ?
+
+# 4x4 Matrix Keypad on DIO header
+tskp*		at tspld?
+wskbd*	at tskp? console ? mux 1
