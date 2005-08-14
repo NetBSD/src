@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.139 2005/06/28 08:36:47 kent Exp $
+#	$NetBSD: files.isa,v 1.140 2005/08/14 04:15:44 joff Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -491,6 +491,18 @@ file dev/isa/nsclpcsio_isa.c nsclpcsio_isa
 # USB Controller
 attach	slhci at isa with slhci_isa
 file	dev/isa/slhci_isa.c		slhci_isa
+
+device	tsdio {}
+attach	tsdio at isa
+file	dev/isa/tsdio.c			tsdio
+
+device	toasterlcd: hd44780, wsemuldisplaydev
+attach	toasterlcd at tsdio
+file	dev/isa/toasterlcd.c		toasterlcd
+
+device toaster
+attach toaster at tsdio
+file	dev/isa/toaster.c		toaster
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
