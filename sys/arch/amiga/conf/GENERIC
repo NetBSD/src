@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214.2.1 2005/07/18 21:13:46 riz Exp $
+# $NetBSD: GENERIC,v 1.214.2.2 2005/08/14 21:14:13 riz Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214.2.1 $"
+#ident 		"GENERIC-$Revision: 1.214.2.2 $"
 
 
 maxusers	8
@@ -484,6 +484,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 
 pseudo-device	vnd		4	# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
