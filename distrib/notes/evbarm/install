@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 2002/06/29 10:54:14 lukem Exp $
+.\"	$NetBSD: install,v 1.6 2005/08/14 18:14:52 joff Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,6 +31,47 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
+.Ss2 Installation for the Technologic Systems TS-7200
+The following steps describe how to set up a CompactFlash card for
+the TS-7200.  The TS-7200 can use the interactive
+installation program
+.Ic
+sysinst 
+to perform an internet installation from ftp.netbsd.org on the CompactFlash.  
+.Pp
+.(enum
+Place the netbsd-TS7200_INSTALL.bin kernel into the TFTP server's download
+area.  It must be decompressed from the gzipped image in the release directory
+evbarm/installation/instkernel/netbsd-TS7200_INSTALL.srec.gz
+.Pp
+.Dl server# Ic gunzip netbsd-TS7200_INSTALL.srec.gz
+.Dl server# Ic cp netbsd-TS7200_INSTALL.srec /tftpboot/netbsd-TS7200_INSTALL
+.It
+Load the kernel from the TFTP server.
+.Pp
+.Bd -literal
+RedBoot\*> load netbsd-TS7200_INSTALL
+.Ed
+.It
+Start the kernel running.
+.Pp
+.Bd -literal
+RedBoot\*> go
+.Ed
+.Pp
+The kernel will display boot messages, probe for devices, and invoke the
+interactive sysinst installation tool.  Once sysinst has completed installation, the
+system will reboot back into RedBoot.  If the preparation instructions above have
+been followed, the post-installation NetBSD kernel will be in the FIS ready to be 
+jumped into.  You can have RedBoot automatically start NetBSD by putting the
+command
+.Ic
+go 0x60660000
+into the RedBoot bootscript using the
+.Ic
+fconfig
+command.
+.enum)
 .
 .Ss2 Installation for the Intel IQ80310
 The following steps describe how to set up an NFS root environment
