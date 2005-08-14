@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.10 2005/08/14 16:05:56 macallan Exp $ */
+/*	$NetBSD: prompatch.c,v 1.11 2005/08/14 19:38:21 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -32,33 +32,38 @@
 #include <lib/libkern/libkern.h>
 #include <machine/promlib.h>
 
-char *match_c5ip(void);
+
 void prom_patch(void);
+
+static const char *match_c5ip(void);
+
 
 /*
  * Each patch entry is processed by:
  * printf(message);  prom_interpret(patch);  printf("\n");
  */
 struct patch_entry {
-	char *message;
-	char *patch;
+	const char *message;
+	const char *patch;
 };
+
 
 /*
  * PROM patches to apply to machine matching name/promvers.
  */
 struct prom_patch {
-	char *name;			/* "name" of the root node */
+	const char *name;		/* "name" of the root node */
 	int promvers;			/* prom_version() */
-	char *(*submatch)(void);	/* Additional matches to test */
-	struct patch_entry *patches;	/* The patches themselves */
+	const char *(*submatch)(void);	/* Additional matches to test */
+	const struct patch_entry *patches;	/* The patches themselves */
 };
 
+
 /*
- * Patches for JavaStation 1 with OBP 2.30
+ * Patches for JavaStation 1 with OBP 2.30.
  * NB: its romvec is version 3, so this is PROM_OBP_V3.
  */
-static struct patch_entry patch_js1_obp[] = {
+static const struct patch_entry patch_js1_obp[] = {
 
 /*
  * Can not remove a node, so just rename bogus /obio/zs so that it
@@ -98,7 +103,7 @@ static struct patch_entry patch_js1_obp[] = {
  * Patches for JavaStation 1 with OpenFirmware.
  * PROM in these machines is crippled in many ways.
  */
-static struct patch_entry patch_js1_ofw[] = {
+static const struct patch_entry patch_js1_ofw[] = {
 
 /*
  * JS1/OFW has no CPU node in the device tree.  Create one to save us a
@@ -148,7 +153,7 @@ static struct patch_entry patch_js1_ofw[] = {
 
 /* 
  * "interrupts" property is bogusly zero, delete it and let
- * sbus_get_intr fallback to correct "intr" property
+ * sbus_get_intr fallback to correct "intr" property.
  */
 { "le: deleting bogus \"interrupts\"",
 	"dev /sbus/ledma/le \" interrupts\" delete-property device-end"
@@ -171,10 +176,11 @@ static struct patch_entry patch_js1_ofw[] = {
 { NULL, NULL }
 }; /* patch_js1_ofw */
 
+
 /*
- * Patches for Cycle 5 IP
+ * Patches for Cycle 5 IP.
  */
-static struct patch_entry patch_c5ip[] = {
+static const struct patch_entry patch_c5ip[] = {
 
 /*
  * Can not remove a node, so just rename bogus /iommu/sbus/SUNW,CS4231
@@ -188,10 +194,14 @@ static struct patch_entry patch_c5ip[] = {
 { NULL, NULL }
 }; /* patch_c5ip */
 
-static struct patch_entry patch_krups[] = {
 
 /*
- * check if there's a node for the audio chip, if not create it
+ * Patches for JavaStation NC, aka Krups.
+ */
+static const struct patch_entry patch_krups[] = {
+
+/*
+ * Check if there's a node for the audio chip, if not create it.
  */
 { "sound device node: ",
 	"\" /pci/ebus/sound\" ' find-device catch"
@@ -210,7 +220,8 @@ static struct patch_entry patch_krups[] = {
 { NULL, NULL }
 }; /* patch_krups */
 
-static struct prom_patch prom_patch_tab[] = {
+
+static const struct prom_patch prom_patch_tab[] = {
 	{ "SUNW,JavaStation-1",  PROM_OBP_V3,   NULL,	    patch_js1_obp },
 	{ "SUNW,JDM1",		 PROM_OPENFIRM, NULL,	    patch_js1_ofw },
 	{ "SUNW,SPARCstation-5", PROM_OBP_V3,   match_c5ip, patch_c5ip	  },
@@ -220,11 +231,12 @@ static struct prom_patch prom_patch_tab[] = {
 
 
 /*
- * Additional match routine for Cycle 5 IP
+ * Additional match routine for Cycle 5 IP.
  * This uses the SPARCstation 5 PROM almost unchanged, so we check the
  * "banner-name" attribute of the root node.
  */
-char * match_c5ip(void)
+static const char *
+match_c5ip(void)
 {
 	if (strcmp(prom_getpropstring(prom_findroot(), "banner-name"),
 	    "Cycle Computer Corporation") == 0)
@@ -232,6 +244,7 @@ char * match_c5ip(void)
 
 	return NULL;
 }
+
 
 /*
  * Check if this machine needs tweaks to its PROM.  It's simpler to fix
@@ -243,7 +256,7 @@ prom_patch(void)
 {
 	char namebuf[32];
 	char *propval;
-	struct prom_patch *p;
+	const struct prom_patch *p;
 
 	if (prom_version() == PROM_OLDMON)
 		return;		/* don't bother - no forth in this */
@@ -256,9 +269,9 @@ prom_patch(void)
 	for (p = prom_patch_tab; p->name != NULL; ++p) {
 		if (p->promvers == prom_version()
 		    && strcmp(p->name, namebuf) == 0) {
-			struct patch_entry *e;
+			const struct patch_entry *e;
 			const char *promstr = "???";
-			char *submatch_info = NULL;
+			const char *submatch_info = NULL;
 
 			switch (prom_version()) {
 			case PROM_OBP_V0:
