@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.2.2 2005/07/18 21:12:59 riz Exp $
+# $NetBSD: GENERIC,v 1.90.2.3 2005/08/14 21:13:37 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.90.2.2 $"
+#ident		"GENERIC-$Revision: 1.90.2.3 $"
 
 maxusers	32
 
@@ -519,6 +519,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
