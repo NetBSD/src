@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.4.1 2005/07/18 21:13:00 riz Exp $
+# $NetBSD: GENERIC,v 1.11.4.2 2005/08/14 21:13:38 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11.4.1 $"
+#ident 		"GENERIC-$Revision: 1.11.4.2 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -156,6 +156,7 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	tb	1
 #pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	4
 #pseudo-device	raid	8		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
