@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.6 2005/02/04 05:59:27 joff Exp $ */
+/* $NetBSD: panel.c,v 1.7 2005/08/14 02:59:52 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.6 2005/02/04 05:59:27 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.7 2005/08/14 02:59:52 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ static void	panel_attach(struct device *, struct device *, void *);
 static void	panel_soft(void *);
 
 static u_int8_t	panel_cbt_kprread(bus_space_tag_t, bus_space_handle_t);
-static u_int8_t	panel_cbt_hdreadreg(struct hd44780_chip *, u_int32_t);
-static void	panel_cbt_hdwritereg(struct hd44780_chip *, u_int32_t, u_int8_t);
+static u_int8_t	panel_cbt_hdreadreg(struct hd44780_chip *, u_int32_t, u_int32_t);
+static void	panel_cbt_hdwritereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
 
 dev_type_open(panelopen);
 dev_type_close(panelclose);
@@ -157,9 +157,9 @@ panel_cbt_kprread(iot, ioh)
 
 
 static void
-panel_cbt_hdwritereg(hd, rs, dat)
+panel_cbt_hdwritereg(hd, en, rs, dat)
 	struct hd44780_chip *hd;
-	u_int32_t rs;
+	u_int32_t en, rs;
 	u_int8_t dat;
 {
 	if (rs) 
@@ -170,9 +170,9 @@ panel_cbt_hdwritereg(hd, rs, dat)
 }
 
 static u_int8_t
-panel_cbt_hdreadreg(hd, rs)
+panel_cbt_hdreadreg(hd, en, rs)
 	struct hd44780_chip *hd;
-	u_int32_t rs;
+	u_int32_t en, rs;
 {
 	delay(HD_TIMEOUT_NORMAL);
 	if (rs)
@@ -239,7 +239,7 @@ panelwrite(dev, uio, flag)
 	if ((error = uiomove((void*)io.buf, io.len, uio)) != 0)
 		return error;
 
-	hd44780_ddram_redraw(&sc->sc_lcd, &io);
+	hd44780_ddram_redraw(&sc->sc_lcd, 0, &io);
 	return 0;
 }
 
