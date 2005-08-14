@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.803 2005/08/07 16:57:12 xtraeme Exp $
+#	$NetBSD: mi,v 1.804 2005/08/14 12:04:23 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5116,7 +5116,7 @@
 ./usr/share/man/cat9/disk_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_detatch.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/disk_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/disk_init.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_resetstat.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disklabel.0		comp-sys-catman		.cat
@@ -8991,7 +8991,7 @@
 ./usr/share/man/man9/disk_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_detatch.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_find.9		comp-sys-man		.man
-./usr/share/man/man9/disk_init.9		comp-sys-man		.man
+./usr/share/man/man9/disk_init.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_resetstat.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/disklabel.9		comp-sys-man		.man
