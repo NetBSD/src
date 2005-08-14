@@ -1,4 +1,4 @@
-#	$NetBSD: files.tsarm,v 1.7 2005/02/04 06:02:36 joff Exp $
+#	$NetBSD: files.tsarm,v 1.8 2005/08/14 04:33:49 joff Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -38,6 +38,10 @@ file	arch/evbarm/tsarm/tslcd.c		tslcd
 device  tskp: matrixkp, wskbddev
 attach	tskp at tspldbus
 file	arch/evbarm/tsarm/tskp.c		tskp
+
+device  toastersensors: matrixkp, wskbddev
+attach	toastersensors at tspldbus
+file	arch/evbarm/tsarm/toastersensors.c		toastersensors
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
