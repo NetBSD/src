@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2002/06/29 10:54:14 lukem Exp $
+.\"	$NetBSD: prep,v 1.6 2005/08/14 18:14:52 joff Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,6 +37,75 @@ First and foremost, before beginning the installation process,
 of any data on the target system that you wish to keep.
 Mistakes in
 e.g. partitioning your hard disk may lead to data loss.
+.Ss2 Preparation for the Technologic Systems TS-7200
+The TS-7200 uses RedBoot firmware which supports loading the kernel via
+serial port and the on-chip Ethernet.
+These notes assume that the Ethernet will be used to load the kernel.
+RedBoot can either use TFTP or HTTP to load the kernel via the network.
+.Pp
+These notes also assume the the TS-7200 will be run from the CompactFlash;
+that a FFS filesystem on the CompactFlash card will provide the root file
+system.  The minimum size of the CompactFlash card is 64MB with 512MB being
+the recommended minimum size if attempting a full installation.
+.Pp
+The first step to install 
+.Nx
+is to interrupt normal
+system bootup and drop to the RedBoot prompt by hitting Ctrl-C immediately
+after applying power.  To load both the installation kernel and the generic
+post-installation TS7200 kernel you will need network connectivity from RedBoot which
+you will have to configure using the RedBoot
+.Ic
+fconfig 
+command; see the RedBoot documentation for more information.
+.Pp
+A compressed kernel image and loader suitable for placing into
+flash is provided with the distribution.
+Use of this image is optional;
+a kernel that can be directly loaded over the network
+by RedBoot is also provided.
+.Pp
+The image for the TS-7200 can be found under the
+.Nx*M
+\*V distribution directory in
+.Pa \*M/binary/gzimg/gzimg_TS7200_flash_0x60660000.gz ,
+and corresponds to the kernel in
+.Pa \*M/binary/kernel/netbsd-TS7200.gz .
+The following steps
+describe how to copy the compressed kernel image into flash.
+.Pp
+.(enum
+Uncompress the gzimg file and place it into the TFTP server's
+download area (note, the kernel inside the gzimg is still
+compressed after this step).
+.Pp
+.Dl server# Ic gzcat gzimg_TS7200_flash_0x60660000.gz > /tftpboot/gzimg_TS7200_flash_0x60660000
+.It
+Load the gzimg from the TFTP server.
+.Pp
+.Bd -literal
+RedBoot\*> load -r -b 0x00200000 gzimg_TS7200_flash_0x60660000
+Raw file loaded 0x00200000-0x00605fe0
+.Ed
+.It
+Use the RedBoot
+.Ic fis
+command to copy the image into flash.
+For more information on the RedBoot
+Flash Image System, see the RedBoot documentation.  The factory default
+Linux image may already be present in flash and must be deleted before
+continuing.
+.Bd -literal
+RedBoot\*> fis delete vmlinux
+RedBoot\*> fis create -b 0x00200000 -f 0x60660000 -l 0x00160000 netbsd.gz
+.Ed
+.enum)
+.Pp
+Once the compressed kernel image has been copied into flash, it may
+be started by jumping to the flash address of the image:
+.Bd -literal
+RedBoot\*> g 0x60660000
+.Ed
 .
 .Ss2 Preparation for the Intel IQ80310
 The IQ80310 uses RedBoot firmware from Red Hat, Inc.
