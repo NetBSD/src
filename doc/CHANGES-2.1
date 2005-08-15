@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.159 2005/08/13 23:38:44 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.160 2005/08/15 06:50:52 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3347,4 +3347,70 @@ sys/dev/ic/wdc.c				1.227-1.228 via patch
 	didn't provide one. Prevent NULL pointer dereference when
 	wdcprobe() is called.  Add missing declaration/initialisation of wdc.
 	[bouyer, ticket #5561]
+
+distrib/notes/common/contents			1.115
+
+	Reference siop(4) not ncr(4)
+	[riz, ticket #5568]
+
+share/man/man4/options.4			1.283
+
+	remove reference to ncr(4)
+	[riz, ticket #5569]
+
+distrib/notes/common/extract-contrib-string.pl	1.2
+
+	Use '#!/usr/bin/env perl' instead of hardcoding the path.
+	Fix some typos.
+	[riz, ticket #5570]
+
+distrib/notes/common/postinstall		1.59
+
+	Packages.txt has been obsoleted, point to doc/pkgsrc.txt.
+	Whitespace and casing nit fixes.
+	[riz, ticket #5571]
+
+distrib/notes/common/main			patch
+
+	Add new developers to release notes.
+	[riz, ticket #5573]
+
+distrib/notes/common/sysinst			1.71
+
+	Fix some typos.
+	[riz, ticket #5574]
+
+distrib/notes/common/main			1.266 via patch
+distrib/notes/common/sysinst			1.72 via patch
+
+	There is no "It-span" macro, replace with "It"; size column correctly
+	to fix a formatting error (hi hubertf!). Empty lines should have a
+	single dot, not two or none.
+	[riz, ticket #5575]
+
+distrib/notes/common/xfer			1.46-1.47
+
+	 * x68k: fix to tell where to get "netbsd" from (how to run gzip.x on
+	   netbsd-INSTALL.gz on the x68k's native OS.)
+	[riz, ticket #5577]
+
+distrib/notes/i386/hardware			1.118
+
+	Add ICH6 southbridge to list of support devices.
+	[riz, ticket #5579]
+
+distrib/notes/i386/hardware			1.120
+
+	Add ethernet adapters driven by re(4) and wm(4) to the list of
+	supported devices.
+	[riz, ticket #5580]
+
+distrib/notes/cats/prep				1.8
+distrib/notes/macppc/install			1.32
+distrib/notes/macppc/prep			1.41
+distrib/notes/macppc/prep.OPENFIRMWARE		1.6
+distrib/notes/sandpoint/install			1.3
+
+	Get rid of some superfluous "No Ns" calls before punctuation.
+	[riz, ticket #5581]
 
