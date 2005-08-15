@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.33 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.34 2005/08/15 21:33:26 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.33 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.34 2005/08/15 21:33:26 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -352,6 +352,7 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 {
 #define	TO_BE_RECLAIMED	(sizeof(struct ether_header) - sizeof(struct llc))
 	int needed_space = hdrsize;
+	int error;
 
 	if (key != NULL) {
 		/* XXX belongs in crypto code? */
@@ -404,6 +405,20 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		n->m_next = m;
 		m = n;
 	}
+
+	/*
+	 * If we're going to s/w encrypt the mbuf chain make sure it is
+	 * writable.
+	 */
+	if (key->wk_flags & IEEE80211_KEY_SWCRYPT) {
+        	error = m_makewritable(&m, 0, M_COPYALL, M_DONTWAIT);
+
+        	if (error) {
+                	m_freem(m);
+                	m = NULL;
+        	}
+	}
+
 	return m;
 #undef TO_BE_RECLAIMED
 }
