@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.26 2005/06/08 00:19:18 fair Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.27 2005/08/15 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,8 +78,7 @@ void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 static inline int _rtld_relocate_plt_object(const Obj_Entry *,
-    const Elf_Rela *, Elf_Addr *tp);
-
+    const Elf_Rela *, Elf_Addr *);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
