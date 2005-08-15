@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.68.2.3.2.1 2005/08/15 05:53:14 snj Exp $
+.\"	$NetBSD: sysinst,v 1.68.2.3.2.2 2005/08/15 06:07:27 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,7 +256,7 @@ is equal to c0513e3c):
 .Pp
 .Dl db\*> Ic "write 0xc0513e3c 0x0a00"
 .Pp
-
+.
 After installation, this value can be permanently written to the kernel image
 directly with:
 .Pp
