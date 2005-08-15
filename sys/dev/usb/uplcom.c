@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.41.10.1 2005/05/28 18:38:11 tron Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.41.10.2 2005/08/15 19:10:55 tron Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.41.10.1 2005/05/28 18:38:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.41.10.2 2005/08/15 19:10:55 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,15 +84,6 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SET_CRTSCTS_HX	0x61
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
-
-#define	UPLCOM_FLOW_OUT_CTS	0x0001
-#define	UPLCOM_FLOW_OUT_DSR	0x0002
-#define	UPLCOM_FLOW_IN_DSR	0x0004
-#define	UPLCOM_FLOW_IN_DTR	0x0008
-#define	UPLCOM_FLOW_IN_RTS	0x0010
-#define	UPLCOM_FLOW_OUT_RTS	0x0020
-#define	UPLCOM_FLOW_OUT_XON	0x0080
-#define	UPLCOM_FLOW_IN_XON	0x0100
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,
@@ -489,8 +480,8 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	if (sc->sc_rts == -1)
 		sc->sc_rts = 0;
 
-	ls = (sc->sc_dtr ? UPLCOM_FLOW_OUT_DSR : 0) |
-		(sc->sc_rts ? UPLCOM_FLOW_OUT_CTS : 0);
+	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
+		(sc->sc_rts ? UCDC_LINE_RTS : 0);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
