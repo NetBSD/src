@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.10.2.2 2005/08/15 05:49:17 snj Exp $
+.\"	$NetBSD: main,v 1.253.2.10.2.3 2005/08/15 06:08:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1208,10 +1208,10 @@ If you're one of them, and would like to mentioned, tell us!)
 .Pp
 .
 .
-.Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@NetBSD.org newsmips
+.Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@NetBSD.org Sy playstation2
 .
 .br_ne 1i
-.It-span Em "The NetBSD core group:"
+.It Em "The NetBSD core group:"
 .It Ta Ta
 .It Ta Allen Briggs Ta Mt briggs@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
@@ -1221,7 +1221,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "The portmasters (and their ports):"
+.It Em "The portmasters (and their ports):"
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
@@ -1286,7 +1286,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 1i
-.It-span Em "The NetBSD \*V Release Engineering team:"
+.It Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Erik Berls Ta Mt cyber@NetBSD.org
@@ -1304,7 +1304,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "NetBSD Developers:"
+.It Em "NetBSD Developers:"
 .It Ta Ta
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
@@ -1574,7 +1574,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "Other contributors:"
+.It Em "Other contributors:"
 .It Ta Ta
 .It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
 .It Ta Brian R. Gaeke Ta Mt brg@dgate.org
