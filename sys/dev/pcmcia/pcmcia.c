@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.73 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.74 2005/08/15 18:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.73 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.74 2005/08/15 18:58:24 christos Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -516,6 +516,7 @@ pcmcia_function_enable(pf)
 	 * necessary.
 	 */
 	pcmcia_socket_enable(&sc->dev);
+	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
@@ -618,8 +619,6 @@ pcmcia_function_enable(pf)
 		}
 	}
 #endif
-
-	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
 
 #ifdef IT8368E_LEGACY_MODE
 	/* return to I/O mode */
