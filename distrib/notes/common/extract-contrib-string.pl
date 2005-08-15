@@ -1,4 +1,4 @@
-#!/usr/pkg/bin/perl
+#!/usr/bin/env perl
 #
 # Copyright (c) 2004 Hubert Feyrer <hubert@feyrer.de>
 # All rights reserved.
@@ -187,7 +187,7 @@ while(<>) {
 			# ... maybe with other case?
 			$lc_msg2=lc($msg2);
 			if ($lc_copyrights{$lc_msg2}) {
-			    print "alreadu there, in different case - skipping\n"
+			    print "already there, in different case - skipping\n"
 				if $debug;
 			    next msg;
 			}
@@ -207,7 +207,7 @@ while(<>) {
 			# ... maybe with other case?
 			$lc_msg2=lc($msg2);
 			if ($lc_copyrights{$lc_msg2}) {
-			    print "alreadu there, in different case - skipping\n"
+			    print "already there, in different case - skipping\n"
 				if $debug;
 			    next msg;
 			}
