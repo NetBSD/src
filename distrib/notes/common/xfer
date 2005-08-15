@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.39.2.5 2004/11/29 06:03:14 jmc Exp $
+.\"	$NetBSD: xfer,v 1.39.2.5.2.1 2005/08/15 06:23:26 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,20 +375,35 @@ from
 Make a boot floppy which contains the installation system
 .bullet)
 .Pp
-When you chose the first method, you have to put the installation kernel
-.Pa netbsd
-and the
+When you chose the first method,
+you have to put the compressed installation kernel
+.Pa netbsd-INSTALL.gz ,
+the
 .Pa loadbsd.x
+utility and the
+.Pa gzip.x
 utility to a disk accessible from Human68k.
 These files can be found in the
+.Pa x68k/binary/kernel
+directory or
 .Pa x68k/installation/misc
 directory of the
 .Nx
 distribution.
+The
+.Pa netbsd-INSTALL
+file needs to be uncompressed from
+.Pa netbsd-INSTALL.gz
+using the provided
+.Ic gzip.x
+program with the
+.Fl d
+switch. 
 .Pp
 To invoke the installation system, just type
 .Pp
-.Dl Ic "loadbsd.x netbsd"
+.Dl Ic "gzip.x -d netbsd-INSTALL.gz"
+.Dl Ic "loadbsd.x netbsd-INSTALL"
 .Pp
 from the
 .Tn Human68k
