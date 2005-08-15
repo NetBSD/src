@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.200 2005/08/15 19:17:24 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.201 2005/08/15 19:18:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11314,8 +11314,8 @@ sys/dev/usb/uplcom.c				1.45
 sys/arch/sparc/stand/boot/prompatch.c		1.10
 sys/arch/sparc/stand/boot/version		1.18
 
-add a prom patch that creates a device node for the Krups' audio chip
-in case it's missing ( like with OF 3.11.10 ) - makes audiocs at ebus work
-on these machines.
-[macallan, ticket #664]
+	Add a prom patch that creates a device node for the Krups' audio chip
+	in case it's missing ( like with OF 3.11.10 ) - makes audiocs at ebus
+	work on these machines.
+	[macallan, ticket #664]
 
