@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.7.2.9 2005/08/15 12:41:30 tron Exp $
+.\" $NetBSD: veriexecctl.8,v 1.7.2.10 2005/08/15 12:42:44 tron Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.7.2.9 2005/08/15 12:41:30 tron Exp $
+.\"	$Id: veriexecctl.8,v 1.7.2.10 2005/08/15 12:42:44 tron Exp $
 .\"
-.Dd August 2, 2005
+.Dd August 6, 2005
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -95,18 +95,27 @@ and are automatically made read only.
 This option may be used to verify shared libraries have not been
 tampered with.
 .It Dv PROGRAM
-An alias for DIRECT, allow direct execution only.
+An alias for
+.Dv DIRECT ,
+allow direct execution only.
 .It Dv INTERPRETER
-An alias for INDIRECT, the executable may only be used as an interpreter
+An alias for
+.Dv INDIRECT ,
+the executable may only be used as an interpreter
 for shell scripts.
 .It Dv SCRIPT
 The file is a shell script.
-For correct operation of veriexec, a script must have both FILE and
-DIRECT attributes set.
+For correct operation of veriexec, a script must have both
+.Dv FILE
+and
+.Dv DIRECT
+attributes set.
 This option is a shorthand way of setting the options for correct
 operation of shell scripts.
 .It Dv LIBRARY
-The file is a library, this option is an alias of the FILE option.
+The file is a library, this option is an alias of the
+.Dv FILE
+option.
 .El
 .Pp
 There must be only one executable/fingerprint pair per line.
