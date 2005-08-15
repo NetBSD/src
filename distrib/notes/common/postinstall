@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.54.2.3 2004/08/25 21:51:54 he Exp $
+.\"	$NetBSD: postinstall,v 1.54.2.4 2005/08/15 05:32:03 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -417,7 +417,7 @@ then replace the first two lines with the following:
 .Ed
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shell,
-the perl programming language , Apache web server, KDE desktop
+the Perl programming language, Apache web server, KDE desktop
 environment and the Mozilla web browser 
 as well as all the packages they depend on.
 .It
@@ -434,7 +434,7 @@ They are typically extracted into
 After extracting, see the
 .Pa README
 and
-.Pa Packages.txt
+.Pa doc/pkgsrc.txt
 files in the extraction directory (e.g.
 .Pa /usr/pkgsrc/README )
 for more information.
