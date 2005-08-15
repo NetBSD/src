@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.24 2005/07/17 05:57:21 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.25 2005/08/15 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -84,8 +84,8 @@
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
-static inline int _rtld_relocate_plt_object(const Obj_Entry *obj,
-    const Elf_Rela *rela, Elf_Addr *tp);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *,
+    const Elf_Rela *, Elf_Addr *);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
