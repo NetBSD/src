@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.31.2.1 2004/11/12 06:01:21 jmc Exp $
+.\"	$NetBSD: install,v 1.31.2.1.2.1 2005/08/15 06:47:42 snj Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -22,7 +22,7 @@ to tell Open Firmware where to find
 .Xr ofwboot 8
 by listing the device, the partition (if it's a disk), and the filename
 of the bootloader (if using
-.Pa ofwboot.xcf No Ns ).
+.Pa ofwboot.xcf ) .
 .Pp
 If the
 .Li boot-file
@@ -576,7 +576,7 @@ Here are some examples of what you might use to boot from such a drive:
 Of course, a lot of the information in this example depends on your model
 and what your boot method is, but we'll include this anyways just so you
 get an idea of what to expect (user-typed commands are in
-.Ic bold No Ns ).
+.Ic bold ) .
 .(disp
  Apple PowerBook3,1 2.1f1 BootROM built on 01/29/00 at 22:38:07
  Copyright 1994-2000 Apple Computer, Inc.
@@ -672,7 +672,7 @@ Reboot, re-enter Open Firmware and check your syntax carefully.
 .(Note
 Don't forget to check your Open Firmware environment variables, as they
 may have been changed by your brief excursion into
-.Tn MacOS No Ns .
+.Tn MacOS .
 .Note)
 .It
 .To 2 "Information on your screen seems garbled or out of sync"
