@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.13 2005/07/02 17:39:10 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -237,28 +237,21 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		hh = veriexec_lookup(va.va_fsid, va.va_fileid);
 		if (hh != NULL) {
 			/*
-			 * Duplicate entry; handle access type conflict
-			 * and enforce 'FILE' over 'INDIRECT' over
-			 * 'DIRECT'.
+			 * Duplicate entry means something is wrong in
+			 * the signature file. Just give collision info
+			 * and return.
 			 */
-			if (hh->type < params->type) {
-				hh->type = params->type;
-
-				veriexec_report("Duplicate entry with "
-						"access type mismatch. "
-						"Updating to stricter "
-						"type.", params->file,
-						&va, NULL,
-						REPORT_NOVERBOSE,
-						REPORT_NOALARM,
-						REPORT_NOPANIC);
-			} else {
-				veriexec_report("Duplicate entry.",
-						params->file, &va, NULL,
-						REPORT_VERBOSE_HIGH,
-						REPORT_NOALARM,
-						REPORT_NOPANIC);
-			}
+			printf("veriexec: Duplicate entry. [%s, %ld:%lu] "
+			       "old[type=0x%02x, algorithm=%s], "
+			       "new[type=0x%02x, algorithm=%s] "
+			       "(%s fingerprint)\n",
+			       params->file, va.va_fsid, va.va_fileid,
+			       hh->type, hh->ops->type,
+			       params->type, params->fp_type,
+			       (((hh->ops->hash_len != params->size) ||
+				(memcmp(hh->fp, params->fingerprint,
+					min(hh->ops->hash_len, params->size))
+					!= 0)) ? "different" : "same"));
 
 			return (0);
 		}
