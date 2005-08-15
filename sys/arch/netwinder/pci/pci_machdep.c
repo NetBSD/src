@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2003/07/15 02:59:25 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2005/08/15 18:51:33 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2003/07/15 02:59:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/08/15 18:51:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -25,6 +25,7 @@ netwinder_pci_attach_hook (struct device *parent,
 	pci_conf_write(pba->pba_pc, tag,
 		PCI_COMMAND_STATUS_REG,
 		PCI_COMMAND_IO_ENABLE|
+		PCI_COMMAND_MEM_ENABLE|
 		PCI_COMMAND_MASTER_ENABLE);
 	intreg = pci_conf_read(pba->pba_pc, tag, PCI_INTERRUPT_REG);
 	intreg = PCI_INTERRUPT_CODE(
@@ -34,7 +35,7 @@ netwinder_pci_attach_hook (struct device *parent,
 		0x40|IRQ_IN_L1);
 	pci_conf_write(pba->pba_pc, tag, PCI_INTERRUPT_REG, intreg);
 	pci_conf_write(pba->pba_pc, tag, 0x10, 0x400 | PCI_MAPREG_TYPE_IO);
-	pci_conf_write(pba->pba_pc, tag, 0x14, 0);
+	pci_conf_write(pba->pba_pc, tag, 0x14, 0x00800000);
 
 	/*
 	 * Initialize the PCI NE2000
