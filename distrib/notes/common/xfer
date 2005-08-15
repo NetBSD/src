@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.39.2.5.2.1 2005/08/15 06:23:26 snj Exp $
+.\"	$NetBSD: xfer,v 1.39.2.5.2.2 2005/08/15 06:24:30 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,7 +375,7 @@ from
 Make a boot floppy which contains the installation system
 .bullet)
 .Pp
-When you chose the first method,
+If you choose the first method,
 you have to put the compressed installation kernel
 .Pa netbsd-INSTALL.gz ,
 the
@@ -409,7 +409,7 @@ from the
 .Tn Human68k
 command line.
 .Pp
-When you chose the second method, you have to make the boot floppy
+If you choose the second method, you have to make the boot floppy
 from the floppy image
 .Pa sysinst.fs .
 The image file can be found in
