@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $ */
+/* $NetBSD: utils.c,v 1.28 2005/08/15 17:13:35 elad Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: utils.c,v 1.28 2005/08/15 17:13:35 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ setfile(struct stat *fs, int fd)
 		rval = 1;
 	}
 
-	if (!islink) {
+	if (!islink && !Nflag) {
 		/*
 		 * XXX
 		 * NFS doesn't support chflags; ignore errors unless
