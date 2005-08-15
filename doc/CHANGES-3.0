@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.196 2005/08/14 22:32:08 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.197 2005/08/15 13:10:04 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11244,4 +11244,24 @@ sys/arch/hpcsh/dev/j6x0tp.c			1.6-1.8
 
 	Match HP 620LX.  Tested by Christer Andersson.
 	[uwe, ticket #652]
+
+sys/dev/verified_exec.c				1.19
+
+	Change how we handle duplicates in the signatures file.
+	Just give collision information (filename, device, inode, old and new
+	entry type and algorithm, and note if the fingerprint is the same or
+	not.
+	[elad, ticket #654]
+
+sbin/veriexecctl/veriexecctl.8			1.16-1.17
+sbin/veriexecctl/veriexecctl_parse.y		1.12
+
+	Add and document some convenience aliases for commonly required option
+	combinations.
+	[elad, ticket #655]
+
+sys/dist/pf/net/pf.c				1.14-1.16
+
+	Fix unitialized warnings that only crop up on m68k.
+	[peter, ticket #658]
 
