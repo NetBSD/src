@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.12.4.2 2005/08/15 13:07:04 tron Exp $	*/
+/*	$NetBSD: pf.c,v 1.12.4.3 2005/08/15 13:14:14 tron Exp $	*/
 /*	$OpenBSD: pf.c,v 1.457.2.7 2005/01/06 14:11:56 brad Exp $ */
 
 /*
@@ -2521,8 +2521,10 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	struct route_in6	 ro6;
 #endif /* INET6 */
 	struct rtentry		*rt = NULL;
-	int			 hlen = 0; /* XXGCC - -Wunitialized m68k */
+	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
+
+	hlen = 0;	/* XXXGCC - -Wunitialized m68k */
 
 	switch (af) {
 #ifdef INET
@@ -4321,10 +4323,12 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
     struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_addr	*saddr = pd->src, *daddr = pd->dst;
-	u_int16_t	 icmpid = 0;	/* XXGCC -Wunitialized m68k */
-	u_int16_t	*icmpsum = NULL;/* XXGCC -Wunitialized m68k */
-	u_int8_t	 icmptype = 0;	/* XXGCC -Wunitialized m68k */
+	u_int16_t	 icmpid = 0, *icmpsum;
+	u_int8_t	 icmptype;
 	int		 state_icmp = 0;
+
+	icmpsum = NULL;	/* XXXGCC -Wunitialized m68k */
+	icmptype = 0;	/* XXXGCC -Wunitialized m68k */
 
 	switch (pd->proto) {
 #ifdef INET
