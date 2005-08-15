@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.12.4.1 2005/08/15 13:03:55 tron Exp $	*/
+/*	$NetBSD: pf.c,v 1.12.4.2 2005/08/15 13:07:04 tron Exp $	*/
 /*	$OpenBSD: pf.c,v 1.457.2.7 2005/01/06 14:11:56 brad Exp $ */
 
 /*
@@ -4321,8 +4321,9 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
     struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_addr	*saddr = pd->src, *daddr = pd->dst;
-	u_int16_t	 icmpid = 0, *icmpsum = NULL; /* XXGCC -Wunint m68k */
-	u_int8_t	 icmptype = 0; 		      /* XXGCC -Wunint m68k */
+	u_int16_t	 icmpid = 0;	/* XXGCC -Wunitialized m68k */
+	u_int16_t	*icmpsum = NULL;/* XXGCC -Wunitialized m68k */
+	u_int8_t	 icmptype = 0;	/* XXGCC -Wunitialized m68k */
 	int		 state_icmp = 0;
 
 	switch (pd->proto) {
