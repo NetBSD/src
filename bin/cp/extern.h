@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.10 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: extern.h,v 1.11 2005/08/15 17:13:35 elad Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@ typedef struct {
 
 extern PATH_T to;
 extern uid_t myuid;
-extern int eflag, fflag, iflag, pflag;
+extern int eflag, fflag, iflag, pflag, Nflag;
 extern mode_t myumask;
 
 #include <sys/cdefs.h>

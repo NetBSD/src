@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.24 2003/08/07 09:05:02 agc Exp $
+.\"	$NetBSD: cp.1,v 1.25 2005/08/15 17:13:35 elad Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd December 18, 2002
+.Dd August 15, 2005
 .Dt CP 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl pv
+.Op Fl Npv
 .Ar source_file target_file
 .Nm cp
 .Oo
@@ -53,7 +53,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl pv
+.Op Fl Npv
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -83,6 +83,10 @@ option is specified, symbolic links on the command line are followed.
 If the
 .Fl R
 option is specified, all symbolic links are followed.
+.It Fl N
+When used with
+.Fl p ,
+don't copy file flags.
 .It Fl P
 If the
 .Fl R
