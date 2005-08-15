@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.2 2005/06/28 10:30:45 tron Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.3 2005/08/15 14:55:25 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,10 +63,8 @@
 vaddr_t xen_shm_base_address;
 u_long xen_shm_base_address_pg;
 vaddr_t xen_shm_end_address;
-/*
- * Grab enouth VM space to map an entire vbd ring. Make it a variable to that
- * it can be patched in the binary.
- */
+
+/* Grab enouth VM space to map an entire vbd ring. */
 #define XENSHM_MAX_PAGES_PER_REQUEST (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1)
 
 vsize_t xen_shm_size =
