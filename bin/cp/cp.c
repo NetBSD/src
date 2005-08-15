@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.36 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: cp.c,v 1.37 2005/08/15 17:13:35 elad Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.36 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.37 2005/08/15 17:13:35 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char empty[] = "";
 PATH_T to = { to.p_path, empty };
 
 uid_t myuid;
-int Rflag, fflag, iflag, pflag, rflag, vflag; 
+int Rflag, fflag, iflag, pflag, rflag, vflag, Nflag;
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfiprv")) != -1) 
+	while ((ch = getopt(argc, argv, "HLNPRfiprv")) != -1) 
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -114,6 +114,9 @@ main(int argc, char *argv[])
 		case 'L':
 			Lflag = 1;
 			Hflag = Pflag = 0;
+			break;
+		case 'N':
+			Nflag = 1;
 			break;
 		case 'P':
 			Pflag = 1;
