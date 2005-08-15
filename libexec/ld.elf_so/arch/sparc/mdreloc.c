@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.35 2005/01/09 14:58:15 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.36 2005/08/15 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -134,8 +134,8 @@ static const int reloc_target_bitmask[] = {
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
-static inline int _rtld_relocate_plt_object(const Obj_Entry *obj,
-    const Elf_Rela *rela, Elf_Addr *tp);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *,
+    const Elf_Rela *, Elf_Addr *);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
