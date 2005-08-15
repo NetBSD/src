@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.2 2005/08/15 06:41:06 he Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.2 2005/08/15 06:41:06 he Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -301,10 +301,6 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	char *var, *val;
 	int	rv;
-
-	if (cd9660_defaults_set == 0)
-		cd9660_set_defaults();
-
 	/* Set up allowed options - integer options ONLY */
 	option_t cd9660_options[] = {
 		{ "l", &diskStructure.isoLevel, 1, 3, "ISO Level" },
@@ -315,7 +311,10 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		  "Turns on verbose output"},
 		{ NULL }
 	};
-	
+
+	if (cd9660_defaults_set == 0)
+		cd9660_set_defaults();
+
 	/*
 	 * Todo : finish implementing this, and make a function that
 	 * parses them
