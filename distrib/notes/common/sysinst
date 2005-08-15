@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.68.2.3 2004/11/29 06:03:20 jmc Exp $
+.\"	$NetBSD: sysinst,v 1.68.2.3.2.1 2005/08/15 05:53:14 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -548,7 +548,7 @@ The
 .Ic Set
 button on the right will become active.
 Use it to locate and
-select the Installation Kernel file appropiate for your hardware.
+select the Installation Kernel file appropriate for your hardware.
 This will be either
 .Pa netbsd-INSTALL.gz
 or
@@ -751,7 +751,7 @@ or other software-based memory enhancement products).
 Place the system in B\*&W Mode (1-bit color or grayscale) as shown in the
 Monitors Control Panel or in the Monitors options dialog of the Booter.
 You may choose to have the Booter do this for you automatically by selecting
-the appropiate check box and radio button in the
+the appropriate check box and radio button in the
 .Ic Monitors
 dialog on the
 .Ic Options
@@ -1186,7 +1186,7 @@ If the disk does not have a Partition Map,
 will give you the option of writing one, but doing so will not make
 the disk a Mac OS bootable volume.
 You will have the option of creating HFS partitions that may be
-subsequentially initialized and used under Mac OS though.
+subsequently initialized and used under Mac OS though.
 .\}
 .Pp
 .if \n[i386] \{\
@@ -1252,10 +1252,10 @@ demolition of partitions used by other systems, you have to tell it what
 partitions it is allowed to use.
 You have to mark the partition you want to use as swap SWP or
 (deprecated!) NBS and the other partitions as NBD.
-Note that all the changes you make to the ID's are reversable as long as
+Note that all the changes you make to the ID's are reversible as long as
 you remember the original value.
 ahdilabel is capable of creating or changing an
-AHDI compatible partioning on the disk, and
+AHDI compatible partitioning on the disk, and
 in the partition-ID editor, the partitions are shown in the order that AHDI
 created them.
 When you leave this editor and continue with
@@ -1412,7 +1412,7 @@ Fix selected partition
 .Pp
 This option reviews the partition's size and starting address and fixes
 the values if they overlap any adjacent partition.
-This is primarily a debugging option and shouldn't be necesary during a
+This is primarily a debugging option and shouldn't be necessary during a
 normal installation.
 However, some 3rd party disk formatters have been known to create
 bogus entries in the Apple Disk Partition Map, and this option can aid
