@@ -1,4 +1,4 @@
-.\" $NetBSD: pfctl.8,v 1.4 2004/11/14 11:26:48 yamt Exp $
+.\" $NetBSD: pfctl.8,v 1.4.2.1 2005/08/15 18:57:40 tron Exp $
 .\" $OpenBSD: pfctl.8,v 1.115 2004/08/26 16:14:58 jaredy Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
@@ -84,7 +84,7 @@ When the variable
 is set to
 .Dv YES
 in
-.Xr rc.conf.local 8 ,
+.Xr rc.conf 5 ,
 the rule file specified with the variable
 .Va pf_rules
 is loaded automatically by the
@@ -100,7 +100,7 @@ and/or
 .Em net.inet6.ip6.forwarding
 to 1.
 Set them permanently in
-.Xr sysctl.conf 5 .
+.Pa /etc/sysctl.conf .
 .Pp
 The
 .Nm
@@ -587,11 +587,10 @@ Passive operating system fingerprint database.
 .Xr pf 4 ,
 .Xr pf.conf 5 ,
 .Xr pf.os 5 ,
-.Xr sysctl.conf 5 ,
+.Xr rc.conf 5 ,
 .Xr authpf 8 ,
 .Xr ftp-proxy 8 ,
 .Xr rc 8 ,
-.Xr rc.conf 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
