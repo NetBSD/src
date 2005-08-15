@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.17 2003/03/01 13:01:56 pk Exp $
+$NetBSD: version,v 1.17.16.1 2005/08/15 19:12:40 tron Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -17,3 +17,4 @@ is taken as the current.
 1.12:	add prom patches for JavaStation-1
 1.13:	add additional match function pointer and prom patch Cycle 5 IP
 1.14:	search for physical memory segment and map to kernel's link address
+1.15:	add prom patch for Krups to make sound work ( create missing node on buggy OF )
