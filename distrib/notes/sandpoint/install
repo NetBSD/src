@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2 2002/01/02 21:12:18 he Exp $
+.\"	$NetBSD: install,v 1.2.6.1 2005/08/15 06:47:34 snj Exp $
 .
 .Ss2 Booting the installer
 .
@@ -9,7 +9,7 @@ Once the kernel is downloaded, type "go 90000" to start the kernel.
 Of course, a lot of the information in this example depends on your model
 and what your boot method is, but we'll include this anyways just so you
 get an idea of what to expect (user-typed commands are in
-.Ic bold No Ns ).
+.Ic bold ) .
 .(disp
 .No DINK32\*>\*> Ic go 90000
 [ XXX - insert boot w/ installer on ramdisk instead of this example ]
