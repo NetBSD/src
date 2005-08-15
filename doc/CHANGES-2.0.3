@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.33 2005/08/13 23:39:10 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.34 2005/08/15 06:52:01 snj Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -351,4 +351,51 @@ usr.sbin/amd/libamu/mkconf			1.4
 	Embed machine and cpu architecture correctly from target host
 	environment, not from build host.
 	[nakayama, ticket #5560]
+
+distrib/notes/common/contents			1.115
+
+	Reference siop(4) not ncr(4)
+	[riz, ticket #5568]
+
+share/man/man4/options.4			1.283
+
+	remove reference to ncr(4)
+	[riz, ticket #5569]
+
+distrib/notes/common/extract-contrib-string.pl	1.2
+
+	Use '#!/usr/bin/env perl' instead of hardcoding the path.
+	Fix some typos.
+	[riz, ticket #5570]
+
+distrib/notes/common/postinstall		1.59
+
+	Packages.txt has been obsoleted, point to doc/pkgsrc.txt.
+	Whitespace and casing nit fixes.
+	[riz, ticket #5571]
+
+distrib/notes/common/sysinst			1.71
+
+	Fix some typos.
+	[riz, ticket #5574]
+
+distrib/utils/sysinst/msg.mi.en			1.134
+
+	Fix a typo: fileystem -> filesystem.
+	[riz, ticket #5578]
+
+distrib/notes/i386/hardware			1.120
+
+	Add ethernet adapters driven by re(4) and wm(4) to the list of
+	supported devices.
+	[riz, ticket #5580]
+
+distrib/notes/cats/prep				1.8
+distrib/notes/macppc/install			1.32
+distrib/notes/macppc/prep			1.41
+distrib/notes/macppc/prep.OPENFIRMWARE		1.6
+distrib/notes/sandpoint/install			1.3
+
+	Get rid of some superfluous "No Ns" calls before punctuation.
+	[riz, ticket #5581]
 
