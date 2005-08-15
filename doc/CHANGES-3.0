@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.198 2005/08/15 13:17:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.199 2005/08/15 15:01:20 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11264,4 +11264,15 @@ sys/dist/pf/net/pf.c				1.14-1.16
 
 	Fix unitialized warnings that only crop up on m68k.
 	[peter, ticket #658]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.9-1.10
+sys/arch/xen/include/xen_shm.h			1.4
+sys/arch/xen/xen/xbdback.c			1.12
+
+	Improvements to xbdback (the domain 0 driver that provides "xbd"
+	virtual disks to other domains):
+	- Fix data corruption issues with Linux.
+	- Disk throughput (though not latency) is now much, much closer to the
+	  "raw hardware" case than it was before.
+	[tls, ticket #656]
 
