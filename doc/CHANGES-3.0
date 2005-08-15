@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.199 2005/08/15 15:01:20 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.200 2005/08/15 19:17:24 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11275,4 +11275,47 @@ sys/arch/xen/xen/xbdback.c			1.12
 	- Disk throughput (though not latency) is now much, much closer to the
 	  "raw hardware" case than it was before.
 	[tls, ticket #656]
+
+dist/pf/sbin/pfctl/pfctl.8			1.6
+dist/pf/share/man/man5/pf.conf.5		1.5
+
+	Update Xrefs in PF manual pages.
+	[peter, ticket #659]
+
+etc/defaults/rc.conf				1.66
+etc/rc.d/pf					1.4
+
+	Allow to change the location of the pf ruleset with the variable
+	$pf_rules.
+	[peter, ticket #660]
+
+sys/net/if.c					1.160
+sys/netinet/in_proto.c				1.70
+sys/netinet6/in6_proto.c			1.60
+sys/sys/protosw.h				1.36
+
+	Avoid crash when deleting interfaces with multicast memberships but
+	no addresses. This fixes PR kern/29580.
+	[gdt, ticket #661]
+
+usr.sbin/amd/libamu/mkconf			1.4
+
+	Embed machine and cpu architecture correctly by target host environmet,
+	not by build host.
+	[nakayama, ticket #662]
+
+sys/dev/usb/uplcom.c				1.45
+
+	Back out the "it is not completely clear" part of revision 1.37 - it
+	effectively swapped RTS and DTR, apparently on all versions of the
+	chip. This fixes PR kern/30685.
+	[martin, ticket #663]
+
+sys/arch/sparc/stand/boot/prompatch.c		1.10
+sys/arch/sparc/stand/boot/version		1.18
+
+add a prom patch that creates a device node for the Krups' audio chip
+in case it's missing ( like with OF 3.11.10 ) - makes audiocs at ebus work
+on these machines.
+[macallan, ticket #664]
 
