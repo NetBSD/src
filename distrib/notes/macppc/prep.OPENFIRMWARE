@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.5 2003/11/01 03:03:00 grant Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.5.2.1 2005/08/15 06:45:53 snj Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -143,7 +143,7 @@ since the next several pages are instructions for MacOS models.
 Open Firmware has two variables,
 .Sq input-device
 and
-.Sq output-device No Ns ,
+.Sq output-device ,
 which specify how it accepts commands and displays output.
 All Open Firmware 1.0.5 and most Open Firmware 2.0.x systems will default
 to using the
@@ -920,24 +920,24 @@ on one hard drive.
 .Pp
 You can use the instructions in this section to partition a disk that may
 also be used with
-.Tn MacOS No Ns ,
+.Tn MacOS ,
 although a disk prepared in this way
 .Em "will not boot"
-.Em Nx No Ns .
+.Em Nx .
 That means, your root partition
-.No ( Ns Pa / No Ns )
+.Pq Pa /
 must be on a drive prepared with the
 .Nx
 installer, but the partitions not necessary to boot (for example
-.Pa /usr No Ns ,
-.Pa /home No Ns ,
+.Pa /usr ,
+.Pa /home ,
 or
-.Pa /export No Ns )
+.Pa /export )
 may be on the same disk as
-.Tn MacOS No Ns .
+.Tn MacOS .
 .Pp
 Unless you are planning to use partitions on the same disk as
-.Tn MacOS No Ns ,
+.Tn MacOS ,
 skip forward to
 .Sx "Preparing the Open Firmware 1 or 2 Bootable Media"
 .\}
@@ -947,7 +947,7 @@ You must have at least one disk that was partitioned before running the
 installer.
 .Pp
 This is the drive that will have the bootloader,
-.Pa ofwboot.xcf No Ns .
+.Pa ofwboot.xcf .
 Your
 .Nx
 partitions may either be on this same disk (using the method described
@@ -1069,10 +1069,10 @@ MB with X.
 interprets an
 .Em "A/UX Root"
 partition as the first partition
-.No ( Ns Em a No Ns )
+.Pq Em a
 on the disk.
 This partition is not readable from
-.Tn MacOS No Ns .
+.Tn MacOS .
 .\}
 .It Em "A/UX Swap"
 Any size.
@@ -1082,16 +1082,17 @@ strictly necessary for machines with a lot of RAM.
 interprets an
 .Em "A/UX Swap"
 partition as the second partition
-.No ( Ns Em b No Ns )
+.Pq Em b
 on the disk.
 This partition is not readable from
-.Tn MacOS No Ns .
+.Tn MacOS .
 .It Em "A/UX User" No and Em "A/UX Free1"
 Use these for any additional partitions you may want to use under
 .Nx Ns ,
 such as
-.Pa /usr No (at least 200 MB),\  Pa /home No Ns ,\  Pa /usr/local No Ns ,\ or
-.Pa /usr/pkg No Ns .
+.Pa /usr No (at least 200 MB) , Pa /home , Pa /usr/local ,
+or
+.Pa /usr/pkg .
 .Nx
 interprets these partitions as normal
 .Nx No Ns -style
@@ -1118,7 +1119,7 @@ If you use an
 partition as your root, then it may not be recognized by the
 .Nx
 kernel as the first partition
-.No ( Ns Em a No Ns )
+.Pq Em a
 on the disk.  You will need to compile a new kernel with the 
 root partition explicitly defined to be the
 .Em UFS
@@ -1144,8 +1145,7 @@ you only need to extract the distribution sets on the diskless server.
 .Pp
 To get the distribution sets onto appropriate media, see the above 
 section entitled
-.Sx "Getting the NetBSD System on to Useful Media"
-.No Ns .
+.Sx "Getting the NetBSD System on to Useful Media" .
 You may want to get the distribution sets when you create the bootable media.
 .Pp
 .(Note
@@ -1204,7 +1204,7 @@ systems should get it from the official website:
 You will need to substitute the correct name of the disk image file,
 speed for your CD writer, and the
 correct device for your system (for i386 it would be
-.Pa /dev/cd1d No Ns ).
+.Pa /dev/cd1d ) .
 .Pp
 .It
 .Em "From a MacOS machine (using Toast)"
@@ -1397,7 +1397,7 @@ systems should get it from the official website:
 .Pp
 You will need to substitute the correct speed for your CD writer, and the
 correct device for your system (for i386 it would be
-.Pa /dev/cd1d No Ns ).
+.Pa /dev/cd1d ) .
 .Pp
 See the
 .Nx
