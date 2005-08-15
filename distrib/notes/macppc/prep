@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.40 2003/09/02 05:47:24 mbw Exp $
+.\"	$NetBSD: prep,v 1.40.2.1 2005/08/15 06:46:00 snj Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -19,7 +19,7 @@ annoying.
 If you assume the worst, you'll be pleasantly surprised when
 everything works easier than you expected.
 Also, forget everything you've been told about installing
-.Nx*M No Ns .
+.Nx*M .
 That's right, flush your knowledge cache -- some of it is almost
 certainly dirty.
 .Pp
