@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.21 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.22 2005/08/15 23:37:10 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.17 2005/07/04 01:29:41 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.21 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.22 2005/08/15 23:37:10 dyoung Exp $");
 #endif
 
 /*
@@ -846,6 +846,7 @@ ieee80211_wme_updateparams(struct ieee80211com *ic)
 	}
 }
 
+#ifndef IEEE80211_NO_HOSTAP
 static void
 sta_disassoc(void *arg, struct ieee80211_node *ni)
 {
@@ -866,6 +867,7 @@ sta_deauth(void *arg, struct ieee80211_node *ni)
 	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
 		IEEE80211_REASON_ASSOC_LEAVE);
 }
+#endif /* !IEEE80211_NO_HOSTAP */
 
 static int
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
