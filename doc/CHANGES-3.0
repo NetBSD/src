@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.201 2005/08/15 19:18:45 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.202 2005/08/16 12:45:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11318,4 +11318,50 @@ sys/arch/sparc/stand/boot/version		1.18
 	in case it's missing ( like with OF 3.11.10 ) - makes audiocs at ebus
 	work on these machines.
 	[macallan, ticket #664]
+
+distrib/notes/evbarm/hardware			1.9
+distrib/notes/evbarm/install			1.6
+distrib/notes/evbarm/prep			1.6
+
+	Some updates for TS-7200 installation.
+	[joff, ticket #665]
+
+sys/dev/ic/i82557.c				1.92 via patch
+
+	Make microcode loading work on big endian machines.
+	[junyoung, ticket #666]
+
+distrib/sets/lists/base/mi			1.561-1.562
+distrib/sets/lists/man/mi			1.810-1.811
+doc/CHANGES					1.498 via patch
+usr.bin/Makefile				1.148
+usr.bin/vndcompress/Makefile			1.1
+usr.bin/vndcompress/vndcompress.1		1.1-1.2
+usr.bin/vndcompress/vndcompress.c		1.1-1.3
+usr.bin/vndcompress/vndcompress.h		1.1
+
+	Add vndcompress(1) and vnduncompress(1) to transform filesystem/disk
+	images from "normal" into cloop2-format compressed images and back. 
+	Compressed disk images can be used with the vnd(4) driver when compiled
+	with VND_COMPRESSION and "vnconfig -z".  Useful for creation of
+	Live CDs/DVDs.
+	[hubertf, ticket #667]
+
+sys/dev/verified_exec.c				1.20-1.21
+sys/kern/kern_verifiedexec.c			1.34
+
+	Fix printing formats.
+	[elad, ticket #668]
+
+sys/dev/verified_exec.c				1.21
+sys/kern/kern_verifiedexec.c			1.35
+
+	The veriexec API uses dev_t and ino_t for device and inode numbers.
+	VOP_GETATTR() fills a struct vattr, where va_fsid and va_fileid (device
+	and inode..) are typed as long.
+	Add some casts when using these values and surround them with XXXs
+	about the potential size mismatch, as long can be 64 bits but dev_t
+	and ino_t are always 32 bits. This is safe because *for now* we're
+	still using 32 bit inode numbers.
+	[elad, ticket #669]
 
