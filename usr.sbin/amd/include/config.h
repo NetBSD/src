@@ -885,10 +885,10 @@
 #define VERSION "6.0.6"
 
 /* Define name of host machine's cpu (eg. sparc) */
-#define HOST_CPU MACHINE
+#define HOST_CPU MACHINE_ARCH
 
 /* Define name of host machine's architecture (eg. sun4) */
-#define HOST_ARCH MACHINE_ARCH
+#define HOST_ARCH MACHINE
 
 /* Define name of host machine's vendor (eg. sun) */
 #define HOST_VENDOR "unknown"
