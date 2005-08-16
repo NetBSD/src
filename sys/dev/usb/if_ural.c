@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.6 2005/08/16 17:02:34 christos Exp $ */
+/*	$NetBSD: if_ural.c,v 1.7 2005/08/16 19:35:17 drochner Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.6 2005/08/16 17:02:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.7 2005/08/16 19:35:17 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -1167,21 +1167,6 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = (struct ural_tx_desc *)data->buf;
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct ural_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
-		tap->wt_antenna = sc->tx_ant;
-
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
-	}
-#endif
-
 	data->m = m0;
 	data->ni = ni;
 
@@ -1199,6 +1184,20 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 			flags |= RAL_TX_TIMESTAMP;
 	}
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct ural_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
+		tap->wt_antenna = sc->tx_ant;
+
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+	}
+#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
 	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
@@ -1270,8 +1269,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
