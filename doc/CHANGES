@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.6 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.7 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -63,6 +63,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[tsarna 20040603]
 	vnd(4): Add support for configuring cloop2-compressed images
 		read-only, written by Cliff Wright. [hubertf 20050716]
+<<<<<<< CHANGES
 	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
 	racoon(8): upgraded to 20040617 [itojun 20040617]
 	pf(4): PF from OpenBSD 3.5 imported [itojun 20040622]
@@ -263,3 +264,9 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[sketch 20050316]
 	postinstall(8): Moved from /etc to /usr/sbin.  [lukem 20050417]
 	azalia(4): Add driver for High Definition Audio. [kent 20050621]
+	vndcompress(1): Add vndcompress(1) and vnduncompress(1) to transform
+		filesystem/disk images from "normal" into cloop2-format
+		compressed images and back (written by Florian Stoehr).
+		Compressed disk images can be used with the vnd(4) driver when
+		compiled with VND_COMPRESSION and "vnconfig -z". 
+		Useful for creation of Live CDs/DVDs. [hubertf 20050725]
