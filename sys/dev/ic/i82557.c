@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.89 2004/11/23 21:41:57 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.89.10.1 2005/08/16 11:53:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.89 2004/11/23 21:41:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.89.10.1 2005/08/16 11:53:22 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2258,7 +2258,7 @@ static const uint32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
 
-#define	UCODE(x)	x, sizeof(x)
+#define	UCODE(x)	x, sizeof(x)/sizeof(uint32_t)
 
 static const struct ucode {
 	int32_t		revision;
@@ -2293,7 +2293,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 {
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
-	int count;
+	int count, i;
 
 	if (sc->sc_flags & FXPF_UCODE_LOADED)
 		return;
@@ -2319,7 +2319,8 @@ fxp_load_ucode(struct fxp_softc *sc)
 	cbp->cb_status = 0;
 	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE | FXP_CB_COMMAND_EL);
 	cbp->link_addr = 0xffffffff;		/* (no) next command */
-	memcpy((void *) cbp->ucode, uc->ucode, uc->length);
+	for (i = 0; i < uc->length; i++)
+		cbp->ucode[i] = htole32(uc->ucode[i]);
 
 	if (uc->int_delay_offset)
 		*(uint16_t *) &cbp->ucode[uc->int_delay_offset] =
