@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.18 2004/06/10 13:53:48 uebayasi Exp $
+.\"	$NetBSD: crypt.3,v 1.19 2005/08/16 10:10:16 drochner Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ The DES encryption scheme is derived from the
 Data Encryption Standard.
 Additional code has been added to deter key search attempts and to use
 stronger hashing algorithms.
-In the DES case, the first argument to
+In the DES case, the second argument to
 .Fn crypt
 is a character array, 9 bytes in length, consisting of an underscore (``_'')
 followed by 4 bytes of iteration count and 4 bytes of salt.
