@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.4 2005/08/10 14:18:28 macallan Exp $
+#	$NetBSD: files.i2c,v 1.5 2005/08/16 11:09:12 nonaka Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -69,3 +69,8 @@ define adm1030c {}
 device adm1030c: sysmon_envsys
 attach adm1030c at iic
 file dev/i2c/adm1030.c			adm1030c
+
+# RICOH RS5C372[AB] Real Time Clock
+device	rs5c372rtc
+attach	rs5c372rtc at iic
+file	dev/i2c/rs5c372.c		rs5c372rtc
