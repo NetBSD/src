@@ -1,6 +1,6 @@
-/*	$NetBSD: if_ural.c,v 1.5 2005/07/12 12:51:03 drochner Exp $ */
+/*	$NetBSD: if_ural.c,v 1.6 2005/08/16 17:02:34 christos Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
-/*	$FreeBSD: src/sys/dev/usb/if_ural.c,v 1.9 2005/07/08 19:19:06 damien Exp $	*/
+/*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
 /*-
  * Copyright (c) 2005
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.5 2005/07/12 12:51:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.6 2005/08/16 17:02:34 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -114,8 +114,6 @@ Static int		ural_alloc_tx_list(struct ural_softc *);
 Static void		ural_free_tx_list(struct ural_softc *);
 Static int		ural_alloc_rx_list(struct ural_softc *);
 Static void		ural_free_rx_list(struct ural_softc *);
-Static int		ural_key_alloc(struct ieee80211com *,
-			    const struct ieee80211_key *);
 Static int		ural_media_change(struct ifnet *);
 Static void		ural_next_scan(void *);
 Static void		ural_task(void *);
@@ -487,7 +485,6 @@ USB_ATTACH(ural)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ural_newstate;
-	ic->ic_crypto.cs_key_alloc = ural_key_alloc;
 	ieee80211_media_init(ic, ural_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
@@ -678,15 +675,6 @@ ural_free_rx_list(struct ural_softc *sc)
 			data->m = NULL;
 		}
 	}
-}
-
-Static int
-ural_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
-{
-	if (k >= ic->ic_nw_keys && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
-		return k - ic->ic_nw_keys;
-
-	return IEEE80211_KEYIX_NONE;
 }
 
 Static int

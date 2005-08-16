@@ -1,6 +1,6 @@
-/*	$NetBSD: ral.c,v 1.4 2005/07/12 12:13:00 drochner Exp $ */
+/*	$NetBSD: ral.c,v 1.5 2005/08/16 17:02:34 christos Exp $ */
 /*	$OpenBSD: ral.c,v 1.56 2005/07/02 23:14:42 brad Exp $  */
-/*	$FreeBSD: src/sys/dev/ral/if_ral.c,v 1.8 2005/07/08 19:33:42 damien Exp $	*/
+/*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/ral/if_ral.c,v 1.10 2005/07/10 22:25:44 sam Exp $	*/
 
 /*-
  * Copyright (c) 2005
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.4 2005/07/12 12:13:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.5 2005/08/16 17:02:34 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -90,8 +90,6 @@ static void		ral_free_rx_ring(struct ral_softc *,
 			    struct ral_rx_ring *);
 static struct		ieee80211_node *ral_node_alloc(
 			    struct ieee80211_node_table *);
-static int		ral_key_alloc(struct ieee80211com *,
-			    const struct ieee80211_key *);
 static int		ral_media_change(struct ifnet *);
 static void		ral_next_scan(void *);
 static void		ral_iter_func(void *, struct ieee80211_node *);
@@ -452,7 +450,6 @@ ral_attach(struct ral_softc *sc)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ral_newstate;
-	ic->ic_crypto.cs_key_alloc = ral_key_alloc;
 	ieee80211_media_init(ic, ral_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
@@ -814,15 +811,6 @@ ral_node_alloc(struct ieee80211_node_table *nt)
 }
 
 static int
-ral_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
-{
-	if (k >= ic->ic_nw_keys && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
-		return k - ic->ic_nw_keys;
-
-	return IEEE80211_KEYIX_NONE;
-}
-
-static int
 ral_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -881,7 +869,6 @@ static int
 ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ral_softc *sc = ic->ic_ifp->if_softc;
-	struct ifnet *ifp = &sc->sc_if;
 	enum ieee80211_state ostate;
 	struct mbuf *m;
 	int error = 0;
@@ -918,10 +905,8 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		ral_set_chan(sc, ic->ic_bss->ni_chan);
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
-			ral_update_slot(ifp);
-		}
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS) {
