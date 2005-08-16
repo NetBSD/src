@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.203 2005/08/16 13:11:59 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.204 2005/08/16 14:48:59 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11365,6 +11365,8 @@ sys/kern/kern_verifiedexec.c			1.35
 	still using 32 bit inode numbers.
 	[elad, ticket #669]
 
+doc/3RDPARTY					1.323
+doc/CHANGES					1.466
 dist/am-utils/AUTHORS				patch
 dist/am-utils/COPYING				patch
 dist/am-utils/ChangeLog				patch
