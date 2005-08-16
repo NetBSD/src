@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.204 2005/08/16 14:48:59 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.205 2005/08/16 15:05:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11365,8 +11365,6 @@ sys/kern/kern_verifiedexec.c			1.35
 	still using 32 bit inode numbers.
 	[elad, ticket #669]
 
-doc/3RDPARTY					1.323
-doc/CHANGES					1.466
 dist/am-utils/AUTHORS				patch
 dist/am-utils/COPYING				patch
 dist/am-utils/ChangeLog				patch
@@ -11706,6 +11704,8 @@ dist/am-utils/wire-test/.cvsignore		delete
 dist/am-utils/wire-test/Makefile.am		patch
 dist/am-utils/wire-test/wire-test.8		patch
 dist/am-utils/wire-test/wire-test.c		patch
+doc/3RDPARTY					1.323
+doc/CHANGES					1.466
 usr.sbin/amd/amd/Makefile			patch
 usr.sbin/amd/include/amu_nfs_prot.h		patch
 usr.sbin/amd/include/aux_conf.h			patch
