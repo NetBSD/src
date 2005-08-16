@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5.2.15 2005/08/16 12:34:57 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5.2.15 2005/08/16 12:34:57 tron Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.14 2005/08/15 12:38:03 tron Exp $");
+__RCSID("$Id: verified_exec.c,v 1.5.2.15 2005/08/16 12:34:57 tron Exp $\n$NetBSD: verified_exec.c,v 1.5.2.15 2005/08/16 12:34:57 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 {
 	if (veriexec_verbose >= 2) {
 		printf("Veriexec: veriexecopen: Veriexec load device "
-		       "open attempt by uid=%u, pid=%u. (dev=%d)\n",
+		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
 		       p->p_ucred->cr_uid, p->p_pid, dev);
 	}
 
@@ -241,7 +241,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			 * the signature file. Just give collision info
 			 * and return.
 			 */
-			printf("veriexec: Duplicate entry. [%s, %ld:%lu] "
+			printf("veriexec: Duplicate entry. [%s, %ld:%ld] "
 			       "old[type=0x%02x, algorithm=%s], "
 			       "new[type=0x%02x, algorithm=%s] "
 			       "(%s fingerprint)\n",
@@ -281,7 +281,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			printf("Veriexec: veriexecioctl: Inconsistent "
 			       "fingerprint size for type \"%s\" for file "
 			       "\"%s\" (dev=%ld, inode=%ld), size was %u "
-			       "was expecting %d\n", params->fp_type,
+			       "was expecting %zu\n", params->fp_type,
 			       params->file, va.va_fsid, va.va_fileid,
 			       params->size, e->ops->hash_len);
 			free(e, M_TEMP);
