@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2003/11/04 03:13:48 uwe Exp $	*/
+/*	$NetBSD: intr.h,v 1.20 2005/08/16 11:32:26 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@ void intc_intr_disestablish(void *);
 void intc_intr_enable(int);
 void intc_intr_disable(int);
 void intc_intr(int, int, int);
+
+void intpri_intr_priority(int evtcode, int level);
 
 /*
  * software simulated interrupt
