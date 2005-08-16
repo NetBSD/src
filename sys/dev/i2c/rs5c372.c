@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.1 2005/08/16 11:09:12 nonaka Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.2 2005/08/16 16:33:50 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -53,7 +53,7 @@ static void rs5c372rtc_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(rs5c372rtc, sizeof(struct rs5c372rtc_softc),
     rs5c372rtc_match, rs5c372rtc_attach, NULL, NULL);
 
-static void rs5c372rtc_init(struct rs5c372rtc_softc *);
+static void rs5c372rtc_reg_write(struct rs5c372rtc_softc *, int, uint8_t);
 static int rs5c372rtc_clock_read(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
@@ -91,7 +91,9 @@ rs5c372rtc_attach(struct device *parent, struct device *self, void *arg)
 
 	todr_attach(&sc->sc_todr);
 
-	rs5c372rtc_init(sc);
+	/* Initialize RTC */
+	rs5c372rtc_reg_write(sc, RS5C372_CONTROL2, RS5C372_CONTROL2_24HRS);
+	rs5c372rtc_reg_write(sc, RS5C372_CONTROL1, 0);
 }
 
 static int
@@ -149,23 +151,24 @@ rs5c372rtc_getcal(struct todr_chip_handle *ch, int *cal)
 }
 
 static void
-rs5c372rtc_init(struct rs5c372rtc_softc *sc)
+rs5c372rtc_reg_write(struct rs5c372rtc_softc *sc, int reg, uint8_t val)
 {
 	uint8_t cmdbuf[2];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: rs5c372rtc_init: failed to acquire I2C bus\n",
+		printf("%s: rs5c372rtc_reg_write: failed to acquire I2C bus\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	cmdbuf[0] = (RS5C372_CONTROL2 << 4);
-	cmdbuf[1] = RS5C372_CONTROL2_24HRS;
+	reg &= 0xf;
+	cmdbuf[0] = (reg << 4);
+	cmdbuf[1] = val;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: rs5c372rtc_clock_read: failed to write control2\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: rs5c372rtc_reg_write: failed to write reg%d\n",
+		    sc->sc_dev.dv_xname, reg);
 		return;
 	}
 
