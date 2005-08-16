@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.18 2005/08/04 18:40:12 tron Exp $
+# $NetBSD: mi,v 1.768.2.19 2005/08/16 12:05:09 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2205,6 +2205,8 @@
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/vndcompress.0		man-util-catman		.cat
+./usr/share/man/cat8/vnduncompress.0		man-util-catman		.cat
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/walnut/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman	.cat
@@ -4420,6 +4422,8 @@
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/vndcompress.8		man-util-man		.man
+./usr/share/man/man8/vnduncompress.8		man-util-man		.man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/walnut/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man		.man
