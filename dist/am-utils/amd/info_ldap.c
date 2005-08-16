@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ldap.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ldap.c,v 1.23 2004/07/29 22:50:53 ezk Exp
+ * Id: info_ldap.c,v 1.24 2005/01/03 20:56:45 ezk Exp
  *
  */
 

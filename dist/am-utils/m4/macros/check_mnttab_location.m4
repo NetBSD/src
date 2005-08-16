@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if the mount table is kept in a file or in the kernel.
-AC_DEFUN(AMU_CHECK_MNTTAB_LOCATION,
+AC_DEFUN([AMU_CHECK_MNTTAB_LOCATION],
 [
 AMU_CACHE_CHECK_DYNAMIC(where mount table is kept,
 ac_cv_mnttab_location,

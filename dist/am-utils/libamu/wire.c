@@ -1,7 +1,7 @@
-/*	$NetBSD: wire.c,v 1.8 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: wire.c,v 1.8.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wire.c,v 1.20 2004/01/06 03:56:20 ezk Exp
+ * Id: wire.c,v 1.22 2005/02/17 03:37:42 ezk Exp
  *
  */
 
@@ -321,8 +321,8 @@ is_network_member(const char *net)
     char *netstr = strdup(net), *maskstr;
     u_long netnum, masknum = 0;
     maskstr = strchr(netstr, '/');
+    maskstr[0] = '\0';		/* null terminate netstr */
     maskstr++;
-    maskstr[-1] = '\0';		/* null terminate netstr */
     if (*maskstr == '\0')	/* if empty string, make it NULL */
       maskstr = NULL;
     /* check if netmask uses a dotted-quad or bit-length, or not defined at all */

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the unmount system call arguments needed for
-AC_DEFUN(AMU_CHECK_UNMOUNT_ARGS,
+AC_DEFUN([AMU_CHECK_UNMOUNT_ARGS],
 [
 AC_CACHE_CHECK(unmount system-call arguments,
 ac_cv_unmount_args,

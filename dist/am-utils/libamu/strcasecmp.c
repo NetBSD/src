@@ -1,7 +1,7 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.7 2004/11/27 01:01:05 christos Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strcasecmp.c,v 1.8 2004/01/06 03:56:20 ezk Exp
+ * Id: strcasecmp.c,v 1.9 2005/01/03 20:56:46 ezk Exp
  *
  */
 
@@ -55,8 +55,8 @@
 int
 strcasecmp(const char *s1, const char *s2)
 {
-  const char *cp1 = s1;
-  const char *cp2 = s2;
+  const unsigned char *cp1 = (const unsigned char *)s1;
+  const unsigned char *cp2 = (const unsigned char *)s2;
 
   while (tolower(*cp1) == tolower(*cp2++))
     if (*cp1++ == '\0')

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if compiler can handle "void *"
-AC_DEFUN(AMU_C_VOID_P,
+AC_DEFUN([AMU_C_VOID_P],
 [
 AC_CACHE_CHECK(if compiler can handle void *,
 ac_cv_c_void_p,

@@ -1,7 +1,7 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.7 2004/11/27 01:00:42 christos Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: rpc_fwd.c,v 1.18 2004/01/06 03:56:20 ezk Exp
+ * Id: rpc_fwd.c,v 1.19 2005/01/03 20:56:45 ezk Exp
  *
  */
 

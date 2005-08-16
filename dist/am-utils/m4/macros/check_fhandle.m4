@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find if type 'fhandle' exists
-AC_DEFUN(AMU_CHECK_FHANDLE,
+AC_DEFUN([AMU_CHECK_FHANDLE],
 [
 AC_CACHE_CHECK(if plain fhandle type exists,
 ac_cv_have_fhandle,

@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.11 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.11.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xutil.c,v 1.32 2004/01/06 03:56:20 ezk Exp
+ * Id: xutil.c,v 1.37 2005/04/07 05:50:39 ezk Exp
  *
  */
 
@@ -57,7 +57,7 @@
 FILE *logfp = NULL;
 
 static char *am_progname = "unknown";	/* "amd" */
-static char am_hostname[MAXHOSTNAMELEN + 1] = "unknown"; /* Hostname */
+static char am_hostname[MAXHOSTNAMELEN] = "unknown"; /* Hostname */
 pid_t am_mypid = -1;		/* process ID */
 serv_state amd_state;		/* amd's state */
 int foreground = 1;		/* 1 == this is the top-level server */
@@ -151,7 +151,7 @@ am_get_progname(void)
 void
 am_set_hostname(char *hn)
 {
-  strlcpy(am_hostname, hn, sizeof(am_hostname));
+  xstrlcpy(am_hostname, hn, sizeof(am_hostname));
 }
 
 
@@ -167,6 +167,13 @@ am_set_mypid(void)
 {
   am_mypid = getpid();
   return am_mypid;
+}
+
+
+long
+get_server_pid()
+{
+  return (long) (foreground ? am_mypid : getppid());
 }
 
 
@@ -456,7 +463,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
 #endif /* not HAVE_VSNPRINTF */
 
   ptr += strlen(ptr);
-  if (ptr[-1] == '\n')
+  if (*(ptr-1) == '\n')
     *--ptr = '\0';
 
 #ifdef HAVE_SYSLOG
@@ -504,7 +511,8 @@ real_plog(int lvl, const char *fmt, va_list vargs)
   switch (last_count) {
   case 0:			/* never printed at all */
     last_count = 1;
-    strlcpy(last_msg, msg, sizeof(last_msg));
+    if (strlcpy(last_msg, msg, sizeof(last_msg)) >= sizeof(last_msg)) /* don't use xstrlcpy here (recursive!) */
+      fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
     last_lvl = lvl;
     show_time_host_and_name(lvl); /* mimic syslog header */
     fwrite(msg, ptr - msg, 1, logfp);
@@ -516,7 +524,8 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       last_count++;
     } else {			/* last msg printed once, new one differs */
       /* last_count remains at 1 */
-      strlcpy(last_msg, msg, sizeof(last_msg));
+      if (strlcpy(last_msg, msg, sizeof(last_msg)) >= sizeof(last_msg)) /* don't use xstrlcpy here (recursive!) */
+	fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
       last_lvl = lvl;
       show_time_host_and_name(lvl); /* mimic syslog header */
       fwrite(msg, ptr - msg, 1, logfp);
@@ -543,7 +552,8 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       show_time_host_and_name(last_lvl);
       snprintf(last_msg, sizeof(last_msg), "last message repeated %d times\n", last_count);
       fwrite(last_msg, strlen(last_msg), 1, logfp);
-      strlcpy(last_msg, msg, sizeof(last_msg));
+      if (strlcpy(last_msg, msg, sizeof(last_msg)) >= sizeof(last_msg)) /* don't use xstrlcpy here (recursive!) */
+	fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
       last_count = 1;
       last_lvl = lvl;
       show_time_host_and_name(lvl); /* mimic syslog header */
@@ -888,10 +898,7 @@ set_amd_program_number(int program)
 void
 amu_release_controlling_tty(void)
 {
-#ifdef TIOCNOTTY
   int fd;
-#endif /* TIOCNOTTY */
-  int tempfd;
 
   /*
    * In daemon mode, leaving open file descriptors to terminals or pipes
@@ -909,11 +916,15 @@ amu_release_controlling_tty(void)
    *
    * XXX We should also probably set the SIGPIPE handler to SIG_IGN.
    */
-  tempfd = open("/dev/null", O_RDWR);
-  fflush(stdin);  close(0); dup2(tempfd, 0);
-  fflush(stdout); close(1); dup2(tempfd, 1);
-  fflush(stderr); close(2); dup2(tempfd, 2);
-  close(tempfd);
+  fd = open("/dev/null", O_RDWR);
+  if (fd < 0) {
+    plog(XLOG_WARNING, "Could not open /dev/null for rw: %m");
+  } else {
+    fflush(stdin);  close(0); dup2(fd, 0);
+    fflush(stdout); close(1); dup2(fd, 1);
+    fflush(stderr); close(2); dup2(fd, 2);
+    close(fd);
+  }
 
 #ifdef HAVE_SETSID
   /* XXX: one day maybe use vhangup(2) */

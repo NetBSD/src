@@ -1,7 +1,7 @@
-/*	$NetBSD: map.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: map.c,v 1.49 2004/04/28 04:22:13 ib42 Exp
+ * Id: map.c,v 1.53 2005/03/18 01:11:33 ezk Exp
  *
  */
 
@@ -146,6 +146,25 @@ get_exported_ap(int index)
 
 
 /*
+ * Get exported_ap by path
+ */
+am_node *
+path_to_exported_ap(char *path)
+{
+  int index;
+  am_node *mp;
+
+  mp = get_first_exported_ap(&index);
+  while (mp != NULL) {
+    if (STREQ(mp->am_path, path))
+      break;
+    mp = get_next_exported_ap(&index);
+  }
+  return mp;
+}
+
+
+/*
  * Resize exported_ap map
  */
 static int
@@ -231,7 +250,7 @@ exported_ap_alloc(void)
    */
   mpp = exported_ap + first_free_map;
   mp = *mpp = ALLOC(struct am_node);
-  memset((char *) mp, 0, sizeof(*mp));
+  memset((char *) mp, 0, sizeof(struct am_node));
 
   mp->am_mapno = first_free_map++;
 
@@ -276,8 +295,9 @@ exported_ap_free(am_node *mp)
     first_free_map = mp->am_mapno;
 
   /*
-   * Free the mount node
+   * Free the mount node, and zero out it's internal struct data.
    */
+  memset((char *) mp, 0, sizeof(am_node));
   XFREE(mp);
 }
 
@@ -531,14 +551,6 @@ get_root_nfs_fh(char *dir)
   am_node *mp = get_root_ap(dir);
   if (mp) {
     mp_to_fh(mp, &nfh);
-    /*
-     * Patch up PID to match main server...
-     */
-    if (!foreground) {
-      long pid = getppid();
-      ((struct am_fh *) &nfh)->fhh_pid = pid;
-      dlog("get_root_nfs_fh substitutes pid %ld", (long) pid);
-    }
     return &nfh;
   }
 
@@ -597,18 +609,19 @@ mount_auto_node(char *dir, opaque_t arg)
 {
   int error = 0;
   am_node *mp = (am_node *) arg;
-  am_node *am;
+  am_node *new_mp;
 
-  /*
-   * this should be:
-   * mp->am_mnt->mf_opts->lookup_child(.....);
-   *
-   * as it is, it uses the generic methods regardless
-   * of the parent filesystem's type
-   */
-  am = amfs_generic_lookup_child(mp, dir, &error, VLOOK_CREATE);
-  if (am && error < 0)
-    am = amfs_generic_mount_child(am, &error);
+  new_mp = mp->am_mnt->mf_ops->lookup_child(mp, dir, &error, VLOOK_CREATE);
+  if (new_mp && error < 0) {
+    /*
+     * We can't allow the fileid of the root node to change.
+     * Should be ok to force it to 1, always.
+     */
+    new_mp->am_gen = new_mp->am_fattr.na_fileid = 1;
+
+    new_mp = mp->am_mnt->mf_ops->mount_child(new_mp, &error);
+  }
+
   if (error > 0) {
     errno = error;		/* XXX */
     plog(XLOG_ERROR, "Could not mount %s: %m", dir);
@@ -719,13 +732,14 @@ umount_exported(void)
 	mf->mf_flags &= ~MFF_MKMNT;
       if (gopt.flags & CFM_UNMOUNT_ON_EXIT || mp->am_flags & AMF_AUTOFS) {
 	plog(XLOG_INFO, "on-exit attempt to unmount %s", mf->mf_mount);
-#ifdef HAVE_FS_AUTOFS
-	if (mf->mf_flags & MFF_IS_AUTOFS)
-	  autofs_release_mp(mp);
-#endif /* HAVE_FS_AUTOFS */
-	unmount_node((opaque_t) mp);
+	/*
+	 * use unmount_mp, not unmount_node, so that unmounts be
+	 * backgrounded as needed.
+	 */
+	unmount_mp((opaque_t) mp);
+      } else {
+	am_unmounted(mp);
       }
-      am_unmounted(mp);
       exported_ap[i] = 0;
     } else {
       /*
@@ -869,6 +883,11 @@ unmount_mp(am_node *mp)
   int was_backgrounded = 0;
   mntfs *mf = mp->am_mnt;
 
+#ifdef notdef
+  plog(XLOG_INFO, "\"%s\" on %s timed out (flags 0x%x)",
+       mp->am_path, mp->am_mnt->mf_mount, (int) mf->mf_flags);
+#endif /* notdef */
+
 #ifndef MNT2_NFS_OPT_SYMTTL
     /*
      * This code is needed to defeat Solaris 2.4's (and newer) symlink
@@ -883,10 +902,6 @@ unmount_mp(am_node *mp)
     /* defensive programming... can't we assert the above condition? */
     mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds++;
 #endif /* not MNT2_NFS_OPT_SYMTTL */
-
-#ifdef notdef
-  plog(XLOG_INFO, "\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
-#endif /* notdef */
 
   if (mf->mf_refc == 1 && !FSRV_ISUP(mf->mf_server)) {
     /*

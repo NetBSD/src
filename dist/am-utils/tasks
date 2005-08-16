@@ -73,9 +73,6 @@ Please volunteer to do any of the following:
 
 - linux support for ext3
 
-- support executable maps: run a program/script and use its output as the
-  map data.
-
 - be able to pass generic mount options to systems w/ a mount(2) that
   supports it (Linux).  Perhaps genopt="foo,bar" syntax.
 
@@ -86,6 +83,9 @@ Please volunteer to do any of the following:
 - fix amd.conf parser so it can parse key=value without spaces around the
   "=" sign.  Note this isn't so trivial because 'value' may include "="
   signs.
+
+- NFSv4 support (such a short "tasks" entry given how much work it is :-)
+
 
 * documentation
 - document what can and what can't be a top-level mount type (i.e. a
@@ -103,6 +103,9 @@ Solaris:
 - host mounts status unknown
 - nfsx status unknown
 - local filesystems (ufs, etc) status unknown
+
+FreeBSD:
+- just do it
 
 All:
 - mntfs->mf_fo->opt_fs can contain garbage sometimes??

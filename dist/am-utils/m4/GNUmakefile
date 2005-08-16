@@ -98,7 +98,7 @@ P2s=/usr/share/libtool
 P1=/usr/local/gnu/lib/automake
 P2=/usr/local/gnu/lib/libtool
 P3=/misc/mirror/gnu/prep/config
-P4=/misc/mirror/gnu/prep/texinfo
+P4=/misc/mirror/gnu/prep/GNUinfo
 ICMD=./m4/copy-if-newbig
 CPCMD=cp -p
 
@@ -114,14 +114,14 @@ update:		\
 # 	missing		\
 # 	mkinstalldirs	\
 
-config.guess:: $(P1s)/config.guess
+config.guess:: $(P1s)*/config.guess
 	$(ICMD) $? $@
 config.guess:: $(P2s)/config.guess
 	$(ICMD) $? $@
 config.guess:: $(P3)/config.guess
 	$(ICMD) $? $@
 
-config.sub:: $(P1s)/config.sub
+config.sub:: $(P1s)*/config.sub
 	$(ICMD) $? $@
 config.sub:: $(P2s)/config.sub
 	$(ICMD) $? $@

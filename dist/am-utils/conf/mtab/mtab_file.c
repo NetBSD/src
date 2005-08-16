@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_file.c,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
+/*	$NetBSD: mtab_file.c,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_file.c,v 1.13 2004/01/06 03:56:20 ezk Exp
+ * Id: mtab_file.c,v 1.15 2005/03/04 18:42:43 ezk Exp
  *
  */
 
@@ -139,7 +139,14 @@ again:
       sleep(1);
       goto again;
     }
-    return 0;
+    /*
+     * If 'mnttabname' file does not exist give setmntent() a
+     * chance to create it (depending on the mode).
+     * Otherwise, bail out.
+     */
+    else if (errno != ENOENT) {
+      return 0;
+    }
   }
 
 eacces:

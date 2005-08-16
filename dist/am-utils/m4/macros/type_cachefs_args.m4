@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for CACHEFS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_CACHEFS_ARGS,
+AC_DEFUN([AMU_TYPE_CACHEFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of cachefs mount(2) arguments,
 ac_cv_type_cachefs_args,

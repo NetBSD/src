@@ -1,7 +1,7 @@
-/*	$NetBSD: pawd.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: pawd.c,v 1.14 2004/08/03 21:28:41 ezk Exp
+ * Id: pawd.c,v 1.16 2005/04/07 03:08:46 ezk Exp
  *
  */
 
@@ -68,16 +68,9 @@ static int
 find_mt(amq_mount_tree *mt, char *dir)
 {
   while (mt) {
-    if (
-	STREQ(mt->mt_type, "host") ||
-	STREQ(mt->mt_type, "link") ||
-	STREQ(mt->mt_type, "linkx") ||
-	STREQ(mt->mt_type, "nfs") ||
-	STREQ(mt->mt_type, "nfsl") ||
-	STREQ(mt->mt_type, "nfsx")
-	) {
+    if (!STREQ(mt->mt_type, "toplvl")) {
       int len = strlen(mt->mt_mountpoint);
-      if (NSTREQ(mt->mt_mountpoint, dir, len) &&
+      if (len && NSTREQ(mt->mt_mountpoint, dir, len) &&
 	  ((dir[len] == '\0') || (dir[len] == '/'))) {
 	char tmp_buf[MAXPATHLEN];
 	strlcpy(tmp_buf, mt->mt_directory, sizeof(tmp_buf));

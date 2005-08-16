@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.7 2004/11/27 01:00:55 christos Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_tli.c,v 1.23 2004/04/28 04:22:13 ib42 Exp
+ * Id: transp_tli.c,v 1.31 2005/03/19 03:05:25 ezk Exp
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -86,8 +86,10 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
      * host.  Maybe something can be done with those.
      */
     struct sockaddr_in *sinp = (struct sockaddr_in *) addrs->n_addrs[0].buf;
+    char dq[20];
     if (preferred_localhost)
-      plog(XLOG_INFO, "localhost_address \"%s\" requested", preferred_localhost);
+      plog(XLOG_INFO, "localhost_address \"%s\" requested, using %s",
+	   preferred_localhost, inet_dquad(dq, iap->s_addr));
     iap->s_addr = sinp->sin_addr.s_addr; /* XXX: used to be htonl() */
   }
 
@@ -121,7 +123,7 @@ bind_resv_port(int td, u_short *pp)
   memset((char *) treq->addr.buf, 0, treq->addr.len);
   sin = (struct sockaddr_in *) treq->addr.buf;
   sin->sin_family = AF_INET;
-  treq->qlen = 0;
+  treq->qlen = 64; /* 0 is ok for udp, for tcp you need qlen>0 */
   treq->addr.len = treq->addr.maxlen;
   errno = EADDRINUSE;
   port = IPPORT_RESERVED;
@@ -152,94 +154,6 @@ bind_resv_port(int td, u_short *pp)
 }
 
 
-/*
- * How to bind to reserved ports.
- * (port-only) version.
- */
-int
-bind_resv_port2(u_short *pp)
-{
-  int td, rc = -1, port;
-  struct t_bind *treq, *tret;
-  struct sockaddr_in *sin;
-  extern char *t_errlist[];
-  extern int t_errno;
-  struct netconfig *nc = (struct netconfig *) NULL;
-  voidp nc_handle;
-
-  if ((nc_handle = setnetconfig()) == (voidp) NULL) {
-    plog(XLOG_ERROR, "Cannot rewind netconfig: %s", nc_sperror());
-    return -1;
-  }
-  /*
-   * Search the netconfig table for INET/UDP.
-   * This loop will terminate if there was an error in the /etc/netconfig
-   * file or if you reached the end of the file without finding the udp
-   * device.  Either way your machine has probably far more problems (for
-   * example, you cannot have nfs v2 w/o UDP).
-   */
-  while (1) {
-    if ((nc = getnetconfig(nc_handle)) == (struct netconfig *) NULL) {
-      plog(XLOG_ERROR, "Error accessing getnetconfig: %s", nc_sperror());
-      endnetconfig(nc_handle);
-      return -1;
-    }
-    if (STREQ(nc->nc_protofmly, NC_INET) &&
-	STREQ(nc->nc_proto, NC_UDP))
-      break;
-  }
-
-  /*
-   * This is the primary reason for the getnetconfig code above: to get the
-   * correct device name to udp, and t_open a descriptor to be used in
-   * t_bind below.
-   */
-  td = t_open(nc->nc_device, O_RDWR, (struct t_info *) 0);
-  endnetconfig(nc_handle);
-
-  if (td < 0) {
-    plog(XLOG_ERROR, "t_open failed: %d: %s", t_errno, t_errlist[t_errno]);
-    return -1;
-  }
-  treq = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
-  if (!treq) {
-    plog(XLOG_ERROR, "t_alloc req");
-    return -1;
-  }
-  tret = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
-  if (!tret) {
-    t_free((char *) treq, T_BIND);
-    plog(XLOG_ERROR, "t_alloc ret");
-    return -1;
-  }
-  memset((char *) treq->addr.buf, 0, treq->addr.len);
-  sin = (struct sockaddr_in *) treq->addr.buf;
-  sin->sin_family = AF_INET;
-  treq->qlen = 0;
-  treq->addr.len = treq->addr.maxlen;
-  errno = EADDRINUSE;
-  port = IPPORT_RESERVED;
-
-  do {
-    --port;
-    sin->sin_port = htons(port);
-    rc = t_bind(td, treq, tret);
-    if (rc < 0) {
-      plog(XLOG_ERROR, "t_bind for port %d: %s", port, t_errlist[t_errno]);
-    } else {
-      if (memcmp(treq->addr.buf, tret->addr.buf, tret->addr.len) == 0)
-	break;
-      else
-	t_unbind(td);
-    }
-  } while ((rc < 0 || errno == EADDRINUSE) && (int) port > IPPORT_RESERVED / 2);
-
-  if (pp && rc == 0)
-    *pp = port;
-  t_free((char *) tret, T_BIND);
-  t_free((char *) treq, T_BIND);
-  return rc;
-}
 
 
 /*
@@ -364,19 +278,23 @@ badout:
 }
 
 
+#ifdef NOT_NEEDED_ON_TLI_SYSTEMS
 /*
  * find the address of the caller of an RPC procedure.
  */
 struct sockaddr_in *
 amu_svc_getcaller(SVCXPRT *xprt)
 {
-  struct netbuf *nbp = (struct netbuf *) NULL;
-
-  if ((nbp = svc_getrpccaller(xprt)) != NULL)
-    return (struct sockaddr_in *) nbp->buf; /* all OK */
-
-  return NULL;			/* failed */
+  /*
+   * On TLI systems we don't use an INET network type, but a "ticlts" (see
+   * /etc/netconfig).  This means that packets could only come from the
+   * loopback interface, and we don't need to check them and filter possibly
+   * spoofed packets.  Therefore we simply return NULL here, and the caller
+   * will ignore the result.
+   */
+  return NULL;			/* tell called to ignore check */
 }
+#endif /* NOT_NEEDED_ON_TLI_SYSTEMS */
 
 
 /*
@@ -390,13 +308,110 @@ amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum, void (*dispatch)
 
 
 /*
+ * Bind to reserved UDP port, for NFS service only.
+ * Port-only version.
+ */
+static int
+bind_resv_port_only_udp(u_short *pp)
+{
+  int td, rc = -1, port;
+  struct t_bind *treq, *tret;
+  struct sockaddr_in *sin;
+  extern char *t_errlist[];
+  extern int t_errno;
+  struct netconfig *nc = (struct netconfig *) NULL;
+  voidp nc_handle;
+
+  if ((nc_handle = setnetconfig()) == (voidp) NULL) {
+    plog(XLOG_ERROR, "Cannot rewind netconfig: %s", nc_sperror());
+    return -1;
+  }
+  /*
+   * Search the netconfig table for INET/UDP.
+   * This loop will terminate if there was an error in the /etc/netconfig
+   * file or if you reached the end of the file without finding the udp
+   * device.  Either way your machine has probably far more problems (for
+   * example, you cannot have nfs v2 w/o UDP).
+   */
+  while (1) {
+    if ((nc = getnetconfig(nc_handle)) == (struct netconfig *) NULL) {
+      plog(XLOG_ERROR, "Error accessing getnetconfig: %s", nc_sperror());
+      endnetconfig(nc_handle);
+      return -1;
+    }
+    if (STREQ(nc->nc_protofmly, NC_INET) &&
+	STREQ(nc->nc_proto, NC_UDP))
+      break;
+  }
+
+  /*
+   * This is the primary reason for the getnetconfig code above: to get the
+   * correct device name to udp, and t_open a descriptor to be used in
+   * t_bind below.
+   */
+  td = t_open(nc->nc_device, O_RDWR, (struct t_info *) 0);
+  endnetconfig(nc_handle);
+
+  if (td < 0) {
+    plog(XLOG_ERROR, "t_open failed: %d: %s", t_errno, t_errlist[t_errno]);
+    return -1;
+  }
+  treq = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
+  if (!treq) {
+    plog(XLOG_ERROR, "t_alloc req");
+    return -1;
+  }
+  tret = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
+  if (!tret) {
+    t_free((char *) treq, T_BIND);
+    plog(XLOG_ERROR, "t_alloc ret");
+    return -1;
+  }
+  memset((char *) treq->addr.buf, 0, treq->addr.len);
+  sin = (struct sockaddr_in *) treq->addr.buf;
+  sin->sin_family = AF_INET;
+  treq->qlen = 64; /* 0 is ok for udp, for tcp you need qlen>0 */
+  treq->addr.len = treq->addr.maxlen;
+  errno = EADDRINUSE;
+
+  if (pp && *pp > 0) {
+    sin->sin_port = htons(*pp);
+    rc = t_bind(td, treq, tret);
+  } else {
+    port = IPPORT_RESERVED;
+
+    do {
+      --port;
+      sin->sin_port = htons(port);
+      rc = t_bind(td, treq, tret);
+      if (rc < 0) {
+	plog(XLOG_ERROR, "t_bind for port %d: %s", port, t_errlist[t_errno]);
+      } else {
+	if (memcmp(treq->addr.buf, tret->addr.buf, tret->addr.len) == 0)
+	  break;
+	else
+	  t_unbind(td);
+      }
+    } while ((rc < 0 || errno == EADDRINUSE) && (int) port > IPPORT_RESERVED / 2);
+
+    if (pp && rc == 0)
+      *pp = port;
+  }
+
+  t_free((char *) tret, T_BIND);
+  t_free((char *) treq, T_BIND);
+  return rc;
+}
+
+
+/*
  * Bind NFS to a reserved port.
  */
 static int
-bindnfs_port(int unused_so, u_short *nfs_portp)
+bind_nfs_port(int unused_so, u_short *nfs_portp)
 {
-  u_short port;
-  int error = bind_resv_port2(&port);
+  u_short port = 0;
+  int error = bind_resv_port_only_udp(&port);
 
   if (error == 0)
     *nfs_portp = port;
@@ -436,12 +451,14 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
    * reserved nfs port.
    */
   *soNFSp = (*nfs_xprtp)->xp_fd;
-  if (*soNFSp < 0 || bindnfs_port(*soNFSp, nfs_portp) < 0) {
+  if (*soNFSp < 0 || bind_nfs_port(*soNFSp, nfs_portp) < 0) {
     plog(XLOG_ERROR, "Can't create privileged nfs port (TLI)");
+    svc_destroy(*nfs_xprtp);
     return 1;
   }
   if (svc_reg(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, NULL) != 1) {
     plog(XLOG_ERROR, "could not register amd NFS service");
+    svc_destroy(*nfs_xprtp);
     return 1;
   }
 
@@ -450,14 +467,93 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
 
 
 /*
+ * Bind to preferred AMQ port.
+ */
+static int
+bind_preferred_amq_port(u_short pref_port,
+			const struct netconfig *ncp,
+			struct t_bind **tretpp)
+{
+  int td = -1, rc = -1;
+  struct t_bind *treq;
+  struct sockaddr_in *sin, *sin2;
+  extern char *t_errlist[];
+  extern int t_errno;
+
+  if (!ncp) {
+    plog(XLOG_ERROR, "null ncp");
+    return -1;
+  }
+
+  td = t_open(ncp->nc_device, O_RDWR, (struct t_info *) 0);
+  if (td < 0) {
+    plog(XLOG_ERROR, "t_open failed: %d: %s", t_errno, t_errlist[t_errno]);
+    return -1;
+  }
+  treq = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
+  if (!treq) {
+    plog(XLOG_ERROR, "t_alloc req");
+    return -1;
+  }
+  *tretpp = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
+  if (!*tretpp) {
+    t_free((char *) treq, T_BIND);
+    plog(XLOG_ERROR, "t_alloc tretpp");
+    return -1;
+  }
+  memset((char *) treq->addr.buf, 0, treq->addr.len);
+  sin = (struct sockaddr_in *) treq->addr.buf;
+  sin->sin_family = AF_INET;
+  treq->qlen = 64; /* must be greater than 0 to work for TCP connections */
+  treq->addr.len = treq->addr.maxlen;
+
+  if (pref_port > 0) {
+    sin->sin_port = htons(pref_port);
+    sin->sin_addr.s_addr = htonl(INADDR_LOOPBACK); /* XXX: may not be needed */
+    rc = t_bind(td, treq, *tretpp);
+    if (rc < 0) {
+      plog(XLOG_ERROR, "t_bind return err %d", rc);
+      goto out;
+    }
+    /* check if we got the port we asked for */
+    sin2 = (struct sockaddr_in *) (*tretpp)->addr.buf;
+    if (sin->sin_port != sin2->sin_port) {
+      plog(XLOG_ERROR, "asked for port %d, got different one (%d)",
+	   ntohs(sin->sin_port), ntohs(sin2->sin_port));
+      t_errno = TNOADDR; /* XXX: is this correct? */
+      rc = -1;
+      goto out;
+    }
+    if (sin->sin_addr.s_addr != sin2->sin_addr.s_addr) {
+      plog(XLOG_ERROR, "asked for address %x, got different one (%x)",
+	   (int) ntohl(sin->sin_addr.s_addr), (int) ntohl(sin2->sin_addr.s_addr));
+      t_errno = TNOADDR; /* XXX: is this correct? */
+      rc = -1;
+      goto out;
+    }
+  }
+out:
+  t_free((char *) treq, T_BIND);
+  return (rc < 0 ? rc : td);
+}
+
+
+/*
  * Create the amq service for amd (both TCP and UDP)
  */
 int
-create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_amqncpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **tcp_amqncpp)
+create_amq_service(int *udp_soAMQp,
+		   SVCXPRT **udp_amqpp,
+		   struct netconfig **udp_amqncpp,
+		   int *tcp_soAMQp,
+		   SVCXPRT **tcp_amqpp,
+		   struct netconfig **tcp_amqncpp,
+		   u_short preferred_amq_port)
 {
   /*
    * (partially) create the amq service for amd
    * to be completed further in by caller.
+   * XXX: is this "partially" still true?!  See amd/nfs_start.c. -Erez
    */
 
   /* first create the TCP service */
@@ -466,8 +562,27 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_
       plog(XLOG_ERROR, "cannot getnetconfigent for %s", NC_TCP);
       return 1;
     }
+
   if (tcp_amqpp) {
-    *tcp_amqpp = svc_tli_create(RPC_ANYFD, *tcp_amqncpp, NULL, 0, 0);
+    if (preferred_amq_port > 0) {
+      struct t_bind *tbp = NULL;
+      int sock;
+
+      plog(XLOG_INFO, "requesting preferred amq TCP port %d", preferred_amq_port);
+      sock = bind_preferred_amq_port(preferred_amq_port, *tcp_amqncpp, &tbp);
+      if (sock < 0) {
+	plog(XLOG_ERROR, "bind_preferred_amq_port failed for TCP port %d: %s",
+	     preferred_amq_port, t_errlist[t_errno]);
+	return 1;
+      }
+      *tcp_amqpp = svc_tli_create(sock, *tcp_amqncpp, tbp, 0, 0);
+      if (*tcp_amqpp != NULL)
+	plog(XLOG_INFO, "amq service bound to TCP port %d", preferred_amq_port);
+      t_free((char *) tbp, T_BIND);
+    } else {
+      /* select any port */
+      *tcp_amqpp = svc_tli_create(RPC_ANYFD, *tcp_amqncpp, NULL, 0, 0);
+    }
     if (*tcp_amqpp == NULL) {
       plog(XLOG_ERROR, "cannot create (tcp) tli service for amq");
       return 1;
@@ -483,7 +598,25 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_
       return 1;
     }
   if (udp_amqpp) {
-    *udp_amqpp = svc_tli_create(RPC_ANYFD, *udp_amqncpp, NULL, 0, 0);
+    if (preferred_amq_port > 0) {
+      struct t_bind *tbp = NULL;
+      int sock;
+
+      plog(XLOG_INFO, "requesting preferred amq UDP port %d", preferred_amq_port);
+      sock = bind_preferred_amq_port(preferred_amq_port, *udp_amqncpp, &tbp);
+      if (sock < 0) {
+	plog(XLOG_ERROR, "bind_preferred_amq_port failed for UDP port %d: %s",
+	     preferred_amq_port, t_errlist[t_errno]);
+	return 1;
+      }
+      *udp_amqpp = svc_tli_create(sock, *udp_amqncpp, tbp, 0, 0);
+      if (*udp_amqpp != NULL)
+	plog(XLOG_INFO, "amq service bound to UDP port %d", preferred_amq_port);
+      t_free((char *) tbp, T_BIND);
+    } else {
+      /* select any port */
+      *udp_amqpp = svc_tli_create(RPC_ANYFD, *udp_amqncpp, NULL, 0, 0);
+    }
     if (*udp_amqpp == NULL) {
       plog(XLOG_ERROR, "cannot create (udp) tli service for amq");
       return 1;
@@ -565,7 +698,7 @@ free_knetconfig(struct knetconfig *kncp)
 
 
 /*
- * Check if the portmapper is running and reachable
+ * Check if the portmapper is running and reachable: 0==down, 1==up
  */
 int check_pmap_up(char *host, struct sockaddr_in* sin)
 {
@@ -574,27 +707,34 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
   int socket = RPC_ANYSOCK;
   struct timeval timeout;
 
-  memset(&timeout, 0, sizeof(timeout));
-  timeout.tv_sec = 3;
+  timeout.tv_sec = 2;
   timeout.tv_usec = 0;
   sin->sin_port = htons(PMAPPORT);
   client = clntudp_create(sin, PMAPPROG, PMAPVERS, timeout, &socket);
-  if (client != (CLIENT *) NULL) {
-    /* Ping the portmapper on a remote system by calling the nullproc */
-    clnt_stat = clnt_call(client,
-			  PMAPPROC_NULL,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  NULL,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  NULL,
-			  timeout);
-    clnt_destroy(client);
+  if (client == (CLIENT *) NULL) {
+    plog(XLOG_ERROR,
+	 "check_pmap_up: cannot create connection to contact portmapper on host \"%s\"%s",
+	 host, clnt_spcreateerror(""));
+    return 0;
   }
+
+  timeout.tv_sec = 6;
+  /* Ping the portmapper on a remote system by calling the nullproc */
+  clnt_stat = clnt_call(client,
+			PMAPPROC_NULL,
+			(XDRPROC_T_TYPE) xdr_void,
+			NULL,
+			(XDRPROC_T_TYPE) xdr_void,
+			NULL,
+			timeout);
+  clnt_destroy(client);
   close(socket);
   sin->sin_port = 0;
 
   if (clnt_stat == RPC_TIMEDOUT) {
-    plog(XLOG_ERROR, "check_pmap_up: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
+    plog(XLOG_ERROR,
+	 "check_pmap_up: failed to contact portmapper on host \"%s\": %s",
+	 host, clnt_sperrno(clnt_stat));
     return 0;
   }
   return 1;
@@ -608,7 +748,11 @@ u_long
 get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto)
 {
   CLIENT *clnt = NULL;
+#ifdef HAVE_CLNT_CREATE_VERS_TIMED
+  rpcvers_t versout;
+#else /* not HAVE_CLNT_CREATE_VERS_TIMED */
   u_long versout;
+#endif /* not HAVE_CLNT_CREATE_VERS_TIMED */
   struct timeval tv;
 
   /*
@@ -681,7 +825,12 @@ get_autofs_address(struct netconfig *ncp, struct t_bind *tbp)
   tbp->addr.len = addrs->n_addrs->len;
   tbp->addr.maxlen = addrs->n_addrs->len;
   memcpy(tbp->addr.buf, addrs->n_addrs->buf, addrs->n_addrs->len);
-  tbp->qlen = 8;		/* arbitrary? who cares really */
+ /*
+  * qlen should not be zero for TCP connections.  It's not clear what it
+  * should be for UDP connections, but setting it to something like 64 seems
+  * to be the safe value that works.
+  */
+  tbp->qlen = 64;
 
   /* all OK */
   netdir_free((voidp) addrs, ND_ADDRLIST);

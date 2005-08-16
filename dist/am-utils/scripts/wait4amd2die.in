@@ -20,14 +20,14 @@ if test -n "$1"
 then
 	delay=$1
 else
-	delay=5
+	delay=3
 fi
 # how many times to delay
 if test -n "$2"
 then
 	count=$2
 else
-	count=6
+	count=10
 fi
 
 i=1

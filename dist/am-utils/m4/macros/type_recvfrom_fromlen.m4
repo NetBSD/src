@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct type for the 6th argument to recvfrom()
-AC_DEFUN(AMU_TYPE_RECVFROM_FROMLEN,
+AC_DEFUN([AMU_TYPE_RECVFROM_FROMLEN],
 [
 AC_CACHE_CHECK(non-pointer type of 6th (fromlen) argument to recvfrom(),
 ac_cv_recvfrom_fromlen,

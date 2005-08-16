@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_aix.c,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
+/*	$NetBSD: mtab_aix.c,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_aix.c,v 1.11 2004/09/01 16:48:44 ezk Exp
+ * Id: mtab_aix.c,v 1.13 2005/02/17 03:37:42 ezk Exp
  *
  */
 
@@ -55,8 +55,14 @@
 #include <am_defs.h>
 #include <amu.h>
 
-/* missing external definitions from AIX's headers */
+/*
+ * These were missing external definitions from old AIX's headers.  They
+ * appear to be available in <sys/vmount.h> on AIX 5.3, and possibly
+ * earlier. Hence I commented this out.
+ */
+#if 0
 extern int mntctl(int cmd, int size, voidp buf);
+#endif
 
 
 static mntent_t *

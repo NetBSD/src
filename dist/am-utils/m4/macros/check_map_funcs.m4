@@ -4,7 +4,7 @@ dnl Usage: AC_CHECK_MAP_FUNCS(<functions>..., <map>, [<mapsymbol>])
 dnl Check if any of the functions <functions> exist.  If any exist, then
 dnl define HAVE_MAP_<map>.  If <mapsymbol> exits, then defined
 dnl HAVE_MAP_<mapsymbol> instead...
-AC_DEFUN(AMU_CHECK_MAP_FUNCS,
+AC_DEFUN([AMU_CHECK_MAP_FUNCS],
 [
 # find what name to give to the map
 if test -n "$3"

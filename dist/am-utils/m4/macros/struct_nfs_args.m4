@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find if struct nfs_args exists anywhere in typical headers
-AC_DEFUN(AMU_STRUCT_NFS_ARGS,
+AC_DEFUN([AMU_STRUCT_NFS_ARGS],
 [
 dnl make sure this is called before [AC_TYPE_NFS_FH]
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])
@@ -20,28 +20,20 @@ AC_TRY_COMPILE_NFS(
 ], ac_cv_have_struct_nfs_args="struct irix5_nfs_args", ac_cv_have_struct_nfs_args=notfound)
 fi
 
-# look for "struct aix52_nfs_args" (specially set in conf/nfs_prot/)
+# look for "struct aix5_nfs_args" (specially set in conf/nfs_prot/)
 if test "$ac_cv_have_struct_nfs_args" = notfound
 then
 AC_TRY_COMPILE_NFS(
-[ struct aix52_nfs_args na;
-], ac_cv_have_struct_nfs_args="struct aix52_nfs_args", ac_cv_have_struct_nfs_args=notfound)
+[ struct aix5_nfs_args na;
+], ac_cv_have_struct_nfs_args="struct aix5_nfs_args", ac_cv_have_struct_nfs_args=notfound)
 fi
 
-# look for "struct aix51_nfs_args" (specially set in conf/nfs_prot/)
+# look for "struct aix4_nfs_args" (specially set in conf/nfs_prot/)
 if test "$ac_cv_have_struct_nfs_args" = notfound
 then
 AC_TRY_COMPILE_NFS(
-[ struct aix51_nfs_args na;
-], ac_cv_have_struct_nfs_args="struct aix51_nfs_args", ac_cv_have_struct_nfs_args=notfound)
-fi
-
-# look for "struct aix42_nfs_args" (specially set in conf/nfs_prot/)
-if test "$ac_cv_have_struct_nfs_args" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ struct aix42_nfs_args na;
-], ac_cv_have_struct_nfs_args="struct aix42_nfs_args", ac_cv_have_struct_nfs_args=notfound)
+[ struct aix4_nfs_args na;
+], ac_cv_have_struct_nfs_args="struct aix4_nfs_args", ac_cv_have_struct_nfs_args=notfound)
 fi
 
 # look for "struct nfs_args"

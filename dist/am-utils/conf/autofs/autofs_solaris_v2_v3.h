@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_solaris_v2_v3.h,v 1.1.1.2 2004/11/27 01:00:53 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v2_v3.h,v 1.1.1.2.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 #ifdef HAVE_FS_AUTOFS
 typedef struct autofs_args autofs_fh_t;
@@ -7,7 +7,6 @@ typedef struct autofs_args autofs_fh_t;
 #define AUTOFS_DIRECT_FS_FLAGS	(FS_DIRECT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_DIRECTORY | FS_AUTOFS)
 #define AUTOFS_ERROR_FS_FLAGS	(FS_DISCARD)
 #define AUTOFS_HOST_FS_FLAGS	(FS_MKMNT | FS_BACKGROUND | FS_AMQINFO)
-#define AUTOFS_INHERIT_FS_FLAGS	(FS_DISCARD)
 #define AUTOFS_LINK_FS_FLAGS	(FS_MBACKGROUND)
 #define AUTOFS_LINKX_FS_FLAGS	(FS_MBACKGROUND)
 #define AUTOFS_NFSL_FS_FLAGS	(FS_BACKGROUND | FS_AMQINFO | FS_ON_AUTOFS)

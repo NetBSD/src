@@ -174,6 +174,13 @@ already fixed by maintainers)
 April 12, 2003: support new "unmount" option, useful to timeout removable
 local media mounts.
 
+October 12, 2004: patch to support two new amd.conf options, domain_strip
+and auto_attrcache.  Patch to cleanup NFS attribute-cache flag computation.
+Patch to fix an inconsistency in timeouts in the RPC code between socket and
+TLI implementations.  Patch to print version string (amd -v) after all
+options had been initialized, so we can print domain, host, and hostd.
+Linux patch to use umount2(2) if umount(2) fails.
+
 * Bill Paul <wpaul@ctr.columbia.edu>
 
 November 5, 1997: NFS v.3 support for AIX 4.2.1, which does *not* include
@@ -310,10 +317,12 @@ January 25, 2000: allow browsable auto maps.
 * Wolfram Klaus	<klaus@physik.fu-berlin.de>.
 November 21, 2000: recognize proplist mnttab flag.
 
-* Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
+* Thomas Klausner <tk@giga.or.at>
 November 21, 2000: lots of NetBSD fixes (many of which are generic).
 
 April 18, 2003: patch to reference am-utils info pages in man page.
+
+November 28, 2004: small fixes to typos in amd.conf(5) man page.
 
 * Olaf Kirch <okir@caldera.de>
 February 1, 2001: important Linux NFS error number mapping fixed
@@ -381,3 +390,29 @@ August 3, 2004: pawd to recognize "linkx" type mounts.
 September 1, 2004: bug fix to avoid race condition in calls to mntctl on
 AIX.
 
+* Jonathan Chen <jon+amd@spock.org>
+October 22, 2004: patch/fix to move mlock/mlockall/plock code after the
+fork().
+
+* David Rage <rage@ucl.ac.uk>
+January 17, 2005: prevent Amd from logging 'Read-only filesystem' errors
+when the mount point has an ancestor (i.e. '/') that is mounted read-only.
+
+* Kevin Layer <layer@franz.com>
+January 28, 2005: basic instructions how to setup Amd on Mac OS-X.
+
+* Dan Ottavio <dottavio@ic.sunysb.edu>
+March 2, 2005: new global amd.conf option debug_mtab_file, to set the debug
+mtab file when using debug_options=mtab.  Default has changed from "./mtab"
+to "/tmp/mtab" to avoid security problem.  Bug fixed to ensure that Amd
+terminates properly even mtab file doesn't exist.
+
+* Erik Kline <ekline at ekline dot com>
+January 3, 2005: implementation of executable maps for Amd.
+
+* Jim Zajkowski <jim.zajkowski@gmail.com>
+March 14, 2005: small patch to amd2ldif.
+
+* Adam Morley <adam at gmi dot com>
+January 27, 2005: synchronize what amd2ldif does vs. what the ldap.schema
+expects.

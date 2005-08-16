@@ -51,6 +51,10 @@ fi
 return 1
 }
 
+# before running any real programs, chdir to / to avoid possible hangs on (NFS)
+# mounts.
+cd /
+
 # locate logs directory
 if [ -d /var/log ]; then
 	logdir="/var/log"

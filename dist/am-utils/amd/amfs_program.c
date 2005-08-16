@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_program.c,v 1.24 2004/08/07 16:32:49 ezk Exp
+ * Id: amfs_program.c,v 1.26 2005/03/06 03:19:01 ezk Exp
  *
  */
 
@@ -96,9 +96,14 @@ amfs_program_match(am_opts *fo)
     plog(XLOG_ERROR, "program: cannot specify both unmount and umount options");
     return 0;
   }
-  if (!fo->opt_mount || (!fo->opt_unmount && !fo->opt_umount)) {
-    plog(XLOG_ERROR, "program: both mount and unmount/umount must be specified");
+  if (!fo->opt_mount) {
+    plog(XLOG_ERROR, "program: must specify mount command");
     return 0;
+  }
+  if (!fo->opt_unmount && !fo->opt_umount) {
+    fo->opt_unmount = str3cat(NULL, UNMOUNT_PROGRAM, " umount ", fo->opt_fs);
+    plog(XLOG_INFO, "program: un/umount not specified; using default \"%s\"",
+	 fo->opt_unmount);
   }
   prog = strchr(fo->opt_mount, ' ');
 
@@ -109,16 +114,16 @@ amfs_program_match(am_opts *fo)
 static int
 amfs_program_init(mntfs *mf)
 {
-  /*
-   * Save unmount (or umount) command
-   */
-  if (mf->mf_refc == 1) {
-    if (mf->mf_fo->opt_unmount != NULL)
-      mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_unmount);
-    else
-      mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_umount);
-    mf->mf_prfree = (void (*)(opaque_t)) free;
-  }
+  /* check if already saved value */
+  if (mf->mf_private != NULL)
+    return 0;
+
+  /* save unmount (or umount) command */
+  if (mf->mf_fo->opt_unmount != NULL)
+    mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_unmount);
+  else
+    mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_umount);
+  mf->mf_prfree = (void (*)(opaque_t)) free;
 
   return 0;
 }

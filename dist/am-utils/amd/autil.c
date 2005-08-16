@@ -1,7 +1,7 @@
-/*	$NetBSD: autil.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autil.c,v 1.45 2004/04/28 04:22:13 ib42 Exp
+ * Id: autil.c,v 1.51 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -190,7 +190,8 @@ domain_strip(char *otherdom, char *localdom)
 
 
 /*
- * Normalize a host name
+ * Normalize a host name: replace cnames with real names, and decide if to
+ * strip domain name or not.
  */
 void
 host_normalize(char **chp)
@@ -209,9 +210,10 @@ host_normalize(char **chp)
       *chp = strealloc(*chp, (char *) hp->h_name);
     }
   }
-  domain_strip(*chp, hostd);
+  if (gopt.flags & CFM_DOMAIN_STRIP) {
+    domain_strip(*chp, hostd);
+  }
 }
-
 
 
 /*
@@ -251,7 +253,7 @@ forcibly_timeout_mp(am_node *mp)
 
 
 void
-mf_mounted(mntfs *mf)
+mf_mounted(mntfs *mf, bool_t call_free_opts)
 {
   int quoted;
   int wasmounted = mf->mf_flags & MFF_MOUNTED;
@@ -268,12 +270,28 @@ mf_mounted(mntfs *mf)
     /*
      * Do mounted callback
      */
-    if (mf->mf_ops->mounted) {
-      (*mf->mf_ops->mounted) (mf);
-    }
+    if (mf->mf_ops->mounted)
+      mf->mf_ops->mounted(mf);
 
-    free_opts(mf->mf_fo);
-    XFREE(mf->mf_fo);
+    /*
+     * Be careful when calling free_ops and XFREE here.  Some pseudo file
+     * systems like nfsx call this function (mf_mounted), even though it
+     * would be called by the lower-level amd file system functions.  nfsx
+     * needs to call this function because of the other actions it takes.
+     * So we pass a boolean from the caller (yes, not so clean workaround)
+     * to determine if we should free or not.  If we're not freeing (often
+     * because we're called from a callback function), then just to be sure,
+     * we'll zero out the am_opts structure and set the pointer to NULL.
+     * The parent mntfs node owns this memory and is going to free it with a
+     * call to mf_mounted(mntfs,TRUE) (see comment in the am_mounted code).
+     */
+    if (call_free_opts) {
+      free_opts(mf->mf_fo);	/* this free is needed to prevent leaks */
+      XFREE(mf->mf_fo);		/* (also this one) */
+    } else {
+      memset(mf->mf_fo, 0, sizeof(am_opts));
+      mf->mf_fo = NULL;
+    }
   }
 
   if (mf->mf_flags & MFF_RESTART) {
@@ -297,9 +315,15 @@ mf_mounted(mntfs *mf)
 void
 am_mounted(am_node *mp)
 {
+  int notimeout = 0;		/* assume normal timeouts initially */
   mntfs *mf = mp->am_mnt;
 
-  mf_mounted(mf);
+  /*
+   * This is the parent mntfs which does the mf->mf_fo (am_opts type), and
+   * we're passing TRUE here to tell mf_mounted to actually free the
+   * am_opts.  See a related comment in mf_mounted().
+   */
+  mf_mounted(mf, TRUE);
 
 #ifdef HAVE_FS_AUTOFS
   if (mf->mf_flags & MFF_IS_AUTOFS)
@@ -313,29 +337,39 @@ am_mounted(am_node *mp)
     mp->am_path = str3cat(mp->am_path, mp->am_parent->am_path, "/", ".");
 
   /*
-   * Check whether this mount should be cached permanently
+   * Check whether this mount should be cached permanently or not,
+   * and handle user-requested timeouts.
    */
-  if (mf->mf_fsflags & FS_NOTIMEOUT) {
+  /* first check if file system was set to never timeout */
+  if (mf->mf_fsflags & FS_NOTIMEOUT)
+    notimeout = 1;
+  /* next, alter that decision by map flags */
+  if (mf->mf_mopts) {
     mntent_t mnt;
     mnt.mnt_opts = mf->mf_mopts;
 
-    if (mf->mf_mopts && (amu_hasmntopt(&mnt, "unmount") || amu_hasmntopt(&mnt, "umount")))
-      mp->am_flags &= ~AMF_NOTIMEOUT;
+    /* umount option: user wants to unmount this entry */
+    if (amu_hasmntopt(&mnt, "unmount") || amu_hasmntopt(&mnt, "umount"))
+      notimeout = 0;
+    /* noumount option: user does NOT want to unmount this entry */
+    if (amu_hasmntopt(&mnt, "nounmount") || amu_hasmntopt(&mnt, "noumount"))
+      notimeout = 1;
+    /* utimeout=N option: user wants to unmount this option AND set timeout */
+    if ((mp->am_timeo = hasmntval(&mnt, "utimeout")) == 0)
+      mp->am_timeo = gopt.am_timeo; /* otherwise use default timeout */
     else
-      mp->am_flags |= AMF_NOTIMEOUT;
-  } else if (mf->mf_mount[1] == '\0' && mf->mf_mount[0] == '/') {
+      notimeout = 0;
+    /* special case: don't try to unmount "/" (it can never succeed) */
+    if (mf->mf_mount[0] == '/' && mf->mf_mount[1] == '\0')
+      notimeout = 1;
+  }
+  /* finally set actual flags */
+  if (notimeout) {
     mp->am_flags |= AMF_NOTIMEOUT;
+    plog(XLOG_INFO, "%s set to never timeout", mp->am_path);
   } else {
-    mntent_t mnt;
-    if (mf->mf_mopts) {
-      mnt.mnt_opts = mf->mf_mopts;
-      if (amu_hasmntopt(&mnt, "nounmount") || amu_hasmntopt(&mnt, "noumount"))
-	mp->am_flags |= AMF_NOTIMEOUT;
-      if (amu_hasmntopt(&mnt, "unmount") || amu_hasmntopt(&mnt, "umount"))
-	mp->am_flags &= ~AMF_NOTIMEOUT;
-      if ((mp->am_timeo = hasmntval(&mnt, "utimeout")) == 0)
-	mp->am_timeo = gopt.am_timeo;
-    }
+    mp->am_flags &= ~AMF_NOTIMEOUT;
+    plog(XLOG_INFO, "%s set to timeout in %d seconds", mp->am_path, mp->am_timeo);
   }
 
   /*
@@ -469,7 +503,7 @@ next_nonerror_node(am_node *xp)
  * the necessary NFS parameters to be given to the
  * kernel so that it will talk back to us.
  *
- * NOTE: automounter mounts in themselves are using NFS Version 2.
+ * NOTE: automounter mounts in themselves are using NFS Version 2 (UDP).
  *
  * NEW: on certain systems, mounting can be done using the
  * kernel-level automount (autofs) support. In that case,

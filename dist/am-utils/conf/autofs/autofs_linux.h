@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_linux.h,v 1.1.1.2 2004/11/27 01:00:53 christos Exp $	*/
+/*	$NetBSD: autofs_linux.h,v 1.1.1.2.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 #if !defined(HAVE_LINUX_AUTO_FS_H) && !defined(HAVE_LINUX_AUTO_FS4_H)
 /* We didn't find the headers, so we can't compile in the autofs support */
@@ -41,7 +41,6 @@ union autofs_packet_union {
 #define AUTOFS_DIRECT_FS_FLAGS	(FS_DIRECT | FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO)
 #define AUTOFS_ERROR_FS_FLAGS	(FS_DISCARD)
 #define AUTOFS_HOST_FS_FLAGS	(FS_MKMNT | FS_BACKGROUND | FS_AMQINFO)
-#define AUTOFS_INHERIT_FS_FLAGS	(FS_DISCARD)
 #define AUTOFS_LINK_FS_FLAGS	(FS_MBACKGROUND)
 #define AUTOFS_LINKX_FS_FLAGS	(FS_MBACKGROUND)
 #define AUTOFS_NFSL_FS_FLAGS	(FS_BACKGROUND | FS_AMQINFO | FS_ON_AUTOFS)

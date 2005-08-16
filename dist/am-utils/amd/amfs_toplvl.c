@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: amfs_toplvl.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_toplvl.c,v 1.33 2004/01/06 03:56:20 ezk Exp
+ * Id: amfs_toplvl.c,v 1.38 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -88,6 +88,53 @@ am_ops amfs_toplvl_ops =
  *** FUNCTIONS                                                             ***
  ****************************************************************************/
 
+static void
+set_auto_attrcache_timeout(char *preopts, char *opts)
+{
+
+#ifdef MNTTAB_OPT_NOAC
+  /*
+   * Don't cache attributes - they are changing under the kernel's feet.
+   * For example, IRIX5.2 will dispense with nfs lookup calls and hand stale
+   * filehandles to getattr unless we disable attribute caching on the
+   * automount points.
+   */
+  if (gopt.auto_attrcache == 0) {
+    sprintf(preopts, ",%s", MNTTAB_OPT_NOAC);
+    strcat(opts, preopts);
+  }
+#endif /* MNTTAB_OPT_NOAC */
+
+  /*
+   * XXX: note that setting these to 0 in the past resulted in an error on
+   * some systems, which is why it's better to use "noac" if possible.  For
+   * now, we're setting everything possible, but if this will cause trouble,
+   * then we'll have to condition the remainder of this on OPT_NOAC.
+   */
+#ifdef MNTTAB_OPT_ACTIMEO
+  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTIMEO, gopt.auto_attrcache);
+  strcat(opts, preopts);
+#else /* MNTTAB_OPT_ACTIMEO */
+# ifdef MNTTAB_OPT_ACDIRMIN
+  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTDIRMIN, gopt.auto_attrcache);
+  strcat(opts, preopts);
+# endif /* MNTTAB_OPT_ACDIRMIN */
+# ifdef MNTTAB_OPT_ACDIRMAX
+  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTDIRMAX, gopt.auto_attrcache);
+  strcat(opts, preopts);
+# endif /* MNTTAB_OPT_ACDIRMAX */
+# ifdef MNTTAB_OPT_ACREGMIN
+  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTREGMIN, gopt.auto_attrcache);
+  strcat(opts, preopts);
+# endif /* MNTTAB_OPT_ACREGMIN */
+# ifdef MNTTAB_OPT_ACREGMAX
+  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTREGMAX, gopt.auto_attrcache);
+  strcat(opts, preopts);
+# endif /* MNTTAB_OPT_ACREGMAX */
+#endif /* MNTTAB_OPT_ACTIMEO */
+}
+
+
 /*
  * Mount the top-level
  */
@@ -133,13 +180,27 @@ amfs_toplvl_mount(am_node *mp, mntfs *mf)
     strlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
     strlcat(preopts, ",", sizeof(preopts));
 #endif /* MNTTAB_OPT_IGNORE */
-    snprintf(opts, sizeof(opts), "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
+#ifdef WANT_TIMEO_AND_RETRANS_ON_TOPLVL
+    sprintf(opts, "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
+#else /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
+    sprintf(opts, "%s%s,%s=%d,%s,map=%s",
+#endif /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
 	    preopts,
 	    MNTTAB_OPT_RW,
 	    MNTTAB_OPT_PORT, nfs_port,
-	    MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo,
-	    MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans,
+#ifdef WANT_TIMEO_AND_RETRANS_ON_TOPLVL
+	    /* note: TIMEO+RETRANS for toplvl are only "udp" currently */
+	    MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[AMU_TYPE_UDP],
+	    MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[AMU_TYPE_UDP],
+#endif /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
 	    mf->mf_ops->fs_type, mf->mf_info);
+#ifdef MNTTAB_OPT_NOAC
+    if (gopt.auto_attrcache == 0) {
+      strcat(opts, ",");
+      strcat(opts, MNTTAB_OPT_NOAC);
+    } else
+#endif /* MNTTAB_OPT_NOAC */
+      set_auto_attrcache_timeout(preopts, opts);
   }
 
   /* now do the mount */

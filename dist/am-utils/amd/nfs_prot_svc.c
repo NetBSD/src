@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.7 2004/11/27 01:00:39 christos Exp $	*/
+/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_svc.c,v 1.13 2004/01/21 03:42:12 ib42 Exp
+ * Id: nfs_prot_svc.c,v 1.15 2005/03/02 03:00:09 ezk Exp
  *
  */
 
@@ -99,28 +99,50 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
   char *result;
   xdrproc_t xdr_argument, xdr_result;
   nfssvcproc_t local;
+
+#ifdef HAVE_TRANSPORT_TYPE_TLI
+  /*
+   * On TLI systems we don't use an INET network type, but a "ticlts" (see
+   * /etc/netconfig and conf/transp_tli.c:create_nfs_service).  This means
+   * that packets could only come from the loopback interface, and we don't
+   * need to check them and filter possibly spoofed packets.  Therefore we
+   * only need to check if the UID caller is correct.
+   */
+# ifdef HAVE___RPC_GET_LOCAL_UID
+  uid_t u;
+  /* extern definition for an internal libnsl function */
+  extern int __rpc_get_local_uid(SVCXPRT *transp, uid_t *uid);
+  if (__rpc_get_local_uid(transp, &u) >= 0  &&  u != 0) {
+    plog(XLOG_WARNING, "ignoring request from UID %ld, must be 0", (long) u);
+    return;
+  }
+# else /* not HAVE___RPC_GET_LOCAL_UID */
+  dlog("cannot verify local uid for rpc request");
+# endif /* HAVE___RPC_GET_LOCAL_UID */
+#else /* not HAVE_TRANPORT_TYPE_TLI */
   struct sockaddr_in *sinp;
   char dq[20], dq2[28];
-
   sinp = amu_svc_getcaller(rqstp->rq_xprt);
-#ifdef MNT2_NFS_OPT_RESVPORT
+# ifdef MNT2_NFS_OPT_RESVPORT
   /* Verify that the request comes from a reserved port */
-  if (ntohs(sinp->sin_port) >= IPPORT_RESERVED &&
+  if (sinp &&
+      ntohs(sinp->sin_port) >= IPPORT_RESERVED &&
       !(gopt.flags & CFM_NFS_INSECURE_PORT)) {
     plog(XLOG_WARNING, "ignoring request from %s:%u, port not reserved",
 	 inet_dquad(dq, sinp->sin_addr.s_addr),
 	 ntohs(sinp->sin_port));
     return;
   }
-#endif /* MNT2_NFS_OPT_RESVPORT */
+# endif /* MNT2_NFS_OPT_RESVPORT */
   /* if the address does not match, ignore the request */
-  if (sinp->sin_addr.s_addr && sinp->sin_addr.s_addr != myipaddr.s_addr) {
+  if (sinp && sinp->sin_addr.s_addr != myipaddr.s_addr) {
     plog(XLOG_WARNING, "ignoring request from %s:%u, expected %s",
 	 inet_dquad(dq, sinp->sin_addr.s_addr),
 	 ntohs(sinp->sin_port),
 	 inet_dquad(dq2, myipaddr.s_addr));
     return;
   }
+#endif /* not HAVE_TRANPORT_TYPE_TLI */
 
   current_transp = NULL;
 

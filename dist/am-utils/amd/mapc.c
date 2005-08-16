@@ -1,7 +1,7 @@
-/*	$NetBSD: mapc.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mapc.c,v 1.20 2004/01/06 03:56:20 ezk Exp
+ * Id: mapc.c,v 1.27 2005/03/19 03:05:25 ezk Exp
  *
  */
 
@@ -200,12 +200,17 @@ extern int ndbm_search(mnt_map *, char *, char *, char **, time_t *);
 extern int ndbm_mtime(mnt_map *, char *, time_t *);
 #endif /* HAVE_MAP_NDBM */
 
+/* EXECUTABLE MAPS */
+#ifdef HAVE_MAP_EXEC
+extern int exec_init(mnt_map *, char *, time_t *);
+extern int exec_search(mnt_map *, char *, char *, char **, time_t *);
+#endif /* HAVE_MAP_EXEC */
+
 /* FILE MAPS */
 #ifdef HAVE_MAP_FILE
-extern int file_init(mnt_map *, char *, time_t *);
+extern int file_init_or_mtime(mnt_map *, char *, time_t *);
 extern int file_reload(mnt_map *, char *, add_fn *);
 extern int file_search(mnt_map *, char *, char *, char **, time_t *);
-extern int file_mtime(mnt_map *, char *, time_t *);
 #endif /* HAVE_MAP_FILE */
 
 
@@ -298,14 +303,25 @@ static map_type maptypes[] =
     MAPC_INC
   },
 #endif /* HAVE_MAP_NDBM */
+#ifdef HAVE_MAP_EXEC
+  {
+    "exec",
+    exec_init,
+    error_reload,
+    NULL,			/* isup function */
+    exec_search,
+    error_mtime,
+    MAPC_INC
+  },
+#endif /* HAVE_MAP_EXEC */
 #ifdef HAVE_MAP_FILE
   {
     "file",
-    file_init,
+    file_init_or_mtime,
     file_reload,
     NULL,			/* isup function */
     file_search,
-    file_mtime,
+    file_init_or_mtime,
     MAPC_ALL
   },
 #endif /* HAVE_MAP_FILE */
@@ -336,16 +352,27 @@ kvhash_of(char *key)
 
 
 void
-mapc_showtypes(char *buf, size_t l)
+mapc_showtypes(char *buf, size_t buflen)
 {
-  map_type *mt;
-  char *sep = "";
+  map_type *mt=NULL, *lastmt;
+  int l = 0, i;
 
+  i = sizeof(maptypes) / sizeof(maptypes[0]);
+  lastmt = maptypes + i;
   buf[0] = '\0';
-  for (mt = maptypes; mt < maptypes + sizeof(maptypes) / sizeof(maptypes[0]); mt++) {
-    strlcat(buf, sep, l);
-    strlcat(buf, mt->name, l);
-    sep = ", ";
+  for (mt = maptypes; mt < lastmt; mt++) {
+    strlcat(buf, mt->name, buflen);
+    if (mt == (lastmt-1))
+      break;	      /* if last one, don't do strcat's that follow */
+    l += strlen(mt->name);
+    if (--i > 0) {
+      strlcat(buf, ", ", buflen);
+      l += 2;
+    }
+    if (l > 54) {
+      l = 0;
+      strlcat(buf, "\n\t\t ", buflen);
+    }
   }
 }
 
@@ -1045,7 +1072,7 @@ mapc_keyiter(mnt_map *m, key_fun *fn, opaque_t arg)
 
 /*
  * Iterate on the root map and call (*fn)() on the key of all the nodes.
- * Finally throw away the root map.
+ * Returns the number of entries in the root map.
  */
 int
 root_keyiter(key_fun *fn, opaque_t arg)

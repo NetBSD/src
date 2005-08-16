@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if system has NFS protocol headers
-AC_DEFUN(AMU_CHECK_NFS_PROT_HEADERS,
+AC_DEFUN([AMU_CHECK_NFS_PROT_HEADERS],
 [
 AC_CACHE_CHECK(location of NFS protocol header files,
 ac_cv_nfs_prot_headers,

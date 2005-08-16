@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_generic.c,v 1.1.1.1 2004/11/27 01:00:38 christos Exp $	*/
+/*	$NetBSD: amfs_generic.c,v 1.1.1.1.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_generic.c,v 1.26 2004/04/30 01:11:12 ib42 Exp
+ * Id: amfs_generic.c,v 1.28 2005/01/18 03:01:24 ib42 Exp
  *
  */
 
@@ -729,21 +729,6 @@ amfs_bgmount(struct continuation *cp)
     if (mf->mf_fo && mf->mf_fo->opt_sublink)
       mp->am_link = strdup(mf->mf_fo->opt_sublink);
 
-    if (mf->mf_flags & MFF_MOUNTED) {
-      dlog("duplicate mount of \"%s\" ...", mf->mf_info);
-      /*
-       * Skip initial processing of the mountpoint if already mounted.
-       * This could happen if we have multiple sublinks into the same f/s.
-       */
-      goto already_mounted;
-    }
-
-    if (mf->mf_fo->fs_mtab) {
-      plog(XLOG_MAP, "Trying mount of %s on %s fstype %s mount_type %s",
-	   mf->mf_fo->fs_mtab, mf->mf_mount, p->fs_type,
-	   mp->am_flags & AMF_AUTOFS ? "autofs" : "non-autofs");
-    }
-
     /*
      * Will usually need to play around with the mount nodes
      * file attribute structure.  This must be done here.
@@ -759,6 +744,22 @@ amfs_bgmount(struct continuation *cp)
       mk_fattr(&mp->am_fattr, NFDIR);
     else
       mk_fattr(&mp->am_fattr, NFLNK);
+
+    if (mf->mf_flags & MFF_MOUNTED) {
+      dlog("duplicate mount of \"%s\" ...", mf->mf_info);
+      /*
+       * Skip initial processing of the mountpoint if already mounted.
+       * This could happen if we have multiple sublinks into the same f/s,
+       * or if we are restarting an already-mounted filesystem.
+       */
+      goto already_mounted;
+    }
+
+    if (mf->mf_fo->fs_mtab) {
+      plog(XLOG_MAP, "Trying mount of %s on %s fstype %s mount_type %s",
+	   mf->mf_fo->fs_mtab, mf->mf_mount, p->fs_type,
+	   mp->am_flags & AMF_AUTOFS ? "autofs" : "non-autofs");
+    }
 
     if (p->fs_init && !(mf->mf_flags & MFF_RESTART))
       this_error = p->fs_init(mf);

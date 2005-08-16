@@ -27,6 +27,8 @@
  */
 #define UNMOUNT_TRAP(mnt)	unmount(mnt->mnt_dir)
 /* End of replaced UNMOUNT_TRAP macro definition */
+/* umount(8) executable path, for type:=program */
+#define UNMOUNT_PROGRAM		"/sbin/umount"
 
 /*
  * The next line is a literal inclusion of a file which includes a

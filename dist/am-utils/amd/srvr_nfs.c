@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_nfs.c,v 1.9 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.9.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: srvr_nfs.c,v 1.36 2004/07/23 18:29:22 ezk Exp
+ * Id: srvr_nfs.c,v 1.39 2005/03/02 03:00:09 ezk Exp
  *
  */
 
@@ -113,7 +113,6 @@ static char *protocols[] = { "tcp", "udp", NULL };
 
 /* forward definitions */
 static void nfs_keepalive(voidp);
-
 
 
 /*
@@ -566,7 +565,7 @@ nfs_keepalive(voidp v)
 
   /*
    * Back off the ping interval if we are not getting replies and
-   * the remote system is know to be down.
+   * the remote system is known to be down.
    */
   switch (fs->fs_flags & (FSF_DOWN | FSF_VALID)) {
   case FSF_VALID:		/* Up */
@@ -592,10 +591,27 @@ nfs_keepalive(voidp v)
 static void
 start_nfs_pings(fserver *fs, int pingval)
 {
-  if (fs->fs_flags & FSF_PINGING) {
-    dlog("Already running pings to %s", fs->fs_host);
+  if (pingval == 0)	    /* could be because ping mnt option not found */
+    pingval = AM_PINGER;
+  /* if pings haven't been initalized, then init them for first time */
+  if (fs->fs_flags & FSF_PING_UNINIT) {
+    fs->fs_flags &= ~FSF_PING_UNINIT;
+    plog(XLOG_INFO, "initializing %s's pinger to %d sec", fs->fs_host, pingval);
+    goto do_pings;
+  }
+
+  if ((fs->fs_flags & FSF_PINGING)  &&  fs->fs_pinger == pingval) {
+    dlog("already running pings to %s", fs->fs_host);
     return;
   }
+
+  /* if got here, then we need to update the ping value */
+  plog(XLOG_INFO, "changing %s's ping value from %d%s to %d%s",
+       fs->fs_host,
+       fs->fs_pinger, (fs->fs_pinger < 0 ? " (off)" : ""),
+       pingval, (pingval < 0 ? " (off)" : ""));
+ do_pings:
+  fs->fs_pinger = pingval;
 
   if (fs->fs_cid)
     untimeout(fs->fs_cid);
@@ -880,12 +896,13 @@ no_dns:
       if (!(mf->mf_flags & MFF_WEBNFS))
 	fs->fs_flags &= ~FSF_WEBNFS;
 
+      /* check if pingval needs to be updated/set/reset */
+      start_nfs_pings(fs, pingval);
+
       /*
-       * following if statement from Mike Mitchell
-       * <mcm@unx.sas.com>
-       * Initialize the ping data if we aren't pinging
-       * now.  The np_ttl and np_ping fields are
-       * especially important.
+       * Following if statement from Mike Mitchell <mcm@unx.sas.com>
+       * Initialize the ping data if we aren't pinging now.  The np_ttl and
+       * np_ping fields are especially important.
        */
       if (!(fs->fs_flags & FSF_PINGING)) {
 	np = (nfs_private *) fs->fs_private;
@@ -938,6 +955,7 @@ no_dns:
   fs->fs_proto = nfs_proto;
   fs->fs_type = MNTTAB_TYPE_NFS;
   fs->fs_pinger = AM_PINGER;
+  fs->fs_flags |= FSF_PING_UNINIT; /* pinger hasn't been initialized */
   np = ALLOC(struct nfs_private);
   memset((voidp) np, 0, sizeof(*np));
   np->np_mountd_inval = TRUE;
@@ -953,9 +971,7 @@ no_dns:
   fs->fs_prfree = (void (*)(voidp)) free;
 
   if (!FSRV_ERROR(fs)) {
-    /*
-     * Start of keepalive timer
-     */
+    /* start of keepalive timer, first updating pingval */
     start_nfs_pings(fs, pingval);
     if (fserver_is_down)
       fs->fs_flags |= FSF_VALID | FSF_DOWN;

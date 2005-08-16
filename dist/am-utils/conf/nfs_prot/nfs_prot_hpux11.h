@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
+/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_hpux11.h,v 1.14 2004/01/06 03:56:20 ezk Exp
+ * Id: nfs_prot_hpux11.h,v 1.16 2005/01/13 21:24:11 ezk Exp
  *
  */
 
@@ -242,6 +242,17 @@ typedef struct statfsres nfsstatfsres;
 typedef struct symlinkargs nfssymlinkargs;
 typedef struct writeargs nfswriteargs;
 
+/*
+ * NFSv3 handle (copied from am_xdr_func.h, because it is needed here)
+ * we use a different name but same storage size/alignment to avoid
+ * conflicts.  Sigh, this is so hacky. -ezk
+ */
+#define HPUX11_FHSIZE3 64	/* size in bytes of a file handle (v3) */
+struct hpux11_nfs_fh3 {
+  u_int am_fh3_length;
+  char am_fh3_data[HPUX11_FHSIZE3];
+};
+typedef struct hpux11_nfs_fh3 hpux11_nfs_fh3;
 
 /*
  * EXTERNALS:
@@ -543,7 +554,7 @@ typedef enum nfsstat3 nfsstat3;
 typedef char *filename3;
 
 struct diropargs3 {
-	am_nfs_fh3 dir;
+	hpux11_nfs_fh3 dir;
 	filename3 name;
 };
 typedef struct diropargs3 diropargs3;
@@ -554,7 +565,7 @@ struct LOOKUP3args {
 typedef struct LOOKUP3args LOOKUP3args;
 
 struct LOOKUP3resok {
-	am_nfs_fh3 object;
+	hpux11_nfs_fh3 object;
 #if 0
 	post_op_attr obj_attributes;
 	post_op_attr dir_attributes;

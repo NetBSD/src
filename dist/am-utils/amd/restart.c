@@ -1,7 +1,7 @@
-/*	$NetBSD: restart.c,v 1.1.1.7 2004/11/27 01:00:42 christos Exp $	*/
+/*	$NetBSD: restart.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: restart.c,v 1.10 2004/01/06 03:56:20 ezk Exp
+ * Id: restart.c,v 1.12 2005/01/18 03:01:24 ib42 Exp
  *
  */
 
@@ -124,9 +124,7 @@ restart_fake_mntfs(mntent_t *me, am_ops *fs_ops)
  *
  * Scan through the mount list finding all "interesting" mount points.
  * Next hack up partial data structures and add the mounted file
- * system to the list of known filesystems.  This will leave a
- * dangling reference to that filesystems, so when the filesystem is
- * finally inherited, an extra "free" must be done on it.
+ * system to the list of known filesystems.
  *
  * This module relies on internal details of other components.  If
  * you change something else make *sure* restart() still works.
@@ -149,6 +147,19 @@ restart(void)
     mntent_t *me = mlp->mnt;
     am_ops *fs_ops = 0;
 
+    if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS)) {
+      /*
+       * NFS entry, or possibly an Amd entry...
+       * The mnt_fsname for daemon mount points is
+       * 	host:(pidXXX)
+       * or (seen on Solaris)
+       *        host:daemon(pidXXX)
+       */
+      char *colon = strchr(me->mnt_fsname, ':');
+      if (colon && strstr(colon, "(pid"))
+	continue;
+    }
+
     /* Search for the correct filesystem ops */
     fs_ops = ops_search(me->mnt_type);
 
@@ -159,6 +170,53 @@ restart(void)
     if (!fs_ops)
       fs_ops = &amfs_link_ops;
 
+    restart_fake_mntfs(me, fs_ops);
+  }
+
+  /*
+   * Free the mount list
+   */
+  free_mntlist(ml);
+}
+
+
+/*
+ * Handle an amd restart for amd's own mount points.
+ *
+ * Scan through the mount list finding all daemon mount points
+ * (determined by the presence of a pid inside the mount info).
+ * Next hack up partial data structures and add the mounted file
+ * system to the list of known filesystems.
+ *
+ * This module relies on internal details of other components.  If
+ * you change something else make *sure* restart() still works.
+ */
+void
+restart_automounter_nodes(void)
+{
+  /*
+   * Read the existing mount table
+   */
+  mntlist *ml, *mlp;
+
+  /* Reasonably sized list of restarted nfs ports */
+  u_short old_ports[256];
+  {
+    int i;
+    for (i = 0; i < 256; i++)
+      old_ports[i] = 0;
+  }
+
+  /*
+   * For each entry, find nfs, ufs or auto mounts
+   * and create a partial am_node to represent it.
+   */
+  for (mlp = ml = read_mtab("restart", mnttab_file_name);
+       mlp;
+       mlp = mlp->mnext) {
+    mntent_t *me = mlp->mnt;
+    am_ops *fs_ops = 0;
+
     if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS)) {
       /*
        * NFS entry, or possibly an Amd entry...
@@ -168,14 +226,71 @@ restart(void)
        *        host:daemon(pidXXX)
        */
       char *colon = strchr(me->mnt_fsname, ':');
-
       if (colon && strstr(colon, "(pid")) {
+	long pid;
+	u_short port;
+	int err = 1;
+
 	plog(XLOG_WARNING, "%s is an existing automount point", me->mnt_dir);
-	fs_ops = &amfs_link_ops;
+
+	/* Is the old automounter still alive? */
+	if (sscanf(colon, "%*[^(](pid%ld%*[,)]", &pid) != 1) {
+	  plog(XLOG_WARNING, "Can't parse pid in %s", me->mnt_fsname);
+	  goto give_up;
+	}
+	if (kill(pid, 0) != -1 || errno != ESRCH) {
+	  plog(XLOG_WARNING, "Automounter (pid: %ld) still alive", pid);
+	  goto give_up;
+	}
+
+	/*
+	 * Do we have a map for this mount point?
+	 * Who cares, we'll restart anyway -- getting ESTALE
+	 * is way better than hanging.
+	 */
+
+	/* Can we restart it? Only if it tells us what port it was using... */
+	if (sscanf(colon, "%*[^,],port%hu)", &port) != 1) {
+	  plog(XLOG_WARNING, "No port specified for %s", me->mnt_fsname);
+	  goto give_up;
+	}
+
+	/* Maybe we already own that port... */
+	if (port != nfs_port) {
+	  int i;
+	  for (i = 0; i < 256; i++) {
+	    if (old_ports[i] == port ||
+		old_ports[i] == 0)
+	      break;
+	  }
+	  if (i == 256) {
+	    plog(XLOG_WARNING, "Too many open ports (256)");
+	    goto give_up;
+	  }
+
+	  if (old_ports[i] == 0) {
+	    int soNFS;
+	    SVCXPRT *nfsxprt;
+	    if (create_nfs_service(&soNFS, &port, &nfsxprt, nfs_program_2) != 0) {
+	      plog(XLOG_WARNING, "Can't bind to port %u", port);
+	      goto give_up;
+	    }
+	    old_ports[i] = nfs_port = port;
+	  }
+	}
+	err = 0;
+
+	give_up:
+	if (err) {
+	  plog(XLOG_WARNING, "Can't restart %s, leaving it alone", me->mnt_dir);
+	  fs_ops = &amfs_link_ops;
+	} else {
+	  fs_ops = &amfs_toplvl_ops;
+	}
+
+	restart_fake_mntfs(me, fs_ops);
       }
     }
-
-    restart_fake_mntfs(me, fs_ops);
   }
 
   /*

@@ -7,7 +7,7 @@ dnl
 dnl Note that $pattern below is very carefully crafted to match any system
 dnl external definition, with __P posix prototypes, with or without an extern
 dnl word, etc.  Think twice before changing this.
-AC_DEFUN(AMU_CHECK_EXTERN,
+AC_DEFUN([AMU_CHECK_EXTERN],
 [
 # store variable name for external definition
 ac_upcase_extern_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
@@ -92,7 +92,7 @@ dnl ======================================================================
 dnl ######################################################################
 dnl run AMU_CHECK_EXTERN on each argument given
 dnl Usage: AMU_CHECK_EXTERNS(arg arg arg ...)
-AC_DEFUN(AMU_CHECK_EXTERNS,
+AC_DEFUN([AMU_CHECK_EXTERNS],
 [
 for ac_tmp_arg in $1
 do

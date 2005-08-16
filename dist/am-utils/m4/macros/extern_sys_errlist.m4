@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl find if "extern char *sys_errlist[]" exist in headers
-AC_DEFUN(AMU_EXTERN_SYS_ERRLIST,
+AC_DEFUN([AMU_EXTERN_SYS_ERRLIST],
 [
 AC_CACHE_CHECK(if external definition for sys_errlist[] exists,
 ac_cv_extern_sys_errlist,

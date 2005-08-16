@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_fs.c,v 1.11 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.11.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_fs.c,v 1.42 2004/07/23 18:29:22 ezk Exp
+ * Id: mount_fs.c,v 1.50 2005/04/09 18:15:35 ottavio Exp
  *
  */
 
@@ -321,8 +321,96 @@ again:
 #endif /* MOUNT_TABLE_ON_FILE */
 
  out:
-  free(mnt_dir);
+  XFREE(mnt_dir);
   return error;
+}
+
+
+/*
+ * Compute all NFS attribute cache related flags separately.  Note that this
+ * function now computes attribute-cache flags for both Amd's automount
+ * points (NFS) as well as any normal NFS mount that Amd performs.  Edit
+ * with caution.
+ */
+static void
+compute_nfs_attrcache_flags(nfs_args_t *nap, mntent_t *mntp)
+{
+  int acval = 0;
+
+  /************************************************************************/
+  /***	ATTRIBUTE CACHES						***/
+  /************************************************************************/
+  /*
+   * acval is set to 0 at the top of the function.  If actimeo mount option
+   * exists and defined in mntopts, then it acval is set to it.
+   * If the value is non-zero, then we set all attribute cache fields to it.
+   * If acval is zero, it means it was never defined in mntopts or the
+   * actimeo mount option does not exist, in which case we check for
+   * individual mount options per attribute cache.
+   * Regardless of the value of acval, mount flags are set based directly
+   * on the values of the attribute caches.
+   */
+#ifdef MNTTAB_OPT_ACTIMEO
+  acval = hasmntval(mntp, MNTTAB_OPT_ACTIMEO); /* attr cache timeout (sec) */
+#endif /* MNTTAB_OPT_ACTIMEO */
+
+  if (acval) {
+#ifdef HAVE_NFS_ARGS_T_ACREGMIN
+    nap->acregmin = acval;	/* min ac timeout for reg files (sec) */
+    nap->acregmax = acval;	/* max ac timeout for reg files (sec) */
+#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
+#ifdef HAVE_NFS_ARGS_T_ACDIRMIN
+    nap->acdirmin = acval;	/* min ac timeout for dirs (sec) */
+    nap->acdirmax = acval;	/* max ac timeout for dirs (sec) */
+#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
+  } else {
+#ifdef HAVE_NFS_ARGS_T_ACREGMIN
+# ifdef MNTTAB_OPT_ACREGMIN
+    nap->acregmin = hasmntval(mntp, MNTTAB_OPT_ACREGMIN);
+# else /* not MNTTAB_OPT_ACREGMIN */
+    nap->acregmin = 0;
+# endif /* not MNTTAB_OPT_ACREGMIN */
+# ifdef MNTTAB_OPT_ACREGMAX
+    nap->acregmax = hasmntval(mntp, MNTTAB_OPT_ACREGMAX);
+# else /* not MNTTAB_OPT_ACREGMAX */
+    nap->acregmax = 0;
+# endif /* not MNTTAB_OPT_ACREGMAX */
+#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
+#ifdef HAVE_NFS_ARGS_T_ACDIRMIN
+# ifdef MNTTAB_OPT_ACDIRMIN
+    nap->acdirmin = hasmntval(mntp, MNTTAB_OPT_ACDIRMIN);
+# else /* not MNTTAB_OPT_ACDIRMIN */
+    nap->acdirmin = 0;
+# endif /* not MNTTAB_OPT_ACDIRMIN */
+# ifdef MNTTAB_OPT_ACDIRMAX
+    nap->acdirmax = hasmntval(mntp, MNTTAB_OPT_ACDIRMAX);
+# else /* not MNTTAB_OPT_ACDIRMAX */
+    nap->acdirmax = 0;
+# endif /* not MNTTAB_OPT_ACDIRMAX */
+#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
+  } /* end of "if (acval)" statement */
+
+#ifdef MNT2_NFS_OPT_ACREGMIN
+  if (nap->acregmin)
+    nap->flags |= MNT2_NFS_OPT_ACREGMIN;
+#endif /* MNT2_NFS_OPT_ACREGMIN */
+#ifdef MNT2_NFS_OPT_ACREGMAX
+  if (nap->acregmax)
+    nap->flags |= MNT2_NFS_OPT_ACREGMAX;
+#endif /* MNT2_NFS_OPT_ACREGMAX */
+#ifdef MNT2_NFS_OPT_ACDIRMIN
+  if (nap->acdirmin)
+    nap->flags |= MNT2_NFS_OPT_ACDIRMIN;
+#endif /* MNT2_NFS_OPT_ACDIRMIN */
+#ifdef MNT2_NFS_OPT_ACDIRMAX
+  if (nap->acdirmax)
+    nap->flags |= MNT2_NFS_OPT_ACDIRMAX;
+#endif /* MNT2_NFS_OPT_ACDIRMAX */
+
+#ifdef MNTTAB_OPT_NOAC		/* don't cache attributes */
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)
+    nap->flags |= MNT2_NFS_OPT_NOAC;
+#endif /* MNTTAB_OPT_NOAC */
 }
 
 
@@ -341,12 +429,22 @@ again:
  * fs_name:	remote file system name to mount
  */
 void
-compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name)
+compute_nfs_args(nfs_args_t *nap,
+		 mntent_t *mntp,
+		 int genflags,
+		 struct netconfig *nfsncp,
+		 struct sockaddr_in *ip_addr,
+		 u_long nfs_version,
+		 char *nfs_proto,
+		 am_nfs_handle_t *fhp,
+		 char *host_name,
+		 char *fs_name)
 {
-  int acval = 0;
-
   /* initialize just in case */
   memset((voidp) nap, 0, sizeof(nfs_args_t));
+
+  /* compute all of the NFS attribute-cache flags */
+  compute_nfs_attrcache_flags(nap, mntp);
 
   /************************************************************************/
   /***	FILEHANDLE DATA AND LENGTH					***/
@@ -396,73 +494,15 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
   /************************************************************************/
   /***	HOST NAME							***/
   /************************************************************************/
+  /*
+   * XXX: warning, using xstrlcpy in NFS_HN_DREF, which may corrupt a
+   * struct nfs_args, or truncate our concocted "hostname:/path"
+   * string prematurely.
+   */
   NFS_HN_DREF(nap->hostname, host_name);
 #ifdef MNT2_NFS_OPT_HOSTNAME
   nap->flags |= MNT2_NFS_OPT_HOSTNAME;
 #endif /* MNT2_NFS_OPT_HOSTNAME */
-
-  /************************************************************************/
-  /***	ATTRIBUTE CACHES						***/
-  /************************************************************************/
-  /*
-   * acval is set to 0 at the top of the function.  If actimeo mount option
-   * exists and defined in mntopts, then it acval is set to it.
-   * If the value is non-zero, then we set all attribute cache fields to it.
-   * If acval is zero, it means it was never defined in mntopts or the
-   * actimeo mount option does not exist, in which case we check for
-   * individual mount options per attribute cache.
-   * Regardless of the value of acval, mount flags are set based directly
-   * on the values of the attribute caches.
-   */
-#ifdef MNTTAB_OPT_ACTIMEO
-  acval = hasmntval(mntp, MNTTAB_OPT_ACTIMEO); /* attr cache timeout (sec) */
-#endif /* MNTTAB_OPT_ACTIMEO */
-
-  if (acval) {
-#ifdef HAVE_NFS_ARGS_T_ACREGMIN
-    nap->acregmin = acval;	/* min ac timeout for reg files (sec) */
-    nap->acregmax = acval;	/* max ac timeout for reg files (sec) */
-#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
-#ifdef HAVE_NFS_ARGS_T_ACDIRMIN
-    nap->acdirmin = acval;	/* min ac timeout for dirs (sec) */
-    nap->acdirmax = acval;	/* max ac timeout for dirs (sec) */
-#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
-  } else {
-#ifdef MNTTAB_OPT_ACREGMIN
-    nap->acregmin = hasmntval(mntp, MNTTAB_OPT_ACREGMIN);
-#endif /* MNTTAB_OPT_ACREGMIN */
-#ifdef MNTTAB_OPT_ACREGMAX
-    nap->acregmax = hasmntval(mntp, MNTTAB_OPT_ACREGMAX);
-#endif /* MNTTAB_OPT_ACREGMAX */
-#ifdef MNTTAB_OPT_ACDIRMIN
-    nap->acdirmin = hasmntval(mntp, MNTTAB_OPT_ACDIRMIN);
-#endif /* MNTTAB_OPT_ACDIRMIN */
-#ifdef MNTTAB_OPT_ACDIRMAX
-    nap->acdirmax = hasmntval(mntp, MNTTAB_OPT_ACDIRMAX);
-#endif /* MNTTAB_OPT_ACDIRMAX */
-  } /* end of "if (acval)" statement */
-
-#ifdef MNT2_NFS_OPT_ACREGMIN
-  if (nap->acregmin)
-    nap->flags |= MNT2_NFS_OPT_ACREGMIN;
-#endif /* MNT2_NFS_OPT_ACREGMIN */
-#ifdef MNT2_NFS_OPT_ACREGMAX
-  if (nap->acregmax)
-    nap->flags |= MNT2_NFS_OPT_ACREGMAX;
-#endif /* MNT2_NFS_OPT_ACREGMAX */
-#ifdef MNT2_NFS_OPT_ACDIRMIN
-  if (nap->acdirmin)
-    nap->flags |= MNT2_NFS_OPT_ACDIRMIN;
-#endif /* MNT2_NFS_OPT_ACDIRMIN */
-#ifdef MNT2_NFS_OPT_ACDIRMAX
-  if (nap->acdirmax)
-    nap->flags |= MNT2_NFS_OPT_ACDIRMAX;
-#endif /* MNT2_NFS_OPT_ACDIRMAX */
-
-#ifdef MNTTAB_OPT_NOAC		/* don't cache attributes */
-  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)
-    nap->flags |= MNT2_NFS_OPT_NOAC;
-#endif /* MNTTAB_OPT_NOAC */
 
   /************************************************************************/
   /***	IP ADDRESS OF REMOTE HOST					***/
@@ -767,28 +807,9 @@ compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp)
   nap->flags |= MNT2_NFS_OPT_DUMBTIMR;
 #endif /* MNT2_NFS_OPT_DUMBTIMR */
 
-#ifdef MNT2_NFS_OPT_NOAC
-  /*
-   * Don't cache attributes - they are changing under the kernel's feet.
-   * For example, IRIX5.2 will dispense with nfs lookup calls and hand stale
-   * filehandles to getattr unless we disable attribute caching on the
-   * automount points.
-   */
-  nap->flags |= MNT2_NFS_OPT_NOAC;
-#else /* not MNT2_NFS_OPT_NOAC */
-  /*
-   * Setting these to 0 results in an error on some systems, which is why
-   * it's better to use "noac" if possible.
-   */
-# if defined(MNT2_NFS_OPT_ACREGMIN) && defined(MNT2_NFS_OPT_ACREGMAX)
-  nap->acregmin = nap->acregmax = 0; /* XXX: was 1, but why? */
-  nap->flags |= MNT2_NFS_OPT_ACREGMIN | MNT2_NFS_OPT_ACREGMAX;
-# endif /* defined(MNT2_NFS_OPT_ACREGMIN) && defined(MNT2_NFS_OPT_ACREGMAX) */
-# if defined(MNT2_NFS_OPT_ACDIRMIN) && defined(MNT2_NFS_OPT_ACDIRMAX)
-  nap->acdirmin = nap->acdirmax = 0; /* XXX: was 1, but why? */
-  nap->flags |= MNT2_NFS_OPT_ACDIRMIN | MNT2_NFS_OPT_ACDIRMAX;
-# endif /* defined(MNT2_NFS_OPT_ACDIRMIN) && defined(MNT2_NFS_OPT_ACDIRMAX) */
-#endif /* not MNT2_NFS_OPT_NOAC */
+  /* compute all of the NFS attribute-cache flags */
+  compute_nfs_attrcache_flags(nap, mntp);
+
   /*
    * Provide a slight bit more security by requiring the kernel to use
    * reserved ports.
@@ -856,7 +877,7 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
        nbp->maxlen, nbp->len,
        get_hex_string(nbp->len, nbp->buf));
   nbp = nap->syncaddr;
-  plog(XLOG_DEBUG, "NA->syncaddr {netbuf} 0x%x", (int) nbp);
+  plog(XLOG_DEBUG, "NA->syncaddr {netbuf} %p", nbp);
   kncp = nap->knconf;
   plog(XLOG_DEBUG, "NA->knconf->semantics %lu", (u_long) kncp->knc_semantics);
   plog(XLOG_DEBUG, "NA->knconf->protofmly \"%s\"", kncp->knc_protofmly);

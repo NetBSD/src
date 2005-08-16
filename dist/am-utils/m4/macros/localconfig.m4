@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if a local configuration file exists
-AC_DEFUN(AMU_LOCALCONFIG,
+AC_DEFUN([AMU_LOCALCONFIG],
 [AC_MSG_CHECKING(a local configuration file)
 if test -f localconfig.h
 then

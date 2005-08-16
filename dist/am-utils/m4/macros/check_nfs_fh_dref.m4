@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct way to dereference the address part of the nfs fhandle
-AC_DEFUN(AMU_CHECK_NFS_FH_DREF,
+AC_DEFUN([AMU_CHECK_NFS_FH_DREF],
 [
 AC_CACHE_CHECK(nfs file-handle address dereferencing style,
 ac_cv_nfs_fh_dref_style,

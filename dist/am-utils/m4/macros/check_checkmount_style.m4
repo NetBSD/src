@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check style of fixmount check_mount() function
-AC_DEFUN(AMU_CHECK_CHECKMOUNT_STYLE,
+AC_DEFUN([AMU_CHECK_CHECKMOUNT_STYLE],
 [
 AC_CACHE_CHECK(style of fixmount check_mount(),
 ac_cv_style_checkmount,

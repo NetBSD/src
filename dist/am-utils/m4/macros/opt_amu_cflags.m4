@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl Which options to add to CFLAGS for compilation?
 dnl NOTE: this is only for final compiltions, not for configure tests)
-AC_DEFUN(AMU_OPT_AMU_CFLAGS,
+AC_DEFUN([AMU_OPT_AMU_CFLAGS],
 [AC_MSG_CHECKING(for additional C option compilation flags)
 AC_ARG_ENABLE(am-cflags,
 AC_HELP_STRING([--enable-am-cflags=ARG],

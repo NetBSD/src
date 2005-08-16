@@ -1,7 +1,7 @@
-/*	$NetBSD: checkmount_default.c,v 1.1.1.7 2004/11/27 01:00:53 christos Exp $	*/
+/*	$NetBSD: checkmount_default.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: checkmount_default.c,v 1.8 2004/01/06 03:56:20 ezk Exp
+ * Id: checkmount_default.c,v 1.10 2005/04/07 05:50:38 ezk Exp
  *
  */
 
@@ -102,9 +102,9 @@ fixmount_check_mount(char *host, struct in_addr hostaddr, char *path)
 
     /* swap files never show up in mtab, only root fs */
     if ((swap = strstr(path, "swap"))) {
-      strncpy(swap, "root", 4);
+      strncpy(swap, "root", 4);	/* this should NOT use xstrlcpy  */
       found = fixmount_check_mount(host, hostaddr, path);
-      strncpy(swap, "swap", 4);
+      strncpy(swap, "swap", 4);	/* this should NOT use xstrlcpy  */
     }
   }
   return found;

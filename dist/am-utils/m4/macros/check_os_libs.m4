@@ -5,7 +5,7 @@ dnl Using a typical macro has proven unsuccesful, because on some other
 dnl systems such as irix, including libnsl and or libsocket actually breaks
 dnl lots of code.  So I am forced to use a special purpose macro that sets
 dnl the libraries based on the OS.  Sigh.  -Erez.
-AC_DEFUN(AMU_CHECK_OS_LIBS,
+AC_DEFUN([AMU_CHECK_OS_LIBS],
 [
 AC_CACHE_CHECK(for additional OS libraries,
 ac_cv_os_libs,

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check for the correct system call to unmount a filesystem.
-AC_DEFUN(AMU_CHECK_UNMOUNT_CALL,
+AC_DEFUN([AMU_CHECK_UNMOUNT_CALL],
 [
 dnl make sure this one is called before [AC_CHECK_UNMOUNT_ARGS]
 AC_BEFORE([$0], [AC_CHECK_UNMOUNT_ARGS])

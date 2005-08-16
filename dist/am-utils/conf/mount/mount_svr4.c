@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_svr4.c,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
+/*	$NetBSD: mount_svr4.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_svr4.c,v 1.10 2004/01/06 03:56:20 ezk Exp
+ * Id: mount_svr4.c,v 1.12 2005/04/07 05:50:38 ezk Exp
  *
  */
 
@@ -84,8 +84,7 @@ mount_svr4(char *fsname, char *dir, int flags, MTYPE_TYPE type, caddr_t data, co
    * Save a copy of the mount options.  The kernel will overwrite them with
    * those it recognizes.
    */
-  strncpy(mountopts, optstr, sizeof(mountopts));
-  mountopts[MAX_MNTOPT_STR-1] = '\0';
+  xstrlcpy(mountopts, optstr, MAX_MNTOPT_STR);
 #endif /* defined(MNT2_GEN_OPT_OPTIONSTR) && defined(MAX_MNTOPT_STR) */
 
 #if defined(MOUNT_TYPE_NFS3) && defined(MNTTAB_TYPE_NFS3)

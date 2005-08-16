@@ -4,7 +4,7 @@ dnl try with $5 if specified.
 dnl it adds $5 to $LIBS if it was needed -Erez.
 dnl AC_CHECK_LIB2(LIBRARY, FUNCTION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND
 dnl              [, OTHER-LIBRARIES]]])
-AC_DEFUN(AMU_CHECK_LIB2,
+AC_DEFUN([AMU_CHECK_LIB2],
 [AC_MSG_CHECKING([for $2 in -l$1])
 dnl Use a cache variable name containing both the library and function name,
 dnl because the test really is for library $1 defining function $2, not

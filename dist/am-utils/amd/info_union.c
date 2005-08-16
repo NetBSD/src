@@ -1,7 +1,7 @@
-/*	$NetBSD: info_union.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: info_union.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_union.c,v 1.9 2004/01/06 03:56:20 ezk Exp
+ * Id: info_union.c,v 1.11 2005/02/17 03:37:42 ezk Exp
  *
  */
 
@@ -135,9 +135,10 @@ union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
    * Add wildcard entry
    */
   {
-    char *val = xmalloc(strlen(dir[-1]) + 5);
+    size_t l = strlen(*(dir-1)) + 5;
+    char *val = xmalloc(l);
 
-    snprintf(val, strlen(dir[-1]) + 5, "fs:=%s", dir[-1]);
+    snprintf(val, l, "fs:=%s", *(dir-1));
     (*fn) (m, strdup("*"), val);
   }
   XFREE(mapd);

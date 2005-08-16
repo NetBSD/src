@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct network transport type to use
-AC_DEFUN(AMU_CHECK_NETWORK_TRANSPORT_TYPE,
+AC_DEFUN([AMU_CHECK_NETWORK_TRANSPORT_TYPE],
 [
 AC_CACHE_CHECK(network transport type,
 ac_cv_transport_type,
