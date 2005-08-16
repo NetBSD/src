@@ -1,4 +1,4 @@
-/*	$NetBSD: intcreg.h,v 1.8 2005/06/29 16:51:20 christos Exp $	*/
+/*	$NetBSD: intcreg.h,v 1.9 2005/08/16 11:32:26 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -104,10 +104,10 @@
 #define	IPRB_REF_MASK		0x0f00
 #define	IPRB_SCI_MASK		0x00f0
 
-#define        INTPRI00_PCI0_MASK      0x0000000f
-#define        INTPRI00_PCI1_MASK      0x000000f0
-#define        INTPRI00_TMU3_MASK      0x00000f00
-#define        INTPRI00_TMU4_MASK      0x0000f000
+#define	INTPRI00_PCI0_MASK      0x0000000f
+#define	INTPRI00_PCI1_MASK      0x000000f0
+#define	INTPRI00_TMU3_MASK      0x00000f00
+#define	INTPRI00_TMU4_MASK      0x0000f000
 
 /* INTREQ/INTMSK/INTMSKCLR */
 #define	INTREQ00_PCISERR	0x00000001
@@ -120,5 +120,7 @@
 #define	INTREQ00_PCIERR		0x00000080
 #define	INTREQ00_TUNI3		0x00000100
 #define	INTREQ00_TUNI4		0x00000200
+
+#define	INTMSK00_MASK_ALL	0x000003ff
 
 #endif /* !_SH3_INTCREG_H_ */

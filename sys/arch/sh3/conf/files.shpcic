@@ -1,0 +1,9 @@
+#	$NetBSD: files.shpcic,v 1.1 2005/08/16 11:32:26 nonaka Exp $
+
+#
+# SH7751{,R} integrated PCI controller
+#
+device  shpcic: pcibus
+attach  shpcic at mainbus
+
+file    arch/sh3/dev/shpcic.c		sh4 & shpcic
