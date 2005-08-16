@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.79 2005/06/27 20:32:40 peter Exp $
+#	$NetBSD: services,v 1.80 2005/08/16 19:41:01 drochner Exp $
 #
 # Network services, Internet style
 #
@@ -232,6 +232,8 @@ svn		3690/tcp		# Subversion
 svn		3690/udp		# Subversion
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
+sip		5060/tcp		# SIP
+sip		5060/udp		# SIP
 postgresql	5432/tcp		# PostgreSQL Database
 postgresql	5432/udp		# PostgreSQL Database
 
