@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.3 2004/11/27 01:00:54 christos Exp $	*/
+/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.3.2.1 2005/08/16 13:02:20 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix5_1.h,v 1.7 2004/01/06 03:56:20 ezk Exp
+ * Id: nfs_prot_aix5_1.h,v 1.9 2005/01/16 23:59:25 ezk Exp
  *
  */
 
@@ -48,7 +48,7 @@
 
 
 /*
- * AIX 5.1 has a different aix51_nfs_args structure, hence the separate header.
+ * AIX 5.1 has a different aix5_nfs_args structure, hence the separate header.
  */
 
 #ifdef HAVE_RPCSVC_NFS_PROT_H
@@ -225,7 +225,7 @@ typedef writeargs	nfswriteargs;
  */
 #ifdef MNT_NFS3
 
-struct aix51_nfs_args {
+struct aix5_nfs_args {
   struct sockaddr_in addr;	/* server address and port */
   caddr_t u0;			/* ??? UNKNOWN ??? */
   unsigned long proto;		/* IPPROTO_TCP/IPPROTO_UDP */

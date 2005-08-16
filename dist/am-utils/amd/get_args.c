@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: get_args.c,v 1.23 2004/04/28 04:22:13 ib42 Exp
+ * Id: get_args.c,v 1.30 2005/03/09 18:48:59 ezk Exp
  *
  */
 
@@ -62,6 +62,7 @@ int usage = 0;
 int use_conf_file = 0;		/* default don't use amd.conf file */
 char *mnttab_file_name = NULL;	/* symbol must be available always */
 
+
 /*
  * Return the version string (dynamic buffer)
  */
@@ -82,7 +83,7 @@ get_version_string(void)
   l = 2048 + wire_buf_len;
   vers = xmalloc(l);
   snprintf(vers, l, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997-2004 Erez Zadok",
+	  "Copyright (c) 1997-2005 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
@@ -100,8 +101,11 @@ get_version_string(void)
   snprintf(tmpbuf, sizeof(tmpbuf), "cpu=%s (%s-endian), arch=%s, karch=%s.\n",
 	  cpu, endian, gopt.arch, gopt.karch);
   strlcat(vers, tmpbuf, l);
-  snprintf(tmpbuf, sizeof(tmpbuf), "full_os=%s, os=%s, osver=%s, vendor=%s.\n",
-	  gopt.op_sys_full, gopt.op_sys, gopt.op_sys_ver, gopt.op_sys_vendor);
+  snprintf(tmpbuf, sizeof(tmpbuf), "full_os=%s, os=%s, osver=%s, vendor=%s, distro=%s.\n",
+	  gopt.op_sys_full, gopt.op_sys, gopt.op_sys_ver, gopt.op_sys_vendor, DISTRO_NAME);
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "domain=%s, host=%s, hostd=%s.\n",
+	  hostdomain, am_get_hostname(), hostd);
   strlcat(vers, tmpbuf, l);
 
   strlcat(vers, "Map support for: ", l);
@@ -110,7 +114,7 @@ get_version_string(void)
   strlcat(vers, ".\nAMFS: ", l);
   ops_showamfstypes(tmpbuf);
   strlcat(vers, tmpbuf, l);
-  strlcat(vers, ".\nFS: ", l);
+  strlcat(vers, ", inherit.\nFS: ", l); /* hack: "show" that we support type:=inherit */
   ops_showfstypes(tmpbuf);
   strlcat(vers, tmpbuf, l);
 
@@ -124,14 +128,48 @@ get_version_string(void)
 }
 
 
+static void
+show_usage(void)
+{
+  fprintf(stderr,
+	  "Usage: %s [-nprvHS] [-a mount_point] [-c cache_time] [-d domain]\n\
+\t[-k kernel_arch] [-l logfile%s\n\
+\t[-t timeout.retrans] [-w wait_timeout] [-A arch] [-C cluster_name]\n\
+\t[-o op_sys_ver] [-O op_sys_name]\n\
+\t[-F conf_file] [-T conf_tag]", am_get_progname(),
+#ifdef HAVE_SYSLOG
+# ifdef LOG_DAEMON
+	  "|\"syslog[:facility]\"]"
+# else /* not LOG_DAEMON */
+	  "|\"syslog\"]"
+# endif /* not LOG_DAEMON */
+#else /* not HAVE_SYSLOG */
+	  "]"
+#endif /* not HAVE_SYSLOG */
+	  );
+
+#ifdef HAVE_MAP_NIS
+  fputs(" [-y nis-domain]\n", stderr);
+#else /* not HAVE_MAP_NIS */
+  fputc('\n', stderr);
+#endif /* HAVE_MAP_NIS */
+
+  show_opts('x', xlog_opt);
+#ifdef DEBUG
+  show_opts('D', dbg_opt);
+#endif /* DEBUG */
+  fprintf(stderr, "\t[directory mapname [-map_options]] ...\n");
+}
+
+
 void
 get_args(int argc, char *argv[])
 {
-  int opt_ch;
+  int opt_ch, i;
   FILE *fp = stdin;
   char getopt_arguments[] = "+nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:HA:";
   char *getopt_args;
-  extern char hostd[2 * MAXHOSTNAMELEN + 1];
+  int print_version = 0;	/* 1 means we should print version info */
 
 #ifdef HAVE_GNU_GETOPT
   getopt_args = getopt_arguments;
@@ -193,21 +231,27 @@ get_args(int argc, char *argv[])
       /* timeo.retrans */
       {
 	char *dot = strchr(optarg, '.');
+	int i;
 	if (dot)
 	  *dot = '\0';
 	if (*optarg) {
-	  gopt.amfs_auto_timeo = atoi(optarg);
+	  for (i=0; i<AMU_TYPE_MAX; ++i)
+	    gopt.amfs_auto_timeo[i] = atoi(optarg);
 	}
 	if (dot) {
-	  gopt.amfs_auto_retrans = atoi(dot + 1);
+	  for (i=0; i<AMU_TYPE_MAX; ++i)
+	    gopt.amfs_auto_retrans[i] = atoi(dot + 1);
 	  *dot = '.';
 	}
       }
       break;
 
     case 'v':
-      fputs(get_version_string(), stderr);
-      exit(0);
+      /*
+       * defer to print version info after every variable had been
+       * initialized.
+       */
+      print_version++;
       break;
 
     case 'w':
@@ -251,7 +295,8 @@ get_args(int argc, char *argv[])
       break;
 
     case 'H':
-      goto show_usage;
+      show_usage();
+      exit(1);
       break;
 
     case 'O':
@@ -311,8 +356,10 @@ get_args(int argc, char *argv[])
   }
 #endif /* HAVE_MAP_LDAP */
 
-  if (usage)
-    goto show_usage;
+  if (usage) {
+    show_usage();
+    exit(1);
+  }
 
   while (optind <= argc - 2) {
     char *dir = argv[optind++];
@@ -334,12 +381,15 @@ get_args(int argc, char *argv[])
       hostdomain = gopt.sub_domain;
     if (*hostdomain == '.')
       hostdomain++;
-    strlcat(hostd, ".", sizeof(hostd));
-    strlcat(hostd, hostdomain, sizeof(hostd));
+    strlcat(hostd, ".", 2 * MAXHOSTNAMELEN + 1);
+    strlcat(hostd, hostdomain, 2 * MAXHOSTNAMELEN + 1);
 
 #ifdef MOUNT_TABLE_ON_FILE
     if (amuDebug(D_MTAB))
-      mnttab_file_name = DEBUG_MNTTAB;
+      if(gopt.debug_mtab_file)
+        mnttab_file_name = gopt.debug_mtab_file; /* user supplied debug mtab path */
+      else
+	mnttab_file_name = DEBUG_MNTTAB_FILE; /* default debug mtab path */
     else
       mnttab_file_name = MNTTAB_FILE_NAME;
 #else /* not MOUNT_TABLE_ON_FILE */
@@ -350,56 +400,35 @@ get_args(int argc, char *argv[])
 # endif /* MNTTAB_FILE_NAME */
 #endif /* not MOUNT_TABLE_ON_FILE */
 
-    if (switch_to_logfile(gopt.logfile, orig_umask) != 0)
-      plog(XLOG_USER, "Cannot switch logfile");
-
     /*
      * If the kernel architecture was not specified
      * then use the machine architecture.
      */
-    if (gopt.karch == 0)
+    if (gopt.karch == NULL)
       gopt.karch = gopt.arch;
 
-    if (gopt.cluster == 0)
+    if (gopt.cluster == NULL)
       gopt.cluster = hostdomain;
 
-    if (gopt.amfs_auto_timeo <= 0)
-      gopt.amfs_auto_timeo = AMFS_AUTO_TIMEO;
-    if (gopt.amfs_auto_retrans <= 0)
-      gopt.amfs_auto_retrans = AMFS_AUTO_RETRANS;
-    if (gopt.amfs_auto_retrans <= 0)
-      gopt.amfs_auto_retrans = 3;	/* XXX */
-    return;
+    /* sanity checking, normalize values just in case */
+    for (i=0; i<AMU_TYPE_MAX; ++i) {
+      if (gopt.amfs_auto_timeo[i] <= 0)
+	gopt.amfs_auto_timeo[i] = AMFS_AUTO_TIMEO;
+      if (gopt.amfs_auto_retrans[i] <= 0)
+	gopt.amfs_auto_retrans[i] = AMFS_AUTO_RETRANS(i);
+      if (gopt.amfs_auto_retrans[i] <= 0)
+	gopt.amfs_auto_retrans[i] = 3;	/* XXX: needed? */
+    }
   }
 
-show_usage:
-  fprintf(stderr,
-	  "Usage: %s [-nprvHS] [-a mount_point] [-c cache_time] [-d domain]\n\
-\t[-k kernel_arch] [-l logfile%s\n\
-\t[-t timeout.retrans] [-w wait_timeout] [-A arch] [-C cluster_name]\n\
-\t[-o op_sys_ver] [-O op_sys_name]\n\
-\t[-F conf_file] [-T conf_tag]", am_get_progname(),
-#ifdef HAVE_SYSLOG
-# ifdef LOG_DAEMON
-	  "|\"syslog[:facility]\"]"
-# else /* not LOG_DAEMON */
-	  "|\"syslog\"]"
-# endif /* not LOG_DAEMON */
-#else /* not HAVE_SYSLOG */
-	  "]"
-#endif /* not HAVE_SYSLOG */
-	  );
+  /* finally print version string and exit, if asked for */
+  if (print_version) {
+    fputs(get_version_string(), stderr);
+    exit(0);
+  }
 
-#ifdef HAVE_MAP_NIS
-  fputs(" [-y nis-domain]\n", stderr);
-#else /* not HAVE_MAP_NIS */
-  fputc('\n', stderr);
-#endif /* HAVE_MAP_NIS */
+  if (switch_to_logfile(gopt.logfile, orig_umask) != 0)
+    plog(XLOG_USER, "Cannot switch logfile");
 
-  show_opts('x', xlog_opt);
-#ifdef DEBUG
-  show_opts('D', dbg_opt);
-#endif /* DEBUG */
-  fprintf(stderr, "\t[directory mapname [-map_options]] ...\n");
-  exit(1);
+  return;
 }

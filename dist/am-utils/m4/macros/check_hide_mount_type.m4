@@ -9,7 +9,7 @@ dnl the headers, but still use it; and more.  After a long attempt to get
 dnl this automatically configured, I came to the conclusion that the semi-
 dnl automatic per-host-os determination here is the best.
 dnl
-AC_DEFUN(AMU_CHECK_HIDE_MOUNT_TYPE,
+AC_DEFUN([AMU_CHECK_HIDE_MOUNT_TYPE],
 [
 AC_CACHE_CHECK(for mount type to hide from df,
 ac_cv_hide_mount_type,

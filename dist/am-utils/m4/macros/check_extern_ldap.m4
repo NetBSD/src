@@ -7,7 +7,7 @@ dnl
 dnl Note that $pattern below is very carefully crafted to match any system
 dnl external definition, with __P posix prototypes, with or without an extern
 dnl word, etc.  Think twice before changing this.
-AC_DEFUN(AMU_CHECK_EXTERN_LDAP,
+AC_DEFUN([AMU_CHECK_EXTERN_LDAP],
 [
 # store variable name for external definition
 ac_upcase_extern_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check style of accessing the mount table file
-AC_DEFUN(AMU_CHECK_MNTTAB_STYLE,
+AC_DEFUN([AMU_CHECK_MNTTAB_STYLE],
 [
 AC_CACHE_CHECK(mount table style,
 ac_cv_style_mnttab,

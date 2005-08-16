@@ -1,7 +1,7 @@
-/*	$NetBSD: checkmount_aix.c,v 1.1.1.7 2004/11/27 01:00:53 christos Exp $	*/
+/*	$NetBSD: checkmount_aix.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: checkmount_aix.c,v 1.9 2004/01/06 03:56:20 ezk Exp
+ * Id: checkmount_aix.c,v 1.11 2005/02/17 03:37:42 ezk Exp
  *
  */
 
@@ -50,7 +50,10 @@
 
 /* external definitions */
 extern int is_same_host(char *name1, char *name2, struct in_addr addr2);
+#if 0
+#error no longer needed on AIX 5.3
 extern int mntctl(int Command, int Size, char *Buffer);
+#endif
 
 
 int

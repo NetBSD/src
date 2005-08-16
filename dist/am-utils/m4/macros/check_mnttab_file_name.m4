@@ -7,7 +7,7 @@ dnl macro MNTTAB, is defined as the _source_ of filesystems to mount, and
 dnl is set to /etc/fstab.  That is why I have to first check out
 dnl if MOUNTED exists, and if not, check for the MNTTAB macro.
 dnl
-AC_DEFUN(AMU_CHECK_MNTTAB_FILE_NAME,
+AC_DEFUN([AMU_CHECK_MNTTAB_FILE_NAME],
 [
 AC_CACHE_CHECK(for name of mount table file name,
 ac_cv_mnttab_file_name,

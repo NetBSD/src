@@ -4,7 +4,7 @@ dnl Usage: AC_CHECK_FS_HEADERS(<headers>..., <fs>, [<fssymbol>])
 dnl Check if any of the headers <headers> exist.  If any exist, then
 dnl define HAVE_FS_<fs>.  If <fssymbol> exits, then define
 dnl HAVE_FS_<fssymbol> instead...
-AC_DEFUN(AMU_CHECK_FS_HEADERS,
+AC_DEFUN([AMU_CHECK_FS_HEADERS],
 [
 # find what name to give to the fs
 if test -n "$3"

@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.1.1.7 2004/11/27 01:00:39 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: conf.c,v 1.25 2004/07/23 18:29:22 ezk Exp
+ * Id: conf.c,v 1.32 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -77,13 +77,17 @@ struct _func_map {
  * FORWARD DECLARATIONS:
  */
 static int gopt_arch(const char *val);
+static int gopt_auto_attrcache(const char *val);
 static int gopt_auto_dir(const char *val);
 static int gopt_autofs_use_lofs(const char *val);
 static int gopt_browsable_dirs(const char *val);
 static int gopt_cache_duration(const char *val);
 static int gopt_cluster(const char *val);
+static int gopt_debug_mtab_file(const char *val);
 static int gopt_debug_options(const char *val);
 static int gopt_dismount_interval(const char *val);
+static int gopt_domain_strip(const char *val);
+static int gopt_exec_map_timeout(const char *val);
 static int gopt_full_os(const char *val);
 static int gopt_fully_qualified_hosts(const char *val);
 static int gopt_hesiod_base(const char *val);
@@ -104,13 +108,19 @@ static int gopt_map_type(const char *val);
 static int gopt_mount_type(const char *val);
 static int gopt_pid_file(const char *val);
 static int gopt_portmap_program(const char *val);
+static int gopt_preferred_amq_port(const char *val);
 static int gopt_nfs_allow_insecure_port(const char *val);
 static int gopt_nfs_proto(const char *val);
 static int gopt_nfs_retransmit_counter(const char *val);
+static int gopt_nfs_retransmit_counter_tcp(const char *val);
+static int gopt_nfs_retransmit_counter_udp(const char *val);
 static int gopt_nfs_retry_interval(const char *val);
+static int gopt_nfs_retry_interval_udp(const char *val);
+static int gopt_nfs_retry_interval_tcp(const char *val);
 static int gopt_nfs_vers(const char *val);
 static int gopt_nis_domain(const char *val);
 static int gopt_normalize_hostnames(const char *val);
+static int gopt_normalize_slashes(const char *val);
 static int gopt_os(const char *val);
 static int gopt_osver(const char *val);
 static int gopt_plock(const char *val);
@@ -144,13 +154,17 @@ static cf_map_t *head_map, *cur_map;
 
 static struct _func_map glob_functable[] = {
   {"arch",			gopt_arch},
+  {"auto_attrcache",		gopt_auto_attrcache},
   {"auto_dir",			gopt_auto_dir},
   {"autofs_use_lofs",		gopt_autofs_use_lofs},
   {"browsable_dirs",		gopt_browsable_dirs},
   {"cache_duration",		gopt_cache_duration},
   {"cluster",			gopt_cluster},
+  {"debug_mtab_file",           gopt_debug_mtab_file},
   {"debug_options",		gopt_debug_options},
   {"dismount_interval",		gopt_dismount_interval},
+  {"domain_strip",		gopt_domain_strip},
+  {"exec_map_timeout",		gopt_exec_map_timeout},
   {"fully_qualified_hosts",	gopt_fully_qualified_hosts},
   {"full_os",			gopt_full_os},
   {"hesiod_base",		gopt_hesiod_base},
@@ -171,13 +185,19 @@ static struct _func_map glob_functable[] = {
   {"mount_type",		gopt_mount_type},
   {"pid_file",			gopt_pid_file},
   {"portmap_program",		gopt_portmap_program},
+  {"preferred_amq_port",	gopt_preferred_amq_port},
   {"nfs_allow_insecure_port",	gopt_nfs_allow_insecure_port},
   {"nfs_proto",			gopt_nfs_proto},
   {"nfs_retransmit_counter",	gopt_nfs_retransmit_counter},
+  {"nfs_retransmit_counter_udp",	gopt_nfs_retransmit_counter_udp},
+  {"nfs_retransmit_counter_tcp",	gopt_nfs_retransmit_counter_tcp},
   {"nfs_retry_interval",	gopt_nfs_retry_interval},
+  {"nfs_retry_interval_udp",	gopt_nfs_retry_interval_udp},
+  {"nfs_retry_interval_tcp",	gopt_nfs_retry_interval_tcp},
   {"nfs_vers",			gopt_nfs_vers},
   {"nis_domain",		gopt_nis_domain},
   {"normalize_hostnames",	gopt_normalize_hostnames},
+  {"normalize_slashes",		gopt_normalize_slashes},
   {"os",			gopt_os},
   {"osver",			gopt_osver},
   {"plock",			gopt_plock},
@@ -344,6 +364,18 @@ gopt_arch(const char *val)
 
 
 static int
+gopt_auto_attrcache(const char *val)
+{
+  gopt.auto_attrcache = atoi(val);
+  if (gopt.auto_attrcache < 0) {
+    fprintf(stderr, "conf: bad attrcache value: \"%s\"\n", val);
+    return 1;
+  }
+  return 0;
+}
+
+
+static int
 gopt_auto_dir(const char *val)
 {
   gopt.auto_dir = strdup((char *)val);
@@ -405,6 +437,14 @@ gopt_cluster(const char *val)
 
 
 static int
+gopt_debug_mtab_file(const char *val)
+{
+  gopt.debug_mtab_file = strdup((char*)val);
+  return 0;
+}
+
+
+static int
 gopt_debug_options(const char *val)
 {
 #ifdef DEBUG
@@ -424,6 +464,32 @@ gopt_dismount_interval(const char *val)
   gopt.am_timeo_w = atoi(val);
   if (gopt.am_timeo_w <= 0)
     gopt.am_timeo_w = AM_TTL_W;
+  return 0;
+}
+
+
+static int
+gopt_domain_strip(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_DOMAIN_STRIP;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_DOMAIN_STRIP;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to domain_strip \"%s\"\n", val);
+  return 1;                     /* unknown value */
+}
+
+
+static int
+gopt_exec_map_timeout(const char *val)
+{
+  gopt.exec_map_timeout = atoi(val);
+  if (gopt.exec_map_timeout <= 0)
+    gopt.exec_map_timeout = AMFS_EXEC_MAP_TIMEOUT; /* default exec map timeout */
   return 0;
 }
 
@@ -699,6 +765,19 @@ gopt_portmap_program(const char *val)
 
 
 static int
+gopt_preferred_amq_port(const char *val)
+{
+  gopt.preferred_amq_port = atoi(val);
+
+  /*
+   * No need to check value: preferred_amq_port is an unsigned short and 0
+   * is a valid number, meaning "any port".
+   */
+  return 0;			/* all is OK */
+}
+
+
+static int
 gopt_nfs_allow_insecure_port(const char *val)
 {
   if (STREQ(val, "yes")) {
@@ -729,7 +808,26 @@ gopt_nfs_proto(const char *val)
 static int
 gopt_nfs_retransmit_counter(const char *val)
 {
-  gopt.amfs_auto_retrans = atoi(val);
+  int i;
+
+  for (i=0; i<AMU_TYPE_MAX; ++i)
+    gopt.amfs_auto_retrans[i] = atoi(val);
+  return 0;
+}
+
+
+static int
+gopt_nfs_retransmit_counter_udp(const char *val)
+{
+  gopt.amfs_auto_retrans[AMU_TYPE_UDP] = atoi(val);
+  return 0;
+}
+
+
+static int
+gopt_nfs_retransmit_counter_tcp(const char *val)
+{
+  gopt.amfs_auto_retrans[AMU_TYPE_TCP] = atoi(val);
   return 0;
 }
 
@@ -737,7 +835,26 @@ gopt_nfs_retransmit_counter(const char *val)
 static int
 gopt_nfs_retry_interval(const char *val)
 {
-  gopt.amfs_auto_timeo = atoi(val);
+  int i;
+
+  for (i=0; i<AMU_TYPE_MAX; ++i)
+    gopt.amfs_auto_timeo[i] = atoi(val);
+  return 0;
+}
+
+
+static int
+gopt_nfs_retry_interval_udp(const char *val)
+{
+  gopt.amfs_auto_timeo[AMU_TYPE_UDP] = atoi(val);
+  return 0;
+}
+
+
+static int
+gopt_nfs_retry_interval_tcp(const char *val)
+{
+  gopt.amfs_auto_timeo[AMU_TYPE_TCP] = atoi(val);
   return 0;
 }
 
@@ -781,6 +898,22 @@ gopt_normalize_hostnames(const char *val)
   }
 
   fprintf(stderr, "conf: unknown value to normalize_hostnames \"%s\"\n", val);
+  return 1;			/* unknown value */
+}
+
+
+static int
+gopt_normalize_slashes(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_NORMALIZE_SLASHES;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_NORMALIZE_SLASHES;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to normalize_slashes \"%s\"\n", val);
   return 1;			/* unknown value */
 }
 

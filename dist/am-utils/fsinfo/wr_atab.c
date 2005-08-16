@@ -1,7 +1,7 @@
-/*	$NetBSD: wr_atab.c,v 1.3 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: wr_atab.c,v 1.3.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wr_atab.c,v 1.9 2004/07/23 18:29:22 ezk Exp
+ * Id: wr_atab.c,v 1.10 2005/01/03 20:56:46 ezk Exp
  *
  */
 

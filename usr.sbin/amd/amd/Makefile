@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2004/11/28 00:07:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2005/08/16 13:02:37 tron Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -9,9 +9,9 @@ DIST=	${IDIST}/amd
 
 SRCS=	am_ops.c amd.c amfs_auto.c amfs_generic.c amfs_direct.c \
 	amfs_error.c amfs_host.c \
-	amfs_inherit.c amfs_link.c amfs_linkx.c amfs_nfsl.c amfs_nfsx.c \
+	amfs_link.c amfs_linkx.c amfs_nfsl.c amfs_nfsx.c \
 	amfs_program.c amfs_root.c amfs_toplvl.c amfs_union.c amq_subr.c \
-	amq_svc.c autil.c clock.c conf.c get_args.c info_file.c \
+	amq_svc.c autil.c clock.c conf.c get_args.c info_exec.c info_file.c \
 	info_ndbm.c info_passwd.c \
 	info_union.c map.c mapc.c mntfs.c nfs_prot_svc.c nfs_start.c \
 	nfs_subr.c ops_cdfs.c \

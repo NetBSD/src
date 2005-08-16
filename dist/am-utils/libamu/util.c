@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.1.1.7 2004/11/27 01:01:05 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: util.c,v 1.11 2004/01/06 03:56:20 ezk Exp
+ * Id: util.c,v 1.16 2005/04/09 18:15:35 ottavio Exp
  *
  */
 
@@ -81,6 +81,28 @@ str3cat(char *p, char *s1, char *s2, char *s3)
   memmove(p + l1, s2, l2);
   memmove(p + l1 + l2, s3, l3 + 1);
   return p;
+}
+
+
+/*
+ * Use generic strlcpy to copy a string more carefully, null-terminating it
+ * as needed.  However, if the copied string  was truncated due to lack of
+ * space, then warn us.
+ *
+ * For now, xstrlcpy returns VOID because it doesn't look like anywhere in
+ * the Amd code do we actually use the return value of strncpy/strlcpy.
+ */
+void
+xstrlcpy(char *dst, const char *src, size_t len)
+{
+  if (len < 0) {
+    plog(XLOG_ERROR, "xstrlcpy: illegal len %lu", (unsigned long)len);
+    return;
+  }
+  if (len == 0)
+    return;
+  if (strlcpy(dst, src, len) >= len)
+    plog(XLOG_ERROR, "xstrlcpy: string \"%s\" truncated to \"%s\"", src, dst);
 }
 
 
@@ -152,6 +174,7 @@ rmdirs(char *dir)
 	if (errno != ENOTEMPTY &&
 	    errno != EBUSY &&
 	    errno != EEXIST &&
+	    errno != EROFS &&
 	    errno != EINVAL)
 	  plog(XLOG_ERROR, "rmdir(%s): %m", xdp);
 	break;
@@ -170,9 +193,3 @@ rmdirs(char *dir)
   XFREE(xdp);
 }
 
-
-long
-get_server_pid()
-{
-  return (long) (foreground ? am_mypid : getppid());
-}

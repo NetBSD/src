@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.7 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: opts.c,v 1.29 2004/08/07 17:01:50 ezk Exp
+ * Id: opts.c,v 1.39 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -95,6 +95,7 @@ struct functable {
  * FORWARD DEFINITION:
  */
 static int f_in_network(char *);
+static int f_xhost(char *);
 static int f_netgrp(char *);
 static int f_netgrpd(char *);
 static int f_exists(char *);
@@ -240,6 +241,7 @@ static struct opt opt_fields[] = {
 
 static struct functable functable[] = {
   { "in_network",	f_in_network },
+  { "xhost",		f_xhost },
   { "netgrp",		f_netgrp },
   { "netgrpd",		f_netgrpd },
   { "exists",		f_exists },
@@ -488,14 +490,14 @@ split_opts(char *opts, char *mapkey)
     if (!eq)
       continue;
 
-    if (eq[-1] == '!' ||
+    if (*(eq-1) == '!' ||
 	eq[1] == '=' ||
 	eq[1] == '!') {	/* != or == or =! */
       continue;			/* we don't care about selectors */
     }
 
-    if (eq[-1] == ':') {	/* := */
-      eq[-1] = '\0';
+    if (*(eq-1) == ':') {	/* := */
+      *(eq-1) = '\0';
     } else {
       /* old style assignment */
       eq[0] = '\0';
@@ -618,11 +620,11 @@ eval_selectors(char *opts, char *mapkey)
      * == is SelEQ
      * =, := is VarAss
      */
-    if (eq[-1] == '!') {	/* != */
+    if (*(eq-1) == '!') {	/* != */
       vs_opt = SelNE;
-      eq[-1] = '\0';
+      *(eq-1) = '\0';
       opt = eq + 1;
-    } else if (eq[-1] == ':') {	/* := */
+    } else if (*(eq-1) == ':') {	/* := */
       continue;
     } else if (eq[1] == '=') {	/* == */
       vs_opt = SelEQ;
@@ -787,9 +789,9 @@ strip_selectors(char *opts, char *mapkey)
      * == is SelEQ
      * := is VarAss
      */
-    if (eq[-1] == '!') {	/* != */
+    if (*(eq-1) == '!') {	/* != */
       vs_opt = SelNE;
-    } else if (eq[-1] == ':') {	/* := */
+    } else if (*(eq-1) == ':') {	/* := */
       vs_opt = VarAss;
     } else if (eq[1] == '=') {	/* == */
       vs_opt = SelEQ;
@@ -828,11 +830,66 @@ f_in_network(char *arg)
   int status;
 
   if (!arg)
-    return FALSE;
+    return 0;
 
   status = is_network_member(arg);
   dlog("%s is %son a local network", arg, (status ? "" : "not "));
   return status;
+}
+
+
+/*
+ * Test if arg is any of this host's names or aliases (CNAMES).
+ * Note: this function compares against the fully expanded host name (hostd).
+ * XXX: maybe we also need to compare against the stripped host name?
+ */
+static int
+f_xhost(char *arg)
+{
+  struct hostent *hp;
+  char **cp;
+
+  if (!arg)
+    return 0;
+
+  /* simple test: does it match main host name? */
+  if (STREQ(arg, opt_hostd))
+    return 1;
+
+  /* now find all of the names of "arg" and compare against opt_hostd */
+  hp = gethostbyname(arg);
+  if (hp == NULL) {
+#ifdef HAVE_HSTRERROR
+    plog(XLOG_ERROR, "gethostbyname xhost(%s): %s", arg, hstrerror(h_errno));
+#else /* not HAVE_HSTRERROR */
+    plog(XLOG_ERROR, "gethostbyname xhost(%s): h_errno %d", arg, h_errno);
+#endif /* not HAVE_HSTRERROR */
+    return 0;
+  }
+  /* check primary name */
+  if (hp->h_name) {
+    dlog("xhost: compare %s==%s", hp->h_name, opt_hostd);
+    if (STREQ(hp->h_name, opt_hostd)) {
+      plog(XLOG_INFO, "xhost(%s): matched h_name %s", arg, hp->h_name);
+      return 1;
+    }
+  }
+  /* check all aliases, if any */
+  if (hp->h_aliases == NULL) {
+    dlog("gethostbyname(%s) has no aliases", arg);
+    return 0;
+  }
+  cp = hp->h_aliases;
+  while (*cp) {
+    dlog("xhost: compare alias %s==%s", *cp, opt_hostd);
+    if (STREQ(*cp, opt_hostd)) {
+      plog(XLOG_INFO, "xhost(%s): matched alias %s", arg, *cp);
+      return 1;
+    }
+    cp++;
+  }
+  /* nothing matched */
+  return 0;
 }
 
 
@@ -897,7 +954,6 @@ free_op(opt_apply *p, int b)
 {
   if (*p->opt) {
     XFREE(*p->opt);
-    *p->opt = 0;
   }
 }
 
@@ -908,9 +964,12 @@ free_op(opt_apply *p, int b)
 void
 normalize_slash(char *p)
 {
-  char *f = strchr(p, '/');
-  char *f0 = f;
+  char *f, *f0;
 
+  if (!(gopt.flags & CFM_NORMALIZE_SLASHES))
+    return;
+
+  f0 = f = strchr(p, '/');
   if (f) {
     char *t = f;
     do {
@@ -949,13 +1008,13 @@ normalize_slash(char *p)
 /*
  * Macro-expand an option.  Note that this does not
  * handle recursive expansions.  They will go badly wrong.
- * If sel is true then old expand selectors, otherwise
+ * If sel_p is true then old expand selectors, otherwise
  * don't expand selectors.
  */
 static char *
 expand_op(char *opt, int sel_p)
 {
-  static const char expand_error[] = "No space to expand \"%s\"";
+#define EXPAND_ERROR "No space to expand \"%s\""
   char expbuf[MAXPATHLEN + 1];
   char nbuf[NLEN + 1];
   char *ep = expbuf;
@@ -971,13 +1030,19 @@ expand_op(char *opt, int sel_p)
      */
     {
       int len = dp - cp;
-
-      if (BUFSPACE(ep, len)) {
-	strncpy(ep, cp, len);
-	ep += len;
-      } else {
-	plog(XLOG_ERROR, expand_error, opt);
-	goto out;
+      
+      if (len > 0) {
+	if (BUFSPACE(ep, len)) { 
+	  /* 
+	   * We use strncpy (not xstrlen) because 'ep' relies on it's symantics.
+	   * BUFSPACE guarantees that ep can hold len.
+	   */
+	  strncpy(ep, cp, len);
+	  ep += len;
+	} else {
+	  plog(XLOG_ERROR, EXPAND_ERROR, opt);
+	  goto out;
+	}
       }
     }
 
@@ -987,7 +1052,7 @@ expand_op(char *opt, int sel_p)
       if (BUFSPACE(ep, 1)) {
 	*ep++ = '$';
       } else {
-	plog(XLOG_ERROR, expand_error, opt);
+	plog(XLOG_ERROR, EXPAND_ERROR, opt);
 	goto out;
       }
     } else if (ch == '{') {
@@ -1023,7 +1088,7 @@ expand_op(char *opt, int sel_p)
 	todo = E_File;
 	cp++;
 	--len;
-      } else if (br_p[-1] == '/') {
+      } else if (*(br_p-1) == '/') {
 	/*
 	 * Take all but the last component
 	 */
@@ -1036,7 +1101,7 @@ expand_op(char *opt, int sel_p)
 	todo = E_Domain;
 	cp++;
 	--len;
-      } else if (br_p[-1] == '.') {
+      } else if (*(br_p-1) == '.') {
 	/*
 	 * Take host name
 	 */
@@ -1060,10 +1125,15 @@ expand_op(char *opt, int sel_p)
       /*
        * Put the string into another buffer so
        * we can do comparisons.
+       *
+       * We use strncpy here (not xstrlcpy) because the dest is meant
+       * to be truncated and we don't want to log it as an error.  The
+       * use of the BUFSPACE macro above guarantees the safe use of
+       * strncpy with nbuf.
        */
       strncpy(nbuf, cp, len);
       nbuf[len] = '\0';
-
+      
       /*
        * Advance cp
        */
@@ -1155,7 +1225,7 @@ expand_op(char *opt, int sel_p)
 	      strlcpy(ep, vptr, sizeof(expbuf) - (ep - expbuf));
 	      ep += vlen;
 	    } else {
-	      plog(XLOG_ERROR, expand_error, opt);
+	      plog(XLOG_ERROR, EXPAND_ERROR, opt);
 	      goto out;
 	    }
 	  }
@@ -1184,7 +1254,7 @@ expand_op(char *opt, int sel_p)
 	    strlcpy(ep, env, sizeof(expbuf) - (ep - expbuf));
 	    ep += vlen;
 	  } else {
-	    plog(XLOG_ERROR, expand_error, opt);
+	    plog(XLOG_ERROR, EXPAND_ERROR, opt);
 	    goto out;
 	  }
 	  if (amuDebug(D_STR))
@@ -1215,7 +1285,7 @@ out:
       strlcpy(ep, cp, sizeof(expbuf) - (ep - expbuf));
       /* ep += strlen(ep); */
     } else {
-      plog(XLOG_ERROR, expand_error, opt);
+      plog(XLOG_ERROR, EXPAND_ERROR, opt);
     }
 
     /*
@@ -1310,10 +1380,14 @@ expand_options(char *key)
  * Remove trailing /'s from a string
  * unless the string is a single / (Steven Glassman)
  * or unless it is two slashes // (Kevin D. Bond)
+ * or unless amd.conf says not to touch slashes.
  */
 void
 deslashify(char *s)
 {
+  if (!(gopt.flags & CFM_NORMALIZE_SLASHES))
+    return;
+
   if (s && *s) {
     char *sl = s + strlen(s);
 

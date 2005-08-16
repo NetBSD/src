@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.7 2004/11/27 01:39:50 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_sockets.c,v 1.28 2004/01/22 05:01:06 ezk Exp
+ * Id: transp_sockets.c,v 1.34 2005/03/03 02:59:02 ezk Exp
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -68,6 +68,7 @@ void
 amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
 {
   struct hostent *hp;
+  char dq[20];
 
 #ifdef DEBUG_off
 #error this code is old and probably not useful any longer.
@@ -113,7 +114,8 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
     goto out;
   }
   memmove((voidp) &iap->s_addr, (voidp) hp->h_addr_list[0], sizeof(iap->s_addr));
-  plog(XLOG_INFO, "localhost_address \"%s\" requested", preferred_localhost);
+  plog(XLOG_INFO, "localhost_address \"%s\" requested, using %s",
+       preferred_localhost, inet_dquad(dq, iap->s_addr));
   return;
 
  out:
@@ -123,6 +125,7 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
 
 /*
  * How to bind to reserved ports.
+ * Note: if *pp is non-null and is greater than 0, then *pp will not be modified.
  */
 int
 bind_resv_port(int so, u_short *pp)
@@ -134,16 +137,21 @@ bind_resv_port(int so, u_short *pp)
   memset((voidp) &sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
 
-  port = IPPORT_RESERVED;
-
-  do {
-    --port;
-    sin.sin_port = htons(port);
+  if (pp && *pp > 0) {
+    sin.sin_port = htons(*pp);
     rc = bind(so, (struct sockaddr *) &sin, sizeof(sin));
-  } while (rc < 0 && (int) port > IPPORT_RESERVED / 2);
+  } else {
+    port = IPPORT_RESERVED;
 
-  if (pp && rc == 0)
-    *pp = port;
+    do {
+      --port;
+      sin.sin_port = htons(port);
+      rc = bind(so, (struct sockaddr *) &sin, sizeof(sin));
+    } while (rc < 0 && (int) port > IPPORT_RESERVED / 2);
+
+    if (pp && rc == 0)
+      *pp = port;
+  }
 
   return rc;
 }
@@ -229,7 +237,7 @@ struct sockaddr_in *
 amu_svc_getcaller(SVCXPRT *xprt)
 {
   /* glibc 2.2 returns a sockaddr_storage ??? */
-  return (struct sockaddr_in *)svc_getcaller(xprt);
+  return (struct sockaddr_in *) svc_getcaller(xprt);
 }
 
 
@@ -254,21 +262,28 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
 
   *soNFSp = socket(AF_INET, SOCK_DGRAM, 0);
 
-  if (*soNFSp < 0 || bind_resv_port(*soNFSp, NULL) < 0) {
+  if (*soNFSp < 0 || bind_resv_port(*soNFSp, nfs_portp) < 0) {
     plog(XLOG_FATAL, "Can't create privileged nfs port (socket)");
+    if (*soNFSp >= 0)
+      close(*soNFSp);
     return 1;
   }
   if ((*nfs_xprtp = svcudp_create(*soNFSp)) == NULL) {
     plog(XLOG_FATAL, "cannot create rpc/udp service");
+    close(*soNFSp);
     return 2;
   }
   if ((*nfs_portp = (*nfs_xprtp)->xp_port) >= IPPORT_RESERVED) {
     plog(XLOG_FATAL, "Can't create privileged nfs port");
+    svc_destroy(*nfs_xprtp);
+    close(*soNFSp);
     return 1;
   }
   if (!svc_register(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, 0)) {
     plog(XLOG_FATAL, "unable to register (%ld, %ld, 0)",
 	 (u_long) NFS_PROGRAM, (u_long) NFS_VERSION);
+    svc_destroy(*nfs_xprtp);
+    close(*soNFSp);
     return 3;
   }
 
@@ -280,9 +295,13 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
  * Create the amq service for amd (both TCP and UDP)
  */
 int
-create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
-		   struct netconfig **dummy1, int *tcp_soAMQp,
-		   SVCXPRT **tcp_amqpp, struct netconfig **dummy2)
+create_amq_service(int *udp_soAMQp,
+		   SVCXPRT **udp_amqpp,
+		   struct netconfig **dummy1,
+		   int *tcp_soAMQp,
+		   SVCXPRT **tcp_amqpp,
+		   struct netconfig **dummy2,
+		   u_short preferred_amq_port)
 {
   /* first create TCP service */
   if (tcp_soAMQp) {
@@ -292,11 +311,25 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
       return 1;
     }
 
+    /* next, bind to a specific (TCP) port if asked for */
+    if (preferred_amq_port > 0) {
+      /*
+       * Note: if &preferred_amq_port is non-null and is greater than 0,
+       * then the pointer will not be modified.  We don't want it to be
+       * modified because it was passed down to create_amq_service as a
+       * non-pointer (a variable on the stack, not to be modified!)
+       */
+      if (bind_resv_port(*tcp_soAMQp, &preferred_amq_port) < 0) {
+	plog(XLOG_FATAL, "can't bind amq service to requested TCP port %d: %m)", preferred_amq_port);
+	return 1;
+      }
+    }
+
     /* now create RPC service handle for amq */
     if (tcp_amqpp &&
 	(*tcp_amqpp = svctcp_create(*tcp_soAMQp, AMQ_SIZE, AMQ_SIZE)) == NULL) {
       plog(XLOG_FATAL, "cannot create tcp service for amq: soAMQp=%d", *tcp_soAMQp);
-      return 2;
+      return 1;
     }
 
 #ifdef SVCSET_CONNMAXREC
@@ -320,14 +353,26 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
     *udp_soAMQp = socket(AF_INET, SOCK_DGRAM, 0);
     if (*udp_soAMQp < 0) {
       plog(XLOG_FATAL, "cannot create udp socket for amq service: %m");
-      return 3;
+      return 1;
+    }
+
+    /* next, bind to a specific (UDP) port if asked for */
+    if (preferred_amq_port > 0) {
+      /*
+       * Note: see comment about using &preferred_amq_port above in this
+       * function.
+       */
+      if (bind_resv_port(*udp_soAMQp, &preferred_amq_port) < 0) {
+	plog(XLOG_FATAL, "can't bind amq service to requested UDP port %d: %m)", preferred_amq_port);
+	return 1;
+      }
     }
 
     /* now create RPC service handle for amq */
     if (udp_amqpp &&
 	(*udp_amqpp = svcudp_bufcreate(*udp_soAMQp, AMQ_SIZE, AMQ_SIZE)) == NULL) {
       plog(XLOG_FATAL, "cannot create udp service for amq: soAMQp=%d", *udp_soAMQp);
-      return 4;
+      return 1;
     }
   }
 
@@ -336,7 +381,7 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
 
 
 /*
- * Check if the portmapper is running and reachable
+ * Check if the portmapper is running and reachable: 0==down, 1==up
  */
 int check_pmap_up(char *host, struct sockaddr_in* sin)
 {
@@ -345,26 +390,35 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
   int socket = RPC_ANYSOCK;
   struct timeval timeout;
 
-  timeout.tv_sec = 3;
+  timeout.tv_sec = 2;
   timeout.tv_usec = 0;
   sin->sin_port = htons(PMAPPORT);
   client = clntudp_create(sin, PMAPPROG, PMAPVERS, timeout, &socket);
-  if (client != (CLIENT *) NULL) {
-    /* Ping the portmapper on a remote system by calling the nullproc */
-    clnt_stat = clnt_call(client,
-			  PMAPPROC_NULL,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  NULL,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  NULL,
-			  timeout);
-    clnt_destroy(client);
+
+  if (client == (CLIENT *) NULL) {
+    plog(XLOG_ERROR,
+	 "check_pmap_up: cannot create connection to contact portmapper on host \"%s\"%s",
+	 host, clnt_spcreateerror(""));
+    return 0;
   }
+
+  timeout.tv_sec = 6;
+  /* Ping the portmapper on a remote system by calling the nullproc */
+  clnt_stat = clnt_call(client,
+			PMAPPROC_NULL,
+			(XDRPROC_T_TYPE) xdr_void,
+			NULL,
+			(XDRPROC_T_TYPE) xdr_void,
+			NULL,
+			timeout);
+  clnt_destroy(client);
   close(socket);
   sin->sin_port = 0;
 
   if (clnt_stat == RPC_TIMEDOUT) {
-    plog(XLOG_ERROR, "check_pmap_up: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
+    plog(XLOG_ERROR,
+	 "check_pmap_up: failed to contact portmapper on host \"%s\": %s",
+	 host, clnt_sperrno(clnt_stat));
     return 0;
   }
   return 1;
@@ -392,7 +446,7 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
     nfs_version = NFS_VERS_MAX;
     again = 1;
   }
-  tv.tv_sec = 3;		/* retry every 3 seconds, but also timeout */
+  tv.tv_sec = 2;		/* retry every 2 seconds, but also timeout */
   tv.tv_usec = 0;
 
 #ifdef HAVE_FS_NFS3
@@ -409,7 +463,7 @@ try_again:
     clnt = NULL;
 
   if (clnt != NULL) {
-    /* Try a couple times to verify the CLIENT handle. */
+    /* Try three times (6/2=3) to verify the CLIENT handle. */
     tv.tv_sec = 6;
     clnt_stat = clnt_call(clnt,
 			  NFSPROC_NULL,

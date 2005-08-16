@@ -7,7 +7,7 @@ dnl exist, then define MNTTAB_TYPE_<fssymbol> instead.  If <fssymbol> is
 dnl defined, then <fs> can be a list of fs strings to look for.
 dnl If no symbols have been defined, but the filesystem has been found
 dnl earlier, then set the mount-table type to "<fs>" anyway...
-AC_DEFUN(AMU_CHECK_MNTTAB_TYPE,
+AC_DEFUN([AMU_CHECK_MNTTAB_TYPE],
 [
 # find what name to give to the fs
 if test -n "$2"
@@ -53,6 +53,11 @@ do
   fi
 
   # look for a loadable filesystem module (linux)
+  if test -f /lib/modules/$host_os_version/fs/$ac_fs_tmp.ko
+  then
+    eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
+    break
+  fi
   if test -f /lib/modules/$host_os_version/fs/$ac_fs_tmp.o
   then
     eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
@@ -60,6 +65,11 @@ do
   fi
 
   # look for a loadable filesystem module (linux 2.4+)
+  if test -f /lib/modules/$host_os_version/kernel/fs/$ac_fs_tmp/$ac_fs_tmp.ko
+  then
+    eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
+    break
+  fi
   if test -f /lib/modules/$host_os_version/kernel/fs/$ac_fs_tmp/$ac_fs_tmp.o
   then
     eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
@@ -67,6 +77,11 @@ do
   fi
 
   # look for a loadable filesystem module (linux redhat-5.1)
+  if test -f /lib/modules/preferred/fs/$ac_fs_tmp.ko
+  then
+    eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
+    break
+  fi
   if test -f /lib/modules/preferred/fs/$ac_fs_tmp.o
   then
     eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""

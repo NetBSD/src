@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if need to turn on, off, or leave alone the NFS "noconn" option
-AC_DEFUN(AMU_CHECK_NFS_SOCKET_CONNECTION,
+AC_DEFUN([AMU_CHECK_NFS_SOCKET_CONNECTION],
 [
 AC_CACHE_CHECK(if to turn on/off noconn option,
 ac_cv_nfs_socket_connection,

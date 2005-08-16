@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check if a system needs to restart its signal handlers
-AC_DEFUN(AMU_CHECK_RESTARTABLE_SIGNAL_HANDLER,
+AC_DEFUN([AMU_CHECK_RESTARTABLE_SIGNAL_HANDLER],
 [
 AC_CACHE_CHECK(if system needs to restart signal handlers,
 ac_cv_restartable_signal_handler,
