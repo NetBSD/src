@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.16 2005/08/16 11:32:26 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2005/08/16 11:32:26 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -56,6 +56,8 @@ void intc_intr_priority(int, int);
 struct intc_intrhand *intc_alloc_ih(void);
 void intc_free_ih(struct intc_intrhand *);
 int intc_unknown_intr(void *);
+void intpri_intr_enable(int);
+void intpri_intr_disable(int);
 void netintr(void);
 void tmu1_oneshot(void);
 int tmu1_intr(void *);
@@ -64,9 +66,9 @@ int tmu2_intr(void *);
 
 /*
  * EVTCODE to intc_intrhand mapper.
- * max #60 is SH7709_INTEVT2_ADC_ADI (0x980)
+ * max #76 is SH4_INTEVT_TMU4 (0xb80)
  */
-int8_t __intc_evtcode_to_ih[64];
+int8_t __intc_evtcode_to_ih[128];
 
 struct intc_intrhand __intc_intrhand[_INTR_N + 1] = {
 	/* Place holder interrupt handler for unregistered interrupt. */
@@ -96,10 +98,14 @@ intc_init()
 		_reg_write_2(SH3_IPRA, 0);
 		_reg_write_2(SH3_IPRB, 0);
 		break;
-	case CPU_PRODUCT_7750S:
-	case CPU_PRODUCT_7750R:
+
 	case CPU_PRODUCT_7751:
 	case CPU_PRODUCT_7751R: 
+		_reg_write_4(SH4_INTPRI00, 0);
+		_reg_write_4(SH4_INTMSK00, INTMSK00_MASK_ALL);
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7750S:
+	case CPU_PRODUCT_7750R:
 		_reg_write_2(SH4_IPRD, 0);
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7750:
@@ -157,7 +163,24 @@ intc_intr_disable(int evtcode)
 
 	s = _cpu_intr_suspend();
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	intc_intr_priority(evtcode, 0);
+	switch (evtcode) {
+	default:
+		intc_intr_priority(evtcode, 0);
+		break;
+
+#if defined(SH4)
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		intpri_intr_disable(evtcode);
+		break;
+#endif
+	}
 	_cpu_intr_resume(s);
 }
 
@@ -169,9 +192,26 @@ intc_intr_enable(int evtcode)
 
 	s = _cpu_intr_suspend();
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	ih = EVTCODE_IH(evtcode);
-	/* ih_level is in the SR.IMASK format */
-	intc_intr_priority(evtcode, (ih->ih_level >> 4));
+	switch (evtcode) {
+	default:
+		ih = EVTCODE_IH(evtcode);
+		/* ih_level is in the SR.IMASK format */
+		intc_intr_priority(evtcode, (ih->ih_level >> 4));
+		break;
+
+#if defined(SH4)
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		intpri_intr_enable(evtcode);
+		break;
+#endif
+	}
 	_cpu_intr_resume(s);
 }
 
@@ -231,7 +271,7 @@ intc_intr_priority(int evtcode, int level)
 		break;
 	}
 
-	if (CPU_IS_SH3)
+	if (CPU_IS_SH3) {
 		switch (evtcode) {
 		case SH7709_INTEVT2_IRQ3:
 			SH7709_IPR(C, 12);
@@ -279,7 +319,7 @@ intc_intr_priority(int evtcode, int level)
 			SH7709_IPR(E, 0);
 			break;
 		}
-	else
+	} else {
 		switch (evtcode) {
 		case SH4_INTEVT_SCIF_ERI:
 		case SH4_INTEVT_SCIF_RXI:
@@ -287,7 +327,23 @@ intc_intr_priority(int evtcode, int level)
 		case SH4_INTEVT_SCIF_TXI:
 			SH4_IPR(C, 4);
 			break;
+
+#if 0
+		case SH4_INTEVT_PCISERR:
+		case SH4_INTEVT_PCIDMA3:
+		case SH4_INTEVT_PCIDMA2:
+		case SH4_INTEVT_PCIDMA1:
+		case SH4_INTEVT_PCIDMA0:
+		case SH4_INTEVT_PCIPWON:
+		case SH4_INTEVT_PCIPWDWN:
+		case SH4_INTEVT_PCIERR:
+#endif
+		case SH4_INTEVT_TMU3:
+		case SH4_INTEVT_TMU4:
+			intpri_intr_priority(evtcode, level);
+			break;
 		}
+	}
 
 	/*
 	 * XXX: This function gets called even for interrupts that
@@ -341,6 +397,162 @@ intc_unknown_intr(void *arg)
 	panic("unknown interrupt");
 	/* NOTREACHED */
 	return (0);
+}
+
+/*
+ * INTPRIxx
+ */
+void
+intpri_intr_priority(int evtcode, int level)
+{
+	volatile uint32_t *iprreg;
+	uint32_t r;
+	int pos;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTPRI00;
+	pos = -1;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIERR:
+		pos = 0;
+		break;
+
+	case SH4_INTEVT_PCISERR:
+		pos = 4;
+		break;
+
+	case SH4_INTEVT_TMU3:
+		pos = 8;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		pos = 12;
+		break;
+	}
+
+	if (pos < 0) {
+		return;
+	}
+
+	r = _reg_read_4(iprreg);
+	r = (r & ~(0xf << pos)) | (level << pos);
+	_reg_write_4(iprreg, r);
+}
+
+void
+intpri_intr_enable(int evtcode)
+{
+	volatile uint32_t *iprreg;
+	uint32_t bit;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTMSKCLR00;
+	bit = 0;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
+		break;
+
+	case SH4_INTEVT_TMU3:
+		bit = INTREQ00_TUNI3;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		bit = INTREQ00_TUNI4;
+		break;
+	}
+
+	if ((bit == 0) || (iprreg == NULL)) {
+		return;
+	}
+
+	_reg_write_4(iprreg, bit);
+}
+
+void
+intpri_intr_disable(int evtcode)
+{
+	volatile uint32_t *iprreg;
+	uint32_t bit;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTMSK00;
+	bit = 0;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
+		break;
+
+	case SH4_INTEVT_TMU3:
+		bit = INTREQ00_TUNI3;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		bit = INTREQ00_TUNI4;
+		break;
+	}
+
+	if ((bit == 0) || (iprreg == NULL)) {
+		return;
+	}
+
+	_reg_write_4(iprreg, bit);
 }
 
 /*
