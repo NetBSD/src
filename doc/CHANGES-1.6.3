@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.152 2005/08/05 20:35:54 snj Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.153 2005/08/16 11:39:49 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1890,4 +1890,10 @@ sys/lib/libz/inftrees.c				1.10
 
 	Return correct error on all zero length codes.
 	[tron, ticket #5835]
+
+usr.sbin/amd/include/config.h			patch
+
+	Embed machine and cpu architecture correctly by target host environmet,
+	not by build host.
+	[nakayama, ticket #5837]
 
