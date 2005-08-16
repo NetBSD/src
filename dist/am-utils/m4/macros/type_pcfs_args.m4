@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the correct type for PC/FS mount(2) arguments structure
-AC_DEFUN(AMU_TYPE_PCFS_ARGS,
+AC_DEFUN([AMU_TYPE_PCFS_ARGS],
 [
 AC_CACHE_CHECK(for structure type of pcfs mount(2) arguments,
 ac_cv_type_pcfs_args,

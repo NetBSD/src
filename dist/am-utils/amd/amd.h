@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.h,v 1.2 2004/11/27 01:39:50 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.2.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.h,v 1.53 2004/07/23 18:29:22 ezk Exp
+ * Id: amd.h,v 1.64 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -50,6 +50,14 @@
 /*
  * MACROS:
  */
+
+/*
+ * Define a default debug mtab path for systems
+ * that support mtab on file.
+ */
+#ifdef MOUNT_TABLE_ON_FILE
+# define DEBUG_MNTTAB_FILE               "/tmp/mnttab"
+#endif /* MOUNT_TABLE_ON_FILE */
 
 /* options for amd.conf */
 #define CFM_BROWSABLE_DIRS		0x0001
@@ -66,8 +74,10 @@
 #define CFM_USE_TCPWRAPPERS		0x0800
 #define CFM_AUTOFS_USE_LOFS		0x1000
 #define CFM_NFS_INSECURE_PORT		0x2000
+#define CFM_DOMAIN_STRIP		0x4000
+#define CFM_NORMALIZE_SLASHES		0x8000 /* normalize slashes? */
 /* defaults global flags: plock, tcpwrappers, and autofs/lofs */
-#define CFM_DEFAULT_FLAGS	(CFM_PROCESS_LOCK|CFM_USE_TCPWRAPPERS|CFM_AUTOFS_USE_LOFS)
+#define CFM_DEFAULT_FLAGS	(CFM_PROCESS_LOCK|CFM_USE_TCPWRAPPERS|CFM_AUTOFS_USE_LOFS|CFM_DOMAIN_STRIP|CFM_NORMALIZE_SLASHES)
 
 /*
  * macro definitions for automounter vfs/vnode operations.
@@ -128,6 +138,7 @@
 #define	FSF_WANT	0x0008	/* Want a wakeup call */
 #define	FSF_PINGING	0x0010	/* Already doing pings */
 #define	FSF_WEBNFS	0x0020	/* Don't try to contact portmapper */
+#define FSF_PING_UNINIT	0x0040	/* ping values have not been initilized */
 #define	FSRV_ERROR(fs)	((fs) && (((fs)->fs_flags & FSF_ERROR) == FSF_ERROR))
 #define	FSRV_ISDOWN(fs)	((fs) && (((fs)->fs_flags & (FSF_DOWN|FSF_VALID)) == (FSF_DOWN|FSF_VALID)))
 #define	FSRV_ISUP(fs)	(!(fs) || (((fs)->fs_flags & (FSF_DOWN|FSF_VALID)) == (FSF_VALID)))
@@ -160,15 +171,16 @@
 /*
  * default amfs_auto retrans - 1/10th seconds
  */
-#define	AMFS_AUTO_RETRANS	((ALLOWED_MOUNT_TIME*10+5*gopt.amfs_auto_timeo)/gopt.amfs_auto_timeo * 2)
+#define	AMFS_AUTO_RETRANS(x)	((ALLOWED_MOUNT_TIME*10+5*gopt.amfs_auto_timeo[(x)])/gopt.amfs_auto_timeo[(x)] * 2)
 
 /*
  * The following values can be tuned...
  */
-#define	AM_TTL			(5 * 60)	/* Default cache period */
-#define	AM_TTL_W		(2 * 60)	/* Default unmount interval */
+#define	AM_TTL			(300) /* Default cache period (5 min) */
+#define	AM_TTL_W		(120) /* Default unmount interval (2 min) */
 #define	AM_PINGER		30 /* NFS ping interval for live systems */
 #define	AMFS_AUTO_TIMEO		8 /* Default amfs_auto timeout - .8s */
+#define AMFS_EXEC_MAP_TIMEOUT	10 /* default 10sec exec map timeout */
 
 /* interval between forced retries of a mount */
 #define RETRY_INTERVAL	2
@@ -243,6 +255,7 @@ typedef wchan_t (*vget_wchan) (mntfs *);
 struct amu_global_options {
   char *arch;			/* name of current architecture */
   char *auto_dir;		/* automounter temp dir */
+  int auto_attrcache;		/* attribute cache timeout for auto dirs */
   char *cluster;		/* cluster name */
   char *karch;			/* kernel architecture */
   char *logfile;		/* amd log file */
@@ -259,12 +272,19 @@ struct amu_global_options {
   char *map_type;		/* global map type */
   char *search_path;		/* search path for maps */
   char *mount_type;		/* mount type for map */
+  char *debug_mtab_file;        /* path for the mtab file during debug mode */
   u_int flags;			/* various CFM_* flags */
-  int amfs_auto_retrans;	/* NFS retransmit counter */
-  int amfs_auto_timeo;		/* NFS retry interval */
+
+#define AMU_TYPE_UDP 0		/* for amfs_auto_{retrans,timeo} */
+#define AMU_TYPE_TCP 1		/* for amfs_auto_{retrans,timeo} */
+#define AMU_TYPE_MAX 2		/* for amfs_auto_{retrans,timeo} */
+  int amfs_auto_retrans[AMU_TYPE_MAX]; /* NFS retransmit counter */
+  int amfs_auto_timeo[AMU_TYPE_MAX]; /* NFS retry interval */
+
   int am_timeo;			/* cache duration */
   int am_timeo_w;		/* dismount interval */
   u_long portmap_program;	/* amd RPC program number */
+  u_short preferred_amq_port;	/* preferred amq service RPC port number (0 means "any") */
 #ifdef HAVE_MAP_HESIOD
   char *hesiod_base;		/* Hesiod rhs */
 #endif /* HAVE_MAP_HESIOD */
@@ -280,6 +300,7 @@ struct amu_global_options {
 #endif /* HAVE_MAP_NIS */
   char *nfs_proto;		/* NFS protocol (NULL, udp, tcp) */
   int nfs_vers;			/* NFS version (0, 2, 3, 4) */
+  u_int exec_map_timeout;	/* timeout (seconds) for executable maps */
 };
 
 /* if you add anything here, update conf.c:reset_cf_map() */
@@ -461,8 +482,8 @@ struct am_node {
   int am_flags;		/* Boolean flags AMF_* */
   int am_error;		/* Specific mount error */
   time_t am_ttl;	/* Time to live */
-  int am_timeo_w;	/* Wait interval */
-  int am_timeo;		/* Timeout interval */
+  int am_timeo_w;	/* Dismount wait interval */
+  int am_timeo;		/* Cache timeout interval */
   u_int am_gen;		/* Generation number */
   char *am_pref;	/* Mount info prefix */
   am_stats am_stats;	/* Statistics gathering */
@@ -485,6 +506,7 @@ struct am_node {
  * when transmitted.
  */
 struct am_fh {
+  int fhh_type;			/* old or new am_fh */
   int fhh_pid;			/* process id */
   int fhh_id;			/* map id */
   u_int fhh_gen;		/* generation number */
@@ -528,11 +550,12 @@ extern void assign_error_mntfs(am_node *mp);
 extern am_node *next_nonerror_node(am_node *xp);
 extern void flush_srvr_nfs_cache(void);
 extern void am_mounted(am_node *);
-extern void mf_mounted(mntfs *mf);
+extern void mf_mounted(mntfs *mf, bool_t call_free_opts);
 extern void am_unmounted(am_node *);
 extern am_node *get_exported_ap(int index);
 extern am_node *get_first_exported_ap(int *index);
 extern am_node *get_next_exported_ap(int *index);
+extern am_node *path_to_exported_ap(char *path);
 extern am_node *exported_ap_alloc(void);
 extern am_node *find_mf(mntfs *);
 extern am_node *next_map(int *);
@@ -594,6 +617,7 @@ extern void ops_showfstypes(char *outbuf);
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);
+extern void restart_automounter_nodes(void);
 extern int  root_keyiter(key_fun *, opaque_t);
 extern void root_newmap(const char *, const char *, const char *, const cf_map_t *);
 extern void run_task(task_fun *, opaque_t, cb_fun *, opaque_t);
@@ -780,13 +804,6 @@ extern am_node *amfs_error_lookup_child(am_node *mp, char *fname, int *error_ret
 extern am_node *amfs_error_mount_child(am_node *ap, int *error_return);
 extern int amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, u_int count);
 #endif /* HAVE_AMU_FS_ERROR */
-
-/*
- * Inheritance File System
- */
-#ifdef HAVE_AMU_FS_INHERIT
-extern am_ops amfs_inherit_ops;	/* Inheritance file system */
-#endif /* HAVE_AMU_FS_INHERIT */
 
 /*
  * NFS mounts with local existence check.

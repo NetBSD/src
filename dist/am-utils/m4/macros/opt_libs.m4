@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl Initial settings for LIBS (-l options)
 dnl NOTE: this is for configuration as well as compilations!
-AC_DEFUN(AMU_OPT_LIBS,
+AC_DEFUN([AMU_OPT_LIBS],
 [AC_MSG_CHECKING(for configuration/compilation (-l) library flags)
 AC_ARG_ENABLE(libs,
 AC_HELP_STRING([--enable-libs=ARG],

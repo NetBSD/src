@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.9 2004/11/27 01:39:50 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.9.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_utils.h,v 1.57 2004/01/22 05:01:06 ezk Exp
+ * Id: am_utils.h,v 1.65 2005/04/07 23:31:07 ezk Exp
  *
  */
 
@@ -283,7 +283,6 @@ extern char *strip_selectors(char *, char *);
 extern char *strnsave(const char *, int);
 extern int amu_close(int fd);
 extern int bind_resv_port(int, u_short *);
-extern int bind_resv_port2(u_short *);
 extern int cmdoption(char *, struct opt_tab *, int *);
 extern int compute_automounter_mount_flags(mntent_t *);
 extern int compute_mount_flags(mntent_t *);
@@ -302,7 +301,9 @@ extern int pickup_rpc_reply(voidp, int, voidp, XDRPROC_T_TYPE);
 extern int switch_option(char *);
 extern int switch_to_logfile(char *logfile, int orig_umask);
 extern mntlist *read_mtab(char *, const char *);
+#ifndef HAVE_TRANSPORT_TYPE_TLI
 extern struct sockaddr_in *amu_svc_getcaller(SVCXPRT *xprt);
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 extern time_t time(time_t *);
 extern void amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost);
 extern void amu_release_controlling_tty(void);
@@ -318,6 +319,7 @@ extern void rmdirs(char *);
 extern void rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
 extern void set_amd_program_number(int program);
 extern void show_opts(int ch, struct opt_tab *);
+extern void xstrlcpy(char *dst, const char *src, size_t len);
 extern void unregister_amq(void);
 extern voidp xmalloc(int);
 extern voidp xrealloc(voidp, int);
@@ -340,7 +342,7 @@ extern int syslogging;
 #endif /* defined(HAVE_SYSLOG_H) || defined(HAVE_SYS_SYSLOG_H) */
 
 extern void compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name);
-extern int create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_amqncpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **tcp_amqncpp);
+extern int create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_amqncpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **tcp_amqncpp, u_short preferred_amq_port);
 extern int create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
 extern int amu_svc_register(SVCXPRT *, u_long, u_long, void (*)(struct svc_req *, SVCXPRT *), u_long, struct netconfig *);
 
@@ -381,11 +383,6 @@ extern int unregister_autofs_service(char *autofs_conftype);
  * DEBUGGING:
  */
 
-/* debugging mount-table file to use */
-#ifndef DEBUG_MNTTAB
-# define DEBUG_MNTTAB	"./mnttab"
-#endif /* not DEBUG_MNTTAB */
-
 #ifdef DEBUG
 
 # define	D_ALL		(~(D_MTAB|D_HRTIME|D_XDRTRACE|D_DAEMON|D_FORK|D_AMQ))
@@ -416,6 +413,9 @@ extern int unregister_autofs_service(char *autofs_conftype);
 # define	amuDebug(x)	(debug_flags & (x))
 # define	dlog		if (amuDebug(D_FULL)) dplog
 
+/* my favorite debugging tool -Erez */
+#define EZKDBG plog(XLOG_INFO,"EZK:%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__)
+
 # ifdef DEBUG_MEM
 /*
  * If debugging memory, then call a special freeing function that logs
@@ -441,10 +441,10 @@ extern void dplog(const char *fmt, ...)
 #else /* not DEBUG */
 
 /*
- * if not debugging, then simple perform free, and don't bother
- * resetting the pointer.
+ * If not debugging, then also reset the pointer.
+ * It's safer -- and besides, free() should do that anyway.
  */
-#  define	XFREE(x) free(x)
+#  define	XFREE(x) do { free((voidp)x); x = NULL;} while (0)
 
 #define		amuDebug(x)	(0)
 

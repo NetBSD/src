@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl AC_HOST_MACROS: define HOST_CPU, HOST_VENDOR, and HOST_OS
-AC_DEFUN(AMU_HOST_MACROS,
+AC_DEFUN([AMU_HOST_MACROS],
 [
 # these are defined already by the macro 'CANONICAL_HOST'
   AC_MSG_CHECKING([host cpu])
@@ -58,6 +58,16 @@ AC_DEFUN(AMU_HOST_MACROS,
   esac
   AC_DEFINE_UNQUOTED(HOST_ARCH, "$host_arch")
   AC_MSG_RESULT($host_arch)
+
+# figure out (linux) distribution, if any
+  AC_MSG_CHECKING([OS system distribution])
+  ac_config_distro=`$SHELL $ac_aux_dir/config.guess.long | cut -d'-' -f4-`
+  if test -z "$ac_config_distro"
+  then
+    ac_config_distro="none"
+  fi
+  AC_DEFINE_UNQUOTED(DISTRO_NAME, "$ac_config_distro")
+  AC_MSG_RESULT($ac_config_distro)
 
 # figure out host name
   AC_MSG_CHECKING([host name])

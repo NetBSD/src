@@ -4,7 +4,7 @@ dnl Usage: AMU_CHECK_MNT2_GEN_OPT(<fs>)
 dnl Check if there is an entry for MS_<fs>, MNT_<fs>, or M_<fs>
 dnl (in that order) in mntent.h, sys/mntent.h, or mount.h...
 dnl then define MNT2_GEN_OPT_<fs> to the hex number.
-AC_DEFUN(AMU_CHECK_MNT2_GEN_OPT,
+AC_DEFUN([AMU_CHECK_MNT2_GEN_OPT],
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -75,7 +75,7 @@ dnl ======================================================================
 dnl ######################################################################
 dnl run AMU_CHECK_MNT2_GEN_OPT on each argument given
 dnl Usage: AMU_CHECK_MNT2_GEN_OPTS(arg arg arg ...)
-AC_DEFUN(AMU_CHECK_MNT2_GEN_OPTS,
+AC_DEFUN([AMU_CHECK_MNT2_GEN_OPTS],
 [
 for ac_tmp_arg in $1
 do

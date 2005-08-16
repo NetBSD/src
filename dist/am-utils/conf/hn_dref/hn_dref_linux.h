@@ -1,4 +1,4 @@
-/*	$NetBSD: hn_dref_linux.h,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+/*	$NetBSD: hn_dref_linux.h,v 1.1.1.4.8.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /* $srcdir/conf/hn_dref/hn_dref_linux.h */
-#define NFS_HN_DREF(dst, src) strncpy((dst), (src), MAXHOSTNAMELEN)
+#define NFS_HN_DREF(dst, src) xstrlcpy((dst), (src), MAXHOSTNAMELEN)

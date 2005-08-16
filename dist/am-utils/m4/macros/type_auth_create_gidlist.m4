@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the correct type for the 5th argument to authunix_create()
-AC_DEFUN(AMU_TYPE_AUTH_CREATE_GIDLIST,
+AC_DEFUN([AMU_TYPE_AUTH_CREATE_GIDLIST],
 [
 AC_CACHE_CHECK(argument type of 5rd argument to authunix_create(),
 ac_cv_auth_create_gidlist,

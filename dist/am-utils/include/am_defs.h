@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.6 2004/11/28 11:15:26 jmc Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.6.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_defs.h,v 1.50 2004/07/30 18:13:10 ezk Exp
+ * Id: am_defs.h,v 1.56 2005/04/17 03:05:54 ezk Exp
  *
  */
 
@@ -168,6 +168,13 @@ struct sigevent;
 #if HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
+
+/*
+ * Actions to take if HAVE_LIMITS_H is defined.
+ */
+#if HAVE_LIMITS_H_H
+# include <limits.h>
+#endif /* HAVE_LIMITS_H */
 
 /*
  * Actions to take if HAVE_UNISTD_H is defined.
@@ -814,6 +821,14 @@ struct sockaddr_dl;
  * Actions to take if <resolv.h> exists.
  */
 #ifdef HAVE_RESOLV_H
+/*
+ * On AIX 5.2, both <resolv.h> and <arpa/nameser_compat.h> define MAXDNAME,
+ * if compiling with gcc -D_USE_IRS (so that we get extern definitions for
+ * hstrerror() and others).
+ */
+# if defined(_AIX) && defined(MAXDNAME) && defined(_USE_IRS)
+#  undef MAXDNAME
+# endif /* defined(_AIX) && defined(MAXDNAME) && defined(_USE_IRS) */
 # include <resolv.h>
 #endif /* HAVE_RESOLV_H */
 
@@ -1000,6 +1015,22 @@ struct sockaddr_dl;
  * Actions to take if <rpcsvc/nis.h> exists.
  */
 #ifdef HAVE_RPCSVC_NIS_H
+/*
+ * Solaris 10 (build 72) defines GROUP_OBJ in <sys/acl.h>, which is included
+ * in many other header files.  <rpcsvc/nis.h> uses GROUP_OBJ inside enum
+ * zotypes.  So if you're unlucky enough to include both headers, you get a
+ * compile error because the two symbols conflict.
+ * A similar conflict arises with Sun cc and the definition of "GROUP".
+ *
+ * Temp hack: undefine acl.h's GROUP_OBJ and GROUP because they're not needed
+ * for am-utils.
+ */
+# ifdef GROUP_OBJ
+#  undef GROUP_OBJ
+# endif /* GROUP_OBJ */
+# ifdef GROUP
+#  undef GROUP
+# endif /* GROUP */
 # include <rpcsvc/nis.h>
 #endif /* HAVE_RPCSVC_NIS_H */
 
@@ -1489,6 +1520,14 @@ extern int strcasecmp(const char *s1, const char *s2);
  */
 extern char *strdup(const char *s);
 #endif /* not HAVE_EXTERN_STRDUP */
+
+#ifndef HAVE_EXTERN_STRLCPY
+/*
+ * define this extern even if function does not exist, for it will
+ * be filled in by libamu/strlcpy.c
+ */
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif /* not HAVE_EXTERN_STRLCPY */
 
 #if defined(HAVE_STRSTR) && !defined(HAVE_EXTERN_STRSTR)
 extern char *strstr(const char *s1, const char *s2);

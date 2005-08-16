@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_host.c,v 1.5 2004/11/27 01:39:50 christos Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.5.2.1 2005/08/16 13:02:13 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_host.c,v 1.28 2004/01/06 03:56:20 ezk Exp
+ * Id: amfs_host.c,v 1.30 2005/04/07 05:50:38 ezk Exp
  *
  */
 
@@ -467,7 +467,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
    * error code 0 at the end.  If they all fail then return
    * the last error code.
    */
-  strlcpy(fs_name, mf->mf_info, sizeof(fs_name));
+  xstrlcpy(fs_name, mf->mf_info, sizeof(fs_name));
   if ((rfs_dir = strchr(fs_name, ':')) == (char *) 0) {
     plog(XLOG_FATAL, "amfs_host_mount: mf_info has no colon");
     error = EINVAL;

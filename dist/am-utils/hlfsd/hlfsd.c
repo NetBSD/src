@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.c,v 1.8 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.8.2.1 2005/08/16 13:02:24 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.c,v 1.28 2004/07/23 18:29:22 ezk Exp
+ * Id: hlfsd.c,v 1.32 2005/02/27 23:53:22 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -384,7 +384,7 @@ main(int argc, char *argv[])
     chmod(alt_spooldir, OPEN_SPOOLMODE);
 
     /* create failsafe link to alternate spool directory */
-    slinkname[-1] = '/';	/* unsplit dir_name to include link */
+    *(slinkname-1) = '/';	/* unsplit dir_name to include link */
     if (lstat(dir_name, &stmodes) == 0 &&
 	(stmodes.st_mode & S_IFMT) != S_IFLNK) {
       fprintf(stderr, "%s: failsafe %s not a symlink\n",
@@ -405,7 +405,7 @@ main(int argc, char *argv[])
       }
     }
 
-    slinkname[-1] = '\0';	/* resplit dir_name */
+    *(slinkname-1) = '\0';	/* resplit dir_name */
   } /* end of "if (!forcefast) {" */
 
   /*
@@ -447,11 +447,18 @@ main(int argc, char *argv[])
    * set this signal handler.
    */
   if (!amuDebug(D_DAEMON)) {
-    /* XXX: port to use pure svr4 signals */
     s = -99;
     while (stoplight != SIGUSR2) {
       plog(XLOG_INFO, "parent waits for child to setup (stoplight=%d)", stoplight);
+#ifdef HAVE_SIGSUSPEND
+      {
+	sigset_t mask;
+	sigemptyset(&mask);
+	s = sigsuspend(&mask);	/* wait for child to set up */
+      }
+#else /* not HAVE_SIGSUSPEND */
       s = sigpause(0);		/* wait for child to set up */
+#endif /* not HAVE_SIGSUSPEND */
       sleep(1);
     }
   }
@@ -868,7 +875,7 @@ cleanup(int signum)
   }
 
   plog(XLOG_INFO, "hlfsd terminating with status 0\n");
-  exit(0);
+  _exit(0);
 }
 
 
@@ -878,7 +885,7 @@ reaper(int signum)
   int result;
 
   if (wait(&result) == masterpid) {
-    exit(4);
+    _exit(4);
   }
 }
 

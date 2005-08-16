@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check for type of xdrproc_t (usually in <rpc/xdr.h>)
-AC_DEFUN(AMU_TYPE_XDRPROC_T,
+AC_DEFUN([AMU_TYPE_XDRPROC_T],
 [
 AC_CACHE_CHECK(for xdrproc_t,
 ac_cv_type_xdrproc_t,

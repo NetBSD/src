@@ -4,7 +4,7 @@ dnl option.
 dnl Usage: AMU_CHECK_MNTTAB_OPT(<fs>)
 dnl Check if there is an entry for MNTOPT_<fs> in sys/mntent.h or mntent.h
 dnl define MNTTAB_OPT_<fs> to the string name (e.g., "ro").
-AC_DEFUN(AMU_CHECK_MNTTAB_OPT,
+AC_DEFUN([AMU_CHECK_MNTTAB_OPT],
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -42,7 +42,7 @@ dnl ======================================================================
 dnl ######################################################################
 dnl run AMU_CHECK_MNTTAB_OPT on each argument given
 dnl Usage: AMU_CHECK_MNTTAB_OPTS(arg arg arg ...)
-AC_DEFUN(AMU_CHECK_MNTTAB_OPTS,
+AC_DEFUN([AMU_CHECK_MNTTAB_OPTS],
 [
 for ac_tmp_arg in $1
 do

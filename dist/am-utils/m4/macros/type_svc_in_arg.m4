@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl Find the type of the 3rd argument (in) to svc_sendreply() call
-AC_DEFUN(AMU_TYPE_SVC_IN_ARG,
+AC_DEFUN([AMU_TYPE_SVC_IN_ARG],
 [
 AC_CACHE_CHECK(for type of 3rd arg ('in') arg to svc_sendreply(),
 ac_cv_type_svc_in_arg,

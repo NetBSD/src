@@ -1,7 +1,7 @@
-/*	$NetBSD: readdir.c,v 1.1.1.1 2004/11/27 01:00:42 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.1.1.1.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: readdir.c,v 1.3 2004/07/23 18:29:22 ezk Exp
+ * Id: readdir.c,v 1.5 2005/03/21 00:16:53 ezk Exp
  *
  */
 
@@ -354,10 +354,8 @@ amfs_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *
   dp->dl_entries = ep;
   if (amuDebug(D_READDIR)) {
     nfsentry *ne;
-    plog(XLOG_DEBUG, "dl_entries=0x%lx, te_next=0x%lx, dl_eof=%d",
-	 (u_long) dp->dl_entries,
-	 (u_long) te_next,
-	 dp->dl_eof);
+    plog(XLOG_DEBUG, "dl_entries=%p, te_next=%p, dl_eof=%d",
+	 dp->dl_entries, te_next, dp->dl_eof);
     for (ne = te; ne; ne = ne->ne_nextentry)
       plog(XLOG_DEBUG, "gen3 key %4d \"%s\"", j++, ne->ne_name);
   }

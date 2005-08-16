@@ -1,7 +1,7 @@
 dnl ######################################################################
 dnl Initial settings for LDFLAGS (-L options)
 dnl NOTE: this is for configuration as well as compilations!
-AC_DEFUN(AMU_OPT_LDFLAGS,
+AC_DEFUN([AMU_OPT_LDFLAGS],
 [AC_MSG_CHECKING(for configuration/compilation (-L) library flags)
 AC_ARG_ENABLE(ldflags,
 AC_HELP_STRING([--enable-ldflags=ARG],

@@ -1,6 +1,6 @@
 dnl ######################################################################
 dnl check the mount system call trap needed to mount(2) a filesystem
-AC_DEFUN(AMU_CHECK_MOUNT_TRAP,
+AC_DEFUN([AMU_CHECK_MOUNT_TRAP],
 [
 AC_CACHE_CHECK(mount trap system-call style,
 ac_cv_mount_trap,

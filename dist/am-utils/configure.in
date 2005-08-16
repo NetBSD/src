@@ -12,7 +12,7 @@ dnl ######################################################################
 dnl INITIALIZATION
 dnl AC_INIT
 dnl new init style: PACKAGE, VERSION, BUG-REPORTING-ADDRESS
-AC_INIT([am-utils],[6.1b5pre],[am-utils@am-utils.org])
+AC_INIT([am-utils],[6.1-rc2],[am-utils@am-utils.org])
 AC_MSG_NOTICE(*** INITIALIZATION ***)
 AC_CONFIG_SRCDIR([amd/amd.c])
 AM_CONFIG_HEADER(config.h)
@@ -53,8 +53,8 @@ AH_BOTTOM([
 dnl
 dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.1.1.5 $)
-AC_COPYRIGHT([Copyright (c) 1997-2004 Erez Zadok])
+AC_REVISION($Revision: 1.1.1.5.2.1 $)
+AC_COPYRIGHT([Copyright (c) 1997-2005 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
 dnl run by libtool, but must be kept here because HOST_MACROS depends on it
@@ -194,6 +194,7 @@ dnl Generic Program Checks
 AC_MSG_NOTICE(*** GENERIC PROGRAMS ***)
 AC_PATH_PROGS(AR, ar, :)
 AC_PATH_PROGS(PERL, perl5 perl4 perl, /usr/bin/perl)
+AC_PATH_PROGS(UNMOUNT_PROGRAM, umount unmount, /bin/umount)
 dnl ======================================================================
 
 dnl ######################################################################
@@ -210,9 +211,11 @@ dnl lots of code.  So I am forced to use a special purpose macro that sets
 dnl the libraries based on the OS.  Sigh.  -Erez.
 AMU_CHECK_OS_LIBS
 
-dnl librpc and librpcsvc are needed on Solaris (I think)
+dnl librpc and librpcsvc are needed on Solaris
 AC_CHECK_LIB(rpc, clnt_sperrno)
 AC_CHECK_LIB(rpcsvc, xdr_fhandle)
+dnl libresolv is needed on Solaris/HPUX-11 for hstrerror()
+AC_CHECK_FUNC(hstrerror,,AC_CHECK_LIB(resolv, hstrerror))
 dnl Linux RedHat 5.1 puts yp functions only in libnsl (libnsl broken on aix)
 AC_CHECK_FUNC(yp_all,,AC_CHECK_LIB(nsl, yp_all))
 
@@ -253,6 +256,7 @@ dnl ======================================================================
 dnl Generic Function Checks
 AC_MSG_NOTICE(*** GENERIC LIBRARY FUNCTIONS ***)
 AC_CHECK_FUNCS(			\
+	__rpc_get_local_uid	\
 	__seterr_reply		\
 	_seterr_reply		\
 	bcmp			\
@@ -283,6 +287,8 @@ AC_CHECK_FUNCS(			\
 	hesiod_init		\
 	hesiod_reload		\
 	hesiod_to_bind		\
+	hstrerror		\
+	madvise			\
 	memcmp			\
 	memcpy			\
 	memmove			\
@@ -304,12 +310,14 @@ AC_CHECK_FUNCS(			\
 	setsid			\
 	sigaction		\
 	signal			\
+	sigsuspend		\
 	socket			\
 	strchr			\
-	strcspn			\
 	strcasecmp		\
+	strcspn			\
 	strdup			\
 	strerror		\
+	strlcpy			\
 	strspn			\
 	strstr			\
 	svc_getreq		\
@@ -318,6 +326,7 @@ AC_CHECK_FUNCS(			\
 	syslog			\
 	uname			\
 	umount			\
+	umount2			\
 	unmount			\
 	uvmount			\
 	vfork			\
@@ -333,6 +342,7 @@ AC_REPLACE_FUNCS(		\
 	strcasecmp		\
 	strdup			\
 	strerror		\
+	strlcpy			\
 	strstr			\
 	ualarm			\
 	)
@@ -407,14 +417,11 @@ AC_CHECK_HEADERS(			\
 	gdbm/ndbm.h			\
 	hsfs/hsfs.h			\
 	isofs/cd9660/cd9660_mount.h	\
-	linux/auto_fs.h			\
-	linux/auto_fs4.h		\
+	limits.h			\
 	linux/fs.h			\
 	linux/kdev_t.h			\
 	linux/list.h			\
-	linux/loop.h			\
 	linux/nfs.h			\
-	linux/nfs_mount.h		\
 	linux/posix_types.h		\
 	machine/endian.h		\
 	msdosfs/msdosfsmount.h		\
@@ -521,6 +528,7 @@ dnl	dirent.h			\
 	lber.h				\
 	ldap.h				\
 	libgen.h			\
+	limits.h			\
 	malloc.h			\
 	memory.h			\
 	mntent.h			\
@@ -551,7 +559,27 @@ dnl	dirent.h			\
 	varargs.h			\
 	unistd.h			\
 	)
-dnl ======================================================================
+dnl headers which depend on others, else you get an configure error
+AC_CHECK_HEADERS([			\
+	linux/auto_fs.h			\
+	linux/auto_fs4.h		\
+	linux/loop.h			\
+	linux/nfs_mount.h		\
+], [], [],
+[
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif /* HAVE_SYS_SOCKET_H */
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif /* HAVE_LIMITS_H */
+#ifdef HAVE_LINUX_POSIX_TYPES_H
+# include <linux/posix_types.h>
+#endif /* HAVE_LINUX_POSIX_TYPES_H */
+/* next dev_t lines needed due to changes in kernel code */
+#undef dev_t
+#define dev_t unsigned short	/* compatible with Red Hat and SuSE */
+])
 
 dnl ======================================================================
 dnl db/ndbm/gdbm: This is serious autoconf-fu...
@@ -703,6 +731,7 @@ AMU_CHECK_EXTERNS(
 	setitimer		\
 	strcasecmp		\
 	strdup			\
+	strlcpy			\
 	strstr			\
 	ualarm			\
 	usleep			\
@@ -791,6 +820,7 @@ AC_MSG_NOTICE(*** MAP TYPES ***)
 dnl DBM is obsolete, use NDBM
 dnl AMU_CHECK_MAP_FUNCS(dbminit dbmopen, dbm)
 AMU_CHECK_MAP_FUNCS(fgets, file)
+AMU_CHECK_MAP_FUNCS(waitpid, exec)
 dnl Define HESIOD map if user wanted it, and both headers and libraries exist
 if test "$with_hesiod" = "yes" && test "$ac_cv_header_hesiod_h" = "yes"
 then
@@ -859,7 +889,7 @@ AMU_CHECK_AMU_FS(auto, automounter)
 AMU_CHECK_AMU_FS(direct, direct automount)
 AMU_CHECK_AMU_FS(toplvl, top-level)
 AMU_CHECK_AMU_FS(error, error)
-AMU_CHECK_AMU_FS(inherit, inheritance)
+dnl AMU_CHECK_AMU_FS(inherit, inheritance)
 AMU_CHECK_AMU_FS(program, program)
 AMU_CHECK_AMU_FS(link, symlink)
 AMU_CHECK_AMU_FS(linkx, symlink with existence check)

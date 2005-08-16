@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_ufs.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: ops_ufs.c,v 1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 Erez Zadok
+ * Copyright (c) 1997-2005 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_ufs.c,v 1.17 2004/01/06 03:56:20 ezk Exp
+ * Id: ops_ufs.c,v 1.18 2005/01/03 20:56:45 ezk Exp
  *
  */
 

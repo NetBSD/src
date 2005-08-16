@@ -6,7 +6,7 @@
 #set -x
 
 # find a single word that prints the version number of the release
-getver () {
+getdistrover () {
     l=`head $1`
     set $l
     for i in $*
@@ -26,24 +26,26 @@ if test "x$GCONFIG" = "x" ; then
     export PATH
     GCONFIG=`config.guess || echo unknown-config`
 fi
+
 case "${GCONFIG}" in
     *linux* )
 	GCONFIG=`echo ${GCONFIG} | sed -e 's/i.86/i386/' -e 's/linux-gnu/linux/'`
 	if test -f /etc/redhat-release ; then
-	    long=`getver /etc/redhat-release`
-	    # determine if it's Red Hat or Fedora
-	    if grep -qi fedora /etc/redhat-release ; then
+	    long=`getdistrover /etc/redhat-release`
+	    if grep -q 'Red Hat Enterprise Linux' /etc/redhat-release; then
+		echo ${GCONFIG}-rhel${long}
+	    elif grep -q 'Fedora Core' /etc/redhat-release; then
 		echo ${GCONFIG}-fc${long}
 	    else
 		echo ${GCONFIG}-rh${long}
 	    fi
 	    exit 0
 	elif test -f /etc/SuSE-release ; then
-	    long=`getver /etc/SuSE-release`
+	    long=`getdistrover /etc/SuSE-release`
 	    echo ${GCONFIG}-suse${long}
 	    exit 0
 	elif test -f /etc/debian_version ; then
-	    long=`getver /etc/debian_version`
+	    long=`getdistrover /etc/debian_version`
 	    echo ${GCONFIG}-deb${long}
 	    exit 0
 	else
