@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.16 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: do_command.c,v 1.17 2005/08/17 22:35:20 heas Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.16 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.17 2005/08/17 22:35:20 heas Exp $");
 #endif
 #endif
 
@@ -105,7 +105,7 @@ child_process(entry *e, user *u)
 	 * use wait() explictly.  so we have to disable the signal (which
 	 * was inherited from the parent).
 	 */
-	(void) signal(SIGCHLD, SIG_IGN);
+	(void) signal(SIGCHLD, SIG_DFL);
 #else
 	/* on system-V systems, we are ignoring SIGCLD.  we have to stop
 	 * ignoring it now or the wait() in cron_pclose() won't work.
