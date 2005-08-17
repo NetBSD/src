@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.12 2004/03/17 20:16:21 matt Exp $
+#	$NetBSD: bsd.endian.mk,v 1.13 2005/08/17 07:13:32 skrll Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
@@ -8,6 +8,7 @@ _BSD_ENDIAN_MK_=1
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "ns32k" || \
     ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "x86_64" || \
