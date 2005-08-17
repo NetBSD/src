@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.160 2005/08/15 06:50:52 snj Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.161 2005/08/17 16:53:39 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3413,4 +3413,11 @@ distrib/notes/sandpoint/install			1.3
 
 	Get rid of some superfluous "No Ns" calls before punctuation.
 	[riz, ticket #5581]
+
+sys/dev/usb/uplcom.c				1.45
+
+	Back out the "it is not completely clear" part of revision 1.37 - it
+	effectively swapped RTS and DTR, apparently on all versions of the chip.
+	This fixes PR kern/30685.
+	[martin, ticket #5576]
 
