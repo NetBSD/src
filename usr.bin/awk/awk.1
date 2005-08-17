@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.15 2004/06/06 04:04:36 wiz Exp $
+.\"	$NetBSD: awk.1,v 1.16 2005/08/17 00:58:19 uebayasi Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -91,7 +91,8 @@ Set the input field separator
 to the regular expression
 .Ar fs .
 .It Fl mr Ar NNN , Fl mf Ar NNN
-Obsolete, no longer needed options. Set limit on maximum record or
+Obsolete, no longer needed options.
+Set limit on maximum record or
 fields number.
 .It Fl safe
 Potentially unsafe functions such as
@@ -179,7 +180,7 @@ Exponentiation (the
 form is also supported, and
 .Ic **=
 for the assignment operator).
-.It + - !
+.It + - \&!
 Unary plus, unary minus and logical negation.
 .It * / %
 Multiplication, division and modulus.
@@ -200,7 +201,8 @@ Logical AND
 .It Ic "||"
 Logical OR
 .It Ic ?:
-C conditional expression. This is used as
+C conditional expression.
+This is used as
 .Ar expr1 Ic ? Ar expr2 Ic : Ar expr3 No .
 If
 .Ar expr1
@@ -340,12 +342,14 @@ AWK has the following mathematical and numerical functions built-in:
 .It Fn atan2 x y
 Returns the arctangent of
 .Ar x Ic / Ar y
-in radians. See also
+in radians.
+See also
 .Xr atan2 3 .
 .It Fn cos expr
 Computes the cosine of
 .Ar expr ,
-measured in radians. See also
+measured in radians.
+See also
 .Xr cos 3 .
 .It Fn exp expr
 Computes the exponential value of the given argument
@@ -366,7 +370,8 @@ Returns random number between 0 and 1.
 .It Fn sin expr
 Computes the sine of
 .Ar expr ,
-measured in radians. See also
+measured in radians.
+See also
 .Xr sin 3 .
 .It Fn sqrt expr
 Computes the non-negative square root of
@@ -401,7 +406,8 @@ Otherwise,
 .Ar h
 is a number indicating which match of
 .Ar r
-to replace. If no
+to replace.
+If no
 .Ar t
 is supplied,
 .Va $0
@@ -415,7 +421,8 @@ is used instead.
 .\"is a digit from 1 to 9, may be used to indicate just the text that
 .\"matched the
 .\".Ar n Ap th
-.\"parenthesized subexpression. The sequence
+.\"parenthesized subexpression.
+.\"The sequence
 .\".Ic \e0
 .\"represents the entire text, as does the character
 .\".Ic & .
@@ -513,7 +520,8 @@ substring of
 .Ar s
 starting at position
 .Ar m ,
-counted from 1. If
+counted from 1.
+If
 .Ar n
 is omitted, the rest of
 .Ar s
@@ -551,11 +559,13 @@ should be in same form as value returned by
 .Fn systime .
 If
 .Ar timestamp
-is missing, current time is used. If
+is missing, current time is used.
+If
 .Ar format
 is missing, a default format equivalent to the output of
 .Xr date 1
-would be used. See the specification of ANSI C
+would be used.
+See the specification of ANSI C
 .Xr strftime 3
 for the format conversions which are supported.
 .El
