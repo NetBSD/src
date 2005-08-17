@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.82 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.83 2005/08/17 17:24:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -653,6 +653,13 @@ typedef struct {
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
 #define	ELF_NOTE_TYPE_NETBSD_TAG	1
+/* NetBSD-specific note type: Checksum.  There should be 1 NOTE per PT_LOAD
+   section.  desc is a tuple of <phnum>(16),<chk-type>(16),<chk-value>. */
+#define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
+#define	ELF_NOTE_CHECKSUM_CRC32		1
+#define	ELF_NOTE_CHECKSUM_MD5		2
+#define	ELF_NOTE_CHECKSUM_SHA1		3
+#define	ELF_NOTE_CHECKSUM_SHA256	4
 
 /* NetBSD-specific note name and description sizes */
 #define	ELF_NOTE_NETBSD_NAMESZ		7
