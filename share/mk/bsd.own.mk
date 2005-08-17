@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.440 2005/06/12 19:31:25 dyoung Exp $
+#	$NetBSD: bsd.own.mk,v 1.441 2005/08/17 07:13:32 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -425,6 +425,13 @@ NOPIC=		# defined
 #
 .if ${MACHINE_ARCH} == "hppa"
 MKGDB=		no
+.endif
+
+#
+# The ia64 port is incomplete.
+#
+.if ${MACHINE_ARCH} == "ia64"
+MKLINT=		no
 .endif
 
 #
