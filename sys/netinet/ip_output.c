@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.154 2005/08/10 13:06:49 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.155 2005/08/18 00:30:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.154 2005/08/10 13:06:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.155 2005/08/18 00:30:59 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1175,9 +1175,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == 0)
 			return (m);
 		MCLAIM(n, m->m_owner);
-		M_COPY_PKTHDR(n, m);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
+		M_MOVE_PKTHDR(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;

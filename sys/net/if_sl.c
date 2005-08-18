@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.92 2005/08/18 00:30:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.92 2005/08/18 00:30:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -964,11 +964,12 @@ slintr(void *arg)
 		 */
 		if (m->m_pkthdr.len < MHLEN) {
 			struct mbuf *n;
+			int pktlen;
 
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			M_COPY_PKTHDR(n, m);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
-			    m->m_pkthdr.len);
+			pktlen = m->m_pkthdr.len;
+			M_MOVE_PKTHDR(n, m);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
 			m = n;
