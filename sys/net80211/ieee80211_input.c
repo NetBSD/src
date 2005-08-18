@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.44 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.45 2005/08/18 00:30:59 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.62 2005/07/11 03:00:20 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.44 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.45 2005/08/18 00:30:59 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -826,7 +826,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 					m_freem(m);
 					return NULL;
 				}
-				M_COPY_PKTHDR(n, m);
+				M_MOVE_PKTHDR(n, m);
 				n->m_len = MHLEN;
 			} else {
 				MGET(n, M_DONTWAIT, MT_DATA);
