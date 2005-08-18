@@ -1,7 +1,7 @@
 SHELL	= /bin/sh
-SRCS	= abounce.c been_here.c bounce.c bounce_log.c \
+SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	canon_addr.c cfg_parser.c cleanup_strerror.c cleanup_strflags.c \
-	clnt_stream.c debug_peer.c debug_process.c defer.c \
+	clnt_stream.c debug_peer.c debug_process.c defer.c db_common.c \
 	deliver_completed.c deliver_flock.c deliver_pass.c deliver_request.c \
 	dict_ldap.c dict_mysql.c dict_pgsql.c dict_proxy.c domain_list.c \
 	dot_lockfile.c dot_lockfile_as.c ext_prop.c file_id.c flush_clnt.c \
@@ -22,10 +22,13 @@ SRCS	= abounce.c been_here.c bounce.c bounce_log.c \
 	sent.c smtp_stream.c split_addr.c string_list.c strip_addr.c \
 	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c trace.c verify.c \
-	verify_clnt.c verp_sender.c virtual8_maps.c xtext.c
-OBJS	= abounce.o been_here.o bounce.o bounce_log.o \
+	verify_clnt.c verp_sender.c virtual8_maps.c xtext.c scache_single.c \
+	scache_clnt.c scache_multi.c user_acl.c mkmap_cdb.c mkmap_sdbm.c \
+	ehlo_mask.c \
+	wildcard_inet_addr.c valid_mailhost_addr.c
+OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
-	clnt_stream.o debug_peer.o debug_process.o defer.o \
+	clnt_stream.o debug_peer.o debug_process.o defer.o db_common.o \
 	deliver_completed.o deliver_flock.o deliver_pass.o deliver_request.o \
 	dict_ldap.o dict_mysql.o dict_pgsql.o dict_proxy.o domain_list.o \
 	dot_lockfile.o dot_lockfile_as.o ext_prop.o file_id.o flush_clnt.o \
@@ -46,8 +49,11 @@ OBJS	= abounce.o been_here.o bounce.o bounce_log.o \
 	sent.o smtp_stream.o split_addr.o string_list.o strip_addr.o \
 	sys_exits.o timed_ipc.o tok822_find.o tok822_node.o tok822_parse.o \
 	tok822_resolve.o tok822_rewrite.o tok822_tree.o trace.o verify.o \
-	verify_clnt.o verp_sender.o virtual8_maps.o xtext.o
-HDRS	= abounce.h been_here.h bounce.h bounce_log.h \
+	verify_clnt.o verp_sender.o virtual8_maps.o xtext.o scache_single.o \
+	scache_clnt.o scache_multi.o user_acl.o mkmap_cdb.o mkmap_sdbm.o \
+	ehlo_mask.o \
+	wildcard_inet_addr.o valid_mailhost_addr.o
+HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	debug_peer.h debug_process.h defer.h deliver_completed.h \
 	deliver_flock.h deliver_pass.h deliver_request.h dict_ldap.h \
@@ -67,7 +73,8 @@ HDRS	= abounce.h been_here.h bounce.h bounce_log.h \
 	resolve_local.h rewrite_clnt.h sent.h smtp_stream.h split_addr.h \
 	string_list.h strip_addr.h sys_exits.h timed_ipc.h tok822.h \
 	trace.h verify.h verify_clnt.h verp_sender.h virtual8_maps.h \
-	xtext.h
+	xtext.h scache.h user_acl.h ehlo_mask.h db_common.h \
+	wildcard_inet_addr.h valid_mailhost_addr.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -78,7 +85,8 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	off_cvt quote_822_local rec2stream recdump resolve_clnt \
 	resolve_local rewrite_clnt stream2rec string_list tok822_parse \
 	quote_821_local mail_conf_time mime_state strip_addr \
-	virtual8_maps verify_clnt xtext anvil_clnt
+	virtual8_maps verify_clnt xtext anvil_clnt scache ehlo_mask \
+	valid_mailhost_addr own_inet_addr
 
 LIBS	= ../../lib/libutil.a
 LIB_DIR	= ../../lib
@@ -89,8 +97,10 @@ MAKES	=
 
 all: $(LIB)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -236,19 +246,32 @@ verify_clnt: $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
-xtext: $(LIB)
+xtext: $(LIB) $(LIBS)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
-anvil_clnt: $(LIB)
+anvil_clnt: $(LIB) $(LIBS)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
+
+scache: scache.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+ehlo_mask: ehlo_mask.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+valid_mailhost_addr: valid_mailhost_addr.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+own_inet_addr: own_inet_addr.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 tests: tok822_test mime_test mime_nest mime_8bit mime_dom mime_trunc \
 	mime_cvt mime_cvt2 mime_cvt3 strip_addr_test tok822_limit_test \
-	virtual8_test xtext_test
+	virtual8_test xtext_test scache_multi_test ehlo_mask_test \
+	namadr_list_test
 
 tok822_test: tok822_parse tok822_parse.in tok822_parse.ref
 	./tok822_parse <tok822_parse.in >tok822_parse.tmp 2>&1
@@ -342,6 +365,21 @@ resolve_clnt_test: resolve_clnt resolve_clnt.in resolve_clnt.ref
 	    resolve_clnt.ref | diff - resolve_clnt.tmp
 	rm -f resolve_clnt.tmp
 
+scache_multi_test: scache scache_multi.in scache_multi.ref
+	./scache <scache_multi.in >scache_multi.tmp
+	diff scache_multi.ref scache_multi.tmp
+	rm -f scache_multi.tmp
+
+ehlo_mask_test: ehlo_mask ehlo_mask.in ehlo_mask.ref
+	./ehlo_mask <ehlo_mask.in >ehlo_mask.tmp
+	diff ehlo_mask.ref ehlo_mask.tmp
+	rm -f ehlo_mask.tmp
+
+namadr_list_test: namadr_list namadr_list.in namadr_list.ref
+	-sh namadr_list.in >namadr_list.tmp 2>&1
+	diff namadr_list.ref namadr_list.tmp
+	rm -f namadr_list.tmp
+
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
 	mkdir printfck
@@ -362,7 +400,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -384,6 +422,20 @@ abounce.o: bounce.h
 abounce.o: deliver_request.h
 abounce.o: ../../include/vstring.h
 abounce.o: recipient_list.h
+anvil_clnt.o: anvil_clnt.c
+anvil_clnt.o: ../../include/sys_defs.h
+anvil_clnt.o: ../../include/mymalloc.h
+anvil_clnt.o: ../../include/msg.h
+anvil_clnt.o: ../../include/attr_clnt.h
+anvil_clnt.o: ../../include/attr.h
+anvil_clnt.o: ../../include/vstream.h
+anvil_clnt.o: ../../include/vbuf.h
+anvil_clnt.o: ../../include/stringops.h
+anvil_clnt.o: ../../include/vstring.h
+anvil_clnt.o: mail_proto.h
+anvil_clnt.o: ../../include/iostuff.h
+anvil_clnt.o: mail_params.h
+anvil_clnt.o: anvil_clnt.h
 been_here.o: been_here.c
 been_here.o: ../../include/sys_defs.h
 been_here.o: ../../include/msg.h
@@ -431,6 +483,10 @@ canon_addr.o: ../../include/vstring.h
 canon_addr.o: ../../include/vbuf.h
 canon_addr.o: ../../include/mymalloc.h
 canon_addr.o: rewrite_clnt.h
+canon_addr.o: mail_proto.h
+canon_addr.o: ../../include/vstream.h
+canon_addr.o: ../../include/iostuff.h
+canon_addr.o: ../../include/attr.h
 canon_addr.o: canon_addr.h
 cfg_parser.o: cfg_parser.c
 cfg_parser.o: ../../include/sys_defs.h
@@ -466,6 +522,20 @@ clnt_stream.o: mail_proto.h
 clnt_stream.o: ../../include/attr.h
 clnt_stream.o: mail_params.h
 clnt_stream.o: clnt_stream.h
+db_common.o: db_common.c
+db_common.o: ../../include/sys_defs.h
+db_common.o: cfg_parser.h
+db_common.o: ../../include/mymalloc.h
+db_common.o: ../../include/vstring.h
+db_common.o: ../../include/vbuf.h
+db_common.o: ../../include/msg.h
+db_common.o: ../../include/dict.h
+db_common.o: ../../include/vstream.h
+db_common.o: ../../include/argv.h
+db_common.o: db_common.h
+db_common.o: string_list.h
+db_common.o: ../../include/match_list.h
+db_common.o: ../../include/match_ops.h
 debug_peer.o: debug_peer.c
 debug_peer.o: ../../include/sys_defs.h
 debug_peer.o: ../../include/msg.h
@@ -549,10 +619,59 @@ deliver_request.o: recipient_list.h
 deliver_request.o: deliver_request.h
 dict_ldap.o: dict_ldap.c
 dict_ldap.o: ../../include/sys_defs.h
+dict_ldap.o: ../../include/msg.h
+dict_ldap.o: ../../include/mymalloc.h
+dict_ldap.o: ../../include/vstring.h
+dict_ldap.o: ../../include/vbuf.h
+dict_ldap.o: ../../include/dict.h
+dict_ldap.o: ../../include/vstream.h
+dict_ldap.o: ../../include/argv.h
+dict_ldap.o: ../../include/stringops.h
+dict_ldap.o: ../../include/binhash.h
+dict_ldap.o: cfg_parser.h
+dict_ldap.o: db_common.h
+dict_ldap.o: string_list.h
+dict_ldap.o: ../../include/match_list.h
+dict_ldap.o: ../../include/match_ops.h
+dict_ldap.o: dict_ldap.h
 dict_mysql.o: dict_mysql.c
 dict_mysql.o: ../../include/sys_defs.h
+dict_mysql.o: ../../include/dict.h
+dict_mysql.o: ../../include/vstream.h
+dict_mysql.o: ../../include/vbuf.h
+dict_mysql.o: ../../include/argv.h
+dict_mysql.o: ../../include/msg.h
+dict_mysql.o: ../../include/mymalloc.h
+dict_mysql.o: ../../include/vstring.h
+dict_mysql.o: ../../include/split_at.h
+dict_mysql.o: ../../include/find_inet.h
+dict_mysql.o: ../../include/myrand.h
+dict_mysql.o: ../../include/events.h
+dict_mysql.o: cfg_parser.h
+dict_mysql.o: db_common.h
+dict_mysql.o: string_list.h
+dict_mysql.o: ../../include/match_list.h
+dict_mysql.o: ../../include/match_ops.h
+dict_mysql.o: dict_mysql.h
 dict_pgsql.o: dict_pgsql.c
 dict_pgsql.o: ../../include/sys_defs.h
+dict_pgsql.o: ../../include/dict.h
+dict_pgsql.o: ../../include/vstream.h
+dict_pgsql.o: ../../include/vbuf.h
+dict_pgsql.o: ../../include/argv.h
+dict_pgsql.o: ../../include/msg.h
+dict_pgsql.o: ../../include/mymalloc.h
+dict_pgsql.o: ../../include/vstring.h
+dict_pgsql.o: ../../include/split_at.h
+dict_pgsql.o: ../../include/find_inet.h
+dict_pgsql.o: ../../include/myrand.h
+dict_pgsql.o: ../../include/events.h
+dict_pgsql.o: cfg_parser.h
+dict_pgsql.o: db_common.h
+dict_pgsql.o: string_list.h
+dict_pgsql.o: ../../include/match_list.h
+dict_pgsql.o: ../../include/match_ops.h
+dict_pgsql.o: dict_pgsql.h
 dict_proxy.o: dict_proxy.c
 dict_proxy.o: ../../include/sys_defs.h
 dict_proxy.o: ../../include/msg.h
@@ -591,6 +710,10 @@ dot_lockfile_as.o: dot_lockfile.h
 dot_lockfile_as.o: ../../include/vstring.h
 dot_lockfile_as.o: ../../include/vbuf.h
 dot_lockfile_as.o: dot_lockfile_as.h
+ehlo_mask.o: ehlo_mask.c
+ehlo_mask.o: ../../include/sys_defs.h
+ehlo_mask.o: ../../include/name_mask.h
+ehlo_mask.o: ehlo_mask.h
 ext_prop.o: ext_prop.c
 ext_prop.o: ../../include/sys_defs.h
 ext_prop.o: ../../include/name_mask.h
@@ -646,7 +769,9 @@ hold_message.o: hold_message.h
 input_transp.o: input_transp.c
 input_transp.o: ../../include/sys_defs.h
 input_transp.o: ../../include/name_mask.h
+input_transp.o: ../../include/msg.h
 input_transp.o: mail_params.h
+input_transp.o: cleanup_user.h
 input_transp.o: input_transp.h
 is_header.o: is_header.c
 is_header.o: ../../include/sys_defs.h
@@ -854,6 +979,7 @@ mail_params.o: ../../include/dict_db.h
 mail_params.o: ../../include/dict.h
 mail_params.o: ../../include/vstream.h
 mail_params.o: ../../include/argv.h
+mail_params.o: ../../include/inet_proto.h
 mail_params.o: mynetworks.h
 mail_params.o: mail_conf.h
 mail_params.o: mail_version.h
@@ -861,6 +987,9 @@ mail_params.o: mail_proto.h
 mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/attr.h
 mail_params.o: verp_sender.h
+mail_params.o: own_inet_addr.h
+mail_params.o: ../../include/inet_addr_list.h
+mail_params.o: ../../include/myaddrinfo.h
 mail_params.o: mail_params.h
 mail_pathname.o: mail_pathname.c
 mail_pathname.o: ../../include/sys_defs.h
@@ -1003,6 +1132,8 @@ mime_state.o: mail_params.h
 mime_state.o: header_token.h
 mime_state.o: lex_822.h
 mime_state.o: mime_state.h
+mkmap_cdb.o: mkmap_cdb.c
+mkmap_cdb.o: ../../include/sys_defs.h
 mkmap_db.o: mkmap_db.c
 mkmap_db.o: ../../include/sys_defs.h
 mkmap_db.o: ../../include/msg.h
@@ -1038,20 +1169,40 @@ mkmap_open.o: ../../include/vstream.h
 mkmap_open.o: ../../include/vbuf.h
 mkmap_open.o: ../../include/argv.h
 mkmap_open.o: ../../include/dict_db.h
+mkmap_open.o: ../../include/dict_cdb.h
 mkmap_open.o: ../../include/dict_dbm.h
+mkmap_open.o: ../../include/dict_sdbm.h
 mkmap_open.o: ../../include/sigdelay.h
 mkmap_open.o: ../../include/mymalloc.h
 mkmap_open.o: mkmap.h
+mkmap_sdbm.o: mkmap_sdbm.c
+mkmap_sdbm.o: ../../include/sys_defs.h
+mkmap_sdbm.o: ../../include/msg.h
+mkmap_sdbm.o: ../../include/mymalloc.h
+mkmap_sdbm.o: ../../include/stringops.h
+mkmap_sdbm.o: ../../include/vstring.h
+mkmap_sdbm.o: ../../include/vbuf.h
+mkmap_sdbm.o: ../../include/dict.h
+mkmap_sdbm.o: ../../include/vstream.h
+mkmap_sdbm.o: ../../include/argv.h
+mkmap_sdbm.o: ../../include/dict_sdbm.h
+mkmap_sdbm.o: ../../include/myflock.h
+mkmap_sdbm.o: mkmap.h
 mynetworks.o: mynetworks.c
 mynetworks.o: ../../include/sys_defs.h
 mynetworks.o: ../../include/msg.h
 mynetworks.o: ../../include/vstring.h
 mynetworks.o: ../../include/vbuf.h
 mynetworks.o: ../../include/inet_addr_list.h
+mynetworks.o: ../../include/myaddrinfo.h
 mynetworks.o: ../../include/name_mask.h
+mynetworks.o: ../../include/mask_addr.h
+mynetworks.o: ../../include/argv.h
 mynetworks.o: own_inet_addr.h
 mynetworks.o: mail_params.h
 mynetworks.o: mynetworks.h
+mynetworks.o: ../../include/sock_addr.h
+mynetworks.o: been_here.h
 mypwd.o: mypwd.c
 mypwd.o: ../../include/sys_defs.h
 mypwd.o: ../../include/mymalloc.h
@@ -1081,11 +1232,14 @@ own_inet_addr.o: ../../include/sys_defs.h
 own_inet_addr.o: ../../include/msg.h
 own_inet_addr.o: ../../include/mymalloc.h
 own_inet_addr.o: ../../include/inet_addr_list.h
+own_inet_addr.o: ../../include/myaddrinfo.h
 own_inet_addr.o: ../../include/inet_addr_local.h
 own_inet_addr.o: ../../include/inet_addr_host.h
 own_inet_addr.o: ../../include/stringops.h
 own_inet_addr.o: ../../include/vstring.h
 own_inet_addr.o: ../../include/vbuf.h
+own_inet_addr.o: ../../include/sock_addr.h
+own_inet_addr.o: ../../include/inet_proto.h
 own_inet_addr.o: mail_params.h
 own_inet_addr.o: own_inet_addr.h
 pipe_command.o: pipe_command.c
@@ -1200,10 +1354,13 @@ resolve_local.o: ../../include/mymalloc.h
 resolve_local.o: string_list.h
 resolve_local.o: ../../include/match_list.h
 resolve_local.o: ../../include/match_ops.h
+resolve_local.o: ../../include/myaddrinfo.h
+resolve_local.o: valid_mailhost_addr.h
+resolve_local.o: ../../include/valid_hostname.h
 resolve_local.o: mail_params.h
 resolve_local.o: own_inet_addr.h
+resolve_local.o: ../../include/inet_addr_list.h
 resolve_local.o: resolve_local.h
-resolve_local.o: match_parent_style.h
 rewrite_clnt.o: rewrite_clnt.c
 rewrite_clnt.o: ../../include/sys_defs.h
 rewrite_clnt.o: ../../include/msg.h
@@ -1220,6 +1377,47 @@ rewrite_clnt.o: ../../include/attr.h
 rewrite_clnt.o: mail_params.h
 rewrite_clnt.o: clnt_stream.h
 rewrite_clnt.o: rewrite_clnt.h
+scache.o: scache.c
+scache.o: ../../include/sys_defs.h
+scache.o: ../../include/msg.h
+scache.o: ../../include/vstream.h
+scache.o: ../../include/vbuf.h
+scache.o: ../../include/vstring.h
+scache.o: ../../include/vstring_vstream.h
+scache.o: ../../include/argv.h
+scache.o: ../../include/events.h
+scache.o: scache.h
+scache_clnt.o: scache_clnt.c
+scache_clnt.o: ../../include/sys_defs.h
+scache_clnt.o: ../../include/msg.h
+scache_clnt.o: ../../include/mymalloc.h
+scache_clnt.o: mail_proto.h
+scache_clnt.o: ../../include/vstream.h
+scache_clnt.o: ../../include/vbuf.h
+scache_clnt.o: ../../include/iostuff.h
+scache_clnt.o: ../../include/attr.h
+scache_clnt.o: mail_params.h
+scache_clnt.o: clnt_stream.h
+scache_clnt.o: scache.h
+scache_clnt.o: ../../include/vstring.h
+scache_multi.o: scache_multi.c
+scache_multi.o: ../../include/sys_defs.h
+scache_multi.o: ../../include/msg.h
+scache_multi.o: ../../include/ring.h
+scache_multi.o: ../../include/htable.h
+scache_multi.o: ../../include/vstring.h
+scache_multi.o: ../../include/vbuf.h
+scache_multi.o: ../../include/mymalloc.h
+scache_multi.o: ../../include/events.h
+scache_multi.o: scache.h
+scache_single.o: scache_single.c
+scache_single.o: ../../include/sys_defs.h
+scache_single.o: ../../include/msg.h
+scache_single.o: ../../include/vstring.h
+scache_single.o: ../../include/vbuf.h
+scache_single.o: ../../include/mymalloc.h
+scache_single.o: ../../include/events.h
+scache_single.o: scache.h
 sent.o: sent.c
 sent.o: ../../include/sys_defs.h
 sent.o: ../../include/msg.h
@@ -1316,6 +1514,10 @@ tok822_rewrite.o: ../../include/vstring.h
 tok822_rewrite.o: ../../include/vbuf.h
 tok822_rewrite.o: ../../include/msg.h
 tok822_rewrite.o: rewrite_clnt.h
+tok822_rewrite.o: mail_proto.h
+tok822_rewrite.o: ../../include/vstream.h
+tok822_rewrite.o: ../../include/iostuff.h
+tok822_rewrite.o: ../../include/attr.h
 tok822_rewrite.o: tok822.h
 tok822_rewrite.o: resolve_clnt.h
 tok822_tree.o: tok822_tree.c
@@ -1341,6 +1543,22 @@ trace.o: recipient_list.h
 trace.o: log_adhoc.h
 trace.o: bounce.h
 trace.o: trace.h
+user_acl.o: user_acl.c
+user_acl.o: ../../include/sys_defs.h
+user_acl.o: ../../include/vstring.h
+user_acl.o: ../../include/vbuf.h
+user_acl.o: string_list.h
+user_acl.o: ../../include/match_list.h
+user_acl.o: ../../include/match_ops.h
+user_acl.o: mypwd.h
+user_acl.o: mail_params.h
+user_acl.o: user_acl.h
+valid_mailhost_addr.o: valid_mailhost_addr.c
+valid_mailhost_addr.o: ../../include/sys_defs.h
+valid_mailhost_addr.o: ../../include/msg.h
+valid_mailhost_addr.o: ../../include/myaddrinfo.h
+valid_mailhost_addr.o: valid_mailhost_addr.h
+valid_mailhost_addr.o: ../../include/valid_hostname.h
 verify.o: verify.c
 verify.o: ../../include/sys_defs.h
 verify.o: ../../include/msg.h
@@ -1388,6 +1606,13 @@ virtual8_maps.o: ../../include/argv.h
 virtual8_maps.o: mail_params.h
 virtual8_maps.o: strip_addr.h
 virtual8_maps.o: virtual8_maps.h
+wildcard_inet_addr.o: wildcard_inet_addr.c
+wildcard_inet_addr.o: ../../include/sys_defs.h
+wildcard_inet_addr.o: ../../include/msg.h
+wildcard_inet_addr.o: ../../include/inet_addr_list.h
+wildcard_inet_addr.o: ../../include/myaddrinfo.h
+wildcard_inet_addr.o: ../../include/inet_addr_host.h
+wildcard_inet_addr.o: wildcard_inet_addr.h
 xtext.o: xtext.c
 xtext.o: ../../include/sys_defs.h
 xtext.o: ../../include/msg.h

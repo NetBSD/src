@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.6 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.7 2005/08/18 22:00:23 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -43,8 +43,6 @@ typedef struct CLEANUP_STATE {
     time_t  time;			/* posting time */
     char   *fullname;			/* envelope sender full name */
     char   *sender;			/* envelope sender address */
-    char   *from;			/* From: address */
-    char   *resent_from;		/* Resent-From: address */
     char   *recip;			/* envelope recipient address */
     char   *orig_rcpt;			/* original recipient address */
     char   *return_receipt;		/* return-receipt address */
@@ -65,6 +63,7 @@ typedef struct CLEANUP_STATE {
     NVTABLE *attr;			/* queue file attribute list */
     MIME_STATE *mime_state;		/* MIME state engine */
     int     mime_errs;			/* MIME error flags */
+    char   *hdr_rewrite_context;	/* header rewrite context */
     char   *filter;			/* from header/body patterns */
     char   *redirect;			/* from header/body patterns */
 } CLEANUP_STATE;
@@ -82,6 +81,9 @@ typedef struct CLEANUP_STATE {
 extern MAPS *cleanup_comm_canon_maps;
 extern MAPS *cleanup_send_canon_maps;
 extern MAPS *cleanup_rcpt_canon_maps;
+extern int cleanup_comm_canon_flags;
+extern int cleanup_send_canon_flags;
+extern int cleanup_rcpt_canon_flags;
 extern MAPS *cleanup_header_checks;
 extern MAPS *cleanup_mimehdr_checks;
 extern MAPS *cleanup_nesthdr_checks;
@@ -92,6 +94,14 @@ extern STRING_LIST *cleanup_masq_exceptions;
 extern int cleanup_masq_flags;
 extern MAPS *cleanup_send_bcc_maps;
 extern MAPS *cleanup_rcpt_bcc_maps;
+
+ /*
+  * Address canonicalization fine control.
+  */
+#define CLEANUP_CANON_FLAG_ENV_FROM	(1<<0)	/* envelope sender */
+#define CLEANUP_CANON_FLAG_ENV_RCPT	(1<<1)	/* envelope recipient */
+#define CLEANUP_CANON_FLAG_HDR_FROM	(1<<2)	/* header sender */
+#define CLEANUP_CANON_FLAG_HDR_RCPT	(1<<3)	/* header recipient */
 
  /*
   * Address masquerading fine control.
@@ -167,16 +177,16 @@ extern void cleanup_extracted(CLEANUP_STATE *, int, const char *, int);
  /*
   * cleanup_rewrite.c
   */
-extern void cleanup_rewrite_external(VSTRING *, const char *);
-extern void cleanup_rewrite_internal(VSTRING *, const char *);
-extern void cleanup_rewrite_tree(TOK822 *);
+extern int cleanup_rewrite_external(const char *, VSTRING *, const char *);
+extern int cleanup_rewrite_internal(const char *, VSTRING *, const char *);
+extern int cleanup_rewrite_tree(const char *, TOK822 *);
 
  /*
   * cleanup_map11.c
   */
-extern void cleanup_map11_external(CLEANUP_STATE *, VSTRING *, MAPS *, int);
-extern void cleanup_map11_internal(CLEANUP_STATE *, VSTRING *, MAPS *, int);
-extern void cleanup_map11_tree(CLEANUP_STATE *, TOK822 *, MAPS *, int);
+extern int cleanup_map11_external(CLEANUP_STATE *, VSTRING *, MAPS *, int);
+extern int cleanup_map11_internal(CLEANUP_STATE *, VSTRING *, MAPS *, int);
+extern int cleanup_map11_tree(CLEANUP_STATE *, TOK822 *, MAPS *, int);
 
  /*
   * cleanup_map1n.c
@@ -186,9 +196,9 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *, const char *, MAPS *, int);
  /*
   * cleanup_masquerade.c
   */
-extern void cleanup_masquerade_external(VSTRING *, ARGV *);
-extern void cleanup_masquerade_internal(VSTRING *, ARGV *);
-extern void cleanup_masquerade_tree(TOK822 *, ARGV *);
+extern int cleanup_masquerade_external(VSTRING *, ARGV *);
+extern int cleanup_masquerade_internal(VSTRING *, ARGV *);
+extern int cleanup_masquerade_tree(TOK822 *, ARGV *);
 
  /*
   * cleanup_recipient.c

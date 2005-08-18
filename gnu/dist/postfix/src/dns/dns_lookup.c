@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.9 2004/11/13 05:45:33 heas Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.10 2005/08/18 22:01:12 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,21 +8,31 @@
 /* SYNOPSIS
 /*	#include <dns.h>
 /*
-/*	int	dns_lookup(name, type, flags, list, fqdn, why)
+/*	int	dns_lookup(name, type, rflags, list, fqdn, why)
 /*	const char *name;
 /*	unsigned type;
-/*	unsigned flags;
+/*	unsigned rflags;
 /*	DNS_RR	**list;
 /*	VSTRING *fqdn;
 /*	VSTRING *why;
 /*
-/*	int	dns_lookup_types(name, flags, list, fqdn, why, type, ...)
+/*	int	dns_lookup_l(name, rflags, list, fqdn, why, lflags, ltype, ...)
 /*	const char *name;
-/*	unsigned flags;
+/*	unsigned rflags;
 /*	DNS_RR	**list;
 /*	VSTRING *fqdn;
 /*	VSTRING *why;
-/*	unsigned type;
+/*	int	lflags;
+/*	unsigned ltype;
+/*
+/*	int	dns_lookup_v(name, rflags, list, fqdn, why, lflags, ltype)
+/*	const char *name;
+/*	unsigned rflags;
+/*	DNS_RR	**list;
+/*	VSTRING *fqdn;
+/*	VSTRING *why;
+/*	int	lflags;
+/*	unsigned *ltype;
 /* DESCRIPTION
 /*	dns_lookup() looks up DNS resource records. When requested to
 /*	look up data other than type CNAME, it will follow a limited
@@ -31,10 +41,8 @@
 /*	All name results are validated by \fIvalid_hostname\fR();
 /*	an invalid name is reported as a transient error.
 /*
-/*	dns_lookup_types() allows the user to specify a null-terminated
-/*	list of resource types. This function calls dns_lookup() for each
-/*	listed type in the specified order, until the list is exhausted or
-/*	until the search result becomes not equal to DNS_NOTFOUND.
+/*	dns_lookup_l() and dns_lookup_v() allow the user to specify
+/*	a list of resource types. 
 /* INPUTS
 /* .ad
 /* .fi
@@ -42,8 +50,8 @@
 /*	The name to be looked up in the domain name system.
 /* .IP type
 /*	The resource record type to be looked up (T_A, T_MX etc.).
-/* .IP flags
-/*	A bitwise OR of:
+/* .IP rflags
+/*	Resolver flags. These are a bitwise OR of:
 /* .RS
 /* .IP RES_DEBUG
 /*	Print debugging information.
@@ -52,6 +60,23 @@
 /* .IP RES_DEFNAMES
 /*	Append local domain to unqualified names.
 /* .RE
+/* .IP lflags
+/*	Multi-type request control for dns_lookup_l() and
+/*	dns_lookup_v(). This is one of the following:
+/* .RS
+/* .IP DNS_REQ_FLAG_ANY
+/*	Call dns_lookup() for each specified resource record type
+/*	in the specified order, until the list is exhausted or
+/*	until some result is DNS_OK.
+/* .IP DNS_REQ_FLAG_ALL
+/*	Call dns_lookup() for all specified resource record types
+/*	in the specified order, and merge their results.
+/* .RE
+/* .IP ltype
+/*	The resource record types to be looked up. In the case of
+/*	dns_lookup_l(), this is a null-terminated argument list.
+/*	In the case of dns_lookup_v(), this is a null-terminated
+/*	integer array.
 /* OUTPUTS
 /* .ad
 /* .fi
@@ -99,8 +124,6 @@
 
 #include <sys_defs.h>
 #include <netdb.h>
-#include <stdlib.h>			/* BSDI stdarg.h uses abort() */
-#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -111,7 +134,6 @@
 #include <msg.h>
 #include <valid_hostname.h>
 #include <stringops.h>
-#include <valid_hostname.h>
 
 /* DNS library. */
 
@@ -143,7 +165,7 @@ static int dns_query(const char *name, int type, int flags,
 {
     HEADER *reply_header;
     int     len;
-    unsigned long saved_options = _res.options;
+    unsigned long saved_options;
 
     /*
      * Initialize the name service.
@@ -162,7 +184,8 @@ static int dns_query(const char *name, int type, int flags,
 
     if ((flags & USER_FLAGS) != flags)
 	msg_panic("dns_query: bad flags: %d", flags);
-    _res.options &= ~(USER_FLAGS);
+    saved_options = (_res.options & USER_FLAGS);
+    _res.options &= ~saved_options;
     _res.options |= flags;
 
     /*
@@ -170,7 +193,8 @@ static int dns_query(const char *name, int type, int flags,
      * only if the name server told us so.
      */
     len = res_search((char *) name, C_IN, type, reply->buf, sizeof(reply->buf));
-    _res.options = saved_options;
+    _res.options &= ~flags;
+    _res.options |= saved_options;
     if (len < 0) {
 	if (why)
 	    vstring_sprintf(why, "Host or domain name not found. "
@@ -197,7 +221,7 @@ static int dns_query(const char *name, int type, int flags,
      */
     if (len > sizeof(reply->buf)) {
 	msg_warn("reply length %d > buffer length %d for name=%s type=%s",
-		 len, sizeof(reply->buf), name, dns_strtype(type));
+		 len, (int) sizeof(reply->buf), name, dns_strtype(type));
 	len = sizeof(reply->buf);
     }
 
@@ -375,7 +399,8 @@ static DNS_RR *dns_get_rr(DNS_REPLY *reply, unsigned char *pos,
 	*dst = 0;
 	break;
     }
-    return (dns_rr_create(rr_name, fixed, pref, temp, data_len));
+    return (dns_rr_create(rr_name, fixed->type, fixed->class, fixed->ttl,
+			  pref, temp, data_len));
 }
 
 /* dns_get_alias - extract CNAME from name server reply */
@@ -507,9 +532,9 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
     int     status;
 
     /*
-     * The Linux resolver misbehaves when given an invalid domain name.
+     * DJBDNS produces a bogus A record when given a numerical hostname.
      */
-    if (!valid_hostname(name, DONT_GRIPE)) {
+    if (valid_hostaddr(name, DONT_GRIPE)) {
 	if (why)
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
@@ -519,9 +544,9 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
     }
 
     /*
-     * DJBDNS produces a bogus A record when given a numerical hostname.
+     * The Linux resolver misbehaves when given an invalid domain name.
      */
-    if (valid_hostaddr(name, DONT_GRIPE)) {
+    if (!valid_hostname(name, DONT_GRIPE)) {
 	if (why)
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
@@ -568,26 +593,70 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
     return (DNS_NOTFOUND);
 }
 
-/* dns_lookup_types - DNS lookup interface with multiple types */
+/* dns_lookup_l - DNS lookup interface with types list */
 
-int     dns_lookup_types(const char *name, unsigned flags, DNS_RR **rrlist,
-			         VSTRING *fqdn, VSTRING *why,...)
+int     dns_lookup_l(const char *name, unsigned flags, DNS_RR **rrlist,
+		             VSTRING *fqdn, VSTRING *why, int lflags,...)
 {
     va_list ap;
     unsigned type;
     int     status = DNS_NOTFOUND;
+    DNS_RR *rr;
+    int     non_err = 0;
     int     soft_err = 0;
 
-    va_start(ap, why);
+    if (rrlist)
+	*rrlist = 0;
+    va_start(ap, lflags);
     while ((type = va_arg(ap, unsigned)) != 0) {
 	if (msg_verbose)
-	    msg_info("lookup %s type %d flags %d", name, type, flags);
-	status = dns_lookup(name, type, flags, rrlist, fqdn, why);
-	if (status == DNS_OK)
-	    break;
-	if (status == DNS_RETRY)
+	    msg_info("lookup %s type %s flags %d",
+		     name, dns_strtype(type), flags);
+	status = dns_lookup(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
+			    fqdn, why);
+	if (status == DNS_OK) {
+	    non_err = 1;
+	    if (rrlist)
+		*rrlist = dns_rr_append(*rrlist, rr);
+	    if (lflags == DNS_REQ_FLAG_ANY)
+		break;
+	} else if (status == DNS_RETRY) {
 	    soft_err = 1;
+	}
     }
     va_end(ap);
-    return ((status == DNS_OK || soft_err == 0) ? status : DNS_RETRY);
+    return (non_err ? DNS_OK : soft_err ? DNS_RETRY : status);
+}
+
+/* dns_lookup_v - DNS lookup interface with types vector */
+
+int     dns_lookup_v(const char *name, unsigned flags, DNS_RR **rrlist,
+		             VSTRING *fqdn, VSTRING *why, int lflags,
+		             unsigned *types)
+{
+    unsigned type;
+    int     status = DNS_NOTFOUND;
+    DNS_RR *rr;
+    int     non_err = 0;
+    int     soft_err = 0;
+
+    if (rrlist)
+	*rrlist = 0;
+    while ((type = *types++) != 0) {
+	if (msg_verbose)
+	    msg_info("lookup %s type %s flags %d",
+		     name, dns_strtype(type), flags);
+	status = dns_lookup(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
+			    fqdn, why);
+	if (status == DNS_OK) {
+	    non_err = 1;
+	    if (rrlist)
+		*rrlist = dns_rr_append(*rrlist, rr);
+	    if (lflags == DNS_REQ_FLAG_ANY)
+		break;
+	} else if (status == DNS_RETRY) {
+	    soft_err = 1;
+	}
+    }
+    return (non_err ? DNS_OK : soft_err ? DNS_RETRY : status);
 }

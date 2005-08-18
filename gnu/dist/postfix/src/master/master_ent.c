@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.12 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.13 2005/08/18 22:06:00 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@
 #include <stringops.h>
 #include <readlline.h>
 #include <inet_addr_list.h>
-#include <inet_util.h>
+#include <host_port.h>
 #include <inet_addr_host.h>
 
 /* Global library. */
@@ -94,6 +94,7 @@
 #include <mail_proto.h>
 #include <mail_params.h>
 #include <own_inet_addr.h>
+#include <wildcard_inet_addr.h>
 
 /* Local stuff. */
 
@@ -226,8 +227,8 @@ MASTER_SERV *get_master_ent()
     MASTER_SERV *serv;
     char   *cp;
     char   *name;
-    char   *host;
-    char   *port;
+    char   *host = 0;
+    char   *port = 0;
     char   *transport;
     int     private;
     int     unprivileged;		/* passed on to child */
@@ -236,6 +237,7 @@ MASTER_SERV *get_master_ent()
     int     n;
     char   *bufp;
     char   *atmp;
+    const char *parse_err;
     static char *saved_interfaces = 0;
 
     if (master_fp == 0)
@@ -299,7 +301,11 @@ MASTER_SERV *get_master_ent()
 		     VAR_INET_INTERFACES);
 	}
 	serv->type = MASTER_SERV_TYPE_INET;
-	atmp = inet_parse(name, &host, &port);
+	atmp = mystrdup(name);
+	if ((parse_err = host_port(atmp, &host, "", &port, (char *) 0)) != 0)
+	    msg_fatal("%s: line %d: %s in \"%s\"",
+		      VSTREAM_PATH(master_fp), master_line,
+		      parse_err, name);
 	if (*host) {
 	    serv->flags |= MASTER_FLAG_INETHOST;/* host:port */
 	    MASTER_INET_ADDRLIST(serv) = (INET_ADDR_LIST *)
@@ -307,25 +313,29 @@ MASTER_SERV *get_master_ent()
 	    inet_addr_list_init(MASTER_INET_ADDRLIST(serv));
 	    if (inet_addr_host(MASTER_INET_ADDRLIST(serv), host) == 0)
 		msg_fatal("%s: line %d: bad hostname or network address: %s",
-			  VSTREAM_PATH(master_fp), master_line, host);
+			  VSTREAM_PATH(master_fp), master_line, name);
 	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
-	} else if (strcasecmp(saved_interfaces, DEF_INET_INTERFACES) == 0) {
-	    MASTER_INET_ADDRLIST(serv) = 0;	/* wild-card */
-	    serv->listen_fd_count = 1;
 	} else {
-	    MASTER_INET_ADDRLIST(serv) = own_inet_addr_list();	/* virtual */
+	    MASTER_INET_ADDRLIST(serv) =
+		strcasecmp(saved_interfaces, INET_INTERFACES_ALL) ?
+		own_inet_addr_list() :		/* virtual */
+		wildcard_inet_addr_list();	/* wild-card */
 	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}
 	MASTER_INET_PORT(serv) = mystrdup(port);
-	myfree(atmp);
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_UNIX)) {
 	serv->type = MASTER_SERV_TYPE_UNIX;
 	serv->listen_fd_count = 1;
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_FIFO)) {
 	serv->type = MASTER_SERV_TYPE_FIFO;
 	serv->listen_fd_count = 1;
+#ifdef MASTER_SERV_TYPE_PASS
+    } else if (STR_SAME(transport, MASTER_XPORT_NAME_PASS)) {
+	serv->type = MASTER_SERV_TYPE_PASS;
+	serv->listen_fd_count = 1;
+#endif
     } else {
 	fatal_with_context("bad transport type: %s", transport);
     }
@@ -340,15 +350,50 @@ MASTER_SERV *get_master_ent()
      * attributes such as privacy.
      */
     if (serv->type == MASTER_SERV_TYPE_INET) {
+	MAI_HOSTADDR_STR host_addr;
+	MAI_SERVPORT_STR serv_port;
+	struct addrinfo *res0;
+
 	if (private)
 	    fatal_with_context("inet service cannot be private");
-	serv->name = mystrdup(name);
+#ifdef SNAPSHOT
+	if (*host == 0)
+	    host = 0;
+	/* Canonicalize numeric host and numeric or symbolic service. */
+	if (hostaddr_to_sockaddr(host, port, 0, &res0) == 0) {
+	    SOCKADDR_TO_HOSTADDR(res0->ai_addr, res0->ai_addrlen,
+				 host ? &host_addr : (MAI_HOSTADDR_STR *) 0,
+				 &serv_port, 0);
+	    serv->name = (host ? concatenate("[", host_addr.buf, "]:",
+					     serv_port.buf, (char *) 0) :
+			  mystrdup(serv_port.buf));
+	    freeaddrinfo(res0);
+	} 
+	/* Canonicalize numeric or symbolic service. */
+	else if (hostaddr_to_sockaddr((char *) 0, port, 0, &res0) == 0) {
+	    SOCKADDR_TO_HOSTADDR(res0->ai_addr, res0->ai_addrlen,
+				 (MAI_HOSTADDR_STR *) 0, &serv_port, 0);
+	    serv->name = (host ? concatenate("[", host, "]:",
+					     serv_port.buf, (char *) 0) :
+			  mystrdup(serv_port.buf));
+	    freeaddrinfo(res0);
+	} 
+	/* Bad service name? */
+	else
+#endif
+	    serv->name = mystrdup(name);
+	myfree(atmp);
     } else if (serv->type == MASTER_SERV_TYPE_UNIX) {
 	serv->name = mail_pathname(private ? MAIL_CLASS_PRIVATE :
 				   MAIL_CLASS_PUBLIC, name);
     } else if (serv->type == MASTER_SERV_TYPE_FIFO) {
 	serv->name = mail_pathname(private ? MAIL_CLASS_PRIVATE :
 				   MAIL_CLASS_PUBLIC, name);
+#ifdef MASTER_SERV_TYPE_PASS
+    } else if (serv->type == MASTER_SERV_TYPE_PASS) {
+	serv->name = mail_pathname(private ? MAIL_CLASS_PRIVATE :
+				   MAIL_CLASS_PUBLIC, name);
+#endif
     } else {
 	msg_panic("bad transport type: %d", serv->type);
     }
@@ -357,6 +402,10 @@ MASTER_SERV *get_master_ent()
      * Listen socket(s). XXX We pre-allocate storage because the number of
      * sockets is frozen anyway once we build the command-line vector below.
      */
+    if (serv->listen_fd_count == 0) {
+	msg_fatal("%s: line %d: no valid IP address found: %s",
+		  VSTREAM_PATH(master_fp), master_line, name);
+    }
     serv->listen_fd = (int *) mymalloc(sizeof(int) * serv->listen_fd_count);
     for (n = 0; n < serv->listen_fd_count; n++)
 	serv->listen_fd[n] = -1;
@@ -470,6 +519,9 @@ void    print_master_ent(MASTER_SERV *serv)
 	     serv->type == MASTER_SERV_TYPE_UNIX ? MASTER_XPORT_NAME_UNIX :
 	     serv->type == MASTER_SERV_TYPE_FIFO ? MASTER_XPORT_NAME_FIFO :
 	     serv->type == MASTER_SERV_TYPE_INET ? MASTER_XPORT_NAME_INET :
+#ifdef MASTER_SERV_TYPE_PASS
+	     serv->type == MASTER_SERV_TYPE_PASS ? MASTER_XPORT_NAME_PASS :
+#endif
 	     "unknown transport type");
     msg_info("listen_fd_count: %d", serv->listen_fd_count);
     msg_info("wakeup: %d", serv->wakeup_time);

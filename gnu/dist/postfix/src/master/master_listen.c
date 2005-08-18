@@ -1,4 +1,4 @@
-/*	$NetBSD: master_listen.c,v 1.7 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: master_listen.c,v 1.8 2005/08/18 22:06:00 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -57,6 +57,8 @@
 #include <set_eugid.h>
 #include <set_ugid.h>
 #include <iostuff.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
 
 /* Global library. */
 
@@ -73,6 +75,8 @@ void    master_listen_init(MASTER_SERV *serv)
     char   *myname = "master_listen_init";
     char   *end_point;
     int     n;
+    MAI_HOSTADDR_STR hostaddr;
+    struct sockaddr *sa;
 
     /*
      * Find out what transport we should use, then create one or more
@@ -107,26 +111,39 @@ void    master_listen_init(MASTER_SERV *serv)
 	/*
 	 * INET-domain listener endpoints can be wildcarded (the default) or
 	 * bound to specific interface addresses.
+	 * 
+	 * With dual-stack IPv4/6 systems it does not matter, we have to specify
+	 * the addresses anyway, either explicit or wild-card.
 	 */
     case MASTER_SERV_TYPE_INET:
-	if (MASTER_INET_ADDRLIST(serv) == 0) {	/* wild-card */
-	    serv->listen_fd[0] =
-		inet_listen(MASTER_INET_PORT(serv),
-			    serv->max_proc > var_proc_limit ?
-			    serv->max_proc : var_proc_limit, NON_BLOCKING);
-	    close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
-	} else {				/* virtual or host:port */
-	    for (n = 0; n < serv->listen_fd_count; n++) {
-		end_point = concatenate(inet_ntoa(MASTER_INET_ADDRLIST(serv)->addrs[n]),
-				   ":", MASTER_INET_PORT(serv), (char *) 0);
-		serv->listen_fd[n]
-		    = inet_listen(end_point, serv->max_proc > var_proc_limit ?
-			     serv->max_proc : var_proc_limit, NON_BLOCKING);
-		close_on_exec(serv->listen_fd[n], CLOSE_ON_EXEC);
-		myfree(end_point);
-	    }
+	for (n = 0; n < serv->listen_fd_count; n++) {
+	    sa = SOCK_ADDR_PTR(MASTER_INET_ADDRLIST(serv)->addrs + n);
+	    SOCKADDR_TO_HOSTADDR(sa, SOCK_ADDR_LEN(sa), &hostaddr,
+				 (MAI_SERVPORT_STR *) 0, 0);
+	    end_point = concatenate(hostaddr.buf,
+				    ":", MASTER_INET_PORT(serv), (char *) 0);
+	    serv->listen_fd[n]
+		= inet_listen(end_point, serv->max_proc > var_proc_limit ?
+			      serv->max_proc : var_proc_limit, NON_BLOCKING);
+	    close_on_exec(serv->listen_fd[n], CLOSE_ON_EXEC);
+	    myfree(end_point);
 	}
 	break;
+
+	/*
+	 * Descriptor passing endpoints always come as singlets.
+	 */
+#ifdef MASTER_SERV_TYPE_PASS
+    case MASTER_SERV_TYPE_PASS:
+	set_eugid(var_owner_uid, var_owner_gid);
+	serv->listen_fd[0] =
+	    PASS_LISTEN(serv->name, serv->max_proc > var_proc_limit ?
+			serv->max_proc : var_proc_limit, NON_BLOCKING,
+			&(serv->pass_info));
+	close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
+	set_ugid(getuid(), getgid());
+	break;
+#endif
     default:
 	msg_panic("%s: unknown service type: %d", myname, serv->type);
     }
@@ -146,6 +163,10 @@ void    master_listen_cleanup(MASTER_SERV *serv)
      * listener. The 4.4BSD shutdown(2) man page promises an ENOTCONN error
      * when shutdown(2) is applied to a socket that is not connected.
      */
+#ifdef MASTER_SERV_TYPE_PASS
+    if (serv->type == MASTER_SERV_TYPE_PASS)
+	PASS_SHUTDOWN(&(serv->pass_info));
+#endif
     for (n = 0; n < serv->listen_fd_count; n++) {
 	if (close(serv->listen_fd[n]) < 0)
 	    msg_warn("%s: close listener socket %d: %m",
