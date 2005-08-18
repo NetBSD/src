@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.102 2005/05/07 17:44:11 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.103 2005/08/18 00:30:59 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102 2005/05/07 17:44:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.103 2005/08/18 00:30:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3233,10 +3233,8 @@ ipsec4_splithdr(m)
 			m_freem(m);
 			return NULL;
 		}
-		M_COPY_PKTHDR(mh, m);
+		M_MOVE_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
 		mh->m_next = m;
@@ -3271,10 +3269,8 @@ ipsec6_splithdr(m)
 			m_freem(m);
 			return NULL;
 		}
-		M_COPY_PKTHDR(mh, m);
+		M_MOVE_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
 		mh->m_next = m;
@@ -3400,7 +3396,7 @@ ipsec_copypkt(m)
 						    0, M_COPYALL, M_DONTWAIT);
 					}
 #endif
-					M_COPY_PKTHDR(mnew, n);
+					M_MOVE_PKTHDR(mnew, n);
 				}
 				else {
 					MGET(mnew, M_DONTWAIT, MT_DATA);

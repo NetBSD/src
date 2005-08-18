@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.109 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.110 2005/08/18 00:30:59 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.110 2005/08/18 00:30:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -601,7 +601,7 @@ icmp6_input(mp, offp, proto)
 				m = NULL;
 				goto deliverecho;
 			}
-			M_COPY_PKTHDR(n, n0);
+			M_MOVE_PKTHDR(n, n0);
 			/*
 			 * Copy IPv6 and ICMPv6 only.
 			 */
@@ -620,7 +620,6 @@ icmp6_input(mp, offp, proto)
 			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
 			m_adj(n0, off + sizeof(struct icmp6_hdr));
 			n->m_next = n0;
-			n0->m_flags &= ~M_PKTHDR;
 		} else {
 	 deliverecho:
 			nip6 = mtod(n, struct ip6_hdr *);
@@ -1377,7 +1376,7 @@ ni6_input(m, off)
 		m_freem(m);
 		return (NULL);
 	}
-	M_COPY_PKTHDR(n, m); /* just for rcvif */
+	M_MOVE_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*

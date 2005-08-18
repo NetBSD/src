@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.114 2005/08/10 12:58:37 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.115 2005/08/18 00:30:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -645,6 +645,12 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /*
+ * Move mbuf pkthdr from `from' to `to'.
+ * `from' must have M_PKTHDR set, and `to' must be empty.
+ */
+#define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
+
+/*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
@@ -851,6 +857,7 @@ void	m_copydata(struct mbuf *, int, int, void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
+void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;

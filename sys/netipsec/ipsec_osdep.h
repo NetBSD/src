@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.12 2005/05/07 17:42:09 christos Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.13 2005/08/18 00:30:59 yamt Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -109,19 +109,10 @@ read_random(void *bufp, u_int len)
 
 /*
  * 4. mbuf packet-header/packet-tag semantics.
- * Sam Leffler explains, in private email, some problems with
- * M_COPY_PKTHDR(), and why FreeBSD deprecated it and replaced it
- * with new, explicit macros M_MOVE_PKTHDR()/M_DUP_PKTHDR().
- * he original fast-ipsec source uses M_MOVE_PKTHDR.
- * NetBSD currently still uses M_COPY_PKTHDR(), so we define
- * M_MOVE_PKTHDR in terms of M_COPY_PKTHDR().  Fast-IPsec
- * will delete the source mbuf shortly after copying packet tags,
- * so we are safe for fast-ipsec but not in general..
  */
-#ifdef __NetBSD__
-#define M_MOVE_PKTHDR(_f, _t) M_COPY_PKTHDR(_f, _t)
-#endif /* __NetBSD__ */
-
+/*
+ * nothing.
+ */
 
 /*
  * 5. Fast mbuf-cluster allocation.

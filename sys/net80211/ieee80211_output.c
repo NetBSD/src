@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.35 2005/08/16 02:12:58 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.36 2005/08/18 00:30:59 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.35 2005/08/16 02:12:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.36 2005/08/18 00:30:59 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -386,7 +386,7 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		 * back to ieee80211_crypto_encap to do crypto encapsulation).
 		 */
 		/* NB: must be first 'cuz it clobbers m_data */
-		M_COPY_PKTHDR(n, m);
+		M_MOVE_PKTHDR(n, m);
 		n->m_len = 0;			/* NB: m_gethdr does not set */
 		n->m_data += needed_space;
 		/*
