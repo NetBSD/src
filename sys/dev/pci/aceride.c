@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.14.2.2 2005/08/18 20:05:41 tron Exp $	*/
+/*	$NetBSD: aceride.c,v 1.14.2.3 2005/08/18 20:07:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -217,7 +217,7 @@ acer_do_reset(struct ata_channel *chp, int poll)
 	reg = pciide_pci_read(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
 	    ACER_PCIB_CTRL);
 	pciide_pci_write(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
-	    ACER_PCIB_CTRL, reg & ACER_PCIB_CTRL_ENCHAN(chp->ch_channel));
+	    ACER_PCIB_CTRL, reg & ~ACER_PCIB_CTRL_ENCHAN(chp->ch_channel));
 	delay(1000);
 	pciide_pci_write(acer_sc->pcib_pa.pa_pc, acer_sc->pcib_pa.pa_tag,
 	    ACER_PCIB_CTRL, reg);
