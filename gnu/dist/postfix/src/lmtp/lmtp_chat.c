@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_chat.c,v 1.1.1.4 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_chat.c,v 1.1.1.5 2005/08/18 21:07:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -177,6 +177,7 @@ LMTP_RESP *lmtp_chat_resp(LMTP_STATE *state)
     static LMTP_RESP rdata;
     char   *cp;
     int     last_char;
+    int     three_digs = 0;
 
     /*
      * Initialize the response data buffer.
@@ -217,7 +218,7 @@ LMTP_RESP *lmtp_chat_resp(LMTP_STATE *state)
 	 */
 	for (cp = STR(state->buffer); *cp && ISDIGIT(*cp); cp++)
 	     /* void */ ;
-	if (cp - STR(state->buffer) == 3) {
+	if ((three_digs = (cp - STR(state->buffer) == 3)) != 0) {
 	    if (*cp == '-')
 		continue;
 	    if (*cp == ' ' || *cp == 0)
@@ -225,7 +226,10 @@ LMTP_RESP *lmtp_chat_resp(LMTP_STATE *state)
 	}
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
     }
-    rdata.code = atoi(STR(state->buffer));
+    if (three_digs != 0)
+	rdata.code = atoi(STR(state->buffer));
+    else
+	rdata.code = 0;
     VSTRING_TERMINATE(rdata.buf);
     rdata.str = STR(rdata.buf);
     return (&rdata);

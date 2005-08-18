@@ -1,4 +1,4 @@
-/*	$NetBSD: xtext.c,v 1.1.1.3 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: xtext.c,v 1.1.1.4 2005/08/18 21:07:09 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -145,7 +145,7 @@ static int read_buf(VSTREAM *fp, VSTRING *buf)
     return (len);
 }
 
-main(int unused_argc, char **unused_argv)
+int     main(int unused_argc, char **unused_argv)
 {
     VSTRING *unquoted = vstring_alloc(BUFLEN);
     VSTRING *quoted = vstring_alloc(100);

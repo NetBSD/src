@@ -19,8 +19,10 @@ LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libdns.a ../../lib/
 $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -51,7 +53,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -86,7 +88,10 @@ lmtp_addr.o: ../../include/vstring.h
 lmtp_addr.o: ../../include/vbuf.h
 lmtp_addr.o: ../../include/mymalloc.h
 lmtp_addr.o: ../../include/inet_addr_list.h
+lmtp_addr.o: ../../include/myaddrinfo.h
 lmtp_addr.o: ../../include/stringops.h
+lmtp_addr.o: ../../include/sock_addr.h
+lmtp_addr.o: ../../include/inet_proto.h
 lmtp_addr.o: ../../include/mail_params.h
 lmtp_addr.o: ../../include/own_inet_addr.h
 lmtp_addr.o: ../../include/dns.h
@@ -129,9 +134,13 @@ lmtp_connect.o: ../../include/timed_connect.h
 lmtp_connect.o: ../../include/stringops.h
 lmtp_connect.o: ../../include/host_port.h
 lmtp_connect.o: ../../include/sane_connect.h
+lmtp_connect.o: ../../include/inet_addr_list.h
+lmtp_connect.o: ../../include/myaddrinfo.h
+lmtp_connect.o: ../../include/sock_addr.h
 lmtp_connect.o: ../../include/mail_params.h
 lmtp_connect.o: ../../include/mail_proto.h
 lmtp_connect.o: ../../include/attr.h
+lmtp_connect.o: ../../include/own_inet_addr.h
 lmtp_connect.o: ../../include/dns.h
 lmtp_connect.o: lmtp.h
 lmtp_connect.o: ../../include/argv.h

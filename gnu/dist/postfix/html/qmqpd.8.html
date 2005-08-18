@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - qmqpd(8) </title>
 </head> <body> <pre>
-QMQPD(8)                                                 QMQPD(8)
+QMQPD(8)                                                              QMQPD(8)
 
 <b>NAME</b>
        qmqpd - Postfix QMQP server
@@ -44,11 +44,11 @@ QMQPD(8)                                                 QMQPD(8)
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes   to  <b>main.cf</b>  are  picked  up  automatically,  as
-       <a href="qmqpd.8.html">qmqpd(8)</a> processes run for only a limited amount of  time.
+       <a href="qmqpd.8.html"><b>qmqpd</b>(8)</a> processes run for only a limited amount of  time.
        Use the command "<b>postfix reload</b>" to speed up a change.
 
        The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>CONTENT INSPECTION CONTROLS</b>
        <b><a href="postconf.5.html#content_filter">content_filter</a> (empty)</b>
@@ -57,7 +57,7 @@ QMQPD(8)                                                 QMQPD(8)
 
        <b><a href="postconf.5.html#receive_override_options">receive_override_options</a> (empty)</b>
               Enable  or  disable  recipient validation, built-in
-              content filtering, or address rewriting.
+              content filtering, or address mapping.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
@@ -122,8 +122,8 @@ QMQPD(8)                                                 QMQPD(8)
               Postfix daemon process terminates.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process ID of a Postfix command or daemon pro-
-              cess.
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The process name of a  Postfix  command  or  daemon
@@ -141,13 +141,13 @@ QMQPD(8)                                                 QMQPD(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
               The  characters  Postfix  accepts as VERP delimiter
-              characters on the Postfix <a href="sendmail.1.html">sendmail(1)</a> command  line
+              characters on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command  line
               and in SMTP commands.
 
 <b>SEE ALSO</b>
@@ -172,5 +172,5 @@ QMQPD(8)                                                 QMQPD(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                         QMQPD(8)
+                                                                      QMQPD(8)
 </pre> </body> </html>

@@ -61,6 +61,16 @@ make -f Makefile.init makefiles \
 </pre>
 </blockquote>
 
+<p> Solaris needs run-time path information too: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    "CCARGS=-DHAS_PCRE -I/usr/local/include" \
+    "AUXLIBS=-L/usr/local/lib -R/usr/local/lib -lpcre"
+</pre>
+</blockquote>
+
 <h2>Things to know</h2>
 
 <ul>

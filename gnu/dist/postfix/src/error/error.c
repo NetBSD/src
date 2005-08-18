@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.4 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.5 2005/08/18 21:06:00 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,14 +8,15 @@
 /* SYNOPSIS
 /*	\fBerror\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The Postfix error delivery agent processes delivery requests from
+/*	The Postfix \fBerror\fR(8) delivery agent processes delivery
+/*	requests from
 /*	the queue manager. Each request specifies a queue file, a sender
 /*	address, a domain or host name that is treated as the reason for
 /*	non-delivery, and recipient information.
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*
-/*	The error delivery agent bounces all recipients in the delivery
+/*	The \fBerror\fR(8) delivery agent bounces all recipients in the delivery
 /*	request using the "next-hop"
 /*	domain or host information as the reason for non-delivery, updates
 /*	the queue file and marks recipients as finished or informs the
@@ -26,7 +27,7 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	The error mailer is not security-sensitive. It does not talk
+/*	The \fBerror\fR(8) mailer is not security-sensitive. It does not talk
 /*	to the network, and can be run chrooted at fixed low privilege.
 /* STANDARDS
 /*	None.
@@ -38,12 +39,12 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically as error(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically as \fBerror\fR(8)
 /*      processes run for only a limited amount of time. Use the command
 /*      "\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fB2bounce_notice_recipient (postmaster)\fR"
 /*	The recipient of undeliverable mail that cannot be returned to
 /*	the sender.
@@ -85,7 +86,9 @@
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
+/*	discard(8), Postfix discard delivery agent
 /*	postconf(5), configuration parameters
+/*	master(5), generic daemon options
 /*	master(8), process manager
 /*	syslogd(8), system logging
 /* LICENSE

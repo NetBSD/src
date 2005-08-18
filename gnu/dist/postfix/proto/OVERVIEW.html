@@ -321,10 +321,11 @@ href="QSHAPE_README.html#deferred_queue"> deferred </a> </td>
 
 <li> <p> The queue manager (the qmgr(8) server process in the
 figure) is the heart of Postfix mail delivery.  It contacts the
-smtp(8), lmtp(8), local(8), virtual(8), pipe(8), or error(8) delivery
-agents, and sends a delivery request for one or more recipient
-addresses. The error(8) delivery agent is special: it always declares
-mail as undeliverable. It is not shown in the figure above.  </p>
+smtp(8), lmtp(8), local(8), virtual(8), pipe(8), discard(8) or
+error(8) delivery agents, and sends a delivery request for one
+or more recipient addresses. The discard(8) and error(8) delivery
+agents are special: they discard or bounce all mail, and are not
+shown in the figure above.  </p>
 
 <p> The queue manager maintains a small active queue with the
 messages that it has opened for delivery. The active queue acts as
@@ -394,8 +395,8 @@ and UUCP_README documents.
 
 <p> The previous sections gave an overview of how Postfix server
 processes send and receive mail. These server processes rely on
-other server processes that do things behind the scenes.  Where
-practical, each service will be visualized in its own context.  As
+other server processes that do things behind the scenes.  The text
+below attempts to visualize each service in its own context.  As
 before, names followed by a number are Postfix commands or server
 programs, while unnumbered names inside shaded areas represent
 Postfix queues. </p>
@@ -444,10 +445,11 @@ postfix-script(1) </td> </tr>
 
 </table>
 
-<li> <p> The anvil(8) server implements client connection and rate
+<li> <p> The anvil(8) server implements client connection and
+request rate
 limiting for all smtpd(8) servers.  The TUNING_README document
 provides guidance for dealing with mis-behaving SMTP clients. The
-anvil(8) service is not included with Postfix version 2.1 or earlier.
+anvil(8) service is available in Postfix version 2.2 and later.
 </p>
 
 <table>
@@ -535,6 +537,31 @@ service to Postfix processes. This overcomes chroot restrictions,
 and reduces the number of open lookup tables by sharing one open
 table among multiple processes. </p>
 
+<li> <p> The scache(8) server maintains the connection cache for
+the Postfix smtp(8) client. When connection caching is enabled for
+selected destinations, the smtp(8) client does not disconnect
+immediately after a mail transaction, but gives the connection to
+the connection cache server which keeps the connection open for a
+limited amount of time.  The smtp(8) client continues with some
+other mail delivery request. Meanwhile, any smtp(8) process can
+ask the scache(8) server for that cached connection and reuse it
+for mail delivery. As a safety measure, Postfix limits the number
+of times that a connection may be reused.  </p>
+
+<p> When delivering mail to a destination with multiple mail servers,
+connection caching can help to skip over a non-responding server,
+and thus dramatically speed up delivery.  </p>
+
+<table>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> <br> smtp(8) <br>
+&nbsp; </td> <td> <tt> &lt;-&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> <br> scache(8) <br> &nbsp; </td> <td> <tt>
+&lt;-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> <br>
+smtp(8) <br> &nbsp; </td>
+
+</table>
+
 <li> <p> The showq(8) servers list the Postfix queue status. This
 is the queue listing service that does the work for the mailq(1)
 and postqueue(1) commands.  </p>
@@ -556,6 +583,53 @@ align="center" valign="middle" bgcolor="#f0f0ff"> Postfix<br> queue
 with the client connected via socket or FIFO to the command's
 standard input, output and error streams. You can find examples of
 its use in the SMTPD_POLICY_README document.  </p>
+
+<li> <p> The tlsmgr(8) server runs when TLS (Transport Layer
+Security, formerly known as SSL) is turned on in the Postfix smtp(8)
+client or smtpd(8) server. This process has two duties: </p>
+
+<ul>
+
+<li> <p> Maintain the pseudo-random number generator (PRNG) that
+is used to seed the TLS engines in Postfix smtp(8) client or smtpd(8)
+server processes.  The state of this PRNG is periodically saved to
+a file, and is read when tlsmgr(8) starts up. </p>
+
+<li> <p> Maintain the optional Postfix smtp(8) client or smtpd(8)
+server caches with TLS session keys. Saved keys can improve
+performance by reducing the amount of computation at the start of
+a TLS session. </p>
+
+</ul>
+
+<p> TLS support is available in Postfix version 2.2 and later.
+Information about the Postfix TLS implementation is in the TLS_README
+document. </p>
+
+<table>
+
+<tr> <td>Network<tt>-&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> <br> smtpd(8) <br> &nbsp; </td> <td colspan="2">
+<tt> &lt;---seed---<br><br>&lt;-session-&gt; </tt> </td> <td
+align="center" bgcolor="#f0f0ff"> <br> tlsmgr(8) <br> &nbsp; </td>
+<td colspan="3"> <tt> ---seed---&gt;<br> <br>&lt;-session-&gt;
+</tt> </td> <td align="center" bgcolor="#f0f0ff"> <br> smtp(8) <br>
+&nbsp; </td> <td> <tt> -&gt;</tt>Network </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="right"> <table> <tr> <td>
+</td> <td> / </td> </tr> <tr> <td> / </td> <td> </td> </tr> </table>
+</td> <td align="center"> |<br> |</td> <td align="left"> <table>
+<tr> <td> \ </td> <td> </td> </tr> <tr> <td> </td> <td> \ </td>
+</tr> </table> </td> <td colspan="3"> </td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" bgcolor="#f0f0ff">
+smtpd<br> session<br> cache </td> <td> </td> <td align="center"
+bgcolor="#f0f0ff"> PRNG<br> state <br>file </td> <td> </td> <td
+align="center" bgcolor="#f0f0ff"> smtp<br> session<br> cache </td>
+<td colspan="2"> </td> </tr>
+
+</table>
+
 
 <li> <p> The verify(8) server verifies that a sender or recipient
 address is deliverable before the smtpd(8) server accepts it.  The

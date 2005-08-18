@@ -188,7 +188,9 @@ have a problem when the update fails because the disk is full or
 because something else happens.  This is because commands such as
 postmap(1) or postalias(1) overwrite existing files. If the update
 fails in the middle then you have no usable database, and Postfix
-will stop working. </p>
+will stop working. This is not an issue with the CDB database type
+available with Postfix 2.2 and later, because <a href="CDB_README.html">CDB</a>
+database rebuilds are atomic. </p>
 
 <p> With multi-file databases such as DBM, there is no simple
 solution. With Berkeley DB and other "one file" databases, it is
@@ -244,7 +246,7 @@ database file as if nothing happened. </p>
 <h2><a name="types">Postfix lookup table types</a> </h2>
 
 <p> To find out what database types your Postfix system supports,
-use the "postconf -m" command.  Here is a list of database types
+use the "<b>postconf -m</b>" command.  Here is a list of database types
 that are often supported: </p>
 
 <blockquote>
@@ -258,6 +260,14 @@ systems with support for Berkeley DB databases. Database files are
 created with the postmap(1) or postalias(1) command. The lookup
 table name as used in "btree:table" is the database file name
 without the ".db" suffix.  </dd>
+
+<dt> <b>cdb</b> </dt>
+
+<dd> A read-optimized structure with no support for incremental updates.
+Database files are created with the postmap(1) or postalias(1) command.
+The lookup table name as used in "cdb:table" is the database file name
+without the ".cdb" suffix.  This feature is available with Postfix 2.2
+and later. </dd>
 
 <dt> <b>cidr</b> </dt>
 
@@ -297,6 +307,19 @@ are given in the ldap_table(5). </dd>
 <dd> Perform MySQL database lookups. Configuration details are given
 in mysql_table(5). </dd>
 
+<dt> <b>netinfo</b> (read-only) </dt>
+
+<dd> Perform Netinfo database lookups. </dd>
+
+<dt> <b>nis</b> (read-only) </dt>
+
+<dd> Perform NIS database lookups. </dd>
+
+<dt> <b>nisplus</b> (read-only) </dt>
+
+<dd> Perform NIS+ database lookups. Configuration details are given
+in nisplus_table(5). </dd>
+
 <dt> <b>pcre</b> (read-only) </dt>
 
 <dd> A lookup table based on Perl Compatible Regular Expressions.
@@ -320,6 +343,14 @@ lookup table name syntax is "proxy:type:table". </dd>
 is described in regexp_table(5). The lookup table name as used in
 "regexp:table" is the name of the regular expression file. </dd>
 
+<dt> <b>sdbm</b> </dt>
+
+<dd> An indexed file type based on hashing.  This is available only
+on systems with support for SDBM databases. Database files are
+created with the postmap(1) or postalias(1) command. The lookup
+table name as used in "sdbm:table" is the database file name without
+the ".dir" or ".pag" suffix.  </dd>
+
 <dt> <b>static</b> (read-only) </dt>
 
 <dd> Always returns its lookup table name as lookup result.  For
@@ -332,8 +363,8 @@ example, the lookup table "static:foobar" always returns the string
 described in tcp_table(5). The lookup table name is "tcp:host:port"
 where "host" specifies a symbolic hostname or a numeric IP address,
 and "port" specifies a symbolic service name or a numeric port
-number. This protocol is not available in Postfix version 2.1.
-</dd>
+number. This protocol is not available up to and including Postfix
+version 2.2.  </dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 
