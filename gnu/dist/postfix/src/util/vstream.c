@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.1.1.5 2004/05/31 00:25:02 heas Exp $	*/
+/*	$NetBSD: vstream.c,v 1.1.1.6 2005/08/18 21:10:49 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,9 @@
 /*	int	flags;
 /*
 /*	int	vstream_fclose(stream)
+/*	VSTREAM	*stream;
+/*
+/*	int	vstream_fdclose(stream)
 /*	VSTREAM	*stream;
 /*
 /*	VSTREAM	*vstream_printf(format, ...)
@@ -153,6 +156,9 @@
 /*
 /*	vstream_fclose() closes the named buffered stream. The result
 /*	is 0 in case of success, VSTREAM_EOF in case of problems.
+/*
+/*	vstream_fdclose() leaves the file(s) open but is otherwise
+/*	identical to vstream_fclose().
 /*
 /*	vstream_fprintf() formats its arguments according to the
 /*	\fIformat\fR argument and writes the result to the named stream.
@@ -539,14 +545,14 @@ static int vstream_fflush_some(VSTREAM *stream, int to_flush)
      * any.
      */
     for (data = (char *) bp->data, len = to_flush; len > 0; len -= n, data += n) {
-	if (stream->timeout)
-	    stream->iotime = time((time_t *) 0);
 	if ((n = stream->write_fn(stream->fd, data, len, stream->timeout, stream->context)) <= 0) {
 	    bp->flags |= VSTREAM_FLAG_ERR;
 	    if (errno == ETIMEDOUT)
 		bp->flags |= VSTREAM_FLAG_TIMEOUT;
 	    return (VSTREAM_EOF);
 	}
+	if (stream->timeout)
+	    stream->iotime = time((time_t *) 0);
 	if (msg_verbose > 2 && stream != VSTREAM_ERR && n != to_flush)
 	    msg_info("%s: %d flushed %d/%d", myname, stream->fd, n, to_flush);
     }
@@ -644,7 +650,7 @@ static int vstream_buf_get_ready(VBUF *bp)
      */
     if (bp->data == 0) {
 	vstream_buf_alloc(bp, VSTREAM_BUFSIZE);
-	if (bp->flags & VSTREAM_FLAG_DOUBLE) 
+	if (bp->flags & VSTREAM_FLAG_DOUBLE)
 	    VSTREAM_SAVE_STATE(stream, read_buf, read_fd);
     }
 
@@ -670,8 +676,6 @@ static int vstream_buf_get_ready(VBUF *bp)
      * data as is available right now, whichever is less. Update the cached
      * file seek position, if any.
      */
-    if (stream->timeout)
-	stream->iotime = time((time_t *) 0);
     switch (n = stream->read_fn(stream->fd, bp->data, bp->len, stream->timeout, stream->context)) {
     case -1:
 	bp->flags |= VSTREAM_FLAG_ERR;
@@ -682,6 +686,8 @@ static int vstream_buf_get_ready(VBUF *bp)
 	bp->flags |= VSTREAM_FLAG_EOF;
 	return (VSTREAM_EOF);
     default:
+	if (stream->timeout)
+	    stream->iotime = time((time_t *) 0);
 	if (msg_verbose > 2)
 	    msg_info("%s: fd %d got %d", myname, stream->fd, n);
 	bp->cnt = -n;
@@ -729,7 +735,7 @@ static int vstream_buf_put_ready(VBUF *bp)
      */
     if (bp->data == 0) {
 	vstream_buf_alloc(bp, VSTREAM_BUFSIZE);
-	if (bp->flags & VSTREAM_FLAG_DOUBLE) 
+	if (bp->flags & VSTREAM_FLAG_DOUBLE)
 	    VSTREAM_SAVE_STATE(stream, write_buf, write_fd);
     } else if (bp->cnt <= 0) {
 	if (VSTREAM_FFLUSH_SOME(stream))
@@ -972,20 +978,29 @@ int     vstream_fclose(VSTREAM *stream)
 {
     int     err;
 
+    /*
+     * NOTE: Negative file descriptors are not part of the external
+     * interface. They are for internal use only, in order to support
+     * vstream_fdclose() without a lot of code duplication. Applications that
+     * rely on negative VSTREAM file descriptors will break without warning.
+     */
     if (stream->pid != 0)
 	msg_panic("vstream_fclose: stream has process");
     if ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0)
 	vstream_fflush(stream);
     err = vstream_ferror(stream);
     if (stream->buf.flags & VSTREAM_FLAG_DOUBLE) {
-	err |= close(stream->read_fd);
+	if (stream->read_fd >= 0)
+	    err |= close(stream->read_fd);
 	if (stream->write_fd != stream->read_fd)
-	    err |= close(stream->write_fd);
+	    if (stream->write_fd >= 0)
+		err |= close(stream->write_fd);
 	vstream_buf_wipe(&stream->read_buf);
 	vstream_buf_wipe(&stream->write_buf);
 	stream->buf = stream->read_buf;
     } else {
-	err |= close(stream->fd);
+	if (stream->fd >= 0)
+	    err |= close(stream->fd);
 	vstream_buf_wipe(&stream->buf);
     }
     if (stream->path)
@@ -995,6 +1010,18 @@ int     vstream_fclose(VSTREAM *stream)
     if (!VSTREAM_STATIC(stream))
 	myfree((char *) stream);
     return (err ? VSTREAM_EOF : 0);
+}
+
+/* vstream_fdclose - close stream, leave file(s) open */
+
+int     vstream_fdclose(VSTREAM *stream)
+{
+    if (stream->buf.flags & VSTREAM_FLAG_DOUBLE) {
+	stream->read_fd = stream->write_fd = -1;
+    } else {
+	stream->fd = -1;
+    }
+    return (vstream_fclose(stream));
 }
 
 /* vstream_printf - formatted print to stdout */
@@ -1097,6 +1124,7 @@ void    vstream_control(VSTREAM *stream, int name,...)
 	    msg_panic("%s: bad name %d", myname, name);
 	}
     }
+    va_end(ap);
 }
 
 /* vstream_vfprintf - formatted print engine */

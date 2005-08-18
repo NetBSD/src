@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.c,v 1.1.1.4 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: valid_hostname.c,v 1.1.1.5 2005/08/18 21:10:45 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -16,28 +16,41 @@
 /*	const char *addr;
 /*	int	gripe;
 /*
-/*	int	valid_hostliteral(addr, gripe)
+/*	int	valid_ipv4_hostaddr(addr, gripe)
+/*	const char *addr;
+/*	int	gripe;
+/*
+/*	int	valid_ipv6_hostaddr(addr, gripe)
 /*	const char *addr;
 /*	int	gripe;
 /* DESCRIPTION
-/*	valid_hostname() scrutinizes a hostname: the name should be no
-/*	longer than VALID_HOSTNAME_LEN characters, should contain only
-/*	letters, digits, dots and hyphens, no adjacent dots and hyphens,
-/*	no leading or trailing dots or hyphens, no labels longer than
-/*	VALID_LABEL_LEN characters, and no numeric top-level domain.
+/*	valid_hostname() scrutinizes a hostname: the name should
+/*	be no longer than VALID_HOSTNAME_LEN characters, should
+/*	contain only letters, digits, dots and hyphens, no adjacent
+/*	dots and hyphens, no leading or trailing dots or hyphens,
+/*	no labels longer than VALID_LABEL_LEN characters, and it
+/*	should not be all numeric.
 /*
 /*	valid_hostaddr() requires that the input is a valid string
-/*	representation of an internet network address.
+/*	representation of an IPv4 or IPv6 network address as
+/*	described next.
 /*
-/*	valid_hostliteral() requires an address enclosed in [].
+/*	valid_ipv4_hostaddr() and valid_ipv6_hostaddr() implement
+/*	protocol-specific address syntax checks. A valid IPv4
+/*	address is in dotted-quad decimal form. A valid IPv6 address
+/*      has 16-bit hexadecimal fields separated by ":", and does not
+/*      include the RFC 2821 style "IPv6:" prefix.
 /*
 /*	These routines operate silently unless the gripe parameter
 /*	specifies a non-zero value. The macros DO_GRIPE and DONT_GRIPE
 /*	provide suitable constants.
+/* BUGS
+/*	valid_hostmumble() does not guarantee that string lengths
+/*	fit the buffer sizes defined in myaddrinfo(3h).
 /* DIAGNOSTICS
-/*	Both functions return zero if they disagree with the input.
+/*	All functions return zero if they disagree with the input.
 /* SEE ALSO
-/*	RFC 952, 1123, RFC 1035
+/*	RFC 952, RFC 1123, RFC 1035, RFC 2373.
 /* LICENSE
 /* .ad
 /* .fi
@@ -111,7 +124,14 @@ int     valid_hostname(const char *name, int gripe)
 		    msg_warn("%s: misplaced hyphen: %.100s", myname, name);
 		return (0);
 	    }
-	} else {
+	}
+#ifdef SLOPPY_VALID_HOSTNAME
+	else if (ch == ':' && valid_ipv6_hostaddr(name, DONT_GRIPE)) {
+	    non_numeric = 0;
+	    break;
+	}
+#endif
+	else {
 	    if (gripe)
 		msg_warn("%s: invalid character %d(decimal): %.100s",
 			 myname, ch, name);
@@ -122,7 +142,9 @@ int     valid_hostname(const char *name, int gripe)
     if (non_numeric == 0) {
 	if (gripe)
 	    msg_warn("%s: numeric hostname: %.100s", myname, name);
-	/* NOT: return (0); this confuses users of the DNS client */
+#ifndef SLOPPY_VALID_HOSTNAME
+	return (0);
+#endif
     }
     if (cp - name > VALID_HOSTNAME_LEN) {
 	if (gripe)
@@ -133,18 +155,11 @@ int     valid_hostname(const char *name, int gripe)
     return (1);
 }
 
-/* valid_hostaddr - test dotted quad string for correctness */
+/* valid_hostaddr - verify numerical address syntax */
 
 int     valid_hostaddr(const char *addr, int gripe)
 {
-    const char *cp;
-    char   *myname = "valid_hostaddr";
-    int     in_byte = 0;
-    int     byte_count = 0;
-    int     byte_val = 0;
-    int     ch;
-
-#define BYTES_NEEDED	4
+    const char *myname = "valid_hostaddr";
 
     /*
      * Trivial cases first.
@@ -156,20 +171,32 @@ int     valid_hostaddr(const char *addr, int gripe)
     }
 
     /*
-     * Preliminary IPV6 support.
+     * Protocol-dependent processing next.
      */
-    if (strchr(addr, ':')) {
-	if (*(cp = addr + strspn(addr, ":./0123456789abcdefABCDEF")) != 0) {
-	    if (gripe)
-		msg_warn("%s: invalid character %d(decimal): %.100s",
-			 myname, *cp, addr);
-	    return (0);
-	}
-	return (1);
-    }
+    if (strchr(addr, ':') != 0)
+	return (valid_ipv6_hostaddr(addr, gripe));
+    else
+	return (valid_ipv4_hostaddr(addr, gripe));
+}
+
+/* valid_ipv4_hostaddr - test dotted quad string for correctness */
+
+int     valid_ipv4_hostaddr(const char *addr, int gripe)
+{
+    const char *cp;
+    char   *myname = "valid_ipv4_hostaddr";
+    int     in_byte = 0;
+    int     byte_count = 0;
+    int     byte_val = 0;
+    int     ch;
+
+#define BYTES_NEEDED	4
 
     /*
      * Scary code to avoid sscanf() overflow nasties.
+     * 
+     * This routine is called by valid_ipv6_hostaddr(). It must not call that
+     * routine, to avoid deadly recursion.
      */
     for (cp = addr; (ch = *(unsigned const char *) cp) != 0; cp++) {
 	if (ISDIGIT(ch)) {
@@ -191,7 +218,8 @@ int     valid_hostaddr(const char *addr, int gripe)
 		    msg_warn("%s: misplaced dot: %.100s", myname, addr);
 		return (0);
 	    }
-	    if ((byte_count == 1 && byte_val == 0)) {
+	    /* XXX Allow 0.0.0.0 but not 0.1.2.3 */
+	    if (byte_count == 1 && byte_val == 0 && addr[strspn(addr, "0.")]) {
 		if (gripe)
 		    msg_warn("%s: bad initial octet value: %.100s", myname, addr);
 		return (0);
@@ -213,37 +241,101 @@ int     valid_hostaddr(const char *addr, int gripe)
     return (1);
 }
 
-/* valid_hostliteral - validate address literal */
+/* valid_ipv6_hostaddr - validate IPv6 address syntax */
 
-int     valid_hostliteral(const char *addr, int gripe)
+int     valid_ipv6_hostaddr(const char *addr, int gripe)
 {
-    const char *myname = "valid_hostliteral";
-    char    buf[100];
-    const char *last;
+    const char *myname = "valid_ipv6_hostaddr";
+    int     null_field = 0;
+    int     field = 0;
+    unsigned char *cp = (unsigned char *) addr;
+    int     len = 0;
 
-    if (*addr != '[') {
-	if (gripe)
-	    msg_warn("%s: '[' expected at start: %.100s", myname, addr);
-	return (0);
+    /*
+     * FIX 200501 The IPv6 patch validated syntax with getaddrinfo(), but I
+     * am not confident that everyone's system library routines are robust
+     * enough, like buffer overflow free. Remember, the valid_hostmumble()
+     * routines are meant to protect Postfix against malformed information
+     * in data received from the network.
+     * 
+     * We require eight-field hex addresses of the form 0:1:2:3:4:5:6:7,
+     * 0:1:2:3:4:5:6a.6b.7c.7d, or some :: compressed version of the same.
+     * 
+     * Note: the character position is advanced inside the loop. I have added
+     * comments to show why we can't get stuck.
+     */
+    for (;;) {
+	switch (*cp) {
+	case 0:
+	    /* Terminate the loop. */
+	    if (field < 2) {
+		if (gripe)
+		    msg_warn("%s: too few `:' in IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    } else if (len == 0 && null_field != field - 1) {
+		if (gripe)
+		    msg_warn("%s: bad null last field in IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    } else
+		return (1);
+	case '.':
+	    /* Terminate the loop. */
+	    if (field < 2 || field > 6) {
+		if (gripe)
+		    msg_warn("%s: malformed IPv4-in-IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    } else
+		/* NOT: valid_hostaddr(). Avoid recursion. */
+		return (valid_ipv4_hostaddr((char *) cp - len, gripe));
+	case ':':
+	    /* Advance by exactly 1 character position or terminate. */
+	    if (field == 0 && len == 0 && ISALNUM(cp[1])) {
+		if (gripe)
+		    msg_warn("%s: bad null first field in IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    }
+	    field++;
+	    if (field > 7) {
+		if (gripe)
+		    msg_warn("%s: too many `:' in IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    }
+	    cp++;
+	    len = 0;
+	    if (*cp == ':') {
+		if (null_field > 0) {
+		    if (gripe)
+			msg_warn("%s: too many `::' in IPv6 address: %.100s",
+				 myname, addr);
+		    return (0);
+		}
+		null_field = field;
+	    } 
+	    break;
+	default:
+	    /* Advance by at least 1 character position or terminate. */
+	    len = strspn((char *) cp, "0123456789abcdefABCDEF");
+	    if (len /* - strspn((char *) cp, "0") */ > 4) {
+		if (gripe)
+		    msg_warn("%s: malformed IPv6 address: %.100s",
+			     myname, addr);
+		return (0);
+	    }
+	    if (len <= 0) {
+		if (gripe)
+		    msg_warn("%s: invalid character %d(decimal) in IPv6 address: %.100s",
+			     myname, *cp, addr);
+		return (0);
+	    }
+	    cp += len;
+	    break;
+	}
     }
-    if ((last = strchr(addr, ']')) == 0) {
-	if (gripe)
-	    msg_warn("%s: ']' expected at end: %.100s", myname, addr);
-	return (0);
-    }
-    if (last[1]) {
-	if (gripe)
-	    msg_warn("%s: unexpected text after ']': %.100s", myname, addr);
-	return (0);
-    }
-    if (last >= addr + sizeof(buf)) {
-	if (gripe)
-	    msg_warn("%s: too much text: %.100s", myname, addr);
-	return (0);
-    }
-    strncpy(buf, addr + 1, last - addr - 1);
-    buf[last - addr - 1] = 0;
-    return (valid_hostaddr(buf, gripe));
 }
 
 #ifdef TEST
@@ -270,7 +362,6 @@ int     main(int unused_argc, char **argv)
 	msg_info("testing: \"%s\"", vstring_str(buffer));
 	valid_hostname(vstring_str(buffer), DO_GRIPE);
 	valid_hostaddr(vstring_str(buffer), DO_GRIPE);
-	valid_hostliteral(vstring_str(buffer), DO_GRIPE);
     }
     exit(0);
 }

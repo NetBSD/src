@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.1.1.3 2005/08/18 21:10:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,18 @@
 /*	const char *context;
 /*	NAME_MASK *table;
 /*	int	mask;
+/*
+/*	int	name_mask_opt(context, table, names, flags)
+/*	const char *context;
+/*	NAME_MASK *table;
+/*	const char *names;
+/*	int	flags;
+/*
+/*	const char *str_name_mask_opt(context, table, mask, flags)
+/*	const char *context;
+/*	NAME_MASK *table;
+/*	int	mask;
+/*	int	flags;
 /* DESCRIPTION
 /*	name_mask() takes a null-terminated \fItable\fR with (name, mask)
 /*	values and computes the bit-wise OR of the masks that correspond
@@ -27,12 +39,39 @@
 /*	The result is written to a static buffer that is overwritten
 /*	upon each call.
 /*
-/*	The \fIcontext\fR argument specifies what kind of names and
+/*	name_mask_opt() and str_name_mask_opt() are extended versions
+/*	with additional fine control.
+/*
+/*	Arguments:
+/* .IP context
+/*	What kind of names and
 /*	masks are being manipulated, in order to make error messages
 /*	more understandable. Typically, this would be the name of a
 /*	user-configurable parameter.
+/* .IP table
+/*	Table with (name, bit mask) pairs.
+/* .IP names
+/*	A list of names that is to be converted into a bit mask.
+/* .IP mask
+/*	A bit mask.
+/* .IP flags
+/*	Bit-wise OR of zero or more of the following:
+/* .RS
+/* .IP NAME_MASK_MATCH_REQ
+/*	Require that all names listed in \fIname\fR exist in \fItable\fR,
+/*	and that all bits listed in \fImask\fR exist in \fItable\fR.
+/*	This feature is enabled by default when calling name_mask()
+/*	or str_name_mask().
+/* .IP NAME_MASK_ANY_CASE
+/*	Enable case-insensitive matching.
+/*	This feature is not enabled by default when calling name_mask();
+/*	it has no effect with str_name_mask().
+/* .RE
+/*	The value NAME_MASK_NONE explicitly requests no features,
+/*	and NAME_MASK_DEFAULT enables the default options.
 /* DIAGNOSTICS
 /*	Fatal: the \fInames\fR argument specifies a name not found in
+/*	\fItable\fR, or the \fImask\fR specifies a bit not found in
 /*	\fItable\fR.
 /* LICENSE
 /* .ad
@@ -50,6 +89,10 @@
 #include <sys_defs.h>
 #include <string.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -60,9 +103,10 @@
 
 #define STR(x) vstring_str(x)
 
-/* name_mask - compute mask corresponding to list of names */
+/* name_mask_opt - compute mask corresponding to list of names */
 
-int     name_mask(const char *context, NAME_MASK * table, const char *names)
+int     name_mask_opt(const char *context, NAME_MASK *table, const char *names,
+		              int flags)
 {
     char   *myname = "name_mask";
     char   *saved_names = mystrdup(names);
@@ -77,10 +121,14 @@ int     name_mask(const char *context, NAME_MASK * table, const char *names)
      */
     while ((name = mystrtok(&bp, ", \t\r\n")) != 0) {
 	for (np = table; /* void */ ; np++) {
-	    if (np->name == 0)
-		msg_fatal("unknown %s value \"%s\" in \"%s\"",
-			  context, name, names);
-	    if (strcmp(name, np->name) == 0) {
+	    if (np->name == 0) {
+		if (flags & NAME_MASK_MATCH_REQ)
+		    msg_fatal("unknown %s value \"%s\" in \"%s\"",
+			      context, name, names);
+		break;
+	    }
+	    if (((flags & NAME_MASK_ANY_CASE) ? strcasecmp : strcmp)
+			(name, np->name) == 0) {
 		if (msg_verbose)
 		    msg_info("%s: %s", myname, name);
 		result |= np->mask;
@@ -92,9 +140,10 @@ int     name_mask(const char *context, NAME_MASK * table, const char *names)
     return (result);
 }
 
-/* str_name_mask - mask to string */
+/* str_name_mask_opt - mask to string */
 
-const char *str_name_mask(const char *context, NAME_MASK * table, int mask)
+const char *str_name_mask_opt(const char *context, NAME_MASK *table,
+			              int mask, int flags)
 {
     char   *myname = "name_mask";
     NAME_MASK *np;
@@ -107,8 +156,12 @@ const char *str_name_mask(const char *context, NAME_MASK * table, int mask)
     VSTRING_RESET(buf);
 
     for (np = table; mask != 0; np++) {
-	if (np->name == 0)
-	    msg_panic("%s: invalid %s bitmask: 0x%x", myname, context, mask);
+	if (np->name == 0) {
+	    if (flags & NAME_MASK_MATCH_REQ)
+		msg_fatal("%s: invalid %s bit in mask: 0x%x",
+			  myname, context, mask);
+	    break;
+	}
 	if (mask & np->mask) {
 	    mask &= ~np->mask;
 	    vstring_sprintf_append(buf, "%s ", np->name);

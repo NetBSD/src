@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.1.1.4 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: match_list.c,v 1.1.1.5 2005/08/18 21:10:30 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -97,6 +97,9 @@ struct MATCH_LIST {
     const char **match_args;		/* match arguments */
 };
 
+#define MATCH_DICTIONARY(pattern) \
+    ((pattern)[0] != '[' && strchr((pattern), ':') != 0)
+
 /* match_list_parse - parse buffer, destroy buffer */
 
 static ARGV *match_list_parse(ARGV *list, char *string)
@@ -127,7 +130,7 @@ static ARGV *match_list_parse(ARGV *list, char *string)
 		    list = match_list_parse(list, vstring_str(buf));
 	    if (vstream_fclose(fp))
 		msg_fatal("%s: read file %s: %m", myname, pattern);
-	} else if (strchr(pattern, ':') != 0) {	/* type:table */
+	} else if (MATCH_DICTIONARY(pattern)) {	/* type:table */
 	    if (buf == 0)
 		buf = vstring_alloc(10);
 #define OPEN_FLAGS	O_RDONLY
@@ -139,7 +142,7 @@ static ARGV *match_list_parse(ARGV *list, char *string)
 	    map_type_name_flags = STR(buf) + (map_type_name - pattern);
 	    if (dict_handle(map_type_name_flags) == 0)
 		dict_register(map_type_name_flags,
-			      dict_open(map_type_name, OPEN_FLAGS, DICT_FLAGS));
+			  dict_open(map_type_name, OPEN_FLAGS, DICT_FLAGS));
 	    argv_add(list, STR(buf), (char *) 0);
 	} else {				/* other pattern */
 	    argv_add(list, pattern, (char *) 0);

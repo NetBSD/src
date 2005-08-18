@@ -1,10 +1,10 @@
-/*	$NetBSD: inet_connect.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: inet_connect.c,v 1.1.1.4 2005/08/18 21:10:26 rpaulo Exp $	*/
 
 /*++
 /* NAME
 /*	inet_connect 3
 /* SUMMARY
-/*	connect to INET-domain listener
+/*	connect to TCP listener
 /* SYNOPSIS
 /*	#include <connect.h>
 /*
@@ -13,7 +13,7 @@
 /*	int	block_mode;
 /*	int	timeout;
 /* DESCRIPTION
-/*	inet_connect connects to a listener in the AF_INET domain at
+/*	inet_connect connects to a TCP listener at
 /*	the specified address, and returns the resulting file descriptor.
 /*
 /*	Arguments:
@@ -30,14 +30,9 @@
 /*	a value <= 0 to disable the time limit.
 /* DIAGNOSTICS
 /*	The result is -1 when the connection could not be made.
-/*	Th nature of the error is available via the global \fIerrno\fR
+/*	The nature of the error is available via the global \fIerrno\fR
 /*	variable.
 /*	Fatal errors: other system call failures.
-/* BUGS
-/*	This routine uses find_inet_addr() which ignores all but the
-/*	first address listed for the named host.
-/* SEE ALSO
-/*	find_inet(3), simple inet name service interface
 /* LICENSE
 /* .ad
 /* .fi
@@ -57,53 +52,103 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <netdb.h>
 
 /* Utility library. */
 
 #include "mymalloc.h"
 #include "msg.h"
-#include "find_inet.h"
-#include "inet_util.h"
 #include "iostuff.h"
+#include "host_port.h"
 #include "sane_connect.h"
 #include "connect.h"
 #include "timed_connect.h"
+#include "myaddrinfo.h"
+#include "sock_addr.h"
+#include "inet_proto.h"
 
-/* inet_connect - connect to AF_INET-domain listener */
+static int inet_connect_one(struct addrinfo *, int, int);
+
+/* inet_connect - connect to TCP listener */
 
 int     inet_connect(const char *addr, int block_mode, int timeout)
 {
     char   *buf;
     char   *host;
     char   *port;
-    struct sockaddr_in sin;
+    const char *parse_err;
+    struct addrinfo *res;
+    struct addrinfo *res0;
+    int     aierr;
     int     sock;
+    MAI_HOSTADDR_STR hostaddr;
+    INET_PROTO_INFO *proto_info;
+    int     found;
 
     /*
      * Translate address information to internal form. No host defaults to
      * the local host.
      */
-    buf = inet_parse(addr, &host, &port);
-    if (*host == 0)
-	host = "localhost";
-    memset((char *) &sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = find_inet_addr(host);
-    sin.sin_port = find_inet_port(port, "tcp");
+    buf = mystrdup(addr);
+    if ((parse_err = host_port(buf, &host, "localhost", &port, (char *) 0)) != 0)
+	msg_fatal("%s: %s", addr, parse_err);
+    if ((aierr = hostname_to_sockaddr(host, port, SOCK_STREAM, &res0)) != 0)
+	msg_fatal("host/service %s/%s not found: %s",
+		  host, port, MAI_STRERROR(aierr));
     myfree(buf);
+
+    proto_info = inet_proto_info();
+    for (sock = -1, found = 0, res = res0; res != 0; res = res->ai_next) {
+
+	/*
+	 * Safety net.
+	 */
+	if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+	    msg_info("skipping address family %d for host %s",
+		     res->ai_family, host);
+	    continue;
+	}
+	found++;
+
+	/*
+	 * In case of multiple addresses, show what address we're trying now.
+	 */
+	if (msg_verbose) {
+	    SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
+				 &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
+	    msg_info("trying... [%s]", hostaddr.buf);
+	}
+	if ((sock = inet_connect_one(res, block_mode, timeout)) < 0) {
+	    if (msg_verbose)
+		msg_info("%m");
+	} else
+	    break;
+    }
+    if (found == 0)
+	msg_fatal("host not found: %s", addr);
+    freeaddrinfo(res0);
+    return (sock);
+}
+
+/* inet_connect_one - try to connect to one address */
+
+static int inet_connect_one(struct addrinfo * res, int block_mode, int timeout)
+{
+    int     sock;
 
     /*
      * Create a client socket.
      */
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	msg_fatal("socket: %m");
+    sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0)
+	return (-1);
 
     /*
      * Timed connect.
      */
     if (timeout > 0) {
 	non_blocking(sock, NON_BLOCKING);
-	if (timed_connect(sock, (struct sockaddr *) & sin, sizeof(sin), timeout) < 0) {
+	if (timed_connect(sock, res->ai_addr, res->ai_addrlen, timeout) < 0) {
 	    close(sock);
 	    return (-1);
 	}
@@ -117,7 +162,7 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
      */
     else {
 	non_blocking(sock, block_mode);
-	if (sane_connect(sock, (struct sockaddr *) & sin, sizeof(sin)) < 0
+	if (sane_connect(sock, res->ai_addr, res->ai_addrlen) < 0
 	    && errno != EINPROGRESS) {
 	    close(sock);
 	    return (-1);

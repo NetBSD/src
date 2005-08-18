@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.1.1.3 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: ring.h,v 1.1.1.4 2005/08/18 21:10:35 rpaulo Exp $	*/
 
 #ifndef _RING_H_INCLUDED_
 #define _RING_H_INCLUDED_
@@ -30,6 +30,9 @@ extern void ring_detach(RING *);
 
 #define ring_succ(c) ((c)->succ)
 #define ring_pred(c) ((c)->pred)
+
+#define RING_FOREACH(entry, head) \
+    for (entry = ring_succ(head); entry != (head); entry = ring_succ(entry))
 
  /*
   * Typically, an application will embed a RING structure into a larger

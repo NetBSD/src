@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.h,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: inet_addr_list.h,v 1.1.1.4 2005/08/18 21:10:23 rpaulo Exp $	*/
 
 #ifndef _INET_ADDR_LIST_H_INCLUDED_
 #define _INET_ADDR_LIST_H_INCLUDED_
@@ -14,9 +14,9 @@
 /* .nf
 
  /*
-  * System library.
+  * Utility library.
   */
-#include <netinet/in.h>
+#include <myaddrinfo.h>			/* generic name/addr API */
 
  /*
   * External interface.
@@ -24,13 +24,13 @@
 typedef struct INET_ADDR_LIST {
     int     used;			/* nr of elements in use */
     int     size;			/* actual list size */
-    struct in_addr *addrs;		/* payload */
+    struct sockaddr_storage *addrs;	/* payload */
 } INET_ADDR_LIST;
 
 extern void inet_addr_list_init(INET_ADDR_LIST *);
 extern void inet_addr_list_free(INET_ADDR_LIST *);
 extern void inet_addr_list_uniq(INET_ADDR_LIST *);
-extern void inet_addr_list_append(INET_ADDR_LIST *, struct in_addr *);
+extern void inet_addr_list_append(INET_ADDR_LIST *, struct sockaddr *);
 
 /* LICENSE
 /* .ad
