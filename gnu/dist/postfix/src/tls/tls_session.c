@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_session.c,v 1.1.1.1 2005/08/18 21:11:10 rpaulo Exp $	*/
+/*	$NetBSD: tls_session.c,v 1.2 2005/08/18 22:29:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -163,13 +163,18 @@ VSTRING *tls_session_passivate(SSL_SESSION *session)
 
 SSL_SESSION *tls_session_activate(char *session_data, int session_data_len)
 {
+#if (OPENSSL_VERSION_NUMBER < 0x0090707fL)
+#define BOGUS_CONST
+#else
+#define BOGUS_CONST const
+#endif
     SSL_SESSION *session;
-    unsigned char *ptr;
+    BOGUS_CONST unsigned char *ptr;
 
     /*
      * Activate the SSL_SESSION object.
      */
-    ptr = (unsigned char *) session_data;
+    ptr = (BOGUS_CONST unsigned char *) session_data;
     session = d2i_SSL_SESSION((SSL_SESSION **) 0, &ptr, session_data_len);
     if (!session)
 	tls_print_errors();
