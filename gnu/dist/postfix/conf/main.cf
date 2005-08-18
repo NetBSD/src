@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.11 2004/07/28 23:19:42 heas Exp $
+#	$NetBSD: main.cf,v 1.12 2005/08/18 21:50:35 rpaulo Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all 300+ parameters. See the postconf(5) manual page for a
@@ -588,11 +588,24 @@ debugger_command =
 	 PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
 	 xxgdb $daemon_directory/$process_name $process_id & sleep 5
 
-# If you don't have X installed on the Postfix machine, try:
+# If you can't use X, use this to capture the call stack when a
+# daemon crashes. The result is in a file in the configuration
+# directory, and is named after the process name and the process ID.
+#
 # debugger_command =
 #	PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
 #	echo where) | gdb $daemon_directory/$process_name $process_id 2>&1
 #	>$config_directory/$process_name.$process_id.log & sleep 5
+#
+# Another possibility is to run gdb under a detached screen session.
+# To attach to the screen sesssion, su root and run "screen -r
+# <id_string>" where <id_string> uniquely matches one of the detached
+# sessions (from "screen -list").
+#
+# debugger_command =
+#	PATH=/bin:/usr/bin:/sbin:/usr/sbin; export PATH; screen
+#	-dmS $process_name gdb $daemon_directory/$process_name
+#	$process_id & sleep 1
 
 # INSTALL-TIME CONFIGURATION INFORMATION
 #
