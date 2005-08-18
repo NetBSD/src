@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.4 2004/05/31 00:25:02 heas Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.5 2005/08/18 21:10:49 rpaulo Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -80,6 +80,7 @@ extern off_t vstream_ftell(VSTREAM *);
 extern int vstream_fflush(VSTREAM *);
 extern int vstream_fputs(const char *, VSTREAM *);
 extern VSTREAM *vstream_fdopen(int, int);
+extern int vstream_fdclose(VSTREAM *);
 
 #define vstream_fread(v, b, n)	vbuf_read(&(v)->buf, (b), (n))
 #define vstream_fwrite(v, b, n)	vbuf_write(&(v)->buf, (b), (n))

@@ -1,4 +1,4 @@
-/*	$NetBSD: unescape.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: unescape.c,v 1.1.1.3 2005/08/18 21:10:44 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -14,7 +14,7 @@
 /* DESCRIPTION
 /*	unescape() translates C-like escape sequences in the null-terminated
 /*	string \fIinput\fR and places the result in \fIresult\fR. The result
-/*	is null-terminated.
+/*	is null-terminated, and is the function result value.
 /*
 /*	Escape sequences and their translations:
 /* .IP \ea

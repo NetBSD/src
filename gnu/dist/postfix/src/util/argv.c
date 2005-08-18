@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.4 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.5 2005/08/18 21:09:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -25,6 +25,10 @@
 /*
 /*	void	argv_terminate(argvp);
 /*	ARGV	*argvp;
+/*
+/*	void	argv_truncate(argvp, len);
+/*	ARGV	*argvp;
+/*	int	len;
 /* DESCRIPTION
 /*	The functions in this module manipulate arrays of string
 /*	pointers. An ARGV structure contains the following members:
@@ -51,6 +55,10 @@
 /*	returns a null pointer.
 /*
 /*	argv_terminate() null-terminates its string array argument.
+/*
+/*	argv_truncate() trucates its argument to the specified
+/*	number of entries, but does not reallocate memory. The
+/*	result is null-terminated.
 /* SEE ALSO
 /*	msg(3) diagnostics interface
 /* DIAGNOSTICS
@@ -178,4 +186,24 @@ void    argv_terminate(ARGV *argvp)
      * Trust that argvp->argc < argvp->len.
      */
     argvp->argv[argvp->argc] = 0;
+}
+
+/* argv_truncate - truncate string array */
+
+void    argv_truncate(ARGV *argvp, int len)
+{
+    char  **cpp;
+
+    /*
+     * Sanity check.
+     */
+    if (len < 0)
+	msg_panic("argv_truncate: bad length %d", len);
+
+    if (len < argvp->argc) {
+	for (cpp = argvp->argv + len; cpp < argvp->argv + argvp->argc; cpp++)
+	    myfree(*cpp);
+	argvp->argc = len;
+	argvp->argv[argvp->argc] = 0;
+    }
 }

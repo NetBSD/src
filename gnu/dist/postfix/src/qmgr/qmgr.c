@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.7 2004/07/28 22:49:25 heas Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.8 2005/08/18 21:08:27 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,7 @@
 /* SYNOPSIS
 /*	\fBqmgr\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The \fBqmgr\fR daemon awaits the arrival of incoming mail
+/*	The \fBqmgr\fR(8) daemon awaits the arrival of incoming mail
 /*	and arranges for its delivery via Postfix delivery processes.
 /*	The actual mail routing strategy is delegated to the
 /*	\fBtrivial-rewrite\fR(8) daemon.
@@ -21,10 +21,10 @@
 /* MAIL QUEUES
 /* .ad
 /* .fi
-/*	The \fBqmgr\fR daemon maintains the following queues:
+/*	The \fBqmgr\fR(8) daemon maintains the following queues:
 /* .IP \fBincoming\fR
 /*	Inbound mail from the network, or mail picked up by the
-/*	local \fBpickup\fR agent from the \fBmaildrop\fR directory.
+/*	local \fBpickup\fR(8) daemon from the \fBmaildrop\fR directory.
 /* .IP \fBactive\fR
 /*	Messages that the queue manager has opened for delivery. Only
 /*	a limited number of messages is allowed to enter the \fBactive\fR
@@ -41,7 +41,7 @@
 /* DELIVERY STATUS REPORTS
 /* .ad
 /* .fi
-/*	The \fBqmgr\fR daemon keeps an eye on per-message delivery status
+/*	The \fBqmgr\fR(8) daemon keeps an eye on per-message delivery status
 /*	reports in the following directories. Each status report file has
 /*	the same name as the corresponding message file:
 /* .IP \fBbounce\fR
@@ -55,7 +55,7 @@
 /*	Postfix "\fBsendmail -v\fR" or "\fBsendmail -bv\fR" command.
 /*	These files are maintained by the \fBtrace\fR(8) daemon.
 /* .PP
-/*	The \fBqmgr\fR daemon is responsible for asking the
+/*	The \fBqmgr\fR(8) daemon is responsible for asking the
 /*	\fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemons to
 /*	send delivery reports.
 /* STRATEGIES
@@ -115,7 +115,7 @@
 /*	servers that should not go away forever. The action is to start
 /*	an incoming queue scan.
 /* .PP
-/*	The \fBqmgr\fR daemon reads an entire buffer worth of triggers.
+/*	The \fBqmgr\fR(8) daemon reads an entire buffer worth of triggers.
 /*	Multiple identical trigger requests are collapsed into one, and
 /*	trigger requests are sorted so that \fBA\fR and \fBF\fR precede
 /*	\fBD\fR and \fBI\fR. Thus, in order to force a deferred queue run,
@@ -124,13 +124,13 @@
 /* STANDARDS
 /* .ad
 /* .fi
-/*	None. The \fBqmgr\fR daemon does not interact with the outside world.
+/*	None. The \fBqmgr\fR(8) daemon does not interact with the outside world.
 /* SECURITY
 /* .ad
 /* .fi
-/*	The \fBqmgr\fR daemon is not security sensitive. It reads
+/*	The \fBqmgr\fR(8) daemon is not security sensitive. It reads
 /*	single-character messages from untrusted local users, and thus may
-/*	be susceptible to denial of service attacks. The \fBqmgr\fR daemon
+/*	be susceptible to denial of service attacks. The \fBqmgr\fR(8) daemon
 /*	does not talk to the outside world, and it can be run at fixed low
 /*	privilege in a chrooted environment.
 /* DIAGNOSTICS
@@ -142,17 +142,18 @@
 /*	the postmaster is notified of bounces and of other trouble.
 /* BUGS
 /*	A single queue manager process has to compete for disk access with
-/*	multiple front-end processes such as \fBsmtpd\fR. A sudden burst of
+/*	multiple front-end processes such as \fBcleanup\fR(8). A sudden burst of
 /*	inbound mail can negatively impact outbound delivery rates.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are not picked up automatically as qmgr(8)
-/*	processes are persistent. Use the \fBpostfix reload\fR command after
+/*	Changes to \fBmain.cf\fR are not picked up automatically
+/*	as \fBqmgr\fR(8)
+/*	is a persistent process. Use the "\fBpostfix reload\fR" command after
 /*	a configuration change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /*
 /*	In the text below, \fItransport\fR is the first field in a
 /*	\fBmaster.cf\fR entry.
@@ -286,8 +287,9 @@
 /*	trivial-rewrite(8), address routing
 /*	bounce(8), delivery status reports
 /*	postconf(5), configuration parameters
+/*	master(5), generic daemon options
 /*	master(8), process manager
-/*	syslogd(8) system logging
+/*	syslogd(8), system logging
 /* README FILES
 /* .ad
 /* .fi
@@ -547,9 +549,14 @@ static void qmgr_post_init(char *name, char **unused_argv)
      * Sanity check.
      */
     if (var_qmgr_rcpt_limit < var_qmgr_active_limit) {
-	msg_warn("%s is smaller than %s",
-		 VAR_QMGR_RCPT_LIMIT, VAR_QMGR_ACT_LIMIT);
+	msg_warn("%s is smaller than %s - adjusting %s",
+	      VAR_QMGR_RCPT_LIMIT, VAR_QMGR_ACT_LIMIT, VAR_QMGR_RCPT_LIMIT);
 	var_qmgr_rcpt_limit = var_qmgr_active_limit;
+    }
+    if (var_dsn_queue_time > var_max_queue_time) {
+	msg_warn("%s is larger than %s - adjusting %s",
+		 VAR_DSN_QUEUE_TIME, VAR_MAX_QUEUE_TIME, VAR_DSN_QUEUE_TIME);
+	var_dsn_queue_time = var_max_queue_time;
     }
 
     /*

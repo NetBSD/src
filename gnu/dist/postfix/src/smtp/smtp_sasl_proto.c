@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_proto.c,v 1.1.1.4 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: smtp_sasl_proto.c,v 1.1.1.5 2005/08/18 21:08:57 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -63,6 +63,7 @@
 
 #include <msg.h>
 #include <mymalloc.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -75,30 +76,67 @@
 
 #ifdef USE_SASL_AUTH
 
-/* smtp_sasl_helo_auth - handle AUTH option in EHLO reply */
+/* smtp_sasl_compat_mechs - Trim server's mechanism list */
 
-void    smtp_sasl_helo_auth(SMTP_STATE *state, const char *words)
+static const char *smtp_sasl_compat_mechs(const char *words)
 {
+    static VSTRING *buf;
+    char   *mech_list;
+    char   *save_mech;
+    char   *mech;
+    int     ret;
 
     /*
-     * XXX If the server offers a null list of authentication mechanisms,
+     * Use server's mechanisms if no filter specified
+     */
+    if (smtp_sasl_mechs == 0 || *words == 0)
+    	return (words);
+
+    if (buf == 0)
+    	buf = vstring_alloc(10);
+
+    VSTRING_RESET(buf);
+    VSTRING_TERMINATE(buf);
+
+    save_mech = mech_list = mystrdup(words);
+
+    while ((mech = mystrtok(&mech_list, " \t")) != 0) {
+	if (string_list_match(smtp_sasl_mechs, mech)) {
+	    if (VSTRING_LEN(buf) > 0)
+		VSTRING_ADDCH(buf, ' ');
+	    vstring_strcat(buf, mech);
+	}
+    }
+    myfree(save_mech);
+
+    return (vstring_str(buf));
+}
+
+/* smtp_sasl_helo_auth - handle AUTH option in EHLO reply */
+
+void    smtp_sasl_helo_auth(SMTP_SESSION *session, const char *words)
+{
+    const char *mech_list = smtp_sasl_compat_mechs(words);
+
+    /*
+     * XXX If the server offers no compatible authentication mechanisms,
      * then pretend that the server doesn't support SASL authentication.
      */
-    if (state->sasl_mechanism_list) {
-	if (strcasecmp(state->sasl_mechanism_list, words) == 0)
+    if (session->sasl_mechanism_list) {
+	if (strcasecmp(session->sasl_mechanism_list, mech_list) == 0)
 	    return;
-	myfree(state->sasl_mechanism_list);
-	msg_warn("%s offered AUTH option multiple times",
-		 state->session->namaddr);
-	state->sasl_mechanism_list = 0;
-	state->features &= ~SMTP_FEATURE_AUTH;
+	myfree(session->sasl_mechanism_list);
+	msg_warn("%s offered AUTH option multiple times", session->namaddr);
+	session->sasl_mechanism_list = 0;
+	session->features &= ~SMTP_FEATURE_AUTH;
     }
-    if (strlen(words) > 0) {
-	state->sasl_mechanism_list = mystrdup(words);
-	state->features |= SMTP_FEATURE_AUTH;
+    if (strlen(mech_list) > 0) {
+	session->sasl_mechanism_list = mystrdup(mech_list);
+	session->features |= SMTP_FEATURE_AUTH;
     } else {
-	msg_warn("%s offered null AUTH mechanism list",
-		 state->session->namaddr);
+	msg_warn(*words ? "%s offered no supported AUTH mechanisms: '%s'" :
+		    "%s offered null AUTH mechanism list",
+		 session->namaddr, words);
     }
 }
 
@@ -106,20 +144,33 @@ void    smtp_sasl_helo_auth(SMTP_STATE *state, const char *words)
 
 int     smtp_sasl_helo_login(SMTP_STATE *state)
 {
-    VSTRING *why = vstring_alloc(10);
-    int     ret = 0;
+    SMTP_SESSION *session = state->session;
+    VSTRING *why;
+    int     ret;
 
     /*
      * Skip authentication when no authentication info exists for this
-     * server, so that we talk to each other like strangers. Otherwise, if
-     * authentication information exists, assume that authentication is
-     * required, and assume that an authentication error is recoverable.
+     * server, so that we talk to each other like strangers.
      */
-    if (smtp_sasl_passwd_lookup(state) != 0) {
-	smtp_sasl_start(state, VAR_SMTP_SASL_OPTS, var_smtp_sasl_opts);
-	if (smtp_sasl_authenticate(state, why) <= 0)
-	    ret = smtp_site_fail(state, 450, "Authentication failed: %s",
-				 vstring_str(why));
+    if (smtp_sasl_passwd_lookup(session) == 0) {
+	session->features &= ~SMTP_FEATURE_AUTH;
+	return 0;
+    }
+
+    /*
+     * Otherwise, if authentication information exists, assume that
+     * authentication is required, and assume that an authentication error is
+     * recoverable from the message delivery point of view. An authentication
+     * error is unrecoverable from a session point of view - the session will
+     * not be reused.
+     */
+    why = vstring_alloc(10);
+    ret = 0;
+    smtp_sasl_start(session, VAR_SMTP_SASL_OPTS, var_smtp_sasl_opts);
+    if (smtp_sasl_authenticate(session, why) <= 0) {
+	ret = smtp_site_fail(state, 450, "Authentication failed: %s",
+			     vstring_str(why));
+	/* Session reuse is disabled. */
     }
     vstring_free(why);
     return (ret);

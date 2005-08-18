@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_queue.c,v 1.1.1.4 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_queue.c,v 1.1.1.5 2005/08/18 21:08:40 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -183,6 +183,7 @@ void    qmgr_queue_throttle(QMGR_QUEUE *queue, const char *reason)
 	queue->reason = mystrdup(reason);
 	event_request_timer(qmgr_queue_unthrottle_wrapper,
 			    (char *) queue, var_min_backoff_time);
+	queue->dflags = 0;
     }
 }
 
@@ -233,6 +234,8 @@ QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *name,
 
     queue = (QMGR_QUEUE *) mymalloc(sizeof(QMGR_QUEUE));
     qmgr_queue_count++;
+    queue->dflags = 0;
+    queue->last_done = 0;
     queue->name = mystrdup(name);
     queue->nexthop = mystrdup(nexthop);
     queue->todo_refcount = 0;

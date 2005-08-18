@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.3 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.4 2005/08/18 21:08:16 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -10,12 +10,12 @@
 /*	\fBpostlog\fR [\fB-iv\fR] [\fB-c \fIconfig_dir\fR]
 /*		[\fB-p \fIpriority\fB] [\fB-t \fItag\fR] [\fItext...\fR]
 /* DESCRIPTION
-/*	The \fBpostlog\fR command implements a Postfix-compatible logging
+/*	The \fBpostlog\fR(1) command implements a Postfix-compatible logging
 /*	interface for use in, for example, shell scripts.
 /*
-/*	By default, \fBpostlog\fR logs the \fItext\fR given on the command
+/*	By default, \fBpostlog\fR(1) logs the \fItext\fR given on the command
 /*	line as one record. If no \fItext\fR is specified on the command
-/*	line, \fBpostlog\fR reads from standard input and logs each input
+/*	line, \fBpostlog\fR(1) reads from standard input and logs each input
 /*	line as one record.
 /*
 /*	Logging is sent to \fBsyslogd\fR(8); when the standard error stream
@@ -49,7 +49,7 @@
 /*	this program.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.

@@ -1,4 +1,4 @@
-/*	$NetBSD: printable.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: printable.c,v 1.1.1.3 2005/08/18 21:10:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	char	*buffer;
 /*	int	replacement;
 /* DESCRIPTION
-/*	printable() replaces non-printable characters in its input
+/*	printable() replaces non-ASCII or non-printable characters in its input
 /*	by the given replacement.
 /*
 /*	Arguments:
@@ -47,7 +47,7 @@ char   *printable(char *string, int replacement)
     int     ch;
 
     for (cp = string; (ch = *(unsigned char *) cp) != 0; cp++)
-	if (!ISPRINT(ch))
+	if (!ISASCII(ch) || !ISPRINT(ch))
 	    *cp = replacement;
     return (string);
 }

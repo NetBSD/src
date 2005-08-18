@@ -1,4 +1,4 @@
-/*	$NetBSD: make_dirs.c,v 1.1.1.4 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: make_dirs.c,v 1.1.1.5 2005/08/18 21:10:30 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -142,7 +142,7 @@ int     make_dirs(const char *path, int perms)
 #include <stdlib.h>
 #include <msg_vstream.h>
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     msg_vstream_init(argv[0], VSTREAM_ERR);
     if (argc < 2)

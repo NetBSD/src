@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.6 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.7 2005/08/18 21:08:43 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -37,12 +37,12 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically, as qmqpd(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically, as \fBqmqpd\fR(8)
 /*	processes run for only a limited amount of time. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
@@ -51,7 +51,7 @@
 /*	it is queued.
 /* .IP "\fBreceive_override_options (empty)\fR"
 /*	Enable or disable recipient validation, built-in content
-/*	filtering, or address rewriting.
+/*	filtering, or address mapping.
 /* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
@@ -117,7 +117,7 @@
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .IP "\fBverp_delimiter_filter (-=+)\fR"
 /*	The characters Postfix accepts as VERP delimiter characters on the
-/*	Postfix sendmail(1) command line and in SMTP commands.
+/*	Postfix \fBsendmail\fR(1) command line and in SMTP commands.
 /* SEE ALSO
 /*	http://cr.yp.to/proto/qmqp.html, QMQP protocol
 /*	cleanup(8), message canonicalization
@@ -236,12 +236,8 @@ static void qmqpd_open_file(QMQPD_STATE *state)
     /*
      * Connect to the cleanup server. Log client name/address with queue ID.
      */
-    cleanup_flags = CLEANUP_FLAG_MASK_EXTERNAL;
-    if (qmqpd_input_transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
-	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
-    if (qmqpd_input_transp_mask & INPUT_TRANSP_HEADER_BODY)
-	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
-
+    cleanup_flags = input_transp_cleanup(CLEANUP_FLAG_MASK_EXTERNAL,
+					 qmqpd_input_transp_mask);
     state->dest = mail_stream_service(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (state->dest == 0
 	|| attr_print(state->dest->stream, ATTR_FLAG_NONE,
@@ -325,7 +321,7 @@ static void qmqpd_write_attributes(QMQPD_STATE *state)
 		    MAIL_ATTR_CLIENT_NAME, state->name);
     if (IS_AVAIL_CLIENT_ADDR(state->addr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		    MAIL_ATTR_CLIENT_ADDR, state->addr);
+		    MAIL_ATTR_CLIENT_ADDR, state->rfc_addr);
     if (IS_AVAIL_CLIENT_NAMADDR(state->namaddr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
 		    MAIL_ATTR_ORIGIN, state->namaddr);
@@ -404,7 +400,7 @@ static void qmqpd_write_content(QMQPD_STATE *state)
      */
     rec_fputs(state->cleanup, REC_TYPE_MESG, "");
     rec_fprintf(state->cleanup, REC_TYPE_NORM, "Received: from %s (%s [%s])",
-		state->name, state->name, state->addr);
+		state->name, state->name, state->rfc_addr);
     if (state->rcpt_count == 1 && state->recipient) {
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
 		    "\tby %s (%s) with %s id %s",

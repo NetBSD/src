@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.7 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.8 2005/08/18 21:08:47 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,38 +8,39 @@
 /* SYNOPSIS
 /*	\fBshowq\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The \fBshowq\fR daemon reports the Postfix mail queue status.
+/*	The \fBshowq\fR(8) daemon reports the Postfix mail queue status.
 /*	It is the program that emulates the sendmail `mailq' command.
 /*
-/*	The \fBshowq\fR daemon can also be run in stand-alone mode
+/*	The \fBshowq\fR(8) daemon can also be run in stand-alone mode
 /*	by the superuser. This mode of operation is used to emulate
 /*	the `mailq' command while the Postfix mail system is down.
 /* SECURITY
 /* .ad
 /* .fi
-/*	The \fBshowq\fR daemon can run in a chroot jail at fixed low
+/*	The \fBshowq\fR(8) daemon can run in a chroot jail at fixed low
 /*	privilege, and takes no input from the client. Its service port
 /*	is accessible to local untrusted users, so the service can be
 /*	susceptible to denial of service attacks.
 /* STANDARDS
 /* .ad
 /* .fi
-/*	None. The showq daemon does not interact with the outside world.
+/*	None. The \fBshowq\fR(8) daemon does not interact with the
+/*	outside world.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
-/*	The \fBshowq\fR daemon runs at a fixed low privilege; consequently,
+/*	The \fBshowq\fR(8) daemon runs at a fixed low privilege; consequently,
 /*	it cannot extract information from queue files in the
 /*	\fBmaildrop\fR directory.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically as showq(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically as \fBshowq\fR(8)
 /*	processes run for only a limited amount of time. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -48,8 +49,8 @@
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBduplicate_filter_limit (1000)\fR"
 /*	The maximal number of addresses remembered by the address
-/*	duplicate filter for aliases(5) or virtual(5) alias expansion, or
-/*	for showq(8) queue displays.
+/*	duplicate filter for \fBaliases\fR(5) or \fBvirtual\fR(5) alias expansion, or
+/*	for \fBshowq\fR(8) queue displays.
 /* .IP "\fBempty_address_recipient (MAILER-DAEMON)\fR"
 /*	The recipient of mail addressed to the null address.
 /* .IP "\fBipc_timeout (3600s)\fR"

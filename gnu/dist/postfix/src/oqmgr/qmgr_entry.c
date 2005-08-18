@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.2 2004/05/31 00:24:40 heas Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.3 2005/08/18 21:07:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -86,6 +86,7 @@
 /* Global library. */
 
 #include <mail_params.h>
+#include <deliver_request.h>		/* opportunistic session caching */
 
 /* Application-specific. */
 
@@ -95,6 +96,7 @@
 
 QMGR_ENTRY *qmgr_entry_select(QMGR_QUEUE *queue)
 {
+    char   *myname = "qmgr_entry_select";
     QMGR_ENTRY *entry;
 
     if ((entry = queue->todo.prev) != 0) {
@@ -102,6 +104,59 @@ QMGR_ENTRY *qmgr_entry_select(QMGR_QUEUE *queue)
 	queue->todo_refcount--;
 	QMGR_LIST_APPEND(queue->busy, entry);
 	queue->busy_refcount++;
+
+	/*
+	 * With opportunistic session caching, the delivery agent must not
+	 * only 1) save a session upon completion, but also 2) reuse a cached
+	 * session upon the next delivery request. In order to not miss out
+	 * on 2), we have to make caching sticky or else we get silly
+	 * behavior when the in-memory queue drains. Specifically, new
+	 * connections must not be made as long as cached connections exist.
+	 * 
+	 * Safety: don't enable opportunistic session caching unless the queue
+	 * manager is able to schedule concurrent or back-to-back deliveries
+	 * (we need to recognize back-to-back deliveries for transports with
+	 * concurrency 1).
+	 * 
+	 * XXX It would be nice if we could say "try to reuse a cached
+	 * connection, but don't bother saving it when you're done". As long
+	 * as we can't, we must not turn off session caching too early.
+	 */
+#define CONCURRENT_OR_BACK_TO_BACK_DELIVERY() \
+	    (queue->busy_refcount > 1 || BACK_TO_BACK_DELIVERY())
+
+#define BACK_TO_BACK_DELIVERY() \
+		(queue->last_done + 1 >= event_time())
+
+	/*
+	 * Turn on session caching after we get up to speed. Don't enable
+	 * session caching just because we have concurrent deliveries. This
+	 * prevents unnecessary session caching when we have a burst of mail
+	 * <= the initial concurrency limit.
+	 */
+	if ((queue->dflags & DEL_REQ_FLAG_SCACHE) == 0) {
+	    if (BACK_TO_BACK_DELIVERY()) {
+		if (msg_verbose)
+		    msg_info("%s: allowing on-demand session caching for %s",
+			     myname, queue->name);
+		queue->dflags |= DEL_REQ_FLAG_SCACHE;
+	    }
+	}
+
+	/*
+	 * Turn off session caching when concurrency drops and we're running
+	 * out of steam. This is what prevents from turning off session
+	 * caching too early, and from making new connections while old ones
+	 * are still cached.
+	 */
+	else {
+	    if (!CONCURRENT_OR_BACK_TO_BACK_DELIVERY()) {
+		if (msg_verbose)
+		    msg_info("%s: disallowing on-demand session caching for %s",
+			     myname, queue->name);
+		queue->dflags &= ~DEL_REQ_FLAG_SCACHE;
+	    }
+	}
     }
     return (entry);
 }
@@ -146,6 +201,11 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     qmgr_rcpt_list_free(&entry->rcpt_list);
 
     myfree((char *) entry);
+
+    /*
+     * Maintain back-to-back delivery status.
+     */
+    queue->last_done = event_time();
 
     /*
      * When the in-core queue for this site is empty and when this site is

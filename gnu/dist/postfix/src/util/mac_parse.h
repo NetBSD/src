@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_parse.h,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: mac_parse.h,v 1.1.1.4 2005/08/18 21:10:29 rpaulo Exp $	*/
 
 #ifndef _MAC_PARSE_H_INCLUDED_
 #define _MAC_PARSE_H_INCLUDED_
@@ -22,7 +22,8 @@
   * External interface.
   */
 #define MAC_PARSE_LITERAL	1
-#define MAC_PARSE_VARNAME	2
+#define MAC_PARSE_EXPR		2
+#define MAC_PARSE_VARNAME	MAC_PARSE_EXPR	/* 2.1 compatibility */
 
 #define MAC_PARSE_OK		0
 #define MAC_PARSE_ERROR		(1<<0)

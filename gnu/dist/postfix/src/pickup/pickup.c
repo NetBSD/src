@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.9 2004/07/28 22:49:23 heas Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.10 2005/08/18 21:08:01 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,7 @@
 /* SYNOPSIS
 /*	\fBpickup\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The \fBpickup\fR daemon waits for hints that new mail has been
+/*	The \fBpickup\fR(8) daemon waits for hints that new mail has been
 /*	dropped into the \fBmaildrop\fR directory, and feeds it into the
 /*	\fBcleanup\fR(8) daemon.
 /*	Ill-formatted files are deleted without notifying the originator.
@@ -17,32 +17,33 @@
 /* STANDARDS
 /* .ad
 /* .fi
-/*	None. The \fBpickup\fR daemon does not interact with the outside world.
+/*	None. The \fBpickup\fR(8) daemon does not interact with
+/*	the outside world.
 /* SECURITY
 /* .ad
 /* .fi
-/*	The \fBpickup\fR daemon is moderately security sensitive. It runs
+/*	The \fBpickup\fR(8) daemon is moderately security sensitive. It runs
 /*	with fixed low privilege and can run in a chrooted environment.
 /*	However, the program reads files from potentially hostile users.
-/*	The \fBpickup\fR daemon opens no files for writing, is careful about
+/*	The \fBpickup\fR(8) daemon opens no files for writing, is careful about
 /*	what files it opens for reading, and does not actually touch any data
 /*	that is sent to its public service endpoint.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
-/*	The \fBpickup\fR daemon copies mail from file to the \fBcleanup\fR(8)
+/*	The \fBpickup\fR(8) daemon copies mail from file to the \fBcleanup\fR(8)
 /*	daemon.  It could avoid message copying overhead by sending a file
 /*	descriptor instead of file data, but then the already complex
 /*	\fBcleanup\fR(8) daemon would have to deal with unfiltered user data.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	As the pickup(8) daemon is a relatively long-running process, up
+/*	As the \fBpickup\fR(8) daemon is a relatively long-running process, up
 /*	to an hour may pass before a \fBmain.cf\fR change takes effect.
 /*	Use the command "\fBpostfix reload\fR" command to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
@@ -51,7 +52,7 @@
 /*	it is queued.
 /* .IP "\fBreceive_override_options (empty)\fR"
 /*	Enable or disable recipient validation, built-in content
-/*	filtering, or address rewriting.
+/*	filtering, or address mapping.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -89,6 +90,7 @@
 /*	sendmail(1), Sendmail-compatible interface
 /*	postdrop(1), mail posting agent
 /*	postconf(5), configuration parameters
+/*	master(5), generic daemon options
 /*	master(8), process manager
 /*	syslogd(8), system logging
 /* LICENSE
@@ -290,12 +292,6 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 	rec_fprintf(cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
 
     /*
-     * Origin is local.
-     */
-    rec_fprintf(cleanup, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_ORIGIN, MAIL_ATTR_ORG_LOCAL);
-
-    /*
      * Copy the message envelope segment. Allow only those records that we
      * expect to see in the envelope section. The envelope segment must
      * contain an envelope sender address.
@@ -413,11 +409,9 @@ static int pickup_file(PICKUP_INFO *info)
      * easier to implement the many possible error exits without forgetting
      * to close files, or to release memory.
      */
-    cleanup_flags = (CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_MASK_EXTERNAL);
-    if (pickup_input_transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
-	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
-    if (pickup_input_transp_mask & INPUT_TRANSP_HEADER_BODY)
-	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
+    cleanup_flags =
+	input_transp_cleanup(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_MASK_EXTERNAL,
+			     pickup_input_transp_mask);
 
     cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
