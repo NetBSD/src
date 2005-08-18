@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.814 2005/07/31 19:26:06 xtraeme Exp $
+# $NetBSD: mi,v 1.815 2005/08/18 22:31:47 rpaulo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1645,6 +1645,7 @@
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amq.0			man-amd-catman		.cat
+./usr/share/man/cat8/anvil.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/apm.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/arc/MAKEDEV.0		man-obsolete		obsolete
@@ -1720,6 +1721,7 @@
 ./usr/share/man/cat8/dhclient.0			man-dhclient-catman	.cat
 ./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman	.cat
+./usr/share/man/cat8/discard.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/disklabel.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/diskless.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman	.cat
@@ -2126,6 +2128,7 @@
 ./usr/share/man/cat8/savecore.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sbmips/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/scache.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/scan_ffs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
@@ -2204,6 +2207,7 @@
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/timed.0			man-timed-catman	.cat
 ./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
+./usr/share/man/cat8/tlsmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
@@ -3898,6 +3902,7 @@
 ./usr/share/man/man8/amiga/installboot.8	man-sysutil-man		.man
 ./usr/share/man/man8/amiga/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/amq.8			man-amd-man		.man
+./usr/share/man/man8/anvil.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/apm.8			man-sysutil-man		.man
 ./usr/share/man/man8/apmd.8			man-sysutil-man		.man
 ./usr/share/man/man8/arc/MAKEDEV.8		man-obsolete		obsolete
@@ -3973,6 +3978,7 @@
 ./usr/share/man/man8/dhclient.8			man-dhclient-man	.man
 ./usr/share/man/man8/dhcpd.8			man-dhcpd-man		.man
 ./usr/share/man/man8/dhcrelay.8			man-dhcpd-man		.man
+./usr/share/man/man8/discard.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/disklabel.8		man-sysutil-man		.man
 ./usr/share/man/man8/diskless.8			man-sysutil-man		.man
 ./usr/share/man/man8/diskpart.8			man-sysutil-man		.man
@@ -4380,6 +4386,7 @@
 ./usr/share/man/man8/savecore.8			man-sysutil-man		.man
 ./usr/share/man/man8/sbmips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sbmips/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/scache.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/scan_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
@@ -4458,6 +4465,7 @@
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man
 ./usr/share/man/man8/timed.8			man-timed-man		.man
 ./usr/share/man/man8/timedc.8			man-timed-man		.man
+./usr/share/man/man8/tlsmgr.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
