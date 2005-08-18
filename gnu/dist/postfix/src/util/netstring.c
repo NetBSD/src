@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: netstring.c,v 1.1.1.3 2005/08/18 21:10:33 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -318,8 +318,8 @@ void    netstring_put_multi(VSTREAM *stream,...)
 	    if (vstream_fwrite(stream, data, data_len) != data_len)
 		netstring_except(stream, vstream_ftimeout(stream) ?
 				 NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
-	va_end(ap);
     }
+    va_end(ap);
     vstream_fwrite(stream, ",", 1);
 }
 

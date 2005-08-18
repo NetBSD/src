@@ -1,4 +1,4 @@
-/*	$NetBSD: find_inet.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: find_inet.c,v 1.1.1.4 2005/08/18 21:10:19 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,7 @@
 /*	BSD TCP/IP network software.
 /*
 /*	find_inet_addr() translates a symbolic or numerical hostname.
+/*	This function is deprecated. Use hostname_to_hostaddr() instead.
 /*
 /*	find_inet_port() translates a symbolic or numerical port name.
 /* BUGS

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_spawn.c,v 1.1.1.3 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: master_spawn.c,v 1.1.1.4 2005/08/18 21:07:42 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -61,6 +61,7 @@
 #include <syslog.h>			/* closelog() */
 #include <signal.h>
 #include <stdarg.h>
+#include <syslog.h>
 
 /* Utility libraries. */
 
@@ -68,8 +69,8 @@
 #include <binhash.h>
 #include <mymalloc.h>
 #include <events.h>
+#include <vstring.h>
 #include <argv.h>
-#include <syslog.h>
 
 /* Application-specific. */
 
@@ -138,9 +139,13 @@ void    master_spawn(MASTER_SERV *serv)
     MASTER_PROC *proc;
     MASTER_PID pid;
     int     n;
+    static unsigned master_generation = 0;
+    static VSTRING *env_gen = 0;
 
     if (master_child_table == 0)
 	master_child_table = binhash_create(0);
+    if (env_gen == 0)
+	env_gen = vstring_alloc(100);
 
     /*
      * Sanity checks. The master_avail module is supposed to know what it is
@@ -157,6 +162,7 @@ void    master_spawn(MASTER_SERV *serv)
      * Create a child process and connect parent and child via the status
      * pipe.
      */
+    master_generation += 1;
     switch (pid = fork()) {
 
 	/*
@@ -209,6 +215,10 @@ void    master_spawn(MASTER_SERV *serv)
 			  myname, serv->listen_fd[n]);
 	    (void) close(serv->listen_fd[n]);
 	}
+	vstring_sprintf(env_gen, "%s=%o", MASTER_GEN_NAME, master_generation);
+	if (putenv(vstring_str(env_gen)) < 0)
+	    msg_fatal("%s: putenv: %m", myname);
+
 	execvp(serv->path, serv->args->argv);
 	msg_fatal("%s: exec %s: %m", myname, serv->path);
 	exit(1);
@@ -226,6 +236,7 @@ void    master_spawn(MASTER_SERV *serv)
 	proc = (MASTER_PROC *) mymalloc(sizeof(MASTER_PROC));
 	proc->serv = serv;
 	proc->pid = pid;
+	proc->gen = master_generation;
 	proc->use_count = 0;
 	proc->avail = 0;
 	binhash_enter(master_child_table, (char *) &pid,

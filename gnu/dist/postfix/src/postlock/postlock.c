@@ -1,4 +1,4 @@
-/*	$NetBSD: postlock.c,v 1.1.1.3 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postlock.c,v 1.1.1.4 2005/08/18 21:08:16 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*	\fBpostlock\fR [\fB-c \fIconfig_dir\fB] [\fB-l \fIlock_style\fB]
 /*		[\fB-v\fR] \fIfile command...\fR
 /* DESCRIPTION
-/*	The \fBpostlock\fR command locks \fIfile\fR for exclusive
+/*	The \fBpostlock\fR(1) command locks \fIfile\fR for exclusive
 /*	access, and executes \fIcommand\fR. The locking method is
 /*	compatible with the Postfix UNIX-style local delivery agent.
 /*
@@ -33,7 +33,7 @@
 /*	access.  The command is executed directly, i.e. without
 /*	interpretation by a shell command interpreter.
 /* DIAGNOSTICS
-/*	The result status is 75 (EX_TEMPFAIL) when \fBpostlock\fR
+/*	The result status is 75 (EX_TEMPFAIL) when \fBpostlock\fR(1)
 /*	could not perform the requested operation.  Otherwise, the
 /*	exit status is the exit status from the command.
 /* BUGS
@@ -53,20 +53,20 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program. 
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* LOCKING CONTROLS
 /* .ad
 /* .fi
 /* .IP "\fBdeliver_lock_attempts (20)\fR"
 /*	The maximal number of attempts to acquire an exclusive lock on a
-/*	mailbox file or bounce(8) logfile.
+/*	mailbox file or \fBbounce\fR(8) logfile.
 /* .IP "\fBdeliver_lock_delay (1s)\fR"
 /*	The time between attempts to acquire an exclusive lock on a mailbox
-/*	file or bounce(8) logfile.
+/*	file or \fBbounce\fR(8) logfile.
 /* .IP "\fBstale_lock_time (500s)\fR"
 /*	The time after which a stale exclusive mailbox lockfile is removed.
 /* .IP "\fBmailbox_delivery_lock (see 'postconf -d' output)\fR"
-/*	How to lock a UNIX-style local(8) mailbox before attempting delivery.
+/*	How to lock a UNIX-style \fBlocal\fR(8) mailbox before attempting delivery.
 /* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi

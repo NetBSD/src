@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.1.1.3 2004/05/31 00:24:54 heas Exp $	*/
+/*	$NetBSD: trivial-rewrite.h,v 1.1.1.4 2005/08/18 21:09:48 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -22,12 +22,28 @@
 #include <tok822.h>
 
  /*
+  * Connection management.
+  */
+int     server_flags;
+
+ /*
   * rewrite.c
   */
+typedef struct {
+    const char *origin_name;		/* name of variable */
+    char  **origin;			/* default origin */
+    const char *domain_name;		/* name of variable */
+    char  **domain;			/* default domain */
+}       RWR_CONTEXT;
+
+#define REW_PARAM_VALUE(x) (*(x))	/* make it easy to do it right */
+
 extern void rewrite_init(void);
 extern int rewrite_proto(VSTREAM *);
-extern void rewrite_addr(char *, char *, VSTRING *);
-extern void rewrite_tree(char *, TOK822 *);
+extern void rewrite_addr(RWR_CONTEXT *, char *, VSTRING *);
+extern void rewrite_tree(RWR_CONTEXT *, TOK822 *);
+extern RWR_CONTEXT local_context;
+extern RWR_CONTEXT inval_context;
 
  /*
   * resolve.c
@@ -63,4 +79,3 @@ extern int resolve_proto(RES_CONTEXT *, VSTREAM *);
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*--*/
-

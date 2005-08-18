@@ -1,4 +1,4 @@
-/*	$NetBSD: postkick.c,v 1.1.1.4 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postkick.c,v 1.1.1.5 2005/08/18 21:08:15 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*	\fBpostkick\fR [\fB-c \fIconfig_dir\fR] [\fB-v\fR]
 /*	\fIclass service request\fR
 /* DESCRIPTION
-/*	The \fBpostkick\fR command sends \fIrequest\fR to the
+/*	The \fBpostkick\fR(1) command sends \fIrequest\fR to the
 /*	specified \fIservice\fR over a local transport channel.
 /*	This command makes Postfix private IPC accessible
 /*	for use in, for example, shell scripts.
@@ -48,12 +48,12 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBapplication_event_drain_time (100s)\fR"
-/*	How long the postkick(1) command waits for a request to enter the
+/*	How long the \fBpostkick\fR(1) command waits for a request to enter the
 /*	server's input buffer before giving up.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.

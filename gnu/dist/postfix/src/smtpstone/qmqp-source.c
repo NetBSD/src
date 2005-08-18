@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-source.c,v 1.1.1.4 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: qmqp-source.c,v 1.1.1.5 2005/08/18 21:09:36 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -14,10 +14,16 @@
 /*	\fBqmqp-source\fR connects to the named host and TCP port (default 628)
 /*	and sends one or more messages to it, either sequentially
 /*	or in parallel. The program speaks the QMQP protocol.
-/*	Connections can be made to UNIX-domain and IPV4 servers.
-/*	IPV4 is the default.
+/*	Connections can be made to UNIX-domain and IPv4 or IPv6 servers.
+/*	IPv4 and IPv6 are the default.
 /*
 /*	Options:
+/* .IP \fB-4\fR
+/*	Connect to the server with IPv4. This option has no effect when
+/*	Postfix is built without IPv6 support.
+/* .IP \fB-6\fR
+/*	Connect to the server with IPv6. This option is not available when
+/*	Postfix is built without IPv6 support.
 /* .IP \fB-c\fR
 /*	Display a running counter that is incremented each time
 /*	a delivery completes.
@@ -84,10 +90,12 @@
 #include <connect.h>
 #include <mymalloc.h>
 #include <events.h>
-#include <find_inet.h>
 #include <iostuff.h>
 #include <netstring.h>
 #include <sane_connect.h>
+#include <host_port.h>
+#include <myaddrinfo.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -122,7 +130,7 @@ static int var_timeout = 300;
 static const char *var_myhostname;
 static int session_count;
 static int message_count = 1;
-static struct sockaddr_in sin;
+static struct sockaddr_storage ss;
 
 #undef sun
 static struct sockaddr_un sun;
@@ -366,7 +374,7 @@ static void send_data(SESSION *session)
 			STR(message_buffer), LEN(message_buffer),
 			STR(sender_buffer), LEN(sender_buffer),
 			STR(recipient_buffer), LEN(recipient_buffer),
-			0);
+			(char *) 0);
     netstring_fflush(session->stream);
 
     /*
@@ -393,12 +401,12 @@ static void receive_reply(int unused_event, char *context)
      */
     netstring_get(session->stream, buffer, var_line_limit);
     if (msg_verbose)
-	vstream_printf("<< %.*s\n", LEN(buffer), STR(buffer));
+	vstream_printf("<< %.*s\n", (int) LEN(buffer), STR(buffer));
     if (STR(buffer)[0] != QMQP_STAT_OK)
 	msg_fatal("%s error: %.*s",
 		  STR(buffer)[0] == QMQP_STAT_RETRY ? "recoverable" :
 		  STR(buffer)[0] == QMQP_STAT_HARD ? "unrecoverable" :
-		  "unknown", LEN(buffer) - 1, STR(buffer) + 1);
+		  "unknown", (int) LEN(buffer) - 1, STR(buffer) + 1);
 
     /*
      * Update the optional running counter.
@@ -438,6 +446,12 @@ int     main(int argc, char **argv)
     int     ch;
     int     n;
     int     i;
+    char   *buf;
+    const char *parse_err;
+    struct addrinfo *res;
+    int     aierr;
+    const char *protocols = INET_PROTO_NAME_ALL;
+    INET_PROTO_INFO *proto_info;
 
     signal(SIGPIPE, SIG_IGN);
     msg_vstream_init(argv[0], VSTREAM_ERR);
@@ -445,8 +459,14 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "cC:f:l:m:r:R:s:t:vw:")) > 0) {
+    while ((ch = GETOPT(argc, argv, "46cC:f:l:m:r:R:s:t:vw:")) > 0) {
 	switch (ch) {
+	case '4':
+	    protocols = INET_PROTO_NAME_IPV4;
+	    break;
+	case '6':
+	    protocols = INET_PROTO_NAME_IPV6;
+	    break;
 	case 'c':
 	    count++;
 	    break;
@@ -500,6 +520,7 @@ int     main(int argc, char **argv)
     /*
      * Translate endpoint address to internal form.
      */
+    proto_info = inet_proto_init("protocols", protocols);
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	path = argv[optind] + 5;
 	path_len = strlen(path);
@@ -516,14 +537,19 @@ int     main(int argc, char **argv)
     } else {
 	if (strncmp(argv[optind], "inet:", 5) == 0)
 	    argv[optind] += 5;
-	if ((port = split_at(host = argv[optind], ':')) == 0 || *port == 0)
-	    port = "628";
-	memset((char *) &sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = find_inet_addr(host);
-	sin.sin_port = find_inet_port(port, "tcp");
-	sa = (struct sockaddr *) & sin;
-	sa_length = sizeof(sin);
+	buf = mystrdup(argv[optind]);
+	if ((parse_err = host_port(buf, &host, (char *) 0, &port, "628")) != 0)
+	    msg_fatal("%s: %s", argv[optind], parse_err);
+	if ((aierr = hostname_to_sockaddr(host, port, SOCK_STREAM, &res)) != 0)
+	    msg_fatal("%s: %s", argv[optind], MAI_STRERROR(aierr));
+	myfree(buf);
+	sa = (struct sockaddr *) & ss;
+	memcpy((char *) sa, res->ai_addr, res->ai_addrlen);
+	sa_length = res->ai_addrlen;
+#ifdef HAS_SA_LEN
+	sa->sa_len = sa_length;
+#endif
+	freeaddrinfo(res);
     }
 
     /*

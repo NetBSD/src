@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.6 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.7 2005/08/18 21:08:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
 /*	\fBpostconf\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIparameter=value ...\fR]
 /* DESCRIPTION
-/*	The \fBpostconf\fR command prints the actual value of
+/*	The \fBpostconf\fR(1) command prints the actual value of
 /*	\fIparameter\fR (all known parameters by default) one
 /*	parameter per line, changes its value, or prints other
 /*	information about the Postfix mail system.
@@ -38,7 +38,7 @@
 /* .RS
 /* .IP \fBflock\fR
 /*	A kernel-based advisory locking method for local files only.
-/*	This locking method is available only on systems with a BSD
+/*	This locking method is available on systems with a BSD
 /*	compatible library.
 /* .IP \fBfcntl\fR
 /*	A kernel-based advisory locking method for local and remote files.
@@ -49,28 +49,33 @@
 /*	stale lock files that were left behind after abnormal termination.
 /* .RE
 /* .IP \fB-m\fR
-/*	List the names of all supported lookup table types. Postfix
+/*	List the names of all supported lookup table types. In Postfix
+/*	configuration files,
 /*	lookup tables are specified as \fItype\fB:\fIname\fR, where
 /*	\fItype\fR is one of the types listed below. The table \fIname\fR
-/*	syntax depends on the lookup table type.
+/*	syntax depends on the lookup table type as described in the
+/*	DATABASE_README document.
 /* .RS
 /* .IP \fBbtree\fR
 /*	A sorted, balanced tree structure.
-/*	This is available only on systems with support for Berkeley DB
+/*	This is available on systems with support for Berkeley DB
 /*	databases.
+/* .IP \fBcdb\fR
+/*	A read-optimized structure with no support for incremental updates.
+/*	This is available on systems with support for CDB databases.
 /* .IP \fBcidr\fR
 /*	A table that associates values with Classless Inter-Domain Routing
 /*	(CIDR) patterns. This is described in \fBcidr_table\fR(5).
 /* .IP \fBdbm\fR
 /*	An indexed file type based on hashing.
-/*	This is available only on systems with support for DBM databases.
+/*	This is available on systems with support for DBM databases.
 /* .IP \fBenviron\fR
 /*	The UNIX process environment array. The lookup key is the variable
 /*	name. Originally implemented for testing, someone may find this
 /*	useful someday.
 /* .IP \fBhash\fR
 /*	An indexed file type based on hashing.
-/*	This is available only on systems with support for Berkeley DB
+/*	This is available on systems with support for Berkeley DB
 /*	databases.
 /* .IP "\fBldap\fR (read-only)"
 /*	Perform lookups using the LDAP protocol. This is described
@@ -91,24 +96,27 @@
 /* .IP "\fBregexp\fR (read-only)"
 /*	A lookup table based on regular expressions. The file format is
 /*	described in \fBregexp_table\fR(5).
+/* .IP \fBsdbm\fR
+/*	An indexed file type based on hashing.
+/*	This is available on systems with support for SDBM databases.
 /* .IP "\fBstatic\fR (read-only)"
 /*	A table that always returns its name as lookup result. For example,
 /*	\fBstatic:foobar\fR always returns the string \fBfoobar\fR as lookup
 /*	result.
 /* .IP "\fBtcp\fR (read-only)"
 /*	Perform lookups using a simple request-reply protocol that is
-/*	described in tcp_table(5).
-/*	This feature is not included with Postfix 2.1.
+/*	described in \fBtcp_table\fR(5).
+/*	This feature is not included with Postfix 2.2.
 /* .IP "\fBunix\fR (read-only)"
 /*	A limited way to query the UNIX authentication database. The
 /*	following tables are implemented:
 /* .RS
 /*. IP \fBunix:passwd.byname\fR
 /*	The table is the UNIX password database. The key is a login name.
-/*	The result is a password file entry in passwd(5) format.
+/*	The result is a password file entry in \fBpasswd\fR(5) format.
 /* .IP \fBunix:group.byname\fR
 /*	The table is the UNIX group database. The key is a group name.
-/*	The result is a group file entry in group(5) format.
+/*	The result is a group file entry in \fBgroup\fR(5) format.
 /* .RE
 /* .RE
 /* .sp
@@ -133,7 +141,7 @@
 /*	this program.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -194,6 +202,7 @@
 #include <split_at.h>
 #include <vstring_vstream.h>
 #include <myflock.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -362,6 +371,7 @@ static const char *check_mydomainname(void)
 
 static const char *check_mynetworks(void)
 {
+    INET_PROTO_INFO *proto_info;
     const char *junk;
 
     if (var_inet_interfaces == 0) {
@@ -375,6 +385,13 @@ static const char *check_mynetworks(void)
 	    || !(junk = mail_conf_lookup_eval(VAR_MYNETWORKS_STYLE)))
 	    junk = DEF_MYNETWORKS_STYLE;
 	var_mynetworks_style = mystrdup(junk);
+    }
+    if (var_inet_protocols == 0) {
+	if ((mode & SHOW_DEFS)
+	    || !(junk = mail_conf_lookup_eval(VAR_INET_PROTOCOLS)))
+	    junk = DEF_INET_PROTOCOLS;
+	var_inet_protocols = mystrdup(junk);
+	proto_info = inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
     }
     return (mynetworks());
 }

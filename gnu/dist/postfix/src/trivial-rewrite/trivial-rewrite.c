@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.8 2004/07/28 22:49:30 heas Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.9 2005/08/18 21:09:48 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,17 +8,30 @@
 /* SYNOPSIS
 /*	\fBtrivial-rewrite\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The \fBtrivial-rewrite\fR daemon processes three types of client
+/*	The \fBtrivial-rewrite\fR(8) daemon processes three types of client
 /*	service requests:
-/* .IP \fBrewrite\fR
-/*	Rewrite an address to standard form. The \fBtrivial-rewrite\fR
-/*	daemon by default appends local domain information to unqualified
-/*	addresses, swaps bang paths to domain form, and strips source
-/*	routing information. This process is under control of several
-/*	configuration parameters (see below).
-/* .IP \fBresolve\fR
+/* .IP "\fBrewrite \fIcontext address\fR"
+/*	Rewrite an address to standard form, according to the
+/*	address rewriting context:
+/* .RS
+/* .IP \fBlocal\fR
+/*	Append the domain names specified with \fB$myorigin\fR or
+/*	\fB$mydomain\fR to incomplete addresses; do \fBswap_bangpath\fR
+/*	and \fBallow_percent_hack\fR processing as described below, and
+/*	strip source routed addresses (\fI@site,@site:user@domain\fR)
+/*	to \fIuser@domain\fR form.
+/* .IP \fBremote\fR
+/*	Append the domain name specified with
+/*	\fB$remote_header_rewrite_domain\fR to incomplete
+/*	addresses. Otherwise the result is identical to that of
+/*	the \fBlocal\fR address rewriting context. This prevents
+/*      Postfix from appending the local domain to spam from poorly
+/*	written remote clients.
+/* .RE
+/* .IP "\fBresolve \fIaddress\fR"
 /*	Resolve an address to a (\fItransport\fR, \fInexthop\fR,
-/*	\fIrecipient\fR) triple. The meaning of the results is as follows:
+/*      \fIrecipient\fR, \fIflags\fR) quadruple. The meaning of
+/*	the results is as follows:
 /* .RS
 /* .IP \fItransport\fR
 /*	The delivery agent to use. This is the first field of an entry
@@ -27,13 +40,17 @@
 /*	The host to send to and optional delivery method information.
 /* .IP \fIrecipient\fR
 /*	The envelope recipient address that is passed on to \fInexthop\fR.
+/* .IP \fIflags\fR
+/*	The address class, whether the address requires relaying,
+/*	whether the address has problems, and whether the request failed.
 /* .RE
-/* .IP \fBverify\fR
+/* .IP "\fBverify \fIaddress\fR"
 /*	Resolve an address for address verification purposes.
 /* SERVER PROCESS MANAGEMENT
 /* .ad
 /* .fi
-/*	The trivial-rewrite servers run under control by the Postfix master
+/*	The \fBtrivial-rewrite\fR(8) servers run under control by
+/*	the Postfix master
 /*	server.  Each server can handle multiple simultaneous connections.
 /*	When all servers are busy while a client connects, the master
 /*	creates a new server process, provided that the trivial-rewrite
@@ -48,7 +65,7 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	The \fBtrivial-rewrite\fR daemon is not security sensitive.
+/*	The \fBtrivial-rewrite\fR(8) daemon is not security sensitive.
 /*	By default, this daemon does not talk to remote or local users.
 /*	It can run at a fixed low privilege in a chrooted environment.
 /* DIAGNOSTICS
@@ -57,11 +74,11 @@
 /* .ad
 /* .fi
 /*	On busy mail systems a long time may pass before a \fBmain.cf\fR
-/*	change affecting trivial_rewrite(8) is picked up. Use the command
+/*	change affecting \fBtrivial-rewrite\fR(8) is picked up. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* COMPATIBILITY CONTROLS
 /* .ad
 /* .fi
@@ -76,20 +93,26 @@
 /* .ad
 /* .fi
 /* .IP "\fBmyorigin ($myhostname)\fR"
-/*	The default domain name that locally-posted mail appears to come
+/*	The domain name that locally-posted mail appears to come
 /*	from, and that locally posted mail is delivered to.
 /* .IP "\fBallow_percent_hack (yes)\fR"
 /*	Enable the rewriting of the form "user%domain" to "user@domain".
 /* .IP "\fBappend_at_myorigin (yes)\fR"
-/*	Append the string "@$myorigin" to mail addresses without domain
-/*	information.
+/*	With locally submitted mail, append the string "@$myorigin" to mail
+/*	addresses without domain information.
 /* .IP "\fBappend_dot_mydomain (yes)\fR"
-/*	Append the string ".$mydomain" to addresses that have no ".domain"
-/*	information.
+/*	With locally submitted mail, append the string ".$mydomain" to
+/*	addresses that have no ".domain" information.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
 /*	The separator between user names and address extensions (user+foo).
 /* .IP "\fBswap_bangpath (yes)\fR"
 /*	Enable the rewriting of "site!user" into "user@site".
+/* .PP
+/*	Available in Postfix 2.2 and later:
+/* .IP "\fBremote_header_rewrite_domain (empty)\fR"
+/*	Don't rewrite message headers from remote clients at all when
+/*	this parameter is empty; otherwise, rewrite remote message headers
+/*	and append the specified domain name to incomplete addresses.
 /* ROUTING CONTROLS
 /* .ad
 /* .fi
@@ -115,7 +138,7 @@
 /*	instead of requiring an explicit ".domain.tld" pattern.
 /* .IP "\fBrelayhost (empty)\fR"
 /*	The default host to send non-local mail to when no entry is matched
-/*	in the optional transport(5) table.
+/*	in the optional \fBtransport\fR(5) table.
 /* .IP "\fBtransport_maps (empty)\fR"
 /*	Optional lookup tables with mappings from recipient address to
 /*	(message delivery transport, next-hop destination).
@@ -231,6 +254,7 @@
 #include <split_at.h>
 #include <stringops.h>
 #include <dict.h>
+#include <events.h>
 
 /* Global library. */
 
@@ -275,6 +299,7 @@ char   *var_def_transport;
 char   *var_empty_addr;
 int     var_show_unk_rcpt_table;
 int     var_resolve_nulldom;
+char   *var_remote_rwr_domain;
 
  /*
   * Shadow personality for address verification.
@@ -307,17 +332,90 @@ RES_CONTEXT resolve_verify = {
     VAR_VRFY_XPORT_MAPS, &var_vrfy_xport_maps, 0
 };
 
+ /*
+  * Connection management. When file-based lookup tables change we should
+  * restart at our convenience, but avoid client read errors. We restart
+  * rather than reopen, because the process may be chrooted (and if it isn't
+  * we still need code that handles the chrooted case anyway).
+  * 
+  * Three variants are implemented. Only one should be used.
+  * 
+  * ifdef DETACH_AND_ASK_CLIENTS_TO_RECONNECT
+  * 
+  * This code detaches the trivial-rewrite process from the master, stops
+  * accepting new clients, and handles established clients in the background,
+  * asking them to reconnect the next time they send a request. The master
+  * create a new process that accepts connections. This is reasonably safe
+  * because the number of trivial-rewrite server processes is small compared
+  * to the number of trivial-rewrite client processes. The few extra
+  * background processes should not make a difference in Postfix's footprint.
+  * However, once a daemon detaches from the master, its exit status will be
+  * lost, and abnormal termination may remain undetected. Timely restart is
+  * achieved by checking the table changed status every 10 seconds or so
+  * before responding to a client request.
+  * 
+  * ifdef CHECK_TABLE_STATS_PERIODICALLY
+  * 
+  * This code runs every 10 seconds and terminates the process when lookup
+  * tables have changed. This is subject to race conditions when established
+  * clients send a request while the server exits; those clients may read EOF
+  * instead of a server reply. If the experience with the oldest option
+  * (below) is anything to go by, however, then this is unlikely to be a
+  * problem during real deployment.
+  * 
+  * ifdef CHECK_TABLE_STATS_BEFORE_ACCEPT
+  * 
+  * This is the old code. It checks the table changed status when a new client
+  * connects (i.e. before the server calls accept()), and terminates
+  * immediately. This is invisible for the connecting client, but is subject
+  * to race conditions when established clients send a request while the
+  * server exits; those clients may read EOF instead of a server reply. This
+  * has, however, not been a problem in real deployment. With the old code,
+  * timely restart is achieved by setting the ipc_ttl parameter to 60
+  * seconds, so that the table change status is checked several times a
+  * minute.
+  */
+int     server_flags;
+
+ /*
+  * Define exactly one of these.
+  */
+/* #define DETACH_AND_ASK_CLIENTS_TO_RECONNECT	/* correct and complex */
+#define CHECK_TABLE_STATS_PERIODICALLY	/* quick */
+/* #define CHECK_TABLE_STATS_BEFORE_ACCEPT	/* slow */
+
 /* rewrite_service - read request and send reply */
 
 static void rewrite_service(VSTREAM *stream, char *unused_service, char **argv)
 {
     int     status = -1;
 
+#ifdef DETACH_AND_ASK_CLIENTS_TO_RECONNECT
+    static time_t last;
+    time_t  now;
+    const char *table;
+
+#endif
+
     /*
      * Sanity check. This service takes no command-line arguments.
      */
     if (argv[0])
 	msg_fatal("unexpected command-line argument: %s", argv[0]);
+
+    /*
+     * Client connections are long-lived. Be sure to refesh timely.
+     */
+#ifdef DETACH_AND_ASK_CLIENTS_TO_RECONNECT
+    if (server_flags == 0 && (now = event_time()) - last > 10) {
+	if ((table = dict_changed_name()) != 0) {
+	    msg_info("table %s has changed -- restarting", table);
+	    if (multi_server_drain() == 0)
+		server_flags = 1;
+	}
+	last = now;
+    }
+#endif
 
     /*
      * This routine runs whenever a client connects to the UNIX-domain socket
@@ -343,6 +441,8 @@ static void rewrite_service(VSTREAM *stream, char *unused_service, char **argv)
 
 /* pre_accept - see if tables have changed */
 
+#ifdef CHECK_TABLE_STATS_BEFORE_ACCEPT
+
 static void pre_accept(char *unused_name, char **unused_argv)
 {
     const char *table;
@@ -352,6 +452,23 @@ static void pre_accept(char *unused_name, char **unused_argv)
 	exit(0);
     }
 }
+
+#endif
+
+#ifdef CHECK_TABLE_STATS_PERIODICALLY
+
+static void check_table_stats(int unused_event, char *unused_context)
+{
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
+	exit(0);
+    }
+    event_request_timer(check_table_stats, (char *) 0, 10);
+}
+
+#endif
 
 /* pre_jail_init - initialize before entering chroot jail */
 
@@ -378,6 +495,9 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	transport_post_init(resolve_regular.transport_info);
     if (resolve_verify.transport_info)
 	transport_post_init(resolve_verify.transport_info);
+#ifdef CHECK_TABLE_STATS_PERIODICALLY
+    check_table_stats(0, (char *) 0);
+#endif
 }
 
 /* main - pass control to the multi-threaded skeleton code */
@@ -402,6 +522,7 @@ int     main(int argc, char **argv)
 	VAR_VRFY_RELAY_XPORT, DEF_VRFY_RELAY_XPORT, &var_vrfy_relay_xport, 1, 0,
 	VAR_VRFY_DEF_XPORT, DEF_VRFY_DEF_XPORT, &var_vrfy_def_xport, 1, 0,
 	VAR_VRFY_RELAYHOST, DEF_VRFY_RELAYHOST, &var_vrfy_relayhost, 0, 0,
+	VAR_REM_RWR_DOMAIN, DEF_REM_RWR_DOMAIN, &var_remote_rwr_domain, 0, 0,
 	0,
     };
     static CONFIG_BOOL_TABLE bool_table[] = {
@@ -420,6 +541,8 @@ int     main(int argc, char **argv)
 		      MAIL_SERVER_BOOL_TABLE, bool_table,
 		      MAIL_SERVER_PRE_INIT, pre_jail_init,
 		      MAIL_SERVER_POST_INIT, post_jail_init,
+#ifdef CHECK_TABLE_STATS_BEFORE_ACCEPT
 		      MAIL_SERVER_PRE_ACCEPT, pre_accept,
+#endif
 		      0);
 }

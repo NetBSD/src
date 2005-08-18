@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_compat.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: sys_compat.c,v 1.1.1.3 2005/08/18 21:10:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,9 @@
 /*	compatibility routines
 /* SYNOPSIS
 /*	#include <sys_defs.h>
+/*
+/*	void	closefrom(int lowfd)
+/*	int	lowfd;
 /*
 /*	const char *strerror(err)
 /*	int	err;
@@ -34,6 +37,17 @@
 /*	int	setsid()
 /*
 /*	void	dup2_pass_on_exec(int oldd, int newd)
+/*
+/*	char	*inet_ntop(af, src, dst, size)
+/*	int	af;
+/*	const void *src;
+/*	char	*dst;
+/*	size_t	size;
+/*
+/*	int	inet_pton(af, src, dst)
+/*	int	af;
+/*	const char *src;
+/*	void	*dst;
 /* DESCRIPTION
 /*	These routines are compiled for platforms that lack the functionality
 /*	or that have broken versions that we prefer to stay away from.
@@ -233,6 +247,116 @@ int     dup2_pass_on_exec(int oldd, int newd)
 	close_on_exec(newd, PASS_ON_EXEC);
 
     return res;
+}
+
+#endif
+
+#ifndef HAS_CLOSEFROM
+
+#include <unistd.h>
+#include <errno.h>
+#include <iostuff.h>
+
+/* closefrom() - closes all file descriptors from the given one up */
+
+int     closefrom(int lowfd)
+{
+    int     fd_limit = open_limit(0);
+    int     fd;
+
+    /*
+     * lowfrom does not have an easy to determine upper limit. A process may
+     * have files open that were inherited from a parent process with a less
+     * restrictive resource limit.
+     */
+    if (lowfd < 0) {
+	errno = EBADF;
+	return (-1);
+    }
+    if (fd_limit > 500)
+	fd_limit = 500;
+    for (fd = lowfd; fd < fd_limit; fd++)
+	(void) close(fd);
+
+    return (0);
+}
+
+#endif
+
+#ifdef MISSING_INET_NTOP
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+/* inet_ntop - convert binary address to printable address */
+
+const char *inet_ntop(int af, const void *src, char *dst, size_t size)
+{
+    const unsigned char *addr;
+    char    buffer[sizeof("255.255.255.255")];
+    int     len;
+
+    if (af != AF_INET) {
+	errno = EAFNOSUPPORT;
+	return (0);
+    }
+    addr = (const unsigned char *) src;
+#if (CHAR_BIT > 8)
+    sprintf(buffer, "%d.%d.%d.%d", addr[0] & 0xff,
+	    addr[1] & 0xff, addr[2] & 0xff, addr[3] & 0xff);
+#else
+    sprintf(buffer, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
+#endif
+    if ((len = strlen(buffer)) >= size) {
+	errno = ENOSPC;
+	return (0);
+    } else {
+	memcpy(dst, buffer, len + 1);
+	return (dst);
+    }
+}
+
+#endif
+
+#ifdef MISSING_INET_PTON
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <errno.h>
+
+#ifndef INADDR_NONE
+#define INADDR_NONE 0xffffffff
+#endif
+
+/* inet_pton - convert printable address to binary address */
+
+int     inet_pton(int af, const char *src, void *dst)
+{
+    struct in_addr addr;
+
+    /*
+     * inet_addr() accepts a wider range of input formats than inet_pton();
+     * the former accepts 1-, 2-, or 3-part dotted addresses, while the
+     * latter requires dotted quad form.
+     */
+    if (af != AF_INET) {
+	errno = EAFNOSUPPORT;
+	return (-1);
+    } else if ((addr.s_addr = inet_addr(src)) == INADDR_NONE
+	       && strcmp(src, "255.255.255.255") != 0) {
+	return (0);
+    } else {
+	memcpy(dst, (char *) &addr, sizeof(addr));
+	return (1);
+    }
 }
 
 #endif

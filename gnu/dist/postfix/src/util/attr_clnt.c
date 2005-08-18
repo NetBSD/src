@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.c,v 1.1.1.2 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: attr_clnt.c,v 1.1.1.3 2005/08/18 21:09:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -203,6 +203,10 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 	(void) va_arg(ap, char *); \
 	(void) va_arg(ap, type); \
     }
+#define SKIP_ARG2(ap, t1, t2) { \
+	SKIP_ARG(ap, t1); \
+	(void) va_arg(ap, t2); \
+    }
 
     for (;;) {
 	errno = 0;
@@ -220,6 +224,9 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 		    case ATTR_TYPE_STR:
 			SKIP_ARG(ap, char *);
 			break;
+		    case ATTR_TYPE_DATA:
+			SKIP_ARG2(ap, char *, int);
+			break;
 		    case ATTR_TYPE_NUM:
 			SKIP_ARG(ap, int);
 			break;
@@ -227,7 +234,7 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 			SKIP_ARG(ap, long);
 			break;
 		    case ATTR_TYPE_HASH:
-			SKIP_ARG(ap, HTABLE *);
+			(void) va_arg(ap, HTABLE *);
 			break;
 		    default:
 			msg_panic("%s: unexpected attribute type %d",
@@ -269,4 +276,5 @@ void    attr_clnt_control(ATTR_CLNT *client, int name,...)
 	    msg_panic("%s: bad name %d", myname, name);
 	}
     }
+    va_end(ap);
 }

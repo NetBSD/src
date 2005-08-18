@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_syslog.c,v 1.1.1.4 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: msg_syslog.c,v 1.1.1.5 2005/08/18 21:10:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -208,7 +208,7 @@ int     msg_syslog_facility(const char *facility_name)
   * Usage: msg_syslog_test text...
   */
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     VSTRING *vp = vstring_alloc(256);
 

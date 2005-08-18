@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl.h,v 1.1.1.3 2004/05/31 00:24:47 heas Exp $	*/
+/*	$NetBSD: smtp_sasl.h,v 1.1.1.4 2005/08/18 21:08:56 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -14,14 +14,18 @@
  * SASL protocol functions
  */
 extern void smtp_sasl_initialize(void);
-extern void smtp_sasl_connect(SMTP_STATE *);
-extern int smtp_sasl_passwd_lookup(SMTP_STATE *);
-extern void smtp_sasl_start(SMTP_STATE *, const char *, const char *);
-extern int smtp_sasl_authenticate(SMTP_STATE *, VSTRING *);
-extern void smtp_sasl_cleanup(SMTP_STATE *);
+extern void smtp_sasl_connect(SMTP_SESSION *);
+extern int smtp_sasl_passwd_lookup(SMTP_SESSION *);
+extern void smtp_sasl_start(SMTP_SESSION *, const char *, const char *);
+extern int smtp_sasl_authenticate(SMTP_SESSION *, VSTRING *);
+extern void smtp_sasl_cleanup(SMTP_SESSION *);
 
-extern void smtp_sasl_helo_auth(SMTP_STATE *, const char *);
+extern void smtp_sasl_helo_auth(SMTP_SESSION *, const char *);
 extern int smtp_sasl_helo_login(SMTP_STATE *);
+
+extern void smtp_sasl_passivate(SMTP_SESSION *, VSTRING *);
+extern int smtp_sasl_activate(SMTP_SESSION *, char *);
+extern STRING_LIST *smtp_sasl_mechs;
 
 /* LICENSE
 /* .ad

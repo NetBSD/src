@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.9 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.10 2005/08/18 21:08:46 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -14,14 +14,15 @@
 /*	\fBnewaliases\fR
 /*	\fBsendmail -I\fR
 /* DESCRIPTION
-/*	The Postfix \fBsendmail\fR command implements the Postfix to Sendmail
-/*	compatibility interface.
+/*	The Postfix \fBsendmail\fR(1) command implements the Postfix
+/*	to Sendmail compatibility interface.
 /*	For the sake of compatibility with existing applications, some
 /*	Sendmail command-line options are recognized but silently ignored.
 /*
-/*	By default, Postfix \fBsendmail\fR reads a message from standard input
+/*	By default, Postfix \fBsendmail\fR(1) reads a message from
+/*	standard input
 /*	until EOF or until it reads a line with only a \fB.\fR character,
-/*	and arranges for delivery.  Postfix \fBsendmail\fR relies on the
+/*	and arranges for delivery.  Postfix \fBsendmail\fR(1) relies on the
 /*	\fBpostdrop\fR(1) command to create a queue file in the \fBmaildrop\fR
 /*	directory.
 /*
@@ -43,7 +44,7 @@
 /*	command.
 /* .sp
 /*	Note: it may take a minute or so before an alias database update
-/*	becomes visible. Use the \fBpostfix reload\fR command to eliminate
+/*	becomes visible. Use the "\fBpostfix reload\fR" command to eliminate
 /*	this delay.
 /* .PP
 /*	These and other features can be selected by specifying the
@@ -59,7 +60,7 @@
 /*	The message body MIME type: \fB7BIT\fR or \fB8BITMIME\fR.
 /* .IP \fB-bd\fR
 /*	Go into daemon mode. This mode of operation is implemented by
-/*	executing the \fBpostfix start\fR command.
+/*	executing the "\fBpostfix start\fR" command.
 /* .IP "\fB-bh\fR (ignored)"
 /* .IP "\fB-bH\fR (ignored)"
 /*	Postfix has no persistent host status database.
@@ -94,8 +95,8 @@
 /*	have no \fBFrom:\fR message header.
 /* .IP "\fB-f \fIsender\fR"
 /*	Set the envelope sender address. This is the address where
-/*	delivery problems are sent to, unless the message contains an
-/*	\fBErrors-To:\fR message header.
+/*	delivery problems are sent to. With Postfix versions before 2.1, the
+/*	\fBErrors-To:\fR message header overrides the error return address.
 /* .IP "\fB-G\fR (ignored)"
 /*	Gateway (relay) submission, as opposed to initial user submission.
 /* .IP "\fB-h \fIhop_count\fR (ignored)"
@@ -121,6 +122,8 @@
 /*	Non-default alias database. Specify \fIpathname\fR or
 /*	\fItype\fR:\fIpathname\fR. See \fBpostalias\fR(1) for
 /*	details.
+/* .IP "\fB-O \fIoption=value\fR (ignored)"
+/*	Backwards compatibility.
 /* .IP "\fB-o7\fR (ignored)"
 /* .IP "\fB-o8\fR (ignored)"
 /*	To send 8-bit or binary content, use an appropriate MIME encapsulation
@@ -135,8 +138,8 @@
 /*	configuration parameter in \fBmain.cf\fR instead.
 /* .IP "\fB-r \fIsender\fR"
 /*	Set the envelope sender address. This is the address where
-/*	delivery problems are sent to, unless the message contains an
-/*	\fBErrors-To:\fR message header.
+/*	delivery problems are sent to. With Postfix versions before 2.1, the
+/*	\fBErrors-To:\fR message header overrides the error return address.
 /* .IP "\fB-R \fIreturn_limit\fR (ignored)"
 /*	Limit the size of bounced mail. Use the \fBbounce_size_limit\fR
 /*	configuration parameter instead.
@@ -157,7 +160,7 @@
 /*	See \fBflush\fR(8) for more information about the "fast flush"
 /*	service.
 /* .IP \fB-qS\fIsite\fR
-/*	This command is not implemented. Use the slower \fBsendmail -q\fR
+/*	This command is not implemented. Use the slower "\fBsendmail -q\fR"
 /*	command instead.
 /* .IP \fB-t\fR
 /*	Extract recipients from message headers. These are added to any
@@ -217,7 +220,7 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
@@ -233,6 +236,17 @@
 /*	Optional list of remote client or server hostname or network
 /*	address patterns that cause the verbose logging level to increase
 /*	by the amount specified in $debug_peer_level.
+/* ACCESS CONTROLS
+/* .ad
+/* .fi
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBauthorized_flush_users (static:anyone)\fR"
+/*	List of users who are authorized to flush the queue.
+/* .IP "\fBauthorized_mailq_users (static:anyone)\fR"
+/*	List of users who are authorized to view the queue.
+/* .IP "\fBauthorized_submit_users (static:anyone)\fR"
+/*	List of users who are authorized to submit mail with the \fBsendmail\fR(1)
+/*	command (and with the privileged \fBpostdrop\fR(1) helper command).
 /* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
@@ -266,12 +280,12 @@
 /*	The two default VERP delimiter characters.
 /* .IP "\fBverp_delimiter_filter (-=+)\fR"
 /*	The characters Postfix accepts as VERP delimiter characters on the
-/*	Postfix sendmail(1) command line and in SMTP commands.
+/*	Postfix \fBsendmail\fR(1) command line and in SMTP commands.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
 /* .IP "\fBalias_database (see 'postconf -d' output)\fR"
-/*	The alias databases for local(8) delivery that are updated with
+/*	The alias databases for \fBlocal\fR(8) delivery that are updated with
 /*	"\fBnewaliases\fR" or with "\fBsendmail -bi\fR".
 /* .IP "\fBcommand_directory (see 'postconf -d' output)\fR"
 /*	The location of all postfix administrative commands.
@@ -281,11 +295,17 @@
 /* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
 /*	The directory with Postfix support programs and daemon programs.
 /* .IP "\fBdefault_database_type (see 'postconf -d' output)\fR"
-/*	The default database type for use in newaliases(1), postalias(1)
-/*	and postmap(1) commands.
+/*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
+/*	and \fBpostmap\fR(1) commands.
 /* .IP "\fBdelay_warning_time (0h)\fR"
 /*	The time after which the sender receives the message headers of
 /*	mail that is still queued.
+/* .IP "\fBenable_errors_to (no)\fR"
+/*	Report mail delivery errors to the address specified with the
+/*	non-standard Errors-To: message header, instead of the envelope
+/*	sender address (this feature is removed with Postfix 2.2, is
+/*	turned off by default with Postfix 2.1, and is always turned on
+/*	with older Postfix versions).
 /* .IP "\fBmail_owner (postfix)\fR"
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
@@ -298,7 +318,7 @@
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
-/*	example, the pickup(8) or qmgr(8) daemon).
+/*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -385,6 +405,7 @@
 #include <deliver_request.h>
 #include <mime_state.h>
 #include <header_opts.h>
+#include <user_acl.h>
 
 /* Application-specific. */
 
@@ -410,7 +431,7 @@
  /*
   * VERP support.
   */
-char   *verp_delims;
+static char *verp_delims;
 
  /*
   * Callback context for extracting recipients.
@@ -424,6 +445,16 @@ typedef struct SM_STATE {
     uid_t   uid;			/* for error messages */
     VSTRING *temp;			/* scratch buffer */
 } SM_STATE;
+
+ /*
+  * Mail submission ACL
+  */
+char   *var_submit_acl;
+
+static CONFIG_STR_TABLE str_table[] = {
+    VAR_SUBMIT_ACL, DEF_SUBMIT_ACL, &var_submit_acl, 0, 0,
+    0,
+};
 
  /*
   * Silly little macros (SLMs).
@@ -457,6 +488,7 @@ static void output_header(void *context, int header_class,
     char   *start;
     char   *line;
     char   *next_line;
+    int     len;
 
     /*
      * Parse the header line, and save copies of recipient addresses in the
@@ -473,11 +505,11 @@ static void output_header(void *context, int header_class,
 		state->resent = 1;
 	} else
 	    rcpt = state->recipients;
-	tree = tok822_parse(vstring_str(buf) + strlen(header_info->name) + 1);
+	tree = tok822_parse(STR(buf) + strlen(header_info->name) + 1);
 	addr_list = tok822_grep(tree, TOK822_ADDR);
 	for (tpp = addr_list; *tpp; tpp++) {
 	    tok822_internalize(state->temp, tpp[0]->head, TOK822_STR_DEFL);
-	    argv_add(rcpt, vstring_str(state->temp), (char *) 0);
+	    argv_add(rcpt, STR(state->temp), (char *) 0);
 	}
 	myfree((char *) addr_list);
 	tok822_free_tree(tree);
@@ -485,12 +517,24 @@ static void output_header(void *context, int header_class,
 
     /*
      * Pipe the unmodified message header through the header line folding
-     * routine.
+     * routine, and ensure that long lines are chopped appropriately.
      */
     for (line = start = STR(buf); line; line = next_line) {
 	next_line = split_at(line, '\n');
-	output_text(context, REC_TYPE_NORM, line, next_line ?
-		    next_line - line - 1 : strlen(line), offset);
+	len = next_line ? next_line - line - 1 : strlen(line);
+	do {
+	    if (len > var_line_limit) {
+		output_text(context, REC_TYPE_CONT, line, var_line_limit, offset);
+		line += var_line_limit;
+		len -= var_line_limit;
+		offset += var_line_limit;
+	    } else {
+		output_text(context, REC_TYPE_NORM, line, len, offset);
+		offset += len;
+		break;
+	    }
+	} while (len > 0);
+	offset += 1;
     }
 }
 
@@ -508,6 +552,7 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     int     skip_from_;
     TOK822 *tree;
     TOK822 *tp;
+    int     rcpt_count = 0;
     enum {
 	STRIP_CR_DUNNO, STRIP_CR_DO, STRIP_CR_DONT
     }       strip_cr;
@@ -520,6 +565,16 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     MIME_STATE *mime_state = 0;
     SM_STATE state;
     int     mime_errs;
+    const char *errstr;
+    int     addr_count;
+
+    /*
+     * Access control is enforced in the postdrop command. The code here
+     * merely produces a more user-friendly interface.
+     */
+    if ((errstr = check_user_acl_byuid(var_submit_acl, uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+	  "User %s(%ld) is not allowed to submit mail", errstr, (long) uid);
 
     /*
      * Initialize.
@@ -599,16 +654,25 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     if (recipients) {
 	for (cpp = recipients; *cpp != 0; cpp++) {
 	    tree = tok822_parse(*cpp);
-	    for (tp = tree; tp != 0; tp = tp->next) {
+	    for (addr_count = 0, tp = tree; tp != 0; tp = tp->next) {
 		if (tp->type == TOK822_ADDR) {
 		    tok822_internalize(buf, tp->head, TOK822_STR_DEFL);
 		    if (REC_PUT_BUF(dst, REC_TYPE_RCPT, buf) < 0)
 			msg_fatal_status(EX_TEMPFAIL,
 				    "%s(%ld): error writing queue file: %m",
 					 saved_sender, (long) uid);
+		    ++rcpt_count;
+		    ++addr_count;
 		}
 	    }
 	    tok822_free_tree(tree);
+	    if (addr_count == 0) {
+		if (rec_put(dst, REC_TYPE_RCPT, "", 0) < 0)
+		    msg_fatal_status(EX_TEMPFAIL,
+				     "%s(%ld): error writing queue file: %m",
+				     saved_sender, (long) uid);
+		++rcpt_count;
+	    }
 	}
     }
 
@@ -623,6 +687,10 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
      */
     rec_fputs(dst, REC_TYPE_MESG, "");
     if (DEL_REQ_TRACE_ONLY(flags) != 0) {
+	if (flags & SM_FLAG_XRCPT)
+	    msg_fatal_status(EX_USAGE, "-t option cannot be used with -bv");
+	if (*saved_sender)
+	    rec_fprintf(dst, REC_TYPE_NORM, "From: %s", saved_sender);
 	rec_fprintf(dst, REC_TYPE_NORM, "Subject: probe");
 	if (recipients) {
 	    rec_fprintf(dst, REC_TYPE_NORM, "To:");
@@ -669,7 +737,7 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 	    }
 	    if (skip_from_) {
 		if (type == REC_TYPE_NORM) {
-		    start = vstring_str(buf);
+		    start = STR(buf);
 		    if (strncmp(start + strspn(start, ">"), "From ", 5) == 0)
 			continue;
 		}
@@ -724,11 +792,17 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 		msg_fatal_status(EX_TEMPFAIL,
 				 "%s(%ld): error writing queue file: %m",
 				 saved_sender, (long) uid);
+	    ++rcpt_count;
 	}
 	argv_free(state.recipients);
 	argv_free(state.resent_recip);
 	vstring_free(state.temp);
     }
+    if (rcpt_count == 0)
+	msg_fatal_status(EX_USAGE, (flags & SM_FLAG_XRCPT) ?
+			 "No recipient addresses found in message header" :
+			 "Recipient addresses must be specified on"
+			 " the command line or via the -t option");
 
     /*
      * Identify the end of the queue file.
@@ -786,6 +860,8 @@ int     main(int argc, char **argv)
     char   *site_to_flush = 0;
     char   *encoding = 0;
     char   *qtime = 0;
+    const char *errstr;
+    uid_t   uid;
 
     /*
      * Be consistent with file permissions.
@@ -847,6 +923,7 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
+    get_mail_conf_str_table(str_table);
 
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);
@@ -897,7 +974,7 @@ int     main(int argc, char **argv)
 	    optind++;
 	    continue;
 	}
-	if ((c = GETOPT(argc, argv, "A:B:C:F:GIL:N:R:UV:X:b:ce:f:h:imno:p:r:q:tvx")) <= 0)
+	if ((c = GETOPT(argc, argv, "A:B:C:F:GIL:N:O:R:UV:X:b:ce:f:h:imno:p:r:q:tvx")) <= 0)
 	    break;
 	switch (c) {
 	default:
@@ -1106,6 +1183,11 @@ int     main(int argc, char **argv)
 	if (argv[OPTIND])
 	    msg_fatal_status(EX_USAGE,
 			     "stand-alone mode requires no recipient");
+	/* The actual enforcement happens in the postdrop command. */
+	if ((errstr = check_user_acl_byuid(var_submit_acl, uid = getuid())) != 0)
+	    msg_fatal_status(EX_NOPERM,
+			     "User %s(%ld) is not allowed to submit mail",
+			     errstr, (long) uid);
 	ext_argv = argv_alloc(2);
 	argv_add(ext_argv, "smtpd", "-S", (char *) 0);
 	for (n = 0; n < msg_verbose; n++)

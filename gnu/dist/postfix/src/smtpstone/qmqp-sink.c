@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.3 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: qmqp-sink.c,v 1.1.1.4 2005/08/18 21:09:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -7,19 +7,26 @@
 /*	multi-threaded QMQP test server
 /* SYNOPSIS
 /* .fi
-/*	\fBqmqp-sink\fR [\fB-cv\fR] [\fB-x \fItime\fR]
+/*	\fBqmqp-sink\fR [\fB-46cv\fR] [\fB-x \fItime\fR]
 /*	[\fBinet:\fR][\fIhost\fR]:\fIport\fR \fIbacklog\fR
 /*
-/*	\fBqmqp-sink\fR [\fB-cv\fR] [\fB-x \fItime\fR]
+/*	\fBqmqp-sink\fR [\fB-46cv\fR] [\fB-x \fItime\fR]
 /*	\fBunix:\fR\fIpathname\fR \fIbacklog\fR
 /* DESCRIPTION
 /*	\fBqmqp-sink\fR listens on the named host (or address) and port.
 /*	It receives messages from the network and throws them away.
 /*	The purpose is to measure QMQP client performance, not protocol
 /*	compliance.
-/*	Connections can be accepted on IPV4 endpoints or UNIX-domain sockets.
-/*	IPV4 is the default.
+/*	Connections can be accepted on IPv4 or IPv6 endpoints, or on
+/*	UNIX-domain sockets.
+/*	IPv4 and IPv6 are the default.
 /*	This program is the complement of the \fBqmqp-source\fR(1) program.
+/* .IP \fB-4\fR
+/*	Support IPv4 only. This option has no effect when
+/*	Postfix is built without IPv6 support.
+/* .IP \fB-6\fR
+/*	Support IPv6 only. This option is not available when
+/*	Postfix is built without IPv6 support.
 /* .IP \fB-c\fR
 /*	Display a running counter that is updated whenever a delivery
 /*	is completed.
@@ -67,6 +74,7 @@
 #include <iostuff.h>
 #include <msg_vstream.h>
 #include <netstring.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -237,6 +245,8 @@ int     main(int argc, char **argv)
     int     backlog;
     int     ch;
     int     ttl;
+    const char *protocols = INET_PROTO_NAME_ALL;
+    INET_PROTO_INFO *proto_info;
 
     /*
      * Initialize diagnostics.
@@ -246,8 +256,14 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "cvx:")) > 0) {
+    while ((ch = GETOPT(argc, argv, "46cvx:")) > 0) {
 	switch (ch) {
+	case '4':
+	    protocols = INET_PROTO_NAME_IPV4;
+	    break;
+	case '6':
+	    protocols = INET_PROTO_NAME_IPV6;
+	    break;
 	case 'c':
 	    count++;
 	    break;
@@ -271,6 +287,7 @@ int     main(int argc, char **argv)
     /*
      * Initialize.
      */
+    proto_info = inet_proto_init("protocols", protocols);
     buffer = vstring_alloc(1024);
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	sock = unix_listen(argv[optind] + 5, backlog, BLOCKING);

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.h,v 1.1.1.3 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: master_proto.h,v 1.1.1.4 2005/08/18 21:07:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,7 @@
 #define MASTER_XPORT_NAME_UNIX	"unix"	/* local IPC */
 #define MASTER_XPORT_NAME_FIFO	"fifo"	/* local IPC */
 #define MASTER_XPORT_NAME_INET	"inet"	/* non-local IPC */
+/*#define MASTER_XPORT_NAME_PASS	"pass"	/* local IPC */
 
  /*
   * Format of a status message sent by a child process to the process
@@ -25,13 +26,16 @@
   */
 typedef struct MASTER_STATUS {
     int     pid;			/* process ID */
+    unsigned gen;			/* child generation number */
     int     avail;			/* availability */
 } MASTER_STATUS;
+
+#define MASTER_GEN_NAME	"GENERATION"	/* passed via environment */
 
 #define MASTER_STAT_TAKEN	0	/* this one is occupied */
 #define MASTER_STAT_AVAIL	1	/* this process is idle */
 
-extern int master_notify(int, int);	/* encapsulate status msg */
+extern int master_notify(int, unsigned, int);	/* encapsulate status msg */
 
  /*
   * File descriptors inherited from the master process. The flow control pipe

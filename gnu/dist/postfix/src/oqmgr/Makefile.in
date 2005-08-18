@@ -19,8 +19,10 @@ LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a
 $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -51,7 +53,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -155,6 +157,9 @@ qmgr_entry.o: ../../include/events.h
 qmgr_entry.o: ../../include/vstream.h
 qmgr_entry.o: ../../include/vbuf.h
 qmgr_entry.o: ../../include/mail_params.h
+qmgr_entry.o: ../../include/deliver_request.h
+qmgr_entry.o: ../../include/vstring.h
+qmgr_entry.o: ../../include/recipient_list.h
 qmgr_entry.o: qmgr.h
 qmgr_entry.o: ../../include/scan_dir.h
 qmgr_message.o: qmgr_message.c
@@ -185,6 +190,7 @@ qmgr_message.o: ../../include/mail_proto.h
 qmgr_message.o: ../../include/iostuff.h
 qmgr_message.o: ../../include/attr.h
 qmgr_message.o: ../../include/qmgr_user.h
+qmgr_message.o: ../../include/split_addr.h
 qmgr_message.o: ../../include/rewrite_clnt.h
 qmgr_message.o: ../../include/resolve_clnt.h
 qmgr_message.o: qmgr.h

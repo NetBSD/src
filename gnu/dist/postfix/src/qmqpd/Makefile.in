@@ -15,8 +15,10 @@ LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libdns.a ../../lib/
 $(PROG): $(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -58,7 +60,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -100,12 +102,19 @@ qmqpd_peer.o: qmqpd_peer.c
 qmqpd_peer.o: ../../include/sys_defs.h
 qmqpd_peer.o: ../../include/msg.h
 qmqpd_peer.o: ../../include/mymalloc.h
-qmqpd_peer.o: ../../include/valid_hostname.h
 qmqpd_peer.o: ../../include/stringops.h
 qmqpd_peer.o: ../../include/vstring.h
 qmqpd_peer.o: ../../include/vbuf.h
-qmqpd_peer.o: qmqpd.h
+qmqpd_peer.o: ../../include/myaddrinfo.h
+qmqpd_peer.o: ../../include/sock_addr.h
+qmqpd_peer.o: ../../include/inet_proto.h
+qmqpd_peer.o: ../../include/mail_proto.h
 qmqpd_peer.o: ../../include/vstream.h
+qmqpd_peer.o: ../../include/iostuff.h
+qmqpd_peer.o: ../../include/attr.h
+qmqpd_peer.o: ../../include/valid_mailhost_addr.h
+qmqpd_peer.o: ../../include/valid_hostname.h
+qmqpd_peer.o: qmqpd.h
 qmqpd_peer.o: ../../include/mail_stream.h
 qmqpd_state.o: qmqpd_state.c
 qmqpd_state.o: ../../include/sys_defs.h

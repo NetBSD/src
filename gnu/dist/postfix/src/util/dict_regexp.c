@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.1.1.6 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.1.1.7 2005/08/18 21:10:15 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -601,7 +601,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	if (prescan_context.max_sub > first_exp->re_nsub) {
 	    msg_warn("regexp map %s, line %d: out of range replacement index \"%d\": "
 		     "skipping this rule", mapname, lineno,
-		     prescan_context.max_sub);
+		     (int) prescan_context.max_sub);
 	    FREE_EXPR_AND_RETURN(first_exp, 0);
 	}
 	if (second_pat.regexp != 0) {

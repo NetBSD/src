@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.3 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: qmqpd_peer.c,v 1.1.1.4 2005/08/18 21:08:44 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -28,7 +28,7 @@
 /* .IP namaddr
 /*	String of the form: "name[addr]".
 /* .PP
-/*	qmqpd_peer_reset() releases memory allocate by qmqpd_peer_init().
+/*	qmqpd_peer_reset() releases memory allocated by qmqpd_peer_init().
 /* LICENSE
 /* .ad
 /* .fi
@@ -51,36 +51,19 @@
 #include <netdb.h>
 #include <string.h>
 
- /*
-  * Older systems don't have h_errno. Even modern systems don't have
-  * hstrerror().
-  */
-#ifdef NO_HERRNO
-
-static int h_errno = TRY_AGAIN;
-
-#define  HSTRERROR(err) "Host not found"
-
-#else
-
-#define  HSTRERROR(err) (\
-	err == TRY_AGAIN ? "Host not found, try again" : \
-	err == HOST_NOT_FOUND ? "Host not found" : \
-	err == NO_DATA ? "Host name has no address" : \
-	err == NO_RECOVERY ? "Name server failure" : \
-	strerror(errno) \
-    )
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
 #include <mymalloc.h>
-#include <valid_hostname.h>
 #include <stringops.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
+#include <mail_proto.h>
+#include <valid_mailhost_addr.h>
 
 /* Application-specific. */
 
@@ -90,16 +73,19 @@ static int h_errno = TRY_AGAIN;
 
 void    qmqpd_peer_init(QMQPD_STATE *state)
 {
-    struct sockaddr_in sin;
-    SOCKADDR_SIZE len = sizeof(sin);
-    struct hostent *hp;
-    int     i;
+    char   *myname = "qmqpd_peer_init";
+    struct sockaddr_storage ss;
+    struct sockaddr *sa;
+    SOCKADDR_SIZE sa_len;
+    INET_PROTO_INFO *proto_info = inet_proto_info();
+
+    sa = (struct sockaddr *) & ss;
+    sa_len = sizeof(ss);
 
     /*
      * Look up the peer address information.
      */
-    if (getpeername(vstream_fileno(state->client),
-		    (struct sockaddr *) & sin, &len) >= 0) {
+    if (getpeername(vstream_fileno(state->client), sa, &sa_len) >= 0) {
 	errno = 0;
     }
 
@@ -107,54 +93,130 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
      * If peer went away, give up.
      */
     if (errno == ECONNRESET || errno == ECONNABORTED) {
-	state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
-	state->addr = mystrdup(CLIENT_ATTR_UNKNOWN);
+	state->name = mystrdup(CLIENT_NAME_UNKNOWN);
+	state->addr = mystrdup(CLIENT_ADDR_UNKNOWN);
+	state->rfc_addr = mystrdup(CLIENT_ADDR_UNKNOWN);
     }
 
     /*
-     * Look up and "verify" the client hostname.
+     * Convert the client address to printable address and hostname.
      */
-    else if (errno == 0 && sin.sin_family == AF_INET) {
-	state->addr = mystrdup(inet_ntoa(sin.sin_addr));
-	hp = gethostbyaddr((char *) &(sin.sin_addr),
-			   sizeof(sin.sin_addr), AF_INET);
-	if (hp == 0) {
-	    state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
-	} else if (!valid_hostname(hp->h_name, DONT_GRIPE)) {
-	    state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
+    else if (errno == 0
+	     && strchr((char *) proto_info->sa_family_list, sa->sa_family)) {
+	MAI_HOSTNAME_STR client_name;
+	MAI_HOSTADDR_STR client_addr;
+	int     aierr;
+	char   *colonp;
+
+	/*
+	 * Convert the client address to printable form.
+	 */
+	if ((aierr = sockaddr_to_hostaddr(sa, sa_len, &client_addr,
+					  (MAI_SERVPORT_STR *) 0, 0)) != 0)
+	    msg_fatal("%s: cannot convert client address to string: %s",
+		      myname, MAI_STRERROR(aierr));
+
+	/*
+	 * We convert IPv4-in-IPv6 address to 'true' IPv4 address early on,
+	 * but only if IPv4 support is enabled (why would anyone want to turn
+	 * it off)? With IPv4 support enabled we have no need for the IPv6
+	 * form in logging, hostname verification and access checks.
+	 */
+#ifdef HAS_IPV6
+	if (sa->sa_family == AF_INET6) {
+	    if (strchr((char *) proto_info->sa_family_list, AF_INET) != 0
+		&& IN6_IS_ADDR_V4MAPPED(&SOCK_ADDR_IN6_ADDR(sa))
+		&& (colonp = strrchr(client_addr.buf, ':')) != 0) {
+		struct addrinfo *res0;
+
+		if (msg_verbose > 1)
+		    msg_info("%s: rewriting V4-mapped address \"%s\" to \"%s\"",
+			     myname, client_addr.buf, colonp + 1);
+
+		state->addr = mystrdup(colonp + 1);
+		state->rfc_addr = mystrdup(colonp + 1);
+		aierr = hostaddr_to_sockaddr(state->addr, (char *) 0, 0, &res0);
+		if (aierr)
+		    msg_fatal("%s: cannot convert %s from string to binary: %s",
+			      myname, state->addr, MAI_STRERROR(aierr));
+		sa_len = res0->ai_addrlen;
+		memcpy((char *) sa, res0->ai_addr, sa_len);
+		freeaddrinfo(res0);
+	    }
+
+	    /*
+	     * Following RFC 2821 section 4.1.3, an IPv6 address literal gets
+	     * a prefix of 'IPv6:'. We do this consistently for all IPv6
+	     * addresses that that appear in headers or envelopes. The fact
+	     * that valid_mailhost_addr() enforces the form helps of course.
+	     * We use the form without IPV6: prefix when doing access
+	     * control, or when accessing the connection cache.
+	     */
+	    else {
+		state->addr = mystrdup(client_addr.buf);
+		state->rfc_addr =
+		    concatenate(IPV6_COL, client_addr.buf, (char *) 0);
+	    }
+	}
+
+	/*
+	 * An IPv4 address is in dotted quad decimal form.
+	 */
+	else
+#endif
+	{
+	    state->addr = mystrdup(client_addr.buf);
+	    state->rfc_addr = mystrdup(client_addr.buf);
+	}
+
+	/*
+	 * Look up and sanity check the client hostname.
+	 * 
+	 * It is unsafe to allow numeric hostnames, especially because there
+	 * exists pressure to turn off the name->addr double check. In that
+	 * case an attacker could trivally bypass access restrictions.
+	 * 
+	 * sockaddr_to_hostname() already rejects malformed or numeric names.
+	 */
+#define REJECT_PEER_NAME(state) { \
+	myfree(state->name); \
+	state->name = mystrdup(CLIENT_NAME_UNKNOWN); \
+    }
+
+	if ((aierr = sockaddr_to_hostname(sa, sa_len, &client_name,
+					  (MAI_SERVNAME_STR *) 0, 0)) != 0) {
+	    state->name = mystrdup(CLIENT_NAME_UNKNOWN);
 	} else {
-	    state->name = mystrdup(hp->h_name);	/* hp->name is clobbered!! */
+	    struct addrinfo *res0;
+	    struct addrinfo *res;
+
+	    state->name = mystrdup(client_name.buf);
 
 	    /*
 	     * Reject the hostname if it does not list the peer address.
 	     */
-#define REJECT_PEER_NAME(state) { \
-	myfree(state->name); \
-	state->name = mystrdup(CLIENT_ATTR_UNKNOWN); \
-    }
-
-	    hp = gethostbyname(state->name);	/* clobbers hp->name!! */
-	    if (hp == 0) {
+	    aierr = hostname_to_sockaddr(state->name, (char *) 0, 0, &res0);
+	    if (aierr) {
 		msg_warn("%s: hostname %s verification failed: %s",
-			 state->addr, state->name, HSTRERROR(h_errno));
-		REJECT_PEER_NAME(state);
-	    } else if (hp->h_length != sizeof(sin.sin_addr)) {
-		msg_warn("%s: hostname %s verification failed: bad address size %d",
-			 state->addr, state->name, hp->h_length);
+			 state->addr, state->name, MAI_STRERROR(aierr));
 		REJECT_PEER_NAME(state);
 	    } else {
-		for (i = 0; /* void */ ; i++) {
-		    if (hp->h_addr_list[i] == 0) {
+		for (res = res0; /* void */ ; res = res->ai_next) {
+		    if (res == 0) {
 			msg_warn("%s: address not listed for hostname %s",
 				 state->addr, state->name);
 			REJECT_PEER_NAME(state);
 			break;
 		    }
-		    if (memcmp(hp->h_addr_list[i],
-			       (char *) &sin.sin_addr,
-			       sizeof(sin.sin_addr)) == 0)
+		    if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+			msg_info("skipping address family %d for host %s",
+				 res->ai_family, state->name);
+			continue;
+		    }
+		    if (sock_addr_cmp_addr(res->ai_addr, sa) == 0)
 			break;			/* keep peer name */
 		}
+		freeaddrinfo(res0);
 	    }
 	}
     }
@@ -166,6 +228,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
     else {
 	state->name = mystrdup("localhost");
 	state->addr = mystrdup("127.0.0.1");	/* XXX bogus. */
+	state->rfc_addr = mystrdup("127.0.0.1");/* XXX bogus. */
     }
 
     /*
@@ -182,4 +245,5 @@ void    qmqpd_peer_reset(QMQPD_STATE *state)
     myfree(state->name);
     myfree(state->addr);
     myfree(state->namaddr);
+    myfree(state->rfc_addr);
 }

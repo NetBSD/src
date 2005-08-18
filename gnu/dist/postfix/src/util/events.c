@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1.1.4 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: events.c,v 1.1.1.5 2005/08/18 21:10:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -263,9 +263,10 @@ void    event_drain(int time_limit)
 	return;
 
     FD_ZERO(&zero_mask);
+    (void) time(&event_present);
     max_time = event_present + time_limit;
     while (event_present < max_time
-	   && (event_timer_head.pred != event_timer_head.succ
+	   && (event_timer_head.pred != &event_timer_head
 	       || memcmp(&zero_mask, &event_xmask, sizeof(zero_mask)) != 0))
 	event_loop(1);
 }
@@ -496,6 +497,20 @@ void    event_loop(int delay)
 	event_init();
 
     /*
+     * XXX Also print the select() masks?
+     */
+    if (msg_verbose > 2) {
+	RING   *ring;
+
+	FOREACH_QUEUE_ENTRY(ring, &event_timer_head) {
+	    timer = RING_TO_TIMER(ring);
+	    msg_info("%s: time left %3d for 0x%lx 0x%lx", myname,
+		     (int) (timer->when - event_present),
+		     (long) timer->callback, (long) timer->context);
+	}
+    }
+
+    /*
      * Find out when the next timer would go off. Timer requests are sorted.
      * If any timer is scheduled, adjust the delay appropriately.
      */
@@ -600,23 +615,19 @@ void    event_loop(int delay)
 #ifdef TEST
 
  /*
-  * Proof-of-concept test program for the event manager. Print "dingdong"
-  * every 5 seconds, while echoing any lines read from stdin. The "dingdong
-  * changes case each time it is printed.
+  * Proof-of-concept test program for the event manager. Schedule a series
+of events at one-second intervals and let them happen,
+  while echoing any lines read from stdin. 
   */
 #include <stdio.h>
 #include <ctype.h>
 
-#define DELAY 5
+/* timer_event - display event */
 
-/* dingdong - print text every DELAY seconds */
-
-static void dingdong(char *context)
+static void timer_event(int unused_event, char *context)
 {
-    printf("%c", *context);
+    printf("%ld: %s\n", (long) event_present, context);
     fflush(stdout);
-    *context = (ISUPPER(*context) ? TOLOWER(*context) : TOUPPER(*context));
-    event_request_timer(dingdong, context, (char *) DELAY);
 }
 
 /* echo - echo text received on stdin */
@@ -630,13 +641,14 @@ static void echo(int unused_event, char *unused_context)
     printf("Result: %s", buf);
 }
 
-main(void)
+int main(void)
 {
-    static char text[] = "\rdingdong ";
-    char   *cp;
-
-    for (cp = text; *cp; cp++)
-	event_request_timer(dingdong, cp, (char *) 0);
+    event_request_timer(timer_event, "3 first", 3);
+    event_request_timer(timer_event, "3 second", 3);
+    event_request_timer(timer_event, "4 first", 4);
+    event_request_timer(timer_event, "4 second", 4);
+    event_request_timer(timer_event, "2 first", 2);
+    event_request_timer(timer_event, "2 second", 2);
     event_enable_read(fileno(stdin), echo, (char *) 0);
     for (;;)
 	event_loop(-1);

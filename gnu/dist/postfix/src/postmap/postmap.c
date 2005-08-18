@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.1.1.7 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postmap.c,v 1.1.1.8 2005/08/18 21:08:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -7,11 +7,11 @@
 /*	Postfix lookup table management
 /* SYNOPSIS
 /* .fi
-/*	\fBpostmap\fR [\fB-Nfinoprvw\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostmap\fR [\fB-Nfinoprsvw\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 /*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
-/*	The \fBpostmap\fR command creates or queries one or more Postfix
+/*	The \fBpostmap\fR(1) command creates or queries one or more Postfix
 /*	lookup tables, or updates an existing one. The input and output
 /*	file formats are expected to be compatible with:
 /*
@@ -64,19 +64,21 @@
 /*	a map.
 /* .IP \fB-i\fR
 /*	Incremental mode. Read entries from standard input and do not
-/*	truncate an existing database. By default, \fBpostmap\fR creates
+/*	truncate an existing database. By default, \fBpostmap\fR(1) creates
 /*	a new database from the entries in \fBfile_name\fR.
 /* .IP \fB-N\fR
 /*	Include the terminating null character that terminates lookup keys
-/*	and values. By default, Postfix does whatever is the default for
+/*	and values. By default, \fBpostmap\fR(1) does whatever is
+/*	the default for
 /*	the host operating system.
 /* .IP \fB-n\fR
 /*	Don't include the terminating null character that terminates lookup
-/*	keys and values. By default, Postfix does whatever is the default for
+/*	keys and values. By default, \fBpostmap\fR(1) does whatever
+/*	is the default for
 /*	the host operating system.
 /* .IP \fB-o\fR
 /*	Do not release root privileges when processing a non-root
-/*	input file. By default, \fBpostmap\fR drops root privileges
+/*	input file. By default, \fBpostmap\fR(1) drops root privileges
 /*	and runs as the source file owner instead.
 /* .IP \fB-p\fR
 /*	Do not inherit the file access permissions from the input file
@@ -92,37 +94,48 @@
 /*	\fIkey value\fR output for each key that was found. The exit
 /*	status is zero when at least one of the requested keys was found.
 /* .IP \fB-r\fR
-/*	When updating a table, do not warn about duplicate entries; silently
-/*	replace them.
+/*	When updating a table, do not complain about attempts to update
+/*	existing entries, and make those updates anyway.
+/* .IP \fB-s\fR
+/*	Retrieve all database elements, and write one line of
+/*	\fIkey value\fR output for each element. The elements are
+/*	printed in database order, which is not necessarily the same
+/*	as the original input order.
+/*	This feature is available in Postfix version 2.2 and later,
+/*	and is not available for all database types.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
 /* .IP \fB-w\fR
-/*	When updating a table, do not warn about duplicate entries; silently
-/*	ignore them.
+/*	When updating a table, do not complain about attempts to update
+/*	existing entries, and ignore those attempts.
 /* .PP
 /*	Arguments:
 /* .IP \fIfile_type\fR
 /*	The database type. To find out what types are supported, use
-/*	the "\fBpostconf -m" command.
+/*	the "\fBpostconf -m\fR" command.
 /*
-/*	The \fBpostmap\fR command can query any supported file type,
+/*	The \fBpostmap\fR(1) command can query any supported file type,
 /*	but it can create only the following file types:
 /* .RS
 /* .IP \fBbtree\fR
 /*	The output file is a btree file, named \fIfile_name\fB.db\fR.
-/*	This is available only on systems with support for \fBdb\fR databases.
+/*	This is available on systems with support for \fBdb\fR databases.
+/* .IP \fBcdb\fR
+/*	The output consists of one file, named \fIfile_name\fB.cdb\fR.
+/*	This is available on systems with support for \fBcdb\fR databases.
 /* .IP \fBdbm\fR
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
-/*	This is available only on systems with support for \fBdbm\fR databases.
+/*	This is available on systems with support for \fBdbm\fR databases.
 /* .IP \fBhash\fR
 /*	The output file is a hashed file, named \fIfile_name\fB.db\fR.
-/*	This is available only on systems with support for \fBdb\fR databases.
+/*	This is available on systems with support for \fBdb\fR databases.
+/* .IP \fBsdbm\fR
+/*	The output consists of two files, named \fIfile_name\fB.pag\fR and
+/*	\fIfile_name\fB.dir\fR.
+/*	This is available on systems with support for \fBsdbm\fR databases.
 /* .PP
-/*	Use the command \fBpostconf -m\fR to find out what types of database
-/*	your Postfix installation can support.
-/*
 /*	When no \fIfile_type\fR is specified, the software uses the database
 /*	type specified via the \fBdefault_database_type\fR configuration
 /*	parameter.
@@ -135,8 +148,8 @@
 /*	No output means that no problems were detected. Duplicate entries are
 /*	skipped and are flagged with a warning.
 /*
-/*	\fBpostmap\fR terminates with zero exit status in case of success
-/*	(including successful \fBpostmap -q\fR lookup) and terminates
+/*	\fBpostmap\fR(1) terminates with zero exit status in case of success
+/*	(including successful "\fBpostmap -q\fR" lookup) and terminates
 /*	with non-zero exit status in case of failure.
 /* ENVIRONMENT
 /* .ad
@@ -151,7 +164,7 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBberkeley_db_create_buffer_size (16777216)\fR"
 /*	The per-table I/O buffer size for programs that create Berkeley DB
 /*	hash or btree tables.
@@ -162,8 +175,8 @@
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBdefault_database_type (see 'postconf -d' output)\fR"
-/*	The default database type for use in newaliases(1), postalias(1)
-/*	and postmap(1) commands.
+/*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
+/*	and \fBpostmap\fR(1) commands.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (postfix)\fR"
@@ -422,8 +435,8 @@ static int postmap_query(const char *map_type, const char *map_name,
 		     map_type, map_name);
 	}
 	vstream_printf("%s\n", value);
-	vstream_fflush(VSTREAM_OUT);
     }
+    vstream_fflush(VSTREAM_OUT);
     dict_close(dict);
     return (value != 0);
 }
@@ -486,11 +499,39 @@ static int postmap_delete(const char *map_type, const char *map_name,
     return (status == 0);
 }
 
+/* postmap_seq - print all map entries to stdout */
+
+static void postmap_seq(const char *map_type, const char *map_name)
+{
+    DICT   *dict;
+    const char *key;
+    const char *value;
+    int     func;
+
+    dict = dict_open3(map_type, map_name, O_RDONLY, DICT_FLAG_LOCK);
+    for (func = DICT_SEQ_FUN_FIRST; /* void */ ; func = DICT_SEQ_FUN_NEXT) {
+	if (dict_seq(dict, func, &key, &value) != 0)
+	    break;
+	if (*key == 0) {
+	    msg_warn("table %s:%s: empty lookup key value is not allowed",
+		     map_type, map_name);
+	} else if (*value == 0) {
+	    msg_warn("table %s:%s: key %s: empty string result is not allowed",
+		     map_type, map_name, key);
+	    msg_warn("table %s:%s should return NO RESULT in case of NOT FOUND",
+		     map_type, map_name);
+	}
+	vstream_printf("%s	%s\n", key, value);
+    }
+    vstream_fflush(VSTREAM_OUT);
+    dict_close(dict);
+}
+
 /* usage - explain */
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s [-Nfinorvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
+    msg_fatal("usage: %s [-Nfinoprsvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
 	      myname);
 }
 
@@ -506,6 +547,7 @@ int     main(int argc, char **argv)
     int     dict_flags = DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_KEY;
     char   *query = 0;
     char   *delkey = 0;
+    int     sequence = 0;
     int     found;
 
     /*
@@ -542,7 +584,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:finopq:rvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:finopq:rsvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -556,8 +598,8 @@ int     main(int argc, char **argv)
 		msg_fatal("out of memory");
 	    break;
 	case 'd':
-	    if (query || delkey)
-		msg_fatal("specify only one of -q or -d");
+	    if (sequence || query || delkey)
+		msg_fatal("specify only one of -s -q or -d");
 	    delkey = optarg;
 	    break;
 	case 'f':
@@ -577,13 +619,18 @@ int     main(int argc, char **argv)
 	    postmap_flags &= ~POSTMAP_FLAG_SAVE_PERM;
 	    break;
 	case 'q':
-	    if (query || delkey)
-		msg_fatal("specify only one of -q or -d");
+	    if (sequence || query || delkey)
+		msg_fatal("specify only one of -s -q or -d");
 	    query = optarg;
 	    break;
 	case 'r':
 	    dict_flags &= ~(DICT_FLAG_DUP_WARN | DICT_FLAG_DUP_IGNORE);
 	    dict_flags |= DICT_FLAG_DUP_REPLACE;
+	    break;
+	case 's':
+	    if (query || delkey)
+		msg_fatal("specify only one of -s or -q or -d");
+	    sequence = 1;
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -633,6 +680,16 @@ int     main(int argc, char **argv)
 	    if (found)
 		exit(0);
 	    optind++;
+	}
+	exit(1);
+    } else if (sequence) {
+	while (optind < argc) {
+	    if ((path_name = split_at(argv[optind], ':')) != 0) {
+		postmap_seq(argv[optind], path_name);
+	    } else {
+		postmap_seq(var_db_type, argv[optind]);
+	    }
+	    exit(0);
 	}
 	exit(1);
     } else {					/* create/update map(s) */

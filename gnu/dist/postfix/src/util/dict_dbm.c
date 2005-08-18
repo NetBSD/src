@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_dbm.c,v 1.1.1.5 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dict_dbm.c,v 1.1.1.6 2005/08/18 21:10:10 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -68,7 +68,12 @@
 typedef struct {
     DICT    dict;			/* generic members */
     DBM    *dbm;			/* open database */
+    VSTRING *key_buf;			/* key buffer */
+    VSTRING *val_buf;			/* result buffer */
 } DICT_DBM;
+
+#define SCOPY(buf, data, size) \
+    vstring_str(vstring_strncpy(buf ? buf : (buf = vstring_alloc(10)), data, size))
 
 /* dict_dbm_lookup - find database entry */
 
@@ -77,8 +82,13 @@ static const char *dict_dbm_lookup(DICT *dict, const char *name)
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
     datum   dbm_key;
     datum   dbm_value;
-    static VSTRING *buf;
     const char *result = 0;
+
+    /*
+     * Sanity check.
+     */
+    if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
+	msg_panic("dict_dbm_lookup: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
     dict_errno = 0;
 
@@ -99,7 +109,7 @@ static const char *dict_dbm_lookup(DICT *dict, const char *name)
 	dbm_value = dbm_fetch(dict_dbm->dbm, dbm_key);
 	if (dbm_value.dptr != 0) {
 	    dict->flags &= ~DICT_FLAG_TRY0NULL;
-	    result = dbm_value.dptr;
+	    result = SCOPY(dict_dbm->val_buf, dbm_value.dptr, dbm_value.dsize);
 	}
     }
 
@@ -112,11 +122,8 @@ static const char *dict_dbm_lookup(DICT *dict, const char *name)
 	dbm_key.dsize = strlen(name);
 	dbm_value = dbm_fetch(dict_dbm->dbm, dbm_key);
 	if (dbm_value.dptr != 0) {
-	    if (buf == 0)
-		buf = vstring_alloc(10);
-	    vstring_strncpy(buf, dbm_value.dptr, dbm_value.dsize);
 	    dict->flags &= ~DICT_FLAG_TRY1NULL;
-	    result = vstring_str(buf);
+	    result = SCOPY(dict_dbm->val_buf, dbm_value.dptr, dbm_value.dsize);
 	}
     }
 
@@ -138,6 +145,12 @@ static void dict_dbm_update(DICT *dict, const char *name, const char *value)
     datum   dbm_key;
     datum   dbm_value;
     int     status;
+
+    /*
+     * Sanity check.
+     */
+    if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
+	msg_panic("dict_dbm_update: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
     dbm_key.dptr = (void *) name;
     dbm_value.dptr = (void *) value;
@@ -202,7 +215,12 @@ static int dict_dbm_delete(DICT *dict, const char *name)
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
     datum   dbm_key;
     int     status = 1;
-    int     flags = 0;
+
+    /*
+     * Sanity check.
+     */
+    if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
+	msg_panic("dict_dbm_delete: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
     /*
      * Acquire an exclusive lock.
@@ -264,15 +282,12 @@ static int dict_dbm_sequence(DICT *dict, int function,
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
     datum   dbm_key;
     datum   dbm_value;
-    int     status = 0;
-    static VSTRING *key_buf;
-    static VSTRING *value_buf;
 
     /*
-     * Acquire an exclusive lock.
+     * Acquire a shared lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->dict.name);
 
     /*
@@ -289,27 +304,12 @@ static int dict_dbm_sequence(DICT *dict, int function,
 	msg_panic("%s: invalid function: %d", myname, function);
     }
 
-    /*
-     * Release the exclusive lock.
-     */
-    if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
-	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
-
     if (dbm_key.dptr != 0 && dbm_key.dsize > 0) {
 
 	/*
-	 * See if this DB file was written with one null byte appended to key
-	 * an d value or not. If necessary, copy the key.
+	 * Copy the key so that it is guaranteed null terminated.
 	 */
-	if (((char *) dbm_key.dptr)[dbm_key.dsize - 1] == 0) {
-	    *key = dbm_key.dptr;
-	} else {
-	    if (key_buf == 0)
-		key_buf = vstring_alloc(10);
-	    vstring_strncpy(key_buf, dbm_key.dptr, dbm_key.dsize);
-	    *key = vstring_str(key_buf);
-	}
+	*key = SCOPY(dict_dbm->key_buf, dbm_key.dptr, dbm_key.dsize);
 
 	/*
 	 * Fetch the corresponding value.
@@ -319,17 +319,9 @@ static int dict_dbm_sequence(DICT *dict, int function,
 	if (dbm_value.dptr != 0 && dbm_value.dsize > 0) {
 
 	    /*
-	     * See if this DB file was written with one null byte appended to
-	     * key and value or not. If necessary, copy the key.
+	     * Copy the value so that it is guaranteed null terminated.
 	     */
-	    if (((char *) dbm_value.dptr)[dbm_value.dsize - 1] == 0) {
-		*value = dbm_value.dptr;
-	    } else {
-		if (value_buf == 0)
-		    value_buf = vstring_alloc(10);
-		vstring_strncpy(value_buf, dbm_value.dptr, dbm_value.dsize);
-		*value = vstring_str(value_buf);
-	    }
+	    *value = SCOPY(dict_dbm->val_buf, dbm_value.dptr, dbm_value.dsize);
 	} else {
 
 	    /*
@@ -350,6 +342,14 @@ static int dict_dbm_sequence(DICT *dict, int function,
 	    msg_fatal("error seeking %s: %m", dict_dbm->dict.name);
 	return (1);				/* no error: eof/not found */
     }
+
+    /*
+     * Release the shared lock.
+     */
+    if ((dict->flags & DICT_FLAG_LOCK)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
+
     return (0);
 }
 
@@ -360,6 +360,10 @@ static void dict_dbm_close(DICT *dict)
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
 
     dbm_close(dict_dbm->dbm);
+    if (dict_dbm->key_buf)
+	vstring_free(dict_dbm->key_buf);
+    if (dict_dbm->val_buf)
+	vstring_free(dict_dbm->val_buf);
     dict_free(dict);
 }
 
@@ -430,6 +434,8 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     if ((dict_flags & (DICT_FLAG_TRY0NULL | DICT_FLAG_TRY1NULL)) == 0)
 	dict_dbm->dict.flags |= (DICT_FLAG_TRY0NULL | DICT_FLAG_TRY1NULL);
     dict_dbm->dbm = dbm;
+    dict_dbm->key_buf = 0;
+    dict_dbm->val_buf = 0;
 
     if ((dict_flags & DICT_FLAG_LOCK))
 	myfree(dbm_path);

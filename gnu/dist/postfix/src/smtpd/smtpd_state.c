@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.6 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.7 2005/08/18 21:09:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,9 +8,10 @@
 /* SYNOPSIS
 /*	#include "smtpd.h"
 /*
-/*	void	smtpd_state_init(state, stream)
+/*	void	smtpd_state_init(state, stream, service)
 /*	SMTPD_STATE *state;
 /*	VSTREAM *stream;
+/*	const char *service;
 /*
 /*	void	smtpd_state_reset(state)
 /*	SMTPD_STATE *state;
@@ -35,6 +36,13 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	TLS support originally by:
+/*	Lutz Jaenicke
+/*	BTU Cottbus
+/*	Allgemeine Elektrotechnik
+/*	Universitaetsplatz 3-4
+/*	D-03044 Cottbus, Germany
 /*--*/
 
 /* System library. */
@@ -64,7 +72,8 @@
 
 /* smtpd_state_init - initialize after connection establishment */
 
-void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
+void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
+			         const char *service)
 {
 
     /*
@@ -73,6 +82,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
      */
     state->err = CLEANUP_STAT_OK;
     state->client = stream;
+    state->service = mystrdup(service);
     state->buffer = vstring_alloc(100);
     state->error_count = 0;
     state->error_mask = 0;
@@ -94,6 +104,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->where = SMTPD_AFTER_CONNECT;
     state->recursion = 0;
     state->msg_size = 0;
+    state->act_size = 0;
     state->junk_cmds = 0;
     state->rcpt_overshoot = 0;
     state->defer_if_permit_client = 0;
@@ -113,6 +124,14 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->saved_flags = 0;
     state->instance = vstring_alloc(10);
     state->seqno = 0;
+    state->rewrite_context = 0;
+#ifdef USE_TLS
+    state->tls_use_tls = 0;
+    state->tls_enforce_tls = 0;
+    state->tls_auth_only = 0;
+    state->tls_context = 0;
+    state->tls_info = tls_info_zero;
+#endif
 
 #ifdef USE_SASL_AUTH
     if (SMTPD_STAND_ALONE(state))
@@ -147,6 +166,8 @@ void    smtpd_state_reset(SMTPD_STATE *state)
      * filled in. The other fields are taken care of by their own
      * "destructor" functions.
      */
+    if (state->service)
+	myfree(state->service);
     if (state->buffer)
 	vstring_free(state->buffer);
     if (state->protocol)

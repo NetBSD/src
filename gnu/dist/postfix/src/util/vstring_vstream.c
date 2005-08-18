@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.c,v 1.1.1.3 2004/05/31 00:25:02 heas Exp $	*/
+/*	$NetBSD: vstring_vstream.c,v 1.1.1.4 2005/08/18 21:10:51 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -186,7 +186,7 @@ int     vstring_get_null_bound(VSTRING *vp, VSTREAM *fp, int bound)
 
 #define TEXT_VSTREAM    "vstring_vstream.c"
 
-main(void)
+int     main(void)
 {
     VSTRING *vp = vstring_alloc(1);
     VSTREAM *fp;

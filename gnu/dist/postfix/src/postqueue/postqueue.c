@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.6 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.7 2005/08/18 21:08:20 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /* .br
 /*	\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-s \fIsite\fR
 /* DESCRIPTION
-/*	The \fBpostqueue\fR program implements the Postfix user interface
+/*	The \fBpostqueue\fR(1) command implements the Postfix user interface
 /*	for queue management. It implements operations that are
 /*	traditionally available via the \fBsendmail\fR(1) command.
 /*	See the \fBpostsuper\fR(1) command for queue operations
@@ -27,7 +27,7 @@
 /* .IP \fB-f\fR
 /*	Flush the queue: attempt to deliver all queued mail.
 /*
-/*	This option implements the traditional \fBsendmail -q\fR command,
+/*	This option implements the traditional "\fBsendmail -q\fR" command,
 /*	by contacting the Postfix \fBqmgr\fR(8) daemon.
 /*
 /*	Warning: flushing undeliverable mail frequently will result in
@@ -53,11 +53,13 @@
 /* .RE
 /* .IP "\fB-s \fIsite\fR"
 /*	Schedule immediate delivery of all mail that is queued for the named
-/*	\fIsite\fR. The site must be eligible for the "fast flush" service.
+/*	\fIsite\fR. A numerical site must be specified as a valid RFC 2821
+/*	address literal enclosed in [], just like in email addresses.
+/*	The site must be eligible for the "fast flush" service.
 /*	See \fBflush\fR(8) for more information about the "fast flush"
 /*	service.
 /*
-/*	This option implements the traditional \fBsendmail -qR\fIsite\fR
+/*	This option implements the traditional "\fBsendmail -qR\fIsite\fR"
 /*	command, by contacting the Postfix \fBflush\fR(8) daemon.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
@@ -90,7 +92,7 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBalternate_config_directories (empty)\fR"
 /*	A list of non-default Postfix configuration directories that may
 /*	be specified with "-c config_directory" on the command line, or
@@ -115,7 +117,13 @@
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
-/*	example, the pickup(8) or qmgr(8) daemon).
+/*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBauthorized_flush_users (static:anyone)\fR"
+/*	List of users who are authorized to flush the queue.
+/* .IP "\fBauthorized_mailq_users (static:anyone)\fR"
+/*	List of users who are authorized to view the queue.
 /* FILES
 /*	/var/spool/postfix, mail queue
 /* SEE ALSO
@@ -182,6 +190,8 @@
 #include <mail_flush.h>
 #include <flush_clnt.h>
 #include <smtp_stream.h>
+#include <user_acl.h>
+#include <valid_mailhost_addr.h>
 
 /* Application-specific. */
 
@@ -211,13 +221,33 @@
   */
 #define STR	vstring_str
 
+ /*
+  * Queue manipulation access lists.
+  */
+char   *var_flush_acl;
+char   *var_showq_acl;
+
+static CONFIG_STR_TABLE str_table[] = {
+    VAR_FLUSH_ACL, DEF_FLUSH_ACL, &var_flush_acl, 0, 0,
+    VAR_SHOWQ_ACL, DEF_SHOWQ_ACL, &var_showq_acl, 0, 0,
+    0,
+};
+
 /* show_queue - show queue status */
 
 static void show_queue(void)
 {
+    const char *errstr;
     char    buf[VSTREAM_BUFSIZE];
     VSTREAM *showq;
     int     n;
+    uid_t   uid = getuid();
+
+    if (uid != 0 && uid != var_owner_uid
+	&& (errstr = check_user_acl_byuid(var_showq_acl, uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+		       "User %s(%ld) is not allowed to view the mail queue",
+			 errstr, (long) uid);
 
     /*
      * Connect to the show queue service. Terminate silently when piping into
@@ -280,6 +310,14 @@ static void show_queue(void)
 
 static void flush_queue(void)
 {
+    const char *errstr;
+    uid_t   uid = getuid();
+
+    if (uid != 0 && uid != var_owner_uid
+	&& (errstr = check_user_acl_byuid(var_flush_acl, uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+		      "User %s(%ld) is not allowed to flush the mail queue",
+			 errstr, (long) uid);
 
     /*
      * Trigger the flush queue service.
@@ -297,6 +335,14 @@ static void flush_queue(void)
 static void flush_site(const char *site)
 {
     int     status;
+    const char *errstr;
+    uid_t   uid = getuid();
+
+    if (uid != 0 && uid != var_owner_uid
+	&& (errstr = check_user_acl_byuid(var_flush_acl, uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+		      "User %s(%ld) is not allowed to flush the mail queue",
+			 errstr, (long) uid);
 
     flush_init();
 
@@ -407,6 +453,7 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
+    get_mail_conf_str_table(str_table);
 
     /*
      * This program is designed to be set-gid, which makes it a potential
@@ -432,14 +479,10 @@ int     main(int argc, char **argv)
      */
     if (site_to_flush != 0) {
 	bad_site = 0;
-	if (*site_to_flush == '['
-	    && *(last = site_to_flush + strlen(site_to_flush) - 1) == ']') {
-	    *last = 0;
-	    bad_site = !valid_hostaddr(site_to_flush + 1, DONT_GRIPE);
-	    *last = ']';
+	if (*site_to_flush == '[') {
+	    bad_site = !valid_mailhost_literal(site_to_flush, DONT_GRIPE);
 	} else {
-	    bad_site = (!valid_hostname(site_to_flush, DONT_GRIPE)
-			&& !valid_hostaddr(site_to_flush, DONT_GRIPE));
+	    bad_site = !valid_hostname(site_to_flush, DONT_GRIPE);
 	}
 	if (bad_site)
 	    msg_fatal_status(EX_USAGE,

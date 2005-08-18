@@ -1,4 +1,4 @@
-/*	$NetBSD: local_expand.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: local_expand.c,v 1.1.1.3 2005/08/18 21:07:30 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,14 @@
 /*	See mac_parse(3).
 /* .PP
 /*	Attributes:
+/* .IP client_address
+/*	The client network address.
+/* .IP client_helo
+/*	The client HELO command parameter.
+/* .IP client_hostname
+/*	The client hostname.
+/* .IP client_protocol
+/*	The client protocol.
 /* .IP domain
 /*	The recipient address domain.
 /* .IP extension
@@ -38,6 +46,12 @@
 /*	The recipient delimiter.
 /* .IP shell
 /*	The recipient shell program.
+/* .IP sasl_method
+/*	The SASL authentication method.
+/* .IP sasl_sender
+/*	The SASL MAIL FROM address.
+/* .IP sasl_username
+/*	The SASL login name.
 /* .IP user
 /*	The recipient user name.
 /* .PP
@@ -124,6 +138,22 @@ static const char *local_expand_lookup(const char *name, int mode, char *ptr)
 	return (local->state->msg_attr.extension);
     } else if (STREQ(name, "recipient_delimiter")) {
 	return (*var_rcpt_delim ? var_rcpt_delim : 0);
+#if 0
+    } else if (STREQ(name, "client_hostname")) {
+	return (local->state->msg_attr.request->client_name);
+    } else if (STREQ(name, "client_address")) {
+	return (local->state->msg_attr.request->client_addr);
+    } else if (STREQ(name, "client_protocol")) {
+	return (local->state->msg_attr.request->client_proto);
+    } else if (STREQ(name, "client_helo")) {
+	return (local->state->msg_attr.request->client_helo);
+    } else if (STREQ(name, "sasl_method")) {
+	return (local->state->msg_attr.request->sasl_method);
+    } else if (STREQ(name, "sasl_sender")) {
+	return (local->state->msg_attr.request->sasl_sender);
+    } else if (STREQ(name, "sasl_username")) {
+	return (local->state->msg_attr.request->sasl_username);
+#endif
     } else {
 	return (0);
     }

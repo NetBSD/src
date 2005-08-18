@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.6 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.7 2005/08/18 21:10:07 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -119,8 +119,8 @@
 /*	dict_eval() expands macro references in the specified string.
 /*	The result is owned by the dictionary manager. Make a copy if the
 /*	result is to survive multiple dict_eval() calls. When the
-/*	\fIrecursive\fR argument is non-zero, macros references are
-/*	expanded recursively.
+/*	\fIrecursive\fR argument is non-zero, macro references in macro
+/*	lookup results are expanded recursively.
 /*
 /*	dict_walk() iterates over all registered dictionaries in some
 /*	arbitrary order, and invokes the specified action routine with
@@ -185,7 +185,7 @@
 #include "vstream.h"
 #include "vstring.h"
 #include "readlline.h"
-#include "mac_parse.h"
+#include "mac_expand.h"
 #include "stringops.h"
 #include "iostuff.h"
 #include "dict.h"
@@ -412,92 +412,52 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
     vstring_free(buf);
 }
 
- /*
-  * Helper for macro expansion callback.
-  */
-struct dict_eval_context {
-    const char *dict_name;		/* where to look */
-    VSTRING *buf;			/* result buffer */
-    int     recursive;			/* recursive or not */
-};
+/* dict_eval_lookup - macro parser call-back routine */
 
-/* dict_eval_action - macro parser call-back routine */
-
-static int dict_eval_action(int type, VSTRING *buf, char *ptr)
+static const char *dict_eval_lookup(const char *key, int unused_type,
+				            char *dict_name)
 {
-    struct dict_eval_context *ctxt = (struct dict_eval_context *) ptr;
-    char   *myname = "dict_eval_action";
     const char *pp;
 
-    if (msg_verbose > 1)
-	msg_info("%s: type %s buf %s context %s \"%s\" %s",
-		 myname, type == MAC_PARSE_VARNAME ? "variable" : "literal",
-		 STR(buf), ctxt->dict_name, STR(ctxt->buf),
-		 ctxt->recursive ? "recursive" : "non-recursive");
-
     /*
-     * In order to support recursion, we must save the dict_lookup() result.
-     * We use the input buffer since it will not be needed anymore.
+     * XXX how would one recover?
      */
-    if (type == MAC_PARSE_VARNAME) {
-	if ((pp = dict_lookup(ctxt->dict_name, STR(buf))) == 0) {
-	    if (dict_errno)			/* XXX how would one recover? */
-		msg_fatal("dictionary %s: lookup %s: temporary error",
-			  ctxt->dict_name, STR(buf));
-	} else if (ctxt->recursive) {
-	    vstring_strcpy(buf, pp);		/* XXX clobber input */
-	    dict_eval(ctxt->dict_name, STR(buf), ctxt->recursive);
-	} else {
-	    vstring_strcat(ctxt->buf, pp);
-	}
-    } else {
-	vstring_strcat(ctxt->buf, STR(buf));
-    }
-    return (0);
+    if ((pp = dict_lookup(dict_name, key)) == 0 && dict_errno != 0)
+	msg_fatal("dictionary %s: lookup %s: temporary error", dict_name, key);
+
+    return (pp);
 }
 
 /* dict_eval - expand embedded dictionary references */
 
 const char *dict_eval(const char *dict_name, const char *value, int recursive)
 {
+    const char *myname = "dict_eval";
     static VSTRING *buf;
-    static struct dict_eval_context ctxt;
-    static int loop = 0;
-
-    /*
-     * Sanity check.
-     */
-    if (loop > 100)
-	msg_fatal("unreasonable macro nesting: \"%s\"", value);
+    int     status;
 
     /*
      * Initialize.
      */
     if (buf == 0)
 	buf = vstring_alloc(10);
-    if (loop++ == 0)
-	VSTRING_RESET(buf);
-    ctxt.buf = buf;
-    ctxt.recursive = recursive;
-    ctxt.dict_name = dict_name;
 
     /*
      * Expand macros, possibly recursively.
      */
-    if (msg_verbose > 1)
-	msg_info("dict_eval[%d] %s", loop, value);
+#define DONT_FILTER (char *) 0
 
-    mac_parse(value, dict_eval_action, (char *) &ctxt);
-
-    if (msg_verbose > 1)
-	msg_info("dict_eval[%d] result %s", loop, STR(buf));
-
-    /*
-     * Cleanup.
-     */
-    loop--;
-    VSTRING_TERMINATE(buf);
-
+    status = mac_expand(buf, value,
+			recursive ? MAC_EXP_FLAG_RECURSE : MAC_EXP_FLAG_NONE,
+			DONT_FILTER, dict_eval_lookup, (char *) dict_name);
+    if (status & MAC_PARSE_ERROR)
+	msg_fatal("dictionary %s: macro processing error", dict_name);
+    if (msg_verbose) {
+	if (strcmp(value, STR(buf)) != 0)
+	    msg_info("%s: expand %s -> %s", myname, value, STR(buf));
+	else
+	    msg_info("%s: const  %s", myname, value);
+    }
     return (STR(buf));
 }
 

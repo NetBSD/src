@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.2 2004/05/31 00:24:40 heas Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.1.1.3 2005/08/18 21:07:53 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -145,6 +145,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
     }
 
     flags = message->tflags
+	| entry->queue->dflags
 	| (message->inspect_xport ? DEL_REQ_FLAG_BOUNCE : DEL_REQ_FLAG_DEFLT);
     attr_print(stream, ATTR_FLAG_MORE,
 	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
@@ -162,6 +163,10 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, message->client_addr,
 	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, message->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, message->client_helo,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, message->sasl_method,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, message->sasl_username,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, message->sasl_sender,
+	       ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, message->rewrite_context,
 	       ATTR_TYPE_END);
     if (sender_buf != 0)
 	vstring_free(sender_buf);

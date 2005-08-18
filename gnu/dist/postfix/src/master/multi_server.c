@@ -1,4 +1,4 @@
-/*	$NetBSD: multi_server.c,v 1.1.1.6 2004/05/31 00:24:39 heas Exp $	*/
+/*	$NetBSD: multi_server.c,v 1.1.1.7 2005/08/18 21:07:45 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,8 @@
 /*	void	multi_server_disconnect(stream, argv)
 /*	VSTREAM *stream;
 /*	char	**argv;
+/*
+/*	void	multi_server_drain()
 /* DESCRIPTION
 /*	This module implements a skeleton for multi-threaded
 /*	mail subsystems: mail subsystem programs that service multiple
@@ -109,9 +111,16 @@
 /*	This service must be configured with process limit of 1.
 /* .IP MAIL_SERVER_UNLIMITED
 /*	This service must be configured with process limit of 0.
+/* .IP MAIL_SERVER_PRIVILEGED
+/*	This service must be configured as privileged.
 /* .PP
 /*	multi_server_disconnect() should be called by the application
 /*	when a client disconnects.
+/*
+/*	multi_server_drain() should be called when the application
+/*	no longer wishes to accept new client connections. Existing
+/*	clients are handled in a background process. A non-zero
+/*	result means this call should be tried again later.
 /*
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -146,6 +155,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -153,6 +163,7 @@
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
 #endif
+#include <time.h>
 
 /* Utility library. */
 
@@ -198,6 +209,7 @@
   */
 static int client_count;
 static int use_count;
+static int socket_count = 1;
 
 static void (*multi_server_service) (VSTREAM *, char *, char **);
 static char *multi_server_name;
@@ -207,6 +219,7 @@ static void (*multi_server_onexit) (char *, char **);
 static void (*multi_server_pre_accept) (char *, char **);
 static VSTREAM *multi_server_lock;
 static int multi_server_in_flow_delay;
+static unsigned multi_server_generation;
 static void (*multi_server_pre_disconn) (VSTREAM *, char *, char **);
 
 /* multi_server_exit - normal termination */
@@ -234,6 +247,28 @@ static void multi_server_timeout(int unused_event, char *unused_context)
     if (msg_verbose)
 	msg_info("idle timeout -- exiting");
     multi_server_exit();
+}
+
+/*  multi_server_drain - stop accepting new clients */
+
+int multi_server_drain(void)
+{
+    int     fd;
+
+    switch (fork()) {
+	/* Try again later. */
+    case -1:
+	return (-1);
+	/* Finish existing clients in the background, then terminate. */
+    case 0:
+	for (fd = MASTER_LISTEN_FD; fd < MASTER_LISTEN_FD + socket_count; fd++)
+	    event_disable_readwrite(fd);
+	var_use_limit = 1;
+	return (0);
+	/* Let the master start a new process. */
+    default:
+	exit(0);
+    }
 }
 
 /* multi_server_disconnect - terminate client session */
@@ -265,10 +300,10 @@ static void multi_server_execute(int unused_event, char *context)
      * Do not bother the application when the client disconnected.
      */
     if (peekfd(vstream_fileno(stream)) > 0) {
-	if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
+	if (master_notify(var_pid, multi_server_generation, MASTER_STAT_TAKEN) < 0)
 	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
 	multi_server_service(stream, multi_server_name, multi_server_argv);
-	if (master_notify(var_pid, MASTER_STAT_AVAIL) < 0)
+	if (master_notify(var_pid, multi_server_generation, MASTER_STAT_AVAIL) < 0)
 	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     } else {
 	multi_server_disconnect(stream);
@@ -345,6 +380,45 @@ static void multi_server_accept_local(int unused_event, char *context)
     multi_server_wakeup(fd);
 }
 
+#ifdef MASTER_XPORT_NAME_PASS
+
+/* multi_server_accept_pass - accept descriptor */
+
+static void multi_server_accept_pass(int unused_event, char *context)
+{
+    int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
+    int     time_left = -1;
+    int     fd;
+
+    /*
+     * Be prepared for accept() to fail because some other process already
+     * got the connection (the number of processes competing for clients is
+     * kept small, so this is not a "thundering herd" problem). If the
+     * accept() succeeds, be sure to disable non-blocking I/O, in order to
+     * minimize confusion.
+     */
+    if (client_count == 0 && var_idle_limit > 0)
+	time_left = event_cancel_timer(multi_server_timeout, (char *) 0);
+
+    if (multi_server_pre_accept)
+	multi_server_pre_accept(multi_server_name, multi_server_argv);
+    fd = PASS_ACCEPT(listen_fd);
+    if (multi_server_lock != 0
+	&& myflock(vstream_fileno(multi_server_lock), INTERNAL_LOCK,
+		   MYFLOCK_OP_NONE) < 0)
+	msg_fatal("select unlock: %m");
+    if (fd < 0) {
+	if (errno != EAGAIN)
+	    msg_fatal("accept connection: %m");
+	if (time_left >= 0)
+	    event_request_timer(multi_server_timeout, (char *) 0, time_left);
+	return;
+    }
+    multi_server_wakeup(fd);
+}
+
+#endif
+
 /* multi_server_accept_inet - accept client connection request */
 
 static void multi_server_accept_inet(int unused_event, char *context)
@@ -392,7 +466,6 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     char   *service_name = basename(argv[0]);
     int     delay;
     int     c;
-    int     socket_count = 1;
     int     fd;
     va_list ap;
     MAIL_SERVER_INIT_FN pre_init = 0;
@@ -408,6 +481,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     int     zerolimit = 0;
     WATCHDOG *watchdog;
     char   *oval;
+    char   *generation;
 
     /*
      * Process environment options as early as we can.
@@ -566,6 +640,11 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 		msg_fatal("service %s requires a process limit of 0",
 			  service_name);
 	    break;
+	case MAIL_SERVER_PRIVILEGED:
+	    if (user_name)
+		msg_fatal("service %s requires privileged operation",
+			  service_name);
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -595,8 +674,24 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    multi_server_accept = multi_server_accept_inet;
 	else if (strcasecmp(transport, MASTER_XPORT_NAME_UNIX) == 0)
 	    multi_server_accept = multi_server_accept_local;
+#ifdef MASTER_XPORT_NAME_PASS
+	else if (strcasecmp(transport, MASTER_XPORT_NAME_PASS) == 0)
+	    multi_server_accept = multi_server_accept_pass;
+#endif
 	else
 	    msg_fatal("unsupported transport type: %s", transport);
+    }
+
+    /*
+     * Retrieve process generation from environment.
+     */
+    if ((generation = getenv(MASTER_GEN_NAME)) != 0) {
+	if (!alldig(generation))
+	    msg_fatal("bad generation: %s", generation);
+	OCTAL_TO_UNSIGNED(multi_server_generation, generation);
+	if (msg_verbose)
+	    msg_info("process generation: %s (%o)",
+		     generation, multi_server_generation);
     }
 
     /*
@@ -649,6 +744,9 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Optionally, restrict the damage that this process can do.
      */
     resolve_local_init();
+#ifdef SNAPSHOT
+    tzset();
+#endif
     chroot_uid(root_dir, user_name);
 
     /*
