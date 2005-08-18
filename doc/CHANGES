@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.505 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.506 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -78,3 +78,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[peter 20050804]
 	bpf(4): Add two new sysctls to retrieve statistics and current
 		peers, viewable with netstat(1). [rpaulo 20050805]
+	postfix: Updated to 2.2.5. [rpaulo 20050818]
