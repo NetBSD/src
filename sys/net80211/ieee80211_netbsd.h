@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.5 2005/07/26 22:52:48 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.6 2005/08/18 06:07:30 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -257,7 +257,7 @@ void	if_printf(struct ifnet *, const char *, ...);
 struct mbuf *m_getcl(int, int, int);
 int	m_append(struct mbuf *, int, const caddr_t);
 void	get_random_bytes(void *, size_t);
-int	m_append(struct mbuf *m0, int, const caddr_t);
+
 void	ieee80211_sysctl_attach(struct ieee80211com *);
 void	ieee80211_sysctl_detach(struct ieee80211com *);
 void	ieee80211_load_module(const char *);
