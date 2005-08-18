@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2005/08/18 22:30:37 rpaulo Exp $
 
 MKPRIVATELIB=	yes
 
@@ -12,8 +12,8 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	attr_scan0.c attr_scan64.c base64_code.c basename.c binhash.c \
 	chroot_uid.c clean_env.c close_on_exec.c concatenate.c ctable.c \
-	dict.c dict_alloc.c dict_db.c dict_dbm.c dict_debug.c dict_env.c \
-	dict_cidr.c dict_ht.c dict_ni.c dict_nis.c \
+	dict.c dict_alloc.c dict_db.c dict_cdb.c dict_dbm.c dict_debug.c \
+	dict_env.c dict_cidr.c dict_ht.c dict_ni.c dict_nis.c \
 	dict_nisplus.c dict_open.c dict_pcre.c dict_regexp.c \
 	dict_static.c dict_tcp.c dict_unix.c dir_forest.c doze.c \
 	duplex_pipe.c environ.c events.c exec_command.c fifo_listen.c \
@@ -38,9 +38,8 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c auto_clnt.c attr_clnt.c attr_scan_plain.c \
 	attr_print_plain.c sane_connect.c neuter.c name_code.c \
-	uppercase.c
-
-# IPv6
-#SRCS+=	get_port.c
+	uppercase.c unix_recv_fd.c stream_recv_fd.c unix_send_fd.c \
+        stream_send_fd.c dict_sdbm.c hex_code.c dummy_read.c dummy_write.c \
+        myaddrinfo.c sock_addr.c inet_proto.c cidr_match.c mask_addr.c
 
 .include <bsd.lib.mk>

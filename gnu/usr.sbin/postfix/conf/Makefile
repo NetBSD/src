@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/27 05:33:55 heas Exp $
+#	$NetBSD: Makefile,v 1.9 2005/08/18 22:30:37 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,9 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/conf
 
 # Not built: main.cf.default
 
-FILES=	LICENSE access aliases canonical header_checks main.cf master.cf \
-	post-install postfix-files relocated transport virtual
+FILES=	LICENSE TLS_LICENSE access aliases canonical generic header_checks \
+	main.cf master.cf post-install postfix-files relocated transport \
+	virtual
 
 SCRIPTS=	postfix-script
 

@@ -1,16 +1,20 @@
-#	$NetBSD: Makefile,v 1.13 2004/05/16 09:53:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2005/08/18 22:30:36 rpaulo Exp $
 
-# The first four of these are libraries and have to be built first.
+# The first four/five of these are libraries and have to be built first.
 
 .include <bsd.own.mk>
 
-SUBDIR=	util global dns masterlib .WAIT \
-	README_FILES bounce cleanup error flush html \
+.if ${MKCRYPTO} != "no"
+SUBDIR=	util global dns masterlib tls .WAIT tlsmgr
+.else
+SUBDIR=	util global dns masterlib .WAIT
+.endif
+SUBDIR+=README_FILES anvil bounce cleanup discard error flush html \
 	lmtp local man master oqmgr pickup pipe postalias \
 	postcat postconf postdrop postfix postkick postlock \
-	postlog postmap postqueue postsuper proxymap qmgr sendmail \
-	showq smtp smtpd spawn trivial-rewrite verify virtual \
-	proxymap
+	postlog postmap postqueue postsuper proxymap qmgr scache \
+	sendmail showq smtp smtpd spawn trivial-rewrite verify \
+	virtual proxymap
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
