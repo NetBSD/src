@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.693 2005/08/05 09:23:16 skrll Exp $
+# $NetBSD: GENERIC,v 1.694 2005/08/18 15:57:00 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.693 $"
+#ident 		"GENERIC-$Revision: 1.694 $"
 
 maxusers	32		# estimated number of users
 
@@ -167,7 +167,7 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
