@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.6 2004/05/31 00:46:47 heas Exp $
+.\"	$NetBSD: virtual.5,v 1.7 2005/08/18 21:53:53 rpaulo Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -6,7 +6,7 @@
 .SH NAME
 virtual
 \-
-format of Postfix virtual alias table
+Postfix virtual alias table format
 .SH "SYNOPSIS"
 .na
 .nf
@@ -18,9 +18,12 @@ format of Postfix virtual alias table
 .SH DESCRIPTION
 .ad
 .fi
-The optional \fBvirtual\fR alias table specifies address aliasing
-for arbitrary local or non-local recipient addresses. Virtual aliasing
-is recursive, and is done by the Postfix \fBcleanup\fR(8) daemon.
+The optional \fBvirtual\fR(5) alias table rewrites recipient
+addresses for all local, virtual and remote mail destinations.
+This is unlike the \fBaliases\fR(5) table which is used
+only for \fBlocal\fR(8) delivery.  Virtual aliasing is
+recursive, and is implemented by the Postfix \fBcleanup\fR(8)
+daemon before mail is queued.
 
 The main applications of virtual aliasing are:
 .IP \(bu
@@ -39,11 +42,11 @@ envelope addresses, and does not affect message headers.
 Think Sendmail rule set \fBS0\fR, if you like. Use \fBcanonical\fR(5)
 mapping to rewrite header and envelope addresses in general.
 
-Normally, the \fBvirtual\fR alias table is specified as a text file
+Normally, the \fBvirtual\fR(5) alias table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
 The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 is used for fast searching by the mail system. Execute the command
-\fBpostmap /etc/postfix/virtual\fR in order to rebuild the indexed
+"\fBpostmap /etc/postfix/virtual\fR" in order to rebuild the indexed
 file after changing the text file.
 
 When the table is provided via other means such as NIS, LDAP
@@ -69,29 +72,46 @@ are lines whose first non-whitespace character is a `#'.
 .IP "multi-line text"
 A logical line starts with non-whitespace text. A line that
 starts with whitespace continues a logical line.
-.PP
+.SH "TABLE SEARCH ORDER"
+.na
+.nf
+.ad
+.fi
 With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, patterns are tried in the order as
 listed below:
 .IP "\fIuser\fR@\fIdomain address, address, ...\fR"
-Mail for \fIuser\fR@\fIdomain\fR is redirected to \fIaddress\fR.
+Redirect mail for \fIuser\fR@\fIdomain\fR to \fIaddress\fR.
 This form has the highest precedence.
 .IP "\fIuser address, address, ...\fR"
-Mail for \fIuser\fR@\fIsite\fR is redirected to \fIaddress\fR when
+Redirect mail for \fIuser\fR@\fIsite\fR to \fIaddress\fR when
 \fIsite\fR is equal to $\fBmyorigin\fR, when \fIsite\fR is listed in
 $\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR
 or $\fBproxy_interfaces\fR.
 .sp
 This functionality overlaps with functionality of the local
-\fIaliases\fR(5) database. The difference is that \fBvirtual\fR
+\fIaliases\fR(5) database. The difference is that \fBvirtual\fR(5)
 mapping can be applied to non-local addresses.
 .IP "@\fIdomain address, address, ...\fR"
-Mail for any user in \fIdomain\fR is redirected to \fIaddress\fR.
+Redirect mail for other users in \fIdomain\fR to \fIaddress\fR.
 This form has the lowest precedence.
-.PP
-In all the above forms, when \fIaddress\fR has the form
-@\fIotherdomain\fR, the result is the same user in \fIotherdomain\fR.
-This works for the first address in the expansion only.
+.SH "RESULT ADDRESS REWRITING"
+.na
+.nf
+.ad
+.fi
+The lookup result is subject to address rewriting:
+.IP \(bu
+When the result has the form @\fIotherdomain\fR, the
+result becomes the same \fIuser\fR in \fIotherdomain\fR.
+This works only for the first address in a multi-address
+lookup result.
+.IP \(bu
+When "\fBappend_at_myorigin=yes\fR", append "\fB@$myorigin\fR"
+to addresses without "@domain".
+.IP \(bu
+When "\fBappend_dot_mydomain=yes\fR", append
+"\fB.$mydomain\fR" to addresses without ".domain".
 .SH "ADDRESS EXTENSION"
 .na
 .nf
@@ -132,7 +152,7 @@ Support for a virtual alias domain looks like:
 virtual_alias_maps = hash:/etc/postfix/virtual
 
 Note: some systems use \fBdbm\fR databases instead of \fBhash\fR.
-See the output from \fBpostconf -m\fR for available database types.
+See the output from "\fBpostconf -m\fR" for available database types.
 
 .ti -4
 /etc/postfix/virtual:
@@ -193,7 +213,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available in Postfix version 2.1.
+This feature is not available up to and including Postfix version 2.2.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their
@@ -212,7 +232,7 @@ The table format does not understand quoting conventions.
 .fi
 The following \fBmain.cf\fR parameters are especially relevant to
 this topic. See the Postfix \fBmain.cf\fR file for syntax details
-and for default values. Use the \fBpostfix reload\fR command after
+and for default values. Use the "\fBpostfix reload\fR" command after
 a configuration change.
 .IP \fBvirtual_alias_maps\fR
 List of virtual aliasing tables.
@@ -223,7 +243,7 @@ as the \fBmydestination\fR parameter.
 A list of address rewriting or forwarding mechanisms that propagate
 an address extension from the original address to the result.
 Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,
-\fBforward\fR, or \fBinclude\fR.
+\fBforward\fR, \fBinclude\fR, or \fBgeneric\fR.
 .PP
 Other parameters of interest:
 .IP \fBinet_interfaces\fR
