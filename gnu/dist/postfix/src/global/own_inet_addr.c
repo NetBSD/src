@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.c,v 1.6 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: own_inet_addr.c,v 1.7 2005/08/18 22:04:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <own_inet_addr.h>
 /*
 /*	int	own_inet_addr(addr)
-/*	struct in_addr *addr;
+/*	struct sockaddr *addr;
 /*
 /*	INET_ADDR_LIST *own_inet_addr_list()
 /*
@@ -49,13 +49,7 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <string.h>
-
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
 
 /* Utility library. */
 
@@ -65,6 +59,9 @@
 #include <inet_addr_local.h>
 #include <inet_addr_host.h>
 #include <stringops.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -90,6 +87,9 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
     char   *bufp;
     int     nvirtual;
     int     nlocal;
+    MAI_HOSTADDR_STR hostaddr;
+    struct sockaddr_storage *sa;
+    struct sockaddr_storage *ma;
 
     inet_addr_list_init(addr_list);
     inet_addr_list_init(mask_list);
@@ -98,14 +98,31 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
      * If we are listening on all interfaces (default), ask the system what
      * the interfaces are.
      */
-    if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
-	if (inet_addr_local(addr_list, mask_list) == 0)
+    if (strcmp(var_inet_interfaces, INET_INTERFACES_ALL) == 0) {
+	if (inet_addr_local(addr_list, mask_list,
+			    inet_proto_info()->ai_family_list) == 0)
 	    msg_fatal("could not find any active network interfaces");
-#if 0
-	if (addr_list->used == 1)
-	    msg_warn("found only one active network interface: %s",
-		     inet_ntoa(addr_list->addrs[0]));
-#endif
+    }
+
+    /*
+     * Select all loopback interfaces from the system's available interface
+     * list.
+     */
+    else if (strcmp(var_inet_interfaces, INET_INTERFACES_LOCAL) == 0) {
+	inet_addr_list_init(&local_addrs);
+	inet_addr_list_init(&local_masks);
+	if (inet_addr_local(&local_addrs, &local_masks,
+			    inet_proto_info()->ai_family_list) == 0)
+	    msg_fatal("could not find any active network interfaces");
+	for (sa = local_addrs.addrs, ma = local_masks.addrs;
+	     sa < local_addrs.addrs + local_addrs.used; sa++, ma++) {
+	    if (sock_addr_in_loopback(SOCK_ADDR_PTR(sa))) {
+		inet_addr_list_append(addr_list, SOCK_ADDR_PTR(sa));
+		inet_addr_list_append(mask_list, SOCK_ADDR_PTR(ma));
+	    }
+	}
+	inet_addr_list_free(&local_addrs);
+	inet_addr_list_free(&local_masks);
     }
 
     /*
@@ -129,19 +146,29 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 	 */
 	inet_addr_list_uniq(addr_list);
 
+	/*
+	 * Find out the netmask for each virtual interface, by looking it up
+	 * among all the local interfaces.
+	 */
 	inet_addr_list_init(&local_addrs);
 	inet_addr_list_init(&local_masks);
-	if (inet_addr_local(&local_addrs, &local_masks) == 0)
+	if (inet_addr_local(&local_addrs, &local_masks,
+			    inet_proto_info()->ai_family_list) == 0)
 	    msg_fatal("could not find any active network interfaces");
 	for (nvirtual = 0; nvirtual < addr_list->used; nvirtual++) {
 	    for (nlocal = 0; /* see below */ ; nlocal++) {
-		if (nlocal >= local_addrs.used)
+		if (nlocal >= local_addrs.used) {
+		    SOCKADDR_TO_HOSTADDR(
+				 SOCK_ADDR_PTR(addr_list->addrs + nvirtual),
+				 SOCK_ADDR_LEN(addr_list->addrs + nvirtual),
+				      &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
 		    msg_fatal("parameter %s: no local interface found for %s",
-			      VAR_INET_INTERFACES,
-			      inet_ntoa(addr_list->addrs[nvirtual]));
-		if (addr_list->addrs[nvirtual].s_addr
-		    == local_addrs.addrs[nlocal].s_addr) {
-		    inet_addr_list_append(mask_list, &local_masks.addrs[nlocal]);
+			      VAR_INET_INTERFACES, hostaddr.buf);
+		}
+		if (SOCK_ADDR_EQ_ADDR(addr_list->addrs + nvirtual,
+				      local_addrs.addrs + nlocal)) {
+		    inet_addr_list_append(mask_list,
+				 SOCK_ADDR_PTR(local_masks.addrs + nlocal));
 		    break;
 		}
 	    }
@@ -153,7 +180,7 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 
 /* own_inet_addr - is this my own internet address */
 
-int     own_inet_addr(struct in_addr * addr)
+int     own_inet_addr(struct sockaddr * addr)
 {
     int     i;
 
@@ -161,7 +188,7 @@ int     own_inet_addr(struct in_addr * addr)
 	own_inet_addr_init(&addr_list, &mask_list);
 
     for (i = 0; i < addr_list.used; i++)
-	if (addr->s_addr == addr_list.addrs[i].s_addr)
+	if (SOCK_ADDR_EQ_ADDR(addr, addr_list.addrs + i))
 	    return (1);
     return (0);
 }
@@ -215,7 +242,7 @@ static void proxy_inet_addr_init(INET_ADDR_LIST *addr_list)
 
 /* proxy_inet_addr - is this my proxy internet address */
 
-int     proxy_inet_addr(struct in_addr * addr)
+int     proxy_inet_addr(struct sockaddr * addr)
 {
     int     i;
 
@@ -226,7 +253,7 @@ int     proxy_inet_addr(struct in_addr * addr)
 	proxy_inet_addr_init(&proxy_list);
 
     for (i = 0; i < proxy_list.used; i++)
-	if (addr->s_addr == proxy_list.addrs[i].s_addr)
+	if (SOCK_ADDR_EQ_ADDR(addr, proxy_list.addrs + i))
 	    return (1);
     return (0);
 }
@@ -240,3 +267,38 @@ INET_ADDR_LIST *proxy_inet_addr_list(void)
 
     return (&proxy_list);
 }
+
+#ifdef TEST
+#include <inet_proto.h>
+
+static void inet_addr_list_print(INET_ADDR_LIST *list)
+{
+    MAI_HOSTADDR_STR hostaddr;
+    struct sockaddr_storage *sa;
+
+    for (sa = list->addrs; sa < list->addrs + list->used; sa++) {
+	SOCKADDR_TO_HOSTADDR(SOCK_ADDR_PTR(sa), SOCK_ADDR_LEN(sa),
+			     &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
+	msg_info("%s", hostaddr.buf);
+    }
+}
+
+char   *var_inet_interfaces;
+
+int     main(int argc, char **argv)
+{
+    INET_PROTO_INFO *proto_info;
+    INET_ADDR_LIST *list;
+
+    if (argc != 3)
+	msg_fatal("usage: %s protocols interface_list (e.g. \"all all\")",
+		  argv[0]);
+    msg_verbose = 10;
+    proto_info = inet_proto_init(argv[0], argv[1]);
+    var_inet_interfaces = argv[2];
+    list = own_inet_addr_list();
+    inet_addr_list_print(list);
+    return (0);
+}
+
+#endif
