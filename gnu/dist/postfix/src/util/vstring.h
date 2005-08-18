@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.h,v 1.1.1.3 2004/05/31 00:25:02 heas Exp $	*/
+/*	$NetBSD: vstring.h,v 1.1.1.4 2005/08/18 21:10:51 rpaulo Exp $	*/
 
 #ifndef _VSTRING_H_INCLUDED_
 #define _VSTRING_H_INCLUDED_
@@ -55,7 +55,7 @@ extern VSTRING *vstring_import(char *);
   */
 #define VSTRING_SPACE(vp, len)	((vp)->vbuf.space(&(vp)->vbuf, len))
 #define vstring_str(vp)		((char *) (vp)->vbuf.data)
-#define VSTRING_LEN(vp)		((vp)->vbuf.ptr - (vp)->vbuf.data)
+#define VSTRING_LEN(vp)		((int) ((vp)->vbuf.ptr - (vp)->vbuf.data))
 #define vstring_end(vp)		((char *) (vp)->vbuf.ptr)
 #define VSTRING_TERMINATE(vp)	{ if ((vp)->vbuf.cnt <= 0) \
 					VSTRING_SPACE((vp),1); \

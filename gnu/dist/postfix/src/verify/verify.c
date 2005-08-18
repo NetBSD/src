@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.2 2004/05/31 00:25:03 heas Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.3 2005/08/18 21:10:59 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,7 @@
 /* SYNOPSIS
 /*	\fBverify\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The Postfix address verification server maintains a record
+/*	The \fBverify\fR(8) address verification server maintains a record
 /*	of what recipient addresses are known to be deliverable or
 /*	undeliverable.
 /*
@@ -21,13 +21,14 @@
 /*	MTA for the specified address, and will therefore not detect
 /*	all undeliverable addresses.
 /*
-/*	This server is designed to run under control by the Postfix
+/*	The \fBverify\fR(8) server is designed to run under control
+/*	by the Postfix
 /*	master server. It maintains an optional persistent database.
 /*	To avoid being interrupted by "postfix stop" in the middle
 /*	of a database update, the process runs in a separate process
 /*	group.
 /*
-/*	This server implements the following requests:
+/*	The \fBverify\fR(8) server implements the following requests:
 /* .IP "\fBupdate\fI address status text\fR"
 /*	Update the status and text of the specified address.
 /* .IP "\fBquery\fI address\fR"
@@ -60,12 +61,13 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are not picked up automatically, as verify(8)
+/*	Changes to \fBmain.cf\fR are not picked up automatically,
+/*	as \fBverify\fR(8)
 /*	processes are persistent. Use the command "\fBpostfix reload\fR" after
 /*	a configuration change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* CACHE CONTROLS
 /* .ad
 /* .fi
@@ -180,6 +182,7 @@
 #include <dict_ht.h>
 #include <dict.h>
 #include <split_at.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -225,11 +228,11 @@ static DICT *verify_map;
   * In the case of TODO, we have no information about the address, and the
   * address is being probed.
   * 
-  * probed: if non-zero, the time of the last outstanding address probe. If
-  * zero, there is no outstanding address probe.
+  * probed: if non-zero, the time the currently outstanding address probe was
+  * sent. If zero, there is no outstanding address probe.
   * 
-  * updated: if non-zero, the time of the last processed address probe. If zero,
-  * we have no information about the address, and the address is being
+  * updated: if non-zero, the time the address probe result was received. If
+  * zero, we have no information about the address, and the address is being
   * probed.
   * 
   * text: descriptive text from delivery agents etc.
@@ -258,7 +261,10 @@ static int verify_parse_entry(char *buf, int *status, long *probed,
 
     if ((probed_text = split_at(buf, ':')) != 0
 	&& (updated_text = split_at(probed_text, ':')) != 0
-	&& (*text = split_at(updated_text, ':')) != 0) {
+	&& (*text = split_at(updated_text, ':')) != 0
+	&& alldig(buf)
+	&& alldig(probed_text)
+	&& alldig(updated_text)) {
 	*probed = atol(probed_text);
 	*updated = atol(updated_text);
 	*status = atoi(buf);
@@ -304,6 +310,8 @@ static void verify_update_service(VSTREAM *client_stream)
 		  ATTR_TYPE_NUM, MAIL_ATTR_ADDR_STATUS, &addr_status,
 		  ATTR_TYPE_STR, MAIL_ATTR_WHY, text,
 		  ATTR_TYPE_END) == 3) {
+	/* FIX 200501 IPv6 patch did not neuter ":" in address literals. */
+	translit(STR(addr), ":", "_");
 	if ((status_name = verify_stat2name(addr_status)) == 0) {
 	    msg_warn("bad recipient status %d for recipient %s",
 		     addr_status, STR(addr));
@@ -393,6 +401,8 @@ static void verify_query_service(VSTREAM *client_stream)
     (addr_status != DEL_RCPT_STAT_OK && updated + var_verify_neg_exp < now)
 #define PROBE_TTL	1000
 
+	/* FIX 200501 IPv6 patch did not neuter ":" in address literals. */
+	translit(STR(addr), ":", "_");
 	if ((raw_data = dict_get(verify_map, STR(addr))) == 0	/* not found */
 	    || ((get_buf = vstring_alloc(10)),
 		vstring_strcpy(get_buf, raw_data),	/* malformed */

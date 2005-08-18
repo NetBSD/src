@@ -1,4 +1,4 @@
-/*	$NetBSD: attr.h,v 1.1.1.4 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: attr.h,v 1.1.1.5 2005/08/18 21:10:53 rpaulo Exp $	*/
 
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
@@ -32,6 +32,7 @@
 #define ATTR_TYPE_HASH		3	/* Hash table */
 #define ATTR_TYPE_NV		3	/* Name-value table */
 #define ATTR_TYPE_LONG		4	/* Unsigned long */
+#define ATTR_TYPE_DATA		5	/* Binary data */
 
 #define ATTR_HASH_LIMIT		1024	/* Size of hash table */
 
@@ -96,6 +97,7 @@ extern int attr_vscan_plain(VSTREAM *, int, va_list);
 #define ATTR_NAME_NUM		"number"
 #define ATTR_NAME_STR		"string"
 #define ATTR_NAME_LONG		"long_number"
+#define ATTR_NAME_DATA		"data"
 #endif
 
 /* LICENSE

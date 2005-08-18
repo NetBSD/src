@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.h,v 1.1.1.3 2004/05/31 00:24:46 heas Exp $	*/
+/*	$NetBSD: smtp_addr.h,v 1.1.1.4 2005/08/18 21:08:51 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
   * Internal interfaces.
   */
 extern DNS_RR *smtp_host_addr(char *, int, VSTRING *);
-extern DNS_RR *smtp_domain_addr(char *, int, VSTRING *);
+extern DNS_RR *smtp_domain_addr(char *, int, VSTRING *, int *);
 
 /* LICENSE
 /* .ad
