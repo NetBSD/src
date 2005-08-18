@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.12 2004/11/13 05:45:33 heas Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.13 2005/08/18 22:08:21 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,7 @@
 /*	RFC 2554 (AUTH command)
 /*	RFC 2821 (SMTP protocol)
 /*	RFC 2920 (SMTP Pipelining)
+/*	RFC 3207 (STARTTLS command)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
@@ -50,12 +51,12 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically, as smtpd(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically, as \fBsmtpd\fR(8)
 /*	processes run for only a limited amount of time. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* COMPATIBILITY CONTROLS
 /* .ad
 /* .fi
@@ -88,6 +89,34 @@
 /*	access restriction is specified.
 /* .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
 /*	What SMTP clients Postfix will not offer AUTH support to.
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBsmtpd_discard_ehlo_keyword_address_maps (empty)\fR"
+/*	Lookup tables, indexed by the remote SMTP client address, with
+/*	case insensitive lists of EHLO keywords (pipelining, starttls,
+/*	auth, etc.) that the SMTP server will not send in the EHLO response
+/*	to a remote SMTP client.
+/* .IP "\fBsmtpd_discard_ehlo_keywords (empty)\fR"
+/*	A case insensitive list of EHLO keywords (pipelining, starttls,
+/*	auth, etc.) that the SMTP server will not send in the EHLO response
+/*	to a remote SMTP client.
+/* ADDRESS REWRITING CONTROLS
+/* .ad
+/* .fi
+/*	See the ADDRESS_REWRITING_README document for a detailed
+/*	discussion of Postfix address rewriting.
+/* .IP "\fBreceive_override_options (empty)\fR"
+/*	Enable or disable recipient validation, built-in content
+/*	filtering, or address mapping.
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBlocal_header_rewrite_clients (permit_inet_interfaces)\fR"
+/*	Rewrite message header addresses in mail from these clients and
+/*	update incomplete addresses with the domain name in $myorigin or
+/*	$mydomain; either don't rewrite message headers from other clients
+/*	at all, or rewrite message headers and update incomplete addresses
+/*	with the domain specified in the remote_header_rewrite_domain
+/*	parameter.
 /* AFTER QUEUE EXTERNAL CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
@@ -122,7 +151,7 @@
 /*	Available in Postfix version 2.1 and later:
 /* .IP "\fBreceive_override_options (empty)\fR"
 /*	Enable or disable recipient validation, built-in content
-/*	filtering, or address rewriting.
+/*	filtering, or address mapping.
 /* EXTERNAL CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
@@ -158,6 +187,76 @@
 /*	Available in Postfix version 2.1 and later:
 /* .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
 /*	What SMTP clients Postfix will not offer AUTH support to.
+/* STARTTLS SUPPORT CONTROLS
+/* .ad
+/* .fi
+/*	Detailed information about STARTTLS configuration may be
+/*	found in the TLS_README document.
+/* .IP "\fBsmtpd_use_tls (no)\fR"
+/*	Opportunistic mode: announce STARTTLS support to SMTP clients,
+/*	but do not require that clients use TLS encryption.
+/* .IP "\fBsmtpd_enforce_tls (no)\fR"
+/*	Enforcement mode: announce STARTTLS support to SMTP clients,
+/*	and require that clients use TLS encryption.
+/* .IP "\fBsmtpd_sasl_tls_security_options ($smtpd_sasl_security_options)\fR"
+/*	The SASL authentication security options that the Postfix SMTP
+/*	server uses for TLS encrypted SMTP sessions.
+/* .IP "\fBsmtpd_starttls_timeout (300s)\fR"
+/*	The time limit for Postfix SMTP server write and read operations
+/*	during TLS startup and shutdown handshake procedures.
+/* .IP "\fBsmtpd_tls_CAfile (empty)\fR"
+/*	The file with the certificate of the certification authority
+/*	(CA) that issued the Postfix SMTP server certificate.
+/* .IP "\fBsmtpd_tls_CAfile (empty)\fR"
+/*	The file with the certificate of the certification authority
+/*	(CA) that issued the Postfix SMTP server certificate.
+/* .IP "\fBsmtpd_tls_ask_ccert (no)\fR"
+/*	Ask a remote SMTP client for a client certificate.
+/* .IP "\fBsmtpd_tls_auth_only (no)\fR"
+/*	When TLS encryption is optional in the Postfix SMTP server, do
+/*	not announce or accept SASL authentication over unencrypted
+/*	connections.
+/* .IP "\fBsmtpd_tls_ccert_verifydepth (5)\fR"
+/*	The verification depth for remote SMTP client certificates.
+/* .IP "\fBsmtpd_tls_cert_file (empty)\fR"
+/*	File with the Postfix SMTP server RSA certificate in PEM format.
+/* .IP "\fBsmtpd_tls_cipherlist (empty)\fR"
+/*	Controls the Postfix SMTP server TLS cipher selection scheme.
+/* .IP "\fBsmtpd_tls_dcert_file (empty)\fR"
+/*	File with the Postfix SMTP server DSA certificate in PEM format.
+/* .IP "\fBsmtpd_tls_dh1024_param_file (empty)\fR"
+/*	File with DH parameters that the Postfix SMTP server should
+/*	use with EDH ciphers.
+/* .IP "\fBsmtpd_tls_dh512_param_file (empty)\fR"
+/*	File with DH parameters that the Postfix SMTP server should
+/*	use with EDH ciphers.
+/* .IP "\fBsmtpd_tls_dkey_file ($smtpd_tls_dcert_file)\fR"
+/*	File with the Postfix SMTP server DSA private key in PEM format.
+/* .IP "\fBsmtpd_tls_key_file ($smtpd_tls_cert_file)\fR"
+/*	File with the Postfix SMTP server RSA private key in PEM format.
+/* .IP "\fBsmtpd_tls_loglevel (0)\fR"
+/*	Enable additional Postfix SMTP server logging of TLS activity.
+/* .IP "\fBsmtpd_tls_received_header (no)\fR"
+/*	Request that the Postfix SMTP server produces Received:  message
+/*	headers that include information about the protocol and cipher used,
+/*	as well as the client CommonName and client certificate issuer
+/*	CommonName.
+/* .IP "\fBsmtpd_tls_req_ccert (no)\fR"
+/*	When TLS encryption is enforced, require a remote SMTP client
+/*	certificate in order to allow TLS connections to proceed.
+/* .IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
+/*	Name of the file containing the optional Postfix SMTP server
+/*	TLS session cache.
+/* .IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
+/*	The expiration time of Postfix SMTP server TLS session cache
+/*	information.
+/* .IP "\fBsmtpd_tls_wrappermode (no)\fR"
+/*	Run the Postfix SMTP server in the non-standard "wrapper" mode,
+/*	instead of using the STARTTLS command.
+/* .IP "\fBtls_daemon_random_bytes (32)\fR"
+/*	The number of pseudo-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
+/*	process requests from the \fBtlsmgr\fR(8) server in order to seed its
+/*	internal pseudo random number generator (PRNG).
 /* VERP SUPPORT CONTROLS
 /* .ad
 /* .fi
@@ -173,7 +272,7 @@
 /*	The two default VERP delimiter characters.
 /* .IP "\fBverp_delimiter_filter (-=+)\fR"
 /*	The characters Postfix accepts as VERP delimiter characters on the
-/*	Postfix sendmail(1) command line and in SMTP commands.
+/*	Postfix \fBsendmail\fR(1) command line and in SMTP commands.
 /* .PP
 /*	Available in Postfix version 1.1 and 2.0:
 /* .IP "\fBauthorized_verp_clients ($mynetworks)\fR"
@@ -232,11 +331,14 @@
 /*	The list of domains that are delivered via the $local_transport
 /*	mail delivery transport.
 /* .IP "\fBinet_interfaces (all)\fR"
-/*	The network interface addresses that this mail system receives mail
-/*	on.
+/*	The network interface addresses that this mail system receives
+/*	mail on.
 /* .IP "\fBproxy_interfaces (empty)\fR"
 /*	The network interface addresses that this mail system receives mail
 /*	on by way of a proxy or network address translation unit.
+/* .IP "\fBinet_protocols (ipv4)\fR"
+/*	The Internet protocols Postfix will attempt to use when making
+/*	or accepting connections.
 /* .IP "\fBlocal_recipient_maps (proxy:unix:passwd.byname $alias_maps)\fR"
 /*	Lookup tables with all names or addresses of local recipients:
 /*	a recipient address is local when its domain matches $mydestination,
@@ -261,9 +363,9 @@
 /*	Parameters concerning known/unknown recipients in virtual alias
 /*	domains:
 /* .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
-/*	Optional list of names of virtual alias domains, that is,
-/*	domains for which all addresses are aliased to addresses in other
-/*	local or remote domains.
+/*	Postfix is final destination for the specified list of virtual
+/*	alias domains, that is, domains for which all addresses are aliased
+/*	to addresses in other local or remote domains.
 /* .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
 /*	Optional lookup tables that alias specific mail addresses or domains
 /*	to other local or remote address.
@@ -275,8 +377,8 @@
 /*	Parameters concerning known/unknown recipients in virtual mailbox
 /*	domains:
 /* .IP "\fBvirtual_mailbox_domains ($virtual_mailbox_maps)\fR"
-/*	The list of domains that are delivered via the $virtual_transport
-/*	mail delivery transport.
+/*	Postfix is final destination for the specified list of domains;
+/*	mail is delivered via the $virtual_transport mail delivery transport.
 /* .IP "\fBvirtual_mailbox_maps (empty)\fR"
 /*	Optional lookup tables with all valid addresses in the domains that
 /*	match $virtual_mailbox_domains.
@@ -307,16 +409,26 @@
 /*	The maximal number of lines in the Postfix SMTP server command history
 /*	before it is flushed upon receipt of EHLO, RSET, or end of DATA.
 /* .PP
-/*	Not available in Postfix version 2.1:
+/*	The per SMTP client connection count and request rate limits are
+/*	implemented in co-operation with the \fBanvil\fR(8) service, and
+/*	are available in Postfix version 2.2 and later.
 /* .IP "\fBsmtpd_client_connection_count_limit (50)\fR"
-/*	How many simultaneous connections any SMTP client is allowed to
-/*	make to the SMTP service.
+/*	How many simultaneous connections any client is allowed to
+/*	make to this service.
 /* .IP "\fBsmtpd_client_connection_rate_limit (0)\fR"
 /*	The maximal number of connection attempts any client is allowed to
 /*	make to this service per time unit.
-/* .IP "\fBsmtpd_client_connection_limit_exceptions ($mynetworks)\fR"
-/*	Clients that are excluded from connection count or connection rate
-/*	restrictions.
+/* .IP "\fBsmtpd_client_message_rate_limit (0)\fR"
+/*	The maximal number of message delivery requests that any client is
+/*	allowed to make to this service per time unit, regardless of whether
+/*	or not Postfix actually accepts those messages.
+/* .IP "\fBsmtpd_client_recipient_rate_limit (0)\fR"
+/*	The maximal number of recipient addresses that any client is allowed
+/*	to send to this service per time unit, regardless of whether or not
+/*	Postfix actually accepts those recipients.
+/* .IP "\fBsmtpd_client_event_limit_exceptions ($mynetworks)\fR"
+/*	Clients that are excluded from connection count, connection rate,
+/*	or SMTP request rate restrictions.
 /* TARPIT CONTROLS
 /* .ad
 /* .fi
@@ -399,7 +511,7 @@
 /* .IP "\fBsmtpd_restriction_classes (empty)\fR"
 /*	User-defined aliases for groups of access restrictions.
 /* .IP "\fBsmtpd_null_access_lookup_key (<>)\fR"
-/*	The lookup key to be used in SMTP access(5) tables instead of the
+/*	The lookup key to be used in SMTP \fBaccess\fR(5) tables instead of the
 /*	null sender address.
 /* .IP "\fBpermit_mx_backup_networks (empty)\fR"
 /*	Restrict the use of the permit_mx_backup SMTP access feature to
@@ -422,6 +534,11 @@
 /*	Request that the Postfix SMTP server rejects mail for unknown
 /*	recipient addresses, even when no explicit reject_unlisted_recipient
 /*	access restriction is specified.
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBsmtpd_end_of_data_restrictions (empty)\fR"
+/*	Optional access restrictions that the Postfix SMTP server
+/*	applies in the context of the SMTP END-OF-DATA command.
 /* SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
@@ -430,12 +547,12 @@
 /*	are not actually delivered.
 /*	This feature is requested via the reject_unverified_sender and
 /*	reject_unverified_recipient access restrictions.  The status of
-/*	verification probes is maintained by the verify(8) server.
+/*	verification probes is maintained by the \fBverify\fR(8) server.
 /*	See the file ADDRESS_VERIFICATION_README for information
 /*	about how to configure and operate the Postfix sender/recipient
 /*	address verification service.
 /* .IP "\fBaddress_verify_poll_count (3)\fR"
-/*	How many times to query the verify(8) service for the completion
+/*	How many times to query the \fBverify\fR(8) service for the completion
 /*	of an address verification request in progress.
 /* .IP "\fBaddress_verify_poll_delay (3s)\fR"
 /*	The delay between queries for the completion of an address
@@ -455,7 +572,7 @@
 /*	and/or text responses.
 /* .IP "\fBaccess_map_reject_code (554)\fR"
 /*	The numerical Postfix SMTP server response code when a client
-/*	is rejected by an access(5) map restriction.
+/*	is rejected by an \fBaccess\fR(5) map restriction.
 /* .IP "\fBdefer_code (450)\fR"
 /*	The numerical Postfix SMTP server response code when a remote SMTP
 /*	client request is rejected by the "defer" restriction.
@@ -473,7 +590,7 @@
 /*	or reject_non_fqdn_recipient restriction.
 /* .IP "\fBreject_code (554)\fR"
 /*	The numerical Postfix SMTP server response code when a remote SMTP
-/*	client request is rejected by the "\fBreject\fR" restriction.
+/*	client request is rejected by the "reject" restriction.
 /* .IP "\fBrelay_domains_reject_code (554)\fR"
 /*	The numerical Postfix SMTP server response code when a client
 /*	request is rejected by the reject_unauth_destination recipient
@@ -554,11 +671,19 @@
 /* .IP "\fBsyslog_name (postfix)\fR"
 /*	The mail system name that is prepended to the process name in syslog
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBsmtpd_forbidden_commands (CONNECT, GET, POST)\fR"
+/*	List of commands that causes the Postfix SMTP server to immediately
+/*	terminate the session with a 221 code.
 /* SEE ALSO
+/*	anvil(8), connection/rate limiting
 /*	cleanup(8), message canonicalization
+/*	tlsmgr(8), TLS session and PRNG management
 /*	trivial-rewrite(8), address resolver
 /*	verify(8), address verification service
 /*	postconf(5), configuration parameters
+/*	master(5), generic daemon options
 /*	master(8), process manager
 /*	syslogd(8), system logging
 /* README FILES
@@ -569,12 +694,14 @@
 /* .na
 /* .nf
 /*	ADDRESS_CLASS_README, blocking unknown hosted or relay recipients
+/*	ADDRESS_REWRITING_README Postfix address manipulation
 /*	FILTER_README, external after-queue content filter
 /*	LOCAL_RECIPIENT_README, blocking unknown local recipients
 /*	SMTPD_ACCESS_README, built-in access policies
 /*	SMTPD_POLICY_README, external policy server
 /*	SMTPD_PROXY_README, external before-queue content filter
 /*	SASL_README, Postfix SASL howto
+/*	TLS_README, Postfix STARTTLS howto
 /*	VERP_README, Postfix XVERP extension
 /*	XCLIENT_README, Postfix XCLIENT extension
 /*	XFORWARD_README, Postfix XFORWARD extension
@@ -587,6 +714,13 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	TLS support originally by:
+/*	Lutz Jaenicke
+/*	BTU Cottbus
+/*	Allgemeine Elektrotechnik
+/*	Universitaetsplatz 3-4
+/*	D-03044 Cottbus, Germany
 /*--*/
 
 /* System library. */
@@ -650,10 +784,12 @@
 #include <lex_822.h>
 #include <namadr_list.h>
 #include <input_transp.h>
-#ifdef SNAPSHOT
+#include <is_header.h>
 #include <anvil_clnt.h>
-#endif
 #include <flush_clnt.h>
+#include <ehlo_mask.h>			/* ehlo filter */
+#include <maps.h>			/* ehlo filter */
+#include <valid_mailhost_addr.h>
 
 /* Single-threaded server skeleton. */
 
@@ -690,6 +826,7 @@ char   *var_mail_checks;
 char   *var_rcpt_checks;
 char   *var_etrn_checks;
 char   *var_data_checks;
+char   *var_eod_checks;
 int     var_unk_client_code;
 int     var_bad_name_code;
 int     var_unk_name_code;
@@ -756,11 +893,29 @@ char   *var_xclient_hosts;
 char   *var_xforward_hosts;
 bool    var_smtpd_rej_unl_from;
 bool    var_smtpd_rej_unl_rcpt;
-
-#ifdef SNAPSHOT
+char   *var_smtpd_forbid_cmds;
 int     var_smtpd_crate_limit;
 int     var_smtpd_cconn_limit;
+int     var_smtpd_cmail_limit;
+int     var_smtpd_crcpt_limit;
 char   *var_smtpd_hoggers;
+char   *var_local_rwr_clients;
+char   *var_smtpd_ehlo_dis_words;
+char   *var_smtpd_ehlo_dis_maps;
+
+bool    var_smtpd_use_tls;
+bool    var_smtpd_enforce_tls;
+bool    var_smtpd_tls_wrappermode;
+
+#ifdef USE_TLS
+char   *var_smtpd_relay_ccerts;
+int     var_smtpd_starttls_tmout;
+bool    var_smtpd_tls_auth_only;
+bool    var_smtpd_tls_ask_ccert;
+bool    var_smtpd_tls_req_ccert;
+int     var_smtpd_tls_ccert_vd;
+bool    var_smtpd_tls_received_header;
+char   *var_smtpd_sasl_tls_opts;
 
 #endif
 
@@ -769,6 +924,11 @@ char   *var_smtpd_hoggers;
   */
 #define STR(x)	vstring_str(x)
 #define LEN(x)	VSTRING_LEN(x)
+
+ /*
+  * EHLO keyword filter
+  */
+static MAPS *ehlo_discard_maps;
 
  /*
   * VERP command name.
@@ -783,22 +943,19 @@ static NAMADR_LIST *verp_clients;
   * its own access control.
   */
 static NAMADR_LIST *xclient_hosts;
-static int xclient_allowed;
+static int xclient_allowed;		/* XXX should be SMTPD_STATE member */
 
  /*
   * XFORWARD command. Access control is cached.
   */
 static NAMADR_LIST *xforward_hosts;
-static int xforward_allowed;
+static int xforward_allowed;		/* XXX should be SMTPD_STATE member */
 
  /*
   * Client connection and rate limiting.
   */
-#ifdef SNAPSHOT
 ANVIL_CLNT *anvil_clnt;
 static NAMADR_LIST *hogger_list;
-
-#endif
 
  /*
   * Other application-specific globals.
@@ -816,7 +973,23 @@ static void chat_reset(SMTPD_STATE *, int);
  /*
   * This filter is applied after printable().
   */
-#define NEUTER_CHARACTERS " <>()\\\";:@"
+#define NEUTER_CHARACTERS " <>()\\\";@"
+
+ /*
+  * Reasons for losing the client.
+  */
+#define REASON_TIMEOUT		"timeout"
+#define REASON_LOST_CONNECTION	"lost connection"
+#define REASON_ERROR_LIMIT	"too many errors"
+
+#ifdef USE_TLS
+
+ /*
+  * TLS initialization status.
+  */
+static SSL_CTX *smtpd_tls_ctx;
+
+#endif
 
 #ifdef USE_SASL_AUTH
 
@@ -905,6 +1078,9 @@ static int helo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     char   *err;
+    int     discard_mask;
+    const char *ehlo_words;
+    VSTRING *reply_buf;
 
     /*
      * XXX 2821 new feature: Section 4.1.4 specifies that a server must clear
@@ -931,39 +1107,111 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     rcpt_reset(state);
     state->helo_name = mystrdup(printable(argv[1].strval, '?'));
     neuter(state->helo_name, NEUTER_CHARACTERS, '?');
+
+    /*
+     * XXX reject_unauth_pipelining depends on the following. If the user
+     * sends EHLO then we announce PIPELINING and we can't accuse them of
+     * using pipelining in places where it is allowed.
+     * 
+     * XXX The reject_unauth_pipelining test needs to change and also account
+     * for mechanisms that disable PIPELINING selectively.
+     */
     if (strcasecmp(state->protocol, MAIL_PROTO_ESMTP) != 0) {
 	myfree(state->protocol);
 	state->protocol = mystrdup(MAIL_PROTO_ESMTP);
     }
-    smtpd_chat_reply(state, "250-%s", var_myhostname);
-    smtpd_chat_reply(state, "250-PIPELINING");
-    if (var_message_limit)
-	smtpd_chat_reply(state, "250-SIZE %lu",
-			 (unsigned long) var_message_limit);	/* XXX */
-    else
-	smtpd_chat_reply(state, "250-SIZE");
-    if (var_disable_vrfy_cmd == 0)
-	smtpd_chat_reply(state, "250-VRFY");
-    smtpd_chat_reply(state, "250-ETRN");
+
+    /*
+     * Determine what server EHLO keywords to suppress, typically to avoid
+     * inter-operability problems.
+     */
+    if (ehlo_discard_maps == 0
+	|| (ehlo_words = maps_find(ehlo_discard_maps, state->addr, 0)) == 0)
+	ehlo_words = var_smtpd_ehlo_dis_words;
+    discard_mask = ehlo_mask(ehlo_words);
+    if (discard_mask && !(discard_mask & EHLO_MASK_SILENT))
+	msg_info("discarding EHLO keywords: %s", str_ehlo_mask(discard_mask));
+
+    /*
+     * Build the EHLO response, suppressing features as requested. We store
+     * each output line in a one-element output queue, where it sits until we
+     * know if we need to prepend "250-" or "250 " to it. Each time we
+     * enqueue a reply line we flush the one that sits in the queue. We use a
+     * couple ugly macros to avoid making mistakes in code that repeats a
+     * lot.
+     */
+#define ENQUEUE_FIX_REPLY(state, reply_buf, cmd) \
+    do { \
+	smtpd_chat_reply((state), "250-%s", STR(reply_buf)); \
+	vstring_strcpy((reply_buf), (cmd)); \
+    } while (0)
+
+#define ENQUEUE_FMT_REPLY(state, reply_buf, fmt, arg) \
+    do { \
+	smtpd_chat_reply((state), "250-%s", STR(reply_buf)); \
+	vstring_sprintf((reply_buf), (fmt), (arg)); \
+    } while (0)
+
+    reply_buf = vstring_alloc(10);
+    vstring_strcpy(reply_buf, var_myhostname);
+    if ((discard_mask & EHLO_MASK_PIPELINING) == 0)
+	ENQUEUE_FIX_REPLY(state, reply_buf, "PIPELINING");
+    if ((discard_mask & EHLO_MASK_SIZE) == 0) {
+	if (var_message_limit)
+	    ENQUEUE_FMT_REPLY(state, reply_buf, "SIZE %lu",
+			      (unsigned long) var_message_limit);	/* XXX */
+	else
+	    ENQUEUE_FIX_REPLY(state, reply_buf, "SIZE");
+    }
+    if ((discard_mask & EHLO_MASK_VRFY) == 0)
+	if (var_disable_vrfy_cmd == 0)
+	    ENQUEUE_FIX_REPLY(state, reply_buf, "VRFY");
+    if ((discard_mask & EHLO_MASK_ETRN) == 0)
+	ENQUEUE_FIX_REPLY(state, reply_buf, "ETRN");
+#ifdef USE_TLS
+    if ((discard_mask & EHLO_MASK_STARTTLS) == 0)
+	if ((state->tls_use_tls || state->tls_enforce_tls) && (!state->tls_context))
+	    ENQUEUE_FIX_REPLY(state, reply_buf, "STARTTLS");
+#endif
 #ifdef USE_SASL_AUTH
-    if (var_smtpd_sasl_enable && !sasl_client_exception(state)) {
-	smtpd_chat_reply(state, "250-AUTH %s", state->sasl_mechanism_list);
-	if (var_broken_auth_clients)
-	    smtpd_chat_reply(state, "250-AUTH=%s", state->sasl_mechanism_list);
+    if ((discard_mask & EHLO_MASK_AUTH) == 0) {
+	if (var_smtpd_sasl_enable && !sasl_client_exception(state)
+#ifdef USE_TLS
+	    && (!state->tls_auth_only || state->tls_context)
+#endif
+	    ) {
+	    ENQUEUE_FMT_REPLY(state, reply_buf, "AUTH %s",
+			      state->sasl_mechanism_list);
+	    if (var_broken_auth_clients)
+		ENQUEUE_FMT_REPLY(state, reply_buf, "AUTH=%s",
+				  state->sasl_mechanism_list);
+	}
     }
 #endif
-    if (namadr_list_match(verp_clients, state->name, state->addr))
-	smtpd_chat_reply(state, "250-%s", VERP_CMD);
+    if ((discard_mask & EHLO_MASK_VERP) == 0)
+	if (namadr_list_match(verp_clients, state->name, state->addr))
+	    ENQUEUE_FIX_REPLY(state, reply_buf, VERP_CMD);
     /* XCLIENT must not override its own access control. */
-    if (xclient_allowed)
-	smtpd_chat_reply(state, "250-" XCLIENT_CMD
-			 " " XCLIENT_NAME " " XCLIENT_ADDR
-			 " " XCLIENT_PROTO " " XCLIENT_HELO);
-    if (xforward_allowed)
-	smtpd_chat_reply(state, "250-" XFORWARD_CMD
-			 " " XFORWARD_NAME " " XFORWARD_ADDR
-			 " " XFORWARD_PROTO " " XFORWARD_HELO);
-    smtpd_chat_reply(state, "250 8BITMIME");
+    if ((discard_mask & EHLO_MASK_XCLIENT) == 0)
+	if (xclient_allowed)
+	    ENQUEUE_FIX_REPLY(state, reply_buf, XCLIENT_CMD
+			      " " XCLIENT_NAME " " XCLIENT_ADDR
+			      " " XCLIENT_PROTO " " XCLIENT_HELO);
+    if ((discard_mask & EHLO_MASK_XFORWARD) == 0)
+	if (xforward_allowed)
+	    ENQUEUE_FIX_REPLY(state, reply_buf, XFORWARD_CMD
+			      " " XFORWARD_NAME " " XFORWARD_ADDR
+			      " " XFORWARD_PROTO " " XFORWARD_HELO
+			      " " XFORWARD_DOMAIN);
+    if ((discard_mask & EHLO_MASK_8BITMIME) == 0)
+	ENQUEUE_FIX_REPLY(state, reply_buf, "8BITMIME");
+    smtpd_chat_reply(state, "250 %s", STR(reply_buf));
+
+    /*
+     * Clean up.
+     */
+    vstring_free(reply_buf);
+
     return (0);
 }
 
@@ -999,11 +1247,8 @@ static void mail_open_stream(SMTPD_STATE *state)
      * If running from the master or from inetd, connect to the cleanup
      * service.
      */
-    cleanup_flags = CLEANUP_FLAG_MASK_EXTERNAL;
-    if (smtpd_input_transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
-	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
-    if (smtpd_input_transp_mask & INPUT_TRANSP_HEADER_BODY)
-	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
+    cleanup_flags = input_transp_cleanup(CLEANUP_FLAG_MASK_EXTERNAL,
+					 smtpd_input_transp_mask);
 
     if (SMTPD_STAND_ALONE(state) == 0) {
 	state->dest = mail_stream_service(MAIL_CLASS_PUBLIC,
@@ -1032,13 +1277,29 @@ static void mail_open_stream(SMTPD_STATE *state)
     state->queue_id = mystrdup(state->dest->id);
 
     /*
-     * Record the time of arrival, the sender envelope address, some session
-     * information, and some additional attributes.
+     * Record the time of arrival, the SASL-related stuff if applicable, the
+     * sender envelope address, some session information, and some additional
+     * attributes.
      */
     if (SMTPD_STAND_ALONE(state) == 0) {
-	rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld", state->time);
+	rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld", (long) state->time);
 	if (*var_filter_xport)
 	    rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_RWR_CONTEXT, FORWARD_DOMAIN(state));
+#ifdef USE_SASL_AUTH
+	if (var_smtpd_sasl_enable) {
+	    if (state->sasl_method)
+		rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+			    MAIL_ATTR_SASL_METHOD, state->sasl_method);
+	    if (state->sasl_username)
+		rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+			    MAIL_ATTR_SASL_USERNAME, state->sasl_username);
+	    if (state->sasl_sender)
+		rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+			    MAIL_ATTR_SASL_SENDER, state->sasl_sender);
+	}
+#endif
     }
     rec_fputs(state->cleanup, REC_TYPE_FROM, state->sender);
     if (state->encoding != 0)
@@ -1189,6 +1450,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     int     narg;
     char   *arg;
     char   *verp_delims = 0;
+    int     rate;
 
     state->encoding = 0;
 
@@ -1217,6 +1479,26 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	|| strcasecmp(argv[1].strval, "from:") != 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 Syntax: MAIL FROM: <address>");
+	return (-1);
+    }
+
+    /*
+     * XXX The client event count/rate control must be consistent in its use
+     * of client address information in connect and disconnect events. For
+     * now we exclude xclient authorized hosts from event count/rate control.
+     */
+    if (SMTPD_STAND_ALONE(state) == 0
+	&& !xclient_allowed
+	&& anvil_clnt
+	&& var_smtpd_cmail_limit > 0
+	&& !namadr_list_match(hogger_list, state->name, state->addr)
+	&& anvil_clnt_mail(anvil_clnt, state->service, state->addr,
+			   &rate) == ANVIL_STAT_OK
+	&& rate > var_smtpd_cmail_limit) {
+	smtpd_chat_reply(state, "421 %s Error: too much mail from %s",
+			 var_myhostname, state->addr);
+	msg_warn("Message delivery request rate limit exceeded: %d from %s for service %s",
+		 rate, state->namaddr, state->service);
 	return (-1);
     }
     if (argv[2].tokval == SMTPD_TOK_ERROR) {
@@ -1319,6 +1601,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 static void mail_reset(SMTPD_STATE *state)
 {
     state->msg_size = 0;
+    state->act_size = 0;
 
     /*
      * Unceremoniously close the pipe to the cleanup service. The cleanup
@@ -1385,6 +1668,7 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     char   *err;
     int     narg;
     char   *arg;
+    int     rate;
 
     /*
      * Sanity checks.
@@ -1404,6 +1688,26 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	|| strcasecmp(argv[1].strval, "to:") != 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 Syntax: RCPT TO: <address>");
+	return (-1);
+    }
+
+    /*
+     * XXX The client event count/rate control must be consistent in its use
+     * of client address information in connect and disconnect events. For
+     * now we exclude xclient authorized hosts from event count/rate control.
+     */
+    if (SMTPD_STAND_ALONE(state) == 0
+	&& !xclient_allowed
+	&& anvil_clnt
+	&& var_smtpd_crcpt_limit > 0
+	&& !namadr_list_match(hogger_list, state->name, state->addr)
+	&& anvil_clnt_rcpt(anvil_clnt, state->service, state->addr,
+			   &rate) == ANVIL_STAT_OK
+	&& rate > var_smtpd_crcpt_limit) {
+	smtpd_chat_reply(state, "421 %s Error: too many recipients from %s",
+			 var_myhostname, state->addr);
+	msg_warn("Recipient address rate limit exceeded: %d from %s for service %s",
+		 rate, state->namaddr, state->service);
 	return (-1);
     }
     if (argv[2].tokval == SMTPD_TOK_ERROR) {
@@ -1443,6 +1747,8 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
      * we have a valid recipient address.
      */
     if (state->proxy == 0 && state->cleanup == 0) {
+	if (!SMTPD_STAND_ALONE(state))
+	    smtpd_check_rewrite(state);
 	if (state->proxy_mail) {
 	    if (smtpd_proxy_open(state, var_smtpd_proxy_filt,
 				 var_smtpd_proxy_tmout, var_smtpd_proxy_ehlo,
@@ -1507,6 +1813,41 @@ static void rcpt_reset(SMTPD_STATE *state)
     state->rcpt_overshoot = 0;
 }
 
+#ifdef USE_TLS
+
+/* CN_sanitize - make sure, the CN-string is well behaved */
+
+static void CN_sanitize(VSTRING *CNstring)
+{
+    unsigned char *cp;
+    int     ch;
+    int     pc;
+
+    /*
+     * Postfix Received: headers can be configured to include a comment with
+     * the CN (CommonName) of the peer and its issuer. To avoid problems with
+     * RFC 822 etc. syntax, we limit the CN information to printable ASCII
+     * text, and neutralize characters that affect comment parsing: the
+     * backslash and unbalanced parentheses.
+     */
+    for (pc = 0, cp = (unsigned char *) STR(CNstring); (ch = *cp) != 0; cp++) {
+	if (!ISASCII(ch) || !ISPRINT(ch) || ch == '\\') {
+	    *cp = '?';
+	} else if (ch == '(') {
+	    pc++;
+	} else if (ch == ')') {
+	    if (pc > 0)
+		pc--;
+	    else
+		*cp = '?';
+	}
+    }
+    while (pc-- > 0)
+	VSTRING_ADDCH(CNstring, ')');
+}
+
+#endif
+
 /* data_cmd - process DATA command */
 
 static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
@@ -1524,6 +1865,12 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     VSTREAM *out_stream;
     int     out_error;
     char  **cpp;
+
+#ifdef USE_TLS
+    VSTRING *peer_CN;
+    VSTRING *issuer_CN;
+
+#endif
 
     /*
      * Sanity checks. With ESMTP command pipelining the client can send DATA
@@ -1605,7 +1952,40 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	out_fprintf(out_stream, REC_TYPE_NORM,
 		    "Received: from %s (%s [%s])",
 		    state->helo_name ? state->helo_name : state->name,
-		    state->name, state->addr);
+		    state->name, state->rfc_addr);
+#ifdef USE_TLS
+	if (var_smtpd_tls_received_header && state->tls_context) {
+	    out_fprintf(out_stream, REC_TYPE_NORM,
+			"\t(using %s with cipher %s (%d/%d bits))",
+		      state->tls_info.protocol, state->tls_info.cipher_name,
+			state->tls_info.cipher_usebits,
+			state->tls_info.cipher_algbits);
+
+#define VSTRING_STRDUP(s) vstring_strcpy(vstring_alloc(strlen(s) + 1), (s))
+
+	    if (state->tls_info.peer_CN) {
+		peer_CN = VSTRING_STRDUP(state->tls_info.peer_CN);
+		CN_sanitize(peer_CN);
+		issuer_CN = VSTRING_STRDUP(state->tls_info.issuer_CN);
+		CN_sanitize(issuer_CN);
+		if (state->tls_info.peer_verified)
+		    out_fprintf(out_stream, REC_TYPE_NORM,
+			"\t(Client CN \"%s\", Issuer \"%s\" (verified OK))",
+				STR(peer_CN), STR(issuer_CN));
+		else
+		    out_fprintf(out_stream, REC_TYPE_NORM,
+		       "\t(Client CN \"%s\", Issuer \"%s\" (not verified))",
+				STR(peer_CN), STR(issuer_CN));
+		vstring_free(issuer_CN);
+		vstring_free(peer_CN);
+	    } else if (var_smtpd_tls_ask_ccert)
+		out_fprintf(out_stream, REC_TYPE_NORM,
+			    "\t(Client did not present a certificate)");
+	    else
+		out_fprintf(out_stream, REC_TYPE_NORM,
+			    "\t(No client certificate requested)");
+	}
+#endif
 	if (state->rcpt_count == 1 && state->recipient) {
 	    out_fprintf(out_stream, REC_TYPE_NORM,
 			state->cleanup ? "\tby %s (%s) with %s id %s" :
@@ -1664,9 +2044,22 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	if (prev_rec_type != REC_TYPE_CONT && *start == '.'
 	    && (state->proxy == 0 ? (++start, --len) == 0 : len == 1))
 	    break;
+	state->act_size += len + 2;
 	if (state->err == CLEANUP_STAT_OK
 	    && out_record(out_stream, curr_rec_type, start, len) < 0)
 	    state->err = out_error;
+    }
+    state->where = SMTPD_AFTER_DOT;
+    if (SMTPD_STAND_ALONE(state) == 0 && (err = smtpd_check_eod(state)) != 0) {
+	smtpd_chat_reply(state, "%s", err);
+	if (state->proxy) {
+	    smtpd_proxy_close(state);
+	} else {
+	    mail_stream_cleanup(state->dest);
+	    state->dest = 0;
+	    state->cleanup = 0;
+	}
+	return (-1);
     }
 
     /*
@@ -1751,12 +2144,6 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	state->error_mask |= MAIL_ERROR_SOFTWARE;
 	smtpd_chat_reply(state, "451 Error: internal error %d", state->err);
     }
-
-    /*
-     * Disconnect after transmission must not be treated as "lost connection
-     * after DATA".
-     */
-    state->where = SMTPD_AFTER_DOT;
 
     /*
      * Cleanup. The client may send another MAIL command.
@@ -1911,9 +2298,15 @@ static int etrn_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "500 Syntax: ETRN domain");
 	return (-1);
     }
-    if (!ISALNUM(argv[1].strval[0]))
-	argv[1].strval++;
-    if (!valid_hostname(argv[1].strval, DONT_GRIPE)) {
+    if (argv[1].strval[0] == '@' || argv[1].strval[0] == '#')
+        argv[1].strval++;
+
+    /*
+     * As an extension to RFC 1985 we also allow an RFC 2821 address literal
+     * enclosed in [].
+     */
+    if (!valid_hostname(argv[1].strval, DONT_GRIPE)
+	&& !valid_mailhost_literal(argv[1].strval, DONT_GRIPE)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 Error: invalid parameter syntax");
 	return (-1);
@@ -1980,6 +2373,7 @@ static int xclient_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     SMTPD_TOKEN *argp;
     char   *attr_value;
+    const char *bare_value;
     char   *attr_name;
     int     update_namaddr = 0;
     int     peer_code;
@@ -2046,8 +2440,7 @@ static int xclient_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    if (peer_code != SMTPD_PEER_CODE_OK) {
 		attr_value = CLIENT_NAME_UNKNOWN;
 	    } else {
-		if (!valid_hostname(attr_value, DONT_GRIPE)
-		    || valid_hostaddr(attr_value, DONT_GRIPE)) {
+		if (!valid_hostname(attr_value, DONT_GRIPE)) {
 		    state->error_mask |= MAIL_ERROR_PROTOCOL;
 		    smtpd_chat_reply(state, "501 Bad %s syntax: %s",
 				     XCLIENT_NAME, attr_value);
@@ -2065,15 +2458,17 @@ static int xclient_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	else if (STREQ(attr_name, XCLIENT_ADDR)) {
 	    if (STREQ(attr_value, XCLIENT_UNAVAILABLE)) {
 		attr_value = CLIENT_ADDR_UNKNOWN;
+		bare_value = attr_value;
 	    } else {
-		if (!valid_hostaddr(attr_value, DONT_GRIPE)) {
+		if ((bare_value = valid_mailhost_addr(attr_value, DONT_GRIPE)) == 0) {
 		    state->error_mask |= MAIL_ERROR_PROTOCOL;
 		    smtpd_chat_reply(state, "501 Bad %s syntax: %s",
 				     XCLIENT_ADDR, attr_value);
 		    return (-1);
 		}
 	    }
-	    UPDATE_STR(state->addr, attr_value);
+	    UPDATE_STR(state->addr, bare_value);
+	    UPDATE_STR(state->rfc_addr, attr_value);
 	    update_namaddr = 1;
 	}
 
@@ -2139,6 +2534,7 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     SMTPD_TOKEN *argp;
     char   *attr_value;
+    const char *bare_value;
     char   *attr_name;
     int     updated = 0;
     static NAME_CODE xforward_flags[] = {
@@ -2146,9 +2542,20 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	XFORWARD_ADDR, SMTPD_STATE_XFORWARD_ADDR,
 	XFORWARD_PROTO, SMTPD_STATE_XFORWARD_PROTO,
 	XFORWARD_HELO, SMTPD_STATE_XFORWARD_HELO,
+	XFORWARD_DOMAIN, SMTPD_STATE_XFORWARD_DOMAIN,
 	0, 0,
     };
+    static char *context_name[] = {
+	MAIL_ATTR_RWR_LOCAL,		/* Postfix internal form */
+	MAIL_ATTR_RWR_REMOTE,		/* Postfix internal form */
+    };
+    static NAME_CODE xforward_to_context[] = {
+	XFORWARD_DOM_LOCAL, 0,		/* XFORWARD representation */
+	XFORWARD_DOM_REMOTE, 1,		/* XFORWARD representation */
+	0, -1,
+    };
     int     flag;
+    int     context_code;
 
     /*
      * Sanity checks.
@@ -2210,6 +2617,12 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 		attr_value = CLIENT_NAME_UNKNOWN;
 	    } else {
 		neuter(attr_value, NEUTER_CHARACTERS, '?');
+		if (!valid_hostname(attr_value, DONT_GRIPE)) {
+		    state->error_mask |= MAIL_ERROR_PROTOCOL;
+		    smtpd_chat_reply(state, "501 Bad %s syntax: %s",
+				     XFORWARD_NAME, attr_value);
+		    return (-1);
+		}
 	    }
 	    UPDATE_STR(state->xforward.name, attr_value);
 	    break;
@@ -2222,10 +2635,18 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	case SMTPD_STATE_XFORWARD_ADDR:
 	    if (STREQ(attr_value, XFORWARD_UNAVAILABLE)) {
 		attr_value = CLIENT_ADDR_UNKNOWN;
+		bare_value = attr_value;
 	    } else {
 		neuter(attr_value, NEUTER_CHARACTERS, '?');
+		if ((bare_value = valid_mailhost_addr(attr_value, DONT_GRIPE)) == 0) {
+		    state->error_mask |= MAIL_ERROR_PROTOCOL;
+		    smtpd_chat_reply(state, "501 Bad %s syntax: %s",
+				     XFORWARD_ADDR, attr_value);
+		    return (-1);
+		}
 	    }
-	    UPDATE_STR(state->xforward.addr, attr_value);
+	    UPDATE_STR(state->xforward.addr, bare_value);
+	    UPDATE_STR(state->xforward.rfc_addr, attr_value);
 	    break;
 
 	    /*
@@ -2259,6 +2680,23 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 		neuter(attr_value, NEUTER_CHARACTERS, '?');
 	    }
 	    UPDATE_STR(state->xforward.protocol, attr_value);
+	    break;
+
+	    /*
+	     * DOMAIN=local or remote.
+	     */
+	case SMTPD_STATE_XFORWARD_DOMAIN:
+	    if (STREQ(attr_value, XFORWARD_UNAVAILABLE))
+		attr_value = XFORWARD_DOM_LOCAL;
+	    if ((context_code = name_code(xforward_to_context,
+					  NAME_CODE_FLAG_NONE,
+					  attr_value)) < 0) {
+		state->error_mask |= MAIL_ERROR_PROTOCOL;
+		smtpd_chat_reply(state, "501 Bad %s syntax: %s",
+				 XFORWARD_DOMAIN, attr_value);
+		return (-1);
+	    }
+	    UPDATE_STR(state->xforward.domain, context_name[context_code]);
 	    break;
 
 	    /*
@@ -2312,6 +2750,116 @@ static void chat_reset(SMTPD_STATE *state, int threshold)
     }
 }
 
+#ifdef USE_TLS
+
+/* smtpd_start_tls -turn on TLS or force disconnect */
+
+static void smtpd_start_tls(SMTPD_STATE *state)
+{
+
+    /*
+     * Wrapper mode uses a dedicated port and always requires TLS.
+     * 
+     * XXX In non-wrapper mode, it is possible to require client certificate
+     * verification without requiring TLS. Since certificates can be verified
+     * only while TLS is turned on, this means that Postfix will happily
+     * perform SMTP transactions when the client does not use the STARTTLS
+     * command. For this reason, Postfix does not require client certificate
+     * verification unless TLS is required.
+     */
+    state->tls_context =
+	tls_server_start(smtpd_tls_ctx, state->client,
+			 var_smtpd_starttls_tmout,
+			 state->name, state->addr, &(state->tls_info),
+		       (var_smtpd_tls_req_ccert && state->tls_enforce_tls));
+
+    /*
+     * When the TLS handshake fails, the conversation is in an unknown state.
+     * There is nothing we can do except to disconnect from the client.
+     */
+    if (state->tls_context == 0)
+	vstream_longjmp(state->client, SMTP_ERR_EOF);
+
+    /*
+     * When TLS is turned on, we may offer AUTH methods that would not be
+     * offered within a plain-text session.
+     */
+#ifdef USE_SASL_AUTH
+    if (var_smtpd_sasl_enable
+	&& strcmp(var_smtpd_sasl_tls_opts, var_smtpd_sasl_opts) != 0) {
+	smtpd_sasl_auth_reset(state);
+	smtpd_sasl_disconnect(state);
+	smtpd_sasl_connect(state, VAR_SMTPD_SASL_TLS_OPTS,
+			   var_smtpd_sasl_tls_opts);
+    }
+#endif
+}
+
+/* starttls_cmd - respond to STARTTLS */
+
+static int starttls_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
+{
+    if (argc != 1) {
+	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	smtpd_chat_reply(state, "501 Syntax: STARTTLS");
+	return (-1);
+    }
+    if (state->tls_context != 0) {
+	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	smtpd_chat_reply(state, "554 Error: TLS already active");
+	return (-1);
+    }
+    if (state->tls_use_tls == 0) {
+	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	smtpd_chat_reply(state, "502 Error: command not implemented");
+	return (-1);
+    }
+    if (smtpd_tls_ctx == 0) {
+	smtpd_chat_reply(state, "454 TLS not available due to local problem");
+	return (-1);
+    }
+    smtpd_chat_reply(state, "220 Ready to start TLS");
+    smtp_flush(state->client);
+
+    /*
+     * Reset all inputs to the initial state.
+     * 
+     * XXX RFC 2487 does not forbid the use of STARTTLS while mail transfer is
+     * in progress, so we have to allow it even when it makes no sense.
+     */
+    helo_reset(state);
+    mail_reset(state);
+    rcpt_reset(state);
+
+    /*
+     * Turn on TLS, using code that is shared with TLS wrapper mode. This
+     * code does not return when the handshake fails.
+     */
+    smtpd_start_tls(state);
+    return (0);
+}
+
+/* tls_reset - undo STARTTLS */
+
+static void tls_reset(SMTPD_STATE *state)
+{
+    int     failure = 0;
+
+    /*
+     * Don't waste time when we lost contact.
+     */
+    if (state->tls_context) {
+	if (vstream_feof(state->client) || vstream_ferror(state->client))
+	    failure = 1;
+	vstream_fflush(state->client);		/* NOT: smtp_flush() */
+	tls_server_stop(smtpd_tls_ctx, state->client, var_smtpd_starttls_tmout,
+			failure, &(state->tls_info));
+	state->tls_context = 0;
+    }
+}
+
+#endif
+
  /*
   * The table of all SMTP commands that we know. Set the junk limit flag on
   * any command that can be repeated an arbitrary number of times without
@@ -2323,38 +2871,33 @@ typedef struct SMTPD_CMD {
     int     flags;
 } SMTPD_CMD;
 
-#define SMTPD_CMD_FLAG_LIMIT    (1<<0)	/* limit usage */
-#define SMTPD_CMD_FLAG_FORBID	(1<<1)	/* RFC 2822 mail header */
+#define SMTPD_CMD_FLAG_LIMIT	(1<<0)	/* limit usage */
+#define SMTPD_CMD_FLAG_PRE_TLS	(1<<1)	/* allow before STARTTLS */
 
 static SMTPD_CMD smtpd_cmd_table[] = {
-    "HELO", helo_cmd, SMTPD_CMD_FLAG_LIMIT,
-    "EHLO", ehlo_cmd, SMTPD_CMD_FLAG_LIMIT,
-
+    "HELO", helo_cmd, SMTPD_CMD_FLAG_LIMIT | SMTPD_CMD_FLAG_PRE_TLS,
+    "EHLO", ehlo_cmd, SMTPD_CMD_FLAG_LIMIT | SMTPD_CMD_FLAG_PRE_TLS,
+#ifdef USE_TLS
+    "STARTTLS", starttls_cmd, SMTPD_CMD_FLAG_PRE_TLS,
+#endif
 #ifdef USE_SASL_AUTH
     "AUTH", smtpd_sasl_auth_cmd, 0,
 #endif
-
     "MAIL", mail_cmd, 0,
     "RCPT", rcpt_cmd, 0,
     "DATA", data_cmd, 0,
     "RSET", rset_cmd, SMTPD_CMD_FLAG_LIMIT,
-    "NOOP", noop_cmd, SMTPD_CMD_FLAG_LIMIT,
+    "NOOP", noop_cmd, SMTPD_CMD_FLAG_LIMIT | SMTPD_CMD_FLAG_PRE_TLS,
     "VRFY", vrfy_cmd, SMTPD_CMD_FLAG_LIMIT,
     "ETRN", etrn_cmd, SMTPD_CMD_FLAG_LIMIT,
-    "QUIT", quit_cmd, 0,
+    "QUIT", quit_cmd, SMTPD_CMD_FLAG_PRE_TLS,
     "XCLIENT", xclient_cmd, SMTPD_CMD_FLAG_LIMIT,
     "XFORWARD", xforward_cmd, SMTPD_CMD_FLAG_LIMIT,
-    "Received:", 0, SMTPD_CMD_FLAG_FORBID,
-    "Reply-To:", 0, SMTPD_CMD_FLAG_FORBID,
-    "Message-ID:", 0, SMTPD_CMD_FLAG_FORBID,
-    "Subject:", 0, SMTPD_CMD_FLAG_FORBID,
-    "From:", 0, SMTPD_CMD_FLAG_FORBID,
-    "CONNECT", 0, SMTPD_CMD_FLAG_FORBID,
-    "User-Agent:", 0, SMTPD_CMD_FLAG_FORBID,
     0,
 };
 
 static STRING_LIST *smtpd_noop_cmds;
+static STRING_LIST *smtpd_forbid_cmds;
 
 /* smtpd_proto - talk the SMTP protocol */
 
@@ -2394,25 +2937,43 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 	break;
 
     case SMTP_ERR_TIME:
-	state->reason = "timeout";
+	state->reason = REASON_TIMEOUT;
 	if (vstream_setjmp(state->client) == 0)
 	    smtpd_chat_reply(state, "421 %s Error: timeout exceeded",
 			     var_myhostname);
 	break;
 
     case SMTP_ERR_EOF:
-	state->reason = "lost connection";
+	state->reason = REASON_LOST_CONNECTION;
 	break;
 
     case 0:
+
+	/*
+	 * In TLS wrapper mode, turn on TLS using code that is shared with
+	 * the STARTTLS command. This code does not return when the handshake
+	 * fails.
+	 * 
+	 * XXX We must start TLS before we can apply the connection and rate
+	 * limits, because otherwise there is no way to report transgressions
+	 * to the client.  This is unfortunate.
+	 */
+#ifdef USE_TLS
+	if (SMTPD_STAND_ALONE(state) == 0 && var_smtpd_tls_wrappermode)
+	    smtpd_start_tls(state);
+#endif
 
 	/*
 	 * XXX The client connection count/rate control must be consistent in
 	 * its use of client address information in connect and disconnect
 	 * events. For now we exclude xclient authorized hosts from
 	 * connection count/rate control.
+	 * 
+	 * XXX Must send connect/disconnect events to the anvil server even when
+	 * this service is not connection count or rate limited, otherwise it
+	 * will discard client message or recipient rate information too
+	 * early or too late.
 	 */
-#ifdef SNAPSHOT
 	if (SMTPD_STAND_ALONE(state) == 0
 	    && !xclient_allowed
 	    && anvil_clnt
@@ -2422,19 +2983,18 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 	    if (var_smtpd_cconn_limit > 0 && count > var_smtpd_cconn_limit) {
 		smtpd_chat_reply(state, "421 %s Error: too many connections from %s",
 				 var_myhostname, state->addr);
-		msg_warn("Too many connections: %d from %s for service %s",
+		msg_warn("Connection concurrency limit exceeded: %d from %s for service %s",
 			 count, state->namaddr, service);
 		break;
 	    }
 	    if (var_smtpd_crate_limit > 0 && crate > var_smtpd_crate_limit) {
 		smtpd_chat_reply(state, "421 %s Error: too many connections from %s",
 				 var_myhostname, state->addr);
-		msg_warn("Too frequent connections: %d from %s for service %s",
+		msg_warn("Connection rate limit exceeded: %d from %s for service %s",
 			 crate, state->namaddr, service);
 		break;
 	    }
 	}
-#endif
 	/* XXX We use the real client for connect access control. */
 	if (SMTPD_STAND_ALONE(state) == 0
 	    && var_smtpd_delay_reject == 0
@@ -2447,7 +3007,7 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 
 	for (;;) {
 	    if (state->error_count >= var_smtpd_hard_erlim) {
-		state->reason = "too many errors";
+		state->reason = REASON_ERROR_LIMIT;
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
 		smtpd_chat_reply(state, "421 %s Error: too many errors",
 				 var_myhostname);
@@ -2472,16 +3032,18 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 		if (strcasecmp(argv[0].strval, cmdp->name) == 0)
 		    break;
 	    if (cmdp->name == 0) {
+		if (is_header(argv[0].strval)
+		    || (*var_smtpd_forbid_cmds
+		 && string_list_match(smtpd_forbid_cmds, argv[0].strval))) {
+		    msg_warn("%s sent non-SMTP command: %.100s",
+			     state->namaddr, vstring_str(state->buffer));
+		    smtpd_chat_reply(state, "221 Error: I can break rules, too. Goodbye.");
+		    break;
+		}
 		smtpd_chat_reply(state, "502 Error: command not implemented");
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
 		state->error_count++;
 		continue;
-	    }
-	    if (cmdp->flags & SMTPD_CMD_FLAG_FORBID) {
-		msg_warn("%s sent non-SMTP command: %.100s",
-			 state->namaddr, vstring_str(state->buffer));
-		smtpd_chat_reply(state, "221 Error: I can break rules, too. Goodbye.");
-		break;
 	    }
 	    /* XXX We use the real client for connect access control. */
 	    if (state->access_denied && cmdp->action != quit_cmd) {
@@ -2490,6 +3052,16 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 		state->error_count++;
 		continue;
 	    }
+#ifdef USE_TLS
+	    if (state->tls_enforce_tls &&
+		!state->tls_context &&
+		(cmdp->flags & SMTPD_CMD_FLAG_PRE_TLS) == 0) {
+		smtpd_chat_reply(state,
+				 "530 Must issue a STARTTLS command first");
+		state->error_count++;
+		continue;
+	    }
+#endif
 	    state->where = cmdp->name;
 	    if (cmdp->action(state, argc, argv) != 0)
 		state->error_count++;
@@ -2507,14 +3079,17 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
      * use of client address information in connect and disconnect events.
      * For now we exclude xclient authorized hosts from connection count/rate
      * control.
+     * 
+     * XXX Must send connect/disconnect events to the anvil server even when
+     * this service is not connection count or rate limited, otherwise it
+     * will discard client message or recipient rate information too early or
+     * too late.
      */
-#ifdef SNAPSHOT
     if (SMTPD_STAND_ALONE(state) == 0
 	&& !xclient_allowed
 	&& anvil_clnt
 	&& !namadr_list_match(hogger_list, state->name, state->addr))
 	anvil_clnt_disconnect(anvil_clnt, service, state->addr);
-#endif
 
     /*
      * Log abnormal session termination, in case postmaster notification has
@@ -2524,7 +3099,7 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
      */
     if (state->reason && state->where
 	&& (strcmp(state->where, SMTPD_AFTER_DOT)
-	    || strcmp(state->reason, "lost connection")))
+	    || strcmp(state->reason, REASON_LOST_CONNECTION)))
 	msg_info("%s after %s from %s[%s]",
 		 state->reason, state->where, state->name, state->addr);
 
@@ -2532,6 +3107,9 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
      * Cleanup whatever information the client gave us during the SMTP
      * dialog.
      */
+#ifdef USE_TLS
+    tls_reset(state);
+#endif
     helo_reset(state);
 #ifdef USE_SASL_AUTH
     if (var_smtpd_sasl_enable)
@@ -2563,8 +3141,30 @@ static void smtpd_service(VSTREAM *stream, char *service, char **argv)
      * take a while. This is why I always run a local name server on critical
      * machines.
      */
-    smtpd_state_init(&state, stream);
+    smtpd_state_init(&state, stream, service);
     msg_info("connect from %s[%s]", state.name, state.addr);
+
+    /*
+     * With TLS wrapper mode, we run on a dedicated port and turn on TLS
+     * before actually speaking the SMTP protocol. This implies TLS enforce
+     * mode.
+     * 
+     * With non-wrapper mode, TLS enforce mode implies that we don't advertise
+     * AUTH before the client issues STARTTLS.
+     */
+#ifdef USE_TLS
+    if (!SMTPD_STAND_ALONE((&state))) {
+	if (var_smtpd_tls_wrappermode) {
+	    state.tls_use_tls = 1;
+	    state.tls_enforce_tls = 1;
+	} else {
+	    state.tls_use_tls = var_smtpd_use_tls | var_smtpd_enforce_tls;
+	    state.tls_enforce_tls = var_smtpd_enforce_tls;
+	}
+	if (var_smtpd_tls_auth_only || state.tls_enforce_tls)
+	    state.tls_auth_only = 1;
+    }
+#endif
 
     /*
      * XCLIENT must not override its own access control.
@@ -2619,12 +3219,11 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      * case they specify a filename pattern.
      */
     smtpd_noop_cmds = string_list_init(MATCH_FLAG_NONE, var_smtpd_noop_cmds);
+    smtpd_forbid_cmds = string_list_init(MATCH_FLAG_NONE, var_smtpd_forbid_cmds);
     verp_clients = namadr_list_init(MATCH_FLAG_NONE, var_verp_clients);
     xclient_hosts = namadr_list_init(MATCH_FLAG_NONE, var_xclient_hosts);
     xforward_hosts = namadr_list_init(MATCH_FLAG_NONE, var_xforward_hosts);
-#ifdef SNAPSHOT
     hogger_list = namadr_list_init(MATCH_FLAG_NONE, var_smtpd_hoggers);
-#endif
     if (getuid() == 0 || getuid() == var_owner_uid)
 	smtpd_check_init();
     debug_peer_init();
@@ -2643,9 +3242,34 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 #endif
 
     /*
+     * Keys can only be loaded when running with suitable permissions. When
+     * called from "sendmail -bs" this is not the case, but STARTTLS is not
+     * used in this scenario anyhow.
+     */
+    if (getuid() == 0 || getuid() == var_owner_uid) {
+	if (var_smtpd_use_tls || var_smtpd_enforce_tls
+	    || var_smtpd_tls_wrappermode)
+#ifdef USE_TLS
+	    smtpd_tls_ctx =
+		tls_server_init(var_smtpd_tls_ccert_vd,
+				var_smtpd_tls_ask_ccert);
+#else
+	    msg_warn("TLS has been selected, but TLS support is not compiled in");
+#endif
+    }
+
+    /*
      * flush client.
      */
     flush_init();
+
+    /*
+     * EHLO keyword filter.
+     */
+    if (*var_smtpd_ehlo_dis_maps)
+	ehlo_discard_maps = maps_create(VAR_SMTPD_EHLO_DIS_MAPS,
+					var_smtpd_ehlo_dis_maps,
+					DICT_FLAG_LOCK);
 }
 
 /* post_jail_init - post-jail initialization */
@@ -2658,7 +3282,7 @@ static void post_jail_init(char *unused_name, char **unused_argv)
      * recipient checks, address mapping, header_body_checks?.
      */
     smtpd_input_transp_mask =
-    input_transp_mask(VAR_INPUT_TRANSP, var_input_transp);
+	input_transp_mask(VAR_INPUT_TRANSP, var_input_transp);
 
     /*
      * Sanity checks. The queue_minfree value should be at least as large as
@@ -2675,10 +3299,9 @@ static void post_jail_init(char *unused_name, char **unused_argv)
     /*
      * Connection rate management.
      */
-#ifdef SNAPSHOT
-    if (var_smtpd_crate_limit || var_smtpd_cconn_limit)
+    if (var_smtpd_crate_limit || var_smtpd_cconn_limit
+	|| var_smtpd_cmail_limit || var_smtpd_crcpt_limit)
 	anvil_clnt = anvil_clnt_create();
-#endif
 }
 
 /* main - the main program */
@@ -2711,9 +3334,12 @@ int     main(int argc, char **argv)
 	VAR_VIRT_MAILBOX_CODE, DEF_VIRT_MAILBOX_CODE, &var_virt_mailbox_code, 0, 0,
 	VAR_RELAY_RCPT_CODE, DEF_RELAY_RCPT_CODE, &var_relay_rcpt_code, 0, 0,
 	VAR_VERIFY_POLL_COUNT, DEF_VERIFY_POLL_COUNT, &var_verify_poll_count, 1, 0,
-#ifdef SNAPSHOT
 	VAR_SMTPD_CRATE_LIMIT, DEF_SMTPD_CRATE_LIMIT, &var_smtpd_crate_limit, 0, 0,
 	VAR_SMTPD_CCONN_LIMIT, DEF_SMTPD_CCONN_LIMIT, &var_smtpd_cconn_limit, 0, 0,
+	VAR_SMTPD_CMAIL_LIMIT, DEF_SMTPD_CMAIL_LIMIT, &var_smtpd_cmail_limit, 0, 0,
+	VAR_SMTPD_CRCPT_LIMIT, DEF_SMTPD_CRCPT_LIMIT, &var_smtpd_crcpt_limit, 0, 0,
+#ifdef USE_TLS
+	VAR_SMTPD_TLS_CCERT_VD, DEF_SMTPD_TLS_CCERT_VD, &var_smtpd_tls_ccert_vd, 0, 0,
 #endif
 	0,
     };
@@ -2725,6 +3351,9 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_POLICY_TMOUT, DEF_SMTPD_POLICY_TMOUT, &var_smtpd_policy_tmout, 1, 0,
 	VAR_SMTPD_POLICY_IDLE, DEF_SMTPD_POLICY_IDLE, &var_smtpd_policy_idle, 1, 0,
 	VAR_SMTPD_POLICY_TTL, DEF_SMTPD_POLICY_TTL, &var_smtpd_policy_ttl, 1, 0,
+#ifdef USE_TLS
+	VAR_SMTPD_STARTTLS_TMOUT, DEF_SMTPD_STARTTLS_TMOUT, &var_smtpd_starttls_tmout, 1, 0,
+#endif
 	0,
     };
     static CONFIG_BOOL_TABLE bool_table[] = {
@@ -2738,6 +3367,15 @@ int     main(int argc, char **argv)
 	VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
 	VAR_SMTPD_REJ_UNL_FROM, DEF_SMTPD_REJ_UNL_FROM, &var_smtpd_rej_unl_from,
 	VAR_SMTPD_REJ_UNL_RCPT, DEF_SMTPD_REJ_UNL_RCPT, &var_smtpd_rej_unl_rcpt,
+	VAR_SMTPD_USE_TLS, DEF_SMTPD_USE_TLS, &var_smtpd_use_tls,
+	VAR_SMTPD_ENFORCE_TLS, DEF_SMTPD_ENFORCE_TLS, &var_smtpd_enforce_tls,
+	VAR_SMTPD_TLS_WRAPPER, DEF_SMTPD_TLS_WRAPPER, &var_smtpd_tls_wrappermode,
+#ifdef USE_TLS
+	VAR_SMTPD_TLS_AUTH_ONLY, DEF_SMTPD_TLS_AUTH_ONLY, &var_smtpd_tls_auth_only,
+	VAR_SMTPD_TLS_ACERT, DEF_SMTPD_TLS_ACERT, &var_smtpd_tls_ask_ccert,
+	VAR_SMTPD_TLS_RCERT, DEF_SMTPD_TLS_RCERT, &var_smtpd_tls_req_ccert,
+	VAR_SMTPD_TLS_RECHEAD, DEF_SMTPD_TLS_RECHEAD, &var_smtpd_tls_received_header,
+#endif
 	0,
     };
     static CONFIG_STR_TABLE str_table[] = {
@@ -2749,6 +3387,7 @@ int     main(int argc, char **argv)
 	VAR_RCPT_CHECKS, DEF_RCPT_CHECKS, &var_rcpt_checks, 0, 0,
 	VAR_ETRN_CHECKS, DEF_ETRN_CHECKS, &var_etrn_checks, 0, 0,
 	VAR_DATA_CHECKS, DEF_DATA_CHECKS, &var_data_checks, 0, 0,
+	VAR_EOD_CHECKS, DEF_EOD_CHECKS, &var_eod_checks, 0, 0,
 	VAR_MAPS_RBL_DOMAINS, DEF_MAPS_RBL_DOMAINS, &var_maps_rbl_domains, 0, 0,
 	VAR_RBL_REPLY_MAPS, DEF_RBL_REPLY_MAPS, &var_rbl_reply_maps, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
@@ -2767,6 +3406,7 @@ int     main(int argc, char **argv)
 	VAR_PERM_MX_NETWORKS, DEF_PERM_MX_NETWORKS, &var_perm_mx_networks, 0, 0,
 	VAR_SMTPD_SND_AUTH_MAPS, DEF_SMTPD_SND_AUTH_MAPS, &var_smtpd_snd_auth_maps, 0, 0,
 	VAR_SMTPD_NOOP_CMDS, DEF_SMTPD_NOOP_CMDS, &var_smtpd_noop_cmds, 0, 0,
+	VAR_SMTPD_FORBID_CMDS, DEF_SMTPD_FORBID_CMDS, &var_smtpd_forbid_cmds, 0, 0,
 	VAR_SMTPD_NULL_KEY, DEF_SMTPD_NULL_KEY, &var_smtpd_null_key, 0, 0,
 	VAR_RELAY_RCPT_MAPS, DEF_RELAY_RCPT_MAPS, &var_relay_rcpt_maps, 0, 0,
 	VAR_VERIFY_SENDER, DEF_VERIFY_SENDER, &var_verify_sender, 0, 0,
@@ -2776,8 +3416,13 @@ int     main(int argc, char **argv)
 	VAR_INPUT_TRANSP, DEF_INPUT_TRANSP, &var_input_transp, 0, 0,
 	VAR_XCLIENT_HOSTS, DEF_XCLIENT_HOSTS, &var_xclient_hosts, 0, 0,
 	VAR_XFORWARD_HOSTS, DEF_XFORWARD_HOSTS, &var_xforward_hosts, 0, 0,
-#ifdef SNAPSHOT
 	VAR_SMTPD_HOGGERS, DEF_SMTPD_HOGGERS, &var_smtpd_hoggers, 0, 0,
+	VAR_LOC_RWR_CLIENTS, DEF_LOC_RWR_CLIENTS, &var_local_rwr_clients, 0, 0,
+	VAR_SMTPD_EHLO_DIS_WORDS, DEF_SMTPD_EHLO_DIS_WORDS, &var_smtpd_ehlo_dis_words, 0, 0,
+	VAR_SMTPD_EHLO_DIS_MAPS, DEF_SMTPD_EHLO_DIS_MAPS, &var_smtpd_ehlo_dis_maps, 0, 0,
+#ifdef USE_TLS
+	VAR_RELAY_CCERTS, DEF_RELAY_CCERTS, &var_smtpd_relay_ccerts, 0, 0,
+	VAR_SMTPD_SASL_TLS_OPTS, DEF_SMTPD_SASL_TLS_OPTS, &var_smtpd_sasl_tls_opts, 0, 0,
 #endif
 	0,
     };

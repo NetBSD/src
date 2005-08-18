@@ -1,10 +1,10 @@
-/*	$NetBSD: inet_listen.c,v 1.5 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: inet_listen.c,v 1.6 2005/08/18 22:11:17 rpaulo Exp $	*/
 
 /*++
 /* NAME
 /*	inet_listen 3
 /* SUMMARY
-/*	start INET-domain listener
+/*	start TCP listener
 /* SYNOPSIS
 /*	#include <listen.h>
 /*
@@ -16,7 +16,7 @@
 /*	int	inet_accept(fd)
 /*	int	fd;
 /* DESCRIPTION
-/*	The \fBinet_listen\fR routine starts a listener in the INET domain
+/*	The \fBinet_listen\fR routine starts a TCP listener
 /*	on the specified address, with the specified backlog, and returns
 /*	the resulting file descriptor.
 /*
@@ -58,6 +58,7 @@
 #ifndef MAXHOSTNAMELEN
 #include <sys/param.h>
 #endif
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -65,49 +66,93 @@
 
 #include "mymalloc.h"
 #include "msg.h"
-#include "find_inet.h"
-#include "inet_util.h"
+#include "host_port.h"
 #include "iostuff.h"
 #include "listen.h"
 #include "sane_accept.h"
+#include "myaddrinfo.h"
+#include "sock_addr.h"
+#include "inet_proto.h"
 
-/* Application-specific stuff. */
-
-#ifndef INADDR_ANY
-#define INADDR_ANY	0xffffffff
-#endif
-
-/* inet_listen - create inet-domain listener */
+/* inet_listen - create TCP listener */
 
 int     inet_listen(const char *addr, int backlog, int block_mode)
 {
-    struct sockaddr_in sin;
+    struct addrinfo *res;
+    struct addrinfo *res0;
+    int     aierr;
     int     sock;
-    int     t = 1;
+    int     on = 1;
     char   *buf;
     char   *host;
     char   *port;
+    const char *parse_err;
+    MAI_HOSTADDR_STR hostaddr;
+    MAI_SERVPORT_STR portnum;
+    INET_PROTO_INFO *proto_info;
+    int     found;
 
     /*
      * Translate address information to internal form.
      */
-    buf = inet_parse(addr, &host, &port);
-    memset((char *) &sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    sin.sin_port = find_inet_port(port, "tcp");
-    sin.sin_addr.s_addr = (*host ? find_inet_addr(host) : INADDR_ANY);
+    buf = mystrdup(addr);
+    if ((parse_err = host_port(buf, &host, "", &port, (char *) 0)) != 0)
+	msg_fatal("%s: %s", addr, parse_err);
+    if (*host == 0)
+	host = 0;
+    if ((aierr = hostname_to_sockaddr(host, port, SOCK_STREAM, &res0)) != 0)
+	msg_fatal("%s: %s", addr, MAI_STRERROR(aierr));
     myfree(buf);
+    /* No early returns or res0 leaks. */
 
-    /*
-     * Create a listener socket.
-     */
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	msg_fatal("socket: %m");
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &t, sizeof(t)) < 0)
-	msg_fatal("setsockopt: %m");
-    if (bind(sock, (struct sockaddr *) & sin, sizeof(sin)) < 0)
-	msg_fatal("bind %s port %d: %m", sin.sin_addr.s_addr == INADDR_ANY ?
-	       "INADDR_ANY" : inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+    proto_info = inet_proto_info();
+    for (found = 0, res = res0; res != 0; res = res->ai_next) {
+
+	/*
+	 * Safety net.
+	 */
+	if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+	    msg_info("skipping address family %d for %s",
+		     res->ai_family, addr);
+	    continue;
+	}
+	found++;
+
+	/*
+	 * Show what address we're trying.
+	 */
+	if (msg_verbose) {
+	    SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
+				 &hostaddr, &portnum, 0);
+	    msg_info("trying... [%s]:%s", hostaddr.buf, portnum.buf);
+	}
+
+	/*
+	 * Create a listener socket.
+	 */
+	if ((sock = socket(res->ai_family, res->ai_socktype, 0)) < 0)
+	    msg_fatal("socket: %m");
+#ifdef HAS_IPV6
+# if defined(IPV6_V6ONLY) && !defined(BROKEN_AI_PASSIVE_NULL_HOST)
+	if (res->ai_family == AF_INET6
+	    && setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
+			  (char *) &on, sizeof(on)) < 0)
+	    msg_fatal("setsockopt(IPV6_V6ONLY): %m");
+# endif
+#endif
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+		       (char *) &on, sizeof(on)) < 0)
+	    msg_fatal("setsockopt(SO_REUSEADDR): %m");
+	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
+				 &hostaddr, &portnum, 0);
+	    msg_fatal("bind %s port %s: %m", hostaddr.buf, portnum.buf);
+	}
+	break;
+    }
+    freeaddrinfo(res0);
+    if (found == 0)
+	msg_fatal("%s: host not found", addr);
     non_blocking(sock, block_mode);
     if (listen(sock, backlog) < 0)
 	msg_fatal("listen: %m");
