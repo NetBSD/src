@@ -1,4 +1,4 @@
-/*	$NetBSD: maildir.c,v 1.1.1.6 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: maildir.c,v 1.1.1.7 2005/08/18 21:07:31 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -43,6 +43,7 @@
 
 #include "sys_defs.h"
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -88,7 +89,9 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     int     deliver_status;
     int     copy_flags;
     struct stat st;
-    time_t  starttime = time((time_t *) 0);
+    struct timeval starttime;
+
+    GETTIMEOFDAY(&starttime);
 
     /*
      * Make verbose logging easier to understand.
@@ -168,7 +171,8 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * filesystem: a maildir has to be within a single UNIX device for link()
      * and rename() to work.)
      * 
-     * [...]
+     * Mn, where n is (in decimal) the microsecond counter from the same
+     * gettimeofday() used for the left part of the unique name.
      * 
      * Pn, where n is (in decimal) the process ID.
      * 
@@ -178,7 +182,7 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 
     set_eugid(usr_attr.uid, usr_attr.gid);
     vstring_sprintf(buf, "%lu.P%d.%s",
-		    (unsigned long) starttime, var_pid, get_hostname());
+		 (unsigned long) starttime.tv_sec, var_pid, get_hostname());
     tmpfile = concatenate(tmpdir, STR(buf), (char *) 0);
     newfile = 0;
     if ((dst = vstream_fopen(tmpfile, O_WRONLY | O_CREAT | O_EXCL, 0600)) == 0
@@ -189,9 +193,12 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     } else if (fstat(vstream_fileno(dst), &st) < 0) {
 	vstring_sprintf(why, "create %s: %m", tmpfile);
     } else {
-	vstring_sprintf(buf, "%lu.V%lxI%lx.%s",
-			(unsigned long) starttime, (unsigned long) st.st_dev,
-			(unsigned long) st.st_ino, get_hostname());
+	vstring_sprintf(buf, "%lu.V%lxI%lxM%lu.%s",
+			(unsigned long) starttime.tv_sec,
+			(unsigned long) st.st_dev,
+			(unsigned long) st.st_ino,
+			(unsigned long) starttime.tv_usec,
+			get_hostname());
 	newfile = concatenate(newdir, STR(buf), (char *) 0);
 	if ((mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr),
 					dst, copy_flags, "\n", why)) == 0) {

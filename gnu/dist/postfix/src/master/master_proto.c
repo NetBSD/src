@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.c,v 1.1.1.2 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: master_proto.c,v 1.1.1.3 2005/08/18 21:07:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,8 +8,9 @@
 /* SYNOPSIS
 /*	#include <master_proto.h>
 /*
-/*	int	master_notify(pid, status)
+/*	int	master_notify(pid, generation, status)
 /*	int	pid;
+/*	unsigned generation;
 /*	int	status;
 /* DESCRIPTION
 /*	The master process provides a standard environment for its
@@ -63,7 +64,7 @@
 
 #include "master_proto.h"
 
-int     master_notify(int pid, int status)
+int     master_notify(int pid, unsigned generation, int status)
 {
     char   *myname = "master_notify";
     MASTER_STATUS stat;
@@ -75,6 +76,7 @@ int     master_notify(int pid, int status)
      * bad status code will only have amusement value.
      */
     stat.pid = pid;
+    stat.gen = generation;
     stat.avail = status;
 
     if (write(MASTER_STATUS_FD, (char *) &stat, sizeof(stat)) != sizeof(stat)) {

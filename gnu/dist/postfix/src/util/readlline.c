@@ -1,4 +1,4 @@
-/*	$NetBSD: readlline.c,v 1.1.1.4 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: readlline.c,v 1.1.1.5 2005/08/18 21:10:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,8 @@
 /*	Warning: a continuation line that does not continue preceding text.
 /*	The invalid input is ignored, to avoid complicating caller code.
 /* SECURITY
+/* .ad
+/* .fi
 /*	readlline() imposes no logical line length limit therefore it
 /*	should be used for reading trusted information only.
 /* LICENSE

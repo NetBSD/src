@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf_print.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: vbuf_print.c,v 1.1.1.3 2005/08/18 21:10:47 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,7 @@
 #include <stdio.h>			/* sprintf() prototype */
 #include <float.h>			/* range of doubles */
 #include <errno.h>
+#include <limits.h>			/* CHAR_BIT */
 
 /* Application-specific. */
 
@@ -76,9 +77,9 @@
   * floating-point numbers, use a similar estimate, and add DBL_MAX_10_EXP
   * just to be sure.
   */
-#define INT_SPACE	(4 * sizeof(long))
-#define DBL_SPACE	(4 * sizeof(double) + DBL_MAX_10_EXP)
-#define PTR_SPACE	(4 * sizeof(char *))
+#define INT_SPACE	((CHAR_BIT * sizeof(long)) / 2)
+#define DBL_SPACE	((CHAR_BIT * sizeof(double)) / 2 + DBL_MAX_10_EXP)
+#define PTR_SPACE	((CHAR_BIT * sizeof(char *)) / 2)
 
  /*
   * Helper macros... Note that there is no need to check the result from

@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_print0.c,v 1.1.1.3 2004/05/31 00:24:54 heas Exp $	*/
+/*	$NetBSD: attr_print0.c,v 1.1.1.4 2005/08/18 21:09:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -53,6 +53,9 @@
 /* .IP "ATTR_TYPE_STR (char *, char *)"
 /*	This argument is followed by an attribute name and a null-terminated
 /*	string.
+/* .IP "ATTR_TYPE_DATA (char *, int, char *)"
+/*	This argument is followed by an attribute name, an attribute value
+/*	length, and an attribute value pointer.
 /* .IP "ATTR_TYPE_HASH (HTABLE *)"
 /* .IP "ATTR_TYPE_NAMEVAL (NVTABLE *)"
 /*	The content of the table is sent as a sequence of string-valued
@@ -91,6 +94,10 @@
 #include <vstream.h>
 #include <htable.h>
 #include <attr.h>
+#include <base64_code.h>
+
+#define STR(x) vstring_str(x)
+#define LEN(x) VSTRING_LEN(x)
 
 /* attr_vprint0 - send attribute list to stream */
 
@@ -104,6 +111,8 @@ int     attr_vprint0(VSTREAM *fp, int flags, va_list ap)
     char   *str_val;
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;
+    int     len_val;
+    static VSTRING *base64_buf;
 
     /*
      * Sanity check.
@@ -142,6 +151,18 @@ int     attr_vprint0(VSTREAM *fp, int flags, va_list ap)
 	    vstream_fwrite(fp, str_val, strlen(str_val) + 1);
 	    if (msg_verbose)
 		msg_info("send attr %s = %s", attr_name, str_val);
+	    break;
+	case ATTR_TYPE_DATA:
+	    attr_name = va_arg(ap, char *);
+	    vstream_fwrite(fp, attr_name, strlen(attr_name) + 1);
+	    len_val = va_arg(ap, int);
+	    str_val = va_arg(ap, char *);
+	    if (base64_buf == 0)
+		base64_buf = vstring_alloc(10);
+	    base64_encode(base64_buf, str_val, len_val);
+	    vstream_fwrite(fp, STR(base64_buf), LEN(base64_buf) + 1);
+	    if (msg_verbose)
+		msg_info("send attr %s = [data %d bytes]", attr_name, len_val);
 	    break;
 	case ATTR_TYPE_HASH:
 	    ht_info_list = htable_list(va_arg(ap, HTABLE *));
@@ -194,12 +215,14 @@ int     main(int unused_argc, char **argv)
 		ATTR_TYPE_NUM, ATTR_NAME_NUM, 4711,
 		ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
 		ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
+		ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		ATTR_TYPE_HASH, table,
 		ATTR_TYPE_END);
     attr_print0(VSTREAM_OUT, ATTR_FLAG_NONE,
 		ATTR_TYPE_NUM, ATTR_NAME_NUM, 4711,
 		ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
 		ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
+		ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		ATTR_TYPE_END);
     if (vstream_fflush(VSTREAM_OUT) != 0)
 	msg_fatal("write error: %m");

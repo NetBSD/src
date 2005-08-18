@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.4 2005/08/18 21:09:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -84,6 +84,13 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	TLS support originally by:
+/*	Lutz Jaenicke
+/*	BTU Cottbus
+/*	Allgemeine Elektrotechnik
+/*	Universitaetsplatz 3-4
+/*	D-03044 Cottbus, Germany
 /*--*/
 
 /* System library. */
@@ -131,6 +138,13 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 Error: authentication not enabled");
 	return (-1);
     }
+#ifdef USE_TLS
+    if (state->tls_auth_only && !state->tls_context) {
+	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	smtpd_chat_reply(state, "538 Encryption required for requested authentication mechanism");
+	return (-1);
+    }
+#endif
     if (state->sasl_username) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 Error: already authenticated");

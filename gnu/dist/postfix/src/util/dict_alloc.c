@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_alloc.c,v 1.1.1.3 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: dict_alloc.c,v 1.1.1.4 2005/08/18 21:10:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -89,7 +89,7 @@ static int dict_default_delete(DICT *dict, const char *unused_key)
 
 /* dict_default_sequence - trap unimplemented operation */
 
-static int dict_default_sequence(DICT *dict, int function,
+static int dict_default_sequence(DICT *dict, int unused_function,
 		         const char **unused_key, const char **unused_value)
 {
     msg_fatal("%s table %s: sequence operation is not supported",

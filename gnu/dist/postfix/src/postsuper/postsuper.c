@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.1.1.8 2004/05/31 00:24:43 heas Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.1.1.9 2005/08/18 21:08:24 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -12,12 +12,13 @@
 /*		[\fB-h \fIqueue_id\fR] [\fB-H \fIqueue_id\fR]
 /*		[\fB-r \fIqueue_id\fR] [\fIdirectory ...\fR]
 /* DESCRIPTION
-/*	The \fBpostsuper\fR command does maintenance jobs on the Postfix
+/*	The \fBpostsuper\fR(1) command does maintenance jobs on the Postfix
 /*	queue. Use of the command is restricted to the superuser.
-/*	See the \fBpostqueue\fR command for unprivileged queue operations
+/*	See the \fBpostqueue\fR(1) command for unprivileged queue operations
 /*	such as listing or flushing the mail queue.
 /*
-/*	By default, \fBpostsuper\fR performs the operations requested with the
+/*	By default, \fBpostsuper\fR(1) performs the operations
+/*	requested with the
 /*	\fB-s\fR and \fB-p\fR command-line options on all Postfix queue
 /*	directories - this includes the \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR directories with mail files and the \fBbounce\fR,
@@ -32,13 +33,18 @@
 /*	Delete one message with the named queue ID from the named
 /*	mail queue(s) (default: \fBhold\fR, \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR).
+/*
 /*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
 /*	queue IDs from standard input. For example, to delete all mail
-/*	from or to \fBuser@example.com\fR:
+/*	with exactly one recipient \fBuser@example.com\fR:
 /* .sp
-/*	mailq | tail +2 | awk  \'BEGIN { RS = "" } \e
+/*	mailq | tail +2 | awk  \'BEGIN { RS = "" }
 /* .ti +4
-/*	/ user@example\e.com$/ { print $1 } \e
+/*	# $7=sender, $8=recipient1, $9=recipient2
+/* .ti +4
+/*	{ if ($8 == "user@example.com" && $9 == "")
+/* .ti +10
+/*	print $1 }
 /* .br
 /*	\' | tr -d '*!' | postsuper -d -
 /* .sp
@@ -55,17 +61,17 @@
 /*	The scenario is as follows:
 /* .RS
 /* .IP 1)
-/*	The Postfix queue manager deletes the message that \fBpostsuper\fR
+/*	The Postfix queue manager deletes the message that \fBpostsuper\fR(1)
 /*	is asked to delete, because Postfix is finished with the
 /*	message (it is delivered, or it is returned to the sender).
 /* .IP 2)
 /*	New mail arrives, and the new message is given the same queue ID
-/*	as the message that \fBpostsuper\fR is supposed to delete.
+/*	as the message that \fBpostsuper\fR(1) is supposed to delete.
 /*	The probability for reusing a deleted queue ID is about 1 in 2**15
 /*	(the number of different microsecond values that the system clock
 /*	can distinguish within a second).
 /* .IP 3)
-/*	\fBpostsuper\fR deletes the new message, instead of the old
+/*	\fBpostsuper\fR(1) deletes the new message, instead of the old
 /*	message that it should have deleted.
 /* .RE
 /* .IP "\fB-h \fIqueue_id\fR"
@@ -73,6 +79,7 @@
 /*	Move one message with the named queue ID from the named
 /*	mail queue(s) (default: \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR) to the \fBhold\fR queue.
+/*
 /*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
 /*	queue IDs from standard input.
 /* .sp
@@ -89,8 +96,13 @@
 /*	Release mail that was put "on hold".
 /*	Move one message with the named queue ID from the named
 /*	mail queue(s) (default: \fBhold\fR) to the \fBdeferred\fR queue.
+/*
 /*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
 /*	queue IDs from standard input.
+/* .sp
+/*	Note: use "\fBpostsuper -r\fR" to release mail that was kept on
+/*	hold for a significant fraction of \fB$maximal_queue_lifetime\fR
+/*	or \fB$bounce_queue_lifetime\fR, or longer.
 /* .sp
 /*	Specify \fB-H ALL\fR to release all mail that is "on hold".
 /*	As a safety measure, the word \fBALL\fR must be specified in upper
@@ -104,6 +116,7 @@
 /*	\fBdeferred\fR).
 /*	To requeue multiple messages, specify multiple \fB-r\fR
 /*	command-line options.
+/*
 /*	Alternatively, if a \fIqueue_id\fR of \fB-\fR is specified,
 /*	the program reads queue IDs from standard input.
 /* .sp
@@ -118,7 +131,7 @@
 /*	mappings have changed.
 /* .sp
 /*	Warning: Postfix queue IDs are reused.
-/*	There is a very small possibility that \fBpostsuper\fR requeues
+/*	There is a very small possibility that \fBpostsuper\fR(1) requeues
 /*	the wrong message file when it is executed while the Postfix mail
 /*	system is running, but no harm should be done.
 /* .IP \fB-s\fR
@@ -143,7 +156,7 @@
 /*	Problems are reported to the standard error stream and to
 /*	\fBsyslogd\fR(8).
 /*
-/*	\fBpostsuper\fR reports the number of messages deleted with \fB-d\fR,
+/*	\fBpostsuper\fR(1) reports the number of messages deleted with \fB-d\fR,
 /*	the number of messages requeued with \fB-r\fR, and the number of
 /*	messages whose queue file name was fixed with \fB-s\fR. The report
 /*	is written to the standard error stream and to \fBsyslogd\fR(8).
@@ -161,14 +174,14 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBhash_queue_depth (1)\fR"
 /*	The number of subdirectory levels for queue directories listed with
 /*	the hash_queue_names parameter.
-/* .IP "\fBhash_queue_names (see 'postconf -d' output)\fR"
+/* .IP "\fBhash_queue_names (deferred, defer)\fR"
 /*	The names of queue directories that are split across multiple
 /*	subdirectory levels.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
@@ -932,19 +945,31 @@ static void super(const char **queues, int action)
     argv_free(hash_queue_names);
 }
 
-/* fatal_exit - print warning if queue fix is incomplete */
-
-static void fatal_exit(void)
-{
-    if (inode_mismatch > 0 || inode_fixed > 0 || position_mismatch > 0)
-	msg_fatal("OPERATION INCOMPLETE -- RERUN COMMAND TO FIX THE QUEUE FIRST");
-}
-
 /* interrupted - signal handler */
 
-static void interrupted(int unused_sig)
+static void interrupted(int sig)
 {
-    fatal_exit();
+
+    /*
+     * This commands requires root privileges. We therefore do not worry
+     * about hostile signals, and report problems via msg_warn().
+     */
+    if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
+	(void) signal(SIGINT, SIG_IGN);
+	(void) signal(SIGQUIT, SIG_IGN);
+	(void) signal(SIGTERM, SIG_IGN);
+	if (inode_mismatch > 0 || inode_fixed > 0 || position_mismatch > 0)
+	    msg_warn("OPERATION INCOMPLETE -- RERUN COMMAND TO FIX THE QUEUE FIRST");
+	if (sig)
+	    _exit(sig);
+    }
+}
+
+/* fatal_warning - print warning if queue fix is incomplete */
+
+static void fatal_warning(void)
+{
+    interrupted(0);
 }
 
 int     main(int argc, char **argv)
@@ -1125,7 +1150,7 @@ int     main(int argc, char **argv)
     signal(SIGINT, interrupted);
     signal(SIGQUIT, interrupted);
     signal(SIGTERM, interrupted);
-    msg_cleanup(fatal_exit);
+    msg_cleanup(fatal_warning);
 
     /*
      * Sanity checks.

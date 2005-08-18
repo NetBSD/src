@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_print64.c,v 1.1.1.3 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: attr_print64.c,v 1.1.1.4 2005/08/18 21:09:57 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -143,6 +143,7 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
     char   *str_val;
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;
+    int     len_val;
 
     /*
      * Sanity check.
@@ -185,6 +186,17 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
 	    VSTREAM_PUTC('\n', fp);
 	    if (msg_verbose)
 		msg_info("send attr %s = %s", attr_name, str_val);
+	    break;
+	case ATTR_TYPE_DATA:
+	    attr_name = va_arg(ap, char *);
+	    attr_print64_str(fp, attr_name, strlen(attr_name));
+	    len_val = va_arg(ap, int);
+	    str_val = va_arg(ap, char *);
+	    VSTREAM_PUTC(':', fp);
+	    attr_print64_str(fp, str_val, len_val);
+	    VSTREAM_PUTC('\n', fp);
+	    if (msg_verbose)
+		msg_info("send attr %s = [data %d bytes]", attr_name, len_val);
 	    break;
 	case ATTR_TYPE_HASH:
 	    ht_info_list = htable_list(va_arg(ap, HTABLE *));
@@ -239,12 +251,14 @@ int     main(int unused_argc, char **argv)
 		 ATTR_TYPE_NUM, ATTR_NAME_NUM, 4711,
 		 ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
 		 ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
+		 ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		 ATTR_TYPE_HASH, table,
 		 ATTR_TYPE_END);
     attr_print64(VSTREAM_OUT, ATTR_FLAG_NONE,
 		 ATTR_TYPE_NUM, ATTR_NAME_NUM, 4711,
 		 ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
 		 ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
+		 ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		 ATTR_TYPE_END);
     if (vstream_fflush(VSTREAM_OUT) != 0)
 	msg_fatal("write error: %m");

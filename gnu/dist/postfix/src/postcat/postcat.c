@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.1.1.5 2004/05/31 00:24:41 heas Exp $	*/
+/*	$NetBSD: postcat.c,v 1.1.1.6 2005/08/18 21:08:05 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -6,9 +6,9 @@
 /* SUMMARY
 /*	show Postfix queue file contents
 /* SYNOPSIS
-/*	\fBpostcat\fR [\fB-vq\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
+/*	\fBpostcat\fR [\fB-oqv\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
 /* DESCRIPTION
-/*	The \fBpostcat\fR command prints the contents of the named
+/*	The \fBpostcat\fR(1) command prints the contents of the named
 /*	\fIfiles\fR in human-readable form. The files are expected
 /*	to be in Postfix queue file format. If no
 /*	\fIfiles\fR are specified on the command line, the program
@@ -18,6 +18,8 @@
 /* .IP "\fB-c \fIconfig_dir\fR"
 /*	The \fBmain.cf\fR configuration file is in the named directory
 /*	instead of the default configuration directory.
+/* .IP \fB-o\fR
+/*	Print the queue file offset of each record.
 /* .IP \fB-q\fR
 /*	Search the Postfix queue for the named \fIfiles\fR instead
 /*	of taking the names literally.
@@ -40,7 +42,7 @@
 /*	this program.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -90,19 +92,22 @@
 /* Application-specific. */
 
 #define PC_FLAG_QUEUE	(1<<0)		/* search queue */
+#define PC_FLAG_OFFSET	(1<<1)		/* print record offsets */
 
 #define STR	vstring_str
 #define LEN	VSTRING_LEN
 
 /* postcat - visualize Postfix queue file contents */
 
-static void postcat(VSTREAM *fp, VSTRING *buffer)
+static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 {
     int     prev_type = 0;
     int     rec_type;
     time_t  time;
     int     first = 1;
     int     ch;
+    off_t   offset;
+    int     in_message = 0;
 
 #define TEXT_RECORD(rec_type) \
 	    (rec_type == REC_TYPE_CONT || rec_type == REC_TYPE_NORM)
@@ -122,6 +127,8 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
      * Now look at the rest.
      */
     for (;;) {
+	if (flags & PC_FLAG_OFFSET)
+	    offset = vstream_ftell(fp);
 	rec_type = rec_get(fp, buffer, 0);
 	if (rec_type == REC_TYPE_ERROR)
 	    msg_fatal("record read error");
@@ -133,6 +140,8 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	}
 	if (prev_type == REC_TYPE_CONT && !TEXT_RECORD(rec_type))
 	    VSTREAM_PUTCHAR('\n');
+	if (flags & PC_FLAG_OFFSET)
+	    vstream_printf("%9lu ", (unsigned long) offset);
 	switch (rec_type) {
 	case REC_TYPE_TIME:
 	case REC_TYPE_WARN:
@@ -140,12 +149,16 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	    vstream_printf("%s: %s", rec_type_name(rec_type),
 			   asctime(localtime(&time)));
 	    break;
-	case REC_TYPE_CONT:
-	    if (msg_verbose)
+	case REC_TYPE_CONT:			/* REC_TYPE_FILT collision */
+	    if (!in_message) 
 		vstream_printf("%s: ", rec_type_name(rec_type));
+	    else if (msg_verbose)
+		vstream_printf("unterminated_text: ");
 	    vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
-	    if (msg_verbose)
+	    if (!in_message || msg_verbose || (flags & PC_FLAG_OFFSET) != 0) {
+		rec_type = 0;
 		VSTREAM_PUTCHAR('\n');
+	    }
 	    break;
 	case REC_TYPE_NORM:
 	    if (msg_verbose)
@@ -155,9 +168,11 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	    break;
 	case REC_TYPE_MESG:
 	    vstream_printf("*** MESSAGE CONTENTS %s ***\n", VSTREAM_PATH(fp));
+	    in_message = 1;
 	    break;
 	case REC_TYPE_XTRA:
 	    vstream_printf("*** HEADER EXTRACTED %s ***\n", VSTREAM_PATH(fp));
+	    in_message = 0;
 	    break;
 	case REC_TYPE_END:
 	    vstream_printf("*** MESSAGE FILE END %s ***\n", VSTREAM_PATH(fp));
@@ -220,11 +235,14 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "c:qv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "c:oqv")) > 0) {
 	switch (ch) {
 	case 'c':
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
 		msg_fatal("out of memory");
+	    break;
+	case 'o':
+	    flags |= PC_FLAG_OFFSET;
 	    break;
 	case 'q':
 	    flags |= PC_FLAG_QUEUE;
@@ -254,7 +272,7 @@ int     main(int argc, char **argv)
 	vstream_control(VSTREAM_IN,
 			VSTREAM_CTL_PATH, "stdin",
 			VSTREAM_CTL_END);
-	postcat(VSTREAM_IN, buffer);
+	postcat(VSTREAM_IN, buffer, flags);
     }
 
     /*
@@ -271,7 +289,7 @@ int     main(int argc, char **argv)
 		    fp = mail_queue_open(*cpp, argv[optind], O_RDONLY, 0);
 	    if (fp == 0)
 		msg_fatal("open queue file %s: %m", argv[optind]);
-	    postcat(fp, buffer);
+	    postcat(fp, buffer, flags);
 	    if (vstream_fclose(fp))
 		msg_warn("close %s: %m", argv[optind]);
 	    optind++;
@@ -285,7 +303,7 @@ int     main(int argc, char **argv)
 	while (optind < argc) {
 	    if ((fp = vstream_fopen(argv[optind], O_RDONLY, 0)) == 0)
 		msg_fatal("open %s: %m", argv[optind]);
-	    postcat(fp, buffer);
+	    postcat(fp, buffer, flags);
 	    if (vstream_fclose(fp))
 		msg_warn("close %s: %m", argv[optind]);
 	    optind++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.1.1.6 2004/11/13 05:05:59 heas Exp $	*/
+/*	$NetBSD: spawn.c,v 1.1.1.7 2005/08/18 21:09:42 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	\fBspawn\fR [generic Postfix daemon options] command_attributes...
 /* DESCRIPTION
-/*	The \fBspawn\fR daemon provides the Postfix equivalent of \fBinetd\fR.
+/*	The \fBspawn\fR(8) daemon provides the Postfix equivalent
+/*	of \fBinetd\fR.
 /*	It listens on a port as specified in the Postfix \fBmaster.cf\fR file
 /*	and spawns an external command whenever a connection is established.
 /*	The connection can be made over local IPC (such as UNIX-domain
@@ -29,7 +30,7 @@
 /*	specified \fIusername\fR.  The software refuses to execute
 /*	commands with root privileges, or with the privileges of the
 /*	mail system owner. If \fIgroupname\fR is specified, the
-/*	corresponding group ID is used instead of the group ID of
+/*	corresponding group ID is used instead of the group ID
 /*	of \fIusername\fR.
 /* .IP "\fBargv\fR=\fIcommand\fR... (required)"
 /*	The command to be executed. This must be specified as the
@@ -38,29 +39,29 @@
 /*	shell meta characters by a shell command interpreter.
 /* BUGS
 /*	In order to enforce standard Postfix process resource controls,
-/*	the \fBspawn\fR daemon runs only one external command at a time.
+/*	the \fBspawn\fR(8) daemon runs only one external command at a time.
 /*	As such, it presents a noticeable overhead by wasting precious
-/*	process resources. The \fBspawn\fR daemon is expected to be
+/*	process resources. The \fBspawn\fR(8) daemon is expected to be
 /*	replaced by a more structural solution.
 /* DIAGNOSTICS
-/*	The \fBspawn\fR daemon reports abnormal child exits.
+/*	The \fBspawn\fR(8) daemon reports abnormal child exits.
 /*	Problems are logged to \fBsyslogd\fR(8).
 /* SECURITY
 /* .fi
 /* .ad
 /*	This program needs root privilege in order to execute external
 /*	commands as the specified user. It is therefore security sensitive.
-/*	However the \fBspawn\fR daemon does not talk to the external command
+/*	However the \fBspawn\fR(8) daemon does not talk to the external command
 /*	and thus is not vulnerable to data-driven attacks.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically as spawn(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically as \fBspawn\fR(8)
 /*	processes run for only a limited amount of time. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /*
 /*	In the text below, \fItransport\fR is the first field of the entry
 /*	in the \fBmaster.cf\fR file.
@@ -346,5 +347,6 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_TIME_TABLE, time_table,
 		       MAIL_SERVER_POST_INIT, drop_privileges,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
+		       MAIL_SERVER_PRIVILEGED,
 		       0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.6 2004/05/31 00:24:42 heas Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.7 2005/08/18 21:08:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,7 @@
 /* SYNOPSIS
 /*	\fBpostdrop\fR [\fB-rv\fR] [\fB-c \fIconfig_dir\fR]
 /* DESCRIPTION
-/*	The \fBpostdrop\fR command creates a file in the \fBmaildrop\fR
+/*	The \fBpostdrop\fR(1) command creates a file in the \fBmaildrop\fR
 /*	directory and copies its standard input to the file.
 /*
 /*	Options:
@@ -54,7 +54,7 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program.
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBalternate_config_directories (empty)\fR"
 /*	A list of non-default Postfix configuration directories that may
 /*	be specified with "-c config_directory" on the command line, or
@@ -74,7 +74,12 @@
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
-/*	example, the pickup(8) or qmgr(8) daemon).
+/*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
+/* .PP
+/*	Available in Postfix version 2.2 and later:
+/* .IP "\fBauthorized_submit_users (static:anyone)\fR"
+/*	List of users who are authorized to submit mail with the \fBsendmail\fR(1)
+/*	command (and with the privileged \fBpostdrop\fR(1) helper command).
 /* FILES
 /*	/var/spool/postfix/maildrop, maildrop queue
 /* SEE ALSO
@@ -129,6 +134,7 @@
 #include <cleanup_user.h>
 #include <record.h>
 #include <rec_type.h>
+#include <user_acl.h>
 
 /* Application-specific. */
 
@@ -146,27 +152,20 @@
   */
 
  /*
+  * Local mail submission access list.
+  */
+char   *var_submit_acl;
+
+static CONFIG_STR_TABLE str_table[] = {
+    VAR_SUBMIT_ACL, DEF_SUBMIT_ACL, &var_submit_acl, 0, 0,
+    0,
+};
+
+ /*
   * Queue file name. Global, so that the cleanup routine can find it when
   * called by the run-time error handler.
   */
 static char *postdrop_path;
-
-/* postdrop_cleanup - callback for the runtime error handler */
-
-static void postdrop_cleanup(void)
-{
-
-    /*
-     * This is the fatal error handler. Don't try to do anything fancy.
-     */
-    if (postdrop_path) {
-	if (remove(postdrop_path))
-	    msg_warn("uid=%ld: remove %s: %m", (long) getuid(), postdrop_path);
-	else if (msg_verbose)
-	    msg_info("remove %s", postdrop_path);
-	postdrop_path = 0;
-    }
-}
 
 /* postdrop_sig - catch signal and clean up */
 
@@ -174,15 +173,37 @@ static void postdrop_sig(int sig)
 {
 
     /*
-     * Assume atomic signal() updates, even when emulated with sigaction().
+     * This is the fatal error handler. Don't try to do anything fancy.
+     * 
+     * msg_vstream does not allocate memory, but msg_syslog may indirectly in
+     * syslog(), so it should not be called from a user-triggered signal
+     * handler.
+     * 
+     * Assume atomic signal() updates, even when emulated with sigaction(). We
+     * use the in-kernel SIGINT handler address as an atomic variable to
+     * prevent nested postdrop_sig() calls. For this reason, main() must
+     * configure postdrop_sig() as SIGINT handler before other signal
+     * handlers are allowed to invoke postdrop_sig().
      */
-    if (signal(SIGHUP, SIG_IGN) != SIG_IGN
-	&& signal(SIGINT, SIG_IGN) != SIG_IGN
-	&& signal(SIGQUIT, SIG_IGN) != SIG_IGN
-	&& signal(SIGTERM, SIG_IGN) != SIG_IGN) {
-	postdrop_cleanup();
-	exit(sig);
+    if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
+	(void) signal(SIGQUIT, SIG_IGN);
+	(void) signal(SIGTERM, SIG_IGN);
+	(void) signal(SIGHUP, SIG_IGN);
+	if (postdrop_path) {
+	    (void) remove(postdrop_path);
+	    postdrop_path = 0;
+	}
+	/* Future proofing. If you need exit() here then you broke Postfix. */
+	if (sig)
+	    _exit(sig);
     }
+}
+
+/* postdrop_cleanup - callback for the runtime error handler */
+
+static void postdrop_cleanup(void)
+{
+    postdrop_sig(0);
 }
 
 /* main - the main program */
@@ -205,6 +226,8 @@ int     main(int argc, char **argv)
     const char *error_text;
     char   *attr_name;
     char   *attr_value;
+    const char *errstr;
+    char   *junk;
 
     /*
      * Be consistent with file permissions.
@@ -261,6 +284,15 @@ int     main(int argc, char **argv)
      * perform some sanity checks on the input.
      */
     mail_conf_read();
+    get_mail_conf_str_table(str_table);
+
+    /*
+     * Mail submission access control. Should this be in the user-land gate,
+     * or in the daemon process?
+     */
+    if ((errstr = check_user_acl_byuid(var_submit_acl, uid)) != 0)
+	msg_fatal("User %s(%ld) is not allowed to submit mail",
+		  errstr, (long) uid);
 
     /*
      * Stop run-away process accidents by limiting the queue file size. This
@@ -284,15 +316,20 @@ int     main(int argc, char **argv)
     /*
      * Set up signal handlers and a runtime error handler so that we can
      * clean up incomplete output.
+     * 
+     * postdrop_sig() uses the in-kernel SIGINT handler address as an atomic
+     * variable to prevent nested postdrop_sig() calls. For this reason, the
+     * SIGINT handler must be configured before other signal handlers are
+     * allowed to invoke postdrop_sig().
      */
     signal(SIGPIPE, SIG_IGN);
     signal(SIGXFSZ, SIG_IGN);
 
-    if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
-	signal(SIGHUP, postdrop_sig);
     signal(SIGINT, postdrop_sig);
     signal(SIGQUIT, postdrop_sig);
     signal(SIGTERM, postdrop_sig);
+    if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
+	signal(SIGHUP, postdrop_sig);
     msg_cleanup(postdrop_cleanup);
 
     /* End of initializations. */
@@ -332,7 +369,7 @@ int     main(int argc, char **argv)
 	if (rec_type == REC_TYPE_EOF) {		/* request cancelled */
 	    mail_stream_cleanup(dst);
 	    if (remove(postdrop_path))
-		msg_warn("uid=%ld: remove %s: %m", (long) getuid(), postdrop_path);
+		msg_warn("uid=%ld: remove %s: %m", (long) uid, postdrop_path);
 	    else if (msg_verbose)
 		msg_info("remove %s", postdrop_path);
 	    myfree(postdrop_path);
@@ -391,8 +428,9 @@ int     main(int argc, char **argv)
      * will not be deleted after we have taken responsibility for delivery.
      */
     if (postdrop_path) {
-	myfree(postdrop_path);
+	junk = postdrop_path;
 	postdrop_path = 0;
+	myfree(junk);
     }
 
     /*

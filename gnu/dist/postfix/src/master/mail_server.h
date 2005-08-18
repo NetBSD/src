@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.1.1.5 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.1.1.6 2005/08/18 21:07:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,7 @@
 #define MAIL_SERVER_SOLITARY	15
 #define MAIL_SERVER_UNLIMITED	16
 #define MAIL_SERVER_PRE_DISCONN	17
+#define MAIL_SERVER_PRIVILEGED	18
 
 #define MAIL_SERVER_IN_FLOW_DELAY	20
 
@@ -53,6 +54,7 @@ extern NORETURN single_server_main(int, char **, SINGLE_SERVER_FN, ...);
 typedef void (*MULTI_SERVER_FN) (VSTREAM *, char *, char **);
 extern NORETURN multi_server_main(int, char **, MULTI_SERVER_FN,...);
 extern void multi_server_disconnect(VSTREAM *);
+extern int multi_server_drain(void);
 
  /*
   * trigger_server.c
