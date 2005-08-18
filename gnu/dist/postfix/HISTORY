@@ -6945,7 +6945,6 @@ Apologies for any names omitted.
 	This involved a further rewrite of the regexp map code.
 	File: util/dict_regexp.c.
 
-
 200209010
 
 	Bugfix: the SMTP client produced suprious warnings about
@@ -7568,7 +7567,6 @@ Apologies for any names omitted.
 	properly quoted just like the null address. File:
 	global/quote_82[12]_local.c.
 
-
 20021217
 
 	Cleanup: more work on the trivial-rewrite address rewriting
@@ -8189,8 +8187,8 @@ Apologies for any names omitted.
 	of mail probes, so it will no longer block for in_flow_delay
 	seconds when mail arrives faster than it is delivered.
 	Still need to make mail_stream_finish() asynchronous in
-	order to avoid blocking for trigger_timeout seconds when the
-	queue manager is overwhelmed.  Files:  global/post_mail.c,
+	order to avoid blocking for trigger_timeout seconds when
+	the queue manager is overwhelmed.  Files:  global/post_mail.c,
 	verify/verify.c.
 
 	Bugfix: removed extraneous sleep() after the last attempt
@@ -8365,13 +8363,13 @@ Apologies for any names omitted.
 	Support for multiple A and TXT results in RBL lookups.
 	Victor Duchovni, Morgan Stanley.  File: smtpd/smtpd_check.c.
 
-	Support for attribute-based query-reply protocols.
-	Files: util/attr_clnt.[hc], util/auto_clnt.[hc].
+	Support for attribute-based query-reply protocols.  Files:
+	util/attr_clnt.[hc], util/auto_clnt.[hc].
 
 20030711
 
-	Support for plain "name=value\n" attribute protocol.
-	Files: util/attr_{scan,print}_plain.c.
+	Support for plain "name=value\n" attribute protocol.  Files:
+	util/attr_{scan,print}_plain.c.
 
 	Bugfix: the LMTP session caching code did not reset the
 	EHLO server feature list when it needed to reconnect.
@@ -8399,7 +8397,7 @@ Apologies for any names omitted.
 
 20030717
 
-	Documentation: added description of policy_time_limit to 
+	Documentation: added description of policy_time_limit to
 	the SMTPD_POLICY_README document.
 
 	Documentation: corrected the command time limit parameter
@@ -8446,7 +8444,6 @@ Apologies for any names omitted.
 	"server_host", if Postfix is linked against OpenLDAP.  This
 	allows Postfix to connect to LDAP SSL sources.  By Liviu
 	Daia.  File: util/dict_ldap.c.
-
 
 20030811
 
@@ -8703,8 +8700,8 @@ Apologies for any names omitted.
 
 20031024
 
-	Portability: added localhost to mydestination for sites that
-	turn off append_dot_mydomain. File: global/mail_params.h.
+	Portability: added localhost to mydestination for sites
+	that turn off append_dot_mydomain. File: global/mail_params.h.
 
 20031027
 
@@ -8958,7 +8955,7 @@ Apologies for any names omitted.
 	Feature: the reject_unlisted_sender(recipient) SMTPD access
 	restriction rejects an address that matches a local, virtual
 	or relay domain, while the address is not listed in the
-	corresponding local, virtual or relay recipient table. 
+	corresponding local, virtual or relay recipient table.
 
 	Compatibility: the check_recipient_maps restriction works
 	like reject_unlisted_recipient, but will eventually be
@@ -9037,8 +9034,8 @@ Apologies for any names omitted.
 	Files:  *qmgr/qmgr_deliver.c.
 
 	Cleanup: in postfix-files, symbolic links and hard links
-	are now first-class citizens with explicit mention of
-	source and destination pathnames. Files: postfix-install,
+	are now first-class citizens with explicit mention of source
+	and destination pathnames. Files: postfix-install,
 	conf/postfix-files, conf/post-install.
 
 20040116
@@ -9071,8 +9068,8 @@ Apologies for any names omitted.
 	longer needed and have been removed, as are the default
 	*_table configuration files.
 
-	Cleanup: support for the non-standard Errors-To: header
-	is removed. File: cleanup/cleanup_message.c.
+	Cleanup: support for the non-standard Errors-To: header is
+	removed. File: cleanup/cleanup_message.c.
 
 20040121
 
@@ -9101,11 +9098,11 @@ Apologies for any names omitted.
 
 20040123
 
-	Feature: set smtpd_reject_unlisted_{sender,recipient}=no to
-	turn off automatic rejection of non-existent local, virtual
-	or relay addresses. This way it can be made conditional
-	for local clients, always on for remote clients. Files:
-	global/mail_params.h, smtpd/smtpd.c, smtpd/smtpd_check.c.
+	Feature: set smtpd_reject_unlisted_{sender,recipient}=no
+	to turn off automatic rejection of non-existent local,
+	virtual or relay addresses. This way it can be made
+	conditional for local clients, always on for remote clients.
+	Files:  global/mail_params.h, smtpd/smtpd.c, smtpd/smtpd_check.c.
 
 20040124
 
@@ -9114,8 +9111,8 @@ Apologies for any names omitted.
 
 20040126
 
-	Safety: handle the case that main.cf is updated while it is
-	being read. File: util/dict.c.
+	Safety: handle the case that main.cf is updated while it
+	is being read. File: util/dict.c.
 
 	Feature: "instance" attribute that links policy etc. queries
 	to the same message instance.
@@ -9186,8 +9183,8 @@ Apologies for any names omitted.
 
 20040324
 
-	Portability: ekkoBSD support by Philip Reynolds.
-	Files: makedefs, util/sys_defs.h.
+	Portability: ekkoBSD support by Philip Reynolds.  Files:
+	makedefs, util/sys_defs.h.
 
 20040325
 
@@ -9352,10 +9349,34 @@ Apologies for any names omitted.
 	= 1000).  Solution in cooperation with Victor Duchovni.
 	Files:  smtpd/smtpd.c, smtpd/smtpd_state.c, smtpd/smtpd.h.
 
+20040502
+
+	Missing test for a never used flag (the problematic and
+	thus never completed INSPECT feature that doesn't re-inject
+	mail into Postfix).  Victor Duchovni, Morgan Stanley. File:
+	virtual/virtual.c.
+
 20040503
 
 	Bugfix: missing "sasl enabled" guard in the SMTPD policy
 	client.  File: smtpd/smtpd_check.c.
+
+20040606
+
+	Portability. UnixWare has strcasecmp() in strings.h.  Patch
+	by Andreas Winkelmann. File: util/sys_defs.h.
+
+	Portability. The postlink script is transformed from sed(1)
+	to perl(1).
+
+20040608
+
+	Portability. Introduced SET_H_ERRNO() macro for compilation
+	environments where h_errno can't be used as an lvalue.
+	Files:  util/sys_defs.h, dns/dns_lookup.c.
+
+	Portability. Eliminate assumption on bits per byte from
+	vbuf_print.c.
 
 20040614
 
@@ -9392,12 +9413,37 @@ Apologies for any names omitted.
 
 20040619
 
-	Bugfix: more missing resets in the SMTP client when it
-	switches to an alternate SMTP server.  In this case the
-	error_mask that controls whether an SMTP session transcript
-	is mailed to the postmaster, and the size_limit that controls
-	how large a message Postfix will send. Found during code
-	maintenance.  File: smtp/smtp_connect.c.
+	Code reorganization: in preparation for SMTP session caching,
+	the SMTP client data structures were changed from the
+	original "one session per delivery request" model to an
+	explicit "multiple sessions per delivery request" model.
+	This uncovered ESMTP and SASL missing re-initialization
+	problems that were fixed in past week.  Design by Victor
+	and Wietse, initial implementation by Victor Duchovni.
+
+20040620
+
+	Future proofing: after the reorganization of SMTP request
+	state and session state, added code to the smtp client
+	error handling routines to more consistently deal with the
+	possibility that session information is not available.
+
+20040621
+
+	Feature: directory=pathname option for the pipe(8) delivery
+	agent. This allows a command to run from a fixed directory.
+	Failure to change directory causes delivery to be deferred.
+	Files: pipe/pipe.c.
+
+	Feature: command_execution_directory for local(8) delivery
+	to external command. This supports the usual $home etc.
+	expansions, subject to filtering with the character set
+	specified with $execution_directory_expansion_filter.
+	Failure to change directory causes delivery to be deferred.
+	Files:  global/mail_params.h, local/command.c.
+
+	Support for external command execution directory. Files:
+	global/pipe_command.[hc].
 
 20040622
 
@@ -9407,6 +9453,52 @@ Apologies for any names omitted.
 	addresses don't get extra delivery concurrency slots.
 	Files: *qmgr/qmgr_message.c.
 
+20040623
+
+	Workaround for fragile clients: add microsecond time to
+	maildir filename.  Files: virtual/maildir.c, local/maildir.c.
+
+20040628-20040701
+
+	SMTP connection caching work with Victor Duchovni.
+
+	New module (later renamed to global/scache_single.c) for
+	protocol-independent session caching.  The initial
+	implementation supports in-process, single-session caching
+	only.  A later version will support a central session cache
+	daemon.  Some more work is needed for passivation/activation
+	of session attributes.
+
+	New function vstream_fdclose() to destroy a VSTREAM while
+	leaving the underlying file(s) open. Files: util/vstream.[hc].
+
+	New function dns_rr_remove() to remove one record from a
+	resource record list. Some more work is needed to turn the
+	list into a doubly-linked one. Files: dns/dns.h, dns/dns_rr.c.
+
+	Restructuring of the SMTP protocol engine for session
+	caching. File: smtp/smtp_proto.c.
+
+	Restructuring of the connection management module, and
+	first implementation of SMTP connection caching.  To enable,
+	specify an smtp_connection_cache_time value greater than
+	zero. The time unit is seconds. File: smtp/smtp_connect.c.
+
+	New code to passivate and re-activate SMTP_SESSION objects,
+	and isolation of session save/lookup in its own module.
+	Files: smtp/smtp_session.c, smtp/smtp_reuse.c.
+
+	Refinement: smtp_cache_reuse_limit parameter to bound the
+	number of times a session may be reused.  
+
+	Refinements: when a session comes from the cache, give it
+	back to the cache anyway (even when it will not be listed
+	under the next-hop destination name).
+
+	Future refinements should also include a bound on the number
+	of consecutive and total non-delivering uses and other
+	statistics.
+
 20040714
 
 	Bugfix: the code to eliminate the local MTA from the MX
@@ -9414,16 +9506,125 @@ Apologies for any names omitted.
 	produced a less preferred match than proxy_interfaces.
 	Victor Duchovni, Morgan Stanley. File: smtp/smtp_addr.c.
 
+20040715
+
+	Resume work on SMTP session caching.  All good sessions
+	are now cached under their IP address. As before, only the
+	first good session per delivery request is cached under
+	the original next-hop destination.
+
+	At this point, SMTP session caching works, with a session
+	cache client module that uses in-process session caching.
+	This is sufficient to demonstrate that the SMTP client is
+	ready for session caching.
+
+20040716
+
+	New modules to send file descriptors from one process into
+	another one. This will be needed for implementing a central
+	connection cache manager daemon. Most systems use UNIX-domain
+	sockets as the transport for this. On Solaris we use streams
+	instead.  Applications are supposed to invoke LOCAL_SEND_FD()
+	and LOCAL_RECV_FD().  Files: {unix,streams}_{send,recv}_fd.c.
+
+20040717
+
+	First implementation of a session caching client API that
+	actually sends to/receives from a caching server process.
+	The old in-process, single-session caching functionality
+	is preserved as global/scache_single.c, so that we can use
+	it for bootstrapping the session cache server. File:
+	global/scache_clnt.c.
+
+	First implementation of the scache session cache server,
+	using the same in-process session caching code that was
+	used to bootstrap the SMTP client.  File: scache/scache.c.
+
+20040718
+
+	Performance: the default RSET timeouts are reduced from
+	120s to 20s.  Perhaps there should be different RSET timeout
+	for address probes and for session cache checks. File:
+	global/mail_params.h.
+
+20040719
+
+	Multi-session connection cache module. Implementing this
+	was actually the easiest part of the entire connection
+	caching project. File: global/scache_multi.c.
+
+20040720
+
+	Bugfix: event_drain() falsely reported a single-entry timer
+	queue as empty.  File: util/events.c.
+
+	Completed the multi-session cache support for SMTP. The
+	code can be stress tested with a driver program that reads
+	commands from a script. It is not practical to manually
+	test the effects of collisions in the time or in name space
+	domains. File:  global/scache.c.
+
+20040721
+
+	Feature: the session cache server now logs cache hit and
+	miss statistics every $session_cache_status_update_time
+	seconds (default: 600s), as well as upon process exit.
+	File:  scache/scache.c.
+
+20040722
+
+	Workaround: LINUX 2.4 has trouble with mixed data and file
+	descriptor traffic on UNIX-domain stream sockets.
+	Specifically, it cannot handle data write (read) followed
+	by file descriptor send (receive): the receiver hangs in
+	recvmsg(). Workaround is to insert an intervening read
+	(write) operation.  Presumably, LINUX 2.4 is confusing the
+	data and file descriptor.  Lucky Ralf Hildebrandt.  Files:
+	util/sys_defs.h, global/scache_clnt.c, scache/scache.c.
+
 20040723
 
 	Safety: spawn(8) now rejects a user with the -1 UID or GID
 	value, so that commands will not end up running as root.
 	Files:  util/spawn_command.c, spawn/spawn.c.
 
+	User interface: parameter smtp_connection_cache_domains
+	renamed to smtp_connection_cache_destinations. Destinations
+	listed here must be specified without [] or :port.  File:
+	smtp/smtp_connect.c.
+
 	Bugfix: "421 Timeout exceeded" wasn't guarded by setjmp().
 	Victor Duchovni, Morgan Stanley. File: smtpd/smtpd.c.
 
+20040729
+
+	Feature:  enable SMTP session caching temporarily while a
+	postfix is able to schedule back-to-back deliveries.
+	Parameter:  smtp_connection_cache_on_demand (default:
+	yes).  Files:  smtp/smtp_connect.c, *qmgr/qmgr_entry.c,
+	*qmgr/qmgr_queue.c, *qmgr/qmgr_deliver.c.
+
+	Feature: smtp-source -N option to generate unique recipient
+	addresses for (trivial-rewrite) stress testing. Victor
+	Duchovni, Morgan Stanley. File: smtpstone/smtp-source.c.
+
+20040730
+
+	Safety: disallow "opportunistic session caching" when the
+	queue manager is unable to schedule back-to-back deliveries.
+	File: *qmgr/qmgr_entry.c.
+
+20040731
+
+	Hysteresis: turn on "opportunistic session caching" when
+	back-to-back deliveries happen, but don't turn if off
+	until both concurrent and back-to-back delivery ends.
+
 20040801
+
+	Workaround: disable session caching for Linux < 2.2 (does
+	not work) or Glibc < 2 (does not compile).  Files:
+	util/sys_defs.h, util/unix_{recv,send}_fd.c.
 
 	Portability: h_errno is not an lvalue in the UnixWare 7.1
 	multi-threaded environment. Olivier PRENANT.
@@ -9433,22 +9634,1008 @@ Apologies for any names omitted.
 	Bugfix: update SMTP server error counter when a client is
 	denied access with smtpd_delay_reject=no.
 
+20040816
+
+	Bugfix: The smtp_chat_cmd() forced output flushing code in
+	the SMTP client could run before an I/O error handler was
+	set up.  Problem diagnosed by Victor Duchovni, Morgan
+	Stanley. The fix is to disable the smtp_chat_cmd() forced
+	output flushing code as it duplicates better code in
+	smtp_loop(). File: smtp/smtp_chat.c.
+
+	Safety: set up an I/O error handler before the smtp_loop()
+	protocol engine starts; this handler logs a warning in case
+	it ever runs, because that means someone broke ESMTP command
+	pipelining.  File: smtp/smtp_proto.c.
+
+	Feature: canonical_classes parameter by Kimmo Suominen, to
+	control what addresses are rewritten by canonical_maps.
+	Files: cleanup/cleanup_addr.c, cleanup/cleanup_message.c.
+
 20040817
 
-	Bugfix: The smtp_chat_cmd() output flushing code in the
-	SMTP client could run before an I/O error handler was set
-	up.  Problem diagnosed by Victor Duchovni, Morgan Stanley.
-	The fix is to disable the smtp_chat_cmd() output flushing
-	code as it duplicates better code in smtp_loop().  File:
-	smtp/smtp_chat.c.
+	Bugfix: update the vstream I/O time AFTER the completion
+	of an I/O request, so that time-sensitive applications
+	don't force flush output too soon and possibly trigger
+	NAGLE delays.  Problem diagnosed by Victor Duchovni, Morgan
+	Stanley. File: util/vstream.c.
 
-20030823
+	Portability: avoid postmap/postalias test file name clashes
+	on Windows.  Ian Lance Taylor (of Taylor UUCP fame).
 
-	Bugfix: vstream_popen() did not close the child pipe after
-	failure to fork(). File: util/vstream_popen.c.
+20040823
+
+	Bugfix: vstream_popen() did not close the child pipe
+	after failure to fork(). File: util/vstream_popen.c.
+
+20040826
+
+	Feature: support for systems with closefrom(), and emulation
+	for those without. Andrew Brown. Files:  util/sys_defs.h,
+	util/sys_compat.c.
+
+20040827
+
+	Feature: {sender,recipient}_canonical_classes parameters,
+	which give better control than sender_canonical_classes.
+	Files: cleanup/cleanup_addr.c, cleanup/cleanup_message.c.
+
+	Feature: the proxymap client now recognizes when a map
+	can't be proxied, and will open it directly instead.  This
+	makes proxy maps easier to use for virtual mailbox domains.
+	File: global/dict_proxy.c.
+
+	Feature: smtp_sasl_mechanism_filter restricts what remote
+	SMTP server mechanism names the Postfix SMTP client passes
+	on to the SASL library.  Victor Duchovni, Morgan Stanley.
+	Files: smtp/smtp.c.  smtp/smtp_sasl_glue.c, smtp/smtp_sasl_proto.c.
+
+20040828
+
+	User interface: when no recipients are specified, the
+	Postfix sendmail command now terminates with status EX_USAGE
+	instead of accepting the mail first and bouncing it later.
+	This gives more direct feedback in case of a common client
+	configuration error. File:  sendmail/sendmail.c.
+
+20040829
+
+	Portability: Solaris closefrom() support didn't work for
+	non-SUN compilers. Victor Duchovni, Morgan Stanley.
+
+20040830
+
+	Feature: the scache(8) session cache manager now logs the
+	peak counts of destinations, endpoints and sessions. Files:
+	scache/scache.c, global/scache*c.
+
+20040831
+
+	Portability: disable session caching support on SCO 5
+	because of incompatible sockets API. File: util/sys_defs.h.
 
 20040913
 
 	Bugfix (introduced 20020803): sent the wrong bounce message
 	type when a Delivered-To: loop was detected for a mailing
 	list alias.  Nicolas Riendeau. File: bounce_notify_util.c.
+
+20040918
+
+	Feature: authorized_flush_users, authorized_mailq_users,
+	authorized_submit_users to restrict what users can flush
+	the queue, list the queue, or submit mail locally.  Based
+	on code by Victor Duchovni, Morgan Stanley. Files:
+	sendmail/sendmail.c, postdrop/postdrop.c, postqueue/postqueue.c,
+	global/user_acl.[hc].
+
+	Feature: discard(8) mail delivery agent.  Victor Duchovni,
+	Morgan Stanley. File: discard/discard.c.
+
+20041002
+
+	Long overdue, a master(5) manual page based on an initial
+	version by Magnus Baeck.
+
+	By popular demand, a postfix-manuals.html web page with
+	totally useless links to UNIX-style manual pages (the same
+	information should already be available simply by typing
+	"apropos postfix"). To keep newbies from getting completely
+	lost due to information overload, the document starts with
+	a list of actually useful pointers to Postfix introductions,
+	duplicated from the already existing documents.html.
+
+20041006
+
+	Bugfix: "sendmail -bv" did not reject the -t option.  File:
+	sendmail/sendmail.c.
+
+20041007
+
+	Feature: SASL authentication attributes are now stored in
+	queue files and passed on to delivery agents, by Leandro
+	Santi. Files:  deliver_pass.c, deliver_request.c,
+	qmgr_deliver.c, qmgr_message.c, pipe.c, smtpd.c.
+
+20041009
+
+	Feature: per SMTP client message rate limit and recipient
+	rate limit, by Ragnar Lonn, GHN network technologies.
+	Files: smtpd/smtpd.c, anvil/anvil.c, global/anvil_clnt.[hc].
+
+	Incompatibility: smtpd_client_connection_limit_exceptions
+	renamed to smtpd_client_event_limit_exceptions, because it
+	now also controls message and recipient rate limit control.
+
+20041013
+
+	Portability: AIX 5.1/GCC.
+
+20041014-23
+
+	Postfix no longer appends the local domain to header
+	addresses from remote clients.  Instead, Postfix either
+	does not rewrite those headers at all, or it appends the
+	domain specified with the new remote_header_rewrite_domain
+	parameter.
+
+	Postfix still appends $@myorigin or .$mydomain to headers
+	from the Postfix sendmail command, or from clients listed
+	with the new local_header_rewrite_clients parameter (default:
+	permit_mynetworks, permit_sasl_authenticated).
+
+	These changes affect the SMTP server (including XFORWARD
+	support), the cleanup server (do or don't rewrite headers),
+	the trivial-rewrite server (append local domain or surrogate
+	remote domain to incomplete addresses), the queue manager
+	(send additional attributes to delivery agents), the LMTP
+	and SMTP clients (XFORWARD support), and the local delivery
+	agent (preserve XFORWARD attributes when forwarding mail).
+
+20041016
+
+	Bugfix: attr_clnt_request() did not properly skip hash
+	table arguments. Luc Pardon, Skopos Consulting. File:
+	util/attr_clnt.c.
+
+20041018
+
+	The NIS+ module by Geoff Gibbs is now part of Postfix.
+	Files: util/dict_nisplus.c, proto/nisplus_table.
+
+20041019
+
+	Support for Errors-To: is permanently removed.
+
+20041022
+
+	Bugfix: "smtp_connection_cache_on_demand=no" could crash
+	the SMTP client. File: smtp/smtp_connect.c.
+
+	Robustness: extra sanity checks. Files: util/dict_db.c,
+	util/dict_dbm.c, dict_nis.c.
+
+20041025
+
+	Initial merge of Lutz Jaenicke's TLS patch. Initial rewrite
+	of tlsmgr to eliminate some code duplication and to postpone
+	calls into OpenSSL until after dropping privileges.
+
+20041030
+
+	Compatibility: "session cache" renamed to "connection cache"
+	to avoid confusion with the TLS session cache.
+
+20041102
+
+	Feature: smtpd_end_of_data_restrictions allow you to specify
+	restrictions at the end of the SMTP DATA command. The syntax
+	is identical to that of the smtpd_data_restrictions feature.
+	This introduces a new END-OF-DATA protocol state for the
+	external policy server. Files:  proto/SMTPD_POLICY_README.html,
+	proto/SMTPD_ACCESS_README.html, smtpd/smtpd_check.c.
+
+20041111
+
+	Cleanup: terminate the dict_eval() result buffer for verbose
+	logging.  Victor Duchovni, Morgan Stanley. File: util/dict.c.
+
+20041112
+
+	Cleanup: be more careful when saving and restoring resolver(3)
+	options to avoid problems with an HP-UX security patch
+	(change introduced 20031215). File:  dns/dns_lookup.c.
+
+20041115
+
+	Bugfix: the test for "no debugger_command" was wrong.
+	Leandro Santi. File: global/debugger_command.c.
+
+20040117
+
+	Robustness: the master-child protocol now includes a process
+	generation number besides the child process ID.  The process
+	generation number is incremented by one each time the master
+	creates a child process. Child-to-master status updates
+	with the wrong generation number are ignored, instead of
+	triggering a consistency error in the master server.  Files:
+	master/*server.c, master/master_status.c, master/master_spawn.c.
+
+20041118
+
+	Bugfix: the "local_header_rewrite_clients" feature (20041023)
+	did not recognize "bare" lookup tables as documented.  Victor
+	Duchovni, Morgan Stanley. File: smtpd/smtpd_check.c.
+
+	Bugfix: the "local_header_rewrite_clients" feature (20041023)
+	was broken because the local delivery agent passed on a
+	bogus attribute value when forwarding internally generated
+	mail, causing the mail to be rejected by the cleanup server.
+	File: local/dotforward.c.
+
+	Bugfix: the "local_header_rewrite_clients" feature (20041023)
+	was broken because the pickup server always overwrote origin
+	information. Files: pickup/pickup.c, cleanup/cleanup_state.c,
+	*qmgr/qmgr_message.c.
+
+	Workaround: enable the "can't write before sending a file
+	descriptor" workaround for Solaris. Problem reported by
+	Victor Duchovni for Solaris 2.5.1, but we play safe and
+	enable it unconditionally.
+
+20041120
+
+	The TLS support routines are moved to a "tls" directory,
+	and are published via the "libtls.a" object library.
+
+20041122
+
+	Infrastructure: support for binary attribute values
+	(ATTR_TYPE_DATA) in Postfix IPC messages. Files:
+	util/attr_scan*c, util/attr_print*c.
+
+20041123-20041205
+
+	TLS support: via a process of gradual transformation,
+	decomposed Lutz Jaenicke's pfixtls.c into separate modules
+	for clients, servers, certificate verification, session
+	caching, and PRNG management. Global variables were eliminated
+	so that the code now supports multiple client and/or server
+	contexts in the same process.  Files:  tls/*.[hc].
+
+20041205
+
+	TLS support: eliminated shared access (and locking) of the
+	TLS PRNG exchange file and TLS session caches. Instead,
+	Postfix uses a client-server protocol, and the tlsmgr
+	becomes the sole mediator. This eliminated the need for
+	1000+ lines of SDBM support, and eliminated the need for
+	running a persistent tlsmgr process on systems don't enable
+	TLS in main.cf.
+
+20041124
+
+	Feature: configurable list of forbidden SMTP commands
+	(default: smtpd_forbidden_commands = CONNECT, GET, POST)
+	after which the Postfix SMTP server disconnects immediately.
+	The SMTP server always disconnects immediately when the
+	client sends a message header instead of an SMTP command.
+	Magnus Baeck.  File: smtpd/smtpd.c.
+
+20041207
+
+	CDB support by Michael Tokarev, documentation by Victor
+	Duchovni. Files: util/dict_cdb.[hc], global/mkmap_cdb.c.
+
+20041209
+
+	Completed support for the Berkeley DB sequence operator.
+	This is needed for finding and deleting old entries in TLS
+	session databases. File:  util/dict_db.c.
+
+	Bugfix: the DBM client's sequence operator used exclusive
+	locking instead of shared locking. File: util/dict_dbm.c.
+
+	Feature: dump an entire database with the new postmap/postalias
+	"-s" option. This works only for database types with Postfix
+	sequence operator support: hash, btree, dbm, and sdbm.
+	Files:  postmap/postmap.c, postalias/postalias.c.
+
+20041212
+
+	Solaris 10/ix86 chroot setup script update by J.D. Bronson.
+
+	TLS support: cosmetic changes to comments and messages;
+	completed the code for the master -> tlsmgr trigger handshake,
+	so that the master no longer complains about trigger
+	responses timing out.
+
+20041213
+
+	Updated the SDBM dictionary interface. It had fallen behind
+	with the Postfix dictionary interfaces that were already
+	bundled with Postfix. Files: util/dict_sdbm.[hc].
+
+	Cleanup: "postconf -m" (show all available map types) now
+	produces sorted output.  File: util/dict_open.c.
+
+20041215
+
+	No bugfix: tests with the new "postmap -s" feature show
+	that SDBM first/next operations never worked with Postfix/TLS
+	patch 20040829 (verified with the 20040829 dict_sdbm.c
+	module on Linux and FreeBSD).  The code stops after finding
+	one database element.  Other SDBM versions found on the
+	Internet will find all database entries, but report an I/O
+	error after the last database element is found. All this
+	would be easy enough to fix, but the SDBM library is not
+	part of Postfix, and never will be.
+
+	Bugfix: the sequence operator in the DBM and SDBM clients
+	released the shared lock after reading the next key but
+	before reading the corresponding value. This was never a
+	problem, because the sequence operator was used only in
+	the Postfix/TLS patch. This used the SDBM sequence operator
+	which didn't work as discussed above. Files:  util/dict_dbm.c,
+	util/dict_sdbm.c.
+
+	Feature: the local(8) and pipe(8) delivery agents now make
+	the following attributes available upon delivery (with
+	local(8) names must be spelled in upper case): client_hostname,
+	client_address, client_protocol, client_helo, sasl_method,
+	sasl_sender, sasl_username. Files: local/command.c,
+	pipe/pipe.c, and lots of documentation.
+
+20041216
+
+	"postcat -o" now prints queue file record offsets; this is
+	useful for debugging. File: postcat/postcat.c.
+
+	NON-PRODUCTION Bugfix: (bug introduced while adopting the
+	Postfix/TLS patch):  the new TLS certification call-back
+	routine expects that the peer hostname is in
+	tlscontext->peername_save, but the TLS server code never
+	updated this field.  File:  tls/tls_server.c.
+
+20041218
+
+	Feature: selective suppression of SMTP extensions (pipelining,
+	starttls, auth, etc.); this is useful to work around broken
+	clients or servers.  Specify a list of EHLO keywords with
+	the smtp(d)_discard_ehlo_keywords parameters, or specify
+	one or more lookup tables, indexed by remote network address,
+	with the smtp(d)_discard_ehlo_keyword_address_maps parameters.
+	EHLO keyword lists are case insensitive.  Files:
+	util/name_mask.[hc], global/ehlo_mask.[hc], smtpd/smtpd.c,
+	smtp/smtp.c, smtp/smtp_proto.c.
+
+20041219
+
+	Bugfix: postcat without -o was broken. File: postcat/postcat.c.
+
+20041220
+
+	NON-PRODUCTION Bugfix: (bug introduced while adopting
+	Postfix/TLS patch):  don't call smtp_flush() after return
+	from vstream_setjmp(), we'll call you.  File: smtpd/smtpd.c.
+
+	Dummy VSTREAM read-write routines. Files: util/dummy_read.c,
+	util/dummy_write.c.
+
+20041221
+
+	Fixes for TLS_README by Victor Duchovni. File:
+	proto/TLS_README.html.
+
+	NON-PRODUCTION Bugfix: (bug introduced while adopting
+	Postfix/TLS patch).  The client code had become too similar
+	to the server implementation, and also required a host
+	certificate and key. Fix by Victor Duchovni. File:
+	tls/tls_client.c.
+
+20041221
+
+	Bugfix: further postcat corner cases.
+
+20041223
+
+	Cosmetic: don't log disconnect events as I/O errors.
+	File: tls/tls_bio_ops.c.
+
+20041221-9
+
+	Infrastructure: unified IPv4/IPv6 name/address API so that
+	Postfix can support IPv6 without #ifdef INET6 everywhere.
+	In particular, we allow #ifdef in libraries but avoid it
+	in applications.  Files:  util/myaddrinfo.[hc],
+	util/sock_addr.[hc], dns/dns_rr_to_pa.c, dns/dns_sa_to_rr.c,
+	dns/dns_rr_eq_sa.c, dns/dns_rr_to_sa.c, inet_proto.[hc].
+
+	Postfix no longer attempts to deliver mail via IPv6 when
+	the system has no IPv6 connectivity.  Network protocol
+	support is now selected with the "inet_protocols" configuration
+	parameter, instead of "inet_interfaces". The "inet_protocols"
+	parameter also controls what DNS lookups Postfix will do.
+
+	Infrastructure: eliminated two host/port parsing routines.
+	Only one survives: host_port(), in an extended form that
+	allows for missing host or missing service information but
+	not both. File: util/host_port.c.
+
+20041229
+
+	Milestone: Postfix with the unified IPv4/IPv6 socket/name
+	API builds without compiler error on IPv4-only system and
+	actually works.
+
+20041228
+
+	Bugfix: SMTPD_PROXY_README incorrectly claimed that ":port"
+	in master.cf causes a server to listen only on "localhost"
+	without exposing the service to the network.  Instead,
+	":port" causes a client to connect to "localhost".
+
+20041231
+
+	Linux workaround:  when mynetworks isn't set, a chrooted
+	process could not read the IPv6 address information from
+	/proc.  We now invoke own_inet_addr() before chrooting,
+	while processing main.cf. File: global/mail_params.c.
+
+20050101
+
+	Workaround for (Linux) systems without IPV6_V6ONLY support
+	(RFC 3493).  When Postfix listened on an IPv4 wild-card
+	smtp socket, the IPv6 wild-card smtp listener would fail
+	with EADDRINUSE (and vice versa).  File: util/myaddrinfo.c.
+
+20050103
+
+	Safety: when the IPV6 netmask can't be determined, assume
+	/128 (host only). File: util/inet_addr_local.c.
+
+20050104
+
+	Re-implemented IPv6 support for net/mask pattern matching.
+	Files:  util/cidr_match.[hc], util/dict_cidr.c,
+	util/match_ops.[hc], proto/cidr_table.
+
+20050105
+
+	Moved mask_addr() to its own module so that it could also
+	be called by mynetworks() and inet_addr_local() to remove
+	non-zero host bits from IPv6 network/mask patterns. File:
+	util/mask_addr.c.
+
+20050108
+
+	Re-implemented IPv6 support for network interface lookup
+	via the Linux /proc file system. File:  util/inet_addr_local.c.
+
+20050111
+
+	Feature: specify "inet_interfaces = loopback-only" for
+	servers that must listen on local interfaces only, without
+	having to specify IPv4 and/or IPv6 addresses in main.cf or
+	master.cf.  File:  global/own_inet_addr.c.
+
+	Workaround: AIX 5.1 getaddrinfo() can't handle a null host
+	argument with AI_PASSIVE. Instead we specify an explicit
+	protocol family, a host of "::" or "0.0.0.0", and turn off
+	IPV6_V6ONLY. Files: util_myaddrinfo.c, util/inet_listen.c.
+
+	Workaround: AIX 5.1 getaddrinfo() can't handle a "0" service
+	argument. Instead we specify "1".  Files: util/inet_addr_host.c.
+
+20050113
+
+	Cleanup: now that the over-all structure is proving itself,
+	clean up some internal APIs to increase robustness and get
+	rid of some clumsiness. Mainly, the getaddrinfo(3) interface.
+
+	Start-up performance: the hash_queue_names default setting
+	is reduced from eight directories to just defer and deferred.
+	This reduces time for checking the Postfix queue. Files:
+	conf/post-install, global/mail_params.h.
+
+20050114
+
+	Further cleanup: eliminate duplicate IPv6 results when the
+	mynetworks value is generated by Postfix. More documentation
+	of the new internal APIs.
+
+	Performance: reduced start-up delay by moving warning-only
+	startup checks into the background. File: conf/postfix-script.
+
+20050115
+
+	Further hardening of the IPv6 support: don't trust system
+	libraries to protect Postfix against malformed IPv6 address
+	literals. Their syntax is complex enough that errors are
+	likely. Files: global/resolve_local.c, util/valid_hostname.c.
+
+	Further cleanup: RFC 2821 requires the IPv6: prefix with
+	IPv6 address strings.  The smtp and qmqp servers maintain
+	separate address instances, the bare address and the RFC
+	2821 compatible form, and use each where appropriate.  This
+	strict separation simplifies address syntax checks as well
+	as the implementation of XCLIENT and XFORWARD.
+
+20050116
+
+	Infrastructure: new valid_mailhost_addr() routine to verify
+	that an address literal satisfies RFC 2821. An IPv4 address
+	is in dotted-quad decimal form, and an IPv6 address is in
+	hexadecimal form, with the "IPv6:" prefix. Files:
+	global/valid_mailhost_addr.[hc].
+
+	Further cleanup: valid_hostname() no longer allows network
+	addresses or numerical domain names. While it made some
+	sense with IPv4 dotted quad decimal forms, with IPv6 it
+	just made no sense anymore.  Again, being stricter actually
+	simplifies code. Files:  util/valid_hostname.c and a
+	surprisingly small number of valid_hostname() callers that
+	did not reject numerical forms.
+
+	Bugfix: in the Postfix 2.2 SMTP client, the debug_peer_init()
+	call was moved to the after-chroot initialization.
+
+20050117
+
+	Performance: reduced start-up delay by moving warning-only
+	startup checks into the background; they now start after
+	one minute to allow the system to finish booting. File:
+	conf/postfix-script.
+
+	Milestone: first non-non-production snapshot with IPv6.
+
+20050119
+
+	Milestone: first non-non-production snapshot with TLS.
+
+20050124
+
+	Workaround: don't send mail to $fallback_relay if Postfix
+	is MX host for the next-hop destination. This is, however,
+	a partial solution. The documentation has been updated to
+	cover all the cases where a fallback_relay could interfere
+	with the operation of a backup or primary MX host. Files:
+	smtp/smtp_addr.c, smtp/smtp_connect.c.
+
+20050127
+
+	Configuration: Postfix daemons that need privileged operation
+	(such as local, pipe, or spawn) now log a fatal error when
+	they are configured in master.cf as unprivileged.
+
+20050130
+
+	Cleanup: simplified the handling of receive_override_options
+	settings. Files: pickup/pickup.c, smtpd/smtpd.c, qmqpd/qmqpd.c,
+	global/input_transp.c.
+
+	Feature: permit_inet_interfaces allows a request when the
+	client matches $inet_interfaces. This is used for generic
+	access restrictions and for header address rewriting control.
+	Files: global/mail_params.h, smtpd/smtpd_check.c.
+
+	Cleanup: by default, message header address rewriting is
+	now enabled only for mail that originates from the machine
+	itself. Files: global/mail_params.h, smtpd/smtpd_check.c.
+
+20050131
+
+	Bugfix: when extracting recipients from message headers,
+	the Postfix sendmail command produced output records longer
+	than $line_length_limit, causing postdrop to reject the
+	mail. Diagnosis by Victor Duchovni. File:  sendmail/sendmail.c.
+
+20050202
+
+	Cleanup: explicit Makefile targets for "make package" and
+	"make non-interactive-package" to create ready-to-install
+	packages for distribution to other systems. Added extra
+	sanity checks to prevent attempts to overwrite your running
+	Postfix instance. Files:  Makefile.in, proto/PACKAGE_README.
+
+	Cleanup: when bounce_queue_lifetime > maximal_queue_lifetime,
+	it is adjusted to maximal_queue_lifetime, and a warning is
+	logged. Files:  *qmgr/qmgr.c.
+
+20050203
+
+	Cleanup: trivial-rewrite now restarts more timely after
+	changes in lookup tables.  Of the all the alternatives
+	tested, the simplest one produces the most bang for the
+	buck. The other code is left in place for illustrative
+	purposes. File:  trivial-rewrite/trivial-rewrite.c.
+
+	Cleanup: sendmail no longer ignores null command-line
+	recipients.  File: sendmail/sendmail.c.
+
+	Cleanup: "postfix start" background checks moved back to
+	the foreground so they can be stopped more easily.  File:
+	conf/postfix-script.
+
+20050204
+
+	Feature: REPLACE command in header/body_checks (implemented
+	as a combination of PREPEND and IGNORE) by Bastiaan Bakker.
+	File: cleanup/cleanup_message.c.
+
+	Cleanup: linted the manual pages for consistency in the
+	way manuals are referenced, and in the presentation of
+	command examples. Files: mantools/manlint, mantools/fixman,
+	mantools/postconf2man.
+
+20050205
+
+	Cleanup: updated the mass-deletion example in the postsuper
+	manual.
+
+20050206
+
+	Cleanup: don't count a [45]XX SMTP server greeting towards
+	the mx_session_limit setting. File: smtp/smtp_connect.c.
+
+	Feature: output address rewriting in the SMTP client. The
+	smtp_generic_maps parameter specifies an address mapping
+	that happens only when mail is delivered via SMTP. This is
+	typically used for hosts without a valid domain name, that
+	use something like localdomain.local instead.  This feature
+	can replace local mail addresses by valid Internet mail
+	addresses when mail needs to go across the Internet, but
+	not when mail is sent between accounts on the local machine.
+	Files:  smtp/smtp_proto.c, smtp/smtp_map11.c.
+
+	Cleanup: don't panic in mymalloc() when master can't find
+	any IP addresses. LaMont Jones. File: master/master_ent.c.
+
+20050207
+
+	Documentation: added a generic(5) manual page for consistency
+	with the already existing table driven mechanisms, added
+	references to or examples of the new generic mapping.
+
+	Bugfix: the header_checks REPLACE action mis-handled
+	multi-line replacement text in message headers, for example:
+	/(.*)/ REPLACE X-$1. File:  cleanup/cleanup_message.c.
+
+	Bugfix: the header_checks REPLACE action should not drop
+	the input when the action is NOT executed. File:
+	cleanup/cleanup_message.c.
+
+	Bugfix? Cleanup? Documentation? main.cf now implements
+	${name[?:]value} as promised in the postconf(5) manual.
+	Implemented by deleting the macro processor in dict_eval(),
+	and using the one in mac_expand() instead.  File: util/dict.c.
+
+20050208
+
+	Feature: check_ccert_access maptype:mapname for access(5)
+	control, based on code by Victor Duchovni. File:
+	smtpd/smtpd_check.c and documentation.
+
+	Safety: don't allow unlimited message size with limited
+	mailbox size. File: local/local.c, virtual/virtual.c.
+
+	Feature: new smtpd policy attributes ccert_subject,
+	ccert_issuer and ccert_fingerprint, with TLS client
+	certificate information, but only when verification was
+	successful.  Files:  src/smtpd/smtpd_check.c.
+
+	Cleanup: corrected the address verification data flow in
+	the ADDRESS_VERIFICATION_README illustration.
+
+20050209
+
+	Cleanup: the smtp generic mapping did syntax check on the
+	input address instead of the result. These tests were not
+	going to be useful in any case, because mail_addr_map()
+	canonicalizes the lookup result, including @dom1->@dom2
+	mapping. File:  smtp_map11.c.
+
+	Cleanup: made the generic mapping documentation consistent
+	with the implementation.
+
+	Cleanup: documented the myorigin/mydomain address rewriting
+	in canonical, generic and virtual alias maps.
+
+	Feature: updated LDAP and *SQL query interfaces using a
+	common infrastructure so that all have the same feature set
+	where possible. Victor Duchovni and many others. This code
+	was tested separately and was merged into the main stream
+	20050308. Files: global/db_common.[hc], global/dict_ldap.c,
+	global/dict_mysql.c, global/dict_pgsql.c, plus documentation.
+
+20050210
+
+	Bugfix: spurious fallback_relay warnings after 20050202.
+	Victor Duchovni.  File: smtp/smtp_connect.c.
+
+	Bugfix: (introduced while adopting Postfix/TLS patch) the
+	TLS cache scan stopped after expiring one entry.  Victor
+	Duchovni.  File: tls/tls_scache.c.
+
+	Safety: delete-behind when removing expired entries from
+	TLS session caches. With some maps the enumeration method
+	mis-behaves when the current entry is deleted. File:
+	tls/tls_scache.c.
+
+20050211
+
+	Cleanup: the "generics" feature (output address rewriting)
+	is renamed to "generic", for consistency with "canonical"
+	and "virtual".
+
+20050212
+
+	Cleanup: remove old trace(8) logfile before attempting
+	delivery (and after locking the message file exclusively).
+	Files: *qmgr/qmgr_message.c.
+
+	Cleanup: don't parse-then-regenerate message headers when
+	no address is changed by address rewriting operations. This
+	behavior was copied from the SMTP client's generic mapping
+	code.  Files: cleanup/cleanup_rewrite.c, cleanup/cleanup_map11.c,
+	cleanup/cleanup_masquerade.c, cleanup/cleanup_message.c..
+
+20050215
+
+	Bugfix: don't chmod queue files while running "postfix
+	set-permissions". This prevents mail from being labeled as
+	"corrupt" when a live Postfix system is upgraded.  Found
+	by Victor Duchovni.  File: conf/post-install.
+
+20050216
+
+	Feature: in smtpd?_discard_ehlo_keyword(s|_address_maps)
+	specify the pseudo keyword "silent-discard" in order to
+	avoid logging that some EHLO keyword is being suppressed.
+	File: global/ehlo_mask.[hc].
+
+20050217
+
+	Bugfix: typo in tls_server.c, breaking CApath.  Fix by
+	Philipp Morger. File: tls/tls_server.c.
+
+20050227
+
+	Bugfix (bug introduced 20040331): with SIGHUP ignored, the
+	postdrop signal handler would effectively ignore SIGINT,
+	SIGQUIT and SIGTERM.  Simplified the overly-conservative
+	protection against nested signals in postdrop, and added
+	some future proofing comments.  File:  postdrop/postdrop.c
+
+	Cleanup: when address rewriting is enabled, don't change
+	the capitalization of header labels, i.e. don't replace
+	FROM: or CC: by From: or Cc:. Files: cleanup/cleanup_message.c,
+	smtp/smtp_proto.c.
+
+20050228
+
+	Cleanup/portability: missing #includes and bad prototypes.
+	Matthias Andree, Carsten Hoeger, and others.
+
+20050302
+
+	Workaround: make TLS session caching work with perverse
+	sites that have multiple servers per hostname or even
+	multiple servers per IP address, but no shared TLS session
+	cache. The SMTP client TLS session cache is now indexed by
+	(server hostname, server address, server port, server helo
+	hostname). After an idea by Victor Duchovni. Files:
+	smtp/smtp_proto.c, tls/tls_client.c.
+
+20050303
+
+	Bugfix (bug inherited from Postfix/TLS patch): a rare 9kbyte
+	memory leak when in-memory TLS session information expires;
+	found by setting the expiry time shorter than the time to
+	deliver one or two messages with a very slow machine.  This
+	was due to a missing SSL_SESSION_free() call in the "new
+	session" call-back routines. Found by Victor Duchovni.
+	Files: tls/tls_client.c, tls/tls_server.c.
+
+	Workaround: OpenSSL is overly agressive when purging a
+	not-yet expired entry from a full in-memory cache: it also
+	purges the entry from the on-disk server session cache.
+	Workaround is to let only the tlsmgr purge entries from the
+	on-disk server session cache.  Found by Victor Duchovni.
+	File: tls/tls_server.c.
+
+20050304
+
+	Postfix releases are now signed with Wietse's new PGP key.
+	The old key was getting a bit short for today's standards.
+	The new public key can be found on the Postfix download
+	webpage. As proof of authenticity the new PGP key is signed
+	with Wietse's old PGP key.
+
+	Cleanup: check_mumble_{ns,mx}_access no longer attempt to
+	do MX or NS lookups for address literals. An address literal
+	is treated as its own MX host; there is no meaningful
+	equivalent for NS access control. File: smtpd/smtpd_check.c.
+
+20050310
+
+	Bugfix: the AIX and SUN compilers rightfully complained
+	about non-portable code in the "new" LDAP/SQL client. File:
+	global/db_common.c.
+
+	Workaround: some systems no longer recognize "tail +2" as
+	valid command syntax. Instead they require "improved" syntax
+	that is not valid on several other systems that Postfix
+	builds on.  So we have to stop using the tail command.
+	Files: Makefile.in, src/*/Makefile.in.
+
+20050312
+
+	Bugfix: the TLS session cache cleaning code didn't always
+	delete the right entry. Problem found by Victor Duchovni,
+	more problems found by Wietse. File: tls/tls_scache.c.
+
+20050314
+
+	Portability: Berkeley DB changed API from version 2.5 to
+	2.6. Rob Foehl. File: util/dict_db.c.
+
+20050315
+
+	Bugfix: when <unistd.h> is included, read is a reserved
+	identifier. File: smtpstone/smtp-source.c.
+
+20050317
+
+	Cleanup: change wording of error message when an IPv6 address
+	is mistaken for maptype:mapname. File: util/dict_open.c.
+
+20050321
+
+	Robustness: don't look for SMTP status code when there was
+	none. File: smtp/smtp_chat.c, lmtp/lmtp_chat.c.
+
+	Portability: missing netinet/in.h include, so that ntohs()
+	was not defined on HP-UX. File: smtp/smtp_proto.c.
+
+20050327
+
+	Bugfix: the SMTP and LMTP clients did not ask the queue
+	manager to reduce destination concurrency when "lost
+	connection" or "connection timed out" happened AFTER Postfix
+	received the server greeting. Files: smtp/smtp_trouble.c,
+	lmtp/lmtp-trouble.c.
+
+20050328
+
+	Cleanup: the REPLACE action is no longer implemented as
+	PREPEND+IGNORE. The result remains in the input stream, and
+	is subject to address rewriting and other processing where
+	applicable.  File: cleanup/cleanup_message.c.
+
+20050402
+
+	Cleanup: updated error messages about MIME processing errors
+	in the SMTP client. These errors are no longer specific to
+	8bit->7bit conversion; they can also happen with generic
+	address mapping. File: smtp/smtp_proto.c.
+
+20050407
+
+	@%^!#& Thanks to inadequate SASL documentation the client
+	could negotiate a security layer where none was desired.
+	Better documentation has become available since Postfix
+	SASL support was implemented, and now Postfix needs to be
+	fixed. Files: */*_sasl_glue.c.
+
+20050409
+
+	Safety: the CDB map now logs a warning when the source file
+	is newer than the indexed file, just like the Berkeley DB
+	and DBM maps. Michael Tokarev. File: util/dict_cdb.c.
+
+20050412
+
+	Bugfix: while updating the cleanup_flush() infrastructure
+	in the 2.3 development release, eliminated a portability
+	problem that was introduced when "REJECT text" support was
+	added. File: cleanup/cleanup.c.
+
+20050413
+
+	Portability: don't mix socket message send/receive calls
+	with socket stream read/write calls. The fact that you can
+	get away with it only on some stacks implies that there is
+	no long-term guarantee. Specify -DCAN_WRITE_BEFORE_SENDING_FD
+	if you feel brave. File: util/sys_defs.h.
+
+	Robustness: re-compile all object files after the "make
+	makefiles" options have changed. Files: src/*/Makefile.in.
+
+20050417
+
+	Safety: don't call syslog from a user-triggered signal
+	handler, and other minor fixes back-ported from the 2.3
+	development release.  File: postdrop/postdrop.c.
+
+20050422
+
+	Bugfix: postsuper could lose an error message after reporting
+	a fatal error. Fix back-ported from the 2.3 development
+	release.  File: postsuper/postsuper.c.
+
+20050427
+
+	Bugfix: don't panic when the fall-back relay can't be used
+	because the local MTA is MX for the destination, or when
+	the fall-back relay can't be used because it was already
+	tried via a cached session.  Files: util/argv.c,
+	smtp/smtp_connect.c.
+
+20050517
+
+	Bugfix: in a DSN report, the original recipient should not
+	be xtext encoded. File: bounce/bounce_notify_util.c.
+
+20050523
+
+	Bugfix: mymalloc() panic with mistyped server host list.
+	File: global/dict_pgsql.c.
+
+20040530
+
+	Bugfix: TLS MUST_NOPEERMATCH didn't work (inherited from
+	TLS patch), and a dangling pointer in the corresponding
+	error handling. File: smtp/smtp_proto.c.
+
+20050615
+
+	Cleanup: the SMTP client now sends QUIT when the initial
+	HELO handshake fails. it still doesn't send QUIT when the
+	server greets with a [45]XX code, as that is handled in the
+	connection management code before a session context exists.
+	File: smtp/smtp_connect.c.
+
+20050616
+
+	Bugfix: missing or mis-placed va_end() macros, found in
+	Postfix 2.3 code review. Files: util/netstring.c,
+	util/myaddrinfo.c, util/attr_clnt.c, util/vstream.c.
+
+20050621
+
+	Portability: file descriptor passing is available for Tru64
+	UNIX, but AIX4 and IRIX6 will have to do without. This means
+	no SMTP connection caching for those platforms.  Albert
+	Chin.  File: util/sys_defs.h.
+
+20050630
+
+	Portability: the connection caching code broke on LP64
+	systems (inherited from Stevens Network Programming).  Files:
+	util/unix_send_fd.c, util/unix_recv_fd.c. This code is
+	back-ported from the Postfix 2.3 snapshot release.
+
+20050706
+
+	Robustness: the SMTP client now disables caching when it
+	is unable to communicate with the scache(8) connection
+	caching server, instead of looping forever and not delivering
+	mail. File: global/scache_clnt.c.  This code is back-ported
+	from the Postfix 2.3 snapshot release.
+
+	Portability: after sending a socket, the scache(8) server
+	now waits for an ACK from the connection cache client before
+	closing the socket that it just sent. Files: scache/scache.c,
+	global/scache_clnt.c. This code is back-ported from the
+	Postfix 2.3 snapshot release.
+
+20050711-3
+
+	Portability: on LP64 systems, integer expressions are int,
+	but sizeof() and pointer difference expressions are larger.
+	Point fixes for a few discrepancies with variadic functions
+	that expect int (the permanent fix is to change the receiving
+	modules, but that results in too much change, and is not
+	allowed in the stable release).  Files: tls/tls_scache.c,
+	util/clean_env.c, util/vstring.h, smtpstone/qmqp-source.c.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: flush.8,v 1.1.1.5 2004/05/31 00:24:19 heas Exp $
+.\"	$NetBSD: flush.8,v 1.1.1.6 2005/08/18 21:04:17 rpaulo Exp $
 .\"
 .TH FLUSH 8 
 .ad
@@ -14,7 +14,8 @@ Postfix fast flush server
 .SH DESCRIPTION
 .ad
 .fi
-The flush server maintains a record of deferred mail by destination.
+The \fBflush\fR(8) server maintains a record of deferred
+mail by destination.
 This information is used to improve the performance of the SMTP
 \fBETRN\fR request, and of its command-line equivalent,
 "\fBsendmail -qR\fR" or "\fBpostqueue -f\fR".
@@ -35,7 +36,7 @@ which defaults to \fB$relay_domains\fR.
 
 This server implements the following requests:
 .IP "\fBadd\fI sitename queueid\fR"
-Inform the fast flush server that the message with the specified
+Inform the \fBflush\fR(8) server that the message with the specified
 queue ID is queued for the specified destination.
 .IP "\fBsend\fI sitename\fR"
 Request delivery of mail that is queued for the specified
@@ -56,7 +57,7 @@ Do a \fBrefresh\fR for all per-destination logfiles.
 .nf
 .ad
 .fi
-The fast flush server is not security-sensitive. It does not
+The \fBflush\fR(8) server is not security-sensitive. It does not
 talk to the network, and it does not talk to local users.
 The fast flush server can run chrooted at fixed low privilege.
 .SH DIAGNOSTICS
@@ -74,7 +75,7 @@ be automated with a suitable wakeup timer setting in the
 \fBmaster.cf\fR configuration file.
 
 Upon receipt of a request to deliver mail for an eligible
-destination, the \fBflush\fR server requests delivery of all messages
+destination, the \fBflush\fR(8) server requests delivery of all messages
 that are listed in that destination's logfile, regardless of the
 recipients of those messages. This is not an issue for mail
 that is sent to a \fBrelay_domains\fR destination because
@@ -84,12 +85,12 @@ such mail typically only has recipients in one domain.
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically as flush(8)
+Changes to \fBmain.cf\fR are picked up automatically as \fBflush\fR(8)
 processes run for only a limited amount of time. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
@@ -138,6 +139,7 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 smtpd(8), SMTP server
 qmgr(8), queue manager
 postconf(5), configuration parameters
+master(5), generic daemon options
 master(8), process manager
 syslogd(8), system logging
 .SH "README FILES"

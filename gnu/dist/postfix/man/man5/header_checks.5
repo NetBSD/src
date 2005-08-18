@@ -1,4 +1,4 @@
-.\"	$NetBSD: header_checks.5,v 1.1.1.4 2004/11/13 05:05:30 heas Exp $
+.\"	$NetBSD: header_checks.5,v 1.1.1.5 2005/08/18 21:03:53 rpaulo Exp $
 .\"
 .TH HEADER_CHECKS 5 
 .ad
@@ -72,7 +72,7 @@ in the form of Postfix regular expression lookup tables. Usually the
 best performance is obtained with \fBpcre\fR (Perl Compatible Regular
 Expression) tables, but the slower \fBregexp\fR (POSIX regular
 expressions) support is more widely available.
-Use the command \fBpostconf -m\fR to find out what lookup table
+Use the command "\fBpostconf -m\fR" to find out what lookup table
 types your Postfix system supports.
 
 The general format of Postfix regular expression tables is
@@ -121,9 +121,10 @@ next input line is inspected.
 .fi
 Substitution of substrings from the matched expression into the
 \fIaction\fR
-string is possible using the conventional Perl syntax ($1, $2, etc.).
-The macros in the result string may need to be written as ${n}
-or $(n) if they aren't followed by whitespace.
+string is possible using the conventional Perl syntax
+(\fB$1\fR, \fB$2\fR, etc.).
+The macros in the result string may need to be written as \fB${n}\fR
+or \fB$(n)\fR if they aren't followed by whitespace.
 
 Note: since negated patterns (those preceded by \fB!\fR) return a
 result when the expression does not match, substitutions are not
@@ -175,6 +176,10 @@ Mail that is placed on hold can be examined with the
 \fBpostcat\fR(1) command, and can be destroyed or released with
 the \fBpostsuper\fR(1) command.
 .sp
+Note: use "\fBpostsuper -r\fR" to release mail that was kept on
+hold for a significant fraction of \fB$maximal_queue_lifetime\fR
+or \fB$bounce_queue_lifetime\fR, or longer.
+.sp
 Note: this action affects all recipients of the message.
 .sp
 This feature is available in Postfix 2.0 and later.
@@ -185,12 +190,23 @@ the next input line.
 Prepend one line with the specified text and inspect the next
 input line.
 .sp
-Note: the prepended text is output immediately before the
-input that triggered the \fBPREPEND\fR action. A body action
-cannot prepend a message header.
-.sp
-Note: this action cannot be used to prepend multi-line text.
-.sp
+Notes:
+.RS
+.IP \(bu
+The prepended text is output on a separate line, immediately
+before the input that triggered the \fBPREPEND\fR action.
+.IP \(bu
+The prepended text is not considered part of the input
+stream: it is not subject to header/body checks or address
+rewriting, and it does not affect the way that Postfix adds
+missing message headers.
+.IP \(bu
+When prepending text before a message header line, the prepended
+text must begin with a valid message header label.
+.IP \(bu
+This action cannot be used to prepend multi-line text.
+.RE
+.IP
 This feature is available in Postfix 2.1 and later.
 .IP "\fBREDIRECT \fIuser@domain\fR"
 Write a message redirection request to the queue file and
@@ -203,6 +219,24 @@ all recipients of the message. If multiple \fBREDIRECT\fR actions
 fire, only the last one is executed.
 .sp
 This feature is available in Postfix 2.1 and later.
+.IP "\fBREPLACE \fItext...\fR"
+Replace the current line with the specified text and inspect the next
+input line.
+.sp
+This feature is available in Postfix 2.2 and later. The
+description below applies to Postfix 2.2.2 and later.
+.sp
+Notes:
+.RS
+.IP \(bu
+When replacing a message header line, the replacement text
+must begin with a valid header label.
+.IP \(bu
+The replaced text remains part of the input stream. Unlike
+the result from the \fBPREPEND\fR action, a replaced message
+header may be subject to address rewriting and may affect
+the way that Postfix adds missing message headers.
+.RE
 .IP "\fBREJECT \fIoptional text...\fR
 Reject the entire message. Reply with \fIoptional text...\fR when
 the optional text is specified, otherwise reply with a generic error

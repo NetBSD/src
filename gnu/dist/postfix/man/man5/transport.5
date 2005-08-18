@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.1.1.9 2004/05/31 00:24:19 heas Exp $
+.\"	$NetBSD: transport.5,v 1.1.1.10 2005/08/18 21:04:14 rpaulo Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -6,7 +6,7 @@
 .SH NAME
 transport
 \-
-format of Postfix transport table
+Postfix transport table format
 .SH "SYNOPSIS"
 .na
 .nf
@@ -18,7 +18,7 @@ format of Postfix transport table
 .SH DESCRIPTION
 .ad
 .fi
-The optional \fBtransport\fR table specifies a mapping from email
+The optional \fBtransport\fR(5) table specifies a mapping from email
 addresses to message delivery transports and/or relay hosts. The
 mapping is used by the \fBtrivial-rewrite\fR(8) daemon.
 
@@ -38,11 +38,11 @@ A list of domains that is by default delivered via
 Mail for any other destination is by default delivered via
 \fB$default_transport\fR.
 .PP
-Normally, the \fBtransport\fR table is specified as a text file
+Normally, the \fBtransport\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
 The result, an indexed file in \fBdbm\fR or \fBdb\fR format, is used
 for fast searching by the mail system. Execute the command
-\fBpostmap /etc/postfix/transport\fR in order to rebuild the indexed
+"\fBpostmap /etc/postfix/transport\fR" in order to rebuild the indexed
 file after changing the transport table.
 
 When the table is provided via other means such as NIS, LDAP
@@ -75,7 +75,7 @@ a domain name hierarchy, as described in section "TABLE LOOKUP".
 The \fIresult\fR is of the form \fItransport:nexthop\fR and
 specifies how or where to deliver mail. This is described in
 section "RESULT FORMAT".
-.SH "TABLE LOOKUP"
+.SH "TABLE SEARCH ORDER"
 .na
 .nf
 .ad
@@ -84,17 +84,17 @@ With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, patterns are tried in the order as
 listed below:
 .IP "\fIuser+extension@domain transport\fR:\fInexthop\fR"
-Mail for \fIuser+extension@domain\fR is delivered through
+Deliver mail for \fIuser+extension@domain\fR through
 \fItransport\fR to
 \fInexthop\fR.
 .IP "\fIuser@domain transport\fR:\fInexthop\fR"
-Mail for \fIuser@domain\fR is delivered through \fItransport\fR to
+Deliver mail for \fIuser@domain\fR through \fItransport\fR to
 \fInexthop\fR.
 .IP "\fIdomain transport\fR:\fInexthop\fR"
-Mail for \fIdomain\fR is delivered through \fItransport\fR to
+Deliver mail for \fIdomain\fR through \fItransport\fR to
 \fInexthop\fR.
 .IP "\fI.domain transport\fR:\fInexthop\fR"
-Mail for any subdomain of \fIdomain\fR is delivered through
+Deliver mail for any subdomain of \fIdomain\fR through
 \fItransport\fR to \fInexthop\fR. This applies only when the
 string \fBtransport_maps\fR is not listed in the
 \fBparent_domain_matches_subdomains\fR configuration setting.
@@ -106,6 +106,9 @@ functions as the wild-card pattern).
 Note 2: the null recipient address is looked up as
 \fB$empty_address_recipient\fR@\fB$myhostname\fR (default:
 mailer-daemon@hostname).
+
+Note 3: \fIuser@domain\fR or \fIuser+extension@domain\fR
+lookup is available in Postfix 2.0 and later.
 .SH "RESULT FORMAT"
 .na
 .nf
@@ -230,7 +233,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available in Postfix version 2.1.
+This feature is not available up to and including Postfix version 2.2.
 
 Each lookup operation uses the entire recipient address once.  Thus,
 \fIsome.domain.hierarchy\fR is not looked up via its parent domains,
@@ -244,7 +247,7 @@ Results are the same as with indexed file lookups.
 .fi
 The following \fBmain.cf\fR parameters are especially relevant.
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .IP \fBempty_address_recipient\fR
 The address that is looked up instead of the null sender address.
 .IP \fBparent_domain_matches_subdomains\fR

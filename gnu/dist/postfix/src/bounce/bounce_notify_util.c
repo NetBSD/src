@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_util.c,v 1.1.1.8 2004/11/13 05:05:38 heas Exp $	*/
+/*	$NetBSD: bounce_notify_util.c,v 1.1.1.9 2005/08/18 21:05:48 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -462,7 +462,7 @@ int     bounce_boilerplate(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
     post_mail_fputs(bounce, "");
     if (bounce_info->flush == BOUNCE_MSG_FAIL) {
 	post_mail_fputs(bounce,
-	       "I'm sorry to have to inform you that your message could not be");
+	       "I'm sorry to have to inform you that your message could not");
 	post_mail_fputs(bounce,
 	       "be delivered to one or more recipients. It's attached below.");
     } else if (bounce_info->flush == BOUNCE_MSG_WARN) {
@@ -615,9 +615,8 @@ int     bounce_recipient_dsn(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
     post_mail_fprintf(bounce, "Final-Recipient: rfc822; %s",
 		      bounce_info->log_handle->recipient);
     if (bounce_info->log_handle->orig_rcpt) {
-	xtext_quote(bounce_info->buf, bounce_info->log_handle->orig_rcpt, "+=");
 	post_mail_fprintf(bounce, "Original-Recipient: rfc822; %s",
-			  STR(bounce_info->buf));
+			  bounce_info->log_handle->orig_rcpt);
     }
     post_mail_fprintf(bounce, "Action: %s",
 		      bounce_info->flush == BOUNCE_MSG_FAIL ?

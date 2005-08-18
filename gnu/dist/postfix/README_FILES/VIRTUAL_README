@@ -57,7 +57,7 @@ ADDRESS_CLASS_README file.
 LLooccaall ffiilleess vveerrssuuss nneettwwoorrkk ddaattaabbaasseess
 
 The examples in this text use table lookups from local files such as DBM or
-berkeley DB. These are easy to debug with the ppoossttmmaapp command:
+Berkeley DB. These are easy to debug with the ppoossttmmaapp command:
 
     Example: postmap -q info@example.com hash:/etc/postfix/virtual
 
@@ -267,7 +267,7 @@ background on this glue you may want to take a look at the virtual mailbox
 domain class as defined in the ADDRESS_CLASS_README file.
 
 The text in this section describes what things should look like from Postfix's
-point of view. See LMTP_README or MAILDROP_README for specific information
+point of view. See CYRUS_README or MAILDROP_README for specific information
 about Cyrus or about Courier maildrop.
 
 Here is an example for a hosted domain example.com that delivers to a non-

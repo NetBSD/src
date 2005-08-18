@@ -1,4 +1,4 @@
-.\"	$NetBSD: postcat.1,v 1.1.1.4 2004/05/31 00:24:16 heas Exp $
+.\"	$NetBSD: postcat.1,v 1.1.1.5 2005/08/18 21:03:46 rpaulo Exp $
 .\"
 .TH POSTCAT 1 
 .ad
@@ -10,11 +10,11 @@ show Postfix queue file contents
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostcat\fR [\fB-vq\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
+\fBpostcat\fR [\fB-oqv\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostcat\fR command prints the contents of the named
+The \fBpostcat\fR(1) command prints the contents of the named
 \fIfiles\fR in human-readable form. The files are expected
 to be in Postfix queue file format. If no
 \fIfiles\fR are specified on the command line, the program
@@ -24,6 +24,8 @@ Options:
 .IP "\fB-c \fIconfig_dir\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory.
+.IP \fB-o\fR
+Print the queue file offset of each record.
 .IP \fB-q\fR
 Search the Postfix queue for the named \fIfiles\fR instead
 of taking the names literally.
@@ -52,7 +54,7 @@ The following \fBmain.cf\fR parameters are especially relevant to
 this program.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pipe.8,v 1.1.1.7 2004/05/31 00:24:19 heas Exp $
+.\"	$NetBSD: pipe.8,v 1.1.1.8 2005/08/18 21:04:21 rpaulo Exp $
 .\"
 .TH PIPE 8 
 .ad
@@ -14,7 +14,7 @@ Postfix delivery to external command
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpipe\fR daemon processes requests from the Postfix queue
+The \fBpipe\fR(8) daemon processes requests from the Postfix queue
 manager to deliver messages to external commands.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
@@ -23,7 +23,7 @@ Message attributes such as sender address, recipient address and
 next-hop host name can be specified as command-line macros that are
 expanded before the external command is executed.
 
-The \fBpipe\fR daemon updates queue files and marks recipients
+The \fBpipe\fR(8) daemon updates queue files and marks recipients
 as finished, or it informs the queue manager that delivery should
 be tried again at a later time. Delivery status reports are sent
 to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
@@ -53,6 +53,16 @@ entry for the pipe-based delivery transport.
 .fi
 The external command attributes are given in the \fBmaster.cf\fR
 file at the end of a service definition.  The syntax is as follows:
+.IP "\fBdirectory=\fIpathname\fR (optional, default: \fB$queue_directory\fR)"
+Change to the named directory before executing the external command.
+Delivery is deferred in case of failure.
+.sp
+This feature is available as of Postfix 2.2.
+.IP "\fBeol=string\fR (optional, default: \fB\en\fR)"
+The output record delimiter. Typically one would use either
+\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
+sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
+\e\fIddd\fR (up to three octal digits) and \fB\e\e\fR.
 .IP "\fBflags=BDFORhqu.>\fR (optional)"
 Optional message processing flags. By default, a message is
 copied unchanged.
@@ -65,6 +75,8 @@ when preceded by a blank line.
 Prepend a "\fBDelivered-To: \fIrecipient\fR" message header with the
 envelope recipient address. Note: for this to work, the
 \fItransport\fB_destination_recipient_limit\fR must be 1.
+.sp
+This feature is available as of Postfix 2.0.
 .IP \fBF\fR
 Prepend a "\fBFrom \fIsender time_stamp\fR" envelope header to
 the message content.
@@ -73,6 +85,8 @@ This is expected by, for example, \fBUUCP\fR software.
 Prepend an "\fBX-Original-To: \fIrecipient\fR" message header
 with the recipient address as given to Postfix. Note: for this to
 work, the \fItransport\fB_destination_recipient_limit\fR must be 1.
+.sp
+This feature is available as of Postfix 2.0.
 .IP \fBR\fR
 Prepend a \fBReturn-Path:\fR message header with the envelope sender
 address.
@@ -88,7 +102,7 @@ transparent version of RFC 822.
 This is recommended for delivery via \fBUUCP\fR or \fBBSMTP\fR.
 .sp
 The result is compatible with the address parsing of command-line
-recipients by the Postfix \fBsendmail\fR mail submission command.
+recipients by the Postfix \fBsendmail\fR(1) mail submission command.
 .sp
 The \fBq\fR flag affects only entire addresses, not the partial
 address information from the \fB$user\fR, \fB$extension\fR or
@@ -98,12 +112,15 @@ Fold the command-line \fB$recipient\fR address localpart (text to
 the left of the right-most \fB@\fR character) to lower case.
 This is recommended for delivery via \fBUUCP\fR.
 .IP \fB.\fR
-Prepend \fB.\fR to lines starting with "\fB.\fR". This is needed
+Prepend "\fB.\fR" to lines starting with "\fB.\fR". This is needed
 by, for example, \fBBSMTP\fR software.
 .IP \fB>\fR
-Prepend \fB>\fR to lines starting with "\fBFrom \fR". This is expected
+Prepend "\fB>\fR" to lines starting with "\fBFrom \fR". This is expected
 by, for example, \fBUUCP\fR software.
 .RE
+.IP "\fBsize\fR=\fIsize_limit\fR (optional)"
+Messages greater in size than this limit (in bytes) will be bounced
+back to the sender.
 .IP "\fBuser\fR=\fIusername\fR (required)"
 .IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
 The external command is executed with the rights of the
@@ -112,14 +129,6 @@ commands with root privileges, or with the privileges of the
 mail system owner. If \fIgroupname\fR is specified, the
 corresponding group ID is used instead of the group ID of
 \fIusername\fR.
-.IP "\fBeol=string\fR (optional, default: \fB\en\fR)"
-The output record delimiter. Typically one would use either
-\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
-sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
-\e\fIoctal\fR and \fB\e\e\fR.
-.IP "\fBsize\fR=\fIsize_limit\fR (optional)"
-Messages greater in size than this limit (in bytes) will be bounced
-back to the sender.
 .IP "\fBargv\fR=\fIcommand\fR... (required)"
 The command to be executed. This must be specified as the
 last command attribute.
@@ -128,8 +137,28 @@ shell meta characters by a shell command interpreter.
 .sp
 In the command argument vector, the following macros are recognized
 and replaced with corresponding information from the Postfix queue
-manager delivery request:
+manager delivery request.
+.sp
+In addition to the form ${\fIname\fR}, the forms $\fIname\fR and
+$(\fIname\fR) are also recognized.  Specify \fB$$\fR where a single
+\fB$\fR is wanted.
 .RS
+.IP \fB${\fBclient_address\fR}\fR
+This macro expands to the remote client network address.
+.sp
+This is available in Postfix 2.2 and later.
+.IP \fB${\fBclient_helo\fR}\fR
+This macro expands to the remote client HELO command parameter.
+.sp
+This is available in Postfix 2.2 and later.
+.IP \fB${\fBclient_hostname\fR}\fR
+This macro expands to the remote client hostname.
+.sp
+This is available in Postfix 2.2 and later.
+.IP \fB${\fBclient_protocol\fR}\fR
+This macro expands to the remote client protocol.
+.sp
+This is available in Postfix 2.2 and later.
 .IP \fB${\fBextension\fR}\fR
 This macro expands to the extension part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the extension is
@@ -160,6 +189,23 @@ expands into as many command-line arguments as there are recipients.
 .sp
 This information is modified by the \fBhqu\fR flags for quoting
 and case folding.
+.IP \fB${\fBsasl_method\fR}\fR
+This macro expands to the SASL authentication mechanism used
+during the reception of the message. An empty string is passed
+if the message has been received without SASL authentication.
+.sp
+This is available in Postfix 2.2 and later.
+.IP \fB${\fBsasl_sender\fR}\fR
+This macro expands to the SASL sender name (i.e. the original
+submitter as per RFC 2554) used during the reception of the message.
+.sp
+This is available in Postfix 2.2 and later.
+.IP \fB${\fBsasl_username\fR}\fR
+This macro expands to the SASL user name used during the reception
+of the message. An empty string is passed if the message has been
+received without SASL authentication.
+.sp
+This is available in Postfix 2.2 and later.
 .IP \fB${\fBsender\fR}\fR
 This macro expands to the envelope sender address.
 .sp
@@ -177,10 +223,6 @@ into as many command-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .RE
-.PP
-In addition to the form ${\fIname\fR}, the forms $\fIname\fR and
-$(\fIname\fR) are also recognized.  Specify \fB$$\fR where a single
-\fB$\fR is wanted.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -203,12 +245,12 @@ commands as the specified user. It is therefore security sensitive.
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically as pipe(8)
+Changes to \fBmain.cf\fR are picked up automatically as \fBpipe\fR(8)
 processes run for only a limited amount of time. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .SH "RESOURCE AND RATE CONTROLS"
 .na
 .nf
@@ -273,6 +315,7 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 qmgr(8), queue manager
 bounce(8), delivery status reports
 postconf(5), configuration parameters
+master(5), generic daemon options
 master(8), process manager
 syslogd(8), system logging
 .SH "LICENSE"

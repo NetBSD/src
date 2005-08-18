@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmqp-source.1,v 1.1.1.3 2004/05/31 00:24:16 heas Exp $
+.\"	$NetBSD: qmqp-source.1,v 1.1.1.4 2005/08/18 21:03:49 rpaulo Exp $
 .\"
 .TH QMQP-SOURCE 1 
 .ad
@@ -20,10 +20,16 @@ multi-threaded QMQP test generator
 \fBqmqp-source\fR connects to the named host and TCP port (default 628)
 and sends one or more messages to it, either sequentially
 or in parallel. The program speaks the QMQP protocol.
-Connections can be made to UNIX-domain and IPV4 servers.
-IPV4 is the default.
+Connections can be made to UNIX-domain and IPv4 or IPv6 servers.
+IPv4 and IPv6 are the default.
 
 Options:
+.IP \fB-4\fR
+Connect to the server with IPv4. This option has no effect when
+Postfix is built without IPv6 support.
+.IP \fB-6\fR
+Connect to the server with IPv6. This option is not available when
+Postfix is built without IPv6 support.
 .IP \fB-c\fR
 Display a running counter that is incremented each time
 a delivery completes.

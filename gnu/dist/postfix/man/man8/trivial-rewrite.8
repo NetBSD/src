@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.9 2004/07/28 22:49:05 heas Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.10 2005/08/18 21:04:26 rpaulo Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -14,17 +14,30 @@ Postfix address rewriting and resolving daemon
 .SH DESCRIPTION
 .ad
 .fi
-The \fBtrivial-rewrite\fR daemon processes three types of client
+The \fBtrivial-rewrite\fR(8) daemon processes three types of client
 service requests:
-.IP \fBrewrite\fR
-Rewrite an address to standard form. The \fBtrivial-rewrite\fR
-daemon by default appends local domain information to unqualified
-addresses, swaps bang paths to domain form, and strips source
-routing information. This process is under control of several
-configuration parameters (see below).
-.IP \fBresolve\fR
+.IP "\fBrewrite \fIcontext address\fR"
+Rewrite an address to standard form, according to the
+address rewriting context:
+.RS
+.IP \fBlocal\fR
+Append the domain names specified with \fB$myorigin\fR or
+\fB$mydomain\fR to incomplete addresses; do \fBswap_bangpath\fR
+and \fBallow_percent_hack\fR processing as described below, and
+strip source routed addresses (\fI@site,@site:user@domain\fR)
+to \fIuser@domain\fR form.
+.IP \fBremote\fR
+Append the domain name specified with
+\fB$remote_header_rewrite_domain\fR to incomplete
+addresses. Otherwise the result is identical to that of
+the \fBlocal\fR address rewriting context. This prevents
+Postfix from appending the local domain to spam from poorly
+written remote clients.
+.RE
+.IP "\fBresolve \fIaddress\fR"
 Resolve an address to a (\fItransport\fR, \fInexthop\fR,
-\fIrecipient\fR) triple. The meaning of the results is as follows:
+\fIrecipient\fR, \fIflags\fR) quadruple. The meaning of
+the results is as follows:
 .RS
 .IP \fItransport\fR
 The delivery agent to use. This is the first field of an entry
@@ -33,15 +46,19 @@ in the \fBmaster.cf\fR file.
 The host to send to and optional delivery method information.
 .IP \fIrecipient\fR
 The envelope recipient address that is passed on to \fInexthop\fR.
+.IP \fIflags\fR
+The address class, whether the address requires relaying,
+whether the address has problems, and whether the request failed.
 .RE
-.IP \fBverify\fR
+.IP "\fBverify \fIaddress\fR"
 Resolve an address for address verification purposes.
 .SH "SERVER PROCESS MANAGEMENT"
 .na
 .nf
 .ad
 .fi
-The trivial-rewrite servers run under control by the Postfix master
+The \fBtrivial-rewrite\fR(8) servers run under control by
+the Postfix master
 server.  Each server can handle multiple simultaneous connections.
 When all servers are busy while a client connects, the master
 creates a new server process, provided that the trivial-rewrite
@@ -60,7 +77,7 @@ None. The command does not interact with the outside world.
 .nf
 .ad
 .fi
-The \fBtrivial-rewrite\fR daemon is not security sensitive.
+The \fBtrivial-rewrite\fR(8) daemon is not security sensitive.
 By default, this daemon does not talk to remote or local users.
 It can run at a fixed low privilege in a chrooted environment.
 .SH DIAGNOSTICS
@@ -73,11 +90,11 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 .ad
 .fi
 On busy mail systems a long time may pass before a \fBmain.cf\fR
-change affecting trivial_rewrite(8) is picked up. Use the command
+change affecting \fBtrivial-rewrite\fR(8) is picked up. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .SH "COMPATIBILITY CONTROLS"
 .na
 .nf
@@ -96,20 +113,26 @@ invalid.
 .ad
 .fi
 .IP "\fBmyorigin ($myhostname)\fR"
-The default domain name that locally-posted mail appears to come
+The domain name that locally-posted mail appears to come
 from, and that locally posted mail is delivered to.
 .IP "\fBallow_percent_hack (yes)\fR"
 Enable the rewriting of the form "user%domain" to "user@domain".
 .IP "\fBappend_at_myorigin (yes)\fR"
-Append the string "@$myorigin" to mail addresses without domain
-information.
+With locally submitted mail, append the string "@$myorigin" to mail
+addresses without domain information.
 .IP "\fBappend_dot_mydomain (yes)\fR"
-Append the string ".$mydomain" to addresses that have no ".domain"
-information.
+With locally submitted mail, append the string ".$mydomain" to
+addresses that have no ".domain" information.
 .IP "\fBrecipient_delimiter (empty)\fR"
 The separator between user names and address extensions (user+foo).
 .IP "\fBswap_bangpath (yes)\fR"
 Enable the rewriting of "site!user" into "user@site".
+.PP
+Available in Postfix 2.2 and later:
+.IP "\fBremote_header_rewrite_domain (empty)\fR"
+Don't rewrite message headers from remote clients at all when
+this parameter is empty; otherwise, rewrite remote message headers
+and append the specified domain name to incomplete addresses.
 .SH "ROUTING CONTROLS"
 .na
 .nf
@@ -137,7 +160,7 @@ What Postfix features match subdomains of "domain.tld" automatically,
 instead of requiring an explicit ".domain.tld" pattern.
 .IP "\fBrelayhost (empty)\fR"
 The default host to send non-local mail to when no entry is matched
-in the optional transport(5) table.
+in the optional \fBtransport\fR(5) table.
 .IP "\fBtransport_maps (empty)\fR"
 Optional lookup tables with mappings from recipient address to
 (message delivery transport, next-hop destination).

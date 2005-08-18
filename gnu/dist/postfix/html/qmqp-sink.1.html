@@ -4,24 +4,30 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - qmqp-sink(1) </title>
 </head> <body> <pre>
-QMQP-SINK(1)                                         QMQP-SINK(1)
+QMQP-SINK(1)                                                      QMQP-SINK(1)
 
 <b>NAME</b>
        qmqp-sink - multi-threaded QMQP test server
 
 <b>SYNOPSIS</b>
-       <b>qmqp-sink</b> [<b>-cv</b>] [<b>-x</b> <i>time</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
+       <b>qmqp-sink</b> [<b>-46cv</b>] [<b>-x</b> <i>time</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
 
-       <b>qmqp-sink</b> [<b>-cv</b>] [<b>-x</b> <i>time</i>] <b>unix:</b><i>pathname backlog</i>
+       <b>qmqp-sink</b> [<b>-46cv</b>] [<b>-x</b> <i>time</i>] <b>unix:</b><i>pathname backlog</i>
 
 <b>DESCRIPTION</b>
        <b>qmqp-sink</b> listens on the named host (or address) and port.
        It receives messages from  the  network  and  throws  them
        away.   The purpose is to measure QMQP client performance,
        not protocol compliance.  Connections can be  accepted  on
-       IPV4  endpoints  or  UNIX-domain  sockets.   IPV4  is  the
-       default.  This program is  the  complement  of  the  <a href="qmqp-source.1.html"><b>qmqp-</b></a>
-       <a href="qmqp-source.1.html"><b>source</b>(1)</a> program.
+       IPv4  or  IPv6 endpoints, or on UNIX-domain sockets.  IPv4
+       and IPv6 are the default.  This program is the  complement
+       of the <a href="qmqp-source.1.html"><b>qmqp-source</b>(1)</a> program.
+
+       <b>-4</b>     Support  IPv4  only. This option has no effect when
+              Postfix is built without IPv6 support.
+
+       <b>-6</b>     Support IPv6 only. This  option  is  not  available
+              when Postfix is built without IPv6 support.
 
        <b>-c</b>     Display  a running counter that is updated whenever
               a delivery is completed.
@@ -46,5 +52,5 @@ QMQP-SINK(1)                                         QMQP-SINK(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                     QMQP-SINK(1)
+                                                                  QMQP-SINK(1)
 </pre> </body> </html>

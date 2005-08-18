@@ -35,6 +35,9 @@
 %CLASS security
 %PARAM allow_min_user
 %PARAM alternate_config_directories
+%PARAM authorized_flush_users
+%PARAM authorized_mailq_users
+%PARAM authorized_submit_users
 %PARAM default_privs
 %PARAM import_environment
 %PARAM proxy_read_maps
@@ -293,6 +296,7 @@
 %PARAM smtp_sasl_auth_enable
 %PARAM smtp_sasl_password_maps
 %PARAM smtp_sasl_security_options
+%PARAM smtp_sasl_mechanism_filter
 
 %CLASS lmtp-sasl
 %PARAM lmtp_sasl_auth_enable

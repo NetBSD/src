@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1.1.7 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: flush.c,v 1.1.1.8 2005/08/18 21:06:01 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	\fBflush\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The flush server maintains a record of deferred mail by destination.
+/*	The \fBflush\fR(8) server maintains a record of deferred
+/*	mail by destination.
 /*	This information is used to improve the performance of the SMTP
 /*	\fBETRN\fR request, and of its command-line equivalent,
 /*	"\fBsendmail -qR\fR" or "\fBpostqueue -f\fR".
@@ -29,7 +30,7 @@
 /*
 /*	This server implements the following requests:
 /* .IP "\fBadd\fI sitename queueid\fR"
-/*	Inform the fast flush server that the message with the specified
+/*	Inform the \fBflush\fR(8) server that the message with the specified
 /*	queue ID is queued for the specified destination.
 /* .IP "\fBsend\fI sitename\fR"
 /*	Request delivery of mail that is queued for the specified
@@ -48,7 +49,7 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	The fast flush server is not security-sensitive. It does not
+/*	The \fBflush\fR(8) server is not security-sensitive. It does not
 /*	talk to the network, and it does not talk to local users.
 /*	The fast flush server can run chrooted at fixed low privilege.
 /* DIAGNOSTICS
@@ -62,7 +63,7 @@
 /*	\fBmaster.cf\fR configuration file.
 /*
 /*	Upon receipt of a request to deliver mail for an eligible
-/*	destination, the \fBflush\fR server requests delivery of all messages
+/*	destination, the \fBflush\fR(8) server requests delivery of all messages
 /*	that are listed in that destination's logfile, regardless of the
 /*	recipients of those messages. This is not an issue for mail
 /*	that is sent to a \fBrelay_domains\fR destination because
@@ -70,12 +71,12 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically as flush(8)
+/*	Changes to \fBmain.cf\fR are picked up automatically as \fBflush\fR(8)
 /*	processes run for only a limited amount of time. Use the command
 /*	"\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
-/*	postconf(5) for more details including examples.
+/*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -120,6 +121,7 @@
 /*	smtpd(8), SMTP server
 /*	qmgr(8), queue manager
 /*	postconf(5), configuration parameters
+/*	master(5), generic daemon options
 /*	master(8), process manager
 /*	syslogd(8), system logging
 /* README FILES

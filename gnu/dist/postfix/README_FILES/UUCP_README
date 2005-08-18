@@ -5,8 +5,8 @@ PPoossttffiixx aanndd UUUUCCPP
 UUssiinngg UUUUCCPP oovveerr TTCCPP
 
 Despite a serious lack of sex-appeal, email via UUCP over TCP is a practical
-option for sites without permanent Internet connection, and for sites without a
-fixed IP address. For first-hand information, see the following guides:
+option for sites without permanent Internet connections, and for sites without
+a fixed IP address. For first-hand information, see the following guides:
 
   * Jim Seymour's guide for using UUCP over TCP at http://jimsun.LinxNet.com/
     jdp/uucp_over_tcp/index.html,
