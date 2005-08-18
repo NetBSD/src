@@ -27,8 +27,8 @@ Postfix distributions for general use.  </p>
 file</h2>
 
 <p> The installed main.cf file must be small. PLEASE resist the
-temptation to list all 300+ parameters in the main.cf file.  Postfix
-is supposed to be easy to configure. Listing all 300+ in main.cf
+temptation to list all 400+ parameters in the main.cf file.  Postfix
+is supposed to be easy to configure. Listing all 400+ in main.cf
 defeats the purpose. It is an invitation for hobbyists to make
 random changes without understanding what they do, and gets them
 into endless trouble.  </p>
@@ -62,7 +62,11 @@ user. </p>
 <p> First compile Postfix. After successful compilation, execute:
 </p>
 
-<blockquote> <pre> % sh postfix-install </pre> </blockquote>
+<blockquote> <pre> % <b>make package</b> </pre>
+</blockquote>
+
+<p> With Postfix versions before 2.2 you must invoke the post-install
+script directly (<tt>% <b>sh post-install</b></tt>). </p>
 
 <p> You will be prompted for installation parameters.  Specify an
 install_root directory other than /.  The mail_owner and setgid_group
@@ -73,8 +77,13 @@ installed on the destination machine. </p>
 <p> If you want to fully automate this process, specify all the
 non-default installation parameters on the command line: </p>
 
-<blockquote> <pre> % sh postfix-install -non-interactive
-install_root=/some/where ...  </pre> </blockquote>
+<blockquote> 
+<pre> % <b>make non-interactive-package install_root=/some/where</b>...  
+</pre> </blockquote>
+
+<p> With Postfix versions before 2.2 you must invoke the post-install
+script directly (<tt>% <b>sh post-install -non-interactive
+install_root...</b></tt>). </p>
 
 <h2>Begin Security Alert</h2>
 

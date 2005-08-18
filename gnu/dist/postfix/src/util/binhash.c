@@ -1,4 +1,4 @@
-/*	$NetBSD: binhash.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: binhash.c,v 1.1.1.3 2005/08/18 21:10:06 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -148,11 +148,11 @@ static unsigned binhash_hash(const char *key, int len, unsigned size)
 /* binhash_link - insert element into table */
 
 #define binhash_link(table, elm) { \
-    BINHASH_INFO **h = table->data + binhash_hash(elm->key, elm->key_len, table->size);\
+    BINHASH_INFO **_h = table->data + binhash_hash(elm->key, elm->key_len, table->size);\
     elm->prev = 0; \
-    if ((elm->next = *h) != 0) \
-	(*h)->prev = elm; \
-    *h = elm; \
+    if ((elm->next = *_h) != 0) \
+	(*_h)->prev = elm; \
+    *_h = elm; \
     table->used++; \
 }
 

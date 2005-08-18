@@ -1,4 +1,4 @@
-.\"	$NetBSD: regexp_table.5,v 1.1.1.9 2004/07/28 22:49:05 heas Exp $
+.\"	$NetBSD: regexp_table.5,v 1.1.1.10 2005/08/18 21:04:13 rpaulo Exp $
 .\"
 .TH REGEXP_TABLE 5 
 .ad
@@ -26,9 +26,9 @@ list of patterns, and when a match is found the corresponding
 result is returned.
 
 To find out what types of lookup tables your Postfix system
-supports use the \fBpostconf -m\fR command.
+supports use the "\fBpostconf -m\fR" command.
 
-To test lookup tables, use the \fBpostmap -fq\fR command as
+To test lookup tables, use the "\fBpostmap -fq\fR" command as
 described in the SYNOPSIS above.
 .SH "TABLE FORMAT"
 .na
@@ -64,8 +64,8 @@ starts with whitespace continues a logical line.
 .PP
 Each pattern is a POSIX regular expression enclosed by a pair of
 delimiters. The regular expression syntax is documented in
-re_format(7) with 4.4BSD, in regex(5) with Solaris, and in
-regex(7) with Linux. Other systems may use other document names.
+\fBre_format\fR(7) with 4.4BSD, in \fBregex\fR(5) with Solaris, and in
+\fBregex\fR(7) with Linux. Other systems may use other document names.
 
 The expression delimiter can be any character, except whitespace
 or characters that have special meaning (traditionally the forward

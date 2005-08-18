@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_init.c,v 1.1.1.5 2004/05/31 00:24:27 heas Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.1.1.6 2005/08/18 21:05:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -99,6 +99,9 @@ int     var_hopcount_limit;		/* max mailer hop count */
 char   *var_canonical_maps;		/* common canonical maps */
 char   *var_send_canon_maps;		/* sender canonical maps */
 char   *var_rcpt_canon_maps;		/* recipient canonical maps */
+char   *var_canon_classes;		/* what to canonicalize */
+char   *var_send_canon_classes;		/* what sender to canonicalize */
+char   *var_rcpt_canon_classes;		/* what recipient to canonicalize */
 char   *var_virt_alias_maps;		/* virtual alias maps */
 char   *var_masq_domains;		/* masquerade domains */
 char   *var_masq_exceptions;		/* users not masqueraded */
@@ -120,7 +123,7 @@ int     var_virt_expan_limit;		/* maximum virtual alias expansion */
 int     var_body_check_len;		/* when to stop body scan */
 char   *var_send_bcc_maps;		/* sender auto-bcc maps */
 char   *var_rcpt_bcc_maps;		/* recipient auto-bcc maps */
-bool    var_enable_errors_to;		/* extract Errors-To: address. */
+char   *var_remote_rwr_domain;		/* header-only surrogate */
 
 CONFIG_INT_TABLE cleanup_int_table[] = {
     VAR_HOPCOUNT_LIMIT, DEF_HOPCOUNT_LIMIT, &var_hopcount_limit, 1, 0,
@@ -134,7 +137,6 @@ CONFIG_INT_TABLE cleanup_int_table[] = {
 
 CONFIG_BOOL_TABLE cleanup_bool_table[] = {
     VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
-    VAR_ENABLE_ERRORS_TO, DEF_ENABLE_ERRORS_TO, &var_enable_errors_to,
     0,
 };
 
@@ -147,6 +149,9 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_CANONICAL_MAPS, DEF_CANONICAL_MAPS, &var_canonical_maps, 0, 0,
     VAR_SEND_CANON_MAPS, DEF_SEND_CANON_MAPS, &var_send_canon_maps, 0, 0,
     VAR_RCPT_CANON_MAPS, DEF_RCPT_CANON_MAPS, &var_rcpt_canon_maps, 0, 0,
+    VAR_CANON_CLASSES, DEF_CANON_CLASSES, &var_canon_classes, 1, 0,
+    VAR_SEND_CANON_CLASSES, DEF_SEND_CANON_CLASSES, &var_send_canon_classes, 1, 0,
+    VAR_RCPT_CANON_CLASSES, DEF_RCPT_CANON_CLASSES, &var_rcpt_canon_classes, 1, 0,
     VAR_VIRT_ALIAS_MAPS, DEF_VIRT_ALIAS_MAPS, &var_virt_alias_maps, 0, 0,
     VAR_MASQ_DOMAINS, DEF_MASQ_DOMAINS, &var_masq_domains, 0, 0,
     VAR_EMPTY_ADDR, DEF_EMPTY_ADDR, &var_empty_addr, 1, 0,
@@ -161,6 +166,7 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_MASQ_CLASSES, DEF_MASQ_CLASSES, &var_masq_classes, 0, 0,
     VAR_SEND_BCC_MAPS, DEF_SEND_BCC_MAPS, &var_send_bcc_maps, 0, 0,
     VAR_RCPT_BCC_MAPS, DEF_RCPT_BCC_MAPS, &var_rcpt_bcc_maps, 0, 0,
+    VAR_REM_RWR_DOMAIN, DEF_REM_RWR_DOMAIN, &var_remote_rwr_domain, 0, 0,
     0,
 };
 
@@ -170,6 +176,9 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
 MAPS   *cleanup_comm_canon_maps;
 MAPS   *cleanup_send_canon_maps;
 MAPS   *cleanup_rcpt_canon_maps;
+int     cleanup_comm_canon_flags;
+int     cleanup_send_canon_flags;
+int     cleanup_rcpt_canon_flags;
 MAPS   *cleanup_header_checks;
 MAPS   *cleanup_mimehdr_checks;
 MAPS   *cleanup_nesthdr_checks;
@@ -198,6 +207,24 @@ void    cleanup_all(void)
 
 void    cleanup_pre_jail(char *unused_name, char **unused_argv)
 {
+    static NAME_MASK send_canon_class_table[] = {
+	CANON_CLASS_ENV_FROM, CLEANUP_CANON_FLAG_ENV_FROM,
+	CANON_CLASS_HDR_FROM, CLEANUP_CANON_FLAG_HDR_FROM,
+	0,
+    };
+    static NAME_MASK rcpt_canon_class_table[] = {
+	CANON_CLASS_ENV_RCPT, CLEANUP_CANON_FLAG_ENV_RCPT,
+	CANON_CLASS_HDR_RCPT, CLEANUP_CANON_FLAG_HDR_RCPT,
+	0,
+    };
+    static NAME_MASK canon_class_table[] = {
+	CANON_CLASS_ENV_FROM, CLEANUP_CANON_FLAG_ENV_FROM,
+	CANON_CLASS_ENV_RCPT, CLEANUP_CANON_FLAG_ENV_RCPT,
+	CANON_CLASS_HDR_FROM, CLEANUP_CANON_FLAG_HDR_FROM,
+	CANON_CLASS_HDR_RCPT, CLEANUP_CANON_FLAG_HDR_RCPT,
+	0,
+    };
+
     static NAME_MASK masq_class_table[] = {
 	MASQ_CLASS_ENV_FROM, CLEANUP_MASQ_FLAG_ENV_FROM,
 	MASQ_CLASS_ENV_RCPT, CLEANUP_MASQ_FLAG_ENV_RCPT,
@@ -221,6 +248,18 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
 	cleanup_virt_alias_maps = maps_create(VAR_VIRT_ALIAS_MAPS,
 					      var_virt_alias_maps,
 					      DICT_FLAG_LOCK);
+    if (*var_canon_classes)
+	cleanup_comm_canon_flags =
+	    name_mask(VAR_CANON_CLASSES, canon_class_table,
+		      var_canon_classes);
+    if (*var_send_canon_classes)
+	cleanup_send_canon_flags =
+	    name_mask(VAR_CANON_CLASSES, send_canon_class_table,
+		      var_send_canon_classes);
+    if (*var_rcpt_canon_classes)
+	cleanup_rcpt_canon_flags =
+	    name_mask(VAR_CANON_CLASSES, rcpt_canon_class_table,
+		      var_rcpt_canon_classes);
     if (*var_masq_domains)
 	cleanup_masq_domains = argv_split(var_masq_domains, " ,\t\r\n");
     if (*var_header_checks)

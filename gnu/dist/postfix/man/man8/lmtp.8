@@ -1,4 +1,4 @@
-.\"	$NetBSD: lmtp.8,v 1.1.1.5 2004/05/31 00:24:19 heas Exp $
+.\"	$NetBSD: lmtp.8,v 1.1.1.6 2005/08/18 21:04:17 rpaulo Exp $
 .\"
 .TH LMTP 8 
 .ad
@@ -80,12 +80,12 @@ other trouble.
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically, as lmtp(8)
+Changes to \fBmain.cf\fR are picked up automatically, as \fBlmtp\fR(8)
 processes run for only a limited amount of time. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .SH "COMPATIBILITY CONTROLS"
 .na
 .nf
@@ -183,9 +183,9 @@ The LMTP client time limit for sending the LMTP message content.
 .IP "\fBlmtp_data_done_timeout (600s)\fR"
 The LMTP client time limit for sending the LMTP ".", and for
 receiving the server response.
-.IP "\fBlmtp_rset_timeout (120s)\fR"
-The LMTP client time limit for sending the RSET command, and for
-receiving the server response.
+.IP "\fBlmtp_rset_timeout (20s)\fR"
+The LMTP client time limit for sending the RSET command, and
+for receiving the server response.
 .IP "\fBlmtp_quit_timeout (300s)\fR"
 The LMTP client time limit for sending the QUIT command, and for
 receiving the server response.
@@ -230,6 +230,7 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 bounce(8), delivery status reports
 qmgr(8), queue manager
 postconf(5), configuration parameters
+master(5), generic daemon options
 services(4), Internet services and aliases
 master(8), process manager
 syslogd(8), system logging

@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.1.1.3 2004/07/28 22:49:18 heas Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.1.1.4 2005/08/18 21:06:52 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -30,6 +30,13 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Dean C. Strik
+/*	Department ICT Services
+/*	Eindhoven University of Technology
+/*	P.O. Box 513
+/*	5600 MB  Eindhoven, Netherlands
+/*	E-mail: <dean@ipnet6.org>
 /*--*/
 
 /* System library. */
@@ -44,20 +51,23 @@
 #define IN_CLASSD_NSHIFT 	28
 #endif
 
-#define BITS_PER_ADDR		32
-
 /* Utility library. */
 
 #include <msg.h>
 #include <vstring.h>
 #include <inet_addr_list.h>
 #include <name_mask.h>
+#include <myaddrinfo.h>
+#include <mask_addr.h>
+#include <argv.h>
 
 /* Global library. */
 
 #include <own_inet_addr.h>
 #include <mail_params.h>
 #include <mynetworks.h>
+#include <sock_addr.h>
+#include <been_here.h>
 
 /* Application-specific. */
 
@@ -82,13 +92,16 @@ const char *mynetworks(void)
 	char   *myname = "mynetworks";
 	INET_ADDR_LIST *my_addr_list;
 	INET_ADDR_LIST *my_mask_list;
-	unsigned long addr;
-	unsigned long mask;
-	struct in_addr net;
 	int     shift;
 	int     junk;
 	int     i;
 	int     mask_style;
+	struct sockaddr_storage *sa;
+	struct sockaddr_storage *ma;
+	int     net_mask_count = 0;
+	ARGV   *argv;
+	BH_TABLE *dup_filter;
+	char  **cpp;
 
 	mask_style = name_mask("mynetworks mask style", mask_styles,
 			       var_mynetworks_style);
@@ -108,59 +121,155 @@ const char *mynetworks(void)
 	my_addr_list = own_inet_addr_list();
 	my_mask_list = own_inet_mask_list();
 
-	for (i = 0; i < my_addr_list->used; i++) {
-	    addr = ntohl(my_addr_list->addrs[i].s_addr);
-	    mask = ntohl(my_mask_list->addrs[i].s_addr);
+	for (sa = my_addr_list->addrs, ma = my_mask_list->addrs;
+	     sa < my_addr_list->addrs + my_addr_list->used;
+	     sa++, ma++) {
+	    unsigned long addr;
+	    unsigned long mask;
+	    struct in_addr net;
 
-	    switch (mask_style) {
+	    if (SOCK_ADDR_FAMILY(sa) == AF_INET) {
+		addr = ntohl(SOCK_ADDR_IN_ADDR(sa).s_addr);
+		mask = ntohl(SOCK_ADDR_IN_ADDR(ma).s_addr);
 
-		/*
-		 * Natural mask. This is dangerous if you're customer of an
-		 * ISP who gave you a small portion of their network.
-		 */
-	    case MASK_STYLE_CLASS:
-		if (IN_CLASSA(addr)) {
-		    mask = IN_CLASSA_NET;
-		    shift = IN_CLASSA_NSHIFT;
-		} else if (IN_CLASSB(addr)) {
-		    mask = IN_CLASSB_NET;
-		    shift = IN_CLASSB_NSHIFT;
-		} else if (IN_CLASSC(addr)) {
-		    mask = IN_CLASSC_NET;
-		    shift = IN_CLASSC_NSHIFT;
-		} else if (IN_CLASSD(addr)) {
-		    mask = IN_CLASSD_NET;
-		    shift = IN_CLASSD_NSHIFT;
-		} else {
-		    msg_fatal("%s: bad address class: %s",
-			      myname, inet_ntoa(my_addr_list->addrs[i]));
+		switch (mask_style) {
+
+		    /*
+		     * Natural mask. This is dangerous if you're customer of
+		     * an ISP who gave you a small portion of their network.
+		     */
+		case MASK_STYLE_CLASS:
+		    if (IN_CLASSA(addr)) {
+			mask = IN_CLASSA_NET;
+			shift = IN_CLASSA_NSHIFT;
+		    } else if (IN_CLASSB(addr)) {
+			mask = IN_CLASSB_NET;
+			shift = IN_CLASSB_NSHIFT;
+		    } else if (IN_CLASSC(addr)) {
+			mask = IN_CLASSC_NET;
+			shift = IN_CLASSC_NSHIFT;
+		    } else if (IN_CLASSD(addr)) {
+			mask = IN_CLASSD_NET;
+			shift = IN_CLASSD_NSHIFT;
+		    } else {
+			msg_fatal("%s: unknown address class: %s",
+				  myname, inet_ntoa(SOCK_ADDR_IN_ADDR(sa)));
+		    }
+		    break;
+
+		    /*
+		     * Subnet mask. This is less unsafe, but still bad if
+		     * you're connected to a large subnet.
+		     */
+		case MASK_STYLE_SUBNET:
+		    for (junk = mask, shift = MAI_V4ADDR_BITS; junk != 0;
+			 shift--, junk <<= 1)
+			 /* void */ ;
+		    break;
+
+		    /*
+		     * Host only. Do not relay authorize other hosts.
+		     */
+		case MASK_STYLE_HOST:
+		    mask = ~0;
+		    shift = 0;
+		    break;
+
+		default:
+		    msg_panic("unknown mynetworks mask style: %s",
+			      var_mynetworks_style);
 		}
-		break;
-
-		/*
-		 * Subnet mask. This is safe, but breaks backwards
-		 * compatibility when used as default setting.
-		 */
-	    case MASK_STYLE_SUBNET:
-		for (junk = mask, shift = BITS_PER_ADDR; junk != 0; shift--, (junk <<= 1))
-		     /* void */ ;
-		break;
-
-		/*
-		 * Host only. Do not relay authorize other hosts.
-		 */
-	    case MASK_STYLE_HOST:
-		mask = ~0;
-		shift = 0;
-		break;
-
-	    default:
-		msg_panic("unknown mynetworks mask style: %s",
-			  var_mynetworks_style);
+		net.s_addr = htonl(addr & mask);
+		vstring_sprintf_append(result, "%s/%d ",
+				   inet_ntoa(net), MAI_V4ADDR_BITS - shift);
+		net_mask_count++;
+		continue;
 	    }
-	    net.s_addr = htonl(addr & mask);
-	    vstring_sprintf_append(result, "%s/%d ",
-				   inet_ntoa(net), BITS_PER_ADDR - shift);
+#ifdef HAS_IPV6
+	    else if (SOCK_ADDR_FAMILY(sa) == AF_INET6) {
+		MAI_HOSTADDR_STR hostaddr;
+		unsigned char *ac;
+		unsigned char *end;
+		unsigned char ch;
+		struct sockaddr_in6 net6;
+
+		switch (mask_style) {
+
+		    /*
+		     * There are no classes for IPv6. We default to subnets
+		     * instead.
+		     */
+		case MASK_STYLE_CLASS:
+
+		    /* FALLTHROUGH */
+
+		    /*
+		     * Subnet mask.
+		     */
+		case MASK_STYLE_SUBNET:
+		    ac = (unsigned char *) &SOCK_ADDR_IN6_ADDR(ma);
+		    end = ac + sizeof(SOCK_ADDR_IN6_ADDR(ma));
+		    shift = MAI_V6ADDR_BITS;
+		    while (ac < end) {
+			if ((ch = *ac++) == (unsigned char) -1) {
+			    shift -= CHAR_BIT;
+			    continue;
+			} else {
+			    while (ch != 0)
+				shift--, ch <<= 1;
+			    break;
+			}
+		    }
+		    break;
+
+		    /*
+		     * Host only. Do not relay authorize other hosts.
+		     */
+		case MASK_STYLE_HOST:
+		    shift = 0;
+		    break;
+
+		default:
+		    msg_panic("unknown mynetworks mask style: %s",
+			      var_mynetworks_style);
+		}
+		/* FIX 200501: IPv6 patch did not clear host bits. */
+		net6 = *SOCK_ADDR_IN6_PTR(sa);
+		mask_addr((unsigned char *) &net6.sin6_addr,
+			  sizeof(net6.sin6_addr),
+			  MAI_V6ADDR_BITS - shift);
+		SOCKADDR_TO_HOSTADDR(SOCK_ADDR_PTR(&net6), SOCK_ADDR_LEN(&net6),
+				     &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
+		vstring_sprintf_append(result, "[%s]/%d ",
+				     hostaddr.buf, MAI_V6ADDR_BITS - shift);
+		net_mask_count++;
+		continue;
+	    }
+#endif
+	    else {
+		msg_warn("%s: skipping unknown address family %d",
+			 myname, SOCK_ADDR_FAMILY(sa));
+		continue;
+	    }
+	}
+
+	/*
+	 * FIX 200501 IPv6 patch produced repeated results. Some systems
+	 * report the same interface multiple times, notably multi-homed
+	 * systems with IPv6 link-local or site-local addresses. A
+	 * straight-forward sort+uniq produces ugly results, though. Instead
+	 * we preserve the original order and use a duplicate filter to
+	 * suppress repeated information.
+	 */
+	if (net_mask_count > 1) {
+	    argv = argv_split(vstring_str(result), " ");
+	    VSTRING_RESET(result);
+	    dup_filter = been_here_init(net_mask_count, BH_FLAG_NONE);
+	    for (cpp = argv->argv; cpp < argv->argv + argv->argc; cpp++)
+		if (!been_here_fixed(dup_filter, *cpp))
+		    vstring_sprintf_append(result, "%s ", *cpp);
+	    argv_free(argv);
+	    been_here_free(dup_filter);
 	}
 	if (msg_verbose)
 	    msg_info("%s: %s", myname, vstring_str(result));
@@ -169,17 +278,22 @@ const char *mynetworks(void)
 }
 
 #ifdef TEST
+#include <inet_proto.h>
 
 char   *var_inet_interfaces;
 char   *var_mynetworks_style;
 
 int     main(int argc, char **argv)
 {
-    if (argc != 3)
-	msg_fatal("usage: %s mask_style interface_list", argv[0]);
+    INET_PROTO_INFO *proto_info;
+
+    if (argc != 4)
+	msg_fatal("usage: %s protocols mask_style interface_list (e.g. \"all subnet all\")",
+		  argv[0]);
     msg_verbose = 10;
-    var_inet_interfaces = argv[2];
-    var_mynetworks_style = argv[1];
+    proto_info = inet_proto_init(argv[0], argv[1]);
+    var_mynetworks_style = argv[2];
+    var_inet_interfaces = argv[3];
     mynetworks();
 }
 

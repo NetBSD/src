@@ -15,8 +15,10 @@ LIBS	= ../../lib/libglobal.a ../../lib/libutil.a
 $(PROG): $(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -46,7 +48,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -75,3 +77,4 @@ postdrop.o: ../../include/mail_stream.h
 postdrop.o: ../../include/cleanup_user.h
 postdrop.o: ../../include/record.h
 postdrop.o: ../../include/rec_type.h
+postdrop.o: ../../include/user_acl.h

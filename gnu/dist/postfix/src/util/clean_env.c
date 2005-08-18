@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_env.c,v 1.1.1.3 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: clean_env.c,v 1.1.1.4 2005/08/18 21:10:06 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -58,7 +58,7 @@ void    clean_env(char **preserve_list)
     /*
      * Preserve or specify selected environment variables.
      */
-#define STRING_AND_LENGTH(x, y) (x), (y)
+#define STRING_AND_LENGTH(x, y) (x), (int) (y)
 
     save_list = argv_alloc(10);
     for (cpp = preserve_list; *cpp; cpp++)

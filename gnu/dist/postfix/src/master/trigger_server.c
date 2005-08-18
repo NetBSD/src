@@ -1,4 +1,4 @@
-/*	$NetBSD: trigger_server.c,v 1.1.1.5 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: trigger_server.c,v 1.1.1.6 2005/08/18 21:07:47 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -108,6 +108,8 @@
 /*	This service must be configured with process limit of 1.
 /* .IP MAIL_SERVER_UNLIMITED
 /*	This service must be configured with process limit of 0.
+/* .IP MAIL_SERVER_PRIVILEGED
+/*	This service must be configured as privileged.
 /* .PP
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -144,6 +146,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -151,6 +154,7 @@
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
 #endif
+#include <time.h>
 
 /* Utility library. */
 
@@ -202,6 +206,7 @@ static void (*trigger_server_onexit) (char *, char **);
 static void (*trigger_server_pre_accept) (char *, char **);
 static VSTREAM *trigger_server_lock;
 static int trigger_server_in_flow_delay;
+static unsigned trigger_server_generation;
 
 /* trigger_server_exit - normal termination */
 
@@ -240,14 +245,14 @@ static void trigger_server_wakeup(int fd)
     /*
      * Commit suicide when the master process disconnected from us.
      */
-    if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
+    if (master_notify(var_pid, trigger_server_generation, MASTER_STAT_TAKEN) < 0)
 	trigger_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     if (trigger_server_in_flow_delay && mail_flow_get(1) < 0)
 	doze(var_in_flow_delay * 1000000);
     if ((len = read(fd, buf, sizeof(buf))) >= 0)
 	trigger_server_service(buf, len, trigger_server_name,
 			       trigger_server_argv);
-    if (master_notify(var_pid, MASTER_STAT_AVAIL) < 0)
+    if (master_notify(var_pid, trigger_server_generation, MASTER_STAT_AVAIL) < 0)
 	trigger_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     if (var_idle_limit > 0)
 	event_request_timer(trigger_server_timeout, (char *) 0, var_idle_limit);
@@ -322,6 +327,54 @@ static void trigger_server_accept_local(int unused_event, char *context)
     close(fd);
 }
 
+#ifdef MASTER_XPORT_NAME_PASS
+
+/* trigger_server_accept_pass - accept descriptor */
+
+static void trigger_server_accept_pass(int unused_event, char *context)
+{
+    char   *myname = "trigger_server_accept_pass";
+    int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
+    int     time_left = 0;
+    int     fd;
+
+    if (msg_verbose)
+	msg_info("%s: trigger arrived", myname);
+
+    /*
+     * Read a message from a socket. Be prepared for accept() to fail because
+     * some other process already got the connection. The socket is
+     * non-blocking so we won't get stuck when multiple processes wake up.
+     * Don't get stuck when the client connects but sends no data. Restart
+     * the idle timer if this was a false alarm.
+     */
+    if (var_idle_limit > 0)
+	time_left = event_cancel_timer(trigger_server_timeout, (char *) 0);
+
+    if (trigger_server_pre_accept)
+	trigger_server_pre_accept(trigger_server_name, trigger_server_argv);
+    fd = PASS_ACCEPT(listen_fd);
+    if (trigger_server_lock != 0
+	&& myflock(vstream_fileno(trigger_server_lock), INTERNAL_LOCK,
+		   MYFLOCK_OP_NONE) < 0)
+	msg_fatal("select unlock: %m");
+    if (fd < 0) {
+	if (errno != EAGAIN)
+	    msg_fatal("accept connection: %m");
+	if (time_left >= 0)
+	    event_request_timer(trigger_server_timeout, (char *) 0, time_left);
+	return;
+    }
+    close_on_exec(fd, CLOSE_ON_EXEC);
+    if (read_wait(fd, 10) == 0)
+	trigger_server_wakeup(fd);
+    else if (time_left >= 0)
+	event_request_timer(trigger_server_timeout, (char *) 0, time_left);
+    close(fd);
+}
+
+#endif
+
 /* trigger_server_main - the real main program */
 
 NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,...)
@@ -350,6 +403,7 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
     int     zerolimit = 0;
     WATCHDOG *watchdog;
     char   *oval;
+    char   *generation;
 
     /*
      * Process environment options as early as we can.
@@ -505,6 +559,11 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 		msg_fatal("service %s requires a process limit of 0",
 			  service_name);
 	    break;
+	case MAIL_SERVER_PRIVILEGED:
+	    if (user_name)
+		msg_fatal("service %s requires privileged operation",
+			  service_name);
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -548,8 +607,24 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 	    trigger_server_accept = trigger_server_accept_local;
 	else if (strcasecmp(transport, MASTER_XPORT_NAME_FIFO) == 0)
 	    trigger_server_accept = trigger_server_accept_fifo;
+#ifdef MASTER_XPORT_NAME_PASS
+	else if (strcasecmp(transport, MASTER_XPORT_NAME_PASS) == 0)
+	    trigger_server_accept = trigger_server_accept_pass;
+#endif
 	else
 	    msg_fatal("unsupported transport type: %s", transport);
+    }
+
+    /*
+     * Retrieve process generation from environment.
+     */
+    if ((generation = getenv(MASTER_GEN_NAME)) != 0) {
+	if (!alldig(generation))
+	    msg_fatal("bad generation: %s", generation);
+	OCTAL_TO_UNSIGNED(trigger_server_generation, generation);
+	if (msg_verbose)
+	    msg_info("process generation: %s (%o)",
+		     generation, trigger_server_generation);
     }
 
     /*
@@ -595,6 +670,9 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
      * Optionally, restrict the damage that this process can do.
      */
     resolve_local_init();
+#ifdef SNAPSHOT
+    tzset();
+#endif
     chroot_uid(root_dir, user_name);
 
     /*

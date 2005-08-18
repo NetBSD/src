@@ -10,16 +10,8 @@ host hhh port ppp
 host hhh port default-service
 >> [hhh]
 host hhh port default-service
->> [hhh:ppp]
-unknown: warning: old-style address form: [hhh:ppp]
-unknown: warning: support for [host:port] forms will go away
-unknown: warning: specify [host]:port instead
-host hhh port ppp
->> [hhh:]
-unknown: warning: old-style address form: [hhh:]
-unknown: warning: support for [host:port] forms will go away
-unknown: warning: specify [host]:port instead
-host hhh port default-service
+>> #[hhh:ppp]
+>> #[hhh:]
 >> hhh:1pp
 unknown: warning: garbage after numerical service in hhh:1pp
 >> [hh.]

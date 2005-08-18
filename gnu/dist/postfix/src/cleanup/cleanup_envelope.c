@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.1.1.6 2004/05/31 00:24:27 heas Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.1.1.7 2005/08/18 21:05:53 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -68,12 +68,14 @@
 #include <qmgr_user.h>
 #include <mail_params.h>
 #include <verp_sender.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
 #include "cleanup.h"
 
 #define STR	vstring_str
+#define STREQ(x,y) (strcmp((x), (y)) == 0)
 
 static void cleanup_envelope_process(CLEANUP_STATE *, int, const char *, int);
 
@@ -279,6 +281,27 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 	    state->errs |= CLEANUP_STAT_BAD;
 	    myfree(sbuf);
 	    return;
+	}
+	/* Zero-length values are place holders for unavailable values. */
+	if (*attr_value == 0) {
+	    msg_warn("%s: spurious null attribute value for \"%s\" -- ignored",
+		     state->queue_id, attr_name);
+	    myfree(sbuf);
+	    return;
+	}
+	if (strcmp(attr_name, MAIL_ATTR_RWR_CONTEXT) == 0) {
+	    /* Choose header rewriting context. See also cleanup_addr.c. */
+	    if (STREQ(attr_value, MAIL_ATTR_RWR_LOCAL)) {
+		state->hdr_rewrite_context = MAIL_ATTR_RWR_LOCAL;
+	    } else if (STREQ(attr_value, MAIL_ATTR_RWR_REMOTE)) {
+		state->hdr_rewrite_context =
+		    (*var_remote_rwr_domain ? MAIL_ATTR_RWR_REMOTE : 0);
+	    } else {
+		msg_warn("%s: message rejected: bad rewriting context: %.100s",
+			 state->queue_id, attr_value);
+		state->errs |= CLEANUP_STAT_BAD;
+		return;
+	    }
 	}
 	nvtable_update(state->attr, attr_name, attr_value);
 	myfree(sbuf);

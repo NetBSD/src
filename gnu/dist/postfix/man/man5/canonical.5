@@ -1,4 +1,4 @@
-.\"	$NetBSD: canonical.5,v 1.1.1.7 2004/05/31 00:24:16 heas Exp $
+.\"	$NetBSD: canonical.5,v 1.1.1.8 2005/08/18 21:03:53 rpaulo Exp $
 .\"
 .TH CANONICAL 5 
 .ad
@@ -6,7 +6,7 @@
 .SH NAME
 canonical
 \-
-format of Postfix canonical table
+Postfix canonical table format
 .SH "SYNOPSIS"
 .na
 .nf
@@ -18,15 +18,16 @@ format of Postfix canonical table
 .SH DESCRIPTION
 .ad
 .fi
-The optional \fBcanonical\fR table specifies an address mapping for
+The optional \fBcanonical\fR(5) table specifies an address mapping for
 local and non-local addresses. The mapping is used by the
-\fBcleanup\fR(8) daemon.  The address mapping is recursive.
+\fBcleanup\fR(8) daemon, before mail is stored into the
+queue.  The address mapping is recursive.
 
-Normally, the \fBcanonical\fR table is specified as a text file
+Normally, the \fBcanonical\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
 The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 is used for fast searching by the mail system. Execute the command
-\fBpostmap /etc/postfix/canonical\fR in order to rebuild the indexed
+"\fBpostmap /etc/postfix/canonical\fR" in order to rebuild the indexed
 file after changing the text file.
 
 When the table is provided via other means such as NIS, LDAP
@@ -38,19 +39,28 @@ can be directed to TCP-based server. In that case, the lookups are
 done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
 
-The \fBcanonical\fR mapping affects both message header addresses
-(i.e. addresses that appear inside messages) and message envelope
-addresses (for example, the addresses that are used in SMTP protocol
-commands). Think Sendmail rule set \fBS3\fR, if you like.
+By default the \fBcanonical\fR(5) mapping affects both message
+header addresses (i.e. addresses that appear inside messages)
+and message envelope addresses (for example, the addresses
+that are used in SMTP protocol commands). Think Sendmail
+rule set \fBS3\fR, if you like.  This is controlled with
+the \fBcanonical_classes\fR parameter.
 
-Typically, one would use the \fBcanonical\fR table to replace login
+NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies
+a non-empty value. To get the behavior before Postfix 2.2,
+specify "local_header_rewrite_clients = static:all".
+
+Typically, one would use the \fBcanonical\fR(5) table to replace login
 names by \fIFirstname.Lastname\fR, or to clean up addresses produced
 by legacy mail systems.
 
-The \fBcanonical\fR mapping is not to be confused with \fIvirtual
+The \fBcanonical\fR(5) mapping is not to be confused with \fIvirtual
 domain\fR support. Use the \fBvirtual\fR(5) map for that purpose.
 
-The \fBcanonical\fR mapping is not to be confused with local aliasing.
+The \fBcanonical\fR(5) mapping is not to be confused with local aliasing.
 Use the \fBaliases\fR(5) map for that purpose.
 .SH "TABLE FORMAT"
 .na
@@ -67,19 +77,23 @@ are lines whose first non-whitespace character is a `#'.
 .IP "multi-line text"
 A logical line starts with non-whitespace text. A line that
 starts with whitespace continues a logical line.
-.PP
+.SH "TABLE SEARCH ORDER"
+.na
+.nf
+.ad
+.fi
 With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, patterns are tried in the order as
 listed below:
 .IP "\fIuser\fR@\fIdomain address\fR"
-\fIuser\fR@\fIdomain\fR is replaced by \fIaddress\fR. This form
+Replace \fIuser\fR@\fIdomain\fR by \fIaddress\fR. This form
 has the highest precedence.
 .sp
 This is useful to clean up addresses produced by legacy mail systems.
 It can also be used to produce \fIFirstname.Lastname\fR style
 addresses, but see below for a simpler solution.
 .IP "\fIuser address\fR"
-\fIuser\fR@\fIsite\fR is replaced by \fIaddress\fR when \fIsite\fR is
+Replace \fIuser\fR@\fIsite\fR by \fIaddress\fR when \fIsite\fR is
 equal to $\fBmyorigin\fR, when \fIsite\fR is listed in
 $\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR
 or $\fBproxy_interfaces\fR.
@@ -87,11 +101,23 @@ or $\fBproxy_interfaces\fR.
 This form is useful for replacing login names by
 \fIFirstname.Lastname\fR.
 .IP "@\fIdomain address\fR"
-Every address in \fIdomain\fR is replaced by \fIaddress\fR.
+Replace other addresses in \fIdomain\fR by \fIaddress\fR.
 This form has the lowest precedence.
-.PP
-In all the above forms, when \fIaddress\fR has the form
-@\fIotherdomain\fR, the result is the same user in \fIotherdomain\fR.
+.SH "RESULT ADDRESS REWRITING"
+.na
+.nf
+.ad
+.fi
+The lookup result is subject to address rewriting:
+.IP \(bu
+When the result has the form @\fIotherdomain\fR, the
+result becomes the same \fIuser\fR in \fIotherdomain\fR.
+.IP \(bu
+When "\fBappend_at_myorigin=yes\fR", append "\fB@$myorigin\fR"
+to addresses without "@domain".
+.IP \(bu
+When "\fBappend_dot_mydomain=yes\fR", append
+"\fB.$mydomain\fR" to addresses without ".domain".
 .SH "ADDRESS EXTENSION"
 .na
 .nf
@@ -134,7 +160,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available in Postfix version 2.1.
+This feature is not available up to and including Postfix version 2.2.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their
@@ -153,7 +179,9 @@ The table format does not understand quoting conventions.
 .fi
 The following \fBmain.cf\fR parameters are especially relevant.
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
+.IP \fBcanonical_classes\fR
+What addresses are subject to canonical address mapping.
 .IP \fBcanonical_maps\fR
 List of canonical mapping tables.
 .IP \fBrecipient_canonical_maps\fR
@@ -166,12 +194,19 @@ addresses.
 A list of address rewriting or forwarding mechanisms that propagate
 an address extension from the original address to the result.
 Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,
-\fBforward\fR, or \fBinclude\fR.
+\fBforward\fR, \fBinclude\fR, or \fBgeneric\fR.
 .PP
 Other parameters of interest:
 .IP \fBinet_interfaces\fR
 The network interface addresses that this system receives mail on.
 You need to stop and start Postfix when this parameter changes.
+.IP \fBlocal_header_rewrite_clients\fR
+Rewrite message header addresses in mail from these clients
+and update incomplete addresses with the domain name in
+$myorigin or $mydomain; either don't rewrite message headers
+from other clients at all, or rewrite message headers and
+update incomplete addresses with the domain specified in
+the remote_header_rewrite_domain parameter.
 .IP \fBproxy_interfaces\fR
 Other interfaces that this machine receives mail on by way of a
 proxy agent or network address translator.
@@ -189,6 +224,11 @@ List of domains that this mail system considers local.
 The domain that is appended to locally-posted mail.
 .IP \fBowner_request_special\fR
 Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
+addresses.
+.IP \fBremote_header_rewrite_domain\fR
+Don't rewrite message headers from remote clients at all
+when this parameter is empty; otherwise, rewrite message
+headers and append the specified domain name to incomplete
 addresses.
 .SH "SEE ALSO"
 .na

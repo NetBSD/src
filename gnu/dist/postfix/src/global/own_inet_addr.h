@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.h,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: own_inet_addr.h,v 1.1.1.4 2005/08/18 21:06:55 rpaulo Exp $	*/
 
 #ifndef _OWN_INET_ADDR_H_INCLUDED_
 #define _OWN_INET_ADDR_H_INCLUDED_
@@ -14,17 +14,17 @@
 /* .nf
 
  /*
-  * System library.
+  * Utility library.
   */
-#include <netinet/in.h>
+#include <inet_addr_list.h>
 
  /*
   * External interface.
   */
-extern int own_inet_addr(struct in_addr *);
+extern int own_inet_addr(struct sockaddr *);
 extern struct INET_ADDR_LIST *own_inet_addr_list(void);
 extern struct INET_ADDR_LIST *own_inet_mask_list(void);
-extern int proxy_inet_addr(struct in_addr *);
+extern int proxy_inet_addr(struct sockaddr *);
 extern struct INET_ADDR_LIST *proxy_inet_addr_list(void);
 
 /* LICENSE

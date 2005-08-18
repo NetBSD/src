@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.4 2004/05/31 00:24:47 heas Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.5 2005/08/18 21:08:58 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -62,6 +62,7 @@
 /*	record why the host is being skipped; soft error, final server:
 /*	defer delivery of all remaining recipients and mark the destination
 /*	as problematic; hard error: bounce all remaining recipients.
+/*	The session is marked as "do not cache".
 /*	The result is non-zero.
 /*
 /*	smtp_mesg_fail() handles the case where the smtp server
@@ -88,6 +89,7 @@
 /*	The policy is: non-final server: log an informational record
 /*	with the reason why the host is being skipped; final server:
 /*	defer delivery of all remaining recipients.
+/*	The session is marked as "do not cache".
 /*	The result is non-zero.
 /* DIAGNOSTICS
 /*	Panic: unknown exception code.
@@ -138,7 +140,7 @@
 
 /* smtp_check_code - check response code */
 
-static void smtp_check_code(SMTP_STATE *state, int code)
+static void smtp_check_code(SMTP_SESSION *session, int code)
 {
 
     /*
@@ -154,7 +156,7 @@ static void smtp_check_code(SMTP_STATE *state, int code)
     if ((!SMTP_SOFT(code) && !SMTP_HARD(code))
 	|| code == 555			/* RFC 1869, section 6.1. */
 	|| (code >= 500 && code < 510))
-	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	session->error_mask |= MAIL_ERROR_PROTOCOL;
 }
 
 /* smtp_site_fail - skip site, defer or bounce all recipients */
@@ -216,7 +218,14 @@ int     smtp_site_fail(SMTP_STATE *state, int code, char *format,...)
 	if (soft_error && request->hop_status == 0)
 	    request->hop_status = mystrdup(vstring_str(why));
     }
-    smtp_check_code(state, code);
+    if (session)
+	smtp_check_code(session, code);
+
+    /*
+     * Don't cache this session. We can't talk to this server.
+     */
+    if (session)
+	session->reuse_count = 0;
 
     /*
      * Cleanup.
@@ -273,15 +282,16 @@ int     smtp_mesg_fail(SMTP_STATE *state, int code, char *format,...)
 	    status = (soft_error ? defer_append : bounce_append)
 		(DEL_REQ_TRACE_FLAGS(request->flags), request->queue_id,
 		 rcpt->orig_addr, rcpt->address, rcpt->offset,
-		 session->namaddr, request->arrival_time,
-		 "%s", vstring_str(why));
+		 session ? session->namaddr : "none",
+		 request->arrival_time, "%s", vstring_str(why));
 	    if (status == 0)
 		deliver_completed(state->src, rcpt->offset);
 	    SMTP_RCPT_DROP(state, rcpt);
 	    state->status |= status;
 	}
     }
-    smtp_check_code(state, code);
+    if (session)
+	smtp_check_code(session, code);
 
     /*
      * Cleanup.
@@ -336,14 +346,16 @@ void    smtp_rcpt_fail(SMTP_STATE *state, int code, RECIPIENT *rcpt,
 	status = (soft_error ? vdefer_append : vbounce_append)
 	    (DEL_REQ_TRACE_FLAGS(request->flags), request->queue_id,
 	     rcpt->orig_addr, rcpt->address, rcpt->offset,
-	     session->namaddr, request->arrival_time, format, ap);
+	     session ? session->namaddr : "none",
+	     request->arrival_time, format, ap);
 	va_end(ap);
 	if (status == 0)
 	    deliver_completed(state->src, rcpt->offset);
 	SMTP_RCPT_DROP(state, rcpt);
 	state->status |= status;
     }
-    smtp_check_code(state, code);
+    if (session)
+	smtp_check_code(session, code);
 }
 
 /* smtp_stream_except - defer domain after I/O problem */
@@ -355,6 +367,12 @@ int     smtp_stream_except(SMTP_STATE *state, int code, char *description)
     RECIPIENT *rcpt;
     int     nrcpt;
     VSTRING *why = vstring_alloc(100);
+
+    /*
+     * Sanity check.
+     */
+    if (session == 0)
+	msg_panic("smtp_stream_except: no session");
 
     /*
      * Initialize.
@@ -404,7 +422,15 @@ int     smtp_stream_except(SMTP_STATE *state, int code, char *description)
 					  "%s", vstring_str(why));
 	    SMTP_RCPT_DROP(state, rcpt);
 	}
+	/* XXX This assumes no fall-back relay. */
+	if (request->hop_status == 0)
+	    request->hop_status = mystrdup(vstring_str(why));
     }
+
+    /*
+     * Don't attempt to cache this session.
+     */
+    session->reuse_count = 0;
 
     /*
      * Cleanup.

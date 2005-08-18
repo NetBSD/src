@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.3 2005/08/18 21:10:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -38,12 +38,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#ifndef INADDR_NONE
-#define INADDR_NONE 0xffffffff
-#endif
 
 /* Utility library. */
 
@@ -54,20 +51,18 @@
 #include <stringops.h>
 #include <readlline.h>
 #include <dict.h>
+#include <myaddrinfo.h>
+#include <cidr_match.h>
 #include <dict_cidr.h>
-#include <split_at.h>
 
 /* Application-specific. */
 
  /*
   * Each rule in a CIDR table is parsed and stored in a linked list.
-  * Obviously all this is IPV4 specific and needs to be redone for IPV6.
   */
 typedef struct DICT_CIDR_ENTRY {
-    unsigned long net_bits;		/* network portion of address */
-    unsigned long mask_bits;		/* network mask */
+    CIDR_MATCH cidr_info;		/* must be first */
     char   *value;			/* lookup result */
-    struct DICT_CIDR_ENTRY *next;	/* next entry */
 } DICT_CIDR_ENTRY;
 
 typedef struct {
@@ -75,26 +70,19 @@ typedef struct {
     DICT_CIDR_ENTRY *head;		/* first entry */
 } DICT_CIDR;
 
-#define BITS_PER_ADDR   32
-
 /* dict_cidr_lookup - CIDR table lookup */
 
 static const char *dict_cidr_lookup(DICT *dict, const char *key)
 {
     DICT_CIDR *dict_cidr = (DICT_CIDR *) dict;
     DICT_CIDR_ENTRY *entry;
-    unsigned long addr;
 
     if (msg_verbose)
-	msg_info("dict_cidr_lookup: %s: %s", dict_cidr->dict.name, key);
+	msg_info("dict_cidr_lookup: %s: %s", dict->name, key);
 
-    if ((addr = inet_addr(key)) == INADDR_NONE)
-	return (0);
-
-    for (entry = dict_cidr->head; entry; entry = entry->next)
-	if ((addr & entry->mask_bits) == entry->net_bits)
-	    return (entry->value);
-
+    if ((entry = (DICT_CIDR_ENTRY *)
+	 cidr_match_execute(&(dict_cidr->head->cidr_info), key)) != 0)
+	return (entry->value);
     return (0);
 }
 
@@ -107,7 +95,7 @@ static void dict_cidr_close(DICT *dict)
     DICT_CIDR_ENTRY *next;
 
     for (entry = dict_cidr->head; entry; entry = next) {
-	next = entry->next;
+	next = (DICT_CIDR_ENTRY *) entry->cidr_info.next;
 	myfree(entry->value);
 	myfree((char *) entry);
     }
@@ -116,24 +104,20 @@ static void dict_cidr_close(DICT *dict)
 
 /* dict_cidr_parse_rule - parse CIDR table rule into network, mask and value */
 
-static DICT_CIDR_ENTRY *dict_cidr_parse_rule(const char *mapname, int lineno,
-					             char *p)
+static DICT_CIDR_ENTRY *dict_cidr_parse_rule(char *p, VSTRING *why)
 {
     DICT_CIDR_ENTRY *rule;
-    char   *key;
+    char   *pattern;
     char   *value;
-    char   *mask;
-    int     mask_shift;
-    unsigned long net_bits;
-    unsigned long mask_bits;
-    struct in_addr net_addr;
+    CIDR_MATCH cidr_info;
+    MAI_HOSTADDR_STR hostaddr;
 
     /*
      * Split the rule into key and value. We already eliminated leading
      * whitespace, comments, empty lines or lines with whitespace only. This
      * means a null key can't happen but we will handle this anyway.
      */
-    key = p;
+    pattern = p;
     while (*p && !ISSPACE(*p))			/* Skip over key */
 	p++;
     if (*p)					/* Terminate key */
@@ -142,66 +126,35 @@ static DICT_CIDR_ENTRY *dict_cidr_parse_rule(const char *mapname, int lineno,
 	p++;
     value = p;
     trimblanks(value, 0)[0] = 0;		/* Trim trailing blanks */
-    if (*key == 0) {
-	msg_warn("cidr map %s, line %d: no address pattern: skipping this rule",
-		 mapname, lineno);
+    if (*pattern == 0) {
+	vstring_sprintf(why, "no address pattern");
 	return (0);
     }
     if (*value == 0) {
-	msg_warn("cidr map %s, line %d: no lookup result: skipping this rule",
-		 mapname, lineno);
+	vstring_sprintf(why, "no lookup result");
 	return (0);
     }
 
     /*
-     * Parse the key into network and mask, and destroy the key. Treat a bare
-     * network address as /32.
-     * 
-     * We need explicit code for /0. The result of << is undefined when the
-     * shift is greater or equal to the number of bits in the shifted
-     * operand.
+     * Parse the pattern, destroying it in the process.
      */
-    if ((mask = split_at(key, '/')) != 0) {
-	if (!alldig(mask) || (mask_shift = atoi(mask)) > BITS_PER_ADDR
-	    || (net_bits = inet_addr(key)) == INADDR_NONE) {
-	    msg_warn("cidr map %s, line %d: bad net/mask pattern: \"%s/%s\": "
-		     "skipping this rule", mapname, lineno, key, mask);
-	    return (0);
-	}
-	mask_bits = mask_shift > 0 ?
-	    htonl((0xffffffff) << (BITS_PER_ADDR - mask_shift)) : 0;
-	if (net_bits & ~mask_bits) {
-	    net_addr.s_addr = (net_bits & mask_bits);
-	    msg_warn("cidr map %s, line %d: net/mask pattern \"%s/%s\" with "
-		     "non-null host portion: skipping this rule",
-		     mapname, lineno, key, mask);
-	    msg_warn("specify \"%s/%d\" if this is really what you want",
-		     inet_ntoa(net_addr), mask_shift);
-	    return (0);
-	}
-    } else {
-	if ((net_bits = inet_addr(key)) == INADDR_NONE) {
-	    msg_warn("cidr map %s, line %d: bad address pattern: \"%s\": "
-		     "skipping this rule", mapname, lineno, key);
-	    return (0);
-	}
-	mask_shift = 32;
-	mask_bits = htonl(0xffffffff);
-    }
+    if (cidr_match_parse(&cidr_info, pattern, why) != 0)
+	return (0);
 
     /*
      * Bundle up the result.
      */
     rule = (DICT_CIDR_ENTRY *) mymalloc(sizeof(DICT_CIDR_ENTRY));
-    rule->net_bits = net_bits;
-    rule->mask_bits = mask_bits;
+    rule->cidr_info = cidr_info;
     rule->value = mystrdup(value);
-    rule->next = 0;
 
-    if (msg_verbose)
-	msg_info("dict_cidr_open: %s: %lu/%d %s",
-		 mapname, rule->net_bits, mask_shift, rule->value);
-
+    if (msg_verbose) {
+	if (inet_ntop(cidr_info.addr_family, cidr_info.net_bytes,
+		      hostaddr.buf, sizeof(hostaddr.buf)) == 0)
+	    msg_fatal("inet_ntop: %m");
+	msg_info("dict_cidr_open: add %s/%d %s",
+		 hostaddr.buf, cidr_info.mask_shift, rule->value);
+    }
     return (rule);
 }
 
@@ -212,6 +165,7 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     DICT_CIDR *dict_cidr;
     VSTREAM *map_fp;
     VSTRING *line_buffer = vstring_alloc(100);
+    VSTRING *why = vstring_alloc(100);
     DICT_CIDR_ENTRY *rule;
     DICT_CIDR_ENTRY *last_rule = 0;
     int     lineno = 0;
@@ -238,13 +192,16 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 	msg_fatal("open %s: %m", mapname);
 
     while (readlline(line_buffer, map_fp, &lineno)) {
-	rule = dict_cidr_parse_rule(mapname, lineno, vstring_str(line_buffer));
-	if (rule == 0)
+	rule = dict_cidr_parse_rule(vstring_str(line_buffer), why);
+	if (rule == 0) {
+	    msg_warn("cidr map %s, line %d: %s: skipping this rule",
+		     mapname, lineno, vstring_str(why));
 	    continue;
+	}
 	if (last_rule == 0)
 	    dict_cidr->head = rule;
 	else
-	    last_rule->next = rule;
+	    last_rule->cidr_info.next = &(rule->cidr_info);
 	last_rule = rule;
     }
 
@@ -254,6 +211,7 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     if (vstream_fclose(map_fp))
 	msg_fatal("cidr map %s: read error: %m", mapname);
     vstring_free(line_buffer);
+    vstring_free(why);
 
     return (DICT_DEBUG (&dict_cidr->dict));
 }

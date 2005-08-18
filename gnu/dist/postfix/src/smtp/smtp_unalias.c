@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_unalias.c,v 1.1.1.2 2004/05/31 00:24:47 heas Exp $	*/
+/*	$NetBSD: smtp_unalias.c,v 1.1.1.3 2005/08/18 21:08:58 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -87,8 +87,12 @@ const char *smtp_unalias_name(const char *name)
      */
     if ((result = htable_find(cache, name)) == 0) {
 	fqdn = vstring_alloc(10);
-	if (dns_lookup_types(name, smtp_unalias_flags, (DNS_RR **) 0,
-			     fqdn, (VSTRING *) 0, T_MX, T_A, 0) != DNS_OK)
+	if (dns_lookup_l(name, smtp_unalias_flags, (DNS_RR **) 0, fqdn,
+			     (VSTRING *) 0, DNS_REQ_FLAG_ANY, T_MX, T_A,
+#ifdef HAS_IPV6
+			     T_AAAA,
+#endif
+			     0) != DNS_OK)
 	    vstring_strcpy(fqdn, name);
 	htable_enter(cache, name, result = vstring_export(fqdn));
     }

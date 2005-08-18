@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.1.1.3 2005/08/18 21:06:16 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -59,14 +59,69 @@
 /*	Password for the above.
 /* .IP \fIdbname\fR
 /*	Name of the database.
+/* .IP \fIdomain\fR
+/*      List of domains the queries should be restricted to.  If
+/*      specified, only FQDN addresses whose domain parts matching this
+/*      list will be queried against the SQL database.  Lookups for
+/*      partial addresses are also supressed.  This can significantly
+/*      reduce the query load on the server.
+/* .IP \fIquery\fR
+/*      Query template, before the query is actually issued, variable
+/*	substitutions are performed. See mysql_table(5) for details. If
+/*	No query is specified, the legacy variables \fItable\fR,
+/*	\fIselect_field\fR, \fIwhere_field\fR and \fIadditional_conditions\fR
+/*	are used to construct the query template.
+/* .IP \fIresult_format\fR
+/*      The format used to expand results from queries.  Substitutions
+/*      are performed as described in mysql_table(5). Defaults to returning
+/*	the lookup result unchanged.
+/* .IP expansion_limit
+/*	Limit (if any) on the total number of lookup result values. Lookups which
+/*	exceed the limit fail with dict_errno=DICT_ERR_RETRY. Note that each
+/*	non-empty (and non-NULL) column of a multi-column result row counts as
+/*	one result.
 /* .IP \fItable\fR
-/*	Name of the table.
+/*	When \fIquery\fR is not set, name of the table used to construct the
+/*	query string. This provides compatibility with older releases.
 /* .IP \fIselect_field\fR
-/*	Name of the result field.
+/*	When \fIquery\fR is not set, name of the result field used to
+/*	construct the query string. This provides compatibility with older
+/*	releases.
 /* .IP \fIwhere_field\fR
-/*	Field used in the WHERE clause.
+/*	When \fIquery\fR is not set, name of the where clause field used to
+/*	construct the query string. This provides compatibility with older
+/*	releases.
 /* .IP \fIadditional_conditions\fR
-/*	Additional conditions to the WHERE clause.
+/*	When \fIquery\fR is not set, additional where clause conditions used
+/*	to construct the query string. This provides compatibility with older
+/*	releases.
+/* .IP \fIhosts\fR
+/*	List of hosts to connect to.
+/* .PP
+/*	For example, if you want the map to reference databases of
+/*	the name "your_db" and execute a query like this: select
+/*	forw_addr from aliases where alias like '<some username>'
+/*	against any database called "vmailer_info" located on hosts
+/*	host1.some.domain and host2.some.domain, logging in as user
+/*	"vmailer" and password "passwd" then the configuration file
+/*	should read:
+/* .PP
+/*	\fIuser\fR = \fBvmailer\fR
+/* .br
+/*	\fIpassword\fR = \fBpasswd\fR
+/* .br
+/*	\fIdbname\fR = \fBvmailer_info\fR
+/* .br
+/*	\fItable\fR = \fBaliases\fR
+/* .br
+/*	\fIselect_field\fR = \fBforw_addr\fR
+/* .br
+/*	\fIwhere_field\fR = \fBalias\fR
+/* .br
+/*	\fIhosts\fR = \fBhost1.some.domain\fR \fBhost2.some.domain\fR
+/* .IP \fIadditional_conditions\fR
+/*      Backward compatibility when \fIquery\fR is not set, additional
+/*	conditions to the WHERE clause.
 /* .IP \fIhosts\fR
 /*	List of hosts to connect to.
 /* .PP
@@ -134,6 +189,7 @@
 /* Global library. */
 
 #include "cfg_parser.h"
+#include "db_common.h"
 
 /* Application-specific. */
 
@@ -158,22 +214,18 @@ typedef struct {
 } PLMYSQL;
 
 typedef struct {
+    DICT    dict;
     CFG_PARSER *parser;
+    char   *query;
+    char   *result_format;
+    STRING_LIST *domain;   
+    void   *ctx;
+    int     expansion_limit;
     char   *username;
     char   *password;
     char   *dbname;
-    char   *table;
-    char   *select_field;
-    char   *where_field;
-    char   *additional_conditions;
-    char  **hostnames;
-    int     len_hosts;
-} MYSQL_NAME;
-
-typedef struct {
-    DICT    dict;
+    ARGV   *hosts;
     PLMYSQL *pldb;
-    MYSQL_NAME *name;
 } DICT_MYSQL;
 
 #define STATACTIVE			(1<<0)
@@ -188,7 +240,7 @@ typedef struct {
 #define IDLE_CONN_INTV			60		/* 1 minute */
 
 /* internal function declarations */
-static PLMYSQL *plmysql_init(char *hostnames[], int);
+static PLMYSQL *plmysql_init(ARGV *);
 static MYSQL_RES *plmysql_query(PLMYSQL *, const char *, char *, char *, char *);
 static void plmysql_dealloc(PLMYSQL *);
 static void plmysql_close_host(HOST *);
@@ -197,89 +249,120 @@ static void plmysql_connect_single(HOST *, char *, char *, char *);
 static const char *dict_mysql_lookup(DICT *, const char *);
 DICT   *dict_mysql_open(const char *, int, int);
 static void dict_mysql_close(DICT *);
-static MYSQL_NAME *mysqlname_parse(const char *);
+static void mysql_parse_config(DICT_MYSQL *, const char *);
 static HOST *host_init(const char *);
 
+/* dict_mysql_quote - escape SQL metacharacters in input string */
 
+static void dict_mysql_quote(DICT *dict, const char *name, VSTRING *result)
+{
+    DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
+    int len = strlen(name);
+    int buflen = 2*len + 1;
 
-/**********************************************************************
- * public interface dict_mysql_lookup
- * find database entry return 0 if no alias found, set dict_errno
- * on errors to DICT_ERRBO_RETRY and set dict_errno to 0 on success
- *********************************************************************/
+    /*
+     * We won't get integer overflows in 2*len + 1, because Postfix
+     * input keys have reasonable size limits, better safe than sorry.
+     */
+    if (buflen < len)
+	msg_panic("dict_mysql_quote: integer overflow in 2*%d+1", len);
+    VSTRING_SPACE(result, buflen);
+
+    /*
+     * XXX Too expensive to find out which connection is still open at
+     * this point. Grrr!
+     */
+#if 0 && defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
+    mysql_real_escape_string(dict_mysql->pldb->db_hosts[i].db,
+    			     vstring_end(result), name, len);
+#else
+    mysql_escape_string(vstring_end(result), name, len);
+#endif
+    VSTRING_SKIP(result);
+}
+
+/* dict_mysql_lookup - find database entry */
+
 static const char *dict_mysql_lookup(DICT *dict, const char *name)
 {
+    char   *myname = "dict_mysql_lookup";
+    DICT_MYSQL *dict_mysql = (DICT_MYSQL *)dict;
+    PLMYSQL *pldb = dict_mysql->pldb;
     MYSQL_RES *query_res;
     MYSQL_ROW row;
-    DICT_MYSQL *dict_mysql;
-    PLMYSQL *pldb;
     static VSTRING *result;
-    static VSTRING *query = 0;
-    int     i,
-            j,
-            numrows;
-    char   *name_escaped = 0;
+    static VSTRING *query;
+    int     i;
+    int     j;
+    int     numrows;
+    int     expansion;
+    const char *r;
 
-    dict_mysql = (DICT_MYSQL *) dict;
-    pldb = dict_mysql->pldb;
-    /* initialization  for query */
-    query = vstring_alloc(24);
-    vstring_strcpy(query, "");
-    if ((name_escaped = (char *) mymalloc((sizeof(char) * (strlen(name) * 2) +1))) == NULL) {
-	msg_fatal("dict_mysql_lookup: out of memory.");
-    }
-    /* prepare the query */
-    mysql_escape_string(name_escaped, name, (unsigned int) strlen(name));
-    vstring_sprintf(query, "select %s from %s where %s = '%s' %s", dict_mysql->name->select_field,
-       dict_mysql->name->table, dict_mysql->name->where_field, name_escaped,
-		    dict_mysql->name->additional_conditions);
-    if (msg_verbose)
-	msg_info("dict_mysql_lookup using sql query: %s", vstring_str(query));
-    /* free mem associated with preparing the query */
-    myfree(name_escaped);
-    /* do the query - set dict_errno & cleanup if there's an error */
-    if ((query_res = plmysql_query(pldb,
-				   vstring_str(query),
-				   dict_mysql->name->dbname,
-				   dict_mysql->name->username,
-				   dict_mysql->name->password)) == 0) {
-	dict_errno = DICT_ERR_RETRY;
-	vstring_free(query);
-	return 0;
-    }
     dict_errno = 0;
-    /* free the vstring query */
-    vstring_free(query);
+    
+    /*
+     * If there is a domain list for this map, then only search for
+     * addresses in domains on the list. This can significantly reduce
+     * the load on the server. Do not try "@domain" keys.
+     */
+    if (db_common_check_domain(dict_mysql->domain, name) == 0) {
+        if (msg_verbose)
+	    msg_info("%s: Skipping lookup of '%s'", myname, name);
+        return (0);
+    }
+
+#define INIT_VSTR(buf, len) do { \
+	if (buf == 0) \
+	    buf = vstring_alloc(len); \
+	VSTRING_RESET(buf); \
+	VSTRING_TERMINATE(buf); \
+    } while (0)
+
+    INIT_VSTR(query, 10);
+
+    /*
+     * Suppress the lookup if the query expansion is empty
+     */
+    if (!db_common_expand(dict_mysql->ctx, dict_mysql->query,
+    			  name, 0, query, dict_mysql_quote))
+        return (0);
+    
+    /* do the query - set dict_errno & cleanup if there's an error */
+    if ((query_res = plmysql_query(pldb, vstring_str(query),
+				   dict_mysql->dbname,
+				   dict_mysql->username,
+				   dict_mysql->password)) == 0) {
+	dict_errno = DICT_ERR_RETRY;
+	return (0);
+    }
+
     numrows = mysql_num_rows(query_res);
     if (msg_verbose)
-	msg_info("dict_mysql_lookup: retrieved %d rows", numrows);
+	msg_info("%s: retrieved %d rows", myname, numrows);
     if (numrows == 0) {
 	mysql_free_result(query_res);
 	return 0;
     }
-    if (result == 0)
-	result = vstring_alloc(10);
-    vstring_strcpy(result, "");
-    for (i = 0; i < numrows; i++) {
+
+    INIT_VSTR(result, 10);
+
+    for (expansion = i = 0; i < numrows && dict_errno == 0; i++) {
 	row = mysql_fetch_row(query_res);
-	if (i > 0)
-	    vstring_strcat(result, ",");
 	for (j = 0; j < mysql_num_fields(query_res); j++) {
-	    if (row[j] == 0) {
-		if (msg_verbose > 1)
-		    msg_info("dict_mysql_lookup: null field #%d row #%d", j, i);
-		mysql_free_result(query_res);
-		return (0);
+	    if (db_common_expand(dict_mysql->ctx, dict_mysql->result_format,
+	    			 row[j], name, result, 0)
+		&& dict_mysql->expansion_limit > 0
+		&& ++expansion > dict_mysql->expansion_limit) {
+		msg_warn("%s: %s: Expansion limit exceeded for key: '%s'",
+			 myname, dict_mysql->parser->name, name);
+		dict_errno = DICT_ERR_RETRY;
+		break;
 	    }
-	    if (j > 0)
-		vstring_strcat(result, ",");
-	    vstring_strcat(result, row[j]);
-	    if (msg_verbose > 1)
-		msg_info("dict_mysql_lookup: retrieved field: %d: %s", j, row[j]);
 	}
     }
     mysql_free_result(query_res);
-    return vstring_str(result);
+    r = vstring_str(result);
+    return ((dict_errno == 0 && *r) ? r : 0);
 }
 
 /* dict_mysql_check_stat - check the status of a host */
@@ -463,12 +546,77 @@ static void plmysql_down_host(HOST *host)
     event_cancel_timer(dict_mysql_event, (char *) host);
 }
 
-/**********************************************************************
- * public interface dict_mysql_open
- *    create association with database with appropriate values
- *    parse the map's config file
- *    allocate memory
- **********************************************************************/
+/* mysql_parse_config - parse mysql configuration file */
+
+static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
+{
+    const char *myname = "mysqlname_parse";
+    CFG_PARSER *p;
+    VSTRING *buf;
+    int     i;
+    char   *hosts;
+    char   *domain;
+    
+    p = dict_mysql->parser = cfg_parser_alloc(mysqlcf);
+    dict_mysql->username = cfg_get_str(p, "user", "", 0, 0);
+    dict_mysql->password = cfg_get_str(p, "password", "", 0, 0);
+    dict_mysql->dbname = cfg_get_str(p, "dbname", "", 1, 0);
+    dict_mysql->result_format = cfg_get_str(p, "result_format", "%s", 1, 0);
+    /*
+     * XXX: The default should be non-zero for safety, but that is not
+     * backwards compatible.
+     */
+    dict_mysql->expansion_limit = cfg_get_int(dict_mysql->parser,
+					      "expansion_limit", 0, 0, 0);
+
+    if ((dict_mysql->query = cfg_get_str(p, "query", NULL, 0, 0)) == 0) {
+        /*
+         * No query specified -- fallback to building it from components
+         * (old style "select %s from %s where %s")
+         */                 
+	buf = vstring_alloc(64);
+	db_common_sql_build_query(buf, p);
+	dict_mysql->query = vstring_export(buf);
+    }
+
+    /*
+     * Must parse all templates before we can use db_common_expand()
+     */
+    dict_mysql->ctx = 0;
+    (void) db_common_parse(&dict_mysql->dict, &dict_mysql->ctx,
+			   dict_mysql->query, 1);
+    (void) db_common_parse(0, &dict_mysql->ctx, dict_mysql->result_format, 0);
+
+    domain = cfg_get_str(p, "domain", "", 0, 0);
+    if (*domain) {
+        if (!(dict_mysql->domain = string_list_init(MATCH_FLAG_NONE, domain)))
+	    /*
+	     * The "domain" optimization skips input keys that may in fact
+	     * have unwanted matches in the database, so failure to create
+	     * the match list is fatal.
+	     */
+	    msg_fatal("%s: %s: domain match list creation using '%s' failed",
+	    	      myname, mysqlcf, domain);
+    }
+    else
+        dict_mysql->domain = 0;
+    myfree(domain);
+
+    hosts = cfg_get_str(p, "hosts", "", 0, 0);
+
+    dict_mysql->hosts = argv_split(hosts, " ,\t\r\n");
+    if (dict_mysql->hosts->argc == 0) {
+	argv_add(dict_mysql->hosts, "localhost", ARGV_END);
+	argv_terminate(dict_mysql->hosts);
+	if (msg_verbose)
+	    msg_info("%s: %s: no hostnames specified, defaulting to '%s'",
+		     myname, mysqlcf, dict_mysql->hosts->argv[0]);
+    }
+    myfree(hosts);
+}
+
+/* dict_mysql_open - open MYSQL data base */
+
 DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
 {
     DICT_MYSQL *dict_mysql;
@@ -485,95 +633,31 @@ DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
     dict_mysql->dict.lookup = dict_mysql_lookup;
     dict_mysql->dict.close = dict_mysql_close;
     dict_mysql->dict.flags = dict_flags | DICT_FLAG_FIXED;
-    dict_mysql->name = mysqlname_parse(name);
-    dict_mysql->pldb = plmysql_init(dict_mysql->name->hostnames,
-				    dict_mysql->name->len_hosts);
+    mysql_parse_config(dict_mysql, name);
+    dict_mysql->pldb = plmysql_init(dict_mysql->hosts);
     if (dict_mysql->pldb == NULL)
 	msg_fatal("couldn't intialize pldb!\n");
     return (DICT_DEBUG (&dict_mysql->dict));
 }
 
-/* mysqlname_parse - parse mysql configuration file */
-static MYSQL_NAME *mysqlname_parse(const char *mysqlcf)
-{
-    const char *myname = "mysqlname_parse";
-    int     i;
-    char   *hosts;
-    MYSQL_NAME *name = (MYSQL_NAME *) mymalloc(sizeof(MYSQL_NAME));
-    ARGV   *hosts_argv;
-
-    /* parser */
-    name->parser = cfg_parser_alloc(mysqlcf);
-
-    /* username */
-    name->username = cfg_get_str(name->parser, "user", "", 0, 0);
-
-    /* password */
-    name->password = cfg_get_str(name->parser, "password", "", 0, 0);
-
-    /* database name */
-    name->dbname = cfg_get_str(name->parser, "dbname", "", 1, 0);
-
-    /* table name */
-    name->table = cfg_get_str(name->parser, "table", "", 1, 0);
-
-    /* select field */
-    name->select_field = cfg_get_str(name->parser, "select_field", "", 1, 0);
-
-    /* where field */
-    name->where_field = cfg_get_str(name->parser, "where_field", "", 1, 0);
-
-    /* additional conditions */
-    name->additional_conditions = cfg_get_str(name->parser,
-					      "additional_conditions",
-					      "", 0, 0);
-
-    /* mysql server hosts */
-    hosts = cfg_get_str(name->parser, "hosts", "", 0, 0);
-
-    /* coo argv interface */
-    hosts_argv = argv_split(hosts, " ,\t\r\n");
-    if (hosts_argv->argc == 0) {		/* no hosts specified,
-						 * default to 'localhost' */
-	if (msg_verbose)
-	    msg_info("%s: %s: no hostnames specified, defaulting to 'localhost'",
-		     myname, mysqlcf);
-	argv_add(hosts_argv, "localhost", ARGV_END);
-	argv_terminate(hosts_argv);
-    }
-    name->len_hosts = hosts_argv->argc;
-    name->hostnames = (char **) mymalloc((sizeof(char *)) * name->len_hosts);
-    i = 0;
-    for (i = 0; hosts_argv->argv[i] != NULL; i++) {
-	name->hostnames[i] = mystrdup(hosts_argv->argv[i]);
-	if (msg_verbose)
-	    msg_info("%s: %s: adding host '%s' to list of mysql server hosts",
-		     myname, mysqlcf, name->hostnames[i]);
-    }
-    myfree(hosts);
-    argv_free(hosts_argv);
-    return name;
-}
-
-
 /*
  * plmysql_init - initalize a MYSQL database.
  *		    Return NULL on failure, or a PLMYSQL * on success.
  */
-static PLMYSQL *plmysql_init(char *hostnames[], int len_hosts)
+static PLMYSQL *plmysql_init(ARGV *hosts)
 {
     PLMYSQL *PLDB;
     int     i;
 
-    if ((PLDB = (PLMYSQL *) mymalloc(sizeof(PLMYSQL))) == NULL) {
+    if ((PLDB = (PLMYSQL *) mymalloc(sizeof(PLMYSQL))) == 0)
 	msg_fatal("mymalloc of pldb failed");
-    }
-    PLDB->len_hosts = len_hosts;
-    if ((PLDB->db_hosts = (HOST **) mymalloc(sizeof(HOST *) * len_hosts)) == NULL)
-	return NULL;
-    for (i = 0; i < len_hosts; i++) {
-	PLDB->db_hosts[i] = host_init(hostnames[i]);
-    }
+
+    PLDB->len_hosts = hosts->argc;
+    if ((PLDB->db_hosts = (HOST **) mymalloc(sizeof(HOST *) * hosts->argc)) == 0)
+	return (0);
+    for (i = 0; i < hosts->argc; i++)
+	PLDB->db_hosts[i] = host_init(hosts->argv[i]);
+
     return PLDB;
 }
 
@@ -621,29 +705,26 @@ static HOST *host_init(const char *hostname)
     return host;
 }
 
-/**********************************************************************
- * public interface dict_mysql_close
- * unregister, disassociate from database, freeing appropriate memory
- **********************************************************************/
+/* dict_mysql_close - close MYSQL database */
+
 static void dict_mysql_close(DICT *dict)
 {
     int     i;
     DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
 
     plmysql_dealloc(dict_mysql->pldb);
-    cfg_parser_free(dict_mysql->name->parser);
-    myfree(dict_mysql->name->username);
-    myfree(dict_mysql->name->password);
-    myfree(dict_mysql->name->dbname);
-    myfree(dict_mysql->name->table);
-    myfree(dict_mysql->name->select_field);
-    myfree(dict_mysql->name->where_field);
-    myfree(dict_mysql->name->additional_conditions);
-    for (i = 0; i < dict_mysql->name->len_hosts; i++) {
-	myfree(dict_mysql->name->hostnames[i]);
-    }
-    myfree((char *) dict_mysql->name->hostnames);
-    myfree((char *) dict_mysql->name);
+    cfg_parser_free(dict_mysql->parser);
+    myfree(dict_mysql->username);
+    myfree(dict_mysql->password);
+    myfree(dict_mysql->dbname);
+    myfree(dict_mysql->query);
+    myfree(dict_mysql->result_format);
+    if (dict_mysql->domain)
+        string_list_free(dict_mysql->domain);
+    if (dict_mysql->hosts)
+    	argv_free(dict_mysql->hosts);
+    if (dict_mysql->ctx)
+	db_common_free_ctx(dict_mysql->ctx);
     dict_free(dict);
 }
 

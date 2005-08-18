@@ -1,79 +1,8 @@
-#	$NetBSD: master.cf,v 1.1.1.11 2004/07/28 22:48:53 heas Exp $
+#	$NetBSD: master.cf,v 1.1.1.12 2005/08/18 21:01:45 rpaulo Exp $
 #
 #
-# Postfix master process configuration file.  Each logical line 
-# describes how a Postfix daemon program should be run. 
-#
-# A logical line starts with non-whitespace, non-comment text.
-# Empty lines and whitespace-only lines are ignored, as are comment 
-# lines whose first non-whitespace character is a `#'.  
-# A line that starts with whitespace continues a logical line.
-#
-# The fields that make up each line are described below. A "-" field
-# value requests that a default value be used for that field.
-#
-# Service: any name that is valid for the specified transport type
-# (the next field).  With INET transports, a service is specified as
-# host:port.  The host part (and colon) may be omitted. Either host
-# or port may be given in symbolic form or in numeric form. Examples
-# for the SMTP server:  localhost:smtp receives mail via the loopback
-# interface only; 10025 receives mail on port 10025.
-#
-# Transport type: "inet" for Internet sockets, "unix" for UNIX-domain
-# sockets, "fifo" for named pipes.
-#
-# Private: whether or not access is restricted to the mail system.
-# Default is private service.  Internet (inet) sockets can't be private.
-#
-# Unprivileged: whether the service runs with root privileges or as
-# the owner of the Postfix system (the owner name is controlled by the
-# mail_owner configuration variable in the main.cf file). Only the
-# pipe, virtual and local delivery daemons require privileges.
-#
-# Chroot: whether or not the service runs chrooted to the mail queue
-# directory (pathname is controlled by the queue_directory configuration
-# variable in the main.cf file). Presently, all Postfix daemons can run
-# chrooted, except for the pipe, virtual and local delivery daemons.
-# The proxymap server can run chrooted, but doing so defeats most of
-# the purpose of having that service in the first place.
-# The files in the examples/chroot-setup subdirectory describe how
-# to set up a Postfix chroot environment for your type of machine.
-#
-# Wakeup time: automatically wake up the named service after the
-# specified number of seconds. A ? at the end of the wakeup time
-# field requests that wake up events be sent only to services that
-# are actually being used.  Specify 0 for no wakeup. Presently, only
-# the pickup, queue manager and flush daemons need a wakeup timer.
-#
-# Max procs: the maximum number of processes that may execute this
-# service simultaneously. Default is to use a globally configurable
-# limit (the default_process_limit configuration parameter in main.cf).
-# Specify 0 for no process count limit.
-#
-# Command + args: the command to be executed. The command name is
-# relative to the Postfix program directory (pathname is controlled by
-# the daemon_directory configuration variable). Adding one or more
-# -v options turns on verbose logging for that service; adding a -D
-# option enables symbolic debugging (see the debugger_command variable
-# in the main.cf configuration file). See individual command man pages
-# for specific command-line options, if any.
-#
-# General main.cf options can be overridden for specific services.
-# To override one or more main.cf options, specify them as arguments
-# below, preceding each option by "-o".  There must be no whitespace
-# in the option itself (separate multiple values for an option by
-# commas).
-#
-# In order to use the "uucp" message tranport below, set up entries
-# in the transport table.
-#
-# In order to use the "cyrus" message transport below, configure it
-# in main.cf as the mailbox_transport.
-#
-# SPECIFY ONLY PROGRAMS THAT ARE WRITTEN TO RUN AS POSTFIX DAEMONS.
-# ALL DAEMONS SPECIFIED HERE MUST SPEAK A POSTFIX-INTERNAL PROTOCOL.
-#
-# DO NOT SHARE THE POSTFIX QUEUE BETWEEN MULTIPLE POSTFIX INSTANCES.
+# Postfix master process configuration file.  For details on the format
+# of the file, see the Postfix master(5) manual page.
 #
 # ==========================================================================
 # service type  private unpriv  chroot  wakeup  maxproc command + args
@@ -82,11 +11,18 @@
 smtp      inet  n       -       n       -       -       smtpd
 #submission inet n      -       n       -       -       smtpd
 #	-o smtpd_etrn_restrictions=reject
+#	-o smtpd_client_restrictions=permit_sasl_authenticated,reject
+#smtps    inet  n       -       n       -       -       smtpd
+#  -o smtpd_tls_wrappermode=yes -o smtpd_sasl_auth_enable=yes
+#submission   inet    n       -       n       -       -       smtpd
+#  -o smtpd_etrn_restrictions=reject
+#  -o smtpd_enforce_tls=yes -o smtpd_sasl_auth_enable=yes
 #628      inet  n       -       n       -       -       qmqpd
 pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
 qmgr      fifo  n       -       n       300     1       qmgr
 #qmgr     fifo  n       -       n       300     1       oqmgr
+tlsmgr    unix  -       -       n       1000?   1       tlsmgr
 rewrite   unix  -       -       n       -       -       trivial-rewrite
 bounce    unix  -       -       n       -       0       bounce
 defer     unix  -       -       n       -       0       bounce
@@ -95,19 +31,30 @@ verify    unix  -       -       n       -       1       verify
 flush     unix  n       -       n       1000?   0       flush
 proxymap  unix  -       -       n       -       -       proxymap
 smtp      unix  -       -       n       -       -       smtp
+# When relaying mail as backup MX, disable fallback_relay to avoid MX loops
 relay     unix  -       -       n       -       -       smtp
+	-o fallback_relay=
 #       -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
 showq     unix  n       -       n       -       -       showq
 error     unix  -       -       n       -       -       error
+discard   unix  -       -       n       -       -       discard
 local     unix  -       n       n       -       -       local
 virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
 anvil     unix  -       -       n       -       1       anvil
+scache	  unix	-	-	n	-	1	scache
 #
+# ====================================================================
 # Interfaces to non-Postfix software. Be sure to examine the manual
 # pages of the non-Postfix software to find out what options it wants.
 #
+# Many of the following services use the Postfix pipe(8) delivery
+# agent.  See the pipe(8) man page for information about ${recipient}
+# and other message envelope options.
+# ====================================================================
+#
 # maildrop. See the Postfix MAILDROP_README file for details.
+# Also specify in main.cf: maildrop_destination_recipient_limit=1
 #
 maildrop  unix  -       n       n       -       -       pipe
   flags=DRhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}
@@ -120,8 +67,14 @@ old-cyrus unix  -       n       n       -       -       pipe
 # Also specify in main.cf: cyrus_destination_recipient_limit=1
 cyrus     unix  -       n       n       -       -       pipe
   user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
+#
+# See the Postfix UUCP_README file for configuration details.
+#
 uucp      unix  -       n       n       -       -       pipe
   flags=Fqhu user=uucp argv=uux -r -n -z -a$sender - $nexthop!rmail ($recipient)
+#
+# Other external delivery methods.
+#
 ifmail    unix  -       n       n       -       -       pipe
   flags=F user=ftn argv=/usr/lib/ifmail/ifmail -r $nexthop ($recipient)
 bsmtp     unix  -       n       n       -       -       pipe

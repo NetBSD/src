@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - lmtp(8) </title>
 </head> <body> <pre>
-LMTP(8)                                                   LMTP(8)
+LMTP(8)                                                                LMTP(8)
 
 <b>NAME</b>
        lmtp - Postfix local delivery via LMTP
@@ -77,12 +77,12 @@ LMTP(8)                                                   LMTP(8)
        and of other trouble.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are picked up automatically, as <a href="lmtp.8.html">lmtp(8)</a>
+       Changes to <b>main.cf</b> are picked up automatically, as <a href="lmtp.8.html"><b>lmtp</b>(8)</a>
        processes  run  for only a limited amount of time. Use the
        command "<b>postfix reload</b>" to speed up a change.
 
        The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>COMPATIBILITY CONTROLS</b>
        <b><a href="postconf.5.html#lmtp_skip_quit_response">lmtp_skip_quit_response</a> (no)</b>
@@ -197,7 +197,7 @@ LMTP(8)                                                   LMTP(8)
               The LMTP client time limit  for  sending  the  LMTP
               ".", and for receiving the server response.
 
-       <b><a href="postconf.5.html#lmtp_rset_timeout">lmtp_rset_timeout</a> (120s)</b>
+       <b><a href="postconf.5.html#lmtp_rset_timeout">lmtp_rset_timeout</a> (20s)</b>
               The  LMTP  client  time  limit for sending the RSET
               command, and for receiving the server response.
 
@@ -237,8 +237,8 @@ LMTP(8)                                                   LMTP(8)
               Postfix daemon process terminates.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID of a Postfix command or daemon  pro-
-              cess.
+              The process ID  of  a  Postfix  command  or  daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The  process  name  of  a Postfix command or daemon
@@ -252,14 +252,15 @@ LMTP(8)                                                   LMTP(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        services(4), Internet services and aliases
        <a href="master.8.html">master(8)</a>, process manager
        syslogd(8), system logging
@@ -289,5 +290,5 @@ LMTP(8)                                                   LMTP(8)
        P.O. Box 830688, MC34
        Richardson, TX 75083, USA
 
-                                                          LMTP(8)
+                                                                       LMTP(8)
 </pre> </body> </html>

@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.1.1.3 2004/05/31 00:24:55 heas Exp $	*/
+/*	$NetBSD: argv.h,v 1.1.1.4 2005/08/18 21:09:54 rpaulo Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -10,8 +10,8 @@
 /*	string array utilities
 /* SYNOPSIS
 /*	#include "argv.h"
- DESCRIPTION
- .nf
+/* DESCRIPTION
+/* .nf
 
  /*
   * External interface.
@@ -26,6 +26,7 @@ extern ARGV *argv_alloc(int);
 extern void argv_add(ARGV *,...);
 extern void argv_addn(ARGV *,...);
 extern void argv_terminate(ARGV *);
+extern void argv_truncate(ARGV *, int);
 extern ARGV *argv_free(ARGV *);
 
 extern ARGV *argv_split(const char *, const char *);

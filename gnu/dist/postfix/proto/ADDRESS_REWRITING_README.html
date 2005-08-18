@@ -38,6 +38,11 @@ replace "username@example.com" by "firstname.lastname@example.com"
 when sending mail, and do the reverse transformation when receiving
 mail.  </p>
 
+<li> <p> Replace an internal address by an external address.  For
+example, replace "username@localdomain.local" by "isp-account@isp.example"
+when sending mail from a home computer to the Internet.
+</p>
+
 <li> <p> Replace an address by multiple addresses. For example,
 replace the address of an alias by the addresses listed under that
 alias.  </p>
@@ -62,6 +67,9 @@ tables. </p>
 <p> Topics covered in this document: </p>
 
 <ul>
+
+<li> <a href="#william"> To rewrite message headers or not, or to label
+as invalid </a>
 
 <li> <a href="#overview"> Postfix address rewriting overview </a>
 
@@ -91,6 +99,20 @@ tables. </p>
 
 <li> <a href="#relocated"> Relocated users table </a>
 
+</ul>
+
+<li> <a href="#remote"> Address rewriting with remote delivery </a>
+
+<ul>
+
+<li> <a href="#generic"> Generic mapping for outgoing SMTP mail </a>
+
+</ul>
+
+<li> <a href="#local"> Address rewriting with local delivery </a>
+
+<ul>
+
 <li> <a href="#aliases"> Local alias database </a>
 
 <li> <a href="#forward"> Local per-user .forward files </a>
@@ -100,6 +122,52 @@ tables. </p>
 </ul>
 
 <li> <a href="#debugging"> Debugging your address manipulations </a>
+
+</ul>
+
+<h2> <a name="william"> To rewrite message headers or not, or to label
+as invalid </a> </h2>
+
+<p> Postfix versions 2.1 and earlier always rewrite message header
+addresses, and append Postfix's own domain information to addresses
+that Postfix considers incomplete.  While rewriting message header
+addresses is OK for mail with a local origin, it is undesirable
+for remote mail: </p>
+
+<ul>
+
+<li> Message header address rewriting is frowned upon by mail standards,
+
+<li> Appending Postfix's own domain produces incorrect results with
+some incomplete addresses,
+
+<li> Appending Postfix's own domain sometimes creates the appearance
+that spam is sent by local users.
+
+</ul>
+
+<p> Postfix versions 2.2 give you the option to either not rewrite
+message headers from remote SMTP clients at all, or to label
+incomplete addresses in such message headers as invalid. Here is
+how it works:  </p>
+
+<ul>
+
+<li> Postfix always rewrites message headers from local SMTP clients
+and from the Postfix sendmail command, and appends its own domain
+to incomplete addresses.  The local_header_rewrite_clients parameter
+controls what SMTP clients Postfix considers local (by default,
+only local network interface addresses).
+
+<li> Postfix never rewrites message header addresses from remote
+SMTP clients when the remote_header_rewrite_domain parameter value
+is empty (the default setting).
+
+<li> Otherwise, Postfix rewrites message headers from remote SMTP
+clients, and appends the remote_header_rewrite_domain value to
+incomplete addresses.  This feature can be used to append a reserved
+domain such as "domain.invalid", so that incomplete addresses cannot
+be mistaken for local addresses.
 
 </ul>
 
@@ -249,15 +317,18 @@ turn-off control </th> </tr>
 <tr> <td> <a href="#standard"> Rewrite addresses to standard form</a>
 </td> <td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td>
 <td> append_at_myorigin, append_dot_mydomain, swap_bangpath,
-allow_percent_hack </td> <td> none </td> </tr>
+allow_percent_hack </td> <td> local_header_rewrite_clients,
+remote_header_rewrite_domain </td> </tr>
 
-<tr> <td> <a href="#canonical"> Canonical address mapping </a>
-</td> <td nowrap> all mail </td> <td> cleanup(8) </td> <td>
-canonical_maps </td> <td> receive_override_options </td> </tr>
+<tr> <td> <a href="#canonical"> Canonical address mapping </a> </td>
+<td nowrap> all mail </td> <td> cleanup(8) </td> <td> canonical_maps
+</td> <td> receive_override_options, local_header_rewrite_clients,
+remote_header_rewrite_domain </td> </tr>
 
-<tr> <td> <a href="#canonical"> Address masquerading </a> </td>
-<td nowrap> all mail </td> <td> cleanup(8) </td> <td> masquerade_domains
-</td> <td> receive_override_options </td> </tr>
+<tr> <td> <a href="#masquerade"> Address masquerading </a> </td> <td
+nowrap> all mail </td> <td> cleanup(8) </td> <td> masquerade_domains
+</td> <td> receive_override_options, local_header_rewrite_clients,
+remote_header_rewrite_domain </td> </tr>
 
 <tr> <td> <a href="#auto_bcc"> Automatic BCC recipients </a> </td>
 <td nowrap> new mail </td> <td> cleanup(8) </td> <td> always_bcc,
@@ -280,24 +351,28 @@ transport_maps </td> <td> none </td> </tr>
 <td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td> <td>
 relocated_maps </td> <td> none </td> </tr>
 
+<tr> <td> <a href="#generic"> Generic mapping table </a> </td> <td>
+outgoing SMTP mail </td> <td> smtp(8) </td> <td> smtp_generic_maps
+</td> <td> none </td> </tr>
+
 <tr> <td> <a href="#aliases"> Local alias database</a> </td> <td>
-all mail </td> <td> local(8) </td> <td> alias_maps </td> <td> none
+local mail only </td> <td> local(8) </td> <td> alias_maps </td> <td> none
 </td> </tr>
 
 <tr> <td> <a href="#forward"> Local per-user .forward files</a>
-</td> <td> all mail </td> <td> local(8) </td> <td> forward_path
+</td> <td> local mail only </td> <td> local(8) </td> <td> forward_path
 </td> <td> none </td> </tr>
 
 <tr> <td> <a href="#luser_relay"> Local catch-all address</a> </td>
-<td> all mail </td> <td> local(8) </td> <td> luser_relay </td> <td>
+<td> local mail only </td> <td> local(8) </td> <td> luser_relay </td> <td>
 none </td> </tr>
 
 </table>
 
 </blockquote>
 
-
-<h2> <a name="receiving"> Address rewriting when mail is received</a> </h2>
+<h2> <a name="receiving"> Address rewriting when mail is received</a>
+</h2>
 
 <p> The cleanup(8) server receives mail from outside of Postfix as
 well as mail from internal sources such as forwarded mail,
@@ -352,21 +427,41 @@ hard-coded address manipulations: </p>
 is called a route address, and specifies that mail for "user@site"
 be delivered via "hosta" and "hostb". Usage of this form has been
 deprecated for a long time.  Postfix has no ability to handle route
-addresses, other than to strip off the route part.  </p> </dd>
+addresses, other than to strip off the route part.  </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p> </dd>
 
 <dt>Rewrite "site!user" to "user@site" </dt>
 
 <dd> <p> This feature is controlled by the boolean swap_bangpath
 parameter (default: yes).  The purpose is to rewrite UUCP-style
 addresses to domain style. This is useful only when you receive
-mail via UUCP, but it probably does not hurt otherwise. </p> </dd>
+mail via UUCP, but it probably does not hurt otherwise. </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p> </dd>
 
 <dt>Rewrite "user%domain" to "user@domain"</dt>
 
 <dd> <p> This feature is controlled by the boolean allow_percent_hack
 parameter (default: yes). Typically, this is used in order to deal
 with monstrosities such as "user%domain@otherdomain". </p>
-</dd>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p> </dd>
 
 <dt>
 
@@ -376,6 +471,14 @@ Rewrite "user" to "user@$myorigin" </dt>
 parameter (default: yes).  You should never turn off this feature,
 because a lot of Postfix components expect that all addresses have
 the form "user@domain".  </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter; otherwise they append the
+domain name specified with the remote_header_rewrite_domain
+configuration parameter, if one is specified. To get the behavior
+before Postfix 2.2, specify "local_header_rewrite_clients =
+static:all". </p>
 
 <p> If your machine is not the main machine for $myorigin and you
 wish to have some users delivered locally without going via that
@@ -393,15 +496,30 @@ Rewrite "user@host" to "user@host.$mydomain" </dt>
 parameter (default: yes).  The purpose is to get consistent treatment
 of different forms of the same hostname. </p>
 
-<p> Some will argue that rewriting "host" to "host.$mydomain"
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter; otherwise they append the
+domain name specified with the remote_header_rewrite_domain
+configuration parameter, if one is specified. To get the behavior
+before Postfix 2.2, specify "local_header_rewrite_clients =
+static:all". </p>
+
+<p> Some will argue that rewriting "host" to "host.domain"
 is bad. That is why it can be turned off. Others like the convenience
-of having the local domain appended automatically. </p> </dd>
+of having Postfix's own domain appended automatically. </p> </dd>
 
 <dt>Rewrite "user@site." to "user@site" (without the trailing dot).</dt>
 
 <dd> <p> A single trailing dot is silently removed. However, an
 address that ends in multiple dots will be rejected as an invalid
-address. </p> </dd>
+address. </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p> </dd>
 
 </dl>
 
@@ -410,7 +528,18 @@ address. </p> </dd>
 <h3> <a name="canonical"> Canonical address mapping </a> </h3>
 
 <p> The cleanup(8) daemon uses the canonical(5) tables to rewrite
-all addresses in message envelopes and in message headers. This is
+addresses in message envelopes and in message headers.  By default
+all header and envelope addresses are rewritten; this is controlled
+with the canonical_classes configuration parameter.  </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p>
+
+<p> Address rewriting is 
 done for local and remote addresses.  The mapping is useful to
 replace login names by "Firstname.Lastname" style addresses, or to
 clean up invalid domains in mail addresses produced by legacy mail
@@ -453,7 +582,10 @@ applied only to sender addresses or to recipient addresses. </p>
 </blockquote>
 
 <p> The sender and recipient canonical maps are applied before the
-common canonical maps. </p>
+common canonical maps. The sender_canonical_classes and
+recipient_canonical_classes parameters control what addresses are
+subject to sender_canonical_maps and recipient_canonical_maps
+mappings, respectively. </p>
 
 <p> Sender-specific rewriting is useful when you want to rewrite
 ugly sender addresses to pretty ones, and still want to be able to
@@ -483,6 +615,13 @@ in the master.cf file.  This feature is available in Postfix version
 behind their mail gateway, and to make it appear as if the mail
 comes from the gateway itself, instead of from individual machines.
 </p>
+
+<p> NOTE: Postfix versions 2.2 and later rewrite message headers
+from remote SMTP clients only if the client matches the
+local_header_rewrite_clients parameter, or if the
+remote_header_rewrite_domain configuration parameter specifies a
+non-empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".  </p>
 
 <p> Address masquerading is disabled by default, and is implemented
 by the cleanup(8) server. To enable, edit the masquerade_domains
@@ -712,8 +851,17 @@ content according to the rules of the SMTP, LMTP, etc.  protocol.
 When mail cannot be delivered, it is either returned to the sender
 or moved to the deferred queue and tried again later.  </p>
 
-<p> Address manipulations when mail is delivered via the local(8)
-delivery agent: </p>
+<p> <a name="remote">Address</a> manipulations when mail is delivered
+via the smtp(8) delivery agent: </p>
+
+<ul>
+
+<li> <a href="#generic"> Generic mapping for outgoing SMTP mail </a>
+
+</ul>
+
+<p> <a name="local">Address</a> manipulations when mail is delivered
+via the local(8) delivery agent: </p>
 
 <ul>
 
@@ -772,7 +920,8 @@ align="left">Default delivery method </th> <th>Availability
 <p> Once the trivial-rewrite(8) daemon has determined a default
 delivery method it searches the optional transport(5) table for
 information that overrides the message destination and/or delivery
-method.  Typical use of the transport(5) is to send mail to a system
+method.  Typical use of the transport(5) table is to send mail to
+a system
 that is not connected to the Internet, or to use a special SMTP
 client configuration for destinations that have special requirements.
 See, for example, the STANDARD_CONFIGURATION_README and UUCP_README
@@ -826,6 +975,43 @@ rejected by the SMTP server with the reason "user has moved to
 otheruser@elsewhere.tld". Older Postfix versions will receive the
 mail first, and then return it to the sender as undeliverable, with
 the same reason.  </p>
+
+<h3> <a name="generic"> Generic mapping for outgoing SMTP mail </a> </h3>
+
+<p> Some hosts have no valid Internet domain name, and instead use
+a name such as <i>localdomain.local</i>. This can be a problem when
+you want to send mail over the Internet, because many mail servers
+reject mail addresses with invalid domain names. </p>
+
+<p> With the smtp_generic_maps parameter you can specify generic(5)
+lookup tables that replace local mail addresses by valid Internet
+addresses when mail leaves the machine via SMTP. The generic(5)
+mapping replaces envelope and header addresses, and is non-recursive.
+It does not happen when you send mail between addresses on the
+local machine. </p>
+
+<p> This feature is available in Postfix version 2.2 and later.</p>
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    smtp_generic_maps = hash:/etc/postfix/generic
+
+/etc/postfix/generic:
+    his@localdomain.local		hisaccount@hisisp.example
+    her@localdomain.local		heraccount@herisp.example
+    @localdomain.local			hisaccount+local@hisisp.example
+</pre>
+</blockquote>
+
+<p> When mail is sent to a remote host via SMTP, this replaces
+<i>his@localdomain.local</i> by his ISP mail address, replaces
+<i>her@localdomain.local</i> by her ISP mail address, and replaces
+other local addresses by his ISP account, with an address extension
+of +<i>local</i> (this example assumes that the ISP supports "+"
+style address extensions).  </p>
 
 <h3> <a name="aliases"> Local alias database </a> </h3>
 

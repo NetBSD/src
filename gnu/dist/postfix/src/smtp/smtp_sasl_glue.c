@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.5 2004/05/31 00:24:46 heas Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.6 2005/08/18 21:08:57 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -10,21 +10,29 @@
 /*
 /*	void	smtp_sasl_initialize()
 /*
-/*	void	smtp_sasl_connect(state)
-/*	SMTP_STATE *state;
+/*	void	smtp_sasl_connect(session)
+/*	SMTP_SESSION *session;
 /*
-/*	void	smtp_sasl_start(state, sasl_opts_name, sasl_opts_val)
-/*	SMTP_STATE *state;
+/*	void	smtp_sasl_start(session, sasl_opts_name, sasl_opts_val)
+/*	SMTP_SESSION *session;
 /*
-/*	int     smtp_sasl_passwd_lookup(state)
-/*	SMTP_STATE *state;
+/*	int     smtp_sasl_passwd_lookup(session)
+/*	SMTP_SESSION *session;
 /*
-/*	int	smtp_sasl_authenticate(state, why)
-/*	SMTP_STATE *state;
+/*	int	smtp_sasl_authenticate(session, why)
+/*	SMTP_SESSION *session;
 /*	VSTRING *why;
 /*
-/*	void	smtp_sasl_cleanup(state)
-/*	SMTP_STATE *state;
+/*	void	smtp_sasl_cleanup(session)
+/*	SMTP_SESSION *session;
+/*
+/*	void	smtp_sasl_passivate(session, buf)
+/*	SMTP_SESSION *session;
+/*	VSTRING	*buf;
+/*
+/*	int	smtp_sasl_activate(session, buf)
+/*	SMTP_SESSION *session;
+/*	char	*buf;
 /* DESCRIPTION
 /*	smtp_sasl_initialize() initializes the SASL library. This
 /*	routine must be called once at process startup, before any
@@ -54,8 +62,15 @@
 /*	end of every SMTP session that uses SASL authentication.
 /*	This routine is a noop for non-SASL sessions.
 /*
+/*	smtp_sasl_passivate() appends flattened SASL attributes to the
+/*	specified buffer. The SASL attributes are not destroyed.
+/*
+/*	smtp_sasl_activate() restores SASL attributes from the
+/*	specified buffer. The buffer is modified. A result < 0
+/*	means there was an error.
+/*
 /*	Arguments:
-/* .IP state
+/* .IP session
 /*	Session context.
 /* .IP mech_list
 /*	String of SASL mechanisms (separated by blanks)
@@ -177,6 +192,11 @@ static NAME_MASK smtp_sasl_sec_mask[] = {
   */
 static MAPS *smtp_sasl_passwd_map;
 
+ /* 
+  * Supported SASL mechanisms.
+  */
+STRING_LIST *smtp_sasl_mechs;
+
 /* smtp_sasl_log - logging call-back routine */
 
 static int smtp_sasl_log(void *unused_context, int priority,
@@ -205,20 +225,20 @@ static int smtp_sasl_get_user(void *context, int unused_id, const char **result,
 			              unsigned *len)
 {
     char   *myname = "smtp_sasl_get_user";
-    SMTP_STATE *state = (SMTP_STATE *) context;
+    SMTP_SESSION *session = (SMTP_SESSION *) context;
 
     if (msg_verbose)
-	msg_info("%s: %s", myname, state->sasl_username);
+	msg_info("%s: %s", myname, session->sasl_username);
 
     /*
      * Sanity check.
      */
-    if (state->sasl_passwd == 0)
+    if (session->sasl_passwd == 0)
 	msg_panic("%s: no username looked up", myname);
 
-    *result = state->sasl_username;
+    *result = session->sasl_username;
     if (len)
-	*len = strlen(state->sasl_username);
+	*len = strlen(session->sasl_username);
     return (SASL_OK);
 }
 
@@ -228,35 +248,35 @@ static int smtp_sasl_get_passwd(sasl_conn_t *conn, void *context,
 				        int id, sasl_secret_t **psecret)
 {
     char   *myname = "smtp_sasl_get_passwd";
-    SMTP_STATE *state = (SMTP_STATE *) context;
+    SMTP_SESSION *session = (SMTP_SESSION *) context;
     int     len;
 
     if (msg_verbose)
-	msg_info("%s: %s", myname, state->sasl_passwd);
+	msg_info("%s: %s", myname, session->sasl_passwd);
 
     /*
      * Sanity check.
      */
     if (!conn || !psecret || id != SASL_CB_PASS)
 	return (SASL_BADPARAM);
-    if (state->sasl_passwd == 0)
+    if (session->sasl_passwd == 0)
 	msg_panic("%s: no password looked up", myname);
 
     /*
      * Convert the password into a counted string.
      */
-    len = strlen(state->sasl_passwd);
+    len = strlen(session->sasl_passwd);
     if ((*psecret = (sasl_secret_t *) malloc(sizeof(sasl_secret_t) + len)) == 0)
 	return (SASL_NOMEM);
     (*psecret)->len = len;
-    memcpy((*psecret)->data, state->sasl_passwd, len + 1);
+    memcpy((*psecret)->data, session->sasl_passwd, len + 1);
 
     return (SASL_OK);
 }
 
 /* smtp_sasl_passwd_lookup - password lookup routine */
 
-int     smtp_sasl_passwd_lookup(SMTP_STATE *state)
+int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 {
     char   *myname = "smtp_sasl_passwd_lookup";
     const char *value;
@@ -271,21 +291,30 @@ int     smtp_sasl_passwd_lookup(SMTP_STATE *state)
     /*
      * Look up the per-server password information. Try the hostname first,
      * then try the destination.
+     * 
+     * XXX Instead of using nexthop (the intended destination) we use dest
+     * (either the intended destination, or a fall-back destination).
+     * 
+     * XXX SASL authentication currently depends on the host/domain but not on
+     * the TCP port. If the port is not :25, we should append it to the table
+     * lookup key. Code for this was briefly introduced into 2.2 snapshots,
+     * but didn't canonicalize the TCP port, and did not append the port to
+     * the MX hostname.
      */
-    if ((value = maps_find(smtp_sasl_passwd_map, state->session->host, 0)) != 0
-	|| (value = maps_find(smtp_sasl_passwd_map, state->request->nexthop, 0)) != 0) {
-	state->sasl_username = mystrdup(value);
-	passwd = split_at(state->sasl_username, ':');
-	state->sasl_passwd = mystrdup(passwd ? passwd : "");
+    if ((value = maps_find(smtp_sasl_passwd_map, session->host, 0)) != 0
+    || (value = maps_find(smtp_sasl_passwd_map, session->dest, 0)) != 0) {
+	session->sasl_username = mystrdup(value);
+	passwd = split_at(session->sasl_username, ':');
+	session->sasl_passwd = mystrdup(passwd ? passwd : "");
 	if (msg_verbose)
 	    msg_info("%s: host `%s' user `%s' pass `%s'",
-		     myname, state->session->host,
-		     state->sasl_username, state->sasl_passwd);
+		     myname, session->host,
+		     session->sasl_username, session->sasl_passwd);
 	return (1);
     } else {
 	if (msg_verbose)
 	    msg_info("%s: host `%s' no auth info found",
-		     myname, state->session->host);
+		     myname, session->host);
 	return (0);
     }
 }
@@ -321,24 +350,30 @@ void    smtp_sasl_initialize(void)
     if (sasl_client_init(callbacks) != SASL_OK)
 	msg_fatal("SASL library initialization");
 
+    /*
+     * Initialize optional supported mechanism matchlist
+     */
+    if (*var_smtp_sasl_mechs)
+    	smtp_sasl_mechs = string_list_init(MATCH_FLAG_NONE,
+					   var_smtp_sasl_mechs);
 }
 
 /* smtp_sasl_connect - per-session client initialization */
 
-void    smtp_sasl_connect(SMTP_STATE *state)
+void    smtp_sasl_connect(SMTP_SESSION *session)
 {
-    state->sasl_mechanism_list = 0;
-    state->sasl_username = 0;
-    state->sasl_passwd = 0;
-    state->sasl_conn = 0;
-    state->sasl_encoded = 0;
-    state->sasl_decoded = 0;
-    state->sasl_callbacks = 0;
+    session->sasl_mechanism_list = 0;
+    session->sasl_username = 0;
+    session->sasl_passwd = 0;
+    session->sasl_conn = 0;
+    session->sasl_encoded = 0;
+    session->sasl_decoded = 0;
+    session->sasl_callbacks = 0;
 }
 
 /* smtp_sasl_start - per-session SASL initialization */
 
-void    smtp_sasl_start(SMTP_STATE *state, const char *sasl_opts_name,
+void    smtp_sasl_start(SMTP_SESSION *session, const char *sasl_opts_name,
 			        const char *sasl_opts_val)
 {
     static sasl_callback_t callbacks[] = {
@@ -359,18 +394,18 @@ void    smtp_sasl_start(SMTP_STATE *state, const char *sasl_opts_name,
      */
 #define NULL_SECFLAGS		0
 
-    state->sasl_callbacks = (sasl_callback_t *) mymalloc(sizeof(callbacks));
-    memcpy((char *) state->sasl_callbacks, callbacks, sizeof(callbacks));
-    for (cp = state->sasl_callbacks; cp->id != SASL_CB_LIST_END; cp++)
-	cp->context = (void *) state;
+    session->sasl_callbacks = (sasl_callback_t *) mymalloc(sizeof(callbacks));
+    memcpy((char *) session->sasl_callbacks, callbacks, sizeof(callbacks));
+    for (cp = session->sasl_callbacks; cp->id != SASL_CB_LIST_END; cp++)
+	cp->context = (void *) session;
 
 #define NULL_SERVER_ADDR	((char *) 0)
 #define NULL_CLIENT_ADDR	((char *) 0)
 
-    if (SASL_CLIENT_NEW("smtp", state->session->host,
+    if (SASL_CLIENT_NEW("smtp", session->host,
 			NULL_CLIENT_ADDR, NULL_SERVER_ADDR,
-			state->sasl_callbacks, NULL_SECFLAGS,
-			(sasl_conn_t **) &state->sasl_conn) != SASL_OK)
+			session->sasl_callbacks, NULL_SECFLAGS,
+			(sasl_conn_t **) &session->sasl_conn) != SASL_OK)
 	msg_fatal("per-session SASL client initialization");
 
     /*
@@ -379,14 +414,14 @@ void    smtp_sasl_start(SMTP_STATE *state, const char *sasl_opts_name,
      */
     memset(&sec_props, 0L, sizeof(sec_props));
     sec_props.min_ssf = 0;
-    sec_props.max_ssf = 1;			/* don't allow real SASL
+    sec_props.max_ssf = 0;			/* don't allow real SASL
 						 * security layer */
     sec_props.security_flags = name_mask(sasl_opts_name, smtp_sasl_sec_mask,
 					 sasl_opts_val);
     sec_props.maxbufsize = 0;
     sec_props.property_names = 0;
     sec_props.property_values = 0;
-    if (sasl_setprop(state->sasl_conn, SASL_SEC_PROPS,
+    if (sasl_setprop(session->sasl_conn, SASL_SEC_PROPS,
 		     &sec_props) != SASL_OK)
 	msg_fatal("set per-session SASL security properties");
 
@@ -395,13 +430,13 @@ void    smtp_sasl_start(SMTP_STATE *state, const char *sasl_opts_name,
      * order to avoid memory leaks in case of read/write timeout or I/O
      * error.
      */
-    state->sasl_encoded = vstring_alloc(10);
-    state->sasl_decoded = vstring_alloc(10);
+    session->sasl_encoded = vstring_alloc(10);
+    session->sasl_decoded = vstring_alloc(10);
 }
 
 /* smtp_sasl_authenticate - run authentication protocol */
 
-int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
+int     smtp_sasl_authenticate(SMTP_SESSION *session, VSTRING *why)
 {
     char   *myname = "smtp_sasl_authenticate";
     unsigned enc_length;
@@ -428,18 +463,18 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
 
     if (msg_verbose)
 	msg_info("%s: %s: SASL mechanisms %s",
-	       myname, state->session->namaddr, state->sasl_mechanism_list);
+		 myname, session->namaddr, session->sasl_mechanism_list);
 
     /*
      * Start the client side authentication protocol.
      */
-    result = SASL_CLIENT_START((sasl_conn_t *) state->sasl_conn,
-			       state->sasl_mechanism_list,
+    result = SASL_CLIENT_START((sasl_conn_t *) session->sasl_conn,
+			       session->sasl_mechanism_list,
 			       NO_SASL_SECRET, NO_SASL_INTERACTION,
 			       &clientout, &clientoutlen, &mechanism);
     if (result != SASL_OK && result != SASL_CONTINUE) {
 	vstring_sprintf(why, "cannot SASL authenticate to server %s: %s",
-			state->session->namaddr,
+			session->namaddr,
 			sasl_errstring(result, NO_SASL_LANGLIST,
 				       NO_SASL_OUTLANG));
 	return (-1);
@@ -455,28 +490,28 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
     if (clientoutlen > 0) {
 	if (msg_verbose)
 	    msg_info("%s: %s: uncoded initial reply: %.*s",
-		     myname, state->session->namaddr,
-		     (int) clientoutlen, clientout);
+		   myname, session->namaddr, (int) clientoutlen, clientout);
 	enc_length = ENCODE64_LENGTH(clientoutlen) + 1;
-	VSTRING_SPACE(state->sasl_encoded, enc_length);
+	VSTRING_SPACE(session->sasl_encoded, enc_length);
 	if (sasl_encode64(clientout, clientoutlen,
-			  STR(state->sasl_encoded), enc_length,
+			  STR(session->sasl_encoded), enc_length,
 			  &enc_length_out) != SASL_OK)
 	    msg_panic("%s: sasl_encode64 botch", myname);
 #if SASL_VERSION_MAJOR < 2
 	/* SASL version 1 doesn't free memory that it allocates. */
 	free(clientout);
 #endif
-	smtp_chat_cmd(state, "AUTH %s %s", mechanism, STR(state->sasl_encoded));
+	smtp_chat_cmd(session, "AUTH %s %s", mechanism,
+		      STR(session->sasl_encoded));
     } else {
-	smtp_chat_cmd(state, "AUTH %s", mechanism);
+	smtp_chat_cmd(session, "AUTH %s", mechanism);
     }
 
     /*
      * Step through the authentication protocol until the server tells us
      * that we are done.
      */
-    while ((resp = smtp_chat_resp(state))->code / 100 == 3) {
+    while ((resp = smtp_chat_resp(session))->code / 100 == 3) {
 
 	/*
 	 * Process a server challenge.
@@ -484,25 +519,24 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
 	line = resp->str;
 	(void) mystrtok(&line, "- \t\n");	/* skip over result code */
 	serverinlen = strlen(line);
-	VSTRING_SPACE(state->sasl_decoded, serverinlen);
-	if (SASL_DECODE64(line, serverinlen, STR(state->sasl_decoded),
+	VSTRING_SPACE(session->sasl_decoded, serverinlen);
+	if (SASL_DECODE64(line, serverinlen, STR(session->sasl_decoded),
 			  serverinlen, &enc_length) != SASL_OK) {
 	    vstring_sprintf(why, "malformed SASL challenge from server %s",
-			    state->session->namaddr);
+			    session->namaddr);
 	    return (-1);
 	}
 	if (msg_verbose)
 	    msg_info("%s: %s: decoded challenge: %.*s",
-		     myname, state->session->namaddr,
-		     (int) enc_length, STR(state->sasl_decoded));
-	result = sasl_client_step((sasl_conn_t *) state->sasl_conn,
-				  STR(state->sasl_decoded), enc_length,
+		     myname, session->namaddr, (int) enc_length,
+		     STR(session->sasl_decoded));
+	result = sasl_client_step((sasl_conn_t *) session->sasl_conn,
+				  STR(session->sasl_decoded), enc_length,
 			    NO_SASL_INTERACTION, &clientout, &clientoutlen);
 	if (result != SASL_OK && result != SASL_CONTINUE)
 	    msg_warn("SASL authentication failed to server %s: %s",
-		     state->session->namaddr,
-		     sasl_errstring(result, NO_SASL_LANGLIST,
-				    NO_SASL_OUTLANG));
+		  session->namaddr, sasl_errstring(result, NO_SASL_LANGLIST,
+						   NO_SASL_OUTLANG));
 
 	/*
 	 * Send a client response.
@@ -510,12 +544,12 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
 	if (clientoutlen > 0) {
 	    if (msg_verbose)
 		msg_info("%s: %s: uncoded client response %.*s",
-			 myname, state->session->namaddr,
+			 myname, session->namaddr,
 			 (int) clientoutlen, clientout);
 	    enc_length = ENCODE64_LENGTH(clientoutlen) + 1;
-	    VSTRING_SPACE(state->sasl_encoded, enc_length);
+	    VSTRING_SPACE(session->sasl_encoded, enc_length);
 	    if (sasl_encode64(clientout, clientoutlen,
-			      STR(state->sasl_encoded), enc_length,
+			      STR(session->sasl_encoded), enc_length,
 			      &enc_length_out) != SASL_OK)
 		msg_panic("%s: sasl_encode64 botch", myname);
 #if SASL_VERSION_MAJOR < 2
@@ -523,9 +557,9 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
 	    free(clientout);
 #endif
 	} else {
-	    vstring_strcat(state->sasl_encoded, "");
+	    vstring_strcat(session->sasl_encoded, "");
 	}
-	smtp_chat_cmd(state, "%s", STR(state->sasl_encoded));
+	smtp_chat_cmd(session, "%s", STR(session->sasl_encoded));
     }
 
     /*
@@ -533,7 +567,7 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
      */
     if (resp->code / 100 != 2) {
 	vstring_sprintf(why, "SASL authentication failed; server %s said: %s",
-			state->session->namaddr, resp->str);
+			session->namaddr, resp->str);
 	return (0);
     }
     return (1);
@@ -541,38 +575,51 @@ int     smtp_sasl_authenticate(SMTP_STATE *state, VSTRING *why)
 
 /* smtp_sasl_cleanup - per-session cleanup */
 
-void    smtp_sasl_cleanup(SMTP_STATE *state)
+void    smtp_sasl_cleanup(SMTP_SESSION *session)
 {
-    if (state->sasl_username) {
-	myfree(state->sasl_username);
-	state->sasl_username = 0;
+    if (session->sasl_username) {
+	myfree(session->sasl_username);
+	session->sasl_username = 0;
     }
-    if (state->sasl_passwd) {
-	myfree(state->sasl_passwd);
-	state->sasl_passwd = 0;
+    if (session->sasl_passwd) {
+	myfree(session->sasl_passwd);
+	session->sasl_passwd = 0;
     }
-    if (state->sasl_mechanism_list) {
+    if (session->sasl_mechanism_list) {
 	/* allocated in smtp_sasl_helo_auth */
-	myfree(state->sasl_mechanism_list);
-	state->sasl_mechanism_list = 0;
+	myfree(session->sasl_mechanism_list);
+	session->sasl_mechanism_list = 0;
     }
-    if (state->sasl_conn) {
+    if (session->sasl_conn) {
 	if (msg_verbose)
 	    msg_info("disposing SASL state information");
-	sasl_dispose(&state->sasl_conn);
+	sasl_dispose(&session->sasl_conn);
     }
-    if (state->sasl_callbacks) {
-	myfree((char *) state->sasl_callbacks);
-	state->sasl_callbacks = 0;
+    if (session->sasl_callbacks) {
+	myfree((char *) session->sasl_callbacks);
+	session->sasl_callbacks = 0;
     }
-    if (state->sasl_encoded) {
-	vstring_free(state->sasl_encoded);
-	state->sasl_encoded = 0;
+    if (session->sasl_encoded) {
+	vstring_free(session->sasl_encoded);
+	session->sasl_encoded = 0;
     }
-    if (state->sasl_decoded) {
-	vstring_free(state->sasl_decoded);
-	state->sasl_decoded = 0;
+    if (session->sasl_decoded) {
+	vstring_free(session->sasl_decoded);
+	session->sasl_decoded = 0;
     }
+}
+
+/* smtp_sasl_passivate - append serialized SASL attributes */
+
+void    smtp_sasl_passivate(SMTP_SESSION *session, VSTRING *buf)
+{
+}
+
+/* smtp_sasl_activate - de-serialize SASL attributes */
+
+int     smtp_sasl_activate(SMTP_SESSION *session, char *buf)
+{
+    return (0);
 }
 
 #endif

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# var2user - create (variable name -> parameter name) mapping
+
+# Usage: var2user mail_params.h
+
+awk '
+
+/^#define[ 	]+VAR_/	{ name=$3 }
+
+/^extern.*var_/ { print "table[\"" $3 "\"] = " name }
+
+' "$@" | tr -d ';*'

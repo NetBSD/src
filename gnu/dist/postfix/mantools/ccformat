@@ -17,7 +17,7 @@ TMPF=/tmp/ccformat.$$
 ERROR=
 TROFF=
 BCK=
-FLAGS="-st -di8 -npsl -bap -bad -bbb -bc -i4 -d0 -nip -nfc1 -cd41 -c49"
+FLAGS="-st -di8 -npsl -bap -bad -bbb -nbc -i4 -d0 -nip -nfc1 -cd41 -c49"
 
 trap 'rm -f .ind.$$ $TMPF; exit 1' 1 2 3 15
 

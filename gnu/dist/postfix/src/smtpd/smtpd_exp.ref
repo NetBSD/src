@@ -123,7 +123,6 @@ OK
 >>> sender_restrictions check_sender_mx_access,hash:smtpd_check_access
 OK
 >>> mail foo@pls.net.au
-./smtpd_check: warning: numeric domain name in resource data of MX record for pls.net.au: 203.3.110.241
 OK
 >>> #mail foo@verisign-wildcard.com
 >>> mail foo@verisign.com

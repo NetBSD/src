@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.7 2004/07/28 22:48:54 heas Exp $
+#	$NetBSD: post-install,v 1.1.1.8 2005/08/18 21:01:46 rpaulo Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -475,7 +475,12 @@ test -n "$create" && {
 	test -n "$set_permission" && {
 	    chown $recursive $owner $path || exit 1
 	    test -z "$group" || chgrp $recursive $group $path || exit 1
-	    chmod $recursive $mode $path || exit 1
+	    if [ "$type" = "d" -a -n "$recursive" ]
+	    then
+		find $path -type d -exec chmod $mode "{}" ";"
+	    else
+		chmod $mode $path
+	    fi || exit 1
 	}
     done
     IFS="$BACKUP_IFS"
@@ -566,22 +571,13 @@ EOF
 	}
     done
 
-    # With 20000 active queue files, the active queue directory should
-    # be hashed, and so should the other directories, because they
-    # can contain even more mail.
-    #
-    # Unfortunately, this sucks mailq performance on unloaded systems.
-    #
-    # If you don't want slow mailq, be sure to hash defer and deferred,
-    # because those two directories can contain lots of files.
+    # File systems have improved since Postfix came out, and all we
+    # require now is that defer and deferred are hashed because those
+    # can contain lots of files.
 
     found=`$POSTCONF -c $config_directory -h hash_queue_names`
     missing=
-    (echo "$found" | grep active >/dev/null) || missing="$missing active"
-    (echo "$found" | grep bounce >/dev/null) || missing="$missing bounce"
     (echo "$found" | grep defer >/dev/null)  || missing="$missing defer"
-    (echo "$found" | grep flush >/dev/null)  || missing="$missing flush"
-    (echo "$found" | grep incoming>/dev/null)|| missing="$missing incoming"
     (echo "$found" | grep deferred>/dev/null)|| missing="$missing deferred"
     test -n "$missing" && {
 	echo fixing main.cf hash_queue_names for missing $missing
@@ -600,7 +596,7 @@ EOF
     if [ -z "$has_lrm" -a -z "$has_lrjc" ]
     then
 	echo SAFETY: editing main.cf, setting $unknown_local=450.
-	echo See the RELEASE_NOTES and LOCAL_RECIPIENT_README files for details.
+	echo See the LOCAL_RECIPIENT_README file for details.
 	$POSTCONF -e "$unknown_local = 450" || exit 1
     fi
 
@@ -615,12 +611,53 @@ EOF
 
     # Add missing anvil service to master.cf.
 
-#    grep '^anvil.*anvil' $config_directory/master.cf >/dev/null || {
-#	echo Editing $config_directory/master.cf, adding missing entry for anvil service
-#	cat >>$config_directory/master.cf <<EOF || exit 1
-#anvil	  unix	-	-	n	-	1	anvil
-#EOF
-#    }
+    grep '^anvil.*anvil' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for anvil service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+anvil	  unix	-	-	n	-	1	anvil
+EOF
+    }
+
+    # Add missing scache service to master.cf.
+
+    grep '^scache.*scache' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for scache service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+scache	  unix	-	-	n	-	1	scache
+EOF
+    }
+
+    # Add missing discard service to master.cf.
+
+    grep '^discard.*discard' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for discard service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+discard	  unix	-	-	n	-	-	discard
+EOF
+    }
+
+    # Update the tlsmgr fifo->unix service.
+
+    grep "^tlsmgr[ 	]*fifo[ 	]" \
+	$config_directory/master.cf >/dev/null && {
+	    echo Editing $config_directory/master.cf, updating the tlsmgr from fifo to unix service
+	    ed $config_directory/master.cf <<EOF || exit 1
+/^tlsmgr[ 	]*fifo[ 	]/
+s/fifo/unix/
+p
+w
+q
+EOF
+    }
+
+    # Add missing tlsmgr service to master.cf.
+
+    grep '^tlsmgr.*tlsmgr' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for tlsmgr service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+tlsmgr    unix  -       -       n       1000?   1       tlsmgr
+EOF
+    }
 
     # Report (but do not remove) obsolete files.
 
