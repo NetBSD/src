@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3.2.11 2005/05/01 22:11:33 tron Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3.2.12 2005/08/18 20:45:11 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.11 2005/05/01 22:11:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.12 2005/08/18 20:45:11 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -195,7 +195,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
-	/* sti */
+	sti();
 	ci->ci_idepth++;
 #ifdef MULTIPROCESSOR
 	x86_intlock(regs);
@@ -210,6 +210,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 #ifdef MULTIPROCESSOR
 			x86_intunlock(regs);
 #endif
+			cli();
 			hypervisor_set_ipending(iplmask,
 			    evtch / 32, evtch % 32);
 			/* leave masked */
@@ -223,6 +224,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
 	}
+	cli();
 #ifdef MULTIPROCESSOR
 	x86_intunlock(regs);
 #endif
