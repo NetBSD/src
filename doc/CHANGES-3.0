@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.206 2005/08/16 15:06:56 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.207 2005/08/18 20:19:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11715,4 +11715,21 @@ usr.sbin/amd/libamu/mkconf			patch
 	Update am-utils to version 6-1-20050417. This fixes problem with
 	unmounting program mounted filesystems.
 	[soda, ticket #670]
+
+sys/dev/ic/wdc.c				1.225,1.227-1.228
+sys/dev/ic/wdcvar.h				1.83
+sys/dev/pci/aceride.c				1.16-1.18
+sys/dev/pci/pciide_acer_reg.h			1.9
+
+	Avoid data corruption when Ultra-DMA is used with certain
+	Acer IDE controllers (like the one found in some sparc systems).
+	[bouyer, ticket #653]
+
+xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h 1.4
+xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dac.c 1.5
+xfree/xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c 1.5
+
+	On old revisions of FFB, when unblanking the screen, make the X server
+	redraw the whole screen to fix video memory corruption.
+	[martin, ticket #672]
 
