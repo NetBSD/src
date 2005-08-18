@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.15 2004/11/13 05:45:33 heas Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.16 2005/08/18 22:11:17 rpaulo Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -68,10 +68,18 @@
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 #endif
 
+#ifdef BSDI4
+/* #define HAS_IPV6 find out interface lookup method */
+#endif
+
 /* __FreeBSD_version version is major+minor */
 
 #if __FreeBSD_version >= 200000
 #define HAS_DUPLEX_PIPE
+#endif
+
+#if __FreeBSD_version >= 220000
+#define HAS_DEV_URANDOM			/* introduced in 2.1.5 */
 #endif
 
 #if __FreeBSD_version >= 300000
@@ -87,6 +95,7 @@
 
 #if OpenBSD >= 200000			/* XXX */
 #define HAS_ISSETUGID
+#define HAS_DEV_URANDOM			/* XXX probably earlier */
 #endif
 
 #if OpenBSD >= 200200			/* XXX */
@@ -94,20 +103,40 @@
 #define SOCKOPT_SIZE	socklen_t
 #endif
 
+#if OpenBSD >= 200405			/* 3.5 */
+#define HAS_CLOSEFROM
+#endif
+
 /* __NetBSD_Version__ is major+minor */
 
-#if __NetBSD_Version__ >= 103000000	/* XXX */
+#if __NetBSD_Version__ >= 103000000	/* XXX maybe earlier */
 #undef DEF_MAILBOX_LOCK
 #define DEF_MAILBOX_LOCK "flock, dotlock"
+#define HAS_DEV_URANDOM			/* XXX probably earlier */
 #endif
 
-#if __NetBSD_Version__ >= 105000000	/* XXX */
-#define HAS_ISSETUGID
+#if __NetBSD_Version__ >= 105000000
+#define HAS_ISSETUGID			/* XXX maybe earlier */
 #endif
 
-#if __NetBSD_Version__ >= 106000000	/* XXX */
+#if __NetBSD_Version__ >= 106000000	/* XXX maybe earlier */
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
+#endif
+
+#if __NetBSD_Version__ >= 200060000	/* 2.0F */
+#define HAS_CLOSEFROM
+#endif
+
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 105000000) \
+    || (defined(__FreeBSD__) && __FreeBSD__ >= 4) \
+    || (defined(OpenBSD) && OpenBSD >= 200003) \
+    || defined(USAGI_LIBINET6)
+#ifndef NO_IPV6
+# define HAS_IPV6
+# define HAVE_GETIFADDRS
+#endif
+
 #endif
 
  /*
@@ -136,7 +165,11 @@
 #define PRINTFLIKE(x,y)
 #define SCANFLIKE(x,y)
 #ifndef NO_NETINFO
-#define HAS_NETINFO
+# define HAS_NETINFO
+#endif
+#ifndef NO_IPV6
+# define HAS_IPV6
+# define HAVE_GETIFADDRS
 #endif
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
@@ -225,6 +258,11 @@ extern int opterr;			/* XXX use <getopt.h> */
 #define STATFS_IN_SYS_MOUNT_H
 #define HAS_POSIX_REGEXP
 #define BROKEN_WRITE_SELECT_ON_NON_BLOCKING_PIPE
+#define NO_MSGHDR_MSG_CONTROL
+#ifndef NO_IPV6
+# define HAS_IPV6
+#endif
+
 #endif
 
  /*
@@ -234,6 +272,7 @@ extern int opterr;			/* XXX use <getopt.h> */
 #ifdef SUNOS4
 #define SUPPORTED
 #include <sys/types.h>
+#include <memory.h>
 #define UNSAFE_CTYPE
 #define fpos_t	long
 #define MISSING_SETENV
@@ -267,6 +306,7 @@ extern int opterr;
 #define NATIVE_COMMAND_DIR "/usr/etc"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 #define STRCASECMP_IN_STRINGS_H
+#define OCTAL_TO_UNSIGNED(res, str) sscanf((str), "%o", &(res))
 #endif
 
  /*
@@ -289,19 +329,37 @@ extern int opterr;
 #define DEF_DB_TYPE	"dbm"
 #define ALIAS_DB_MAP	"dbm:/etc/mail/aliases"
 #define HAS_NIS
+#define HAS_NISPLUS
 #define USE_SYS_SOCKIO_H		/* Solaris 2.5, changed sys/ioctl.h */
 #define GETTIMEOFDAY(t)	gettimeofday(t)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin:/usr/ucb"
 #define FIONREAD_IN_SYS_FILIO_H
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
+#define INT_MAX_IN_LIMITS_H
 #define STREAM_CONNECTIONS		/* avoid UNIX-domain sockets */
 #define LOCAL_LISTEN	stream_listen
 #define LOCAL_ACCEPT	stream_accept
 #define LOCAL_CONNECT	stream_connect
 #define LOCAL_TRIGGER	stream_trigger
+#define LOCAL_SEND_FD	stream_send_fd
+#define LOCAL_RECV_FD	stream_recv_fd
 #define HAS_VOLATILE_LOCKS
 #define BROKEN_READ_SELECT_ON_TCP_SOCKET
+#define CANT_WRITE_BEFORE_SENDING_FD
+#ifndef NO_POSIX_REGEXP
+# define HAS_POSIX_REGEXP
+#endif
+#ifndef NO_IPV6
+# define HAS_IPV6
+# define HAS_SIOCGLIF
+#endif
+#ifndef NO_CLOSEFROM
+# define HAS_CLOSEFROM
+#endif
+#ifndef NO_DEV_URANDOM
+# define HAS_DEV_URANDOM
+#endif
 
 /*
  * Allow build environment to override paths.
@@ -413,6 +471,22 @@ extern int opterr;
 #define NATIVE_NEWALIAS_PATH "/usr/sbin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+
+ /*
+  * XXX Need CMSG_SPACE() and CMSG_LEN() but don't want to drag in everything
+  * that comes with _LINUX_SOURCE_COMPAT.
+  */
+#include <sys/socket.h>
+#ifndef CMSG_SPACE
+#define CMSG_SPACE(len) (_CMSG_ALIGN(sizeof(struct cmsghdr)) + _CMSG_ALIGN(len))
+#endif
+#ifndef CMSG_LEN
+#define CMSG_LEN(len) (_CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
+#endif
+#ifndef NO_IPV6
+# define HAS_IPV6
+#endif
+#define BROKEN_AI_PASSIVE_NULL_HOST
 #endif
 
 #ifdef AIX4
@@ -453,6 +527,7 @@ extern int initgroups(const char *, int);
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 
+#define CANT_USE_SEND_RECV_MSG
 #endif
 
 #ifdef AIX3
@@ -487,6 +562,7 @@ extern int setegid(gid_t);
 extern int initgroups(const char *, int);
 #define NATIVE_SENDMAIL_PATH "/usr/lib/sendmail"
 
+#define CANT_USE_SEND_RECV_MSG
 #endif
 
  /*
@@ -516,6 +592,7 @@ extern int initgroups(const char *, int);
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
 #define BROKEN_WRITE_SELECT_ON_NON_BLOCKING_PIPE
+#define CANT_USE_SEND_RECV_MSG
 #endif
 
 #if defined(IRIX5)
@@ -523,6 +600,9 @@ extern int initgroups(const char *, int);
 #endif
 
 #if defined(IRIX6)
+#ifndef NO_IPV6
+# define HAS_IPV6
+#endif
 #define HAS_POSIX_REGEXP
 #define PIPES_CANT_FIONREAD
 #endif
@@ -561,6 +641,20 @@ extern int initgroups(const char *, int);
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
 #endif
+#ifndef NO_IPV6
+# define HAS_IPV6
+# define HAS_PROCNET_IFINET6
+# define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
+#endif
+#include <linux/version.h>
+#if !defined(KERNEL_VERSION) || (LINUX_VERSION_CODE < KERNEL_VERSION(2,2,0)) \
+	|| (__GLIBC__ < 2)
+# define CANT_USE_SEND_RECV_MSG
+# define DEF_SMTP_CACHE_DEMAND	0
+#else
+# define CANT_WRITE_BEFORE_SENDING_FD
+#endif
+#define HAS_DEV_URANDOM			/* introduced in 1.1 */
 #endif
 
 #ifdef LINUX1
@@ -589,6 +683,8 @@ extern int initgroups(const char *, int);
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+#define CANT_USE_SEND_RECV_MSG
+#define DEF_SMTP_CACHE_DEMAND	0
 #endif
 
  /*
@@ -893,6 +989,8 @@ extern int h_errno;
  */
 #include <cpio.h>
 #define S_ISSOCK(mode)	(((mode) & (S_IFMT)) == (C_ISSOCK))
+#define CANT_USE_SEND_RECV_MSG
+#define DEF_SMTP_CACHE_DEMAND	0
 #endif
 
  /*
@@ -978,6 +1076,25 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #endif
 
  /*
+  * Defaults for systems that pre-date IPv6 support.
+  */
+#ifndef HAS_IPV6
+#define EMULATE_IPV4_ADDRINFO
+#define MISSING_INET_PTON
+#define MISSING_INET_NTOP
+extern const char *inet_ntop(int, const void *, char *, size_t);
+extern int inet_pton(int, const char *, void *);
+
+#endif
+
+ /*
+  * Defaults for all systems.
+  */
+#ifndef DEF_INET_PROTOCOLS
+#define DEF_INET_PROTOCOLS	"ipv4"
+#endif
+
+ /*
   * Defaults for systems that pre-date POSIX socklen_t.
   */
 #ifndef SOCKADDR_SIZE
@@ -996,6 +1113,8 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #define LOCAL_ACCEPT	unix_accept
 #define LOCAL_CONNECT	unix_connect
 #define LOCAL_TRIGGER	unix_trigger
+#define LOCAL_SEND_FD	unix_send_fd
+#define LOCAL_RECV_FD	unix_recv_fd
 #endif
 
 #if !defined (HAVE_SYS_NDIR_H) && !defined (HAVE_SYS_DIR_H) \
@@ -1007,6 +1126,10 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 typedef int WAIT_STATUS_T;
 
 #define NORMAL_EXIT_STATUS(status)	((status) == 0)
+#endif
+
+#ifndef OCTAL_TO_UNSIGNED
+#define OCTAL_TO_UNSIGNED(res, str)	((res) = strtoul((str), (char **) 0, 8))
 #endif
 
  /*
@@ -1052,6 +1175,11 @@ extern int waitpid(int, WAIT_STATUS_T *status, int options);
 
 #ifdef MISSING_SETSID
 extern int setsid(void);
+
+#endif
+
+#ifndef HAS_CLOSEFROM
+extern int closefrom(int);
 
 #endif
 
@@ -1128,7 +1256,7 @@ typedef int pid_t;
   * sections above.
   */
 #ifndef PRINTFLIKE
-#if __GNUC__ == 2 && __GNUC_MINOR__ >= 7
+#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ == 3
 #define PRINTFLIKE(x,y) __attribute__ ((format (printf, (x), (y))))
 #else
 #define PRINTFLIKE(x,y)
@@ -1136,7 +1264,7 @@ typedef int pid_t;
 #endif
 
 #ifndef SCANFLIKE
-#if __GNUC__ == 2 && __GNUC_MINOR__ >= 7
+#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ == 3
 #define SCANFLIKE(x,y) __attribute__ ((format (scanf, (x), (y))))
 #else
 #define SCANFLIKE(x,y)
@@ -1168,6 +1296,24 @@ typedef int pid_t;
   */
 #ifndef SET_H_ERRNO
 #define SET_H_ERRNO(err) (h_errno = (err))
+#endif
+
+ /*
+  * Don't mix socket message calls with socket read/write calls. The fact
+  * that you can get away with it only on some stacks implies that there is
+  * no long-term guarantee.
+  */
+#ifndef CAN_WRITE_BEFORE_SENDING_FD
+#define CANT_WRITE_BEFORE_SENDING_FD
+#endif
+
+ /*
+  * FreeBSD sendmsg(2) says that after sending a file descriptor, the sender
+  * must not immediately close the descriptor, otherwise it may close the
+  * descriptor before it is actually sent.
+  */
+#ifndef DONT_WAIT_AFTER_SENDING_FD
+#define MUST_READ_AFTER_SENDING_FD
 #endif
 
  /*

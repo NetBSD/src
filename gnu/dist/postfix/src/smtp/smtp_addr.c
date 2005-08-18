@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.9 2004/11/13 05:45:33 heas Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.10 2005/08/18 22:07:14 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,11 @@
 /* SYNOPSIS
 /*	#include "smtp_addr.h"
 /*
-/*	DNS_RR *smtp_domain_addr(name, misc_flags, why)
+/*	DNS_RR *smtp_domain_addr(name, misc_flags, why, found_myself)
 /*	char	*name;
 /*	int	misc_flags;
 /*	VSTRING	*why;
+/*	int	*found_myself;
 /*
 /*	DNS_RR *smtp_host_addr(name, misc_flags, why)
 /*	char	*name;
@@ -28,7 +29,9 @@
 /*	exchanger hosts listed for the named domain. Addresses are
 /*	returned in most-preferred first order. The result is truncated
 /*	so that it contains only hosts that are more preferred than the
-/*	local mail server itself.
+/*	local mail server itself. The found_myself result parameter
+/*	is updated when the local MTA is MX host for the specified
+/*	destination.
 /*
 /*	When no mail exchanger is listed in the DNS for \fIname\fR, the
 /*	request is passed to smtp_host_addr().
@@ -48,11 +51,11 @@
 /*
 /*	All routines either return a DNS_RR pointer, or return a null
 /*	pointer and set the \fIsmtp_errno\fR global variable accordingly:
-/* .IP SMTP_RETRY
+/* .IP SMTP_ERR_RETRY
 /*	The request failed due to a soft error, and should be retried later.
-/* .IP SMTP_FAIL
+/* .IP SMTP_ERR_FAIL
 /*	The request attempt failed due to a hard error.
-/* .IP SMTP_LOOP
+/* .IP SMTP_ERR_LOOP
 /*	The local machine is the best mail exchanger.
 /* .PP
 /*	In addition, a textual description of the problem is made available
@@ -81,31 +84,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#ifndef INADDR_NONE
-#define INADDR_NONE 0xffffffff
-#endif
-
- /*
-  * Older systems don't have h_errno. Even modern systems don't have
-  * hstrerror().
-  */
-#ifdef NO_HERRNO
-
-static int h_errno = TRY_AGAIN;
-
-#define  HSTRERROR(err) "Host not found"
-
-#else
-
-#define  HSTRERROR(err) (\
-        err == TRY_AGAIN ? "Host not found, try again" : \
-        err == HOST_NOT_FOUND ? "Host not found" : \
-        err == NO_DATA ? "Host name has no address" : \
-        err == NO_RECOVERY ? "Name server failure" : \
-        strerror(errno) \
-    )
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -113,7 +91,8 @@ static int h_errno = TRY_AGAIN;
 #include <mymalloc.h>
 #include <inet_addr_list.h>
 #include <stringops.h>
-#include <myrand.h>
+#include <myaddrinfo.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -134,17 +113,16 @@ static int h_errno = TRY_AGAIN;
 static void smtp_print_addr(char *what, DNS_RR *addr_list)
 {
     DNS_RR *addr;
-    struct in_addr in_addr;
+    MAI_HOSTADDR_STR hostaddr;
 
     msg_info("begin %s address list", what);
     for (addr = addr_list; addr; addr = addr->next) {
-	if (addr->data_len > sizeof(addr)) {
-	    msg_warn("skipping address length %d", addr->data_len);
+	if (dns_rr_to_pa(addr, &hostaddr) == 0) {
+	    msg_warn("skipping record type %s: %m", dns_strtype(addr->type));
 	} else {
-	    memcpy((char *) &in_addr, addr->data, sizeof(in_addr));
 	    msg_info("pref %4d host %s/%s",
 		     addr->pref, addr->name,
-		     inet_ntoa(in_addr));
+		     hostaddr.buf);
 	}
     }
     msg_info("end %s address list", what);
@@ -155,11 +133,13 @@ static void smtp_print_addr(char *what, DNS_RR *addr_list)
 static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRING *why)
 {
     char   *myname = "smtp_addr_one";
-    struct in_addr inaddr;
-    DNS_FIXED fixed;
     DNS_RR *addr = 0;
     DNS_RR *rr;
-    struct hostent *hp;
+    int     aierr;
+    struct addrinfo *res0;
+    struct addrinfo *res;
+    INET_PROTO_INFO *proto_info = inet_proto_info();
+    int     found;
 
     if (msg_verbose)
 	msg_info("%s: host %s", myname, host);
@@ -167,18 +147,22 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     /*
      * Interpret a numerical name as an address.
      */
-    if (ISDIGIT(host[0]) && (inaddr.s_addr = inet_addr(host)) != INADDR_NONE) {
-	memset((char *) &fixed, 0, sizeof(fixed));
-	return (dns_rr_append(addr_list,
-			      dns_rr_create(host, &fixed, pref,
-					(char *) &inaddr, sizeof(inaddr))));
+    if (hostaddr_to_sockaddr(host, (char *) 0, 0, &res0) == 0
+	&& strchr((char *) proto_info->sa_family_list, res0->ai_family) != 0) {
+	if ((addr = dns_sa_to_rr(host, pref, res0->ai_addr)) == 0)
+	    msg_fatal("host %s: conversion error for address family %d: %m",
+		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
+	addr_list = dns_rr_append(addr_list, addr);
+	freeaddrinfo(res0);
+	return (addr_list);
     }
 
     /*
      * Use DNS lookup, but keep the option open to use native name service.
      */
     if (smtp_host_lookup_mask & SMTP_HOST_FLAG_DNS) {
-	switch (dns_lookup(host, T_A, RES_DEFNAMES, &addr, (VSTRING *) 0, why)) {
+	switch (dns_lookup_v(host, RES_DEFNAMES, &addr, (VSTRING *) 0, why,
+			     DNS_REQ_FLAG_ALL, proto_info->dns_atype_list)) {
 	case DNS_OK:
 	    for (rr = addr; rr; rr = rr->next)
 		rr->pref = pref;
@@ -194,7 +178,7 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 	case DNS_NOTFOUND:
 	    if (smtp_errno != SMTP_ERR_RETRY)
 		smtp_errno = SMTP_ERR_FAIL;
-	    /* maybe gethostbyname() will succeed */
+	    /* maybe native naming service will succeed */
 	    break;
 	}
     }
@@ -202,29 +186,36 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     /*
      * Use the native name service which also looks in /etc/hosts.
      */
+#define RETRY_AI_ERROR(e) \
+        ((e) == EAI_AGAIN || (e) == EAI_MEMORY || (e) == EAI_SYSTEM)
+
     if (smtp_host_lookup_mask & SMTP_HOST_FLAG_NATIVE) {
-	memset((char *) &fixed, 0, sizeof(fixed));
-	if ((hp = gethostbyname(host)) == 0) {
-	    vstring_sprintf(why, "%s: %s", host, HSTRERROR(h_errno));
+	if ((aierr = hostname_to_sockaddr(host, (char *) 0, 0, &res0)) != 0) {
+	    vstring_sprintf(why, "%s: %s", host, MAI_STRERROR(aierr));
 	    if (smtp_errno != SMTP_ERR_RETRY)
 		smtp_errno =
-		    (h_errno == TRY_AGAIN ? SMTP_ERR_RETRY : SMTP_ERR_FAIL);
-	} else if (hp->h_addrtype != AF_INET) {
-	    vstring_sprintf(why, "%s: host not found", host);
-	    msg_warn("%s: unknown address family %d for %s",
-		     myname, hp->h_addrtype, host);
-	    if (smtp_errno != SMTP_ERR_RETRY)
-		smtp_errno = SMTP_ERR_FAIL;
+		    (RETRY_AI_ERROR(aierr) ? SMTP_ERR_RETRY : SMTP_ERR_FAIL);
 	} else {
-	    while (hp->h_addr_list[0]) {
-		addr_list = dns_rr_append(addr_list,
-					  dns_rr_create(host, &fixed, pref,
-							hp->h_addr_list[0],
-							sizeof(inaddr)));
-		hp->h_addr_list++;
+	    for (found = 0, res = res0; res != 0; res = res->ai_next) {
+		if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+		    msg_info("skipping address family %d for host %s",
+			     res->ai_family, host);
+		    continue;
+		}
+		found++;
+		if ((addr = dns_sa_to_rr(host, pref, res->ai_addr)) == 0)
+		    msg_fatal("host %s: conversion error for address family %d: %m",
+		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
+		addr_list = dns_rr_append(addr_list, addr);
 	    }
+	    freeaddrinfo(res0);
+	    if (found == 0) {
+		vstring_sprintf(why, "%s: host not found", host);
+		if (smtp_errno != SMTP_ERR_RETRY)
+		    smtp_errno = SMTP_ERR_FAIL;
+	    }
+	    return (addr_list);
 	}
-	return (addr_list);
     }
 
     /*
@@ -268,8 +259,6 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
     DNS_RR *addr;
     int     i;
 
-#define INADDRP(x) ((struct in_addr *) (x))
-
     self = own_inet_addr_list();
     proxy = proxy_inet_addr_list();
 
@@ -279,7 +268,7 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
 	 * Find out if this mail system is listening on this address.
 	 */
 	for (i = 0; i < self->used; i++)
-	    if (INADDRP(addr->data)->s_addr == self->addrs[i].s_addr) {
+	    if (DNS_RR_EQ_SA(addr, (struct sockaddr *) (self->addrs + i))) {
 		if (msg_verbose)
 		    msg_info("%s: found self at pref %d", myname, addr->pref);
 		return (addr);
@@ -290,7 +279,7 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
 	 * address.
 	 */
 	for (i = 0; i < proxy->used; i++)
-	    if (INADDRP(addr->data)->s_addr == proxy->addrs[i].s_addr) {
+	    if (DNS_RR_EQ_SA(addr, (struct sockaddr *) (proxy->addrs + i))) {
 		if (msg_verbose)
 		    msg_info("%s: found proxy at pref %d", myname, addr->pref);
 		return (addr);
@@ -332,12 +321,23 @@ static DNS_RR *smtp_truncate_self(DNS_RR *addr_list, unsigned pref)
 
 static int smtp_compare_pref(DNS_RR *a, DNS_RR *b)
 {
-    return (a->pref - b->pref);
+    if (a->pref != b->pref)
+	return (a->pref - b->pref);
+#ifdef HAS_IPV6
+    if (a->type == b->type)			/* 200412 */
+	return 0;
+    if (a->type == T_AAAA)
+	return (-1);
+    if (b->type == T_AAAA)
+	return (+1);
+#endif
+    return 0;
 }
 
 /* smtp_domain_addr - mail exchanger address lookup */
 
-DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why)
+DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
+			         int *found_myself)
 {
     DNS_RR *mx_names;
     DNS_RR *addr_list = 0;
@@ -419,7 +419,7 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why)
 	if (addr_list == 0) {
 	    if (var_smtp_defer_mxaddr)
 		smtp_errno = SMTP_ERR_RETRY;
-	    msg_warn("no MX host for %s has a valid A record", name);
+	    msg_warn("no MX host for %s has a valid address record", name);
 	    break;
 	}
 	best_found = (addr_list ? addr_list->pref : IMPOSSIBLE_PREFERENCE);
@@ -453,6 +453,7 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why)
     /*
      * Clean up.
      */
+    *found_myself |= (self != 0);
     return (addr_list);
 }
 
@@ -478,8 +479,13 @@ DNS_RR *smtp_host_addr(char *host, int misc_flags, VSTRING *why)
 	smtp_errno = SMTP_ERR_LOOP;
 	return (0);
     }
-    if (addr_list && addr_list->next && var_smtp_rand_addr)
-	addr_list = dns_rr_shuffle(addr_list);
+    if (addr_list && addr_list->next) {
+	if (var_smtp_rand_addr)
+	    addr_list = dns_rr_shuffle(addr_list);
+	/* The following changes the order of equal-preference hosts. */
+	if (inet_proto_info()->ai_family_list[1] != 0)
+	    addr_list = dns_rr_sort(addr_list, smtp_compare_pref);
+    }
     if (msg_verbose)
 	smtp_print_addr(host, addr_list);
     return (addr_list);

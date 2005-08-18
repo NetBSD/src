@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.c,v 1.7 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: inet_addr_list.c,v 1.8 2005/08/18 22:11:17 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
 /*
 /*	void	inet_addr_list_append(list,addr)
 /*	INET_ADDR_LIST *list;
-/*	struct in_addr *addr;
+/*	struct sockaddr *addr;
 /*
 /*	void	inet_addr_list_uniq(list)
 /*	INET_ADDR_LIST *list;
@@ -49,14 +49,18 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <netdb.h>
 
 /* Utility library. */
 
 #include <msg.h>
 #include <mymalloc.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
 #include <inet_addr_list.h>
 
 /* inet_addr_list_init - initialize internet address list */
@@ -68,37 +72,43 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
     list->used = 0;
     list->size = 0;
     init_size = 2;
-    list->addrs = (struct in_addr *) mymalloc(sizeof(*list->addrs) * init_size);
+    list->addrs = (struct sockaddr_storage *)
+	mymalloc(sizeof(*list->addrs) * init_size);
     list->size = init_size;
 }
 
 /* inet_addr_list_append - append address to internet address list */
 
-void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
+void    inet_addr_list_append(INET_ADDR_LIST *list,
+			              struct sockaddr * addr)
 {
     char   *myname = "inet_addr_list_append";
+    MAI_HOSTADDR_STR hostaddr;
     int     new_size;
 
-    if (msg_verbose > 1)
-	msg_info("%s: %s", myname, inet_ntoa(*addr));
-
+    if (msg_verbose > 1) {
+	SOCKADDR_TO_HOSTADDR(addr, SOCK_ADDR_LEN(addr),
+			     &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
+	msg_info("%s: %s", myname, hostaddr.buf);
+    }
     if (list->used >= list->size) {
 	new_size = list->size * 2;
-	list->addrs = (struct in_addr *)
+	list->addrs = (struct sockaddr_storage *)
 	    myrealloc((char *) list->addrs, sizeof(*list->addrs) * new_size);
 	list->size = new_size;
     }
-    list->addrs[list->used++] = *addr;
+    memcpy(list->addrs + list->used++, addr, SOCK_ADDR_LEN(addr));
 }
 
 /* inet_addr_list_comp - compare addresses */
 
 static int inet_addr_list_comp(const void *a, const void *b)
 {
-    const struct in_addr *a_addr = (const struct in_addr *) a;
-    const struct in_addr *b_addr = (const struct in_addr *) b;
 
-    return (a_addr->s_addr - b_addr->s_addr);
+    /*
+     * In case (struct *) != (void *).
+     */
+    return (sock_addr_cmp_addr(SOCK_ADDR_PTR(a), SOCK_ADDR_PTR(b)));
 }
 
 /* inet_addr_list_uniq - weed out duplicates */
@@ -137,6 +147,7 @@ void    inet_addr_list_free(INET_ADDR_LIST *list)
 }
 
 #ifdef TEST
+#include <inet_proto.h>
 
  /*
   * Duplicate elimination needs to be tested.
@@ -145,16 +156,22 @@ void    inet_addr_list_free(INET_ADDR_LIST *list)
 
 static void inet_addr_list_print(INET_ADDR_LIST *list)
 {
-    int     n;
+    MAI_HOSTADDR_STR hostaddr;
+    struct sockaddr_storage *sa;
 
-    for (n = 0; n < list->used; n++)
-	msg_info("%s", inet_ntoa(list->addrs[n]));
+    for (sa = list->addrs; sa < list->addrs + list->used; sa++) {
+	SOCKADDR_TO_HOSTADDR(SOCK_ADDR_PTR(sa), SOCK_ADDR_LEN(sa),
+			     &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
+	msg_info("%s", hostaddr.buf);
+    }
 }
 
 int     main(int argc, char **argv)
 {
     INET_ADDR_LIST list;
+    INET_PROTO_INFO *proto_info;
 
+    proto_info = inet_proto_init(argv[0], INET_PROTO_NAME_ALL);
     inet_addr_list_init(&list);
     while (--argc && *++argv)
 	if (inet_addr_host(&list, *argv) == 0)
