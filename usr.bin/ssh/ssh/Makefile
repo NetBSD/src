@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2005/03/04 20:44:55 he Exp $
+#	$NetBSD: Makefile,v 1.22 2005/08/18 00:19:28 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,18 +13,14 @@ MLINKS=	ssh.1 slogin.1
 .if (${USE_KERBEROS} != "no")
 
 # this is not entirely true, libgssapi might be independant of krb5
-CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
 SRCS +=	gss-genr.c
 LDADD+=	-lgssapi
 DPADD+=	${LIBGSSAPI}
 
-CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 LDADD+=	-lkrb5 -lkafs -lasn1 -lcrypt
 DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
 .if ${MKKERBEROS4} != "no"
-CPPFLAGS+=-I${DESTDIR}/usr/include/kerberosIV -DKRB4
-CPPFLAGS+=-DKRB4
 SRCS+=radix.c
 LDADD+=	-lkrb -ldes
 DPADD+=	${LIBKRB} ${LIBDES}
